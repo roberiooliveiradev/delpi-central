@@ -10,7 +10,10 @@ from app.application.dto.audit_5s.list_audit_5s_nc_board_request import (
     ListAudit5sNcBoardRequest,
 )
 from app.domain.services.audit_5s.audit_5s_nc_sla_service import (
+    NC_CANCELLED_VIEW_ONLY_MESSAGE,
+    is_nc_cancelled,
     is_nc_plan_complete,
+    is_nc_plan_locked,
     resolve_nc_due_sla,
     resolve_nc_workflow,
 )
@@ -42,6 +45,7 @@ from app.application.services.audit_5s.response_attachment_storage import (
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
+    PluginsSchemaOutdatedError,
 )
 from app.infrastructure.persistence.plugins.repositories.shared_quality.postgres_sequential_code_generator import (
     PostgresSequentialCodeGenerator,
@@ -998,7 +1002,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
 
         try:
-            row = self.execute_returning_one(
+            with self.db():
+                row = self.execute_returning_one(
                 """
                 INSERT INTO quality.audit_5s_nc_attachments (
                     nonconformity_id,
@@ -1031,30 +1036,30 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 ),
                 auto_commit=False,
             )
-            if not row:
-                return None
+                if not row:
+                    return None
 
-            self.execute(
-                """
-                INSERT INTO quality.audit_5s_nc_events (
-                    nonconformity_id, event_type, payload, actor_user_id
-                ) VALUES (%s, 'attachment_uploaded', %s::jsonb, %s)
-                """,
-                (
-                    nonconformity_id,
-                    self._json_dumps(
-                        {
-                            "attachment_id": str(row["id"]),
-                            "attachment_type": "before",
-                            "original_name": original_name,
-                            "seeded_from_evaluation": True,
-                        }
+                self.execute(
+                    """
+                    INSERT INTO quality.audit_5s_nc_events (
+                        nonconformity_id, event_type, payload, actor_user_id
+                    ) VALUES (%s, 'attachment_uploaded', %s::jsonb, %s)
+                    """,
+                    (
+                        nonconformity_id,
+                        self._json_dumps(
+                            {
+                                "attachment_id": str(row["id"]),
+                                "attachment_type": "before",
+                                "original_name": original_name,
+                                "seeded_from_evaluation": True,
+                            }
+                        ),
+                        uploaded_by_user_id,
                     ),
-                    uploaded_by_user_id,
-                ),
-                auto_commit=False,
-            )
-            self.commit()
+                    auto_commit=False,
+                )
+                self.commit()
             return row
         except PluginsRepositoryError:
             try:
@@ -1260,42 +1265,46 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         if existing:
             raise PluginsRepositoryError("NC já registrada para este critério.")
 
-        row = self._insert_nonconformity_row(
-            audit_id=audit_id,
-            response_id=response_id,
-            description=description.strip(),
-            responsible_name=responsible_name.strip(),
-            responsible_user_id=self._normalize_responsible_user_id(responsible_user_id),
-            due_date=due_date,
-            root_cause=self._normalize_text(root_cause),
-            corrective_action=self._normalize_text(corrective_action),
-            priority=priority,
-            created_by_user_id=created_by_user_id,
-        )
-        if not row:
-            raise PluginsRepositoryError("Falha ao registrar NC.")
+        # Lease único: cada execute(auto_commit=False) sem lease externo
+        # devolve a conexão ao pool com rollback — o INSERT da NC some e o
+        # evento seguinte falha com FK («Falha ao executar comando…»).
+        with self.db():
+            row = self._insert_nonconformity_row(
+                audit_id=audit_id,
+                response_id=response_id,
+                description=description.strip(),
+                responsible_name=responsible_name.strip(),
+                responsible_user_id=self._normalize_responsible_user_id(responsible_user_id),
+                due_date=due_date,
+                root_cause=self._normalize_text(root_cause),
+                corrective_action=self._normalize_text(corrective_action),
+                priority=priority,
+                created_by_user_id=created_by_user_id,
+            )
+            if not row:
+                raise PluginsRepositoryError("Falha ao registrar NC.")
 
-        nc_id = str(row["id"])
-        self.execute(
-            """
-            INSERT INTO quality.audit_5s_nc_events (
-                nonconformity_id, event_type, payload, actor_user_id
-            ) VALUES (%s, 'created', '{}'::jsonb, %s)
-            """,
-            (nc_id, created_by_user_id),
-            auto_commit=False,
-        )
-        self.execute(
-            """
-            UPDATE quality.audit_5s_audits
-               SET status = 'nc_in_progress', updated_at = NOW()
-             WHERE id = %s AND status = 'evaluation_complete'
-            """,
-            (audit_id,),
-            auto_commit=False,
-        )
-        row = self._maybe_promote_nc_to_in_progress(nc_id, row)
-        self.commit()
+            nc_id = str(row["id"])
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'created', '{}'::jsonb, %s)
+                """,
+                (nc_id, created_by_user_id),
+                auto_commit=False,
+            )
+            self.execute(
+                """
+                UPDATE quality.audit_5s_audits
+                   SET status = 'nc_in_progress', updated_at = NOW()
+                 WHERE id = %s AND status = 'evaluation_complete'
+                """,
+                (audit_id,),
+                auto_commit=False,
+            )
+            row = self._maybe_promote_nc_to_in_progress(nc_id, row)
+            self.commit()
         try:
             self.seed_nc_before_from_response_attachment(
                 nonconformity_id=nc_id,
@@ -1365,7 +1374,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 extended_params,
                 auto_commit=False,
             )
-        except PluginsRepositoryError:
+        except PluginsSchemaOutdatedError:
             legacy_row = self.execute_returning_one(
                 """
                 INSERT INTO quality.audit_5s_nonconformities (
@@ -1419,7 +1428,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 tuple(extended_params),
                 auto_commit=False,
             )
-        except PluginsRepositoryError:
+        except PluginsSchemaOutdatedError:
             legacy_pairs = [
                 (clause, param)
                 for clause, param in zip(updates, params)
@@ -1494,7 +1503,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             raise PluginsRepositoryError("Auditoria não encontrada.")
         if is_audit_closed(audit["status"]):
             raise PluginsRepositoryError("Auditoria encerrada — NC não pode ser alterada.")
-        if nc["status"] == "closed":
+        if is_nc_plan_locked(nc["status"]):
+            if is_nc_cancelled(nc["status"]):
+                raise PluginsRepositoryError(NC_CANCELLED_VIEW_ONLY_MESSAGE)
             raise PluginsRepositoryError("NC finalizada — altere apenas visualizando as evidências.")
 
         updates: list[str] = []
@@ -1562,38 +1573,39 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 raise PluginsRepositoryError("NC não encontrada.")
             return self._augment_nc_legacy_row(row) if "root_cause" not in row else row
 
-        row = self._update_nonconformity_row(
-            nonconformity_id=nonconformity_id,
-            updates=updates,
-            params=params,
-        )
-        if not row:
-            raise PluginsRepositoryError("Falha ao atualizar NC.")
+        with self.db():
+            row = self._update_nonconformity_row(
+                nonconformity_id=nonconformity_id,
+                updates=updates,
+                params=params,
+            )
+            if not row:
+                raise PluginsRepositoryError("Falha ao atualizar NC.")
 
-        self.execute(
-            """
-            INSERT INTO quality.audit_5s_nc_events (
-                nonconformity_id, event_type, payload, actor_user_id
-            ) VALUES (%s, 'updated', %s::jsonb, %s)
-            """,
-            (
-                nonconformity_id,
-                self._json_dumps(payload),
-                actor_user_id,
-            ),
-            auto_commit=False,
-        )
-        self.execute(
-            """
-            UPDATE quality.audit_5s_audits
-               SET status = 'nc_in_progress', updated_at = NOW()
-             WHERE id = %s AND status = 'evaluation_complete'
-            """,
-            (str(nc["audit_id"]),),
-            auto_commit=False,
-        )
-        row = self._maybe_promote_nc_to_in_progress(nonconformity_id, row)
-        self.commit()
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'updated', %s::jsonb, %s)
+                """,
+                (
+                    nonconformity_id,
+                    self._json_dumps(payload),
+                    actor_user_id,
+                ),
+                auto_commit=False,
+            )
+            self.execute(
+                """
+                UPDATE quality.audit_5s_audits
+                   SET status = 'nc_in_progress', updated_at = NOW()
+                 WHERE id = %s AND status = 'evaluation_complete'
+                """,
+                (str(nc["audit_id"]),),
+                auto_commit=False,
+            )
+            row = self._maybe_promote_nc_to_in_progress(nonconformity_id, row)
+            self.commit()
         if "previous_responsible_user_id" in payload:
             row = {
                 **row,
@@ -1615,48 +1627,51 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not nc:
             raise PluginsRepositoryError("NC não encontrada.")
+        if is_nc_cancelled(nc["status"]):
+            raise PluginsRepositoryError(NC_CANCELLED_VIEW_ONLY_MESSAGE)
 
-        action = self.execute_returning_one(
-            """
-            INSERT INTO quality.audit_5s_nc_actions (
-                nonconformity_id, description, actor_user_id, actor_display_name
-            ) VALUES (%s, %s, %s, %s)
-            RETURNING id, nonconformity_id, description, actor_user_id, actor_display_name, created_at
-            """,
-            (
-                nonconformity_id,
-                description.strip(),
-                actor_user_id,
-                actor_display_name,
-            ),
-            auto_commit=False,
-        )
-        if not action:
-            raise PluginsRepositoryError("Falha ao registrar ação.")
+        with self.db():
+            action = self.execute_returning_one(
+                """
+                INSERT INTO quality.audit_5s_nc_actions (
+                    nonconformity_id, description, actor_user_id, actor_display_name
+                ) VALUES (%s, %s, %s, %s)
+                RETURNING id, nonconformity_id, description, actor_user_id, actor_display_name, created_at
+                """,
+                (
+                    nonconformity_id,
+                    description.strip(),
+                    actor_user_id,
+                    actor_display_name,
+                ),
+                auto_commit=False,
+            )
+            if not action:
+                raise PluginsRepositoryError("Falha ao registrar ação.")
 
-        self.execute(
-            """
-            INSERT INTO quality.audit_5s_nc_events (
-                nonconformity_id, event_type, payload, actor_user_id
-            ) VALUES (%s, 'action_added', %s::jsonb, %s)
-            """,
-            (
-                nonconformity_id,
-                self._json_dumps({"action_id": str(action["id"]), "description": description.strip()}),
-                actor_user_id,
-            ),
-            auto_commit=False,
-        )
-        self.execute(
-            """
-            UPDATE quality.audit_5s_nonconformities
-               SET status = 'in_progress', updated_at = NOW()
-             WHERE id = %s AND status = 'open'
-            """,
-            (nonconformity_id,),
-            auto_commit=False,
-        )
-        self.commit()
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'action_added', %s::jsonb, %s)
+                """,
+                (
+                    nonconformity_id,
+                    self._json_dumps({"action_id": str(action["id"]), "description": description.strip()}),
+                    actor_user_id,
+                ),
+                auto_commit=False,
+            )
+            self.execute(
+                """
+                UPDATE quality.audit_5s_nonconformities
+                   SET status = 'in_progress', updated_at = NOW()
+                 WHERE id = %s AND status = 'open'
+                """,
+                (nonconformity_id,),
+                auto_commit=False,
+            )
+            self.commit()
         return action
 
     def list_nc_actions(self, nonconformity_id: str) -> list[dict[str, Any]]:
@@ -1757,7 +1772,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not nc:
             raise PluginsRepositoryError("NC não encontrada.")
-        if nc["status"] == "closed":
+        if is_nc_plan_locked(nc["status"]):
+            if is_nc_cancelled(nc["status"]):
+                raise PluginsRepositoryError(NC_CANCELLED_VIEW_ONLY_MESSAGE)
             raise PluginsRepositoryError("NC finalizada — evidências não podem ser alteradas.")
 
         audit = self.fetch_one(
@@ -1769,69 +1786,70 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         if is_audit_closed(audit["status"]):
             raise PluginsRepositoryError("Auditoria encerrada.")
 
-        row = self.execute_returning_one(
-            """
-            INSERT INTO quality.audit_5s_nc_attachments (
-                nonconformity_id,
-                attachment_type,
-                original_name,
-                stored_name,
-                mime_type,
-                size_bytes,
-                uploaded_by_user_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (nonconformity_id, attachment_type)
-            DO UPDATE SET
-                original_name = EXCLUDED.original_name,
-                stored_name = EXCLUDED.stored_name,
-                mime_type = EXCLUDED.mime_type,
-                size_bytes = EXCLUDED.size_bytes,
-                uploaded_by_user_id = EXCLUDED.uploaded_by_user_id,
-                created_at = NOW()
-            RETURNING id,
-                      nonconformity_id,
-                      attachment_type,
-                      original_name,
-                      stored_name,
-                      mime_type,
-                      size_bytes,
-                      uploaded_by_user_id,
-                      created_at
-            """,
-            (
-                nonconformity_id,
-                attachment_type,
-                original_name,
-                stored_name,
-                mime_type,
-                size_bytes,
-                uploaded_by_user_id,
-            ),
-            auto_commit=False,
-        )
-        if not row:
-            raise PluginsRepositoryError("Falha ao salvar evidência.")
-
-        self.execute(
-            """
-            INSERT INTO quality.audit_5s_nc_events (
-                nonconformity_id, event_type, payload, actor_user_id
-            ) VALUES (%s, 'attachment_uploaded', %s::jsonb, %s)
-            """,
-            (
-                nonconformity_id,
-                self._json_dumps(
-                    {
-                        "attachment_id": str(row["id"]),
-                        "attachment_type": attachment_type,
-                        "original_name": original_name,
-                    }
+        with self.db():
+            row = self.execute_returning_one(
+                """
+                INSERT INTO quality.audit_5s_nc_attachments (
+                    nonconformity_id,
+                    attachment_type,
+                    original_name,
+                    stored_name,
+                    mime_type,
+                    size_bytes,
+                    uploaded_by_user_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (nonconformity_id, attachment_type)
+                DO UPDATE SET
+                    original_name = EXCLUDED.original_name,
+                    stored_name = EXCLUDED.stored_name,
+                    mime_type = EXCLUDED.mime_type,
+                    size_bytes = EXCLUDED.size_bytes,
+                    uploaded_by_user_id = EXCLUDED.uploaded_by_user_id,
+                    created_at = NOW()
+                RETURNING id,
+                          nonconformity_id,
+                          attachment_type,
+                          original_name,
+                          stored_name,
+                          mime_type,
+                          size_bytes,
+                          uploaded_by_user_id,
+                          created_at
+                """,
+                (
+                    nonconformity_id,
+                    attachment_type,
+                    original_name,
+                    stored_name,
+                    mime_type,
+                    size_bytes,
+                    uploaded_by_user_id,
                 ),
-                uploaded_by_user_id,
-            ),
-            auto_commit=False,
-        )
-        self.commit()
+                auto_commit=False,
+            )
+            if not row:
+                raise PluginsRepositoryError("Falha ao salvar evidência.")
+
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'attachment_uploaded', %s::jsonb, %s)
+                """,
+                (
+                    nonconformity_id,
+                    self._json_dumps(
+                        {
+                            "attachment_id": str(row["id"]),
+                            "attachment_type": attachment_type,
+                            "original_name": original_name,
+                        }
+                    ),
+                    uploaded_by_user_id,
+                ),
+                auto_commit=False,
+            )
+            self.commit()
         return row
 
     def complete_nc_action(
@@ -1857,6 +1875,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not nc:
             raise PluginsRepositoryError("NC não encontrada.")
+        if is_nc_cancelled(nc["status"]):
+            raise PluginsRepositoryError(NC_CANCELLED_VIEW_ONLY_MESSAGE)
         if nc["status"] == "closed":
             return self._get_nonconformity_by_id(nonconformity_id) or nc
 
@@ -1882,33 +1902,34 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "Anexe a foto do antes e do depois para finalizar a ação."
             )
 
-        row = self._update_nonconformity_row(
-            nonconformity_id=nonconformity_id,
-            updates=["status = %s"],
-            params=["closed"],
-        )
-        if not row:
-            raise PluginsRepositoryError("Falha ao finalizar NC.")
+        with self.db():
+            row = self._update_nonconformity_row(
+                nonconformity_id=nonconformity_id,
+                updates=["status = %s"],
+                params=["closed"],
+            )
+            if not row:
+                raise PluginsRepositoryError("Falha ao finalizar NC.")
 
-        self.execute(
-            """
-            INSERT INTO quality.audit_5s_nc_events (
-                nonconformity_id, event_type, payload, actor_user_id
-            ) VALUES (%s, 'action_completed', '{}'::jsonb, %s)
-            """,
-            (nonconformity_id, actor_user_id),
-            auto_commit=False,
-        )
-        self.execute(
-            """
-            UPDATE quality.audit_5s_audits
-               SET status = 'nc_in_progress', updated_at = NOW()
-             WHERE id = %s AND status = 'evaluation_complete'
-            """,
-            (str(nc["audit_id"]),),
-            auto_commit=False,
-        )
-        self.commit()
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'action_completed', '{}'::jsonb, %s)
+                """,
+                (nonconformity_id, actor_user_id),
+                auto_commit=False,
+            )
+            self.execute(
+                """
+                UPDATE quality.audit_5s_audits
+                   SET status = 'nc_in_progress', updated_at = NOW()
+                 WHERE id = %s AND status = 'evaluation_complete'
+                """,
+                (str(nc["audit_id"]),),
+                auto_commit=False,
+            )
+            self.commit()
         return self._get_nonconformity_by_id(nonconformity_id) or row
 
     def reopen_nc_action(
@@ -1942,36 +1963,37 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         if not audit:
             raise PluginsRepositoryError("Auditoria não encontrada.")
 
-        row = self._update_nonconformity_row(
-            nonconformity_id=nonconformity_id,
-            updates=["status = %s"],
-            params=["in_progress"],
-        )
-        if not row:
-            raise PluginsRepositoryError("Falha ao reabrir NC.")
+        with self.db():
+            row = self._update_nonconformity_row(
+                nonconformity_id=nonconformity_id,
+                updates=["status = %s"],
+                params=["in_progress"],
+            )
+            if not row:
+                raise PluginsRepositoryError("Falha ao reabrir NC.")
 
-        self.execute(
-            """
-            INSERT INTO quality.audit_5s_nc_events (
-                nonconformity_id, event_type, payload, actor_user_id
-            ) VALUES (%s, 'action_reopened', '{}'::jsonb, %s)
-            """,
-            (nonconformity_id, actor_user_id),
-            auto_commit=False,
-        )
-
-        if is_audit_closed(audit["status"]) or audit["status"] == "evaluation_complete":
             self.execute(
                 """
-                UPDATE quality.audit_5s_audits
-                   SET status = %s, updated_at = NOW()
-                 WHERE id = %s
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'action_reopened', '{}'::jsonb, %s)
                 """,
-                (AUDIT_STATUS_NC_IN_PROGRESS, str(nc["audit_id"])),
+                (nonconformity_id, actor_user_id),
                 auto_commit=False,
             )
 
-        self.commit()
+            if is_audit_closed(audit["status"]) or audit["status"] == "evaluation_complete":
+                self.execute(
+                    """
+                    UPDATE quality.audit_5s_audits
+                       SET status = %s, updated_at = NOW()
+                     WHERE id = %s
+                    """,
+                    (AUDIT_STATUS_NC_IN_PROGRESS, str(nc["audit_id"])),
+                    auto_commit=False,
+                )
+
+            self.commit()
         return self._get_nonconformity_by_id(nonconformity_id) or row
 
     def close_audit(self, audit_id: str) -> dict[str, Any]:
@@ -3123,4 +3145,4 @@ class PostgresAudit5sRepository(PluginBaseRepository):
     def _json_dumps(value: Any) -> str:
         import json
 
-        return json.dumps(value)
+        return json.dumps(value, default=str)

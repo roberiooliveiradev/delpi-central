@@ -5,7 +5,9 @@ from datetime import date
 import pytest
 
 from app.domain.services.audit_5s.audit_5s_nc_sla_service import (
+    is_nc_cancelled,
     is_nc_plan_complete,
+    is_nc_plan_locked,
     resolve_nc_due_sla,
     resolve_nc_workflow,
 )
@@ -28,6 +30,7 @@ def test_is_nc_plan_complete_requires_all_fields() -> None:
     ("status", "due_date", "expected_level", "expected_days"),
     [
         ("closed", "2026-01-01", "none", None),
+        ("cancelled", "2026-01-01", "none", None),
         ("open", None, "none", None),
         ("open", "2026-07-20", "ok", 10),
         ("in_progress", "2026-07-12", "due_soon", 2),
@@ -47,6 +50,15 @@ def test_resolve_nc_due_sla(
     )
     assert result["due_sla_level"] == expected_level
     assert result["days_until_due"] == expected_days
+
+
+def test_cancelled_nc_is_view_only_and_plan_locked() -> None:
+    assert is_nc_cancelled("cancelled") is True
+    assert is_nc_cancelled("closed") is False
+    assert is_nc_plan_locked("cancelled") is True
+    assert is_nc_plan_locked("closed") is True
+    assert is_nc_plan_locked("open") is False
+    assert is_nc_plan_locked("in_progress") is False
 
 
 def test_resolve_nc_workflow_not_started() -> None:

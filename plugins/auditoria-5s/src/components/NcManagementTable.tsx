@@ -11,6 +11,9 @@ import {
 
 import type { NcBoardItem, NcBoardPagination } from "../types/ncManagement";
 import {
+  canAddNcBoardNotes,
+  canUpdateNcBoardItem,
+  isNcBoardViewOnly,
   sensoName,
   shiftLabel,
 } from "../constants/audit5s";
@@ -96,8 +99,11 @@ export function NcManagementTable({
             ) : (
               items.map((item) => {
                 const rowStatus = resolveNcBoardRowStatus(item);
+                const showUpdate = canUpdateNcBoardItem(item.status);
+                const showNotes = !isNcBoardViewOnly(item.status);
                 const showReopen = canReopenAction(item);
-                const menuItemCount = 3 + (showReopen ? 1 : 0);
+                const menuItemCount =
+                  1 + (showUpdate ? 1 : 0) + (showNotes ? 1 : 0) + (showReopen ? 1 : 0);
                 return (
                 <tr
                   key={item.id}
@@ -191,36 +197,40 @@ export function NcManagementTable({
                             <Eye size={14} aria-hidden />
                             Ver
                           </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="a5s-row-menu__item"
-                            onClick={() => {
-                              setOpenMenuId(null);
-                              onEdit(item);
-                            }}
-                          >
-                            <Pencil size={14} aria-hidden />
-                            Atualizar
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="a5s-row-menu__item"
-                            disabled={!item.is_registered}
-                            title={
-                              item.is_registered
-                                ? undefined
-                                : "Registre o plano de ação antes de incluir notas."
-                            }
-                            onClick={() => {
-                              setOpenMenuId(null);
-                              onNotes(item);
-                            }}
-                          >
-                            <MessageSquarePlus size={14} aria-hidden />
-                            Notas
-                          </button>
+                          {showUpdate ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="a5s-row-menu__item"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                onEdit(item);
+                              }}
+                            >
+                              <Pencil size={14} aria-hidden />
+                              Atualizar
+                            </button>
+                          ) : null}
+                          {showNotes ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="a5s-row-menu__item"
+                              disabled={!canAddNcBoardNotes(item.status, Boolean(item.is_registered))}
+                              title={
+                                canAddNcBoardNotes(item.status, Boolean(item.is_registered))
+                                  ? undefined
+                                  : "Registre o plano de ação antes de incluir notas."
+                              }
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                onNotes(item);
+                              }}
+                            >
+                              <MessageSquarePlus size={14} aria-hidden />
+                              Notas
+                            </button>
+                          ) : null}
                           {showReopen ? (
                             <button
                               type="button"
