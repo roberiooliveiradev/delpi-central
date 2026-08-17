@@ -246,6 +246,22 @@ button.delpi-ui-kpi-card--interactive:active,
   );
 }
 
+.delpi-ui-kpi-goal__help {
+  display: inline-flex;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.delpi-ui-kpi-goal--monthly {
+  font-size: clamp(15px, 1.25vw, 22px);
+  font-weight: 600;
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 78%,
+    var(--delpi-ui-text-muted, rgba(17, 17, 17, 0.65))
+  );
+}
+
 .delpi-ui-kpi-goal--idd {
   color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
   font-size: clamp(16px, 1.35vw, 24px);

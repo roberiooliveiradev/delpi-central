@@ -52,6 +52,28 @@ describe("KpiCard", () => {
     expect(screen.getByText("On track")).toBeTruthy();
   });
 
+  it("exibe segunda linha Meta mês e ajuda", () => {
+    render(
+      <KpiCard
+        title="ROL"
+        value="100"
+        goalLabel="50"
+        goalPrefix="Meta parcial"
+        goalHint="Meta calculada do período"
+        monthlyGoalLabel="100"
+        monthlyGoalPrefix="Meta mês"
+        monthlyGoalHint="Valor cadastrado"
+        icon={<span />}
+        classNames={kpiCardBemClasses("dc")}
+        labels={LABELS}
+      />,
+    );
+    expect(screen.getByText("Meta parcial")).toBeTruthy();
+    expect(screen.getByText("Meta mês")).toBeTruthy();
+    expect(screen.getByLabelText("Ajuda: Meta parcial")).toBeTruthy();
+    expect(screen.getByLabelText("Ajuda: Meta mês")).toBeTruthy();
+  });
+
   it("mostra placeholder quando loading", () => {
     render(
       <KpiCard

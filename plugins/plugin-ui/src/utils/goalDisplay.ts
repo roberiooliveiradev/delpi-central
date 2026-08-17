@@ -1,4 +1,8 @@
 import { formatGoalScopeUnitLabel } from "./operationalUnitLabels";
+import {
+  resolveGoalLineHelp,
+  type GoalLineHelpKind,
+} from "./goalHelpContent";
 
 export type PerformanceDirection = "higher_is_better" | "lower_is_better";
 
@@ -19,10 +23,13 @@ export type GoalScopeBadge = {
 
 export type DashboardGoalFields = {
   goal_label?: string | null;
+  goal_value?: number | null;
   comparable_goal?: number | null;
+  reference_goal?: number | null;
   target?: number | null;
   has_goal?: boolean;
   goal_aggregation?: string | null;
+  goal_mode?: string | null;
   /** exact = one closed calendar month; partial = incomplete month; accumulated = multi-month. */
   goal_period_kind?: "exact" | "partial" | "accumulated" | string | null;
   goal_period_partial?: boolean | null;
@@ -82,6 +89,12 @@ export type KpiGoalPresentation = {
   goalLabel: string | null;
   /** Prefixo Meta / Meta parcial / Meta acumulada; null se meta oculta. */
   goalPrefix: string | null;
+  /** HelpTooltip da linha de meta do período. */
+  goalHint: string | null;
+  /** Segunda linha: Meta mês (reference_goal), só parcial/acumulado. */
+  monthlyGoalLabel: string | null;
+  monthlyGoalPrefix: string | null;
+  monthlyGoalHint: string | null;
   goalScopeBadge: GoalScopeBadge | null;
   goalScopeHint: string | null;
   goalPerformanceBadge: GoalPerformanceBadge | null;
@@ -508,14 +521,43 @@ export function buildKpiGoalPresentation(
     dateStart: options?.dateStart,
     dateEnd: options?.dateEnd,
   };
+  const kind = resolveGoalPeriodKind(goal, dateOpts) as GoalLineHelpKind;
   const goalPrefix =
     showGoal && goalLabel
       ? resolveAccumulatedGoalPrefix(goal, dateOpts)
+      : null;
+  const goalHint =
+    showGoal && goalLabel
+      ? resolveGoalLineHelp({ kind, goalMode: goal?.goal_mode, line: "period" })
+      : null;
+
+  const showMonthlyLine =
+    showGoal && (kind === "partial" || kind === "accumulated");
+  const monthlyRaw =
+    goal?.reference_goal ?? goal?.goal_value ?? null;
+  const monthlyGoalLabel =
+    showMonthlyLine && monthlyRaw != null && !Number.isNaN(Number(monthlyRaw))
+      ? formatComparable
+        ? formatComparable(Number(monthlyRaw))
+        : formatDashboardMetricValue(Number(monthlyRaw), goal)
+      : null;
+  const monthlyGoalPrefix = monthlyGoalLabel ? "Meta mês" : null;
+  const monthlyGoalHint =
+    monthlyGoalLabel != null
+      ? resolveGoalLineHelp({
+          kind,
+          goalMode: goal?.goal_mode,
+          line: "monthly",
+        })
       : null;
 
   return {
     goalLabel,
     goalPrefix,
+    goalHint,
+    monthlyGoalLabel,
+    monthlyGoalPrefix,
+    monthlyGoalHint,
     goalScopeBadge: scopeBadge?.tone === "scope" ? scopeBadge : null,
     goalScopeHint: scopeHint,
     goalPerformanceBadge: showGoal

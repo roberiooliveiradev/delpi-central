@@ -23,6 +23,8 @@ export type KpiCardClassNames = {
   goal: string;
   goalPerUnit: string;
   goalPrefix: string;
+  goalHelp?: string;
+  goalMonthly?: string;
   goalIdd: string;
   badges: string;
   badge: string;
@@ -46,6 +48,12 @@ export type KpiCardProps = {
   goalLabel?: string | null;
   /** Sobrescreve `labels.goalPrefix` (ex.: Meta parcial / Meta acumulada). */
   goalPrefix?: string | null;
+  /** HelpTooltip ao lado do prefixo da meta do período. */
+  goalHint?: string | null;
+  /** Segunda linha: Meta mês (reference_goal). */
+  monthlyGoalLabel?: string | null;
+  monthlyGoalPrefix?: string | null;
+  monthlyGoalHint?: string | null;
   /** Chip de natureza do período (MTD / YTD). */
   periodKindBadge?: string | null;
   goalScopeBadge?: KpiScopeBadge | null;
@@ -89,6 +97,11 @@ export function kpiCardBemClasses(
       `${ui}-goal ${ui}-goal--per-unit`,
     ),
     goalPrefix: pair(`${prefix}-kpi-goal-prefix`, `${ui}-goal-prefix`),
+    goalHelp: pair(`${prefix}-kpi-goal__help`, `${ui}-goal__help`),
+    goalMonthly: pair(
+      `${prefix}-kpi-goal ${prefix}-kpi-goal--monthly`,
+      `${ui}-goal ${ui}-goal--monthly`,
+    ),
     goalIdd: pair(`${prefix}-kpi-goal--idd`, `${ui}-goal--idd`),
     badges: pair(`${prefix}-kpi-badges`, `${ui}-badges`),
     badge: pair(`${prefix}-kpi-badge`, `${ui}-badge`),
@@ -106,6 +119,10 @@ export function KpiCard({
   contextLabel,
   goalLabel = null,
   goalPrefix = null,
+  goalHint = null,
+  monthlyGoalLabel = null,
+  monthlyGoalPrefix = null,
+  monthlyGoalHint = null,
   periodKindBadge = null,
   goalScopeBadge = null,
   goalScopeHint = null,
@@ -124,6 +141,10 @@ export function KpiCard({
   const showMeta = !loading;
   const resolvedGoal = showMeta ? goalLabel ?? null : null;
   const resolvedGoalPrefix = (goalPrefix ?? labels.goalPrefix).trim();
+  const resolvedGoalHint = showMeta ? goalHint?.trim() || null : null;
+  const resolvedMonthlyGoal = showMeta ? monthlyGoalLabel ?? null : null;
+  const resolvedMonthlyPrefix = (monthlyGoalPrefix ?? "Meta mês").trim();
+  const resolvedMonthlyHint = showMeta ? monthlyGoalHint?.trim() || null : null;
   const resolvedContext = subtitle ?? contextLabel ?? "";
   const resolvedScopeHint = showMeta ? goalScopeHint?.trim() || null : null;
   const resolvedScopeBadge = showMeta ? goalScopeBadge : null;
@@ -145,6 +166,7 @@ export function KpiCard({
   const valueClassName =
     valueVariant === "per-unit" ? classNames.valuePerUnit : classNames.value;
   const goalClassName = goalVariant === "per-unit" ? classNames.goalPerUnit : classNames.goal;
+  const monthlyClassName = classNames.goalMonthly ?? goalClassName;
   const articleClass = [classNames.article, className].filter(Boolean).join(" ");
 
   return (
@@ -164,7 +186,28 @@ export function KpiCard({
           <h3 className={valueClassName}>{loading ? "…" : value}</h3>
           {resolvedGoal ? (
             <p className={goalClassName}>
-              <span className={classNames.goalPrefix}>{resolvedGoalPrefix}</span> {resolvedGoal}
+              <span className={classNames.goalPrefix}>{resolvedGoalPrefix}</span>
+              {resolvedGoalHint ? (
+                <HelpTooltip
+                  content={resolvedGoalHint}
+                  ariaLabel={`Ajuda: ${resolvedGoalPrefix}`}
+                  className={classNames.goalHelp}
+                />
+              ) : null}{" "}
+              {resolvedGoal}
+            </p>
+          ) : null}
+          {resolvedMonthlyGoal ? (
+            <p className={monthlyClassName}>
+              <span className={classNames.goalPrefix}>{resolvedMonthlyPrefix}</span>
+              {resolvedMonthlyHint ? (
+                <HelpTooltip
+                  content={resolvedMonthlyHint}
+                  ariaLabel={`Ajuda: ${resolvedMonthlyPrefix}`}
+                  className={classNames.goalHelp}
+                />
+              ) : null}{" "}
+              {resolvedMonthlyGoal}
             </p>
           ) : null}
           {resolvedIddScore ? (

@@ -36,6 +36,25 @@ describe("goalDisplay", () => {
     expect(presentation.contextLabel).toBe("Jan/2026");
     expect(presentation.goalPerformanceBadge?.tone).toBe("success");
     expect(presentation.goalPrefix).toBe("Meta");
+    expect(presentation.goalHint).toBeTruthy();
+    expect(presentation.monthlyGoalLabel).toBeNull();
+  });
+
+  it("emite Meta mês e hints em período parcial", () => {
+    const presentation = buildKpiGoalPresentation("ctx", {
+      comparable_goal: 5,
+      goal_value: 10,
+      reference_goal: 10,
+      goal_period_kind: "partial",
+      goal_mode: "standard",
+      value_suffix: "%",
+      value_decimals: 1,
+    });
+    expect(presentation.goalPrefix).toBe("Meta parcial");
+    expect(presentation.monthlyGoalPrefix).toBe("Meta mês");
+    expect(presentation.monthlyGoalLabel).toContain("10");
+    expect(presentation.goalHint).toMatch(/calculada/i);
+    expect(presentation.monthlyGoalHint).toMatch(/cadastrado/i);
   });
 
   it("emite goalPrefix parcial / acumulada via kind", () => {

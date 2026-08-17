@@ -1,6 +1,7 @@
 export * from "./chartColors";
 export * from "./operationalUnitLabels";
 export * from "./goalDisplay";
+export * from "./goalHelpContent";
 export * from "./localeFormat";
 export * from "./textPartBoxLayout";
 export * from "./delpiUiClass";
