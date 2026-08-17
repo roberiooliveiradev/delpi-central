@@ -725,7 +725,9 @@ export function AuditListView({
               {pendingReopen.status === "nc_in_progress" ? (
                 <>
                   {" "}
-                  Se já houver não conformidades registradas, a reabertura será bloqueada.
+                  As não conformidades existentes permanecem. Se você alterar a nota de um critério
+                  para Bom (5) ou N/A, a NC daquele critério será cancelada automaticamente ao
+                  salvar.
                 </>
               ) : null}
             </p>

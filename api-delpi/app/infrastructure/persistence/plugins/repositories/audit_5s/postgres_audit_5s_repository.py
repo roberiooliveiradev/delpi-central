@@ -19,7 +19,10 @@ from app.domain.services.audit_5s.audit_5s_nc_sla_service import (
 )
 from app.domain.services.audit_5s.audit_5s_status import (
     AUDIT_FORCE_CLOSE_UNTREATED_SOURCE_STATUSES,
+    AUDIT_REOPEN_EVALUATION_SOURCE_STATUSES,
     AUDIT_STATUS_CLOSED_WITHOUT_NC_TREATMENT,
+    AUDIT_STATUS_DRAFT,
+    AUDIT_STATUS_EVALUATION_COMPLETE,
     AUDIT_STATUS_NC_IN_PROGRESS,
     is_audit_closed,
 )
@@ -30,6 +33,7 @@ from app.application.services.audit_5s.scoring_service import (
     can_attach_criterion_photo,
     is_evaluation_complete,
     is_nc_candidate,
+    nc_cleared_by_score,
 )
 from app.domain.totvs.protheus_branches import is_all_branches, normalize_branch_scope
 from app.application.services.audit_5s.catalog_service import (
@@ -668,7 +672,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not audit:
             raise PluginsRepositoryError("Auditoria não encontrada.")
-        if audit["status"] != "draft":
+        if audit["status"] != AUDIT_STATUS_DRAFT:
             raise PluginsRepositoryError("Auditoria não está em fase de avaliação.")
 
         existing = self.fetch_one(
@@ -683,51 +687,108 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         if existing and expected_version is not None and int(existing["version"]) != expected_version:
             raise PluginsRepositoryError("Conflito de versão na resposta do critério.")
 
-        if existing:
-            row = self.execute_returning_one(
-                """
-                UPDATE quality.audit_5s_responses
-                   SET score = %s,
-                       is_not_applicable = %s,
-                       observation = %s,
-                       version = version + 1,
-                       updated_by_user_id = %s,
-                       updated_at = NOW()
-                 WHERE audit_id = %s
-                   AND criterion_id = %s
-                RETURNING id, criterion_id, score, is_not_applicable, observation, version, updated_by_user_id, updated_at
-                """,
-                (
-                    score,
-                    is_not_applicable,
-                    observation,
-                    updated_by_user_id,
-                    audit_id,
-                    criterion_id,
-                ),
-                auto_commit=False,
-            )
-        else:
-            row = self.execute_returning_one(
-                """
-                INSERT INTO quality.audit_5s_responses (
-                    audit_id, criterion_id, score, is_not_applicable, observation, updated_by_user_id
-                ) VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id, criterion_id, score, is_not_applicable, observation, version, updated_by_user_id, updated_at
-                """,
-                (
-                    audit_id,
-                    criterion_id,
-                    score,
-                    is_not_applicable,
-                    observation,
-                    updated_by_user_id,
-                ),
-                auto_commit=False,
-            )
+        # Lease único: score + cancelamento pontual de NC no mesmo commit.
+        with self.db():
+            linked_nc = None
+            if existing:
+                linked_nc = self.fetch_one(
+                    """
+                    SELECT id, status
+                      FROM quality.audit_5s_nonconformities
+                     WHERE response_id = %s
+                    """,
+                    (str(existing["id"]),),
+                )
 
-        self._refresh_audit_scores(audit_id, int(audit["catalog_version"]))
-        self.commit()
+            if linked_nc and nc_cleared_by_score(score, is_not_applicable):
+                nc_status = str(linked_nc.get("status") or "").strip().lower()
+                if nc_status == "closed":
+                    raise PluginsRepositoryError(
+                        "Não é possível alterar a nota deste critério: a ação corretiva "
+                        "já foi finalizada."
+                    )
+                if nc_status in ("open", "in_progress"):
+                    self.execute(
+                        """
+                        UPDATE quality.audit_5s_nonconformities
+                           SET status = 'cancelled', updated_at = NOW()
+                         WHERE id = %s
+                           AND status IN ('open', 'in_progress')
+                        """,
+                        (str(linked_nc["id"]),),
+                        auto_commit=False,
+                    )
+                    self.execute(
+                        """
+                        INSERT INTO quality.audit_5s_nc_events (
+                            nonconformity_id, event_type, payload, actor_user_id
+                        ) VALUES (
+                            %s,
+                            'cancelled_after_score_clear',
+                            %s::jsonb,
+                            %s
+                        )
+                        """,
+                        (
+                            str(linked_nc["id"]),
+                            self._json_dumps(
+                                {
+                                    "criterion_id": criterion_id,
+                                    "score": score,
+                                    "is_not_applicable": is_not_applicable,
+                                }
+                            ),
+                            updated_by_user_id,
+                        ),
+                        auto_commit=False,
+                    )
+
+            if existing:
+                row = self.execute_returning_one(
+                    """
+                    UPDATE quality.audit_5s_responses
+                       SET score = %s,
+                           is_not_applicable = %s,
+                           observation = %s,
+                           version = version + 1,
+                           updated_by_user_id = %s,
+                           updated_at = NOW()
+                     WHERE audit_id = %s
+                       AND criterion_id = %s
+                    RETURNING id, criterion_id, score, is_not_applicable, observation, version, updated_by_user_id, updated_at
+                    """,
+                    (
+                        score,
+                        is_not_applicable,
+                        observation,
+                        updated_by_user_id,
+                        audit_id,
+                        criterion_id,
+                    ),
+                    auto_commit=False,
+                )
+            else:
+                row = self.execute_returning_one(
+                    """
+                    INSERT INTO quality.audit_5s_responses (
+                        audit_id, criterion_id, score, is_not_applicable, observation, updated_by_user_id
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id, criterion_id, score, is_not_applicable, observation, version, updated_by_user_id, updated_at
+                    """,
+                    (
+                        audit_id,
+                        criterion_id,
+                        score,
+                        is_not_applicable,
+                        observation,
+                        updated_by_user_id,
+                    ),
+                    auto_commit=False,
+                )
+
+            self._refresh_audit_scores(audit_id, int(audit["catalog_version"]))
+            self.commit()
+
         if not row:
             raise PluginsRepositoryError("Falha ao salvar resposta.")
         attachment = self.get_response_attachment_by_response_id(str(row["id"]))
@@ -1086,14 +1147,26 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "Todos os critérios precisam receber uma nota (1, 3, 5 ou NA)."
             )
 
+        # Após reabrir e ajustar notas, NCs ainda abertas mantêm a fase NC.
+        active_ncs = [
+            item
+            for item in self.list_nonconformities(audit_id)
+            if str(item.get("status") or "").strip().lower() in ("open", "in_progress")
+        ]
+        next_status = (
+            AUDIT_STATUS_NC_IN_PROGRESS
+            if active_ncs
+            else AUDIT_STATUS_EVALUATION_COMPLETE
+        )
+
         self.execute(
             """
             UPDATE quality.audit_5s_audits
-               SET status = 'evaluation_complete',
+               SET status = %s,
                    updated_at = NOW()
              WHERE id = %s
             """,
-            (audit_id,),
+            (next_status, audit_id),
         )
         refreshed = self.get_audit(audit_id)
         if not refreshed:
@@ -1106,28 +1179,25 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             raise PluginsRepositoryError("Auditoria não encontrada.")
 
         status = str(audit["status"])
-        if status == "draft":
+        if status == AUDIT_STATUS_DRAFT:
             raise PluginsRepositoryError("A auditoria já está em fase de avaliação.")
         if is_audit_closed(status):
             raise PluginsRepositoryError(
                 "Auditorias encerradas não podem ser reabertas para avaliação."
             )
-        if status not in ("evaluation_complete", "nc_in_progress"):
+        if status not in AUDIT_REOPEN_EVALUATION_SOURCE_STATUSES:
             raise PluginsRepositoryError("Auditoria não pode ser reaberta neste status.")
 
-        if self.list_nonconformities(audit_id):
-            raise PluginsRepositoryError(
-                "Não é possível reabrir a avaliação enquanto houver não conformidades registradas."
-            )
-
+        # Mantém NCs existentes. Critério que deixar de ser elegível cancela
+        # só a NC vinculada ao salvar a nova nota (upsert_response).
         self.execute(
             """
             UPDATE quality.audit_5s_audits
-               SET status = 'draft',
+               SET status = %s,
                    updated_at = NOW()
              WHERE id = %s
             """,
-            (audit_id,),
+            (AUDIT_STATUS_DRAFT, audit_id),
         )
         refreshed = self.get_audit(audit_id)
         if not refreshed:
@@ -1259,28 +1329,79 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             raise PluginsRepositoryError("Critério não elegível para NC.")
 
         existing = self.fetch_one(
-            "SELECT id FROM quality.audit_5s_nonconformities WHERE response_id = %s",
+            """
+            SELECT id, status
+              FROM quality.audit_5s_nonconformities
+             WHERE response_id = %s
+            """,
             (response_id,),
         )
         if existing:
-            raise PluginsRepositoryError("NC já registrada para este critério.")
+            existing_status = str(existing.get("status") or "").strip().lower()
+            if existing_status != "cancelled":
+                raise PluginsRepositoryError("NC já registrada para este critério.")
 
         # Lease único: cada execute(auto_commit=False) sem lease externo
         # devolve a conexão ao pool com rollback — o INSERT da NC some e o
         # evento seguinte falha com FK («Falha ao executar comando…»).
         with self.db():
-            row = self._insert_nonconformity_row(
-                audit_id=audit_id,
-                response_id=response_id,
-                description=description.strip(),
-                responsible_name=responsible_name.strip(),
-                responsible_user_id=self._normalize_responsible_user_id(responsible_user_id),
-                due_date=due_date,
-                root_cause=self._normalize_text(root_cause),
-                corrective_action=self._normalize_text(corrective_action),
-                priority=priority,
-                created_by_user_id=created_by_user_id,
-            )
+            if existing and str(existing.get("status") or "").strip().lower() == "cancelled":
+                row = self.execute_returning_one(
+                    """
+                    UPDATE quality.audit_5s_nonconformities
+                       SET description = %s,
+                           root_cause = %s,
+                           corrective_action = %s,
+                           responsible_name = %s,
+                           responsible_user_id = %s,
+                           due_date = %s,
+                           priority = %s,
+                           status = 'open',
+                           updated_at = NOW()
+                     WHERE id = %s
+                       AND status = 'cancelled'
+                    RETURNING id,
+                              audit_id,
+                              response_id,
+                              description,
+                              root_cause,
+                              corrective_action,
+                              responsible_name,
+                              responsible_user_id,
+                              due_date,
+                              priority,
+                              status,
+                              created_at,
+                              updated_at
+                    """,
+                    (
+                        description.strip(),
+                        self._normalize_text(root_cause),
+                        self._normalize_text(corrective_action),
+                        responsible_name.strip(),
+                        self._normalize_responsible_user_id(responsible_user_id),
+                        due_date,
+                        priority,
+                        str(existing["id"]),
+                    ),
+                    auto_commit=False,
+                )
+                event_type = "reopened_after_score_regression"
+            else:
+                row = self._insert_nonconformity_row(
+                    audit_id=audit_id,
+                    response_id=response_id,
+                    description=description.strip(),
+                    responsible_name=responsible_name.strip(),
+                    responsible_user_id=self._normalize_responsible_user_id(responsible_user_id),
+                    due_date=due_date,
+                    root_cause=self._normalize_text(root_cause),
+                    corrective_action=self._normalize_text(corrective_action),
+                    priority=priority,
+                    created_by_user_id=created_by_user_id,
+                )
+                event_type = "created"
+
             if not row:
                 raise PluginsRepositoryError("Falha ao registrar NC.")
 
@@ -1289,9 +1410,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 """
                 INSERT INTO quality.audit_5s_nc_events (
                     nonconformity_id, event_type, payload, actor_user_id
-                ) VALUES (%s, 'created', '{}'::jsonb, %s)
+                ) VALUES (%s, %s, '{}'::jsonb, %s)
                 """,
-                (nc_id, created_by_user_id),
+                (nc_id, event_type, created_by_user_id),
                 auto_commit=False,
             )
             self.execute(

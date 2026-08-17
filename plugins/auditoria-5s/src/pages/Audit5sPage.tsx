@@ -46,6 +46,7 @@ import {
   auditViewFromPathname,
   branchFromPathname,
   canAccessNc,
+  canEditEvaluation,
   isAuditClosed,
   isPerfectAuditScore,
   listPrimaryActionLabel,
@@ -161,13 +162,15 @@ export function Audit5sPage({ pathname, search }: Props) {
     setError(null);
     setSuccess(null);
     try {
-      await reopenEvaluation(auditId);
-      if (selectedAudit?.id === auditId) {
-        setSelectedAudit(null);
-      }
+      const reopened = await reopenEvaluation(auditId);
+      setSelectedAudit(reopened);
+      setObservationDrafts({});
+      setActiveSenso(1);
+      setView("audit");
       await loadList();
-      setSuccess("Auditoria reaberta para avaliação.");
-      await openAudit(auditId);
+      setSuccess(
+        "Auditoria reaberta para avaliação. Ao salvar nota 5 ou N/A, a NC daquele critério é cancelada.",
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao reabrir auditoria.");
       throw err;
@@ -422,7 +425,7 @@ export function Audit5sPage({ pathname, search }: Props) {
     criterionId: string,
     payload: { score: number | null; is_not_applicable: boolean },
   ) => {
-    if (!selectedAudit) return;
+    if (!selectedAudit || !canEditEvaluation(selectedAudit.status)) return;
     setError(null);
     try {
       const existing = responseMap.get(criterionId);
@@ -451,7 +454,7 @@ export function Audit5sPage({ pathname, search }: Props) {
   const handleObservationBlur = async (criterionId: string) => {
     stopObservationTyping(criterionId);
 
-    if (!selectedAudit || selectedAudit.status !== "draft") return;
+    if (!selectedAudit || !canEditEvaluation(selectedAudit.status)) return;
 
     const existing = responseMap.get(criterionId);
     if (!existing || (existing.score == null && !existing.is_not_applicable)) {
@@ -725,7 +728,7 @@ export function Audit5sPage({ pathname, search }: Props) {
           <div className="a5s-criteria-list">
             {(criteriaBySenso.get(activeSenso) ?? []).map((criterion: Criterion) => {
               const response = responseMap.get(criterion.id);
-              const disabled = selectedAudit.status !== "draft";
+              const disabled = !canEditEvaluation(selectedAudit.status);
               const hasScore = Boolean(
                 response && (response.is_not_applicable || response.score != null),
               );
@@ -817,7 +820,7 @@ export function Audit5sPage({ pathname, search }: Props) {
             })}
           </div>
 
-          {selectedAudit.status === "draft" && (
+          {canEditEvaluation(selectedAudit.status) && (
             <div className="a5s-panel__actions">
               <button
                 type="button"
@@ -835,7 +838,7 @@ export function Audit5sPage({ pathname, search }: Props) {
             </div>
           )}
 
-          {selectedAudit.status !== "draft" && (
+          {!canEditEvaluation(selectedAudit.status) && (
             <div className="a5s-audit-complete-hint">
               <p>
                 {isPerfectAuditScore(

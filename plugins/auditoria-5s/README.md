@@ -74,7 +74,7 @@ Storage: `AUDIT_5S_RESPONSE_UPLOAD_DIR` → volume `${DELPI_DATA_HOST_DIR}/audit
 
 Permissão: `auditoria-5s.admin.filial-XX` da filial da auditoria.
 
-`POST /audits/{id}/reopen-evaluation` permanece com `auditoria-5s.audit.filial-XX`.
+`POST /audits/{id}/reopen-evaluation` (permissão `auditoria-5s.audit.filial-XX`): volta a auditoria para `draft` sem cancelar NCs em lote. Ao salvar nota **5** ou **N/A** em um critério, a NC vinculada (`open`/`in_progress`) é cancelada; se a ação já estiver `closed`, a alteração da nota é bloqueada.
 
 ### Catálogo de critérios (somente admin)
 
