@@ -44,6 +44,10 @@ export type KpiCardProps = {
   valueVariant?: "default" | "per-unit";
   contextLabel?: string;
   goalLabel?: string | null;
+  /** Sobrescreve `labels.goalPrefix` (ex.: Meta acumulada · parcial). */
+  goalPrefix?: string | null;
+  /** Chip de natureza do período (MTD / YTD). */
+  periodKindBadge?: string | null;
   goalScopeBadge?: KpiScopeBadge | null;
   goalScopeHint?: string | null;
   goalPerformanceBadge?: KpiPerformanceBadge | null;
@@ -101,6 +105,8 @@ export function KpiCard({
   valueVariant = "default",
   contextLabel,
   goalLabel = null,
+  goalPrefix = null,
+  periodKindBadge = null,
   goalScopeBadge = null,
   goalScopeHint = null,
   goalPerformanceBadge = null,
@@ -117,9 +123,11 @@ export function KpiCard({
 }: KpiCardProps) {
   const showMeta = !loading;
   const resolvedGoal = showMeta ? goalLabel ?? null : null;
+  const resolvedGoalPrefix = (goalPrefix ?? labels.goalPrefix).trim();
   const resolvedContext = subtitle ?? contextLabel ?? "";
   const resolvedScopeHint = showMeta ? goalScopeHint?.trim() || null : null;
   const resolvedScopeBadge = showMeta ? goalScopeBadge : null;
+  const resolvedPeriodKind = showMeta ? periodKindBadge?.trim() || null : null;
   const resolvedIddScore = showMeta ? iddScoreLabel ?? null : null;
   const performanceBadges = showMeta
     ? goalPerformanceBadges.length > 0
@@ -129,7 +137,10 @@ export function KpiCard({
         : []
     : [];
   const hasBadges = Boolean(
-    resolvedScopeBadge || resolvedScopeHint || performanceBadges.length > 0,
+    resolvedPeriodKind ||
+      resolvedScopeBadge ||
+      resolvedScopeHint ||
+      performanceBadges.length > 0,
   );
   const valueClassName =
     valueVariant === "per-unit" ? classNames.valuePerUnit : classNames.value;
@@ -153,7 +164,7 @@ export function KpiCard({
           <h3 className={valueClassName}>{loading ? "…" : value}</h3>
           {resolvedGoal ? (
             <p className={goalClassName}>
-              <span className={classNames.goalPrefix}>{labels.goalPrefix}</span> {resolvedGoal}
+              <span className={classNames.goalPrefix}>{resolvedGoalPrefix}</span> {resolvedGoal}
             </p>
           ) : null}
           {resolvedIddScore ? (
@@ -164,6 +175,11 @@ export function KpiCard({
           ) : null}
           {hasBadges ? (
             <div className={classNames.badges} role="status" aria-label={labels.badgesStatus}>
+              {resolvedPeriodKind ? (
+                <span className={withBemModifier(classNames.badge, "info")}>
+                  {resolvedPeriodKind}
+                </span>
+              ) : null}
               {resolvedScopeBadge ? (
                 <span className={withBemModifier(classNames.badge, "scope")}>
                   {resolvedScopeBadge.label}

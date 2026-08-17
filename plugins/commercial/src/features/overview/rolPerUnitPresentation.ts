@@ -1,9 +1,11 @@
 import type { RolTargetData } from "../../types/analytics";
 import { formatOperationalUnitCode } from "../analytics/utils/analyticsBranchFilters";
+import type { PeriodKindChip } from "../analytics/utils/periodPreset";
 import type { GoalPerformanceBadge, KpiGoalPresentation } from "./goalDisplay";
 import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
+  resolveAccumulatedGoalPrefix,
   resolveConsolidatedIddScoreLabel,
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
@@ -15,6 +17,8 @@ export type RolPerUnitKpiView = KpiGoalPresentation & {
   valueVariant: "default" | "per-unit";
   value: string;
   goalPerformanceBadges: GoalPerformanceBadge[];
+  goalPrefix: string | null;
+  periodKindBadge: string | null;
 };
 
 function resolveConsolidatedRolValue(
@@ -70,14 +74,39 @@ function resolvePerUnitPerformanceBadges(
     .filter((badge): badge is GoalPerformanceBadge => badge != null);
 }
 
+function pickGoalForPrefix(
+  filial01: RolTargetData | null,
+  filial02: RolTargetData | null,
+  activeBranch?: string,
+): RolTargetData | null {
+  const branch = (activeBranch ?? "").trim();
+  if (branch === "01") return filial01;
+  if (branch === "02") return filial02;
+  return filial01 ?? filial02;
+}
+
 export function buildRolPerUnitKpiView(
   filial01: RolTargetData | null,
   filial02: RolTargetData | null,
   contextLabel: string,
   formatCurrency: (value: number) => string,
   activeBranch?: string,
+  options?: {
+    periodKindBadge?: PeriodKindChip | null;
+    dateStart?: string | null;
+    dateEnd?: string | null;
+  },
 ): RolPerUnitKpiView {
   const branch = (activeBranch ?? "").trim();
+  const periodKindBadge = options?.periodKindBadge ?? null;
+  const dateOpts = {
+    dateStart: options?.dateStart,
+    dateEnd: options?.dateEnd,
+  };
+  const goalForPrefix = pickGoalForPrefix(filial01, filial02, activeBranch);
+  const goalPrefix = goalForPrefix
+    ? resolveAccumulatedGoalPrefix(goalForPrefix, dateOpts)
+    : null;
 
   if (branch === "01" || branch === "02") {
     const data = branch === "01" ? filial01 : filial02;
@@ -94,6 +123,8 @@ export function buildRolPerUnitKpiView(
         filial02,
         activeBranch,
       ),
+      goalPrefix: data ? resolveAccumulatedGoalPrefix(data, dateOpts) : goalPrefix,
+      periodKindBadge,
     };
   }
 
@@ -112,5 +143,7 @@ export function buildRolPerUnitKpiView(
       { realized: filial01?.rol, goal: filial01 },
       { realized: filial02?.rol, goal: filial02 },
     ]),
+    goalPrefix,
+    periodKindBadge,
   };
 }

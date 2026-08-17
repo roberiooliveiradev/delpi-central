@@ -37,11 +37,13 @@ import { AnalyticsFunnelChart } from "../analytics/components/AnalyticsFunnelCha
 import { AnalyticsRolSeriesChart } from "../analytics/components/AnalyticsRolSeriesChart";
 import { useAnalyticsDashboard } from "../analytics/hooks/useAnalyticsDashboard";
 import { useAnalyticsFilters } from "../analytics/hooks/useAnalyticsFilters";
+import { resolvePeriodKindChip } from "../analytics/utils/periodPreset";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
 import { pickPrimaryRolTarget, resolveGapToTarget } from "./gapToTarget";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  resolveAccumulatedGoalPrefix,
 } from "./goalDisplay";
 import { buildRolPerUnitKpiView } from "./rolPerUnitPresentation";
 
@@ -81,6 +83,15 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
     ? formatOperationalUnitCode(activeBranch, activeBranch)
     : "Consolidado (todas as unidades)";
   const contextBase = `${branchLabel} · ${periodLabel}`;
+  const periodKindBadge = resolvePeriodKindChip(filters.periodPreset);
+  const rolPresentationOptions = useMemo(
+    () => ({
+      periodKindBadge,
+      dateStart: filters.dateStart,
+      dateEnd: filters.dateEnd,
+    }),
+    [filters.dateEnd, filters.dateStart, periodKindBadge],
+  );
 
   const primaryRol = useMemo(
     () =>
@@ -116,8 +127,15 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         contextBase,
         formatCurrency,
         activeBranch,
+        rolPresentationOptions,
       ),
-    [activeBranch, contextBase, dashboard.branchRol, dashboard.headOfficeRol],
+    [
+      activeBranch,
+      contextBase,
+      dashboard.branchRol,
+      dashboard.headOfficeRol,
+      rolPresentationOptions,
+    ],
   );
 
   const wegRolKpi = useMemo(
@@ -128,12 +146,14 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         `${contextBase} · WEG`,
         formatCurrency,
         activeBranch,
+        rolPresentationOptions,
       ),
     [
       activeBranch,
       contextBase,
       dashboard.branchWegRol,
       dashboard.headOfficeWegRol,
+      rolPresentationOptions,
     ],
   );
 
@@ -145,12 +165,14 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         `${contextBase} · Novos negócios`,
         formatCurrency,
         activeBranch,
+        rolPresentationOptions,
       ),
     [
       activeBranch,
       contextBase,
       dashboard.branchNewBusinessRol,
       dashboard.headOfficeNewBusinessRol,
+      rolPresentationOptions,
     ],
   );
 
@@ -222,6 +244,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               goalVariant={rolKpi.valueVariant}
               contextLabel={rolKpi.contextLabel}
               goalLabel={rolKpi.goalLabel}
+              goalPrefix={rolKpi.goalPrefix}
+              periodKindBadge={rolKpi.periodKindBadge}
               goalScopeBadge={rolKpi.goalScopeBadge}
               goalScopeHint={rolKpi.goalScopeHint}
               goalPerformanceBadge={rolKpi.goalPerformanceBadge}
@@ -238,6 +262,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               goalVariant={wegRolKpi.valueVariant}
               contextLabel={wegRolKpi.contextLabel}
               goalLabel={wegRolKpi.goalLabel}
+              goalPrefix={wegRolKpi.goalPrefix}
+              periodKindBadge={wegRolKpi.periodKindBadge}
               goalScopeBadge={wegRolKpi.goalScopeBadge}
               goalScopeHint={wegRolKpi.goalScopeHint}
               goalPerformanceBadge={wegRolKpi.goalPerformanceBadge}
@@ -254,6 +280,8 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               goalVariant={segmentNewBusinessRolKpi.valueVariant}
               contextLabel={segmentNewBusinessRolKpi.contextLabel}
               goalLabel={segmentNewBusinessRolKpi.goalLabel}
+              goalPrefix={segmentNewBusinessRolKpi.goalPrefix}
+              periodKindBadge={segmentNewBusinessRolKpi.periodKindBadge}
               goalScopeBadge={segmentNewBusinessRolKpi.goalScopeBadge}
               goalScopeHint={segmentNewBusinessRolKpi.goalScopeHint}
               goalPerformanceBadge={segmentNewBusinessRolKpi.goalPerformanceBadge}
@@ -278,6 +306,11 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   branches: dashboard.salesOrderOtdBranches,
                 },
               )}
+              goalPrefix={resolveAccumulatedGoalPrefix(dashboard.salesOrderOtd, {
+                dateStart: filters.dateStart,
+                dateEnd: filters.dateEnd,
+              })}
+              periodKindBadge={periodKindBadge}
               icon={<PackageCheck size={22} aria-hidden="true" />}
               loading={dashboard.loading}
             />
@@ -352,6 +385,11 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   branches: dashboard.closingRateBranches,
                 },
               )}
+              goalPrefix={resolveAccumulatedGoalPrefix(dashboard.closingRate, {
+                dateStart: filters.dateStart,
+                dateEnd: filters.dateEnd,
+              })}
+              periodKindBadge={periodKindBadge}
               icon={<Percent size={22} aria-hidden="true" />}
               loading={dashboard.loading}
             />
@@ -371,6 +409,11 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   branches: dashboard.newBusinessRolBranches,
                 },
               )}
+              goalPrefix={resolveAccumulatedGoalPrefix(dashboard.newBusinessRol, {
+                dateStart: filters.dateStart,
+                dateEnd: filters.dateEnd,
+              })}
+              periodKindBadge={periodKindBadge}
               icon={<Sparkles size={22} aria-hidden="true" />}
               loading={dashboard.loading}
             />

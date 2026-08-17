@@ -22,6 +22,8 @@ export type DashboardGoalFields = {
   comparable_goal?: number | null;
   target?: number | null;
   has_goal?: boolean;
+  goal_aggregation?: string | null;
+  goal_period_partial?: boolean | null;
   goal_scope_branch?: string | null;
   goal_scope_label?: string | null;
   goal_scope_hint?: string | null;
@@ -31,6 +33,8 @@ export type DashboardGoalFields = {
   value_prefix?: string | null;
   value_suffix?: string | null;
   value_decimals?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
 };
 
 function normalizeDecimals(value: number | null | undefined): number {
@@ -389,6 +393,79 @@ export function resolveGoalLabel(
   }
 
   return null;
+}
+
+/**
+ * Prefixo do KPI: meta acumulada no intervalo; «· parcial» quando o período
+ * não cobre mês(es) civil(is) completo(s). Prefer flags da API; fallback por datas.
+ */
+export function resolveAccumulatedGoalPrefix(
+  goal?: DashboardGoalFields | null,
+  options?: { dateStart?: string | null; dateEnd?: string | null },
+): string {
+  const partial = resolveGoalPeriodPartial(goal, options);
+  return partial ? "Meta acumulada · parcial" : "Meta acumulada";
+}
+
+export function resolveGoalPeriodPartial(
+  goal?: DashboardGoalFields | null,
+  options?: { dateStart?: string | null; dateEnd?: string | null },
+): boolean {
+  if (typeof goal?.goal_period_partial === "boolean") {
+    return goal.goal_period_partial;
+  }
+
+  const start = (goal?.start_date ?? options?.dateStart ?? "").trim();
+  const end = (goal?.end_date ?? options?.dateEnd ?? "").trim();
+  if (!start || !end) {
+    return false;
+  }
+
+  return !isInclusiveCalendarMonthSpanComplete(start, end);
+}
+
+function parseFlexibleDateParts(value: string): { y: number; m: number; d: number } | null {
+  const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    return { y: Number(iso[1]), m: Number(iso[2]), d: Number(iso[3]) };
+  }
+  const br = value.match(/^(\d{2})[-/](\d{2})[-/](\d{4})/);
+  if (br) {
+    return { y: Number(br[3]), m: Number(br[2]), d: Number(br[1]) };
+  }
+  return null;
+}
+
+function daysInMonth(y: number, m: number): number {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+function isInclusiveCalendarMonthSpanComplete(start: string, end: string): boolean {
+  const a = parseFlexibleDateParts(start);
+  const b = parseFlexibleDateParts(end);
+  if (!a || !b) {
+    return true;
+  }
+
+  let y = a.y;
+  let m = a.m;
+  while (y < b.y || (y === b.y && m <= b.m)) {
+    const dim = daysInMonth(y, m);
+    const monthStartDay = y === a.y && m === a.m ? a.d : 1;
+    const monthEndDay = y === b.y && m === b.m ? b.d : dim;
+    if (monthStartDay !== 1 || monthEndDay !== dim) {
+      return false;
+    }
+    if (y === b.y && m === b.m) {
+      break;
+    }
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return true;
 }
 
 export function buildKpiGoalPresentation(

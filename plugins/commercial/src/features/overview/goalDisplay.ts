@@ -26,6 +26,8 @@ export {
   resolveOffTrackStatusLabel,
   resolveGoalPerformanceBadge,
   resolveGoalLabel,
+  resolveAccumulatedGoalPrefix,
+  resolveGoalPeriodPartial,
   buildKpiGoalPresentation,
   formatGoalSubtitle,
 } from "@delpi/plugin-ui/index";

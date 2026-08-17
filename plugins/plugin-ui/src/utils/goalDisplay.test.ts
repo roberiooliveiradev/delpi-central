@@ -4,6 +4,8 @@ import {
   buildKpiGoalPresentation,
   calculateIndicatorIddScore,
   isGoalOnTrack,
+  resolveAccumulatedGoalPrefix,
+  resolveGoalPeriodPartial,
 } from "./goalDisplay";
 import { formatGoalScopeUnitLabel, formatFilterViewScopeLabel } from "./operationalUnitLabels";
 
@@ -40,5 +42,35 @@ describe("goalDisplay", () => {
     expect(formatGoalScopeUnitLabel("01", null)).toBe("Meta Santa Catarina");
     expect(formatFilterViewScopeLabel("consolidated", "")).toBe("Consolidado");
     expect(formatFilterViewScopeLabel("branch", "01")).toBe("Santa Catarina");
+  });
+
+  it("resolve prefixo Meta acumulada / parcial via flags", () => {
+    expect(
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 10,
+        goal_period_partial: false,
+      }),
+    ).toBe("Meta acumulada");
+    expect(
+      resolveAccumulatedGoalPrefix({
+        comparable_goal: 10,
+        goal_period_partial: true,
+      }),
+    ).toBe("Meta acumulada · parcial");
+  });
+
+  it("deriva parcial por datas quando flags ausentes", () => {
+    expect(
+      resolveGoalPeriodPartial(null, {
+        dateStart: "2026-05-01",
+        dateEnd: "2026-05-15",
+      }),
+    ).toBe(true);
+    expect(
+      resolveGoalPeriodPartial(null, {
+        dateStart: "2026-05-01",
+        dateEnd: "2026-05-31",
+      }),
+    ).toBe(false);
   });
 });
