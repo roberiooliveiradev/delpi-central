@@ -19,6 +19,9 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
+from si_app.application.use_cases.strategic_indicators.get_trends_real_use_case import (
+    GetStrategicIndicatorsTrendsRealUseCase,
+)
 from si_app.domain.ports.strategic_indicators.alerts_summary_port import (
     StrategicIndicatorsAlertsSummaryPort,
 )
@@ -763,7 +766,9 @@ class GetStrategicIndicatorsPresentationUseCase:
         branch: str | None,
     ) -> dict:
         reference = self._parse_competence(competence)
-        periods = self._build_periods(reference, months)
+        months_requested = max(2, min(months, 12))
+        periods = self._build_periods(reference, months_requested)
+        competences_requested = [period.competence for period in periods]
 
         snapshots = self._snapshot_service.get_series_snapshot_optimized(
             periods=periods,
@@ -771,6 +776,35 @@ class GetStrategicIndicatorsPresentationUseCase:
             branch=branch,
             prefer_materialized_only=True,
         )
+
+        if not snapshots:
+            coverage = GetStrategicIndicatorsTrendsRealUseCase._series_coverage(
+                months_requested=months_requested,
+                competences_requested=competences_requested,
+                competences_returned=[],
+            )
+            return {
+                "competence": competence or "",
+                "current_igd": 0.0,
+                "previous_igd": 0.0,
+                "current_classification": "",
+                "igd_series": [],
+                "departments": [],
+                "indicator_series_by_department_id": {},
+                "errors": [
+                    {
+                        "competence": "",
+                        "department_id": "",
+                        "source": "si_trends_materialized",
+                        "message": (
+                            "Nenhum período materializado em period_scores para "
+                            "esta competência. Execute o refresh ou aguarde o job."
+                        ),
+                    }
+                ],
+                "partial_success": True,
+                **coverage,
+            }
 
         monthly_points: list[dict] = []
         monthly_departments: dict[str, list[dict]] = {}
@@ -865,6 +899,16 @@ class GetStrategicIndicatorsPresentationUseCase:
             snapshots
         )
 
+        competences_returned = [point["period"] for point in monthly_points]
+        coverage = GetStrategicIndicatorsTrendsRealUseCase._series_coverage(
+            months_requested=months_requested,
+            competences_requested=competences_requested,
+            competences_returned=competences_returned,
+        )
+        incomplete_window = bool(coverage["missing_competences"]) or (
+            months_requested > 0 and len(competences_returned) < months_requested
+        )
+
         return {
             "competence": current_point["period"],
             "current_igd": self._safe_float(current_point["value"]),
@@ -874,7 +918,8 @@ class GetStrategicIndicatorsPresentationUseCase:
             "departments": departments,
             "indicator_series_by_department_id": indicator_series_by_department_id,
             "errors": errors,
-            "partial_success": len(errors) > 0,
+            "partial_success": len(errors) > 0 or incomplete_window,
+            **coverage,
         }
 
     def _build_indicator_series_by_department_id(
