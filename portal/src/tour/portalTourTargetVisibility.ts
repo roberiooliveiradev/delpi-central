@@ -137,7 +137,8 @@ function isQuestAvailable(quest: PortalTourQuest) {
   return quest.isAvailable ? quest.isAvailable() : true;
 }
 
-function scopeMatchesRoute(scope: PortalTourQuest["scope"]) {
+/** Página/área de referência do desafio (home, notificações, sidebar shell, etc.). */
+export function scopeMatchesRoute(scope: PortalTourQuest["scope"]) {
   switch (scope) {
     case "home":
       return isHomeRoute();
