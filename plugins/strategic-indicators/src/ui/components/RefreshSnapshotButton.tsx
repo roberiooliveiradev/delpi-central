@@ -12,6 +12,11 @@ type RefreshSnapshotButtonProps = {
   disabled?: boolean;
   /** Competência YYYY-MM dos filtros da página (opcional). */
   competence?: string;
+  /**
+   * Janela de meses a materializar no refresh.
+   * Default 6 (alinhado a /trends). Páginas com filtro devem passar monthsToCompare.
+   */
+  trendsMonths?: number;
 };
 
 export function RefreshSnapshotButton({
@@ -19,6 +24,7 @@ export function RefreshSnapshotButton({
   getAccessToken,
   disabled = false,
   competence,
+  trendsMonths = 6,
 }: RefreshSnapshotButtonProps) {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<"success" | "error" | "background" | null>(
@@ -37,6 +43,7 @@ export function RefreshSnapshotButton({
       const started = await refreshStrategicIndicatorsSnapshots({
         getAccessToken,
         competence,
+        trendsMonths: Math.max(2, Math.min(trendsMonths, 12)),
       });
 
       clearAllStrategicIndicatorsCache();
@@ -61,7 +68,7 @@ export function RefreshSnapshotButton({
       setBusy(false);
       feedbackTimer.current = setTimeout(() => setFeedback(null), 5000);
     }
-  }, [busy, competence, getAccessToken, onRefreshed]);
+  }, [busy, competence, getAccessToken, onRefreshed, trendsMonths]);
 
   return (
     <span className="si-refresh-snapshot">

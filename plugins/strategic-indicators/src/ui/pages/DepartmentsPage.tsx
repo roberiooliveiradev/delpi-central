@@ -150,6 +150,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         <RefreshSnapshotButton
           getAccessToken={getAccessToken}
           competence={referenceMonth}
+          trendsMonths={Math.max(monthsToCompare, 6)}
           onRefreshed={() => void reload()}
           disabled={loading || refreshing}
         />
@@ -283,6 +284,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
               <RefreshSnapshotButton
                 getAccessToken={getAccessToken}
                 competence={referenceMonth}
+                trendsMonths={Math.max(monthsToCompare, 6)}
                 onRefreshed={() => void reload()}
                 disabled={loading || refreshing}
               />

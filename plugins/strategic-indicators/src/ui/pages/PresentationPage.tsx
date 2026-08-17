@@ -1257,6 +1257,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
             <RefreshSnapshotButton
               getAccessToken={getAccessToken}
               competence={referenceMonth}
+              trendsMonths={Math.max(monthsToCompare, 6)}
               onRefreshed={() => void presentation.reload()}
               disabled={presentation.loading || presentation.refreshing}
             />
