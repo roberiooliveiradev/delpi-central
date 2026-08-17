@@ -458,56 +458,57 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         created_by_user_id: str,
         auditors: list[dict[str, str]],
     ) -> dict[str, Any]:
-        sequence_key = f"audit_5s_branch_{branch_code}"
-        code_generator = PostgresSequentialCodeGenerator(connection=self.connection)
-        audit_code = code_generator.next_code(sequence_key)
+        with self.db():
+            sequence_key = f"audit_5s_branch_{branch_code}"
+            code_generator = PostgresSequentialCodeGenerator(connection=self.connection)
+            audit_code = code_generator.next_code(sequence_key)
 
-        audit = self.execute_returning_one(
-            """
-            INSERT INTO quality.audit_5s_audits (
-                branch_code,
-                audit_code,
-                catalog_version,
-                audit_date,
-                area_id,
-                area_responsible,
-                shift,
-                created_by_user_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, audit_code, status, catalog_version, branch_code, audit_date
-            """,
-            (
-                branch_code,
-                audit_code,
-                self.resolve_catalog_version(branch_code),
-                audit_date,
-                area_id,
-                area_responsible.strip(),
-                shift,
-                created_by_user_id,
-            ),
-            auto_commit=False,
-        )
-        if not audit:
-            raise PluginsRepositoryError("Falha ao criar auditoria.")
-
-        audit_id = str(audit["id"])
-        for auditor in auditors:
-            self.execute(
+            audit = self.execute_returning_one(
                 """
-                INSERT INTO quality.audit_5s_auditors (audit_id, user_id, display_name)
-                VALUES (%s, %s, %s)
+                INSERT INTO quality.audit_5s_audits (
+                    branch_code,
+                    audit_code,
+                    catalog_version,
+                    audit_date,
+                    area_id,
+                    area_responsible,
+                    shift,
+                    created_by_user_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, audit_code, status, catalog_version, branch_code, audit_date
                 """,
                 (
-                    audit_id,
-                    auditor["user_id"],
-                    format_person_name(auditor.get("display_name")),
+                    branch_code,
+                    audit_code,
+                    self.resolve_catalog_version(branch_code),
+                    audit_date,
+                    area_id,
+                    area_responsible.strip(),
+                    shift,
+                    created_by_user_id,
                 ),
                 auto_commit=False,
             )
+            if not audit:
+                raise PluginsRepositoryError("Falha ao criar auditoria.")
 
-        self.commit()
-        return self.get_audit(audit_id) or audit
+            audit_id = str(audit["id"])
+            for auditor in auditors:
+                self.execute(
+                    """
+                    INSERT INTO quality.audit_5s_auditors (audit_id, user_id, display_name)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (
+                        audit_id,
+                        auditor["user_id"],
+                        format_person_name(auditor.get("display_name")),
+                    ),
+                    auto_commit=False,
+                )
+
+            self.commit()
+            return self.get_audit(audit_id) or audit
 
     def update_audit(
         self,

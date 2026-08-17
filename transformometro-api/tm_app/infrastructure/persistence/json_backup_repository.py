@@ -354,51 +354,52 @@ class JsonBackupRepository(PluginBaseRepository):
         auto_commit: bool = False,
     ) -> None:
         """Substitui vínculos processo×filial e processo×setor a partir do backup."""
-        self.execute("DELETE FROM transformometro.processo_filiais", auto_commit=False)
-        self.execute("DELETE FROM transformometro.processo_setores", auto_commit=False)
+        with self.db():
+            self.execute("DELETE FROM transformometro.processo_filiais", auto_commit=False)
+            self.execute("DELETE FROM transformometro.processo_setores", auto_commit=False)
 
-        for row in payload.get(PROCESSO_FILIAIS_BUNDLE_KEY, []) or []:
-            if not isinstance(row, dict):
-                continue
-            processo_id = row.get("processo_id")
-            filial_codigo = row.get("codigo_filial") or row.get("filial_id")
-            if not processo_id or not filial_codigo:
-                continue
-            self.execute(
-                """
-                INSERT INTO transformometro.processo_filiais (processo_id, filial_id)
-                SELECT %s::uuid, f.filial_id
-                FROM transformometro.filiais f
-                WHERE f.codigo_filial = %s
-                  AND f.deletado = FALSE
-                ON CONFLICT DO NOTHING
-                """,
-                (str(processo_id), str(filial_codigo).strip()),
-                auto_commit=False,
-            )
+            for row in payload.get(PROCESSO_FILIAIS_BUNDLE_KEY, []) or []:
+                if not isinstance(row, dict):
+                    continue
+                processo_id = row.get("processo_id")
+                filial_codigo = row.get("codigo_filial") or row.get("filial_id")
+                if not processo_id or not filial_codigo:
+                    continue
+                self.execute(
+                    """
+                    INSERT INTO transformometro.processo_filiais (processo_id, filial_id)
+                    SELECT %s::uuid, f.filial_id
+                    FROM transformometro.filiais f
+                    WHERE f.codigo_filial = %s
+                      AND f.deletado = FALSE
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (str(processo_id), str(filial_codigo).strip()),
+                    auto_commit=False,
+                )
 
-        for row in payload.get(PROCESSO_SETORES_BUNDLE_KEY, []) or []:
-            if not isinstance(row, dict):
-                continue
-            processo_id = row.get("processo_id")
-            setor_codigo = row.get("codigo_setor") or row.get("setor_id")
-            if not processo_id or not setor_codigo:
-                continue
-            self.execute(
-                """
-                INSERT INTO transformometro.processo_setores (processo_id, setor_id)
-                SELECT %s::uuid, s.setor_id
-                FROM transformometro.setores s
-                WHERE s.codigo_setor = %s
-                  AND s.deletado = FALSE
-                ON CONFLICT DO NOTHING
-                """,
-                (str(processo_id), str(setor_codigo).strip()),
-                auto_commit=False,
-            )
+            for row in payload.get(PROCESSO_SETORES_BUNDLE_KEY, []) or []:
+                if not isinstance(row, dict):
+                    continue
+                processo_id = row.get("processo_id")
+                setor_codigo = row.get("codigo_setor") or row.get("setor_id")
+                if not processo_id or not setor_codigo:
+                    continue
+                self.execute(
+                    """
+                    INSERT INTO transformometro.processo_setores (processo_id, setor_id)
+                    SELECT %s::uuid, s.setor_id
+                    FROM transformometro.setores s
+                    WHERE s.codigo_setor = %s
+                      AND s.deletado = FALSE
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (str(processo_id), str(setor_codigo).strip()),
+                    auto_commit=False,
+                )
 
-        if auto_commit:
-            self._connection.commit()
+            if auto_commit:
+                self.commit()
 
     def fetch_processo_instancias(self) -> list[dict[str, Any]]:
         return self.fetch_all(
@@ -527,43 +528,44 @@ class JsonBackupRepository(PluginBaseRepository):
         *,
         auto_commit: bool = False,
     ) -> None:
-        for row in payload.get(REVISAO_EVIDENCIAS_BUNDLE_KEY, []) or []:
-            if not isinstance(row, dict) or not row.get("evidencia_id"):
-                continue
-            values = {
-                col: row[col]
-                for col in (
-                    "evidencia_id",
-                    "revisao_id",
-                    "tipo",
-                    "nome_arquivo",
-                    "nome_armazenado",
-                    "tipo_mime",
-                    "tamanho_bytes",
-                    "descricao",
-                    "url_externa",
-                    "enviado_por_id",
-                    "enviado_por_nome",
-                    "created_at",
+        with self.db():
+            for row in payload.get(REVISAO_EVIDENCIAS_BUNDLE_KEY, []) or []:
+                if not isinstance(row, dict) or not row.get("evidencia_id"):
+                    continue
+                values = {
+                    col: row[col]
+                    for col in (
+                        "evidencia_id",
+                        "revisao_id",
+                        "tipo",
+                        "nome_arquivo",
+                        "nome_armazenado",
+                        "tipo_mime",
+                        "tamanho_bytes",
+                        "descricao",
+                        "url_externa",
+                        "enviado_por_id",
+                        "enviado_por_nome",
+                        "created_at",
+                    )
+                    if col in row
+                }
+                cols = list(values.keys())
+                placeholders = ", ".join(["%s"] * len(cols))
+                col_sql = ", ".join(cols)
+                update_cols = [c for c in cols if c != "evidencia_id"]
+                update_sql = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
+                self.execute(
+                    f"""
+                    INSERT INTO transformometro.revisao_evidencias ({col_sql})
+                    VALUES ({placeholders})
+                    ON CONFLICT (evidencia_id) DO UPDATE SET {update_sql}
+                    """,
+                    tuple(values[c] for c in cols),
+                    auto_commit=False,
                 )
-                if col in row
-            }
-            cols = list(values.keys())
-            placeholders = ", ".join(["%s"] * len(cols))
-            col_sql = ", ".join(cols)
-            update_cols = [c for c in cols if c != "evidencia_id"]
-            update_sql = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
-            self.execute(
-                f"""
-                INSERT INTO transformometro.revisao_evidencias ({col_sql})
-                VALUES ({placeholders})
-                ON CONFLICT (evidencia_id) DO UPDATE SET {update_sql}
-                """,
-                tuple(values[c] for c in cols),
-                auto_commit=False,
-            )
-        if auto_commit:
-            self._connection.commit()
+            if auto_commit:
+                self.commit()
 
     def fetch_processo_arquivos(self) -> list[dict[str, Any]]:
         return self.fetch_all(
@@ -603,43 +605,44 @@ class JsonBackupRepository(PluginBaseRepository):
         *,
         auto_commit: bool = False,
     ) -> None:
-        for row in payload.get(PROCESSO_ARQUIVOS_BUNDLE_KEY, []) or []:
-            if not isinstance(row, dict) or not row.get("arquivo_id"):
-                continue
-            values = {
-                col: row[col]
-                for col in (
-                    "arquivo_id",
-                    "processo_id",
-                    "tipo",
-                    "nome_arquivo",
-                    "nome_armazenado",
-                    "tipo_mime",
-                    "tamanho_bytes",
-                    "descricao",
-                    "url_externa",
-                    "enviado_por_id",
-                    "enviado_por_nome",
-                    "created_at",
+        with self.db():
+            for row in payload.get(PROCESSO_ARQUIVOS_BUNDLE_KEY, []) or []:
+                if not isinstance(row, dict) or not row.get("arquivo_id"):
+                    continue
+                values = {
+                    col: row[col]
+                    for col in (
+                        "arquivo_id",
+                        "processo_id",
+                        "tipo",
+                        "nome_arquivo",
+                        "nome_armazenado",
+                        "tipo_mime",
+                        "tamanho_bytes",
+                        "descricao",
+                        "url_externa",
+                        "enviado_por_id",
+                        "enviado_por_nome",
+                        "created_at",
+                    )
+                    if col in row
+                }
+                cols = list(values.keys())
+                placeholders = ", ".join(["%s"] * len(cols))
+                col_sql = ", ".join(cols)
+                update_cols = [c for c in cols if c != "arquivo_id"]
+                update_sql = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
+                self.execute(
+                    f"""
+                    INSERT INTO transformometro.processo_arquivos ({col_sql})
+                    VALUES ({placeholders})
+                    ON CONFLICT (arquivo_id) DO UPDATE SET {update_sql}, deleted_at = NULL
+                    """,
+                    tuple(values[c] for c in cols),
+                    auto_commit=False,
                 )
-                if col in row
-            }
-            cols = list(values.keys())
-            placeholders = ", ".join(["%s"] * len(cols))
-            col_sql = ", ".join(cols)
-            update_cols = [c for c in cols if c != "arquivo_id"]
-            update_sql = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
-            self.execute(
-                f"""
-                INSERT INTO transformometro.processo_arquivos ({col_sql})
-                VALUES ({placeholders})
-                ON CONFLICT (arquivo_id) DO UPDATE SET {update_sql}, deleted_at = NULL
-                """,
-                tuple(values[c] for c in cols),
-                auto_commit=False,
-            )
-        if auto_commit:
-            self._connection.commit()
+            if auto_commit:
+                self.commit()
 
     def fetch_revisao_decomposicao_overlays(self) -> list[dict[str, Any]]:
         return self.fetch_all(
@@ -656,34 +659,35 @@ class JsonBackupRepository(PluginBaseRepository):
         *,
         auto_commit: bool = False,
     ) -> None:
-        from tm_app.infrastructure.persistence.repositories.instance_scope_diagram_repository import (
-            InstanciaDiagramEscopoRepository,
-        )
-        from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
-            ProcessoDiagramRepository,
-        )
-        from tm_app.infrastructure.persistence.repositories.revision_diagram_overlay_repository import (
-            RevisaoDiagramOverlayRepository,
-        )
+        with self.db():
+            from tm_app.infrastructure.persistence.repositories.instance_scope_diagram_repository import (
+                InstanciaDiagramEscopoRepository,
+            )
+            from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
+                ProcessoDiagramRepository,
+            )
+            from tm_app.infrastructure.persistence.repositories.revision_diagram_overlay_repository import (
+                RevisaoDiagramOverlayRepository,
+            )
 
-        processo_repo = ProcessoDiagramRepository(connection=self._connection)
-        instancia_repo = InstanciaDiagramEscopoRepository(connection=self._connection)
-        revisao_repo = RevisaoDiagramOverlayRepository(connection=self._connection)
+            processo_repo = ProcessoDiagramRepository(connection=self._connection)
+            instancia_repo = InstanciaDiagramEscopoRepository(connection=self._connection)
+            revisao_repo = RevisaoDiagramOverlayRepository(connection=self._connection)
 
-        for row in payload.get(PROCESSO_DIAGRAMAS_BUNDLE_KEY, []) or []:
-            if isinstance(row, dict) and row.get("processo_id"):
-                processo_repo.upsert_from_backup(row, auto_commit=False)
+            for row in payload.get(PROCESSO_DIAGRAMAS_BUNDLE_KEY, []) or []:
+                if isinstance(row, dict) and row.get("processo_id"):
+                    processo_repo.upsert_from_backup(row, auto_commit=False)
 
-        for row in payload.get(INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY, []) or []:
-            if isinstance(row, dict) and row.get("instancia_id"):
-                instancia_repo.upsert_from_backup(row, auto_commit=False)
+            for row in payload.get(INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY, []) or []:
+                if isinstance(row, dict) and row.get("instancia_id"):
+                    instancia_repo.upsert_from_backup(row, auto_commit=False)
 
-        for row in payload.get(REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY, []) or []:
-            if isinstance(row, dict) and row.get("revisao_id"):
-                revisao_repo.upsert_from_backup(row, auto_commit=False)
+            for row in payload.get(REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY, []) or []:
+                if isinstance(row, dict) and row.get("revisao_id"):
+                    revisao_repo.upsert_from_backup(row, auto_commit=False)
 
-        if auto_commit:
-            self._connection.commit()
+            if auto_commit:
+                self.commit()
 
     def sync_decomposition_bundles(
         self,
@@ -691,34 +695,35 @@ class JsonBackupRepository(PluginBaseRepository):
         *,
         auto_commit: bool = False,
     ) -> None:
-        from tm_app.infrastructure.persistence.repositories.instance_scope_decomposition_repository import (
-            InstanciaDecomposicaoEscopoRepository,
-        )
-        from tm_app.infrastructure.persistence.repositories.process_decomposition_repository import (
-            ProcessoDecomposicaoRepository,
-        )
-        from tm_app.infrastructure.persistence.repositories.revision_decomposition_overlay_repository import (
-            RevisaoDecomposicaoOverlayRepository,
-        )
+        with self.db():
+            from tm_app.infrastructure.persistence.repositories.instance_scope_decomposition_repository import (
+                InstanciaDecomposicaoEscopoRepository,
+            )
+            from tm_app.infrastructure.persistence.repositories.process_decomposition_repository import (
+                ProcessoDecomposicaoRepository,
+            )
+            from tm_app.infrastructure.persistence.repositories.revision_decomposition_overlay_repository import (
+                RevisaoDecomposicaoOverlayRepository,
+            )
 
-        processo_repo = ProcessoDecomposicaoRepository(connection=self._connection)
-        instancia_repo = InstanciaDecomposicaoEscopoRepository(connection=self._connection)
-        revisao_repo = RevisaoDecomposicaoOverlayRepository(connection=self._connection)
+            processo_repo = ProcessoDecomposicaoRepository(connection=self._connection)
+            instancia_repo = InstanciaDecomposicaoEscopoRepository(connection=self._connection)
+            revisao_repo = RevisaoDecomposicaoOverlayRepository(connection=self._connection)
 
-        for row in payload.get(PROCESSO_DECOMPOSICAO_BUNDLE_KEY, []) or []:
-            if isinstance(row, dict) and row.get("processo_id"):
-                processo_repo.upsert_from_backup(row, auto_commit=False)
+            for row in payload.get(PROCESSO_DECOMPOSICAO_BUNDLE_KEY, []) or []:
+                if isinstance(row, dict) and row.get("processo_id"):
+                    processo_repo.upsert_from_backup(row, auto_commit=False)
 
-        for row in payload.get(INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY, []) or []:
-            if isinstance(row, dict) and row.get("instancia_id"):
-                instancia_repo.upsert_from_backup(row, auto_commit=False)
+            for row in payload.get(INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY, []) or []:
+                if isinstance(row, dict) and row.get("instancia_id"):
+                    instancia_repo.upsert_from_backup(row, auto_commit=False)
 
-        for row in payload.get(REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY, []) or []:
-            if isinstance(row, dict) and row.get("revisao_id"):
-                revisao_repo.upsert_from_backup(row, auto_commit=False)
+            for row in payload.get(REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY, []) or []:
+                if isinstance(row, dict) and row.get("revisao_id"):
+                    revisao_repo.upsert_from_backup(row, auto_commit=False)
 
-        if auto_commit:
-            self._connection.commit()
+            if auto_commit:
+                self.commit()
 
     def fetch_setor_filiais(self) -> list[dict[str, Any]]:
         return self.fetch_all(
@@ -752,30 +757,31 @@ class JsonBackupRepository(PluginBaseRepository):
         *,
         auto_commit: bool = False,
     ) -> None:
-        self.execute("DELETE FROM transformometro.setor_filiais", auto_commit=False)
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            setor_codigo = row.get("codigo_setor") or row.get("setor_id")
-            filial_codigo = row.get("codigo_filial") or row.get("filial_id")
-            if not setor_codigo or not filial_codigo:
-                continue
-            self.execute(
-                """
-                INSERT INTO transformometro.setor_filiais (setor_id, filial_id)
-                SELECT s.setor_id, f.filial_id
-                FROM transformometro.setores s
-                JOIN transformometro.filiais f ON f.codigo_filial = %s
-                WHERE s.codigo_setor = %s
-                  AND s.deletado = FALSE
-                  AND f.deletado = FALSE
-                ON CONFLICT DO NOTHING
-                """,
-                (str(filial_codigo).strip(), str(setor_codigo).strip()),
-                auto_commit=False,
-            )
-        if auto_commit:
-            self._connection.commit()
+        with self.db():
+            self.execute("DELETE FROM transformometro.setor_filiais", auto_commit=False)
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                setor_codigo = row.get("codigo_setor") or row.get("setor_id")
+                filial_codigo = row.get("codigo_filial") or row.get("filial_id")
+                if not setor_codigo or not filial_codigo:
+                    continue
+                self.execute(
+                    """
+                    INSERT INTO transformometro.setor_filiais (setor_id, filial_id)
+                    SELECT s.setor_id, f.filial_id
+                    FROM transformometro.setores s
+                    JOIN transformometro.filiais f ON f.codigo_filial = %s
+                    WHERE s.codigo_setor = %s
+                      AND s.deletado = FALSE
+                      AND f.deletado = FALSE
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (str(filial_codigo).strip(), str(setor_codigo).strip()),
+                    auto_commit=False,
+                )
+            if auto_commit:
+                self.commit()
 
     def fetch_rows_by_ids(self, spec: EntitySpec, ids: set[str]) -> list[dict[str, Any]]:
         if not ids:

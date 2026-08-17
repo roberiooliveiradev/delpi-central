@@ -389,75 +389,76 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         opinion = _blank_to_none(technical_opinion)
         registered = _blank_to_none(registered_at)
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO engineering.lmp_nonconformities (
-                        registered_at, occurrence_date, sale_number, lmp_number,
-                        customer_name, launch_date, last_revision_date,
-                        executed_by, released_by, status,
-                        defect_description, corrective_actions, technical_opinion,
-                        created_by, updated_by
-                    ) VALUES (
-                        COALESCE(%s::timestamptz, NOW()),
-                        COALESCE(%s::date, CURRENT_DATE),
-                        %s, %s, %s, %s::date, %s::date,
-                        %s, %s, %s,
-                        %s, %s, %s,
-                        %s, %s
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        INSERT INTO engineering.lmp_nonconformities (
+                            registered_at, occurrence_date, sale_number, lmp_number,
+                            customer_name, launch_date, last_revision_date,
+                            executed_by, released_by, status,
+                            defect_description, corrective_actions, technical_opinion,
+                            created_by, updated_by
+                        ) VALUES (
+                            COALESCE(%s::timestamptz, NOW()),
+                            COALESCE(%s::date, CURRENT_DATE),
+                            %s, %s, %s, %s::date, %s::date,
+                            %s, %s, %s,
+                            %s, %s, %s,
+                            %s, %s
+                        )
+                        RETURNING id
+                        """,
+                        (
+                            registered,
+                            occurred,
+                            sale,
+                            lmp,
+                            customer,
+                            launch,
+                            revision,
+                            executed,
+                            released,
+                            status_norm,
+                            defect,
+                            corrective,
+                            opinion,
+                            created_by,
+                            created_by,
+                        ),
                     )
-                    RETURNING id
-                    """,
-                    (
-                        registered,
-                        occurred,
-                        sale,
-                        lmp,
-                        customer,
-                        launch,
-                        revision,
-                        executed,
-                        released,
-                        status_norm,
-                        defect,
-                        corrective,
-                        opinion,
-                        created_by,
-                        created_by,
-                    ),
-                )
-                row = cursor.fetchone()
-                if row is None:
-                    raise PluginsRepositoryError("Falha ao criar não conformidade LMP.")
-                record_id = str(dict(row)["id"])
-                self._replace_products(cursor, record_id, lines)
-                self._replace_problem_tags(cursor, record_id, tags, created_by=created_by)
-                after = _history_snapshot(
-                    status=status_norm,
-                    sale_number=sale,
-                    lmp_number=lmp,
-                    customer_name=customer,
-                    occurrence_date=occurred,
-                    launch_date=launch,
-                    last_revision_date=revision,
-                    executed_by=executed,
-                    released_by=released,
-                    defect_description=defect,
-                    corrective_actions=corrective,
-                    technical_opinion=opinion,
-                    products=lines,
-                    problem_tags=tags,
-                )
-                self._append_history(
-                    cursor,
-                    record_id,
-                    event_type="created",
-                    changes=build_nc_history_changes(None, after),
-                    actor_user_id=actor_user_id,
-                    actor_email=actor_email,
-                    actor_name=actor_name,
-                )
-            self.commit()
+                    row = cursor.fetchone()
+                    if row is None:
+                        raise PluginsRepositoryError("Falha ao criar não conformidade LMP.")
+                    record_id = str(dict(row)["id"])
+                    self._replace_products(cursor, record_id, lines)
+                    self._replace_problem_tags(cursor, record_id, tags, created_by=created_by)
+                    after = _history_snapshot(
+                        status=status_norm,
+                        sale_number=sale,
+                        lmp_number=lmp,
+                        customer_name=customer,
+                        occurrence_date=occurred,
+                        launch_date=launch,
+                        last_revision_date=revision,
+                        executed_by=executed,
+                        released_by=released,
+                        defect_description=defect,
+                        corrective_actions=corrective,
+                        technical_opinion=opinion,
+                        products=lines,
+                        problem_tags=tags,
+                    )
+                    self._append_history(
+                        cursor,
+                        record_id,
+                        event_type="created",
+                        changes=build_nc_history_changes(None, after),
+                        actor_user_id=actor_user_id,
+                        actor_email=actor_email,
+                        actor_name=actor_name,
+                    )
+                self.commit()
         except PluginsRepositoryError:
             self.rollback()
             raise
@@ -520,80 +521,81 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         opinion = _blank_to_none(technical_opinion)
 
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE engineering.lmp_nonconformities
-                       SET sale_number = %s,
-                           lmp_number = %s,
-                           customer_name = %s,
-                           occurrence_date = %s::date,
-                           launch_date = %s::date,
-                           last_revision_date = %s::date,
-                           executed_by = %s,
-                           released_by = %s,
-                           status = %s,
-                           defect_description = %s,
-                           corrective_actions = %s,
-                           technical_opinion = %s,
-                           updated_by = %s,
-                           updated_at = NOW()
-                     WHERE id = %s
-                    """,
-                    (
-                        sale,
-                        lmp,
-                        customer,
-                        occurred,
-                        launch,
-                        revision,
-                        executed,
-                        released,
-                        status_norm,
-                        defect,
-                        corrective,
-                        opinion,
-                        updated_by,
-                        record_id,
-                    ),
-                )
-                cursor.execute(
-                    """
-                    DELETE FROM engineering.lmp_nonconformity_products
-                     WHERE nonconformity_id = %s
-                    """,
-                    (record_id,),
-                )
-                self._replace_products(cursor, record_id, lines)
-                self._replace_problem_tags(cursor, record_id, tags, created_by=updated_by)
-                after = _history_snapshot(
-                    status=status_norm,
-                    sale_number=sale,
-                    lmp_number=lmp,
-                    customer_name=customer,
-                    occurrence_date=occurred,
-                    launch_date=launch,
-                    last_revision_date=revision,
-                    executed_by=executed,
-                    released_by=released,
-                    defect_description=defect,
-                    corrective_actions=corrective,
-                    technical_opinion=opinion,
-                    products=lines,
-                    problem_tags=tags,
-                )
-                changes = build_nc_history_changes(before, after)
-                if changes.get("fields"):
-                    self._append_history(
-                        cursor,
-                        record_id,
-                        event_type="updated",
-                        changes=changes,
-                        actor_user_id=actor_user_id,
-                        actor_email=actor_email,
-                        actor_name=actor_name,
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        UPDATE engineering.lmp_nonconformities
+                           SET sale_number = %s,
+                               lmp_number = %s,
+                               customer_name = %s,
+                               occurrence_date = %s::date,
+                               launch_date = %s::date,
+                               last_revision_date = %s::date,
+                               executed_by = %s,
+                               released_by = %s,
+                               status = %s,
+                               defect_description = %s,
+                               corrective_actions = %s,
+                               technical_opinion = %s,
+                               updated_by = %s,
+                               updated_at = NOW()
+                         WHERE id = %s
+                        """,
+                        (
+                            sale,
+                            lmp,
+                            customer,
+                            occurred,
+                            launch,
+                            revision,
+                            executed,
+                            released,
+                            status_norm,
+                            defect,
+                            corrective,
+                            opinion,
+                            updated_by,
+                            record_id,
+                        ),
                     )
-            self.commit()
+                    cursor.execute(
+                        """
+                        DELETE FROM engineering.lmp_nonconformity_products
+                         WHERE nonconformity_id = %s
+                        """,
+                        (record_id,),
+                    )
+                    self._replace_products(cursor, record_id, lines)
+                    self._replace_problem_tags(cursor, record_id, tags, created_by=updated_by)
+                    after = _history_snapshot(
+                        status=status_norm,
+                        sale_number=sale,
+                        lmp_number=lmp,
+                        customer_name=customer,
+                        occurrence_date=occurred,
+                        launch_date=launch,
+                        last_revision_date=revision,
+                        executed_by=executed,
+                        released_by=released,
+                        defect_description=defect,
+                        corrective_actions=corrective,
+                        technical_opinion=opinion,
+                        products=lines,
+                        problem_tags=tags,
+                    )
+                    changes = build_nc_history_changes(before, after)
+                    if changes.get("fields"):
+                        self._append_history(
+                            cursor,
+                            record_id,
+                            event_type="updated",
+                            changes=changes,
+                            actor_user_id=actor_user_id,
+                            actor_email=actor_email,
+                            actor_name=actor_name,
+                        )
+                self.commit()
         except PluginsRepositoryError:
             self.rollback()
             raise
@@ -678,21 +680,22 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
     def delete_record(self, record_id: str) -> bool:
         """Exclui a NC; libera CASCADE do histórico via GUC de sessão (V008)."""
         try:
-            with self.connection.cursor() as cursor:
-                # Permite DELETE no histórico append-only durante o CASCADE.
-                cursor.execute(
-                    "SELECT set_config('app.allow_lmp_nc_history_delete', 'true', true)"
-                )
-                cursor.execute(
-                    """
-                    DELETE FROM engineering.lmp_nonconformities
-                     WHERE id = %s
-                 RETURNING id
-                    """,
-                    (record_id,),
-                )
-                row = cursor.fetchone()
-            self.commit()
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    # Permite DELETE no histórico append-only durante o CASCADE.
+                    cursor.execute(
+                        "SELECT set_config('app.allow_lmp_nc_history_delete', 'true', true)"
+                    )
+                    cursor.execute(
+                        """
+                        DELETE FROM engineering.lmp_nonconformities
+                         WHERE id = %s
+                     RETURNING id
+                        """,
+                        (record_id,),
+                    )
+                    row = cursor.fetchone()
+                self.commit()
             return row is not None
         except PluginsRepositoryError:
             self.rollback()
@@ -706,18 +709,19 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
     def delete_all_records(self) -> int:
         """Remove todas as NCs (substituição total na importação)."""
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT set_config('app.allow_lmp_nc_history_delete', 'true', true)"
-                )
-                cursor.execute(
-                    """
-                    DELETE FROM engineering.lmp_nonconformities
-                 RETURNING id
-                    """
-                )
-                rows = cursor.fetchall()
-            self.commit()
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT set_config('app.allow_lmp_nc_history_delete', 'true', true)"
+                    )
+                    cursor.execute(
+                        """
+                        DELETE FROM engineering.lmp_nonconformities
+                     RETURNING id
+                        """
+                    )
+                    rows = cursor.fetchall()
+                self.commit()
             return len(rows or [])
         except PluginsRepositoryError:
             self.rollback()

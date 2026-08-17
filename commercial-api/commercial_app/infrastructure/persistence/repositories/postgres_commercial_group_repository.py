@@ -131,33 +131,34 @@ class PostgresCommercialGroupRepository(PluginBaseRepository, CommercialGroupRep
             seen.add(uid)
             unique_ids.append(uid)
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    DELETE FROM commercial.commercial_group_members
-                     WHERE group_id = %s
-                    """,
-                    (group_id,),
-                )
-                for uid in unique_ids:
+            with self.db():
+                with self.connection.cursor() as cursor:
                     cursor.execute(
                         """
-                        INSERT INTO commercial.commercial_group_members (
-                            group_id, user_id
-                        ) VALUES (%s, %s)
-                        ON CONFLICT (group_id, user_id) DO NOTHING
+                        DELETE FROM commercial.commercial_group_members
+                         WHERE group_id = %s
                         """,
-                        (group_id, uid),
+                        (group_id,),
                     )
-                cursor.execute(
-                    """
-                    UPDATE commercial.commercial_groups
-                       SET updated_at = NOW()
-                     WHERE id = %s
-                    """,
-                    (group_id,),
-                )
-            self.commit()
+                    for uid in unique_ids:
+                        cursor.execute(
+                            """
+                            INSERT INTO commercial.commercial_group_members (
+                                group_id, user_id
+                            ) VALUES (%s, %s)
+                            ON CONFLICT (group_id, user_id) DO NOTHING
+                            """,
+                            (group_id, uid),
+                        )
+                    cursor.execute(
+                        """
+                        UPDATE commercial.commercial_groups
+                           SET updated_at = NOW()
+                         WHERE id = %s
+                        """,
+                        (group_id,),
+                    )
+                self.commit()
         except Exception:
             self.rollback()
             raise

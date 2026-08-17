@@ -281,6 +281,37 @@ Ver também `infra/.env.prod.cpu.example` (desliga spell-check web e reduz conte
 | Pesquisa web | Tavily/Serper/Bing/SearXNG |
 | APIs legadas | `api-delpi`, planilhas Google, etc. |
 
+### Pool de conexões `postgres-plugins`
+
+Vários processos (api-delpi, commercial-api, transformometro-api, strategic-indicators-api, maintenance-api, …) compartilham o mesmo Postgres. Cada um usa um **pool limitado** (`PluginsConnectionPool`) com acquire/release — não manter conexão eterna por thread/singleton.
+
+| Variável | Default | Notas |
+|----------|---------|--------|
+| `PLUGINS_DB_POOL_MAX_SIZE` | `10` (api-delpi) / `5` (APIs irmãs) | Teto por processo |
+| `PLUGINS_DB_POOL_ACQUIRE_TIMEOUT` | `30` | Segundos aguardando slot |
+| `PLUGINS_DB_APPLICATION_NAME` | ex. `api-delpi-plugins` | Visível em `pg_stat_activity` |
+
+**Regra de capacidade:** somatório dos `PLUGINS_DB_POOL_MAX_SIZE` de todos os clientes ≪ `max_connections` do `postgres-plugins` (default PostgreSQL ~100).
+
+#### Checklist pós-deploy (esgotamento / `too many clients`)
+
+1. Restart dos clientes do plugins DB (`api-delpi`, commercial, TM, SI, maintenance, TV, CX, …).
+2. Se ainda saturado: `docker restart delpi-postgres-plugins` (volume preserva dados).
+3. Conferir carga:
+
+```bash
+docker exec -it delpi-postgres-plugins psql -U "$PLUGINS_DB_USER" -d "$PLUGINS_DB_NAME" -c \
+  "SELECT count(*) AS total, application_name, client_addr
+   FROM pg_stat_activity
+   WHERE datname = current_database()
+   GROUP BY 2, 3
+   ORDER BY 1 DESC;"
+docker exec -it delpi-postgres-plugins psql -U "$PLUGINS_DB_USER" -d "$PLUGINS_DB_NAME" -c \
+  "SHOW max_connections;"
+```
+
+4. Confirmar `application_name` esperado (ex. `api-delpi-plugins`) e total estável sob uso normal (PAC/PVA/TV).
+
 Variáveis só no **código** (sem entrada no compose) ainda podem ser definidas no `.env`; o container as recebe se você as adicionar ao bloco `environment:` ou usar `env_file:`.
 
 Documentação detalhada da API de chat: `minha-delpi-ai-api/README.md`.

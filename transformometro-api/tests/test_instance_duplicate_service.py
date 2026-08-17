@@ -9,7 +9,7 @@ from tm_app.application.services.instance_duplicate_service import (
 )
 
 
-@patch("tm_app.application.services.instance_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.instance_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.instance_duplicate_service.VinculoRepository")
 @patch("tm_app.application.services.instance_duplicate_service.InvestimentoRepository")
 @patch("tm_app.application.services.instance_duplicate_service.MedicaoRepository")
@@ -24,7 +24,8 @@ def test_duplicate_instancia_copies_timeline_to_new_par(
     mock_conn_factory,
 ):
     conn = MagicMock()
-    mock_conn_factory.return_value = conn
+    mock_conn_factory.return_value.__enter__.return_value = conn
+    mock_conn_factory.return_value.__exit__.return_value = None
 
     inst_repo = mock_inst_cls.return_value
     rev_repo = mock_rev_cls.return_value
@@ -78,7 +79,7 @@ def test_duplicate_instancia_copies_timeline_to_new_par(
     assert create_payload["processo_id"] == "p1"
 
 
-@patch("tm_app.application.services.instance_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.instance_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.instance_duplicate_service.VinculoRepository")
 @patch("tm_app.application.services.instance_duplicate_service.InvestimentoRepository")
 @patch("tm_app.application.services.instance_duplicate_service.MedicaoRepository")
@@ -93,7 +94,8 @@ def test_duplicate_instancia_allows_same_par(
     mock_conn_factory,
 ):
     conn = MagicMock()
-    mock_conn_factory.return_value = conn
+    mock_conn_factory.return_value.__enter__.return_value = conn
+    mock_conn_factory.return_value.__exit__.return_value = None
     inst_repo = mock_inst_cls.return_value
     rev_repo = mock_rev_cls.return_value
     med_repo = mock_med_cls.return_value
@@ -139,7 +141,7 @@ def test_duplicate_instancia_allows_same_par(
     inst_repo.create.assert_called_once()
 
 
-@patch("tm_app.application.services.instance_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.instance_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.instance_duplicate_service.ProcessoInstanciaRepository")
 def test_duplicate_instancia_not_found(mock_inst_cls, mock_conn_factory):
     mock_conn_factory.return_value = MagicMock()

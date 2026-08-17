@@ -97,26 +97,27 @@ class SetorRepository(PluginBaseRepository):
         return str(row["filial_id"])
 
     def _sync_filiais(self, setor_uuid: str, filiais: list[str], *, auto_commit: bool) -> None:
-        self.execute(
-            "DELETE FROM transformometro.setor_filiais WHERE setor_id = %s::uuid",
-            (setor_uuid,),
-            auto_commit=False,
-        )
-        for codigo_filial in sorted(set(filiais)):
-            filial_uuid = self._resolve_filial_uuid(codigo_filial)
-            if not filial_uuid:
-                raise ValueError(f"filial_id inválido: {codigo_filial}")
+        with self.db():
             self.execute(
-                """
-                INSERT INTO transformometro.setor_filiais (setor_id, filial_id)
-                VALUES (%s::uuid, %s::uuid)
-                ON CONFLICT DO NOTHING
-                """,
-                (setor_uuid, filial_uuid),
+                "DELETE FROM transformometro.setor_filiais WHERE setor_id = %s::uuid",
+                (setor_uuid,),
                 auto_commit=False,
             )
-        if auto_commit:
-            self._connection.commit()
+            for codigo_filial in sorted(set(filiais)):
+                filial_uuid = self._resolve_filial_uuid(codigo_filial)
+                if not filial_uuid:
+                    raise ValueError(f"filial_id inválido: {codigo_filial}")
+                self.execute(
+                    """
+                    INSERT INTO transformometro.setor_filiais (setor_id, filial_id)
+                    VALUES (%s::uuid, %s::uuid)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (setor_uuid, filial_uuid),
+                    auto_commit=False,
+                )
+            if auto_commit:
+                self.commit()
 
     def list(self, filial_id: str | None = None) -> list[dict[str, Any]]:
         query = self._LIST_QUERY
@@ -215,88 +216,90 @@ class SetorRepository(PluginBaseRepository):
         return int((row or {}).get("total") or 0)
 
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
-        codigo_setor = normalize_codigo_setor(data.get("setor_id") or data["nome_setor"])
-        if self.get(codigo_setor):
-            raise ValueError(f"Setor '{codigo_setor}' já existe.")
+        with self.db():
+            codigo_setor = normalize_codigo_setor(data.get("setor_id") or data["nome_setor"])
+            if self.get(codigo_setor):
+                raise ValueError(f"Setor '{codigo_setor}' já existe.")
 
-        filiais = list(data["filiais"])
-        self._validate_filiais(filiais)
+            filiais = list(data["filiais"])
+            self._validate_filiais(filiais)
 
-        row = self.execute_returning_one(
-            """
-            INSERT INTO transformometro.setores (setor_id, codigo_setor, nome_setor, status_setor)
-            VALUES (gen_random_uuid(), %s, %s, %s)
-            RETURNING setor_id, codigo_setor, nome_setor, status_setor, created_at, updated_at
-            """,
-            (
-                codigo_setor,
-                data["nome_setor"].strip(),
-                data.get("status_setor", "ativo"),
-            ),
-            auto_commit=False,
-        )
-        if row is None:
-            self._connection.rollback()
-            raise RuntimeError("Falha ao criar setor.")
-
-        self._sync_filiais(str(row["setor_id"]), filiais, auto_commit=True)
-        created = self.get(str(row["setor_id"]))
-        if created is None:
-            raise RuntimeError("Falha ao carregar setor criado.")
-        return created
-
-    def update(self, setor_ref: str, data: dict[str, Any]) -> dict[str, Any] | None:
-        existing = self.get(setor_ref)
-        if not existing:
-            return None
-
-        filiais = list(data["filiais"])
-        self._validate_filiais(filiais)
-
-        new_codigo = normalize_codigo_setor(
-            data.get("codigo_setor") or existing["codigo_setor"]
-        )
-        old_codigo = str(existing["codigo_setor"])
-        if new_codigo != old_codigo:
-            conflict = self.get(new_codigo)
-            if conflict and str(conflict["setor_id"]) != str(existing["setor_id"]):
-                raise ValueError(f"Departamento com código '{new_codigo}' já existe.")
-
-        row = self.execute_returning_one(
-            """
-            UPDATE transformometro.setores SET
-                codigo_setor = %s,
-                nome_setor = %s,
-                status_setor = %s,
-                updated_at = NOW()
-            WHERE setor_id = %s::uuid AND deletado = FALSE
-            RETURNING setor_id
-            """,
-            (
-                new_codigo,
-                data["nome_setor"].strip(),
-                data.get("status_setor", "ativo"),
-                existing["setor_id"],
-            ),
-            auto_commit=False,
-        )
-        if row is None:
-            self._connection.rollback()
-            return None
-
-        if new_codigo != old_codigo:
-            self.execute(
+            row = self.execute_returning_one(
                 """
-                UPDATE transformometro.dashboard_calculos
-                SET codigo_setor = %s
-                WHERE setor_id = %s::uuid
+                INSERT INTO transformometro.setores (setor_id, codigo_setor, nome_setor, status_setor)
+                VALUES (gen_random_uuid(), %s, %s, %s)
+                RETURNING setor_id, codigo_setor, nome_setor, status_setor, created_at, updated_at
                 """,
-                (new_codigo, existing["setor_id"]),
+                (
+                    codigo_setor,
+                    data["nome_setor"].strip(),
+                    data.get("status_setor", "ativo"),
+                ),
                 auto_commit=False,
             )
+            if row is None:
+                self.rollback()
+                raise RuntimeError("Falha ao criar setor.")
 
-        self._sync_filiais(str(existing["setor_id"]), filiais, auto_commit=True)
-        return self.get(str(existing["setor_id"]))
+            self._sync_filiais(str(row["setor_id"]), filiais, auto_commit=True)
+            created = self.get(str(row["setor_id"]))
+            if created is None:
+                raise RuntimeError("Falha ao carregar setor criado.")
+            return created
+
+    def update(self, setor_ref: str, data: dict[str, Any]) -> dict[str, Any] | None:
+        with self.db():
+            existing = self.get(setor_ref)
+            if not existing:
+                return None
+
+            filiais = list(data["filiais"])
+            self._validate_filiais(filiais)
+
+            new_codigo = normalize_codigo_setor(
+                data.get("codigo_setor") or existing["codigo_setor"]
+            )
+            old_codigo = str(existing["codigo_setor"])
+            if new_codigo != old_codigo:
+                conflict = self.get(new_codigo)
+                if conflict and str(conflict["setor_id"]) != str(existing["setor_id"]):
+                    raise ValueError(f"Departamento com código '{new_codigo}' já existe.")
+
+            row = self.execute_returning_one(
+                """
+                UPDATE transformometro.setores SET
+                    codigo_setor = %s,
+                    nome_setor = %s,
+                    status_setor = %s,
+                    updated_at = NOW()
+                WHERE setor_id = %s::uuid AND deletado = FALSE
+                RETURNING setor_id
+                """,
+                (
+                    new_codigo,
+                    data["nome_setor"].strip(),
+                    data.get("status_setor", "ativo"),
+                    existing["setor_id"],
+                ),
+                auto_commit=False,
+            )
+            if row is None:
+                self.rollback()
+                return None
+
+            if new_codigo != old_codigo:
+                self.execute(
+                    """
+                    UPDATE transformometro.dashboard_calculos
+                    SET codigo_setor = %s
+                    WHERE setor_id = %s::uuid
+                    """,
+                    (new_codigo, existing["setor_id"]),
+                    auto_commit=False,
+                )
+
+            self._sync_filiais(str(existing["setor_id"]), filiais, auto_commit=True)
+            return self.get(str(existing["setor_id"]))
 
     def soft_delete(self, setor_ref: str) -> bool:
         if self.count_processos(setor_ref) > 0:

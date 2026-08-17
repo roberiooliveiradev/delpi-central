@@ -75,6 +75,11 @@ async def lifespan(_app: FastAPI):
         worker.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await worker
+        from tm_app.infrastructure.providers.database.plugins_postgres_connection import (
+            close_plugins_connection,
+        )
+
+        close_plugins_connection()
 
 
 app = FastAPI(

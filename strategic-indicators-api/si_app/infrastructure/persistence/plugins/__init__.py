@@ -17,6 +17,8 @@ from si_app.infrastructure.providers.database.plugins_postgres_connection import
     close_plugins_connection,
     get_plugins_connection,
     get_plugins_connection_settings,
+    plugins_connection,
+    release_plugins_connection,
 )
 
 __all__ = [
@@ -28,5 +30,7 @@ __all__ = [
     "close_plugins_connection",
     "check_plugins_connection",
     "get_plugins_connection_settings",
+    "plugins_connection",
+    "release_plugins_connection",
     "get_plugins_db_health",
 ]

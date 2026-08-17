@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterable
+from contextlib import contextmanager
+from typing import Any, Iterator, Iterable
 
 from psycopg import Connection
 from psycopg.errors import UndefinedColumn, UndefinedTable
 
-from app.infrastructure.providers.database.plugins_postgres_connection import get_plugins_connection
+from app.infrastructure.providers.database.plugins_postgres_connection import (
+    acquire_plugins_connection,
+    current_plugins_lease,
+    release_plugins_connection,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,16 +56,43 @@ class PluginBaseRepository:
     - não contém regra de domínio
     - não conhece HTTP/Flask
     - não mistura SQL Server/TOTVS com PostgreSQL
+    - conexão via pool (acquire/release); lease aninhável na thread
     """
 
     def __init__(self, connection: Connection[dict[str, Any]] | None = None) -> None:
-        self._connection: Connection[dict[str, Any]] = (
-            connection if connection is not None else get_plugins_connection()
-        )
+        # Injetado só em testes / geradores que já possuem lease.
+        self._injected_connection = connection
+
+    @contextmanager
+    def db(self) -> Iterator[Connection[dict[str, Any]]]:
+        """Unidade de trabalho: adquire do pool (ou reusa lease externo)."""
+        if self._injected_connection is not None:
+            yield self._injected_connection
+            return
+
+        connection = acquire_plugins_connection()
+        discard = False
+        try:
+            yield connection
+        except Exception:
+            try:
+                connection.rollback()
+            except Exception:
+                discard = True
+            raise
+        finally:
+            release_plugins_connection(connection, discard=discard)
 
     @property
     def connection(self) -> Connection[dict[str, Any]]:
-        return self._connection
+        if self._injected_connection is not None:
+            return self._injected_connection
+        leased = current_plugins_lease()
+        if leased is None:
+            raise PluginsRepositoryError(
+                "Conexão plugins sem lease ativo; use 'with self.db()'."
+            )
+        return leased
 
     def fetch_one(
         self,
@@ -68,12 +100,12 @@ class PluginBaseRepository:
         params: tuple[Any, ...] | None = None,
     ) -> dict[str, Any] | None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                row = cursor.fetchone()
-                return dict(row) if row is not None else None
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                    row = cursor.fetchone()
+                    return dict(row) if row is not None else None
         except Exception as exc:
-            self.rollback()
             logger.exception(
                 "Plugins repository fetch_one failed.",
                 extra={"query": query},
@@ -86,12 +118,12 @@ class PluginBaseRepository:
         params: tuple[Any, ...] | None = None,
     ) -> list[dict[str, Any]]:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                rows = cursor.fetchall()
-                return [dict(row) for row in rows]
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                    rows = cursor.fetchall()
+                    return [dict(row) for row in rows]
         except Exception as exc:
-            self.rollback()
             logger.exception(
                 "Plugins repository fetch_all failed.",
                 extra={"query": query},
@@ -106,13 +138,12 @@ class PluginBaseRepository:
         auto_commit: bool = True,
     ) -> None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-
-            if auto_commit:
-                self.commit()
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                if auto_commit:
+                    connection.commit()
         except Exception as exc:
-            self.rollback()
             logger.exception(
                 "Plugins repository execute failed.",
                 extra={"query": query},
@@ -127,16 +158,14 @@ class PluginBaseRepository:
         auto_commit: bool = True,
     ) -> dict[str, Any] | None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                row = cursor.fetchone()
-
-            if auto_commit:
-                self.commit()
-
-            return dict(row) if row is not None else None
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                    row = cursor.fetchone()
+                if auto_commit:
+                    connection.commit()
+                return dict(row) if row is not None else None
         except Exception as exc:
-            self.rollback()
             logger.exception(
                 "Plugins repository execute_returning_one failed.",
                 extra={"query": query},
@@ -151,13 +180,12 @@ class PluginBaseRepository:
         auto_commit: bool = True,
     ) -> None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.executemany(query, values)
-
-            if auto_commit:
-                self.commit()
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.executemany(query, values)
+                if auto_commit:
+                    connection.commit()
         except Exception as exc:
-            self.rollback()
             logger.exception(
                 "Plugins repository execute_many failed.",
                 extra={"query": query},
@@ -166,7 +194,8 @@ class PluginBaseRepository:
 
     def commit(self) -> None:
         try:
-            self.connection.commit()
+            with self.db() as connection:
+                connection.commit()
         except Exception as exc:
             logger.exception("Plugins repository commit failed.")
             raise PluginsRepositoryError(
@@ -175,7 +204,8 @@ class PluginBaseRepository:
 
     def rollback(self) -> None:
         try:
-            self.connection.rollback()
+            with self.db() as connection:
+                connection.rollback()
         except Exception as exc:
             logger.exception("Plugins repository rollback failed.")
             raise PluginsRepositoryError(

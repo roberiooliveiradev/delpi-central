@@ -22,7 +22,7 @@ def test_suggest_duplicate_versao_revisao_fallback_for_non_semver() -> None:
     assert suggest_duplicate_versao_revisao("v1", {"v1"}) == "v1-copia-2"
 
 
-@patch("tm_app.application.services.revision_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.revision_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.revision_duplicate_service.RevisaoEvidenceStorage")
 @patch("tm_app.application.services.revision_duplicate_service.RevisaoEvidenceRepository")
 @patch("tm_app.application.services.revision_duplicate_service.RevisaoDecomposicaoOverlayRepository")
@@ -43,7 +43,8 @@ def test_duplicate_revisao_creates_inactive_copy(
     mock_conn_factory,
 ):
     conn = MagicMock()
-    mock_conn_factory.return_value = conn
+    mock_conn_factory.return_value.__enter__.return_value = conn
+    mock_conn_factory.return_value.__exit__.return_value = None
 
     rev_repo = mock_rev_cls.return_value
     med_repo = mock_med_cls.return_value
@@ -105,7 +106,7 @@ def test_duplicate_revisao_creates_inactive_copy(
     conn.commit.assert_called_once()
 
 
-@patch("tm_app.application.services.revision_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.revision_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.revision_duplicate_service.RevisaoRepository")
 def test_duplicate_revisao_not_found(mock_rev_cls, mock_conn_factory):
     mock_conn_factory.return_value = MagicMock()

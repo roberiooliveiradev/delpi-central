@@ -18,10 +18,30 @@ for _key, _val in {
 
 import tm_app.infrastructure.providers.database.plugins_postgres_connection as _pg_mod
 
+from contextlib import contextmanager
+
 _mock_conn = MagicMock()
 _mock_conn.closed = False
-_pg_mod.get_plugins_connection = lambda: _mock_conn  # type: ignore[assignment]
-_pg_mod._cached_connection = _mock_conn
+
+
+def _mock_acquire(**_kwargs):
+    return _mock_conn
+
+
+def _mock_release(*_args, **_kwargs):
+    return None
+
+
+@contextmanager
+def _mock_plugins_connection(**_kwargs):
+    yield _mock_conn
+
+
+_pg_mod.acquire_plugins_connection = _mock_acquire  # type: ignore[assignment]
+_pg_mod.release_plugins_connection = _mock_release  # type: ignore[assignment]
+_pg_mod.get_plugins_connection = _mock_acquire  # type: ignore[assignment]
+_pg_mod.plugins_connection = _mock_plugins_connection  # type: ignore[assignment]
+_pg_mod.close_plugins_connection = lambda: None  # type: ignore[assignment]
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError

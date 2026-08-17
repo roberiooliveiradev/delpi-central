@@ -313,12 +313,13 @@ class DashboardCalculoRepository(PluginBaseRepository):
             return 0
         params = [self._row_params(row) for row in rows]
         try:
-            with self._connection.cursor() as cursor:
-                cursor.executemany(self._UPSERT_SQL, params)
-            if auto_commit:
-                self._connection.commit()
+            with self.db():
+                with self._connection.cursor() as cursor:
+                    cursor.executemany(self._UPSERT_SQL, params)
+                if auto_commit:
+                    self.commit()
         except Exception as exc:
-            self._connection.rollback()
+            self.rollback()
             raise exc
         return len(rows)
 
@@ -330,13 +331,14 @@ class DashboardCalculoRepository(PluginBaseRepository):
 
     def replace_all(self, rows: list[dict[str, Any]]) -> int:
         try:
-            with self._connection.cursor() as cursor:
-                cursor.execute("TRUNCATE transformometro.dashboard_calculos")
-                if rows:
-                    cursor.executemany(self._UPSERT_SQL, [self._row_params(row) for row in rows])
-            self._connection.commit()
+            with self.db():
+                with self._connection.cursor() as cursor:
+                    cursor.execute("TRUNCATE transformometro.dashboard_calculos")
+                    if rows:
+                        cursor.executemany(self._UPSERT_SQL, [self._row_params(row) for row in rows])
+                self.commit()
         except Exception as exc:
-            self._connection.rollback()
+            self.rollback()
             raise exc
         return len(rows)
 

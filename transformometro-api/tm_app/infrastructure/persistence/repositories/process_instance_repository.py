@@ -260,68 +260,69 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             )
 
     def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
-        processo_id = str(data["processo_id"])
-        todas_filiais_ativas = bool(data.get("todas_filiais_ativas"))
-        filial_codigo = str(data.get("filial_id") or "").strip() or None
-        setor_refs = self._normalize_setor_refs(data)
+        with self.db():
+            processo_id = str(data["processo_id"])
+            todas_filiais_ativas = bool(data.get("todas_filiais_ativas"))
+            filial_codigo = str(data.get("filial_id") or "").strip() or None
+            setor_refs = self._normalize_setor_refs(data)
 
-        if not ProcessoRepository(connection=self._connection).get(processo_id):
-            raise ProcessoInstanciaDomainError("Processo não encontrado.")
+            if not ProcessoRepository(connection=self._connection).get(processo_id):
+                raise ProcessoInstanciaDomainError("Processo não encontrado.")
 
-        filial = self._resolve_filial(
-            filial_codigo=filial_codigo,
-            todas_filiais_ativas=todas_filiais_ativas,
-        )
-        setores = self._resolve_setores(
-            setor_refs,
-            filial_codigo=filial_codigo,
-            todas_filiais_ativas=todas_filiais_ativas,
-        )
-
-        row = self.execute_returning_one(
-            """
-            INSERT INTO transformometro.processo_instancias (
-                processo_id,
-                filial_id,
-                todas_filiais_ativas,
-                rotulo_instancia,
-                status_instancia,
-                resumo_melhoria,
-                responsavel_local,
-                fase_melhoria,
-                data_alvo_go_live,
-                prioridade
+            filial = self._resolve_filial(
+                filial_codigo=filial_codigo,
+                todas_filiais_ativas=todas_filiais_ativas,
             )
-            VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING instancia_id
-            """,
-            (
-                processo_id,
-                filial["filial_id"] if filial else None,
-                todas_filiais_ativas,
-                data.get("rotulo_instancia"),
-                data.get("status_instancia", "ativo"),
-                data.get("resumo_melhoria"),
-                data.get("responsavel_local"),
-                data.get("fase_melhoria", "planejado"),
-                data.get("data_alvo_go_live"),
-                data.get("prioridade", "media"),
-            ),
-            auto_commit=False,
-        )
-        if row is None:
-            raise RuntimeError("Falha ao criar instância operacional.")
+            setores = self._resolve_setores(
+                setor_refs,
+                filial_codigo=filial_codigo,
+                todas_filiais_ativas=todas_filiais_ativas,
+            )
 
-        instancia_id = str(row["instancia_id"])
-        self._attach_setores(instancia_id, setores, auto_commit=False)
+            row = self.execute_returning_one(
+                """
+                INSERT INTO transformometro.processo_instancias (
+                    processo_id,
+                    filial_id,
+                    todas_filiais_ativas,
+                    rotulo_instancia,
+                    status_instancia,
+                    resumo_melhoria,
+                    responsavel_local,
+                    fase_melhoria,
+                    data_alvo_go_live,
+                    prioridade
+                )
+                VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING instancia_id
+                """,
+                (
+                    processo_id,
+                    filial["filial_id"] if filial else None,
+                    todas_filiais_ativas,
+                    data.get("rotulo_instancia"),
+                    data.get("status_instancia", "ativo"),
+                    data.get("resumo_melhoria"),
+                    data.get("responsavel_local"),
+                    data.get("fase_melhoria", "planejado"),
+                    data.get("data_alvo_go_live"),
+                    data.get("prioridade", "media"),
+                ),
+                auto_commit=False,
+            )
+            if row is None:
+                raise RuntimeError("Falha ao criar instância operacional.")
 
-        if auto_commit:
-            self._connection.commit()
+            instancia_id = str(row["instancia_id"])
+            self._attach_setores(instancia_id, setores, auto_commit=False)
 
-        created = self.get(instancia_id)
-        if created is None:
-            raise RuntimeError("Falha ao carregar instância criada.")
-        return created
+            if auto_commit:
+                self.commit()
+
+            created = self.get(instancia_id)
+            if created is None:
+                raise RuntimeError("Falha ao carregar instância criada.")
+            return created
 
     def count_revisoes(self, instancia_id: str) -> int:
         row = self.fetch_one(
@@ -371,77 +372,78 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             self._attach_setores(instancia_id, add_setores, auto_commit=auto_commit)
 
     def update(self, instancia_id: str, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
-        existing = self.get(instancia_id)
-        if not existing:
-            raise ProcessoInstanciaDomainError("Instância não encontrada.")
+        with self.db():
+            existing = self.get(instancia_id)
+            if not existing:
+                raise ProcessoInstanciaDomainError("Instância não encontrada.")
 
-        setor_refs = self._normalize_setor_refs(data)
-        existing_todas = bool(existing.get("todas_filiais_ativas"))
+            setor_refs = self._normalize_setor_refs(data)
+            existing_todas = bool(existing.get("todas_filiais_ativas"))
 
-        # Escopo alvo: usa o que veio no payload; sem chave, mantém o atual.
-        if data.get("todas_filiais_ativas") is None:
-            target_todas = existing_todas
-        else:
-            target_todas = bool(data.get("todas_filiais_ativas"))
-        filial_atual = str(existing.get("codigo_filial") or existing.get("filial_id") or "").strip() or None
-        target_filial_codigo = (
-            None if target_todas else (str(data.get("filial_id") or "").strip() or filial_atual)
-        )
-        scope_changed = bool(data.get("scope_changed"))
+            # Escopo alvo: usa o que veio no payload; sem chave, mantém o atual.
+            if data.get("todas_filiais_ativas") is None:
+                target_todas = existing_todas
+            else:
+                target_todas = bool(data.get("todas_filiais_ativas"))
+            filial_atual = str(existing.get("codigo_filial") or existing.get("filial_id") or "").strip() or None
+            target_filial_codigo = (
+                None if target_todas else (str(data.get("filial_id") or "").strip() or filial_atual)
+            )
+            scope_changed = bool(data.get("scope_changed"))
 
-        target_filial: dict[str, Any] | None = None
-        if not target_todas:
-            target_filial = self._resolve_filial(
+            target_filial: dict[str, Any] | None = None
+            if not target_todas:
+                target_filial = self._resolve_filial(
+                    filial_codigo=target_filial_codigo,
+                    todas_filiais_ativas=False,
+                )
+
+            setores = self._resolve_setores(
+                setor_refs,
                 filial_codigo=target_filial_codigo,
-                todas_filiais_ativas=False,
+                todas_filiais_ativas=target_todas,
             )
 
-        setores = self._resolve_setores(
-            setor_refs,
-            filial_codigo=target_filial_codigo,
-            todas_filiais_ativas=target_todas,
-        )
+            self.execute_returning_one(
+                """
+                UPDATE transformometro.processo_instancias
+                SET rotulo_instancia = %s,
+                    status_instancia = %s,
+                    todas_filiais_ativas = %s,
+                    filial_id = %s::uuid,
+                    resumo_melhoria = %s,
+                    responsavel_local = %s,
+                    fase_melhoria = %s,
+                    data_alvo_go_live = %s,
+                    prioridade = %s,
+                    updated_at = NOW()
+                WHERE instancia_id = %s::uuid
+                  AND deletado = FALSE
+                RETURNING instancia_id
+                """,
+                (
+                    data.get("rotulo_instancia"),
+                    data.get("status_instancia", existing.get("status_instancia") or "ativo"),
+                    target_todas,
+                    target_filial["filial_id"] if target_filial else None,
+                    data.get("resumo_melhoria"),
+                    data.get("responsavel_local"),
+                    data.get("fase_melhoria", existing.get("fase_melhoria") or "planejado"),
+                    data.get("data_alvo_go_live"),
+                    data.get("prioridade", existing.get("prioridade") or "media"),
+                    instancia_id,
+                ),
+                auto_commit=False,
+            )
+            self._sync_setores(instancia_id, setores, auto_commit=False)
 
-        self.execute_returning_one(
-            """
-            UPDATE transformometro.processo_instancias
-            SET rotulo_instancia = %s,
-                status_instancia = %s,
-                todas_filiais_ativas = %s,
-                filial_id = %s::uuid,
-                resumo_melhoria = %s,
-                responsavel_local = %s,
-                fase_melhoria = %s,
-                data_alvo_go_live = %s,
-                prioridade = %s,
-                updated_at = NOW()
-            WHERE instancia_id = %s::uuid
-              AND deletado = FALSE
-            RETURNING instancia_id
-            """,
-            (
-                data.get("rotulo_instancia"),
-                data.get("status_instancia", existing.get("status_instancia") or "ativo"),
-                target_todas,
-                target_filial["filial_id"] if target_filial else None,
-                data.get("resumo_melhoria"),
-                data.get("responsavel_local"),
-                data.get("fase_melhoria", existing.get("fase_melhoria") or "planejado"),
-                data.get("data_alvo_go_live"),
-                data.get("prioridade", existing.get("prioridade") or "media"),
-                instancia_id,
-            ),
-            auto_commit=False,
-        )
-        self._sync_setores(instancia_id, setores, auto_commit=False)
+            if auto_commit:
+                self.commit()
 
-        if auto_commit:
-            self._connection.commit()
-
-        updated = self.get(instancia_id)
-        if updated is None:
-            raise RuntimeError("Falha ao carregar instância atualizada.")
-        return updated
+            updated = self.get(instancia_id)
+            if updated is None:
+                raise RuntimeError("Falha ao carregar instância atualizada.")
+            return updated
 
     def update_contexto(
         self,

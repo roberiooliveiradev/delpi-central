@@ -232,30 +232,31 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         assignee_user_ids: Sequence[str],
         auto_commit: bool = False,
     ) -> None:
-        tid = str(task_id)
-        self.execute(
-            "DELETE FROM commercial.task_assignees WHERE task_id = %s",
-            (tid,),
-            auto_commit=False,
-        )
-        values = [
-            (tid, uid, index)
-            for index, uid in enumerate(assignee_user_ids)
-            if uid and str(uid).strip()
-        ]
-        if values:
-            self.execute_many(
-                """
-                INSERT INTO commercial.task_assignees (task_id, user_id, sort_order)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (task_id, user_id) DO UPDATE
-                   SET sort_order = EXCLUDED.sort_order
-                """,
-                values,
+        with self.db():
+            tid = str(task_id)
+            self.execute(
+                "DELETE FROM commercial.task_assignees WHERE task_id = %s",
+                (tid,),
                 auto_commit=False,
             )
-        if auto_commit:
-            self.commit()
+            values = [
+                (tid, uid, index)
+                for index, uid in enumerate(assignee_user_ids)
+                if uid and str(uid).strip()
+            ]
+            if values:
+                self.execute_many(
+                    """
+                    INSERT INTO commercial.task_assignees (task_id, user_id, sort_order)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (task_id, user_id) DO UPDATE
+                       SET sort_order = EXCLUDED.sort_order
+                    """,
+                    values,
+                    auto_commit=False,
+                )
+            if auto_commit:
+                self.commit()
 
     def _replace_customers(
         self,
@@ -264,38 +265,39 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         customers: Sequence[TaskCustomerRef],
         auto_commit: bool = False,
     ) -> None:
-        tid = str(task_id)
-        self.execute(
-            "DELETE FROM commercial.task_customers WHERE task_id = %s",
-            (tid,),
-            auto_commit=False,
-        )
-        values = [
-            (
-                tid,
-                item.customer_code,
-                item.customer_store,
-                item.customer_name,
-                index,
-            )
-            for index, item in enumerate(customers)
-            if item.customer_code and item.customer_store
-        ]
-        if values:
-            self.execute_many(
-                """
-                INSERT INTO commercial.task_customers (
-                    task_id, customer_code, customer_store, customer_name, sort_order
-                ) VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (task_id, customer_code, customer_store) DO UPDATE
-                   SET customer_name = EXCLUDED.customer_name,
-                       sort_order = EXCLUDED.sort_order
-                """,
-                values,
+        with self.db():
+            tid = str(task_id)
+            self.execute(
+                "DELETE FROM commercial.task_customers WHERE task_id = %s",
+                (tid,),
                 auto_commit=False,
             )
-        if auto_commit:
-            self.commit()
+            values = [
+                (
+                    tid,
+                    item.customer_code,
+                    item.customer_store,
+                    item.customer_name,
+                    index,
+                )
+                for index, item in enumerate(customers)
+                if item.customer_code and item.customer_store
+            ]
+            if values:
+                self.execute_many(
+                    """
+                    INSERT INTO commercial.task_customers (
+                        task_id, customer_code, customer_store, customer_name, sort_order
+                    ) VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (task_id, customer_code, customer_store) DO UPDATE
+                       SET customer_name = EXCLUDED.customer_name,
+                           sort_order = EXCLUDED.sort_order
+                    """,
+                    values,
+                    auto_commit=False,
+                )
+            if auto_commit:
+                self.commit()
 
     def _replace_groups(
         self,
@@ -304,29 +306,30 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         assignee_group_ids: Sequence[str],
         auto_commit: bool = False,
     ) -> None:
-        tid = str(task_id)
-        self.execute(
-            "DELETE FROM commercial.task_assignee_groups WHERE task_id = %s",
-            (tid,),
-            auto_commit=False,
-        )
-        values = [
-            (tid, gid)
-            for gid in assignee_group_ids
-            if gid and str(gid).strip()
-        ]
-        if values:
-            self.execute_many(
-                """
-                INSERT INTO commercial.task_assignee_groups (task_id, group_id)
-                VALUES (%s, %s)
-                ON CONFLICT (task_id, group_id) DO NOTHING
-                """,
-                values,
+        with self.db():
+            tid = str(task_id)
+            self.execute(
+                "DELETE FROM commercial.task_assignee_groups WHERE task_id = %s",
+                (tid,),
                 auto_commit=False,
             )
-        if auto_commit:
-            self.commit()
+            values = [
+                (tid, gid)
+                for gid in assignee_group_ids
+                if gid and str(gid).strip()
+            ]
+            if values:
+                self.execute_many(
+                    """
+                    INSERT INTO commercial.task_assignee_groups (task_id, group_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT (task_id, group_id) DO NOTHING
+                    """,
+                    values,
+                    auto_commit=False,
+                )
+            if auto_commit:
+                self.commit()
 
     def _resolve_assignees(
         self,
@@ -513,53 +516,54 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         customers: Sequence[TaskCustomerRef] | None = None,
         assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask:
-        assignees = self._resolve_assignees(
-            assignee_user_id=assignee_user_id,
-            assignee_user_ids=assignee_user_ids,
-        )
-        custs = self._resolve_customers(
-            customer_code=customer_code,
-            customer_store=customer_store,
-            customers=customers,
-        )
-        groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
-        primary_assignee = assignees[0] if assignees else assignee_user_id
-        primary_customer = custs[0] if custs else None
-        row = self.execute_returning_one(
-            f"""
-            INSERT INTO commercial.tasks (
-                title, description, task_type, priority, due_at,
-                assignee_user_id, created_by_user_id, customer_code, customer_store
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING {_TASK_COLUMNS}
-            """,
-            (
-                title,
-                description,
-                task_type,
-                priority,
-                due_at,
-                primary_assignee,
-                created_by_user_id,
-                primary_customer.customer_code if primary_customer else None,
-                primary_customer.customer_store if primary_customer else None,
-            ),
-            auto_commit=False,
-        )
-        task = _row_task_base(row)
-        if task is None:
-            self.rollback()
-            raise RuntimeError("Falha ao criar tarefa.")
-        try:
-            self._replace_assignees(task_id=task.id, assignee_user_ids=assignees)
-            self._replace_customers(task_id=task.id, customers=custs)
-            self._replace_groups(task_id=task.id, assignee_group_ids=groups)
-            self.commit()
-        except Exception:
-            self.rollback()
-            raise
-        hydrated = self._hydrate([task])
-        return hydrated[0]
+        with self.db():
+            assignees = self._resolve_assignees(
+                assignee_user_id=assignee_user_id,
+                assignee_user_ids=assignee_user_ids,
+            )
+            custs = self._resolve_customers(
+                customer_code=customer_code,
+                customer_store=customer_store,
+                customers=customers,
+            )
+            groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
+            primary_assignee = assignees[0] if assignees else assignee_user_id
+            primary_customer = custs[0] if custs else None
+            row = self.execute_returning_one(
+                f"""
+                INSERT INTO commercial.tasks (
+                    title, description, task_type, priority, due_at,
+                    assignee_user_id, created_by_user_id, customer_code, customer_store
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING {_TASK_COLUMNS}
+                """,
+                (
+                    title,
+                    description,
+                    task_type,
+                    priority,
+                    due_at,
+                    primary_assignee,
+                    created_by_user_id,
+                    primary_customer.customer_code if primary_customer else None,
+                    primary_customer.customer_store if primary_customer else None,
+                ),
+                auto_commit=False,
+            )
+            task = _row_task_base(row)
+            if task is None:
+                self.rollback()
+                raise RuntimeError("Falha ao criar tarefa.")
+            try:
+                self._replace_assignees(task_id=task.id, assignee_user_ids=assignees)
+                self._replace_customers(task_id=task.id, customers=custs)
+                self._replace_groups(task_id=task.id, assignee_group_ids=groups)
+                self.commit()
+            except Exception:
+                self.rollback()
+                raise
+            hydrated = self._hydrate([task])
+            return hydrated[0]
 
     def complete(
         self,
@@ -614,40 +618,41 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         assignee_user_ids: Sequence[str] | None = None,
         assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
-        assignees = self._resolve_assignees(
-            assignee_user_id=new_assignee_user_id,
-            assignee_user_ids=assignee_user_ids,
-        )
-        if not assignees:
-            return None
-        groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
-        primary = assignees[0]
-        row = self.execute_returning_one(
-            f"""
-            UPDATE commercial.tasks
-               SET assignee_user_id = %s,
-                   updated_at = NOW()
-             WHERE id = %s
-               AND deleted_at IS NULL
-               AND status = 'open'
-         RETURNING {_TASK_COLUMNS}
-            """,
-            (primary, str(task_id)),
-            auto_commit=False,
-        )
-        base = _row_task_base(row)
-        if base is None:
-            self.rollback()
-            return None
-        try:
-            self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
-            if assignee_group_ids is not None:
-                self._replace_groups(task_id=task_id, assignee_group_ids=groups)
-            self.commit()
-        except Exception:
-            self.rollback()
-            raise
-        return self._hydrate([base])[0]
+        with self.db():
+            assignees = self._resolve_assignees(
+                assignee_user_id=new_assignee_user_id,
+                assignee_user_ids=assignee_user_ids,
+            )
+            if not assignees:
+                return None
+            groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
+            primary = assignees[0]
+            row = self.execute_returning_one(
+                f"""
+                UPDATE commercial.tasks
+                   SET assignee_user_id = %s,
+                       updated_at = NOW()
+                 WHERE id = %s
+                   AND deleted_at IS NULL
+                   AND status = 'open'
+             RETURNING {_TASK_COLUMNS}
+                """,
+                (primary, str(task_id)),
+                auto_commit=False,
+            )
+            base = _row_task_base(row)
+            if base is None:
+                self.rollback()
+                return None
+            try:
+                self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
+                if assignee_group_ids is not None:
+                    self._replace_groups(task_id=task_id, assignee_group_ids=groups)
+                self.commit()
+            except Exception:
+                self.rollback()
+                raise
+            return self._hydrate([base])[0]
 
     def update(
         self,
@@ -665,62 +670,63 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         customers: Sequence[TaskCustomerRef] | None = None,
         assignee_group_ids: Sequence[str] | None = None,
     ) -> CommercialTask | None:
-        assignees = self._resolve_assignees(
-            assignee_user_id=assignee_user_id,
-            assignee_user_ids=assignee_user_ids,
-        )
-        custs = self._resolve_customers(
-            customer_code=customer_code,
-            customer_store=customer_store,
-            customers=customers,
-        )
-        groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
-        primary_assignee = assignees[0] if assignees else assignee_user_id
-        primary_customer = custs[0] if custs else None
-        row = self.execute_returning_one(
-            f"""
-            UPDATE commercial.tasks
-               SET title = %s,
-                   description = %s,
-                   task_type = %s,
-                   priority = %s,
-                   due_at = %s,
-                   customer_code = %s,
-                   customer_store = %s,
-                   assignee_user_id = %s,
-                   updated_at = NOW()
-             WHERE id = %s
-               AND deleted_at IS NULL
-               AND status = 'open'
-         RETURNING {_TASK_COLUMNS}
-            """,
-            (
-                title,
-                description,
-                task_type,
-                priority,
-                due_at,
-                primary_customer.customer_code if primary_customer else None,
-                primary_customer.customer_store if primary_customer else None,
-                primary_assignee,
-                str(task_id),
-            ),
-            auto_commit=False,
-        )
-        base = _row_task_base(row)
-        if base is None:
-            self.rollback()
-            return None
-        try:
-            self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
-            self._replace_customers(task_id=task_id, customers=custs)
-            if assignee_group_ids is not None:
-                self._replace_groups(task_id=task_id, assignee_group_ids=groups)
-            self.commit()
-        except Exception:
-            self.rollback()
-            raise
-        return self._hydrate([base])[0]
+        with self.db():
+            assignees = self._resolve_assignees(
+                assignee_user_id=assignee_user_id,
+                assignee_user_ids=assignee_user_ids,
+            )
+            custs = self._resolve_customers(
+                customer_code=customer_code,
+                customer_store=customer_store,
+                customers=customers,
+            )
+            groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
+            primary_assignee = assignees[0] if assignees else assignee_user_id
+            primary_customer = custs[0] if custs else None
+            row = self.execute_returning_one(
+                f"""
+                UPDATE commercial.tasks
+                   SET title = %s,
+                       description = %s,
+                       task_type = %s,
+                       priority = %s,
+                       due_at = %s,
+                       customer_code = %s,
+                       customer_store = %s,
+                       assignee_user_id = %s,
+                       updated_at = NOW()
+                 WHERE id = %s
+                   AND deleted_at IS NULL
+                   AND status = 'open'
+             RETURNING {_TASK_COLUMNS}
+                """,
+                (
+                    title,
+                    description,
+                    task_type,
+                    priority,
+                    due_at,
+                    primary_customer.customer_code if primary_customer else None,
+                    primary_customer.customer_store if primary_customer else None,
+                    primary_assignee,
+                    str(task_id),
+                ),
+                auto_commit=False,
+            )
+            base = _row_task_base(row)
+            if base is None:
+                self.rollback()
+                return None
+            try:
+                self._replace_assignees(task_id=task_id, assignee_user_ids=assignees)
+                self._replace_customers(task_id=task_id, customers=custs)
+                if assignee_group_ids is not None:
+                    self._replace_groups(task_id=task_id, assignee_group_ids=groups)
+                self.commit()
+            except Exception:
+                self.rollback()
+                raise
+            return self._hydrate([base])[0]
 
     def soft_delete(self, *, task_id: UUID) -> CommercialTask | None:
         row = self.execute_returning_one(
@@ -772,28 +778,29 @@ class PostgresActivityRepository(PluginBaseRepository, ActivityRepositoryPort):
         customer_store: str | None,
         task_id: UUID | None,
     ) -> CommercialActivity:
-        row = self.execute_returning_one(
-            f"""
-            INSERT INTO commercial.activities (
-                activity_type, subject, body, occurred_at, actor_user_id,
-                customer_code, customer_store, task_id
-            ) VALUES (
-                %s, %s, %s, COALESCE(%s, NOW()), %s, %s, %s, %s
+        with self.db():
+            row = self.execute_returning_one(
+                f"""
+                INSERT INTO commercial.activities (
+                    activity_type, subject, body, occurred_at, actor_user_id,
+                    customer_code, customer_store, task_id
+                ) VALUES (
+                    %s, %s, %s, COALESCE(%s, NOW()), %s, %s, %s, %s
+                )
+                RETURNING {_ACTIVITY_COLUMNS}
+                """,
+                (
+                    activity_type,
+                    subject,
+                    body,
+                    occurred_at,
+                    actor_user_id,
+                    customer_code,
+                    customer_store,
+                    str(task_id) if task_id else None,
+                ),
             )
-            RETURNING {_ACTIVITY_COLUMNS}
-            """,
-            (
-                activity_type,
-                subject,
-                body,
-                occurred_at,
-                actor_user_id,
-                customer_code,
-                customer_store,
-                str(task_id) if task_id else None,
-            ),
-        )
-        activity = _row_activity(row)
-        if activity is None:
-            raise RuntimeError("Falha ao criar atividade.")
-        return activity
+            activity = _row_activity(row)
+            if activity is None:
+                raise RuntimeError("Falha ao criar atividade.")
+            return activity

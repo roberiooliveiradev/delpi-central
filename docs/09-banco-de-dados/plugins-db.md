@@ -136,9 +136,14 @@ PLUGINS_DB_USER=
 PLUGINS_DB_PASSWORD=
 PLUGINS_DB_CONNECT_TIMEOUT=
 PLUGINS_DB_SSLMODE=
+PLUGINS_DB_POOL_MAX_SIZE=10
+PLUGINS_DB_POOL_ACQUIRE_TIMEOUT=30
+PLUGINS_DB_APPLICATION_NAME=api-delpi-plugins
 ```
 
 Essas variáveis são injetadas no serviço `api-delpi`.
+
+O acesso usa **pool limitado** (`PluginsConnectionPool`) com acquire/release por operação — o somatório dos pools dos apps clientes deve permanecer bem abaixo de `max_connections` do Postgres. Ver `infra/README-ambiente.md` § Pool de conexões `postgres-plugins`.
 
 ---
 

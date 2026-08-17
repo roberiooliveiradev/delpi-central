@@ -15,7 +15,7 @@ import sys
 from dataclasses import dataclass
 
 from si_app.infrastructure.providers.database.plugins_postgres_connection import (
-    get_plugins_connection,
+    plugins_connection,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,39 +30,39 @@ class RetentionResult:
 
 def run_data_retention(*, dry_run: bool = False) -> RetentionResult:
     """Executa a política de retenção de dados pessoais em settings_audit."""
-    conn = get_plugins_connection()
-    audit_anonymized = 0
+    with plugins_connection() as conn:
+        audit_anonymized = 0
 
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                UPDATE strategic_indicators.settings_audit
-                SET changed_by_email = 'anonimizado@lgpd',
-                    changed_by_user_id = NULL
-                WHERE changed_by_email IS NOT NULL
-                  AND changed_by_email != 'anonimizado@lgpd'
-                  AND created_at < NOW() - INTERVAL '{AUDIT_ANONYMIZE_DAYS} days'
-                """,
-            )
-            audit_anonymized = cur.rowcount or 0
-            logger.info(
-                "settings_audit anonimizados: %d registros%s",
-                audit_anonymized,
-                " (dry-run)" if dry_run else "",
-            )
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE strategic_indicators.settings_audit
+                    SET changed_by_email = 'anonimizado@lgpd',
+                        changed_by_user_id = NULL
+                    WHERE changed_by_email IS NOT NULL
+                      AND changed_by_email != 'anonimizado@lgpd'
+                      AND created_at < NOW() - INTERVAL '{AUDIT_ANONYMIZE_DAYS} days'
+                    """,
+                )
+                audit_anonymized = cur.rowcount or 0
+                logger.info(
+                    "settings_audit anonimizados: %d registros%s",
+                    audit_anonymized,
+                    " (dry-run)" if dry_run else "",
+                )
 
-        if dry_run:
+            if dry_run:
+                conn.rollback()
+            else:
+                conn.commit()
+
+        except Exception:
             conn.rollback()
-        else:
-            conn.commit()
+            logger.exception("Erro durante job de retenção de dados (strategic-indicators).")
+            raise
 
-    except Exception:
-        conn.rollback()
-        logger.exception("Erro durante job de retenção de dados (strategic-indicators).")
-        raise
-
-    return RetentionResult(audit_anonymized=audit_anonymized)
+        return RetentionResult(audit_anonymized=audit_anonymized)
 
 
 def main() -> None:

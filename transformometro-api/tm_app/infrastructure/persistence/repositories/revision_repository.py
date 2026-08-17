@@ -68,113 +68,115 @@ class RevisaoRepository(PluginBaseRepository):
         )
 
     def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
-        data = self._normalize_lifecycle_payload(data)
-        if data.get("instancia_id"):
-            instancia_id = str(data["instancia_id"])
-        else:
-            instancia = ProcessoInstanciaRepository(connection=self._connection).ensure_from_processo(
-                str(data["processo_id"])
+        with self.db():
+            data = self._normalize_lifecycle_payload(data)
+            if data.get("instancia_id"):
+                instancia_id = str(data["instancia_id"])
+            else:
+                instancia = ProcessoInstanciaRepository(connection=self._connection).ensure_from_processo(
+                    str(data["processo_id"])
+                )
+                instancia_id = str(instancia["instancia_id"])
+            self._validate_referencia_payload(data, instancia_id=instancia_id)
+            chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
+            row = self.execute_returning_one(
+                """
+                INSERT INTO transformometro.revisoes (
+                    processo_id, instancia_id, versao_revisao, chave_unica_processo_revisao,
+                    descricao_revisao, motivo_revisao, cenario_tipo,
+                    beneficio_calculo_categoria,
+                    data_implantacao, data_inicio_vigencia, data_fim_vigencia,
+                    revisao_ativa, observacoes, status_aprovacao, revisao_referencia_id
+                ) VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid)
+                RETURNING *
+                """,
+                (
+                    data["processo_id"],
+                    instancia_id,
+                    data["versao_revisao"],
+                    chave,
+                    data.get("descricao_revisao"),
+                    data.get("motivo_revisao"),
+                    data["cenario_tipo"],
+                    data.get("beneficio_calculo_categoria") or "automatico",
+                    data.get("data_implantacao"),
+                    data["data_inicio_vigencia"],
+                    data.get("data_fim_vigencia"),
+                    data.get("revisao_ativa", False),
+                    data.get("observacoes"),
+                    data.get("status_aprovacao", "aprovada"),
+                    data.get("revisao_referencia_id"),
+                ),
+                auto_commit=False,
             )
-            instancia_id = str(instancia["instancia_id"])
-        self._validate_referencia_payload(data, instancia_id=instancia_id)
-        chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
-        row = self.execute_returning_one(
-            """
-            INSERT INTO transformometro.revisoes (
-                processo_id, instancia_id, versao_revisao, chave_unica_processo_revisao,
-                descricao_revisao, motivo_revisao, cenario_tipo,
-                beneficio_calculo_categoria,
-                data_implantacao, data_inicio_vigencia, data_fim_vigencia,
-                revisao_ativa, observacoes, status_aprovacao, revisao_referencia_id
-            ) VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid)
-            RETURNING *
-            """,
-            (
-                data["processo_id"],
-                instancia_id,
-                data["versao_revisao"],
-                chave,
-                data.get("descricao_revisao"),
-                data.get("motivo_revisao"),
-                data["cenario_tipo"],
-                data.get("beneficio_calculo_categoria") or "automatico",
-                data.get("data_implantacao"),
-                data["data_inicio_vigencia"],
-                data.get("data_fim_vigencia"),
-                data.get("revisao_ativa", False),
-                data.get("observacoes"),
-                data.get("status_aprovacao", "aprovada"),
-                data.get("revisao_referencia_id"),
-            ),
-            auto_commit=False,
-        )
-        if row is None:
-            raise RuntimeError("Falha ao criar revisão.")
+            if row is None:
+                raise RuntimeError("Falha ao criar revisão.")
 
-        row = self._apply_revision_lifecycle(row, auto_commit=False)
-        if auto_commit:
-            self._connection.commit()
-        return row
+            row = self._apply_revision_lifecycle(row, auto_commit=False)
+            if auto_commit:
+                self.commit()
+            return row
 
     def update(self, revisao_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
-        data = self._normalize_lifecycle_payload(data)
-        current = self.get(revisao_id)
-        instancia_id = str(
-            data.get("instancia_id")
-            or (current or {}).get("instancia_id")
-            or ""
-        )
-        self._validate_referencia_payload(
-            data,
-            instancia_id=instancia_id,
-            revisao_id=revisao_id,
-        )
-        chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
-        row = self.execute_returning_one(
-            """
-            UPDATE transformometro.revisoes SET
-                processo_id = %s,
-                versao_revisao = %s,
-                chave_unica_processo_revisao = %s,
-                descricao_revisao = %s,
-                motivo_revisao = %s,
-                cenario_tipo = %s,
-                beneficio_calculo_categoria = %s,
-                data_implantacao = %s,
-                data_inicio_vigencia = %s,
-                data_fim_vigencia = %s,
-                revisao_ativa = %s,
-                observacoes = %s,
-                revisao_referencia_id = %s::uuid,
-                updated_at = NOW()
-            WHERE revisao_id = %s AND deletado = FALSE
-            RETURNING *
-            """,
-            (
-                data["processo_id"],
-                data["versao_revisao"],
-                chave,
-                data.get("descricao_revisao"),
-                data.get("motivo_revisao"),
-                data["cenario_tipo"],
-                data.get("beneficio_calculo_categoria") or "automatico",
-                data.get("data_implantacao"),
-                data["data_inicio_vigencia"],
-                data.get("data_fim_vigencia"),
-                data.get("revisao_ativa", False),
-                data.get("observacoes"),
-                data.get("revisao_referencia_id"),
-                revisao_id,
-            ),
-            auto_commit=False,
-        )
-        if row is None:
-            self._connection.commit()
-            return None
+        with self.db():
+            data = self._normalize_lifecycle_payload(data)
+            current = self.get(revisao_id)
+            instancia_id = str(
+                data.get("instancia_id")
+                or (current or {}).get("instancia_id")
+                or ""
+            )
+            self._validate_referencia_payload(
+                data,
+                instancia_id=instancia_id,
+                revisao_id=revisao_id,
+            )
+            chave = self.build_chave_unica(instancia_id, str(data["versao_revisao"]))
+            row = self.execute_returning_one(
+                """
+                UPDATE transformometro.revisoes SET
+                    processo_id = %s,
+                    versao_revisao = %s,
+                    chave_unica_processo_revisao = %s,
+                    descricao_revisao = %s,
+                    motivo_revisao = %s,
+                    cenario_tipo = %s,
+                    beneficio_calculo_categoria = %s,
+                    data_implantacao = %s,
+                    data_inicio_vigencia = %s,
+                    data_fim_vigencia = %s,
+                    revisao_ativa = %s,
+                    observacoes = %s,
+                    revisao_referencia_id = %s::uuid,
+                    updated_at = NOW()
+                WHERE revisao_id = %s AND deletado = FALSE
+                RETURNING *
+                """,
+                (
+                    data["processo_id"],
+                    data["versao_revisao"],
+                    chave,
+                    data.get("descricao_revisao"),
+                    data.get("motivo_revisao"),
+                    data["cenario_tipo"],
+                    data.get("beneficio_calculo_categoria") or "automatico",
+                    data.get("data_implantacao"),
+                    data["data_inicio_vigencia"],
+                    data.get("data_fim_vigencia"),
+                    data.get("revisao_ativa", False),
+                    data.get("observacoes"),
+                    data.get("revisao_referencia_id"),
+                    revisao_id,
+                ),
+                auto_commit=False,
+            )
+            if row is None:
+                self.commit()
+                return None
 
-        row = self._apply_revision_lifecycle(row, auto_commit=False)
-        self._connection.commit()
-        return row
+            row = self._apply_revision_lifecycle(row, auto_commit=False)
+            self.commit()
+            return row
 
     def set_status_aprovacao(
         self,
@@ -224,36 +226,37 @@ class RevisaoRepository(PluginBaseRepository):
         )
 
     def activate(self, revisao_id: str) -> dict[str, Any] | None:
-        current = self.get(revisao_id)
-        if not current:
-            return None
-        if self._is_baseline(current):
-            return self.execute_returning_one(
+        with self.db():
+            current = self.get(revisao_id)
+            if not current:
+                return None
+            if self._is_baseline(current):
+                return self.execute_returning_one(
+                    """
+                    UPDATE transformometro.revisoes
+                    SET revisao_ativa = FALSE, updated_at = NOW()
+                    WHERE revisao_id = %s AND deletado = FALSE
+                    RETURNING *
+                    """,
+                    (revisao_id,),
+                )
+
+            self.execute(
                 """
                 UPDATE transformometro.revisoes
-                SET revisao_ativa = FALSE, updated_at = NOW()
+                SET revisao_ativa = TRUE, data_fim_vigencia = NULL, updated_at = NOW()
                 WHERE revisao_id = %s AND deletado = FALSE
-                RETURNING *
                 """,
                 (revisao_id,),
+                auto_commit=False,
             )
-
-        self.execute(
-            """
-            UPDATE transformometro.revisoes
-            SET revisao_ativa = TRUE, data_fim_vigencia = NULL, updated_at = NOW()
-            WHERE revisao_id = %s AND deletado = FALSE
-            """,
-            (revisao_id,),
-            auto_commit=False,
-        )
-        current = self.get(revisao_id)
-        if not current:
-            self._connection.commit()
-            return None
-        row = self._apply_revision_lifecycle(current, auto_commit=False)
-        self._connection.commit()
-        return row
+            current = self.get(revisao_id)
+            if not current:
+                self.commit()
+                return None
+            row = self._apply_revision_lifecycle(current, auto_commit=False)
+            self.commit()
+            return row
 
     def soft_delete(self, revisao_id: str) -> bool:
         row = self.execute_returning_one(
@@ -310,93 +313,94 @@ class RevisaoRepository(PluginBaseRepository):
         *,
         auto_commit: bool,
     ) -> dict[str, Any]:
-        revision_id = str(revision["revisao_id"])
-        processo_id = str(revision["processo_id"])
+        with self.db():
+            revision_id = str(revision["revisao_id"])
+            processo_id = str(revision["processo_id"])
 
-        if self._is_baseline(revision):
-            self.execute(
+            if self._is_baseline(revision):
+                self.execute(
+                    """
+                    UPDATE transformometro.revisoes
+                    SET revisao_ativa = FALSE, updated_at = NOW()
+                    WHERE revisao_id = %s AND deletado = FALSE
+                    """,
+                    (revision_id,),
+                    auto_commit=False,
+                )
+                return self.get(revision_id) or revision
+
+            if revision.get("data_fim_vigencia"):
+                self.execute(
+                    """
+                    UPDATE transformometro.revisoes
+                    SET revisao_ativa = FALSE, updated_at = NOW()
+                    WHERE revisao_id = %s AND deletado = FALSE
+                    """,
+                    (revision_id,),
+                    auto_commit=False,
+                )
+                return self.get(revision_id) or revision
+
+            if not bool(revision.get("revisao_ativa")):
+                self.execute(
+                    """
+                    UPDATE transformometro.revisoes
+                    SET data_fim_vigencia = COALESCE(data_fim_vigencia, CURRENT_DATE),
+                        updated_at = NOW()
+                    WHERE revisao_id = %s AND deletado = FALSE
+                    """,
+                    (revision_id,),
+                    auto_commit=False,
+                )
+                if auto_commit:
+                    self.commit()
+                return self.get(revision_id) or revision
+
+            boundary_date = revision.get("data_implantacao") or revision.get("data_inicio_vigencia")
+            instancia_id = revision.get("instancia_id")
+            if instancia_id:
+                self.execute(
+                    """
+                    UPDATE transformometro.revisoes
+                    SET revisao_ativa = FALSE,
+                        data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
+                        updated_at = NOW()
+                    WHERE instancia_id = %s::uuid
+                      AND revisao_id <> %s
+                      AND deletado = FALSE
+                    """,
+                    (boundary_date, str(instancia_id), revision_id),
+                    auto_commit=False,
+                )
+            else:
+                self.execute(
+                    """
+                    UPDATE transformometro.revisoes
+                    SET revisao_ativa = FALSE,
+                        data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
+                        updated_at = NOW()
+                    WHERE processo_id = %s
+                      AND revisao_id <> %s
+                      AND deletado = FALSE
+                    """,
+                    (boundary_date, processo_id, revision_id),
+                    auto_commit=False,
+                )
+            row = self.execute_returning_one(
                 """
                 UPDATE transformometro.revisoes
-                SET revisao_ativa = FALSE, updated_at = NOW()
-                WHERE revisao_id = %s AND deletado = FALSE
-                """,
-                (revision_id,),
-                auto_commit=False,
-            )
-            return self.get(revision_id) or revision
-
-        if revision.get("data_fim_vigencia"):
-            self.execute(
-                """
-                UPDATE transformometro.revisoes
-                SET revisao_ativa = FALSE, updated_at = NOW()
-                WHERE revisao_id = %s AND deletado = FALSE
-                """,
-                (revision_id,),
-                auto_commit=False,
-            )
-            return self.get(revision_id) or revision
-
-        if not bool(revision.get("revisao_ativa")):
-            self.execute(
-                """
-                UPDATE transformometro.revisoes
-                SET data_fim_vigencia = COALESCE(data_fim_vigencia, CURRENT_DATE),
+                SET revisao_ativa = TRUE,
+                    data_fim_vigencia = NULL,
                     updated_at = NOW()
                 WHERE revisao_id = %s AND deletado = FALSE
+                RETURNING *
                 """,
                 (revision_id,),
                 auto_commit=False,
             )
             if auto_commit:
-                self._connection.commit()
-            return self.get(revision_id) or revision
-
-        boundary_date = revision.get("data_implantacao") or revision.get("data_inicio_vigencia")
-        instancia_id = revision.get("instancia_id")
-        if instancia_id:
-            self.execute(
-                """
-                UPDATE transformometro.revisoes
-                SET revisao_ativa = FALSE,
-                    data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
-                    updated_at = NOW()
-                WHERE instancia_id = %s::uuid
-                  AND revisao_id <> %s
-                  AND deletado = FALSE
-                """,
-                (boundary_date, str(instancia_id), revision_id),
-                auto_commit=False,
-            )
-        else:
-            self.execute(
-                """
-                UPDATE transformometro.revisoes
-                SET revisao_ativa = FALSE,
-                    data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
-                    updated_at = NOW()
-                WHERE processo_id = %s
-                  AND revisao_id <> %s
-                  AND deletado = FALSE
-                """,
-                (boundary_date, processo_id, revision_id),
-                auto_commit=False,
-            )
-        row = self.execute_returning_one(
-            """
-            UPDATE transformometro.revisoes
-            SET revisao_ativa = TRUE,
-                data_fim_vigencia = NULL,
-                updated_at = NOW()
-            WHERE revisao_id = %s AND deletado = FALSE
-            RETURNING *
-            """,
-            (revision_id,),
-            auto_commit=False,
-        )
-        if auto_commit:
-            self._connection.commit()
-        return row or revision
+                self.commit()
+            return row or revision
 
     @staticmethod
     def _is_baseline(data: dict[str, Any]) -> bool:

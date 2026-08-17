@@ -161,22 +161,51 @@ class ProcessoEscopoRepository(PluginBaseRepository):
         setor_ids: list[str] | None,
         auto_commit: bool = True,
     ) -> dict[str, Any]:
-        filial_refs = self._normalize_refs(filial_ids)
-        setor_refs = self._normalize_refs(setor_ids)
-        validate_processo_escopo(
-            todas_filiais_ativas=todas_filiais_ativas,
-            filial_ids=filial_refs,
-            setor_ids=setor_refs,
-        )
+        with self.db():
+            filial_refs = self._normalize_refs(filial_ids)
+            setor_refs = self._normalize_refs(setor_ids)
+            validate_processo_escopo(
+                todas_filiais_ativas=todas_filiais_ativas,
+                filial_ids=filial_refs,
+                setor_ids=setor_refs,
+            )
 
-        if not filial_refs and not setor_refs and not todas_filiais_ativas:
+            if not filial_refs and not setor_refs and not todas_filiais_ativas:
+                self.execute(
+                    """
+                    UPDATE transformometro.processos
+                    SET todas_filiais_ativas = FALSE, updated_at = NOW()
+                    WHERE processo_id = %s::uuid AND deletado = FALSE
+                    """,
+                    (processo_id,),
+                    auto_commit=False,
+                )
+                self.execute(
+                    "DELETE FROM transformometro.processo_filiais WHERE processo_id = %s::uuid",
+                    (processo_id,),
+                    auto_commit=False,
+                )
+                self.execute(
+                    "DELETE FROM transformometro.processo_setores WHERE processo_id = %s::uuid",
+                    (processo_id,),
+                    auto_commit=auto_commit,
+                )
+                return self.get_escopo(processo_id)
+
+            filiais = [] if todas_filiais_ativas else self._resolve_filiais(filial_refs)
+            setores = self._resolve_setores(
+                setor_refs,
+                filial_codigos=filial_refs,
+                todas_filiais_ativas=todas_filiais_ativas,
+            )
+
             self.execute(
                 """
                 UPDATE transformometro.processos
-                SET todas_filiais_ativas = FALSE, updated_at = NOW()
+                SET todas_filiais_ativas = %s, updated_at = NOW()
                 WHERE processo_id = %s::uuid AND deletado = FALSE
                 """,
-                (processo_id,),
+                (todas_filiais_ativas, processo_id),
                 auto_commit=False,
             )
             self.execute(
@@ -187,56 +216,28 @@ class ProcessoEscopoRepository(PluginBaseRepository):
             self.execute(
                 "DELETE FROM transformometro.processo_setores WHERE processo_id = %s::uuid",
                 (processo_id,),
-                auto_commit=auto_commit,
+                auto_commit=False,
             )
+            for filial in filiais:
+                self.execute(
+                    """
+                    INSERT INTO transformometro.processo_filiais (processo_id, filial_id)
+                    VALUES (%s::uuid, %s::uuid)
+                    ON CONFLICT (processo_id, filial_id) DO NOTHING
+                    """,
+                    (processo_id, filial["filial_id"]),
+                    auto_commit=False,
+                )
+            for setor in setores:
+                self.execute(
+                    """
+                    INSERT INTO transformometro.processo_setores (processo_id, setor_id)
+                    VALUES (%s::uuid, %s::uuid)
+                    ON CONFLICT (processo_id, setor_id) DO NOTHING
+                    """,
+                    (processo_id, setor["setor_id"]),
+                    auto_commit=False,
+                )
+            if auto_commit:
+                self.commit()
             return self.get_escopo(processo_id)
-
-        filiais = [] if todas_filiais_ativas else self._resolve_filiais(filial_refs)
-        setores = self._resolve_setores(
-            setor_refs,
-            filial_codigos=filial_refs,
-            todas_filiais_ativas=todas_filiais_ativas,
-        )
-
-        self.execute(
-            """
-            UPDATE transformometro.processos
-            SET todas_filiais_ativas = %s, updated_at = NOW()
-            WHERE processo_id = %s::uuid AND deletado = FALSE
-            """,
-            (todas_filiais_ativas, processo_id),
-            auto_commit=False,
-        )
-        self.execute(
-            "DELETE FROM transformometro.processo_filiais WHERE processo_id = %s::uuid",
-            (processo_id,),
-            auto_commit=False,
-        )
-        self.execute(
-            "DELETE FROM transformometro.processo_setores WHERE processo_id = %s::uuid",
-            (processo_id,),
-            auto_commit=False,
-        )
-        for filial in filiais:
-            self.execute(
-                """
-                INSERT INTO transformometro.processo_filiais (processo_id, filial_id)
-                VALUES (%s::uuid, %s::uuid)
-                ON CONFLICT (processo_id, filial_id) DO NOTHING
-                """,
-                (processo_id, filial["filial_id"]),
-                auto_commit=False,
-            )
-        for setor in setores:
-            self.execute(
-                """
-                INSERT INTO transformometro.processo_setores (processo_id, setor_id)
-                VALUES (%s::uuid, %s::uuid)
-                ON CONFLICT (processo_id, setor_id) DO NOTHING
-                """,
-                (processo_id, setor["setor_id"]),
-                auto_commit=False,
-            )
-        if auto_commit:
-            self._connection.commit()
-        return self.get_escopo(processo_id)

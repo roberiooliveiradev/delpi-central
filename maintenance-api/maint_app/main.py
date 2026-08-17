@@ -52,7 +52,14 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    yield
+    try:
+        yield
+    finally:
+        from maint_app.infrastructure.providers.database.plugins_postgres_connection import (
+            close_plugins_connection,
+        )
+
+        close_plugins_connection()
 
 
 app = FastAPI(

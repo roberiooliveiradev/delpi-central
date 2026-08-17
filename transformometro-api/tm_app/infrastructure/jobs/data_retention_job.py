@@ -16,7 +16,7 @@ import sys
 from dataclasses import dataclass
 
 from tm_app.infrastructure.providers.database.plugins_postgres_connection import (
-    get_plugins_connection,
+    plugins_connection,
 )
 
 logger = logging.getLogger(__name__)
@@ -43,57 +43,57 @@ class RetentionResult:
 
 def run_data_retention(*, dry_run: bool = False) -> RetentionResult:
     """Executa a política de retenção de dados pessoais."""
-    conn = get_plugins_connection()
-    purged: dict[str, int] = {}
-    audit_anonymized = 0
+    with plugins_connection() as conn:
+        purged: dict[str, int] = {}
+        audit_anonymized = 0
 
-    try:
-        with conn.cursor() as cur:
-            for table in _TABLES_WITH_SOFT_DELETE:
+        try:
+            with conn.cursor() as cur:
+                for table in _TABLES_WITH_SOFT_DELETE:
+                    cur.execute(
+                        f"""
+                        DELETE FROM {table}
+                        WHERE deletado = TRUE
+                          AND updated_at < NOW() - INTERVAL '{SOFT_DELETE_RETENTION_DAYS} days'
+                        """,
+                    )
+                    purged[table] = cur.rowcount or 0
+                    logger.info(
+                        "Purge %s: %d registros removidos%s",
+                        table,
+                        purged[table],
+                        " (dry-run)" if dry_run else "",
+                    )
+
                 cur.execute(
                     f"""
-                    DELETE FROM {table}
-                    WHERE deletado = TRUE
-                      AND updated_at < NOW() - INTERVAL '{SOFT_DELETE_RETENTION_DAYS} days'
+                    UPDATE transformometro.audit_logs
+                    SET user_email = 'anonimizado@lgpd',
+                        user_name = NULL,
+                        user_id = NULL
+                    WHERE user_email IS NOT NULL
+                      AND user_email != 'anonimizado@lgpd'
+                      AND created_at < NOW() - INTERVAL '{AUDIT_ANONYMIZE_DAYS} days'
                     """,
                 )
-                purged[table] = cur.rowcount or 0
+                audit_anonymized = cur.rowcount or 0
                 logger.info(
-                    "Purge %s: %d registros removidos%s",
-                    table,
-                    purged[table],
+                    "Audit logs anonimizados: %d registros%s",
+                    audit_anonymized,
                     " (dry-run)" if dry_run else "",
                 )
 
-            cur.execute(
-                f"""
-                UPDATE transformometro.audit_logs
-                SET user_email = 'anonimizado@lgpd',
-                    user_name = NULL,
-                    user_id = NULL
-                WHERE user_email IS NOT NULL
-                  AND user_email != 'anonimizado@lgpd'
-                  AND created_at < NOW() - INTERVAL '{AUDIT_ANONYMIZE_DAYS} days'
-                """,
-            )
-            audit_anonymized = cur.rowcount or 0
-            logger.info(
-                "Audit logs anonimizados: %d registros%s",
-                audit_anonymized,
-                " (dry-run)" if dry_run else "",
-            )
+            if dry_run:
+                conn.rollback()
+            else:
+                conn.commit()
 
-        if dry_run:
+        except Exception:
             conn.rollback()
-        else:
-            conn.commit()
+            logger.exception("Erro durante job de retenção de dados (transformometro).")
+            raise
 
-    except Exception:
-        conn.rollback()
-        logger.exception("Erro durante job de retenção de dados (transformometro).")
-        raise
-
-    return RetentionResult(purged=purged, audit_anonymized=audit_anonymized)
+        return RetentionResult(purged=purged, audit_anonymized=audit_anonymized)
 
 
 def main() -> None:

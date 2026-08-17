@@ -120,7 +120,14 @@ check_credentials()
 async def lifespan(app: FastAPI):
     run_plugins_migrations_on_startup()
     schedule_openapi_consumer_notify_on_startup()
-    yield
+    try:
+        yield
+    finally:
+        from app.infrastructure.providers.database.plugins_postgres_connection import (
+            close_plugins_connection,
+        )
+
+        close_plugins_connection()
 
 
 app = FastAPI(

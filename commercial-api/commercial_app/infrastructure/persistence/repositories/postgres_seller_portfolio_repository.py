@@ -144,41 +144,42 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                 seen.add(uid)
                 unique_extras.append(uid)
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    f"""
-                    INSERT INTO commercial.seller_portfolios (
-                        user_id, display_name, created_by_user_id
-                    ) VALUES (%s, %s, %s)
-                    RETURNING {_PORTFOLIO_COLUMNS}
-                    """,
-                    (owner_id or None, display_name, created_by_user_id),
-                )
-                row = cursor.fetchone()
-                if row is None:
-                    raise RuntimeError("Falha ao criar carteira de vendedor.")
-                portfolio_row = dict(row)
-                portfolio_id = str(portfolio_row["id"])
-                if owner_id:
+            with self.db():
+                with self.connection.cursor() as cursor:
                     cursor.execute(
-                        """
-                        INSERT INTO commercial.seller_portfolio_members (
-                            seller_portfolio_id, user_id, role
-                        ) VALUES (%s, %s, 'owner')
+                        f"""
+                        INSERT INTO commercial.seller_portfolios (
+                            user_id, display_name, created_by_user_id
+                        ) VALUES (%s, %s, %s)
+                        RETURNING {_PORTFOLIO_COLUMNS}
                         """,
-                        (portfolio_id, owner_id),
+                        (owner_id or None, display_name, created_by_user_id),
                     )
-                    for member_id in unique_extras:
+                    row = cursor.fetchone()
+                    if row is None:
+                        raise RuntimeError("Falha ao criar carteira de vendedor.")
+                    portfolio_row = dict(row)
+                    portfolio_id = str(portfolio_row["id"])
+                    if owner_id:
                         cursor.execute(
                             """
                             INSERT INTO commercial.seller_portfolio_members (
                                 seller_portfolio_id, user_id, role
-                            ) VALUES (%s, %s, 'member')
-                            ON CONFLICT (seller_portfolio_id, user_id) DO NOTHING
+                            ) VALUES (%s, %s, 'owner')
                             """,
-                            (portfolio_id, member_id),
+                            (portfolio_id, owner_id),
                         )
-            self.commit()
+                        for member_id in unique_extras:
+                            cursor.execute(
+                                """
+                                INSERT INTO commercial.seller_portfolio_members (
+                                    seller_portfolio_id, user_id, role
+                                ) VALUES (%s, %s, 'member')
+                                ON CONFLICT (seller_portfolio_id, user_id) DO NOTHING
+                                """,
+                                (portfolio_id, member_id),
+                            )
+                self.commit()
         except Exception:
             self.rollback()
             raise
@@ -246,36 +247,37 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         ) is None:
             return None
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    "DELETE FROM commercial.seller_customers WHERE seller_portfolio_id = %s",
-                    (portfolio_id,),
-                )
-                for customer in customers:
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    cursor.execute(
+                        "DELETE FROM commercial.seller_customers WHERE seller_portfolio_id = %s",
+                        (portfolio_id,),
+                    )
+                    for customer in customers:
+                        cursor.execute(
+                            """
+                            INSERT INTO commercial.seller_customers (
+                                seller_portfolio_id, customer_code, customer_store, customer_name
+                            ) VALUES (%s, %s, %s, %s)
+                            ON CONFLICT (seller_portfolio_id, customer_code, customer_store) DO UPDATE
+                               SET customer_name = EXCLUDED.customer_name
+                            """,
+                            (
+                                portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                                customer.customer_name,
+                            ),
+                        )
                     cursor.execute(
                         """
-                        INSERT INTO commercial.seller_customers (
-                            seller_portfolio_id, customer_code, customer_store, customer_name
-                        ) VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (seller_portfolio_id, customer_code, customer_store) DO UPDATE
-                           SET customer_name = EXCLUDED.customer_name
+                        UPDATE commercial.seller_portfolios
+                           SET updated_at = NOW()
+                         WHERE id = %s
                         """,
-                        (
-                            portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                            customer.customer_name,
-                        ),
+                        (portfolio_id,),
                     )
-                cursor.execute(
-                    """
-                    UPDATE commercial.seller_portfolios
-                       SET updated_at = NOW()
-                     WHERE id = %s
-                    """,
-                    (portfolio_id,),
-                )
-            self.commit()
+                self.commit()
         except Exception:
             self.rollback()
             raise
@@ -369,73 +371,74 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         if source is None or target is None:
             return None
         try:
-            with self.connection.cursor() as cursor:
-                for customer in customers:
-                    cursor.execute(
-                        """
-                        SELECT customer_name
-                          FROM commercial.seller_customers
-                         WHERE seller_portfolio_id = %s
-                           AND customer_code = %s
-                           AND customer_store = %s
-                        """,
-                        (
-                            source_portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                        ),
-                    )
-                    row = cursor.fetchone()
-                    if row is None:
-                        raise ValueError(
-                            "Cliente "
-                            f"{customer.customer_code}/{customer.customer_store} "
-                            "não pertence à carteira de origem."
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    for customer in customers:
+                        cursor.execute(
+                            """
+                            SELECT customer_name
+                              FROM commercial.seller_customers
+                             WHERE seller_portfolio_id = %s
+                               AND customer_code = %s
+                               AND customer_store = %s
+                            """,
+                            (
+                                source_portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                            ),
                         )
-                    source_name = row.get("customer_name") if isinstance(row, dict) else None
-                    name = customer.customer_name or (
-                        str(source_name).strip() if source_name else None
-                    )
+                        row = cursor.fetchone()
+                        if row is None:
+                            raise ValueError(
+                                "Cliente "
+                                f"{customer.customer_code}/{customer.customer_store} "
+                                "não pertence à carteira de origem."
+                            )
+                        source_name = row.get("customer_name") if isinstance(row, dict) else None
+                        name = customer.customer_name or (
+                            str(source_name).strip() if source_name else None
+                        )
+                        cursor.execute(
+                            """
+                            INSERT INTO commercial.seller_customers (
+                                seller_portfolio_id, customer_code, customer_store, customer_name
+                            ) VALUES (%s, %s, %s, %s)
+                            ON CONFLICT (seller_portfolio_id, customer_code, customer_store) DO UPDATE
+                               SET customer_name = COALESCE(
+                                   EXCLUDED.customer_name,
+                                   commercial.seller_customers.customer_name
+                               )
+                            """,
+                            (
+                                target_portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                                name,
+                            ),
+                        )
+                        cursor.execute(
+                            """
+                            DELETE FROM commercial.seller_customers
+                             WHERE seller_portfolio_id = %s
+                               AND customer_code = %s
+                               AND customer_store = %s
+                            """,
+                            (
+                                source_portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                            ),
+                        )
                     cursor.execute(
                         """
-                        INSERT INTO commercial.seller_customers (
-                            seller_portfolio_id, customer_code, customer_store, customer_name
-                        ) VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (seller_portfolio_id, customer_code, customer_store) DO UPDATE
-                           SET customer_name = COALESCE(
-                               EXCLUDED.customer_name,
-                               commercial.seller_customers.customer_name
-                           )
+                        UPDATE commercial.seller_portfolios
+                           SET updated_at = NOW()
+                         WHERE id IN (%s, %s)
                         """,
-                        (
-                            target_portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                            name,
-                        ),
+                        (source_portfolio_id, target_portfolio_id),
                     )
-                    cursor.execute(
-                        """
-                        DELETE FROM commercial.seller_customers
-                         WHERE seller_portfolio_id = %s
-                           AND customer_code = %s
-                           AND customer_store = %s
-                        """,
-                        (
-                            source_portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                        ),
-                    )
-                cursor.execute(
-                    """
-                    UPDATE commercial.seller_portfolios
-                       SET updated_at = NOW()
-                     WHERE id IN (%s, %s)
-                    """,
-                    (source_portfolio_id, target_portfolio_id),
-                )
-            self.commit()
+                self.commit()
         except Exception:
             self.rollback()
             raise
@@ -463,39 +466,40 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         if not owner_user_id:
             raise ValueError("Owner inválido.")
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    DELETE FROM commercial.seller_portfolio_members
-                     WHERE seller_portfolio_id = %s
-                    """,
-                    (portfolio_id,),
-                )
-                for member in members:
-                    uid = str(member.user_id).strip()
-                    role = "owner" if member.role == "owner" else "member"
-                    if not uid:
-                        continue
+            with self.db():
+                with self.connection.cursor() as cursor:
                     cursor.execute(
                         """
-                        INSERT INTO commercial.seller_portfolio_members (
-                            seller_portfolio_id, user_id, role
-                        ) VALUES (%s, %s, %s)
-                        ON CONFLICT (seller_portfolio_id, user_id) DO UPDATE
-                           SET role = EXCLUDED.role
+                        DELETE FROM commercial.seller_portfolio_members
+                         WHERE seller_portfolio_id = %s
                         """,
-                        (portfolio_id, uid, role),
+                        (portfolio_id,),
                     )
-                cursor.execute(
-                    """
-                    UPDATE commercial.seller_portfolios
-                       SET user_id = %s,
-                           updated_at = NOW()
-                     WHERE id = %s
-                    """,
-                    (owner_user_id, portfolio_id),
-                )
-            self.commit()
+                    for member in members:
+                        uid = str(member.user_id).strip()
+                        role = "owner" if member.role == "owner" else "member"
+                        if not uid:
+                            continue
+                        cursor.execute(
+                            """
+                            INSERT INTO commercial.seller_portfolio_members (
+                                seller_portfolio_id, user_id, role
+                            ) VALUES (%s, %s, %s)
+                            ON CONFLICT (seller_portfolio_id, user_id) DO UPDATE
+                               SET role = EXCLUDED.role
+                            """,
+                            (portfolio_id, uid, role),
+                        )
+                    cursor.execute(
+                        """
+                        UPDATE commercial.seller_portfolios
+                           SET user_id = %s,
+                               updated_at = NOW()
+                         WHERE id = %s
+                        """,
+                        (owner_user_id, portfolio_id),
+                    )
+                self.commit()
         except Exception:
             self.rollback()
             raise
@@ -590,36 +594,37 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         if not owner_id:
             raise ValueError("Owner inválido.")
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE commercial.seller_portfolio_members
-                       SET role = 'member'
-                     WHERE seller_portfolio_id = %s
-                       AND role = 'owner'
-                    """,
-                    (portfolio_id,),
-                )
-                cursor.execute(
-                    """
-                    INSERT INTO commercial.seller_portfolio_members (
-                        seller_portfolio_id, user_id, role
-                    ) VALUES (%s, %s, 'owner')
-                    ON CONFLICT (seller_portfolio_id, user_id) DO UPDATE
-                       SET role = 'owner'
-                    """,
-                    (portfolio_id, owner_id),
-                )
-                cursor.execute(
-                    """
-                    UPDATE commercial.seller_portfolios
-                       SET user_id = %s,
-                           updated_at = NOW()
-                     WHERE id = %s
-                    """,
-                    (owner_id, portfolio_id),
-                )
-            self.commit()
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        UPDATE commercial.seller_portfolio_members
+                           SET role = 'member'
+                         WHERE seller_portfolio_id = %s
+                           AND role = 'owner'
+                        """,
+                        (portfolio_id,),
+                    )
+                    cursor.execute(
+                        """
+                        INSERT INTO commercial.seller_portfolio_members (
+                            seller_portfolio_id, user_id, role
+                        ) VALUES (%s, %s, 'owner')
+                        ON CONFLICT (seller_portfolio_id, user_id) DO UPDATE
+                           SET role = 'owner'
+                        """,
+                        (portfolio_id, owner_id),
+                    )
+                    cursor.execute(
+                        """
+                        UPDATE commercial.seller_portfolios
+                           SET user_id = %s,
+                               updated_at = NOW()
+                         WHERE id = %s
+                        """,
+                        (owner_id, portfolio_id),
+                    )
+                self.commit()
         except Exception:
             self.rollback()
             raise

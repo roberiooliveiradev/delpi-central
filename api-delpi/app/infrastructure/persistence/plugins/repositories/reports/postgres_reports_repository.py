@@ -362,53 +362,54 @@ class PostgresReportsRepository(PluginBaseRepository):
         limit = max(1, min(int(limit), 100))
         now = now or datetime.now(timezone.utc)
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT s.id, s.definition_id, s.schedule_kind, s.cron_expression,
-                           s.timezone, s.next_run_at, s.enabled, s.last_claimed_at,
-                           s.created_at, s.updated_at
-                      FROM reports.report_schedules s
-                      INNER JOIN reports.report_definitions d
-                              ON d.id = s.definition_id
-                     WHERE s.enabled = TRUE
-                       AND d.active = TRUE
-                       AND s.next_run_at IS NOT NULL
-                       AND s.next_run_at <= %s
-                     ORDER BY s.next_run_at ASC
-                     FOR UPDATE OF s SKIP LOCKED
-                     LIMIT %s
-                    """,
-                    (now, limit),
-                )
-                locked = [dict(row) for row in cursor.fetchall()]
-                claimed: list[dict[str, Any]] = []
-                for row in locked:
-                    next_at = compute_next_run_from_cron(
-                        schedule_kind=str(row.get("schedule_kind") or ""),
-                        cron_expression=row.get("cron_expression"),
-                        timezone_name=str(
-                            row.get("timezone") or "America/Sao_Paulo"
-                        ),
-                        after=now,
-                    )
+            with self.db():
+                with self.connection.cursor() as cursor:
                     cursor.execute(
                         """
-                        UPDATE reports.report_schedules
-                           SET next_run_at = %s,
-                               last_claimed_at = %s,
-                               updated_at = NOW()
-                         WHERE id = %s
-                        RETURNING id, definition_id, schedule_kind, cron_expression,
-                                  timezone, next_run_at, enabled, last_claimed_at,
-                                  created_at, updated_at
+                        SELECT s.id, s.definition_id, s.schedule_kind, s.cron_expression,
+                               s.timezone, s.next_run_at, s.enabled, s.last_claimed_at,
+                               s.created_at, s.updated_at
+                          FROM reports.report_schedules s
+                          INNER JOIN reports.report_definitions d
+                                  ON d.id = s.definition_id
+                         WHERE s.enabled = TRUE
+                           AND d.active = TRUE
+                           AND s.next_run_at IS NOT NULL
+                           AND s.next_run_at <= %s
+                         ORDER BY s.next_run_at ASC
+                         FOR UPDATE OF s SKIP LOCKED
+                         LIMIT %s
                         """,
-                        (next_at, now, str(row["id"])),
+                        (now, limit),
                     )
-                    updated = cursor.fetchone()
-                    if updated is not None:
-                        claimed.append(self.schedule_to_payload(dict(updated)))
-            self.commit()
+                    locked = [dict(row) for row in cursor.fetchall()]
+                    claimed: list[dict[str, Any]] = []
+                    for row in locked:
+                        next_at = compute_next_run_from_cron(
+                            schedule_kind=str(row.get("schedule_kind") or ""),
+                            cron_expression=row.get("cron_expression"),
+                            timezone_name=str(
+                                row.get("timezone") or "America/Sao_Paulo"
+                            ),
+                            after=now,
+                        )
+                        cursor.execute(
+                            """
+                            UPDATE reports.report_schedules
+                               SET next_run_at = %s,
+                                   last_claimed_at = %s,
+                                   updated_at = NOW()
+                             WHERE id = %s
+                            RETURNING id, definition_id, schedule_kind, cron_expression,
+                                      timezone, next_run_at, enabled, last_claimed_at,
+                                      created_at, updated_at
+                            """,
+                            (next_at, now, str(row["id"])),
+                        )
+                        updated = cursor.fetchone()
+                        if updated is not None:
+                            claimed.append(self.schedule_to_payload(dict(updated)))
+                self.commit()
             return claimed
         except PluginsRepositoryError:
             raise

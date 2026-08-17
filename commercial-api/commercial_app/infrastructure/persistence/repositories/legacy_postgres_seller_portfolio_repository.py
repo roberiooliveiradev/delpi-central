@@ -179,36 +179,37 @@ class LegacyPostgresSellerPortfolioRepository(
         ) is None:
             return None
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(
-                    "DELETE FROM pedidos_venda_abertos.seller_customers WHERE seller_id = %s",
-                    (portfolio_id,),
-                )
-                for customer in customers:
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    cursor.execute(
+                        "DELETE FROM pedidos_venda_abertos.seller_customers WHERE seller_id = %s",
+                        (portfolio_id,),
+                    )
+                    for customer in customers:
+                        cursor.execute(
+                            """
+                            INSERT INTO pedidos_venda_abertos.seller_customers (
+                                seller_id, customer_code, customer_store, customer_name
+                            ) VALUES (%s, %s, %s, %s)
+                            ON CONFLICT (seller_id, customer_code, customer_store) DO UPDATE
+                               SET customer_name = EXCLUDED.customer_name
+                            """,
+                            (
+                                portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                                customer.customer_name,
+                            ),
+                        )
                     cursor.execute(
                         """
-                        INSERT INTO pedidos_venda_abertos.seller_customers (
-                            seller_id, customer_code, customer_store, customer_name
-                        ) VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (seller_id, customer_code, customer_store) DO UPDATE
-                           SET customer_name = EXCLUDED.customer_name
+                        UPDATE pedidos_venda_abertos.sellers
+                           SET updated_at = NOW()
+                         WHERE id = %s
                         """,
-                        (
-                            portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                            customer.customer_name,
-                        ),
+                        (portfolio_id,),
                     )
-                cursor.execute(
-                    """
-                    UPDATE pedidos_venda_abertos.sellers
-                       SET updated_at = NOW()
-                     WHERE id = %s
-                    """,
-                    (portfolio_id,),
-                )
-            self.commit()
+                self.commit()
         except Exception:
             self.rollback()
             raise
@@ -302,73 +303,74 @@ class LegacyPostgresSellerPortfolioRepository(
         if source is None or target is None:
             return None
         try:
-            with self.connection.cursor() as cursor:
-                for customer in customers:
-                    cursor.execute(
-                        """
-                        SELECT customer_name
-                          FROM pedidos_venda_abertos.seller_customers
-                         WHERE seller_id = %s
-                           AND customer_code = %s
-                           AND customer_store = %s
-                        """,
-                        (
-                            source_portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                        ),
-                    )
-                    row = cursor.fetchone()
-                    if row is None:
-                        raise ValueError(
-                            "Cliente "
-                            f"{customer.customer_code}/{customer.customer_store} "
-                            "não pertence à carteira de origem."
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    for customer in customers:
+                        cursor.execute(
+                            """
+                            SELECT customer_name
+                              FROM pedidos_venda_abertos.seller_customers
+                             WHERE seller_id = %s
+                               AND customer_code = %s
+                               AND customer_store = %s
+                            """,
+                            (
+                                source_portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                            ),
                         )
-                    source_name = row.get("customer_name") if isinstance(row, dict) else None
-                    name = customer.customer_name or (
-                        str(source_name).strip() if source_name else None
-                    )
+                        row = cursor.fetchone()
+                        if row is None:
+                            raise ValueError(
+                                "Cliente "
+                                f"{customer.customer_code}/{customer.customer_store} "
+                                "não pertence à carteira de origem."
+                            )
+                        source_name = row.get("customer_name") if isinstance(row, dict) else None
+                        name = customer.customer_name or (
+                            str(source_name).strip() if source_name else None
+                        )
+                        cursor.execute(
+                            """
+                            INSERT INTO pedidos_venda_abertos.seller_customers (
+                                seller_id, customer_code, customer_store, customer_name
+                            ) VALUES (%s, %s, %s, %s)
+                            ON CONFLICT (seller_id, customer_code, customer_store) DO UPDATE
+                               SET customer_name = COALESCE(
+                                   EXCLUDED.customer_name,
+                                   pedidos_venda_abertos.seller_customers.customer_name
+                               )
+                            """,
+                            (
+                                target_portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                                name,
+                            ),
+                        )
+                        cursor.execute(
+                            """
+                            DELETE FROM pedidos_venda_abertos.seller_customers
+                             WHERE seller_id = %s
+                               AND customer_code = %s
+                               AND customer_store = %s
+                            """,
+                            (
+                                source_portfolio_id,
+                                customer.customer_code,
+                                customer.customer_store,
+                            ),
+                        )
                     cursor.execute(
                         """
-                        INSERT INTO pedidos_venda_abertos.seller_customers (
-                            seller_id, customer_code, customer_store, customer_name
-                        ) VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (seller_id, customer_code, customer_store) DO UPDATE
-                           SET customer_name = COALESCE(
-                               EXCLUDED.customer_name,
-                               pedidos_venda_abertos.seller_customers.customer_name
-                           )
+                        UPDATE pedidos_venda_abertos.sellers
+                           SET updated_at = NOW()
+                         WHERE id IN (%s, %s)
                         """,
-                        (
-                            target_portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                            name,
-                        ),
+                        (source_portfolio_id, target_portfolio_id),
                     )
-                    cursor.execute(
-                        """
-                        DELETE FROM pedidos_venda_abertos.seller_customers
-                         WHERE seller_id = %s
-                           AND customer_code = %s
-                           AND customer_store = %s
-                        """,
-                        (
-                            source_portfolio_id,
-                            customer.customer_code,
-                            customer.customer_store,
-                        ),
-                    )
-                cursor.execute(
-                    """
-                    UPDATE pedidos_venda_abertos.sellers
-                       SET updated_at = NOW()
-                     WHERE id IN (%s, %s)
-                    """,
-                    (source_portfolio_id, target_portfolio_id),
-                )
-            self.commit()
+                self.commit()
         except Exception:
             self.rollback()
             raise

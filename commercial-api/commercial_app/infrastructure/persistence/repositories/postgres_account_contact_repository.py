@@ -86,47 +86,48 @@ class PostgresAccountContactRepository(
 
     def create(self, *, values: dict[str, Any]) -> AccountContact:
         try:
-            with self.connection.cursor() as cursor:
-                if values["is_primary"]:
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    if values["is_primary"]:
+                        cursor.execute(
+                            """
+                            UPDATE commercial.account_contacts
+                               SET is_primary = FALSE,
+                                   updated_at = NOW()
+                             WHERE customer_code = %s
+                               AND customer_store = %s
+                               AND is_primary = TRUE
+                               AND deleted_at IS NULL
+                            """,
+                            (values["customer_code"], values["customer_store"]),
+                        )
                     cursor.execute(
-                        """
-                        UPDATE commercial.account_contacts
-                           SET is_primary = FALSE,
-                               updated_at = NOW()
-                         WHERE customer_code = %s
-                           AND customer_store = %s
-                           AND is_primary = TRUE
-                           AND deleted_at IS NULL
+                        f"""
+                        INSERT INTO commercial.account_contacts (
+                            customer_code, customer_store, full_name, role_title,
+                            channel, email, phone_e164, is_whatsapp, is_primary,
+                            source, created_by_user_id
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        )
+                        RETURNING {_COLUMNS}
                         """,
-                        (values["customer_code"], values["customer_store"]),
+                        (
+                            values["customer_code"],
+                            values["customer_store"],
+                            values["full_name"],
+                            values.get("role_title"),
+                            values["channel"],
+                            values.get("email"),
+                            values.get("phone_e164"),
+                            values["is_whatsapp"],
+                            values["is_primary"],
+                            values["source"],
+                            values["created_by_user_id"],
+                        ),
                     )
-                cursor.execute(
-                    f"""
-                    INSERT INTO commercial.account_contacts (
-                        customer_code, customer_store, full_name, role_title,
-                        channel, email, phone_e164, is_whatsapp, is_primary,
-                        source, created_by_user_id
-                    ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                    )
-                    RETURNING {_COLUMNS}
-                    """,
-                    (
-                        values["customer_code"],
-                        values["customer_store"],
-                        values["full_name"],
-                        values.get("role_title"),
-                        values["channel"],
-                        values.get("email"),
-                        values.get("phone_e164"),
-                        values["is_whatsapp"],
-                        values["is_primary"],
-                        values["source"],
-                        values["created_by_user_id"],
-                    ),
-                )
-                row = cursor.fetchone()
-            self.commit()
+                    row = cursor.fetchone()
+                self.commit()
         except Exception as exc:
             self.rollback()
             raise PluginsRepositoryError("Falha ao criar contato da conta.") from exc
@@ -144,38 +145,39 @@ class PostgresAccountContactRepository(
         if not updates:
             return self.get_by_id(contact_id)
         try:
-            with self.connection.cursor() as cursor:
-                if updates.get("is_primary") is True:
+            with self.db():
+                with self.connection.cursor() as cursor:
+                    if updates.get("is_primary") is True:
+                        cursor.execute(
+                            """
+                            UPDATE commercial.account_contacts AS other
+                               SET is_primary = FALSE,
+                                   updated_at = NOW()
+                              FROM commercial.account_contacts AS target
+                             WHERE target.id = %s
+                               AND target.deleted_at IS NULL
+                               AND other.customer_code = target.customer_code
+                               AND other.customer_store = target.customer_store
+                               AND other.id <> target.id
+                               AND other.is_primary = TRUE
+                               AND other.deleted_at IS NULL
+                            """,
+                            (contact_id,),
+                        )
+                    assignments = ", ".join(f"{column} = %s" for column in updates)
                     cursor.execute(
-                        """
-                        UPDATE commercial.account_contacts AS other
-                           SET is_primary = FALSE,
+                        f"""
+                        UPDATE commercial.account_contacts
+                           SET {assignments},
                                updated_at = NOW()
-                          FROM commercial.account_contacts AS target
-                         WHERE target.id = %s
-                           AND target.deleted_at IS NULL
-                           AND other.customer_code = target.customer_code
-                           AND other.customer_store = target.customer_store
-                           AND other.id <> target.id
-                           AND other.is_primary = TRUE
-                           AND other.deleted_at IS NULL
+                         WHERE id = %s
+                           AND deleted_at IS NULL
+                     RETURNING {_COLUMNS}
                         """,
-                        (contact_id,),
+                        (*updates.values(), contact_id),
                     )
-                assignments = ", ".join(f"{column} = %s" for column in updates)
-                cursor.execute(
-                    f"""
-                    UPDATE commercial.account_contacts
-                       SET {assignments},
-                           updated_at = NOW()
-                     WHERE id = %s
-                       AND deleted_at IS NULL
-                 RETURNING {_COLUMNS}
-                    """,
-                    (*updates.values(), contact_id),
-                )
-                row = cursor.fetchone()
-            self.commit()
+                    row = cursor.fetchone()
+                self.commit()
         except Exception as exc:
             self.rollback()
             raise PluginsRepositoryError("Falha ao atualizar contato da conta.") from exc

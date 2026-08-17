@@ -16,7 +16,7 @@ from tm_app.application.services.process_duplicate_service import (
 @patch("tm_app.application.services.process_duplicate_service.InstanciaDiagramEscopoRepository")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoDecomposicaoRepository")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoDiagramRepository")
-@patch("tm_app.application.services.process_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.process_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoInstanciaRepository")
 @patch("tm_app.application.services.process_duplicate_service.VinculoRepository")
 @patch("tm_app.application.services.process_duplicate_service.InvestimentoRepository")
@@ -41,7 +41,8 @@ def test_duplicate_copies_full_process_tree(
     mock_storage_cls,
 ):
     conn = MagicMock()
-    mock_conn_factory.return_value = conn
+    mock_conn_factory.return_value.__enter__.return_value = conn
+    mock_conn_factory.return_value.__exit__.return_value = None
 
     proc_repo = mock_proc_cls.return_value
     rev_repo = mock_rev_cls.return_value
@@ -149,7 +150,8 @@ def test_duplicate_copies_full_process_tree(
     evidence_storage.copy_file.assert_called_once()
 
 
-@patch("tm_app.application.services.process_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.process_duplicate_service.RevisaoEvidenceStorage")
+@patch("tm_app.application.services.process_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoInstanciaRepository")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoDiagramRepository")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoDecomposicaoRepository")
@@ -160,9 +162,11 @@ def test_duplicate_allows_process_without_melhorias(
     mock_diagram_cls,
     mock_inst_cls,
     mock_conn_factory,
+    _mock_storage_cls,
 ):
     conn = MagicMock()
-    mock_conn_factory.return_value = conn
+    mock_conn_factory.return_value.__enter__.return_value = conn
+    mock_conn_factory.return_value.__exit__.return_value = None
 
     proc_repo = mock_proc_cls.return_value
     inst_repo = mock_inst_cls.return_value
@@ -188,7 +192,7 @@ def test_duplicate_allows_process_without_melhorias(
     conn.commit.assert_called_once()
 
 
-@patch("tm_app.application.services.process_duplicate_service.get_plugins_connection")
+@patch("tm_app.application.services.process_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoRepository")
 def test_duplicate_raises_when_process_missing(mock_proc_cls, mock_conn_factory):
     mock_conn_factory.return_value = MagicMock()

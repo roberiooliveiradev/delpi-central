@@ -81,7 +81,14 @@ async def lifespan(_app: FastAPI):
     schedule_period_scores_refresh()
     if settings.SI_WARMUP_ON_STARTUP and not settings.SI_PERIOD_SCORES_REFRESH_ENABLED:
         schedule_strategic_indicators_warmup()
-    yield
+    try:
+        yield
+    finally:
+        from si_app.infrastructure.providers.database.plugins_postgres_connection import (
+            close_plugins_connection,
+        )
+
+        close_plugins_connection()
 
 
 app = FastAPI(

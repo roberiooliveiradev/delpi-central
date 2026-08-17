@@ -1,39 +1,63 @@
-# app/infrastructure/persistence/plugins/plugin_base_repository.py
-
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterable
+from contextlib import contextmanager
+from typing import Any, Iterable, Iterator
 
 from psycopg import Connection
 
-from si_app.infrastructure.providers.database.plugins_postgres_connection import get_plugins_connection
+from si_app.infrastructure.providers.database.plugins_postgres_connection import (
+    acquire_plugins_connection,
+    current_plugins_lease,
+    release_plugins_connection,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class PluginsRepositoryError(RuntimeError):
-    """Erro base de persistência do contexto plugins."""
+    pass
 
 
 class PluginBaseRepository:
-    """
-    Base para repositórios PostgreSQL do contexto plugins.
-
-    Regras:
-    - não contém regra de domínio
-    - não conhece HTTP/Flask
-    - não mistura SQL Server/TOTVS com PostgreSQL
-    """
+    """Base PostgreSQL plugins: pool acquire/release por operação."""
 
     def __init__(self, connection: Connection[dict[str, Any]] | None = None) -> None:
-        self._connection: Connection[dict[str, Any]] = (
-            connection if connection is not None else get_plugins_connection()
-        )
+        self._injected_connection = connection
+
+    @contextmanager
+    def db(self) -> Iterator[Connection[dict[str, Any]]]:
+        if self._injected_connection is not None:
+            yield self._injected_connection
+            return
+
+        connection = acquire_plugins_connection()
+        discard = False
+        try:
+            yield connection
+        except Exception:
+            try:
+                connection.rollback()
+            except Exception:
+                discard = True
+            raise
+        finally:
+            release_plugins_connection(connection, discard=discard)
 
     @property
     def connection(self) -> Connection[dict[str, Any]]:
-        return self._connection
+        if self._injected_connection is not None:
+            return self._injected_connection
+        leased = current_plugins_lease()
+        if leased is None:
+            raise PluginsRepositoryError(
+                "Conexão plugins sem lease ativo; use 'with self.db()'."
+            )
+        return leased
+
+    @property
+    def _connection(self) -> Connection[dict[str, Any]]:
+        return self.connection
 
     def fetch_one(
         self,
@@ -41,18 +65,14 @@ class PluginBaseRepository:
         params: tuple[Any, ...] | None = None,
     ) -> dict[str, Any] | None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                row = cursor.fetchone()
-                return dict(row) if row is not None else None
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                    row = cursor.fetchone()
+                    return dict(row) if row is not None else None
         except Exception as exc:
-            logger.exception(
-                "Plugins repository fetch_one failed.",
-                extra={"query": query},
-            )
-            raise PluginsRepositoryError(
-                "Falha ao executar fetch_one no banco de plugins."
-            ) from exc
+            logger.exception("fetch_one failed")
+            raise PluginsRepositoryError("Falha ao consultar registro.") from exc
 
     def fetch_all(
         self,
@@ -60,18 +80,13 @@ class PluginBaseRepository:
         params: tuple[Any, ...] | None = None,
     ) -> list[dict[str, Any]]:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                rows = cursor.fetchall()
-                return [dict(row) for row in rows]
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                    return [dict(row) for row in cursor.fetchall()]
         except Exception as exc:
-            logger.exception(
-                "Plugins repository fetch_all failed.",
-                extra={"query": query},
-            )
-            raise PluginsRepositoryError(
-                "Falha ao executar fetch_all no banco de plugins."
-            ) from exc
+            logger.exception("fetch_all failed")
+            raise PluginsRepositoryError("Falha ao listar registros.") from exc
 
     def execute(
         self,
@@ -81,20 +96,14 @@ class PluginBaseRepository:
         auto_commit: bool = True,
     ) -> None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-
-            if auto_commit:
-                self.commit()
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                if auto_commit:
+                    connection.commit()
         except Exception as exc:
-            self.rollback()
-            logger.exception(
-                "Plugins repository execute failed.",
-                extra={"query": query},
-            )
-            raise PluginsRepositoryError(
-                "Falha ao executar comando no banco de plugins."
-            ) from exc
+            logger.exception("execute failed")
+            raise PluginsRepositoryError(f"Falha ao executar comando: {exc}") from exc
 
     def execute_returning_one(
         self,
@@ -104,23 +113,16 @@ class PluginBaseRepository:
         auto_commit: bool = True,
     ) -> dict[str, Any] | None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                row = cursor.fetchone()
-
-            if auto_commit:
-                self.commit()
-
-            return dict(row) if row is not None else None
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params or ())
+                    row = cursor.fetchone()
+                if auto_commit:
+                    connection.commit()
+                return dict(row) if row is not None else None
         except Exception as exc:
-            self.rollback()
-            logger.exception(
-                "Plugins repository execute_returning_one failed.",
-                extra={"query": query},
-            )
-            raise PluginsRepositoryError(
-                "Falha ao executar comando com retorno no banco de plugins."
-            ) from exc
+            logger.exception("execute_returning_one failed")
+            raise PluginsRepositoryError(f"Falha ao gravar registro: {exc}") from exc
 
     def execute_many(
         self,
@@ -130,35 +132,27 @@ class PluginBaseRepository:
         auto_commit: bool = True,
     ) -> None:
         try:
-            with self.connection.cursor() as cursor:
-                cursor.executemany(query, values)
-
-            if auto_commit:
-                self.commit()
+            with self.db() as connection:
+                with connection.cursor() as cursor:
+                    cursor.executemany(query, values)
+                if auto_commit:
+                    connection.commit()
         except Exception as exc:
-            self.rollback()
-            logger.exception(
-                "Plugins repository execute_many failed.",
-                extra={"query": query},
-            )
-            raise PluginsRepositoryError(
-                "Falha ao executar múltiplos comandos no banco de plugins."
-            ) from exc
+            logger.exception("execute_many failed")
+            raise PluginsRepositoryError("Falha ao executar múltiplos comandos.") from exc
 
     def commit(self) -> None:
         try:
-            self.connection.commit()
+            with self.db() as connection:
+                connection.commit()
         except Exception as exc:
-            logger.exception("Plugins repository commit failed.")
-            raise PluginsRepositoryError(
-                "Falha ao confirmar transação no banco de plugins."
-            ) from exc
+            logger.exception("commit failed")
+            raise PluginsRepositoryError("Falha ao confirmar transação.") from exc
 
     def rollback(self) -> None:
         try:
-            self.connection.rollback()
+            with self.db() as connection:
+                connection.rollback()
         except Exception as exc:
-            logger.exception("Plugins repository rollback failed.")
-            raise PluginsRepositoryError(
-                "Falha ao desfazer transação no banco de plugins."
-            ) from exc
+            logger.exception("rollback failed")
+            raise PluginsRepositoryError("Falha ao desfazer transação.") from exc
