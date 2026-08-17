@@ -66,8 +66,21 @@ export function isStrategicIndicatorsDepartmentsRoute(
   return pathname.includes("/strategic-indicators/departments");
 }
 
-/** Janela canônica de materialização / série (alinhada à API SI). */
+/** Janela de exibição default em Tendências / Presentation (filtro da UI). */
 export const SI_DEFAULT_SERIES_MONTHS = 6;
+
+/**
+ * Meses do início do ano da competência até o mês de referência (YTD).
+ * Usado na materialização do refresh — não é um valor fixo 3/6.
+ */
+export function monthsYearToDate(competence?: string | null): number {
+  const value = (competence ?? "").trim() || getCurrentStrategicIndicatorsMonthValue();
+  const month = Number(value.split("-")[1]);
+  if (!Number.isFinite(month) || month < 1) {
+    return 1;
+  }
+  return Math.min(12, Math.max(1, Math.trunc(month)));
+}
 
 /** Janela de exibição default só na árvore de departamentos. */
 export const SI_DEPARTMENTS_DISPLAY_MONTHS = 3;

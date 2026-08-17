@@ -12,6 +12,17 @@ def _get_env(*names: str, default=None):
     return default
 
 
+def _optional_positive_int_env(*names: str) -> int | None:
+    """None = sem override (ex.: janela YTD). Aceita ytd/auto/0 como vazio."""
+    raw = _get_env(*names, default="")
+    if raw is None:
+        return None
+    trimmed = str(raw).strip()
+    if not trimmed or trimmed.lower() in {"ytd", "auto", "0"}:
+        return None
+    return int(trimmed)
+
+
 class Settings:
     # ==========================
     # Strategic Indicators API (gateway path)
@@ -55,9 +66,10 @@ class Settings:
     SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS: int = int(
         _get_env("SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS", default="3600") or "3600"
     )
-    # Alinhado ao default das rotas de série (/trends, tree, presentation): 6.
-    SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS: int = int(
-        _get_env("SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS", default="6") or "6"
+    # Opcional: se definido (1–12), sobrescreve a janela YTD do refresh.
+    # Omitido / ytd / auto / 0 → do início do ano da competência até o mês de referência.
+    SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS: int | None = _optional_positive_int_env(
+        "SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS"
     )
     # Desligado por padrão: a leitura para exibição agora usa SEMPRE a base
     # global (scope_department_id="") e filtra o departamento em memória, então

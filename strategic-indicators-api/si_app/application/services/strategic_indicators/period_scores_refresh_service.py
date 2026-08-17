@@ -12,6 +12,7 @@ from si_app.application.services.strategic_indicators.period_resolution import (
     current_competence,
     previous_period,
     resolve_period,
+    resolve_refresh_trends_months,
 )
 from si_app.composition.strategic_indicators_composer import (
     build_strategic_indicators_snapshot_service,
@@ -75,7 +76,8 @@ def refresh_period_scores_materialized(
 
     `reference_competence`: competência YYYY-MM de referência para a janela de tendência
     (default: mês atual do servidor).
-    `trends_months` / `per_department`: sobrescrevem env (útil no script CLI sem recriar container).
+    `trends_months` / `per_department`: sobrescrevem YTD / env (útil no script CLI).
+    Sem `trends_months` e sem env → materializa do início do ano até a competência (YTD).
     `invalidate_cache`: quando False, não apaga period_scores existentes (refresh incremental).
     """
     if not settings.SI_PERIOD_SCORES_ENABLED:
@@ -86,15 +88,6 @@ def refresh_period_scores_materialized(
         logger.info("si_period_scores_refresh_skipped already_running")
         return 0
 
-    resolved_trends_months = max(
-        2,
-        min(
-            trends_months
-            if trends_months is not None
-            else settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
-            12,
-        ),
-    )
     resolved_per_department = (
         settings.SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT
         if per_department is None
@@ -110,6 +103,11 @@ def refresh_period_scores_materialized(
         competence=resolved_reference,
         start_date=None,
         end_date=None,
+    )
+    resolved_trends_months = resolve_refresh_trends_months(
+        reference_competence=resolved_reference,
+        trends_months=trends_months,
+        env_override=settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
     )
 
     logger.info(

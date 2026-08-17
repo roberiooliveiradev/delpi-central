@@ -139,9 +139,9 @@ docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_sco
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py --competence 2026-04
 ```
 
-### Pós-deploy — alinhar série de Tendências (6 meses)
+### Pós-deploy — alinhar série de Tendências (YTD)
 
-Após subir código com `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=6`, materialize a janela pedida pela UI (senão `/trends` mat-only continua curto):
+Após subir código com default **YTD**, remova override fixo do `.env` se houver (`SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=3` ou `=6`) e materialize do início do ano até a competência:
 
 ```bash
 # Preferir scripts sequenciais (RAM / ordem MF)
@@ -149,10 +149,11 @@ Após subir código com `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=6`, materialize 
 # prod: ./infra/scripts/up-prod-sequential.sh --fase api --build strategic-indicators-api
 
 docker exec delpi-strategic-indicators-api printenv SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS
-# esperado: 6
+# esperado: vazio (YTD)
 
+# Ex.: competência junho → materializa jan–jun (não precisa --trends-months)
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
-  --competence 2026-06 --trends-months 6 --no-per-department --no-invalidate
+  --competence 2026-06 --no-per-department --no-invalidate
 ```
 
 Smoke:
@@ -163,13 +164,13 @@ curl -sS "$BASE/trends?competence=2026-06&months=6" \
   | jq '{months_requested, missing_competences, returned: [.igd_series[].period]}'
 ```
 
-Esperado: até 6 competências em `igd_series`, ou `missing_competences` explícito se a fonte ainda não tiver o mês.
+Esperado: competências do ano até a referência em `period_scores`; filtro UI de N meses pode ainda reportar `missing_competences` se pedir meses de anos anteriores.
 
 Refresh mais rápido (sem apagar cache e menos escopos):
 
 ```bash
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
-  --competence 2026-05 --trends-months 6 --no-per-department --no-invalidate
+  --competence 2026-05 --no-per-department --no-invalidate
 ```
 
 Após alterar `.env`, recrie o container para o scheduler usar os novos valores (preferir script sequencial em stack completa):
@@ -177,7 +178,7 @@ Após alterar `.env`, recrie o container para o scheduler usar os novos valores 
 ```bash
 docker compose up -d --force-recreate strategic-indicators-api
 docker exec delpi-strategic-indicators-api printenv SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS
-# esperado: 6
+# esperado: vazio
 ```
 
 Confirme `period_scores` para a competência (via container da API, sem depender de `.env` no shell):

@@ -23,7 +23,8 @@ Documentação interativa: `/apps/strategic-indicators-api/docs`
 
 Botão **Atualizar** do MFE. Recalcula fontes e grava **nova versão** em `period_scores` **sem apagar** versões anteriores (até 3 por escopo). Enquanto o job roda, leituras continuam servindo a **última versão limpa** (`is_clean`).
 
-Body JSON opcional: `{ "competence": "2026-05", "trends_months": 6 }`.
+Body JSON opcional: `{ "competence": "2026-05" }` ou com override `{ "trends_months": 6 }`.
+Sem `trends_months` (e sem env override) → materializa **YTD** (janeiro do ano da competência até o mês de referência).
 
 Resposta: `{ "status": "accepted" | "already_running", "message": "..." }`.
 
@@ -209,7 +210,7 @@ Campos de cobertura (sempre presentes na resposta):
 | `missing_competences` | Pedidas e ausentes em `period_scores` |
 | `partial_success` | `true` se há erros de medição, série &lt; 2 pontos **ou** janela incompleta |
 
-Default de materialização do job/refresh: `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS=6` (alinhado a este endpoint). Body do botão Atualizar: `{ "competence", "trends_months" }`.
+Default de materialização do job/refresh: **YTD** (início do ano até a competência). Override opcional: body `trends_months` ou env `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` (1–12). Botão Atualizar envia YTD a partir da competência dos filtros.
 
 ---
 

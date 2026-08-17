@@ -25,9 +25,9 @@ def main() -> None:
         type=int,
         default=None,
         help=(
-            "Meses de tendência a materializar (2–12). "
-            f"Default: env SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS="
-            f"{settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS}"
+            "Meses de tendência a materializar (1–12). "
+            "Default: YTD (início do ano até a competência), "
+            "salvo override SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS no env."
         ),
     )
     parser.add_argument(
@@ -57,10 +57,14 @@ def main() -> None:
     )
 
     competence_label = args.competence or "mês atual"
-    trends_months = (
+    trends_months_label = (
         args.trends_months
         if args.trends_months is not None
-        else settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS
+        else (
+            settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS
+            if settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS is not None
+            else "ytd"
+        )
     )
     per_department = (
         settings.SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT
@@ -71,7 +75,7 @@ def main() -> None:
     print(
         (
             f"si_refresh_start competence={competence_label} "
-            f"trends_months={trends_months} per_department={per_department} "
+            f"trends_months={trends_months_label} per_department={per_department} "
             f"invalidate={not args.no_invalidate} "
             "(consulta TOTVS/Sheets/RH; pode levar vários minutos em produção)..."
         ),

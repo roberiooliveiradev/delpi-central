@@ -4,7 +4,7 @@ import {
   waitForStrategicIndicatorsRefresh,
 } from "../../data/api/strategicIndicatorsCacheApi";
 import { clearAllStrategicIndicatorsCache } from "../../data/cache/strategicIndicatorsReadCache";
-import { SI_DEFAULT_SERIES_MONTHS } from "../shared/strategicIndicatorsFilters";
+import { monthsYearToDate } from "../shared/strategicIndicatorsFilters";
 import "./RefreshSnapshotButton.css";
 
 type RefreshSnapshotButtonProps = {
@@ -14,8 +14,8 @@ type RefreshSnapshotButtonProps = {
   /** Competência YYYY-MM dos filtros da página (opcional). */
   competence?: string;
   /**
-   * Janela de meses a materializar no refresh.
-   * Default 6 (alinhado a /trends). Páginas com filtro devem passar monthsToCompare.
+   * Override opcional da janela a materializar.
+   * Default: YTD (início do ano até a competência) — alinhado à API.
    */
   trendsMonths?: number;
 };
@@ -25,7 +25,7 @@ export function RefreshSnapshotButton({
   getAccessToken,
   disabled = false,
   competence,
-  trendsMonths = SI_DEFAULT_SERIES_MONTHS,
+  trendsMonths,
 }: RefreshSnapshotButtonProps) {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<"success" | "error" | "background" | null>(
@@ -41,10 +41,15 @@ export function RefreshSnapshotButton({
     clearTimeout(feedbackTimer.current);
 
     try {
+      const resolvedMonths =
+        trendsMonths != null
+          ? Math.max(1, Math.min(trendsMonths, 12))
+          : monthsYearToDate(competence);
+
       const started = await refreshStrategicIndicatorsSnapshots({
         getAccessToken,
         competence,
-        trendsMonths: Math.max(2, Math.min(trendsMonths, 12)),
+        trendsMonths: resolvedMonths,
       });
 
       clearAllStrategicIndicatorsCache();

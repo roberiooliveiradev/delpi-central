@@ -1,6 +1,5 @@
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
-import { SI_DEFAULT_SERIES_MONTHS } from "../shared/strategicIndicatorsFilters";
 import { DepartmentTrendGrid } from "../components/DepartmentTrendGrid";
 import { IgdTrendTimeline } from "../components/IgdTrendTimeline";
 import { InfoState } from "../components/InfoState";
@@ -54,7 +53,6 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
     <RefreshSnapshotButton
       getAccessToken={getAccessToken}
       competence={referenceMonth}
-      trendsMonths={Math.max(monthsToCompare, SI_DEFAULT_SERIES_MONTHS)}
       onRefreshed={() => void reload()}
       disabled={loading || refreshing}
     />

@@ -174,7 +174,7 @@ PROIBIDO:
 | `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Scheduler recalcula scores a cada N segundos |
 | `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `3600` | Intervalo do job (mín. 60s) |
 | `SI_PERSIST_CALCULATION_SNAPSHOTS_ON_READ` | `false` | Em leituras HTTP, grava só `period_scores` (refresh materializa `calculation_snapshots`) |
-| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `6` | Meses materializados (alinhado a `/trends` e UI) |
+| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | *(vazio)* | Override opcional (1–12). Vazio = **YTD** (início do ano até a competência) |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
 | `SI_PERIOD_SCORES_REFRESH_INCLUDE_PREVIOUS` | `true` | Garante comparativo mês anterior |
 | `SI_PERIOD_SCORES_REFRESH_BRANCHES` | vazio | Filiais extras (CSV); vazio = consolidado |

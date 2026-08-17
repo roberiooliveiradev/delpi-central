@@ -54,7 +54,7 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | `SI_PERIOD_SCORES_ENABLED` | `true` | Grava/lê `period_scores` nas rotas |
 | `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Job periódico de materialização |
 | `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `3600` (1 h) | Intervalo do job (segundos) |
-| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `6` | Meses materializados (alinhado a `/trends` e UI) |
+| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | *(vazio)* | Override opcional (1–12). Vazio = **YTD** (início do ano até a competência) |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
 | `SI_RUN_MIGRATIONS_ON_STARTUP` | `true` (Compose prod/dev) | Migrations no boot |
 | `DELPI_API_URL` | `http://delpi-api-delpi:8000` | Medições TOTVS via HTTP (não há pool ODBC no SI) |

@@ -174,13 +174,37 @@ def stored_period_matches_request(
     )
 
 
+def months_year_to_date(competence: str | None = None) -> int:
+    """Quantidade de meses do início do ano da competência até o mês de referência (1–12)."""
+    reference = _parse_competence_date(competence)
+    return max(1, min(reference.month, 12))
+
+
+def resolve_refresh_trends_months(
+    *,
+    reference_competence: str | None = None,
+    trends_months: int | None = None,
+    env_override: int | None = None,
+) -> int:
+    """
+    Janela de materialização do refresh: override explícito (CLI/body/env) ou YTD.
+
+    Sem override → do mês 01 até a competência de referência (ano corrente da competência).
+    """
+    if trends_months is not None:
+        return max(1, min(int(trends_months), 12))
+    if env_override is not None:
+        return max(1, min(int(env_override), 12))
+    return months_year_to_date(reference_competence)
+
+
 def build_trend_periods(
     *,
     reference_competence: str | None = None,
     months: int = 6,
 ) -> list[ResolvedPeriod]:
     reference = _parse_competence_date(reference_competence)
-    resolved_months = max(2, min(months, 12))
+    resolved_months = max(1, min(months, 12))
     periods: list[ResolvedPeriod] = []
 
     year = reference.year

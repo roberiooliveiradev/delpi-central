@@ -9,6 +9,9 @@ from si_app.application.dto.strategic_indicators.get_trends_real_request import 
 )
 from si_app.application.services.strategic_indicators.period_resolution import (
     ResolvedPeriod,
+    build_trend_periods,
+    months_year_to_date,
+    resolve_refresh_trends_months,
 )
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_models import (
     StrategicIndicatorsPeriodSnapshot,
@@ -43,8 +46,49 @@ def _snapshot(competence: str, igd: float = 8.0) -> StrategicIndicatorsPeriodSna
     )
 
 
-def test_refresh_trends_months_default_is_six() -> None:
-    assert settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS == 6
+def test_months_year_to_date_uses_reference_month() -> None:
+    assert months_year_to_date("2026-01") == 1
+    assert months_year_to_date("2026-06") == 6
+    assert months_year_to_date("2026-12") == 12
+
+
+def test_resolve_refresh_trends_months_defaults_to_ytd() -> None:
+    assert (
+        resolve_refresh_trends_months(reference_competence="2026-08") == 8
+    )
+    assert (
+        resolve_refresh_trends_months(
+            reference_competence="2026-08",
+            trends_months=4,
+        )
+        == 4
+    )
+    assert (
+        resolve_refresh_trends_months(
+            reference_competence="2026-08",
+            env_override=3,
+        )
+        == 3
+    )
+
+
+def test_build_trend_periods_ytd_stays_in_reference_year() -> None:
+    periods = build_trend_periods(
+        reference_competence="2026-06",
+        months=months_year_to_date("2026-06"),
+    )
+    assert [period.competence for period in periods] == [
+        "2026-01",
+        "2026-02",
+        "2026-03",
+        "2026-04",
+        "2026-05",
+        "2026-06",
+    ]
+
+
+def test_refresh_trends_months_env_default_is_ytd_when_unset() -> None:
+    assert settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS is None
 
 
 def test_tree_load_job_months_default_is_six() -> None:
