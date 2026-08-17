@@ -13,6 +13,9 @@ from app.domain.notifications.notification_constants import (
     ALLOWED_NOTIFICATION_TYPES,
     ALLOWED_PRESENTATION_MODES,
 )
+from app.application.services.notification_catalog_icon_service import (
+    NotificationCatalogIconService,
+)
 from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.domain.notifications.notification_templates import NotificationTemplateSpec
 from app.domain.notifications.notification_variables import ALL_KNOWN_VARIABLE_KEYS
@@ -87,6 +90,7 @@ class NotificationContentService:
         expires_at: datetime | None,
         recipient_context: dict[str, str] | None = None,
         template_spec: NotificationTemplateSpec | None = None,
+        published_app_icons: dict[str, str] | None = None,
     ) -> PreparedNotificationContent:
         normalized_presentation = (presentation or "text").strip().lower()
         if normalized_presentation not in ALLOWED_PRESENTATION_MODES:
@@ -165,8 +169,9 @@ class NotificationContentService:
 
         action = self._normalize_action(action_type, action_label, action_target)
 
-        normalized_icon = (icon or "").strip() or NotificationCatalogService.get().category_default_icons.get(
-            normalized_category
+        normalized_icon = (icon or "").strip() or NotificationCatalogIconService.resolve_icon_for_category(
+            normalized_category,
+            published_icons=published_app_icons,
         )
 
         if recipient_context and normalized_presentation == "html":

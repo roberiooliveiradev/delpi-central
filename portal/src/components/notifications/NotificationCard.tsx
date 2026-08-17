@@ -13,8 +13,9 @@ import { Button, Checkbox } from "../../ui-kit";
 import type { NotificationItem } from "../../data/coreApi";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
 import {
-  getNotificationCategoryIcon,
   getNotificationCategoryLabel,
+  resolveNotificationCategoryIconComponent,
+  resolveNotificationPreferenceDisplay,
 } from "../../utils/notificationCatalog";
 import { AuthContext } from "../../state/AuthContext";
 import { openAppLauncher, shouldOpenAppLauncher } from "../../utils/appLauncher";
@@ -106,7 +107,13 @@ export function NotificationCard({
 
   const layout = variant ?? (compact ? "compact" : "page");
   const isPage = layout === "page";
-  const Icon = getNotificationCategoryIcon(notification.category, catalog);
+  const preferenceDisplay = resolveNotificationPreferenceDisplay(
+    notification.category,
+    catalog,
+    apps,
+  );
+  const iconName = (notification.icon || "").trim() || preferenceDisplay.iconName;
+  const Icon = resolveNotificationCategoryIconComponent(iconName);
   const categoryLabel = getNotificationCategoryLabel(notification.category, catalog);
   const templateId = getTemplateIdFromMetadata(notification.metadata);
   const templateDefinition =

@@ -26,6 +26,7 @@ def test_normalize_muted_categories_ignores_system_and_invalid():
 def test_update_notification_preferences_persists_muted():
     uow = MagicMock()
     uow.notification_preferences.get_muted_categories.return_value = ["birthday"]
+    uow.admin_apps.get.return_value = None
 
     result = UpdateNotificationPreferencesUseCase(uow).execute(
         "user-1",

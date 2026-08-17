@@ -66,6 +66,9 @@ from app.application.use_cases.get_notification_preferences_use_case import (
 from app.application.use_cases.update_notification_preferences_use_case import (
     UpdateNotificationPreferencesUseCase,
 )
+from app.application.services.notification_catalog_icon_service import (
+    NotificationCatalogIconService,
+)
 from app.application.services.notification_catalog_service import NotificationCatalogService
 
 from app.application.use_cases.notify_user_use_case import (
@@ -425,10 +428,12 @@ def get_notification_preferences():
 @require_auth()
 def get_notification_catalog():
     catalog = NotificationCatalogService.get()
+    with SqlAlchemyUnitOfWork() as uow:
+        categories = NotificationCatalogIconService.to_api_categories(uow.admin_apps)
     return jsonify(
         {
             "version": catalog.version,
-            "categories": catalog.to_api_categories(),
+            "categories": categories,
             "legacyCategoryAliases": catalog.legacy_category_aliases,
         }
     ), 200

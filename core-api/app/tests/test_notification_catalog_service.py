@@ -22,6 +22,18 @@ def test_catalog_contains_app_sources():
     assert catalog.categories["tv_dashboard"].source_apps == ("tv-dashboard",)
 
 
+def test_every_category_has_notification_label():
+    catalog = NotificationCatalogService.get()
+    for category_id, spec in catalog.categories.items():
+        assert spec.notification_label.strip(), category_id
+
+    commercial = catalog.categories["commercial"]
+    assert commercial.notification_label == "Faturar notas fiscais"
+    assert commercial.preference_title == "Faturar notas fiscais"
+    api_payload = {item["id"]: item for item in catalog.to_api_categories()}
+    assert api_payload["commercial"]["notificationLabel"] == "Faturar notas fiscais"
+
+
 def test_resolve_legacy_category_alias():
     catalog = NotificationCatalogService.get()
     assert catalog.resolve_category("quality") == "quality_action_plans"
@@ -47,6 +59,7 @@ def test_loader_rejects_app_category_without_source_apps(tmp_path: Path):
           "categories": {
             "broken_app": {
               "label": "Broken",
+              "notificationLabel": "Broken notification",
               "icon": "bell",
               "mutable": true,
               "kind": "app"
@@ -58,4 +71,27 @@ def test_loader_rejects_app_category_without_source_apps(tmp_path: Path):
     )
 
     with pytest.raises(ValueError, match="requires sourceApps"):
+        load_notification_catalog(bad_catalog)
+
+
+def test_loader_rejects_category_without_notification_label(tmp_path: Path):
+    bad_catalog = tmp_path / "bad.json"
+    bad_catalog.write_text(
+        """
+        {
+          "version": 1,
+          "categories": {
+            "broken_title": {
+              "label": "Broken",
+              "icon": "bell",
+              "mutable": true,
+              "kind": "platform"
+            }
+          }
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="notificationLabel is required"):
         load_notification_catalog(bad_catalog)

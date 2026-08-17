@@ -24,6 +24,7 @@ alwaysApply: true
 | `mf-federation-patch-safety.mdc` | **Patch MF / `federationReactProxyFix`** — sem ReDoS; validar `plugin-ui` vite build |
 | `migrations-immutable-checksum.mdc` | **Migrations SQL** — nunca editar arquivo já aplicado/commitado (checksum) |
 | `plugins-migrations-no-reset-prod.mdc` | **Migrations de plugins** — só `up` em prod; `reset` = DROP SCHEMA (apaga dados) |
+| `notification-catalog-preferences.mdc` | **Nova notificação / preferências** — `notificationLabel` + app + status; catálogo Core + FALLBACK portal |
 
 ## Infra / Docker
 
@@ -131,6 +132,7 @@ TV Dashboard F5/WS perde fontes   → tv-dashboard-persist-local-edits → apply
 TV Dashboard corta logo/borda no editor → tv-dashboard-editor-pasteboard → overflow:visible no canvas (não «WYSIWYG clip»)
 Modal MFE cobre sidebar do portal → mfe-modal-host-contained → HostContainedDialog / createHostContainedModalShell
 TV Dashboard prévia ≠ editor / gráfico errado → tv-dashboard-presentation-parity → RichComunicadoStage + applyViewProjection (não confiar em serverProjectionApplied para chart)
+Nova notificação / silêncio no Portal → notification-catalog-preferences → notification_catalog.json (`notificationLabel`) + FALLBACK + check_notification_catalog.py
 ```
 
 ## Ordem de prioridade em conflito

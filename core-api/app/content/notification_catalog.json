@@ -3,48 +3,56 @@
   "categories": {
     "system": {
       "label": "Sistema",
+      "notificationLabel": "Avisos de sistema",
       "icon": "bell",
       "mutable": false,
       "kind": "platform"
     },
     "welcome": {
       "label": "Boas-vindas",
+      "notificationLabel": "Boas-vindas",
       "icon": "sparkles",
       "mutable": true,
       "kind": "platform"
     },
     "birthday": {
       "label": "Aniversário",
+      "notificationLabel": "Aniversário",
       "icon": "cake",
       "mutable": true,
       "kind": "platform"
     },
     "company_event": {
       "label": "Evento",
+      "notificationLabel": "Evento da empresa",
       "icon": "calendar",
       "mutable": true,
       "kind": "platform"
     },
     "announcement": {
       "label": "Comunicado",
+      "notificationLabel": "Comunicado",
       "icon": "megaphone",
       "mutable": true,
       "kind": "platform"
     },
     "access": {
       "label": "Acesso",
+      "notificationLabel": "Acesso a aplicações",
       "icon": "key-round",
       "mutable": true,
       "kind": "platform"
     },
     "custom": {
       "label": "Personalizada",
+      "notificationLabel": "Personalizada",
       "icon": "bell",
       "mutable": true,
       "kind": "platform"
     },
     "controle_mp": {
       "label": "Controle MP",
+      "notificationLabel": "Mensagens do Controle MP",
       "icon": "message-circle",
       "mutable": true,
       "kind": "app",
@@ -53,6 +61,7 @@
     },
     "api_console": {
       "label": "Console API DELPI",
+      "notificationLabel": "Alertas do Console API",
       "icon": "activity",
       "mutable": true,
       "kind": "app",
@@ -61,6 +70,7 @@
     },
     "quality_action_plans": {
       "label": "Planos de ação (PAC)",
+      "notificationLabel": "Atualizações de planos de ação",
       "icon": "clipboard-list",
       "mutable": true,
       "kind": "app",
@@ -69,6 +79,7 @@
     },
     "auditoria_5s": {
       "label": "Auditoria 5S",
+      "notificationLabel": "Auditorias e não conformidades 5S",
       "icon": "clipboard-check",
       "mutable": true,
       "kind": "app",
@@ -77,6 +88,7 @@
     },
     "central_agendamento": {
       "label": "Central de Agendamento",
+      "notificationLabel": "Agendamentos e lembretes",
       "icon": "calendar",
       "mutable": true,
       "kind": "app",
@@ -85,6 +97,7 @@
     },
     "kaizometro": {
       "label": "Kaizômetro",
+      "notificationLabel": "Atualizações de kaizens",
       "icon": "sparkles",
       "mutable": true,
       "kind": "app",
@@ -93,6 +106,7 @@
     },
     "lancamento_notas_fiscais": {
       "label": "Lançamento de Notas Fiscais",
+      "notificationLabel": "Pendências e menções de lançamento",
       "icon": "file-text",
       "mutable": true,
       "kind": "app",
@@ -101,6 +115,7 @@
     },
     "invoice_issuance": {
       "label": "Emissão de Notas Fiscais",
+      "notificationLabel": "Solicitações de emissão de NF",
       "icon": "file-text",
       "mutable": true,
       "kind": "app",
@@ -109,6 +124,7 @@
     },
     "comite_etica_conduta": {
       "label": "Comitê de Ética e Conduta",
+      "notificationLabel": "Atualizações do comitê",
       "icon": "clipboard-check",
       "mutable": true,
       "kind": "app",
@@ -117,6 +133,7 @@
     },
     "tv_dashboard": {
       "label": "Painéis TV",
+      "notificationLabel": "Avisos dos painéis TV",
       "icon": "tv",
       "mutable": true,
       "kind": "app",
@@ -125,6 +142,7 @@
     },
     "commercial": {
       "label": "Portal Comercial",
+      "notificationLabel": "Faturar notas fiscais",
       "icon": "briefcase",
       "mutable": true,
       "kind": "app",

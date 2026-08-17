@@ -26,13 +26,14 @@ Antes deste catálogo, categorias e rótulos ficavam espalhados em Python (`noti
 {
   "version": 1,
   "categories": {
-    "api_console": {
-      "label": "Console API DELPI",
-      "icon": "activity",
+    "commercial": {
+      "label": "Portal Comercial",
+      "notificationLabel": "Faturar notas fiscais",
+      "icon": "briefcase",
       "mutable": true,
       "kind": "app",
-      "sourceApps": ["api-delpi-console"],
-      "pluginId": "api-delpi-console"
+      "sourceApps": ["commercial"],
+      "pluginId": "commercial"
     }
   },
   "legacyCategoryAliases": {
@@ -45,12 +46,29 @@ Antes deste catálogo, categorias e rótulos ficavam espalhados em Python (`noti
 
 | Campo | Obrigatório | Descrição |
 |-------|-------------|-----------|
-| `label` | Sim | Texto exibido nas preferências, cards e filtros |
-| `icon` | Sim | Nome do ícone (portal mapeia para Lucide) |
+| `label` | Sim | Texto curto (filtros, histórico, badge) |
+| `notificationLabel` | **Sim** | **Nome da notificação** no card de Preferências (título) |
+| `icon` | Condicional | **`kind=platform`:** obrigatório (Minha Delpi). **`kind=app`:** último recurso; a API **substitui** por `apps.icon` do manifesto publicado (`NotificationCatalogIconService`) |
 | `mutable` | Sim | `false` = usuário **não** pode silenciar (`system`) |
 | `kind` | Sim | `platform` (transversal) ou `app` (emissor de plugin) |
 | `sourceApps` | Se `kind=app` | IDs lógicos usados em `sourceApp` / `metadata.source` |
-| `pluginId` | Recomendado p/ app | ID do plugin no portal (`apps.id`) — usado no filtro RBAC |
+| `pluginId` | Se `kind=app` | ID do plugin no portal (`apps.id`) — nome do app na 2ª linha do card |
+
+### Padrão visual das Preferências (obrigatório)
+
+Todo card de silêncio segue **somente** este layout (não reinventar no MFE):
+
+```text
+{notificationLabel}     ← o que o usuário silencia
+{nome do app}           ← plugin via pluginId ou «Minha Delpi» (platform)
+{Recebendo|Silenciada}
+[+ ícone]
+```
+
+Ícone de plugin: **manifesto publicado** (`apps.icon`), nunca hardcode no catálogo como fonte de verdade.
+
+Implementação: `resolveNotificationPreferenceDisplay` + `NotificationCatalogIconService` + `NotificationPreferencesPanel`.  
+Regra Cursor: `.cursor/rules/notification-catalog-preferences.mdc`.
 
 ### Aliases legados
 
@@ -92,17 +110,20 @@ Exemplo `GET /me/notifications/catalog`:
 
 ## 4. Checklist — novo app que envia notificação
 
-1. **Plugin no portal** — `POST /admin/apps/register` com manifesto (RBAC, `basePath`).
-2. **Categoria no catálogo** — entrada `kind: "app"` em `notification_catalog.json`:
-   - `sourceApps` = valor de `sourceApp` no POST `/integrations/notifications`
-   - `pluginId` = `apps.id` do manifesto
+1. **Plugin no portal** — `POST /admin/apps/register` com manifesto (RBAC, `basePath`, **`icon`**).
+2. **Categoria no catálogo** — entrada em `notification_catalog.json`:
+   - `notificationLabel` = frase do que se silencia (ex.: «Faturar notas fiscais») — **obrigatório**
+   - `label` = nome curto do módulo / filtro
+   - `kind: "app"` + `sourceApps` = valor de `sourceApp` no POST `/integrations/notifications`
+   - `pluginId` = `apps.id` do manifesto (liga o ícone publicado)
    - `mutable: true` se o usuário pode silenciar
-3. **Espelho no Portal** — atualizar `portal/src/utils/notificationCatalog.ts` → `FALLBACK_NOTIFICATION_CATALOG` (offline).
+   - `icon` opcional em app (não é a fonte de verdade)
+3. **Espelho no Portal** — atualizar `FALLBACK_NOTIFICATION_CATALOG` com o **mesmo** `notificationLabel` / `pluginId`.
 4. **Backend emissor** — chamar Core API com `category` e `sourceApp` do catálogo.
-5. **CI** — `python scripts/check_notification_catalog.py --check`
+5. **CI** — `python scripts/check_notification_catalog.py --check` (valida JSON + espelho do portal).
 6. **Testes** — `app/tests/test_notification_catalog_service.py` + smoke do emissor.
 
-Não é necessário editar `NotificationPreferencesPanel`, `NotificationCard` etc. — consomem o catálogo via API.
+**Não** alterar o layout de `NotificationPreferencesPanel` por feature — só o catálogo + ícone no manifesto.
 
 ---
 
@@ -150,3 +171,4 @@ pytest app/tests/test_notification_catalog_service.py -q
 | [notificacoes.md](./notificacoes.md) | API de notificações, preferências, integrações |
 | [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplicacao-iframe.md) | Envio via `/integrations/notifications` |
 | [notificacoes-ricas.md](../12-roadmap-e-evolucao/notificacoes-ricas.md) | Roadmap de campanhas e templates |
+| `.cursor/rules/notification-catalog-preferences.mdc` | Padrão obrigatório do card de Preferências |

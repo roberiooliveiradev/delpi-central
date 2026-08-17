@@ -14,6 +14,13 @@ class NotificationCategorySpec:
     kind: str
     source_apps: tuple[str, ...] = ()
     plugin_id: str | None = None
+    # Preferências: título do card (obrigatório no JSON).
+    notification_label: str = ""
+
+    @property
+    def preference_title(self) -> str:
+        value = self.notification_label.strip()
+        return value or self.label
 
 
 @dataclass(frozen=True)
@@ -70,6 +77,7 @@ class NotificationCatalog:
             payload: dict[str, object] = {
                 "id": spec.id,
                 "label": spec.label,
+                "notificationLabel": spec.preference_title,
                 "icon": spec.icon,
                 "mutable": spec.mutable,
                 "kind": spec.kind,

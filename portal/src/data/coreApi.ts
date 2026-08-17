@@ -61,6 +61,8 @@ export type NotificationCategory = string;
 export type NotificationCatalogCategoryItem = {
   id: string;
   label: string;
+  /** Título do card de Preferências (sempre enviado pela Core API). */
+  notificationLabel: string;
   icon: string;
   mutable: boolean;
   kind: string;

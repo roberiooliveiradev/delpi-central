@@ -4,7 +4,10 @@ import { Settings2 } from "lucide-react";
 import { AuthContext } from "../../state/AuthContext";
 import { ApiClient } from "../../data/apiClient";
 import { CoreApi, type NotificationCategory, type NotificationCatalogCategoryItem } from "../../data/coreApi";
-import { getNotificationCategoryLabel } from "../../utils/notificationCatalog";
+import {
+  resolveNotificationCategoryIconComponent,
+  resolveNotificationPreferenceDisplay,
+} from "../../utils/notificationCatalog";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
 import { Alert, Button, Checkbox, Spinner } from "../../ui-kit";
 
@@ -21,7 +24,7 @@ export function NotificationPreferencesPanel({
   onSaved,
   variant = "embedded",
 }: Props) {
-  const { getAccessToken, refreshToken } = useContext(AuthContext);
+  const { getAccessToken, refreshToken, apps } = useContext(AuthContext);
   const { catalog } = useNotificationCatalog();
 
   const coreApi = useMemo(() => {
@@ -105,6 +108,11 @@ export function NotificationPreferencesPanel({
     [catalog.version, catalog.categories, catalogCategories],
   );
 
+  const appRefs = useMemo(
+    () => apps.map((app) => ({ id: app.id, name: app.name, icon: app.icon })),
+    [apps],
+  );
+
   const rootClassName =
     variant === "page"
       ? "notification-preferences notification-preferences--page"
@@ -144,6 +152,12 @@ export function NotificationPreferencesPanel({
         <ul className="notification-preferences__list">
           {mutableCategories.map((category) => {
             const isMuted = mutedCategories.includes(category);
+            const display = resolveNotificationPreferenceDisplay(
+              category,
+              catalogForLabels,
+              appRefs,
+            );
+            const AppIcon = resolveNotificationCategoryIconComponent(display.iconName);
             return (
               <li key={category}>
                 <Checkbox
@@ -151,12 +165,20 @@ export function NotificationPreferencesPanel({
                   checked={isMuted}
                   onChange={() => toggleCategory(category)}
                   label={
-                    <span>
-                      <span className="notification-preferences__label">
-                        {getNotificationCategoryLabel(category, catalogForLabels)}
+                    <span className="notification-preferences__body">
+                      <span className="notification-preferences__app-icon" aria-hidden="true">
+                        <AppIcon size={18} />
                       </span>
-                      <span className="notification-preferences__hint">
-                        {isMuted ? "Silenciada — não receberá novos envios" : "Recebendo"}
+                      <span className="notification-preferences__copy">
+                        <span className="notification-preferences__label">
+                          {display.notificationName}
+                        </span>
+                        <span className="notification-preferences__app">
+                          {display.applicationName}
+                        </span>
+                        <span className="notification-preferences__hint">
+                          {isMuted ? "Silenciada" : "Recebendo"}
+                        </span>
                       </span>
                     </span>
                   }

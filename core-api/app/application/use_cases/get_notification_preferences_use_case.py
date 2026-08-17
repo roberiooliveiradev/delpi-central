@@ -2,6 +2,9 @@
 
 from dataclasses import dataclass
 
+from app.application.services.notification_catalog_icon_service import (
+    NotificationCatalogIconService,
+)
 from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.application.unit_of_work import UnitOfWork
 
@@ -24,5 +27,5 @@ class GetNotificationPreferencesUseCase:
         return NotificationPreferencesResult(
             muted_categories=muted,
             mutable_categories=sorted(catalog.mutable_categories),
-            categories=catalog.to_api_categories(),
+            categories=NotificationCatalogIconService.to_api_categories(self.uow.admin_apps),
         )

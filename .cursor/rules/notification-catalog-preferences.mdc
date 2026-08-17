@@ -1,0 +1,59 @@
+---
+description: Padrão de preferências de notificação — nome + app + status + ícone via catálogo
+globs: "**/notification_catalog.json,**/notificationCatalog.ts,**/NotificationPreferencesPanel.*,**/notification_catalog_*.py,**/check_notification_catalog.py"
+alwaysApply: false
+---
+
+# Notificações — preferências e catálogo
+
+## Princípio
+
+Nova categoria / emissor de notificação **não** inventa UI no Portal. Declara no catálogo canônico; a aba Preferências renderiza o padrão fixo:
+
+```text
+{notificationLabel}     ← nome da notificação (o que o usuário silencia)
+{appName}               ← app de origem (plugin registrado ou «Minha Delpi»)
+{Recebendo|Silenciada}  ← status
+[+ ícone do manifesto publicado]
+```
+
+**Ícone (`kind=app`):** sempre de `apps.icon` (sincronizado do manifesto no register/update) — Core enriquece o catálogo API via `NotificationCatalogIconService`; Portal prioriza `GET /me/apps`. **Não** hardcodar ícone de plugin no JSON do catálogo como fonte de verdade.
+
+## Fonte única
+
+| Camada | Onde |
+|--------|------|
+| Catálogo | `core-api/app/content/notification_catalog.json` (labels / pluginId — **não** ícone do app) |
+| Ícone app | manifesto → `apps.icon` → `NotificationCatalogIconService` / AuthContext `apps` |
+| Loader | `notification_catalog_loader.py` + `NotificationCatalogService` |
+| Preferências UI | `resolveNotificationPreferenceDisplay` + `NotificationPreferencesPanel` |
+| Espelho offline | `portal/src/utils/notificationCatalog.ts` → `FALLBACK_NOTIFICATION_CATALOG` |
+
+Doc: `docs/04-core-api/notification-catalog.md`.
+
+## Campos obrigatórios (categoria nova)
+
+| Campo | Uso |
+|-------|-----|
+| `label` | Filtros / histórico / badge curto |
+| `notificationLabel` | **Título** do card de preferências (obrigatório) |
+| `icon` | Só `kind=platform` (Minha Delpi). Em `kind=app` é último recurso se o app ainda não foi publicado |
+| `kind` | `platform` \| `app` |
+| `sourceApps` + `pluginId` | Se `kind=app` — `pluginId` liga ao manifesto / `apps.id` |
+
+## O que NÃO fazer
+
+- Card de preferência com só o nome do plugin (sem `notificationLabel` distinto).
+- Linhas «Tipo:» / «Origem: /apps/…» no card — origem = segunda linha (nome do app).
+- Patch de label/ícone só no MFE ou só no catálogo quando o manifesto já define o ícone.
+- Categoria `kind=app` sem `sourceApps` / sem espelho no FALLBACK do portal.
+- Usar `getNotificationCategoryIcon` só com catálogo (ignora manifesto) — usar `resolveNotificationCategoryIcon(..., apps)`.
+
+## Checklist (nova notificação)
+
+1. Entrada no JSON Core com `notificationLabel` (frase de ação, ex.: «Faturar notas fiscais»).
+2. Manifesto do plugin com `icon` correto; publicar/register para gravar em `apps.icon`.
+3. Espelhar no FALLBACK do portal (`notificationLabel` + `pluginId`).
+4. Emissor usa `category` + `sourceApp` do catálogo.
+5. `python scripts/check_notification_catalog.py --check`
+6. Preferências: **sem** mudar o layout do painel — só catálogo + manifesto.

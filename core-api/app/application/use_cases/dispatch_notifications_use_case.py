@@ -8,6 +8,9 @@ from app.application.errors.notification_dispatch_errors import (
 from app.application.services.notification_app_access_service import (
     filter_user_ids_with_app_access,
 )
+from app.application.services.notification_catalog_icon_service import (
+    NotificationCatalogIconService,
+)
 from app.application.services.notification_recipient_resolution import (
     resolve_notification_recipient_ids,
 )
@@ -77,6 +80,10 @@ class DispatchNotificationsUseCase:
             action_label=request.action_label,
         )
 
+        published_app_icons = NotificationCatalogIconService.published_icons_by_plugin_id(
+            self.uow.admin_apps
+        )
+
         prepared_shared = None
         if not per_recipient:
             try:
@@ -94,6 +101,7 @@ class DispatchNotificationsUseCase:
                     metadata=request.metadata,
                     expires_at=request.expires_at,
                     template_spec=template_spec,
+                    published_app_icons=published_app_icons,
                 )
             except NotificationContentValidationError as exc:
                 raise DispatchNotificationsValidationError(str(exc)) from exc
@@ -123,6 +131,7 @@ class DispatchNotificationsUseCase:
                         expires_at=request.expires_at,
                         recipient_context=recipient_context,
                         template_spec=template_spec,
+                        published_app_icons=published_app_icons,
                     )
                 except NotificationContentValidationError as exc:
                     raise DispatchNotificationsValidationError(str(exc)) from exc

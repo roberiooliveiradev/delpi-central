@@ -76,6 +76,37 @@
   color: var(--text);
 }
 
+.notification-preferences__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.notification-preferences__app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  color: var(--primary);
+}
+
+.notification-preferences__copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.notification-preferences__app {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .notification-preferences__hint {
   display: block;
   margin-top: 2px;

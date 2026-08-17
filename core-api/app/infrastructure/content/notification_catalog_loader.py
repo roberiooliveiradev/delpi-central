@@ -40,6 +40,15 @@ def _parse_catalog(raw: dict[str, Any]) -> NotificationCatalog:
             raise ValueError(f"notification_catalog.categories.{category_id} must be an object")
 
         label = str(item.get("label") or "").strip()
+        notification_label_raw = item.get("notificationLabel") or item.get("notification_label")
+        notification_label = (
+            str(notification_label_raw).strip() if notification_label_raw else ""
+        )
+        if not notification_label:
+            raise ValueError(
+                f"notification_catalog.categories.{category_id}.notificationLabel is required "
+                "(preference card title: notification name → app → status)"
+            )
         icon = str(item.get("icon") or "bell").strip() or "bell"
         kind = str(item.get("kind") or "platform").strip().lower() or "platform"
         mutable = bool(item.get("mutable", True))
@@ -70,6 +79,7 @@ def _parse_catalog(raw: dict[str, Any]) -> NotificationCatalog:
             kind=kind,
             source_apps=source_apps,
             plugin_id=plugin_id_str,
+            notification_label=notification_label,
         )
 
     legacy_aliases_raw = raw.get("legacyCategoryAliases") or raw.get("legacy_category_aliases") or {}

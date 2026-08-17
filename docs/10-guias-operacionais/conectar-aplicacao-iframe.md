@@ -254,12 +254,15 @@ Detalhe técnico: [embedded-app-deep-links.md](../05-portal/embedded-app-deep-li
 
 Checklist completo: [notification-catalog.md](../04-core-api/notification-catalog.md).
 
-Resumo:
+Resumo (padrão de Preferências: **nome da notificação → app → status**):
 
-1. Adicionar entrada em `notification_catalog.json` (`kind: "app"` com `sourceApps` + `pluginId`).
-2. Espelhar fallback em `portal/src/utils/notificationCatalog.ts`.
+1. Adicionar entrada em `notification_catalog.json` com `notificationLabel` obrigatório + `kind: "app"` (`sourceApps` + `pluginId`).
+2. Espelhar o **mesmo** `notificationLabel` em `portal/src/utils/notificationCatalog.ts` (`FALLBACK`).
 3. No backend emissor, usar `category` e `sourceApp` do catálogo no `POST /integrations/notifications`.
 4. Rodar `python scripts/check_notification_catalog.py --check` e rebuild Core API + Portal.
+5. **Não** alterar o layout de `NotificationPreferencesPanel` — só o catálogo.
+
+Regra Cursor: `.cursor/rules/notification-catalog-preferences.mdc`.
 
 ---
 
