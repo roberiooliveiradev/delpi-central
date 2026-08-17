@@ -254,7 +254,11 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
             periodLabel,
             summary,
             undefined,
-            { realizedValue: summary?.total_gross_savings_in_period },
+            {
+              realizedValue: summary?.total_gross_savings_in_period,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Coins size={22} />}
           loading={isBusy}

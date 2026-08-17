@@ -181,7 +181,11 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
             `${branchLabel} · ${periodLabel}`,
             data?.summary,
             undefined,
-            { realizedValue },
+            {
+              realizedValue,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<HandCoins size={22} />}
           loading={isBusy}

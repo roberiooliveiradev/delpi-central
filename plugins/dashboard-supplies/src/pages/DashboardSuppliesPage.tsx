@@ -220,7 +220,9 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             `${branchLabel} · ${periodLabel}`,
             cpv?.summary,
             undefined,
-            { showGoal: false },
+            {
+              showGoal: false,
+            },
           )}
           icon={<TrendingUp size={22} />}
           loading={isBusy}
@@ -239,6 +241,8 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: cpv?.summary.cpv_percentage,
               activeBranch: activeApiBranch,
               branches: cpvBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Percent size={22} />}
@@ -258,6 +262,8 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: otd?.summary.otd_percentage,
               activeBranch: activeApiBranch,
               branches: otdBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<CircleGauge size={22} />}
@@ -277,6 +283,8 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: stockValue?.summary.total_stock_value,
               activeBranch: activeApiBranch,
               branches: stockValueBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Warehouse size={22} />}
@@ -296,6 +304,8 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: inventoryTurnover?.summary.inventory_turnover_times,
               activeBranch: activeApiBranch,
               branches: inventoryTurnoverBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Package size={22} />}
@@ -318,6 +328,8 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
                 negotiationSavings?.total_savings,
               activeBranch: activeApiBranch,
               branches: negotiationSavingsBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<HandCoins size={22} />}

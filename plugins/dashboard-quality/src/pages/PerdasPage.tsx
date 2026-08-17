@@ -138,6 +138,8 @@ export function PerdasPage({ pathname }: PerdasPageProps) {
                 realizedValue: scrap?.scrap_cost_pct,
                 activeBranch: activeApiBranch,
                 branches: scrapBranches,
+                dateStart,
+                dateEnd,
               },
             )}
             icon={<Factory size={22} />}
@@ -154,6 +156,8 @@ export function PerdasPage({ pathname }: PerdasPageProps) {
                 realizedValue: rework?.rework_cost_pct,
                 activeBranch: activeApiBranch,
                 branches: reworkBranches,
+                dateStart,
+                dateEnd,
               },
             )}
             icon={<Recycle size={22} />}

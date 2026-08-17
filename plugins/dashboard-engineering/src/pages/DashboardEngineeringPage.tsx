@@ -194,6 +194,8 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
               realizedValue: lmpSummary?.percent_dentro_prazo,
               activeBranch: activeApiBranch,
               branches: lmpBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<CircleGauge size={22} />}
@@ -231,6 +233,8 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
               realizedValue: transforma?.total_gross_savings_in_period,
               activeBranch: activeApiBranch,
               branches: transformaSavingsBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Coins size={22} />}

@@ -351,6 +351,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               realizedValue: directLabor?.direct_labor_cost_pct,
               activeBranch: selectedBranch,
               branches: directLaborBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Users size={22} />}
@@ -370,6 +372,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               realizedValue: productionCost?.production_cost_pct,
               activeBranch: selectedBranch,
               branches: productionCostBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Coins size={22} />}
@@ -389,6 +393,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               realizedValue: depreciation?.depreciation_pct,
               activeBranch: selectedBranch,
               branches: depreciationBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Percent size={22} />}
@@ -408,6 +414,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               realizedValue: oee?.overall_equipment_effectiveness_pct,
               activeBranch: selectedBranch,
               branches: oeeBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<CircleGauge size={22} />}
@@ -427,6 +435,8 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               realizedValue: otd?.on_time_delivery_pct,
               activeBranch: selectedBranch,
               branches: otdBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Truck size={22} />}

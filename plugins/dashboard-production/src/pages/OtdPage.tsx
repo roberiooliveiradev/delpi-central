@@ -301,8 +301,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             data?.summary,
             undefined,
-            { realizedValue: data?.summary.on_time_delivery_pct }
-          )}
+            {
+              realizedValue: data?.summary.on_time_delivery_pct,
+              dateStart,
+              dateEnd,
+            })}
           icon={<CircleGauge size={22} />}
           loading={isBusy}
         />

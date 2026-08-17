@@ -124,7 +124,11 @@ export function PmrPage({ pathname }: PmrPageProps) {
             periodLabel,
             data,
             undefined,
-            { realizedValue: data?.pmr_days },
+            {
+              realizedValue: data?.pmr_days,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Clock size={22} />}
           loading={isBusy}

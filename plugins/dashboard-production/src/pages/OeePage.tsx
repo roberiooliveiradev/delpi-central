@@ -461,8 +461,11 @@ export function OeePage({ pathname }: OeePageProps) {
             `TOTVS · ${branchLabel} · ${periodLabel}`,
             data?.summary,
             undefined,
-            { realizedValue: data?.summary.oee_pct }
-          )}
+            {
+              realizedValue: data?.summary.oee_pct,
+              dateStart,
+              dateEnd,
+            })}
           icon={<CircleGauge size={22} />}
           loading={isBusy}
         />

@@ -397,6 +397,8 @@ export function DashboardHrPage() {
               realizedValue: absenteeism,
               activeBranch: activeApiBranch,
               branches: absenteeismBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<UserMinus size={22} />}
@@ -416,6 +418,8 @@ export function DashboardHrPage() {
               realizedValue: turnover,
               activeBranch: activeApiBranch,
               branches: turnoverBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<TrendingDown size={22} />}
@@ -435,6 +439,8 @@ export function DashboardHrPage() {
               realizedValue: satisfaction,
               activeBranch: activeApiBranch,
               branches: satisfactionBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Smile size={22} />}
@@ -458,6 +464,8 @@ export function DashboardHrPage() {
               realizedValue: activePdiCount,
               activeBranch: activeApiBranch,
               branches: activePdiBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Award size={22} />}
@@ -481,6 +489,8 @@ export function DashboardHrPage() {
               realizedValue: performanceReviewsCompletion,
               activeBranch: activeApiBranch,
               branches: performanceReviewsBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<ClipboardCheck size={22} />}
@@ -500,6 +510,8 @@ export function DashboardHrPage() {
               realizedValue: trainingHours,
               activeBranch: activeApiBranch,
               branches: trainingHoursBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<BookOpen size={22} />}

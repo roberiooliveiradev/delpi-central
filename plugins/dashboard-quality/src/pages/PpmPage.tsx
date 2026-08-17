@@ -378,7 +378,11 @@ export function PpmPage({ pathname }: PpmPageProps) {
             `Produzido: ${formatDecimal(summary?.total_produzido_un)} un · ${periodLabel}`,
             summary,
             undefined,
-            { realizedValue: summary?.ppm },
+            {
+              realizedValue: summary?.ppm,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={
             ppmType === "internal" ? (

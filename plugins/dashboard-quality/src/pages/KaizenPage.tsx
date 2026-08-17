@@ -319,7 +319,11 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
             periodLabel,
             data?.ideas_goal ?? data,
             undefined,
-            { realizedValue: data?.total_kaizens },
+            {
+              realizedValue: data?.total_kaizens,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Lightbulb size={22} />}
           loading={loading && !data}
@@ -332,7 +336,11 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
             periodLabel,
             data,
             undefined,
-            { realizedValue: data?.total_savings },
+            {
+              realizedValue: data?.total_savings,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Wallet size={22} />}
           loading={loading && !data}

@@ -354,7 +354,11 @@ export function LmpPage({ pathname }: LmpPageProps) {
             periodLabel,
             summary,
             undefined,
-            { realizedValue: summary?.percent_dentro_prazo },
+            {
+              realizedValue: summary?.percent_dentro_prazo,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<CircleGauge size={22} />}
           loading={isBusy}

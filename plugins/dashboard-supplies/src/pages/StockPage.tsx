@@ -220,7 +220,11 @@ export function StockPage({ pathname }: StockPageProps) {
             `${branchLabel} · ${locationLabel}`,
             data?.summary,
             undefined,
-            { realizedValue: data?.summary.total_stock_value },
+            {
+              realizedValue: data?.summary.total_stock_value,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy}

@@ -139,7 +139,11 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
             periodLabel,
             data,
             undefined,
-            { realizedValue: data?.fixed_cost_over_rol_pct },
+            {
+              realizedValue: data?.fixed_cost_over_rol_pct,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Landmark size={22} />}
           loading={isBusy}

@@ -143,7 +143,11 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
             periodLabel,
             data,
             undefined,
-            { realizedValue: data?.ebitda_over_rol_pct },
+            {
+              realizedValue: data?.ebitda_over_rol_pct,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Percent size={22} />}
           loading={isBusy}

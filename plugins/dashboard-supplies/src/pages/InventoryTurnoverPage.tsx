@@ -123,7 +123,11 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
             `${branchLabel} · ${locationLabel} · ${periodLabel}`,
             data?.summary,
             undefined,
-            { realizedValue: data?.summary.inventory_turnover_times },
+            {
+              realizedValue: data?.summary.inventory_turnover_times,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<TrendingUp size={22} />}
           loading={isBusy}
@@ -147,7 +151,11 @@ export function InventoryTurnoverPage({ pathname }: InventoryTurnoverPageProps) 
             `${branchLabel} · ${locationLabel}`,
             data?.stock_context,
             undefined,
-            { realizedValue: data?.summary.total_stock_value },
+            {
+              realizedValue: data?.summary.total_stock_value,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Warehouse size={22} />}
           loading={isBusy}

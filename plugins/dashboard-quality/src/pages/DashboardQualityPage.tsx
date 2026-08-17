@@ -234,6 +234,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
                 realizedValue: ppmInternal?.ppm,
                 activeBranch: activeApiBranch,
                 branches: ppmInternalBranches,
+                dateStart,
+                dateEnd,
               },
             )}
             icon={<Factory size={22} />}
@@ -250,6 +252,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
                 realizedValue: ppmExternal?.ppm,
                 activeBranch: activeApiBranch,
                 branches: ppmExternalBranches,
+                dateStart,
+                dateEnd,
               },
             )}
             icon={<Truck size={22} />}
@@ -273,6 +277,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
               realizedValue: kaizen?.total_kaizens,
               activeBranch: activeApiBranch,
               branches: kaizenIdeasBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Lightbulb size={22} />}
@@ -286,6 +292,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             realizedValue: kaizen?.total_savings,
             activeBranch: activeApiBranch,
             branches: kaizenSavingsBranches,
+            dateStart,
+            dateEnd,
           })}
           icon={<Wallet size={22} />}
           loading={isBusy}
@@ -298,6 +306,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             realizedValue: audit5s?.average_score,
             activeBranch: activeApiBranch,
             branches: audit5sBranches,
+            dateStart,
+            dateEnd,
           })}
           icon={<ClipboardCheck size={22} />}
           loading={isBusy}

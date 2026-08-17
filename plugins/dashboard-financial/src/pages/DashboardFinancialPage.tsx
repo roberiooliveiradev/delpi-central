@@ -224,6 +224,8 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
               realizedValue: ebitda?.ebitda_over_rol_pct,
               activeBranch: activeApiBranch,
               branches: ebitdaBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Percent size={22} />}
@@ -245,6 +247,8 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
               realizedValue: fixedCost?.fixed_cost_over_rol_pct,
               activeBranch: activeApiBranch,
               branches: fixedCostBranches,
+              dateStart,
+              dateEnd,
             },
           )}
           icon={<Landmark size={22} />}
@@ -258,6 +262,8 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
             realizedValue: pmr?.pmr_days,
             activeBranch: activeApiBranch,
             branches: pmrBranches,
+            dateStart,
+            dateEnd,
           })}
           icon={<Clock size={22} />}
           loading={isBusy}

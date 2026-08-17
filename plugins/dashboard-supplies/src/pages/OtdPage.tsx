@@ -213,9 +213,12 @@ export function OtdPage({ pathname }: OtdPageProps) {
             data?.summary.otd_percentage,
             data?.summary,
           )}
-          {...buildKpiGoalPresentation(periodLabel, data?.summary, undefined, {
-            realizedValue: data?.summary.otd_percentage,
-          })}
+          {...buildKpiGoalPresentation(periodLabel, data?.summary, undefined,
+            {
+              realizedValue: data?.summary.otd_percentage,
+              dateStart,
+              dateEnd,
+            })}
           icon={<CircleGauge size={22} />}
           loading={isBusy}
         />

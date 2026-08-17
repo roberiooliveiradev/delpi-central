@@ -247,7 +247,11 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
             periodLabel,
             data,
             undefined,
-            { realizedValue: data?.average_score },
+            {
+              realizedValue: data?.average_score,
+              dateStart,
+              dateEnd,
+            },
           )}
           icon={<Star size={22} />}
           loading={loading && !data}
