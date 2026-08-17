@@ -44,13 +44,18 @@ def test_catalog_resolves_legacy_department_idd_operation_id():
 
 
 def test_catalog_lmp_summary_exposes_meta_for_si_goal_picker():
-    """Hubs com enrich SI devem listar Meta no Campo dinâmico (não só via discovery)."""
+    """Hubs com enrich SI devem listar a tríade de meta no Campo dinâmico."""
     catalog = TvDataRouteCatalogService()
     route = catalog.get_route("get_lmps_dashboard_summary")
     assert route is not None
-    assert "comparable_goal" in (route.get("valueFields") or [])
+    fields = route.get("valueFields") or []
+    assert "comparable_goal" in fields
+    assert "goal_value" in fields
+    assert "reference_goal" in fields
     labels = route.get("valueFieldLabels") or {}
-    assert labels.get("comparable_goal") == "Meta"
+    assert labels.get("comparable_goal") == "Meta do período"
+    assert labels.get("goal_value") == "Meta cadastrada"
+    assert labels.get("reference_goal") == "Meta mês (referência)"
 
 
 def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():

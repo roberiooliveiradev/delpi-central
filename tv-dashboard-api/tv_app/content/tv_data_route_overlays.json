@@ -2,7 +2,9 @@
   "version": 1,
   "description": "Overlays TV por operationId — valueFields, tvConstraints, paramStrategy, labels curados e whenToUse (audiência). Mergeados sobre o schema gerado do OpenAPI.",
   "siGoalFieldLabels": {
-    "comparable_goal": "Meta"
+    "comparable_goal": "Meta do período",
+    "goal_value": "Meta cadastrada",
+    "reference_goal": "Meta mês (referência)"
   },
   "overlayPrefixes": {
     "get_si_indicator_": {
@@ -93,7 +95,9 @@
         "total_produzido_milheiro": "Total produzido (milheiro)",
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
-        "comparable_goal": "Meta"
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "label": "PPM Externo",
       "labelAliases": [
@@ -121,7 +125,9 @@
         "total_produzido_milheiro": "Total produzido (milheiro)",
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
-        "comparable_goal": "Meta"
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "label": "PPM Interno",
       "labelAliases": [
@@ -438,7 +444,9 @@
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
         "total_items": "Total de itens",
-        "comparable_goal": "Meta"
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "allowedDisplayModes": [
         "kpi",
@@ -593,8 +601,10 @@
         "value": "Valor",
         "total_savings": "Economia total",
         "total_kaizens": "Total kaizens",
-        "comparable_goal": "Meta financeira",
-        "ideas_goal": "Ideias / meta"
+        "comparable_goal": "Meta do período",
+        "ideas_goal": "Ideias / meta",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "label": "Kaizen — resumo",
       "labelAliases": [
@@ -617,7 +627,9 @@
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
-        "comparable_goal": "Meta"
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "label": "Auditoria 5S",
       "labelAliases": [
@@ -644,7 +656,10 @@
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
-        "quantity": "Quantidade total"
+        "quantity": "Quantidade total",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "allowedDisplayModes": [
         "kpi",
@@ -666,7 +681,10 @@
         "total_hours": "Horas de retrabalho",
         "appointment_count": "Apontamentos",
         "average_cost_per_hour": "Custo médio por hora (R$)",
-        "records_without_cost": "Registros sem custo"
+        "records_without_cost": "Registros sem custo",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "allowedDisplayModes": [
         "kpi",
@@ -732,7 +750,10 @@
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
-        "quantity": "Quantidade total"
+        "quantity": "Quantidade total",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       }
     },
     "get_refugos_rankings": {
@@ -785,7 +806,10 @@
         "gross_recurring_investment_month": "Invest. recorrente (mês)",
         "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
         "investment_total_month": "Investimento total (mês)",
-        "net_savings_month": "Economia líquida (mês)"
+        "net_savings_month": "Economia líquida (mês)",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
       "valueFieldTypes": {
         "total_investment_in_period": "number",

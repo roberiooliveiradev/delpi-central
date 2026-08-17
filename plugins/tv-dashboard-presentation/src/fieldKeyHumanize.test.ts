@@ -11,7 +11,9 @@ describe("fieldKeyHumanize", () => {
   it("usa rótulo curado por chave completa", () => {
     expect(humanizeFieldKey("gross_savings_month")).toBe("Economia bruta (mês)");
     expect(humanizeFieldKey("month")).toBe("Mês");
-    expect(humanizeFieldKey("goal_value")).toBe("Valor da meta");
+    expect(humanizeFieldKey("goal_value")).toBe("Meta cadastrada");
+    expect(humanizeFieldKey("comparable_goal")).toBe("Meta do período");
+    expect(humanizeFieldKey("reference_goal")).toBe("Meta mês (referência)");
     expect(humanizeFieldKey("solutions_started_in_period_count")).toBe(
       "Soluções iniciadas no período",
     );

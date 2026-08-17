@@ -10,7 +10,9 @@ from tv_app.domain.services.field_key_humanize import (
 def test_humanize_field_key_uses_full_key_map():
     assert humanize_field_key("gross_savings_month") == "Economia bruta (mês)"
     assert humanize_field_key("month") == "Mês"
-    assert humanize_field_key("goal_value") == "Valor da meta"
+    assert humanize_field_key("goal_value") == "Meta cadastrada"
+    assert humanize_field_key("comparable_goal") == "Meta do período"
+    assert humanize_field_key("reference_goal") == "Meta mês (referência)"
 
 
 def test_humanize_field_key_translates_tokens():

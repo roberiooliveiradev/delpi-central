@@ -556,6 +556,7 @@ def test_enrich_si_scalar_meta_prefers_value_not_alias_metrics():
             "value": 1100.0,
             "comparable_goal": 1100.0,
             "goal_value": 1100.0,
+            "reference_goal": 1100.0,
             "value_decimals": 2,
             "has_value": True,
         },
@@ -591,6 +592,69 @@ def test_enrich_si_scalar_meta_prefers_value_not_alias_metrics():
     assert metrics[0]["value"] == 1100.0
     assert enriched[0]["resolved"]["kpi"]["value"] == 1100.0
     assert "table" not in enriched[0]["resolved"] or not enriched[0]["resolved"].get("table")
+
+
+def test_enrich_si_scalar_keeps_distinct_goal_metrics():
+    """goal_value ≠ comparable_goal (e ≠ value) → métricas distintas no picker/KPI."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_si_indicator_quality_ppm_external_meta",
+            "shape": "scalar",
+            "entity": "dashboard_si_indicator_meta",
+        },
+        "data": {
+            "indicator_id": "quality-ppm-external",
+            "name": "PPM Externo",
+            "value": 550.0,
+            "comparable_goal": 550.0,
+            "goal_value": 1100.0,
+            "reference_goal": 1100.0,
+            "value_decimals": 2,
+            "has_value": True,
+        },
+        "route": {
+            "label": "PPM Externo — meta",
+            "metaShape": "scalar",
+            "valueFields": ["value", "comparable_goal", "goal_value", "reference_goal"],
+            "valueFieldLabels": {
+                "value": "Valor",
+                "comparable_goal": "Meta do período",
+                "goal_value": "Meta cadastrada",
+                "reference_goal": "Meta mês (referência)",
+            },
+            "tvConstraints": {"maxRows": 1},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "si-2",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_si_indicator_quality_ppm_external_meta",
+                    "params": {"dateRangePreset": "this_month"},
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    metrics = enriched[0]["resolved"]["kpiMetrics"]
+    fields = {metric["field"] for metric in metrics}
+    assert "value" in fields
+    assert "comparable_goal" not in fields  # igual a value → dedupe
+    assert "goal_value" in fields
+    assert "reference_goal" in fields
+    by_field = {metric["field"]: metric["value"] for metric in metrics}
+    assert by_field["goal_value"] == 1100.0
+    assert by_field["reference_goal"] == 1100.0
 
 
 def test_enrich_table_reads_branches_and_ranking_list_keys():

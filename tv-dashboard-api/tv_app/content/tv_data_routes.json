@@ -197,14 +197,14 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_sales_conversion_rate_series",
@@ -1141,16 +1141,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "sales_order_otd_pct",
-        "late_percentage",
-        "late_lines",
-        "total_lines"
-      ],
-      "tvConstraints": {
-        "maxRows": 200
-      },
-      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
       "valueFieldTypes": {
         "sales_order_otd_pct": "number",
         "late_percentage": "number",
@@ -1159,8 +1149,18 @@
         "promised_date": "date",
         "invoice_date": "date"
       },
-      "openEndedDateRange": true,
-      "tableFields": "lines"
+      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "late_percentage",
+        "late_lines",
+        "total_lines"
+      ],
+      "tableFields": "lines",
+      "openEndedDateRange": true
     },
     {
       "operationId": "get_sales_order_otd_series",
@@ -1363,14 +1363,14 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "score",
         "value",
         "idd"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      ]
     },
     {
       "operationId": "get_dashboard_department_indicators",
@@ -1439,13 +1439,13 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 20
+      },
       "valueFields": [
         "idd",
         "score"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
       "tableFields": "indicators"
     },
     {
@@ -1515,13 +1515,13 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 20
+      },
       "valueFields": [
         "idd",
         "score"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
       "tableFields": "items"
     },
     {
@@ -1575,15 +1575,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
@@ -1636,15 +1636,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_meta",
@@ -1697,15 +1697,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
@@ -1758,15 +1758,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_rol_meta",
@@ -1819,15 +1819,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_rol_realized",
@@ -1880,15 +1880,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
@@ -1941,15 +1941,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
@@ -2002,15 +2002,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_meta",
@@ -2063,15 +2063,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
@@ -2124,15 +2124,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
@@ -2185,15 +2185,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
@@ -2246,15 +2246,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_meta",
@@ -2307,15 +2307,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_realized",
@@ -2368,15 +2368,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_meta",
@@ -2429,15 +2429,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
@@ -2490,15 +2490,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_pmr_meta",
@@ -2551,15 +2551,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_pmr_realized",
@@ -2612,15 +2612,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_meta",
@@ -2673,15 +2673,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_realized",
@@ -2734,15 +2734,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_pdi_meta",
@@ -2795,15 +2795,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_pdi_realized",
@@ -2856,15 +2856,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_meta",
@@ -2917,15 +2917,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
@@ -2978,15 +2978,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_meta",
@@ -3039,15 +3039,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_realized",
@@ -3100,15 +3100,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_meta",
@@ -3161,15 +3161,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_realized",
@@ -3222,15 +3222,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_turnover_meta",
@@ -3283,15 +3283,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_turnover_realized",
@@ -3344,15 +3344,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_costs_meta",
@@ -3405,15 +3405,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_costs_realized",
@@ -3466,15 +3466,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_depreciation_meta",
@@ -3527,15 +3527,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_depreciation_realized",
@@ -3588,15 +3588,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_meta",
@@ -3649,15 +3649,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_realized",
@@ -3710,15 +3710,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_oee_meta",
@@ -3771,15 +3771,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_oee_realized",
@@ -3832,15 +3832,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_otd_meta",
@@ -3893,15 +3893,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_otd_realized",
@@ -3954,15 +3954,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_meta",
@@ -4015,15 +4015,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_realized",
@@ -4076,15 +4076,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_meta",
@@ -4137,15 +4137,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
@@ -4198,15 +4198,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
@@ -4259,15 +4259,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
@@ -4320,15 +4320,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_components_meta",
@@ -4376,15 +4376,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFields": [
+        "value"
+      ],
       "labelAliases": [
         "PPM Externo Componentes — meta",
         "PPM chicotes 9026 — meta"
@@ -4436,15 +4436,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFields": [
+        "value"
+      ],
       "labelAliases": [
         "PPM Externo Componentes — realizado",
         "PPM chicotes 9026 — realizado"
@@ -4501,15 +4501,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
@@ -4562,15 +4562,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_meta",
@@ -4623,15 +4623,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_realized",
@@ -4684,15 +4684,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
@@ -4740,15 +4740,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFields": [
+        "value"
+      ],
       "labelAliases": [
         "PPM Interno Componentes — meta",
         "PPM chicotes 9026 — meta"
@@ -4800,15 +4800,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFields": [
+        "value"
+      ],
       "labelAliases": [
         "PPM Interno Componentes — realizado",
         "PPM chicotes 9026 — realizado"
@@ -4865,15 +4865,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
@@ -4926,15 +4926,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_meta",
@@ -4987,15 +4987,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
@@ -5048,15 +5048,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
@@ -5112,11 +5112,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5173,11 +5173,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5234,11 +5234,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5295,11 +5295,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5353,15 +5353,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_realized",
@@ -5414,15 +5414,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
@@ -5475,15 +5475,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
@@ -5536,15 +5536,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_otd_meta",
@@ -5597,15 +5597,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_otd_realized",
@@ -5658,15 +5658,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_meta",
@@ -5719,15 +5719,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
@@ -5780,15 +5780,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_meta",
@@ -5841,15 +5841,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_realized",
@@ -5902,15 +5902,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "list_lmps",
@@ -6313,20 +6313,22 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
         "total_items",
         "comparable_goal"
-      ],
-      "valueFieldLabels": {
-        "total_lmps": "Total de LMPs",
-        "percent_dentro_prazo": "% no prazo",
-        "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens",
-        "comparable_goal": "Meta"
-      }
+      ]
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -7110,13 +7112,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "total_investment_in_period",
-        "total_gross_savings_in_period",
-        "total_hours_saved_until_now",
-        "implemented_solutions_count",
-        "solutions_started_in_period_count"
-      ],
       "valueFieldTypes": {
         "total_investment_in_period": "number",
         "total_gross_savings_in_period": "number",
@@ -7148,8 +7143,18 @@
         "gross_recurring_investment_month": "Invest. recorrente (mês)",
         "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
         "investment_total_month": "Investimento total (mês)",
-        "net_savings_month": "Economia líquida (mês)"
-      }
+        "net_savings_month": "Economia líquida (mês)",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count",
+        "solutions_started_in_period_count"
+      ]
     },
     {
       "operationId": "get_transformometro_savings_investment_series",
@@ -7225,10 +7230,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
       "valueFieldTypes": {
         "periodo": "date",
         "economia_bruta": "number",
@@ -7241,6 +7242,10 @@
         "economia_bruta": "Economia",
         "investimento": "Investimento"
       },
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -7256,8 +7261,8 @@
           "direction": "asc"
         }
       ],
-      "openEndedDateRange": true,
-      "tableFields": "points"
+      "tableFields": "points",
+      "openEndedDateRange": true
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -13184,23 +13189,23 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "eficiencia_percentual",
-        "resultado_mod",
-        "tempo_real_horas",
-        "tempo_previsto_horas"
-      ],
-      "tvConstraints": {
-        "maxRows": 10000,
-        "bulkList": true
-      },
-      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
       "valueFieldTypes": {
         "eficiencia_percentual": "number",
         "resultado_mod": "number",
         "tempo_real_horas": "number",
         "tempo_previsto_horas": "number"
-      }
+      },
+      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
+      "tvConstraints": {
+        "maxRows": 10000,
+        "bulkList": true
+      },
+      "valueFields": [
+        "eficiencia_percentual",
+        "resultado_mod",
+        "tempo_real_horas",
+        "tempo_previsto_horas"
+      ]
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -13359,23 +13364,23 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "efficiency_pct",
-        "appointment_count"
-      ],
-      "tvConstraints": {
-        "maxRows": 200
-      },
-      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
       "valueFieldTypes": {
         "efficiency_pct": "number",
         "appointment_count": "number"
       },
+      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
       "valueFieldLabels": {
         "efficiency_pct": "Eficiência %",
         "appointment_count": "Apontamentos",
         "work_center": "Centro de trabalho"
-      }
+      },
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "efficiency_pct",
+        "appointment_count"
+      ]
     },
     {
       "operationId": "get_production_losses_records",
@@ -13787,13 +13792,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -13803,6 +13801,13 @@
         "oee_filial_02": "number"
       },
       "seriesField": "points",
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -13875,14 +13880,14 @@
         "value",
         "otdPct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -14234,9 +14239,6 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -14245,7 +14247,10 @@
         "otd_filial_01": "number",
         "otd_filial_02": "number"
       },
-      "seriesField": "points"
+      "seriesField": "points",
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -14303,14 +14308,14 @@
         "value",
         "oeePct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -15466,15 +15471,15 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       },
-      "tableFields": "items"
+      "tableFields": "items",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -18438,7 +18443,7 @@
           "optional": true,
           "label": "Somente pendentes",
           "default": false,
-          "description": "Retorna apenas itens pendentes quando verdadeiro."
+          "description": "Retorna NCs em aberto: aguardando registro, plano em registro e aguardando evidências."
         },
         "senso_order": {
           "type": "integer",
@@ -18603,15 +18608,17 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldLabels": {
+        "value": "Valor",
+        "average_score": "Nota média 5S",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
       "valueFields": [
         "value",
         "average_score"
       ],
-      "valueFieldLabels": {
-        "value": "Valor",
-        "average_score": "Nota média 5S",
-        "comparable_goal": "Meta"
-      },
       "labelAliases": [
         "Auditoria 5S — resumo"
       ]
@@ -19214,18 +19221,20 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldLabels": {
+        "value": "Valor",
+        "total_savings": "Economia total",
+        "total_kaizens": "Total kaizens",
+        "comparable_goal": "Meta do período",
+        "ideas_goal": "Ideias / meta",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
       "valueFields": [
         "value",
         "total_savings",
         "total_kaizens"
       ],
-      "valueFieldLabels": {
-        "value": "Valor",
-        "total_savings": "Economia total",
-        "total_kaizens": "Total kaizens",
-        "comparable_goal": "Meta financeira",
-        "ideas_goal": "Ideias / meta"
-      },
       "labelAliases": [
         "Kaizens — resumo e listagem (PostgreSQL)",
         "Kaizens — resumo e listagem (Google Sheets)"
@@ -19836,17 +19845,6 @@
         }
       },
       "paramStrategy": "direct",
-      "valueFields": [
-        "value",
-        "current_days_without_nc"
-      ],
-      "defaultParams": {
-        "type": "customer"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "value": "number",
         "current_days_without_nc": "number",
@@ -19859,10 +19857,21 @@
         "record_days_without_nc": "Recorde de dias sem NC",
         "last_nc_date": "Data da última NC"
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "current_days_without_nc"
+      ],
       "labelAliases": [
         "Qualidade — dias sem NC no cliente",
         "Dias sem defeitos no cliente"
-      ]
+      ],
+      "defaultParams": {
+        "type": "customer"
+      }
     },
     {
       "operationId": "list_ppm_external",
@@ -20042,15 +20051,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -20059,8 +20059,19 @@
         "total_produzido_milheiro": "Total produzido (milheiro)",
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
-        "comparable_goal": "Meta"
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "labelAliases": [
         "Qualidade — PPM externo"
       ]
@@ -20243,15 +20254,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -20260,8 +20262,19 @@
         "total_produzido_milheiro": "Total produzido (milheiro)",
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
-        "comparable_goal": "Meta"
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "labelAliases": [
         "Qualidade — PPM interno",
         "PPM Interno — realizado"
@@ -20438,7 +20451,10 @@
         "total_hours": "Horas de retrabalho",
         "appointment_count": "Apontamentos",
         "average_cost_per_hour": "Custo médio por hora (R$)",
-        "records_without_cost": "Registros sem custo"
+        "records_without_cost": "Registros sem custo",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       }
     },
     {
@@ -20561,7 +20577,10 @@
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
-        "quantity": "Quantidade total"
+        "quantity": "Quantidade total",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       }
     },
     {
@@ -20832,13 +20851,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value",
-        "sharePct",
-        "percentual",
-        "quantity",
-        "occurrenceCount"
-      ],
       "valueFieldLabels": {
         "value": "Valor (R$)",
         "sharePct": "Participação (%)",
@@ -20848,6 +20860,13 @@
         "code": "Código",
         "label": "Descrição"
       },
+      "valueFields": [
+        "value",
+        "sharePct",
+        "percentual",
+        "quantity",
+        "occurrenceCount"
+      ],
       "tableFields": "items"
     },
     {
@@ -21103,7 +21122,10 @@
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
-        "quantity": "Quantidade total"
+        "quantity": "Quantidade total",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       }
     },
     {
@@ -22507,15 +22529,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "purchase_order_otd_pct",
-        "late_lines",
-        "total_lines"
-      ],
-      "tvConstraints": {
-        "maxRows": 200
-      },
-      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
       "valueFieldTypes": {
         "purchase_order_otd_pct": "number",
         "late_lines": "number",
@@ -22525,8 +22538,17 @@
         "invoice_issue_date": "date",
         "purchase_order_issue_date": "date"
       },
-      "openEndedDateRange": true,
-      "tableFields": "lines"
+      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFields": [
+        "purchase_order_otd_pct",
+        "late_lines",
+        "total_lines"
+      ],
+      "tableFields": "lines",
+      "openEndedDateRange": true
     },
     {
       "operationId": "get_supplies_purchase_order_otd_series",
@@ -23167,25 +23189,25 @@
         }
       },
       "paramStrategy": "direct",
-      "valueFields": [
-        "stock_value",
-        "quantity"
-      ],
-      "defaultParams": {
-        "page": 1,
-        "page_size": 50,
-        "only_positive": true,
-        "sort": "stock_value_desc"
+      "valueFieldLabels": {
+        "stock_value": "Valor (R$)",
+        "quantity": "Quantidade"
       },
       "tvConstraints": {
         "maxRows": 50,
         "requiresBranchPermission": true
       },
-      "valueFieldLabels": {
-        "stock_value": "Valor (R$)",
-        "quantity": "Quantidade"
-      },
-      "tableFields": "items"
+      "valueFields": [
+        "stock_value",
+        "quantity"
+      ],
+      "tableFields": "items",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 50,
+        "only_positive": true,
+        "sort": "stock_value_desc"
+      }
     },
     {
       "operationId": "get_supplies_stock_balances_summary",
@@ -23228,20 +23250,20 @@
         }
       },
       "paramStrategy": "direct",
-      "valueFields": [
-        "product_count",
-        "total_stock_value",
-        "total_quantity"
-      ],
-      "tvConstraints": {
-        "maxRows": 12,
-        "requiresBranchPermission": true
-      },
       "valueFieldLabels": {
         "product_count": "Qtd. de produtos",
         "total_stock_value": "Valor do estoque (R$)",
         "total_quantity": "Quantidade total"
       },
+      "tvConstraints": {
+        "maxRows": 12,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "product_count",
+        "total_stock_value",
+        "total_quantity"
+      ],
       "tableFields": "by_warehouse"
     },
     {
@@ -23323,15 +23345,15 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
       ],
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
       "tableFields": "top_products"
     },
     {

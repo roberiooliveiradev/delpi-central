@@ -53,7 +53,9 @@ _RUNTIME_OVERLAY_KEYS = frozenset(
 )
 
 _DEFAULT_SI_GOAL_FIELD_LABELS: dict[str, str] = {
-    "comparable_goal": "Meta",
+    "comparable_goal": "Meta do período",
+    "goal_value": "Meta cadastrada",
+    "reference_goal": "Meta mês (referência)",
 }
 
 
@@ -91,7 +93,7 @@ def _load_overlays() -> dict[str, dict[str, Any]]:
 
 @lru_cache(maxsize=1)
 def _si_goal_field_labels() -> dict[str, str]:
-    """Rótulos canônicos de meta SI (comparable_goal → Meta) para o picker."""
+    """Rótulos canônicos de meta SI para o picker (cadastrada / período / referência)."""
     payload = _load_overlays_document()
     raw = payload.get("siGoalFieldLabels")
     if isinstance(raw, dict) and raw:
@@ -129,20 +131,20 @@ def resolve_canonical_operation_id(operation_id: str | None) -> str:
 
 
 def _apply_si_goal_picker_fields(route: dict[str, Any], *, overlay: dict[str, Any]) -> dict[str, Any]:
-    """Garante Meta (comparable_goal) no picker de hubs com enriquecimento SI.
+    """Garante tríade de meta SI no picker de hubs com enriquecimento SI.
 
     Sem isso, o campo só aparece via discovery quando o preview já trouxe valor —
     e some do «Campo dinâmico» se a meta estiver vazia ou o resolved falhar.
     """
     exposes = bool(overlay.get("exposesSiGoal"))
     labels = route.get("valueFieldLabels") if isinstance(route.get("valueFieldLabels"), dict) else {}
-    if not exposes and "comparable_goal" not in labels:
+    if not exposes and not any(field in labels for field in _si_goal_field_labels()):
         return route
 
     merged = dict(route)
     next_labels = dict(labels)
     for field, label in _si_goal_field_labels().items():
-        next_labels.setdefault(field, label)
+        next_labels[field] = label
     merged["valueFieldLabels"] = next_labels
 
     fields = [

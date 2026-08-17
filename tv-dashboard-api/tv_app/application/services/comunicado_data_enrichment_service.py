@@ -361,11 +361,12 @@ _KPI_META_FIELD_KEYS = frozenset(
     }
 )
 
-# Quando `value` existe, estes são espelhos/aliases (ex.: SI meta: value == comparable_goal).
+# Aliases SI do realizado: só dedupe quando o valor numérico ≈ `value`.
 _KPI_VALUE_ALIAS_FIELDS = frozenset(
     {
         "comparable_goal",
         "goal_value",
+        "reference_goal",
         "score",
         "gap",
     }
@@ -562,18 +563,46 @@ def _extract_kpi_metrics(
     return filtered
 
 
+def _coerce_metric_number(value: Any) -> float | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip().replace(",", ".")
+        if not text:
+            return None
+        try:
+            return float(text)
+        except ValueError:
+            return None
+    return None
+
+
 def _prefer_primary_value_metric(metrics: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Com `value` presente, remove aliases SI (comparable_goal/goal_value) e formatação."""
+    """Com `value` presente, remove aliases SI só quando o valor numérico é o mesmo."""
     if len(metrics) <= 1:
         return metrics
-    fields = {str(metric.get("field") or "") for metric in metrics}
-    if "value" not in fields:
+    by_field = {str(metric.get("field") or ""): metric for metric in metrics}
+    primary = by_field.get("value")
+    if primary is None:
         return metrics
-    return [
-        metric
-        for metric in metrics
-        if str(metric.get("field") or "") not in _KPI_VALUE_ALIAS_FIELDS
-    ]
+    primary_number = _coerce_metric_number(primary.get("value"))
+    kept: list[dict[str, Any]] = []
+    for metric in metrics:
+        field = str(metric.get("field") or "")
+        if field not in _KPI_VALUE_ALIAS_FIELDS:
+            kept.append(metric)
+            continue
+        alias_number = _coerce_metric_number(metric.get("value"))
+        if (
+            primary_number is not None
+            and alias_number is not None
+            and abs(primary_number - alias_number) < 1e-9
+        ):
+            continue
+        kept.append(metric)
+    return kept
 
 
 def _extract_scalar_value(data: Any, value_fields: list[Any]) -> Any:
@@ -778,7 +807,14 @@ def _scalar_object_as_table_rows(
         if _is_kpi_meta_field(key):
             continue
         if key in _KPI_VALUE_ALIAS_FIELDS and "value" in data:
-            continue
+            primary_number = _coerce_metric_number(data.get("value"))
+            alias_number = _coerce_metric_number(value)
+            if (
+                primary_number is not None
+                and alias_number is not None
+                and abs(primary_number - alias_number) < 1e-9
+            ):
+                continue
         rows.append({"campo": key, "valor": value})
         if len(rows) >= max_rows:
             break
