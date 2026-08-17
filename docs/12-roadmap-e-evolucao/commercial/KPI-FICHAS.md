@@ -43,7 +43,7 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | **Meta no período (decisão ata alinhamento 2 + correção pós-W0)** | **Currency/count:** soma das metas **proporcionais por dia** no intervalo. **Percent/nível:** média **ponderada por dias** das metas mensais (não somar %). Implementação: `strategic-indicators-api` — ver [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §5 · [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
 | Analogia de mercado | **Billings / receita faturada** no período (não é backlog; não é book-to-bill) |
 | Numerador | Valor líquido de vendas (− impostos listados) menos devoluções no período |
-| Denominador (meta) | Meta SI `comparable_goal` com **proporcional diária** (`Σ meta_mês/dias_mês × dias_sobrepostos`); flags `goal_aggregation` / `goal_period_partial` via enrich api-delpi |
+| Denominador (meta) | Meta SI `comparable_goal` com **proporcional diária** (`Σ meta_mês/dias_mês × dias_sobrepostos`); % em mês incompleto = sum diária; YTD % = average; flags `goal_aggregation` / `goal_period_kind` / `goal_period_partial` via enrich api-delpi |
 | Inclusões / exclusões (SQL) | Inclui TES com `F4_DUPLIC='S'` (padrão); exclui `D2_TIPO='D'`; CF `5911`/`6151` com exceções; remessa especial `5927` conforme regras SF4. Segmento WEG = cliente `000001`; novos negócios = não-WEG |
 | Fonte | api-delpi `get_financial_rol`, `get_*_rol_target_pct`, `get_commercial_rol_series`; BFF commercial-api `/analytics/*`; SQL: `api-delpi/app/infrastructure/persistence/totvs/financial_repositories/financial_repository.py` |
 | Freshness | Conforme cache/query TOTVS do período filtrado |

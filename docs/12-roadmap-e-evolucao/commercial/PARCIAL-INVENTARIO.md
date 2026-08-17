@@ -25,8 +25,8 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 
 | ID | Tema | Etapa | Status | Pacotes | Fontes |
 |----|------|-------|--------|---------|--------|
-| P-META | Meta proporcional diária + flags + parity notas | E1 | **Existe** (SI; pós-W0: sum/average por `value_unit`) | `strategic-indicators-api` | ATA-2 §5 · KPI-ROL |
-| P-META-LABEL | «Meta parcial» / «Meta acumulada» (sem composto · parcial) | E2 | **Existe** | `plugins/commercial` + plugin-ui | ATA-2 §5 |
+| P-META | Meta proporcional diária + flags + parity notas | E1 | **Existe** (SI; % incompleto = sum diária; YTD % = average) | `strategic-indicators-api` | ATA-2 §5 · KPI-ROL |
+| P-META-LABEL | «Meta» / «Meta parcial» / «Meta acumulada» (`goal_period_kind`) | E2 | **Existe** | `plugins/commercial` + plugin-ui | ATA-2 §5 |
 | P-LABEL | Chip MTD/YTD nos cards Overview | E2 | **Existe** | `plugins/commercial` | ATA-2 §5 |
 | P-RENAME | «Data de faturamento» + FOB/CIF | E3 | **Existe** | MFE + help | ATA-2 §14–15 |
 | P-OPP | Filtros Conta: período, produto, família (grid + debounce/foco) | E4 | **Existe** | api-delpi + BFF + MFE | ATA-2 §21 |
@@ -38,8 +38,9 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | Tema | Decisão | Status |
 |------|--------|--------|
 | Meta % no YTD | `average` ponderada por dias (não soma de meses) | **Existe** |
+| Meta % mês incompleto | `sum` das parcelas diárias (`meta_mês × dias/dias_mês`) | **Existe** |
 | Meta R$/count | `sum` prorata diária | **Existe** |
-| Rótulo | Intervalo &lt; 1 mês → «Meta parcial»; multi-mês → «Meta acumulada» | **Existe** |
+| Rótulo | 1 mês fechado → «Meta»; &lt; 1 mês → «Meta parcial»; multi-mês → «Meta acumulada» (`goal_period_kind`) | **Existe** |
 | Favoritos | Na topbar (`secondary`), sem faixa abaixo da nav | **Existe** |
 | Opp Conta | Filtros em linha; inputs estáveis no refetch | **Existe** |
 
