@@ -5,7 +5,6 @@ import type { GoalPerformanceBadge, KpiGoalPresentation } from "./goalDisplay";
 import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
-  resolveAccumulatedGoalPrefix,
   resolveConsolidatedIddScoreLabel,
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
@@ -74,17 +73,6 @@ function resolvePerUnitPerformanceBadges(
     .filter((badge): badge is GoalPerformanceBadge => badge != null);
 }
 
-function pickGoalForPrefix(
-  filial01: RolTargetData | null,
-  filial02: RolTargetData | null,
-  activeBranch?: string,
-): RolTargetData | null {
-  const branch = (activeBranch ?? "").trim();
-  if (branch === "01") return filial01;
-  if (branch === "02") return filial02;
-  return filial01 ?? filial02;
-}
-
 export function buildRolPerUnitKpiView(
   filial01: RolTargetData | null,
   filial02: RolTargetData | null,
@@ -99,14 +87,6 @@ export function buildRolPerUnitKpiView(
 ): RolPerUnitKpiView {
   const branch = (activeBranch ?? "").trim();
   const periodKindBadge = options?.periodKindBadge ?? null;
-  const dateOpts = {
-    dateStart: options?.dateStart,
-    dateEnd: options?.dateEnd,
-  };
-  const goalForPrefix = pickGoalForPrefix(filial01, filial02, activeBranch);
-  const goalPrefix = goalForPrefix
-    ? resolveAccumulatedGoalPrefix(goalForPrefix, dateOpts)
-    : null;
 
   if (branch === "01" || branch === "02") {
     const data = branch === "01" ? filial01 : filial02;
@@ -130,20 +110,17 @@ export function buildRolPerUnitKpiView(
   }
 
   const consolidatedRol = resolveConsolidatedRolValue(filial01, filial02);
-  const prefixPresentation = goalForPrefix
-    ? buildKpiGoalPresentation(contextLabel, goalForPrefix, undefined, dateOpts)
-    : null;
 
   return {
     contextLabel,
     value: consolidatedRol != null ? formatCurrency(consolidatedRol) : "—",
     valueVariant: "default",
     goalLabel: null,
-    goalPrefix,
-    goalHint: prefixPresentation?.goalHint ?? null,
-    monthlyGoalLabel: prefixPresentation?.monthlyGoalLabel ?? null,
-    monthlyGoalPrefix: prefixPresentation?.monthlyGoalPrefix ?? null,
-    monthlyGoalHint: prefixPresentation?.monthlyGoalHint ?? null,
+    goalPrefix: null,
+    goalHint: null,
+    monthlyGoalLabel: null,
+    monthlyGoalPrefix: null,
+    monthlyGoalHint: null,
     goalScopeBadge: null,
     goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
     goalPerformanceBadge: null,

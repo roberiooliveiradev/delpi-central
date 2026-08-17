@@ -59,6 +59,22 @@ describe("goalDisplay", () => {
     expect(presentation.monthlyGoalHint).toMatch(/cadastrado/i);
   });
 
+  it("omite meta numérica quando há goal_scope_hint (selecione unidade)", () => {
+    const presentation = buildKpiGoalPresentation("ctx", {
+      comparable_goal: 1_076_000,
+      reference_goal: 1_076_000,
+      goal_value: 1_076_000,
+      goal_period_kind: "partial",
+      goal_scope_hint:
+        "Metas cadastradas apenas por unidade. Selecione uma unidade no filtro.",
+      value_prefix: "R$",
+      value_decimals: 2,
+    });
+    expect(presentation.goalLabel).toBeNull();
+    expect(presentation.monthlyGoalLabel).toBeNull();
+    expect(presentation.goalScopeHint).toMatch(/Selecione uma unidade/i);
+  });
+
   it("formata fragmentos de export com Meta mês", () => {
     const presentation = buildKpiGoalPresentation("ctx", {
       comparable_goal: 5,

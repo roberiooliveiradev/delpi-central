@@ -240,7 +240,11 @@ def test_unit_goals_for_per_unit_monthly_curve() -> None:
     )
 
     assert len(calculated) == 1
-    assert calculated[0].unit_goals == {"01": 3_466_000.0, "02": 1_006_000.0}
+    expected_01 = round(3_466_000.0 * 27 / 31, 2)
+    expected_02 = round(1_006_000.0 * 27 / 31, 2)
+    assert calculated[0].unit_goals == {"01": expected_01, "02": expected_02}
+    # Meta cadastrada da curva: goal_value do catálogo (primary), não o comparable parcial.
+    assert calculated[0].goal_value == 3_466_000
 
     goals_payload = calculator.resolve_goals_payload_for_calculated(
         calculated=calculated[0],
@@ -249,7 +253,7 @@ def test_unit_goals_for_per_unit_monthly_curve() -> None:
         end_date="27-05-2026",
         competence="2026-05",
     )
-    assert goals_payload == {"01": 3_466_000.0, "02": 1_006_000.0}
+    assert goals_payload == {"01": expected_01, "02": expected_02}
 
     stale = StrategicIndicatorCalculatedValue(
         indicator_id=calculated[0].indicator_id,
@@ -279,7 +283,7 @@ def test_unit_goals_for_per_unit_monthly_curve() -> None:
         end_date="27-05-2026",
         competence="2026-05",
     )
-    assert recomputed == {"01": 3_466_000.0, "02": 1_006_000.0}
+    assert recomputed == {"01": expected_01, "02": expected_02}
 
 
 def test_resolve_unit_goals_ignores_stale_consolidated_cache() -> None:
@@ -537,3 +541,58 @@ def test_branch_view_per_unit_goals_payload_uses_active_branch_key() -> None:
 
     assert goals_payload == {"01": 1_006_000.0}
     assert "consolidated" not in goals_payload
+
+
+def test_branch_view_keeps_registered_goal_value_not_comparable() -> None:
+    """goal_value permanece cadastrado; comparable fica só em unit_goals (mês parcial)."""
+    calculator = StrategicIndicatorsCalculator()
+    indicator = StrategicIndicatorCatalogItem(
+        indicator_id="quality-ppm-internal",
+        department_id="quality",
+        indicator_name="PPM Interno",
+        weight_pct=25,
+        goal_label="Meta",
+        goal_value=1_400.0,
+        goal_periodicity="monthly",
+        goal_mode="standard",
+        monthly_targets=[],
+        scope_type="per_unit",
+        performance_direction="lower_is_better",
+        branch_goals={
+            "01": {
+                "goal_label": "Meta",
+                "goal_value": 1_400.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "standard",
+                "monthly_targets": [],
+            },
+        },
+        resolved_goal_scope_branch="01",
+        has_resolved_goal=True,
+        value_unit="ppm",
+    )
+    measurement = StrategicIndicatorMeasuredValue(
+        indicator_id="quality-ppm-internal",
+        department_id="quality",
+        value=835.19,
+        source="quality",
+        unit_values={"01": 835.19},
+    )
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=[indicator],
+        measurements=[measurement],
+        competence="2026-08",
+        start_date="01-08-2026",
+        end_date="17-08-2026",
+        scope_branch="01",
+    )
+
+    assert len(calculated) == 1
+    item = calculated[0]
+    assert item.goal_value == 1_400.0
+    assert item.unit_goals is not None
+    comparable = item.unit_goals.get("01")
+    assert comparable is not None
+    assert comparable < 1_400.0
+    assert abs(comparable - round(1_400.0 * 17 / 31, 2)) < 0.02

@@ -213,6 +213,10 @@ class StrategicIndicatorsCalculator:
                         end_date=end_date,
                         competence=competence,
                     )
+                    registered = self._registered_goal_fields_for_branch_view(
+                        indicator=indicator,
+                        branch_code=scoring_branch,
+                    )
                     unit_goals = None
                     if comparable_goal is not None:
                         rounded_goal = round(float(comparable_goal), 2)
@@ -229,14 +233,11 @@ class StrategicIndicatorsCalculator:
                             indicator_name=indicator.indicator_name,
                             weight_pct=indicator.weight_pct,
                             goal_label=indicator.goal_label,
-                            goal_value=(
-                                round(float(comparable_goal), 2)
-                                if comparable_goal is not None
-                                else indicator.goal_value
-                            ),
-                            goal_periodicity=indicator.goal_periodicity,
-                            goal_mode=getattr(indicator, "goal_mode", "standard"),
-                            monthly_targets=getattr(indicator, "monthly_targets", None),
+                            # Meta cadastrada da filial/escopo — nunca o comparable do período.
+                            goal_value=registered["goal_value"],
+                            goal_periodicity=registered["goal_periodicity"],
+                            goal_mode=registered["goal_mode"],
+                            monthly_targets=registered["monthly_targets"],
                             scope_type=indicator.scope_type,
                             performance_direction=performance_direction,
                             strategic_description=indicator.strategic_description,
@@ -1554,6 +1555,36 @@ class StrategicIndicatorsCalculator:
 
     def indicator_has_value(self, value: float | None) -> bool:
         return value is not None
+
+    def _registered_goal_fields_for_branch_view(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        branch_code: str,
+    ) -> dict[str, object]:
+        """Campos da meta cadastrada no escopo da filial (não a meta calculada do período)."""
+        branch_goal = (indicator.branch_goals or {}).get(branch_code)
+        if branch_goal:
+            return {
+                "goal_value": float(branch_goal["goal_value"])
+                if branch_goal.get("goal_value") is not None
+                else indicator.goal_value,
+                "goal_periodicity": branch_goal.get("goal_periodicity")
+                or indicator.goal_periodicity
+                or "monthly",
+                "goal_mode": branch_goal.get("goal_mode")
+                or getattr(indicator, "goal_mode", "standard")
+                or "standard",
+                "monthly_targets": branch_goal.get("monthly_targets")
+                or getattr(indicator, "monthly_targets", None)
+                or [],
+            }
+        return {
+            "goal_value": indicator.goal_value,
+            "goal_periodicity": indicator.goal_periodicity or "monthly",
+            "goal_mode": getattr(indicator, "goal_mode", "standard") or "standard",
+            "monthly_targets": getattr(indicator, "monthly_targets", None) or [],
+        }
 
     def _comparable_goal_for_branch_view(
         self,

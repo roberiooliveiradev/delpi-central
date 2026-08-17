@@ -513,8 +513,13 @@ export function buildKpiGoalPresentation(
   },
 ): KpiGoalPresentation {
   const showGoal = options?.showGoal ?? true;
+  const hasUnitScopeHint = Boolean(goal?.goal_scope_hint?.trim());
+  // Hint «selecione unidade» = meta só por filial — não exibir número consolidado.
+  const showNumericGoals = showGoal && !hasUnitScopeHint;
   const scopeBadge = showGoal ? resolveGoalScopeBadge(goal) : null;
-  const goalLabel = showGoal ? resolveGoalLabel(goal, formatComparable) : null;
+  const goalLabel = showNumericGoals
+    ? resolveGoalLabel(goal, formatComparable)
+    : null;
   const scopeHint =
     scopeBadge?.tone === "info" ? scopeBadge.label : goal?.goal_scope_hint?.trim() || null;
   const dateOpts = {
@@ -523,16 +528,16 @@ export function buildKpiGoalPresentation(
   };
   const kind = resolveGoalPeriodKind(goal, dateOpts) as GoalLineHelpKind;
   const goalPrefix =
-    showGoal && goalLabel
+    showNumericGoals && goalLabel
       ? resolveAccumulatedGoalPrefix(goal, dateOpts)
       : null;
   const goalHint =
-    showGoal && goalLabel
+    showNumericGoals && goalLabel
       ? resolveGoalLineHelp({ kind, goalMode: goal?.goal_mode, line: "period" })
       : null;
 
   const showMonthlyLine =
-    showGoal && (kind === "partial" || kind === "accumulated");
+    showNumericGoals && (kind === "partial" || kind === "accumulated");
   const monthlyRaw =
     goal?.reference_goal ?? goal?.goal_value ?? null;
   const monthlyGoalLabel =
@@ -560,7 +565,7 @@ export function buildKpiGoalPresentation(
     monthlyGoalHint,
     goalScopeBadge: scopeBadge?.tone === "scope" ? scopeBadge : null,
     goalScopeHint: scopeHint,
-    goalPerformanceBadge: showGoal
+    goalPerformanceBadge: showNumericGoals
       ? resolveGoalPerformanceBadge(options?.realizedValue, goal)
       : null,
     iddScoreLabel: showGoal
