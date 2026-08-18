@@ -13,6 +13,7 @@ export type OverviewMetricId =
   | "portfolio_billing_share"
   | "gap_to_target"
   | "open_portfolio_horizon"
+  | "declared_forecast"
   | "rol_series"
   | "closing_rate_series"
   | "funnel";
@@ -69,6 +70,12 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     label: "Carteira no tempo",
     tooltip:
       "Valor aberto por data de entrega (atrasado, este mês, 1–3 meses, depois, sem data). Clique abre Meus pedidos filtrados.",
+  },
+  {
+    id: "declared_forecast",
+    label: "Previsão declarada",
+    tooltip:
+      "FCT declarado no Portal (mês civil). Não é ROL, não é carteira aberta e não é previsão de OP.",
   },
   {
     id: "otd",

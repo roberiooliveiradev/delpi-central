@@ -8,8 +8,9 @@ import {
   RefreshCw,
   Sparkles,
   Target,
+  CalendarRange,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   cmEmptyStateClassNames,
@@ -22,6 +23,7 @@ import {
   CommercialPageHero,
   CommercialSectionHintLabel,
 } from "../../app/commercialUi";
+import { getCurrentForecast, type ForecastDeclarationData } from "../../api/forecastApi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
@@ -76,6 +78,25 @@ type OverviewPageProps = {
 export function OverviewPage({ basePath }: OverviewPageProps) {
   const filters = useAnalyticsFilters();
   const dashboard = useAnalyticsDashboard(filters.apiParams);
+  const [forecast, setForecast] = useState<ForecastDeclarationData | null>(null);
+  const [forecastError, setForecastError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setForecastError(null);
+    void getCurrentForecast(controller.signal, {
+      portfolioId: filters.apiParams.seller_id || undefined,
+    })
+      .then((data) => {
+        if (!controller.signal.aborted) setForecast(data);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setForecast(null);
+        setForecastError(err instanceof Error ? err.message : "Previsão indisponível.");
+      });
+    return () => controller.abort();
+  }, [filters.apiParams.seller_id, dashboard.loading]);
   const copy = ANALYTICS_CONTENT.overview;
   const activeBranch = filters.apiParams.branch;
   const periodLabel = formatPeriodLabel(filters.dateStart, filters.dateEnd);
@@ -425,6 +446,26 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               periodKindBadge={periodKindBadge}
               icon={<Sparkles size={22} aria-hidden="true" />}
               loading={dashboard.loading}
+            />
+            <CommercialDashboardKpiCard
+              title={OVERVIEW_METRIC_BY_ID.declared_forecast.label}
+              titleHint={OVERVIEW_METRIC_BY_ID.declared_forecast.tooltip}
+              value={
+                forecastError
+                  ? "—"
+                  : forecast
+                    ? formatCurrency(forecast.declaredValue)
+                    : "—"
+              }
+              contextLabel={
+                forecastError
+                  ? forecastError
+                  : forecast
+                    ? `${String(forecast.cycleMonth).padStart(2, "0")}/${forecast.cycleYear} · FCT declarado · ≠ ROL · ≠ carteira`
+                    : "Carregando previsão…"
+              }
+              icon={<CalendarRange size={22} aria-hidden="true" />}
+              loading={!forecast && !forecastError}
             />
           </div>
         ) : null}

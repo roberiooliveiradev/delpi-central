@@ -224,7 +224,8 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 | GET | `/forecast/cycles` | `list_forecast_cycles` | F6 | `commercial.forecast.view` | `forecast_cycle` | `paged_list` | WF-09 |
 | POST | `/forecast/cycles` | `create_forecast_cycle` | F6 | `commercial.settings.manage` | `forecast_cycle` | `scalar` | WF-09 |
 | GET | `/forecast/cycles/{id}` | `get_forecast_cycle` | F6 | view | `forecast_cycle` | `scalar` | WF-09 |
-| GET | `/forecast/current` | `get_current_forecast` | F6 | view | `forecast_submission` | `composite_analysis` | WF-09 |
+| GET | `/forecast/current` | `get_current_forecast` | F6 MVP | `commercial.access` | `forecast_submission` | `scalar` | **Implementado** — FCT declarado (Postgres); ≠ TOTVS ≠ OP |
+| PUT | `/forecast/current` | `put_current_forecast` | F6 MVP | `commercial.access` | `forecast_submission` | `scalar` | Declared value mês/carteira |
 | GET | `/forecast/submissions` | `list_forecast_submissions` | F6 | view | `forecast_submission` | `paged_list` | WF-09 |
 | POST | `/forecast/submissions` | `create_forecast_submission` | F6 | `commercial.forecast.submit` | `forecast_submission` | `scalar` | WF-09 |
 | GET | `/forecast/submissions/{id}` | `get_forecast_submission` | F6 | view/submit | `forecast_submission` | `scalar` | WF-09 |

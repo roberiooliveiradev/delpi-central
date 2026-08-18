@@ -34,6 +34,9 @@ from commercial_app.interface.http.routes.seller_portfolio_routes import (
 from commercial_app.interface.http.routes.home_favorites_routes import (
     router as home_favorites_router,
 )
+from commercial_app.interface.http.routes.forecast_routes import (
+    router as forecast_router,
+)
 from commercial_app.interface.http.routes.worklist_routes import (
     activities_router,
     me_router as worklist_me_router,
@@ -184,6 +187,7 @@ app.include_router(proposal_documents_router)
 app.include_router(production_bff_router)
 app.include_router(worklist_me_router)
 app.include_router(home_favorites_router)
+app.include_router(forecast_router)
 app.include_router(tasks_router)
 app.include_router(activities_router)
 app.include_router(attachment_router)
