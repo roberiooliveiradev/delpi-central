@@ -125,6 +125,78 @@ def test_preview_merge_skips_existing_goal():
     assert result["planned"]["departments"]["delete"] == 0
 
 
+def test_preview_merge_inserts_new_department():
+    repo = _repo_mock(departments=1, department_indicators=0, indicator_goals=0)
+    repo.list_department_ids.return_value = {"existing"}
+    service = AdminConfigBundleService(repo)
+    result = service.preview(bundle=_bundle(), mode="merge")
+    assert result["planned"]["departments"]["insert"] == 1
+    assert result["planned"]["departments"]["update"] == 0
+    assert result["planned"]["department_indicators"]["insert"] == 1
+
+
+def test_preview_merge_include_goals_false_skips_goals():
+    repo = _repo_mock()
+    service = AdminConfigBundleService(repo)
+    result = service.preview(
+        bundle=_bundle(),
+        mode="merge",
+        include_goals=False,
+    )
+    assert result["planned"]["indicator_goals"]["insert"] == 0
+    assert result["planned"]["indicator_goals"]["skip"] == 1
+
+
+def test_apply_merge_keeps_include_goals_false():
+    repo = _repo_mock()
+    repo.list_department_ids.return_value = {"quality"}
+    repo.list_indicator_ids.return_value = {"quality-ppm"}
+    repo.import_bundle.return_value = {"mode": "merge", "goals_created": 0}
+    service = AdminConfigBundleService(repo)
+    service.apply(
+        bundle=_bundle(),
+        actor_user_id="user-1",
+        mode="merge",
+        include_goals=False,
+    )
+    assert repo.import_bundle.call_args.kwargs["include_goals"] is False
+
+
+def test_delete_catalog_for_replace_uses_fk_order():
+    from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_admin_config_bundle_repository import (
+        PostgresStrategicIndicatorsAdminConfigBundleRepository,
+    )
+
+    repo = PostgresStrategicIndicatorsAdminConfigBundleRepository(connection=MagicMock())
+    repo.count_catalog = MagicMock(
+        return_value={
+            "departments": 7,
+            "department_indicators": 42,
+            "indicator_goals": 42,
+        }
+    )
+    repo.execute = MagicMock()
+    deleted = repo.delete_catalog_for_replace()
+    sqls = [call.args[0] for call in repo.execute.call_args_list]
+    assert "indicator_goals" in sqls[0]
+    assert "department_indicators" in sqls[1]
+    assert "departments" in sqls[2]
+    assert deleted == {
+        "goals_deleted": 42,
+        "indicators_deleted": 42,
+        "departments_deleted": 7,
+    }
+
+
+def test_apply_replace_wipe_insert_rolls_back_when_import_fails():
+    repo = _repo_mock()
+    repo.import_bundle.side_effect = RuntimeError("falha persistência")
+    service = AdminConfigBundleService(repo)
+    with pytest.raises(RuntimeError, match="falha persistência"):
+        service.apply(bundle=_bundle(), actor_user_id="user-1", mode="replace")
+    assert repo.import_bundle.call_count == 1
+
+
 def test_apply_replace_ignores_include_goals_false():
     repo = _repo_mock()
     repo.import_bundle.return_value = {"mode": "replace", "goals_created": 1}
