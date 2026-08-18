@@ -48,6 +48,32 @@ export {
   type EntityUnfurlField,
 } from "./EntityUnfurlCard";
 export {
+  ReactionBar,
+  createDashboardReactionBar,
+  reactionBarBemClasses,
+  type DashboardReactionBarProps,
+  type ReactionBarClassNames,
+  type ReactionBarItem,
+  type ReactionBarProps,
+} from "./ReactionBar";
+export {
+  RoomInboxList,
+  createDashboardRoomInboxList,
+  roomInboxListBemClasses,
+  type DashboardRoomInboxListProps,
+  type RoomInboxListClassNames,
+  type RoomInboxListItem,
+  type RoomInboxListProps,
+} from "./RoomInboxList";
+export {
+  RoomHeader,
+  createDashboardRoomHeader,
+  roomHeaderBemClasses,
+  type DashboardRoomHeaderProps,
+  type RoomHeaderClassNames,
+  type RoomHeaderProps,
+} from "./RoomHeader";
+export {
   detectActiveMention,
   insertMentionToken,
   type ActiveMentionQuery,

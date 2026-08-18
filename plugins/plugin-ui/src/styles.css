@@ -70,6 +70,9 @@
 @import "./styles/mention-composer.css";
 @import "./styles/message-thread.css";
 @import "./styles/entity-unfurl.css";
+@import "./styles/reaction-bar.css";
+@import "./styles/room-inbox.css";
+@import "./styles/room-header.css";
 @import "./styles/top-bar.css";
 @import "./styles/page-hero.css";
 @import "./styles/metric-strip.css";
