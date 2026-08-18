@@ -1,7 +1,20 @@
 import { useRef, useState } from "react";
-import { exportAdminConfigBundle, importAdminConfigBundle } from "../../data/api/adminConfigBundleApi";
-import type { AdminConfigBundle } from "../../data/types/adminConfigBundle";
+import { useConfirmDialogController } from "@delpi/plugin-ui/index";
+import {
+  applyAdminConfigBundle,
+  downloadAdminConfigBundleJson,
+  exportAdminConfigBundle,
+  previewAdminConfigBundle,
+} from "../../data/api/adminConfigBundleApi";
+import type {
+  AdminConfigBundle,
+  AdminConfigImportMode,
+  AdminConfigPlannedCounts,
+  AdminConfigPreviewResponse,
+} from "../../data/types/adminConfigBundle";
+import { DataTable } from "./DataTable";
 import { InfoState } from "./InfoState";
+import { SiConfirmModal } from "./SiConfirmModal";
 import { SiNativeCheckboxControl } from "./siNativeFormFields";
 import "./AdminConfigImportExportPanel.css";
 
@@ -10,16 +23,45 @@ type AdminConfigImportExportPanelProps = {
   onCompleted?: () => void;
 };
 
-function downloadJson(filename: string, payload: unknown) {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
+type Feedback = { kind: "success" | "error"; text: string };
+
+type PreviewRow = {
+  key: string;
+  entity: string;
+  inFile: number;
+  insert: number;
+  update: number;
+  skip: number;
+  remove: number;
+};
+
+function plannedRow(
+  key: string,
+  entity: string,
+  counts: AdminConfigPlannedCounts,
+): PreviewRow {
+  return {
+    key,
+    entity,
+    inFile: counts.in_file,
+    insert: counts.insert,
+    update: counts.update,
+    skip: counts.skip,
+    remove: counts.delete,
+  };
+}
+
+function isAdminConfigBundle(value: unknown): value is AdminConfigBundle {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.schema_version === "number" &&
+    Array.isArray(record.departments) &&
+    Array.isArray(record.department_indicators) &&
+    Array.isArray(record.indicator_goals) &&
+    typeof record.module_settings === "object" &&
+    record.module_settings !== null
+  );
 }
 
 export function AdminConfigImportExportPanel({
@@ -27,66 +69,200 @@ export function AdminConfigImportExportPanel({
   onCompleted,
 }: AdminConfigImportExportPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const confirmDialog = useConfirmDialogController();
+  const [busy, setBusy] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [parsedBundle, setParsedBundle] = useState<AdminConfigBundle | null>(null);
+  const [mode, setMode] = useState<AdminConfigImportMode>("replace");
   const [includeGoals, setIncludeGoals] = useState(true);
+  const [preview, setPreview] = useState<AdminConfigPreviewResponse | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+
+  const canPreview = Boolean(parsedBundle) && !busy;
+  const canApply = Boolean(preview?.valid) && !busy;
+
+  function resetPreview() {
+    setPreview(null);
+  }
+
+  function handleModeChange(next: AdminConfigImportMode) {
+    setMode(next);
+    resetPreview();
+  }
 
   async function handleExport() {
-    setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-
+    setBusy(true);
+    setFeedback(null);
     try {
       const bundle = await exportAdminConfigBundle(getAccessToken);
       const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-      downloadJson(`strategic-indicators-config-${stamp}.json`, bundle);
-      setSuccessMessage(
-        "Exportação concluída. O arquivo inclui departamentos, indicadores, metas ativas e parâmetros globais.",
+      downloadAdminConfigBundleJson(
+        bundle,
+        `strategic-indicators-config-${stamp}.json`,
       );
+      setFeedback({
+        kind: "success",
+        text: "Exportação concluída. O arquivo inclui departamentos, indicadores, metas ativas e parâmetros globais.",
+      });
     } catch (exportError) {
-      setError(
-        exportError instanceof Error
-          ? exportError.message
-          : "Falha ao exportar configuração.",
-      );
+      setFeedback({
+        kind: "error",
+        text:
+          exportError instanceof Error
+            ? exportError.message
+            : "Falha ao exportar configuração.",
+      });
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
 
-  async function handleImportFile(file: File) {
-    setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-
+  async function handleChooseFile(file: File) {
+    setFeedback(null);
+    resetPreview();
     try {
       const text = await file.text();
-      const parsed = JSON.parse(text) as AdminConfigBundle;
-
-      const result = await importAdminConfigBundle(
-        { ...parsed, include_goals: includeGoals },
-        getAccessToken,
-      );
-
-      const stats = result.stats;
-      setSuccessMessage(
-        `${result.message} Departamentos: ${stats.departments_upserted}, indicadores: ${stats.indicators_upserted}, metas criadas: ${stats.goals_created}, metas ignoradas: ${stats.goals_skipped}.`,
-      );
-      onCompleted?.();
-    } catch (importError) {
-      setError(
-        importError instanceof Error
-          ? importError.message
-          : "Falha ao importar configuração.",
-      );
+      const parsed = JSON.parse(text) as unknown;
+      if (!isAdminConfigBundle(parsed)) {
+        setParsedBundle(null);
+        setFileName(null);
+        setFeedback({
+          kind: "error",
+          text: "Arquivo JSON inválido: envelope de configuração não reconhecido.",
+        });
+        return;
+      }
+      setParsedBundle(parsed);
+      setFileName(file.name);
+    } catch {
+      setParsedBundle(null);
+      setFileName(null);
+      setFeedback({
+        kind: "error",
+        text: "Arquivo JSON inválido: não foi possível ler o conteúdo.",
+      });
     } finally {
-      setLoading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   }
+
+  async function handlePreview() {
+    if (!parsedBundle) return;
+    setBusy(true);
+    setFeedback(null);
+    try {
+      const result = await previewAdminConfigBundle(
+        parsedBundle,
+        { mode, includeGoals },
+        getAccessToken,
+      );
+      setPreview(result);
+      if (!result.valid) {
+        setFeedback({
+          kind: "error",
+          text: result.errors.join(" ") || "Pré-visualização inválida.",
+        });
+      }
+    } catch (previewError) {
+      setPreview(null);
+      setFeedback({
+        kind: "error",
+        text:
+          previewError instanceof Error
+            ? previewError.message
+            : "Falha ao pré-visualizar configuração.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runApply() {
+    if (!parsedBundle) return;
+    setBusy(true);
+    setFeedback(null);
+    try {
+      const result = await applyAdminConfigBundle(
+        parsedBundle,
+        { mode, includeGoals },
+        getAccessToken,
+      );
+      const stats = result.stats;
+      const wipeNote =
+        mode === "replace"
+          ? " Scores materializados foram limpos; use Atualizar ou aguarde o job."
+          : "";
+      setFeedback({
+        kind: "success",
+        text: `${result.message} ${
+          mode === "replace" ? "Substituir" : "Mesclar"
+        }: ${stats.departments_upserted} departamentos, ${stats.indicators_upserted} indicadores, ${stats.goals_created} metas.${wipeNote}`,
+      });
+      resetPreview();
+      onCompleted?.();
+    } catch (applyError) {
+      setFeedback({
+        kind: "error",
+        text:
+          applyError instanceof Error
+            ? applyError.message
+            : "Falha ao importar configuração.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleApply() {
+    if (!canApply) return;
+    if (mode === "replace") {
+      const confirmed = await confirmDialog.confirm({
+        title: "Substituir cadastro?",
+        message:
+          "Isso apaga TODOS os departamentos, indicadores e metas atuais e importa o arquivo. Auditoria e solicitações de mudança não entram no backup. O painel estratégico fica sem scores até o job horário ou Atualizar.",
+        confirmLabel: "Substituir e aplicar",
+        cancelLabel: "Cancelar",
+        variant: "danger",
+      });
+      if (!confirmed) return;
+    }
+    await runApply();
+  }
+
+  const previewRows: PreviewRow[] = preview
+    ? [
+        plannedRow("departments", "Departamentos", preview.planned.departments),
+        plannedRow(
+          "indicators",
+          "Indicadores",
+          preview.planned.department_indicators,
+        ),
+        plannedRow("goals", "Metas ativas", preview.planned.indicator_goals),
+        plannedRow(
+          "settings",
+          "Parâmetros globais",
+          preview.planned.module_settings,
+        ),
+      ]
+    : [];
+
+  const previewColumns =
+    mode === "replace"
+      ? [
+          { key: "entity", header: "Entidade", render: (row: PreviewRow) => row.entity },
+          { key: "inFile", header: "Arquivo", render: (row: PreviewRow) => String(row.inFile) },
+          { key: "insert", header: "Inserir", render: (row: PreviewRow) => String(row.insert) },
+          { key: "remove", header: "Remover", render: (row: PreviewRow) => String(row.remove) },
+        ]
+      : [
+          { key: "entity", header: "Entidade", render: (row: PreviewRow) => row.entity },
+          { key: "inFile", header: "Arquivo", render: (row: PreviewRow) => String(row.inFile) },
+          { key: "insert", header: "Inserir", render: (row: PreviewRow) => String(row.insert) },
+          { key: "update", header: "Atualizar", render: (row: PreviewRow) => String(row.update) },
+          { key: "skip", header: "Ignorar", render: (row: PreviewRow) => String(row.skip) },
+        ];
 
   return (
     <section className="si-config-io-panel">
@@ -94,24 +270,24 @@ export function AdminConfigImportExportPanel({
         <div>
           <h3>Exportar e importar configuração</h3>
           <p>
-            Backup completo do catálogo administrativo: departamentos, indicadores
-            estruturais, metas ativas e parâmetros globais (JSON versionado).
+            Backup do catálogo: departamentos, indicadores, metas ativas e
+            parâmetros globais (JSON versionado).
           </p>
         </div>
       </div>
 
-      {error ? (
+      {feedback?.kind === "error" ? (
         <InfoState
           title="Operação não concluída"
-          description={error}
+          description={feedback.text}
           actionLabel="Fechar"
-          onAction={() => setError(null)}
+          onAction={() => setFeedback(null)}
         />
       ) : null}
 
-      {successMessage ? (
+      {feedback?.kind === "success" ? (
         <div className="si-settings-editor__alert si-settings-editor__alert--success">
-          {successMessage}
+          {feedback.text}
         </div>
       ) : null}
 
@@ -119,35 +295,132 @@ export function AdminConfigImportExportPanel({
         <button
           type="button"
           className="si-settings-editor__button"
-          disabled={loading}
+          disabled={busy}
           onClick={() => void handleExport()}
         >
-          {loading ? "Processando..." : "Exportar JSON"}
+          {busy ? "Processando..." : "Exportar JSON"}
         </button>
+      </div>
 
+      <div className="si-config-io-panel__import-block">
+        <p className="si-config-io-panel__section-title">Importar</p>
+        <p className="si-config-io-panel__file-name">
+          Arquivo: {fileName ?? "nenhum selecionado"}
+        </p>
         <label className="si-config-io-panel__import">
           <input
             ref={fileInputRef}
             type="file"
             accept="application/json,.json"
-            disabled={loading}
+            disabled={busy}
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) void handleImportFile(file);
+              if (file) void handleChooseFile(file);
             }}
           />
           <span className="si-settings-editor__button si-settings-editor__button--secondary">
-            Importar JSON
+            {fileName ? "Trocar arquivo JSON" : "Escolher arquivo JSON"}
           </span>
         </label>
       </div>
 
-      <SiNativeCheckboxControl
-        className="si-config-io-panel__checkbox"
-        checked={includeGoals}
-        onChange={setIncludeGoals}
-        disabled={loading}
-        label="Incluir metas analíticas na importação (somente cria metas ativas que ainda não existem)"
+      <fieldset className="si-config-io-panel__modes" disabled={busy}>
+        <legend>Modo de importação</legend>
+        <label className="si-config-io-panel__mode">
+          <input
+            type="radio"
+            name="si-config-import-mode"
+            checked={mode === "replace"}
+            onChange={() => handleModeChange("replace")}
+          />
+          <span>
+            <strong>Substituir tudo</strong>
+            <small>
+              Apaga o cadastro atual e grava o JSON. Scores do painel são
+              zerados até o job / Atualizar.
+            </small>
+          </span>
+        </label>
+        <label className="si-config-io-panel__mode">
+          <input
+            type="radio"
+            name="si-config-import-mode"
+            checked={mode === "merge"}
+            onChange={() => handleModeChange("merge")}
+          />
+          <span>
+            <strong>Mesclar por ID</strong>
+            <small>
+              Mantém IDs que não estão no arquivo; metas existentes não são
+              alteradas.
+            </small>
+          </span>
+        </label>
+      </fieldset>
+
+      {mode === "merge" ? (
+        <SiNativeCheckboxControl
+          className="si-config-io-panel__checkbox"
+          checked={includeGoals}
+          onChange={(next) => {
+            setIncludeGoals(next);
+            resetPreview();
+          }}
+          disabled={busy}
+          label="Incluir metas analíticas (somente cria as que ainda não existem)"
+        />
+      ) : null}
+
+      <div className="si-config-io-panel__actions">
+        <button
+          type="button"
+          className="si-settings-editor__button si-settings-editor__button--secondary"
+          disabled={!canPreview}
+          onClick={() => void handlePreview()}
+        >
+          {preview ? "Pré-visualizar de novo" : "Pré-visualizar"}
+        </button>
+        <button
+          type="button"
+          className="si-settings-editor__button"
+          disabled={!canApply}
+          onClick={() => void handleApply()}
+        >
+          Aplicar
+        </button>
+      </div>
+
+      {preview?.valid ? (
+        <div className="si-config-io-panel__preview">
+          <p className="si-config-io-panel__section-title">
+            Pré-visualização modo={mode} válido
+          </p>
+          <DataTable
+            columns={previewColumns}
+            rows={previewRows}
+            getRowKey={(row) => row.key}
+            emptyText="Sem diferenças planejadas."
+          />
+          {mode === "replace" ? (
+            <p className="si-config-io-panel__warning">
+              Substituir tudo apaga o cadastro atual (incluindo metas inativas
+              que não vão no JSON) e os scores materializados. Tendências/Painel
+              ficam incompletos até o refresh.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <SiConfirmModal
+        open={confirmDialog.pending !== null}
+        title={confirmDialog.pending?.title}
+        message={confirmDialog.pending?.message ?? ""}
+        confirmLabel={confirmDialog.pending?.confirmLabel}
+        cancelLabel={confirmDialog.pending?.cancelLabel}
+        confirmBusy={busy}
+        variant={confirmDialog.pending?.variant}
+        onConfirm={confirmDialog.confirmPending}
+        onCancel={confirmDialog.cancelPending}
       />
     </section>
   );

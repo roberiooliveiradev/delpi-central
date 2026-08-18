@@ -112,15 +112,3 @@ export async function applyAdminConfigBundle(
 
   return response.json();
 }
-
-/** Compatível com o painel legado até o fluxo preview/apply. */
-export async function importAdminConfigBundle(
-  bundle: AdminConfigBundle & { include_goals?: boolean },
-  getAccessToken?: GetToken,
-): Promise<AdminConfigImportResponse> {
-  return applyAdminConfigBundle(
-    bundle,
-    { mode: "replace", includeGoals: bundle.include_goals ?? true },
-    getAccessToken,
-  );
-}

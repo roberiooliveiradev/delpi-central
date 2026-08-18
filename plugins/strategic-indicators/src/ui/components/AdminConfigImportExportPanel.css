@@ -41,6 +41,69 @@
   pointer-events: none;
 }
 
+.si-config-io-panel__import-block {
+  display: grid;
+  gap: 8px;
+}
+
+.si-config-io-panel__section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--si-title, var(--text));
+}
+
+.si-config-io-panel__file-name {
+  margin: 0;
+  font-size: 13px;
+  color: var(--si-text-muted, var(--text-muted));
+}
+
+.si-config-io-panel__modes {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.si-config-io-panel__modes legend {
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.si-config-io-panel__mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.si-config-io-panel__mode span {
+  display: grid;
+  gap: 2px;
+}
+
+.si-config-io-panel__mode small {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--si-text-muted, var(--text-muted));
+}
+
+.si-config-io-panel__preview {
+  display: grid;
+  gap: 10px;
+}
+
+.si-config-io-panel__warning {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--si-text-muted, var(--text-muted));
+}
+
 .si-config-io-panel__checkbox {
   display: inline-flex;
   align-items: flex-start;
