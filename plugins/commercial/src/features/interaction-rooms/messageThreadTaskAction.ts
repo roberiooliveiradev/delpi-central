@@ -1,11 +1,13 @@
 /**
- * Slot de ação «criar tarefa» do MessageThread — host monta, kit só renderiza.
+ * Slots de ação do MessageThread (tarefa + pin) — host monta, kit só renderiza.
  */
 import type { MessageThreadAction, MessageThreadItem } from "@delpi/plugin-ui/index";
 
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 
 export const CREATE_TASK_MESSAGE_ACTION_ID = "create-task";
+export const PIN_MESSAGE_ACTION_ID = "pin-message";
+export const UNPIN_MESSAGE_ACTION_ID = "unpin-message";
 
 export function canCreateTaskFromMessage(
   message: Pick<MessageThreadItem, "kind" | "deleted">,
@@ -13,6 +15,15 @@ export function canCreateTaskFromMessage(
   if (message.deleted) return false;
   const kind = String(message.kind || "").trim();
   if (kind === "system" || kind === "task_ref" || kind === "pin") return false;
+  return true;
+}
+
+export function canPinMessage(
+  message: Pick<MessageThreadItem, "kind" | "deleted">,
+): boolean {
+  if (message.deleted) return false;
+  const kind = String(message.kind || "").trim();
+  if (kind === "system") return false;
   return true;
 }
 
@@ -31,15 +42,52 @@ export function buildCreateTaskMessageAction(options: {
   };
 }
 
+export function buildPinMessageAction(options: {
+  message: Pick<MessageThreadItem, "id" | "kind" | "deleted">;
+  pinned: boolean;
+  onTogglePin: (messageId: string, nextPinned: boolean) => void;
+  busy?: boolean;
+}): MessageThreadAction | null {
+  if (!canPinMessage(options.message)) return null;
+  if (options.busy) return null;
+  if (options.pinned) {
+    return {
+      id: UNPIN_MESSAGE_ACTION_ID,
+      label: INTERACTION_ROOMS_CONTENT.unpinActionLabel,
+      onClick: () => options.onTogglePin(options.message.id, false),
+    };
+  }
+  return {
+    id: PIN_MESSAGE_ACTION_ID,
+    label: INTERACTION_ROOMS_CONTENT.pinActionLabel,
+    onClick: () => options.onTogglePin(options.message.id, true),
+  };
+}
+
 export function resolveInteractionMessageActions(options: {
   message: MessageThreadItem;
   onCreateTask: (messageId: string) => void;
   creatingMessageId?: string | null;
+  pinnedMessageIds?: ReadonlySet<string>;
+  onTogglePin?: (messageId: string, nextPinned: boolean) => void;
+  pinningMessageId?: string | null;
 }): MessageThreadAction[] {
-  const action = buildCreateTaskMessageAction({
+  const actions: MessageThreadAction[] = [];
+  const createTask = buildCreateTaskMessageAction({
     message: options.message,
     onCreateTask: options.onCreateTask,
     busy: options.creatingMessageId === options.message.id,
   });
-  return action ? [action] : [];
+  if (createTask) actions.push(createTask);
+
+  if (options.onTogglePin) {
+    const pin = buildPinMessageAction({
+      message: options.message,
+      pinned: Boolean(options.pinnedMessageIds?.has(options.message.id)),
+      onTogglePin: options.onTogglePin,
+      busy: options.pinningMessageId === options.message.id,
+    });
+    if (pin) actions.push(pin);
+  }
+  return actions;
 }

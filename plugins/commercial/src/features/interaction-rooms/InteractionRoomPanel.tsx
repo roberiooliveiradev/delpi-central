@@ -4,8 +4,11 @@ import {
   createTaskFromInteractionMessage,
   listInteractionMessages,
   listInteractionRoomMembers,
+  listInteractionRoomPins,
   markInteractionRoomRead,
+  pinInteractionMessage,
   resolveInteractionRoom,
+  unpinInteractionMessage,
   type InteractionMessageDto,
   type InteractionRoomDto,
   type InteractionRoomMemberDto,
@@ -76,6 +79,10 @@ export function InteractionRoomPanel({
   const [creatingTaskMessageId, setCreatingTaskMessageId] = useState<string | null>(
     null,
   );
+  const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
 
   const authorIds = useMemo(() => {
     const ids = new Set<string>();
@@ -97,6 +104,7 @@ export function InteractionRoomPanel({
       setRoom(null);
       setMembers([]);
       setMessages([]);
+      setPinnedMessageIds(new Set());
       setError(null);
       return;
     }
@@ -115,17 +123,19 @@ export function InteractionRoomPanel({
           controller.signal,
         );
         if (controller.signal.aborted) return;
-        const [memberRows, messageRows] = await Promise.all([
+        const [memberRows, messageRows, pinRows] = await Promise.all([
           listInteractionRoomMembers(resolved.id, controller.signal),
           listInteractionMessages(resolved.id, {
             limit: EMBED_MESSAGE_LIMIT,
             signal: controller.signal,
           }),
+          listInteractionRoomPins(resolved.id, controller.signal),
         ]);
         if (controller.signal.aborted) return;
         setRoom(resolved);
         setMembers(memberRows);
         setMessages([...messageRows].reverse());
+        setPinnedMessageIds(new Set(pinRows.map((pin) => pin.message_id)));
         void markInteractionRoomRead(resolved.id, controller.signal).catch(
           () => undefined,
         );
@@ -137,6 +147,7 @@ export function InteractionRoomPanel({
         setRoom(null);
         setMembers([]);
         setMessages([]);
+        setPinnedMessageIds(new Set());
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -177,6 +188,42 @@ export function InteractionRoomPanel({
     ],
   );
 
+  const onTogglePin = useCallback(
+    async (messageId: string, nextPinned: boolean) => {
+      const id = room?.id?.trim() ?? "";
+      if (!id || !messageId.trim() || pinningMessageId) return;
+      setPinningMessageId(messageId);
+      setError(null);
+      setSuccess(null);
+      try {
+        if (nextPinned) {
+          await pinInteractionMessage(id, messageId);
+          setPinnedMessageIds((prev) => new Set(prev).add(messageId));
+          setSuccess(content.pinOk);
+        } else {
+          await unpinInteractionMessage(id, messageId);
+          setPinnedMessageIds((prev) => {
+            const next = new Set(prev);
+            next.delete(messageId);
+            return next;
+          });
+          setSuccess(content.unpinOk);
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : content.pinError);
+      } finally {
+        setPinningMessageId(null);
+      }
+    },
+    [
+      room?.id,
+      pinningMessageId,
+      content.pinOk,
+      content.unpinOk,
+      content.pinError,
+    ],
+  );
+
   const resolveActions = useCallback(
     (message: {
       id: string;
@@ -191,8 +238,19 @@ export function InteractionRoomPanel({
           void onCreateTaskFromMessage(messageId);
         },
         creatingMessageId: creatingTaskMessageId,
+        pinnedMessageIds,
+        onTogglePin: (messageId, nextPinned) => {
+          void onTogglePin(messageId, nextPinned);
+        },
+        pinningMessageId,
       }),
-    [onCreateTaskFromMessage, creatingTaskMessageId],
+    [
+      onCreateTaskFromMessage,
+      creatingTaskMessageId,
+      pinnedMessageIds,
+      onTogglePin,
+      pinningMessageId,
+    ],
   );
 
   const threadMessages = useMemo(

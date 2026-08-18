@@ -9,7 +9,9 @@ import {
   interactionRoomMessagePath,
   interactionRoomMessagesPath,
   interactionRoomMessageTasksPath,
+  interactionRoomMessagePinPath,
   interactionRoomPath,
+  interactionRoomPinsPath,
   interactionRoomReactionPath,
   interactionRoomReadPath,
   interactionRoomResolvePath,
@@ -39,6 +41,10 @@ describe("interactionRoomsApi paths", () => {
     );
     expect(interactionRoomMessageTasksPath("r1", "m1")).toBe(
       "/interaction-rooms/r1/messages/m1/tasks",
+    );
+    expect(interactionRoomPinsPath("r1")).toBe("/interaction-rooms/r1/pins");
+    expect(interactionRoomMessagePinPath("r1", "m1")).toBe(
+      "/interaction-rooms/r1/messages/m1/pin",
     );
     expect(interactionRoomReadPath("r1")).toBe("/interaction-rooms/r1/read");
     expect(interactionRoomMemberPath("r1", "u1")).toBe(

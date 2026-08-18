@@ -75,6 +75,14 @@ export type InteractionReactionDto = {
   created_at?: string | null;
 };
 
+export type InteractionPinDto = {
+  id: string;
+  room_id: string;
+  message_id: string;
+  pinned_by_user_id: string;
+  created_at?: string | null;
+};
+
 export type InteractionMessageDto = {
   id: string;
   room_id: string;
@@ -180,6 +188,17 @@ export function interactionRoomMessageTasksPath(
   messageId: string,
 ): string {
   return `${interactionRoomMessagePath(roomId, messageId)}/tasks`;
+}
+
+export function interactionRoomPinsPath(roomId: string): string {
+  return `${interactionRoomPath(roomId)}/pins`;
+}
+
+export function interactionRoomMessagePinPath(
+  roomId: string,
+  messageId: string,
+): string {
+  return `${interactionRoomMessagePath(roomId, messageId)}/pin`;
 }
 
 export function interactionRoomsUrl(path: string): string {
@@ -386,6 +405,41 @@ export async function createTaskFromInteractionMessage(
     task: data.task,
     task_ref_message: data.task_ref_message,
   };
+}
+
+export async function listInteractionRoomPins(
+  roomId: string,
+  signal?: AbortSignal,
+): Promise<InteractionPinDto[]> {
+  const response = await httpGet<
+    ApiSuccessResponse<{ items?: InteractionPinDto[] }>
+  >(interactionRoomsUrl(interactionRoomPinsPath(roomId)), { signal });
+  const data = unwrapEnvelope(response, "Erro ao listar pins.");
+  return data.items ?? [];
+}
+
+export async function pinInteractionMessage(
+  roomId: string,
+  messageId: string,
+  signal?: AbortSignal,
+): Promise<InteractionPinDto> {
+  const response = await httpPost<ApiSuccessResponse<InteractionPinDto>>(
+    interactionRoomsUrl(interactionRoomMessagePinPath(roomId, messageId)),
+    {},
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao fixar mensagem.");
+}
+
+export async function unpinInteractionMessage(
+  roomId: string,
+  messageId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await httpDelete(
+    interactionRoomsUrl(interactionRoomMessagePinPath(roomId, messageId)),
+    { signal },
+  );
 }
 
 export async function setInteractionMessageReaction(
