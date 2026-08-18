@@ -326,7 +326,7 @@ Com síntese LLM ativa, o modelo recebe fatos canônicos (nome do agente, papel,
 | Precedência | 1ª pessoa de acesso **sem** «você/vc/agente» → só perfil; composto só com os dois sujeitos |
 | Fonte | `GET {CORE_API_BASE_URL}/me` + `me/access-profile` via `ChatUserContextService.build_synthesis_facts` (perfil canônico rotulado; permissões/apps não são a identidade) |
 | Turno | `ChatMetaLlmTurnPreparationService` — estágio `meta_llm_synthesis` / `identity_llm_synthesis`, sem resposta direta |
-| Síntese LLM | `ChatMetaLlmSynthesisService` — fatos rotulados em `toolContext.metaSynthesisFacts` + policy `chat-user-profile.md`; guarda pós-LLM se placeholder ou nome ausente |
+| Síntese LLM | `ChatMetaLlmSynthesisService` — fatos rotulados em `toolContext.metaSynthesisFacts` + policy `chat-user-profile.md`; guarda pós-LLM (`ChatLlmSynthesisLeakGuardService`) se placeholder, nome ausente ou lead copiado |
 | Prompt | compacto (`skip_skill_policy_sections`) + `ChatUserProfileContentService` (`promptContext`, `llmSynthesis`) + PII no contexto quando titular |
 | Chips | `followUpChips.identity` (não estoque/produto) |
 | Consentimento | `GET {CORE_API_BASE_URL}/me/consents` — com `LGPD_REQUIRE_AI_CONSENT=true`, PII entra no prompt LLM **só** em perguntas sobre o próprio usuário |
@@ -346,9 +346,13 @@ Gap G4 (template sombreando o LLM) está **corrigido**: o contrato único é fat
 
 Mensagens que misturam perfil + capacidades + identidade do assistente (`ChatMetaDirectAnswerService.detect_intents`) recebem **um** bloco com seções `##` em `metaSynthesisSections`; o LLM responde em prosa única sem atalhos isolados por domínio.
 
+### Guarda de vazamento na síntese LLM
+
+Se o modelo copiar lead, diretriz ou bloco interno, `ChatLlmSynthesisLeakGuardService` troca pela prosa template: cartão de perfil, catálogo de capacidades, identidade do assistente, comentário operacional ou resumo extractivo da busca web. Markers: `llm_synthesis_delivery.json` (`commonLeakMarkers`) ∪ JSON da família (`leakMarkers`). O finalize dispara em `metaLlmSynthesis`; o perfil delega. **Não** criar serviço por tipo de pergunta.
+
 **Smokes:** `scripts/smoke_identity_profile.py`, `scripts/smoke_meta_llm_responses.py`.
 
-**Testes:** `test_chat_meta_llm_synthesis_service.py`, `test_chat_meta_llm_turn_preparation_service.py`, `test_chat_turn_preparation_response_mode.py`.
+**Testes:** `test_chat_meta_llm_synthesis_service.py`, `test_chat_llm_synthesis_leak_guard_service.py`, `test_chat_turn_completion_finalize_meta_guard.py`, `test_chat_meta_llm_turn_preparation_service.py`, `test_chat_turn_preparation_response_mode.py`.
 
 ### Small talk (maio/2026)
 
@@ -922,7 +926,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 | Provedores | `auto`: Tavily → Serper → Bing → **SearXNG** (OSS) → DuckDuckGo Instant Answer; fallback Wikipedia PT se todos falharem |
 | Isolamento | `blocks_external_action_selection`: no mesmo turno **não** roda `execute_external_action`, roteador de actions nem loop agentic |
 | Resposta simples | `ChatWebSearchDirectAnswerService` — 1 resultado útil ou fallback rápido (`directAnswer`, `skipRag`) |
-| Síntese LLM | `ChatWebSearchSynthesisService` — com ≥ `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` fontes úteis, monta intro, seções, linha do tempo e conclusão em PT |
+| Síntese LLM | `ChatWebSearchSynthesisService` — com ≥ `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` fontes úteis, monta intro, seções, linha do tempo e conclusão em PT; `ChatLlmSynthesisLeakGuardService` troca lead copiado pelo fallback extractivo |
 | Localização | `WebSearchPortugueseContentService` — Wikipedia PT quando snippet vier em inglês; entidades de uma palavra (ex.: «tyco») |
 | Fontes na API | `webSources` → `sources[]` com `scope: web_search`, `sourceRef` = URL |
 | Atividade de pesquisa | `webSearchResearch` na metadata da mensagem assistant; botão **Fontes · N** abre painel lateral (`ChatWebSearchResearchPanel`) |

@@ -142,3 +142,63 @@ def test_guard_delivered_answer_keeps_humanized_capabilities():
     )
 
     assert guarded == answer
+
+def test_guard_delivered_answer_replaces_identity_lead_leak():
+    card = "Olá! Sou o Assistente Minha DELPI."
+    context = ChatMetaLlmSynthesisService.enrich_tool_context(
+        {},
+        sections=[
+            MetaLlmSynthesisSection(
+                section_id=SECTION_ASSISTANT,
+                title="Sobre o assistente nesta conversa",
+                facts=card,
+            )
+        ],
+    )
+    leaked = (
+        "Use somente o que está no bloco de fatos. "
+        "Olá! Sou o Assistente Minha DELPI e posso explicar o que faço."
+    )
+    guarded = ChatMetaLlmSynthesisService.guard_delivered_answer(
+        answer=leaked,
+        tool_context=context,
+    )
+
+    assert guarded == card
+    assert "use somente o que está no bloco" not in guarded.lower()
+
+
+def test_guard_delivered_answer_replaces_compound_lead_leak():
+    profile_facts = "- **Nome:** Ana Silva"
+    catalog = "Posso ajudar você nestes formatos:\n\n- RAG autorizado"
+    context = ChatMetaLlmSynthesisService.enrich_tool_context(
+        {},
+        sections=[
+            MetaLlmSynthesisSection(
+                section_id=SECTION_PROFILE,
+                title="Seu perfil na Minha DELPI",
+                facts=profile_facts,
+            ),
+            MetaLlmSynthesisSection(
+                section_id=SECTION_CAPABILITIES,
+                title="O que você pode fazer aqui",
+                facts=catalog,
+            ),
+        ],
+    )
+    leaked = (
+        "Não copie este bloco nem reproduza frases de instrução. "
+        "Ana Silva pode consultar RAG autorizado nesta sessão."
+    )
+    guarded = ChatMetaLlmSynthesisService.guard_delivered_answer(
+        answer=leaked,
+        tool_context=context,
+    )
+
+    assert guarded != leaked
+    assert "## Seu perfil" in guarded
+    assert "## O que você pode fazer aqui" in guarded
+    assert "Ana Silva" in guarded
+    assert "RAG autorizado" in guarded
+    assert "não copie este bloco" not in guarded.lower()
+

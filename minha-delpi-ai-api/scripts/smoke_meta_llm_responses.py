@@ -17,21 +17,27 @@ _USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
 _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 
+_LEAK_EXCLUSIONS: tuple[str, ...] = (
+    "não invente rotas",
+    "use somente o que está no bloco",
+    "não peça acesso",
+)
+
 _CASES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
     (
         "quem sou eu?",
         ("@",),
-        ("[nome]", "[email]", "não informado"),
+        ("[nome]", "[email]", "não informado") + _LEAK_EXCLUSIONS,
     ),
     (
         "o que você pode fazer?",
         ("posso", "ajud", "rag", "consult"),
-        ("[nome]", "[capacidade]", "não sei o que fazer"),
+        ("[nome]", "[capacidade]", "não sei o que fazer") + _LEAK_EXCLUSIONS,
     ),
     (
         "quem é você?",
         ("assistente", "delpi", "agente"),
-        ("[nome]", "openai", "chatgpt", "2019"),
+        ("[nome]", "openai", "chatgpt", "2019") + _LEAK_EXCLUSIONS,
     ),
 )
 

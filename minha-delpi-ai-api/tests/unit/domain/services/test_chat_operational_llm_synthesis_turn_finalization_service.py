@@ -159,3 +159,21 @@ def test_finalize_persisted_answer_falls_back_when_instruction_leaks():
     assert "10080045" in result
     assert "não transcreva listas" not in result.lower()
     assert "o painel exibe" not in result.lower()
+
+def test_finalize_persisted_answer_falls_back_when_access_directive_leaks():
+    llm_answer = (
+        "O produto **10080045** está cadastrado. "
+        "Responda com o que já veio — não peça acesso à rota."
+    )
+
+    result = ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+        llm_answer,
+        _overview_tool_calls(),
+        message="me fale do produto 10080045",
+        response_mode="normal",
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert "10080045" in result
+    assert "não peça acesso" not in result.lower()
+
