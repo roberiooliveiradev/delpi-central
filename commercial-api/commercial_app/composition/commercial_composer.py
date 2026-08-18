@@ -10,6 +10,9 @@ from commercial_app.application.use_cases.manage_attachments import ManageAttach
 from commercial_app.application.use_cases.manage_commercial_groups import (
     ManageCommercialGroupsUseCase,
 )
+from commercial_app.application.use_cases.manage_interaction_rooms import (
+    ManageInteractionRoomsUseCase,
+)
 from commercial_app.application.use_cases.manage_team_roster import ManageTeamRosterUseCase
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
@@ -254,6 +257,15 @@ def build_interaction_message_repository() -> InteractionMessageRepositoryPort:
     if _interaction_message_repository is None:
         _interaction_message_repository = PostgresInteractionMessageRepository()
     return _interaction_message_repository
+
+
+def build_manage_interaction_rooms_use_case() -> ManageInteractionRoomsUseCase:
+    global _interaction_rooms_use_case
+    if _interaction_rooms_use_case is None:
+        _interaction_rooms_use_case = ManageInteractionRoomsUseCase(
+            repository=build_interaction_room_repository(),
+        )
+    return _interaction_rooms_use_case
 
 
 def build_attachment_storage() -> AttachmentStorage:

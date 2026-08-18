@@ -9,7 +9,11 @@
     "userIdRequired": "user_id é obrigatório.",
     "notAuthor": "Só o autor pode editar ou excluir esta mensagem.",
     "parentNotInRoom": "A resposta precisa ser da mesma sala.",
-    "attachmentOwnerInvalid": "Tipo de anexo inválido para a sala."
+    "attachmentOwnerInvalid": "Tipo de anexo inválido para a sala.",
+    "roomKindInvalid": "Tipo de sala inválido.",
+    "entityRequired": "Informe entity_type e entity_key.",
+    "groupRequired": "Informe group_id para o mural.",
+    "entityTypeUnknown": "Tipo de registro não reconhecido para a sala."
   },
   "messages": {
     "listRoomsOk": "Salas carregadas.",
