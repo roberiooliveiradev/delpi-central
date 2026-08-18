@@ -175,3 +175,23 @@ class InteractionRoomContentService:
             return template.format(title=cleaned_title)
         except Exception:
             return f"{template} {cleaned_title}".strip()
+
+    @classmethod
+    def setting_str_list(cls, key: str) -> tuple[str, ...]:
+        raw = cls._section("settings").get(key)
+        if not isinstance(raw, list):
+            return ()
+        return tuple(str(item).strip() for item in raw if str(item or "").strip())
+
+    @classmethod
+    def system_message_kind(cls) -> str:
+        return cls.setting_str("systemMessageKind", "system")
+
+    @classmethod
+    def system_event_kinds(cls) -> frozenset[str]:
+        return frozenset(cls.setting_str_list("systemEventKinds"))
+
+    @classmethod
+    def is_allowed_system_event_kind(cls, event_kind: str) -> bool:
+        kind = str(event_kind or "").strip()
+        return bool(kind) and kind in cls.system_event_kinds()

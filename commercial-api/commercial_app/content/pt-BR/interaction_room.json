@@ -16,7 +16,8 @@
     "groupRequired": "Informe group_id para o mural.",
     "entityTypeUnknown": "Tipo de registro não reconhecido para a sala.",
     "messageDeletedForTask": "Não é possível criar tarefa a partir de mensagem removida.",
-    "messageNotInRoom": "A mensagem não pertence a esta sala."
+    "messageNotInRoom": "A mensagem não pertence a esta sala.",
+    "systemEventKindInvalid": "Tipo de evento de sistema inválido."
   },
   "messages": {
     "listRoomsOk": "Salas carregadas.",
@@ -84,6 +85,9 @@
     "taskTitleMaxChars": 500,
     "relatedEntityTypeRoom": "interaction_room",
     "taskMentionKind": "task",
-    "taskRefMessageKind": "task_ref"
+    "taskRefMessageKind": "task_ref",
+    "systemMessageKind": "system",
+    "systemEventKinds": ["otd_event", "process_stage"],
+    "reservedMessageKinds": ["otd_event", "confirmation_event", "wall_post"]
   }
 }

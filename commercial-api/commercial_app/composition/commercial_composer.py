@@ -16,6 +16,9 @@ from commercial_app.application.use_cases.list_interaction_inbox import (
 from commercial_app.application.use_cases.create_task_from_interaction_message import (
     CreateTaskFromInteractionMessageUseCase,
 )
+from commercial_app.application.use_cases.post_system_message import (
+    PostSystemMessageUseCase,
+)
 from commercial_app.application.use_cases.manage_interaction_messages import (
     ManageInteractionMessagesUseCase,
 )
@@ -116,6 +119,7 @@ _preview_interaction_entity_use_case: PreviewInteractionEntityUseCase | None = N
 _create_task_from_interaction_message_use_case: (
     CreateTaskFromInteractionMessageUseCase | None
 ) = None
+_post_system_message_use_case: PostSystemMessageUseCase | None = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
 _account_contact_repository: AccountContactRepositoryPort | None = None
@@ -350,6 +354,16 @@ def build_create_task_from_interaction_message_use_case() -> (
             )
         )
     return _create_task_from_interaction_message_use_case
+
+
+def build_post_system_message_use_case() -> PostSystemMessageUseCase:
+    global _post_system_message_use_case
+    if _post_system_message_use_case is None:
+        _post_system_message_use_case = PostSystemMessageUseCase(
+            rooms=build_interaction_room_repository(),
+            messages=build_interaction_message_repository(),
+        )
+    return _post_system_message_use_case
 
 
 def build_attachment_storage() -> AttachmentStorage:
