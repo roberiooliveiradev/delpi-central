@@ -305,6 +305,24 @@ export function AnalyticsOpportunityDetailPage({
                 returnLabel={`OV ${proposalNumber}`}
               />
             ) : null}
+            <CommercialActionButton
+              variant="ghost"
+              onClick={() => {
+                const params = new URLSearchParams();
+                params.set("createTask", "1");
+                params.set("task_type", "follow_up");
+                params.set("title", `Follow-up OV ${proposalNumber}`);
+                const code = (data?.customer_code || "").trim();
+                const store = (data?.customer_store || "").trim();
+                if (code) params.set("customer_code", code);
+                if (store) params.set("customer_store", store);
+                navigatePluginPath(
+                  buildPluginPath("my_tasks", basePath, `?${params.toString()}`),
+                );
+              }}
+            >
+              <CalendarPlus size={16} aria-hidden="true" /> Follow-up OV
+            </CommercialActionButton>
             <CommercialActionButton variant="ghost" onClick={() => setReloadKey((v) => v + 1)}>
               <RefreshCw size={16} aria-hidden="true" /> Atualizar
             </CommercialActionButton>

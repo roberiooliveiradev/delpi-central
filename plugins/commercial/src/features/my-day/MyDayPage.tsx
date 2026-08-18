@@ -130,12 +130,19 @@ function readCreateTaskDeepLink(): {
   customerCode: string;
   customerStore: string;
   assigneeUserId: string;
+  taskTitle: string;
+  taskType: string;
   bucket: BucketKey | null;
 } {
   if (typeof window === "undefined") {
     return {
       createTask: false,
       customerCode: "",
+      customerStore: "",
+      assigneeUserId: "",
+      taskTitle: "",
+      taskType: "",
+      bucket: null,
       customerStore: "",
       assigneeUserId: "",
       bucket: null,
@@ -155,6 +162,8 @@ function readCreateTaskDeepLink(): {
     customerCode: (params.get("customer_code") ?? "").trim(),
     customerStore: (params.get("customer_store") ?? "").trim(),
     assigneeUserId: (params.get("assignee_user_id") ?? "").trim(),
+    taskTitle: (params.get("title") ?? "").trim(),
+    taskType: (params.get("task_type") ?? "").trim(),
     bucket,
   };
 }
@@ -168,6 +177,8 @@ function clearCreateTaskQueryFromUrl(): void {
     "customer_code",
     "customer_store",
     "assignee_user_id",
+    "title",
+    "task_type",
     "bucket",
   ]) {
     if (url.searchParams.has(key)) {
@@ -494,6 +505,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           directoryOptionFromId(link.assigneeUserId, directoryLabelFor),
         ]);
       }
+      if (link.taskTitle) setTitle(link.taskTitle);
+      if (link.taskType) setTaskType(link.taskType);
       setFormMode("create");
       scrollToTaskForm();
     }

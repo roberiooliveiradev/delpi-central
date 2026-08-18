@@ -1,7 +1,7 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { getCommercialProposals, getOpportunityCollaboratorSummary } from "../../api/analyticsApi";
+import { getSlaPolicies } from "../../api/slaPoliciesApi";
 import {
   CommercialActionButton,
   CommercialDataTable,
@@ -38,7 +38,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const filters = useAnalyticsFilters();
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [collab, setCollab] = useState<OpportunityCollaboratorSummaryRow[]>([]);
-  const [collabTruncated, setCollabTruncated] = useState(false);
+  const [slaConfigured, setSlaConfigured] = useState(false);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
   const [statusFilter, setStatusFilter] = useState("");
@@ -79,8 +79,9 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         { ...filters.apiParams, status: statusFilter || undefined },
         controller.signal,
       ).catch(() => null),
+      getSlaPolicies(controller.signal).catch(() => ({ items: [], configured: false })),
     ])
-      .then(([page, summary]) => {
+      .then(([page, summary, sla]) => {
         if (controller.signal.aborted) return;
         setItems(page.items ?? []);
         setTotal(page.total ?? 0);
@@ -91,6 +92,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           setCollab([]);
           setCollabTruncated(false);
         }
+        setSlaConfigured(Boolean(sla?.configured));
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -156,6 +158,10 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         onSellerIds={filters.setSellerIds}
       />
       </CommercialPageHero>
+
+      {!slaConfigured ? (
+        <CommercialEmptyState defaultMessage="SLA de etapa não configurado. Cadastre políticas em settings quando o Comercial homologar prazos." />
+      ) : null}
 
       {!loading && collab.length > 0 ? (
         <CommercialSectionCard
