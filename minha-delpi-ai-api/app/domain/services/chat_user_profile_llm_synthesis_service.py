@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+    ChatLlmSynthesisLeakGuardService,
+)
 from app.domain.services.chat_user_profile_content_service import (
     ChatUserProfileContentService,
 )
@@ -94,34 +97,26 @@ class ChatUserProfileLlmSynthesisService:
         return ""
 
     @classmethod
-    def answer_needs_fallback(cls, *, answer: str, synthesis_facts: str | None) -> bool:
-        facts = str(synthesis_facts or "").strip()
-        text = str(answer or "").strip()
-
-        if not facts:
-            return False
-
-        lowered = text.lower()
-        for marker in ChatUserProfileContentService.placeholder_markers():
-            if marker and marker in lowered:
-                return True
-
-        for marker in ChatUserProfileContentService.leak_markers():
-            if marker and marker in lowered:
-                return True
-
-        facts_title = facts.splitlines()[0].strip().lower() if facts else ""
-        if facts_title and len(facts_title) >= 8 and facts_title in lowered:
-            return True
-
+    def _required_name_substrings(cls, facts: str | None) -> tuple[str, ...]:
         name = cls.extract_fact_field(facts, "Nome")
-        if name:
-            name_lower = name.lower()
-            first = name_lower.split()[0] if name_lower.split() else ""
-            if name_lower not in lowered and first not in lowered:
-                return True
+        if not name:
+            return ()
 
-        return False
+        first = name.split()[0] if name.split() else ""
+        required = [name]
+        if first and first.lower() != name.lower():
+            required.append(first)
+        return tuple(required)
+
+    @classmethod
+    def answer_needs_fallback(cls, *, answer: str, synthesis_facts: str | None) -> bool:
+        return ChatLlmSynthesisLeakGuardService.needs_fallback(
+            answer=answer,
+            facts=synthesis_facts,
+            leak_markers=ChatUserProfileContentService.leak_markers(),
+            placeholder_markers=ChatUserProfileContentService.placeholder_markers(),
+            required_substrings=cls._required_name_substrings(synthesis_facts),
+        )
 
     @classmethod
     def guard_answer(
@@ -131,13 +126,14 @@ class ChatUserProfileLlmSynthesisService:
         synthesis_facts: str | None,
         fallback: str | None,
     ) -> str:
-        if not cls.answer_needs_fallback(answer=answer, synthesis_facts=synthesis_facts):
-            return str(answer or "").strip()
-
-        recovery = str(fallback or "").strip()
-        if recovery:
-            return recovery
-        return str(synthesis_facts or "").strip() or str(answer or "").strip()
+        return ChatLlmSynthesisLeakGuardService.guard_answer(
+            answer=answer,
+            fallback=fallback,
+            facts=synthesis_facts,
+            leak_markers=ChatUserProfileContentService.leak_markers(),
+            placeholder_markers=ChatUserProfileContentService.placeholder_markers(),
+            required_substrings=cls._required_name_substrings(synthesis_facts),
+        )
 
     @classmethod
     def enrich_tool_context(

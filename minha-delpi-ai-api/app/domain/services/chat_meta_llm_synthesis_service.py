@@ -14,6 +14,9 @@ from app.domain.services.chat_capabilities_content_service import (
 from app.domain.services.chat_llm_synthesis_delivery_content_service import (
     ChatLlmSynthesisDeliveryContentService,
 )
+from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+    ChatLlmSynthesisLeakGuardService,
+)
 from app.domain.services.chat_user_profile_content_service import (
     ChatUserProfileContentService,
 )
@@ -24,6 +27,7 @@ from app.domain.services.chat_user_profile_llm_synthesis_service import (
 TOOL_CONTEXT_META_LLM_SYNTHESIS = "metaLlmSynthesis"
 TOOL_CONTEXT_META_SYNTHESIS_FACTS = "metaSynthesisFacts"
 TOOL_CONTEXT_META_SYNTHESIS_SECTIONS = "metaSynthesisSections"
+TOOL_CONTEXT_META_SYNTHESIS_TEMPLATES = "metaSynthesisTemplates"
 PIPELINE_STAGE_META_LLM_SYNTHESIS = "meta_llm_synthesis"
 
 SECTION_PROFILE = "profile"
@@ -64,6 +68,7 @@ class ChatMetaLlmSynthesisService:
     TOOL_CONTEXT_META_LLM_SYNTHESIS = TOOL_CONTEXT_META_LLM_SYNTHESIS
     TOOL_CONTEXT_META_SYNTHESIS_FACTS = TOOL_CONTEXT_META_SYNTHESIS_FACTS
     TOOL_CONTEXT_META_SYNTHESIS_SECTIONS = TOOL_CONTEXT_META_SYNTHESIS_SECTIONS
+    TOOL_CONTEXT_META_SYNTHESIS_TEMPLATES = TOOL_CONTEXT_META_SYNTHESIS_TEMPLATES
     PIPELINE_STAGE_META_LLM_SYNTHESIS = PIPELINE_STAGE_META_LLM_SYNTHESIS
 
     @classmethod
@@ -176,6 +181,10 @@ class ChatMetaLlmSynthesisService:
         context[TOOL_CONTEXT_META_SYNTHESIS_SECTIONS] = [
             section.as_dict() for section in sections
         ]
+        context[TOOL_CONTEXT_META_SYNTHESIS_TEMPLATES] = cls._templates_for_sections(
+            sections,
+            profile_template_fallback=profile_template_fallback,
+        )
 
         for section in sections:
             if section.section_id == SECTION_PROFILE:
@@ -187,6 +196,118 @@ class ChatMetaLlmSynthesisService:
                 break
 
         return context
+
+    @classmethod
+    def _templates_for_sections(
+        cls,
+        sections: list[MetaLlmSynthesisSection],
+        *,
+        profile_template_fallback: str | None,
+    ) -> dict[str, str]:
+        templates: dict[str, str] = {}
+        profile_template = str(profile_template_fallback or "").strip()
+
+        for section in sections:
+            if section.section_id == SECTION_PROFILE and profile_template:
+                templates[section.section_id] = profile_template
+                continue
+
+            body = str(section.facts or "").strip()
+            if body:
+                templates[section.section_id] = body
+
+        return templates
+
+    @classmethod
+    def extract_templates(cls, tool_context: dict[str, Any] | None) -> dict[str, str]:
+        if not isinstance(tool_context, dict):
+            return {}
+
+        raw = tool_context.get(TOOL_CONTEXT_META_SYNTHESIS_TEMPLATES)
+        if not isinstance(raw, dict):
+            return {}
+
+        return {
+            str(key).strip(): str(value).strip()
+            for key, value in raw.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
+    def compose_template_fallback(cls, tool_context: dict[str, Any] | None) -> str | None:
+        sections = cls.extract_sections(tool_context)
+        templates = cls.extract_templates(tool_context)
+        if not sections:
+            return None
+
+        parts: list[str] = []
+        compound = len(sections) >= 2
+
+        for section in sections:
+            body = templates.get(section.section_id) or str(section.facts or "").strip()
+            if not body:
+                continue
+            if compound:
+                parts.append(f"## {section.title}\n\n{body}")
+            else:
+                parts.append(body)
+
+        joined = "\n\n".join(parts).strip()
+        return joined or None
+
+    @classmethod
+    def family_leak_markers(cls, sections: list[MetaLlmSynthesisSection]) -> tuple[str, ...]:
+        groups: list[tuple[str, ...]] = []
+        section_ids = {section.section_id for section in sections}
+
+        if SECTION_PROFILE in section_ids:
+            groups.append(ChatUserProfileContentService.leak_markers())
+        if SECTION_CAPABILITIES in section_ids:
+            groups.append(ChatCapabilitiesContentService.leak_markers())
+        if SECTION_ASSISTANT in section_ids:
+            groups.append(ChatAssistantIdentityContentService.leak_markers())
+
+        return ChatLlmSynthesisLeakGuardService.merge_markers(*groups)
+
+    @classmethod
+    def guard_delivered_answer(
+        cls,
+        *,
+        answer: str,
+        tool_context: dict[str, Any] | None,
+    ) -> str:
+        if not isinstance(tool_context, dict) or not tool_context.get(
+            TOOL_CONTEXT_META_LLM_SYNTHESIS
+        ):
+            return str(answer or "").strip()
+
+        sections = cls.extract_sections(tool_context)
+        facts = cls.extract_synthesis_facts(tool_context)
+        fallback = cls.compose_template_fallback(tool_context)
+        required: list[str] = []
+        placeholders: tuple[str, ...] = ()
+
+        for section in sections:
+            if section.section_id != SECTION_PROFILE:
+                continue
+            placeholders = ChatUserProfileContentService.placeholder_markers()
+            name = ChatUserProfileLlmSynthesisService.extract_fact_field(
+                section.facts, "Nome"
+            )
+            if name:
+                required.append(name)
+                first = name.split()[0] if name.split() else ""
+                if first:
+                    required.append(first)
+
+        return ChatLlmSynthesisLeakGuardService.guard_answer(
+            answer=answer,
+            fallback=fallback,
+            facts=facts,
+            leak_markers=cls.family_leak_markers(sections),
+            placeholder_markers=placeholders,
+            required_substrings=required,
+        )
 
     @classmethod
     def extract_sections(cls, tool_context: dict[str, Any] | None) -> list[MetaLlmSynthesisSection]:

@@ -82,3 +82,63 @@ def test_resolve_user_message_from_tool_context_sections():
 
     assert "RAG autorizado" in composed
     assert "o que você pode fazer?" in composed
+
+
+def test_enrich_tool_context_stores_section_templates():
+    sections = [
+        MetaLlmSynthesisSection(
+            section_id=SECTION_CAPABILITIES,
+            title="Capacidades desta sessão",
+            facts="Posso ajudar você nestes formatos:\n\n- RAG",
+        )
+    ]
+    context = ChatMetaLlmSynthesisService.enrich_tool_context({}, sections=sections)
+    templates = context[ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_TEMPLATES]
+
+    assert templates[SECTION_CAPABILITIES].startswith("Posso ajudar você")
+
+
+def test_guard_delivered_answer_replaces_capabilities_lead_leak():
+    catalog = "Posso ajudar você nestes formatos:\n\n- RAG autorizado"
+    context = ChatMetaLlmSynthesisService.enrich_tool_context(
+        {},
+        sections=[
+            MetaLlmSynthesisSection(
+                section_id=SECTION_CAPABILITIES,
+                title="Capacidades desta sessão",
+                facts=catalog,
+            )
+        ],
+    )
+    leaked = (
+        "Resposta com vazamento: não invente rotas. "
+        "Posso ajudar você nestes formatos."
+    )
+    guarded = ChatMetaLlmSynthesisService.guard_delivered_answer(
+        answer=leaked,
+        tool_context=context,
+    )
+
+    assert guarded == catalog
+    assert "não invente rotas" not in guarded.lower()
+
+
+def test_guard_delivered_answer_keeps_humanized_capabilities():
+    catalog = "Posso ajudar você nestes formatos:\n\n- RAG autorizado"
+    context = ChatMetaLlmSynthesisService.enrich_tool_context(
+        {},
+        sections=[
+            MetaLlmSynthesisSection(
+                section_id=SECTION_CAPABILITIES,
+                title="Capacidades desta sessão",
+                facts=catalog,
+            )
+        ],
+    )
+    answer = "Posso consultar documentação autorizada e dados operacionais nesta sessão."
+    guarded = ChatMetaLlmSynthesisService.guard_delivered_answer(
+        answer=answer,
+        tool_context=context,
+    )
+
+    assert guarded == answer

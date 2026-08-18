@@ -64,4 +64,5 @@ def test_apply_identity_llm_route_stores_template_from_bundle():
 
     assert result.tool_context["userProfileSynthesisFacts"] == "- **Nome:** Ana"
     assert "Ana" in result.tool_context["userProfileTemplateFallback"]
+    assert result.tool_context["metaSynthesisTemplates"]["profile"].startswith("**Seu perfil")
     assert result.skip_user_direct_answer is True
