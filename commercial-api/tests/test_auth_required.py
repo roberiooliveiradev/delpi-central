@@ -16,10 +16,21 @@ def test_new_bff_routes_require_token():
     for path in (
         "/settings/sla-policies",
         "/analytics/opportunity-collaborator-summary",
+        "/interaction-rooms/00000000-0000-0000-0000-000000000001",
     ):
         response = client.get(path)
         assert response.status_code == 401, path
         assert response.json().get("detail") == "Unauthorized"
+
+
+def test_interaction_room_resolve_requires_token():
+    client = TestClient(app)
+    response = client.post(
+        "/interaction-rooms/resolve",
+        json={"kind": "entity", "entity_type": "order", "entity_key": "01|1"},
+    )
+    assert response.status_code == 401
+    assert response.json().get("detail") == "Unauthorized"
 
 
 def test_declared_forecast_route_removed():
