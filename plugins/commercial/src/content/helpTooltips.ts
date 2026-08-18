@@ -570,6 +570,8 @@ export const CM_HELP = {
       "Histórico da oportunidade em ordem cronológica, com os principais eventos comerciais.",
     searchOpportunities:
       "Filtra a lista por número da OV, código ou nome do cliente no período selecionado.",
+    opportunityStatus:
+      "Status canônico da OV (aberta, ganha, perdida) — mesmo contrato do BFF. Analista/etapa/família de cliente ainda sem campo no envelope.",
     columns: {
       order: "Número do pedido e item da linha avaliada no OTD.",
       branch: "Unidade operacional (Santa Catarina ou Espírito Santo) da linha.",

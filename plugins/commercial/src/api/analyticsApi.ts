@@ -144,6 +144,7 @@ export type OpportunityCollaboratorSummaryRow = {
   wonCount: number;
   lostCount: number;
   totalCount: number;
+  ageDaysAvg: number | null;
 };
 
 export function getOpportunityCollaboratorSummary(

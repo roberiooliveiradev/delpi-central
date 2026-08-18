@@ -7,16 +7,17 @@ from commercial_app.domain.services.opportunity_collaborator_summary_service imp
 
 def test_summarize_groups_by_seller_and_status() -> None:
     items = [
-        {"seller_code": "A", "seller_name": "Ana", "status_category": "open"},
-        {"seller_code": "A", "seller_name": "Ana", "status_category": "won"},
+        {"seller_code": "A", "seller_name": "Ana", "status_category": "open", "proposal_date": "2026-08-08"},
+        {"seller_code": "A", "seller_name": "Ana", "status_category": "won", "proposal_date": "2026-08-01"},
         {"seller_code": "B", "seller_name": "Bia", "status_category": "open"},
         {"seller_code": "", "status_category": "lost"},
     ]
-    rows = OpportunityCollaboratorSummaryService().summarize(items)
+    rows = OpportunityCollaboratorSummaryService().summarize(items, as_of=__import__("datetime").date(2026, 8, 18))
     by_code = {row["sellerCode"]: row for row in rows}
     assert by_code["A"]["totalCount"] == 2
     assert by_code["A"]["openCount"] == 1
     assert by_code["A"]["wonCount"] == 1
+    assert by_code["A"]["ageDaysAvg"] == 13.5
     assert by_code["B"]["openCount"] == 1
     assert by_code[""]["lostCount"] == 1
     assert rows[0]["sellerCode"] == "A"

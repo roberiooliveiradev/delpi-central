@@ -10,6 +10,7 @@ import {
   CommercialPageHero,
   CommercialSectionCard,
   CommercialSectionHintLabel,
+  CommercialSelectField,
   CommercialTextField,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/PortfolioScopeContext";
@@ -40,6 +41,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const [collabTruncated, setCollabTruncated] = useState(false);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
+  const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -67,12 +69,16 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           page: 1,
           page_size: 50,
           search: search.trim() || undefined,
+          status: statusFilter || undefined,
           sort_by: "proposal_date",
           sort_dir: "desc",
         },
         controller.signal,
       ),
-      getOpportunityCollaboratorSummary(filters.apiParams, controller.signal).catch(() => null),
+      getOpportunityCollaboratorSummary(
+        { ...filters.apiParams, status: statusFilter || undefined },
+        controller.signal,
+      ).catch(() => null),
     ])
       .then(([page, summary]) => {
         if (controller.signal.aborted) return;
@@ -103,6 +109,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
     search,
+    statusFilter,
     reloadKey,
   ]);
 
@@ -168,6 +175,12 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
               { key: "won", header: "Ganhas", render: (row) => String(row.wonCount) },
               { key: "lost", header: "Perdidas", render: (row) => String(row.lostCount) },
               { key: "total", header: "Total", render: (row) => String(row.totalCount) },
+              {
+                key: "age",
+                header: "Idade média (dias)",
+                render: (row) =>
+                  row.ageDaysAvg == null ? "—" : row.ageDaysAvg.toLocaleString("pt-BR"),
+              },
             ]}
           />
         </CommercialSectionCard>
@@ -179,6 +192,18 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         value={search}
         onChange={setSearch}
         placeholder="Número da OV, cliente…"
+      />
+      <CommercialSelectField
+        label="Status"
+        hint={CM_HELP.analytics.opportunityStatus}
+        value={statusFilter || "all"}
+        onChange={(value) => setStatusFilter(value === "all" ? "" : value)}
+        options={[
+          { value: "all", label: "Todos" },
+          { value: "open", label: "Abertas" },
+          { value: "won", label: "Ganhas" },
+          { value: "lost", label: "Perdidas" },
+        ]}
       />
 
       <CommercialSectionCard
