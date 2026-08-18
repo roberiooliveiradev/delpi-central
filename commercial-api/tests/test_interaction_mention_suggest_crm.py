@@ -33,6 +33,18 @@ class _Gateway:
             raise RuntimeError("api-delpi down")
         return self._orders
 
+    def get_product(self, path, *, params=None):
+        raise RuntimeError("unused")
+
+    def get_production(self, path, *, params=None):
+        raise RuntimeError("unused")
+
+    def get_commercial_analytics(self, path, *, params=None):
+        raise RuntimeError("unused")
+
+    def list_customer_outbound_invoices(self, *, customer_code, customer_store, params=None):
+        raise RuntimeError("unused")
+
 
 class _Portfolios:
     def __init__(self, items: list[SellerPortfolio]) -> None:

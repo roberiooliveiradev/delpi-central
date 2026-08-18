@@ -35,6 +35,29 @@ class CrmMentionSearchPort(Protocol):
     def list_open_orders(self, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
         ...
 
+    def get_product(self, path: str, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        ...
+
+    def get_production(self, path: str, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        ...
+
+    def get_commercial_analytics(
+        self,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        ...
+
+    def list_customer_outbound_invoices(
+        self,
+        *,
+        customer_code: str,
+        customer_store: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        ...
+
 
 def _needle(query: str) -> str:
     return (query or "").strip().lower()
@@ -100,13 +123,36 @@ class SuggestInteractionMentionsUseCase:
         items: list[dict[str, Any]] = []
         if "user" in wanted:
             items.extend(self._suggest_users(query=query, limit=cap))
+        remaining = cap - len(items)
         crm_kinds = [kind for kind in ("customer", "portfolio", "order") if kind in wanted]
-        if crm_kinds:
+        if remaining > 0 and crm_kinds:
             items.extend(
                 self._suggest_crm(
                     query=query,
                     kinds=crm_kinds,
-                    limit=cap,
+                    limit=remaining,
+                    actor_user_id=actor_user_id,
+                    unrestricted=unrestricted,
+                )
+            )
+        remaining = cap - len(items)
+        ops_kinds = [
+            kind
+            for kind in (
+                "product",
+                "production_order",
+                "opportunity",
+                "otd_line",
+                "invoice",
+            )
+            if kind in wanted
+        ]
+        if remaining > 0 and ops_kinds:
+            items.extend(
+                self._suggest_ops(
+                    query=query,
+                    kinds=ops_kinds,
+                    limit=remaining,
                     actor_user_id=actor_user_id,
                     unrestricted=unrestricted,
                 )
@@ -325,4 +371,279 @@ class SuggestInteractionMentionsUseCase:
             )
             if len(out) >= limit:
                 break
+        return out
+
+    def _suggest_ops(
+        self,
+        *,
+        query: str,
+        kinds: Sequence[str],
+        limit: int,
+        actor_user_id: str | None,
+        unrestricted: bool,
+    ) -> list[dict[str, Any]]:
+        if self._gateway is None:
+            return []
+        scope = self._customer_scope(
+            actor_user_id=actor_user_id,
+            unrestricted=unrestricted,
+        )
+        out: list[dict[str, Any]] = []
+        if "product" in kinds:
+            out.extend(self._suggest_products(query=query, limit=limit))
+        if "production_order" in kinds:
+            out.extend(self._suggest_production_orders(query=query, limit=limit))
+        if "opportunity" in kinds:
+            out.extend(self._suggest_opportunities(query=query, limit=limit, scope=scope))
+        if "otd_line" in kinds:
+            out.extend(self._suggest_otd_lines(query=query, limit=limit, scope=scope))
+        if "invoice" in kinds:
+            out.extend(self._suggest_invoices(query=query, limit=limit, scope=scope))
+        return out[:limit]
+
+    def _suggest_products(self, *, query: str, limit: int) -> list[dict[str, Any]]:
+        term = (query or "").strip()
+        if not term or self._gateway is None:
+            return []
+        try:
+            payload = self._gateway.get_product(
+                "/search",
+                params={"code": term, "page": 1, "page_size": limit},
+            )
+        except Exception:
+            payload = None
+        items = _unwrap_items(payload) if payload else []
+        if not items:
+            try:
+                detail = self._gateway.get_product(f"/{term}/factory-status")
+                data = detail.get("data") if isinstance(detail.get("data"), dict) else detail
+                if isinstance(data, dict):
+                    items = [data]
+            except Exception:
+                return []
+        out: list[dict[str, Any]] = []
+        for item in items:
+            code = str(
+                item.get("code")
+                or item.get("product_code")
+                or item.get("productCode")
+                or term
+            ).strip()
+            if not code:
+                continue
+            name = str(
+                item.get("description")
+                or item.get("name")
+                or item.get("product_description")
+                or ""
+            ).strip()
+            out.append(
+                {
+                    "kind": "product",
+                    "label": name or code,
+                    "subtitle": code,
+                    "ref": {"product_code": code},
+                }
+            )
+            if len(out) >= limit:
+                break
+        return out
+
+    def _suggest_production_orders(self, *, query: str, limit: int) -> list[dict[str, Any]]:
+        term = (query or "").strip()
+        if not term or self._gateway is None:
+            return []
+        try:
+            payload = self._gateway.get_production(f"/orders/by-op/{term}")
+        except Exception:
+            return []
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+        if not isinstance(data, dict):
+            return []
+        op = str(
+            data.get("op")
+            or data.get("production_order")
+            or data.get("productionOrder")
+            or term
+        ).strip()
+        branch = str(data.get("branch") or data.get("filial") or "").strip()
+        if not op:
+            return []
+        return [
+            {
+                "kind": "production_order",
+                "label": op,
+                "subtitle": branch,
+                "ref": {"production_order": op, "branch": branch or None},
+            }
+        ][:limit]
+
+    def _in_customer_scope(
+        self,
+        item: dict[str, Any],
+        scope: CommercialCustomerScope | None,
+    ) -> bool:
+        if scope is None:
+            return False
+        if scope.unrestricted or scope.allowed_customers is None:
+            return True
+        code = str(
+            item.get("customer_code")
+            or item.get("codigo_cadastro")
+            or item.get("codigo")
+            or ""
+        ).strip()
+        store = str(
+            item.get("customer_store")
+            or item.get("loja_cadastro")
+            or item.get("loja")
+            or ""
+        ).strip()
+        if not code or not store:
+            return False
+        return scope.allows(code, store)
+
+    def _suggest_opportunities(
+        self,
+        *,
+        query: str,
+        limit: int,
+        scope: CommercialCustomerScope | None,
+    ) -> list[dict[str, Any]]:
+        if self._gateway is None:
+            return []
+        try:
+            payload = self._gateway.get_commercial_analytics(
+                "/proposals",
+                params={"search": query, "page": 1, "page_size": limit},
+            )
+        except Exception:
+            return []
+        out: list[dict[str, Any]] = []
+        for item in _unwrap_items(payload):
+            if not self._in_customer_scope(item, scope):
+                continue
+            number = str(
+                item.get("proposal_number")
+                or item.get("proposalNumber")
+                or item.get("numero")
+                or item.get("id")
+                or ""
+            ).strip()
+            if not number:
+                continue
+            name = str(item.get("customer_name") or item.get("cliente") or "").strip()
+            if not _matches(query, number, name):
+                continue
+            out.append(
+                {
+                    "kind": "opportunity",
+                    "label": number,
+                    "subtitle": name,
+                    "ref": {"proposal_number": number},
+                }
+            )
+            if len(out) >= limit:
+                break
+        return out
+
+    def _suggest_otd_lines(
+        self,
+        *,
+        query: str,
+        limit: int,
+        scope: CommercialCustomerScope | None,
+    ) -> list[dict[str, Any]]:
+        if self._gateway is None:
+            return []
+        try:
+            payload = self._gateway.get_commercial_analytics(
+                "/sales-order-otd/panel",
+                params={"search": query, "page": 1, "page_size": limit},
+            )
+        except Exception:
+            return []
+        out: list[dict[str, Any]] = []
+        seen: set[tuple[str, str, str]] = set()
+        for item in _unwrap_items(payload):
+            if not self._in_customer_scope(item, scope):
+                continue
+            branch = str(item.get("branch") or item.get("filial") or "").strip()
+            order = str(
+                item.get("order_number") or item.get("pedido") or item.get("order") or ""
+            ).strip()
+            line = str(
+                item.get("line_item") or item.get("linha") or item.get("line") or ""
+            ).strip()
+            key = (branch, order, line)
+            if not branch or not order or not line or key in seen:
+                continue
+            if not _matches(query, order, line, branch):
+                continue
+            seen.add(key)
+            out.append(
+                {
+                    "kind": "otd_line",
+                    "label": f"{order}/{line}",
+                    "subtitle": branch,
+                    "ref": {
+                        "branch": branch,
+                        "order": order,
+                        "line": line,
+                    },
+                }
+            )
+            if len(out) >= limit:
+                break
+        return out
+
+    def _suggest_invoices(
+        self,
+        *,
+        query: str,
+        limit: int,
+        scope: CommercialCustomerScope | None,
+    ) -> list[dict[str, Any]]:
+        if self._gateway is None or scope is None or not scope.allowed_customers:
+            return []
+        out: list[dict[str, Any]] = []
+        seen: set[tuple[str, str, str]] = set()
+        for code, store in list(scope.allowed_customers)[:8]:
+            try:
+                payload = self._gateway.list_customer_outbound_invoices(
+                    customer_code=code,
+                    customer_store=store,
+                )
+            except Exception:
+                continue
+            for item in _unwrap_items(payload):
+                number = str(
+                    item.get("invoice_number")
+                    or item.get("nota")
+                    or item.get("nf")
+                    or item.get("number")
+                    or ""
+                ).strip()
+                series = str(item.get("series") or item.get("serie") or "").strip()
+                branch = str(item.get("branch") or item.get("filial") or "").strip()
+                key = (branch, number, series)
+                if not number or key in seen:
+                    continue
+                if not _matches(query, number, series, branch):
+                    continue
+                seen.add(key)
+                out.append(
+                    {
+                        "kind": "invoice",
+                        "label": number,
+                        "subtitle": f"{branch} {series}".strip(),
+                        "ref": {
+                            "branch": branch,
+                            "invoice": number,
+                            "series": series,
+                        },
+                    }
+                )
+                if len(out) >= limit:
+                    return out
         return out
