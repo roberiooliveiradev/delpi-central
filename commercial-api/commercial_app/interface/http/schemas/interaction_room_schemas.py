@@ -11,3 +11,8 @@ class ResolveInteractionRoomBody(BaseModel):
     entity_key: str | None = None
     group_id: UUID | None = None
     title: str | None = None
+
+
+class AddInteractionRoomMemberBody(BaseModel):
+    user_id: str = Field(..., min_length=1)
+    role: str = "member"

@@ -21,6 +21,7 @@ from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
 )
 from commercial_app.interface.http.schemas.interaction_room_schemas import (
+    AddInteractionRoomMemberBody,
     ResolveInteractionRoomBody,
 )
 
@@ -98,3 +99,132 @@ def get_interaction_room(
     except Exception:
         logger.exception("get_interaction_room_failed")
         return fail("Erro interno ao carregar a sala.", 500, operation_id=operation_id)
+
+
+@router.get("/{room_id}/members", operation_id="list_interaction_room_members")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def list_interaction_room_members(
+    request: Request,
+    room_id: UUID = Path(...),
+):
+    operation_id = "list_interaction_room_members"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        members = build_manage_interaction_rooms_use_case().list_members(
+            room_id=room_id,
+            actor_user_id=actor,
+        )
+        return ok(
+            {"items": [item.to_dict() for item in members]},
+            message=InteractionRoomContentService.message("listMembersOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except Exception:
+        logger.exception("list_interaction_room_members_failed")
+        return fail("Erro interno ao listar membros.", 500, operation_id=operation_id)
+
+
+@router.post("/{room_id}/members", operation_id="add_interaction_room_member")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def add_interaction_room_member(
+    request: Request,
+    room_id: UUID = Path(...),
+    body: AddInteractionRoomMemberBody = Body(...),
+):
+    operation_id = "add_interaction_room_member"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        member = build_manage_interaction_rooms_use_case().add_member(
+            room_id=room_id,
+            actor_user_id=actor,
+            user_id=body.user_id,
+            role=body.role,
+        )
+        return ok(
+            member.to_dict(),
+            message=InteractionRoomContentService.message("addMemberOk"),
+            status_code=201,
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("add_interaction_room_member_failed")
+        return fail("Erro interno ao adicionar membro.", 500, operation_id=operation_id)
+
+
+@router.delete(
+    "/{room_id}/members/{user_id}",
+    operation_id="remove_interaction_room_member",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def remove_interaction_room_member(
+    request: Request,
+    room_id: UUID = Path(...),
+    user_id: str = Path(..., min_length=1),
+):
+    operation_id = "remove_interaction_room_member"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        build_manage_interaction_rooms_use_case().remove_member(
+            room_id=room_id,
+            actor_user_id=actor,
+            user_id=user_id,
+        )
+        return ok(
+            {"removed": True, "user_id": user_id},
+            message=InteractionRoomContentService.message("removeMemberOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("remove_interaction_room_member_failed")
+        return fail("Erro interno ao remover membro.", 500, operation_id=operation_id)
+
+
+@router.post("/{room_id}/read", operation_id="mark_interaction_room_read")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def mark_interaction_room_read(
+    request: Request,
+    room_id: UUID = Path(...),
+):
+    operation_id = "mark_interaction_room_read"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        member = build_manage_interaction_rooms_use_case().mark_read(
+            room_id=room_id,
+            actor_user_id=actor,
+        )
+        return ok(
+            member.to_dict(),
+            message=InteractionRoomContentService.message("markReadOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except Exception:
+        logger.exception("mark_interaction_room_read_failed")
+        return fail("Erro interno ao marcar leitura.", 500, operation_id=operation_id)
