@@ -8,7 +8,7 @@ import {
   type PurchaseEvolutionWindowMonths,
 } from "../hooks/useCustomerPurchaseEvolution";
 import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
-import { CustomerConversationPoints } from "./CustomerConversationPoints";
+import { CustomerPreMeetingChecklist } from "./CustomerPreMeetingChecklist";
 import { CustomerOpenOrdersPreview } from "./CustomerOpenOrdersPreview";
 import { CustomerPurchaseEvolutionChart } from "./CustomerPurchaseEvolutionChart";
 
@@ -23,6 +23,8 @@ type CustomerOverviewSectionProps = {
   basePath: string;
   onGoToOrders: () => void;
   onGoToActivities: () => void;
+  onGoToSection: (section: "historico" | "pedidos" | "oportunidades" | "atividades") => void;
+  onGoToForecast: () => void;
 };
 
 /**
@@ -38,6 +40,8 @@ export function CustomerOverviewSection({
   basePath,
   onGoToOrders,
   onGoToActivities,
+  onGoToSection,
+  onGoToForecast,
 }: CustomerOverviewSectionProps) {
   const [windowMonths, setWindowMonths] =
     useState<PurchaseEvolutionWindowMonths>(12);
@@ -50,6 +54,10 @@ export function CustomerOverviewSection({
 
   return (
     <div className="cm-customer-overview">
+      <CustomerPreMeetingChecklist
+        onGoToSection={onGoToSection}
+        onGoToForecast={onGoToForecast}
+      />
       <CustomerConversationPoints
         customer={customer}
         coveragePartial={coveragePartial}

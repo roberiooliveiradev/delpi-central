@@ -91,7 +91,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-CLI-CLASS | Badges ativo/novo/recuperado/ticket | **Bloqueado** | Playbook #7 · gate ficha KPI |
 | P-SEG | Segmentação estruturada (fonte) | **Backlog** | Playbook #6 — ADR fonte antes de inventar |
 | P-CLI-FILT | Filtros família/grupo na carteira | **Parcial** | Produto em aberto na lista + Conta Opp `product_group`; B1_GRUPO na lista = ADR-003 | MAPA |
-| P-CONTA-360 | Conta pré-reunião (checklist do Existe) | **Backlog** | Playbook #5 |
+| P-CONTA-360 | Conta pré-reunião (checklist do Existe) | **Existe** | Checklist no resumo da Conta (sem inventar rentabilidade) | Playbook #5 |
 | P-HIST-NEG | Ticket/rentabilidade na Conta | **Bloqueado** | FIN-004 / KPI-TICKET · § Bloqueado |
 | P-PROD-COM | Produtividade ofertas/colaborador | **Backlog** | overlap W2 |
 

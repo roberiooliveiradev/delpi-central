@@ -317,6 +317,10 @@ export function CustomerDetailPage({
                   basePath={basePath}
                   onGoToOrders={() => changeSection("pedidos")}
                   onGoToActivities={() => changeSection("atividades")}
+                  onGoToSection={(next) => changeSection(next)}
+                  onGoToForecast={() =>
+                    navigatePluginView("overview", { basePath })
+                  }
                 />
               ) : null}
 
