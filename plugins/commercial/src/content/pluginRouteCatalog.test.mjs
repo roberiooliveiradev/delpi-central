@@ -59,4 +59,18 @@ describe("pluginRouteCatalog", () => {
       ["operations", "management", "documents", "administration"],
     );
   });
+
+  it("inclui Sala de interação em Operação", () => {
+    const sections = resolveHubSections(allCaps);
+    const operations = sections.find((s) => s.id === "operations");
+    assert.ok(operations?.routes.some((r) => r.id === "interaction_rooms"));
+  });
+
+  it("filterRouteCatalog encontra sala por keyword", () => {
+    const sections = resolveHubSections(allCaps);
+    const filtered = filterRouteCatalog(sections, "interação");
+    assert.ok(
+      filtered.some((s) => s.routes.some((r) => r.id === "interaction_rooms")),
+    );
+  });
 });

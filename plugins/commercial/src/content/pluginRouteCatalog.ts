@@ -130,6 +130,22 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         requiredCap: "customers",
         keywords: ["carteira", "clientes", "conta"],
       },
+      {
+        id: "interaction_rooms",
+        label: "Sala de interação",
+        viewId: "interaction_rooms",
+        requiredCap: "always",
+        keywords: [
+          "sala",
+          "interacao",
+          "interação",
+          "conversa",
+          "menção",
+          "mencao",
+          "chat",
+          "inbox",
+        ],
+      },
     ],
   },
   {

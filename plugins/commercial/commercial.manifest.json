@@ -70,11 +70,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/commercial/interaction-rooms",
+      "label": "Sala de interação",
+      "permission": "commercial.access",
+      "icon": "messages-square",
+      "order": 18,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/commercial/customers",
       "label": "Minha Carteira",
       "permission": "commercial.access",
       "icon": "users",
-      "order": 18,
+      "order": 19,
       "showInMenu": false
     },
     {
