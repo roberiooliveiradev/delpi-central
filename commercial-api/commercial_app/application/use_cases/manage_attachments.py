@@ -16,8 +16,11 @@ from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
 )
 from commercial_app.domain.ports.task_repository_port import TaskRepositoryPort
+from commercial_app.domain.services.interaction_room_content_service import (
+    InteractionRoomContentService,
+)
 
-ALLOWED_OWNER_TYPES = frozenset({"task"})
+ALLOWED_OWNER_TYPES = frozenset({"task", "room_message"})
 
 
 @dataclass(frozen=True)
@@ -106,6 +109,15 @@ class ManageAttachmentsUseCase:
                 actor_is_portfolio_manager=actor_is_portfolio_manager,
             ):
                 raise PermissionError("Sem permissão para anexos desta tarefa.")
+            return
+        if kind == "room_message":
+            try:
+                UUID(oid)
+            except ValueError as exc:
+                raise ValueError(
+                    InteractionRoomContentService.error("attachmentOwnerInvalid")
+                ) from exc
+            return
 
     def list(
         self,

@@ -220,3 +220,51 @@ def test_rejects_unsupported_mime(tmp_path: Path) -> None:
         assert False, "expected ValueError"
     except ValueError:
         pass
+
+
+def test_room_message_upload_uses_disk_subdir(tmp_path: Path) -> None:
+    message_id = uuid4()
+    repo = _MemoryAttachments()
+    storage = AttachmentStorage(base_dir=str(tmp_path))
+    uc = ManageAttachmentsUseCase(
+        repository=repo,
+        storage=storage,
+        task_repository=_MemoryTasks(_task()),
+    )
+    uploaded = uc.upload(
+        owner_type="room_message",
+        owner_id=str(message_id),
+        original_name="proposta.pdf",
+        content=b"%PDF-1.4 sala",
+        mime_type="application/pdf",
+        uploaded_by_user_id="u1",
+    )
+    assert uploaded.owner_type == "room_message"
+    assert uploaded.storage_key.startswith(f"room_message/{message_id}/")
+    assert (tmp_path / uploaded.storage_key).is_file()
+    listed = uc.list(
+        owner_type="room_message",
+        owner_id=str(message_id),
+        actor_user_id="u1",
+    )
+    assert [item.id for item in listed] == [uploaded.id]
+
+
+def test_room_message_rejects_invalid_owner_id(tmp_path: Path) -> None:
+    uc = ManageAttachmentsUseCase(
+        repository=_MemoryAttachments(),
+        storage=AttachmentStorage(base_dir=str(tmp_path)),
+        task_repository=_MemoryTasks(_task()),
+    )
+    try:
+        uc.upload(
+            owner_type="room_message",
+            owner_id="not-a-uuid",
+            original_name="x.pdf",
+            content=b"%PDF-1.4",
+            mime_type="application/pdf",
+            uploaded_by_user_id="u1",
+        )
+        assert False, "expected ValueError"
+    except ValueError:
+        pass
