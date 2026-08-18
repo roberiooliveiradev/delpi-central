@@ -279,6 +279,33 @@ export function navigateAnalyticsOtdLine(
   return true;
 }
 
+/** Visão geral — destino de menção kpi/goal (sem página de indicador isolada). */
+export function buildOverviewKpiHref(
+  label?: string,
+  options?: { basePath?: string },
+): string {
+  const encoded = (label ?? "").trim();
+  const search = encoded ? `kpi=${encodeURIComponent(encoded)}` : undefined;
+  return buildPluginPath("overview", options?.basePath, search);
+}
+
+/**
+ * Produto ainda não tem ficha no Comercial; o unfurl usa BFF.
+ * Href cai na Visão geral com query de código até existir página própria.
+ */
+export function buildProductHref(
+  productCode: string,
+  options?: { basePath?: string },
+): string | null {
+  const code = productCode.trim();
+  if (!code) return null;
+  return buildPluginPath(
+    "overview",
+    options?.basePath,
+    `product=${encodeURIComponent(code)}`,
+  );
+}
+
 export function navigateOpenOrderOpDetail(
   branch: string,
   orderNumber: string,

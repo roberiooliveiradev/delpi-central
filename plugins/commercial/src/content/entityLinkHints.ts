@@ -16,6 +16,8 @@ export const ENTITY_LINK_HINTS = {
   profile: "Abrir perfil de {name}",
   portfolio: "Abrir carteira {label}",
   openOrdersFiltered: "Abrir Meus pedidos",
+  product: "Abrir produto {code}",
+  kpi: "Abrir indicador {label}",
 } as const;
 
 export type EntityLinkHintKey = keyof typeof ENTITY_LINK_HINTS;
@@ -84,4 +86,12 @@ export function proposalLinkTitle(id: string): string {
 
 export function portfolioLinkTitle(label: string): string {
   return entityLinkTitle("portfolio", { label: label.trim() || "—" });
+}
+
+export function productLinkTitle(code: string): string {
+  return entityLinkTitle("product", { code: code.trim() || "—" });
+}
+
+export function kpiLinkTitle(label: string): string {
+  return entityLinkTitle("kpi", { label: label.trim() || "indicador" });
 }
