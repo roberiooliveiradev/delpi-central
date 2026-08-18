@@ -13,6 +13,7 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   CommercialActionButton,
   CommercialEmptyState,
+  CommercialHostDrawer,
   CommercialLoadingCard,
   CommercialMessageThread,
   CommercialRoomHeader,
@@ -25,6 +26,10 @@ import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent
 import { InteractionRoomMessageComposer } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
+import {
+  INTERACTION_ROOM_NARROW_QUERY,
+  useMatchMedia,
+} from "./useMatchMedia";
 
 const EMBED_MESSAGE_LIMIT = 30;
 
@@ -48,7 +53,8 @@ function formatMessageTime(iso: string | null | undefined): string {
 }
 
 /**
- * Painel embutido na ficha — resolve lazy + thread/composer do kit (sem chrome local).
+ * Painel embutido na ficha — resolve lazy + thread/composer do kit.
+ * Viewport ≤768px: conversa no drawer host-contained (não cobre a sidebar).
  */
 export function InteractionRoomPanel({
   basePath,
@@ -57,6 +63,8 @@ export function InteractionRoomPanel({
   roomTitle,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
+  const narrow = useMatchMedia(INTERACTION_ROOM_NARROW_QUERY);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [room, setRoom] = useState<InteractionRoomDto | null>(null);
   const [members, setMembers] = useState<InteractionRoomMemberDto[]>([]);
   const [messages, setMessages] = useState<InteractionMessageDto[]>([]);
@@ -130,6 +138,10 @@ export function InteractionRoomPanel({
     return () => controller.abort();
   }, [entityType, entityKey, roomTitle, content.panelResolveError]);
 
+  useEffect(() => {
+    if (!narrow) setDrawerOpen(false);
+  }, [narrow]);
+
   const onMessageCreated = useCallback((created: InteractionMessageDto) => {
     setMessages((prev) => [...prev, created]);
   }, []);
@@ -195,6 +207,45 @@ export function InteractionRoomPanel({
       </CommercialActionButton>
     ) : null;
 
+  const roomBody =
+    !loading && room ? (
+      <>
+        <CommercialRoomHeader
+          title={room.title || roomTitle}
+          participants={participants}
+          participantsAriaLabel={content.roomMembersAriaLabel}
+        />
+        {threadMessages.length === 0 ? (
+          <CommercialEmptyState
+            title={content.panelEmptyTitle}
+            message={content.panelEmptyDescription}
+          />
+        ) : (
+          <CommercialMessageThread
+            listAriaLabel={content.roomMessagesAriaLabel}
+            emptyLabel={content.panelEmptyTitle}
+            messages={threadMessages}
+          />
+        )}
+        <InteractionRoomMessageComposer
+          roomId={room.id}
+          onMessageCreated={onMessageCreated}
+          onError={(message) => setError(message)}
+        />
+      </>
+    ) : null;
+
+  const statusBlock = (
+    <>
+      {error ? (
+        <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
+      ) : null}
+      {loading ? (
+        <CommercialLoadingCard title={content.panelLoadingLabel} variant="panel" />
+      ) : null}
+    </>
+  );
+
   if (!entityKey?.trim()) {
     return (
       <CommercialSectionCard title={content.panelTitle}>
@@ -205,40 +256,35 @@ export function InteractionRoomPanel({
     );
   }
 
+  if (narrow) {
+    return (
+      <>
+        <CommercialSectionCard title={content.panelTitle} actions={openRoomAction}>
+          <p>{content.panelNarrowHint}</p>
+          <CommercialActionButton
+            variant="primary"
+            onClick={() => setDrawerOpen(true)}
+          >
+            {content.panelOpenDrawer}
+          </CommercialActionButton>
+        </CommercialSectionCard>
+        <CommercialHostDrawer
+          open={drawerOpen}
+          title={room?.title || roomTitle || content.panelTitle}
+          onClose={() => setDrawerOpen(false)}
+          closeAriaLabel={content.drawerCloseAriaLabel}
+        >
+          {statusBlock}
+          {roomBody}
+        </CommercialHostDrawer>
+      </>
+    );
+  }
+
   return (
     <CommercialSectionCard title={content.panelTitle} actions={openRoomAction}>
-      {error ? (
-        <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
-      ) : null}
-      {loading ? (
-        <CommercialLoadingCard title={content.panelLoadingLabel} variant="panel" />
-      ) : null}
-      {!loading && room ? (
-        <>
-          <CommercialRoomHeader
-            title={room.title || roomTitle}
-            participants={participants}
-            participantsAriaLabel={content.roomMembersAriaLabel}
-          />
-          {threadMessages.length === 0 ? (
-            <CommercialEmptyState
-              title={content.panelEmptyTitle}
-              message={content.panelEmptyDescription}
-            />
-          ) : (
-            <CommercialMessageThread
-              listAriaLabel={content.roomMessagesAriaLabel}
-              emptyLabel={content.panelEmptyTitle}
-              messages={threadMessages}
-            />
-          )}
-          <InteractionRoomMessageComposer
-            roomId={room.id}
-            onMessageCreated={onMessageCreated}
-            onError={(message) => setError(message)}
-          />
-        </>
-      ) : null}
+      {statusBlock}
+      {roomBody}
     </CommercialSectionCard>
   );
 }

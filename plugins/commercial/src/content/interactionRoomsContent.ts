@@ -70,4 +70,7 @@ export const INTERACTION_ROOMS_CONTENT = {
     um: "UM",
     value: "Valor",
   },
+  panelNarrowHint: "Abra a conversa em um painel sem cobrir o menu do portal.",
+  panelOpenDrawer: "Abrir conversa",
+  drawerCloseAriaLabel: "Fechar sala",
 } as const;

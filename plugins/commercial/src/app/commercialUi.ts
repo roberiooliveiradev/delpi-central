@@ -39,6 +39,7 @@ import {
   createDashboardTableFontSizeControls,
   createFilterBarShell,
   createHostContainedModalShell,
+  createHostContainedDrawerShell,
   dateFieldBemClasses,
   createDashboardPageHero,
   createDashboardMetricStrip,
@@ -209,6 +210,12 @@ export const CommercialHostDialog = createHostContainedModalShell({
   prefix: UI_PREFIX,
   portalScopeClassName: CM_PORTAL_SCOPE,
   containedLayout: "dialog",
+});
+export const CommercialHostDrawer = createHostContainedDrawerShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
+  closeAriaLabel: "Fechar",
+  backdropAriaLabel: "Fechar painel",
 });
 export const CommercialDataRecordCard = createDashboardDataRecordCard({
   prefix: UI_PREFIX,

@@ -14,6 +14,8 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/resolveInteractionRoom/);
+    expect(source).toMatch(/CommercialHostDrawer/);
+    expect(source).toMatch(/INTERACTION_ROOM_NARROW_QUERY|max-width: 768px/);
     expect(source).not.toMatch(/<textarea/);
     expect(source).not.toMatch(/cm-message-bubble/);
   });
