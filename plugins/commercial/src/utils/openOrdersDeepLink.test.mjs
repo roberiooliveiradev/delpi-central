@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import {
   buildCommercialOpenOrderPath,
   buildOpenOrdersHorizonListHref,
+  buildOpenOrdersPostponedListHref,
   buildOpenOrdersListSearch,
   buildOpenOrdersContextSearch,
   findOpenOrderLine,
@@ -82,6 +83,7 @@ describe("openOrdersDeepLink", () => {
       dateStart: "",
       dateEnd: "2026-08-10",
       lateOnly: false,
+      postponedOnly: false,
     });
     assert.equal(state.sellerId, "s2");
     assert.equal(state.sortKey, "data_entrega");
@@ -111,6 +113,13 @@ describe("openOrdersDeepLink", () => {
       buildOpenOrdersListSearch(state),
       "?q=abc&branch=01&client=C1&stock=com_estoque&date_start=2026-08-01&seller_id=s1&sort=pedido&dir=desc&page=2",
     );
+  });
+
+  it("parseia postponed=1 como recorte de disponibilidade", () => {
+    const state = parseOpenOrdersListUrlState("?postponed=1");
+    assert.equal(state.filters.postponedOnly, true);
+    assert.equal(buildOpenOrdersListSearch(state), "?postponed=1");
+    assert.match(buildOpenOrdersPostponedListHref(), /postponed=1/);
   });
 
   it("parseia e monta deep link view=board&stage", () => {

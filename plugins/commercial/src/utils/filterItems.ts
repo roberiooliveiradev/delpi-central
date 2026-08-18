@@ -26,6 +26,8 @@ export type OpenOrdersTotvsFilters = {
   dateEnd: string;
   /** Só linhas com entrega em atraso. */
   lateOnly: boolean;
+  /** Só linhas postergadas (entrega após o mês corrente — heurística BFF `availability`). */
+  postponedOnly: boolean;
 };
 
 export const DEFAULT_FILTERS: OpenOrdersTotvsFilters = {
@@ -36,6 +38,7 @@ export const DEFAULT_FILTERS: OpenOrdersTotvsFilters = {
   dateStart: "",
   dateEnd: "",
   lateOnly: false,
+  postponedOnly: false,
 };
 
 export function getClientKey(item: OpenOrdersTotvsItem): string {
@@ -62,6 +65,7 @@ export function filterPedidosItems(
     }
     if (!matchesStockFilter(item, filters.stockStatus)) return false;
     if (filters.lateOnly && !isDeliveryOverdue(item.data_entrega, item.saldo)) return false;
+    if (filters.postponedOnly && item.availability !== "postponed") return false;
 
     if (filters.dateStart || filters.dateEnd) {
       if (!isWithinDateRange(item.data_entrega, filters.dateStart, filters.dateEnd)) {

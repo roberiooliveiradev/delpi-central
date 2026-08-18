@@ -119,6 +119,8 @@ export const CM_HELP = {
     filterStock:
       "Situação de estoque da linha: pode faturar, parcial ou sem estoque/atrasado. Os chips de atenção também aplicam este filtro.",
     filterLate: "Filtrar só linhas com entrega prometida vencida e saldo em aberto.",
+    filterPostponed:
+      "Postergado: data de faturamento prometida após o mês corrente (heurística — não há campo TOTVS de postergação). Deep link postponed=1.",
     filterDateStart: "Início da janela pela data de faturamento prometida da linha.",
     filterDateEnd: "Fim da janela pela data de faturamento prometida da linha.",
     sellerScope:

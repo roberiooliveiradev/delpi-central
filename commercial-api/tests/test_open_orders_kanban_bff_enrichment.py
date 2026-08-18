@@ -35,6 +35,7 @@ def test_bff_enrichment_shape_for_open_orders_payload() -> None:
     payload = EnrichOpenOrdersKanbanService().build_payload_fields(items)
     assert payload["items"][0]["kanbanStage"] == STAGE_READY_TO_INVOICE
     assert payload["items"][0]["estoque_alocado"] == 5.0
+    assert payload["items"][0]["availability"] in {"available", "postponed", "undated"}
     assert "deliveryHorizon" in payload
     assert _ready_count(payload["kanbanStageCounts"]) == 1
 

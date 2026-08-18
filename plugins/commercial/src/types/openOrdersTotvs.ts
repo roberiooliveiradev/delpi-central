@@ -40,6 +40,8 @@ export type OpenOrdersTotvsItem = {
   proposal_number?: string | null;
   /** BFF kanban stage (OpenOrderKanbanStageService) or completed from recently-closed. */
   kanbanStage?: "upcoming" | "in_progress" | "ready_to_invoice" | "completed";
+  /** BFF OpenOrderAvailabilityClassificationService — postponed = entrega após o mês corrente. */
+  availability?: "available" | "postponed" | "undated";
 };
 
 export type OpenOrdersTotvsData = {

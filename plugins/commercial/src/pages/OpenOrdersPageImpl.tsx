@@ -66,10 +66,14 @@ function monthBoundsFromAsOf(asOfIso: string | undefined): {
 
 function resolveConcentrateChip(filters: {
   lateOnly: boolean;
+  postponedOnly: boolean;
   dateStart: string;
   dateEnd: string;
   asOfIso?: string;
 }): ConcentrateChipId {
+  if (filters.postponedOnly && !filters.dateStart && !filters.dateEnd && !filters.lateOnly) {
+    return "future";
+  }
   if (filters.lateOnly && !filters.dateStart && !filters.dateEnd) return "overdue";
   const bounds = monthBoundsFromAsOf(filters.asOfIso);
   if (filters.dateStart === bounds.currentStart && filters.dateEnd === bounds.currentEnd) {
@@ -153,6 +157,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
   const activeChip = resolveAttentionChip(filters);
   const concentrateChip = resolveConcentrateChip({
     lateOnly: filters.lateOnly,
+    postponedOnly: filters.postponedOnly,
     dateStart: filters.dateStart,
     dateEnd: filters.dateEnd,
     asOfIso: deliveryHorizon?.asOf,
@@ -177,12 +182,19 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
   const selectConcentrate = (id: ConcentrateChipId) => {
     const bounds = monthBoundsFromAsOf(deliveryHorizon?.asOf);
     if (id === "none") {
-      updateFilters({ lateOnly: false, dateStart: "", dateEnd: "", stockStatus: "" as StockFilter });
+      updateFilters({
+        lateOnly: false,
+        postponedOnly: false,
+        dateStart: "",
+        dateEnd: "",
+        stockStatus: "" as StockFilter,
+      });
       return;
     }
     if (id === "overdue") {
       updateFilters({
         lateOnly: true,
+        postponedOnly: false,
         dateStart: "",
         dateEnd: "",
         stockStatus: "" as StockFilter,
@@ -192,6 +204,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
     if (id === "current_month") {
       updateFilters({
         lateOnly: false,
+        postponedOnly: false,
         dateStart: bounds.currentStart,
         dateEnd: bounds.currentEnd,
         stockStatus: "" as StockFilter,
@@ -200,7 +213,8 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
     }
     updateFilters({
       lateOnly: false,
-      dateStart: bounds.futureStart,
+      postponedOnly: true,
+      dateStart: "",
       dateEnd: "",
       stockStatus: "" as StockFilter,
     });
@@ -321,7 +335,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
                       },
                       {
                         id: "conc-future",
-                        label: `Futuro (${futureCount.toLocaleString("pt-BR")})`,
+                        label: `Postergado (${futureCount.toLocaleString("pt-BR")})`,
                         active: concentrateChip === "future",
                         onSelect: () => selectConcentrate("future"),
                       },

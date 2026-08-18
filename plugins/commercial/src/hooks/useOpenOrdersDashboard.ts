@@ -109,6 +109,7 @@ export function useOpenOrdersDashboard(
         ...filters,
         stockStatus: "",
         lateOnly: false,
+        postponedOnly: false,
       }),
     [itemsWithOpForecast, filters],
   );
@@ -199,7 +200,8 @@ export function useOpenOrdersDashboard(
     Boolean(filters.stockStatus) ||
     Boolean(filters.dateStart) ||
     Boolean(filters.dateEnd) ||
-    filters.lateOnly;
+    filters.lateOnly ||
+    filters.postponedOnly;
 
   return {
     loading,

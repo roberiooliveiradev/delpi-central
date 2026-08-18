@@ -113,6 +113,7 @@ export function parseOpenOrdersListUrlState(
       dateStart: isIsoDate(dateStart) ? dateStart : "",
       dateEnd: isIsoDate(dateEnd) ? dateEnd : "",
       lateOnly: focus === "late",
+      postponedOnly: (params.get("postponed") ?? "").trim() === "1",
     },
     sellerId: resolveOpenOrdersSellerId(params.get("seller_id"), sellerAccess),
     sortKey: SORT_QUERY_VALUES.has(sort) ? sort : DEFAULT_SORT.key,
@@ -142,6 +143,7 @@ export function buildOpenOrdersListSearch(state: OpenOrdersListUrlState): string
     params.set("stock", filters.stockStatus);
   }
   if (filters.lateOnly) params.set("focus", "late");
+  if (filters.postponedOnly) params.set("postponed", "1");
   if (isIsoDate(filters.dateStart)) params.set("date_start", filters.dateStart);
   if (isIsoDate(filters.dateEnd)) params.set("date_end", filters.dateEnd);
   if (state.sellerId) params.set("seller_id", state.sellerId);
@@ -170,6 +172,7 @@ export function buildOpenOrdersBoardHref(options: {
       dateStart: "",
       dateEnd: "",
       lateOnly: false,
+      postponedOnly: false,
     },
     sellerId: options.sellerId?.trim() || null,
     sortKey: DEFAULT_SORT.key,
@@ -253,6 +256,7 @@ export function buildOpenOrdersHorizonListHref(options: {
     dateStart: "",
     dateEnd: "",
     lateOnly: false,
+    postponedOnly: false,
   };
 
   if (options.bucket === "overdue") {
@@ -273,6 +277,32 @@ export function buildOpenOrdersHorizonListHref(options: {
   const search = buildOpenOrdersListSearch({
     filters,
     sellerId: options.sellerId?.trim() || null,
+    sortKey: DEFAULT_SORT.key,
+    sortDirection: DEFAULT_SORT.direction,
+    page: 1,
+    view: null,
+    stage: null,
+  });
+  return `${base}/open-orders${search}`;
+}
+
+export function buildOpenOrdersPostponedListHref(options?: {
+  sellerId?: string | null;
+  basePath?: string;
+}): string {
+  const base = (options?.basePath || COMMERCIAL_BASE_PATH).replace(/\/$/, "");
+  const search = buildOpenOrdersListSearch({
+    filters: {
+      search: "",
+      filial: "",
+      clientCodes: [],
+      stockStatus: "",
+      dateStart: "",
+      dateEnd: "",
+      lateOnly: false,
+      postponedOnly: true,
+    },
+    sellerId: options?.sellerId?.trim() || null,
     sortKey: DEFAULT_SORT.key,
     sortDirection: DEFAULT_SORT.direction,
     page: 1,

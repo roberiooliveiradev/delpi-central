@@ -67,6 +67,21 @@ def _month_end(year: int, month: int) -> date:
     return _month_start(y2, m2) - timedelta(days=1)
 
 
+def delivery_windows(as_of_date: date) -> tuple[date, date, date, date]:
+    """Current month start/end and next-1-to-3-months start/end."""
+    cy, cm = as_of_date.year, as_of_date.month
+    current_start = _month_start(cy, cm)
+    current_end = _month_end(cy, cm)
+    n1_y, n1_m = _add_months(cy, cm, 1)
+    n3_y, n3_m = _add_months(cy, cm, 3)
+    return (
+        current_start,
+        current_end,
+        _month_start(n1_y, n1_m),
+        _month_end(n3_y, n3_m),
+    )
+
+
 def _empty_bucket(bucket_id: str) -> dict[str, Any]:
     return {"id": bucket_id, "openValue": 0.0, "openLineCount": 0}
 
@@ -88,32 +103,22 @@ class OpenOrdersHorizonBucketService:
         else:
             stamp = stamp.astimezone(tz)
         as_of_date = stamp.date()
-
         buckets = {bid: _empty_bucket(bid) for bid in BUCKET_IDS}
-        cy, cm = as_of_date.year, as_of_date.month
-        current_start = _month_start(cy, cm)
-        current_end = _month_end(cy, cm)
-        n1_y, n1_m = _add_months(cy, cm, 1)
-        n3_y, n3_m = _add_months(cy, cm, 3)
-        next_start = _month_start(n1_y, n1_m)
-        next_end = _month_end(n3_y, n3_m)
+        current_start, current_end, next_start, next_end = delivery_windows(as_of_date)
 
         rows = items or ()
         for row in rows:
             if not isinstance(row, Mapping):
                 continue
             value = _as_float(row.get("valor_aberto"))
-            delivery = _parse_delivery_date(row.get("data_entrega"))
-            if delivery is None:
-                bucket_id = BUCKET_UNDATED
-            elif delivery < as_of_date:
-                bucket_id = BUCKET_OVERDUE
-            elif current_start <= delivery <= current_end:
-                bucket_id = BUCKET_CURRENT_MONTH
-            elif next_start <= delivery <= next_end:
-                bucket_id = BUCKET_NEXT_1_3_MONTHS
-            else:
-                bucket_id = BUCKET_LATER
+            bucket_id = self.resolve_bucket_id(
+                row,
+                as_of_date=as_of_date,
+                current_start=current_start,
+                current_end=current_end,
+                next_start=next_start,
+                next_end=next_end,
+            )
 
             bucket = buckets[bucket_id]
             bucket["openValue"] = float(bucket["openValue"]) + value
@@ -131,3 +136,25 @@ class OpenOrdersHorizonBucketService:
             "buckets": ordered,
             "totals": totals,
         }
+
+    def resolve_bucket_id(
+        self,
+        item: Mapping[str, Any],
+        *,
+        as_of_date: date,
+        current_start: date,
+        current_end: date,
+        next_start: date,
+        next_end: date,
+    ) -> str:
+        delivery = _parse_delivery_date(item.get("data_entrega"))
+        if delivery is None:
+            return BUCKET_UNDATED
+        if delivery < as_of_date:
+            return BUCKET_OVERDUE
+        if current_start <= delivery <= current_end:
+            return BUCKET_CURRENT_MONTH
+        if next_start <= delivery <= next_end:
+            return BUCKET_NEXT_1_3_MONTHS
+        return BUCKET_LATER
+
