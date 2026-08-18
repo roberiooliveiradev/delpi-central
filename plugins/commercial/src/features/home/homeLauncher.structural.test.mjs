@@ -21,7 +21,9 @@ describe("home hub stack", () => {
     assert.match(catalog, /export function filterRouteCatalog/);
     assert.match(catalog, /export function collectSearchHits/);
     assert.match(catalog, /create_task/);
-    assert.match(catalog, /Propostas comerciais/);
+    assert.match(catalog, /orders_billable/);
+    assert.match(catalog, /orders_postponed/);
+    assert.match(catalog, /orders_ready_board/);
   });
 
   it("HomePage usa stack vertical e SectionRouteCard", () => {

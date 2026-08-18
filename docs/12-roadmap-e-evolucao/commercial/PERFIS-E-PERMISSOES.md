@@ -64,7 +64,8 @@ Exemplos: OTD/OV → `access`; Administração de grupos → `manage`; notifica�
 |-------|--------|
 | Comercial — Operacional | `commercial.access` (+ membership) |
 | Comercial — Admin | `commercial.access` + `commercial.manage` |
-| Comercial — Faturamento | `commercial.access` + `commercial.billing.notify` |
+| Comercial — Faturamento | `commercial.access` + `commercial.billing.notify` — atalhos Início: Pode faturar / board / Postergado |
+| Comercial — Orçamentista | `commercial.access` — atalhos Início: Oportunidades + Propostas |
 | Comercial — Auditor | `commercial.access` |
 
 ## Notificação «pronto para faturar»

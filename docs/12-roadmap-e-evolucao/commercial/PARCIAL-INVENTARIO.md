@@ -119,7 +119,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 |----|------|--------|------|--------|
 | P-GAV-N1 | Gestão à Vista N1 gaps | **Backlog** | Comercial + TV | MAPA · Playbook |
 | P-GR-TV | GR de Vendas **no MFE commercial** | **Bloqueado** / Fora | **tv-dashboard** | ATA-2 §35 · bounded context — só Link |
-| P-HOME-PERS | Home orçamentista / faturamento | **Backlog** | MFE | FOLLOWUP T7 — por capabilities |
+| P-HOME-PERS | Home orçamentista / faturamento | **Existe** | Hub routes postponed/board + PERFIS | FOLLOWUP T7 |
 | P-RANK-BI | Ranking produtividade (ofertas/colaborador) | **Backlog** | MFE + BFF | MAPA — ≠ ranking faturamento T5 (**Existe**) |
 | P-CAP-PCP | Cockpit capacidade PCP no commercial | **Bloqueado** / Fora Link | Produção/PCP | Playbook #14 · § Bloqueado — Link OK |
 | P-IA-ALIM | Alimentar GAV/GR/IA | **Backlog** | Posterior | DESIGN-IA |

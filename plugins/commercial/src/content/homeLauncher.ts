@@ -80,6 +80,12 @@ export const HOME_LAUNCHER_CARDS: readonly HomeLauncherCard[] = [
         viewId: "open_orders",
         search: "?stock=com_estoque",
       },
+      {
+        id: "postponed",
+        label: "Postergado",
+        viewId: "open_orders",
+        search: "?postponed=1",
+      },
     ],
   },
   {
