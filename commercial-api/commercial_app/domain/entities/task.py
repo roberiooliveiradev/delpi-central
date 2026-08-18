@@ -55,6 +55,9 @@ class CommercialTask:
     assignee_group_ids: tuple[str, ...] = field(default_factory=tuple)
     assignee_groups: tuple[TaskAssigneeGroupRef, ...] = field(default_factory=tuple)
     completed_by_user_id: str | None = None
+    related_entity_type: str | None = None
+    related_entity_id: str | None = None
+    source_interaction_message_id: UUID | None = None
 
     def resolved_assignee_user_ids(self) -> tuple[str, ...]:
         if self.assignee_user_ids:
@@ -105,6 +108,13 @@ class CommercialTask:
             "customer_store": primary["customer_store"] if primary else self.customer_store,
             "customer_name": primary.get("customer_name") if primary else None,
             "customers": customers,
+            "related_entity_type": self.related_entity_type,
+            "related_entity_id": self.related_entity_id,
+            "source_interaction_message_id": (
+                str(self.source_interaction_message_id)
+                if self.source_interaction_message_id
+                else None
+            ),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

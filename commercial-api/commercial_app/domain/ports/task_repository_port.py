@@ -65,6 +65,9 @@ class TaskRepositoryPort(ABC):
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
         assignee_group_ids: Sequence[str] | None = None,
+        related_entity_type: str | None = None,
+        related_entity_id: str | None = None,
+        source_interaction_message_id: UUID | None = None,
     ) -> CommercialTask:
         raise NotImplementedError
 

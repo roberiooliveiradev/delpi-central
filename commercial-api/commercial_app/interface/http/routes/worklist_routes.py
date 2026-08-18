@@ -247,6 +247,9 @@ def create_task(request: Request, body: CreateTaskBody):
                 assignee_user_ids=body.assignee_user_ids,
                 assignee_group_ids=body.assignee_group_ids,
                 customers=_customers_from_body(body.customers),
+                related_entity_type=body.related_entity_type,
+                related_entity_id=body.related_entity_id,
+                source_interaction_message_id=body.source_interaction_message_id,
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )

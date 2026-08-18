@@ -40,6 +40,9 @@ class CreateTaskInput:
     assignee_user_ids: Sequence[str] | None = None
     assignee_group_ids: Sequence[str] | None = None
     customers: Sequence[TaskCustomerRef] | None = None
+    related_entity_type: str | None = None
+    related_entity_id: str | None = None
+    source_interaction_message_id: UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -419,6 +422,9 @@ class ManageWorklistUseCase:
             assignee_user_ids=assignees,
             customers=customers,
             assignee_group_ids=group_ids,
+            related_entity_type=data.related_entity_type,
+            related_entity_id=data.related_entity_id,
+            source_interaction_message_id=data.source_interaction_message_id,
         )
         if self._audit:
             self._audit.append(

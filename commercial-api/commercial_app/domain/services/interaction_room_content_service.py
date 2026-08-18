@@ -20,7 +20,15 @@ def load_interaction_room_messages() -> dict[str, Any]:
         payload = json.load(handle)
     if not isinstance(payload, dict):
         raise ValueError("interaction_room.json deve ser um objeto.")
-    for section in ("errors", "messages", "empty", "filters", "activity", "notifications"):
+    for section in (
+        "errors",
+        "messages",
+        "empty",
+        "filters",
+        "activity",
+        "notifications",
+        "settings",
+    ):
         value = payload.get(section)
         if not isinstance(value, dict) or not value:
             raise ValueError(f"interaction_room.json precisa de {section} não vazio.")
@@ -120,3 +128,31 @@ class InteractionRoomContentService:
             return template.format(roomId=str(room_id or "").strip())
         except Exception:
             return f"/apps/commercial/interaction-rooms/{str(room_id or '').strip()}"
+
+    @classmethod
+    def setting_int(cls, key: str, default: int) -> int:
+        raw = cls._section("settings").get(key)
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def setting_str(cls, key: str, default: str = "") -> str:
+        raw = cls._section("settings").get(key)
+        value = str(raw or "").strip()
+        return value or default
+
+    @classmethod
+    def task_title_from_message_body(cls, body_text: str) -> str:
+        limit = max(1, min(cls.setting_int("taskTitleMaxChars", 500), 500))
+        cleaned = " ".join(str(body_text or "").split())
+        if not cleaned:
+            return cls.message("taskFromMessageDefaultTitle")
+        if len(cleaned) <= limit:
+            return cleaned
+        return cleaned[:limit].rstrip()
+
+    @classmethod
+    def related_entity_type_room(cls) -> str:
+        return cls.setting_str("relatedEntityTypeRoom", "interaction_room")

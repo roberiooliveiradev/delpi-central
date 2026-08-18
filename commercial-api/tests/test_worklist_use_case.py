@@ -118,6 +118,9 @@ class InMemoryTaskRepo:
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
         assignee_group_ids: Sequence[str] | None = None,
+        related_entity_type: str | None = None,
+        related_entity_id: str | None = None,
+        source_interaction_message_id: UUID | None = None,
     ) -> CommercialTask:
         now = datetime.now(timezone.utc)
         assignees = tuple(
@@ -153,6 +156,9 @@ class InMemoryTaskRepo:
             assignee_user_ids=assignees,
             customers=custs,
             assignee_group_ids=groups,
+            related_entity_type=(related_entity_type or "").strip() or None,
+            related_entity_id=(related_entity_id or "").strip() or None,
+            source_interaction_message_id=source_interaction_message_id,
         )
         self.items[task.id] = task
         return task

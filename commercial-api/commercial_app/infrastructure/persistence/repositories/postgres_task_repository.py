@@ -24,12 +24,14 @@ from commercial_app.infrastructure.persistence.plugins.plugin_base_repository im
 _TASK_COLUMNS = """
     id, title, description, task_type, status, priority, due_at, completed_at,
     completed_by_user_id, assignee_user_id, created_by_user_id, customer_code, customer_store,
+    related_entity_type, related_entity_id, source_interaction_message_id,
     created_at, updated_at
 """
 
 _TASK_COLUMNS_ALIASED = """
     t.id, t.title, t.description, t.task_type, t.status, t.priority, t.due_at, t.completed_at,
     t.completed_by_user_id, t.assignee_user_id, t.created_by_user_id, t.customer_code, t.customer_store,
+    t.related_entity_type, t.related_entity_id, t.source_interaction_message_id,
     t.created_at, t.updated_at
 """
 
@@ -82,6 +84,17 @@ def _row_task_base(row: dict[str, Any] | None) -> CommercialTask | None:
         created_by_user_id=row["created_by_user_id"],
         customer_code=row.get("customer_code"),
         customer_store=row.get("customer_store"),
+        related_entity_type=(
+            str(row["related_entity_type"]).strip()
+            if row.get("related_entity_type")
+            else None
+        ),
+        related_entity_id=(
+            str(row["related_entity_id"]).strip()
+            if row.get("related_entity_id")
+            else None
+        ),
+        source_interaction_message_id=row.get("source_interaction_message_id"),
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
@@ -515,6 +528,9 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         assignee_user_ids: Sequence[str] | None = None,
         customers: Sequence[TaskCustomerRef] | None = None,
         assignee_group_ids: Sequence[str] | None = None,
+        related_entity_type: str | None = None,
+        related_entity_id: str | None = None,
+        source_interaction_message_id: UUID | None = None,
     ) -> CommercialTask:
         with self.db():
             assignees = self._resolve_assignees(
@@ -529,12 +545,15 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             groups = normalize_assignee_group_ids(assignee_group_ids=assignee_group_ids)
             primary_assignee = assignees[0] if assignees else assignee_user_id
             primary_customer = custs[0] if custs else None
+            related_type = (related_entity_type or "").strip() or None
+            related_id = (related_entity_id or "").strip() or None
             row = self.execute_returning_one(
                 f"""
                 INSERT INTO commercial.tasks (
                     title, description, task_type, priority, due_at,
-                    assignee_user_id, created_by_user_id, customer_code, customer_store
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    assignee_user_id, created_by_user_id, customer_code, customer_store,
+                    related_entity_type, related_entity_id, source_interaction_message_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING {_TASK_COLUMNS}
                 """,
                 (
@@ -547,6 +566,9 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                     created_by_user_id,
                     primary_customer.customer_code if primary_customer else None,
                     primary_customer.customer_store if primary_customer else None,
+                    related_type,
+                    related_id,
+                    source_interaction_message_id,
                 ),
                 auto_commit=False,
             )
