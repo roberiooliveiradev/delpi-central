@@ -10,6 +10,9 @@ from commercial_app.application.use_cases.manage_attachments import ManageAttach
 from commercial_app.application.use_cases.manage_commercial_groups import (
     ManageCommercialGroupsUseCase,
 )
+from commercial_app.application.use_cases.manage_interaction_messages import (
+    ManageInteractionMessagesUseCase,
+)
 from commercial_app.application.use_cases.manage_interaction_rooms import (
     ManageInteractionRoomsUseCase,
 )
@@ -93,6 +96,8 @@ _avatar_repository: CustomerAvatarRepositoryPort | None = None
 _attachment_repository: AttachmentRepositoryPort | None = None
 _interaction_room_repository: InteractionRoomRepositoryPort | None = None
 _interaction_message_repository: InteractionMessageRepositoryPort | None = None
+_interaction_rooms_use_case: ManageInteractionRoomsUseCase | None = None
+_interaction_messages_use_case: ManageInteractionMessagesUseCase | None = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
 _account_contact_repository: AccountContactRepositoryPort | None = None
@@ -266,6 +271,16 @@ def build_manage_interaction_rooms_use_case() -> ManageInteractionRoomsUseCase:
             repository=build_interaction_room_repository(),
         )
     return _interaction_rooms_use_case
+
+
+def build_manage_interaction_messages_use_case() -> ManageInteractionMessagesUseCase:
+    global _interaction_messages_use_case
+    if _interaction_messages_use_case is None:
+        _interaction_messages_use_case = ManageInteractionMessagesUseCase(
+            rooms=build_interaction_room_repository(),
+            messages=build_interaction_message_repository(),
+        )
+    return _interaction_messages_use_case
 
 
 def build_attachment_storage() -> AttachmentStorage:
