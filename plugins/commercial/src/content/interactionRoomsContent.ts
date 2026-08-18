@@ -61,4 +61,13 @@ export const INTERACTION_ROOMS_CONTENT = {
     invoice: "Notas fiscais",
     product: "Produtos",
   },
+  unfurlDeniedTitle: "Registro",
+  unfurlDeniedLabel: "Sem acesso a este registro. Peça visibilidade da carteira.",
+  unfurlOpenLabel: "Abrir",
+  unfurlSubtitleFieldLabel: "Detalhe",
+  unfurlFieldLabels: {
+    status: "Status",
+    um: "UM",
+    value: "Valor",
+  },
 } as const;

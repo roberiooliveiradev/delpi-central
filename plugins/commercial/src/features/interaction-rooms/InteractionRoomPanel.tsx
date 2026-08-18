@@ -23,6 +23,8 @@ import { buildInteractionRoomPath } from "../../app/pluginRoutes";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer } from "./InteractionRoomMessageComposer";
+import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
+import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 
 const EMBED_MESSAGE_LIMIT = 30;
 
@@ -134,27 +136,39 @@ export function InteractionRoomPanel({
 
   const threadMessages = useMemo(
     () =>
-      messages.map((message) => ({
-        id: message.id,
-        kind: message.message_kind,
-        bodyText:
-          message.deleted_at != null
-            ? content.messageDeleted
-            : message.body_text,
-        createdAtLabel: formatMessageTime(message.created_at),
-        authorName: message.author_user_id
-          ? labelFor(message.author_user_id)
-          : null,
-        authorUserId: message.author_user_id,
-        parentId: message.parent_id,
-        deleted: Boolean(message.deleted_at),
-        mentions: (message.mentions ?? []).map((mention) => ({
-          kind: mention.mention_kind,
-          label: mention.label,
-          ref: mention.ref,
-        })),
-      })),
-    [messages, labelFor, content.messageDeleted],
+      messages.map((message) => {
+        const mentionDtos = message.mentions ?? [];
+        const hasUnfurl = mentionDtos.some((mention) =>
+          shouldUnfurlMentionKind(mention.mention_kind),
+        );
+        return {
+          id: message.id,
+          kind: message.message_kind,
+          bodyText:
+            message.deleted_at != null
+              ? content.messageDeleted
+              : message.body_text,
+          createdAtLabel: formatMessageTime(message.created_at),
+          authorName: message.author_user_id
+            ? labelFor(message.author_user_id)
+            : null,
+          authorUserId: message.author_user_id,
+          parentId: message.parent_id,
+          deleted: Boolean(message.deleted_at),
+          mentions: mentionDtos.map((mention) => ({
+            kind: mention.mention_kind,
+            label: mention.label,
+            ref: mention.ref,
+          })),
+          belowBody: hasUnfurl ? (
+            <InteractionRoomMentionUnfurls
+              basePath={basePath}
+              mentions={mentionDtos}
+            />
+          ) : null,
+        };
+      }),
+    [messages, labelFor, content.messageDeleted, basePath],
   );
 
   const participants = useMemo(
