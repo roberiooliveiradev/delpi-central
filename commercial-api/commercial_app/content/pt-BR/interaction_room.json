@@ -66,6 +66,13 @@
       "category": "commercial_collaboration",
       "deepLinkTemplate": "/apps/commercial/interaction-rooms/{roomId}",
       "excerptMaxChars": 80
+    },
+    "attachment": {
+      "title": "Anexo na sala",
+      "messageTemplate": "{actor} {action} {fileName}",
+      "uploaded": "anexou",
+      "deleted": "removeu o anexo",
+      "type": "info"
     }
   }
 }

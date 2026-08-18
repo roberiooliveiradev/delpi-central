@@ -8,6 +8,14 @@ from commercial_app.application.services.attachment_storage import AttachmentSto
 from commercial_app.application.use_cases.manage_attachments import ManageAttachmentsUseCase
 from commercial_app.domain.entities.attachment import CommercialAttachment
 from commercial_app.domain.entities.task import CommercialTask
+from commercial_app.domain.services.interaction_room_content_service import (
+    InteractionRoomContentService,
+)
+from tests.test_interaction_message_use_case import (
+    InMemoryInteractionMessageRepo,
+    _open_room,
+)
+from tests.test_interaction_room_membership_use_case import InMemoryInteractionRoomRepo
 
 
 class _MemoryTasks:
@@ -223,28 +231,38 @@ def test_rejects_unsupported_mime(tmp_path: Path) -> None:
 
 
 def test_room_message_upload_uses_disk_subdir(tmp_path: Path) -> None:
-    message_id = uuid4()
+    rooms = InMemoryInteractionRoomRepo()
+    messages = InMemoryInteractionMessageRepo()
+    room = _open_room(rooms)
+    posted = messages.create_message(
+        room_id=room.id,
+        author_user_id="u1",
+        message_kind="text",
+        body_text="anexo",
+    )
     repo = _MemoryAttachments()
     storage = AttachmentStorage(base_dir=str(tmp_path))
     uc = ManageAttachmentsUseCase(
         repository=repo,
         storage=storage,
         task_repository=_MemoryTasks(_task()),
+        rooms=rooms,
+        messages=messages,
     )
     uploaded = uc.upload(
         owner_type="room_message",
-        owner_id=str(message_id),
+        owner_id=str(posted.id),
         original_name="proposta.pdf",
         content=b"%PDF-1.4 sala",
         mime_type="application/pdf",
         uploaded_by_user_id="u1",
     )
     assert uploaded.owner_type == "room_message"
-    assert uploaded.storage_key.startswith(f"room_message/{message_id}/")
+    assert uploaded.storage_key.startswith(f"room_message/{posted.id}/")
     assert (tmp_path / uploaded.storage_key).is_file()
     listed = uc.list(
         owner_type="room_message",
-        owner_id=str(message_id),
+        owner_id=str(posted.id),
         actor_user_id="u1",
     )
     assert [item.id for item in listed] == [uploaded.id]
@@ -268,3 +286,34 @@ def test_room_message_rejects_invalid_owner_id(tmp_path: Path) -> None:
         assert False, "expected ValueError"
     except ValueError:
         pass
+
+
+def test_room_message_forbidden_for_non_member(tmp_path: Path) -> None:
+    rooms = InMemoryInteractionRoomRepo()
+    messages = InMemoryInteractionMessageRepo()
+    room = _open_room(rooms)
+    posted = messages.create_message(
+        room_id=room.id,
+        author_user_id="u1",
+        message_kind="text",
+        body_text="anexo",
+    )
+    uc = ManageAttachmentsUseCase(
+        repository=_MemoryAttachments(),
+        storage=AttachmentStorage(base_dir=str(tmp_path)),
+        task_repository=_MemoryTasks(_task()),
+        rooms=rooms,
+        messages=messages,
+    )
+    try:
+        uc.upload(
+            owner_type="room_message",
+            owner_id=str(posted.id),
+            original_name="x.pdf",
+            content=b"%PDF-1.4",
+            mime_type="application/pdf",
+            uploaded_by_user_id="u2",
+        )
+        assert False, "expected PermissionError"
+    except PermissionError as exc:
+        assert str(exc) == InteractionRoomContentService.error("accessDenied")

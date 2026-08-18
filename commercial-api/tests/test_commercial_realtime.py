@@ -454,3 +454,38 @@ def test_resolve_user_display_name_never_uses_portfolio_label():
     assert notify.resolve_user_display_name(None) == "Alguém da equipe"
     assert notify.resolve_user_display_name("") == "Alguém da equipe"
     assert notify.resolve_user_display_name("helper-1") == "Alguém da equipe"
+
+
+def test_notify_interaction_attachment_schedules_member_rooms(monkeypatch):
+    hub = MagicMock()
+    scheduled: list[tuple[str, dict]] = []
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
+        hub,
+    )
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.resolve_user_display_name",
+        lambda _uid: "Ana",
+    )
+    from commercial_app.application.services.commercial_realtime_notify import (
+        notify_interaction_attachment,
+        user_room,
+    )
+
+    notify_interaction_attachment(
+        room_id="r1",
+        message_id="m1",
+        attachment_id="a1",
+        file_name="proposta.pdf",
+        member_user_ids=["u1", "u2"],
+        actor_user_id="u1",
+        actor_display_name="Ana",
+        reason="uploaded",
+    )
+    rooms = {room for room, _ in scheduled}
+    assert rooms == {user_room("u1"), user_room("u2")}
+    body = scheduled[0][1]
+    assert body["type"] == "room.attachment"
+    assert body["reason"] == "attachment.uploaded"
+    assert "proposta.pdf" in body["notification"]["message"]

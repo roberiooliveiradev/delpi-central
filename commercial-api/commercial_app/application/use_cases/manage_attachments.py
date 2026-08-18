@@ -12,6 +12,12 @@ from commercial_app.application.services.attachment_storage import (
 from commercial_app.domain.entities.attachment import CommercialAttachment
 from commercial_app.domain.entities.task import CommercialTask
 from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
+from commercial_app.domain.ports.interaction_message_repository_port import (
+    InteractionMessageRepositoryPort,
+)
+from commercial_app.domain.ports.interaction_room_repository_port import (
+    InteractionRoomRepositoryPort,
+)
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
 )
@@ -38,11 +44,15 @@ class ManageAttachmentsUseCase:
         storage: AttachmentStorage,
         task_repository: TaskRepositoryPort,
         portfolio_repository: SellerPortfolioRepositoryPort | None = None,
+        rooms: InteractionRoomRepositoryPort | None = None,
+        messages: InteractionMessageRepositoryPort | None = None,
     ) -> None:
         self._repo = repository
         self._storage = storage
         self._tasks = task_repository
         self._portfolios = portfolio_repository
+        self._rooms = rooms
+        self._messages = messages
 
     def team_user_ids(self) -> set[str]:
         if self._portfolios is None:
@@ -112,11 +122,19 @@ class ManageAttachmentsUseCase:
             return
         if kind == "room_message":
             try:
-                UUID(oid)
+                message_id = UUID(oid)
             except ValueError as exc:
                 raise ValueError(
                     InteractionRoomContentService.error("attachmentOwnerInvalid")
                 ) from exc
+            if self._messages is None or self._rooms is None:
+                raise PermissionError(InteractionRoomContentService.error("accessDenied"))
+            message = self._messages.get_by_id(message_id)
+            if message is None or message.deleted_at is not None:
+                raise LookupError(InteractionRoomContentService.error("messageNotFound"))
+            actor = (actor_user_id or "").strip()
+            if self._rooms.get_member(room_id=message.room_id, user_id=actor) is None:
+                raise PermissionError(InteractionRoomContentService.error("accessDenied"))
             return
 
     def list(
@@ -172,7 +190,7 @@ class ManageAttachmentsUseCase:
             )
         except AttachmentStorageError:
             raise
-        return self._repo.create(
+        record = self._repo.create(
             owner_type=kind,
             owner_id=oid,
             file_name=stored.file_name,
@@ -181,6 +199,13 @@ class ManageAttachmentsUseCase:
             byte_size=stored.byte_size,
             uploaded_by_user_id=uploaded_by_user_id,
         )
+        if kind == "room_message":
+            self._notify_room_attachment(
+                record=record,
+                actor_user_id=uploaded_by_user_id,
+                reason="uploaded",
+            )
+        return record
 
     def get_file(
         self,
@@ -225,4 +250,44 @@ class ManageAttachmentsUseCase:
         if deleted is None:
             raise LookupError("Anexo não encontrado.")
         self._storage.delete(storage_key=record.storage_key)
+        if record.owner_type.strip().lower() == "room_message":
+            self._notify_room_attachment(
+                record=record,
+                actor_user_id=actor_user_id,
+                reason="deleted",
+            )
         return {"deleted": True, "id": str(attachment_id)}
+
+    def _notify_room_attachment(
+        self,
+        *,
+        record: CommercialAttachment,
+        actor_user_id: str,
+        reason: str,
+    ) -> None:
+        if self._messages is None or self._rooms is None:
+            return
+        try:
+            from commercial_app.application.services.commercial_realtime_notify import (
+                notify_interaction_attachment,
+            )
+
+            message = self._messages.get_by_id(UUID(record.owner_id))
+            if message is None:
+                return
+            members = [
+                item.user_id
+                for item in self._rooms.list_members(message.room_id)
+                if item.user_id
+            ]
+            notify_interaction_attachment(
+                room_id=str(message.room_id),
+                message_id=str(message.id),
+                attachment_id=str(record.id),
+                file_name=record.file_name,
+                member_user_ids=members,
+                actor_user_id=actor_user_id,
+                reason=reason,
+            )
+        except Exception:  # noqa: BLE001 — notificação não pode falhar o anexo
+            return

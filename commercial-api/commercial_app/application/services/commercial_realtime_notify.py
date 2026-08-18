@@ -542,3 +542,64 @@ def notify_interaction_mention(
         actor_display_name=actor_label,
         excerpt=excerpt,
     )
+
+
+def notify_interaction_attachment(
+    *,
+    room_id: str,
+    message_id: str,
+    attachment_id: str,
+    file_name: str,
+    member_user_ids: Sequence[str],
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    reason: str = "uploaded",
+) -> None:
+    """WS `user:` dos membros da sala — sem worklist.changed."""
+    from commercial_app.domain.services.interaction_room_content_service import (
+        InteractionRoomContentService,
+    )
+
+    members = [uid.strip() for uid in member_user_ids if uid and str(uid).strip()]
+    if not members:
+        return
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    block = InteractionRoomContentService.notification("attachment")
+    action_key = "uploaded" if reason == "uploaded" else "deleted"
+    action = str(block.get(action_key) or reason).strip()
+    template = str(block.get("messageTemplate") or "{actor} {action} {fileName}")
+    try:
+        toast_message = template.format(
+            actor=actor_label,
+            action=action,
+            fileName=(file_name or "").strip() or "arquivo",
+        )
+    except Exception:
+        toast_message = f"{actor_label} {action} {file_name}".strip()
+    title = str(block.get("title") or "").strip()
+    notification_type = str(block.get("type") or "info").strip() or "info"
+    variant = (
+        notification_type
+        if notification_type in {"info", "success", "warning", "error"}
+        else "info"
+    )
+    payload = {
+        "type": "room.attachment",
+        "reason": f"attachment.{action_key}",
+        "roomId": (room_id or "").strip() or None,
+        "messageId": (message_id or "").strip() or None,
+        "attachmentId": (attachment_id or "").strip() or None,
+        "fileName": (file_name or "").strip() or None,
+        "memberUserIds": members,
+        "actorUserId": (actor_user_id or "").strip() or None,
+        "actorDisplayName": actor_label,
+        "notification": {
+            "title": title,
+            "message": toast_message,
+            "variant": variant,
+        },
+    }
+    for uid in members:
+        commercial_realtime_hub.schedule_broadcast(user_room(uid), payload)

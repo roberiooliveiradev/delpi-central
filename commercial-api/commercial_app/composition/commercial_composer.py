@@ -328,6 +328,8 @@ def build_manage_attachments_use_case() -> ManageAttachmentsUseCase:
             storage=build_attachment_storage(),
             task_repository=build_task_repository(),
             portfolio_repository=build_seller_portfolio_repository(),
+            rooms=build_interaction_room_repository(),
+            messages=build_interaction_message_repository(),
         )
     return _attachment_use_case
 
