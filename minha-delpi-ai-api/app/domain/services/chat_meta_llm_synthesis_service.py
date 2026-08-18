@@ -11,6 +11,9 @@ from app.domain.services.chat_assistant_identity_content_service import (
 from app.domain.services.chat_capabilities_content_service import (
     ChatCapabilitiesContentService,
 )
+from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+    ChatLlmSynthesisDeliveryContentService,
+)
 from app.domain.services.chat_user_profile_content_service import (
     ChatUserProfileContentService,
 )
@@ -119,10 +122,7 @@ class ChatMetaLlmSynthesisService:
             if lead:
                 return lead
 
-        return (
-            "Responda à pergunta em linguagem natural com os blocos de fatos abaixo. "
-            "Use somente dados reais de cada seção — não invente nem use placeholders."
-        )
+        return ChatLlmSynthesisDeliveryContentService.compound_user_message_lead()
 
     @classmethod
     def compose_question_prefix(cls, sections: list[MetaLlmSynthesisSection]) -> str:

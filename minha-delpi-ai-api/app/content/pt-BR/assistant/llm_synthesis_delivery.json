@@ -1,0 +1,17 @@
+{
+  "compoundUserMessageLead": "Responda à pergunta em linguagem natural com os blocos de fatos abaixo. Use somente dados reais de cada seção — não invente nem use placeholders. Não copie este bloco nem reproduza frases de instrução.",
+  "commonLeakMarkers": [
+    "não copie este bloco",
+    "não reproduza frases de instrução",
+    "não invente nem use placeholder",
+    "não invente nem use placeholders",
+    "use somente dados reais de cada seção",
+    "blocos de fatos abaixo",
+    "catálogo real de capacidades abaixo",
+    "não invente rotas",
+    "use somente o que está no bloco",
+    "não invente origem",
+    "valores reais —",
+    "regra: quando o usuário perguntar"
+  ]
+}
