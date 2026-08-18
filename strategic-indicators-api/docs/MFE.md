@@ -46,7 +46,7 @@ Quando a API retorna `has_value: false` ou `value` / `score` `null`:
 - Médias de departamento/unidade na UI consideram apenas indicadores com `hasValue` e `score` numérico.
 - Metas e gaps multi-filial na visão consolidado: **`01: valor | 02: valor`** (código da filial, sem prefixo "Un.") — `formatBranchScopedMetric` em `indicatorValueFormatter.ts`.
 - Admin de metas: escopo da meta com rótulos `01`, `02` (`getGoalScopeBranchLabel`); modo **Padrão** / **Curva** (`getGoalModeLabel`).
-- Settings **Visão geral**: painel export/import JSON (`AdminConfigImportExportPanel`).
+- Settings **Painel**: backup JSON com preview → apply (`AdminConfigImportExportPanel` em `ui/components/`). Default **Substituir tudo**; escolher arquivo não grava.
 - Settings **Metas**: formulário sem valor consolidado em curva; grade redimensiona ao mudar periodicidade (`curveTargets.ts`, `goalFormValidation.ts`).
 
 Contrato da API: [API.md](./API.md). Metas e backup: [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md), [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md). Cálculo: [ARCHITECTURE.md](./ARCHITECTURE.md).
@@ -130,8 +130,9 @@ Troubleshooting backend: [OPERATIONS.md](./OPERATIONS.md).
 
 | Componente | Função |
 |------------|--------|
-| `ui/pages/SettingsPage.tsx` | Abas; export/import na visão geral |
-| `ui/components/admin/AdminConfigImportExportPanel.tsx` | Download/upload do bundle |
+| `ui/pages/SettingsPage.tsx` | Abas; export/import na aba Painel |
+| `ui/components/AdminConfigImportExportPanel.tsx` | Preview + apply (`merge`/`replace`); confirm host-contained |
+| `ui/components/SiConfirmModal.tsx` | Confirm danger sem cobrir a sidebar |
 | `ui/components/admin/IndicatorGoalForm.tsx` | Cadastro Padrão/Curva |
 | `ui/components/admin/AdminGoalsWorkspace.tsx` | Ciclos anuais, duplicar ano, duplicar meta por linha, preencher faltantes |
 | `ui/utils/goalDuplicateHelpers.ts` | Rótulo e seed ao duplicar meta |

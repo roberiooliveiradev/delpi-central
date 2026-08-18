@@ -89,7 +89,11 @@ API: `POST /admin/indicator-goals/duplicate-year` com `source_year`, `target_yea
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | GET | `/admin/config/export` | JSON do catálogo administrativo |
-| POST | `/admin/config/import` | Restaura/atualiza a partir do JSON |
+| POST | `/admin/config/import/preview` | Dry-run (`mode` merge\|replace); **não** grava nem invalida scores |
+| POST | `/admin/config/import/apply` | Aplica o bundle após revalidar o preview no servidor |
+| POST | `/admin/config/import` | Alias de apply (compatibilidade) |
+
+Body de preview/apply: envelope `schema_version: 1` + `mode` (`merge` \| `replace`, default **`replace`**) + `include_goals` (só vale no merge).
 
 ### Conteúdo do bundle (`schema_version: 1`)
 
@@ -100,16 +104,24 @@ API: `POST /admin/indicator-goals/duplicate-year` com `source_year`, `target_yea
 | `indicator_goals` | Metas **ativas** + `monthly_targets` |
 | `module_settings` | `parameters.global`, `governance.notes` |
 
-### Importação
+**Não entra no JSON:** metas inativas, `settings_audit`, solicitações de mudança, `refresh_state`, `period_scores`.
 
-- Departamentos e indicadores: **upsert** (merge por ID).
-- Metas: cria somente se **não** existir meta ativa para `(indicator_id, goal_year, goal_scope_branch)`; não sobrescreve metas existentes (`goals_skipped`).
-- Body: `include_goals` (boolean, default `true`) para ignorar metas na importação.
-- Invalida cache de leitura após import.
+### Modos
 
-UI: painel na aba **Visão geral** do settings (`AdminConfigImportExportPanel`).
+| Modo | Efeito |
+|------|--------|
+| `replace` (default na UI) | Apaga cadastro atual na ordem FK **metas → indicadores → departamentos** (monthly targets em CASCADE) e reimporta o JSON. `include_goals` é ignorado: metas do arquivo **sempre** entram. Settings globais são sobrescritos. |
+| `merge` | Upsert de departamentos/indicadores por ID. Metas: cria somente se **não** existir meta ativa para `(indicator_id, goal_year, goal_scope_branch)`. `include_goals=false` não cria metas. |
 
-Implementação: `postgres_admin_config_bundle_repository.py`, use cases `export_admin_config` / `import_admin_config`.
+Após **apply**: `invalidate_strategic_indicators_snapshot_cache()` apaga `period_scores` e `calculation_snapshots` e agenda o refresh. O painel/tendências ficam incompletos até o job horário ou **Atualizar**. Preview **não** dispara isso.
+
+`schema_version` incompatível → HTTP 400. Conteúdo v1 inválido no preview → 200 com `valid: false`. Apply inválido → 400 + rollback.
+
+Auditoria (migration **V033**): `config.exported` no export; `config.imported` no apply (`payload_after` com `mode` + stats).
+
+UI: aba **Painel** de Configurações (`/apps/strategic-indicators/settings`) — `AdminConfigImportExportPanel`. Escolher arquivo **não** grava; apply em replace pede confirmação host-contained.
+
+Implementação: `admin_config_bundle_service.py`, `postgres_admin_config_bundle_repository.py`, use cases `preview_admin_config` / `import_admin_config` / `export_admin_config`.
 
 ---
 
@@ -129,4 +141,5 @@ Implementação: `postgres_admin_config_bundle_repository.py`, use cases `export
 |---------|-----------|
 | `tests/test_goal_value_policy.py` | `goal_value` zerado em curvas |
 | `tests/test_goal_curve_validation.py` | Validação 4/12/52/1 pontos; calculador trimestral |
-| `tests/test_commercial_production_scoring.py` | Curva sem fallback em `goal_value` |
+| `tests/test_admin_config_bundle.py` | Preview merge/replace, wipe FK, include_goals, auditoria |
+| `tests/test_admin_config_bundle_routes.py` | HTTP export/preview/apply/alias, 400, 403 |

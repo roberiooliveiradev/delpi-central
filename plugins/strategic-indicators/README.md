@@ -35,6 +35,8 @@ Páginas analíticas usam o card **`StrategicIndicatorsPageError`** (causas, sug
 
 Na página **Tendências**, `SeriesCoverageNotice` avisa quando `missing_competences` / janela incompleta vem da API (`months_requested` vs série retornada). O botão **Atualizar** materializa **YTD** (início do ano até a competência dos filtros).
 
+Backup administrativo (Configurações → **Painel**): export JSON, pré-visualizar e aplicar com modo **Substituir tudo** (default) ou **Mesclar por ID**. Escolher arquivo não importa. Contrato: [ADMIN_GOALS_AND_CONFIG.md](../../strategic-indicators-api/docs/ADMIN_GOALS_AND_CONFIG.md).
+
 ## Filtro consolidado vs filial
 
 - Rótulos de visão: `getFilterViewScopeLabel` → **Consolidado** ou **Filial 01/02** (tabela de indicadores, detalhe rápido, `realized`/`gaps`).
