@@ -467,6 +467,8 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | `REPORTS_RUN_ARTIFACTS_DIR` | `/app/data/reports-runs` | `${DELPI_DATA_HOST_DIR}/reports-runs` |
 | `INVOICE_ISSUANCE_UPLOAD_DIR` | `/app/data/invoice-issuance` | `${DELPI_DATA_HOST_DIR}/invoice-issuance` |
 
+> **Anexos do Comercial** (`COMMERCIAL_ATTACHMENT_UPLOAD_DIR`): o volume **já** monta o diretório inteiro. Não criar volume extra. Subdirs no disco: `task/{taskId}/` (tarefas) e `room_message/{messageId}/` (sala de interação). Recreate do `commercial-api` não apaga os binários enquanto o bind mount existir.
+
 > As etiquetas da qualidade (**quality-labels**, CRUD dentro da `api-delpi`) guardam os PNGs de QR em `QUALITY_LABELS_QR_DIR`, as assinaturas dos inspetores (PNG) em `QUALITY_LABELS_SIGNATURE_DIR` e os certificados emitidos (PDF) em `QUALITY_LABELS_CERTIFICATE_DIR`. Mesmo padrão: o Postgres mantém o registro; sem volume, os binários somem no recreate.
 
 > **Delpi Reports:** HTML de cada run fica em `REPORTS_RUN_ARTIFACTS_DIR` (`summary.artifactHtmlPath`). Sem volume, o artefato some no recreate do `api-delpi`.
