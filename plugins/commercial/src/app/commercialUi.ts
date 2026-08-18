@@ -64,6 +64,14 @@ import {
   createDashboardUnderlineNav,
   createDashboardChartToolbarKit,
   createDashboardTabularExportButtons,
+  createDashboardMentionText,
+  createDashboardMentionMenu,
+  createDashboardMentionComposer,
+  createDashboardMessageThread,
+  createDashboardEntityUnfurlCard,
+  createDashboardReactionBar,
+  createDashboardRoomInboxList,
+  createDashboardRoomHeader,
   useChartGranularitySelection,
   attachmentFileListBemClasses,
   attachmentPreviewStripBemClasses,
@@ -518,3 +526,13 @@ export function CommercialHorizontalValueBars(
 ) {
   return createElement(HorizontalValueBars, { ...props, prefix: UI_PREFIX });
 }
+
+/** Interaction room — kit factories (dual-class `cm` + `delpi-ui-*`). */
+export const CommercialMentionText = createDashboardMentionText(UI_PREFIX);
+export const CommercialMentionMenu = createDashboardMentionMenu(UI_PREFIX);
+export const CommercialMentionComposer = createDashboardMentionComposer(UI_PREFIX);
+export const CommercialMessageThread = createDashboardMessageThread(UI_PREFIX);
+export const CommercialEntityUnfurlCard = createDashboardEntityUnfurlCard(UI_PREFIX);
+export const CommercialReactionBar = createDashboardReactionBar(UI_PREFIX);
+export const CommercialRoomInboxList = createDashboardRoomInboxList(UI_PREFIX);
+export const CommercialRoomHeader = createDashboardRoomHeader(UI_PREFIX);
