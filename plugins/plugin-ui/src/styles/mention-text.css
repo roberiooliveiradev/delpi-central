@@ -1,0 +1,38 @@
+/* Mention chips in message bodies (interaction rooms / collaboration). */
+.delpi-ui-mention-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.delpi-ui-mention-text__chip {
+  display: inline;
+  margin: 0;
+  padding: 0.05em 0.2em;
+  border: none;
+  border-radius: 0.25em;
+  font: inherit;
+  font-weight: 600;
+  color: var(--delpi-color-accent, #2563eb);
+  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 12%, transparent);
+  text-decoration: none;
+  vertical-align: baseline;
+}
+
+button.delpi-ui-mention-text__chip {
+  cursor: default;
+}
+
+.delpi-ui-mention-text__chip--interactive,
+button.delpi-ui-mention-text__chip--interactive {
+  cursor: pointer;
+}
+
+.delpi-ui-mention-text__chip--interactive:hover,
+.delpi-ui-mention-text__chip--interactive:focus-visible {
+  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 22%, transparent);
+  outline: none;
+}
+
+a.delpi-ui-mention-text__chip:visited {
+  color: var(--delpi-color-accent, #2563eb);
+}
