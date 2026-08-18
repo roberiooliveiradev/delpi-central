@@ -177,12 +177,69 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
             "module_settings": module_settings,
         }
 
+    def count_catalog(self) -> dict[str, int]:
+        departments = self.fetch_one(
+            "SELECT COUNT(*) AS n FROM strategic_indicators.departments"
+        )
+        indicators = self.fetch_one(
+            "SELECT COUNT(*) AS n FROM strategic_indicators.department_indicators"
+        )
+        goals = self.fetch_one(
+            "SELECT COUNT(*) AS n FROM strategic_indicators.indicator_goals"
+        )
+        return {
+            "departments": int((departments or {}).get("n") or 0),
+            "department_indicators": int((indicators or {}).get("n") or 0),
+            "indicator_goals": int((goals or {}).get("n") or 0),
+        }
+
+    def list_department_ids(self) -> set[str]:
+        rows = self.fetch_all(
+            "SELECT department_id FROM strategic_indicators.departments"
+        )
+        return {str(row["department_id"]) for row in rows}
+
+    def list_indicator_ids(self) -> set[str]:
+        rows = self.fetch_all(
+            "SELECT indicator_id FROM strategic_indicators.department_indicators"
+        )
+        return {str(row["indicator_id"]) for row in rows}
+
+    def list_active_goal_keys(self) -> set[tuple[str, int, str]]:
+        rows = self.fetch_all(
+            """
+            SELECT indicator_id, goal_year, goal_scope_branch
+            FROM strategic_indicators.indicator_goals
+            WHERE is_active = TRUE
+            """
+        )
+        return {
+            (
+                str(row["indicator_id"]),
+                int(row["goal_year"]),
+                str(row.get("goal_scope_branch") or ""),
+            )
+            for row in rows
+        }
+
+    def delete_catalog_for_replace(self) -> dict[str, int]:
+        counts = self.count_catalog()
+        self.execute("DELETE FROM strategic_indicators.indicator_goals")
+        self.execute("DELETE FROM strategic_indicators.department_indicators")
+        self.execute("DELETE FROM strategic_indicators.departments")
+        return {
+            "goals_deleted": counts["indicator_goals"],
+            "indicators_deleted": counts["department_indicators"],
+            "departments_deleted": counts["departments"],
+        }
+
     def import_bundle(
         self,
         *,
         bundle: dict,
         actor_user_id: str | None,
         include_goals: bool = True,
+        mode: str = "replace",
     ) -> dict:
         schema_version = int(bundle.get("schema_version") or 0)
         if schema_version != self.SCHEMA_VERSION:
@@ -190,52 +247,91 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
                 f"schema_version incompatível: esperado {self.SCHEMA_VERSION}."
             )
 
+        if self._injected_connection is None:
+            with self.db() as connection:
+                bound = type(self)(connection=connection)
+                try:
+                    stats = bound._import_bundle_on_connection(
+                        bundle=bundle,
+                        actor_user_id=actor_user_id,
+                        include_goals=include_goals,
+                        mode=mode,
+                    )
+                    connection.commit()
+                    return stats
+                except Exception:
+                    connection.rollback()
+                    raise
+
+        try:
+            return self._import_bundle_on_connection(
+                bundle=bundle,
+                actor_user_id=actor_user_id,
+                include_goals=include_goals,
+                mode=mode,
+            )
+        except Exception:
+            self.rollback()
+            raise
+
+    def _import_bundle_on_connection(
+        self,
+        *,
+        bundle: dict,
+        actor_user_id: str | None,
+        include_goals: bool,
+        mode: str,
+    ) -> dict:
         departments = bundle.get("departments") or []
         indicators = bundle.get("department_indicators") or []
         goals = bundle.get("indicator_goals") or [] if include_goals else []
         module_settings = bundle.get("module_settings") or {}
 
+        deleted = {
+            "goals_deleted": 0,
+            "indicators_deleted": 0,
+            "departments_deleted": 0,
+        }
+        if mode == "replace":
+            deleted = self.delete_catalog_for_replace()
+
         stats = {
+            "mode": mode,
             "departments_upserted": 0,
             "indicators_upserted": 0,
             "goals_created": 0,
             "goals_skipped": 0,
             "module_settings_updated": 0,
+            **deleted,
         }
 
-        try:
-            for row in departments:
-                self._upsert_department(row, actor_user_id=actor_user_id)
-                stats["departments_upserted"] += 1
+        for row in departments:
+            self._upsert_department(row, actor_user_id=actor_user_id)
+            stats["departments_upserted"] += 1
 
-            for row in indicators:
-                self._upsert_indicator(row, actor_user_id=actor_user_id)
-                stats["indicators_upserted"] += 1
+        for row in indicators:
+            self._upsert_indicator(row, actor_user_id=actor_user_id)
+            stats["indicators_upserted"] += 1
 
-            if include_goals:
-                for row in goals:
-                    if not bool(row.get("is_active", True)):
-                        stats["goals_skipped"] += 1
-                        continue
-                    created = self._import_goal_if_missing(
-                        row,
-                        actor_user_id=actor_user_id,
-                    )
-                    if created:
-                        stats["goals_created"] += 1
-                    else:
-                        stats["goals_skipped"] += 1
+        if include_goals:
+            for row in goals:
+                if not bool(row.get("is_active", True)):
+                    stats["goals_skipped"] += 1
+                    continue
+                created = self._import_goal_if_missing(
+                    row,
+                    actor_user_id=actor_user_id,
+                )
+                if created:
+                    stats["goals_created"] += 1
+                else:
+                    stats["goals_skipped"] += 1
 
-            stats["module_settings_updated"] = self._import_module_settings(
-                module_settings,
-                actor_user_id=actor_user_id,
-            )
-
-            self.commit()
-            return stats
-        except Exception:
-            self.rollback()
-            raise
+        stats["module_settings_updated"] = self._import_module_settings(
+            module_settings,
+            actor_user_id=actor_user_id,
+        )
+        return stats
 
     def _upsert_department(self, row: dict, *, actor_user_id: str | None) -> None:
         department_id = str(row.get("department_id") or "").strip()

@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_admin_config_bundle_repository import (
-    PostgresStrategicIndicatorsAdminConfigBundleRepository,
+from si_app.application.services.strategic_indicators.admin_config_bundle_service import (
+    AdminConfigBundleService,
 )
 
 
 class ImportStrategicIndicatorsAdminConfigUseCase:
-    def __init__(
-        self,
-        repository: PostgresStrategicIndicatorsAdminConfigBundleRepository,
-    ) -> None:
-        self._repository = repository
+    def __init__(self, service: AdminConfigBundleService) -> None:
+        self._service = service
 
     def execute(
         self,
@@ -20,16 +17,14 @@ class ImportStrategicIndicatorsAdminConfigUseCase:
         include_goals: bool = True,
         mode: str = "replace",
     ) -> dict:
-        if not isinstance(bundle, dict):
-            raise ValueError("Pacote de importação inválido.")
-
-        stats = self._repository.import_bundle(
+        if mode not in ("merge", "replace"):
+            raise ValueError("mode inválido: use merge ou replace.")
+        stats = self._service.apply(
             bundle=bundle,
             actor_user_id=actor_user_id,
             include_goals=include_goals,
+            mode=mode,
         )
-        stats = {**stats, "mode": mode}
-
         return {
             "message": "Configuração importada com sucesso.",
             "stats": stats,

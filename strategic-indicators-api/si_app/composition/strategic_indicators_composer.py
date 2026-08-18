@@ -127,6 +127,9 @@ from si_app.application.use_cases.strategic_indicators.export_admin_config_use_c
 from si_app.application.use_cases.strategic_indicators.import_admin_config_use_case import (
     ImportStrategicIndicatorsAdminConfigUseCase,
 )
+from si_app.application.services.strategic_indicators.admin_config_bundle_service import (
+    AdminConfigBundleService,
+)
 from si_app.application.use_cases.strategic_indicators.preview_admin_config_use_case import (
     PreviewStrategicIndicatorsAdminConfigUseCase,
 )
@@ -539,18 +542,22 @@ def build_list_strategic_indicators_goal_years_overview_use_case():
     return ListStrategicIndicatorsGoalYearsOverviewUseCase(repository)
 
 
+def _build_admin_config_bundle_service() -> AdminConfigBundleService:
+    repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
+    return AdminConfigBundleService(repository)
+
+
 def build_export_strategic_indicators_admin_config_use_case():
     repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
     return ExportStrategicIndicatorsAdminConfigUseCase(repository)
 
 
 def build_import_strategic_indicators_admin_config_use_case():
-    repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
-    return ImportStrategicIndicatorsAdminConfigUseCase(repository)
+    return ImportStrategicIndicatorsAdminConfigUseCase(_build_admin_config_bundle_service())
 
 
 def build_preview_strategic_indicators_admin_config_use_case():
-    return PreviewStrategicIndicatorsAdminConfigUseCase()
+    return PreviewStrategicIndicatorsAdminConfigUseCase(_build_admin_config_bundle_service())
 
 
 def build_activate_strategic_indicators_admin_department_use_case():

@@ -88,18 +88,24 @@ class PluginBaseRepository:
             logger.exception("fetch_all failed")
             raise PluginsRepositoryError("Falha ao listar registros.") from exc
 
+    def _should_auto_commit(self, auto_commit: bool | None) -> bool:
+        if auto_commit is None:
+            return self._injected_connection is None
+        return auto_commit
+
     def execute(
         self,
         query: str,
         params: tuple[Any, ...] | None = None,
         *,
-        auto_commit: bool = True,
+        auto_commit: bool | None = None,
     ) -> None:
+        should_commit = self._should_auto_commit(auto_commit)
         try:
             with self.db() as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(query, params or ())
-                if auto_commit:
+                if should_commit:
                     connection.commit()
         except Exception as exc:
             logger.exception("execute failed")
@@ -110,14 +116,15 @@ class PluginBaseRepository:
         query: str,
         params: tuple[Any, ...] | None = None,
         *,
-        auto_commit: bool = True,
+        auto_commit: bool | None = None,
     ) -> dict[str, Any] | None:
+        should_commit = self._should_auto_commit(auto_commit)
         try:
             with self.db() as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(query, params or ())
                     row = cursor.fetchone()
-                if auto_commit:
+                if should_commit:
                     connection.commit()
                 return dict(row) if row is not None else None
         except Exception as exc:
@@ -129,13 +136,14 @@ class PluginBaseRepository:
         query: str,
         values: Iterable[tuple[Any, ...]],
         *,
-        auto_commit: bool = True,
+        auto_commit: bool | None = None,
     ) -> None:
+        should_commit = self._should_auto_commit(auto_commit)
         try:
             with self.db() as connection:
                 with connection.cursor() as cursor:
                     cursor.executemany(query, values)
-                if auto_commit:
+                if should_commit:
                     connection.commit()
         except Exception as exc:
             logger.exception("execute_many failed")
