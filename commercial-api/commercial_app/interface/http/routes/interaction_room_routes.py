@@ -9,6 +9,8 @@ from fastapi import APIRouter, Body, Path, Query, Request
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_ACCESS_PERMISSIONS,
+    can_manage_portfolios,
+    can_use_team_scope,
 )
 from commercial_app.application.use_cases.manage_interaction_messages import (
     PostInteractionMessageInput,
@@ -21,7 +23,7 @@ from commercial_app.composition.commercial_composer import (
     build_manage_interaction_rooms_use_case,
     build_suggest_interaction_mentions_use_case,
 )
-from commercial_app.core.auth_actor import actor_sub_from_request
+from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
 from commercial_app.core.responses import fail, ok
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
@@ -104,6 +106,9 @@ def suggest_interaction_mentions(
             query=query,
             kinds=kind_list,
             limit=limit if isinstance(limit, int) else 20,
+            actor_user_id=actor,
+            unrestricted=can_manage_portfolios(current_user_from_request(request))
+            or can_use_team_scope(current_user_from_request(request)),
         )
         return ok(
             {"items": items},

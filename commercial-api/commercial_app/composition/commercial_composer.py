@@ -292,6 +292,9 @@ def build_suggest_interaction_mentions_use_case() -> SuggestInteractionMentionsU
     if _suggest_interaction_mentions_use_case is None:
         _suggest_interaction_mentions_use_case = SuggestInteractionMentionsUseCase(
             directory=CoreApiPortalAccessPort(),
+            portfolios=build_seller_portfolio_repository(),
+            scope=build_resolve_commercial_customer_scope_service(),
+            gateway=build_delpi_commercial_gateway(),
         )
     return _suggest_interaction_mentions_use_case
 
