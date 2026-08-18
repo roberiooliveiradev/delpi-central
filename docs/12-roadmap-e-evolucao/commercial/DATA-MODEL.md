@@ -2,7 +2,7 @@
 
 > **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`; **carteira name-first** em `V013__seller_portfolio_user_id_nullable.sql` (`user_id` nullable / órfã); **outbox + checkpoints** em `V014__integration_outbox_and_checkpoints.sql` (notif ready_to_invoice). Demais entidades deste doc = especificação futura.  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`; **carteira name-first** em `V013__seller_portfolio_user_id_nullable.sql` (`user_id` nullable / órfã); **outbox + checkpoints** em `V014__integration_outbox_and_checkpoints.sql` (notif ready_to_invoice). **Sala de interação:** spec **V019** (§ 8.1) — ainda não aplicada. Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
@@ -779,15 +779,104 @@ Padrão comum:
 | Coluna | Tipo | Notas |
 |--------|------|--------|
 | `id` | UUID PK | |
-| `owner_type` / `owner_id` | TEXT NOT NULL | prospect, opportunity, visit, … |
+| `owner_type` / `owner_id` | TEXT NOT NULL | V004: `task` \| `customer` \| `activity`. **V019** acrescenta `room_message` (não editar V004). |
 | `file_name` | TEXT NOT NULL | |
-| `storage_key` | TEXT NOT NULL | volume persistente |
+| `storage_key` | TEXT NOT NULL | volume persistente `commercial-attachments` |
 | `content_type` | TEXT NOT NULL | |
 | `byte_size` | BIGINT | |
 | `uploaded_by_user_id` | TEXT NOT NULL | |
 | `created_at` | TIMESTAMPTZ NOT NULL | |
 
-**Índice:** `(owner_type, owner_id)`.
+**Índice:** `(owner_type, owner_id)`.  
+**Sala:** `owner_type=room_message`, `owner_id` = `interaction_messages.id`. Path no disco `{base}/room_message/{id}/`.
+
+### 8.1 Sala de interação (P2-SALA — V019)
+
+Histórico operacional ancorado em registro (`room_kind`: `entity` \| `process` \| `wall`). Sem DM (`direct` fora do P0). Nomes EN; PT só em JSON/UI.
+
+#### `interaction_rooms`
+
+| Coluna | Tipo | Constraints / notas |
+|--------|------|---------------------|
+| `id` | UUID | PK, default `gen_random_uuid()` |
+| `kind` | TEXT | NOT NULL — check `IN ('entity', 'process', 'wall')` |
+| `entity_type` | TEXT | NULL — kind do catálogo de menções (`order`, `customer`, …) quando `kind=entity` |
+| `entity_key` | TEXT | NULL — chave estável (ex. `01\|102942`, `000123\|01`) |
+| `group_id` | UUID | NULL — FK lógica → `commercial_groups(id)` quando `kind=wall` por grupo |
+| `title` | TEXT | NOT NULL — rótulo de inbox |
+| `created_by_user_id` | TEXT | NOT NULL |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
+| `deleted_at` | TIMESTAMPTZ | NULL — soft delete |
+
+**Único parcial:** `(kind, entity_type, entity_key)` WHERE `kind='entity'` AND `deleted_at IS NULL`.  
+**Único parcial wall:** `(kind, group_id)` WHERE `kind='wall'` AND `deleted_at IS NULL`.  
+**Índices:** `(updated_at DESC)`; `(kind, entity_type, entity_key)`.
+
+#### `interaction_room_members`
+
+| Coluna | Tipo | Constraints / notas |
+|--------|------|---------------------|
+| `id` | UUID | PK |
+| `room_id` | UUID | NOT NULL, FK → `interaction_rooms(id)` ON DELETE CASCADE |
+| `user_id` | TEXT | NOT NULL — Keycloak sub |
+| `role` | TEXT | NOT NULL, default `member` — check `IN ('member', 'watcher')` |
+| `last_read_at` | TIMESTAMPTZ | NULL |
+| `muted` | BOOLEAN | NOT NULL, default `FALSE` |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
+
+**Único:** `(room_id, user_id)`. **Índice:** `(user_id)`.
+
+#### `interaction_messages`
+
+| Coluna | Tipo | Constraints / notas |
+|--------|------|---------------------|
+| `id` | UUID | PK |
+| `room_id` | UUID | NOT NULL, FK → `interaction_rooms` ON DELETE CASCADE |
+| `parent_id` | UUID | NULL — FK → `interaction_messages(id)` (thread) |
+| `author_user_id` | TEXT | NULL quando `message_kind=system` |
+| `message_kind` | TEXT | NOT NULL — check `IN ('text', 'system', 'task_ref', 'pin')`; JSON reserva `otd_event`, `confirmation_event`, `wall_post` |
+| `body_text` | TEXT | NOT NULL, default `''` |
+| `edited_at` | TIMESTAMPTZ | NULL |
+| `deleted_at` | TIMESTAMPTZ | NULL — soft delete |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
+
+**Índices:** `(room_id, created_at DESC)`; `(parent_id)` WHERE `parent_id IS NOT NULL`.
+
+#### `interaction_mentions`
+
+| Coluna | Tipo | Constraints / notas |
+|--------|------|---------------------|
+| `id` | UUID | PK |
+| `message_id` | UUID | NOT NULL, FK → `interaction_messages` ON DELETE CASCADE |
+| `mention_kind` | TEXT | NOT NULL — id do catálogo `interaction_mention_kinds.json` |
+| `ref` | JSONB | NOT NULL — payload do objeto (`user_id`, `customer_code`+`store`, …) |
+| `label` | TEXT | NOT NULL — snapshot para render |
+
+**Índice:** `(mention_kind)`; GIN `(ref)` se busca por objeto.
+
+#### `interaction_reactions`
+
+| Coluna | Tipo | Constraints / notas |
+|--------|------|---------------------|
+| `message_id` | UUID | NOT NULL, FK → `interaction_messages` ON DELETE CASCADE |
+| `user_id` | TEXT | NOT NULL |
+| `code` | TEXT | NOT NULL — código do conjunto JSON (ex. `ok`) |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
+
+**PK:** `(message_id, user_id, code)`.
+
+#### `interaction_pins`
+
+| Coluna | Tipo | Constraints / notas |
+|--------|------|---------------------|
+| `id` | UUID | PK |
+| `room_id` | UUID | NOT NULL, FK → `interaction_rooms` ON DELETE CASCADE |
+| `message_id` | UUID | NOT NULL, FK → `interaction_messages` ON DELETE CASCADE |
+| `pinned_by_user_id` | TEXT | NOT NULL |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
+
+**Único:** `(room_id, message_id)`.
 
 ---
 
