@@ -5,15 +5,42 @@ import { describe, it } from "node:test";
 
 import {
   buildCustomerOrderDetailPath,
+  buildInteractionRoomPath,
+  buildInteractionRoomsPath,
   buildOpenOrderLineDetailPath,
   buildOpenOrderOpDetailPath,
   buildPluginPath,
+  INTERACTION_ROOM_DETAIL_PATH_RE,
+  INTERACTION_ROOMS_PATH_RE,
   resolveActiveNavId,
   resolvePluginRoute,
 } from "./pluginRoutes.ts";
 import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink.ts";
 
 describe("rotas nativas do pedido comercial", () => {
+  it("resolve interaction-rooms (inbox e detalhe) em EN", () => {
+    assert.equal(INTERACTION_ROOMS_PATH_RE.test("interaction-rooms"), true);
+    assert.equal(INTERACTION_ROOM_DETAIL_PATH_RE.test("interaction-rooms/abc"), true);
+    const inbox = buildInteractionRoomsPath("/apps/commercial");
+    assert.equal(inbox, "/apps/commercial/interaction-rooms");
+    assert.deepEqual(resolvePluginRoute(inbox, "/apps/commercial"), {
+      view: "interaction_rooms",
+      pathname: "/apps/commercial/interaction-rooms",
+      relativePath: "interaction-rooms",
+    });
+    const detail = buildInteractionRoomPath("/apps/commercial", "room-1");
+    assert.equal(detail, "/apps/commercial/interaction-rooms/room-1");
+    assert.deepEqual(resolvePluginRoute(detail, "/apps/commercial"), {
+      view: "interaction_room_detail",
+      pathname: "/apps/commercial/interaction-rooms/room-1",
+      relativePath: "interaction-rooms/room-1",
+      roomId: "room-1",
+    });
+    assert.equal(resolveActiveNavId("interaction_rooms"), "home");
+    assert.equal(resolveActiveNavId("interaction_room_detail"), "home");
+    assert.equal(buildPluginPath("interaction_rooms", "/apps/commercial"), inbox);
+  });
+
   it("faz roundtrip do detalhe de pedido da conta", () => {
     const path = buildCustomerOrderDetailPath(
       "/apps/commercial",

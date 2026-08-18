@@ -26,6 +26,8 @@ export type PluginView =
   | "seller_portfolios"
   | "seller_portfolio_detail"
   | "user_profile"
+  | "interaction_rooms"
+  | "interaction_room_detail"
   | "not_found";
 
 /** Itens da navegação de topo (IA 2026 — seis áreas + Cliente efêmero fora da carteira). */
@@ -54,6 +56,7 @@ export type ResolvedPluginRoute = {
   productionOrder?: string;
   portfolioId?: string;
   userId?: string;
+  roomId?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -68,6 +71,10 @@ export function normalizePathname(pathname: string): string {
 export function normalizeBasePath(basePath?: string): string {
   return normalizePathname(basePath?.trim() || COMMERCIAL_BASE_PATH);
 }
+
+/** Path regex EN — inbox e detalhe da sala de interação. */
+export const INTERACTION_ROOMS_PATH_RE = /^interaction-rooms$/;
+export const INTERACTION_ROOM_DETAIL_PATH_RE = /^interaction-rooms\/([^/]+)$/;
 
 function safeDecodeSegment(segment: string): string | null {
   try {
@@ -114,6 +121,24 @@ export function resolvePluginRoute(
 
   if (relativePath === "overview") {
     return { view: "overview", pathname: path, relativePath };
+  }
+
+  if (INTERACTION_ROOMS_PATH_RE.test(relativePath)) {
+    return { view: "interaction_rooms", pathname: path, relativePath };
+  }
+
+  const interactionRoomDetail = INTERACTION_ROOM_DETAIL_PATH_RE.exec(relativePath);
+  if (interactionRoomDetail) {
+    const roomId = safeDecodeSegment(interactionRoomDetail[1] ?? "");
+    if (!roomId?.trim()) {
+      return { view: "not_found", pathname: path, relativePath };
+    }
+    return {
+      view: "interaction_room_detail",
+      pathname: path,
+      relativePath,
+      roomId: roomId.trim(),
+    };
   }
 
   if (relativePath === "open-orders") {
@@ -455,6 +480,7 @@ export type BuildablePluginView = Exclude<
   | "analytics_opportunity_detail"
   | "seller_portfolio_detail"
   | "user_profile"
+  | "interaction_room_detail"
   | "not_found"
 >;
 
@@ -480,6 +506,7 @@ const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
   administration_groups: "administration/groups",
   /** Alias legado — resolve para a aba Carteiras do hub. */
   seller_portfolios: "administration/seller-portfolios",
+  interaction_rooms: "interaction-rooms",
 };
 
 export function buildPluginPath(
@@ -568,6 +595,19 @@ export function buildUserProfilePath(
   const id = userId.trim();
   if (!id) return null;
   return `${normalizeBasePath(basePath)}/users/${encodeURIComponent(id)}`;
+}
+
+export function buildInteractionRoomsPath(basePath?: string): string {
+  return buildPluginPath("interaction_rooms", basePath);
+}
+
+export function buildInteractionRoomPath(
+  basePath: string | undefined,
+  roomId: string,
+): string | null {
+  const id = roomId.trim();
+  if (!id) return null;
+  return `${normalizeBasePath(basePath)}/interaction-rooms/${encodeURIComponent(id)}`;
 }
 
 export function buildOpenOrderOpDetailPath(
@@ -683,6 +723,7 @@ export function resolveActiveNavId(
   }
   if (view === "proposals" || view === "proposal_detail") return null;
   if (view === "user_profile") return null;
+  if (view === "interaction_rooms" || view === "interaction_room_detail") return "home";
   if (isAnalyticsDeepView(view)) return null;
   if (view === "not_found") return "home";
   if (

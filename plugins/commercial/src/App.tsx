@@ -38,6 +38,8 @@ import { ProposalsPage } from "./features/proposals/ProposalsPage";
 import { AdministrationHomePage } from "./features/administration/AdministrationHomePage";
 import { AdministrationGroupsPage } from "./features/administration/AdministrationGroupsPage";
 import { AdministrationTeamPage } from "./features/administration/AdministrationTeamPage";
+import { InteractionRoomPage } from "./features/interaction-rooms/InteractionRoomPage";
+import { InteractionRoomsInboxPage } from "./features/interaction-rooms/InteractionRoomsInboxPage";
 import { SellerPortfolioDetailPage } from "./features/seller-portfolios/SellerPortfolioDetailPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
@@ -297,6 +299,12 @@ function AppRoutes({
         ) : (
           <NotFoundPage basePath={basePath} />
         )
+      ) : null}
+      {view === "interaction_rooms" ? (
+        <InteractionRoomsInboxPage basePath={basePath} />
+      ) : null}
+      {view === "interaction_room_detail" && route.roomId ? (
+        <InteractionRoomPage basePath={basePath} roomId={route.roomId} />
       ) : null}
       {view === "not_found" ? <NotFoundPage basePath={basePath} /> : null}
     </PluginShell>
