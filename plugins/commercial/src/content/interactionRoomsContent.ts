@@ -35,4 +35,11 @@ export const INTERACTION_ROOMS_CONTENT = {
   composerAttachAriaLabel: "Anexar arquivo",
   composerMentionListAriaLabel: "Sugestões de menção",
   composerMentionEmptyLabel: "Nenhuma sugestão",
+  panelTitle: "Sala de interação",
+  panelOpenRoom: "Abrir sala",
+  panelLoadingLabel: "Abrindo a sala…",
+  panelResolveError: "Não foi possível abrir a sala nesta ficha.",
+  panelEmptyTitle: "Nenhuma mensagem ainda",
+  panelEmptyDescription: "A conversa deste registro fica registrada aqui.",
+  panelMissingKey: "Registro incompleto para abrir a sala.",
 } as const;

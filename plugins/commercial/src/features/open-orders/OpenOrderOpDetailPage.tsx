@@ -19,6 +19,11 @@ import {
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { usePortfolioSellerAccess } from "../../app/usePortfolioSellerAccess";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
+import { InteractionRoomPanel } from "../interaction-rooms/InteractionRoomPanel";
+import {
+  buildProductionOrderEntityKey,
+  INTERACTION_ENTITY_TYPES,
+} from "../interaction-rooms/interactionRoomEntityKeys";
 import { resolveOpenOrderOpDetailItem } from "../../utils/enrichOpenOrdersForecast";
 import {
   buildOpenOrdersContextSearch,
@@ -232,14 +237,22 @@ export function OpenOrderOpDetailPage({
         </div>
       ) : null}
       {item ? (
-        <OpenOrdersProductionDetailContent
-          item={item}
-          basePath={basePath}
-          productionOrder={productionOrder}
-          search={contextSearch}
-          onProductionOrderChange={selectProductionOrder}
-          showOpenProductionOrderAction={false}
-        />
+        <>
+          <OpenOrdersProductionDetailContent
+            item={item}
+            basePath={basePath}
+            productionOrder={productionOrder}
+            search={contextSearch}
+            onProductionOrderChange={selectProductionOrder}
+            showOpenProductionOrderAction={false}
+          />
+          <InteractionRoomPanel
+            basePath={basePath}
+            entityType={INTERACTION_ENTITY_TYPES.productionOrder}
+            entityKey={buildProductionOrderEntityKey(branch, productionOrder)}
+            roomTitle={`OP ${productionOrder}`}
+          />
+        </>
       ) : null}
     </section>
   );

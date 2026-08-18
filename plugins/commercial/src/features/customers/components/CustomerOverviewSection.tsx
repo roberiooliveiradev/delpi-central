@@ -7,6 +7,11 @@ import {
   useCustomerPurchaseEvolution,
   type PurchaseEvolutionWindowMonths,
 } from "../hooks/useCustomerPurchaseEvolution";
+import { InteractionRoomPanel } from "../../interaction-rooms/InteractionRoomPanel";
+import {
+  buildCustomerEntityKey,
+  INTERACTION_ENTITY_TYPES,
+} from "../../interaction-rooms/interactionRoomEntityKeys";
 import { CustomerActivityTimelinePanel } from "./CustomerActivityTimelinePanel";
 import { CustomerConversationPoints } from "./CustomerConversationPoints";
 import { CustomerPreMeetingChecklist } from "./CustomerPreMeetingChecklist";
@@ -78,6 +83,12 @@ export function CustomerOverviewSection({
         canViewActivities={canViewActivities}
         preview
         onViewActivities={onGoToActivities}
+      />
+      <InteractionRoomPanel
+        basePath={basePath}
+        entityType={INTERACTION_ENTITY_TYPES.customer}
+        entityKey={buildCustomerEntityKey(customer.codigo, customer.loja)}
+        roomTitle={customer.nome?.trim() || `${customer.codigo}/${customer.loja}`}
       />
     </div>
   );

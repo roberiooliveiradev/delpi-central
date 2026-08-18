@@ -24,6 +24,11 @@ import { buildCustomerDetailPath } from "../../../app/pluginRoutes";
 import { usePortfolioScope } from "../../../app/PortfolioScopeContext";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
+import { InteractionRoomPanel } from "../../interaction-rooms/InteractionRoomPanel";
+import {
+  buildOrderEntityKey,
+  INTERACTION_ENTITY_TYPES,
+} from "../../interaction-rooms/interactionRoomEntityKeys";
 import { useCustomerDetailData } from "../hooks/useCustomerDetailData";
 import { CustomerOrderLines } from "../components/CustomerOrderLines";
 import { orderSituationLabel } from "../utils/customerOrderAggregation";
@@ -211,6 +216,13 @@ export function CustomerOrderDetailPage({
               }}
             />
           </CommercialSectionCard>
+
+          <InteractionRoomPanel
+            basePath={basePath}
+            entityType={INTERACTION_ENTITY_TYPES.order}
+            entityKey={buildOrderEntityKey(order.filial, order.pedido)}
+            roomTitle={`Pedido ${order.pedido}`}
+          />
         </>
       ) : null}
     </section>

@@ -15,6 +15,11 @@ import { buildPluginPath } from "../../app/pluginRoutes";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { usePortfolioSellerAccess } from "../../app/usePortfolioSellerAccess";
 import { OpenOrdersProductionDetailContent } from "../../components/OpenOrdersProductionDetailContent";
+import { InteractionRoomPanel } from "../interaction-rooms/InteractionRoomPanel";
+import {
+  buildOrderEntityKey,
+  INTERACTION_ENTITY_TYPES,
+} from "../interaction-rooms/interactionRoomEntityKeys";
 import { enrichOpenOrdersWithOpForecast } from "../../utils/enrichOpenOrdersForecast";
 import {
   buildOpenOrdersContextSearch,
@@ -190,11 +195,19 @@ export function OpenOrderLineDetailPage({
         </div>
       ) : null}
       {item ? (
-        <OpenOrdersProductionDetailContent
-          item={item}
-          basePath={basePath}
-          search={contextSearch}
-        />
+        <>
+          <OpenOrdersProductionDetailContent
+            item={item}
+            basePath={basePath}
+            search={contextSearch}
+          />
+          <InteractionRoomPanel
+            basePath={basePath}
+            entityType={INTERACTION_ENTITY_TYPES.order}
+            entityKey={buildOrderEntityKey(branch, orderNumber)}
+            roomTitle={`Pedido ${orderNumber}`}
+          />
+        </>
       ) : null}
     </section>
   );
