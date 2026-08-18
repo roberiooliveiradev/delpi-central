@@ -29,6 +29,7 @@ from commercial_app.application.use_cases.get_portfolio_billing_ranking import (
     GetPortfolioBillingRankingUseCase,
 )
 from commercial_app.core.auth_actor import current_user_from_request
+from commercial_app.core.responses import fail, ok
 from commercial_app.composition.commercial_composer import build_delpi_commercial_gateway
 from commercial_app.domain.services.opportunity_collaborator_summary_service import (
     OpportunityCollaboratorSummaryService,
@@ -767,6 +768,12 @@ def bff_opportunity_collaborator_summary(
         )
     except PermissionError as exc:
         return fail(str(exc), 403, operation_id="bff_opportunity_collaborator_summary")
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="bff_opportunity_collaborator_summary")
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="bff_opportunity_collaborator_summary")
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id="bff_opportunity_collaborator_summary")
     except Exception:
         logger.exception("bff_opportunity_collaborator_summary_failed")
         return fail(

@@ -251,14 +251,17 @@ class DelpiCommercialGateway:
         headers = self._headers()
         if json_body is not None:
             headers = {**headers, "Content-Type": "application/json"}
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.request(
-                method,
-                url,
-                params=clean_params or None,
-                json=json_body,
-                headers=headers,
-            )
+        try:
+            with httpx.Client(timeout=self._timeout) as client:
+                response = client.request(
+                    method,
+                    url,
+                    params=clean_params or None,
+                    json=json_body,
+                    headers=headers,
+                )
+        except httpx.RequestError as exc:
+            raise RuntimeError("Erro ao consultar api-delpi.") from exc
         if response.status_code >= 400:
             message = "Erro ao consultar api-delpi."
             try:
@@ -287,14 +290,17 @@ class DelpiCommercialGateway:
             for key, value in (params or {}).items()
             if value is not None and value != ""
         }
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.request(
-                method,
-                url,
-                params=clean_params or None,
-                json=json_body,
-                headers=self._headers(),
-            )
+        try:
+            with httpx.Client(timeout=self._timeout) as client:
+                response = client.request(
+                    method,
+                    url,
+                    params=clean_params or None,
+                    json=json_body,
+                    headers=self._headers(),
+                )
+        except httpx.RequestError as exc:
+            raise RuntimeError("Erro ao consultar api-delpi.") from exc
         if response.status_code >= 400:
             message = "Erro ao consultar api-delpi."
             try:
