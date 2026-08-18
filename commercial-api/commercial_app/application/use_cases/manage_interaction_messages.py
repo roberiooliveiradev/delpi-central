@@ -162,3 +162,56 @@ class ManageInteractionMessagesUseCase:
         if deleted is None:
             raise LookupError(InteractionRoomContentService.error("messageNotFound"))
         return deleted
+
+    def _require_message_in_room(
+        self,
+        *,
+        room_id: UUID,
+        message_id: UUID,
+    ):
+        message = self._messages.get_by_id(message_id)
+        if (
+            message is None
+            or message.room_id != room_id
+            or message.deleted_at is not None
+        ):
+            raise LookupError(InteractionRoomContentService.error("messageNotFound"))
+        return message
+
+    def set_reaction(
+        self,
+        *,
+        room_id: UUID,
+        message_id: UUID,
+        actor_user_id: str,
+        code: str,
+    ):
+        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_message_in_room(room_id=room_id, message_id=message_id)
+        reaction_code = (code or "").strip()
+        if not reaction_code:
+            raise ValueError(InteractionRoomContentService.error("kindUnknown"))
+        return self._messages.set_reaction(
+            message_id=message_id,
+            user_id=actor_user_id.strip(),
+            code=reaction_code,
+        )
+
+    def clear_reaction(
+        self,
+        *,
+        room_id: UUID,
+        message_id: UUID,
+        actor_user_id: str,
+        code: str,
+    ) -> None:
+        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_message_in_room(room_id=room_id, message_id=message_id)
+        reaction_code = (code or "").strip()
+        if not reaction_code:
+            raise ValueError(InteractionRoomContentService.error("kindUnknown"))
+        self._messages.clear_reaction(
+            message_id=message_id,
+            user_id=actor_user_id.strip(),
+            code=reaction_code,
+        )

@@ -403,3 +403,79 @@ def delete_interaction_message(
     except Exception:
         logger.exception("delete_interaction_message_failed")
         return fail("Erro interno ao excluir mensagem.", 500, operation_id=operation_id)
+
+
+@router.put(
+    "/{room_id}/messages/{message_id}/reactions/{code}",
+    operation_id="set_interaction_message_reaction",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def set_interaction_message_reaction(
+    request: Request,
+    room_id: UUID = Path(...),
+    message_id: UUID = Path(...),
+    code: str = Path(..., min_length=1),
+):
+    operation_id = "set_interaction_message_reaction"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        reaction = build_manage_interaction_messages_use_case().set_reaction(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id=actor,
+            code=code,
+        )
+        return ok(
+            reaction.to_dict(),
+            message=InteractionRoomContentService.message("reactionSetOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("set_interaction_message_reaction_failed")
+        return fail("Erro interno ao registrar reação.", 500, operation_id=operation_id)
+
+
+@router.delete(
+    "/{room_id}/messages/{message_id}/reactions/{code}",
+    operation_id="clear_interaction_message_reaction",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def clear_interaction_message_reaction(
+    request: Request,
+    room_id: UUID = Path(...),
+    message_id: UUID = Path(...),
+    code: str = Path(..., min_length=1),
+):
+    operation_id = "clear_interaction_message_reaction"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        build_manage_interaction_messages_use_case().clear_reaction(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id=actor,
+            code=code,
+        )
+        return ok(
+            {"cleared": True, "code": code},
+            message=InteractionRoomContentService.message("reactionClearedOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("clear_interaction_message_reaction_failed")
+        return fail("Erro interno ao remover reação.", 500, operation_id=operation_id)
