@@ -126,7 +126,55 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
                     response_mode_effect=effect,
                 )
 
-        return body
+        return cls._guard_instruction_leak(
+            body,
+            message=message,
+            tool_calls=tool_calls,
+            response_mode=normalized_mode,
+            response_mode_effect=effect,
+        )
+
+    @classmethod
+    def _guard_instruction_leak(
+        cls,
+        body: str,
+        *,
+        message: str | None,
+        tool_calls: list | None,
+        response_mode: str,
+        response_mode_effect: str,
+    ) -> str:
+        from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+            ChatLlmSynthesisLeakGuardService,
+        )
+        from app.domain.services.chat_operational_llm_synthesis_context_content_service import (
+            ChatOperationalLlmSynthesisContextContentService,
+        )
+
+        fallback = ChatOperationalLlmSynthesisBriefDirectService.try_build_quality_fallback(
+            message,
+            tool_calls,
+            response_mode=response_mode,
+        )
+        guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
+            answer=body,
+            fallback=fallback,
+            facts=ChatOperationalLlmSynthesisContextContentService.title(),
+            leak_markers=ChatOperationalLlmSynthesisContextContentService.leak_markers(),
+        )
+        if guarded == str(body or "").strip():
+            return body
+
+        if guarded == str(fallback or "").strip() and fallback:
+            return cls._finalize_body(
+                fallback,
+                message=message,
+                tool_calls=tool_calls,
+                response_mode=response_mode,
+                response_mode_effect=response_mode_effect,
+            )
+
+        return guarded
 
     @classmethod
     def _should_try_commentary_before_enrich(

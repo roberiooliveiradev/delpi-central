@@ -140,3 +140,22 @@ def test_finalize_persisted_answer_normal_falls_back_when_llm_too_short():
     assert len(result) >= 72
     assert "10080045" in result
     assert "MP" in result or "roteiro" in result.lower()
+
+
+def test_finalize_persisted_answer_falls_back_when_instruction_leaks():
+    llm_answer = (
+        "O produto **10080045** está cadastrado. "
+        "Não transcreva listas: o painel exibe os dados."
+    )
+
+    result = ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+        llm_answer,
+        _overview_tool_calls(),
+        message="me fale do produto 10080045",
+        response_mode="normal",
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert "10080045" in result
+    assert "não transcreva listas" not in result.lower()
+    assert "o painel exibe" not in result.lower()

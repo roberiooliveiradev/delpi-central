@@ -15,6 +15,14 @@ class ChatOperationalLlmSynthesisContextContentService:
         return ChatAssistantContentService.get(_BUNDLE, "title", default="Fatos consultados:")
 
     @classmethod
+    def leak_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(_BUNDLE, "leakMarkers")
+            if str(item).strip()
+        )
+
+    @classmethod
     def prose_panel_rule(cls) -> str:
         return str(
             ChatAssistantContentService.get(_BUNDLE, "prosePanelRule", default="")

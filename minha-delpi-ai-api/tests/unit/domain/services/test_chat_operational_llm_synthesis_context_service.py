@@ -112,6 +112,7 @@ def test_build_facts_addon_includes_title():
 
     assert "Fatos já consultados" in addon
     assert "PA PRODUZIDO" in addon
+    assert "não peça acesso" not in addon.lower()
 
 
 def test_build_prompt_policy_includes_facts_block():

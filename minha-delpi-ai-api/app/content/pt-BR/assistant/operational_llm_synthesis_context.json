@@ -1,5 +1,12 @@
 {
-  "title": "Fatos já consultados (responda com base neles — não peça acesso):",
+  "title": "Fatos já consultados:",
+  "leakMarkers": [
+    "não peça acesso",
+    "responda com base neles",
+    "não transcreva listas",
+    "o painel exibe",
+    "abertura: cite o código"
+  ],
   "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, gráfico). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta.",
   "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta». **Vereditos Sim/Não:** quando os fatos trouxerem resposta direta (ex.: MPs exclusivas = 0), reproduza o veredito sem contradizê-lo.",
   "maxChars": 480,
