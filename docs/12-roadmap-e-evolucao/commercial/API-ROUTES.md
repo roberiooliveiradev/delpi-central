@@ -120,7 +120,7 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 
 | Method | Path | operationId | Fase | Permissão | entity | shape | Notas |
 |--------|------|-------------|------|-----------|--------|-------|-------|
-| GET | `/open-orders/` | `list_commercial_open_orders` | F2b | `commercial.accounts.view` | `open_orders` | `list` | Escopo commercial; proxy → `GET …/totvs-open-orders`; envelope inclui **`deliveryHorizon`** (buckets KPI-CARTEIRA-HORIZON) |
+| GET | `/open-orders/` | `list_commercial_open_orders` | F2b | `commercial.accounts.view` | `open_orders` | `list` | Escopo commercial; proxy → `GET …/totvs-open-orders`; **FIFO** `estoque_alocado` via `EnrichOpenOrdersKanbanService` antes de `kanbanStage` / **`kanbanStageCounts`** (badge = chip «Pode faturar»); envelope inclui **`deliveryHorizon`** |
 | GET | `/open-orders/ops-abertas` | `list_commercial_open_ops` | F2b | `commercial.accounts.view` | `open_ops` | `list` | Proxy TOTVS sem membership |
 | GET | `/analytics/open-portfolio-summary` | `bff_get_analytics_open_portfolio_summary` | Onda A | `commercial.analytics.view` | `open_portfolio_summary` | `scalar` | KPI-CARTEIRA; reusa `list_open_orders` + filtro de escopo; **sem** `items`; `{ openValue, openLineCount, asOf, nature }` |
 | GET | `/analytics/open-portfolio-horizon` | `bff_get_analytics_open_portfolio_horizon` | Onda B MVP | `commercial.analytics.view` | `open_portfolio_horizon` | `scalar` | KPI-CARTEIRA-HORIZON; mesmos filtros de escopo do summary; buckets `overdue`…`undated` + totais; **sem** SQL novo na api-delpi |

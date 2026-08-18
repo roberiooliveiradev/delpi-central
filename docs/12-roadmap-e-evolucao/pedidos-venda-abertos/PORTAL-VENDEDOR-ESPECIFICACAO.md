@@ -359,7 +359,7 @@ Fonte base: item de `GET /apps/api-delpi/pedidos-venda-abertos/` (campos abaixo)
 | Preço | `preco_venda` | — | Por linha | — |
 | Data entrega | `data_entrega` | ISO / dd/MM/yyyy | Atraso / próxima | Pode ser `null` |
 | Data despacho | `data_despacho` | — | Coluna linhas (já existe) | ~70% nulo (Fase 0) |
-| Estoque view | `no_estoque` | alocação FIFO existente | Badges tela linhas | Client-side |
+| Estoque view | `no_estoque` | FIFO no BFF (`OpenOrderStockAllocationService` → `estoque_alocado`); MFE reaplica a mesma regra para OP | Badges / chip «Pode faturar» / badge nav | Fonte canônica = commercial-api; não usar `no_estoque` bruto por linha |
 | Pedidos em aberto (cliente) | `filial`+`pedido` | distinct count | `saldo > 0` | ≠ count de linhas |
 | Linhas em aberto | — | count | `saldo > 0` | — |
 | Valor total aberto (cliente) | `valor_aberto` | SUM | — | — |

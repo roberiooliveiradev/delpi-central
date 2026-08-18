@@ -68,6 +68,8 @@ Alias `/administration/members` → Equipe; detalhe legado `/seller-portfolios/:
 
 Bancada operacional em `/apps/commercial/open-orders` (WF-02R). Contrato UX: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) § WF-02R / WF-02R-D.
 
+Chip «Pode faturar» e badge da nav **Meus pedidos** usam a mesma regra: estoque **FIFO** calculado no BFF (`estoque_alocado` / `kanbanStageCounts.ready_to_invoice`). O MFE reaplica `allocateStockToOrders` só para previsão de OP — não para a contagem do badge.
+
 ### Deep links (URL compartilhável)
 
 Sincronizados com o estado da página (`replaceState`); **não** apagam filtros no mount.
@@ -77,7 +79,7 @@ Sincronizados com o estado da página (`replaceState`); **não** apagam filtros 
 | `q` | Busca livre |
 | `branch` | Filial |
 | `client` (repetível) | Clientes selecionados |
-| `?stock=com_estoque\|parcial\|sem_estoque` | Chip de atenção (estoque) |
+| `?stock=com_estoque\|parcial\|sem_estoque` | Chip de atenção (estoque FIFO: alocado ≥ saldo) |
 | `?focus=late` | Chip «Atraso» |
 | `date_start` / `date_end` | Intervalo de entrega (`YYYY-MM-DD`) |
 | `sort` / `dir=asc\|desc` | Coluna allowlisted e direção da ordenação |

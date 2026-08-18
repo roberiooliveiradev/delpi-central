@@ -3,6 +3,7 @@
 > **Status:** canônico · sincronizado com ATA-2 / ATA-MAPA / Follow-up / Playbook  
 > **Atualização W0:** **fechada** (E0–E7) — itens W0 = Existe; W1–W5 = backlog  
 > **Correções pós-W0:** hub SI + shell (meta sum/average, rótulos, favoritos na topbar, filtros Opp) — **Existe**  
+> **Revisão código ago/2026:** itens W1/DOC cuja entrega já está no `main` promovidos a **Existe** (não confundir com backlog de produto W2–W5)  
 > **Não substitui:** [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)
 
 Inventário **deduplicado** de itens com status **Parcial** (e afins) na documentação commercial. Classes: `W0` (implementação imediata) · `W1`…`W5` (backlog) · `HOMOLOG` · `DOC` · `FORA`.
@@ -49,20 +50,20 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 
 ---
 
-## W1 — Carteira / consolidado (backlog)
+## W1 — Carteira / consolidado
 
-| ID | Tema | Status | Fontes |
-|----|------|--------|--------|
-| P-CART-KPI | Carteira consolidada valor/itens | **Backlog** | MAPA · Playbook #4 |
-| P-CART-ROL | Carteira + ROL / 2 anos | **Backlog** | MAPA §5.3 |
-| P-CART-HORIZ | Glossário aberto × faturado | **Backlog** | FOLLOWUP |
-| P-BRUTO-LIQ | Bruto vs líquido explícito | **Backlog** | MAPA |
-| P-POSTERG | UX postergado vs disponível | **Backlog** | Playbook #4 |
-| P-CART-PCP | Distinguir carteira × PCP | **Backlog** | Playbook #4 |
-| P-PROJ | Projeção / FCT | **Backlog** | Forecast F6 |
-| P-SHARE | % empresa / seletor livre | **Backlog** | FOLLOWUP |
+| ID | Tema | Status | Evidência no código | Fontes |
+|----|------|--------|---------------------|--------|
+| P-CART-KPI | Carteira consolidada valor/itens | **Existe** | BFF `GET /analytics/open-portfolio-summary` + card Overview | MAPA · KPI-CARTEIRA |
+| P-CART-ROL | Soma ROL + carteira (uma métrica) | **Backlog** / bloqueado | Lado a lado **Existe**; soma oficial proibida até homologação | MAPA §5.3 · KPI-ROL-CARTEIRA |
+| P-CART-HORIZ | Glossário aberto × faturado | **Existe** | `CM_HELP.*.glossaryOpenVsBilled` + horizon | FOLLOWUP · KPI-CARTEIRA-HORIZON |
+| P-BRUTO-LIQ | Bruto vs líquido explícito por indicador | **Backlog** | ROL líquido; pedidos podem ser brutos — política Onda A | MAPA |
+| P-POSTERG | UX postergado vs disponível | **Backlog** | Pedidos refletem TOTVS; sem recorte «postergado» | Playbook #4 |
+| P-CART-PCP | Distinguir carteira × PCP | **Existe** | Copy Overview + `overviewMetricsCatalog` / helps | Playbook #4 |
+| P-PROJ | Projeção / FCT | **Backlog** | Horizon ≠ forecast F6 | Forecast F6 |
+| P-SHARE | % empresa (carteira ÷ empresa) | **Existe** | BFF `portfolio-billing-share` + cards Overview/Carteira (RBAC) | FOLLOWUP T3 |
 
-**Entrada:** fórmula KPI consolidada fechada em KPI-FICHAS.
+**Ainda backlog W1:** soma ROL+carteira, bruto vs líquido, postergado, FCT. Não reabrir P-CART-KPI / P-SHARE / P-CART-HORIZ / P-CART-PCP.
 
 ---
 
@@ -117,12 +118,12 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 |----|------|--------|------|--------|
 | P-GAV-N1 | Gestão à Vista N1 gaps | **Backlog** | Comercial + TV | MAPA · Playbook |
 | P-GR-TV | GR de Vendas | **Backlog** | **tv-dashboard** | ATA-2 §35 |
-| P-HOME-PERS | Home por perfil | **Backlog** | MFE | FOLLOWUP |
-| P-RANK-BI | Ranking produtividade | **Backlog** | MFE | MAPA |
+| P-HOME-PERS | Home orçamentista / faturamento | **Backlog** | MFE | FOLLOWUP T7 — vendedor/gestor já existem |
+| P-RANK-BI | Ranking produtividade (ofertas/colaborador) | **Backlog** | MFE | MAPA — ≠ ranking faturamento T5 (**Existe**) |
 | P-CAP-PCP | Capacidade fábrica | **Backlog** / Fora Link | Produção/PCP | Playbook #14 |
 | P-IA-ALIM | Alimentar GAV/GR/IA | **Backlog** | Posterior | DESIGN-IA |
 | P-VIS-INT | Lacunas gerenciais | **Backlog** | Contínuo | MAPA |
-| P-NOTIF | Notificações além toast | **Backlog** | Core + commercial | FOLLOWUP |
+| P-NOTIF | Canal plataforma (sino Minha Delpi) | **Existe** | commercial-api + Core | FOLLOWUP T6/T9 — P3 reminder CRM permanece backlog |
 
 **Entrada GR:** indicadores Junior/Laércio.
 
@@ -132,10 +133,10 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 
 | ID | Tema | Status | Fontes |
 |----|------|--------|--------|
-| H-YOY | Preferência visual mês a mês YoY | **Homolog** | ATA-2 §6 |
-| H-ADMIN-CFG | Config sensível só manage | Manter | FOLLOWUP |
-| D-HIT | Completar ficha hit rate | **DOC** | MAPA |
-| D-CATALOG-UI | Catálogo plugin-ui UnderlineNav | **DOC** | IMPLEMENTATION-PLAN |
+| H-YOY | Preferência visual mês a mês YoY | **Homolog** | ATA-2 §6 — overlay **Existe**; média visual aguarda Junior/Laércio |
+| H-ADMIN-CFG | Config sensível só manage | **Existe** (manter) | FOLLOWUP — CRUD carteiras/grupos só `manage` |
+| D-HIT | Ficha hit rate (num/den) | **Existe** | `KPI-HIT-RATE` em [KPI-FICHAS.md](./KPI-FICHAS.md) + doc api-delpi — homologação de regra ainda `em_validacao` |
+| D-CATALOG-UI | Catálogo plugin-ui UnderlineNav | **Existe** | `plugins/plugin-ui/docs/component-catalog.md` + demo `layout.UnderlineNav` |
 | F-EMPTY-SAVED | SavedViewChips | **Fora** | IMPLEMENTATION-PLAN |
 | F-OCUP-FULL | Cockpit capacidade PCP | **Fora** | MAPA |
 
@@ -151,3 +152,16 @@ Confirmação pedidos · sala interação · Reunião Diretoria · MyVEG · avis
 |-------|--------|------|
 | E0 | (este) | — |
 | E1–E7 | — | — |
+
+## Revisão código (ago/2026) — Parcial que já era entrega
+
+Critério: **Parcial na ata só permanece se o código ainda não cobre o pedido**. Homologação de negócio (`em_validacao`) ≠ gap de implementação.
+
+| ID / tema | Antes | Depois | Por quê |
+|-----------|-------|--------|---------|
+| P-CART-KPI / P-SHARE / P-CART-HORIZ / P-CART-PCP | Backlog | **Existe** | Summary, share, glossário e copy ≠ PCP no Overview/Carteira |
+| P-NOTIF (sino) | Backlog | **Existe** | Outbox Core; reminder P3 continua backlog |
+| D-HIT / D-CATALOG-UI / H-ADMIN-CFG | DOC / Manter | **Existe** | Ficha + catálogo kit + RBAC manage |
+| «Pode faturar» (estoque) | MAPA Parcial | **Existe** | Chip + badge FIFO no BFF (`OpenOrderStockAllocationService`); FNE continua **Falta** |
+| MTD/YTD + meta proporcional | MAPA Parcial | **Existe** | Já W0 / ATA-2 |
+| FIFO badge ≠ chip | (não inventariado) | **Existe** | `EnrichOpenOrdersKanbanService` aloca antes de `kanbanStageCounts` |

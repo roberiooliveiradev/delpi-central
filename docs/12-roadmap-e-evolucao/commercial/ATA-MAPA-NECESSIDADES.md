@@ -19,7 +19,7 @@ Este documento responde, para cada ponto da ata: **já temos?** · **onde acessa
 | Dimensão | Cobertura aproximada no Portal |
 |----------|--------------------------------|
 | Área comercial central + navegação | **Existe** |
-| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit C1 + YoY + **gap/meta MVP** entregues; soma ROL+carteira / FCT declarado ainda fora |
+| Visão gerencial (ROL, funil/hit rate, OTD, OV) | **Parcial forte** — cockpit C1 + YoY + MTD/YTD + meta prorata + **snapshot carteira** + gap/horizon + share **entregues**; soma ROL+carteira / FCT declarado ainda fora |
 | Visão do vendedor (Conta 360 pré-reunião) | **Parcial** — faturamento, pedidos, opp, contatos, tarefas; sem forecast/ofertas SLA |
 | Ofertas (produtividade, etapas, SLA) | **Parcial** — listagens OV/ADY + hit rate; sem tempo/etapa/área |
 | Clientes (ativo, recuperado, ticket, família, WEG) | **Parcial / bloqueado** — lista operacional; fichas KPI em rascunho |
@@ -55,8 +55,8 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
 | Visão integrada (não só cópia de telas) | **Parcial** | Início `/` + Visão geral `/overview` + launcher | MFE nativo | Consolidar lacunas gerenciais (Onda B); evitar iframes de MFEs irmãos |
-| Situação do faturamento | **Existe** | `/overview` (ROL) · Conta `?secao=historico` | api-delpi ROL / billing-series via BFF | Formalizar ficha `KPI-ROL` |
-| Carteira atual | **Parcial** | `/open-orders` · `/customers` | open-orders + membership | Carteira consolidada valor/itens (`KPI-CARTEIRA`) |
+| Situação do faturamento | **Existe** | `/overview` (ROL) · Conta `?secao=historico` | api-delpi ROL / billing-series via BFF | Ficha `KPI-ROL` em [KPI-FICHAS.md](./KPI-FICHAS.md) (`em_validacao`) |
+| Carteira atual | **Existe** | `/overview` (card aberto) · `/open-orders` · `/customers` | `open-portfolio-summary` + membership | Snapshot valor+linhas; ≠ soma ROL; ≠ PCP |
 | Carteira futura / projeções | **Falta** | — | — | Onda B após ficha; dor playbook #4 |
 | Andamento das ofertas | **Parcial** | `/analytics/opportunities` · `/proposals` | OV + ADY | Etapas/SLA (Onda C) |
 | Desempenho dos vendedores | **Parcial** | Escopo carteira · Admin `/administration` | membership / roster | Ranking produtividade BI (não só presença) |
@@ -78,11 +78,11 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
-| ROL | **Existe** | `/overview` | `/commercial/*rol*` via BFF analytics | Documentar fórmula (`KPI-ROL`) |
-| Carteira | **Parcial** | `/open-orders`, métricas Conta | open-orders | KPI consolidado |
-| Carteira + ROL | **Bloqueado** | — | — | `KPI-ROL-CARTEIRA` |
-| MTD / YTD | **Parcial** | Filtro de período no Overview | séries ROL | Presets existem; **rótulos MTD/YTD nos cards** = P0-LABEL — [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §5 |
-| Meta acumulada no período | **Parcial** | % meta no Overview (SI) | comparable_goal | Hoje meses civis; **corrigir soma proporcional por dia** = P0-META — ATA-2 §5 |
+| ROL | **Existe** | `/overview` | `/commercial/*rol*` via BFF analytics | Ficha `KPI-ROL` (`em_validacao`) |
+| Carteira | **Existe** | `/overview` (summary) · `/open-orders` · métricas Conta | `open-portfolio-summary` | Snapshot; homologar bruto/líquido |
+| Carteira + ROL | **Bloqueado** | Lado a lado no Overview | KPI-ROL-CARTEIRA | Soma oficial **proibida** até homologação |
+| MTD / YTD | **Existe** | Chip MTD/YTD nos cards Overview | `periodPreset.ts` `PeriodKindChip` | P0-LABEL — [ATA-2](./ATA-ALINHAMENTO-AGO2026-2.md) §5 |
+| Meta acumulada no período | **Existe** | % meta no Overview (SI prorata diária) | `comparable_goal` | P0-META — ATA-2 §5 · [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
 | Projeção de fechamento | **Falta** | — | — | Onda B / FCT-\* |
 | Comparação anos anteriores | **Entregue** | Toggle YoY nos gráficos ROL e hit rate (Overview) | rol/series + closing-rate/series (2ª chamada −1a) | Mesmo período filtrado −1a; todas as granularidades |
 | Produtividade comercial | **Parcial** | Opp/Proposals counts; Admin | — | Ofertas/colaborador (Onda C) |
@@ -122,24 +122,24 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | Capital / valor total ofertado | **Falta** | — | — | Confirmar negócio (ata ambígua) |
 | Filtros: cliente, segmento, vendedor, analista, período, situação, etapa, família, grupo | **Parcial** | Analytics: período, unidade, segmento WEG/NB, carteira | AnalyticsFilters | Analista, etapa, família, grupo cliente |
 | Etapa atual / permanência / área / prazo / gargalo | **Falta** | — | — | Onda C; SLAs ainda não acordados |
-| Hit rate — documentar metodologia | **Parcial** | Rota existe | Doc conversão api-delpi | Completar ficha sem alterar regra |
+| Hit rate — documentar metodologia | **Existe** | Ficha `KPI-HIT-RATE` + [comercial-taxa-conversao-estagios.md](../../../api-delpi/docs/api/comercial-taxa-conversao-estagios.md) | closing-rate | Homologar num/den **sem** mudar regra |
 
 ### §7 — ROL, carteira e projeções
 
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
 | ROL + série + metas % | **Existe** | `/overview` | rol targets + series | Ficha `KPI-ROL` |
-| Carteira + ROL / itens e valores / MTD YTD / 2 anos | **Parcial / bloqueado** | ROL sim; consolidado não | — | Onda A → B |
+| Carteira + ROL / itens e valores / MTD YTD / 2 anos | **Parcial / bloqueado** | ROL+YoY+MTD/YTD **Existem**; snapshot carteira **Existe**; **soma** ROL+carteira bloqueada | KPI-ROL-CARTEIRA | Onda A → B |
 | Visão temporal (realizado, carteira mês/futuro, gap meta, antecipação) | **MVP entregue** | Overview + Meus pedidos + Home/Carteira atalhos | `KPI-CARTEIRA-HORIZON` · BFF `open-portfolio-horizon` · `deliveryHorizon` | FCT declarado (WF-09) permanece backlog |
 | Atualização automática da carteira (postergações) | **Parcial** | Pedidos refletem TOTVS | open-orders | UX «postergado vs disponível» |
 | Bruto vs líquido explícito | **Parcial** | ROL líquido; pedidos podem ser brutos | — | Política por indicador (Onda A) |
-| Distinguir carteira comercial × programação PCP | **Parcial** | Pedidos = comercial; factory-status ≠ PCP completo | — | Nunca rotular PCP como carteira (dor #4) |
+| Distinguir carteira comercial × programação PCP | **Existe** | Copy Overview + helps (`≠ PCP`) | open-orders / summary | Não rotular PCP como carteira (dor #4) |
 
 ### §8 — Indicadores de clientes
 
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
-| Clientes com pedido / faturamento / evolução / carteira / ofertas | **Parcial** | `/customers` + Conta | enrich + billing + opp | — |
+| Clientes com pedido / faturamento / evolução / carteira / ofertas | **Existe** | `/customers` + Conta | enrich + billing + opp | Classificação ativo/recuperado/ticket = outra linha (KPI) |
 | Ativos / novos / recuperados / frequência / tempo desde compra / ticket | **Bloqueado / parcial** | `new-clients-*` na api-delpi (pouca UI) | — | Fichas KPI-CLIENTE-\* / TICKET |
 | Filtros vendedor, segmento, período | **Parcial** | Escopo + analytics | — | Família / grupo cliente |
 | Segmentação estruturada | **Parcial** | WEG × Novos negócios | — | Fonte TOTVS/CRM/cadastro (dor #6) |
@@ -205,7 +205,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 | Necessidade | Status | Onde acessar | Fonte | Gap / próximo passo |
 |-------------|--------|--------------|-------|---------------------|
 | Lista FNE (cliente, doc, item, tempos, justificativa, responsável) | **Falta** | — | Sem operationId | Onda D; SLA 24h só após formalizar |
-| «Pode faturar» (estoque) | **Parcial** | Chip em Meus pedidos / Início | open-orders | **Não** substitui FNE |
+| «Pode faturar» (estoque) | **Existe** | Chip Meus pedidos / Início + badge nav | FIFO BFF `OpenOrderStockAllocationService` → `kanbanStageCounts` | **Não** substitui FNE |
 
 ### §18 — Divergência de expedição (barcode/QR)
 

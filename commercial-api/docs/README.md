@@ -16,4 +16,6 @@ API dona do estado Delpi do **Portal Comercial** (carteiras, worklist, contatos 
 |-----|------|
 | [architecture/realtime-worklist.md](./architecture/realtime-worklist.md) | WS worklist / presença |
 
+**Estoque FIFO / kanban:** `OpenOrderStockAllocationService` + `EnrichOpenOrdersKanbanService` gravam `estoque_alocado` **antes** de `kanbanStageCounts`. Badge da nav e chip «Pode faturar» compartilham essa contagem.
+
 Confirmação de pedidos, sala de interação e realtime ampliado para esses fluxos entram como epicos **após** a spec da ATA-2 — não inventar rotas/contratos aqui antes do epico.

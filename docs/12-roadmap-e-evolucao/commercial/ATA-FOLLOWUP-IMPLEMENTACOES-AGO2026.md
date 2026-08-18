@@ -14,12 +14,12 @@
 | Pedidos em aberto (filtros, KPI, tabela/cards, colunas) | **Existe** | Homologar UX; não reinventar |
 | Kanban de pedidos por etapa (próximos → faturar → concluídos) | **Existe** | Board + BFF `kanbanStage` + concluídos recently-closed |
 | Responsável pela criação do pedido (Protheus) | **Indisponível** (doc padroes-totvs) | Sem UI de criador neste ciclo |
-| Comparativos de faturamento na carteira (empresa, YoY, períodos, tendência) | **Parcial** | Estender Overview/Conta; faltam % empresa e seletor livre |
+| Comparativos de faturamento na carteira (empresa, YoY, períodos, tendência) | **Existe** | T3 share · T4 períodos/YoY · T5 ranking — [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) P-SHARE |
 | Meu Dia (tarefas, cliente, anexos, responsável, realtime, gestor) | **Existe** (MVP forte) | P3 CRM (lembrete/notif push); visita→frota |
 | Integração visita × Central de Agendamento (veículos) | **Falta** (app irmão existe) | BFF + deep-link / reserva no fluxo Visita |
-| Home por perfil (vendedor × gestor × orçamentista × faturamento) | **Parcial** | Personas via papéis Minha Delpi + layouts Home |
+| Home por perfil (vendedor × gestor × orçamentista × faturamento) | **Parcial** | Vendedor/gestor **Existem**; orçamentista/faturamento = T7 |
 | Notificar «pronto para faturar» (faturamento + vendedores) | **Existe** | Snapshot + outbox + sino Minha Delpi; config `billing*` só admin/app |
-| Config sensível só admin da aplicação | **Parcial** | Manter manage interno; não expandir toggles ao gestor |
+| Config sensível só admin da aplicação | **Existe** | Grants `manage` internos; não expandir toggles ao gestor |
 | Área de colaboração (feed, menções, vínculos, Outlook/Teams) | **Falta** | Epico novo; reusar integração Outlook Minha Delpi |
 
 ### Ata alinhamento 2 (epicos apontados)
@@ -45,7 +45,7 @@ Legenda: **Existe** · **Parcial** · **Falta** · **Investigar** · **Fora** (o
 | Filtros (estoque, atraso, escopo carteira/vendedor, datas…) | `OpenOrdersPage` + deep links | Ver helps `CM_HELP.openOrders` |
 | Indicadores resumidos / strip de status | Página + factory strip | Cobertura, atrasos, etc. |
 | Visualização **tabela**, **cards** ou **board** (Kanban) | Preferência persistida | Layout toggle + WF-OPEN-ORDERS-KANBAN |
-| Colunas Kanban `upcoming` · `in_progress` · `ready_to_invoice` · `completed` | BFF `kanbanStage` + recently-closed | Classificador em `OpenOrderKanbanStageService`; MFE só agrupa |
+| Colunas Kanban `upcoming` · `in_progress` · `ready_to_invoice` · `completed` | BFF `kanbanStage` + recently-closed | FIFO `OpenOrderStockAllocationService` → `OpenOrderKanbanStageService` via `EnrichOpenOrdersKanbanService`; MFE só agrupa. Badge «Meus pedidos» = `kanbanStageCounts.ready_to_invoice` (mesma regra do chip «Pode faturar») |
 | Escolher e ordenar colunas | Preferências de coluna | Table settings |
 | Detalhe de linha / OP, links reais Conta/Pedido/OP | Detalhe produção + `CommercialEntityLink` | WF pedidos / links ago/2026 |
 | Export Excel | Toolbar | |
@@ -98,7 +98,7 @@ Refs: [KPI-FICHAS.md](./KPI-FICHAS.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-
 | Faturamento da **carteira ÷ faturamento total da empresa** | **Entregue** (T3) | KPI-PORTFOLIO-SHARE · BFF `portfolio-billing-share` · cards Overview + Minha Carteira (RBAC analytics/team/manage) |
 | Período atual × **mesmo período ano anterior** | **Entregue** (T4) | YoY Overview + Minha Carteira + Conta `?secao=historico` via `periodShift` / billing |
 | Comparação com **períodos e anos escolhidos pelo usuário** | **Entregue** (T4) | `PeriodCompareControls`: presets + custom + até 3 anos overlay nas séries |
-| Evolução da carteira no tempo | **Parcial** (horizon + séries) | Aberto = horizon; faturado = séries/billing — glossário CM_HELP |
+| Evolução da carteira no tempo | **Existe** | Aberto = horizon; faturado = séries/billing; glossário `CM_HELP.*.glossaryOpenVsBilled`. FCT declarado permanece backlog |
 | Tendência de faturamento com **período configurável** | **Entregue** (T4) | Janela 7/30/90/custom (default 30) no enrichment + UI Minha Carteira |
 | Cortes cliente × vendedor × período (crescimento/queda) | **Entregue** (T5) | BFF `portfolio-billing-ranking` + tabela/Excel Minha Carteira; `group_by=seller` só team/manage |
 
@@ -131,7 +131,7 @@ Refs: [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [HOMOLOGACAO-WAVE-
 
 | Item da ata | Status | Ferramenta / entrega |
 |-------------|--------|----------------------|
-| **Notificações no Minha Delpi** (além do toast in-app) | **Parcial / Falta** | Canal plataforma (bell/push/e-mail) via outbox; P3 «Reminder» em UX-E-TASKS |
+| **Notificações no Minha Delpi** (além do toast in-app) | **Existe** (T6/T9) | Outbox → Core (pronto a faturar + tarefas). **Falta:** P3 «Reminder» CRM em UX-E-TASKS |
 | Integração **visita → Central de Agendamento (veículos)** | **Falta** | Ao tipo **Visita**: consultar disponibilidade, data/hora, reservar recurso; UI no Portal + gateway HTTP para api-delpi `/scheduling…` (dono: Central de Agendamento) |
 
 App irmão já existe: [`plugins/central-agendamento`](../../../plugins/central-agendamento/README.md) · rotas ES/SC · doc [central-agendamento.md](../../../api-delpi/docs/api/central-agendamento.md).
@@ -153,7 +153,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 | Informações conforme **capacidade** (não cargo hardcoded) | **Existe** | [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) — papéis Minha Delpi agrupam codes |
 | Vendedor: pedidos, carteira (membership), Meu Dia, Conta | **Existe** | Home prioriza atenção / números do escopo |
 | Gestor: Visão geral, escopo equipe, Admin carteiras/equipe | **Existe** | `analytics.view`, `accounts.team.view`, `seller-portfolios.manage` |
-| Config sensível em Admin (não no dia a dia do gestor de campo) | **Parcial** | CRUD carteiras/grupos só `manage`; evitar proliferar toggles |
+| Config sensível em Admin (não no dia a dia do gestor de campo) | **Existe** | CRUD carteiras/grupos só `manage`; evitar proliferar toggles |
 
 ### 4.2 Implementar
 
@@ -162,7 +162,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 | Home **vendedor** = meus clientes / pedidos / carteira / atividades | Layout/prioridade do Início por conjunto de permissões (já parcialmente); validar copy e ordem com Comercial |
 | Home **gestor** = equipe + carteiras + pedidos + indicadores | Reforçar bloco Gestão/Equipe + deep links Overview; ranking produtividade se faltar |
 | Perfis **orçamentista** e **faturamento** | Novos **papéis** Minha Delpi (agrupando codes existentes + futuros `*.view` se necessário); telas/atalhos: OV/propostas vs. «pronto a faturar» |
-| Notificar **responsável faturamento** + **vendedores** quando pedido **pronto para faturar** | **Entregue** — `OpenOrderKanbanStageService` + checkpoint `integration_checkpoints` + outbox + `POST /integrations/jobs/ready-to-invoice-scan` → Core `/integrations/notifications` (deep link board). Destinatários: membership da carteira do cliente + `billingUserIds` / `billingPermissionCodes` em `ready_to_invoice_notification.json` (só ops/admin app). Catálogo: categoria `commercial`. |
+| Notificar **responsável faturamento** + **vendedores** quando pedido **pronto para faturar** | **Entregue** — FIFO `OpenOrderStockAllocationService` + `OpenOrderKanbanStageService` + checkpoint `integration_checkpoints` + outbox + `POST /integrations/jobs/ready-to-invoice-scan` → Core `/integrations/notifications` (deep link board). Destinatários: membership da carteira do cliente + `billingUserIds` / `billingPermissionCodes` em `ready_to_invoice_notification.json` (só ops/admin app). Catálogo: categoria `commercial`. |
 | Notificar envolvidos em **tarefas** (atribuída / grupo / concluída / prazo) | **Entregue** — hooks worklist + outbox + `POST /integrations/jobs/task-due-scan` → Core (`category=commercial_tasks`). Destinatários = `userIds` envolvidos (sem permission code novo). Preferências: «Tarefas comerciais». |
 | Permissões sensíveis só equipe da aplicação | Política ops: grants de `manage` / auditoria só internos; documentar no PERFIS |
 

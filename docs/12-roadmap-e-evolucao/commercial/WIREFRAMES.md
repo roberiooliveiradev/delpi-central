@@ -538,7 +538,7 @@ Concentrar (MVP temporal) usa `deliveryHorizon` do envelope e deep links
 **Status:** entregue (read-only)  
 **Toggle:** Tabela | Cards | **Board** (persistido em `commercial:open-orders:layout`)  
 **Kit:** `KanbanBoard` / `CommercialKanbanBoard` — zero CSS de board no MFE  
-**Estágios (BFF `kanbanStage`):** `upcoming` · `in_progress` · `ready_to_invoice` (+ coluna `completed` via rota recently-closed)  
+**Estágios (BFF `kanbanStage`):** `upcoming` · `in_progress` · `ready_to_invoice` (+ coluna `completed` via rota recently-closed). Contagens `kanbanStageCounts` usam **FIFO** (`estoque_alocado`) — mesma regra do chip «Pode faturar» e do badge «Meus pedidos».  
 **Deep link:** `?view=board&stage=ready_to_invoice` (`buildOpenOrdersBoardHref`)  
 **Não é:** WF-08 Kanban de oportunidades; sem drag-and-drop / escrita Protheus
 

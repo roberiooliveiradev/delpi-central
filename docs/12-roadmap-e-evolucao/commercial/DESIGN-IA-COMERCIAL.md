@@ -128,7 +128,7 @@ Entrega atual (ago/2026): busca sem outline no input; `leadingIcon` em Eventos; 
 | Ícone Lucide por rota no `SectionRouteCard` (prop opcional) | Hierarquia visual 2º nível | Backlog |
 | Subtítulos «Alertas» vs «Tarefas» no painel Eventos | Separação semântica | Backlog |
 | CommandPalette polish = CatalogSearchBar | Paridade visual | Backlog |
-| Empty quiet da busca inline | Zero empty SectionCard | Parcial |
+| Empty quiet da busca inline | Zero empty SectionCard | **Existe** (`emptyHitsLabel` no `CommercialCatalogSearchBar`) |
 
 ## UX
 
@@ -144,5 +144,5 @@ Entrega atual (ago/2026): busca sem outline no input; `leadingIcon` em Eventos; 
 | Export OTD/Opp; worklist summary leve | GESTAO-A-VISTA backlog |
 | Paridade KPI WEG / NB absoluto | GESTAO-A-VISTA |
 | Ranking Equipe (só se dentro de Admin) | futuro |
-| Observação, anexos, reminder | UX-E-TASKS-EVOLUTION |
+| Reminder / checklist CRM (P3) | UX-E-TASKS-EVOLUTION — obs./responsável/anexos **entregues** |
 | F2c PVA, Wave H | IMPLEMENTATION-PLAN |

@@ -38,7 +38,7 @@ Todos os campos abaixo devem ser selecionados **explicitamente** no repository (
 | `saldo` | number | Quantidade em aberto | `quantidade - entregue` (validar na view) |
 | `data_despacho` | string \| null | Data de despacho | `null` → "Não informado" na UI |
 | `data_entrega` | string | Data prevista de entrega | ISO `YYYY-MM-DD`; ordenação default DESC |
-| `no_estoque` | number | Quantidade disponível em estoque | Base dos badges de estoque |
+| `no_estoque` | number | Quantidade física repetida por produto/filial na view TOTVS | **Não** usar sozinho para «pode faturar» — ver § 6 FIFO |
 | `preco_venda` | number | Preço unitário de venda | BRL na UI |
 | `valor_aberto` | number | Valor financeiro em aberto | BRL na UI |
 
@@ -64,7 +64,7 @@ Calculados no repository sobre **todas** as linhas retornadas:
 | `itens_estoque_parcial` | `COUNT` onde `no_estoque > 0 AND no_estoque < saldo` |
 | `itens_sem_estoque` | `COUNT` onde `no_estoque <= 0` |
 
-Na UI, após filtros client-side, o summary é **recalculado** sobre as linhas filtradas.
+Na UI, após filtros client-side, o summary operacional é **recalculado** sobre as linhas filtradas com `estoque_alocado` (FIFO). Os agregados SQL acima (`itens_com_estoque` via `no_estoque`) descrevem a view TOTVS e **não** alimentam o chip/badge do Portal Comercial.
 
 ---
 
@@ -131,9 +131,11 @@ FROM dbo.VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES;
 
 | Condição | Label |
 |----------|-------|
-| `no_estoque >= saldo` | Com estoque |
-| `no_estoque > 0` AND `no_estoque < saldo` | Estoque parcial |
-| `no_estoque <= 0` | Sem estoque |
+| `estoque_alocado >= saldo` (após FIFO) | Pode faturar / com estoque |
+| `estoque_alocado > 0` AND `estoque_alocado < saldo` | Estoque parcial |
+| `estoque_alocado <= 0` | Sem estoque |
+
+`no_estoque` da view é o físico **repetido** por produto/filial. A regra operacional (chip, tabela, badge «Meus pedidos», kanban `ready_to_invoice`, notificação) reparte esse físico em `estoque_alocado` no **commercial-api** (`OpenOrderStockAllocationService`, paridade MFE `allocateStockToOrders`).
 
 ### Despacho
 

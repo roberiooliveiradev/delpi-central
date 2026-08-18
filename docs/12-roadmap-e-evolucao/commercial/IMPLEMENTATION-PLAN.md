@@ -56,16 +56,16 @@ Homologação: [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md) · Perfis: [PERF
 | **G2+** Hero SI + highlights vivos | **Feito** | `PageHero` + `HomeHeroMetricsContext` |
 | **G3** Timeline conta + deep links propostas/dashboard | **Feito** | `CustomerActivityTimelinePanel.tsx` |
 | **G4** Migration M2 parcial `tasks`/`activities` | **Feito** | `V003__tasks_activities.sql` (`description` no DB) |
-| **G4** API worklist/tasks/activities | **Feito** | list/create/complete/**defer** + worklist; **sem** reassign multi-user |
-| **G4** MFE `/my-day` + RBAC `worklist`/`followups` | **Feito** | Form prazo/prioridade/cliente/tipo; Adiar; Conta→follow-up; **sem** UI de `description` |
+| **G4** API worklist/tasks/activities | **Feito** | list/create/complete/**defer** + **reassign** + worklist |
+| **G4** MFE `/my-day` + RBAC `worklist`/`followups` | **Feito** | Form prazo/prioridade/cliente/tipo; Adiar; Observação; Conta→follow-up |
 | **G4+** Meu dia PageHero / ScopeChipBar / empty CTA | **Feito** | `MyDayPage.tsx` (UX polish) |
-| **Pós-G** Observação / responsável / anexos | **Backlog** | [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
+| **Pós-G** Observação / responsável / anexos | **Feito** | [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) P0–P2; P3 reminder permanece backlog |
 | **G5** Manifest capacidades (sem persona) | **Feito** | Sem `commercial.home.view` — Home usa `accounts.view` |
 | **G5** `PERFIS-E-PERMISSOES.md` | **Feito** | Papéis sugeridos Minha Delpi |
 | Docs DESIGN-IA / HOMOLOGAÇÃO / README | **Feito** | Wave G+ P0/P1 |
 | Wireframes **WF-00 / 01R / 06R** | **Feito** | `WIREFRAMES.md` + DESIGN-IA |
 | Playbook §9 → link perfis | **Pendente doc** | Catálogo longo ainda; Wave G ativa em PERFIS |
-| Catálogo `plugin-ui` docs | **Parcial** | `UnderlineNav` no kit; entrada no catalog a completar |
+| Catálogo `plugin-ui` docs | **Feito** | `UnderlineNav` em `component-catalog.md` + demo `layout.UnderlineNav` |
 | Testes unit worklist + smoke remotes | **Feito** | Ver HOMOLOGACAO-WAVE-G |
 | Testes HTTP 403 RBAC worklist | **Feito** | `test_worklist_routes_rbac.py` (+ defer) |
 | **Fora:** F2c, prospects, pipeline, forecast, F3–F4 | **Fora** | Intencional |
