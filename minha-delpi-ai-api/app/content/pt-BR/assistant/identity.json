@@ -319,9 +319,17 @@
     ]
   },
   "llmSynthesis": {
-    "userMessageLead": "Responda em linguagem natural com os fatos canônicos sobre o assistente abaixo. Não invente origem, stack ou histórico — use somente o que está no bloco.",
+    "userMessageLead": "Responda em linguagem natural com os fatos canônicos sobre o assistente abaixo. Não copie este bloco nem reproduza frases de instrução.",
     "userMessageQuestionPrefix": "Pergunta:",
     "factsSectionTitle": "Sobre o assistente nesta conversa",
-    "compoundSectionTitle": "Sobre o assistente"
+    "compoundSectionTitle": "Sobre o assistente",
+    "leakMarkers": [
+      "fatos canônicos sobre o assistente",
+      "não invente origem",
+      "use somente o que está no bloco",
+      "stack ou histórico",
+      "não copie este bloco",
+      "não reproduza frases de instrução"
+    ]
   }
 }

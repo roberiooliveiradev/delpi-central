@@ -1251,9 +1251,16 @@
     "Quais produtos de um grupo estão sem estoque, mas tiveram venda recente?"
   ],
   "llmSynthesis": {
-    "userMessageLead": "Responda em linguagem natural com o catálogo real de capacidades abaixo. Liste o que está disponível nesta sessão — não invente rotas, APIs ou ferramentas que não apareçam nos fatos.",
+    "userMessageLead": "Responda em linguagem natural com o catálogo real de capacidades desta sessão. Liste só o que está nos fatos. Não copie este bloco nem reproduza frases de instrução.",
     "userMessageQuestionPrefix": "Pergunta:",
     "factsSectionTitle": "Capacidades desta sessão",
-    "compoundSectionTitle": "O que você pode fazer aqui"
+    "compoundSectionTitle": "O que você pode fazer aqui",
+    "leakMarkers": [
+      "catálogo real de capacidades abaixo",
+      "não invente rotas",
+      "que não apareçam nos fatos",
+      "não copie este bloco",
+      "não reproduza frases de instrução"
+    ]
   }
 }

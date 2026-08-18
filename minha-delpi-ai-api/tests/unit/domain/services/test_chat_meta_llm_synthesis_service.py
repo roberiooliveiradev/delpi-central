@@ -14,8 +14,16 @@ configure_domain_infrastructure_ports()
 
 
 def test_capabilities_llm_synthesis_content_loaded():
+    from app.domain.services.chat_assistant_identity_content_service import (
+        ChatAssistantIdentityContentService,
+    )
+
     assert ChatCapabilitiesContentService.llm_synthesis_facts_section_title()
     assert "capacidades" in ChatCapabilitiesContentService.llm_synthesis_user_message_lead().lower()
+    assert "não copie este bloco" in ChatCapabilitiesContentService.leak_markers()
+    assert "use somente o que está no bloco" in ChatAssistantIdentityContentService.leak_markers()
+    assert "não copie" in ChatCapabilitiesContentService.llm_synthesis_user_message_lead().lower()
+    assert "não copie" in ChatAssistantIdentityContentService.llm_synthesis_user_message_lead().lower()
 
 
 def test_compose_compound_user_message():
