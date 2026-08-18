@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { useRef, useState, type ReactElement } from "react";
+import { useRef, type ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
