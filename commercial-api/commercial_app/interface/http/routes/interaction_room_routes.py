@@ -1,18 +1,23 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Path, Request
+from fastapi import APIRouter, Body, Path, Query, Request
 
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_ACCESS_PERMISSIONS,
 )
+from commercial_app.application.use_cases.manage_interaction_messages import (
+    PostInteractionMessageInput,
+)
 from commercial_app.application.use_cases.manage_interaction_rooms import (
     ResolveInteractionRoomInput,
 )
 from commercial_app.composition.commercial_composer import (
+    build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
 )
 from commercial_app.core.auth_actor import actor_sub_from_request
@@ -22,7 +27,9 @@ from commercial_app.domain.services.interaction_room_content_service import (
 )
 from commercial_app.interface.http.schemas.interaction_room_schemas import (
     AddInteractionRoomMemberBody,
+    PostInteractionMessageBody,
     ResolveInteractionRoomBody,
+    UpdateInteractionMessageBody,
 )
 
 logger = logging.getLogger(__name__)
@@ -228,3 +235,171 @@ def mark_interaction_room_read(
     except Exception:
         logger.exception("mark_interaction_room_read_failed")
         return fail("Erro interno ao marcar leitura.", 500, operation_id=operation_id)
+
+
+def _mentions_from_body(
+    raw: list[dict] | None,
+) -> list[tuple[str, dict, str]]:
+    items: list[tuple[str, dict, str]] = []
+    for entry in raw or []:
+        if not isinstance(entry, dict):
+            continue
+        kind = str(entry.get("mention_kind") or entry.get("kind") or "").strip()
+        label = str(entry.get("label") or "").strip()
+        ref = entry.get("ref")
+        if not isinstance(ref, dict):
+            ref = {
+                key: value
+                for key, value in entry.items()
+                if key not in {"mention_kind", "kind", "label", "ref"}
+            }
+        items.append((kind, ref, label))
+    return items
+
+
+@router.get("/{room_id}/messages", operation_id="list_interaction_messages")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def list_interaction_messages(
+    request: Request,
+    room_id: UUID = Path(...),
+    limit: int = Query(default=50, ge=1, le=200),
+    before_id: UUID | None = Query(default=None),
+    before_created_at: datetime | None = Query(default=None),
+    q: str | None = Query(default=None),
+):
+    operation_id = "list_interaction_messages"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        messages = build_manage_interaction_messages_use_case().list_messages(
+            room_id=room_id,
+            actor_user_id=actor,
+            limit=limit,
+            before_created_at=before_created_at,
+            before_id=before_id,
+            query=q,
+        )
+        return ok(
+            {"items": [item.to_dict() for item in messages]},
+            message=InteractionRoomContentService.message("listMessagesOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except Exception:
+        logger.exception("list_interaction_messages_failed")
+        return fail("Erro interno ao listar mensagens.", 500, operation_id=operation_id)
+
+
+@router.post("/{room_id}/messages", operation_id="post_interaction_message")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def post_interaction_message(
+    request: Request,
+    room_id: UUID = Path(...),
+    body: PostInteractionMessageBody = Body(...),
+):
+    operation_id = "post_interaction_message"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        message = build_manage_interaction_messages_use_case().post(
+            PostInteractionMessageInput(
+                room_id=room_id,
+                actor_user_id=actor,
+                body_text=body.body_text,
+                message_kind=body.message_kind,
+                parent_id=body.parent_id,
+                mentions=_mentions_from_body(body.mentions),
+            )
+        )
+        return ok(
+            message.to_dict(),
+            message=InteractionRoomContentService.message("postOk"),
+            status_code=201,
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("post_interaction_message_failed")
+        return fail("Erro interno ao enviar mensagem.", 500, operation_id=operation_id)
+
+
+@router.patch(
+    "/{room_id}/messages/{message_id}",
+    operation_id="update_interaction_message",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def update_interaction_message(
+    request: Request,
+    room_id: UUID = Path(...),
+    message_id: UUID = Path(...),
+    body: UpdateInteractionMessageBody = Body(...),
+):
+    operation_id = "update_interaction_message"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        message = build_manage_interaction_messages_use_case().update(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id=actor,
+            body_text=body.body_text,
+        )
+        return ok(
+            message.to_dict(),
+            message=InteractionRoomContentService.message("updateOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("update_interaction_message_failed")
+        return fail("Erro interno ao atualizar mensagem.", 500, operation_id=operation_id)
+
+
+@router.delete(
+    "/{room_id}/messages/{message_id}",
+    operation_id="delete_interaction_message",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def delete_interaction_message(
+    request: Request,
+    room_id: UUID = Path(...),
+    message_id: UUID = Path(...),
+):
+    operation_id = "delete_interaction_message"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        message = build_manage_interaction_messages_use_case().delete(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id=actor,
+        )
+        return ok(
+            message.to_dict(),
+            message=InteractionRoomContentService.message("deleteOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except Exception:
+        logger.exception("delete_interaction_message_failed")
+        return fail("Erro interno ao excluir mensagem.", 500, operation_id=operation_id)

@@ -16,3 +16,14 @@ class ResolveInteractionRoomBody(BaseModel):
 class AddInteractionRoomMemberBody(BaseModel):
     user_id: str = Field(..., min_length=1)
     role: str = "member"
+
+
+class PostInteractionMessageBody(BaseModel):
+    body_text: str = ""
+    message_kind: str = "text"
+    parent_id: UUID | None = None
+    mentions: list[dict] | None = None
+
+
+class UpdateInteractionMessageBody(BaseModel):
+    body_text: str = Field(..., min_length=1)
