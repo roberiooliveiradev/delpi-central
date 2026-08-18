@@ -1,0 +1,120 @@
+{
+  "kinds": [
+    {
+      "id": "user",
+      "group": "people",
+      "label": "Pessoa",
+      "hrefStrategy": "user_profile",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "customer",
+      "group": "objects",
+      "label": "Cliente",
+      "hrefStrategy": "customer_detail",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "portfolio",
+      "group": "objects",
+      "label": "Carteira",
+      "hrefStrategy": "portfolio_detail",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "order",
+      "group": "objects",
+      "label": "Pedido",
+      "hrefStrategy": "order_detail",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "opportunity",
+      "group": "objects",
+      "label": "Oportunidade",
+      "hrefStrategy": "opportunity_detail",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "proposal",
+      "group": "objects",
+      "label": "Proposta",
+      "hrefStrategy": "proposal_detail",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "production_order",
+      "group": "objects",
+      "label": "Ordem de produção",
+      "hrefStrategy": "production_order_detail",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "otd_line",
+      "group": "objects",
+      "label": "Linha OTD",
+      "hrefStrategy": "otd_line",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "invoice",
+      "group": "objects",
+      "label": "Nota fiscal",
+      "hrefStrategy": "invoice_detail",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "product",
+      "group": "objects",
+      "label": "Produto",
+      "hrefStrategy": "product_factory",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "kpi",
+      "group": "objects",
+      "label": "Indicador",
+      "hrefStrategy": "overview_kpi",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "goal",
+      "group": "objects",
+      "label": "Meta",
+      "hrefStrategy": "overview_kpi",
+      "suggestEnabled": true,
+      "previewEnabled": true
+    },
+    {
+      "id": "raw_material",
+      "group": "objects",
+      "label": "Matéria-prima",
+      "hrefStrategy": "product_structure",
+      "suggestEnabled": false,
+      "previewEnabled": true
+    }
+  ],
+  "requiredFields": [
+    "id",
+    "group",
+    "label",
+    "hrefStrategy",
+    "suggestEnabled",
+    "previewEnabled"
+  ],
+  "groups": {
+    "people": "Pessoas",
+    "objects": "Objetos"
+  }
+}
