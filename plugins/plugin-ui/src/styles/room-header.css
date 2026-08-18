@@ -1,0 +1,49 @@
+.delpi-ui-room-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+}
+
+.delpi-ui-room-header__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.delpi-ui-room-header__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--delpi-color-text, #0f172a);
+}
+
+.delpi-ui-room-header__subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--delpi-color-text-muted, #64748b);
+}
+
+.delpi-ui-room-header__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.delpi-ui-room-header__people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.delpi-ui-room-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
