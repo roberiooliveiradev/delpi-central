@@ -17,6 +17,13 @@ import { useCommercialFloatingNotice } from "./CommercialFloatingNoticeProvider"
 import { usePortfolioScope } from "./PortfolioScopeContext";
 import { lookupDirectoryUsers } from "../api/commercialPortfolioApi";
 import {
+  buildInteractionRoomSubscribePayload,
+  buildInteractionRoomUnsubscribePayload,
+  interactionRoomEventTouchesRoom,
+  isInteractionRoomEventType,
+  type CommercialInteractionRoomEvent,
+} from "../constants/interactionRoomRealtime";
+import {
   buildCommercialRealtimeWsUrl,
   isGenericActorDisplayName,
   parseCommercialRealtimeEvent,
@@ -42,6 +49,7 @@ type PortfolioChangedHandler = (event: CommercialPortfolioChangedEvent) => void;
 type AccountChangedHandler = (event: CommercialAccountChangedEvent) => void;
 type PresenceUpdatedHandler = (event: CommercialPresenceUpdatedEvent) => void;
 type ReadyToInvoiceHandler = (event: CommercialOrdersReadyToInvoiceEvent) => void;
+type InteractionRoomEventHandler = (event: CommercialInteractionRoomEvent) => void;
 
 type CommercialRealtimeContextValue = {
   connected: boolean;
@@ -51,6 +59,11 @@ type CommercialRealtimeContextValue = {
   subscribeAccountChanged: (handler: AccountChangedHandler) => () => void;
   subscribePresenceUpdated: (handler: PresenceUpdatedHandler) => () => void;
   subscribeReadyToInvoice: (handler: ReadyToInvoiceHandler) => () => void;
+  joinInteractionRoom: (roomId: string) => void;
+  leaveInteractionRoom: (roomId: string) => void;
+  subscribeInteractionRoomEvents: (
+    handler: InteractionRoomEventHandler,
+  ) => () => void;
 };
 
 const CommercialRealtimeContext = createContext<CommercialRealtimeContextValue | null>(null);
@@ -75,6 +88,8 @@ export function CommercialRealtimeProvider({
   const accountHandlersRef = useRef(new Set<AccountChangedHandler>());
   const presenceHandlersRef = useRef(new Set<PresenceUpdatedHandler>());
   const readyToInvoiceHandlersRef = useRef(new Set<ReadyToInvoiceHandler>());
+  const interactionRoomHandlersRef = useRef(new Set<InteractionRoomEventHandler>());
+  const desiredInteractionRoomIdsRef = useRef(new Set<string>());
   const lastPresenceRef = useRef<CommercialPresenceUpdatedEvent | null>(null);
   const getAccessTokenRef = useRef(getAccessToken);
 
@@ -116,6 +131,43 @@ export function CommercialRealtimeProvider({
       readyToInvoiceHandlersRef.current.delete(handler);
     };
   }, []);
+
+  const sendInteractionRoomProtocol = useCallback((payload: string) => {
+    const socket = socketRef.current;
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(payload);
+    }
+  }, []);
+
+  const joinInteractionRoom = useCallback(
+    (roomId: string) => {
+      const id = roomId.trim();
+      if (!id) return;
+      desiredInteractionRoomIdsRef.current.add(id);
+      sendInteractionRoomProtocol(buildInteractionRoomSubscribePayload(id));
+    },
+    [sendInteractionRoomProtocol],
+  );
+
+  const leaveInteractionRoom = useCallback(
+    (roomId: string) => {
+      const id = roomId.trim();
+      if (!id) return;
+      desiredInteractionRoomIdsRef.current.delete(id);
+      sendInteractionRoomProtocol(buildInteractionRoomUnsubscribePayload(id));
+    },
+    [sendInteractionRoomProtocol],
+  );
+
+  const subscribeInteractionRoomEvents = useCallback(
+    (handler: InteractionRoomEventHandler) => {
+      interactionRoomHandlersRef.current.add(handler);
+      return () => {
+        interactionRoomHandlersRef.current.delete(handler);
+      };
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!enabled) {
@@ -178,6 +230,9 @@ export function CommercialRealtimeProvider({
         if (cancelled) return;
         setConnectionError(null);
         setConnected(true);
+        for (const roomId of desiredInteractionRoomIdsRef.current) {
+          socket.send(buildInteractionRoomSubscribePayload(roomId));
+        }
         pingTimerRef.current = window.setInterval(() => {
           if (socket.readyState === WebSocket.OPEN) {
             socket.send("ping");
@@ -214,6 +269,13 @@ export function CommercialRealtimeProvider({
         if (event.type === "orders.ready_to_invoice") {
           for (const handler of readyToInvoiceHandlersRef.current) {
             handler(event);
+          }
+          return;
+        }
+        if (isInteractionRoomEventType(event.type)) {
+          const roomEvent = event as CommercialInteractionRoomEvent;
+          for (const handler of interactionRoomHandlersRef.current) {
+            handler(roomEvent);
           }
         }
       };
@@ -261,6 +323,9 @@ export function CommercialRealtimeProvider({
     subscribeAccountChanged,
     subscribePresenceUpdated,
     subscribeReadyToInvoice,
+    joinInteractionRoom,
+    leaveInteractionRoom,
+    subscribeInteractionRoomEvents,
   };
 
   return (
@@ -301,6 +366,43 @@ export function useCommercialWorklistSync(onChanged: () => void, enabled = true)
       if (timer != null) window.clearTimeout(timer);
     };
   }, [enabled, subscribeWorklistChanged]);
+}
+
+/**
+ * Join/leave `room:{uuid}` no WS existente e escuta eventos `room.*` da sala aberta.
+ * Não recarrega a UI sozinho — o host decide o que fazer no `onEvent`.
+ */
+export function useInteractionRoomSync(
+  roomId: string | null | undefined,
+  onEvent: (event: CommercialInteractionRoomEvent) => void,
+  enabled = true,
+) {
+  const {
+    joinInteractionRoom,
+    leaveInteractionRoom,
+    subscribeInteractionRoomEvents,
+  } = useCommercialRealtime();
+  const onEventRef = useRef(onEvent);
+
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
+
+  useEffect(() => {
+    const id = (roomId || "").trim();
+    if (!enabled || !id) return;
+    joinInteractionRoom(id);
+    return () => leaveInteractionRoom(id);
+  }, [enabled, roomId, joinInteractionRoom, leaveInteractionRoom]);
+
+  useEffect(() => {
+    const id = (roomId || "").trim();
+    if (!enabled || !id) return;
+    return subscribeInteractionRoomEvents((event) => {
+      if (!interactionRoomEventTouchesRoom(event, id)) return;
+      onEventRef.current(event);
+    });
+  }, [enabled, roomId, subscribeInteractionRoomEvents]);
 }
 
 /** Refetch badge / lista quando chega `orders.ready_to_invoice`. */

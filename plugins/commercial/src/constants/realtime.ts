@@ -1,4 +1,9 @@
 import { COMMERCIAL_API_BASE } from "../api/httpClient";
+import type {
+  CommercialInteractionRoomEvent,
+  CommercialRoomSubscribeAckEvent,
+  CommercialRoomSubscribeErrorEvent,
+} from "./interactionRoomRealtime";
 
 export type WorklistChangeReason =
   | "task.created"
@@ -80,6 +85,9 @@ export type CommercialRealtimeEvent =
   | CommercialAccountChangedEvent
   | CommercialPresenceUpdatedEvent
   | CommercialOrdersReadyToInvoiceEvent
+  | CommercialInteractionRoomEvent
+  | CommercialRoomSubscribeAckEvent
+  | CommercialRoomSubscribeErrorEvent
   | { type: "connected"; roomKeys?: string[]; userId?: string; clientId?: string }
   | { type: "pong" };
 
