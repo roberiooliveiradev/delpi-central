@@ -40,6 +40,20 @@ class CreateTaskBody(BaseModel):
         max_length=20,
         description="Grupos operacionais responsáveis (UUID). Exige manage; membership atual define visibilidade.",
     )
+    related_entity_type: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Tipo polimórfico leve (ex.: order, customer, interaction_room).",
+    )
+    related_entity_id: str | None = Field(
+        default=None,
+        max_length=200,
+        description="Identificador do registro relacionado (chave estável).",
+    )
+    source_interaction_message_id: UUID | None = Field(
+        default=None,
+        description="Mensagem da sala de interação que originou a tarefa.",
+    )
 
     @model_validator(mode="after")
     def _require_customer_pair(self) -> CreateTaskBody:
@@ -49,6 +63,12 @@ class CreateTaskBody(BaseModel):
         store = (self.customer_store or "").strip()
         if (code and not store) or (store and not code):
             raise ValueError("customer_code e customer_store devem ser enviados juntos")
+        related_type = (self.related_entity_type or "").strip()
+        related_id = (self.related_entity_id or "").strip()
+        if (related_type and not related_id) or (related_id and not related_type):
+            raise ValueError(
+                "related_entity_type e related_entity_id devem ser enviados juntos"
+            )
         return self
 
 
