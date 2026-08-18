@@ -39,7 +39,8 @@
     "previewOk": "Prévia do registro carregada.",
     "previewDenied": "Sem acesso a este registro.",
     "taskFromMessageOk": "Tarefa criada a partir da mensagem.",
-    "taskFromMessageDefaultTitle": "Tarefa da sala"
+    "taskFromMessageDefaultTitle": "Tarefa da sala",
+    "taskRefBody": "Tarefa criada: {title}"
   },
   "empty": {
     "title": "Nenhuma mensagem.",
@@ -80,6 +81,8 @@
   },
   "settings": {
     "taskTitleMaxChars": 500,
-    "relatedEntityTypeRoom": "interaction_room"
+    "relatedEntityTypeRoom": "interaction_room",
+    "taskMentionKind": "task",
+    "taskRefMessageKind": "task_ref"
   }
 }

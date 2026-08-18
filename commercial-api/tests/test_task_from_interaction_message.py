@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Mapping, Sequence
 from uuid import UUID, uuid4
 
 import pytest
@@ -11,13 +12,16 @@ from commercial_app.application.use_cases.create_task_from_interaction_message i
     CreateTaskFromInteractionMessageInput,
     CreateTaskFromInteractionMessageUseCase,
 )
+from commercial_app.application.use_cases.manage_interaction_messages import (
+    ManageInteractionMessagesUseCase,
+)
 from commercial_app.application.use_cases.manage_worklist import ManageWorklistUseCase
 from commercial_app.domain.entities.interaction_room import (
+    InteractionMention,
     InteractionMessage,
     InteractionRoom,
     InteractionRoomMember,
 )
-from commercial_app.domain.entities.task import CommercialTask
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
 )
@@ -42,6 +46,40 @@ class FakeMessages:
 
     def get_by_id(self, message_id: UUID) -> InteractionMessage | None:
         return self.items.get(message_id)
+
+    def create_message(
+        self,
+        *,
+        room_id: UUID,
+        author_user_id: str | None,
+        message_kind: str,
+        body_text: str,
+        parent_id: UUID | None = None,
+        mentions: Sequence[tuple[str, Mapping[str, object], str]] | None = None,
+    ) -> InteractionMessage:
+        message_id = uuid4()
+        mention_rows = tuple(
+            InteractionMention(
+                id=uuid4(),
+                message_id=message_id,
+                mention_kind=kind,
+                ref=dict(ref),
+                label=label,
+            )
+            for kind, ref, label in mentions or ()
+        )
+        message = InteractionMessage(
+            id=message_id,
+            room_id=room_id,
+            message_kind=message_kind,
+            body_text=body_text,
+            created_at=datetime.now(timezone.utc),
+            author_user_id=author_user_id,
+            parent_id=parent_id,
+            mentions=mention_rows,
+        )
+        self.items[message_id] = message
+        return message
 
 
 def _now() -> datetime:
@@ -98,11 +136,16 @@ def _use_case(
         task_repository=task_repo,
         activity_repository=InMemoryActivityRepo(),
     )
+    interaction_messages = ManageInteractionMessagesUseCase(
+        rooms=rooms,
+        messages=messages,
+    )
     return (
         CreateTaskFromInteractionMessageUseCase(
             rooms=rooms,
             messages=messages,
             worklist=worklist,
+            interaction_messages=interaction_messages,
         ),
         task_repo,
     )
@@ -114,7 +157,7 @@ def test_creates_task_linked_to_room_and_message() -> None:
     room_id, message_id = _seed_room_message(rooms=rooms, messages=messages)
     uc, tasks = _use_case(rooms, messages)
 
-    task = uc.execute(
+    result = uc.execute(
         CreateTaskFromInteractionMessageInput(
             room_id=room_id,
             message_id=message_id,
@@ -122,12 +165,21 @@ def test_creates_task_linked_to_room_and_message() -> None:
         )
     )
 
-    assert isinstance(task, CommercialTask)
+    task = result.task
     assert task.title == "Confirmar produto 90AAAA01 no pedido"
     assert task.related_entity_type == "interaction_room"
     assert task.related_entity_id == str(room_id)
     assert task.source_interaction_message_id == message_id
     assert tasks.items[task.id].source_interaction_message_id == message_id
+
+    ref_msg = result.task_ref_message
+    assert ref_msg.message_kind == "task_ref"
+    assert ref_msg.body_text == "Tarefa criada: Confirmar produto 90AAAA01 no pedido"
+    assert ref_msg.room_id == room_id
+    assert any(m.mention_kind == "task" for m in ref_msg.mentions)
+    assert any(
+        str(m.ref.get("task_id")) == str(task.id) for m in ref_msg.mentions
+    )
 
 
 def test_rejects_non_member() -> None:

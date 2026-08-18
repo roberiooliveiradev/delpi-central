@@ -100,6 +100,9 @@ export function resolveInteractionEntityHref(
     case "product_factory": {
       return buildPluginPath("home", basePath);
     }
+    case "my_day": {
+      return buildPluginPath("my_tasks", basePath);
+    }
     default:
       return null;
   }

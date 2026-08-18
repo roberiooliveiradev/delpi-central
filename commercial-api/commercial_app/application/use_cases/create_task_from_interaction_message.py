@@ -5,10 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID
 
+from commercial_app.application.use_cases.manage_interaction_messages import (
+    ManageInteractionMessagesUseCase,
+    PostInteractionMessageInput,
+)
 from commercial_app.application.use_cases.manage_worklist import (
     CreateTaskInput,
     ManageWorklistUseCase,
 )
+from commercial_app.domain.entities.interaction_room import InteractionMessage
 from commercial_app.domain.entities.task import CommercialTask
 from commercial_app.domain.ports.interaction_message_repository_port import (
     InteractionMessageRepositoryPort,
@@ -33,8 +38,14 @@ class CreateTaskFromInteractionMessageInput:
     task_type: str = "follow_up"
 
 
+@dataclass(frozen=True)
+class CreateTaskFromInteractionMessageResult:
+    task: CommercialTask
+    task_ref_message: InteractionMessage
+
+
 class CreateTaskFromInteractionMessageUseCase:
-    """Membership na sala + create_task com related_entity=interaction_room."""
+    """Membership + create_task + mensagem task_ref na sala."""
 
     def __init__(
         self,
@@ -42,17 +53,19 @@ class CreateTaskFromInteractionMessageUseCase:
         rooms: InteractionRoomRepositoryPort,
         messages: InteractionMessageRepositoryPort,
         worklist: ManageWorklistUseCase,
+        interaction_messages: ManageInteractionMessagesUseCase,
     ) -> None:
         self._rooms = rooms
         self._messages = messages
         self._worklist = worklist
+        self._interaction_messages = interaction_messages
 
     def execute(
         self,
         request: CreateTaskFromInteractionMessageInput,
         *,
         actor_is_portfolio_manager: bool = False,
-    ) -> CommercialTask:
+    ) -> CreateTaskFromInteractionMessageResult:
         actor = (request.actor_user_id or "").strip()
         if not actor:
             raise ValueError(InteractionRoomContentService.error("userIdRequired"))
@@ -73,7 +86,7 @@ class CreateTaskFromInteractionMessageUseCase:
             message.body_text
         )
         description = (request.description or "").strip() or None
-        return self._worklist.create_task(
+        task = self._worklist.create_task(
             user_id=actor,
             data=CreateTaskInput(
                 title=title,
@@ -87,4 +100,24 @@ class CreateTaskFromInteractionMessageUseCase:
                 source_interaction_message_id=request.message_id,
             ),
             actor_is_portfolio_manager=actor_is_portfolio_manager,
+        )
+        mention_kind = InteractionRoomContentService.task_mention_kind()
+        task_ref_message = self._interaction_messages.post(
+            PostInteractionMessageInput(
+                room_id=request.room_id,
+                actor_user_id=actor,
+                body_text=InteractionRoomContentService.task_ref_body(title=task.title),
+                message_kind=InteractionRoomContentService.task_ref_message_kind(),
+                mentions=(
+                    (
+                        mention_kind,
+                        {"task_id": str(task.id)},
+                        task.title,
+                    ),
+                ),
+            )
+        )
+        return CreateTaskFromInteractionMessageResult(
+            task=task,
+            task_ref_message=task_ref_message,
         )

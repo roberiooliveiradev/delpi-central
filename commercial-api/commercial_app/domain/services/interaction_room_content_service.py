@@ -156,3 +156,22 @@ class InteractionRoomContentService:
     @classmethod
     def related_entity_type_room(cls) -> str:
         return cls.setting_str("relatedEntityTypeRoom", "interaction_room")
+
+    @classmethod
+    def task_ref_message_kind(cls) -> str:
+        return cls.setting_str("taskRefMessageKind", "task_ref")
+
+    @classmethod
+    def task_mention_kind(cls) -> str:
+        return cls.setting_str("taskMentionKind", "task")
+
+    @classmethod
+    def task_ref_body(cls, *, title: str) -> str:
+        template = cls.message("taskRefBody")
+        cleaned_title = " ".join(str(title or "").split()) or cls.message(
+            "taskFromMessageDefaultTitle"
+        )
+        try:
+            return template.format(title=cleaned_title)
+        except Exception:
+            return f"{template} {cleaned_title}".strip()

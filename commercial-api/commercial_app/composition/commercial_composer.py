@@ -346,6 +346,7 @@ def build_create_task_from_interaction_message_use_case() -> (
                 rooms=build_interaction_room_repository(),
                 messages=build_interaction_message_repository(),
                 worklist=build_manage_worklist_use_case(),
+                interaction_messages=build_manage_interaction_messages_use_case(),
             )
         )
     return _create_task_from_interaction_message_use_case

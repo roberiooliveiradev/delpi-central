@@ -696,7 +696,7 @@ def create_task_from_interaction_message(
         return early
     try:
         payload = body or CreateTaskFromInteractionMessageBody()
-        task = build_create_task_from_interaction_message_use_case().execute(
+        result = build_create_task_from_interaction_message_use_case().execute(
             CreateTaskFromInteractionMessageInput(
                 room_id=room_id,
                 message_id=message_id,
@@ -707,6 +707,7 @@ def create_task_from_interaction_message(
                 current_user_from_request(request)
             ),
         )
+        task = result.task
         try:
             notify_worklist_changed(
                 reason="task.created",
@@ -721,10 +722,21 @@ def create_task_from_interaction_message(
                 task=task,
                 actor_user_id=actor,
             )
+            notify_room_message_changed(
+                reason="created",
+                room_id=str(result.task_ref_message.room_id),
+                message=result.task_ref_message,
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
         except Exception:  # noqa: BLE001 — notificação não pode falhar o POST
             logger.exception("task_from_message_notify_failed")
         return ok(
-            task.to_dict(),
+            {
+                "task": task.to_dict(),
+                "task_ref_message": result.task_ref_message.to_dict(),
+            },
             message=InteractionRoomContentService.message("taskFromMessageOk"),
             status_code=201,
             operation_id=operation_id,

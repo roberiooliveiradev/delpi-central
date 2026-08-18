@@ -160,7 +160,8 @@ export function InteractionRoomPanel({
       setError(null);
       setSuccess(null);
       try {
-        await createTaskFromInteractionMessage(id, messageId);
+        const created = await createTaskFromInteractionMessage(id, messageId);
+        setMessages((prev) => [...prev, created.task_ref_message]);
         setSuccess(content.createTaskOk);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : content.createTaskError);

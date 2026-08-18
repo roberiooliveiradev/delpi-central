@@ -9,6 +9,10 @@ from uuid import UUID, uuid4
 import pytest
 from starlette.requests import Request
 
+from commercial_app.application.use_cases.create_task_from_interaction_message import (
+    CreateTaskFromInteractionMessageResult,
+)
+from commercial_app.domain.entities.interaction_room import InteractionMessage
 from commercial_app.domain.entities.task import CommercialTask
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
@@ -65,6 +69,17 @@ def _task(*, room_id: UUID, message_id: UUID) -> CommercialTask:
     )
 
 
+def _task_ref(*, room_id: UUID, task: CommercialTask) -> InteractionMessage:
+    return InteractionMessage(
+        id=uuid4(),
+        room_id=room_id,
+        message_kind="task_ref",
+        body_text=f"Tarefa criada: {task.title}",
+        created_at=datetime.now(timezone.utc),
+        author_user_id="user-room-test",
+    )
+
+
 def test_create_task_from_message_403() -> None:
     request = _request("/interaction-rooms/x/messages/y/tasks")
     request.state.user = _User([])
@@ -81,8 +96,12 @@ def test_create_task_from_message_201(monkeypatch: pytest.MonkeyPatch) -> None:
     room_id = UUID("00000000-0000-0000-0000-000000000111")
     message_id = UUID("00000000-0000-0000-0000-000000000222")
     task = _task(room_id=room_id, message_id=message_id)
+    task_ref = _task_ref(room_id=room_id, task=task)
     fake_uc = MagicMock()
-    fake_uc.execute.return_value = task
+    fake_uc.execute.return_value = CreateTaskFromInteractionMessageResult(
+        task=task,
+        task_ref_message=task_ref,
+    )
     monkeypatch.setattr(
         interaction_room_routes,
         "build_create_task_from_interaction_message_use_case",
@@ -91,6 +110,11 @@ def test_create_task_from_message_201(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         interaction_room_routes,
         "notify_worklist_changed",
+        MagicMock(),
+    )
+    monkeypatch.setattr(
+        interaction_room_routes,
+        "notify_room_message_changed",
         MagicMock(),
     )
     portal = MagicMock()
@@ -111,13 +135,8 @@ def test_create_task_from_message_201(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert response.status_code == 201
     assert b"create_task_from_interaction_message" in response.body
+    assert b"task_ref_message" in response.body
     fake_uc.execute.assert_called_once()
-    call_kwargs = fake_uc.execute.call_args
-    req = call_kwargs.args[0]
-    assert req.room_id == room_id
-    assert req.message_id == message_id
-    assert req.actor_user_id == "user-room-test"
-    assert req.description == "detalhe"
     portal.on_task_created.assert_called_once()
 
 

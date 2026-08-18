@@ -359,15 +359,33 @@ export async function createTaskFromInteractionMessage(
   roomId: string,
   messageId: string,
   options?: { description?: string | null; signal?: AbortSignal },
-): Promise<CommercialTaskDto> {
-  const response = await httpPost<ApiSuccessResponse<CommercialTaskDto>>(
+): Promise<{
+  task: CommercialTaskDto;
+  task_ref_message: InteractionMessageDto;
+}> {
+  const response = await httpPost<
+    ApiSuccessResponse<{
+      task?: CommercialTaskDto;
+      task_ref_message?: InteractionMessageDto;
+    }>
+  >(
     interactionRoomsUrl(interactionRoomMessageTasksPath(roomId, messageId)),
     {
       description: options?.description?.trim() || undefined,
     },
     { signal: options?.signal },
   );
-  return unwrapEnvelope(response, "Erro ao criar tarefa a partir da mensagem.");
+  const data = unwrapEnvelope(
+    response,
+    "Erro ao criar tarefa a partir da mensagem.",
+  );
+  if (!data.task || !data.task_ref_message) {
+    throw new Error("Erro ao criar tarefa a partir da mensagem.");
+  }
+  return {
+    task: data.task,
+    task_ref_message: data.task_ref_message,
+  };
 }
 
 export async function setInteractionMessageReaction(

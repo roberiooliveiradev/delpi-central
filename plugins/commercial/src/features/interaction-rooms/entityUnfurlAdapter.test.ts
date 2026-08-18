@@ -59,6 +59,12 @@ describe("resolveInteractionEntityHref", () => {
         order: "102942",
       }),
     ).toBe("/apps/commercial/open-orders/01/102942/001");
+
+    expect(
+      resolveInteractionEntityHref("/apps/commercial", "my_day", {
+        task_id: "t1",
+      }),
+    ).toBe("/apps/commercial/my-tasks");
   });
 
   it("retorna null quando faltam chaves", () => {

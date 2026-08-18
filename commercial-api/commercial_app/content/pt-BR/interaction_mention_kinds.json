@@ -97,6 +97,14 @@
       "previewEnabled": true
     },
     {
+      "id": "task",
+      "group": "objects",
+      "label": "Tarefa",
+      "hrefStrategy": "my_day",
+      "suggestEnabled": false,
+      "previewEnabled": false
+    },
+    {
       "id": "raw_material",
       "group": "objects",
       "label": "Matéria-prima",
