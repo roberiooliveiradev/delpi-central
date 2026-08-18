@@ -1,0 +1,54 @@
+{
+  "errors": {
+    "roomNotFound": "Sala não encontrada.",
+    "messageNotFound": "Mensagem não encontrada.",
+    "accessDenied": "Você não tem acesso a esta sala.",
+    "entityAccessDenied": "Sem acesso a este registro.",
+    "kindUnknown": "Tipo de menção não reconhecido.",
+    "bodyRequired": "Informe o texto da mensagem.",
+    "userIdRequired": "user_id é obrigatório.",
+    "notAuthor": "Só o autor pode editar ou excluir esta mensagem.",
+    "parentNotInRoom": "A resposta precisa ser da mesma sala.",
+    "attachmentOwnerInvalid": "Tipo de anexo inválido para a sala."
+  },
+  "messages": {
+    "listRoomsOk": "Salas carregadas.",
+    "resolveOk": "Sala carregada.",
+    "getOk": "Sala carregada.",
+    "listMembersOk": "Membros da sala carregados.",
+    "addMemberOk": "Membro adicionado à sala.",
+    "removeMemberOk": "Membro removido da sala.",
+    "markReadOk": "Sala marcada como lida.",
+    "listMessagesOk": "Mensagens carregadas.",
+    "postOk": "Mensagem enviada.",
+    "updateOk": "Mensagem atualizada.",
+    "deleteOk": "Mensagem excluída.",
+    "reactionSetOk": "Reação registrada.",
+    "reactionClearedOk": "Reação removida.",
+    "listPinsOk": "Mensagens fixadas carregadas.",
+    "pinOk": "Mensagem fixada.",
+    "unpinOk": "Mensagem desafixada.",
+    "suggestOk": "Sugestões de menção carregadas.",
+    "previewOk": "Prévia do registro carregada.",
+    "previewDenied": "Sem acesso a este registro.",
+    "taskFromMessageOk": "Tarefa criada a partir da mensagem."
+  },
+  "empty": {
+    "title": "Nenhuma mensagem.",
+    "body": "A conversa deste pedido fica registrada aqui.",
+    "cta": "Escrever a primeira mensagem",
+    "inbox": "Nenhuma sala para exibir."
+  },
+  "filters": {
+    "all": "Todas",
+    "unread": "Não lidas",
+    "mentioned": "Mencionaram-me",
+    "process": "Processos",
+    "wall": "Mural"
+  },
+  "activity": {
+    "searching": "Buscando salas…",
+    "loadingMessages": "Carregando mensagens…",
+    "sending": "Enviando mensagem…"
+  }
+}
