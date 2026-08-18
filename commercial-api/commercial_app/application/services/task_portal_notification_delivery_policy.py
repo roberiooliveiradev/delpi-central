@@ -14,6 +14,9 @@ from commercial_app.domain.services.ready_to_invoice_notification_content_servic
 from commercial_app.domain.services.task_portal_notification_content_service import (
     TASK_PORTAL_EVENT_TYPES,
 )
+from commercial_app.domain.services.interaction_room_content_service import (
+    InteractionRoomContentService,
+)
 
 # When the user has the Commercial MFE open (WS online), they already get
 # in-app toast — skip Minha Delpi portal channel for these events.
@@ -21,6 +24,7 @@ _PORTAL_SUPPRESS_WHEN_ONLINE = frozenset(
     {
         *TASK_PORTAL_EVENT_TYPES,
         ReadyToInvoiceNotificationContentService.event_type(),
+        InteractionRoomContentService.mention_event_type(),
     }
 )
 

@@ -19,13 +19,20 @@ from commercial_app.application.use_cases.manage_interaction_messages import (
 from commercial_app.application.use_cases.manage_interaction_rooms import (
     ResolveInteractionRoomInput,
 )
+from commercial_app.application.services.commercial_realtime_notify import (
+    notify_interaction_mention,
+)
 from commercial_app.composition.commercial_composer import (
     build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
     build_preview_interaction_entity_use_case,
     build_suggest_interaction_mentions_use_case,
 )
-from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
+from commercial_app.core.auth_actor import (
+    actor_display_name_from_request,
+    actor_sub_from_request,
+    current_user_from_request,
+)
 from commercial_app.core.responses import fail, ok
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
@@ -399,6 +406,14 @@ def post_interaction_message(
                 mentions=_mentions_from_body(body.mentions),
             )
         )
+        try:
+            notify_interaction_mention(
+                message=message,
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+            )
+        except Exception:  # noqa: BLE001 — notificação não pode falhar o POST
+            logger.exception("interaction_mention_notify_failed")
         return ok(
             message.to_dict(),
             message=InteractionRoomContentService.message("postOk"),

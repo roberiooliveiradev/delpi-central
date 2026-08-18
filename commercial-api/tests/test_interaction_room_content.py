@@ -9,7 +9,7 @@ def setup_function() -> None:
 
 def test_bundle_has_required_sections() -> None:
     bundle = InteractionRoomContentService.bundle()
-    for section in ("errors", "messages", "empty", "filters", "activity"):
+    for section in ("errors", "messages", "empty", "filters", "activity", "notifications"):
         assert isinstance(bundle.get(section), dict)
         assert bundle[section]
 

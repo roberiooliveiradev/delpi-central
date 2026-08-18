@@ -55,5 +55,17 @@
     "searching": "Buscando salas…",
     "loadingMessages": "Carregando mensagens…",
     "sending": "Enviando mensagem…"
+  },
+  "notifications": {
+    "mention": {
+      "title": "Você foi mencionado na sala",
+      "messageTemplate": "{actor} mencionou você: {excerpt}",
+      "actionLabel": "Abrir sala",
+      "type": "info",
+      "eventType": "commercial.interaction.mention",
+      "category": "commercial_collaboration",
+      "deepLinkTemplate": "/apps/commercial/interaction-rooms/{roomId}",
+      "excerptMaxChars": 80
+    }
   }
 }

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Literal, Sequence
+from typing import Any, Literal, Mapping, Sequence
 
 from commercial_app.application.services.commercial_realtime_hub import (
     commercial_realtime_hub,
@@ -436,3 +436,109 @@ def notify_account_changed(
     rooms.add(TEAM_ROOM)
     for room in rooms:
         commercial_realtime_hub.schedule_broadcast(room, body)
+
+
+def mentioned_user_ids_from_message(message: Any) -> list[str]:
+    """Extrai user_id de menções kind=user (catálogo); ignora objetos de negócio."""
+    out: list[str] = []
+    seen: set[str] = set()
+    mentions = getattr(message, "mentions", ()) or ()
+    for item in mentions:
+        kind = str(
+            getattr(item, "mention_kind", None)
+            or (item.get("mention_kind") if isinstance(item, dict) else "")
+            or ""
+        ).strip()
+        if kind != "user":
+            continue
+        ref = getattr(item, "ref", None)
+        if ref is None and isinstance(item, dict):
+            ref = item.get("ref")
+        if not isinstance(ref, Mapping):
+            continue
+        user_id = str(ref.get("user_id") or "").strip()
+        if not user_id or user_id in seen:
+            continue
+        seen.add(user_id)
+        out.append(user_id)
+    return out
+
+
+def notify_interaction_mention(
+    *,
+    message: Any,
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+    portal: Any | None = None,
+) -> None:
+    """WS `user:` dos mencionados + sino Core (offline) em commercial_collaboration."""
+    from commercial_app.application.services.commercial_portal_notification_service import (
+        CommercialPortalNotificationService,
+    )
+    from commercial_app.application.services.task_portal_notification_delivery_policy import (
+        TaskPortalNotificationDeliveryPolicy,
+    )
+    from commercial_app.domain.services.interaction_room_content_service import (
+        InteractionRoomContentService,
+    )
+
+    recipients = mentioned_user_ids_from_message(message)
+    actor = (actor_user_id or "").strip()
+    recipients = [uid for uid in recipients if uid != actor]
+    if not recipients:
+        return
+
+    room_id = str(getattr(message, "room_id", "") or "").strip()
+    message_id = str(getattr(message, "id", "") or "").strip()
+    body_text = str(getattr(message, "body_text", "") or "")
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    content = InteractionRoomContentService
+    excerpt = content.mention_excerpt(body_text)
+    title = str(content.notification("mention").get("title") or "").strip()
+    notification_type = str(
+        content.notification("mention").get("type") or "info"
+    ).strip() or "info"
+    variant = (
+        notification_type
+        if notification_type in {"info", "success", "warning", "error"}
+        else "info"
+    )
+    toast_message = content.format_mention_message(
+        actor=actor_label,
+        excerpt=excerpt,
+    )
+    payload = {
+        "type": "room.mention",
+        "roomId": room_id or None,
+        "messageId": message_id or None,
+        "mentionedUserIds": recipients,
+        "actorUserId": actor or None,
+        "actorDisplayName": actor_label,
+        "actorClientId": (actor_client_id or "").strip() or None,
+        "notification": {
+            "title": title,
+            "message": toast_message,
+            "variant": variant,
+        },
+    }
+    for uid in recipients:
+        commercial_realtime_hub.schedule_broadcast(user_room(uid), payload)
+
+    event_type = content.mention_event_type()
+    offline = TaskPortalNotificationDeliveryPolicy().filter_portal_recipients(
+        event_type,
+        recipients,
+    )
+    if not offline:
+        return
+    notifier = portal or CommercialPortalNotificationService()
+    notifier.notify_interaction_mention(
+        user_ids=offline,
+        room_id=room_id,
+        message_id=message_id,
+        actor_display_name=actor_label,
+        excerpt=excerpt,
+    )

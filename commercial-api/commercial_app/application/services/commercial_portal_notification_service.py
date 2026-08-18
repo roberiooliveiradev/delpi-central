@@ -211,3 +211,47 @@ class CommercialPortalNotificationService:
                 "bucket": bucket or Content.bucket_for(event_type),
             },
         )
+
+    def notify_interaction_mention(
+        self,
+        *,
+        user_ids: Sequence[str],
+        room_id: str,
+        message_id: str,
+        actor_display_name: str,
+        excerpt: str,
+        action_target: str | None = None,
+        dedupe_key: str | None = None,
+    ) -> bool:
+        from commercial_app.domain.services.interaction_room_content_service import (
+            InteractionRoomContentService as Content,
+        )
+
+        block = Content.notification("mention")
+        title = str(block.get("title") or "Você foi mencionado na sala").strip()
+        action_label = str(block.get("actionLabel") or "Abrir sala").strip()
+        notification_type = str(block.get("type") or "info").strip() or "info"
+        message = Content.format_mention_message(
+            actor=actor_display_name,
+            excerpt=excerpt,
+        )
+        target = (action_target or "").strip() or Content.mention_deep_link(
+            room_id=room_id
+        )
+        return self.send(
+            user_ids=user_ids,
+            permission_codes=[],
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            action_label=action_label,
+            action_target=target,
+            dedupe_key=dedupe_key
+            or f"commercial:interaction:mention:{message_id}",
+            event_type=Content.mention_event_type(),
+            category=Content.mention_category(),
+            metadata={
+                "roomId": room_id,
+                "messageId": message_id,
+            },
+        )

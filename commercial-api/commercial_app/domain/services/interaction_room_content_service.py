@@ -20,7 +20,7 @@ def load_interaction_room_messages() -> dict[str, Any]:
         payload = json.load(handle)
     if not isinstance(payload, dict):
         raise ValueError("interaction_room.json deve ser um objeto.")
-    for section in ("errors", "messages", "empty", "filters", "activity"):
+    for section in ("errors", "messages", "empty", "filters", "activity", "notifications"):
         value = payload.get(section)
         if not isinstance(value, dict) or not value:
             raise ValueError(f"interaction_room.json precisa de {section} não vazio.")
@@ -68,3 +68,55 @@ class InteractionRoomContentService:
     @classmethod
     def activity(cls, key: str) -> str:
         return str(cls._section("activity").get(key) or key)
+
+    @classmethod
+    def notification(cls, key: str) -> dict[str, Any]:
+        block = cls._section("notifications").get(key) or {}
+        return block if isinstance(block, dict) else {}
+
+    @classmethod
+    def mention_event_type(cls) -> str:
+        return str(
+            cls.notification("mention").get("eventType")
+            or "commercial.interaction.mention"
+        ).strip()
+
+    @classmethod
+    def mention_category(cls) -> str:
+        return str(
+            cls.notification("mention").get("category") or "commercial_collaboration"
+        ).strip()
+
+    @classmethod
+    def format_mention_message(cls, *, actor: str, excerpt: str) -> str:
+        block = cls.notification("mention")
+        template = str(block.get("messageTemplate") or "{actor}: {excerpt}")
+        try:
+            return template.format(actor=actor, excerpt=excerpt)
+        except Exception:
+            return f"{actor}: {excerpt}"
+
+    @classmethod
+    def mention_excerpt(cls, body_text: str) -> str:
+        block = cls.notification("mention")
+        try:
+            limit = int(block.get("excerptMaxChars") or 80)
+        except (TypeError, ValueError):
+            limit = 80
+        limit = max(20, min(limit, 200))
+        cleaned = " ".join(str(body_text or "").split())
+        if len(cleaned) <= limit:
+            return cleaned
+        return cleaned[: max(1, limit - 1)].rstrip() + "…"
+
+    @classmethod
+    def mention_deep_link(cls, *, room_id: str) -> str:
+        block = cls.notification("mention")
+        template = str(
+            block.get("deepLinkTemplate")
+            or "/apps/commercial/interaction-rooms/{roomId}"
+        )
+        try:
+            return template.format(roomId=str(room_id or "").strip())
+        except Exception:
+            return f"/apps/commercial/interaction-rooms/{str(room_id or '').strip()}"
