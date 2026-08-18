@@ -1,12 +1,10 @@
 # Conteúdo GR / Gestão à Vista — fontes do Portal Comercial
 
-O editor de slides e playlists vive no **tv-dashboard**. O Portal Comercial **não** reimplementa GR.
+O editor de slides e playlists vive no **tv-dashboard**. O Portal Comercial **não** reimplementa GR e **não** roteia para o TV Dashboard.
 
-## Deep link
+## Fora do Comercial
 
-`/apps/tv-dashboard`
-
-Início (Home) do Comercial: alerta «GR de Vendas (TV)» → mesmo path.
+GR é demanda do app TV. Ocupação/OEE, quando entrar no Comercial, vêm por API/BFF numa página própria — sem `window.location` para outro plugin.
 
 ## Indicadores já no Overview (reusar como data routes TV)
 
@@ -27,4 +25,5 @@ Ticket médio, amostras, FNE, soma ROL+carteira — **bloqueados** até ficha/po
 ## O que não fazer
 
 - Editor de slides no `plugins/commercial`
+- Atalho/roteamento da Home (ou ficha) para `/apps/tv-dashboard` ou `/apps/dashboard-production`
 - Duplicar `tv-dashboard-api` no commercial-api

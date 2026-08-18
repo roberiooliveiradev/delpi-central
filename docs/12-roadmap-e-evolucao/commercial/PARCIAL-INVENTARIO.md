@@ -118,10 +118,10 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | ID | Tema | Status | Dono | Fontes |
 |----|------|--------|------|--------|
 | P-GAV-N1 | Gestão à Vista N1 gaps | **Backlog** | Comercial + TV | MAPA · Playbook |
-| P-GR-TV | GR de Vendas **no MFE commercial** | **Bloqueado** / Link | **tv-dashboard** | Home → `/apps/tv-dashboard` · [GAV-TV-FEED.md](./GAV-TV-FEED.md) |
+| P-GR-TV | GR de Vendas **no MFE commercial** | **Bloqueado** | **tv-dashboard** | Sem roteamento; GR no TV · [GAV-TV-FEED.md](./GAV-TV-FEED.md) |
 | P-HOME-PERS | Home orçamentista / faturamento | **Existe** | Hub routes postponed/board + PERFIS | FOLLOWUP T7 |
 | P-RANK-BI | Ranking produtividade (ofertas/colaborador) | **Backlog** | MFE + BFF | MAPA — ≠ ranking faturamento T5 (**Existe**) |
-| P-CAP-PCP | Cockpit capacidade PCP no commercial | **Bloqueado** / Link | Produção/PCP | Link Home + ficha linha → `/apps/dashboard-production` |
+| P-CAP-PCP | Cockpit capacidade PCP no commercial | **Bloqueado** | Produção/PCP | Sem roteamento; OEE/ocupação via API quando houver página |
 | P-IA-ALIM | Alimentar GAV/GR/IA | **Backlog** | Posterior | DESIGN-IA |
 | P-VIS-INT | Lacunas gerenciais | **Backlog** | Contínuo | MAPA |
 | P-NOTIF | Canal plataforma (sino Minha Delpi) | **Existe** | commercial-api + Core | FOLLOWUP T6/T9 — P3 reminder CRM permanece backlog |
@@ -141,8 +141,8 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-CLI-ATIVO / P-CLI-CLASS | Badges classificação KPI | Playbook P0 até ficha; KPI-FICHAS | Ficha `em_validacao`/`aprovada` |
 | KPI-TICKET | Ticket médio no cockpit | Ficha bloqueada Onda A | Unidade + bruto/líquido homologados |
 | P-HIST-NEG (margem) / rentabilidade | Margem na Conta / relatório | FIN-004; bounded-context | Política + RBAC + auditoria |
-| P-GR-TV (no commercial) | Editor/slides GR no MFE | Bounded context = tv-dashboard | Só Link / feed; slides no TV |
-| P-CAP-PCP / F-OCUP-FULL | Cockpit PCP no commercial | Dono Produção/PCP | Link dashboard-production; read-model só com contrato |
+| P-GR-TV (no commercial) | Editor/slides GR no MFE | Bounded context = tv-dashboard | Sem link para outro plugin; slides no TV |
+| P-CAP-PCP / F-OCUP-FULL | Cockpit PCP no commercial | Dono Produção/PCP | Sem link dashboard-production; read-model via BFF com contrato |
 | (anti-padrão) | MFE → api-delpi direto | `mfe-own-api-no-direct-api-delpi` | Sempre BFF commercial-api |
 | (anti-padrão) | Path/campo novo em PT | `english-code-identifiers` | Contrato EN |
 | (anti-padrão) | CSS espelho / patch regra só no MFE | `plugins-reusable-components` · `centralized-rules-first` | Kit + domain/BFF |

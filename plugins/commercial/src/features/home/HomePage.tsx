@@ -338,28 +338,6 @@ export function HomePage({
           }),
       });
     }
-    items.push({
-      id: "factory-capacity",
-      title: "Capacidade fabril",
-      description: "Ocupação e OEE ficam no dashboard de Produção — o Comercial não duplica o cockpit PCP.",
-      tone: "neutral" as const,
-      leadingIcon: <BarChart3 size={18} strokeWidth={1.75} aria-hidden="true" />,
-      actionLabel: "Abrir Produção",
-      onAction: () => {
-        window.location.assign("/apps/dashboard-production");
-      },
-    });
-    items.push({
-      id: "tv-gr",
-      title: "GR de Vendas (TV)",
-      description: "Painéis de Gestão à Vista no TV Dashboard — o Comercial não edita slides.",
-      tone: "neutral" as const,
-      leadingIcon: <BarChart3 size={18} strokeWidth={1.75} aria-hidden="true" />,
-      actionLabel: "Abrir TV",
-      onAction: () => {
-        window.location.assign("/apps/tv-dashboard");
-      },
-    });
     return items;
   }, [
     basePath,

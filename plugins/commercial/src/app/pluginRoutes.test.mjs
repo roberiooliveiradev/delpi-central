@@ -269,7 +269,7 @@ describe("estrutura dos detalhes de linha e OP", () => {
     assert.match(app, /view === "open_order_op_detail"/);
     assert.match(app, /<OpenOrderLineDetailPage/);
     assert.match(app, /<OpenOrderOpDetailPage/);
-    for (const source of [linePage, opPage, otdPanel, otdUtils]) {
+    for (const source of [linePage, opPage, otdPanel, otdUtils, content]) {
       assert.doesNotMatch(source, /dashboard-production|production-appointments|iframe/i);
     }
   });
