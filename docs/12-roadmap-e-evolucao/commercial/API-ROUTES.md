@@ -165,6 +165,8 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 
 `create_task` / `update_task` aceitam `description` (Observação), `assignee_user_ids` e/ou `assignee_group_ids`. **XOR:** enviar usuários **e** grupos no mesmo request → **422** (`ValueError`). Worklist: `scope=team` + `assignee_user_id` opcional + `attachment_count`. Anexos: § 3.18 (`/attachments`, volume `commercial-attachments`); UI create/edit = `AttachmentPreviewStrip` `mode=manage`.
 
+**Sala (V019+):** `POST /tasks` também aceita `related_entity_type`, `related_entity_id`, `source_interaction_message_id`. Ação canônica da sala: `create_task_from_interaction_message` (§ 3.21).
+
 ### 3.7 Activities (F5)
 
 | Method | Path | operationId | Fase | Permissão | entity | shape | WF |
@@ -266,6 +268,7 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 
 | Tema | Status | Nota |
 |------|--------|------|
+| **Sala de interação / passagem de bastão** | **Spec** | Contrato em **§ 3.21** · WF-SALA · P2-SALA — **não** é stub vazio |
 | Reunião Diretoria | **Falta** | UI após modelo Junior/Laércio; paths `operationId` em inglês quando existir; ATA-2 §34 · WF-DIR |
 | MyVEG | **Investigar** | Estudo PCP/Elaine/Michael — **sem** integração nesta onda; ATA-2 §33 |
 | GR de Vendas | **TV-GR** | Não é rota commercial-api; slides no [tv-dashboard](../../../plugins/tv-dashboard/README.md) |
@@ -333,7 +336,7 @@ Presença online: evento WS `presence.updated` na sala `team` (só manage).
 | GET | `/attachments/{id}/content` | `download_attachment` | P2 | followups / accounts.view | `attachment` | file |
 | DELETE | `/attachments/{id}` | `delete_attachment` | P2 | followups.manage | `attachment` | `scalar` |
 
-`owner_type` inicial: `task`. Volume: `COMMERCIAL_ATTACHMENT_UPLOAD_DIR` / `${DELPI_DATA_HOST_DIR}/commercial-attachments`.
+`owner_type` inicial: `task`. **V019:** também `room_message` (sala; RBAC = membro). Volume: `COMMERCIAL_ATTACHMENT_UPLOAD_DIR` / `${DELPI_DATA_HOST_DIR}/commercial-attachments`. **Não** criar `/interaction-rooms/{id}/attachments`.
 
 ### 3.19 Sequences (P2 — cadências)
 
@@ -355,6 +358,36 @@ Presença online: evento WS `presence.updated` na sala `team` (só manage).
 | GET | `/sales-issued-slips` | `list_sales_issued_slips` | P1 | permissão dedicada | Só se contrato TOTVS/api-delpi existir |
 
 **Não implementar** sem ficha de KPI + política de acesso (playbook FIN-004).
+
+### 3.21 Interaction rooms (P2-SALA — spec V019)
+
+Prefixo `/interaction-rooms`. Permissão: `commercial.access` (dado por membership); `commercial.manage` = irrestrito. **Sem** code RBAC novo. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` (protocolo `subscribe`/`unsubscribe` + eventos `room.*`) — **sem** segundo endpoint.
+
+| Method | Path | operationId | Permissão | entity | shape | WF |
+|--------|------|-------------|-----------|--------|-------|-----|
+| GET | `/interaction-rooms` | `list_interaction_rooms` | access | `interaction_room` | `paged_list` | WF-SALA-01 |
+| POST | `/interaction-rooms/resolve` | `resolve_interaction_room` | access | `interaction_room` | `scalar` | lazy create; body `{ kind, entity_type?, entity_key?, group_id? }` |
+| GET | `/interaction-rooms/{room_id}` | `get_interaction_room` | access | `interaction_room` | `scalar` | 404 sem acesso |
+| GET | `/interaction-rooms/{room_id}/members` | `list_interaction_room_members` | access | `interaction_room_member` | `list` | |
+| POST | `/interaction-rooms/{room_id}/members` | `add_interaction_room_member` | access | `interaction_room_member` | `scalar` | body `{ user_id }` |
+| DELETE | `/interaction-rooms/{room_id}/members/{user_id}` | `remove_interaction_room_member` | access | `interaction_room_member` | `scalar` | |
+| POST | `/interaction-rooms/{room_id}/read` | `mark_interaction_room_read` | access | `interaction_room_member` | `scalar` | `last_read_at` |
+| GET | `/interaction-rooms/{room_id}/messages` | `list_interaction_messages` | access | `interaction_message` | `paged_list` | cursor, `parent_id`, `q` |
+| POST | `/interaction-rooms/{room_id}/messages` | `post_interaction_message` | access | `interaction_message` | `scalar` | body + `mentions[]` |
+| PATCH | `/interaction-rooms/{room_id}/messages/{message_id}` | `update_interaction_message` | access | `interaction_message` | `scalar` | só autor |
+| DELETE | `/interaction-rooms/{room_id}/messages/{message_id}` | `delete_interaction_message` | access | `interaction_message` | `scalar` | soft |
+| PUT | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `set_interaction_message_reaction` | access | `interaction_reaction` | `scalar` | |
+| DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `clear_interaction_message_reaction` | access | `interaction_reaction` | `scalar` | |
+| GET | `/interaction-rooms/{room_id}/pins` | `list_interaction_room_pins` | access | `interaction_pin` | `list` | |
+| POST | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `pin_interaction_message` | access | `interaction_pin` | `scalar` | |
+| DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `unpin_interaction_message` | access | `interaction_pin` | `scalar` | |
+| GET | `/interaction-rooms/mention-suggest` | `suggest_interaction_mentions` | access | `interaction_mention` | `list` | query `q`, `kinds` |
+| GET | `/interaction-rooms/entity-preview` | `preview_interaction_entity` | access | `interaction_mention` | `scalar` | card opaco sem RBAC |
+| POST | `/interaction-rooms/{room_id}/messages/{message_id}/tasks` | `create_task_from_interaction_message` | access | `task` | `scalar` | E8 |
+
+**Alterações (paths existentes):** § 3.18 `owner_type=room_message`; § 3.6 `create_task` campos `related_entity_*` / `source_interaction_message_id`; WS protocolo sala.
+
+**Não criar:** rotas api-delpi; `GET /products/search` público; HTTP de `otd_event`; path PT.
 
 ---
 
