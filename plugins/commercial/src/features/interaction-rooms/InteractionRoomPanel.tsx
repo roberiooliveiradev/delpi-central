@@ -4,7 +4,6 @@ import {
   listInteractionMessages,
   listInteractionRoomMembers,
   markInteractionRoomRead,
-  postInteractionMessage,
   resolveInteractionRoom,
   type InteractionMessageDto,
   type InteractionRoomDto,
@@ -12,11 +11,9 @@ import {
 } from "../../api/interactionRoomsApi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
-  CM_PORTAL_SCOPE,
   CommercialActionButton,
   CommercialEmptyState,
   CommercialLoadingCard,
-  CommercialMentionComposer,
   CommercialMessageThread,
   CommercialRoomHeader,
   CommercialSectionCard,
@@ -25,6 +22,7 @@ import {
 import { buildInteractionRoomPath } from "../../app/pluginRoutes";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import { InteractionRoomMessageComposer } from "./InteractionRoomMessageComposer";
 
 const EMBED_MESSAGE_LIMIT = 30;
 
@@ -60,9 +58,7 @@ export function InteractionRoomPanel({
   const [room, setRoom] = useState<InteractionRoomDto | null>(null);
   const [members, setMembers] = useState<InteractionRoomMemberDto[]>([]);
   const [messages, setMessages] = useState<InteractionMessageDto[]>([]);
-  const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(Boolean(entityKey));
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const authorIds = useMemo(() => {
@@ -132,22 +128,9 @@ export function InteractionRoomPanel({
     return () => controller.abort();
   }, [entityType, entityKey, roomTitle, content.panelResolveError]);
 
-  const onSubmit = useCallback(async () => {
-    const id = room?.id?.trim() ?? "";
-    const body = draft.trim();
-    if (!id || !body || submitting) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const created = await postInteractionMessage(id, { body_text: body });
-      setMessages((prev) => [...prev, created]);
-      setDraft("");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : content.roomSendError);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [room?.id, draft, submitting, content.roomSendError]);
+  const onMessageCreated = useCallback((created: InteractionMessageDto) => {
+    setMessages((prev) => [...prev, created]);
+  }, []);
 
   const threadMessages = useMemo(
     () =>
@@ -235,22 +218,10 @@ export function InteractionRoomPanel({
               messages={threadMessages}
             />
           )}
-          <CommercialMentionComposer
-            value={draft}
-            onChange={setDraft}
-            onSubmit={() => {
-              void onSubmit();
-            }}
-            submitting={submitting}
-            portalScopeClassName={CM_PORTAL_SCOPE}
-            mentionHits={[]}
-            labels={{
-              placeholder: content.composerPlaceholder,
-              sendAriaLabel: content.composerSendAriaLabel,
-              attachAriaLabel: content.composerAttachAriaLabel,
-              mentionListAriaLabel: content.composerMentionListAriaLabel,
-              mentionEmptyLabel: content.composerMentionEmptyLabel,
-            }}
+          <InteractionRoomMessageComposer
+            roomId={room.id}
+            onMessageCreated={onMessageCreated}
+            onError={(message) => setError(message)}
           />
         </>
       ) : null}

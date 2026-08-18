@@ -12,7 +12,7 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/CommercialSectionCard/);
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).toMatch(/CommercialMessageThread/);
-    expect(source).toMatch(/CommercialMentionComposer/);
+    expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/resolveInteractionRoom/);
     expect(source).not.toMatch(/<textarea/);
     expect(source).not.toMatch(/cm-message-bubble/);

@@ -42,4 +42,10 @@ export const INTERACTION_ROOMS_CONTENT = {
   panelEmptyTitle: "Nenhuma mensagem ainda",
   panelEmptyDescription: "A conversa deste registro fica registrada aqui.",
   panelMissingKey: "Registro incompleto para abrir a sala.",
+  attachmentOnlyBody: "Anexo.",
+  dropzoneTitle: "Arraste ou clique para anexar",
+  dropzoneHint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB",
+  dropzoneBusyTitle: "Enviando anexos…",
+  pendingAttachmentsHeading: "Arquivos a enviar",
+  attachUploadError: "A mensagem foi enviada, mas um anexo falhou.",
 } as const;

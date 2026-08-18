@@ -14,6 +14,6 @@ describe("interaction room shell pages", () => {
       expect(source).not.toMatch(/cm-message-bubble/);
     }
     expect(inbox).toMatch(/CommercialRoomInboxList/);
-    expect(room).toMatch(/CommercialMentionComposer/);
+    expect(room).toMatch(/InteractionRoomMessageComposer/);
   });
 });
