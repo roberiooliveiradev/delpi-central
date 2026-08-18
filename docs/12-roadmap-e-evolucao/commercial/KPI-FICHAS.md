@@ -225,11 +225,17 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 |-------|----------|
 | Código | `KPI-CLIENTE-ATIVO`, `KPI-CLIENTE-NOVO`, `KPI-CLIENTE-RECUPERADO` |
 | Nome | Cliente ativo / novo / recuperado |
-| Objetivo | Classificar base de clientes |
-| Fórmula | Janelas de evento (faturamento vs pedido) — **a formalizar** |
-| Fonte | parcial `get_new_clients_*` / `get_new_business_rol_pct` |
-| Owner | a confirmar |
-| Status | rascunho · **bloqueia** dor #7 completa |
+| Objetivo | Classificar base de clientes para a carteira (não confundir com status operacional da lista) |
+| **Fórmula — rascunho para workshop** | **Ativo:** teve NF de saída nos últimos **N** dias (N a homologar; hipótese 90). **Novo:** primeira NF no período filtrado. **Recuperado:** teve NF no período após intervalo sem compra ≥ **M** dias (M a homologar; hipótese 180). |
+| Fonte | parcial `get_new_clients_*` / billing-series; lista `/customers` hoje = clientes **com pedido aberto** (operacional) |
+| Owner | Comercial — a confirmar |
+| Status | `rascunho` · **UI de badges bloqueada** (`.cursor` / playbook P0 até `em_validacao`) |
+
+### Checklist
+
+- [ ] Confirmar N/M e se o evento é NF, pedido ou ambos  
+- [ ] Confirmar se «ativo» da lista (pedido aberto) permanece distinto deste KPI  
+- [ ] **Proibido** badges na Minha Carteira antes deste gate  
 
 ---
 
