@@ -20,13 +20,13 @@
 | Home por perfil (vendedor × gestor × orçamentista × faturamento) | **Parcial** | Vendedor/gestor **Existem**; orçamentista/faturamento = T7 |
 | Notificar «pronto para faturar» (faturamento + vendedores) | **Existe** | Snapshot + outbox + sino Minha Delpi; config `billing*` só admin/app |
 | Config sensível só admin da aplicação | **Existe** | Grants `manage` internos; não expandir toggles ao gestor |
-| Área de colaboração (feed, menções, vínculos, Outlook/Teams) | **Falta** | Epico novo; reusar integração Outlook Minha Delpi |
+| Área de colaboração (feed, menções, vínculos, Outlook/Teams) | **Parcial** | P0 sala (**Existe**) · Outlook/Teams = T11 |
 
 ### Ata alinhamento 2 (epicos apontados)
 
 | Tema | Situação | Doc canônico |
 |------|----------|--------------|
-| Sala de interação / passagem de bastão | **Falta** | [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §11–12 · P2-SALA |
+| Sala de interação / passagem de bastão | **Existe** (P0) | [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §11–12 · P2-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 |
 | Confirmação de pedidos (2 momentos + SLA) | **Falta** | ATA-2 §9–10 · P2-CONF · API-ROUTES §3.13 |
 | Reunião Diretoria | **Falta** (aguardar modelo) | ATA-2 §34 · P2-DIR |
 | MyVEG | **Falta** (estudo) | ATA-2 §33 · P2-MYVEG |
@@ -182,17 +182,19 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 
 ### 5.2 Implementar (épico)
 
+**P0 entregue (T10 parcial):** sala por entidade/processo/mural, inbox, `@` menções tipadas + unfurl, anexos `room_message`, pins, criar tarefa a partir da mensagem, WS `room.*`, notificação colaboração — ver [API-ROUTES.md](./API-ROUTES.md) § 3.21 · WF-SALA · README do plugin.
+
 | Capacidade da ata | Ferramenta / entrega | Notas |
 |-------------------|----------------------|-------|
-| Publicar mensagens e orientações | Feed / mural Comercial (Postgres `commercial` + API) | Bounded context Comercial |
-| Menções a colaboradores | `@user` + notificação | Diretório já usado em Admin |
-| Vincular cliente, pedido, proposta, etc. | Mentions tipados → deep link Portal | Reusar builders de path/href |
-| Preview resumido do item mencionado | Cards/snippet (nome, status, valor) | BFF por tipo de entidade |
-| Histórico formal | Persistência + busca + auditoria | Soft delete / retenção |
-| Criar reuniões/compromissos a partir da mensagem | Action «Agendar» | |
-| Integração **Outlook** e **Teams** | Graph / conectores Minha Delpi | Conta já existe; ampliar scopes |
-| Consultar disponibilidade dos participantes | Free/busy Graph | |
-| Convites + eventos nas agendas | Create event + attendees | |
+| Publicar mensagens e orientações | **Existe** (thread + wall global/grupo) | Mural board completo = fora do P0 |
+| Menções a colaboradores | **Existe** (`@user` + notif) | Diretório Admin |
+| Vincular cliente, pedido, proposta, etc. | **Existe** (kinds + deep link) | Suggest/preview no BFF |
+| Preview resumido do item mencionado | **Existe** (unfurl + card opaco sem RBAC) | |
+| Histórico formal | **Existe** (persistência + soft delete) | Busca avançada = evolução |
+| Criar reuniões/compromissos a partir da mensagem | Action «Agendar» | Backlog T11 / Graph |
+| Integração **Outlook** e **Teams** | Graph / conectores Minha Delpi | Conta já existe; ampliar scopes — **T11** |
+| Consultar disponibilidade dos participantes | Free/busy Graph | **T11** |
+| Convites + eventos nas agendas | Create event + attendees | **T11** |
 
 **Fora do escopo imediato do MFE Comercial sozinho:** política de tenant Graph, consentimento admin, rate limits — coordenar com plataforma/auth.
 
@@ -213,8 +215,8 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 | T7 | Home/personas orçamentista & faturamento | Papéis + launcher Home | P2 | T6 |
 | T8 | Visita Meu Dia → reserva veículo | commercial + Central de Agendamento | P1 | Contrato HTTP scheduling |
 | T9 | Lembretes / notif de tarefa (sino Portal) | commercial-api outbox + catálogo `commercial_tasks` | **Feito** | Job `task-due-scan`; WS toast MFE permanece |
-| T10 | Área de colaboração (feed + menções + vínculos) | commercial-api + MFE | P2 épico | Design + Graph |
-| T11 | Colaboração → Outlook/Teams (busy + invite) | plataforma / Graph | P2–P3 | T10 + scopes |
+| T10 | Área de colaboração (feed + menções + vínculos) | commercial-api + MFE | **P0 Existe** (sala); Graph = T11 | Design + Graph |
+| T11 | Colaboração → Outlook/Teams (busy + invite) | plataforma / Graph | P2–P3 | T10 P0 + scopes |
 
 ---
 
@@ -238,7 +240,7 @@ Checklist, lembrete antes do prazo, recorrência, convidados/local — ver UX-E-
 3. **T6 + persona faturamento** — maior ganho operacional citado na ata.  
 4. ~~**T3/T4** — comparativos de faturamento na superfície Carteira/Conta.~~ **Feito** (T3/T4/T5 — ago/2026).  
 5. **T8** — visita ↔ veículos (reuso Central de Agendamento).  
-6. **T10/T11** — épico colaboração (ADR + spike Graph).
+6. ~~**T10/T11** — épico colaboração (ADR + spike Graph).~~ **T10 P0 Feito** (sala); **T11** Graph permanece.
 
 ---
 

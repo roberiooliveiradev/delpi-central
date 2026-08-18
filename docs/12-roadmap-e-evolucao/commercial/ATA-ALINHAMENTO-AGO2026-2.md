@@ -20,7 +20,7 @@ Este documento responde, para cada ponto da ata: **já temos?** · **o que falta
 | Faturamento histórico Protheus | **Existe** |
 | Aviso de cobertura CRM no funil | **Falta** |
 | Confirmação de pedidos (Apoio→PCP→cliente) | **Falta** (epico F7 / ORD-*) |
-| Sala de interação / passagem de bastão | **Falta** (evolução Meu Dia) |
+| Sala de interação / passagem de bastão | **Existe** (P0 — V019–V021 + MFE) |
 | Rename entrega → faturamento (timeline) | **Existe** |
 | OTD fluxo completo (entrada→faturamento) | **Parcial** — OTD DatFat×prometida Existe; fluxo completo = W4 |
 | Filtros avançados de oportunidades (Conta) | **Existe** (período/produto/família) |
@@ -78,8 +78,8 @@ Regra de negócio travada: para cada mês do intervalo, `meta_mês / dias_do_mê
 
 | Necessidade | Status | Evidência | Próximo passo |
 |-------------|--------|-----------|---------------|
-| Informação acompanhar Oferta→Engenharia→Compras | **Falta** | Follow-up colaboração | Epico **P2** — evolução worklist/tarefas |
-| Sala tipo Teams: menções, tarefas, anexos, vínculo pedido/OV | **Falta** | Realtime = worklist/carteira, não chat de entidade | Spec + WF stub |
+| Informação acompanhar Oferta→Engenharia→Compras | **Parcial** | Sala `process` + publisher `process_stage` / `otd_event` | Homologar eventos OTD/CONF |
+| Sala tipo Teams: menções, tarefas, anexos, vínculo pedido/OV | **Existe** (P0) | V019–V021 · API-ROUTES § 3.21 · WF-SALA · MFE inbox/panel | Mural board / Graph = fora P0 |
 
 ### §14–§15 — Nomenclatura entrega vs faturamento
 
@@ -181,7 +181,7 @@ Regra de negócio travada: para cada mês do intervalo, `meta_mês / dias_do_mê
 | **P0-OPP** | Filtros Conta: status, período, OV, produto/família | MFE (+ BFF) | Caso «drives abertos no período» |
 | **P1-FUNNEL** | Aviso cobertura CRM | MFE content | Copy sem inventar data sem fonte |
 | **P2-CONF** | Confirmação pedidos | commercial-api F7 + MFE | Spec + SLA |
-| **P2-SALA** | Sala de interação | commercial-api + MFE | Spec |
+| **P2-SALA** | Sala de interação | commercial-api + MFE | **Existe** (P0) — § 3.21 + WF-SALA |
 | **P2-DIR** | Reunião Diretoria | MFE | Após modelo |
 | **P2-MYVEG** | Integração MyVEG | Discovery | Relatório PCP/Elaine/Michael |
 

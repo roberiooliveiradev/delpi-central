@@ -125,6 +125,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-IA-ALIM | Alimentar GAV/GR/IA | **Backlog** | Posterior | DESIGN-IA |
 | P-VIS-INT | Lacunas gerenciais | **Backlog** | Contínuo | MAPA |
 | P-NOTIF | Canal plataforma (sino Minha Delpi) | **Existe** | commercial-api + Core | FOLLOWUP T6/T9 — P3 reminder CRM permanece backlog |
+| P-SALA | Sala de interação (P2-SALA P0) | **Existe** | V019–V021 + MFE thread/inbox/panel · [API-ROUTES.md](./API-ROUTES.md) § 3.21 | ATA-2 · FOLLOWUP T10 · WF-SALA |
 
 **Entrada GR:** indicadores Junior/Laércio.
 

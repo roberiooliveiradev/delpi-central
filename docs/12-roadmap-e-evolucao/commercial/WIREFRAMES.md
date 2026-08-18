@@ -76,7 +76,7 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 | (forecast) | WF-09 | **backlog** | Não implementado — não inventar UI |
 | (confirmação de pedidos) | **WF-CONF** | **stub** | Ata alinhamento 2 §9–10 — epico P2-CONF; sem UI inventada |
 | (reunião Diretoria) | **WF-DIR** | **stub** | Ata alinhamento 2 §34 — aguardar modelo Junior/Laércio |
-| `/interaction-rooms` · `/:roomId` | **WF-SALA-01…08** | **spec** | P2-SALA — mockups kit; implementação E7 |
+| `/interaction-rooms` · `/:roomId` | **WF-SALA-01…08** | **Existe** (P0) | P2-SALA — kit + commercial-api § 3.21 |
 | WF-G «Gestão» top nav | — | **supersedido** | Substituído por WF-OV + top «Visão geral» |
 
 ### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)

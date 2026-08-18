@@ -268,7 +268,7 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 
 | Tema | Status | Nota |
 |------|--------|------|
-| **Sala de interação / passagem de bastão** | **Spec** | Contrato em **§ 3.21** · WF-SALA · P2-SALA — **não** é stub vazio |
+| **Sala de interação / passagem de bastão** | **Existe** (P0) | Contrato em **§ 3.21** · WF-SALA · P2-SALA |
 | Reunião Diretoria | **Falta** | UI após modelo Junior/Laércio; paths `operationId` em inglês quando existir; ATA-2 §34 · WF-DIR |
 | MyVEG | **Investigar** | Estudo PCP/Elaine/Michael — **sem** integração nesta onda; ATA-2 §33 |
 | GR de Vendas | **TV-GR** | Não é rota commercial-api; slides no [tv-dashboard](../../../plugins/tv-dashboard/README.md) |
@@ -359,7 +359,7 @@ Presença online: evento WS `presence.updated` na sala `team` (só manage).
 
 **Não implementar** sem ficha de KPI + política de acesso (playbook FIN-004).
 
-### 3.21 Interaction rooms (P2-SALA — spec V019)
+### 3.21 Interaction rooms (P2-SALA — V019–V021)
 
 Prefixo `/interaction-rooms`. Permissão: `commercial.access` (dado por membership); `commercial.manage` = irrestrito. **Sem** code RBAC novo. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` (protocolo `subscribe`/`unsubscribe` + eventos `room.*`) — **sem** segundo endpoint.
 

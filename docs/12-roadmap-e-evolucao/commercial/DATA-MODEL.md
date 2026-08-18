@@ -2,7 +2,7 @@
 
 > **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`; **carteira name-first** em `V013__seller_portfolio_user_id_nullable.sql` (`user_id` nullable / órfã); **outbox + checkpoints** em `V014__integration_outbox_and_checkpoints.sql` (notif ready_to_invoice). **Sala de interação:** spec **V019** (§ 8.1) — ainda não aplicada. Demais entidades deste doc = especificação futura.  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`; **carteira name-first** em `V013__seller_portfolio_user_id_nullable.sql` (`user_id` nullable / órfã); **outbox + checkpoints** em `V014__integration_outbox_and_checkpoints.sql` (notif ready_to_invoice). **Sala de interação:** **aplicada** — `V019__interaction_rooms.sql` + `V020` (`source_interaction_message_id`) + `V021` (wall global) — § 8.1. Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
