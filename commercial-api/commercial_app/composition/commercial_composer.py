@@ -24,6 +24,12 @@ from commercial_app.domain.ports.commercial_group_repository_port import (
     CommercialGroupRepositoryPort,
 )
 from commercial_app.domain.ports.customer_avatar_repository_port import CustomerAvatarRepositoryPort
+from commercial_app.domain.ports.interaction_message_repository_port import (
+    InteractionMessageRepositoryPort,
+)
+from commercial_app.domain.ports.interaction_room_repository_port import (
+    InteractionRoomRepositoryPort,
+)
 from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
 from commercial_app.domain.ports.task_repository_port import (
     ActivityRepositoryPort,
@@ -55,6 +61,12 @@ from commercial_app.infrastructure.persistence.repositories.postgres_audit_log_r
 from commercial_app.infrastructure.persistence.repositories.postgres_commercial_group_repository import (
     PostgresCommercialGroupRepository,
 )
+from commercial_app.infrastructure.persistence.repositories.postgres_interaction_message_repository import (
+    PostgresInteractionMessageRepository,
+)
+from commercial_app.infrastructure.persistence.repositories.postgres_interaction_room_repository import (
+    PostgresInteractionRoomRepository,
+)
 from commercial_app.infrastructure.security.permissive_portal_access import (
     PermissivePortalAccessPort,
 )
@@ -76,6 +88,8 @@ from commercial_app.infrastructure.persistence.repositories.postgres_user_profil
 _portfolio_repository: SellerPortfolioRepositoryPort | None = None
 _avatar_repository: CustomerAvatarRepositoryPort | None = None
 _attachment_repository: AttachmentRepositoryPort | None = None
+_interaction_room_repository: InteractionRoomRepositoryPort | None = None
+_interaction_message_repository: InteractionMessageRepositoryPort | None = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
 _account_contact_repository: AccountContactRepositoryPort | None = None
@@ -226,6 +240,20 @@ def build_attachment_repository() -> AttachmentRepositoryPort:
     if _attachment_repository is None:
         _attachment_repository = PostgresAttachmentRepository()
     return _attachment_repository
+
+
+def build_interaction_room_repository() -> InteractionRoomRepositoryPort:
+    global _interaction_room_repository
+    if _interaction_room_repository is None:
+        _interaction_room_repository = PostgresInteractionRoomRepository()
+    return _interaction_room_repository
+
+
+def build_interaction_message_repository() -> InteractionMessageRepositoryPort:
+    global _interaction_message_repository
+    if _interaction_message_repository is None:
+        _interaction_message_repository = PostgresInteractionMessageRepository()
+    return _interaction_message_repository
 
 
 def build_attachment_storage() -> AttachmentStorage:
