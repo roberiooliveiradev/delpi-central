@@ -5,6 +5,7 @@
     "accessDenied": "Você não tem acesso a esta sala.",
     "entityAccessDenied": "Sem acesso a este registro.",
     "kindUnknown": "Tipo de menção não reconhecido.",
+    "messageKindInvalid": "Tipo de mensagem inválido.",
     "bodyRequired": "Informe o texto da mensagem.",
     "userIdRequired": "user_id é obrigatório.",
     "notAuthor": "Só o autor pode editar ou excluir esta mensagem.",

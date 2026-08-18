@@ -95,7 +95,7 @@ class ManageInteractionMessagesUseCase:
         )
         kind = (request.message_kind or "text").strip() or "text"
         if kind not in MESSAGE_KINDS:
-            raise ValueError(InteractionRoomContentService.error("kindUnknown"))
+            raise ValueError(InteractionRoomContentService.error("messageKindInvalid"))
         body = request.body_text if request.body_text is not None else ""
         if kind == "text" and not str(body).strip():
             raise ValueError(InteractionRoomContentService.error("bodyRequired"))
