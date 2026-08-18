@@ -145,6 +145,21 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     sellerId: canFilterPortfolios ? sellerIdFilter : null,
   });
 
+  const [productQuery, setProductQuery] = useState("");
+  const productMatchedCustomers = useMemo(() => {
+    const q = productQuery.trim().toLocaleLowerCase("pt-BR");
+    if (!q) return filteredCustomers;
+    return filteredCustomers.filter((customer) =>
+      customer.lines.some((line) =>
+        (line.produto || "").toLocaleLowerCase("pt-BR").includes(q),
+      ),
+    );
+  }, [filteredCustomers, productQuery]);
+  const productPagedCustomers = useMemo(() => {
+    const size = 20;
+    const start = (Math.max(1, page) - 1) * size;
+    return productMatchedCustomers.slice(start, start + size);
+  }, [productMatchedCustomers, page]);
   const coverageCustomers = useMemo(
     () =>
       (aggregation?.customers ?? []).map((customer) => ({
@@ -407,6 +422,15 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             onChange={setSearch}
             placeholder="Código ou nome"
           />
+          <CommercialTextField
+            className="cm-customers-page__search-field"
+            label="Produto (pedido aberto)"
+            hint="Clientes com linha em aberto cujo código contém o texto. Família/grupo (B1_GRUPO) na lista = ADR-003 até open-orders expor product_group."
+            type="search"
+            value={productQuery}
+            onChange={setProductQuery}
+            placeholder="Código do produto"
+          />
           {canFilterPortfolios ? (
             <SellerScopeFilter
               sellers={filterablePortfolios}
@@ -549,8 +573,8 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                     hint={CM_HELP.customers.list}
                   >
                     <CustomersTable
-                      customers={pagedCustomers}
-                      exportRows={filteredCustomers}
+                      customers={productPagedCustomers}
+                      exportRows={productMatchedCustomers}
                       canUseTeamScope={canUseTeamScope}
                       sortKey={sortKey}
                       sortDirection={sortDirection}
@@ -561,11 +585,11 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                       loading={refreshing}
                       sharedCoverageByKey={sharedCoverage.byKey}
                     />
-                    {filteredCustomers.length > 20 ? (
+                    {productMatchedCustomers.length > 20 ? (
                       <CommercialPagination
                         page={page}
                         pageSize={20}
-                        total={filteredCustomers.length}
+                        total={productMatchedCustomers.length}
                         onPageChange={setPage}
                       />
                     ) : null}
