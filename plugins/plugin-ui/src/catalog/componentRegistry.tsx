@@ -10,6 +10,7 @@ import { bpmnCatalogEntries } from "./demos/bpmn";
 import { orgCatalogEntries } from "./demos/org";
 import { shapeCatalogEntries } from "./demos/shape";
 import { menuCatalogEntries } from "./demos/menu";
+import { collaborationCatalogEntries } from "./demos/collaboration";
 import { CatalogStub } from "./CatalogStub";
 import {
   formatCatalogDatePtBr,
@@ -76,6 +77,7 @@ const EXPLICIT_ENTRIES_RAW = [
   ...orgCatalogEntries,
   ...shapeCatalogEntries,
   ...menuCatalogEntries,
+  ...collaborationCatalogEntries,
 ];
 
 const coveredExports = new Set(EXPLICIT_ENTRIES_RAW.map((e) => e.exportName));

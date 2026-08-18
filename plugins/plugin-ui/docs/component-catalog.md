@@ -1311,6 +1311,48 @@ Consumidores: `ContextMenu` (kit) e `DataPrepareColumnMenu` do `tv-dashboard` (p
 
 ---
 
+## Família `collaboration` — sala de interação
+
+Primitivos neutros para threads estilo Teams/Slack (Portal Comercial). **Sem HTTP** no kit; labels e hits vêm das factories do MFE. CSS só `.delpi-ui-*`.
+
+| Export | Descrição |
+|--------|-----------|
+| `MentionText` | Corpo com chips `@`; `parseMentionText` + slots de click/href. |
+| `MentionMenu` | Listbox agrupada via `AnchoredPanelPortal` (teclado ↑↓ Enter). |
+| `MentionComposer` | Textarea **dentro** do kit + menu `@` + anexar/enviar. |
+| `MessageThread` | Bolhas, `system`, replies e ações via `resolveActions`. |
+| `EntityUnfurlCard` | Preview genérico (ok / `accessible: false`) — sem `if` de entidade. |
+| `ReactionBar` | Chips de reação; códigos do host. |
+| `RoomInboxList` | Inbox de salas (não reutilizar `WorklistItem`). |
+| `RoomHeader` | Título, chips e `AvatarStack` de participantes. |
+
+Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`.
+
+```tsx
+import {
+  MentionComposer,
+  mentionComposerBemClasses,
+} from "@delpi/plugin-ui";
+
+const classNames = mentionComposerBemClasses("cm");
+<MentionComposer
+  classNames={classNames}
+  value={text}
+  onChange={setText}
+  onSubmit={send}
+  mentionHits={hits}
+  labels={{
+    placeholder: "Escreva uma mensagem",
+    sendAriaLabel: "Enviar",
+    attachAriaLabel: "Anexar",
+    mentionListAriaLabel: "Menções",
+    mentionEmptyLabel: "Nenhum resultado",
+  }}
+/>
+```
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |

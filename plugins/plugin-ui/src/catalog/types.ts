@@ -12,7 +12,8 @@ export type CatalogFamily =
   | "bpmn"
   | "org"
   | "shape"
-  | "menu";
+  | "menu"
+  | "collaboration";
 
 export type CatalogLifecycle = "new" | "updated" | "stable";
 
@@ -64,6 +65,7 @@ export const CATALOG_FAMILY_LABELS: Record<CatalogFamily, string> = {
   org: "Org",
   shape: "Shape",
   menu: "Menu",
+  collaboration: "Collaboration",
 };
 
 export const CATALOG_LIFECYCLE_LABELS: Record<Exclude<CatalogLifecycle, "stable">, string> = {

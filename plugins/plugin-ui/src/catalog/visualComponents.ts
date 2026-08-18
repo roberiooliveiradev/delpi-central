@@ -428,4 +428,37 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("menu", "ContextMenuDivider"),
   vc("menu", "ContextMenuToolbar"),
   vc("menu", "ContextMenuToolbarButton"),
+  // collaboration (interaction rooms)
+  vc("collaboration", "MentionText", {
+    addedAt: "2026-08-18",
+    description: "Corpo de mensagem com chips de @mention; parser e chrome no kit.",
+  }),
+  vc("collaboration", "MentionMenu", {
+    addedAt: "2026-08-18",
+    description: "Listbox @ ancorado via AnchoredPanelPortal; hits/labels do host.",
+  }),
+  vc("collaboration", "MentionComposer", {
+    addedAt: "2026-08-18",
+    description: "Composer com textarea nativo no kit, menu @, anexar e enviar.",
+  }),
+  vc("collaboration", "MessageThread", {
+    addedAt: "2026-08-18",
+    description: "Thread com bolhas, system, replies e ações via props.",
+  }),
+  vc("collaboration", "EntityUnfurlCard", {
+    addedAt: "2026-08-18",
+    description: "Card genérico de preview de entidade (ok / sem acesso).",
+  }),
+  vc("collaboration", "ReactionBar", {
+    addedAt: "2026-08-18",
+    description: "Chips de reação; códigos vindos do host.",
+  }),
+  vc("collaboration", "RoomInboxList", {
+    addedAt: "2026-08-18",
+    description: "Lista da caixa de entrada de salas (não é WorklistItem).",
+  }),
+  vc("collaboration", "RoomHeader", {
+    addedAt: "2026-08-18",
+    description: "Cabeçalho da sala com chips e AvatarStack.",
+  }),
 ];
