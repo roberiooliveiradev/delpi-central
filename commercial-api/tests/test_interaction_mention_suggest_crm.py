@@ -45,6 +45,9 @@ class _Gateway:
     def list_customer_outbound_invoices(self, *, customer_code, customer_store, params=None):
         raise RuntimeError("unused")
 
+    def get_outbound_invoice(self, *, branch, invoice_number, invoice_series):
+        raise RuntimeError("unused")
+
 
 class _Portfolios:
     def __init__(self, items: list[SellerPortfolio]) -> None:

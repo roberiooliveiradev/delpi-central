@@ -58,6 +58,15 @@ class CrmMentionSearchPort(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def get_outbound_invoice(
+        self,
+        *,
+        branch: str,
+        invoice_number: str,
+        invoice_series: str,
+    ) -> dict[str, Any]:
+        ...
+
 
 def _needle(query: str) -> str:
     return (query or "").strip().lower()

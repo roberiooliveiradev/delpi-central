@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime
 from uuid import UUID
@@ -21,6 +22,7 @@ from commercial_app.application.use_cases.manage_interaction_rooms import (
 from commercial_app.composition.commercial_composer import (
     build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
+    build_preview_interaction_entity_use_case,
     build_suggest_interaction_mentions_use_case,
 )
 from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
@@ -118,6 +120,46 @@ def suggest_interaction_mentions(
     except Exception:
         logger.exception("suggest_interaction_mentions_failed")
         return fail("Erro interno ao sugerir menções.", 500, operation_id=operation_id)
+
+
+@router.get("/entity-preview", operation_id="preview_interaction_entity")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def preview_interaction_entity(
+    request: Request,
+    kind: str = Query(...),
+    ref: str = Query(default="{}"),
+):
+    operation_id = "preview_interaction_entity"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        kind_value = kind if isinstance(kind, str) else ""
+        raw_ref = ref if isinstance(ref, str) else "{}"
+        try:
+            parsed = json.loads(raw_ref or "{}")
+        except json.JSONDecodeError as exc:
+            raise ValueError(InteractionRoomContentService.error("kindUnknown")) from exc
+        if not isinstance(parsed, dict):
+            raise ValueError(InteractionRoomContentService.error("kindUnknown"))
+        card = build_preview_interaction_entity_use_case().preview(
+            kind=kind_value,
+            ref=parsed,
+            actor_user_id=actor,
+            unrestricted=can_manage_portfolios(current_user_from_request(request))
+            or can_use_team_scope(current_user_from_request(request)),
+        )
+        message_key = "previewOk" if card.get("accessible") else "previewDenied"
+        return ok(
+            card,
+            message=InteractionRoomContentService.message(message_key),
+            operation_id=operation_id,
+        )
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("preview_interaction_entity_failed")
+        return fail("Erro interno ao carregar a prévia.", 500, operation_id=operation_id)
 
 
 @router.get("/{room_id}", operation_id="get_interaction_room")

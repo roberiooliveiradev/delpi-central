@@ -90,6 +90,17 @@ class _OpsGateway:
             }
         }
 
+    def get_outbound_invoice(self, *, branch, invoice_number, invoice_series):
+        return {
+            "data": {
+                "invoice_number": invoice_number,
+                "series": invoice_series,
+                "filial": branch,
+                "customer_code": "0001",
+                "customer_store": "01",
+            }
+        }
+
 
 def _uc(gateway=None) -> SuggestInteractionMentionsUseCase:
     repo = _Portfolios([_portfolio()])

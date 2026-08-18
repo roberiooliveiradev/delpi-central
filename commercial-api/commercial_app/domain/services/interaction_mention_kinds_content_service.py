@@ -85,6 +85,14 @@ class InteractionMentionKindsContentService:
         )
 
     @classmethod
+    def preview_enabled_ids(cls) -> frozenset[str]:
+        return frozenset(
+            str(item["id"])
+            for item in cls.kinds()
+            if item.get("previewEnabled") is True
+        )
+
+    @classmethod
     def group_label(cls, group_id: str) -> str:
         groups = cls.bundle().get("groups") or {}
         if not isinstance(groups, dict):

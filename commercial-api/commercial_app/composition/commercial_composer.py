@@ -19,6 +19,9 @@ from commercial_app.application.use_cases.manage_interaction_rooms import (
 from commercial_app.application.use_cases.suggest_interaction_mentions import (
     SuggestInteractionMentionsUseCase,
 )
+from commercial_app.application.use_cases.preview_interaction_entity import (
+    PreviewInteractionEntityUseCase,
+)
 from commercial_app.application.use_cases.manage_team_roster import ManageTeamRosterUseCase
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
@@ -102,6 +105,7 @@ _interaction_message_repository: InteractionMessageRepositoryPort | None = None
 _interaction_rooms_use_case: ManageInteractionRoomsUseCase | None = None
 _interaction_messages_use_case: ManageInteractionMessagesUseCase | None = None
 _suggest_interaction_mentions_use_case: SuggestInteractionMentionsUseCase | None = None
+_preview_interaction_entity_use_case: PreviewInteractionEntityUseCase | None = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
 _account_contact_repository: AccountContactRepositoryPort | None = None
@@ -297,6 +301,19 @@ def build_suggest_interaction_mentions_use_case() -> SuggestInteractionMentionsU
             gateway=build_delpi_commercial_gateway(),
         )
     return _suggest_interaction_mentions_use_case
+
+
+def build_preview_interaction_entity_use_case() -> PreviewInteractionEntityUseCase:
+    global _preview_interaction_entity_use_case
+    if _preview_interaction_entity_use_case is None:
+        directory = CoreApiPortalAccessPort()
+        _preview_interaction_entity_use_case = PreviewInteractionEntityUseCase(
+            directory=directory,
+            portfolios=build_seller_portfolio_repository(),
+            scope=build_resolve_commercial_customer_scope_service(),
+            gateway=build_delpi_commercial_gateway(),
+        )
+    return _preview_interaction_entity_use_case
 
 
 def build_attachment_storage() -> AttachmentStorage:
