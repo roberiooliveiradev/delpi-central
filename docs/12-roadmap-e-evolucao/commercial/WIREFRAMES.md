@@ -566,7 +566,7 @@ Concentrar (MVP temporal) usa `deliveryHorizon` do envelope e deep links
 │ Produção/OPs: SegmentToggle · meter · Prazo OTD + tabela PI densa        │
 │   Timeline · apontamentos agregados · prefetch até 12 OPs (+ on-demand)  │
 │   Labels: «data de faturamento» (não «data de entrega do pedido») — P0-RENAME │
-│   «Ver no OTD produção» → /apps/dashboard-production/otd/op/{op}         │
+│   Status fabril e OTD da OP via BFF (sem CTA para dashboard-production)      │
 │ Tabela OP rica — clique sincroniza OP selecionada                        │
 │ Estrutura do produto (BOM: empty/erro/loading visíveis)                  │
 │ [Abrir página OP] [Copiar pedido] [Ver OV n] [Abrir conta]               │

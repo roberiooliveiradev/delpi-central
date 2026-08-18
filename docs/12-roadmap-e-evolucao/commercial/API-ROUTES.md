@@ -219,6 +219,8 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 
 ### 3.11 Forecast (F6)
 
+> Catálogo WF-09 **não implementado**. `GET/PUT /forecast/current` (FCT declarado) foi **removido** — metas SI cobrem o Overview; não reintroduzir segundo número de meta nem atalho de previsão na Home.
+
 | Method | Path | operationId | Fase | Permissão | entity | shape | WF |
 |--------|------|-------------|------|-----------|--------|-------|-----|
 | GET | `/forecast/cycles` | `list_forecast_cycles` | F6 | `commercial.forecast.view` | `forecast_cycle` | `paged_list` | WF-09 |

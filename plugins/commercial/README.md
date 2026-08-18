@@ -21,7 +21,7 @@ W0 entregue — detalhe em [PARCIAL-INVENTARIO.md](../../docs/12-roadmap-e-evolu
 | P0-OTD-COPY | Help OTD = DatFat × prometida |
 | P0-FAV | Favoritos no `PluginShell` (strip em todas as rotas) |
 
-**GR de Vendas** = [tv-dashboard](../tv-dashboard/README.md) (não feature deste MFE).
+**GR de Vendas** = [tv-dashboard](../tv-dashboard/README.md) (não feature deste MFE; **sem** atalho Home/ficha para o TV).
 
 ```text
 Portal Minha DELPI

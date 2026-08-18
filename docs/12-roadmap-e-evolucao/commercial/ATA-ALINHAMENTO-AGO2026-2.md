@@ -193,7 +193,7 @@ Cada ID = commit próprio quando executado. **Esta entrega (ago/2026-2 docs) nã
 
 - **Objetivo ata:** primeiro GR do Depto. de Vendas até fim de **agosto/2026**.
 - **Onde implementar:** app **TV Dashboard** (`plugins/tv-dashboard`), slides/playlist GR, dados live api-delpi / painéis já existentes no Comercial.
-- **O que o Comercial faz:** continua sendo fonte de KPIs (ROL, carteira, funil, OTD); **não** duplicar editor de GR no MFE Comercial.
+- **O que o Comercial faz:** continua sendo fonte de KPIs (ROL, carteira, funil, OTD); **não** duplicar editor de GR no MFE Comercial; **não** atalho Home/ficha para `/apps/tv-dashboard`.
 - **Próximo passo TV:** definir indicadores com Junior/Laércio; montar playlist GR Vendas; ver nota em [plugins/tv-dashboard/README.md](../../../plugins/tv-dashboard/README.md).
 
 ---

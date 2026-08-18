@@ -195,7 +195,7 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 | Amostras | **novo** | — |
 | Visitas | **parcial** | `customer-experience` existe; integração Comercial indefinida |
 | Análises / cockpit | **existente** | `dashboard-commercial` + `/commercial` |
-| Gestão à Vista | **parcial** | `tv-dashboard` disponível; painéis Comercial a definir |
+| Gestão à Vista | **parcial** | GR no `tv-dashboard` (sem atalho no Comercial); painéis/conteúdo a definir |
 
 ---
 
