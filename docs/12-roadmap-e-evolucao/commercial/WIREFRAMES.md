@@ -1258,10 +1258,10 @@ URL são nativos. Path de Perfil e Conta honram `returnTo` / `returnLabel`.
 
 ### WF-SALA — Sala de interação (P2)
 
-**Status:** spec ASCII (P0) — chrome só `@delpi/plugin-ui`.  
+**Status:** **Existe** (P0) — chrome só `@delpi/plugin-ui` (`MessageThread`, composer, room header).  
 **Rotas:** `/apps/commercial/interaction-rooms` · `/apps/commercial/interaction-rooms/:roomId`.  
-**API:** [API-ROUTES.md](./API-ROUTES.md) § 3.21.  
-**Fonte:** ATA-2 §11–12 · Follow-up T10.
+**API:** [API-ROUTES.md](./API-ROUTES.md) § 3.21 · migrations V019–V021.  
+**Fonte:** ATA-2 §11–12 · Follow-up T10 (**P0 Feito**; Graph/T11 fora).
 
 Rotas UI EN; labels pt-BR. Sidebar do Portal **sempre visível**.
 

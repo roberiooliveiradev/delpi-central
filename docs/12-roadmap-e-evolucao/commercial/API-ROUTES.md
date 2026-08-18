@@ -366,7 +366,7 @@ Prefixo `/interaction-rooms`. Permissão: `commercial.access` (dado por membersh
 | Method | Path | operationId | Permissão | entity | shape | WF |
 |--------|------|-------------|-----------|--------|-------|-----|
 | GET | `/interaction-rooms` | `list_interaction_rooms` | access | `interaction_room` | `paged_list` | WF-SALA-01 |
-| POST | `/interaction-rooms/resolve` | `resolve_interaction_room` | access | `interaction_room` | `scalar` | lazy create; body `{ kind, entity_type?, entity_key?, group_id? }` |
+| POST | `/interaction-rooms/resolve` | `resolve_interaction_room` | access | `interaction_room` | `scalar` | lazy create; body `{ kind, entity_type?, entity_key?, group_id?, title? }` · `wall` sem `group_id` = mural global |
 | GET | `/interaction-rooms/{room_id}` | `get_interaction_room` | access | `interaction_room` | `scalar` | 404 sem acesso |
 | GET | `/interaction-rooms/{room_id}/members` | `list_interaction_room_members` | access | `interaction_room_member` | `list` | |
 | POST | `/interaction-rooms/{room_id}/members` | `add_interaction_room_member` | access | `interaction_room_member` | `scalar` | body `{ user_id }` |
@@ -383,11 +383,15 @@ Prefixo `/interaction-rooms`. Permissão: `commercial.access` (dado por membersh
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `unpin_interaction_message` | access | `interaction_pin` | `scalar` | |
 | GET | `/interaction-rooms/mention-suggest` | `suggest_interaction_mentions` | access | `interaction_mention` | `list` | query `q`, `kinds` |
 | GET | `/interaction-rooms/entity-preview` | `preview_interaction_entity` | access | `interaction_mention` | `scalar` | card opaco sem RBAC |
-| POST | `/interaction-rooms/{room_id}/messages/{message_id}/tasks` | `create_task_from_interaction_message` | access | `task` | `scalar` | E8 |
+| POST | `/interaction-rooms/{room_id}/messages/{message_id}/tasks` | `create_task_from_interaction_message` | access | `task` | `scalar` | body `{ description? }` · resposta `{ task, task_ref_message }` |
 
-**Alterações (paths existentes):** § 3.18 `owner_type=room_message`; § 3.6 `create_task` campos `related_entity_*` / `source_interaction_message_id`; WS protocolo sala.
+**Alterações (paths existentes):** § 3.18 `owner_type=room_message`; § 3.6 `create_task` campos `related_entity_*` / `source_interaction_message_id`; WS protocolo sala (`room.*`).
 
-**Não criar:** rotas api-delpi; `GET /products/search` público; HTTP de `otd_event`; path PT.
+**Publisher interno (sem HTTP):** `post_system_message` — kinds allowlist `otd_event` \| `process_stage` (JSON); para OTD/CONF futuros.
+
+**UI:** inbox + thread + painel embutido — [plugins/commercial/README.md](../../../plugins/commercial/README.md) · WF-SALA. RBAC: só `commercial.access` / `commercial.manage`.
+
+**Não criar:** rotas api-delpi; `GET /products/search` público; HTTP de `otd_event`; path PT; permission code novo da sala.
 
 ---
 

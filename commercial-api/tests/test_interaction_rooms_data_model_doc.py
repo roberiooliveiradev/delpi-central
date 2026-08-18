@@ -30,6 +30,10 @@ def test_data_model_documents_interaction_tables_in_english() -> None:
         assert f"`{name}`" in DOC, f"DATA-MODEL sem tabela {name}"
     assert "room_message" in DOC
     assert "### 8.1" in DOC
+    assert "source_interaction_message_id" in DOC
+    assert "V020" in DOC
+    assert "V021" in DOC
+    assert "uq_commercial_interaction_rooms_wall_global" in DOC
 
 
 def test_data_model_has_no_portuguese_table_names() -> None:

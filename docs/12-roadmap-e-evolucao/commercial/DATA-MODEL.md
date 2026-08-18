@@ -2,7 +2,7 @@
 
 > **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`; **carteira name-first** em `V013__seller_portfolio_user_id_nullable.sql` (`user_id` nullable / órfã); **outbox + checkpoints** em `V014__integration_outbox_and_checkpoints.sql` (notif ready_to_invoice). **Sala de interação:** **aplicada** — `V019__interaction_rooms.sql` + `V020` (`source_interaction_message_id`) + `V021` (wall global) — § 8.1. Demais entidades deste doc = especificação futura.  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`); **E5.1 multi-membro** em `V005__seller_portfolio_members.sql`; **grupos operacionais** em `V010__commercial_groups.sql` + `V011`; **tarefa↔grupo + concluído por** em `V012__task_assignee_groups_and_completed_by.sql`; **carteira name-first** em `V013__seller_portfolio_user_id_nullable.sql` (`user_id` nullable / órfã); **outbox + checkpoints** em `V014__integration_outbox_and_checkpoints.sql` (notif ready_to_invoice). **Sala de interação (P0):** `V019__interaction_rooms.sql` + `V020__task_source_interaction_message.sql` + `V021__interaction_wall_global_unique.sql` — § 8.1. Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
@@ -225,7 +225,8 @@ Trilha imutável (append-only).
 | `customer_code` / `customer_store` | TEXT | Espelho do **primeiro** cliente (`task_customers`); opcional |
 | `opportunity_id` | UUID NULL | FK → `opportunities` (nullable até M3; criar FK na M3) |
 | `prospect_id` | UUID NULL | FK → `prospects` (M2/M3) |
-| `related_entity_type` / `related_entity_id` | TEXT | polimórfico leve |
+| `related_entity_type` / `related_entity_id` | TEXT | polimórfico leve · sala: tipo `interaction_room` + id da sala |
+| `source_interaction_message_id` | UUID NULL | **V020:** mensagem que originou a tarefa (`create_task_from_interaction_message`) |
 | `sla_policy_id` | UUID NULL | FK → `sla_policies` |
 | `sla_due_at` | TIMESTAMPTZ | |
 | `defer_reason_code` / `defer_note` | TEXT | |
@@ -233,7 +234,7 @@ Trilha imutável (append-only).
 | `created_at` / `updated_at` | TIMESTAMPTZ NOT NULL | |
 | `deleted_at` | TIMESTAMPTZ | |
 
-**Índices:** `(assignee_user_id, status, due_at)`; `(customer_code, customer_store)`; `(due_at) WHERE status = 'open'`.
+**Índices:** `(assignee_user_id, status, due_at)`; `(customer_code, customer_store)`; `(due_at) WHERE status = 'open'`; `(source_interaction_message_id)` WHERE NOT NULL (**V020**).
 
 **Multi responsável / cliente (V007):** junções abaixo (máx. 20 cada na API). Qualquer assignee conclui; só o criador edita/exclui/adia.
 
@@ -790,9 +791,11 @@ Padrão comum:
 **Índice:** `(owner_type, owner_id)`.  
 **Sala:** `owner_type=room_message`, `owner_id` = `interaction_messages.id`. Path no disco `{base}/room_message/{id}/`.
 
-### 8.1 Sala de interação (P2-SALA — V019)
+### 8.1 Sala de interação (P2-SALA — V019–V021 · P0 entregue)
 
-Histórico operacional ancorado em registro (`room_kind`: `entity` \| `process` \| `wall`). Sem DM (`direct` fora do P0). Nomes EN; PT só em JSON/UI.
+Histórico operacional ancorado em registro (`kind`: `entity` \| `process` \| `wall`). Sem DM (`direct` fora do P0). Nomes EN; PT só em JSON/UI.
+
+**Migrations:** `V019` (tabelas da sala) · `V020` (`tasks.source_interaction_message_id`) · `V021` (único mural global sem `group_id`).
 
 #### `interaction_rooms`
 
@@ -810,7 +813,8 @@ Histórico operacional ancorado em registro (`room_kind`: `entity` \| `process` 
 | `deleted_at` | TIMESTAMPTZ | NULL — soft delete |
 
 **Único parcial:** `(kind, entity_type, entity_key)` WHERE `kind='entity'` AND `deleted_at IS NULL`.  
-**Único parcial wall:** `(kind, group_id)` WHERE `kind='wall'` AND `deleted_at IS NULL`.  
+**Único parcial wall por grupo:** `(kind, group_id)` WHERE `kind='wall'` AND `group_id IS NOT NULL` AND `deleted_at IS NULL`.  
+**Único mural global (V021):** `(kind)` WHERE `kind='wall'` AND `group_id IS NULL` AND `deleted_at IS NULL` (`uq_commercial_interaction_rooms_wall_global`).  
 **Índices:** `(updated_at DESC)`; `(kind, entity_type, entity_key)`.
 
 #### `interaction_room_members`

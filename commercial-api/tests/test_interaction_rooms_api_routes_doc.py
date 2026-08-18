@@ -53,3 +53,5 @@ def test_attachments_and_tasks_note_room_message() -> None:
     assert "room_message" in DOC
     assert "source_interaction_message_id" in DOC
     assert "Sala de interação" in DOC or "P2-SALA" in DOC
+    assert "post_system_message" in DOC
+    assert "task_ref_message" in DOC
