@@ -17,6 +17,7 @@ describe("OverviewPage — paridade dashboard", () => {
     assert.match(source, /open_portfolio|openPortfolio/);
     assert.match(source, /portfolio_billing_share|portfolioBillingShare/);
     assert.match(source, /CM_HELP\.overview\.portfolioBillingShare/);
+    assert.match(source, /appendBillingNatureContext/);
     assert.doesNotMatch(source, /apiDelpiUrl|\/apps\/api-delpi/);
     const kpiCount = (source.match(/<CommercialDashboardKpiCard/g) ?? []).length;
     assert.equal(kpiCount, 9);

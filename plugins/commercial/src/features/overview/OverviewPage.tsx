@@ -26,6 +26,7 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_METRIC_BY_ID } from "../../content/overviewMetricsCatalog";
+import { appendBillingNatureContext } from "../../content/billingNature";
 import { formatCurrency } from "../../utils/format";
 import {
   buildOpenOrdersHorizonListHref,
@@ -241,7 +242,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               value={rolKpi.value}
               valueVariant={rolKpi.valueVariant}
               goalVariant={rolKpi.valueVariant}
-              contextLabel={rolKpi.contextLabel}
+              contextLabel={appendBillingNatureContext(rolKpi.contextLabel, "net")}
               goalLabel={rolKpi.goalLabel}
               goalPrefix={rolKpi.goalPrefix}
               goalHint={rolKpi.goalHint}
@@ -263,7 +264,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               value={wegRolKpi.value}
               valueVariant={wegRolKpi.valueVariant}
               goalVariant={wegRolKpi.valueVariant}
-              contextLabel={wegRolKpi.contextLabel}
+              contextLabel={appendBillingNatureContext(wegRolKpi.contextLabel, "net")}
               goalLabel={wegRolKpi.goalLabel}
               goalPrefix={wegRolKpi.goalPrefix}
               goalHint={wegRolKpi.goalHint}
@@ -285,7 +286,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               value={segmentNewBusinessRolKpi.value}
               valueVariant={segmentNewBusinessRolKpi.valueVariant}
               goalVariant={segmentNewBusinessRolKpi.valueVariant}
-              contextLabel={segmentNewBusinessRolKpi.contextLabel}
+              contextLabel={appendBillingNatureContext(segmentNewBusinessRolKpi.contextLabel, "net")}
               goalLabel={segmentNewBusinessRolKpi.goalLabel}
               goalPrefix={segmentNewBusinessRolKpi.goalPrefix}
               goalHint={segmentNewBusinessRolKpi.goalHint}
@@ -336,7 +337,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
               contextLabel={
                 dashboard.openPortfolioError
                   ? dashboard.openPortfolioError
-                  : `${formatInteger(dashboard.openPortfolio?.openLineCount)} linhas · Em aberto (agora) · ≠ PCP`
+                  : appendBillingNatureContext(
+                      `${formatInteger(dashboard.openPortfolio?.openLineCount)} linhas · Em aberto (agora) · ≠ PCP`,
+                      "open_order_value",
+                    )
               }
               icon={<ClipboardList size={22} aria-hidden="true" />}
               loading={dashboard.openPortfolioLoading}

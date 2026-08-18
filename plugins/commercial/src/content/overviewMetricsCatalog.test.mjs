@@ -14,6 +14,7 @@ const REQUIRED_IDS = [
   "rol_new_business",
   "closing_rate",
   "open_portfolio",
+  "portfolio_billing_share",
   "gap_to_target",
   "open_portfolio_horizon",
   "otd",

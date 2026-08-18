@@ -608,7 +608,7 @@ export const CM_HELP = {
       "Dashboard do período: filtros, indicadores (≤8), evolução ROL (com YoY opcional), série de conversão e funil. Sem lista de OVs nem faixa Aprofundar.",
     filters:
       "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
-    kpis: "Indicadores do período: ROL vs meta, conversão, OTD% e novos negócios. «Carteira em aberto» é saldo comercial atual (pedidos) — não some com ROL e não é programação do PCP.",
+    kpis: "Indicadores do período: ROL vs meta (natureza líquido), conversão, OTD% e novos negócios. «Carteira em aberto» é valor aberto de pedido (snapshot) — não some com ROL e não é programação do PCP. Bruto só com contrato BFF.",
     rolSeries:
       "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série.",
     rolSeriesYoy:
@@ -622,7 +622,11 @@ export const CM_HELP = {
     closingRate:
       "Taxa de conversão (hit rate): propostas ganhas (AD1_STATUS=9, aceite no período) ÷ revisões abertas no período. Metodologia atual do Portal — não alterar sem homologação.",
     openPortfolio:
-      "Carteira comercial em aberto agora: valor e linhas de pedidos/compromissos. Não é programação do PCP, não é forecast e não deve ser somada ao ROL do período (bases diferentes).",
+      "Carteira comercial em aberto agora (natureza: valor aberto de pedido): valor e linhas. Não é ROL líquido nem bruto, não é PCP, não é forecast e não deve ser somada ao ROL do período.",
+    billingNatureNet:
+      "ROL usa natureza líquido (receita operacional líquida). Toggle bruto bloqueado até o BFF expor nature=gross.",
+    billingNatureOpenOrder:
+      "Carteira usa natureza valor aberto de pedido (snapshot). Distinta do ROL líquido do período.",
     gapToTarget:
       "Gap vs meta ROL SI do período filtrado. A carteira «este mês» aparece só como contexto — nunca some gap + carteira.",
     openPortfolioHorizon:

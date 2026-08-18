@@ -27,7 +27,8 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
   {
     id: "rol",
     label: "ROL",
-    tooltip: "Receita operacional líquida consolidada versus meta por unidade.",
+    tooltip:
+      "Receita operacional líquida (natureza: líquido) versus meta por unidade. Série bruta indisponível neste contrato.",
   },
   {
     id: "rol_weg",
@@ -49,7 +50,7 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     id: "open_portfolio",
     label: "Carteira em aberto",
     tooltip:
-      "Saldo comercial agora (valor e linhas de pedidos). Não é programação do PCP, não é forecast e não some com o ROL do período.",
+      "Saldo comercial agora (natureza: valor aberto de pedido). Não é ROL líquido, não é PCP, não é forecast e não some com o ROL do período.",
   },
   {
     id: "portfolio_billing_share",
