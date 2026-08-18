@@ -76,6 +76,7 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 | (forecast) | WF-09 | **backlog** | Não implementado — não inventar UI |
 | (confirmação de pedidos) | **WF-CONF** | **stub** | Ata alinhamento 2 §9–10 — epico P2-CONF; sem UI inventada |
 | (reunião Diretoria) | **WF-DIR** | **stub** | Ata alinhamento 2 §34 — aguardar modelo Junior/Laércio |
+| `/interaction-rooms` · `/:roomId` | **WF-SALA-01…08** | **spec** | P2-SALA — mockups kit; implementação E7 |
 | WF-G «Gestão» top nav | — | **supersedido** | Substituído por WF-OV + top «Visão geral» |
 
 ### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)
@@ -1254,6 +1255,136 @@ URL são nativos. Path de Perfil e Conta honram `returnTo` / `returnLabel`.
 ---
 
 ## Stubs — ata alinhamento 2
+
+### WF-SALA — Sala de interação (P2)
+
+**Status:** spec ASCII (P0) — chrome só `@delpi/plugin-ui`.  
+**Rotas:** `/apps/commercial/interaction-rooms` · `/apps/commercial/interaction-rooms/:roomId`.  
+**API:** [API-ROUTES.md](./API-ROUTES.md) § 3.21.  
+**Fonte:** ATA-2 §11–12 · Follow-up T10.
+
+Rotas UI EN; labels pt-BR. Sidebar do Portal **sempre visível**.
+
+```mermaid
+flowchart LR
+  Home[Inicio card Sala]
+  Inbox[Inbox WF-SALA-01]
+  Room[Sala WF-SALA-02]
+  Ficha[Ficha pedido/conta]
+  Drawer[Drawer WF-SALA-07]
+  Home --> Inbox
+  Inbox --> Room
+  Ficha --> Room
+  Ficha --> Drawer
+```
+
+#### WF-SALA-01 — Inbox + sala (desktop)
+
+Lista à esquerda (~320px), thread à direita. Filtros = `UnderlineNav`. Busca = `CatalogSearchBar`.
+
+```text
++-- Portal ---------------------------------------------------------------+
+| [sidebar Minha Delpi] | Inicio  Visao geral  Tarefas  Pedidos  Carteira |
+|                       +-------------------------------------------------+
+|                       | PageHero: Sala de interacao                     |
+|                       | PagePath: Inicio / Sala de interacao            |
+|                       | UnderlineNav: [Todas] Nao lidas  Mencionaram-me |
+|                       |                   Processos  Mural              |
+|                       | CatalogSearchBar: ····· buscar salas ·····      |
+|                       +------------------+------------------------------+
+|                       | RoomInboxList    | RoomHeader                   |
+|                       | * ACME 000123/01 | Pedido 102942 / filial 01    |
+|                       |   Pedido 102942  | chips: [Conta ACME] [OV 4412]|
+|                       |   Ana agora  (2) | avatars: Ana Joao +2  [Membros]|
+|                       |                  +------------------------------+
+|                       |   Handoff 102942 | MessageThread                |
+|                       |   Oferta>Compras |                              |
+|                       |   Joao 14:02     | -- 18 ago 2026 --------------|
+|                       |                  | [sys] Engenharia recebeu a OV|
+|                       |   Mural equipe   |                              |
+|                       |   (kind=wall)    | (Ana 09:41)                  |
+|                       |   pin: aviso SI  | @Joao falta confirmar        |
+|                       |                  | @produto 90AAAA01 no pedido  |
+|                       |                  | @102942.                     |
+|                       |                  | [Unfurl produto] [Unfurl ped]|
+|                       |                  | [PDF proposta.pdf]           |
+|                       |                  | ReactionBar: +1  ok  2       |
+|                       |                  | [Responder] [Criar tarefa]   |
+|                       |                  | [Fixar]                      |
+|                       |                  |   thread (2)  v              |
+|                       |                  +------------------------------+
+|                       |                  | MentionComposer              |
+|                       |                  |  Mensagem a equipe...     @  |
+|                       |                  |  [anexar]              [Enviar]|
+|                       +------------------+------------------------------+
++-------------------------------------------------------------------------+
+```
+
+Linha com `*` = sala aberta / unread badge. Clique navega `/:roomId`.
+
+#### WF-SALA-02 — Mensagens (tipos no thread)
+
+```text
++-- MessageThread ------------------------------------------------------+
+| -- segunda-feira, 18 de agosto --------------------------------------|
+|  [system]  Engenharia recebeu a OV 4412 · 09:12                      |
+|  [Ana avatar]  Ana Silva · 09:41                                     |
+|  Preciso que o @Joao Costa (Compras) confirme o                      |
+|  @produto 90AAAA01 neste @pedido 102942.                             |
+|  +----------------------------------------------+                    |
+|  | EntityUnfurlCard  Produto 90AAAA01           |                    |
+|  +----------------------------------------------+                    |
+|  AttachmentPreviewStrip: [proposta.pdf]                              |
+|  ReactionBar  [ok 2]                                                 |
+|  acoes: Responder · Criar tarefa · Fixar                             |
+|    [Joao] reply · OP 00118901001                                     |
+|  [task_ref]  Tarefa criada · [Abrir Meu Dia]                         |
++----------------------------------------------------------------------+
+```
+
+#### WF-SALA-03 — Menu `@` (MentionMenu)
+
+Composer aberto; menu ancorado (`AnchoredPanelPortal`), agrupado pessoa / objeto.
+
+```text
++-- MentionComposer ----------------------------------------+
+|  @jo                                                @  [Enviar] |
++-----------------------------------------------------------+
+| MentionMenu  Pessoas / Objetos (pedido, produto, OP, carteira) |
++-----------------------------------------------------------+
+```
+
+#### WF-SALA-04 — Unfurl sem acesso
+
+```text
++-- EntityUnfurlCard (sem permissao) --+
+|  Sem acesso a este registro          |
+|  (sem botao Abrir, sem valor)        |
++--------------------------------------+
+```
+
+#### WF-SALA-05 — Vazio
+
+```text
+EmptyState: Nenhuma mensagem. A conversa deste pedido fica registrada aqui.
+[Escrever a primeira mensagem] + MentionComposer
+```
+
+#### WF-SALA-06 — Embed na ficha
+
+`SectionCard` na ficha de pedido/conta/OV/OP; `[Abrir sala]` → `/:roomId`. Mesmo `InteractionRoomPanel`.
+
+#### WF-SALA-07 — Drawer (viewport estreita)
+
+`createHostContainedDrawerShell` — **não** cobre a sidebar do Portal.
+
+#### WF-SALA-08 — Card no Início
+
+`SectionRouteCard` Operação: item «Sala de interação» + badge não lidas.
+
+**Mapa tela → kit:** `PageHero`, `PagePath`, `UnderlineNav`, `CatalogSearchBar`, `RoomInboxList`, `RoomHeader`, `MessageThread`, `MentionComposer`, `MentionMenu`, `MentionText`, `EntityUnfurlCard`, `ReactionBar`, `FileDropzone`, `EmptyState`, `LoadingActivityCard`, `SectionRouteCard`, drawer host-contained.
+
+**Fora P0:** mural kanban, DM 1:1, call/vídeo, tela OTD nova.
 
 ### WF-CONF — Confirmação de pedidos (P2)
 
