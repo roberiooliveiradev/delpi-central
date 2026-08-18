@@ -59,6 +59,65 @@ describe("goalDisplay", () => {
     expect(presentation.monthlyGoalHint).toMatch(/cadastrado/i);
   });
 
+  it("não exibe Meta R$ 0,00 nem IDD quando SI não tem meta", () => {
+    const presentation = buildKpiGoalPresentation(
+      "ctx",
+      {
+        comparable_goal: 0,
+        target: 0,
+        performance_direction: "higher_is_better",
+        value_prefix: "R$",
+      },
+      undefined,
+      { realizedValue: 100, showGoal: true },
+    );
+    expect(presentation.goalLabel).toBeNull();
+    expect(presentation.goalPrefix).toBeNull();
+    expect(presentation.goalPerformanceBadge).toBeNull();
+    expect(presentation.iddScoreLabel).toBeNull();
+  });
+
+  it("não usa o nome do indicador como Meta parcial quando a meta SI é zero", () => {
+    const presentation = buildKpiGoalPresentation(
+      "ctx",
+      {
+        comparable_goal: 0,
+        target: 0,
+        goal_label: "ROL Novos Negócios",
+        goal_period_kind: "partial",
+        value_prefix: "R$",
+        value_decimals: 2,
+      },
+      undefined,
+      { realizedValue: 137551.78, showGoal: true },
+    );
+    expect(presentation.goalLabel).toBeNull();
+    expect(presentation.goalPrefix).toBeNull();
+    expect(presentation.monthlyGoalLabel).toBeNull();
+  });
+
+  it("mantém goal_label só quando não há valor numérico de meta", () => {
+    const presentation = buildKpiGoalPresentation("ctx", {
+      comparable_goal: null,
+      target: null,
+      goal_label: "≥ 95%",
+    });
+    expect(presentation.goalLabel).toBe("≥ 95%");
+  });
+
+  it("omite Meta mês quando reference_goal é zero", () => {
+    const presentation = buildKpiGoalPresentation("ctx", {
+      comparable_goal: 5,
+      goal_value: 0,
+      reference_goal: 0,
+      goal_period_kind: "partial",
+      value_suffix: "%",
+      value_decimals: 1,
+    });
+    expect(presentation.goalLabel).toContain("5");
+    expect(presentation.monthlyGoalLabel).toBeNull();
+  });
+
   it("omite meta numérica quando há goal_scope_hint (selecione unidade)", () => {
     const presentation = buildKpiGoalPresentation("ctx", {
       comparable_goal: 1_076_000,

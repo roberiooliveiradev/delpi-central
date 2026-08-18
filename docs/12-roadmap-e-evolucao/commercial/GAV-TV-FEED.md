@@ -17,7 +17,6 @@ Início (Home) do Comercial: alerta «GR de Vendas (TV)» → mesmo path.
 | Share empresa | `/analytics/portfolio-billing-share` | RBAC |
 | Gap vs meta | meta SI − ROL | Carteira do mês = contexto |
 | Carteira no tempo | `/analytics/open-portfolio-horizon` | Buckets entrega |
-| Previsão declarada | `/forecast/current` | FCT Delpi |
 | Hit rate | closing-rate | Não alterar fórmula |
 | OTD | sales-order-otd | |
 

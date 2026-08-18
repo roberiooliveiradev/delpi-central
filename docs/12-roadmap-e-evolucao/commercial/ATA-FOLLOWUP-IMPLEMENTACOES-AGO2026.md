@@ -98,7 +98,7 @@ Refs: [KPI-FICHAS.md](./KPI-FICHAS.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-
 | Faturamento da **carteira ÷ faturamento total da empresa** | **Entregue** (T3) | KPI-PORTFOLIO-SHARE · BFF `portfolio-billing-share` · cards Overview + Minha Carteira (RBAC analytics/team/manage) |
 | Período atual × **mesmo período ano anterior** | **Entregue** (T4) | YoY Overview + Minha Carteira + Conta `?secao=historico` via `periodShift` / billing |
 | Comparação com **períodos e anos escolhidos pelo usuário** | **Entregue** (T4) | `PeriodCompareControls`: presets + custom + até 3 anos overlay nas séries |
-| Evolução da carteira no tempo | **Existe** | Aberto = horizon; faturado = séries/billing; glossário `CM_HELP.*.glossaryOpenVsBilled`. FCT declarado permanece backlog |
+| Evolução da carteira no tempo | **Existe** | Aberto = horizon; faturado = séries/billing; glossário `CM_HELP.*.glossaryOpenVsBilled`. FCT declarado **não** entra no produto (fora das atas; metas SI cobrem). |
 | Tendência de faturamento com **período configurável** | **Entregue** (T4) | Janela 7/30/90/custom (default 30) no enrichment + UI Minha Carteira |
 | Cortes cliente × vendedor × período (crescimento/queda) | **Entregue** (T5) | BFF `portfolio-billing-ranking` + tabela/Excel Minha Carteira; `group_by=seller` só team/manage |
 

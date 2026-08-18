@@ -383,6 +383,13 @@ export function resolveGoalPerformanceBadge(
   };
 }
 
+function positiveGoalNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return null;
+  return numeric;
+}
+
 export function resolveGoalLabel(
   goal?: DashboardGoalFields | null,
   formatComparable?: (value: number) => string,
@@ -391,8 +398,14 @@ export function resolveGoalLabel(
     return null;
   }
 
-  const comparable = goal.comparable_goal ?? goal.target ?? null;
-  if (comparable != null) {
+  const raw = goal.comparable_goal ?? goal.target;
+  if (raw != null && raw !== "") {
+    const comparable = positiveGoalNumber(raw);
+    // Meta explícita zero/inválida: não cair no nome do indicador (`goal_label`).
+    if (comparable == null) {
+      return null;
+    }
+
     const hasCatalogFormat =
       Boolean(goal.value_prefix?.trim()) ||
       Boolean(goal.value_suffix?.trim()) ||
@@ -538,10 +551,11 @@ export function buildKpiGoalPresentation(
 
   const showMonthlyLine =
     showNumericGoals && (kind === "partial" || kind === "accumulated");
-  const monthlyRaw =
-    goal?.reference_goal ?? goal?.goal_value ?? null;
+  const monthlyRaw = positiveGoalNumber(
+    goal?.reference_goal ?? goal?.goal_value ?? null,
+  );
   const monthlyGoalLabel =
-    showMonthlyLine && monthlyRaw != null && !Number.isNaN(Number(monthlyRaw))
+    showMonthlyLine && monthlyRaw != null
       ? formatComparable
         ? formatComparable(Number(monthlyRaw))
         : formatDashboardMetricValue(Number(monthlyRaw), goal)

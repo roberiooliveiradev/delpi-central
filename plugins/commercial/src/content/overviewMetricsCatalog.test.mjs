@@ -17,7 +17,6 @@ const REQUIRED_IDS = [
   "portfolio_billing_share",
   "gap_to_target",
   "open_portfolio_horizon",
-  "declared_forecast",
   "otd",
   "new_business_pct",
   "rol_series",

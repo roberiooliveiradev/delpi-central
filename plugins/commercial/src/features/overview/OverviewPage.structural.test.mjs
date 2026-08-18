@@ -20,7 +20,7 @@ describe("OverviewPage — paridade dashboard", () => {
     assert.match(source, /appendBillingNatureContext/);
     assert.doesNotMatch(source, /apiDelpiUrl|\/apps\/api-delpi/);
     const kpiCount = (source.match(/<CommercialDashboardKpiCard/g) ?? []).length;
-    assert.equal(kpiCount, 10);
-    assert.match(source, /declared_forecast|getCurrentForecast/);
+    assert.equal(kpiCount, 9);
+    assert.doesNotMatch(source, /declared_forecast|getCurrentForecast|forecastApi/);
   });
 });

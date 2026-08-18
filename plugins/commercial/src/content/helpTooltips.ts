@@ -354,7 +354,7 @@ export const CM_HELP = {
     outsidePortfolioNotice:
       "Cliente fora da sua carteira — dados da conta (histórico, oportunidades, contatos e pedidos deste cliente) permanecem disponíveis. Indicadores de cobertura de carteira ficam ocultos.",
     preMeetingChecklist:
-      "Roteiro da Conta com o que já existe (histórico, pedidos, OV, atividades). Previsão = FCT do Overview; rentabilidade permanece bloqueada (FIN-004).",
+      "Roteiro da Conta com o que já existe (histórico, pedidos, OV, atividades). Rentabilidade permanece bloqueada (FIN-004).",
     lastSale: "Data da última venda conhecida para o cliente (quando disponível).",
     purchaseEvolution:
       "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior.",

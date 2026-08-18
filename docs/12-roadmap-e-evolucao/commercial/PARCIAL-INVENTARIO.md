@@ -61,10 +61,10 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-BRUTO-LIQ | Toggle bruto inventado (sem contrato) | **Bloqueado** | Rótulo «ROL líquido» OK; série gross sem BFF = não | MAPA · § Bloqueado |
 | P-POSTERG | UX postergado vs disponível | **Existe** | BFF `availability` + `?postponed=1` · [pedido-venda-postergacao.md](../../../api-delpi/docs/api/padroes-totvs/pedido-venda-postergacao.md) | Playbook #4 |
 | P-CART-PCP | Distinguir carteira × PCP | **Existe** | Copy Overview + `overviewMetricsCatalog` / helps | Playbook #4 |
-| P-PROJ | Projeção / FCT | **Existe** (MVP declarado) | `GET/PUT /forecast/current` + card Overview | Forecast F6 |
+| P-PROJ | Projeção / FCT | **Fora** | Não está nas atas como segundo número de meta (metas SI já cobrem). MVP declarado removido. | Forecast F6 (backlog) |
 | P-SHARE | % empresa (carteira ÷ empresa) | **Existe** | BFF `portfolio-billing-share` + cards Overview/Carteira (RBAC) | FOLLOWUP T3 |
 
-**W1 implementável:** P-PROJ (FCT declarado). **Bloqueado:** P-CART-ROL, P-BRUTO-LIQ (toggle). P-POSTERG **Existe**.
+**W1:** P-PROJ **Fora** (FCT declarado removido — não estava nas atas). **Bloqueado:** P-CART-ROL, P-BRUTO-LIQ (toggle). P-POSTERG **Existe**.
 
 ---
 

@@ -4,27 +4,23 @@ import { buildCustomerDetailSearch, type CustomerDetailSection } from "../utils/
 
 type CustomerPreMeetingChecklistProps = {
   onGoToSection: (section: CustomerDetailSection) => void;
-  onGoToForecast: () => void;
 };
 
 const ITEMS: Array<{
   id: string;
   label: string;
   section?: CustomerDetailSection;
-  forecast?: boolean;
   blocked?: boolean;
 }> = [
   { id: "historico", label: "Histórico de faturamento", section: "historico" },
   { id: "pedidos", label: "Pedidos em aberto", section: "pedidos" },
   { id: "oportunidades", label: "Oportunidades", section: "oportunidades" },
   { id: "atividades", label: "Atividades / follow-ups", section: "atividades" },
-  { id: "forecast", label: "Previsão declarada (Overview)", forecast: true },
   { id: "rent", label: "Rentabilidade (bloqueada — FIN-004)", blocked: true },
 ];
 
 export function CustomerPreMeetingChecklist({
   onGoToSection,
-  onGoToForecast,
 }: CustomerPreMeetingChecklistProps) {
   return (
     <CommercialSectionCard
@@ -36,10 +32,6 @@ export function CustomerPreMeetingChecklist({
           <li key={item.id}>
             {item.blocked ? (
               <span>{item.label}</span>
-            ) : item.forecast ? (
-              <CommercialActionButton variant="ghost" onClick={onGoToForecast}>
-                {item.label}
-              </CommercialActionButton>
             ) : item.section ? (
               <CommercialActionButton
                 variant="ghost"
