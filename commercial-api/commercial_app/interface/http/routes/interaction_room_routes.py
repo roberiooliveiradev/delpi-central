@@ -19,6 +19,7 @@ from commercial_app.application.use_cases.manage_interaction_rooms import (
 from commercial_app.composition.commercial_composer import (
     build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
+    build_suggest_interaction_mentions_use_case,
 )
 from commercial_app.core.auth_actor import actor_sub_from_request
 from commercial_app.core.responses import fail, ok
@@ -77,6 +78,41 @@ def resolve_interaction_room(
     except Exception:
         logger.exception("resolve_interaction_room_failed")
         return fail("Erro interno ao abrir a sala.", 500, operation_id=operation_id)
+
+
+@router.get("/mention-suggest", operation_id="suggest_interaction_mentions")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def suggest_interaction_mentions(
+    request: Request,
+    q: str = Query(default=""),
+    kinds: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=20),
+):
+    operation_id = "suggest_interaction_mentions"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        query = q if isinstance(q, str) else ""
+        kind_source = kinds if isinstance(kinds, str) else "user"
+        kind_list = [
+            item.strip()
+            for item in kind_source.split(",")
+            if item.strip()
+        ]
+        items = build_suggest_interaction_mentions_use_case().suggest(
+            query=query,
+            kinds=kind_list,
+            limit=limit if isinstance(limit, int) else 20,
+        )
+        return ok(
+            {"items": items},
+            message=InteractionRoomContentService.message("suggestOk"),
+            operation_id=operation_id,
+        )
+    except Exception:
+        logger.exception("suggest_interaction_mentions_failed")
+        return fail("Erro interno ao sugerir menções.", 500, operation_id=operation_id)
 
 
 @router.get("/{room_id}", operation_id="get_interaction_room")

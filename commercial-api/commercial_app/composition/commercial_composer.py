@@ -16,6 +16,9 @@ from commercial_app.application.use_cases.manage_interaction_messages import (
 from commercial_app.application.use_cases.manage_interaction_rooms import (
     ManageInteractionRoomsUseCase,
 )
+from commercial_app.application.use_cases.suggest_interaction_mentions import (
+    SuggestInteractionMentionsUseCase,
+)
 from commercial_app.application.use_cases.manage_team_roster import ManageTeamRosterUseCase
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
@@ -98,6 +101,7 @@ _interaction_room_repository: InteractionRoomRepositoryPort | None = None
 _interaction_message_repository: InteractionMessageRepositoryPort | None = None
 _interaction_rooms_use_case: ManageInteractionRoomsUseCase | None = None
 _interaction_messages_use_case: ManageInteractionMessagesUseCase | None = None
+_suggest_interaction_mentions_use_case: SuggestInteractionMentionsUseCase | None = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
 _account_contact_repository: AccountContactRepositoryPort | None = None
@@ -281,6 +285,15 @@ def build_manage_interaction_messages_use_case() -> ManageInteractionMessagesUse
             messages=build_interaction_message_repository(),
         )
     return _interaction_messages_use_case
+
+
+def build_suggest_interaction_mentions_use_case() -> SuggestInteractionMentionsUseCase:
+    global _suggest_interaction_mentions_use_case
+    if _suggest_interaction_mentions_use_case is None:
+        _suggest_interaction_mentions_use_case = SuggestInteractionMentionsUseCase(
+            directory=CoreApiPortalAccessPort(),
+        )
+    return _suggest_interaction_mentions_use_case
 
 
 def build_attachment_storage() -> AttachmentStorage:
