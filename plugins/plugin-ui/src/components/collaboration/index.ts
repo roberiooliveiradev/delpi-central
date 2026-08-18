@@ -28,6 +28,17 @@ export {
   type MentionComposerProps,
 } from "./MentionComposer";
 export {
+  MessageThread,
+  createDashboardMessageThread,
+  messageThreadBemClasses,
+  type DashboardMessageThreadProps,
+  type MessageThreadAction,
+  type MessageThreadClassNames,
+  type MessageThreadItem,
+  type MessageThreadKind,
+  type MessageThreadProps,
+} from "./MessageThread";
+export {
   detectActiveMention,
   insertMentionToken,
   type ActiveMentionQuery,

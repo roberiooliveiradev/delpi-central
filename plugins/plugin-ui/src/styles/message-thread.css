@@ -1,0 +1,102 @@
+/* Message thread: bubbles, system lines, reply indent. */
+.delpi-ui-message-thread {
+  min-width: 0;
+}
+
+.delpi-ui-message-thread__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-message-thread__item--reply {
+  padding-left: 1.5rem;
+}
+
+.delpi-ui-message-thread__system {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--delpi-color-text-muted, #64748b);
+  text-align: center;
+}
+
+.delpi-ui-message-thread__bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 42rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--delpi-color-border, #e2e8f0);
+  border-radius: 0.75rem;
+  background: var(--delpi-color-surface, #fff);
+}
+
+.delpi-ui-message-thread__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.delpi-ui-message-thread__author {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--delpi-color-text, #0f172a);
+}
+
+.delpi-ui-message-thread__time {
+  font-size: 0.75rem;
+  color: var(--delpi-color-text-muted, #64748b);
+}
+
+.delpi-ui-message-thread__body {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--delpi-color-text, #0f172a);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.delpi-ui-message-thread__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.delpi-ui-message-thread__action {
+  margin: 0;
+  padding: 0.15rem 0.4rem;
+  border: none;
+  border-radius: 0.35rem;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--delpi-color-text-muted, #64748b);
+  background: transparent;
+  cursor: pointer;
+}
+
+.delpi-ui-message-thread__action:hover {
+  color: var(--delpi-color-accent, #2563eb);
+  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 10%, transparent);
+}
+
+.delpi-ui-message-thread__action--danger:hover {
+  color: var(--delpi-color-danger, #dc2626);
+  background: color-mix(in srgb, var(--delpi-color-danger, #dc2626) 10%, transparent);
+}
+
+.delpi-ui-message-thread__empty {
+  padding: 1.25rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--delpi-color-text-muted, #64748b);
+  text-align: center;
+}
