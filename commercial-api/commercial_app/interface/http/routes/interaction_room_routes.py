@@ -13,6 +13,9 @@ from commercial_app.application.security.commercial_permissions import (
     can_manage_portfolios,
     can_use_team_scope,
 )
+from commercial_app.application.use_cases.create_task_from_interaction_message import (
+    CreateTaskFromInteractionMessageInput,
+)
 from commercial_app.application.use_cases.manage_interaction_messages import (
     PostInteractionMessageInput,
 )
@@ -23,8 +26,11 @@ from commercial_app.application.services.commercial_realtime_notify import (
     notify_interaction_mention,
     notify_room_message_changed,
     notify_room_reaction_changed,
+    notify_worklist_changed,
 )
 from commercial_app.composition.commercial_composer import (
+    build_create_task_from_interaction_message_use_case,
+    build_enqueue_task_portal_notifications_service,
     build_list_interaction_inbox_use_case,
     build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
@@ -43,6 +49,7 @@ from commercial_app.domain.services.interaction_room_content_service import (
 )
 from commercial_app.interface.http.schemas.interaction_room_schemas import (
     AddInteractionRoomMemberBody,
+    CreateTaskFromInteractionMessageBody,
     PostInteractionMessageBody,
     ResolveInteractionRoomBody,
     UpdateInteractionMessageBody,
@@ -670,3 +677,68 @@ def clear_interaction_message_reaction(
     except Exception:
         logger.exception("clear_interaction_message_reaction_failed")
         return fail("Erro interno ao remover reação.", 500, operation_id=operation_id)
+
+
+@router.post(
+    "/{room_id}/messages/{message_id}/tasks",
+    operation_id="create_task_from_interaction_message",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def create_task_from_interaction_message(
+    request: Request,
+    room_id: UUID = Path(...),
+    message_id: UUID = Path(...),
+    body: CreateTaskFromInteractionMessageBody | None = Body(default=None),
+):
+    operation_id = "create_task_from_interaction_message"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        payload = body or CreateTaskFromInteractionMessageBody()
+        task = build_create_task_from_interaction_message_use_case().execute(
+            CreateTaskFromInteractionMessageInput(
+                room_id=room_id,
+                message_id=message_id,
+                actor_user_id=actor,
+                description=payload.description,
+            ),
+            actor_is_portfolio_manager=can_manage_portfolios(
+                current_user_from_request(request)
+            ),
+        )
+        try:
+            notify_worklist_changed(
+                reason="task.created",
+                task_id=str(task.id),
+                assignee_user_ids=list(task.resolved_assignee_user_ids()),
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                task_title=task.title,
+                actor_client_id=client_id_from_request(request),
+            )
+            build_enqueue_task_portal_notifications_service().on_task_created(
+                task=task,
+                actor_user_id=actor,
+            )
+        except Exception:  # noqa: BLE001 — notificação não pode falhar o POST
+            logger.exception("task_from_message_notify_failed")
+        return ok(
+            task.to_dict(),
+            message=InteractionRoomContentService.message("taskFromMessageOk"),
+            status_code=201,
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("create_task_from_interaction_message_failed")
+        return fail(
+            "Erro interno ao criar tarefa a partir da mensagem.",
+            500,
+            operation_id=operation_id,
+        )

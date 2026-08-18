@@ -13,6 +13,9 @@ from commercial_app.application.use_cases.manage_commercial_groups import (
 from commercial_app.application.use_cases.list_interaction_inbox import (
     ListInteractionInboxUseCase,
 )
+from commercial_app.application.use_cases.create_task_from_interaction_message import (
+    CreateTaskFromInteractionMessageUseCase,
+)
 from commercial_app.application.use_cases.manage_interaction_messages import (
     ManageInteractionMessagesUseCase,
 )
@@ -110,6 +113,9 @@ _interaction_messages_use_case: ManageInteractionMessagesUseCase | None = None
 _list_interaction_inbox_use_case: ListInteractionInboxUseCase | None = None
 _suggest_interaction_mentions_use_case: SuggestInteractionMentionsUseCase | None = None
 _preview_interaction_entity_use_case: PreviewInteractionEntityUseCase | None = None
+_create_task_from_interaction_message_use_case: (
+    CreateTaskFromInteractionMessageUseCase | None
+) = None
 _task_repository: TaskRepositoryPort | None = None
 _activity_repository: ActivityRepositoryPort | None = None
 _account_contact_repository: AccountContactRepositoryPort | None = None
@@ -328,6 +334,21 @@ def build_preview_interaction_entity_use_case() -> PreviewInteractionEntityUseCa
             gateway=build_delpi_commercial_gateway(),
         )
     return _preview_interaction_entity_use_case
+
+
+def build_create_task_from_interaction_message_use_case() -> (
+    CreateTaskFromInteractionMessageUseCase
+):
+    global _create_task_from_interaction_message_use_case
+    if _create_task_from_interaction_message_use_case is None:
+        _create_task_from_interaction_message_use_case = (
+            CreateTaskFromInteractionMessageUseCase(
+                rooms=build_interaction_room_repository(),
+                messages=build_interaction_message_repository(),
+                worklist=build_manage_worklist_use_case(),
+            )
+        )
+    return _create_task_from_interaction_message_use_case
 
 
 def build_attachment_storage() -> AttachmentStorage:

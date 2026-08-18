@@ -27,3 +27,9 @@ class PostInteractionMessageBody(BaseModel):
 
 class UpdateInteractionMessageBody(BaseModel):
     body_text: str = Field(..., min_length=1)
+
+
+class CreateTaskFromInteractionMessageBody(BaseModel):
+    """Título vem do body_text da mensagem; assignee default = actor."""
+
+    description: str | None = None
