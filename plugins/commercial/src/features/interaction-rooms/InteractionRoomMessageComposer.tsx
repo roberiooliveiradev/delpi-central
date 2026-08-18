@@ -12,6 +12,8 @@ import {
   CommercialMentionComposer,
 } from "../../app/commercialUi";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import type { InteractionMentionHit } from "./mentionSuggestAdapter";
+import { useInteractionMentionSuggest } from "./useInteractionMentionSuggest";
 
 const ATTACH_ACCEPT =
   ".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain";
@@ -42,6 +44,19 @@ export function InteractionRoomMessageComposer({
   const [pending, setPending] = useState<PendingFile[]>([]);
   const [showDropzone, setShowDropzone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const {
+    hits,
+    onMentionQueryChange,
+    onMentionInserted,
+    takeMentionsForBody,
+    resetMentions,
+  } = useInteractionMentionSuggest();
+
+  const hitsById = useMemo(() => {
+    const map = new Map<string, InteractionMentionHit>();
+    for (const hit of hits) map.set(hit.id, hit);
+    return map;
+  }, [hits]);
 
   const stripItems = useMemo(
     () =>
@@ -74,13 +89,17 @@ export function InteractionRoomMessageComposer({
 
     setSubmitting(true);
     try {
+      const bodyText = body || content.attachmentOnlyBody;
+      const mentions = takeMentionsForBody(bodyText);
       const created = await postInteractionMessage(id, {
-        body_text: body || content.attachmentOnlyBody,
+        body_text: bodyText,
+        mentions,
       });
       const files = [...pending];
       setDraft("");
       setPending([]);
       setShowDropzone(false);
+      resetMentions();
       onMessageCreated(created);
 
       for (const item of files) {
@@ -106,6 +125,8 @@ export function InteractionRoomMessageComposer({
     content.attachmentOnlyBody,
     content.attachUploadError,
     content.roomSendError,
+    takeMentionsForBody,
+    resetMentions,
     onMessageCreated,
     onError,
   ]);
@@ -148,7 +169,12 @@ export function InteractionRoomMessageComposer({
       submitting={submitting}
       disabled={disabled || submitting}
       portalScopeClassName={CM_PORTAL_SCOPE}
-      mentionHits={[]}
+      mentionHits={hits}
+      onMentionQueryChange={onMentionQueryChange}
+      onMentionInserted={(hit) => {
+        const full = hitsById.get(hit.id);
+        if (full) onMentionInserted(full);
+      }}
       showAttach
       onAttachClick={() => setShowDropzone((value) => !value)}
       footer={footer}

@@ -48,4 +48,17 @@ export const INTERACTION_ROOMS_CONTENT = {
   dropzoneBusyTitle: "Enviando anexos…",
   pendingAttachmentsHeading: "Arquivos a enviar",
   attachUploadError: "A mensagem foi enviada, mas um anexo falhou.",
+  mentionKindGroupFallback: "Outros",
+  mentionKindGroupLabels: {
+    user: "Pessoas",
+    customer: "Clientes",
+    portfolio: "Carteiras",
+    order: "Pedidos",
+    opportunity: "Oportunidades",
+    proposal: "Propostas",
+    production_order: "Ordens de produção",
+    otd_line: "Linhas OTD",
+    invoice: "Notas fiscais",
+    product: "Produtos",
+  },
 } as const;
