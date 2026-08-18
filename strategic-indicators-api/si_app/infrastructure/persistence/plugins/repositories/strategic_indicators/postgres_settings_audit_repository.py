@@ -21,6 +21,7 @@ class PostgresStrategicIndicatorsSettingsAuditRepository(
         payload_before: dict | None,
         payload_after: dict | None,
         changed_by_user_id: str | None,
+        event_type: str = "settings.updated",
     ) -> None:
         query = """
             INSERT INTO strategic_indicators.settings_audit (
@@ -37,7 +38,7 @@ class PostgresStrategicIndicatorsSettingsAuditRepository(
         self.execute(
             query,
             (
-                "settings.updated",
+                event_type,
                 entity_key,
                 json.dumps(payload_before, ensure_ascii=False)
                 if payload_before is not None

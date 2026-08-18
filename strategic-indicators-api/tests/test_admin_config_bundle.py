@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -7,6 +8,9 @@ from si_app.application.services.strategic_indicators.admin_config_bundle_servic
 )
 from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
+)
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
+    PostgresStrategicIndicatorsSettingsAuditRepository,
 )
 
 
@@ -144,3 +148,58 @@ def test_injected_connection_execute_does_not_auto_commit():
     repo.execute("SELECT 1")
     connection.commit.assert_not_called()
     cursor.execute.assert_called_once()
+
+
+def test_apply_writes_config_imported_audit():
+    repo = _repo_mock()
+    repo.import_bundle.return_value = {"mode": "replace", "departments_upserted": 1}
+    audit = MagicMock()
+    service = AdminConfigBundleService(repo, audit_repository=audit)
+    service.apply(bundle=_bundle(), actor_user_id="user-1", mode="replace")
+    audit.insert_audit_event.assert_called_once()
+    kwargs = audit.insert_audit_event.call_args.kwargs
+    assert kwargs["event_type"] == "config.imported"
+    assert kwargs["payload_after"]["mode"] == "replace"
+    assert kwargs["payload_after"]["stats"]["departments_upserted"] == 1
+
+
+def test_preview_does_not_write_audit():
+    repo = _repo_mock()
+    audit = MagicMock()
+    service = AdminConfigBundleService(repo, audit_repository=audit)
+    service.preview(bundle=_bundle(), mode="replace")
+    audit.insert_audit_event.assert_not_called()
+
+
+def test_export_writes_config_exported_audit():
+    repo = _repo_mock()
+    repo.export_bundle.return_value = _bundle()
+    audit = MagicMock()
+    service = AdminConfigBundleService(repo, audit_repository=audit)
+    service.export(actor_user_id="user-1")
+    kwargs = audit.insert_audit_event.call_args.kwargs
+    assert kwargs["event_type"] == "config.exported"
+    assert kwargs["payload_after"]["departments"] == 1
+
+
+def test_insert_audit_event_uses_provided_event_type():
+    repo = PostgresStrategicIndicatorsSettingsAuditRepository(connection=MagicMock())
+    repo.execute = MagicMock()
+    repo.insert_audit_event(
+        entity_key="admin.config",
+        payload_before=None,
+        payload_after={"mode": "replace"},
+        changed_by_user_id="user-1",
+        event_type="config.imported",
+    )
+    params = repo.execute.call_args.args[1]
+    assert params[0] == "config.imported"
+
+
+def test_v033_allows_config_export_import_events():
+    sql = Path("migrations/V033__settings_audit_config_import_events.sql").read_text(
+        encoding="utf-8"
+    )
+    assert "config.exported" in sql
+    assert "config.imported" in sql
+    assert "ck_si_settings_audit_event_type" in sql

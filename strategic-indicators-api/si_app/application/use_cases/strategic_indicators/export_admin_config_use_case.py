@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_admin_config_bundle_repository import (
-    PostgresStrategicIndicatorsAdminConfigBundleRepository,
+from si_app.application.services.strategic_indicators.admin_config_bundle_service import (
+    AdminConfigBundleService,
 )
 
 
 class ExportStrategicIndicatorsAdminConfigUseCase:
-    def __init__(
-        self,
-        repository: PostgresStrategicIndicatorsAdminConfigBundleRepository,
-    ) -> None:
-        self._repository = repository
+    def __init__(self, service: AdminConfigBundleService) -> None:
+        self._service = service
 
-    def execute(self) -> dict:
-        return self._repository.export_bundle()
+    def execute(self, *, actor_user_id: str | None = None) -> dict:
+        return self._service.export(actor_user_id=actor_user_id)

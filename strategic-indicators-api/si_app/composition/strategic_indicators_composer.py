@@ -544,12 +544,12 @@ def build_list_strategic_indicators_goal_years_overview_use_case():
 
 def _build_admin_config_bundle_service() -> AdminConfigBundleService:
     repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
-    return AdminConfigBundleService(repository)
+    audit_repository = PostgresStrategicIndicatorsSettingsAuditRepository()
+    return AdminConfigBundleService(repository, audit_repository=audit_repository)
 
 
 def build_export_strategic_indicators_admin_config_use_case():
-    repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
-    return ExportStrategicIndicatorsAdminConfigUseCase(repository)
+    return ExportStrategicIndicatorsAdminConfigUseCase(_build_admin_config_bundle_service())
 
 
 def build_import_strategic_indicators_admin_config_use_case():

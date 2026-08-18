@@ -1,12 +1,24 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_admin_config_bundle_repository import (
     PostgresStrategicIndicatorsAdminConfigBundleRepository,
 )
 
 AdminConfigImportMode = Literal["merge", "replace"]
+
+
+class _AuditWriter(Protocol):
+    def insert_audit_event(
+        self,
+        *,
+        entity_key: str,
+        payload_before: dict | None,
+        payload_after: dict | None,
+        changed_by_user_id: str | None,
+        event_type: str = "settings.updated",
+    ) -> None: ...
 
 
 def _planned(
@@ -30,8 +42,10 @@ class AdminConfigBundleService:
     def __init__(
         self,
         repository: PostgresStrategicIndicatorsAdminConfigBundleRepository,
+        audit_repository: _AuditWriter | None = None,
     ) -> None:
         self._repository = repository
+        self._audit_repository = audit_repository
 
     def preview(
         self,
@@ -75,11 +89,48 @@ class AdminConfigBundleService:
             raise ValueError("; ".join(str(item) for item in errors))
 
         effective_include_goals = True if mode == "replace" else include_goals
-        return self._repository.import_bundle(
+        stats = self._repository.import_bundle(
             bundle=bundle,
             actor_user_id=actor_user_id,
             include_goals=effective_include_goals,
             mode=mode,
+        )
+        self._record_audit(
+            event_type="config.imported",
+            actor_user_id=actor_user_id,
+            payload_after={"mode": mode, "stats": stats},
+        )
+        return stats
+
+    def export(self, *, actor_user_id: str | None = None) -> dict[str, Any]:
+        bundle = self._repository.export_bundle()
+        self._record_audit(
+            event_type="config.exported",
+            actor_user_id=actor_user_id,
+            payload_after={
+                "schema_version": bundle.get("schema_version"),
+                "departments": len(bundle.get("departments") or []),
+                "department_indicators": len(bundle.get("department_indicators") or []),
+                "indicator_goals": len(bundle.get("indicator_goals") or []),
+            },
+        )
+        return bundle
+
+    def _record_audit(
+        self,
+        *,
+        event_type: str,
+        actor_user_id: str | None,
+        payload_after: dict[str, Any],
+    ) -> None:
+        if self._audit_repository is None:
+            return
+        self._audit_repository.insert_audit_event(
+            event_type=event_type,
+            entity_key="admin.config",
+            payload_before=None,
+            payload_after=payload_after,
+            changed_by_user_id=actor_user_id,
         )
 
     def _require_envelope(self, bundle: dict) -> None:

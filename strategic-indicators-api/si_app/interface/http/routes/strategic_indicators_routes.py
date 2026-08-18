@@ -1009,10 +1009,11 @@ def _admin_config_import_payload(
 
 @router.get("/admin/config/export")
 @require_permission("strategic-indicators.settings.manage")
-def export_admin_config():
+def export_admin_config(request: Request):
     try:
+        actor_user_id = _extract_actor(request)
         use_case = build_export_strategic_indicators_admin_config_use_case()
-        return use_case.execute()
+        return use_case.execute(actor_user_id=actor_user_id)
     except Exception as exc:
         raise HTTPException(
             status_code=500,
