@@ -126,6 +126,23 @@ class ChatUserContextService:
         apps = self._apps_from_profile(access_profile) or self._fetch_apps(access_token)
         return self._format_direct_answer(me, apps, message, access_profile)
 
+    def build_synthesis_facts(self, access_token: str | None, message: str) -> str | None:
+        """Bloco rotulado completo para o LLM humanizar (dump de papéis, permissões e apps)."""
+        if not access_token or not self.is_user_identity_question(message):
+            return None
+
+        try:
+            me = self.core_api_gateway.get_me(access_token)
+        except Exception:
+            return None
+
+        if not me or me.get("authorized") is False:
+            return None
+
+        access_profile = self._fetch_access_profile(access_token)
+        apps = self._apps_from_profile(access_profile) or self._fetch_apps(access_token)
+        return self._format_synthesis_facts(me, apps, access_profile)
+
     def _fetch_access_profile(self, access_token: str) -> dict | None:
         try:
             profile = self.core_api_gateway.get_access_profile(access_token)
@@ -375,6 +392,92 @@ class ChatUserContextService:
             )
 
         return "\n".join(parts)
+
+    def _format_synthesis_facts(
+        self,
+        me: dict,
+        apps: list[dict],
+        access_profile: dict | None = None,
+    ) -> str:
+        name = me.get("name") or ""
+        email = me.get("email") or ""
+        roles = me.get("roles") or []
+        groups = (access_profile or {}).get("groups") or me.get("groups") or []
+        permissions = (access_profile or {}).get("effectivePermissions") or me.get(
+            "permissions"
+        ) or []
+        is_superadmin = me.get("is_superadmin", False)
+        profile_roles = (access_profile or {}).get("roles") or []
+        role_names = [
+            str(role.get("name") or "").strip()
+            for role in profile_roles
+            if str(role.get("name") or "").strip()
+        ] or [str(item) for item in roles if str(item).strip()]
+        group_names = self._group_display_names(groups)
+        app_names = [
+            a.get("label") or a.get("name") or a.get("key", "")
+            for a in (apps or [])
+            if a.get("label") or a.get("name") or a.get("key")
+        ]
+        perm_codes = [str(item).strip() for item in permissions if str(item).strip()]
+
+        parts = [self._content("synthesisFacts", "title")]
+        if name:
+            parts.append(self._content("lines", "profileName", name=name))
+        if email:
+            parts.append(self._content("lines", "profileEmail", email=email))
+        if is_superadmin:
+            parts.append(self._content("synthesisFacts", "canonicalProfileSuperadmin"))
+        else:
+            parts.append(self._content("synthesisFacts", "canonicalProfileUser"))
+        if role_names:
+            parts.append(
+                self._content("lines", "profileRoles", roles=", ".join(role_names))
+            )
+        if group_names:
+            parts.append(
+                self._content("lines", "profileGroups", groups=", ".join(group_names))
+            )
+        if perm_codes:
+            parts.append(
+                self._content(
+                    "synthesisFacts",
+                    "permissionsHeading",
+                    count=str(len(perm_codes)),
+                )
+            )
+            for perm in perm_codes:
+                parts.append(
+                    self._content("synthesisFacts", "permissionItem", perm=perm)
+                )
+        if app_names:
+            parts.append(
+                self._content(
+                    "synthesisFacts",
+                    "appsHeading",
+                    count=str(len(app_names)),
+                )
+            )
+            for app_name in app_names:
+                parts.append(
+                    self._content("synthesisFacts", "appItem", app=app_name)
+                )
+
+        return "\n".join(parts)
+
+    @staticmethod
+    def _group_display_names(groups: list) -> list[str]:
+        names: list[str] = []
+        for group in groups or []:
+            if isinstance(group, dict):
+                label = str(group.get("name") or "").strip()
+                if label:
+                    names.append(label)
+                continue
+            label = str(group).strip()
+            if label:
+                names.append(label)
+        return names
 
     @staticmethod
     def _normalize_match_text(value: str) -> str:

@@ -12,6 +12,7 @@ from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentS
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntentService
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+from app.domain.services.chat_user_profile_intent_service import ChatUserProfileIntentService
 from app.domain.services.chat_web_search_follow_up_service import ChatWebSearchFollowUpService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 
@@ -62,11 +63,16 @@ class ChatFollowUpSuggestionService:
 
         if suggestions:
             metadata["followUpSuggestions"] = suggestions
-            metadata["followUpOutcome"] = cls.classify_outcome(
-                answer=answer,
-                tool_calls=tool_calls or [],
-                issues=issues,
-            )
+            if ChatUserProfileIntentService.is_user_identity_question(
+                message
+            ) and not ChatUserProfileIntentService.asks_about_assistant(message):
+                metadata["followUpOutcome"] = "identity"
+            else:
+                metadata["followUpOutcome"] = cls.classify_outcome(
+                    answer=answer,
+                    tool_calls=tool_calls or [],
+                    issues=issues,
+                )
 
     @classmethod
     def build(
@@ -79,7 +85,11 @@ class ChatFollowUpSuggestionService:
         workspace_context: dict | None = None,
         previous_messages: list[Any] | None = None,
     ) -> list[dict[str, str]]:
-        if (workspace_context or {}).get("textTaskCategory") and not tool_calls:
+        if ChatUserProfileIntentService.is_user_identity_question(
+            message
+        ) and not ChatUserProfileIntentService.asks_about_assistant(message):
+            outcome = "identity"
+        elif (workspace_context or {}).get("textTaskCategory") and not tool_calls:
             outcome = "text"
         else:
             outcome = cls.classify_outcome(
@@ -225,7 +235,7 @@ class ChatFollowUpSuggestionService:
 
         context = workspace_context or {}
 
-        if outcome in {"generic", "empty", "error"}:
+        if outcome in {"generic", "empty", "error", "identity"}:
             return True
 
         if outcome in {"product", "stock", "sales", "warning"}:

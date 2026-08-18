@@ -42,3 +42,11 @@ def test_prose_delivery_mode_for_tier():
         ChatPresentationProseDeliveryContentService.prose_delivery_mode_for_tier(None)
         is None
     )
+
+
+def test_preserve_direct_answer_stages_exclude_capabilities():
+    stages = ChatPresentationProseDeliveryContentService.preserve_direct_answer_stages()
+
+    assert "capabilities" not in stages
+    assert "small_talk" in stages
+    assert "utility_direct" in stages

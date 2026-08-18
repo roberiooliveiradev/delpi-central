@@ -55,6 +55,22 @@ def test_build_includes_product_chips_even_without_resolved_code():
     assert "O que você pode fazer?" in labels
 
 
+def test_build_identity_chips_for_user_profile_question():
+    suggestions = ChatFollowUpSuggestionService.build(
+        message="quem sou eu?",
+        answer="Você é Robério Oliveira, Superadministrador.",
+        tool_calls=[],
+    )
+
+    labels = {item["label"] for item in suggestions}
+
+    assert "Ver estoque" not in labels
+    assert "Consultar produto" not in labels
+    assert "Quais são meus papéis?" in labels
+    assert "Quais apps tenho acesso?" in labels
+    assert "O que você pode fazer?" in labels
+
+
 def test_follow_up_queries_use_operational_phrases_with_placeholders():
     suggestions = ChatFollowUpSuggestionService.build(
         message="me fale do produto 10080001",

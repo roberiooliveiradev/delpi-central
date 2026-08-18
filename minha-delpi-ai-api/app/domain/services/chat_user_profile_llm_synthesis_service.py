@@ -69,6 +69,51 @@ class ChatUserProfileLlmSynthesisService:
         return f"{lead}\n\n{facts}\n\n{prefix} {prompt}".strip()
 
     @classmethod
+    def extract_fact_field(cls, facts: str | None, field: str) -> str:
+        needle = f"**{field}:**"
+        for line in str(facts or "").splitlines():
+            stripped = line.strip()
+            if needle.lower() in stripped.lower():
+                return stripped[stripped.lower().find(needle.lower()) + len(needle) :].strip()
+        return ""
+
+    @classmethod
+    def answer_needs_fallback(cls, *, answer: str, synthesis_facts: str | None) -> bool:
+        facts = str(synthesis_facts or "").strip()
+        text = str(answer or "").strip()
+
+        if not facts:
+            return False
+
+        lowered = text.lower()
+        for marker in ChatUserProfileContentService.placeholder_markers():
+            if marker and marker in lowered:
+                return True
+
+        name = cls.extract_fact_field(facts, "Nome")
+        if name:
+            name_lower = name.lower()
+            first = name_lower.split()[0] if name_lower.split() else ""
+            if name_lower not in lowered and first not in lowered:
+                return True
+
+        return False
+
+    @classmethod
+    def guard_answer(
+        cls,
+        *,
+        answer: str,
+        synthesis_facts: str | None,
+        fallback: str | None,
+    ) -> str:
+        if not cls.answer_needs_fallback(answer=answer, synthesis_facts=synthesis_facts):
+            return str(answer or "").strip()
+
+        recovery = str(fallback or synthesis_facts or "").strip()
+        return recovery or str(answer or "").strip()
+
+    @classmethod
     def enrich_tool_context(
         cls,
         tool_context: dict[str, Any] | None,

@@ -17,6 +17,14 @@ class ChatUserProfileContentService:
         )
 
     @classmethod
+    def assistant_subject_terms(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip()
+            for item in ChatAssistantContentService.list(_BUNDLE, "assistantSubjectTerms")
+            if str(item).strip()
+        )
+
+    @classmethod
     def prompt_context_header(cls) -> str:
         return str(
             ChatAssistantContentService.get(
@@ -58,3 +66,13 @@ class ChatUserProfileContentService:
             )
             or "Pergunta:"
         ).strip()
+
+    @classmethod
+    def placeholder_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(
+                _BUNDLE, "llmSynthesis", "placeholderMarkers"
+            )
+            if str(item).strip()
+        )

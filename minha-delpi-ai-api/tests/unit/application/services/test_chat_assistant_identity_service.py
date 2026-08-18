@@ -15,6 +15,7 @@ _SHOULD_DETECT = (
     ("o que você não faz", "limits"),
     ("suas limitações", "limits"),
     ("você é ia?", "origin"),
+    ("quem te criou?", "origin"),
     ("como foi feito", "origin"),
     ("como usar o chat", "usage"),
     ("como te usar", "usage"),

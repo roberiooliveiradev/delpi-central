@@ -20,8 +20,6 @@ _IDENTITY_META_LLM_PHRASES = (
     "como te usar",
 )
 
-_IDENTITY_DIRECT_CAPABILITY_PHRASES = ("o que vc faz?",)
-
 _IDENTITY_ONLY_NO_RAG = frozenset({"quem te criou?", "quem é vc?"})
 
 _META_SYNTHESIS_MARKER = "fatos canônicos"
@@ -216,7 +214,7 @@ def test_send_identity_uses_meta_synthesis_without_rag(message: str, common: boo
 
 
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_send_capabilities_inquiry_uses_direct_answer_without_llm(common: bool):
+def test_send_capabilities_inquiry_uses_llm_with_catalog_facts(common: bool):
     session, send_use_case, _, rag_context_service, llm_gateway = _build_use_cases(
         common=common
     )
@@ -229,7 +227,16 @@ def test_send_capabilities_inquiry_uses_direct_answer_without_llm(common: bool):
 
     response = send_use_case.execute(request)
 
-    llm_gateway.generate.assert_not_called()
+    llm_gateway.generate.assert_called_once()
+    user_messages = [
+        item
+        for item in llm_gateway.generate.call_args[0][0]
+        if item.get("role") == "user"
+    ]
+    content = user_messages[-1]["content"]
+    assert "catálogo" in content.lower() or "Posso ajudar você nestes formatos:" in content
+    assert "Robério" not in content
+    assert "o que vc faz?" in content
     assert response.answer
     assert len(response.answer.strip()) > 10
     rag_context_service.build_context.assert_not_called()

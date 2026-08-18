@@ -21,6 +21,13 @@ def _detection() -> dict[str, Any]:
 class ChatCapabilitiesDetectionService:
     @classmethod
     def is_capabilities_question(cls, message: str) -> bool:
+        from app.domain.services.chat_user_profile_intent_service import (
+            ChatUserProfileIntentService,
+        )
+
+        if ChatUserProfileIntentService.suppresses_capabilities_intent(message):
+            return False
+
         detection = _detection()
         max_length = int(detection.get("maxMessageLength") or 280)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)

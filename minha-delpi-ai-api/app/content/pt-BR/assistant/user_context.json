@@ -101,14 +101,45 @@
     "o que o papel",
     "o que a role",
     "o papel ",
-    " a role "
+    " a role ",
+    "o que eu posso",
+    "o que eu consigo",
+    "o que posso fazer aqui",
+    "o que consigo fazer aqui",
+    "o que eu faço aqui",
+    "o que eu faco aqui"
+  ],
+  "assistantSubjectTerms": [
+    "voce",
+    "você",
+    "vc",
+    "o agente",
+    "o assistente"
   ],
   "promptContext": {
     "header": "[Dados do usuário que está conversando com você]",
     "rule": "REGRA: quando o usuário perguntar sobre si mesmo (quem sou, meus papéis, permissões de um papel, apps, funcionalidades, meu perfil, sobre mim, etc.), responda com os dados abaixo. Para um papel específico, use permissões e apps daquele papel — não misture com outros papéis."
   },
   "llmSynthesis": {
-    "userMessageLead": "Responda à pergunta em linguagem natural, citando os dados reais do perfil abaixo sobre o USUÁRIO AUTENTICADO (não sobre você, o assistente). Nunca use placeholders como [nome] ou [email]; inclua nome e e-mail quando estiverem no bloco.",
-    "userMessageQuestionPrefix": "Pergunta:"
+    "userMessageLead": "Responda à pergunta em linguagem natural, citando os dados reais do perfil abaixo sobre o USUÁRIO AUTENTICADO (não sobre você, o assistente). Nunca use placeholders como [nome], [Seu Nome], [email] ou [Seu Email]. Inclua nome e e-mail quando estiverem no bloco. O campo Perfil (canônico) é a identidade — nunca trate o primeiro código de permissão como «permissão principal». Em «quem sou eu?» / «meu perfil» / «o que eu posso fazer aqui?», resuma nome, e-mail, perfil, papéis e grupo, e as contagens de permissões e apps; só cite códigos RBAC ou a lista completa de apps se a pergunta pedir isso explicitamente.",
+    "userMessageQuestionPrefix": "Pergunta:",
+    "placeholderMarkers": [
+      "[nome]",
+      "[email]",
+      "[seu nome]",
+      "[seu email]",
+      "[e-mail]",
+      "[nome do usuário]",
+      "[email do usuário]"
+    ]
+  },
+  "synthesisFacts": {
+    "title": "Fatos do usuário autenticado (valores reais — não invente nem use placeholder):",
+    "canonicalProfileSuperadmin": "- **Perfil (canônico — não confundir com a primeira permissão da lista):** Superadministrador",
+    "canonicalProfileUser": "- **Perfil (canônico — não confundir com a primeira permissão da lista):** usuário autenticado",
+    "permissionsHeading": "- **Permissões ({count} códigos técnicos — NÃO são o perfil nem a permissão principal):**",
+    "permissionItem": "  - {perm}",
+    "appsHeading": "- **Apps disponíveis ({count} — cite nomes amigáveis; não despeje a lista inteira em overview):**",
+    "appItem": "  - {app}"
   }
 }

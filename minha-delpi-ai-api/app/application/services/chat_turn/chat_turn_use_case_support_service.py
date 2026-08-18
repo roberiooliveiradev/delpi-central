@@ -306,7 +306,7 @@ class ChatTurnUseCaseSupportService:
         from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
-        return service.build_direct_answer(access_token, message)
+        return service.build_synthesis_facts(access_token, message)
 
     @staticmethod
     def resolve_capabilities_answer(

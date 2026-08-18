@@ -165,7 +165,7 @@ class ChatTurnPreparationPostToolResolutionService:
 
         if canvas_action:
             direct_answer = canvas_action.answer
-        elif pre_capability_answer:
+        elif pre_capability_answer and not profile_prep.skip_meta_direct_answer:
             direct_answer = pre_capability_answer
         elif small_talk_direct:
             direct_answer = small_talk_direct

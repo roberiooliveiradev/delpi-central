@@ -32,10 +32,16 @@ def test_assistant_identity_classifies_in_compound_question():
     assert category is None
 
 
-def test_capabilities_detects_consigo_fazer_aqui():
-    assert ChatCapabilitiesService.is_capability_inquiry(
-        "o que consigo fazer aqui"
+def test_first_person_access_is_user_profile_not_capabilities():
+    from app.domain.services.chat_user_profile_intent_service import (
+        ChatUserProfileIntentService,
     )
+
+    message = "o que eu posso fazer aqui?"
+
+    assert ChatUserProfileIntentService.is_user_identity_question(message)
+    assert not ChatCapabilitiesService.is_capability_inquiry(message)
+    assert not ChatCapabilitiesService.is_capabilities_question("o que consigo fazer aqui")
 
 
 def test_meta_direct_answer_composes_three_sections():

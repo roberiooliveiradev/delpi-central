@@ -78,28 +78,19 @@ class ChatMetaLlmTurnPreparationService:
                 )
 
         if intents.capabilities and ChatCapabilitiesService.is_capabilities_question(message):
-            from app.application.services.chat_workspace_agent_activation_service import (
-                ChatWorkspaceAgentActivationService,
-            )
+            capabilities_facts = str(resolve_capabilities_facts(message) or "").strip()
 
-            use_capabilities_llm = ChatWorkspaceAgentActivationService.operational_tools_enabled(
-                workspace_context,
-            )
-
-            if use_capabilities_llm:
-                capabilities_facts = str(resolve_capabilities_facts(message) or "").strip()
-
-                if capabilities_facts:
-                    sections.append(
-                        MetaLlmSynthesisSection(
-                            section_id=SECTION_CAPABILITIES,
-                            title=ChatMetaLlmSynthesisService.section_title(
-                                SECTION_CAPABILITIES,
-                                compound=compound,
-                            ),
-                            facts=capabilities_facts,
-                        )
+            if capabilities_facts:
+                sections.append(
+                    MetaLlmSynthesisSection(
+                        section_id=SECTION_CAPABILITIES,
+                        title=ChatMetaLlmSynthesisService.section_title(
+                            SECTION_CAPABILITIES,
+                            compound=compound,
+                        ),
+                        facts=capabilities_facts,
                     )
+                )
 
         if intents.assistant_identity and ChatAssistantIdentityService.is_assistant_identity_question(
             message

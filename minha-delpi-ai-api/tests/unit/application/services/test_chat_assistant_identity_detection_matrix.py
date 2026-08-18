@@ -29,6 +29,7 @@ _ORIGIN = (
     "vc e ia",
     "voce e um bot",
     "como voce funciona",
+    "quem te criou?",
 )
 
 _USAGE = (

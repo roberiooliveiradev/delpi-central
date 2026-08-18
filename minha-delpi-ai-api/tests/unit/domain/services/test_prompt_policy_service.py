@@ -346,3 +346,27 @@ def test_build_active_skill_policy_includes_readonly_section_when_flag_set():
 
     assert "modo só consulta" in combined
     assert "allowwrite" in combined or "modo consulta" in combined
+
+
+def test_contextual_prompt_skips_skill_sections_when_flag_set():
+    service = PromptPolicyService()
+    skills = {"sqlAuthoring": True, "qualityActionPlans": True}
+
+    with_skills = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        skills=skills,
+        skip_skill_policy_sections=False,
+    )
+    compact = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        skills=skills,
+        skip_skill_policy_sections=True,
+    )
+
+    assert "Especialista SQL" in with_skills
+    assert "PAC Qualidade" in with_skills
+    assert "Especialista SQL" not in compact
+    assert "PAC Qualidade" not in compact
+    assert "[Seu nome]" not in compact

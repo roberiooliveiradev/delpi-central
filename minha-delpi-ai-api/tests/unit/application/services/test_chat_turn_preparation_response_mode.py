@@ -132,6 +132,32 @@ def test_post_tool_capabilities_question_routes_to_llm_not_direct_answer():
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
 
 
+def test_post_tool_capabilities_with_pre_capability_answer_still_routes_to_llm():
+    caps = (
+        "Posso ajudar você nestes formatos:\n\n"
+        "**Sempre disponíveis (chat comum e agentes)**\n"
+        "- Respostas com base na documentação autorizada (RAG)."
+    )
+    result = _resolve_post_tool(
+        message="o que vc faz?",
+        workspace_context={"userActivatedAgent": False, "actionsEnabled": False},
+        pipeline_stages=["capabilities"],
+        tool_context={},
+        tool_calls=[],
+        pre_capability_answer=caps,
+        resolve_capabilities_answer=lambda _message: caps,
+        response_mode="normal",
+    )
+
+    assert result.direct_answer is None
+    assert result.skip_rag is True
+    assert caps in result.tool_context.get(
+        ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS,
+        "",
+    )
+    assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
+
+
 def test_post_tool_small_talk_keeps_direct_answer_with_llm_prose_everywhere():
     greeting = "Bom dia! Como posso ajudar?"
     result = _resolve_post_tool(

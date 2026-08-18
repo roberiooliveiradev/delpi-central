@@ -217,6 +217,7 @@ class PromptPolicyService:
         email_writing_mode: bool = False,
         text_correction_mode: bool = False,
         skills: dict | None = None,
+        skip_skill_policy_sections: bool = False,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
         resolved_skills = skills or {}
@@ -258,7 +259,8 @@ class PromptPolicyService:
             )
         )
 
-        sections.extend(self.build_active_skill_policy_sections(resolved_skills))
+        if not skip_skill_policy_sections:
+            sections.extend(self.build_active_skill_policy_sections(resolved_skills))
 
         if operational_mode:
             sections.append(self._load_policy("operational-agent.md"))

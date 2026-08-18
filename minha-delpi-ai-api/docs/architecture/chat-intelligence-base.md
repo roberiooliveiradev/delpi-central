@@ -312,7 +312,7 @@ Perguntas como «quem é você», «quem te criou», «o que você é» (não co
 | Etapa | Comportamento |
 |-------|----------------|
 | Classificação | `ChatAssistantIdentityService.is_assistant_identity_question` / `classify` (categorias: `who`, `origin`, `role`, `what`, `limits`, `usage`) |
-| Síntese LLM (padrão com `llmProseEverywhere`) | `ChatMetaLlmTurnPreparationService` injeta `build_direct_answer` em `toolContext.metaSynthesisFacts` + policy `chat-assistant-identity.md` — **sem RAG**, prosa pelo modelo |
+| Síntese LLM | `ChatMetaLlmTurnPreparationService` injeta `build_direct_answer` em `toolContext.metaSynthesisFacts` + policy `chat-assistant-identity.md` — **sem RAG**, prosa pelo modelo; o system prompt **omite** o wall de skills (ex.: e-mail `[Seu nome]`) |
 | Atalho legado | `build_direct_answer` direto quando `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=true` **e** a rota meta LLM não está ativa |
 | RAG (modo legado) | `build_rag_query`, `RAG_IDENTITY_QUESTION_MIN_SCORE`, filtro `is_identity_relevant_chunk` (rejeita `Normas_Tecnicas_*` mesmo com “DELPI” no trecho) |
 
@@ -322,21 +322,25 @@ Com síntese LLM ativa, o modelo recebe fatos canônicos (nome do agente, papel,
 
 | Etapa | Comportamento |
 |-------|----------------|
-| Intenção | `ChatUserProfileIntentService` — termos em `user_context.json` → `identityTerms` |
-| Fonte | `GET {CORE_API_BASE_URL}/me` + `me/access-profile` via `ChatUserContextService` |
+| Intenção | `ChatUserProfileIntentService` — termos em `user_context.json` → `identityTerms` (inclui 1ª pessoa: «o que eu posso fazer aqui?») |
+| Precedência | 1ª pessoa de acesso **sem** «você/vc/agente» → só perfil; composto só com os dois sujeitos |
+| Fonte | `GET {CORE_API_BASE_URL}/me` + `me/access-profile` via `ChatUserContextService.build_synthesis_facts` (perfil canônico rotulado; permissões/apps não são a identidade) |
 | Turno | `ChatMetaLlmTurnPreparationService` — estágio `meta_llm_synthesis` / `identity_llm_synthesis`, sem resposta direta |
-| Síntese LLM | `ChatMetaLlmSynthesisService` — fatos (`build_direct_answer`) em `toolContext.metaSynthesisFacts` + policy `chat-user-profile.md` |
-| Prompt | `ChatUserProfileContentService` (`promptContext`, `llmSynthesis`) + PII no contexto quando titular (`should_include_pii_in_llm_context`) |
+| Síntese LLM | `ChatMetaLlmSynthesisService` — fatos rotulados em `toolContext.metaSynthesisFacts` + policy `chat-user-profile.md`; guarda pós-LLM se placeholder ou nome ausente |
+| Prompt | compacto (`skip_skill_policy_sections`) + `ChatUserProfileContentService` (`promptContext`, `llmSynthesis`) + PII no contexto quando titular |
+| Chips | `followUpChips.identity` (não estoque/produto) |
 | Consentimento | `GET {CORE_API_BASE_URL}/me/consents` — com `LGPD_REQUIRE_AI_CONSENT=true`, PII entra no prompt LLM **só** em perguntas sobre o próprio usuário |
 
 ### Capacidades («o que você pode fazer?»)
 
 | Etapa | Comportamento |
 |-------|----------------|
-| Intenção | `ChatCapabilitiesService.is_capabilities_question` (não confundir com ajuda por tópico ou release notes) |
-| Fonte | `ChatCapabilitiesService.build_direct_answer` — catálogo da sessão (skills, actions, exemplos) |
-| Síntese LLM | Mesmo pipeline meta — `capabilities.json` → `llmSynthesis` + policy `chat-capabilities.md` |
-| Direct legado | Suprimido quando a rota meta LLM está ativa (`skip_isolated_meta_direct_answers`) |
+| Intenção | `ChatCapabilitiesService.is_capabilities_question` — 2ª pessoa / catálogo da sessão; **não** «o que eu posso fazer aqui?» (isso é perfil) |
+| Fonte | `ChatCapabilitiesService.build_direct_answer` / `resolve_capability_answer` — catálogo da sessão (skills, actions, exemplos); **não** Core `/me` |
+| Síntese LLM | Mesmo pipeline meta — fatos do catálogo em `metaSynthesisFacts` + policy `chat-capabilities.md`; **chat comum e agente** (sem gate `operational_tools_enabled` na rota) |
+| Direct legado | `pre_capability_answer` **não** vira resposta final em pergunta isolada; `capabilities` **não** está em `preserveDirectAnswerStages` |
+
+Gap G4 (template sombreando o LLM) está **corrigido**: o contrato único é fatos da API + prosa do modelo.
 
 ### Perguntas meta compostas
 
@@ -425,7 +429,7 @@ Testes: `test_chat_action_label_service.py`, `test_content_service.py`.
 
 ### Perguntas meta compostas (maio/2026)
 
-Mensagens que misturam perfil do usuário, capacidades da plataforma e identidade do assistente (ex.: *«me diga quem sou eu e o que consigo fazer aqui, quem é você?»*) → `ChatMetaDirectAnswerService.build` monta resposta em seções (`## Seu perfil`, `## O que você pode fazer aqui`, `## Sobre o assistente`). Tem prioridade sobre atalhos isolados de capacidade ou identidade.
+Mensagens que misturam perfil do usuário, capacidades da plataforma e identidade do assistente (ex.: *«me diga quem sou eu e o que você pode fazer, quem é você?»*) → `ChatMetaLlmTurnPreparationService` monta seções de fatos (`##`) em `metaSynthesisSections`; o LLM responde em prosa única. Atalhos isolados (`pre_capability_answer`, identity/profile direct) não vencem quando a rota meta está ativa.
 
 ### Lousa / canvas — cópia, append e merge operacional (maio/2026)
 

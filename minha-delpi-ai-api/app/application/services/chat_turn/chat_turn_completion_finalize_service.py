@@ -109,6 +109,27 @@ class ChatTurnCompletionFinalizeService:
         if drawing_report_answer:
             answer = drawing_report_answer
 
+        from app.domain.services.chat_user_profile_llm_synthesis_service import (
+            ChatUserProfileLlmSynthesisService,
+        )
+
+        if isinstance(turn.tool_context, dict) and turn.tool_context.get(
+            ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FLAG
+        ):
+            from app.domain.services.chat_meta_llm_synthesis_service import (
+                ChatMetaLlmSynthesisService,
+            )
+
+            facts = ChatUserProfileLlmSynthesisService.extract_synthesis_facts(
+                turn.tool_context
+            ) or ChatMetaLlmSynthesisService.extract_synthesis_facts(turn.tool_context)
+
+            answer = ChatUserProfileLlmSynthesisService.guard_answer(
+                answer=answer,
+                synthesis_facts=facts,
+                fallback=facts,
+            )
+
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
                 message=turn.message,

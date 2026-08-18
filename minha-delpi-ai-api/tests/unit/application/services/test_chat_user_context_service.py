@@ -146,7 +146,40 @@ def test_build_direct_answer_keeps_name_email_for_identity_question():
     assert "Não informado" not in answer
 
 
-def test_build_direct_answer_for_role_permissions_without_llm():
+def test_build_synthesis_facts_labels_canonical_profile_before_permissions():
+    gateway = StubCoreGateway(
+        me={
+            "authorized": True,
+            "name": "Robério Oliveira",
+            "email": "inovacao@delpi.com.br",
+            "is_superadmin": True,
+            "roles": ["Chat Full"],
+            "permissions": ["auditoria-5s.view.filial-01", "minha-delpi.chat.ask"],
+            "groups": ["DELPI - SC"],
+        },
+        profile={
+            "effectivePermissions": ["auditoria-5s.view.filial-01", "minha-delpi.chat.ask"],
+            "effectiveApps": [{"label": "Kaizômetro", "name": "Kaizômetro"}],
+            "groups": ["DELPI - SC"],
+            "roles": [{"name": "Chat Full"}],
+        },
+    )
+    service = ChatUserContextService(gateway)
+
+    facts = service.build_synthesis_facts("token", "quem sou eu?")
+
+    assert facts is not None
+    assert "Robério Oliveira" in facts
+    assert "inovacao@delpi.com.br" in facts
+    assert "Superadministrador" in facts
+    assert "Kaizômetro" in facts
+    profile_pos = facts.find("Perfil (canônico")
+    perm_pos = facts.find("auditoria-5s.view.filial-01")
+    assert profile_pos != -1
+    assert perm_pos != -1
+    assert profile_pos < perm_pos
+    assert "não confundir" in facts.lower() or "NÃO são o perfil" in facts
+
     gateway = StubCoreGateway(
         me={
             "authorized": True,

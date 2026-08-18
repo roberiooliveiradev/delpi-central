@@ -18,6 +18,7 @@ def _prepare(
     skills: dict | None = None,
     identity_direct_enabled: bool = True,
     monkeypatch=None,
+    resolve_capabilities_answer=None,
 ) -> object:
     session = MagicMock()
     session.id = uuid4()
@@ -65,7 +66,8 @@ def _prepare(
         fast_path_enabled=True,
         fast_path_max_chars=30,
         resolve_user_identity_answer=lambda msg: None,
-        resolve_capabilities_answer=lambda msg: None,
+        resolve_capabilities_answer=resolve_capabilities_answer
+        or (lambda msg: None),
     )
 
     return prepared, rag_context_service
@@ -103,5 +105,27 @@ def test_identity_question_skips_rag_on_fast_path_without_company_skill():
     )
 
     assert prepared.tool_context.get("metaLlmSynthesis") is True
+    assert prepared.skip_rag is True
+    rag_context_service.build_context.assert_not_called()
+
+
+def test_capabilities_question_prepare_routes_to_llm_not_simple_direct():
+    from app.application.services.chat_capabilities_service import ChatCapabilitiesService
+
+    caps = ChatCapabilitiesService.build_direct_answer(
+        workspace_context={"agent": None, "agentId": None},
+        allowed_action_ids=[],
+        action_catalog=[],
+    )
+    prepared, rag_context_service = _prepare(
+        "o que vc faz?",
+        resolve_capabilities_answer=lambda _msg: caps,
+    )
+
+    assert prepared.direct_answer is None
+    assert prepared.tool_context.get("metaLlmSynthesis") is True
+    assert "Posso ajudar você nestes formatos:" in str(
+        prepared.tool_context.get("metaSynthesisFacts") or ""
+    )
     assert prepared.skip_rag is True
     rag_context_service.build_context.assert_not_called()

@@ -137,33 +137,45 @@ class ChatPromptBuilderService:
         tool_calls: list | None = None,
         host_surface_prompt: str | None = None,
     ) -> list[dict]:
+        from app.domain.services.chat_meta_llm_synthesis_service import (
+            ChatMetaLlmSynthesisService,
+        )
+
+        meta_synthesis_active = isinstance(meta_synthesis_tool_context, dict) and bool(
+            meta_synthesis_tool_context.get(
+                ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_LLM_SYNTHESIS
+            )
+            or meta_synthesis_tool_context.get("userProfileLlmSynthesis")
+        )
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
             tool_context=tool_context,
             operational_mode=operational_mode,
             analysis_mode=analysis_mode,
             data_interpretation_mode=data_interpretation_mode,
-            text_task_mode=text_task_mode,
-            email_writing_mode=email_writing_mode,
-            text_correction_mode=text_correction_mode,
+            text_task_mode=False if meta_synthesis_active else text_task_mode,
+            email_writing_mode=False if meta_synthesis_active else email_writing_mode,
+            text_correction_mode=False if meta_synthesis_active else text_correction_mode,
             skills=skills,
+            skip_skill_policy_sections=meta_synthesis_active,
         )
         base_prompt += self._user_profile_policy_addon(current_message)
         base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
-        base_prompt += self._technical_description_policy_addon(
-            current_message,
-            skills=skills,
-        )
-        base_prompt += self._operational_narrative_policy_addon(
-            current_message,
-            response_mode=response_mode,
-            tool_calls=tool_calls,
-        )
+        if not meta_synthesis_active:
+            base_prompt += self._technical_description_policy_addon(
+                current_message,
+                skills=skills,
+            )
+            base_prompt += self._operational_narrative_policy_addon(
+                current_message,
+                response_mode=response_mode,
+                tool_calls=tool_calls,
+            )
         if host_surface_prompt and str(host_surface_prompt).strip():
             base_prompt = f"{base_prompt}\n\n{str(host_surface_prompt).strip()}"
 
-        if text_task_mode:
+        if (not meta_synthesis_active) and text_task_mode:
             from app.application.services.chat_text_task_composer_service import (
                 ChatTextTaskComposerService,
             )
@@ -173,10 +185,18 @@ class ChatPromptBuilderService:
                 f"{ChatTextTaskComposerService.attachment_text_task_instruction(attachment_context=text_task_attachment_context)}"
             )
 
-        if email_writing_mode and str(email_prompt_supplement or "").strip():
+        if (
+            (not meta_synthesis_active)
+            and email_writing_mode
+            and str(email_prompt_supplement or "").strip()
+        ):
             base_prompt = f"{base_prompt}\n\n{email_prompt_supplement.strip()}"
 
-        if text_correction_mode and str(text_correction_prompt_supplement or "").strip():
+        if (
+            (not meta_synthesis_active)
+            and text_correction_mode
+            and str(text_correction_prompt_supplement or "").strip()
+        ):
             base_prompt = f"{base_prompt}\n\n{text_correction_prompt_supplement.strip()}"
 
         if user_context:

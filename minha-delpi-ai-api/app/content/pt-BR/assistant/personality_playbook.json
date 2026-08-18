@@ -828,6 +828,11 @@
       "Verificar código",
       "Colocar na lousa"
     ],
+    "identity": [
+      "Quais são meus papéis?",
+      "Quais apps tenho acesso?",
+      "O que você pode fazer?"
+    ],
     "generic": [
       "O que você pode fazer?",
       "Consultar produto",
@@ -862,6 +867,8 @@
     "Tentar por descrição": "busque produto por descrição {{productDescription}}",
     "Ampliar período": "amplie o período da consulta para {{period}}",
     "Verificar código": "me fale do produto {{productCode}}",
+    "Quais são meus papéis?": "quais são meus papéis?",
+    "Quais apps tenho acesso?": "quais apps tenho acesso?",
     "O que você pode fazer?": "o que você pode fazer?",
     "Refinar o pedido": "pode detalhar o resultado anterior?",
     "Detalhar por filial": "detalhe por filial",

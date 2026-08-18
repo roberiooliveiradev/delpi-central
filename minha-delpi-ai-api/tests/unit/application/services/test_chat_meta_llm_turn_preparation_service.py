@@ -25,7 +25,7 @@ def test_capabilities_question_routes_to_llm_synthesis_with_operational_agent():
     assert caps in result.tool_context[ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS]
 
 
-def test_capabilities_question_skips_llm_synthesis_in_common_chat():
+def test_capabilities_question_routes_to_llm_synthesis_in_common_chat():
     caps = "Posso ajudar você nestes formatos:\n\n- RAG"
     result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
         message="o que você pode fazer?",
@@ -37,8 +37,9 @@ def test_capabilities_question_skips_llm_synthesis_in_common_chat():
         resolve_assistant_identity_facts=lambda _message: None,
     )
 
-    assert result.active is False
-    assert result.skip_meta_direct_answer is False
+    assert result.active is True
+    assert result.skip_meta_direct_answer is True
+    assert caps in result.tool_context[ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS]
 
 
 def test_assistant_identity_question_routes_to_llm_synthesis():

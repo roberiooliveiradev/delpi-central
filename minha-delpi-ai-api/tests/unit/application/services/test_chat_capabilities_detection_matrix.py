@@ -49,6 +49,8 @@ _SHOULD_NOT_DETECT = (
     "ele é capaz de resolver sozinho",
     "quanto custa o produto",
     "SELECT * FROM SB1010 LIMIT 1",
+    "o que eu posso fazer aqui?",
+    "o que consigo fazer aqui",
 )
 
 
