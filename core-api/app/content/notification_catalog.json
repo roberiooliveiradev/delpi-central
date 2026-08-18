@@ -157,6 +157,15 @@
       "kind": "app",
       "sourceApps": ["commercial"],
       "pluginId": "commercial"
+    },
+    "commercial_collaboration": {
+      "label": "Sala de interação",
+      "notificationLabel": "Menções na sala de interação",
+      "icon": "briefcase",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["commercial"],
+      "pluginId": "commercial"
     }
   },
   "legacyCategoryAliases": {

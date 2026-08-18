@@ -172,6 +172,7 @@ Exemplo `GET /me/notifications/catalog`:
 | `tv_dashboard` | Painéis TV | `tv-dashboard` | `tv-dashboard` |
 | `commercial` | Faturar notas fiscais | `commercial` | `commercial` |
 | `commercial_tasks` | Tarefas comerciais | `commercial` | `commercial` |
+| `commercial_collaboration` | Menções na sala de interação | `commercial` | `commercial` |
 
 Categorias `platform` (boas-vindas, aniversário, comunicado, …) não têm `sourceApp` — são disparadas pela Core API ou Admin.
 

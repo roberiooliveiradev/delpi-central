@@ -59,6 +59,7 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
     { id: "tv_dashboard", label: "Painéis TV", notificationLabel: "Avisos dos painéis TV", icon: "tv", mutable: true, kind: "app", sourceApps: ["tv-dashboard"], pluginId: "tv-dashboard" },
     { id: "commercial", label: "Portal Comercial", notificationLabel: "Faturar notas fiscais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
     { id: "commercial_tasks", label: "Tarefas", notificationLabel: "Tarefas comerciais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
+    { id: "commercial_collaboration", label: "Sala de interação", notificationLabel: "Menções na sala de interação", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",
