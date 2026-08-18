@@ -113,24 +113,39 @@ class ChatUserContextService:
         if not access_token or not self.is_user_identity_question(message):
             return None
 
-        try:
-            me = self.core_api_gateway.get_me(access_token)
-        except Exception:
+        loaded = self._load_authorized_profile(access_token)
+        if not loaded:
             return None
 
-        if not me or me.get("authorized") is False:
-            return None
-
-        # Resposta exibida ao próprio usuário: não remover PII (LGPD aplica só ao prompt LLM).
-        access_profile = self._fetch_access_profile(access_token)
-        apps = self._apps_from_profile(access_profile) or self._fetch_apps(access_token)
+        me, apps, access_profile = loaded
         return self._format_direct_answer(me, apps, message, access_profile)
 
     def build_synthesis_facts(self, access_token: str | None, message: str) -> str | None:
-        """Bloco rotulado completo para o LLM humanizar (dump de papéis, permissões e apps)."""
+        bundle = self.build_profile_llm_bundle(access_token, message)
+        if not bundle:
+            return None
+        return str(bundle.get("facts") or "").strip() or None
+
+    def build_profile_llm_bundle(
+        self, access_token: str | None, message: str
+    ) -> dict[str, str] | None:
         if not access_token or not self.is_user_identity_question(message):
             return None
 
+        loaded = self._load_authorized_profile(access_token)
+        if not loaded:
+            return None
+
+        me, apps, access_profile = loaded
+        facts = self._format_synthesis_facts(me, apps, access_profile, message)
+        template = self._format_direct_answer(me, apps, message, access_profile)
+        if not facts:
+            return None
+        return {"facts": facts, "template": template}
+
+    def _load_authorized_profile(
+        self, access_token: str
+    ) -> tuple[dict, list[dict], dict | None] | None:
         try:
             me = self.core_api_gateway.get_me(access_token)
         except Exception:
@@ -141,7 +156,7 @@ class ChatUserContextService:
 
         access_profile = self._fetch_access_profile(access_token)
         apps = self._apps_from_profile(access_profile) or self._fetch_apps(access_token)
-        return self._format_synthesis_facts(me, apps, access_profile)
+        return me, apps, access_profile
 
     def _fetch_access_profile(self, access_token: str) -> dict | None:
         try:
@@ -362,32 +377,26 @@ class ChatUserContextService:
             )
         if groups:
             parts.append(
-                self._content("lines", "profileGroups", groups=", ".join(groups))
+                self._content(
+                    "lines",
+                    "profileGroups",
+                    groups=", ".join(self._group_display_names(groups)),
+                )
             )
         if permissions:
             parts.append(
                 self._content(
                     "lines",
-                    "profilePermissions",
+                    "profilePermissionsCount",
                     count=str(len(permissions)),
-                    preview=", ".join(permissions[:15]),
                 )
             )
-            if len(permissions) > 15:
-                parts.append(
-                    self._content(
-                        "lines",
-                        "profilePermissionsMore",
-                        count=str(len(permissions) - 15),
-                    )
-                )
         if app_names:
             parts.append(
                 self._content(
                     "lines",
-                    "profileApps",
+                    "profileAppsCount",
                     count=str(len(app_names)),
-                    apps=", ".join(app_names),
                 )
             )
 
@@ -398,6 +407,7 @@ class ChatUserContextService:
         me: dict,
         apps: list[dict],
         access_profile: dict | None = None,
+        message: str = "",
     ) -> str:
         name = me.get("name") or ""
         email = me.get("email") or ""
@@ -439,31 +449,62 @@ class ChatUserContextService:
                 self._content("lines", "profileGroups", groups=", ".join(group_names))
             )
         if perm_codes:
-            parts.append(
-                self._content(
-                    "synthesisFacts",
-                    "permissionsHeading",
-                    count=str(len(perm_codes)),
-                )
-            )
-            for perm in perm_codes:
+            if self._asks_for_permission_list(message):
                 parts.append(
-                    self._content("synthesisFacts", "permissionItem", perm=perm)
+                    self._content(
+                        "synthesisFacts",
+                        "permissionsHeading",
+                        count=str(len(perm_codes)),
+                    )
+                )
+                for perm in perm_codes:
+                    parts.append(
+                        self._content("synthesisFacts", "permissionItem", perm=perm)
+                    )
+            else:
+                parts.append(
+                    self._content(
+                        "lines",
+                        "profilePermissionsCount",
+                        count=str(len(perm_codes)),
+                    )
                 )
         if app_names:
-            parts.append(
-                self._content(
-                    "synthesisFacts",
-                    "appsHeading",
-                    count=str(len(app_names)),
-                )
-            )
-            for app_name in app_names:
+            if self._asks_for_app_list(message):
                 parts.append(
-                    self._content("synthesisFacts", "appItem", app=app_name)
+                    self._content(
+                        "synthesisFacts",
+                        "appsHeading",
+                        count=str(len(app_names)),
+                    )
+                )
+                for app_name in app_names:
+                    parts.append(
+                        self._content("synthesisFacts", "appItem", app=app_name)
+                    )
+            else:
+                parts.append(
+                    self._content(
+                        "lines",
+                        "profileAppsCount",
+                        count=str(len(app_names)),
+                    )
                 )
 
         return "\n".join(parts)
+
+    @staticmethod
+    def _asks_for_permission_list(message: str) -> bool:
+        normalized = str(message or "").lower()
+        return any(token in normalized for token in ("minha permiss", "minhas permiss"))
+
+    @staticmethod
+    def _asks_for_app_list(message: str) -> bool:
+        normalized = str(message or "").lower()
+        return any(
+            token in normalized
+            for token in ("quais apps", "meus apps", "meus aplicativos")
+        )
 
     @staticmethod
     def _group_display_names(groups: list) -> list[str]:

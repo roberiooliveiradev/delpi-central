@@ -27,7 +27,9 @@
     "profileGroups": "- **Grupos:** {groups}",
     "profilePermissions": "- **Permissões ({count}):** {preview}",
     "profilePermissionsMore": "  … e mais {count}",
-    "profileApps": "- **Apps disponíveis ({count}):** {apps}"
+    "profileApps": "- **Apps disponíveis ({count}):** {apps}",
+    "profilePermissionsCount": "- **Permissões:** {count}",
+    "profileAppsCount": "- **Apps:** {count}"
   },
   "roleDetail": {
     "title": "**Papel: {name}**",
@@ -121,7 +123,7 @@
     "rule": "REGRA: quando o usuário perguntar sobre si mesmo (quem sou, meus papéis, permissões de um papel, apps, funcionalidades, meu perfil, sobre mim, etc.), responda com os dados abaixo. Para um papel específico, use permissões e apps daquele papel — não misture com outros papéis."
   },
   "llmSynthesis": {
-    "userMessageLead": "Responda à pergunta em linguagem natural, citando os dados reais do perfil abaixo sobre o USUÁRIO AUTENTICADO (não sobre você, o assistente). Nunca use placeholders como [nome], [Seu Nome], [email] ou [Seu Email]. Inclua nome e e-mail quando estiverem no bloco. O campo Perfil (canônico) é a identidade — nunca trate o primeiro código de permissão como «permissão principal». Em «quem sou eu?» / «meu perfil» / «o que eu posso fazer aqui?», resuma nome, e-mail, perfil, papéis e grupo, e as contagens de permissões e apps; só cite códigos RBAC ou a lista completa de apps se a pergunta pedir isso explicitamente.",
+    "userMessageLead": "Responda em prosa natural ao usuário autenticado (não sobre o assistente). Use os dados abaixo. Não copie este bloco, não reproduza frases de instrução e não use placeholders. Em overview («quem sou eu?», «meu perfil», «o que eu posso fazer aqui?»), cite nome, e-mail, perfil, papéis, grupo e as contagens; códigos RBAC ou lista de apps só se a pergunta pedir.",
     "userMessageQuestionPrefix": "Pergunta:",
     "placeholderMarkers": [
       "[nome]",
@@ -131,15 +133,28 @@
       "[e-mail]",
       "[nome do usuário]",
       "[email do usuário]"
+    ],
+    "leakMarkers": [
+      "perfil (canônico)",
+      "fatos do usuário autenticado",
+      "dados do usuário autenticado",
+      "não invente nem use placeholder",
+      "não confundir com a primeira permissão",
+      "não são o perfil",
+      "cite nomes amigáveis",
+      "não despeje a lista",
+      "não copie este bloco",
+      "valores reais —",
+      "regra: quando o usuário perguntar"
     ]
   },
   "synthesisFacts": {
-    "title": "Fatos do usuário autenticado (valores reais — não invente nem use placeholder):",
-    "canonicalProfileSuperadmin": "- **Perfil (canônico — não confundir com a primeira permissão da lista):** Superadministrador",
-    "canonicalProfileUser": "- **Perfil (canônico — não confundir com a primeira permissão da lista):** usuário autenticado",
-    "permissionsHeading": "- **Permissões ({count} códigos técnicos — NÃO são o perfil nem a permissão principal):**",
+    "title": "Dados do usuário autenticado:",
+    "canonicalProfileSuperadmin": "- **Perfil:** Superadministrador",
+    "canonicalProfileUser": "- **Perfil:** usuário autenticado",
+    "permissionsHeading": "- **Permissões ({count}):**",
     "permissionItem": "  - {perm}",
-    "appsHeading": "- **Apps disponíveis ({count} — cite nomes amigáveis; não despeje a lista inteira em overview):**",
+    "appsHeading": "- **Apps ({count}):**",
     "appItem": "  - {app}"
   }
 }

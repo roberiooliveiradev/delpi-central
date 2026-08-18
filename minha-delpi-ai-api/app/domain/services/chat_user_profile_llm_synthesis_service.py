@@ -13,6 +13,7 @@ from app.domain.services.chat_user_profile_intent_service import (
 
 TOOL_CONTEXT_SYNTHESIS_FLAG = "userProfileLlmSynthesis"
 TOOL_CONTEXT_SYNTHESIS_FACTS = "userProfileSynthesisFacts"
+TOOL_CONTEXT_TEMPLATE_FALLBACK = "userProfileTemplateFallback"
 PIPELINE_STAGE_IDENTITY_LLM_SYNTHESIS = "identity_llm_synthesis"
 POLICY_NAME = "chat-user-profile.md"
 
@@ -20,6 +21,7 @@ POLICY_NAME = "chat-user-profile.md"
 class ChatUserProfileLlmSynthesisService:
     TOOL_CONTEXT_SYNTHESIS_FLAG = TOOL_CONTEXT_SYNTHESIS_FLAG
     TOOL_CONTEXT_SYNTHESIS_FACTS = TOOL_CONTEXT_SYNTHESIS_FACTS
+    TOOL_CONTEXT_TEMPLATE_FALLBACK = TOOL_CONTEXT_TEMPLATE_FALLBACK
     PIPELINE_STAGE_IDENTITY_LLM_SYNTHESIS = PIPELINE_STAGE_IDENTITY_LLM_SYNTHESIS
     POLICY_NAME = POLICY_NAME
 
@@ -69,6 +71,20 @@ class ChatUserProfileLlmSynthesisService:
         return f"{lead}\n\n{facts}\n\n{prefix} {prompt}".strip()
 
     @classmethod
+    def parse_profile_resolver_payload(cls, raw: Any) -> tuple[str, str | None]:
+        if isinstance(raw, dict):
+            facts = str(raw.get("facts") or "").strip()
+            template = str(raw.get("template") or "").strip() or None
+            return facts, template
+        return str(raw or "").strip(), None
+
+    @classmethod
+    def template_or_facts(cls, raw: Any) -> str | None:
+        facts, template = cls.parse_profile_resolver_payload(raw)
+        text = (template or facts or "").strip()
+        return text or None
+
+    @classmethod
     def extract_fact_field(cls, facts: str | None, field: str) -> str:
         needle = f"**{field}:**"
         for line in str(facts or "").splitlines():
@@ -90,6 +106,14 @@ class ChatUserProfileLlmSynthesisService:
             if marker and marker in lowered:
                 return True
 
+        for marker in ChatUserProfileContentService.leak_markers():
+            if marker and marker in lowered:
+                return True
+
+        facts_title = facts.splitlines()[0].strip().lower() if facts else ""
+        if facts_title and len(facts_title) >= 8 and facts_title in lowered:
+            return True
+
         name = cls.extract_fact_field(facts, "Nome")
         if name:
             name_lower = name.lower()
@@ -110,8 +134,10 @@ class ChatUserProfileLlmSynthesisService:
         if not cls.answer_needs_fallback(answer=answer, synthesis_facts=synthesis_facts):
             return str(answer or "").strip()
 
-        recovery = str(fallback or synthesis_facts or "").strip()
-        return recovery or str(answer or "").strip()
+        recovery = str(fallback or "").strip()
+        if recovery:
+            return recovery
+        return str(synthesis_facts or "").strip() or str(answer or "").strip()
 
     @classmethod
     def enrich_tool_context(
@@ -119,6 +145,7 @@ class ChatUserProfileLlmSynthesisService:
         tool_context: dict[str, Any] | None,
         *,
         profile_facts: str | None,
+        template_fallback: str | None = None,
     ) -> dict[str, Any]:
         context = dict(tool_context) if isinstance(tool_context, dict) else {}
         context[TOOL_CONTEXT_SYNTHESIS_FLAG] = True
@@ -128,7 +155,19 @@ class ChatUserProfileLlmSynthesisService:
         if facts:
             context[TOOL_CONTEXT_SYNTHESIS_FACTS] = facts
 
+        template = str(template_fallback or "").strip()
+        if template:
+            context[TOOL_CONTEXT_TEMPLATE_FALLBACK] = template
+
         return context
+
+    @classmethod
+    def extract_template_fallback(cls, tool_context: dict[str, Any] | None) -> str | None:
+        if not isinstance(tool_context, dict):
+            return None
+
+        template = str(tool_context.get(TOOL_CONTEXT_TEMPLATE_FALLBACK) or "").strip()
+        return template or None
 
     @classmethod
     def extract_synthesis_facts(cls, tool_context: dict[str, Any] | None) -> str | None:

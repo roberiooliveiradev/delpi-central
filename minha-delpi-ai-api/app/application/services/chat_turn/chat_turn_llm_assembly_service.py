@@ -183,15 +183,23 @@ class ChatTurnLlmAssemblyService:
                 skills=workspace_context.get("skills") or {},
             )
         else:
-            user_context = resolve_llm_user_context(
-                request.access_token,
-                message,
-                operational_optimize=operational_optimize,
-                analysis_mode=analysis_mode,
-            )
             from app.domain.services.chat_meta_llm_synthesis_service import (
                 ChatMetaLlmSynthesisService,
             )
+
+            meta_ctx = tool_context if isinstance(tool_context, dict) else None
+            meta_synthesis_active = isinstance(meta_ctx, dict) and bool(
+                meta_ctx.get(ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_LLM_SYNTHESIS)
+                or meta_ctx.get("userProfileLlmSynthesis")
+            )
+            user_context = None
+            if not meta_synthesis_active:
+                user_context = resolve_llm_user_context(
+                    request.access_token,
+                    message,
+                    operational_optimize=operational_optimize,
+                    analysis_mode=analysis_mode,
+                )
 
             profile_synthesis_facts = ChatMetaLlmSynthesisService.extract_synthesis_facts(
                 tool_context if isinstance(tool_context, dict) else None,

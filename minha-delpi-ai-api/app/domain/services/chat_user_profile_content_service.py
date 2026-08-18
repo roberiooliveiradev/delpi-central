@@ -76,3 +76,13 @@ class ChatUserProfileContentService:
             )
             if str(item).strip()
         )
+
+    @classmethod
+    def leak_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(
+                _BUNDLE, "llmSynthesis", "leakMarkers"
+            )
+            if str(item).strip()
+        )

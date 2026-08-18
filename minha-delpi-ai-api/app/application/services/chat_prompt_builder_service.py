@@ -199,7 +199,7 @@ class ChatPromptBuilderService:
         ):
             base_prompt = f"{base_prompt}\n\n{text_correction_prompt_supplement.strip()}"
 
-        if user_context:
+        if user_context and not meta_synthesis_active:
             base_prompt = f"{base_prompt}\n\n{user_context}"
 
         if admin_guidelines_prompt:

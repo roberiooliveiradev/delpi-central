@@ -49,3 +49,19 @@ def test_compound_profile_question_skips_other_direct_answers():
     )
 
     assert result.skip_compound_direct_answers is True
+
+
+def test_apply_identity_llm_route_stores_template_from_bundle():
+    result = ChatUserProfileTurnPreparationService.apply_identity_llm_route(
+        message="quem sou eu?",
+        tool_context={},
+        pipeline_stages=[],
+        resolve_profile_facts=lambda _message: {
+            "facts": "- **Nome:** Ana",
+            "template": "**Seu perfil na Minha DELPI:**\n\n- **Nome:** Ana",
+        },
+    )
+
+    assert result.tool_context["userProfileSynthesisFacts"] == "- **Nome:** Ana"
+    assert "Ana" in result.tool_context["userProfileTemplateFallback"]
+    assert result.skip_user_direct_answer is True

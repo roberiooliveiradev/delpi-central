@@ -123,6 +123,29 @@ def test_build_user_context_includes_pii_for_identity_when_strip_enabled():
     assert "engenharia6@delpi.com.br" in with_pii
 
 
+def test_build_direct_answer_overview_uses_permission_and_app_counts():
+    gateway = StubCoreGateway(
+        me={
+            "authorized": True,
+            "name": "Robério Oliveira",
+            "email": "inovacao@delpi.com.br",
+            "is_superadmin": True,
+            "roles": ["Chat Full"],
+            "permissions": ["auditoria-5s.view.filial-01", "minha-delpi.chat.ask"],
+        },
+        profile={"effectiveApps": [{"label": "Kaizômetro", "name": "Kaizômetro"}]},
+    )
+    service = ChatUserContextService(gateway)
+
+    answer = service.build_direct_answer("token", "quem sou eu?")
+
+    assert answer is not None
+    assert "Robério Oliveira" in answer
+    assert "auditoria-5s.view.filial-01" not in answer
+    assert "- **Permissões:** 2" in answer
+    assert "- **Apps:** 1" in answer
+
+
 def test_build_direct_answer_keeps_name_email_for_identity_question():
     gateway = StubCoreGateway(
         me={
@@ -146,7 +169,7 @@ def test_build_direct_answer_keeps_name_email_for_identity_question():
     assert "Não informado" not in answer
 
 
-def test_build_synthesis_facts_labels_canonical_profile_before_permissions():
+def test_build_synthesis_facts_overview_uses_counts_not_rbac_dump():
     gateway = StubCoreGateway(
         me={
             "authorized": True,
@@ -167,19 +190,36 @@ def test_build_synthesis_facts_labels_canonical_profile_before_permissions():
     service = ChatUserContextService(gateway)
 
     facts = service.build_synthesis_facts("token", "quem sou eu?")
+    bundle = service.build_profile_llm_bundle("token", "quem sou eu?")
 
     assert facts is not None
+    assert bundle is not None
+    assert bundle["facts"] == facts
     assert "Robério Oliveira" in facts
     assert "inovacao@delpi.com.br" in facts
     assert "Superadministrador" in facts
-    assert "Kaizômetro" in facts
-    profile_pos = facts.find("Perfil (canônico")
-    perm_pos = facts.find("auditoria-5s.view.filial-01")
-    assert profile_pos != -1
-    assert perm_pos != -1
-    assert profile_pos < perm_pos
-    assert "não confundir" in facts.lower() or "NÃO são o perfil" in facts
+    assert "Chat Full" in facts
+    assert "DELPI - SC" in facts
+    assert "auditoria-5s.view.filial-01" not in facts
+    assert "Kaizômetro" not in facts
+    assert "não confundir" not in facts.lower()
+    assert "não despeje" not in facts.lower()
+    assert "- **Permissões:** 2" in facts
+    assert "- **Apps:** 1" in facts
+    assert "Seu perfil na Minha DELPI" in bundle["template"]
+    assert "Robério Oliveira" in bundle["template"]
+    assert "auditoria-5s.view.filial-01" not in bundle["template"]
 
+    permission_facts = service.build_synthesis_facts("token", "minhas permissões")
+    assert permission_facts is not None
+    assert "auditoria-5s.view.filial-01" in permission_facts
+
+    app_facts = service.build_synthesis_facts("token", "quais apps eu tenho?")
+    assert app_facts is not None
+    assert "Kaizômetro" in app_facts
+
+
+def test_build_direct_answer_role_permissions_question():
     gateway = StubCoreGateway(
         me={
             "authorized": True,

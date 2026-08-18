@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from app.application.services.chat_meta_direct_answer_service import (
     MetaDirectAnswerIntents,
@@ -35,7 +36,7 @@ class ChatUserProfileTurnPreparationService:
         message: str,
         tool_context: dict,
         pipeline_stages: list[str],
-        resolve_profile_facts: Callable[[str], str | None],
+        resolve_profile_facts: Callable[[str], Any],
         meta_intents: MetaDirectAnswerIntents | None = None,
         workspace_context: dict | None = None,
         resolve_capabilities_facts: Callable[[str], str | None] | None = None,

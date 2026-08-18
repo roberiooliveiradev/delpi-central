@@ -299,14 +299,16 @@ class ChatTurnUseCaseSupportService:
         )
 
     @staticmethod
-    def resolve_user_identity_answer(access_token: str | None, message: str) -> str | None:
+    def resolve_user_identity_answer(
+        access_token: str | None, message: str
+    ) -> dict[str, str] | None:
         if not access_token:
             return None
 
         from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
-        return service.build_synthesis_facts(access_token, message)
+        return service.build_profile_llm_bundle(access_token, message)
 
     @staticmethod
     def resolve_capabilities_answer(

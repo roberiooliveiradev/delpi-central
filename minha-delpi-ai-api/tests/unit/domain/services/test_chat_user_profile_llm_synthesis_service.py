@@ -51,10 +51,29 @@ def test_enrich_tool_context_sets_contract_keys():
     context = ChatUserProfileLlmSynthesisService.enrich_tool_context(
         {},
         profile_facts="Perfil",
+        template_fallback="Você é Ana.",
     )
 
     assert context[ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FLAG] is True
     assert context[ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_SYNTHESIS_FACTS] == "Perfil"
+    assert (
+        context[ChatUserProfileLlmSynthesisService.TOOL_CONTEXT_TEMPLATE_FALLBACK]
+        == "Você é Ana."
+    )
+
+
+def test_parse_profile_resolver_payload_accepts_bundle_or_string():
+    facts, template = ChatUserProfileLlmSynthesisService.parse_profile_resolver_payload(
+        {"facts": "- **Nome:** Ana", "template": "Você é Ana."}
+    )
+    assert facts == "- **Nome:** Ana"
+    assert template == "Você é Ana."
+
+    facts_only, empty_template = ChatUserProfileLlmSynthesisService.parse_profile_resolver_payload(
+        "- **Nome:** Ana"
+    )
+    assert facts_only == "- **Nome:** Ana"
+    assert empty_template is None
 
 
 def test_guard_answer_falls_back_on_placeholder():
@@ -78,6 +97,29 @@ def test_guard_answer_falls_back_when_name_missing():
     )
 
     assert fallback == facts
+
+
+def test_guard_answer_falls_back_on_leaked_instruction_to_template():
+    facts = (
+        "Dados do usuário autenticado:\n"
+        "- **Nome:** Robério Oliveira\n"
+        "- **Email:** inovacao@delpi.com.br"
+    )
+    template = "**Seu perfil na Minha DELPI:**\n\n- **Nome:** Robério Oliveira"
+    leaked = (
+        "Fatos do usuário autenticado (valores reais — não invente nem use placeholder):\n"
+        "Perfil (canônico — não confundir com a primeira permissão da lista)\n"
+        "Você é Robério Oliveira."
+    )
+    guarded = ChatUserProfileLlmSynthesisService.guard_answer(
+        answer=leaked,
+        synthesis_facts=facts,
+        fallback=template,
+    )
+
+    assert guarded == template
+    assert "não confundir" not in guarded.lower()
+    assert "não invente" not in guarded.lower()
 
 
 def test_guard_answer_keeps_humanized_name():

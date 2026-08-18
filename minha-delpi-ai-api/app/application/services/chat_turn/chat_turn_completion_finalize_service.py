@@ -123,11 +123,14 @@ class ChatTurnCompletionFinalizeService:
             facts = ChatUserProfileLlmSynthesisService.extract_synthesis_facts(
                 turn.tool_context
             ) or ChatMetaLlmSynthesisService.extract_synthesis_facts(turn.tool_context)
+            template = ChatUserProfileLlmSynthesisService.extract_template_fallback(
+                turn.tool_context
+            )
 
             answer = ChatUserProfileLlmSynthesisService.guard_answer(
                 answer=answer,
                 synthesis_facts=facts,
-                fallback=facts,
+                fallback=template,
             )
 
         correction_canvas_payload = (

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
@@ -49,7 +50,7 @@ class ChatMetaLlmTurnPreparationService:
         workspace_context: dict,
         tool_context: dict,
         pipeline_stages: list[str],
-        resolve_profile_facts: Callable[[str], str | None],
+        resolve_profile_facts: Callable[[str], Any],
         resolve_capabilities_facts: Callable[[str], str | None],
         resolve_assistant_identity_facts: Callable[[str], str | None],
         meta_intents: MetaDirectAnswerIntents | None = None,
@@ -59,11 +60,16 @@ class ChatMetaLlmTurnPreparationService:
         intents = meta_intents or cls.detect_meta_intents(message)
         sections: list[MetaLlmSynthesisSection] = []
         compound = intents.count >= 2
+        profile_template: str | None = None
 
         if intents.user_profile and ChatUserProfileLlmSynthesisService.should_route_to_llm(
             message
         ):
-            profile_facts = str(resolve_profile_facts(message) or "").strip()
+            profile_facts, profile_template = (
+                ChatUserProfileLlmSynthesisService.parse_profile_resolver_payload(
+                    resolve_profile_facts(message)
+                )
+            )
 
             if profile_facts:
                 sections.append(
@@ -120,7 +126,11 @@ class ChatMetaLlmTurnPreparationService:
                 pipeline_stages=stages,
             )
 
-        context = ChatMetaLlmSynthesisService.enrich_tool_context(context, sections=sections)
+        context = ChatMetaLlmSynthesisService.enrich_tool_context(
+            context,
+            sections=sections,
+            profile_template_fallback=profile_template,
+        )
         ChatMetaLlmSynthesisService.append_pipeline_stage(stages)
 
         if any(section.section_id == SECTION_PROFILE for section in sections):

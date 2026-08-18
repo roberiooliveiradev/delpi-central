@@ -46,3 +46,23 @@ def test_profile_meta_synthesis_omits_email_placeholder():
     assert "[Seu nome]" not in system
     assert "Especialista SQL" not in system
     assert "perfil" in system.lower()
+
+
+def test_profile_meta_synthesis_omits_prompt_user_context_block():
+    builder = ChatPromptBuilderService(PromptPolicyService())
+    messages = builder.build_messages(
+        history=[],
+        current_message="quem sou eu?",
+        rag_context="",
+        tool_context="",
+        user_context=(
+            "[Dados do usuário que está conversando com você]\n"
+            "REGRA: quando o usuário perguntar sobre si mesmo, use os dados abaixo."
+        ),
+        meta_synthesis_tool_context={"userProfileLlmSynthesis": True},
+    )
+
+    system = messages[0]["content"]
+
+    assert "REGRA: quando o usuário" not in system
+    assert "[Dados do usuário que está conversando com você]" not in system

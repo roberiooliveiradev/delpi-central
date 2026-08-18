@@ -163,6 +163,7 @@ class ChatMetaLlmSynthesisService:
         tool_context: dict[str, Any] | None,
         *,
         sections: list[MetaLlmSynthesisSection],
+        profile_template_fallback: str | None = None,
     ) -> dict[str, Any]:
         context = dict(tool_context) if isinstance(tool_context, dict) else {}
         facts = cls.compose_facts_block(sections)
@@ -181,6 +182,7 @@ class ChatMetaLlmSynthesisService:
                 context = ChatUserProfileLlmSynthesisService.enrich_tool_context(
                     context,
                     profile_facts=section.facts,
+                    template_fallback=profile_template_fallback,
                 )
                 break
 

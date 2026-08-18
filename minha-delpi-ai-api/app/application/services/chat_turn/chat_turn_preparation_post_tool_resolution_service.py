@@ -67,7 +67,7 @@ class ChatTurnPreparationPostToolResolutionService:
         routing_disambiguation_answer: str | None,
         learning_term_confirmation_answer: str | None,
         skip_tools_for_data_interpretation: bool,
-        resolve_user_identity_answer: Callable[[str], str | None],
+        resolve_user_identity_answer: Callable[[str], Any],
         resolve_capabilities_answer: Callable[[str], str | None],
         attachment_ids: list[str] | None = None,
         response_mode: str | None = None,
@@ -246,7 +246,13 @@ class ChatTurnPreparationPostToolResolutionService:
                     pipeline_stages.append("meta_direct_answer")
 
         if not direct_answer and not profile_prep.skip_user_direct_answer:
-            user_direct = resolve_user_identity_answer(message)
+            from app.domain.services.chat_user_profile_llm_synthesis_service import (
+                ChatUserProfileLlmSynthesisService,
+            )
+
+            user_direct = ChatUserProfileLlmSynthesisService.template_or_facts(
+                resolve_user_identity_answer(message)
+            )
 
             if user_direct:
                 direct_answer = user_direct

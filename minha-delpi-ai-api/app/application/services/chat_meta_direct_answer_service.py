@@ -13,6 +13,9 @@ from app.application.services.chat_capabilities_service import ChatCapabilitiesS
 from app.domain.services.chat_user_profile_intent_service import (
     ChatUserProfileIntentService,
 )
+from app.domain.services.chat_user_profile_llm_synthesis_service import (
+    ChatUserProfileLlmSynthesisService,
+)
 
 
 @dataclass(frozen=True)
@@ -47,14 +50,16 @@ class ChatMetaDirectAnswerService:
         *,
         message: str,
         workspace_context: dict,
-        resolve_user_identity_answer: Callable[[str], str | None],
+        resolve_user_identity_answer: Callable[[str], str | dict | None],
         resolve_capabilities_answer: Callable[[str], str | None],
     ) -> str | None:
         intents = cls.detect_intents(message)
         sections: list[tuple[str, str]] = []
 
         if intents.user_profile:
-            user_answer = resolve_user_identity_answer(message)
+            user_answer = ChatUserProfileLlmSynthesisService.template_or_facts(
+                resolve_user_identity_answer(message)
+            )
 
             if user_answer:
                 sections.append(
