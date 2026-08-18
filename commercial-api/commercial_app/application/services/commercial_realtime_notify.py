@@ -607,3 +607,75 @@ def notify_interaction_attachment(
     }
     for uid in members:
         commercial_realtime_hub.schedule_broadcast(user_room(uid), payload)
+
+
+def notify_room_message_changed(
+    *,
+    reason: str,
+    room_id: str,
+    message: Any,
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+) -> None:
+    """Fan-out para inscritos em `room:{uuid}` (subscribe)."""
+    rid = str(room_id or "").strip()
+    if not rid:
+        return
+    action = str(reason or "").strip().lower()
+    if action not in {"created", "updated", "deleted"}:
+        action = "updated"
+    message_payload = None
+    message_id = None
+    if message is not None:
+        message_id = str(getattr(message, "id", "") or "").strip() or None
+        to_dict = getattr(message, "to_dict", None)
+        if callable(to_dict):
+            message_payload = to_dict()
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    payload = {
+        "type": f"room.message.{action}",
+        "roomId": rid,
+        "messageId": message_id,
+        "message": message_payload,
+        "actorUserId": (actor_user_id or "").strip() or None,
+        "actorDisplayName": actor_label,
+        "actorClientId": (actor_client_id or "").strip() or None,
+    }
+    commercial_realtime_hub.schedule_broadcast(interaction_room_key(rid), payload)
+
+
+def notify_room_reaction_changed(
+    *,
+    room_id: str,
+    message_id: str,
+    code: str,
+    actor_user_id: str,
+    action: str = "set",
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+) -> None:
+    """Fan-out de reação para inscritos em `room:{uuid}`."""
+    rid = str(room_id or "").strip()
+    mid = str(message_id or "").strip()
+    reaction_code = str(code or "").strip()
+    if not rid or not mid or not reaction_code:
+        return
+    reaction_action = "clear" if str(action or "").strip().lower() == "clear" else "set"
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    payload = {
+        "type": "room.reaction",
+        "roomId": rid,
+        "messageId": mid,
+        "code": reaction_code,
+        "action": reaction_action,
+        "userId": (actor_user_id or "").strip() or None,
+        "actorUserId": (actor_user_id or "").strip() or None,
+        "actorDisplayName": actor_label,
+        "actorClientId": (actor_client_id or "").strip() or None,
+    }
+    commercial_realtime_hub.schedule_broadcast(interaction_room_key(rid), payload)

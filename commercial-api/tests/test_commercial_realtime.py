@@ -566,3 +566,54 @@ def test_notify_interaction_attachment_schedules_member_rooms(monkeypatch):
     assert body["type"] == "room.attachment"
     assert body["reason"] == "attachment.uploaded"
     assert "proposta.pdf" in body["notification"]["message"]
+
+
+def test_notify_room_message_fanout_to_interaction_room(monkeypatch):
+    hub = MagicMock()
+    scheduled: list[tuple[str, dict]] = []
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
+        hub,
+    )
+    from commercial_app.application.services.commercial_realtime_notify import (
+        interaction_room_key,
+        notify_room_message_changed,
+        notify_room_reaction_changed,
+    )
+    from commercial_app.domain.entities.interaction_room import InteractionMessage
+    from datetime import datetime, timezone
+    from uuid import UUID
+
+    message = InteractionMessage(
+        id=UUID("00000000-0000-0000-0000-000000000222"),
+        room_id=UUID("00000000-0000-0000-0000-000000000111"),
+        message_kind="text",
+        body_text="olá",
+        created_at=datetime.now(timezone.utc),
+        author_user_id="u1",
+    )
+    notify_room_message_changed(
+        reason="created",
+        room_id=str(message.room_id),
+        message=message,
+        actor_user_id="u1",
+        actor_display_name="Ana",
+    )
+    assert len(scheduled) == 1
+    room, payload = scheduled[0]
+    assert room == interaction_room_key(str(message.room_id))
+    assert payload["type"] == "room.message.created"
+    assert payload["message"]["body_text"] == "olá"
+
+    scheduled.clear()
+    notify_room_reaction_changed(
+        room_id=str(message.room_id),
+        message_id=str(message.id),
+        code="ok",
+        actor_user_id="u2",
+        action="set",
+    )
+    assert scheduled[0][0] == interaction_room_key(str(message.room_id))
+    assert scheduled[0][1]["type"] == "room.reaction"
+    assert scheduled[0][1]["action"] == "set"

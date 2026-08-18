@@ -21,6 +21,8 @@ from commercial_app.application.use_cases.manage_interaction_rooms import (
 )
 from commercial_app.application.services.commercial_realtime_notify import (
     notify_interaction_mention,
+    notify_room_message_changed,
+    notify_room_reaction_changed,
 )
 from commercial_app.composition.commercial_composer import (
     build_manage_interaction_messages_use_case,
@@ -34,6 +36,7 @@ from commercial_app.core.auth_actor import (
     current_user_from_request,
 )
 from commercial_app.core.responses import fail, ok
+from commercial_app.interface.http.client_id import client_id_from_request
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
 )
@@ -407,13 +410,22 @@ def post_interaction_message(
             )
         )
         try:
+            notify_room_message_changed(
+                reason="created",
+                room_id=str(message.room_id),
+                message=message,
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
             notify_interaction_mention(
                 message=message,
                 actor_user_id=actor,
                 actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
             )
         except Exception:  # noqa: BLE001 — notificação não pode falhar o POST
-            logger.exception("interaction_mention_notify_failed")
+            logger.exception("interaction_message_notify_failed")
         return ok(
             message.to_dict(),
             message=InteractionRoomContentService.message("postOk"),
@@ -453,6 +465,17 @@ def update_interaction_message(
             actor_user_id=actor,
             body_text=body.body_text,
         )
+        try:
+            notify_room_message_changed(
+                reason="updated",
+                room_id=str(message.room_id),
+                message=message,
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_message_update_notify_failed")
         return ok(
             message.to_dict(),
             message=InteractionRoomContentService.message("updateOk"),
@@ -489,6 +512,17 @@ def delete_interaction_message(
             message_id=message_id,
             actor_user_id=actor,
         )
+        try:
+            notify_room_message_changed(
+                reason="deleted",
+                room_id=str(message.room_id),
+                message=message,
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_message_delete_notify_failed")
         return ok(
             message.to_dict(),
             message=InteractionRoomContentService.message("deleteOk"),
@@ -525,6 +559,18 @@ def set_interaction_message_reaction(
             actor_user_id=actor,
             code=code,
         )
+        try:
+            notify_room_reaction_changed(
+                room_id=str(room_id),
+                message_id=str(message_id),
+                code=reaction.code,
+                actor_user_id=actor,
+                action="set",
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_reaction_set_notify_failed")
         return ok(
             reaction.to_dict(),
             message=InteractionRoomContentService.message("reactionSetOk"),
@@ -563,6 +609,18 @@ def clear_interaction_message_reaction(
             actor_user_id=actor,
             code=code,
         )
+        try:
+            notify_room_reaction_changed(
+                room_id=str(room_id),
+                message_id=str(message_id),
+                code=code,
+                actor_user_id=actor,
+                action="clear",
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_reaction_clear_notify_failed")
         return ok(
             {"cleared": True, "code": code},
             message=InteractionRoomContentService.message("reactionClearedOk"),
