@@ -58,6 +58,8 @@ Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — *
 | `/apps/commercial/administration/team` | Administração — Equipe (presença online via WS) | `commercial.manage` |
 | `/apps/commercial/administration/groups` | Administração — Grupos operacionais | `commercial.manage` |
 | `/apps/commercial/seller-portfolios` (legado) | Alias → Carteiras do hub | `commercial.manage` |
+| `/apps/commercial/interaction-rooms` | Inbox da sala de interação (lista) | `commercial.access` |
+| `/apps/commercial/interaction-rooms/:roomId` | Thread da sala (SPA; não declarado no manifesto) | `commercial.access` |
 
 Nav de topo: `Início → Visão geral† → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração°`
 (†‡ `commercial.access` · ° `commercial.manage`). Propostas, OTD, Oportunidades
@@ -248,10 +250,43 @@ em [`src/utils/sellerPortfoliosDeepLink.ts`](./src/utils/sellerPortfoliosDeepLin
 | `/apps/commercial-api/analytics/*` | KPIs, ROL, OTD, propostas OV (escopo `seller_id`/membership no BFF) |
 | `/apps/commercial-api/proposal-documents*` | Documento ADY + PDF |
 | `/apps/commercial-api/production/*` e `/products/*` | OP, apontamentos, status fabril, BOM |
+| `/apps/commercial-api/interaction-rooms*` | Sala de interação (inbox, resolve, mensagens, pins, tarefas) |
 
 O MFE **nunca** chama `/apps/api-delpi` — só a `commercial-api` faz gateway TOTVS. Diretriz: `.cursor/rules/mfe-own-api-no-direct-api-delpi.mdc`.
 
 Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
+
+## Sala de interação
+
+Inbox e thread nativos (WF-SALA). Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`MessageThread`, composer, room header).
+
+Contrato HTTP completo: [API-ROUTES.md § 3.21](../../docs/12-roadmap-e-evolucao/commercial/API-ROUTES.md). Paths EN (prefixo `/interaction-rooms`):
+
+| Método | Path relativo | `operationId` |
+|--------|---------------|---------------|
+| GET | `/interaction-rooms` | `list_interaction_rooms` |
+| POST | `/interaction-rooms/resolve` | `resolve_interaction_room` |
+| GET | `/interaction-rooms/{room_id}` | `get_interaction_room` |
+| GET | `/interaction-rooms/{room_id}/members` | `list_interaction_room_members` |
+| POST | `/interaction-rooms/{room_id}/members` | `add_interaction_room_member` |
+| DELETE | `/interaction-rooms/{room_id}/members/{user_id}` | `remove_interaction_room_member` |
+| POST | `/interaction-rooms/{room_id}/read` | `mark_interaction_room_read` |
+| GET | `/interaction-rooms/{room_id}/messages` | `list_interaction_messages` |
+| POST | `/interaction-rooms/{room_id}/messages` | `post_interaction_message` |
+| PATCH | `/interaction-rooms/{room_id}/messages/{message_id}` | `update_interaction_message` |
+| DELETE | `/interaction-rooms/{room_id}/messages/{message_id}` | `delete_interaction_message` |
+| PUT | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `set_interaction_message_reaction` |
+| DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `clear_interaction_message_reaction` |
+| GET | `/interaction-rooms/{room_id}/pins` | `list_interaction_room_pins` |
+| POST | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `pin_interaction_message` |
+| DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `unpin_interaction_message` |
+| GET | `/interaction-rooms/mention-suggest` | `suggest_interaction_mentions` |
+| GET | `/interaction-rooms/entity-preview` | `preview_interaction_entity` |
+| POST | `/interaction-rooms/{room_id}/messages/{message_id}/tasks` | `create_task_from_interaction_message` |
+
+Anexos de mensagem: `owner_type=room_message` em `/attachments` (mesmo volume `commercial-attachments`). Publisher interno `post_system_message` (`otd_event` / `process_stage`) **não** tem rota HTTP.
+
+RBAC: `commercial.access` (dado por membership da sala); `commercial.manage` = irrestrito — **sem** permission code novo.
 
 ## RBAC (capacidades)
 
