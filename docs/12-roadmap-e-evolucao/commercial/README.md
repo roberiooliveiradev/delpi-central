@@ -38,7 +38,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **[HELP-COVERAGE.md](./HELP-COVERAGE.md)** | Cobertura de help (`hint` / `headerHint`) no MFE |
 | **[adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)** | ADR — API própria e migração carteira |
 | **[adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)** | ADR — depreciação Portal do Vendedor |
-| **[adr/ADR-003-customer-product-group-filter.md](./adr/ADR-003-customer-product-group-filter.md)** | ADR — filtro produto vs família na Minha Carteira |
+| **[GAV-TV-FEED.md](./GAV-TV-FEED.md)** | Fontes Overview → TV Dashboard (GR); Comercial só Link |
 
 ## Estado da implementação (ago/2026)
 

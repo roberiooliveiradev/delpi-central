@@ -118,7 +118,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | ID | Tema | Status | Dono | Fontes |
 |----|------|--------|------|--------|
 | P-GAV-N1 | Gestão à Vista N1 gaps | **Backlog** | Comercial + TV | MAPA · Playbook |
-| P-GR-TV | GR de Vendas **no MFE commercial** | **Bloqueado** / Fora | **tv-dashboard** | ATA-2 §35 · bounded context — só Link |
+| P-GR-TV | GR de Vendas **no MFE commercial** | **Bloqueado** / Link | **tv-dashboard** | Home → `/apps/tv-dashboard` · [GAV-TV-FEED.md](./GAV-TV-FEED.md) |
 | P-HOME-PERS | Home orçamentista / faturamento | **Existe** | Hub routes postponed/board + PERFIS | FOLLOWUP T7 |
 | P-RANK-BI | Ranking produtividade (ofertas/colaborador) | **Backlog** | MFE + BFF | MAPA — ≠ ranking faturamento T5 (**Existe**) |
 | P-CAP-PCP | Cockpit capacidade PCP no commercial | **Bloqueado** / Link | Produção/PCP | Link Home + ficha linha → `/apps/dashboard-production` |

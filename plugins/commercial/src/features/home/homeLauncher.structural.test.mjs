@@ -37,11 +37,12 @@ describe("home hub stack", () => {
     assert.match(home, /cm-home-queue-ok/);
     assert.match(home, /queueOkTitle/);
     assert.match(home, /cm-home-sections-grid/);
-    assert.match(home, /getHomeFavorites|putHomeFavorites/);
+    assert.match(home, /getHomeFavorites|putHomeFavorites|refreshHomeFavorites/);
     assert.match(home, /onPinClick/);
     assert.match(home, /buildOpenOrdersHorizonListHref/);
     assert.match(home, /month-deliveries/);
     assert.match(home, /dashboard-production/);
+    assert.match(home, /tv-dashboard/);
     assert.doesNotMatch(home, /kind === ["']create["']/);
     assert.doesNotMatch(home, /cm-home-columns/);
     assert.doesNotMatch(home, /HOME_LAUNCHER_CONTENT/);
