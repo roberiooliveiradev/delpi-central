@@ -1,0 +1,76 @@
+.delpi-ui-entity-unfurl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 24rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--delpi-color-border, #e2e8f0);
+  border-radius: 0.65rem;
+  background: var(--delpi-color-surface-muted, #f8fafc);
+}
+
+.delpi-ui-entity-unfurl--denied {
+  opacity: 0.92;
+  border-style: dashed;
+}
+
+.delpi-ui-entity-unfurl__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: var(--delpi-color-text, #0f172a);
+}
+
+.delpi-ui-entity-unfurl__kind {
+  font-size: 0.75rem;
+  color: var(--delpi-color-text-muted, #64748b);
+}
+
+.delpi-ui-entity-unfurl__fields {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0;
+}
+
+.delpi-ui-entity-unfurl__field {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+}
+
+.delpi-ui-entity-unfurl__field-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--delpi-color-text-muted, #64748b);
+}
+
+.delpi-ui-entity-unfurl__field-value {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--delpi-color-text, #0f172a);
+}
+
+.delpi-ui-entity-unfurl__denied {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--delpi-color-text-muted, #64748b);
+}
+
+.delpi-ui-entity-unfurl__actions {
+  margin-top: 0.35rem;
+}
+
+.delpi-ui-entity-unfurl__action {
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--delpi-color-border, #d1d5db);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--delpi-color-accent, #2563eb);
+  background: var(--delpi-color-surface, #fff);
+  cursor: pointer;
+}

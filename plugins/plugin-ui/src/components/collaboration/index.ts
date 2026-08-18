@@ -39,6 +39,15 @@ export {
   type MessageThreadProps,
 } from "./MessageThread";
 export {
+  EntityUnfurlCard,
+  createDashboardEntityUnfurlCard,
+  entityUnfurlCardBemClasses,
+  type DashboardEntityUnfurlCardProps,
+  type EntityUnfurlCardClassNames,
+  type EntityUnfurlCardProps,
+  type EntityUnfurlField,
+} from "./EntityUnfurlCard";
+export {
   detectActiveMention,
   insertMentionToken,
   type ActiveMentionQuery,
