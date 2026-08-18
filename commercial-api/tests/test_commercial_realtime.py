@@ -138,6 +138,83 @@ def test_hub_presence_idle_timeout_marks_offline():
     asyncio.run(run())
 
 
+def test_hub_subscribe_join_and_unsubscribe_room():
+    async def run() -> None:
+        from uuid import uuid4
+
+        from commercial_app.application.services.commercial_realtime_notify import (
+            interaction_room_key,
+        )
+        from commercial_app.application.services.commercial_realtime_protocol import (
+            handle_realtime_client_message,
+        )
+
+        hub = CommercialRealtimeHub()
+        room_id = str(uuid4())
+        room_key = interaction_room_key(room_id)
+        ws = AsyncMock()
+        ws.send_json = AsyncMock()
+        hub._socket_meta[ws] = (("user:seller-a",), "seller-a")  # noqa: SLF001
+        hub._rooms["user:seller-a"] = {ws}  # noqa: SLF001
+
+        ack = await handle_realtime_client_message(
+            hub=hub,
+            websocket=ws,
+            user_id="seller-a",
+            raw='{"type":"subscribe","roomId":"%s"}' % room_id,
+            can_join_room=lambda _uid, rid: rid == room_id,
+        )
+        assert ack is not None
+        assert ack["type"] == "subscribed"
+        assert room_key in hub.socket_room_keys(ws)
+        assert ws in hub._rooms.get(room_key, set())  # noqa: SLF001
+
+        ack = await handle_realtime_client_message(
+            hub=hub,
+            websocket=ws,
+            user_id="seller-a",
+            raw='{"type":"unsubscribe","roomId":"%s"}' % room_id,
+            can_join_room=lambda _uid, rid: rid == room_id,
+        )
+        assert ack is not None
+        assert ack["type"] == "unsubscribed"
+        assert room_key not in hub.socket_room_keys(ws)
+
+    asyncio.run(run())
+
+
+def test_subscribe_denied_without_membership():
+    async def run() -> None:
+        from uuid import uuid4
+
+        from commercial_app.application.services.commercial_realtime_notify import (
+            interaction_room_key,
+        )
+        from commercial_app.application.services.commercial_realtime_protocol import (
+            handle_realtime_client_message,
+        )
+
+        hub = CommercialRealtimeHub()
+        room_id = str(uuid4())
+        ws = AsyncMock()
+        ws.send_json = AsyncMock()
+        hub._socket_meta[ws] = (("user:seller-a",), "seller-a")  # noqa: SLF001
+        hub._rooms["user:seller-a"] = {ws}  # noqa: SLF001
+        ack = await handle_realtime_client_message(
+            hub=hub,
+            websocket=ws,
+            user_id="seller-a",
+            raw='{"type":"subscribe","roomId":"%s"}' % room_id,
+            can_join_room=lambda *_args: False,
+        )
+        assert ack is not None
+        assert ack["type"] == "error"
+        assert ack["code"] == "accessDenied"
+        assert interaction_room_key(room_id) not in hub.socket_room_keys(ws)
+
+    asyncio.run(run())
+
+
 def test_build_notification_mentions_who_assigned():
     note = build_worklist_notification(
         reason="task.reassigned",

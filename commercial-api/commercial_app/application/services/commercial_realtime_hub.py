@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 from commercial_app.core.serialize import json_safe
 from fastapi import WebSocket
@@ -15,6 +15,8 @@ TEAM_ROOM = "team"
 # Cliente envia ping a cada ~25s; sem tráfego além disso → socket zumbi (ex.: unmount falhou).
 PRESENCE_IDLE_SECONDS = 75.0
 
+ClientTextHandler = Callable[[WebSocket, str], Awaitable[None]]
+
 
 def presence_updated_payload(online_user_ids: list[str]) -> dict[str, Any]:
     return {
@@ -24,7 +26,7 @@ def presence_updated_payload(online_user_ids: list[str]) -> dict[str, Any]:
 
 
 class CommercialRealtimeHub:
-    """Salas WebSocket: user:{userId} e team (gestores).
+    """Salas WebSocket: user:{userId}, team (gestores) e room:{uuid} (subscribe).
 
     Presença: conta sockets por user_id (multi-aba = 1 online). Gestores na
     sala `team` recebem `presence.updated` + snapshot ao entrar.
@@ -81,6 +83,7 @@ class CommercialRealtimeHub:
         room_keys: list[str],
         user_id: str | None,
         client_id: str | None,
+        on_text: ClientTextHandler | None = None,
     ) -> None:
         normalized = [key for key in room_keys if key]
         if not normalized:
@@ -125,6 +128,9 @@ class CommercialRealtimeHub:
                     break
                 if message.strip().lower() == "ping":
                     await websocket.send_json({"type": "pong"})
+                    continue
+                if on_text is not None:
+                    await on_text(websocket, message)
         except WebSocketDisconnect:
             pass
         finally:
@@ -156,6 +162,44 @@ class CommercialRealtimeHub:
                     self._user_socket_counts[uid] = previous - 1
         if went_offline:
             await self.broadcast_now(TEAM_ROOM, self.presence_payload())
+
+    async def join_room(self, websocket: WebSocket, room_key: str) -> bool:
+        key = (room_key or "").strip()
+        if not key:
+            return False
+        async with self._lock:
+            meta = self._socket_meta.get(websocket)
+            if meta is None:
+                return False
+            keys = list(meta[0])
+            if key not in keys:
+                keys.append(key)
+            self._rooms.setdefault(key, set()).add(websocket)
+            self._socket_meta[websocket] = (tuple(keys), meta[1])
+        return True
+
+    async def leave_room(self, websocket: WebSocket, room_key: str) -> bool:
+        key = (room_key or "").strip()
+        if not key:
+            return False
+        async with self._lock:
+            meta = self._socket_meta.get(websocket)
+            if meta is None:
+                return False
+            keys = [item for item in meta[0] if item != key]
+            self._socket_meta[websocket] = (tuple(keys), meta[1])
+            room = self._rooms.get(key)
+            if room:
+                room.discard(websocket)
+                if not room:
+                    del self._rooms[key]
+        return True
+
+    def socket_room_keys(self, websocket: WebSocket) -> tuple[str, ...]:
+        meta = self._socket_meta.get(websocket)
+        if meta is None:
+            return ()
+        return meta[0]
 
     async def broadcast_now(self, room_key: str, payload: dict[str, Any]) -> None:
         async with self._lock:

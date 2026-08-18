@@ -124,6 +124,10 @@ def user_room(user_id: str) -> str:
     return f"user:{user_id.strip()}"
 
 
+def interaction_room_key(room_id: str) -> str:
+    return f"room:{str(room_id or '').strip()}"
+
+
 def _safe_label(value: str | None) -> str | None:
     cleaned = (value or "").strip()
     if not cleaned or _UUID_RE.match(cleaned):

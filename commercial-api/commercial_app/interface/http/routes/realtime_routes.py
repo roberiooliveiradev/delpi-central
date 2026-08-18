@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from types import SimpleNamespace
+from uuid import UUID
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketException, status
 from delpi_auth.jwt_validator import validate_token
@@ -18,6 +19,12 @@ from commercial_app.application.services.commercial_realtime_hub import (
 from commercial_app.application.services.commercial_realtime_notify import (
     TEAM_ROOM,
     user_room,
+)
+from commercial_app.application.services.commercial_realtime_protocol import (
+    handle_realtime_client_message,
+)
+from commercial_app.composition.commercial_composer import (
+    build_interaction_room_repository,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,6 +74,21 @@ async def resolve_websocket_user(token: str) -> SimpleNamespace:
     return user
 
 
+def can_subscribe_interaction_room(user_id: str, room_id: str) -> bool:
+    try:
+        parsed = UUID(str(room_id or "").strip())
+    except (TypeError, ValueError):
+        return False
+    actor = str(user_id or "").strip()
+    if not actor:
+        return False
+    member = build_interaction_room_repository().get_member(
+        room_id=parsed,
+        user_id=actor,
+    )
+    return member is not None
+
+
 @router.websocket("/ws")
 async def commercial_realtime_ws(
     websocket: WebSocket,
@@ -80,9 +102,19 @@ async def commercial_realtime_ws(
     if can_manage_portfolios(user):
         room_keys.append(TEAM_ROOM)
 
+    async def on_text(socket: WebSocket, raw: str) -> None:
+        await handle_realtime_client_message(
+            hub=commercial_realtime_hub,
+            websocket=socket,
+            user_id=user_id,
+            raw=raw,
+            can_join_room=can_subscribe_interaction_room,
+        )
+
     await commercial_realtime_hub.connect(
         websocket,
         room_keys=room_keys,
         user_id=user_id,
         client_id=client_id,
+        on_text=on_text,
     )
