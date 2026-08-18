@@ -1,7 +1,11 @@
-# Commercial API — worklist e carteiras em tempo real (WebSocket)
+# Commercial API — worklist, carteiras e sala de interação (WebSocket)
 
-Atualização live da fila de tarefas (Meu dia / Início) **e** mutações de carteira
-(toasts + refetch) via WebSocket nativo FastAPI — padrão Transformômetro/TV Dashboard.
+Atualização live da fila de tarefas (Meu dia / Início), mutações de carteira
+(toasts + refetch) **e** sala de interação (mensagens / reações / menções / anexos)
+via WebSocket nativo FastAPI — padrão Transformômetro/TV Dashboard.
+
+**Path inalterado:** um único endpoint serve worklist e salas de interação.
+Join em `room:{uuid}` só via mensagem de cliente `subscribe` (não no handshake).
 
 ## Endpoint
 
@@ -10,11 +14,136 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 ```
 
 - **Auth:** JWT em query `token` → `validate_token` + **RBAC via core-api** (`load_user_rbac`), igual ao middleware HTTP. Exige `commercial.access`. O access token Keycloak **não** carrega permissões Delpi — checar só o JWT quebrava o handshake (401 em loop).
-- **Salas:** `user:{sub}` sempre; `team` se gestor (`commercial.manage`).
+- **Salas no connect:** `user:{sub}` sempre; `team` se gestor (`commercial.manage`).
+- **Salas sob demanda:** `room:{uuid}` após `subscribe` (membro da interaction room).
 - **Keepalive:** cliente envia texto `ping`; servidor responde `{ "type": "pong" }`.
+- **Outros textos JSON:** `subscribe` / `unsubscribe` (protocolo da sala — abaixo).
 - **Middleware HTTP:** path `/commercial/realtime/ws` é público no JWT middleware (token na query; auth no handler).
+- **Código:** `commercial_realtime_protocol.py` (parse/ack), `commercial_realtime_hub.py` (`join_room` / `leave_room`), `commercial_realtime_notify.py` (fan-out), gate `can_subscribe_interaction_room` em `realtime_routes.py`.
 
-## Eventos
+## Sala de interação (subscribe / fan-out)
+
+### Cliente → servidor
+
+Texto JSON no mesmo socket (além de `ping`):
+
+```json
+{ "type": "subscribe", "roomId": "<uuid>" }
+```
+
+```json
+{ "type": "unsubscribe", "roomId": "<uuid>" }
+```
+
+Aceita `room_id` como alias de `roomId`. Outros `type` (exceto `ping`) são ignorados pelo handler da sala.
+
+### Ack servidor → cliente
+
+| type | Quando |
+|------|--------|
+| `subscribed` | Join OK → socket entra em `room:{uuid}` (`roomKey` no ack) |
+| `unsubscribed` | Leave OK |
+| `error` | `code`: `roomIdInvalid` \| `accessDenied` \| `subscribeFailed` \| `unsubscribeFailed` |
+
+`accessDenied`: usuário **não** é membro da interaction room (fail-closed via repositório). UUID inválido → `roomIdInvalid` **sem** tentar join.
+
+### Chave de sala
+
+`interaction_room_key(room_id)` → `room:{uuid}` (minúsculas do UUID canônico). **Não** confundir com `user:{sub}` nem com `team`.
+
+### Eventos no fio (`room:*`)
+
+Fan-out **só** para sockets que fizeram `subscribe` naquela sala (não para todo membro online).
+
+#### `room.message.created` | `room.message.updated` | `room.message.deleted`
+
+Após POST/PATCH/DELETE em `/interaction-rooms/{id}/messages`.
+
+```json
+{
+  "type": "room.message.created",
+  "roomId": "uuid",
+  "messageId": "uuid",
+  "message": { "...": "to_dict da mensagem" },
+  "actorUserId": "seller-a",
+  "actorDisplayName": "Ana",
+  "actorClientId": "client-uuid"
+}
+```
+
+#### `room.reaction`
+
+Após PUT/DELETE de reação na mensagem.
+
+```json
+{
+  "type": "room.reaction",
+  "roomId": "uuid",
+  "messageId": "uuid",
+  "code": "thumbsup",
+  "action": "set",
+  "userId": "seller-a",
+  "actorUserId": "seller-a",
+  "actorDisplayName": "Ana",
+  "actorClientId": "client-uuid"
+}
+```
+
+`action`: `set` | `clear`.
+
+### Eventos no fio (`user:` — sem exigir subscribe da sala)
+
+#### `room.mention`
+
+Menção `kind=user` na mensagem (exclui o autor). Broadcast em `user:{mentioned}`.
+
+Se o destinatário estiver **offline** no Comercial → Core notificação categoria `commercial_collaboration` (`TaskPortalNotificationDeliveryPolicy` + `mention_event_type()` do JSON).
+
+```json
+{
+  "type": "room.mention",
+  "roomId": "uuid",
+  "messageId": "uuid",
+  "mentionedUserIds": ["seller-b"],
+  "actorUserId": "seller-a",
+  "actorDisplayName": "Ana",
+  "actorClientId": "client-uuid",
+  "notification": {
+    "title": "…",
+    "message": "…",
+    "variant": "info"
+  }
+}
+```
+
+#### `room.attachment`
+
+Upload/delete de anexo com `owner_type=room_message`. Fan-out em `user:` de **cada membro** da sala — **não** emite `worklist.changed`.
+
+```json
+{
+  "type": "room.attachment",
+  "reason": "attachment.uploaded",
+  "roomId": "uuid",
+  "messageId": "uuid",
+  "attachmentId": "uuid",
+  "fileName": "spec.pdf",
+  "memberUserIds": ["seller-a", "seller-b"],
+  "actorUserId": "seller-a",
+  "actorDisplayName": "Ana",
+  "notification": {
+    "title": "…",
+    "message": "…",
+    "variant": "info"
+  }
+}
+```
+
+### Inbox HTTP (fora do WS)
+
+`GET /interaction-rooms?filter=all|unread|mentioned|process|wall&q=&limit=` (`operation_id=list_interaction_rooms`) — preview + `unread_count`; o MFE combina com eventos WS para atualizar sem F5.
+
+## Eventos (worklist / carteira / conta)
 
 ### `presence.updated`
 
@@ -98,7 +227,7 @@ Emitido no publish da outbox quando uma linha entra em Pronto para faturar e o d
 
 ### Portal vs toast (presença)
 
-`TaskPortalNotificationDeliveryPolicy` consulta `CommercialRealtimeHub.is_user_online`. Online → toast WS; offline → Core `/integrations/notifications`. Cobre eventos de tarefa (`commercial.task.*`) e `commercial.order.ready_to_invoice`.
+`TaskPortalNotificationDeliveryPolicy` consulta `CommercialRealtimeHub.is_user_online`. Online → toast WS; offline → Core `/integrations/notifications`. Cobre eventos de tarefa (`commercial.task.*`), `commercial.order.ready_to_invoice` e menção da sala (`mention_event_type()` em `interaction_room.json`).
 
 ### `portfolio.changed`
 
@@ -191,9 +320,10 @@ Mutações enviam header `X-Commercial-Client-Id`; evento inclui `actorClientId`
 ## Limitações
 
 - Hub **in-memory** (processo Uvicorn único). Multi-réplica → backlog Redis pub-sub
-  (presença incluída — contagem por processo).
+  (presença e `room:{uuid}` incluídos — contagem/join por processo).
 - Não usa Socket.IO do Portal/`core-api` (notificações globais do host) — só toasts do plugin Comercial.
 - Rooms por `portfolio:{id}` (membership dinâmica no socket) ficam fora do v1 — publish resolve membros no momento do audit.
+- Mensagem/reação da sala **exigem** `subscribe`; menção/anexo usam `user:` para alcançar quem não está com a thread aberta.
 
 ## Homologação
 
@@ -201,3 +331,6 @@ Mutações enviam header `X-Commercial-Client-Id`; evento inclui `actorClientId`
 2. Dois browsers (membros da mesma carteira): vincular cliente / membro → toast `portfolio.changed` no outro; Histórico em Minha Carteira atualiza.
 3. Dois browsers na mesma conta: criar/editar contato ou avatar → toast `account.changed` no outro; Histórico da conta / lista de contatos atualizam sem F5.
 4. Usuário sem membership → `GET …/audit` retorna 403.
+5. Dois browsers membros da mesma sala: um faz `subscribe` + POST mensagem → o outro recebe `room.message.created` sem F5; quem **não** assinou a sala não recebe o evento `room.message.*`.
+6. Menção `@user` com destinatário offline → sino Minha Delpi (`commercial_collaboration`); online → `room.mention` no `user:`.
+7. Anexo em mensagem da sala → `room.attachment` nos `user:` dos membros (sem `worklist.changed`).
