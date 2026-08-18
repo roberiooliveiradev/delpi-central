@@ -87,11 +87,15 @@ class ManageInteractionRoomsUseCase:
                     entity_key=entity_key,
                 )
         elif kind == "wall":
-            if request.group_id is None:
-                raise ValueError(InteractionRoomContentService.error("groupRequired"))
             room = self._rooms.find_wall_room(group_id=request.group_id)
             if room is None:
-                title = (request.title or "").strip() or f"wall:{request.group_id}"
+                if request.group_id is None:
+                    title = (
+                        (request.title or "").strip()
+                        or InteractionRoomContentService.message("wallGlobalTitle")
+                    )
+                else:
+                    title = (request.title or "").strip() or f"wall:{request.group_id}"
                 room = self._rooms.create_room(
                     kind="wall",
                     title=title,

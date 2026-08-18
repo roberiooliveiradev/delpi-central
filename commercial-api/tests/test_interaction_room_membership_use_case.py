@@ -49,7 +49,7 @@ class InMemoryInteractionRoomRepo(InteractionRoomRepositoryPort):
                 return room
         return None
 
-    def find_wall_room(self, *, group_id: UUID) -> InteractionRoom | None:
+    def find_wall_room(self, *, group_id: UUID | None = None) -> InteractionRoom | None:
         for room in self.rooms.values():
             if (
                 room.deleted_at is None

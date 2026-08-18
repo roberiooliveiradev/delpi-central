@@ -91,7 +91,18 @@ class PostgresInteractionRoomRepository(
         )
         return _row_room(row)
 
-    def find_wall_room(self, *, group_id: UUID) -> InteractionRoom | None:
+    def find_wall_room(self, *, group_id: UUID | None = None) -> InteractionRoom | None:
+        if group_id is None:
+            row = self.fetch_one(
+                f"""
+                SELECT {_ROOM_COLUMNS}
+                  FROM commercial.interaction_rooms
+                 WHERE kind = 'wall'
+                   AND group_id IS NULL
+                   AND deleted_at IS NULL
+                """,
+            )
+            return _row_room(row)
         row = self.fetch_one(
             f"""
             SELECT {_ROOM_COLUMNS}

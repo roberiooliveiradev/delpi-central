@@ -26,7 +26,7 @@ class InteractionRoomRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def find_wall_room(self, *, group_id: UUID) -> InteractionRoom | None:
+    def find_wall_room(self, *, group_id: UUID | None = None) -> InteractionRoom | None:
         raise NotImplementedError
 
     @abstractmethod

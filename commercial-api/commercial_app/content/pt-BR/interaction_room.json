@@ -40,7 +40,8 @@
     "previewDenied": "Sem acesso a este registro.",
     "taskFromMessageOk": "Tarefa criada a partir da mensagem.",
     "taskFromMessageDefaultTitle": "Tarefa da sala",
-    "taskRefBody": "Tarefa criada: {title}"
+    "taskRefBody": "Tarefa criada: {title}",
+    "wallGlobalTitle": "Mural comercial"
   },
   "empty": {
     "title": "Nenhuma mensagem.",
