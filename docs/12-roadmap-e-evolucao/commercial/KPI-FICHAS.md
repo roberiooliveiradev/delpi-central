@@ -104,13 +104,15 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | Analogia de mercado | Painel billings + backlog; **book-to-bill** é outro indicador (fora deste ciclo) |
 | Fonte | `KPI-ROL` + `KPI-CARTEIRA` no Overview |
 | Owner | Comercial — a confirmar (homologação) |
-| Status | **em_validacao** · soma oficial **bloqueada** |
+| Status | **em_validacao** · **soma UI/KPI bloqueada** (`.cursor` + «Proibido somar») |
 
 ### Checklist de homologação (KPI-ROL-CARTEIRA)
 
-- [ ] Manter lado a lado como padrão?  
-- [ ] Se soma for desejada: definir base única (tudo líquido ou tudo bruto) e fórmula  
+- [x] Manter lado a lado como padrão (código Overview: cards ROL e carteira separados; **não** somar)  
+- [ ] Se soma for desejada: definir base única (tudo líquido ou tudo bruto) e fórmula **antes** de qualquer UI  
 - [ ] Definir se book-to-bill entra em ciclo futuro  
+
+**Implementação:** **Bloqueada** até ficha **aprovada**. Ver [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) § Bloqueado (P-CART-ROL).
 
 ---
 

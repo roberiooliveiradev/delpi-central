@@ -50,7 +50,7 @@ Validar (ou ajustar formalmente) as quatro fichas C1 sem mudar SQL neste worksho
 
 ### KPI-ROL-CARTEIRA
 
-1. Confirma **lado a lado** na Visão geral (sem soma automática)?  
+1. Confirma **lado a lado** na Visão geral (sem soma automática)? **Sim no código** — soma UI **bloqueada** até ficha aprovada (`.cursor`).  
 2. Se quiser soma depois: qual base única (líquido/bruto) e fórmula?
 
 ## Registro da reunião (preencher)

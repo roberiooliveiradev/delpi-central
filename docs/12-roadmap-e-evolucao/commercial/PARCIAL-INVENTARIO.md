@@ -14,8 +14,9 @@ Inventário **deduplicado** de itens com status **Parcial** (e afins) na documen
 |--------|-------------|
 | **W0-pendente** | Na onda imediata; ainda não Existe no código |
 | **Existe** | Entregue no Portal / SI |
-| **Backlog** | Onda W1–W5 — plano fino na entrada |
-| **Homolog** | Sem código; aguarda negócio |
+| **Backlog** | Onda W1–W5 — plano fino na entrada (implementável sob `.cursor`) |
+| **Bloqueado** | **Não implementar** até desbloqueio; motivo = diretriz `.cursor` e/ou ficha/política (ver § Bloqueado) |
+| **Homolog** | Aguarda negócio (sem código novo de regra) |
 | **Fora** | Outro bounded context ou não agora |
 
 ---
@@ -55,15 +56,15 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | ID | Tema | Status | Evidência no código | Fontes |
 |----|------|--------|---------------------|--------|
 | P-CART-KPI | Carteira consolidada valor/itens | **Existe** | BFF `GET /analytics/open-portfolio-summary` + card Overview | MAPA · KPI-CARTEIRA |
-| P-CART-ROL | Soma ROL + carteira (uma métrica) | **Backlog** / bloqueado | Lado a lado **Existe**; soma oficial proibida até homologação | MAPA §5.3 · KPI-ROL-CARTEIRA |
+| P-CART-ROL | Soma ROL + carteira (uma métrica) | **Bloqueado** | UI/KPI único **proibido**; lado a lado **Existe** | MAPA §5.3 · KPI-ROL-CARTEIRA · § Bloqueado |
 | P-CART-HORIZ | Glossário aberto × faturado | **Existe** | `CM_HELP.*.glossaryOpenVsBilled` + horizon | FOLLOWUP · KPI-CARTEIRA-HORIZON |
-| P-BRUTO-LIQ | Bruto vs líquido explícito por indicador | **Backlog** | ROL líquido; pedidos podem ser brutos — política Onda A | MAPA |
-| P-POSTERG | UX postergado vs disponível | **Backlog** | Pedidos refletem TOTVS; sem recorte «postergado» | Playbook #4 |
+| P-BRUTO-LIQ | Toggle bruto inventado (sem contrato) | **Bloqueado** | Rótulo «ROL líquido» OK; série gross sem BFF = não | MAPA · § Bloqueado |
+| P-POSTERG | UX postergado vs disponível | **Existe** | BFF `availability` + `?postponed=1` · [pedido-venda-postergacao.md](../../../api-delpi/docs/api/padroes-totvs/pedido-venda-postergacao.md) | Playbook #4 |
 | P-CART-PCP | Distinguir carteira × PCP | **Existe** | Copy Overview + `overviewMetricsCatalog` / helps | Playbook #4 |
 | P-PROJ | Projeção / FCT | **Backlog** | Horizon ≠ forecast F6 | Forecast F6 |
 | P-SHARE | % empresa (carteira ÷ empresa) | **Existe** | BFF `portfolio-billing-share` + cards Overview/Carteira (RBAC) | FOLLOWUP T3 |
 
-**Ainda backlog W1:** soma ROL+carteira, bruto vs líquido, postergado, FCT. Não reabrir P-CART-KPI / P-SHARE / P-CART-HORIZ / P-CART-PCP.
+**W1 implementável:** P-PROJ (FCT declarado). **Bloqueado:** P-CART-ROL, P-BRUTO-LIQ (toggle). P-POSTERG **Existe**.
 
 ---
 
@@ -76,7 +77,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-OFF-AGE | Idade + status canônicos | **Backlog** | MAPA |
 | P-OFF-FU | Follow-up dedicado OV | **Backlog** | MAPA |
 | P-FILT-ADV | Filtros analista/etapa/família/grupo | **Backlog** | MAPA |
-| P-HIT-DOC | Ficha metodologia hit rate | **Backlog** / DOC | MAPA |
+| P-HIT-DOC | Ficha metodologia hit rate | **Existe** (DOC) | Ver D-HIT / KPI-HIT-RATE — homolog regra ainda `em_validacao` |
 
 **Entrada:** spec OFF-SLA.
 
@@ -86,12 +87,12 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 
 | ID | Tema | Status | Fontes |
 |----|------|--------|--------|
-| P-CLI-ATIVO | Formalizar KPI-CLIENTE-ATIVO | **Backlog** | Playbook #7 |
-| P-CLI-CLASS | Ativo/novo/recuperado/ticket | **Backlog** | Playbook #7 |
-| P-SEG | Segmentação estruturada (fonte) | **Backlog** | Playbook #6 |
-| P-CLI-FILT | Filtros família/grupo na carteira | **Backlog** | MAPA |
-| P-CONTA-360 | Conta pré-reunião completa | **Backlog** | Playbook #5 |
-| P-HIST-NEG | Histórico + ticket/rentabilidade | **Backlog** | MAPA |
+| P-CLI-ATIVO | Formalizar KPI-CLIENTE-ATIVO | **Bloqueado** (ficha) / DOC ok | Playbook #7 · § Bloqueado — UI só após ficha |
+| P-CLI-CLASS | Badges ativo/novo/recuperado/ticket | **Bloqueado** | Playbook #7 · gate ficha KPI |
+| P-SEG | Segmentação estruturada (fonte) | **Backlog** | Playbook #6 — ADR fonte antes de inventar |
+| P-CLI-FILT | Filtros família/grupo na carteira | **Backlog** | MAPA — só com contrato BFF |
+| P-CONTA-360 | Conta pré-reunião (checklist do Existe) | **Backlog** | Playbook #5 |
+| P-HIST-NEG | Ticket/rentabilidade na Conta | **Bloqueado** | FIN-004 / KPI-TICKET · § Bloqueado |
 | P-PROD-COM | Produtividade ofertas/colaborador | **Backlog** | overlap W2 |
 
 **Entrada:** ADR fonte de segmentação.
@@ -117,10 +118,10 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | ID | Tema | Status | Dono | Fontes |
 |----|------|--------|------|--------|
 | P-GAV-N1 | Gestão à Vista N1 gaps | **Backlog** | Comercial + TV | MAPA · Playbook |
-| P-GR-TV | GR de Vendas | **Backlog** | **tv-dashboard** | ATA-2 §35 |
-| P-HOME-PERS | Home orçamentista / faturamento | **Backlog** | MFE | FOLLOWUP T7 — vendedor/gestor já existem |
-| P-RANK-BI | Ranking produtividade (ofertas/colaborador) | **Backlog** | MFE | MAPA — ≠ ranking faturamento T5 (**Existe**) |
-| P-CAP-PCP | Capacidade fábrica | **Backlog** / Fora Link | Produção/PCP | Playbook #14 |
+| P-GR-TV | GR de Vendas **no MFE commercial** | **Bloqueado** / Fora | **tv-dashboard** | ATA-2 §35 · bounded context — só Link |
+| P-HOME-PERS | Home orçamentista / faturamento | **Backlog** | MFE | FOLLOWUP T7 — por capabilities |
+| P-RANK-BI | Ranking produtividade (ofertas/colaborador) | **Backlog** | MFE + BFF | MAPA — ≠ ranking faturamento T5 (**Existe**) |
+| P-CAP-PCP | Cockpit capacidade PCP no commercial | **Bloqueado** / Fora Link | Produção/PCP | Playbook #14 · § Bloqueado — Link OK |
 | P-IA-ALIM | Alimentar GAV/GR/IA | **Backlog** | Posterior | DESIGN-IA |
 | P-VIS-INT | Lacunas gerenciais | **Backlog** | Contínuo | MAPA |
 | P-NOTIF | Canal plataforma (sino Minha Delpi) | **Existe** | commercial-api + Core | FOLLOWUP T6/T9 — P3 reminder CRM permanece backlog |
@@ -128,6 +129,25 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 **Entrada GR:** indicadores Junior/Laércio.
 
 ---
+
+## Bloqueado por diretrizes `.cursor` (não implementar)
+
+**Trava de engenharia:** PR que entregue UI/código destes itens = rejeitar até a coluna **Desbloqueio**. Espelho do plano quatro blocos § 0.1.
+
+| ID | Tema | Motivo (diretriz / doc) | Desbloqueio |
+|----|------|-------------------------|-------------|
+| P-CART-ROL | Soma ROL + carteira (KPI/UI único) | KPI-FICHAS «Proibido somar»; gate ficha; clean-architecture | Ficha `KPI-ROL-CARTEIRA` **aprovada** + base única |
+| P-BRUTO-LIQ | Toggle/série bruto inventada | Sem contrato BFF; totvs-product-patterns / centralized-rules | Rota nature `gross` no commercial-api |
+| P-CLI-ATIVO / P-CLI-CLASS | Badges classificação KPI | Playbook P0 até ficha; KPI-FICHAS | Ficha `em_validacao`/`aprovada` |
+| KPI-TICKET | Ticket médio no cockpit | Ficha bloqueada Onda A | Unidade + bruto/líquido homologados |
+| P-HIST-NEG (margem) / rentabilidade | Margem na Conta / relatório | FIN-004; bounded-context | Política + RBAC + auditoria |
+| P-GR-TV (no commercial) | Editor/slides GR no MFE | Bounded context = tv-dashboard | Só Link / feed; slides no TV |
+| P-CAP-PCP / F-OCUP-FULL | Cockpit PCP no commercial | Dono Produção/PCP | Link dashboard-production; read-model só com contrato |
+| (anti-padrão) | MFE → api-delpi direto | `mfe-own-api-no-direct-api-delpi` | Sempre BFF commercial-api |
+| (anti-padrão) | Path/campo novo em PT | `english-code-identifiers` | Contrato EN |
+| (anti-padrão) | CSS espelho / patch regra só no MFE | `plugins-reusable-components` · `centralized-rules-first` | Kit + domain/BFF |
+| (anti-padrão) | Editar migration aplicada | `migrations-immutable-checksum` | Nova `V0NN` |
+| (anti-padrão) | UI «rascunho» sem ficha | Guardrails + decisão NEG ago/2026 | Homolog primeiro |
 
 ## Homolog / Doc / Fora
 
@@ -138,7 +158,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | D-HIT | Ficha hit rate (num/den) | **Existe** | `KPI-HIT-RATE` em [KPI-FICHAS.md](./KPI-FICHAS.md) + doc api-delpi — homologação de regra ainda `em_validacao` |
 | D-CATALOG-UI | Catálogo plugin-ui UnderlineNav | **Existe** | `plugins/plugin-ui/docs/component-catalog.md` + demo `layout.UnderlineNav` |
 | F-EMPTY-SAVED | SavedViewChips | **Fora** | IMPLEMENTATION-PLAN |
-| F-OCUP-FULL | Cockpit capacidade PCP | **Fora** | MAPA |
+| F-OCUP-FULL | Cockpit capacidade PCP | **Fora** / **Bloqueado** no commercial | MAPA · § Bloqueado |
 
 ### Falta (fora do inventário Parcial — ATA-2)
 

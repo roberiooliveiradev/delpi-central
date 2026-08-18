@@ -80,7 +80,7 @@ Fonte de verdade de rotas: [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md).
 |-------------|--------|--------------|-------|---------------------|
 | ROL | **Existe** | `/overview` | `/commercial/*rol*` via BFF analytics | Ficha `KPI-ROL` (`em_validacao`) |
 | Carteira | **Existe** | `/overview` (summary) · `/open-orders` · métricas Conta | `open-portfolio-summary` | Snapshot; homologar bruto/líquido |
-| Carteira + ROL | **Bloqueado** | Lado a lado no Overview | KPI-ROL-CARTEIRA | Soma oficial **proibida** até homologação |
+| Carteira + ROL | **Bloqueado** | Lado a lado no Overview | KPI-ROL-CARTEIRA | Soma UI/KPI **travada** (`.cursor` + ficha «Proibido somar») até ficha **aprovada** — [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) § Bloqueado |
 | MTD / YTD | **Existe** | Chip MTD/YTD nos cards Overview | `periodPreset.ts` `PeriodKindChip` | P0-LABEL — [ATA-2](./ATA-ALINHAMENTO-AGO2026-2.md) §5 |
 | Meta acumulada no período | **Existe** | % meta no Overview (SI prorata diária) | `comparable_goal` | P0-META — ATA-2 §5 · [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
 | Projeção de fechamento | **Falta** | — | — | Onda B / FCT-\* |
