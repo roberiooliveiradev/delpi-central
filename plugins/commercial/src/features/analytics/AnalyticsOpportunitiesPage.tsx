@@ -1,9 +1,10 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { getCommercialProposals } from "../../api/analyticsApi";
+import { getCommercialProposals, getOpportunityCollaboratorSummary } from "../../api/analyticsApi";
 import {
   CommercialActionButton,
+  CommercialDataTable,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialPageHero,
@@ -15,6 +16,7 @@ import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import type { CommercialProposal } from "../../types/analytics";
+import type { OpportunityCollaboratorSummaryRow } from "../../api/analyticsApi";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { CommercialProposalsTable } from "./components/CommercialProposalsTable";
@@ -34,6 +36,8 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const { canViewProposals } = usePortfolioScope();
   const filters = useAnalyticsFilters();
   const [items, setItems] = useState<CommercialProposal[]>([]);
+  const [collab, setCollab] = useState<OpportunityCollaboratorSummaryRow[]>([]);
+  const [collabTruncated, setCollabTruncated] = useState(false);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
   const [loading, setLoading] = useState(true);
@@ -56,21 +60,31 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    void getCommercialProposals(
-      {
-        ...filters.apiParams,
-        page: 1,
-        page_size: 50,
-        search: search.trim() || undefined,
-        sort_by: "proposal_date",
-        sort_dir: "desc",
-      },
-      controller.signal,
-    )
-      .then((page) => {
+    void Promise.all([
+      getCommercialProposals(
+        {
+          ...filters.apiParams,
+          page: 1,
+          page_size: 50,
+          search: search.trim() || undefined,
+          sort_by: "proposal_date",
+          sort_dir: "desc",
+        },
+        controller.signal,
+      ),
+      getOpportunityCollaboratorSummary(filters.apiParams, controller.signal).catch(() => null),
+    ])
+      .then(([page, summary]) => {
         if (controller.signal.aborted) return;
         setItems(page.items ?? []);
         setTotal(page.total ?? 0);
+        if (summary) {
+          setCollab(summary.items ?? []);
+          setCollabTruncated(Boolean(summary.truncated));
+        } else {
+          setCollab([]);
+          setCollabTruncated(false);
+        }
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -135,6 +149,29 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         onSellerIds={filters.setSellerIds}
       />
       </CommercialPageHero>
+
+      {!loading && collab.length > 0 ? (
+        <CommercialSectionCard
+          title="Por colaborador"
+          hint={
+            collabTruncated
+              ? "Agregação das primeiras 200 OVs do filtro (lista truncada)."
+              : "Contagem de OVs abertas/ganhas/perdidas por vendedor TOTVS (AD1_VEND)."
+          }
+        >
+          <CommercialDataTable
+            rows={collab}
+            rowKey={(row) => row.sellerCode || "_"}
+            columns={[
+              { key: "seller", header: "Vendedor", render: (row) => row.sellerName || row.sellerCode || "—" },
+              { key: "open", header: "Abertas", render: (row) => String(row.openCount) },
+              { key: "won", header: "Ganhas", render: (row) => String(row.wonCount) },
+              { key: "lost", header: "Perdidas", render: (row) => String(row.lostCount) },
+              { key: "total", header: "Total", render: (row) => String(row.totalCount) },
+            ]}
+          />
+        </CommercialSectionCard>
+      ) : null}
 
       <CommercialTextField
         label="Busca"

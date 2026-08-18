@@ -137,6 +137,27 @@ export function getPortfolioBillingShare(
   );
 }
 
+export type OpportunityCollaboratorSummaryRow = {
+  sellerCode: string;
+  sellerName: string;
+  openCount: number;
+  wonCount: number;
+  lostCount: number;
+  totalCount: number;
+};
+
+export function getOpportunityCollaboratorSummary(
+  params: AnalyticsFilterParams,
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<{
+    items: OpportunityCollaboratorSummaryRow[];
+    sourceCount: number;
+    total: number;
+    truncated: boolean;
+  }>("/opportunity-collaborator-summary", params, signal);
+}
+
 /** Ranking delta % faturamento vs período −1 ano. */
 export function getPortfolioBillingRanking(
   params: AnalyticsFilterParams & {

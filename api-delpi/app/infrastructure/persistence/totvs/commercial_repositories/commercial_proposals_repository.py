@@ -177,7 +177,8 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                     AD1.AD1_STATUS,
                     AD1.AD1_CODCLI,
                     AD1.AD1_LOJCLI,
-                    AD1.AD1_STAGE
+                    AD1.AD1_STAGE,
+                    AD1.AD1_VEND
                 FROM AD1010 AD1
                 WHERE {where_clause}
             ),
@@ -195,6 +196,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                     AD1_CODCLI,
                     AD1_LOJCLI,
                     AD1_STAGE,
+                    AD1_VEND,
                     ROW_NUMBER() OVER (
                         PARTITION BY AD1_FILIAL, AD1_NROPOR
                         ORDER BY AD1_REVISA DESC
@@ -223,7 +225,8 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                 AD1_STATUS AS status_code,
                 AD1_CODCLI AS customer_code,
                 AD1_LOJCLI AS customer_store,
-                AD1_STAGE AS stage
+                AD1_STAGE AS stage,
+                AD1_VEND AS seller_code
             FROM ovs_latest
             WHERE rn = 1
             {search_clause}
@@ -377,6 +380,8 @@ def _row_to_entity(row: dict) -> CommercialProposal:
         customer_code=(row.get("customer_code") or "").strip() or None,
         customer_store=(row.get("customer_store") or "").strip() or None,
         stage=(row.get("stage") or "").strip() or None,
+        seller_code=(row.get("seller_code") or "").strip() or None,
+        seller_name=(row.get("seller_name") or "").strip() or None,
     )
 
 

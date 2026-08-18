@@ -30,7 +30,9 @@ from commercial_app.application.use_cases.get_portfolio_billing_ranking import (
 )
 from commercial_app.core.auth_actor import current_user_from_request
 from commercial_app.composition.commercial_composer import build_delpi_commercial_gateway
-from commercial_app.core.responses import fail, ok
+from commercial_app.domain.services.opportunity_collaborator_summary_service import (
+    OpportunityCollaboratorSummaryService,
+)
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
     merge_totvs_params,
     resolve_analytics_portfolio_scope,
@@ -711,6 +713,67 @@ def bff_list_proposals(
         ),
         message="Oportunidades carregadas.",
     )
+
+
+@router.get(
+    "/opportunity-collaborator-summary",
+    operation_id="bff_opportunity_collaborator_summary",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_opportunity_collaborator_summary(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    status: str | None = None,
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    """Aggregate OV counts by seller from the scoped proposals list (page cap 200)."""
+    try:
+        scope = resolve_analytics_portfolio_scope(
+            request, seller_id=seller_id, portfolio_id=portfolio_id
+        )
+        totvs_params = merge_totvs_params(
+            scope,
+            _common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+                status=status,
+                page=1,
+                page_size=200,
+            ),
+        )
+        payload = build_delpi_commercial_gateway().get_commercial_analytics(
+            "/proposals", params=totvs_params
+        )
+        data = unwrap_gateway_data(payload)
+        items = []
+        truncated = False
+        total = 0
+        if isinstance(data, dict):
+            raw_items = data.get("items")
+            items = [item for item in raw_items if isinstance(item, dict)] if isinstance(raw_items, list) else []
+            total = int(data.get("total") or len(items))
+            truncated = total > len(items)
+        rows = OpportunityCollaboratorSummaryService().summarize(items)
+        return ok(
+            {"items": rows, "sourceCount": len(items), "total": total, "truncated": truncated},
+            message="Resumo de oportunidades por colaborador.",
+            operation_id="bff_opportunity_collaborator_summary",
+        )
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="bff_opportunity_collaborator_summary")
+    except Exception:
+        logger.exception("bff_opportunity_collaborator_summary_failed")
+        return fail(
+            "Erro ao agregar oportunidades por colaborador.",
+            500,
+            operation_id="bff_opportunity_collaborator_summary",
+        )
 
 
 @router.get(
