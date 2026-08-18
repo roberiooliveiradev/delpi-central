@@ -679,6 +679,106 @@ def clear_interaction_message_reaction(
         return fail("Erro interno ao remover reação.", 500, operation_id=operation_id)
 
 
+@router.get("/{room_id}/pins", operation_id="list_interaction_room_pins")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def list_interaction_room_pins(
+    request: Request,
+    room_id: UUID = Path(...),
+):
+    operation_id = "list_interaction_room_pins"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        pins = build_manage_interaction_messages_use_case().list_pins(
+            room_id=room_id,
+            actor_user_id=actor,
+        )
+        return ok(
+            {"items": [item.to_dict() for item in pins]},
+            message=InteractionRoomContentService.message("listPinsOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except Exception:
+        logger.exception("list_interaction_room_pins_failed")
+        return fail("Erro interno ao listar pins.", 500, operation_id=operation_id)
+
+
+@router.post(
+    "/{room_id}/messages/{message_id}/pin",
+    operation_id="pin_interaction_message",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def pin_interaction_message(
+    request: Request,
+    room_id: UUID = Path(...),
+    message_id: UUID = Path(...),
+):
+    operation_id = "pin_interaction_message"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        pin = build_manage_interaction_messages_use_case().pin(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id=actor,
+        )
+        return ok(
+            pin.to_dict(),
+            message=InteractionRoomContentService.message("pinOk"),
+            status_code=201,
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("pin_interaction_message_failed")
+        return fail("Erro interno ao fixar mensagem.", 500, operation_id=operation_id)
+
+
+@router.delete(
+    "/{room_id}/messages/{message_id}/pin",
+    operation_id="unpin_interaction_message",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def unpin_interaction_message(
+    request: Request,
+    room_id: UUID = Path(...),
+    message_id: UUID = Path(...),
+):
+    operation_id = "unpin_interaction_message"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        cleared = build_manage_interaction_messages_use_case().unpin(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id=actor,
+        )
+        return ok(
+            {"cleared": cleared},
+            message=InteractionRoomContentService.message("unpinOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except Exception:
+        logger.exception("unpin_interaction_message_failed")
+        return fail("Erro interno ao desafixar mensagem.", 500, operation_id=operation_id)
+
+
 @router.post(
     "/{room_id}/messages/{message_id}/tasks",
     operation_id="create_task_from_interaction_message",

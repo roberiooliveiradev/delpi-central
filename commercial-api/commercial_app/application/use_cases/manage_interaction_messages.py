@@ -8,6 +8,7 @@ from uuid import UUID
 from commercial_app.domain.entities.interaction_room import (
     MESSAGE_KINDS,
     InteractionMessage,
+    InteractionPin,
 )
 from commercial_app.domain.ports.interaction_message_repository_port import (
     InteractionMessageRepositoryPort,
@@ -215,3 +216,38 @@ class ManageInteractionMessagesUseCase:
             user_id=actor_user_id.strip(),
             code=reaction_code,
         )
+
+    def list_pins(
+        self,
+        *,
+        room_id: UUID,
+        actor_user_id: str,
+    ) -> Sequence[InteractionPin]:
+        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        return self._messages.list_pins(room_id)
+
+    def pin(
+        self,
+        *,
+        room_id: UUID,
+        message_id: UUID,
+        actor_user_id: str,
+    ) -> InteractionPin:
+        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_message_in_room(room_id=room_id, message_id=message_id)
+        return self._messages.pin_message(
+            room_id=room_id,
+            message_id=message_id,
+            pinned_by_user_id=actor_user_id.strip(),
+        )
+
+    def unpin(
+        self,
+        *,
+        room_id: UUID,
+        message_id: UUID,
+        actor_user_id: str,
+    ) -> bool:
+        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_message_in_room(room_id=room_id, message_id=message_id)
+        return self._messages.unpin_message(room_id=room_id, message_id=message_id)

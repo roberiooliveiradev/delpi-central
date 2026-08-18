@@ -33,6 +33,7 @@ class InMemoryInteractionMessageRepo(InteractionMessageRepositoryPort):
     def __init__(self) -> None:
         self.messages: dict[UUID, InteractionMessage] = {}
         self.mentions: dict[UUID, list[InteractionMention]] = {}
+        self.pins: dict[tuple[UUID, UUID], InteractionPin] = {}
 
     def get_by_id(self, message_id: UUID) -> InteractionMessage | None:
         message = self.messages.get(message_id)
@@ -172,7 +173,13 @@ class InMemoryInteractionMessageRepo(InteractionMessageRepositoryPort):
         raise NotImplementedError
 
     def list_pins(self, room_id: UUID) -> Sequence[InteractionPin]:
-        return ()
+        items = [
+            pin
+            for (rid, _), pin in self.pins.items()
+            if rid == room_id
+        ]
+        items.sort(key=lambda item: item.created_at, reverse=True)
+        return items
 
     def pin_message(
         self,
@@ -181,10 +188,18 @@ class InMemoryInteractionMessageRepo(InteractionMessageRepositoryPort):
         message_id: UUID,
         pinned_by_user_id: str,
     ) -> InteractionPin:
-        raise NotImplementedError
+        pin = InteractionPin(
+            id=uuid4(),
+            room_id=room_id,
+            message_id=message_id,
+            pinned_by_user_id=pinned_by_user_id,
+            created_at=datetime.now(timezone.utc),
+        )
+        self.pins[(room_id, message_id)] = pin
+        return pin
 
     def unpin_message(self, *, room_id: UUID, message_id: UUID) -> bool:
-        return False
+        return self.pins.pop((room_id, message_id), None) is not None
 
     def list_mentions_for_message(
         self,
