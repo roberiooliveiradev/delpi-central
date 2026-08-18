@@ -5,11 +5,11 @@
   max-height: min(18rem, 50vh);
   overflow: auto;
   padding: 0.35rem;
-  border: 1px solid var(--delpi-color-border, #d1d5db);
+  border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
   border-radius: 0.5rem;
-  background: var(--delpi-color-surface, #fff);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
   box-shadow: 0 8px 24px rgb(15 23 42 / 14%);
-  color: var(--delpi-color-text, #0f172a);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
 }
 
 .delpi-ui-mention-menu__list {
@@ -24,7 +24,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-mention-menu__option {
@@ -38,7 +38,7 @@
 
 .delpi-ui-mention-menu__option--active,
 .delpi-ui-mention-menu__option:hover {
-  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 12%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
 }
 
 .delpi-ui-mention-menu__option-label {
@@ -48,11 +48,11 @@
 
 .delpi-ui-mention-menu__option-subtitle {
   font-size: 0.75rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-mention-menu__empty {
   padding: 0.65rem 0.5rem;
   font-size: 0.8125rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }

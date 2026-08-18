@@ -18,13 +18,13 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: var(--delpi-color-text, #0f172a);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
 }
 
 .delpi-ui-room-header__subtitle {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-room-header__chips {

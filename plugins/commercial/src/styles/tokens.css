@@ -40,6 +40,8 @@
 
   --delpi-ui-accent: var(--cm-accent);
   --delpi-ui-surface: var(--cm-surface);
+  --delpi-ui-surface-elevated: var(--cm-surface-elevated);
+  --delpi-ui-surface-soft: var(--cm-surface-soft);
   --delpi-ui-text: var(--cm-text);
   --delpi-ui-border: var(--cm-border);
   --delpi-ui-muted: var(--cm-muted);
@@ -69,6 +71,8 @@
 
   --delpi-ui-accent: var(--cm-accent);
   --delpi-ui-surface: var(--cm-surface);
+  --delpi-ui-surface-elevated: var(--cm-surface-elevated);
+  --delpi-ui-surface-soft: var(--cm-surface-soft);
   --delpi-ui-text: var(--cm-text);
   --delpi-ui-border: var(--cm-border);
   --delpi-ui-muted: var(--cm-muted);

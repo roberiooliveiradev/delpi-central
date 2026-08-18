@@ -11,9 +11,9 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--delpi-color-border, #d1d5db);
+  border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
   border-radius: 0.75rem;
-  background: var(--delpi-color-surface, #fff);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
 
 .delpi-ui-mention-composer__textarea {
@@ -25,8 +25,14 @@
   resize: vertical;
   font: inherit;
   line-height: 1.45;
-  color: var(--delpi-color-text, #0f172a);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+  caret-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: transparent;
+}
+
+.delpi-ui-mention-composer__textarea::placeholder {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+  opacity: 1;
 }
 
 .delpi-ui-mention-composer__textarea:focus {
@@ -62,15 +68,15 @@
   padding: 0;
   border: none;
   border-radius: 0.45rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
   background: transparent;
   cursor: pointer;
 }
 
 .delpi-ui-mention-composer__attach:hover:not(:disabled),
 .delpi-ui-mention-composer__send:hover:not(:disabled) {
-  color: var(--delpi-color-accent, #2563eb);
-  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 12%, transparent);
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
 }
 
 .delpi-ui-mention-composer__send:disabled,
@@ -80,7 +86,7 @@
 }
 
 .delpi-ui-mention-composer__send:not(:disabled) {
-  color: var(--delpi-color-accent, #2563eb);
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 .delpi-ui-mention-composer__footer {

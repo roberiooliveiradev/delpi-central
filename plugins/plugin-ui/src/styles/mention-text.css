@@ -12,8 +12,8 @@
   border-radius: 0.25em;
   font: inherit;
   font-weight: 600;
-  color: var(--delpi-color-accent, #2563eb);
-  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 12%, transparent);
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
   text-decoration: none;
   vertical-align: baseline;
 }
@@ -29,10 +29,10 @@ button.delpi-ui-mention-text__chip--interactive {
 
 .delpi-ui-mention-text__chip--interactive:hover,
 .delpi-ui-mention-text__chip--interactive:focus-visible {
-  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 22%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 22%, transparent);
   outline: none;
 }
 
 a.delpi-ui-mention-text__chip:visited {
-  color: var(--delpi-color-accent, #2563eb);
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }

@@ -24,7 +24,7 @@
   gap: 0.5rem;
   padding: 0.25rem 0.75rem;
   font-size: 0.8125rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
   text-align: center;
 }
 
@@ -34,9 +34,12 @@
   gap: 0.35rem;
   max-width: 42rem;
   padding: 0.65rem 0.85rem;
-  border: 1px solid var(--delpi-color-border, #e2e8f0);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e2e8f0));
   border-radius: 0.75rem;
-  background: var(--delpi-color-surface, #fff);
+  background: var(
+    --delpi-ui-surface-elevated,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
 }
 
 .delpi-ui-message-thread__meta {
@@ -49,18 +52,18 @@
 .delpi-ui-message-thread__author {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--delpi-color-text, #0f172a);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
 }
 
 .delpi-ui-message-thread__time {
   font-size: 0.75rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-message-thread__body {
   font-size: 0.9375rem;
   line-height: 1.45;
-  color: var(--delpi-color-text, #0f172a);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -79,24 +82,24 @@
   border-radius: 0.35rem;
   font: inherit;
   font-size: 0.75rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
   background: transparent;
   cursor: pointer;
 }
 
 .delpi-ui-message-thread__action:hover {
-  color: var(--delpi-color-accent, #2563eb);
-  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 10%, transparent);
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, transparent);
 }
 
 .delpi-ui-message-thread__action--danger:hover {
-  color: var(--delpi-color-danger, #dc2626);
-  background: color-mix(in srgb, var(--delpi-color-danger, #dc2626) 10%, transparent);
+  color: var(--delpi-ui-danger, var(--danger, #dc2626));
+  background: color-mix(in srgb, var(--delpi-ui-danger, var(--danger, #dc2626)) 10%, transparent);
 }
 
 .delpi-ui-message-thread__empty {
   padding: 1.25rem 0.75rem;
   font-size: 0.875rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
   text-align: center;
 }

@@ -12,28 +12,28 @@
   gap: 0.3rem;
   margin: 0;
   padding: 0.2rem 0.5rem;
-  border: 1px solid var(--delpi-color-border, #d1d5db);
+  border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
   border-radius: 999px;
   font: inherit;
   font-size: 0.8125rem;
-  color: var(--delpi-color-text, #0f172a);
-  background: var(--delpi-color-surface, #fff);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
   cursor: pointer;
 }
 
 .delpi-ui-reaction-bar__chip--active {
-  border-color: var(--delpi-color-accent, #2563eb);
-  color: var(--delpi-color-accent, #2563eb);
-  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 12%, transparent);
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
 }
 
 .delpi-ui-reaction-bar__count {
   font-weight: 600;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
 .delpi-ui-reaction-bar__add {
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
   border-style: dashed;
 }
 
