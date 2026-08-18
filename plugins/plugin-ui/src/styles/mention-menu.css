@@ -1,0 +1,58 @@
+/* @ mention suggestion listbox (AnchoredPanelPortal). */
+.delpi-ui-mention-menu {
+  min-width: 12rem;
+  max-width: min(24rem, 92vw);
+  max-height: min(18rem, 50vh);
+  overflow: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--delpi-color-border, #d1d5db);
+  border-radius: 0.5rem;
+  background: var(--delpi-color-surface, #fff);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 14%);
+  color: var(--delpi-color-text, #0f172a);
+}
+
+.delpi-ui-mention-menu__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-mention-menu__group {
+  padding: 0.35rem 0.5rem 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--delpi-color-text-muted, #64748b);
+}
+
+.delpi-ui-mention-menu__option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+}
+
+.delpi-ui-mention-menu__option--active,
+.delpi-ui-mention-menu__option:hover {
+  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 12%, transparent);
+}
+
+.delpi-ui-mention-menu__option-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.delpi-ui-mention-menu__option-subtitle {
+  font-size: 0.75rem;
+  color: var(--delpi-color-text-muted, #64748b);
+}
+
+.delpi-ui-mention-menu__empty {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--delpi-color-text-muted, #64748b);
+}
