@@ -101,3 +101,21 @@ class InteractionMessageRepositoryPort(ABC):
         message_id: UUID,
     ) -> Sequence[InteractionMention]:
         raise NotImplementedError
+
+    @abstractmethod
+    def latest_in_room(self, room_id: UUID) -> InteractionMessage | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_unread(
+        self,
+        *,
+        room_id: UUID,
+        since: datetime | None,
+        exclude_user_id: str | None = None,
+    ) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def user_mentioned_in_room(self, *, room_id: UUID, user_id: str) -> bool:
+        raise NotImplementedError

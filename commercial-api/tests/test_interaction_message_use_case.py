@@ -192,6 +192,51 @@ class InMemoryInteractionMessageRepo(InteractionMessageRepositoryPort):
     ) -> Sequence[InteractionMention]:
         return tuple(self.mentions.get(message_id, ()))
 
+    def latest_in_room(self, room_id: UUID) -> InteractionMessage | None:
+        items = [
+            self.get_by_id(mid)
+            for mid, msg in self.messages.items()
+            if msg.room_id == room_id and msg.deleted_at is None
+        ]
+        alive = [item for item in items if item is not None]
+        if not alive:
+            return None
+        alive.sort(key=lambda item: (item.created_at, item.id), reverse=True)
+        return alive[0]
+
+    def count_unread(
+        self,
+        *,
+        room_id: UUID,
+        since: datetime | None,
+        exclude_user_id: str | None = None,
+    ) -> int:
+        actor = (exclude_user_id or "").strip()
+        total = 0
+        for message in self.messages.values():
+            if message.room_id != room_id or message.deleted_at is not None:
+                continue
+            if since is not None and message.created_at <= since:
+                continue
+            if actor and (message.author_user_id or "").strip() == actor:
+                continue
+            total += 1
+        return total
+
+    def user_mentioned_in_room(self, *, room_id: UUID, user_id: str) -> bool:
+        actor = (user_id or "").strip()
+        if not actor:
+            return False
+        for message in self.messages.values():
+            if message.room_id != room_id or message.deleted_at is not None:
+                continue
+            for mention in self.mentions.get(message.id, ()):
+                if mention.mention_kind != "user":
+                    continue
+                if str(mention.ref.get("user_id") or "").strip() == actor:
+                    return True
+        return False
+
 
 def _open_room(rooms: InMemoryInteractionRoomRepo, user_id: str = "u1"):
     return ManageInteractionRoomsUseCase(rooms).resolve(

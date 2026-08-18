@@ -425,3 +425,75 @@ class PostgresInteractionMessageRepository(
         message_id: UUID,
     ) -> Sequence[InteractionMention]:
         return tuple(self._load_mentions([message_id]).get(str(message_id), ()))
+
+    def latest_in_room(self, room_id: UUID) -> InteractionMessage | None:
+        row = self.fetch_one(
+            f"""
+            SELECT {_MESSAGE_COLUMNS}
+              FROM commercial.interaction_messages
+             WHERE room_id = %s
+               AND deleted_at IS NULL
+             ORDER BY created_at DESC, id DESC
+             LIMIT 1
+            """,
+            (str(room_id),),
+        )
+        base = _row_message_base(row)
+        if base is None:
+            return None
+        hydrated = self._hydrate([base])
+        return hydrated[0] if hydrated else base
+
+    def count_unread(
+        self,
+        *,
+        room_id: UUID,
+        since: datetime | None,
+        exclude_user_id: str | None = None,
+    ) -> int:
+        params: list[Any] = [str(room_id)]
+        clauses = [
+            "room_id = %s",
+            "deleted_at IS NULL",
+        ]
+        if since is not None:
+            clauses.append("created_at > %s")
+            params.append(since)
+        actor = (exclude_user_id or "").strip()
+        if actor:
+            clauses.append("(author_user_id IS NULL OR author_user_id <> %s)")
+            params.append(actor)
+        row = self.fetch_one(
+            f"""
+            SELECT COUNT(*)::int AS total
+              FROM commercial.interaction_messages
+             WHERE {" AND ".join(clauses)}
+            """,
+            tuple(params),
+        )
+        if not row:
+            return 0
+        try:
+            return max(0, int(row.get("total") or 0))
+        except (TypeError, ValueError):
+            return 0
+
+    def user_mentioned_in_room(self, *, room_id: UUID, user_id: str) -> bool:
+        actor = (user_id or "").strip()
+        if not actor:
+            return False
+        row = self.fetch_one(
+            """
+            SELECT 1 AS hit
+              FROM commercial.interaction_mentions mn
+              INNER JOIN commercial.interaction_messages msg
+                      ON msg.id = mn.message_id
+             WHERE msg.room_id = %s
+               AND msg.deleted_at IS NULL
+               AND mn.mention_kind = 'user'
+               AND mn.ref->>'user_id' = %s
+             LIMIT 1
+            """,
+            (str(room_id), actor),
+        )
+        return row is not None

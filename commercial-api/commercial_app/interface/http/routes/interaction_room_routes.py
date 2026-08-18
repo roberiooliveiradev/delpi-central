@@ -25,6 +25,7 @@ from commercial_app.application.services.commercial_realtime_notify import (
     notify_room_reaction_changed,
 )
 from commercial_app.composition.commercial_composer import (
+    build_list_interaction_inbox_use_case,
     build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
     build_preview_interaction_entity_use_case,
@@ -57,6 +58,40 @@ def _actor_or_401(request: Request, *, operation_id: str):
     if not actor:
         return None, fail("Não autenticado.", 401, operation_id=operation_id)
     return actor, None
+
+
+@router.get("", operation_id="list_interaction_rooms")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def list_interaction_rooms(
+    request: Request,
+    filter: str | None = Query(default="all"),
+    q: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+):
+    operation_id = "list_interaction_rooms"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        filter_value = filter if isinstance(filter, str) else "all"
+        query = q if isinstance(q, str) else None
+        limit_value = limit if isinstance(limit, int) else 50
+        items = build_list_interaction_inbox_use_case().execute(
+            actor_user_id=actor,
+            filter_key=filter_value,
+            query=query,
+            limit=limit_value,
+        )
+        return ok(
+            {"items": [item.to_dict() for item in items]},
+            message=InteractionRoomContentService.message("listRoomsOk"),
+            operation_id=operation_id,
+        )
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("list_interaction_rooms_failed")
+        return fail("Erro interno ao listar salas.", 500, operation_id=operation_id)
 
 
 @router.post("/resolve", operation_id="resolve_interaction_room")

@@ -10,6 +10,9 @@ from commercial_app.application.use_cases.manage_attachments import ManageAttach
 from commercial_app.application.use_cases.manage_commercial_groups import (
     ManageCommercialGroupsUseCase,
 )
+from commercial_app.application.use_cases.list_interaction_inbox import (
+    ListInteractionInboxUseCase,
+)
 from commercial_app.application.use_cases.manage_interaction_messages import (
     ManageInteractionMessagesUseCase,
 )
@@ -104,6 +107,7 @@ _interaction_room_repository: InteractionRoomRepositoryPort | None = None
 _interaction_message_repository: InteractionMessageRepositoryPort | None = None
 _interaction_rooms_use_case: ManageInteractionRoomsUseCase | None = None
 _interaction_messages_use_case: ManageInteractionMessagesUseCase | None = None
+_list_interaction_inbox_use_case: ListInteractionInboxUseCase | None = None
 _suggest_interaction_mentions_use_case: SuggestInteractionMentionsUseCase | None = None
 _preview_interaction_entity_use_case: PreviewInteractionEntityUseCase | None = None
 _task_repository: TaskRepositoryPort | None = None
@@ -289,6 +293,16 @@ def build_manage_interaction_messages_use_case() -> ManageInteractionMessagesUse
             messages=build_interaction_message_repository(),
         )
     return _interaction_messages_use_case
+
+
+def build_list_interaction_inbox_use_case() -> ListInteractionInboxUseCase:
+    global _list_interaction_inbox_use_case
+    if _list_interaction_inbox_use_case is None:
+        _list_interaction_inbox_use_case = ListInteractionInboxUseCase(
+            rooms=build_interaction_room_repository(),
+            messages=build_interaction_message_repository(),
+        )
+    return _list_interaction_inbox_use_case
 
 
 def build_suggest_interaction_mentions_use_case() -> SuggestInteractionMentionsUseCase:
