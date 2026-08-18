@@ -8,6 +8,7 @@ import {
   interactionRoomMemberPath,
   interactionRoomMessagePath,
   interactionRoomMessagesPath,
+  interactionRoomMessageTasksPath,
   interactionRoomPath,
   interactionRoomReactionPath,
   interactionRoomReadPath,
@@ -35,6 +36,9 @@ describe("interactionRoomsApi paths", () => {
     );
     expect(interactionRoomReactionPath("r1", "m1", "thumbsup")).toBe(
       "/interaction-rooms/r1/messages/m1/reactions/thumbsup",
+    );
+    expect(interactionRoomMessageTasksPath("r1", "m1")).toBe(
+      "/interaction-rooms/r1/messages/m1/tasks",
     );
     expect(interactionRoomReadPath("r1")).toBe("/interaction-rooms/r1/read");
     expect(interactionRoomMemberPath("r1", "u1")).toBe(

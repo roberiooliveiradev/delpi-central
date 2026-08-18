@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  createTaskFromInteractionMessage,
   listInteractionMessages,
   listInteractionRoomMembers,
   markInteractionRoomRead,
@@ -26,6 +27,7 @@ import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent
 import { InteractionRoomMessageComposer } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
+import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
 import {
   INTERACTION_ROOM_NARROW_QUERY,
   useMatchMedia,
@@ -70,6 +72,10 @@ export function InteractionRoomPanel({
   const [messages, setMessages] = useState<InteractionMessageDto[]>([]);
   const [loading, setLoading] = useState(Boolean(entityKey));
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [creatingTaskMessageId, setCreatingTaskMessageId] = useState<string | null>(
+    null,
+  );
 
   const authorIds = useMemo(() => {
     const ids = new Set<string>();
@@ -145,6 +151,48 @@ export function InteractionRoomPanel({
   const onMessageCreated = useCallback((created: InteractionMessageDto) => {
     setMessages((prev) => [...prev, created]);
   }, []);
+
+  const onCreateTaskFromMessage = useCallback(
+    async (messageId: string) => {
+      const id = room?.id?.trim() ?? "";
+      if (!id || !messageId.trim() || creatingTaskMessageId) return;
+      setCreatingTaskMessageId(messageId);
+      setError(null);
+      setSuccess(null);
+      try {
+        await createTaskFromInteractionMessage(id, messageId);
+        setSuccess(content.createTaskOk);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : content.createTaskError);
+      } finally {
+        setCreatingTaskMessageId(null);
+      }
+    },
+    [
+      room?.id,
+      creatingTaskMessageId,
+      content.createTaskOk,
+      content.createTaskError,
+    ],
+  );
+
+  const resolveActions = useCallback(
+    (message: {
+      id: string;
+      kind: string;
+      deleted?: boolean;
+      bodyText: string;
+      createdAtLabel: string;
+    }) =>
+      resolveInteractionMessageActions({
+        message,
+        onCreateTask: (messageId) => {
+          void onCreateTaskFromMessage(messageId);
+        },
+        creatingMessageId: creatingTaskMessageId,
+      }),
+    [onCreateTaskFromMessage, creatingTaskMessageId],
+  );
 
   const threadMessages = useMemo(
     () =>
@@ -225,6 +273,7 @@ export function InteractionRoomPanel({
             listAriaLabel={content.roomMessagesAriaLabel}
             emptyLabel={content.panelEmptyTitle}
             messages={threadMessages}
+            resolveActions={resolveActions}
           />
         )}
         <InteractionRoomMessageComposer
@@ -239,6 +288,9 @@ export function InteractionRoomPanel({
     <>
       {error ? (
         <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
+      ) : null}
+      {success ? (
+        <CommercialStateBanner variant="success">{success}</CommercialStateBanner>
       ) : null}
       {loading ? (
         <CommercialLoadingCard title={content.panelLoadingLabel} variant="panel" />

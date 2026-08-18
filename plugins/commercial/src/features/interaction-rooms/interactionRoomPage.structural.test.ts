@@ -10,6 +10,8 @@ describe("InteractionRoomPage", () => {
     const source = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).toMatch(/CommercialMessageThread/);
+    expect(source).toMatch(/resolveActions/);
+    expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/getInteractionRoom/);
     expect(source).not.toMatch(/cm-message-bubble/);

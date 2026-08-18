@@ -15,6 +15,7 @@ import {
   httpPut,
 } from "./httpClient";
 import type { CommercialAttachmentDto } from "./attachmentsApi";
+import type { CommercialTaskDto } from "./worklistApi";
 
 export const INTERACTION_ROOMS_API_BASE = "/interaction-rooms";
 export const ROOM_MESSAGE_OWNER_TYPE = "room_message";
@@ -172,6 +173,13 @@ export function interactionRoomReactionPath(
   code: string,
 ): string {
   return `${interactionRoomMessagePath(roomId, messageId)}/reactions/${encodeURIComponent(code)}`;
+}
+
+export function interactionRoomMessageTasksPath(
+  roomId: string,
+  messageId: string,
+): string {
+  return `${interactionRoomMessagePath(roomId, messageId)}/tasks`;
 }
 
 export function interactionRoomsUrl(path: string): string {
@@ -345,6 +353,21 @@ export async function deleteInteractionMessage(
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao excluir mensagem.");
+}
+
+export async function createTaskFromInteractionMessage(
+  roomId: string,
+  messageId: string,
+  options?: { description?: string | null; signal?: AbortSignal },
+): Promise<CommercialTaskDto> {
+  const response = await httpPost<ApiSuccessResponse<CommercialTaskDto>>(
+    interactionRoomsUrl(interactionRoomMessageTasksPath(roomId, messageId)),
+    {
+      description: options?.description?.trim() || undefined,
+    },
+    { signal: options?.signal },
+  );
+  return unwrapEnvelope(response, "Erro ao criar tarefa a partir da mensagem.");
 }
 
 export async function setInteractionMessageReaction(

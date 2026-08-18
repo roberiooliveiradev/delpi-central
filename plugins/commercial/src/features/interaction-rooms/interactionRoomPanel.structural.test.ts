@@ -12,6 +12,8 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/CommercialSectionCard/);
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).toMatch(/CommercialMessageThread/);
+    expect(source).toMatch(/resolveActions/);
+    expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/resolveInteractionRoom/);
     expect(source).toMatch(/CommercialHostDrawer/);
