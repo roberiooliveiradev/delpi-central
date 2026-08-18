@@ -405,6 +405,10 @@ export function OpenOrdersProductionDetailContent({
           forbidden={extras.factoryForbidden}
           error={extras.factoryError}
         />
+        <p className="cm-open-orders-detail__factory-link">
+          <a href="/apps/dashboard-production">Capacidade e OEE (dashboard Produção)</a>
+          {" — o Comercial não reimplementa o cockpit PCP."}
+        </p>
 
         <section className="cm-open-orders-detail__metrics" aria-label="Indicadores da linha">
           <h3 className="cm-open-orders-detail__metrics-title">

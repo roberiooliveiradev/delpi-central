@@ -41,7 +41,7 @@ describe("home hub stack", () => {
     assert.match(home, /onPinClick/);
     assert.match(home, /buildOpenOrdersHorizonListHref/);
     assert.match(home, /month-deliveries/);
-    assert.match(home, /gap-meta/);
+    assert.match(home, /dashboard-production/);
     assert.doesNotMatch(home, /kind === ["']create["']/);
     assert.doesNotMatch(home, /cm-home-columns/);
     assert.doesNotMatch(home, /HOME_LAUNCHER_CONTENT/);

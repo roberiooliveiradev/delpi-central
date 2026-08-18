@@ -338,6 +338,17 @@ export function HomePage({
           }),
       });
     }
+    items.push({
+      id: "factory-capacity",
+      title: "Capacidade fabril",
+      description: "Ocupação e OEE ficam no dashboard de Produção — o Comercial não duplica o cockpit PCP.",
+      tone: "neutral" as const,
+      leadingIcon: <BarChart3 size={18} strokeWidth={1.75} aria-hidden="true" />,
+      actionLabel: "Abrir Produção",
+      onAction: () => {
+        window.location.assign("/apps/dashboard-production");
+      },
+    });
     return items;
   }, [
     basePath,

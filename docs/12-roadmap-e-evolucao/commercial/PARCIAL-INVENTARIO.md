@@ -121,7 +121,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-GR-TV | GR de Vendas **no MFE commercial** | **Bloqueado** / Fora | **tv-dashboard** | ATA-2 §35 · bounded context — só Link |
 | P-HOME-PERS | Home orçamentista / faturamento | **Existe** | Hub routes postponed/board + PERFIS | FOLLOWUP T7 |
 | P-RANK-BI | Ranking produtividade (ofertas/colaborador) | **Backlog** | MFE + BFF | MAPA — ≠ ranking faturamento T5 (**Existe**) |
-| P-CAP-PCP | Cockpit capacidade PCP no commercial | **Bloqueado** / Fora Link | Produção/PCP | Playbook #14 · § Bloqueado — Link OK |
+| P-CAP-PCP | Cockpit capacidade PCP no commercial | **Bloqueado** / Link | Produção/PCP | Link Home + ficha linha → `/apps/dashboard-production` |
 | P-IA-ALIM | Alimentar GAV/GR/IA | **Backlog** | Posterior | DESIGN-IA |
 | P-VIS-INT | Lacunas gerenciais | **Backlog** | Contínuo | MAPA |
 | P-NOTIF | Canal plataforma (sino Minha Delpi) | **Existe** | commercial-api + Core | FOLLOWUP T6/T9 — P3 reminder CRM permanece backlog |
