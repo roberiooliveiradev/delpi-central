@@ -1,0 +1,88 @@
+/* Message composer with in-kit textarea + @ menu anchor. */
+.delpi-ui-mention-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.delpi-ui-mention-composer__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--delpi-color-border, #d1d5db);
+  border-radius: 0.75rem;
+  background: var(--delpi-color-surface, #fff);
+}
+
+.delpi-ui-mention-composer__textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.45;
+  color: var(--delpi-color-text, #0f172a);
+  background: transparent;
+}
+
+.delpi-ui-mention-composer__textarea:focus {
+  outline: none;
+}
+
+.delpi-ui-mention-composer__textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delpi-ui-mention-composer__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.delpi-ui-mention-composer__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.delpi-ui-mention-composer__attach,
+.delpi-ui-mention-composer__send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0.45rem;
+  color: var(--delpi-color-text-muted, #64748b);
+  background: transparent;
+  cursor: pointer;
+}
+
+.delpi-ui-mention-composer__attach:hover:not(:disabled),
+.delpi-ui-mention-composer__send:hover:not(:disabled) {
+  color: var(--delpi-color-accent, #2563eb);
+  background: color-mix(in srgb, var(--delpi-color-accent, #2563eb) 12%, transparent);
+}
+
+.delpi-ui-mention-composer__send:disabled,
+.delpi-ui-mention-composer__attach:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.delpi-ui-mention-composer__send:not(:disabled) {
+  color: var(--delpi-color-accent, #2563eb);
+}
+
+.delpi-ui-mention-composer__footer {
+  min-width: 0;
+}

@@ -18,4 +18,18 @@ export {
   type MentionMenuHit,
   type MentionMenuProps,
 } from "./MentionMenu";
+export {
+  MentionComposer,
+  createDashboardMentionComposer,
+  mentionComposerBemClasses,
+  type DashboardMentionComposerProps,
+  type MentionComposerClassNames,
+  type MentionComposerLabels,
+  type MentionComposerProps,
+} from "./MentionComposer";
+export {
+  detectActiveMention,
+  insertMentionToken,
+  type ActiveMentionQuery,
+} from "./mentionComposerCaret";
 export { parseMentionText } from "./parseMentionText";
