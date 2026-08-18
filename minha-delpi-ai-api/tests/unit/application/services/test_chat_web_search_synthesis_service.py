@@ -93,3 +93,31 @@ def test_synthesize_falls_back_on_llm_error(monkeypatch):
     }
 
     assert service.synthesize(payload, fallback="resposta simples") == "resposta simples"
+
+
+def test_synthesize_falls_back_when_instruction_leaks(monkeypatch):
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
+    monkeypatch.setattr(Settings, "CHAT_WEB_SEARCH_SYNTHESIS_ENABLED", True)
+    monkeypatch.setattr(Settings, "CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED", True)
+    monkeypatch.setattr(Settings, "CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS", 2)
+
+    llm = MagicMock()
+    llm.generate.return_value = (
+        "Use SOMENTE fatos presentes nos trechos fornecidos; não invente URLs, "
+        "datas ou empresas. Trechos autorizados da busca: Tyco foi um conglomerado "
+        "com várias divisões históricas no século XX."
+    )
+
+    service = ChatWebSearchSynthesisService(llm_gateway=llm)
+    payload = {
+        "searchStatus": "success",
+        "results": [
+            {"title": "A", "snippet": "1", "url": "https://a.test", "source": "x"},
+            {"title": "B", "snippet": "2", "url": "https://b.test", "source": "y"},
+        ],
+    }
+
+    extractive = "Tyco International foi um conglomerado citado nas fontes da busca."
+    assert service.synthesize(payload, fallback=extractive) == extractive

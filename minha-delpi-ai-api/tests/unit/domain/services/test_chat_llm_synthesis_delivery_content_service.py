@@ -24,6 +24,7 @@ def test_common_leak_markers_loaded_from_json():
 
     assert "não copie este bloco" in markers
     assert "não invente rotas" in markers
+    assert "não invente dados além do que está abaixo" in markers
 
 
 def test_compound_user_message_uses_delivery_lead():

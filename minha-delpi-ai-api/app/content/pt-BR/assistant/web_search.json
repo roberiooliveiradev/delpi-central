@@ -396,5 +396,15 @@
       "abnt",
       "pdf oficial"
     ]
+  },
+  "llmSynthesis": {
+    "leakMarkers": [
+      "use somente fatos presentes nos trechos",
+      "não invente urls",
+      "trechos autorizados da busca",
+      "não diga que não pesquisa na internet",
+      "responda só markdown",
+      "instrução de integração"
+    ]
   }
 }

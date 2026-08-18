@@ -79,7 +79,35 @@ class ChatWebSearchSynthesisService:
         if not answer or len(answer) < 80:
             return fallback
 
-        return answer
+        return self._guard_instruction_leak(answer, fallback=fallback)
+
+    @classmethod
+    def _leak_markers(cls) -> tuple[str, ...]:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(
+                "web_search", "llmSynthesis", "leakMarkers"
+            )
+            if str(item).strip()
+        )
+
+    @classmethod
+    def _guard_instruction_leak(cls, answer: str, *, fallback: str | None) -> str | None:
+        from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+            ChatLlmSynthesisLeakGuardService,
+        )
+
+        guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
+            answer=answer,
+            fallback=fallback,
+            facts="Trechos autorizados da busca:",
+            leak_markers=cls._leak_markers(),
+        )
+        return guarded or fallback
 
     @classmethod
     def _system_prompt(cls, payload: dict | None = None) -> str:
