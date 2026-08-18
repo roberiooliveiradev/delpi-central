@@ -127,6 +127,9 @@ from si_app.application.use_cases.strategic_indicators.export_admin_config_use_c
 from si_app.application.use_cases.strategic_indicators.import_admin_config_use_case import (
     ImportStrategicIndicatorsAdminConfigUseCase,
 )
+from si_app.application.use_cases.strategic_indicators.preview_admin_config_use_case import (
+    PreviewStrategicIndicatorsAdminConfigUseCase,
+)
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_admin_config_bundle_repository import (
     PostgresStrategicIndicatorsAdminConfigBundleRepository,
 )
@@ -544,6 +547,10 @@ def build_export_strategic_indicators_admin_config_use_case():
 def build_import_strategic_indicators_admin_config_use_case():
     repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
     return ImportStrategicIndicatorsAdminConfigUseCase(repository)
+
+
+def build_preview_strategic_indicators_admin_config_use_case():
+    return PreviewStrategicIndicatorsAdminConfigUseCase()
 
 
 def build_activate_strategic_indicators_admin_department_use_case():

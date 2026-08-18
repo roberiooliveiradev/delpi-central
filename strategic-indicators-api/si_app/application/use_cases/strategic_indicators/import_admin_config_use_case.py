@@ -18,6 +18,7 @@ class ImportStrategicIndicatorsAdminConfigUseCase:
         bundle: dict,
         actor_user_id: str | None,
         include_goals: bool = True,
+        mode: str = "replace",
     ) -> dict:
         if not isinstance(bundle, dict):
             raise ValueError("Pacote de importação inválido.")
@@ -27,6 +28,7 @@ class ImportStrategicIndicatorsAdminConfigUseCase:
             actor_user_id=actor_user_id,
             include_goals=include_goals,
         )
+        stats = {**stats, "mode": mode}
 
         return {
             "message": "Configuração importada com sucesso.",

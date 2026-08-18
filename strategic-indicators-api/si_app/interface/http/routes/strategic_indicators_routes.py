@@ -107,6 +107,7 @@ from si_app.composition.strategic_indicators_composer import (
     build_get_departments_tree_trends_use_case,
     build_export_strategic_indicators_admin_config_use_case,
     build_import_strategic_indicators_admin_config_use_case,
+    build_preview_strategic_indicators_admin_config_use_case,
 )
 
 router = APIRouter(
@@ -997,6 +998,15 @@ def fill_missing_indicator_goals(
         ) from exc
 
 
+def _admin_config_import_payload(
+    body: ImportAdminConfigBodySchema,
+) -> tuple[dict, str, bool]:
+    include_goals = body.include_goals
+    mode = body.mode
+    bundle = body.model_dump(exclude={"include_goals", "mode"})
+    return bundle, mode, include_goals
+
+
 @router.get("/admin/config/export")
 @require_permission("strategic-indicators.settings.manage")
 def export_admin_config():
@@ -1010,22 +1020,42 @@ def export_admin_config():
         ) from exc
 
 
-@router.post("/admin/config/import")
+@router.post("/admin/config/import/preview")
 @require_permission("strategic-indicators.settings.manage")
-def import_admin_config(
+def preview_admin_config(body: ImportAdminConfigBodySchema):
+    try:
+        bundle, mode, include_goals = _admin_config_import_payload(body)
+        use_case = build_preview_strategic_indicators_admin_config_use_case()
+        return use_case.execute(
+            bundle=bundle,
+            mode=mode,
+            include_goals=include_goals,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao pré-visualizar configuração administrativa: {exc}",
+        ) from exc
+
+
+@router.post("/admin/config/import/apply")
+@require_permission("strategic-indicators.settings.manage")
+def apply_admin_config(
     body: ImportAdminConfigBodySchema,
     request: Request,
 ):
     try:
         actor_user_id = _extract_actor(request)
-        include_goals = body.include_goals
-        bundle = body.model_dump(exclude={"include_goals"})
+        bundle, mode, include_goals = _admin_config_import_payload(body)
         use_case = build_import_strategic_indicators_admin_config_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 bundle=bundle,
                 actor_user_id=actor_user_id,
                 include_goals=include_goals,
+                mode=mode,
             )
         )
     except ValueError as exc:
@@ -1035,6 +1065,15 @@ def import_admin_config(
             status_code=500,
             detail=f"Falha ao importar configuração administrativa: {exc}",
         ) from exc
+
+
+@router.post("/admin/config/import")
+@require_permission("strategic-indicators.settings.manage")
+def import_admin_config(
+    body: ImportAdminConfigBodySchema,
+    request: Request,
+):
+    return apply_admin_config(body, request)
 
 
 @router.get("/departments")

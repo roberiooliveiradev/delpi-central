@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 
 # =========================================================
@@ -249,10 +249,45 @@ class FillMissingIndicatorGoalsBodySchema(BaseModel):
 # =========================================================
 
 class ImportAdminConfigBodySchema(BaseModel):
-    schema_version: int = Field(ge=1, le=1)
+    schema_version: int
     exported_at: Optional[str] = None
     departments: List[dict] = Field(default_factory=list)
     department_indicators: List[dict] = Field(default_factory=list)
     indicator_goals: List[dict] = Field(default_factory=list)
     module_settings: dict = Field(default_factory=dict)
     include_goals: bool = True
+    mode: Literal["merge", "replace"] = "replace"
+
+
+class AdminConfigPlannedCountsSchema(BaseModel):
+    in_file: int = 0
+    insert: int = 0
+    update: int = 0
+    skip: int = 0
+    delete: int = 0
+
+
+class AdminConfigCurrentCountsSchema(BaseModel):
+    departments: int = 0
+    department_indicators: int = 0
+    indicator_goals: int = 0
+
+
+class AdminConfigPreviewResponseSchema(BaseModel):
+    valid: bool
+    errors: List[str] = Field(default_factory=list)
+    mode: Literal["merge", "replace"]
+    current_counts: AdminConfigCurrentCountsSchema
+    planned: dict[str, AdminConfigPlannedCountsSchema]
+
+
+class AdminConfigImportStatsSchema(BaseModel):
+    mode: Literal["merge", "replace"]
+    departments_upserted: int = 0
+    indicators_upserted: int = 0
+    goals_created: int = 0
+    goals_skipped: int = 0
+    goals_deleted: int = 0
+    departments_deleted: int = 0
+    indicators_deleted: int = 0
+    module_settings_updated: int = 0
