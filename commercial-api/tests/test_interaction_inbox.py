@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from commercial_app.application.services.interaction_inbox_customer_enrichment_service import (
+    InteractionInboxCustomerEnrichmentService,
+)
 from commercial_app.application.use_cases.list_interaction_inbox import (
     ListInteractionInboxUseCase,
 )
@@ -112,3 +115,81 @@ def test_inbox_rejects_unknown_filter() -> None:
         assert False, "expected ValueError"
     except ValueError as exc:
         assert str(exc) == InteractionRoomContentService.error("kindUnknown")
+
+
+class _OpenOrdersGateway:
+    def __init__(self, payload=None, *, fail: bool = False) -> None:
+        self._payload = payload or {}
+        self._fail = fail
+
+    def list_open_orders(self, *, params=None):
+        if self._fail:
+            raise RuntimeError("totvs down")
+        return self._payload
+
+
+def test_inbox_enriches_order_customer_from_open_orders() -> None:
+    rooms, messages, room_uc, _msg_uc, _inbox = _uc()
+    order_room = room_uc.resolve(
+        ResolveInteractionRoomInput(
+            kind="entity",
+            entity_type="order",
+            entity_key="01|102942",
+            actor_user_id="u1",
+            title="Pedido 102942",
+        )
+    )
+    inbox = ListInteractionInboxUseCase(
+        rooms=rooms,
+        messages=messages,
+        customer_enrichment=InteractionInboxCustomerEnrichmentService(
+            gateway=_OpenOrdersGateway(
+                {
+                    "data": {
+                        "items": [
+                            {
+                                "filial": "01",
+                                "pedido": "102942",
+                                "codigo_cliente": "000123",
+                                "loja": "01",
+                                "nome_cliente": "Cliente Demo",
+                            }
+                        ]
+                    }
+                }
+            )
+        ),
+    )
+    item = next(
+        row for row in inbox.execute(actor_user_id="u1") if row.id == order_room.id
+    )
+    assert item.customer_code == "000123"
+    assert item.customer_store == "01"
+    assert item.customer_name == "Cliente Demo"
+    payload = item.to_dict()
+    assert payload["customer_name"] == "Cliente Demo"
+
+
+def test_inbox_customer_enrichment_fails_open() -> None:
+    rooms, messages, room_uc, _msg_uc, _inbox = _uc()
+    order_room = room_uc.resolve(
+        ResolveInteractionRoomInput(
+            kind="entity",
+            entity_type="order",
+            entity_key="01|102942",
+            actor_user_id="u1",
+            title="Pedido 102942",
+        )
+    )
+    inbox = ListInteractionInboxUseCase(
+        rooms=rooms,
+        messages=messages,
+        customer_enrichment=InteractionInboxCustomerEnrichmentService(
+            gateway=_OpenOrdersGateway(fail=True)
+        ),
+    )
+    item = next(
+        row for row in inbox.execute(actor_user_id="u1") if row.id == order_room.id
+    )
+    assert item.customer_code is None
+    assert item.customer_name is None

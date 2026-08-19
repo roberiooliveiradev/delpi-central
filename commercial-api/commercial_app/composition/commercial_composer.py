@@ -10,6 +10,9 @@ from commercial_app.application.use_cases.manage_attachments import ManageAttach
 from commercial_app.application.use_cases.manage_commercial_groups import (
     ManageCommercialGroupsUseCase,
 )
+from commercial_app.application.services.interaction_inbox_customer_enrichment_service import (
+    InteractionInboxCustomerEnrichmentService,
+)
 from commercial_app.application.use_cases.list_interaction_inbox import (
     ListInteractionInboxUseCase,
 )
@@ -314,6 +317,9 @@ def build_list_interaction_inbox_use_case() -> ListInteractionInboxUseCase:
         _list_interaction_inbox_use_case = ListInteractionInboxUseCase(
             rooms=build_interaction_room_repository(),
             messages=build_interaction_message_repository(),
+            customer_enrichment=InteractionInboxCustomerEnrichmentService(
+                gateway=build_delpi_commercial_gateway(),
+            ),
         )
     return _list_interaction_inbox_use_case
 

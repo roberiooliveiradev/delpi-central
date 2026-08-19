@@ -7,6 +7,9 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from commercial_app.application.services.interaction_inbox_customer_enrichment_service import (
+    InteractionInboxCustomerEnrichmentService,
+)
 from commercial_app.domain.ports.interaction_message_repository_port import (
     InteractionMessageRepositoryPort,
 )
@@ -34,6 +37,9 @@ class InteractionRoomInboxItem:
     last_message_preview: str | None = None
     last_message_at: datetime | None = None
     last_author_user_id: str | None = None
+    customer_code: str | None = None
+    customer_store: str | None = None
+    customer_name: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -51,6 +57,9 @@ class InteractionRoomInboxItem:
                 self.last_message_at.isoformat() if self.last_message_at else None
             ),
             "last_author_user_id": self.last_author_user_id,
+            "customer_code": self.customer_code,
+            "customer_store": self.customer_store,
+            "customer_name": self.customer_name,
         }
 
 
@@ -62,9 +71,13 @@ class ListInteractionInboxUseCase:
         *,
         rooms: InteractionRoomRepositoryPort,
         messages: InteractionMessageRepositoryPort,
+        customer_enrichment: InteractionInboxCustomerEnrichmentService | None = None,
     ) -> None:
         self._rooms = rooms
         self._messages = messages
+        self._customer_enrichment = (
+            customer_enrichment or InteractionInboxCustomerEnrichmentService()
+        )
 
     def execute(
         self,
@@ -85,6 +98,7 @@ class ListInteractionInboxUseCase:
         fetch_cap = min(200, max(cap * 3, cap))
         rooms = self._rooms.list_all(limit=fetch_cap, offset=0)
         needle = (query or "").strip().lower()
+        order_index = self._customer_enrichment.load_order_index()
         items: list[InteractionRoomInboxItem] = []
         for room in rooms:
             if wanted in {"process", "wall"} and room.kind != wanted:
@@ -115,6 +129,11 @@ class ListInteractionInboxUseCase:
                     preview = preview[:159].rstrip() + "…"
                 last_at = latest.created_at
                 last_author = latest.author_user_id
+            customer = self._customer_enrichment.enrich(
+                entity_type=room.entity_type,
+                entity_key=room.entity_key,
+                order_index=order_index,
+            )
             items.append(
                 InteractionRoomInboxItem(
                     id=room.id,
@@ -129,6 +148,9 @@ class ListInteractionInboxUseCase:
                     last_message_preview=preview or None,
                     last_message_at=last_at,
                     last_author_user_id=last_author,
+                    customer_code=customer.customer_code,
+                    customer_store=customer.customer_store,
+                    customer_name=customer.customer_name,
                 )
             )
             if len(items) >= cap:
