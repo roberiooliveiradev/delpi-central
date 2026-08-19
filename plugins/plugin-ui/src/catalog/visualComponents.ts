@@ -468,7 +468,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("collaboration", "RoomContextPanel", {
     addedAt: "2026-08-19",
-    description: "Painel Sobre / participantes / pins da sala (não é coluna Slack).",
+    description: "Painel Sobre / participantes / pins da sala (embedded no card ou drawer da ficha).",
   }),
   vc("collaboration", "ConversationFileDropLayer", {
     addedAt: "2026-08-19",

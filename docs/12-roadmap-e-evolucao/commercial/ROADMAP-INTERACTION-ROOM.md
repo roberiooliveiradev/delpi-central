@@ -25,13 +25,13 @@ O visual atual falha porque o split **não herda altura do viewport**, o **Conte
 
 - **TopBar do módulo** continua em [`PluginShell.tsx`](../../../plugins/commercial/src/app/PluginShell.tsx) (Início / Visão geral / Sala…). Não mover. O que parece «topbar deslocada» é o `UnderlineNav` no hero — **sai**. Filtros da inbox = `CommercialScopeChipBar` no `children` do PageHero, igual Meu Dia / OTD.
 - **PagePath:** lista = Início → Sala de interação. Com sala aberta = Sala de interação → **título da sala** (nunca `Sala / Sala`).
-- **Contexto:** `CommercialHostDrawer` (já usado no painel da ficha). Overlay à direita; **não** entra no flex entre header e composer. Header só com toggle. Participantes no `RoomHeader` permanecem.
+- **Contexto:** `CommercialSectionCard` colapsável **no fluxo** da coluna (abaixo do header). Sem overlay/backdrop. `CommercialHostDrawer` permanece só no painel da ficha. Header com toggle + chevron do card. Participantes no `RoomHeader` permanecem.
 - **Avatar lista (conversa)** = **cliente** (`CustomerAvatar` + `customer_name`; sem código, iniciais do nome do cliente, nunca de «Pedido 10…»).
 - **Avatar mensagem** = **usuário autor** (`nameFor` + `InitialsAvatar` do kit) — sem `CustomerAvatar` no thread.
 - **Um scroller:** só `.cm-room-thread__msgs`. Kit `message-thread.css`: `overflow: visible` no root da lista (o host rola).
 - **Bolhas:** `max-width` na **bolha**, não na row inteira a 75%.
 - **Fill:** modificador só nas views da sala (`dashboard-page--fill`), sem mudar o scroll de página do Meu Dia / carteira.
-- **Header da conversa (uma linha):** `RoomHeader` `align-items: center`. Visível: **título** · **chave** `02|002573` · **AvatarStack** · **Contexto só ícone** (`PanelRight`, `aria-label`). Sem chip «order». Tipo/chave completa ficam no drawer Contexto.
+- **Header da conversa (uma linha):** `RoomHeader` `align-items: center`. Visível: **título** · **chave** `02|002573` · **AvatarStack** · **Contexto só ícone** (`PanelRight`, `aria-label`). Sem chip «order». Tipo/chave completa ficam no card Contexto.
 - **Feedback pin/erro:** não `StateBanner` acima do título. Só `CommercialAlertQueue` overlay no host `.dashboard-commercial` (não `position:fixed` no `body`), auto-dismiss 4s, tom `info` se a fila não tiver `success`.
 - **Sem sala selecionada:** a **lista de conversas ocupa 100%** da área abaixo do hero. Sem split, sem coluna vazia «Selecione uma sala». `ResizableColumns` **só** existe com `roomId`.
 - **Ritmo espacial da sala (tokens existentes):** `--cm-gap-xs` 8px, `--cm-gap-sm` 12px. No `--fill`: página `padding: 16px`; stack chrome `gap: 12px` (não 24px); Hero `density="compact"`; Path `margin: 0`; inbox/header/dock padding 12px; lista/msgs padding horizontal 8px. Proibido margin entre Path/Hero/workspace; padding 24px na página fill.
@@ -53,20 +53,20 @@ O visual atual falha porque o split **não herda altura do viewport**, o **Conte
 - **Reações:** `ReactionBar` + rotas já existentes.
 - **Unfurl:** manter `EntityUnfurlCard`; gap 8px.
 - **Inbox:** título + subtitle cliente + preview plano + hora + badge. Empty/Loading do kit.
-- **Drawer Contexto:** ~20rem; Sobre / Participantes / Fixadas.
+- **Contexto da thread:** card colapsável (`SectionCard`) entre header e msgs; Sobre / Participantes / Fixadas.
 - **Anexos no composer:** imagens = thumbs na pílula; documentos = bandeja overlay `__document-tray`.
 - **Modernização visual (E5):** só CSS da família colaboração no kit. Sem caixa 1px; seleção barra 3px; bolha sem border; composer pílula; send circular. Tokens `--delpi-ui-*`.
 
 ## Inventário (o que já existe)
 
 - Workspace: `InteractionRoomWorkspace.tsx` + `ResizableColumns`.
-- Thread: header / msgs / dock em `InteractionRoomPage.tsx`; Contexto hoje **no fluxo**.
+- Thread: header / card Contexto / msgs / dock em `InteractionRoomPage.tsx`.
 - Inbox: `InteractionRoomsInboxPage.tsx` já usa `CustomerAvatar` no `leading`, mas o fallback de nome é o **título da sala**.
 - Cadeia de altura quebrada: `.dashboard-page` só `min-height: 100%`; `ViewTransition` e o `cm-page-stack` **não** são `flex: 1`.
 
 ## Pesquisa (referência)
 
-Slack/Teams: lista + reading pane **preenchem** a altura; contexto é **drawer**. WhatsApp: bolha com teto de largura. Sem conversa: lista em tela cheia.
+Slack/Teams: lista + reading pane **preenchem** a altura; contexto da **página da sala** é card colapsável (sem overlay). Drawer host-contained permanece na **ficha**. WhatsApp: bolha com teto de largura. Sem conversa: lista em tela cheia.
 
 Composer: Teams compacto + Formatar; Slack WYSIWYG (não copiar mrkdwn); Discord markdown visível; GitHub Preview rejeitado. Kit já tem `richTextMarkdown.ts` — reusar no composer de chat, não no editor de deck.
 
@@ -78,7 +78,7 @@ Factory em `commercialUi.ts` (`createDashboard*` + prefix `cm`). CSS canônico =
 
 **Família colaboração (E5):** `room-inbox.css`, `message-thread.css`, `mention-composer.css`, `room-header.css`. `AttachmentPreviewStrip` só documentos na bandeja (E6.S7).
 
-**Chrome de página (E1–E3):** PagePath, PageHero compact, ScopeChipBar, ResizableColumns só com `roomId`, HostContainedDrawer.
+**Chrome de página (E1–E3):** PagePath, PageHero compact, ScopeChipBar, ResizableColumns só com `roomId`, HostContainedDrawer **na ficha**, SectionCard Contexto **na thread**.
 
 **Fora do kit:** `CustomerAvatar` no MFE (foto API).
 
@@ -161,7 +161,9 @@ Clique no card → navega `/:roomId` → Tela B (split 20/80).
 |  | * Pedido      | HEADER pad 12 uma linha                              |    |
 |  |   101731      |  Pedido 101731  01|101731   [JC][RO]  [ctx icon]    |    |
 |  |   [cli AV]    |-----------------------------------------------------|    |
-|  |   BUHLER      | MSGS  <-- UNICO SCROLL  pad-inline 8px              |    |
+|  |   BUHLER      | CARD Contexto colapsável (sem overlay)              |    |
+|  |               |-----------------------------------------------------|    |
+|  |               | MSGS  <-- UNICO SCROLL  pad-inline 8px              |    |
 |  |               |           barra hover ACIMA da bolha                |    |
 |  |               |-----------------------------------------------------|    |
 |  |               | DOCK pad 12 (nao rola) — pilula + clip + send       |    |
@@ -197,9 +199,9 @@ flowchart TB
   root --> tb
 ```
 
-### Tela C — Contexto (drawer overlay)
+### Tela C — Contexto (card colapsável)
 
-O split **não encolhe**. Drawer host-contained. Empty «Selecione uma sala» **não existe** na Tela A.
+O split **não encolhe**. Contexto entra no **fluxo** da coluna (card, default recolhido). Sem overlay nem clique na conversa para fechar. Empty «Selecione uma sala» **não existe** na Tela A. Drawer host-contained só no **painel da ficha**.
 
 ---
 
@@ -318,13 +320,13 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - **Backend (commercial-api):** nenhum (título já no GET room / list).
 - **Testes:** vitest Path.
 
-### E3.S4 — Drawer Contexto — custo M
+### E3.S4 — Card Contexto — custo M
 
-- **Front (plugin-ui / kit):** `RoomContextPanel` inalterado na API do componente; drawer via `createHostContainedDrawerShell` já no kit.
-- **Front (MFE commercial):** [`InteractionRoomPage.tsx`](../../../plugins/commercial/src/features/interaction-rooms/InteractionRoomPage.tsx): painel no `CommercialHostDrawer`; sair do flex; apagar override 40vh. Largura ~20rem; Sobre / participantes / pins.
+- **Front (plugin-ui / kit):** `RoomContextPanel` com `embedded` (sem borda de sidebar); `SectionCard` collapsible + `--compact`.
+- **Front (MFE commercial):** [`InteractionRoomPage.tsx`](../../../plugins/commercial/src/features/interaction-rooms/InteractionRoomPage.tsx): `CommercialSectionCard` entre header e `__stage`; sem `CommercialHostDrawer` nesta página. Sobre / participantes / pins.
 - **Backend (commercial-api):** nenhum — pins/membros já em `list_interaction_room_pins` / members.
-- **Testes:** vitest drawer.
-- **Não fazer:** terceira coluna no split; Contexto no fluxo entre header e composer.
+- **Testes:** vitest card + panel da ficha ainda com drawer.
+- **Não fazer:** terceira coluna no split; overlay/backdrop sobre `__msgs`.
 
 ### E3.S5 — Header uma linha + AlertQueue — custo M
 
@@ -339,7 +341,7 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - **Front (plugin-ui / kit):** nenhum de produto.
 - **Front (MFE commercial):** nenhum de produto.
 - **Backend (commercial-api):** nenhum de produto.
-- **Ops:** `--fase mfe --build commercial`; remote `plugin-ui` se S5 tocou o kit. Smoke chips, lista full, Path, drawer, header, toast.
+- **Ops:** `--fase mfe --build commercial`; remote `plugin-ui` se S5 tocou o kit. Smoke chips, lista full, Path, card Contexto, header, toast.
 
 ## E5 — Visual kit (CSS / DOM leve)
 
@@ -545,7 +547,7 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - Bolha enviada: imagens thumbs + PDF chips + lightbox; unfurl; reações.
 - Responder (faixa no dock + `parent_id`).
 - Excluir: autor; `CommercialHostDialog` + `ConfirmModalPanel` (não cobre sidebar).
-- Inbox: preview plano, empty/loading do kit; drawer Contexto ~20rem.
+- Inbox: preview plano, empty/loading do kit; Contexto da thread = card colapsável.
 - AlertQueue no host (pin/erro), não banner no título.
 - Documentação alinhada ao entregue: WF-SALA, § 3.21, DATA-MODEL `body_text`, README commercial + commercial-api, catálogo kit; testes `test_interaction_rooms_*_doc.py` verdes.
 - Cada etapa E1–E7 fechada com containers atualizados, erros corrigidos e push **antes** da etapa seguinte.

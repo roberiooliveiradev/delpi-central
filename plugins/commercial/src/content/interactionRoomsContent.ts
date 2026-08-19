@@ -53,6 +53,10 @@ export const INTERACTION_ROOMS_CONTENT = {
   contextOpenEntity: "Abrir",
   contextToggle: "Contexto",
   contextCloseAriaLabel: "Fechar contexto",
+  contextSubtitleParticipantOne: "1 participante",
+  contextSubtitleParticipants: "{count} participantes",
+  contextSubtitlePinOne: "1 fixada",
+  contextSubtitlePins: "{count} fixadas",
   roomAlertsAriaLabel: "Avisos da sala",
   alertDismissMs: 4000,
   composerPlaceholder: "Escreva uma mensagem… Use @ para mencionar.",
@@ -113,3 +117,34 @@ export const INTERACTION_ROOMS_CONTENT = {
   panelOpenDrawer: "Abrir conversa",
   drawerCloseAriaLabel: "Fechar sala",
 } as const;
+
+export function formatInteractionRoomContextSubtitle(
+  entityKey: string | null | undefined,
+  participantCount: number,
+  pinCount: number,
+): string {
+  const bits: string[] = [];
+  const key = (entityKey ?? "").trim();
+  if (key) bits.push(key);
+  if (participantCount === 1) {
+    bits.push(INTERACTION_ROOMS_CONTENT.contextSubtitleParticipantOne);
+  } else if (participantCount > 1) {
+    bits.push(
+      INTERACTION_ROOMS_CONTENT.contextSubtitleParticipants.replace(
+        "{count}",
+        String(participantCount),
+      ),
+    );
+  }
+  if (pinCount === 1) {
+    bits.push(INTERACTION_ROOMS_CONTENT.contextSubtitlePinOne);
+  } else if (pinCount > 1) {
+    bits.push(
+      INTERACTION_ROOMS_CONTENT.contextSubtitlePins.replace(
+        "{count}",
+        String(pinCount),
+      ),
+    );
+  }
+  return bits.join(" · ");
+}

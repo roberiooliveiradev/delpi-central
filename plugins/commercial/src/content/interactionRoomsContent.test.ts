@@ -1,0 +1,16 @@
+import { describe, expect, it } from "vitest";
+
+import { formatInteractionRoomContextSubtitle } from "./interactionRoomsContent";
+
+describe("formatInteractionRoomContextSubtitle", () => {
+  it("junta chave, participantes e pins", () => {
+    expect(formatInteractionRoomContextSubtitle("02|002573", 2, 1)).toBe(
+      "02|002573 · 2 participantes · 1 fixada",
+    );
+  });
+
+  it("omite partes vazias", () => {
+    expect(formatInteractionRoomContextSubtitle("  ", 0, 0)).toBe("");
+    expect(formatInteractionRoomContextSubtitle(null, 3, 0)).toBe("3 participantes");
+  });
+});

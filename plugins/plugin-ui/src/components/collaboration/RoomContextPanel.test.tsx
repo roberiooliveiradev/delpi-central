@@ -55,4 +55,17 @@ describe("RoomContextPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Follow up/ }));
     expect(onPinSelect).toHaveBeenCalledWith("m1");
   });
+
+  it("aplica o modificador embedded no root", () => {
+    const { container } = render(
+      <RoomContextPanel
+        classNames={classNames}
+        labels={labels}
+        embedded
+        entityTitle="Order"
+      />,
+    );
+    const aside = container.querySelector("aside");
+    expect(aside?.className).toMatch(/delpi-ui-room-context-panel--embedded/);
+  });
 });

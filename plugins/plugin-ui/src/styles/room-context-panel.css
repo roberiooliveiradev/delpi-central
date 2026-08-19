@@ -8,6 +8,15 @@
   border-left: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
 }
 
+.delpi-ui-room-context-panel--embedded {
+  gap: 0.75rem;
+  max-height: min(36vh, 14rem);
+  padding: 0;
+  overflow-y: auto;
+  background: transparent;
+  border-left: none;
+}
+
 .delpi-ui-room-context-panel__section {
   display: flex;
   flex-direction: column;
@@ -20,6 +29,15 @@
 .delpi-ui-room-context-panel__section:last-of-type {
   border-bottom: none;
   padding-bottom: 0;
+}
+
+.delpi-ui-room-context-panel--embedded .delpi-ui-room-context-panel__section {
+  padding-bottom: 0.75rem;
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 65%,
+    transparent
+  );
 }
 
 .delpi-ui-room-context-panel__heading {
@@ -106,5 +124,10 @@
     border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
     max-height: 40vh;
     overflow-y: auto;
+  }
+
+  .delpi-ui-room-context-panel--embedded {
+    border-bottom: none;
+    max-height: min(36vh, 14rem);
   }
 }

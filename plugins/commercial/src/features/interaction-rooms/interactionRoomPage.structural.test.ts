@@ -23,8 +23,12 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/mine:/);
     expect(source).toMatch(/CommercialConversationFileDropLayer/);
     expect(source).toMatch(/CommercialRoomContextPanel/);
-    expect(source).toMatch(/CommercialHostDrawer/);
-    expect(source).toMatch(/portalTarget=\{stageHost\}/);
+    expect(source).toMatch(/CommercialSectionCard/);
+    expect(source).toMatch(/collapsible/);
+    expect(source).toMatch(/formatInteractionRoomContextSubtitle/);
+    expect(source).toMatch(/embedded/);
+    expect(source).not.toMatch(/CommercialHostDrawer/);
+    expect(source).not.toMatch(/portalTarget/);
     expect(source).toMatch(/cm-room-thread__stage/);
     expect(source).toMatch(/CommercialAlertQueue/);
     expect(source).toMatch(/cm-room-alert-host/);

@@ -22,6 +22,7 @@ export type RoomContextPanelPin = {
 
 export type RoomContextPanelClassNames = {
   root: string;
+  embedded: string;
   section: string;
   heading: string;
   body: string;
@@ -55,6 +56,8 @@ export type RoomContextPanelProps = {
   participantsAriaLabel?: string;
   pins?: readonly RoomContextPanelPin[];
   onPinSelect?: (messageId: string) => void;
+  /** Sem chrome de sidebar/drawer: card no fluxo da coluna. */
+  embedded?: boolean;
   className?: string;
   footer?: ReactNode;
 };
@@ -65,6 +68,7 @@ export function roomContextPanelBemClasses(prefix: string): RoomContextPanelClas
   const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
     root: pair(base, ui),
+    embedded: pair(`${base}--embedded`, `${ui}--embedded`),
     section: pair(`${base}__section`, `${ui}__section`),
     heading: pair(`${base}__heading`, `${ui}__heading`),
     body: pair(`${base}__body`, `${ui}__body`),
@@ -90,10 +94,17 @@ export function RoomContextPanel({
   participantsAriaLabel,
   pins = [],
   onPinSelect,
+  embedded = false,
   className,
   footer,
 }: RoomContextPanelProps) {
-  const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const rootClass = [
+    classNames.root,
+    embedded ? classNames.embedded : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const title = (entityTitle ?? "").trim();
   const key = (entityKey ?? "").trim();
 

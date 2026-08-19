@@ -26,19 +26,19 @@ import {
   CommercialAlertQueue,
   CommercialConversationFileDropLayer,
   CommercialEmptyState,
-  CommercialHostDrawer,
   CommercialLoadingCard,
   CommercialMessageThread,
   CommercialPagePath,
   CommercialRoomContextPanel,
   CommercialRoomHeader,
+  CommercialSectionCard,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   buildInteractionRoomsPath,
   buildPluginPath,
 } from "../../app/pluginRoutes";
-import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import { INTERACTION_ROOMS_CONTENT, formatInteractionRoomContextSubtitle } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
@@ -112,7 +112,6 @@ export function InteractionRoomPage({
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
   const [contextOpen, setContextOpen] = useState(false);
-  const [stageHost, setStageHost] = useState<HTMLElement | null>(null);
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
@@ -425,6 +424,7 @@ export function InteractionRoomPage({
                 <CommercialActionButton
                   variant="ghost"
                   aria-label={content.contextToggle}
+                  aria-expanded={contextOpen}
                   onClick={() => setContextOpen((open) => !open)}
                 >
                   <PanelRight size={16} aria-hidden />
@@ -432,7 +432,45 @@ export function InteractionRoomPage({
               }
             />
           </div>
-          <div className="cm-room-thread__stage" ref={setStageHost}>
+          <CommercialSectionCard
+            className="cm-room-thread__context delpi-ui-section-card--compact"
+            title={content.contextToggle}
+            subtitle={formatInteractionRoomContextSubtitle(
+              room.entity_key,
+              participants.length,
+              contextPins.length,
+            )}
+            collapsible
+            open={contextOpen}
+            onOpenChange={setContextOpen}
+          >
+            <CommercialRoomContextPanel
+              embedded
+              labels={{
+                about: content.contextAbout,
+                participants: content.contextParticipants,
+                pins: content.contextPins,
+                pinsEmpty: content.contextPinsEmpty,
+                membersEmpty: content.contextMembersEmpty,
+                openEntity: content.contextOpenEntity,
+              }}
+              entityTitle={room.title}
+              entityKey={room.entity_key}
+              entityHref={entityHref}
+              onOpenEntity={
+                entityHref
+                  ? () => {
+                      navigatePluginPath(entityHref);
+                    }
+                  : undefined
+              }
+              participants={participants}
+              participantsAriaLabel={content.roomMembersAriaLabel}
+              pins={contextPins}
+              onPinSelect={onSelectPin}
+            />
+          </CommercialSectionCard>
+          <div className="cm-room-thread__stage">
             <div
               className="cm-room-thread__msgs"
               ref={msgsRef}
@@ -456,43 +494,6 @@ export function InteractionRoomPage({
               />
             )}
           </div>
-          <CommercialHostDrawer
-            open={contextOpen}
-            title={content.contextToggle}
-            className="cm-room-context-drawer"
-            portalTarget={stageHost}
-            onClose={() => setContextOpen(false)}
-            closeAriaLabel={content.contextCloseAriaLabel}
-          >
-            <CommercialRoomContextPanel
-              labels={{
-                about: content.contextAbout,
-                participants: content.contextParticipants,
-                pins: content.contextPins,
-                pinsEmpty: content.contextPinsEmpty,
-                membersEmpty: content.contextMembersEmpty,
-                openEntity: content.contextOpenEntity,
-              }}
-              entityTitle={room.title}
-              entityKey={room.entity_key}
-              entityHref={entityHref}
-              onOpenEntity={
-                entityHref
-                  ? () => {
-                      setContextOpen(false);
-                      navigatePluginPath(entityHref);
-                    }
-                  : undefined
-              }
-              participants={participants}
-              participantsAriaLabel={content.roomMembersAriaLabel}
-              pins={contextPins}
-              onPinSelect={(messageId) => {
-                setContextOpen(false);
-                onSelectPin(messageId);
-              }}
-            />
-          </CommercialHostDrawer>
           </div>
           <div className="cm-room-thread__dock">
             <InteractionRoomMessageComposer

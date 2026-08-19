@@ -70,6 +70,21 @@
   margin-bottom: 0;
 }
 
+.delpi-ui-section-card--collapsed .delpi-ui-section-card__subtitle {
+  margin-top: 4px;
+}
+
+.delpi-ui-section-card--compact .delpi-ui-section-card__header {
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  margin-bottom: 8px;
+}
+
+.delpi-ui-section-card--compact.delpi-ui-section-card--collapsed .delpi-ui-section-card__header {
+  margin-bottom: 0;
+}
+
 .delpi-ui-section-card__body {
   min-width: 0;
 }

@@ -24,6 +24,17 @@ describe("ActionButton", () => {
     expect(container.querySelector(".delpi-ui-action-btn--primary")).toBeTruthy();
   });
 
+  it("repassa aria-expanded no botão", () => {
+    render(
+      <ActionButton variant="ghost" aria-label="Contexto" aria-expanded>
+        Ctx
+      </ActionButton>,
+    );
+    expect(screen.getByRole("button", { name: "Contexto" }).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+  });
+
   it("desabilitado não dispara onClick e aceita className extra", () => {
     const onClick = vi.fn();
     const { container } = render(

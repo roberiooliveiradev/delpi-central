@@ -38,4 +38,22 @@ describe("SectionCard collapsible", () => {
     expect(onOpenChange).toHaveBeenCalledWith(true);
     expect(screen.getByText("Conteúdo do formulário")).toBeTruthy();
   });
+
+  it("mantém o subtítulo visível quando recolhido", () => {
+    render(
+      <SectionCard
+        title="Contexto"
+        subtitle="Pedido 002573"
+        classNames={sectionCardPacBemClasses("cm")}
+        labels={labels}
+        collapsible
+        defaultOpen={false}
+      >
+        <p>Sobre</p>
+      </SectionCard>,
+    );
+
+    expect(screen.getByText("Pedido 002573")).toBeTruthy();
+    expect(screen.queryByText("Sobre")).toBeNull();
+  });
 });

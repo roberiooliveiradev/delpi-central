@@ -182,13 +182,17 @@
   pointer-events: auto;
 }
 
-.dashboard-commercial .cm-room-context-drawer {
-  width: min(20rem, 100%);
-  max-width: 20rem;
-}
-
 .dashboard-commercial .cm-room-thread__header {
   flex: 0 0 auto;
+}
+
+.dashboard-commercial .cm-room-thread__context {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dashboard-commercial.dashboard-page--fill .cm-room-thread__context {
+  padding-inline: var(--cm-gap-xs);
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-thread__header {

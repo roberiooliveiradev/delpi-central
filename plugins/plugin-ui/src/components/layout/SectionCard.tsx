@@ -144,7 +144,7 @@ export function SectionCard({
               ) : null}
             </span>
           </h2>
-          {subtitle && isOpen ? <p className={classNames.subtitle}>{subtitle}</p> : null}
+          {subtitle ? <p className={classNames.subtitle}>{subtitle}</p> : null}
         </div>
         {actions ? <div className={classNames.actions}>{actions}</div> : null}
       </div>
