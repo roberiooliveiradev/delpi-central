@@ -45,16 +45,33 @@ export function resolveContainedModalScrollPort(host: HTMLElement): HTMLElement 
   return host;
 }
 
-/** Retângulo da área útil (viewport do scrollport), em coordenadas de tela. */
+function intersectVisibleBoxes(
+  hostRect: DOMRect,
+  portRect: DOMRect,
+): ContainedModalBox {
+  const top = Math.max(hostRect.top, portRect.top);
+  const left = Math.max(hostRect.left, portRect.left);
+  const right = Math.min(hostRect.right, portRect.right);
+  const bottom = Math.min(hostRect.bottom, portRect.bottom);
+  return {
+    top: Math.max(0, top),
+    left: Math.max(0, left),
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+  };
+}
+
+/**
+ * Caixa visível do overlay: interseção do host com o scrollport.
+ * Página MFE alta recorta no `.content`; host menor (ex.: lista da conversa)
+ * permanece na coluna — não estica até a borda direita do portal.
+ */
 export function measureContainedModalBox(host: HTMLElement): ContainedModalBox {
   const scrollPort = resolveContainedModalScrollPort(host);
-  const rect = scrollPort.getBoundingClientRect();
-  return {
-    top: Math.max(0, rect.top),
-    left: Math.max(0, rect.left),
-    width: Math.max(0, rect.width),
-    height: Math.max(0, rect.height),
-  };
+  return intersectVisibleBoxes(
+    host.getBoundingClientRect(),
+    scrollPort.getBoundingClientRect(),
+  );
 }
 
 export function containedModalBoxToStyle(box: ContainedModalBox): CSSProperties {

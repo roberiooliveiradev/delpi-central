@@ -196,6 +196,7 @@
 }
 
 .dashboard-commercial .cm-room-thread__msgs {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;

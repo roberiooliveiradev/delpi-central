@@ -79,4 +79,50 @@ describe("containedModalViewport", () => {
     expect(style.top).not.toBe("auto");
     expect(style.left).not.toBe("auto");
   });
+
+  it("restringe a caixa ao host quando ele é menor que o scrollport", () => {
+    const content = document.createElement("div");
+    content.className = "content";
+    content.getBoundingClientRect = () =>
+      ({
+        top: 48,
+        left: 240,
+        width: 1000,
+        height: 700,
+        right: 1240,
+        bottom: 748,
+        x: 240,
+        y: 48,
+        toJSON() {
+          return {};
+        },
+      }) as DOMRect;
+
+    const host = document.createElement("div");
+    host.className = "cm-room-thread__msgs";
+    host.getBoundingClientRect = () =>
+      ({
+        top: 120,
+        left: 520,
+        width: 480,
+        height: 430,
+        right: 1000,
+        bottom: 550,
+        x: 520,
+        y: 120,
+        toJSON() {
+          return {};
+        },
+      }) as DOMRect;
+
+    content.appendChild(host);
+    document.body.appendChild(content);
+
+    expect(measureContainedModalBox(host)).toEqual({
+      top: 120,
+      left: 520,
+      width: 480,
+      height: 430,
+    });
+  });
 });

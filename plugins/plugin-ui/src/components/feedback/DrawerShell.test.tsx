@@ -76,7 +76,7 @@ describe("DrawerShell", () => {
     const plugin = document.createElement("div");
     plugin.className = "dashboard-commercial";
     const thread = document.createElement("div");
-    thread.className = "cm-room-thread";
+    thread.className = "cm-room-thread__msgs";
     plugin.appendChild(thread);
     document.body.appendChild(plugin);
 
