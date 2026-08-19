@@ -19,7 +19,9 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).not.toMatch(/actions=\{\s*<CommercialActionButton/);
     expect(source).toMatch(/CustomerAvatar/);
     expect(source).toMatch(/selectedRoomId/);
+    expect(source).toMatch(/inboxCustomerAvatarName/);
     expect(source).toMatch(/customer_name/);
+    expect(source).not.toMatch(/name=\{dto\.title\}/);
     expect(source).toMatch(/stopPropagation/);
     expect(source).not.toMatch(/cm-message-bubble|<textarea/);
   });

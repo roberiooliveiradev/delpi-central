@@ -33,6 +33,7 @@ import {
   useCustomerAvatarPresence,
 } from "../../hooks/useCustomerAvatarPresence";
 import { formatInboxMetaLabel } from "./formatInboxMetaLabel";
+import { inboxCustomerAvatarName } from "./inboxCustomerAvatarName";
 
 type Props = {
   basePath: string;
@@ -78,7 +79,7 @@ function customerIdentity(item: InteractionRoomInboxItemDto): {
   const code = (item.customer_code ?? "").trim();
   const store = (item.customer_store ?? "").trim();
   if (!code || !store) return null;
-  const name = (item.customer_name ?? "").trim() || code;
+  const name = inboxCustomerAvatarName(item) || code;
   return { code, store, name };
 }
 
@@ -249,12 +250,13 @@ export function InteractionRoomsInboxPage({
             const dto = itemsById.get(row.id);
             if (!dto) return null;
             const identity = customerIdentity(dto);
+            const avatarName = inboxCustomerAvatarName(dto);
             if (!identity) {
               return (
                 <CustomerAvatar
-                  code="—"
-                  store="—"
-                  name={dto.title}
+                  code=""
+                  store=""
+                  name={avatarName}
                   size="sm"
                   previewable={false}
                 />
