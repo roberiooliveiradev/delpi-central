@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 import pytest
@@ -37,3 +38,12 @@ def test_update_audit_blocks_header_when_closed() -> None:
     repo = HeaderEditProbeRepo("closed")
     with pytest.raises(PluginsRepositoryError, match="encerrada"):
         repo.update_audit(audit_id="audit-1", audit_date="2026-07-08")
+
+
+def test_update_audit_uses_unit_of_work() -> None:
+    """Regressão: sem lease, DELETE de auditores sofre rollback e o INSERT viola unique."""
+    source = inspect.getsource(PostgresAudit5sRepository.update_audit)
+    assert "with self.db():" in source, (
+        "update_audit deve abrir lease único antes de "
+        "execute(auto_commit=False) em sequência (UPDATE + DELETE/INSERT auditores)"
+    )

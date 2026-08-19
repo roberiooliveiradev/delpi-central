@@ -579,41 +579,46 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         if auditors is not None and not auditors:
             raise PluginsRepositoryError("Informe ao menos um auditor.")
 
+        # Lease único: execute(auto_commit=False) sem lease externo devolve a
+        # conexão ao pool com rollback — o DELETE dos auditores some e o INSERT
+        # estoura unique (uq_audit_5s_auditors_audit_user) com
+        # «Falha ao executar comando no banco de plugins.»
         try:
-            if fields:
-                fields.append("updated_at = NOW()")
-                params.append(audit_id)
-                self.execute(
-                    f"""
-                    UPDATE quality.audit_5s_audits
-                       SET {", ".join(fields)}
-                     WHERE id = %s
-                    """,
-                    tuple(params),
-                    auto_commit=False,
-                )
-
-            if auditors is not None:
-                self.execute(
-                    "DELETE FROM quality.audit_5s_auditors WHERE audit_id = %s",
-                    (audit_id,),
-                    auto_commit=False,
-                )
-                for auditor in auditors:
+            with self.db():
+                if fields:
+                    fields.append("updated_at = NOW()")
+                    params.append(audit_id)
                     self.execute(
-                        """
-                        INSERT INTO quality.audit_5s_auditors (audit_id, user_id, display_name)
-                        VALUES (%s, %s, %s)
+                        f"""
+                        UPDATE quality.audit_5s_audits
+                           SET {", ".join(fields)}
+                         WHERE id = %s
                         """,
-                        (
-                            audit_id,
-                            auditor["user_id"],
-                            format_person_name(auditor.get("display_name")),
-                        ),
+                        tuple(params),
                         auto_commit=False,
                     )
 
-            self.commit()
+                if auditors is not None:
+                    self.execute(
+                        "DELETE FROM quality.audit_5s_auditors WHERE audit_id = %s",
+                        (audit_id,),
+                        auto_commit=False,
+                    )
+                    for auditor in auditors:
+                        self.execute(
+                            """
+                            INSERT INTO quality.audit_5s_auditors (audit_id, user_id, display_name)
+                            VALUES (%s, %s, %s)
+                            """,
+                            (
+                                audit_id,
+                                auditor["user_id"],
+                                format_person_name(auditor.get("display_name")),
+                            ),
+                            auto_commit=False,
+                        )
+
+                self.commit()
         except Exception:
             self.rollback()
             raise
