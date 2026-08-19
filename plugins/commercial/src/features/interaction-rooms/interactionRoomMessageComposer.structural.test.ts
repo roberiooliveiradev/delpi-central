@@ -16,6 +16,8 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/CommercialMentionComposer/);
     expect(source).toMatch(/onFilesSelected=/);
     expect(source).toMatch(/hasAttachments=/);
+    expect(source).not.toMatch(/body_html/);
+    expect(source).toMatch(/body_text:/);
     expect(source).toMatch(/postInteractionMessage/);
     expect(source).toMatch(/uploadRoomMessageAttachment/);
     expect(source).toMatch(/useInteractionMentionSuggest/);

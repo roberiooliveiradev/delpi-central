@@ -9,6 +9,8 @@ import { MentionComposer, mentionComposerBemClasses } from "./MentionComposer";
 import {
   detectActiveMention,
   insertMentionToken,
+  replaceEditablePlainRange,
+  snapshotEditablePlaintext,
 } from "./mentionComposerCaret";
 import type { MentionMenuHit } from "./MentionMenu";
 
@@ -42,6 +44,15 @@ describe("mentionComposerCaret", () => {
     expect(result.nextValue).toBe("Hi @Ana Silva ");
     expect(result.nextCursor).toBe("Hi @Ana Silva ".length);
   });
+
+  it("substitui intervalo plano no contenteditable", () => {
+    const root = document.createElement("div");
+    root.textContent = "Hi @An";
+    document.body.appendChild(root);
+    replaceEditablePlainRange(root, 3, 6, "@Ana ");
+    expect(root.textContent).toBe("Hi @Ana ");
+    root.remove();
+  });
 });
 
 describe("MentionComposer", () => {
@@ -50,13 +61,15 @@ describe("MentionComposer", () => {
     onSubmit = vi.fn(),
     onMentionQueryChange = vi.fn(),
     onFilesSelected,
+    initial = "",
   }: {
     hits?: MentionMenuHit[];
     onSubmit?: () => void;
     onMentionQueryChange?: (q: string | null) => void;
     onFilesSelected?: (files: File[]) => void;
+    initial?: string;
   }): ReactElement {
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(initial);
     return (
       <MentionComposer
         value={value}
@@ -72,28 +85,75 @@ describe("MentionComposer", () => {
     );
   }
 
-  it("renders textarea and send/attach inside the kit", () => {
+  it("renderiza contenteditable markdown, não textarea nativo", () => {
     render(<Harness />);
-    expect(screen.getByLabelText("Write a message").tagName).toBe("TEXTAREA");
+    const surface = screen.getByLabelText("Write a message");
+    expect(surface.tagName).toBe("DIV");
+    expect(surface.getAttribute("contenteditable")).toBe("true");
+    expect(screen.queryByRole("textbox", { name: "Write a message" })).toBe(surface);
     expect(screen.getByLabelText("Send")).toBeTruthy();
     expect(screen.getByLabelText("Attach")).toBeTruthy();
+  });
+
+  it("round-trip: markdown controlado vira HTML e o input devolve markdown", () => {
+    const { rerender } = render(
+      <MentionComposer
+        value="**hi**"
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={labels}
+        classNames={classNames}
+      />,
+    );
+    const surface = screen.getByLabelText("Write a message");
+    expect(surface.innerHTML.toLowerCase()).toContain("strong");
+
+    const onChange = vi.fn();
+    rerender(
+      <MentionComposer
+        value="**hi**"
+        onChange={onChange}
+        onSubmit={vi.fn()}
+        labels={labels}
+        classNames={classNames}
+      />,
+    );
+    surface.innerHTML = "<p><strong>ok</strong></p>";
+    fireEvent.input(surface);
+    expect(onChange).toHaveBeenCalled();
+    expect(String(onChange.mock.calls.at(-1)?.[0])).toMatch(/\*\*ok\*\*/);
   });
 
   it("opens mention query callback when typing @", () => {
     const onMentionQueryChange = vi.fn();
     render(<Harness onMentionQueryChange={onMentionQueryChange} />);
-    const area = screen.getByLabelText("Write a message");
-    fireEvent.change(area, { target: { value: "@An", selectionStart: 3 } });
+    const surface = screen.getByLabelText("Write a message");
+    surface.textContent = "@An";
+    const textNode = surface.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(textNode, 3);
+    range.collapse(true);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+    fireEvent.input(surface);
     expect(onMentionQueryChange).toHaveBeenCalledWith("An");
   });
 
   it("submits with Ctrl+Enter when not empty", () => {
     const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
-    const area = screen.getByLabelText("Write a message");
-    fireEvent.change(area, { target: { value: "Hello" } });
-    fireEvent.keyDown(area, { key: "Enter", ctrlKey: true });
+    render(<Harness onSubmit={onSubmit} initial="Hello" />);
+    const surface = screen.getByLabelText("Write a message");
+    fireEvent.keyDown(surface, { key: "Enter", ctrlKey: true });
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("aplica atalho Ctrl+B via execCommand", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    render(<Harness initial="Hello" />);
+    const surface = screen.getByLabelText("Write a message");
+    fireEvent.keyDown(surface, { key: "b", ctrlKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("bold", false, undefined);
   });
 
   it("inserts selected mention from the menu", () => {
@@ -101,10 +161,17 @@ describe("MentionComposer", () => {
       { id: "u1", kind: "user", label: "Ana", groupLabel: "People" },
     ];
     render(<Harness hits={hits} />);
-    const area = screen.getByLabelText("Write a message") as HTMLTextAreaElement;
-    fireEvent.change(area, { target: { value: "Oi @A", selectionStart: 5 } });
+    const surface = screen.getByLabelText("Write a message");
+    surface.textContent = "Oi @A";
+    const textNode = surface.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(textNode, 5);
+    range.collapse(true);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    fireEvent.input(surface);
     fireEvent.mouseDown(screen.getByRole("option", { name: /Ana/ }));
-    expect(area.value).toMatch(/@Ana/);
+    expect(snapshotEditablePlaintext(surface).text).toMatch(/@Ana/);
   });
 
   it("opens the hidden file input when attach is clicked", () => {
@@ -136,5 +203,7 @@ describe("mention-composer.css", () => {
     expect(focus).not.toMatch(/outline:\s*2px/);
     expect(sendBlocks.join("\n")).toMatch(/width:\s*36px;/);
     expect(sendBlocks.join("\n")).toMatch(/border-radius:\s*50%;/);
+    expect(css).toMatch(/\[contenteditable="false"\]/);
+    expect(css).not.toMatch(/textarea::placeholder/);
   });
 });

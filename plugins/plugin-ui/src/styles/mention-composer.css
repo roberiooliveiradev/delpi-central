@@ -39,23 +39,35 @@
   font: inherit;
   font-size: 0.9375rem;
   line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
   color: var(--delpi-ui-text, var(--text, #0f172a));
   caret-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: transparent;
 }
 
-.delpi-ui-mention-composer__textarea::placeholder {
+.delpi-ui-mention-composer__textarea--empty::before {
+  content: attr(data-placeholder);
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
-  opacity: 1;
+  pointer-events: none;
 }
 
 .delpi-ui-mention-composer__textarea:focus {
   outline: none;
 }
 
-.delpi-ui-mention-composer__textarea:disabled {
+.delpi-ui-mention-composer__textarea[contenteditable="false"] {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.delpi-ui-mention-composer__textarea :is(p, ul, ol, blockquote, pre) {
+  margin: 0;
+}
+
+.delpi-ui-mention-composer__textarea code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
 }
 
 .delpi-ui-mention-composer__toolbar {

@@ -103,6 +103,9 @@ export {
 export {
   detectActiveMention,
   insertMentionToken,
+  replaceEditablePlainRange,
+  setEditablePlainCursor,
+  snapshotEditablePlaintext,
   type ActiveMentionQuery,
 } from "./mentionComposerCaret";
 export { parseMentionText } from "./parseMentionText";
