@@ -33,6 +33,8 @@ describe("messageThreadTaskAction", () => {
       onCreateTask,
     });
     expect(action?.id).toBe(CREATE_TASK_MESSAGE_ACTION_ID);
+    expect(action?.icon).toBeTruthy();
+    expect(action?.title).toBe(action?.label);
     action?.onClick();
     expect(onCreateTask).toHaveBeenCalledWith("m1");
   });
@@ -45,6 +47,8 @@ describe("messageThreadTaskAction", () => {
       onTogglePin,
     });
     expect(pin?.id).toBe(PIN_MESSAGE_ACTION_ID);
+    expect(pin?.icon).toBeTruthy();
+    expect(pin?.title).toBe(pin?.label);
     pin?.onClick();
     expect(onTogglePin).toHaveBeenCalledWith("m1", true);
 

@@ -1,9 +1,13 @@
 /**
  * Slots de ação do MessageThread (tarefa + pin) — host monta, kit só renderiza.
  */
+import { createElement } from "react";
+import { ListTodo, Pin, PinOff } from "lucide-react";
 import type { MessageThreadAction, MessageThreadItem } from "@delpi/plugin-ui/index";
 
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+
+const ACTION_ICON_SIZE = 16;
 
 export const CREATE_TASK_MESSAGE_ACTION_ID = "create-task";
 export const PIN_MESSAGE_ACTION_ID = "pin-message";
@@ -35,9 +39,12 @@ export function buildCreateTaskMessageAction(options: {
 }): MessageThreadAction | null {
   if (!canCreateTaskFromMessage(options.message)) return null;
   if (options.busy) return null;
+  const label = options.label ?? INTERACTION_ROOMS_CONTENT.createTaskActionLabel;
   return {
     id: CREATE_TASK_MESSAGE_ACTION_ID,
-    label: options.label ?? INTERACTION_ROOMS_CONTENT.createTaskActionLabel,
+    label,
+    title: label,
+    icon: createElement(ListTodo, { size: ACTION_ICON_SIZE, "aria-hidden": true }),
     onClick: () => options.onCreateTask(options.message.id),
   };
 }
@@ -51,15 +58,21 @@ export function buildPinMessageAction(options: {
   if (!canPinMessage(options.message)) return null;
   if (options.busy) return null;
   if (options.pinned) {
+    const label = INTERACTION_ROOMS_CONTENT.unpinActionLabel;
     return {
       id: UNPIN_MESSAGE_ACTION_ID,
-      label: INTERACTION_ROOMS_CONTENT.unpinActionLabel,
+      label,
+      title: label,
+      icon: createElement(PinOff, { size: ACTION_ICON_SIZE, "aria-hidden": true }),
       onClick: () => options.onTogglePin(options.message.id, false),
     };
   }
+  const label = INTERACTION_ROOMS_CONTENT.pinActionLabel;
   return {
     id: PIN_MESSAGE_ACTION_ID,
-    label: INTERACTION_ROOMS_CONTENT.pinActionLabel,
+    label,
+    title: label,
+    icon: createElement(Pin, { size: ACTION_ICON_SIZE, "aria-hidden": true }),
     onClick: () => options.onTogglePin(options.message.id, true),
   };
 }

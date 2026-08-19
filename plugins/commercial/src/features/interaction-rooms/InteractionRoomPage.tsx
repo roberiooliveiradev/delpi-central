@@ -16,9 +16,11 @@ import {
 import { getCommercialClientId } from "../../app/commercialClientId";
 import { useInteractionRoomSync } from "../../app/CommercialRealtimeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
+import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import {
+  CommercialConversationFileDropLayer,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialMessageThread,
@@ -32,9 +34,10 @@ import {
   buildPluginPath,
 } from "../../app/pluginRoutes";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
-import { InteractionRoomMessageComposer } from "./InteractionRoomMessageComposer";
+import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
+import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
 
 type Props = {
@@ -88,6 +91,9 @@ export function InteractionRoomPage({
     () => new Set(),
   );
   const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
+  const { currentUserId, myPortfolio } = usePortfolioScope();
+  const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
+  const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
@@ -116,7 +122,7 @@ export function InteractionRoomPage({
     return [...ids];
   }, [members, messages]);
 
-  const { labelFor } = useDirectoryUserLabels(authorIds);
+  const { nameFor } = useDirectoryUserLabels(authorIds);
 
   useEffect(() => {
     const id = roomId.trim();
@@ -254,9 +260,10 @@ export function InteractionRoomPage({
               : message.body_text,
           createdAtLabel: formatMessageTime(message.created_at),
           authorName: message.author_user_id
-            ? labelFor(message.author_user_id)
+            ? nameFor(message.author_user_id)
             : null,
           authorUserId: message.author_user_id,
+          mine: isOwnInteractionAuthor(message.author_user_id, sessionUserId),
           parentId: message.parent_id,
           deleted: Boolean(message.deleted_at),
           mentions: mentionDtos.map((mention) => ({
@@ -272,16 +279,16 @@ export function InteractionRoomPage({
           ) : null,
         };
       }),
-    [messages, labelFor, content.messageDeleted, basePath],
+    [messages, nameFor, sessionUserId, content.messageDeleted, basePath],
   );
 
   const participants = useMemo(
     () =>
       members.map((member) => ({
         id: member.user_id,
-        name: labelFor(member.user_id),
+        name: nameFor(member.user_id),
       })),
-    [members, labelFor],
+    [members, nameFor],
   );
 
   return (
@@ -305,7 +312,11 @@ export function InteractionRoomPage({
         <CommercialLoadingCard title={content.roomLoadingLabel} variant="panel" />
       ) : null}
       {!loading && room ? (
-        <>
+        <CommercialConversationFileDropLayer
+          overlayLabel={content.dropOverlayLabel}
+          accept={ROOM_ATTACH_ACCEPT}
+          onFiles={(files) => addFilesRef.current(files)}
+        >
           <div className="cm-room-thread__header">
             <CommercialRoomHeader
               title={room.title}
@@ -341,9 +352,12 @@ export function InteractionRoomPage({
               roomId={room.id}
               onMessageCreated={onMessageCreated}
               onError={(message) => setError(message)}
+              onAddFilesReady={(addFiles) => {
+                addFilesRef.current = addFiles;
+              }}
             />
           </div>
-        </>
+        </CommercialConversationFileDropLayer>
       ) : null}
       {!loading && !room && !error ? (
         <CommercialEmptyState

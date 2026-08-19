@@ -6,14 +6,16 @@ import { fileURLToPath } from "node:url";
 const dir = dirname(fileURLToPath(import.meta.url));
 
 describe("InteractionRoomMessageComposer", () => {
-  it("usa FileDropzone/PreviewStrip, upload room_message e suggest no composer", () => {
+  it("usa clip/onFilesSelected + PreviewStrip, sem dashed permanente", () => {
     const source = readFileSync(
       join(dir, "InteractionRoomMessageComposer.tsx"),
       "utf8",
     );
-    expect(source).toMatch(/CommercialFileDropzone/);
+    expect(source).not.toMatch(/CommercialFileDropzone/);
     expect(source).toMatch(/CommercialAttachmentPreviewStrip/);
     expect(source).toMatch(/CommercialMentionComposer/);
+    expect(source).toMatch(/onFilesSelected=/);
+    expect(source).toMatch(/hasAttachments=/);
     expect(source).toMatch(/postInteractionMessage/);
     expect(source).toMatch(/uploadRoomMessageAttachment/);
     expect(source).toMatch(/useInteractionMentionSuggest/);

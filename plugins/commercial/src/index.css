@@ -114,6 +114,11 @@
   overflow: hidden;
 }
 
+.dashboard-commercial .cm-room-thread .cm-conversation-drop {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .dashboard-commercial .cm-room-thread__header {
   flex: 0 0 auto;
 }

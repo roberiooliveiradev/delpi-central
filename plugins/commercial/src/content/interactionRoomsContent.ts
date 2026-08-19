@@ -57,7 +57,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   panelEmptyDescription: "A conversa deste registro fica registrada aqui.",
   panelMissingKey: "Registro incompleto para abrir a sala.",
   attachmentOnlyBody: "Anexo.",
-  dropzoneTitle: "Arraste ou clique para anexar",
+  dropOverlayLabel: "Solte o arquivo para anexar",
   dropzoneHint: "PDF, imagem, TXT, Word ou Excel · máx. 10 MB",
   dropzoneBusyTitle: "Enviando anexos…",
   pendingAttachmentsHeading: "Arquivos a enviar",

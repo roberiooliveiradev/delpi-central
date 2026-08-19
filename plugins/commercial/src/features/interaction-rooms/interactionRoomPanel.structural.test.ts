@@ -15,6 +15,10 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
+    expect(source).toMatch(/nameFor/);
+    expect(source).toMatch(/usePortfolioScope/);
+    expect(source).toMatch(/mine:/);
+    expect(source).toMatch(/CommercialConversationFileDropLayer/);
     expect(source).toMatch(/resolveInteractionRoom/);
     expect(source).toMatch(/useInteractionRoomSync/);
     expect(source).toMatch(/applyInteractionRoomRealtime/);

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   postInteractionMessage,
@@ -8,14 +8,13 @@ import {
 import {
   CM_PORTAL_SCOPE,
   CommercialAttachmentPreviewStrip,
-  CommercialFileDropzone,
   CommercialMentionComposer,
 } from "../../app/commercialUi";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import type { InteractionMentionHit } from "./mentionSuggestAdapter";
 import { useInteractionMentionSuggest } from "./useInteractionMentionSuggest";
 
-const ATTACH_ACCEPT =
+export const ROOM_ATTACH_ACCEPT =
   ".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain";
 
 type PendingFile = {
@@ -28,6 +27,7 @@ type Props = {
   disabled?: boolean;
   onMessageCreated: (message: InteractionMessageDto) => void;
   onError: (message: string) => void;
+  onAddFilesReady?: (addFiles: (files: File[]) => void) => void;
 };
 
 /**
@@ -38,11 +38,11 @@ export function InteractionRoomMessageComposer({
   disabled = false,
   onMessageCreated,
   onError,
+  onAddFilesReady,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<PendingFile[]>([]);
-  const [showDropzone, setShowDropzone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const {
     hits,
@@ -78,8 +78,11 @@ export function InteractionRoomMessageComposer({
         file,
       })),
     ]);
-    setShowDropzone(true);
   }, []);
+
+  useEffect(() => {
+    onAddFilesReady?.(onFilesSelected);
+  }, [onAddFilesReady, onFilesSelected]);
 
   const onSubmit = useCallback(async () => {
     const id = roomId.trim();
@@ -98,7 +101,6 @@ export function InteractionRoomMessageComposer({
       const files = [...pending];
       setDraft("");
       setPending([]);
-      setShowDropzone(false);
       resetMentions();
       onMessageCreated(created);
 
@@ -132,31 +134,16 @@ export function InteractionRoomMessageComposer({
   ]);
 
   const footer =
-    showDropzone || pending.length > 0 ? (
-      <>
-        <CommercialFileDropzone
-          multiple
-          accept={ATTACH_ACCEPT}
-          busy={submitting}
-          disabled={disabled || submitting}
-          onFilesSelected={onFilesSelected}
-          labels={{
-            title: submitting ? content.dropzoneBusyTitle : content.dropzoneTitle,
-            hint: content.dropzoneHint,
-          }}
-        />
-        {pending.length > 0 ? (
-          <CommercialAttachmentPreviewStrip
-            mode="manage"
-            heading={content.pendingAttachmentsHeading}
-            items={stripItems}
-            onOpen={() => undefined}
-            onRemove={(item) => {
-              setPending((prev) => prev.filter((row) => row.id !== item.id));
-            }}
-          />
-        ) : null}
-      </>
+    pending.length > 0 ? (
+      <CommercialAttachmentPreviewStrip
+        mode="manage"
+        heading={content.pendingAttachmentsHeading}
+        items={stripItems}
+        onOpen={() => undefined}
+        onRemove={(item) => {
+          setPending((prev) => prev.filter((row) => row.id !== item.id));
+        }}
+      />
     ) : null;
 
   return (
@@ -176,7 +163,9 @@ export function InteractionRoomMessageComposer({
         if (full) onMentionInserted(full);
       }}
       showAttach
-      onAttachClick={() => setShowDropzone((value) => !value)}
+      onFilesSelected={onFilesSelected}
+      fileAccept={ROOM_ATTACH_ACCEPT}
+      hasAttachments={pending.length > 0}
       footer={footer}
       labels={{
         placeholder: content.composerPlaceholder,
