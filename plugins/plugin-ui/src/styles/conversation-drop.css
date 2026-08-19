@@ -1,0 +1,27 @@
+.delpi-ui-conversation-drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.delpi-ui-conversation-drop__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  border: 2px dashed var(--delpi-ui-accent, var(--primary, #089bdb));
+  pointer-events: none;
+}

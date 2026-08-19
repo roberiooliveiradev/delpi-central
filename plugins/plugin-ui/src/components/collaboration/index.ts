@@ -84,6 +84,15 @@ export {
   type RoomContextPanelProps,
 } from "./RoomContextPanel";
 export {
+  ConversationFileDropLayer,
+  createDashboardConversationFileDropLayer,
+  conversationFileDropLayerBemClasses,
+  CONVERSATION_FILE_DROP_MAX_BYTES,
+  type ConversationFileDropLayerClassNames,
+  type ConversationFileDropLayerProps,
+  type DashboardConversationFileDropLayerProps,
+} from "./ConversationFileDropLayer";
+export {
   detectActiveMention,
   insertMentionToken,
   type ActiveMentionQuery,

@@ -470,4 +470,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-19",
     description: "Painel Sobre / participantes / pins da sala (não é coluna Slack).",
   }),
+  vc("collaboration", "ConversationFileDropLayer", {
+    addedAt: "2026-08-19",
+    description: "Overlay de drop de arquivo sobre a coluna da conversa.",
+  }),
 ];
