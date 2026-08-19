@@ -18,7 +18,7 @@ import type {
   PropostaComercialPdfItemTextOverrides,
   PropostaComercialPdfRotulosOverrides,
 } from "../types/propostasComerciais";
-import { displayValue } from "../utils/format";
+import { displayMoneyAmount, displayValue } from "../utils/format";
 import { ItensTable } from "./ItensTable";
 import { PcNativeTextAreaControl } from "./pcFormFields";
 import { PropostaComercialModal } from "./PropostaComercialModal";
@@ -246,7 +246,7 @@ const RESUMO_FIELDS: Array<{
   { key: "numero_ov", value: (detail) => displayValue(detail.cabecalho.numero_ov) },
   { key: "data", value: (detail) => displayValue(detail.cabecalho.data) },
   { key: "versao", value: (detail) => displayValue(detail.cabecalho.versao) },
-  { key: "total_r_mil", value: (detail) => displayValue(detail.cabecalho.soma_valores_r_mil) },
+  { key: "total_r_mil", value: (detail) => displayMoneyAmount(detail.cabecalho.soma_valores_r_mil) },
   { key: "empresa", wide: true, value: (detail) => displayValue(detail.empresa.nome) },
   { key: "cliente", wide: true, value: (detail) => displayValue(detail.cliente.nome) },
 ];

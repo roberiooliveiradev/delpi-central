@@ -50,6 +50,14 @@ export function displayValue(value: string | number | null | undefined): string 
   return text || "—";
 }
 
+/** Valor monetário sem símbolo: moeda fica só no rótulo de coluna/cabeçalho. */
+export function displayMoneyAmount(value: string | number | null | undefined): string {
+  const text = displayValue(value);
+  if (text === "—") return text;
+  const stripped = text.replace(/^(R\$|US\$|USD|\$)\s*/i, "").trim();
+  return stripped || "—";
+}
+
 /** Lote mínimo Protheus → milheiro (÷1000), sempre 3 casas decimais. */
 export function formatLoteMinimoMil(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";

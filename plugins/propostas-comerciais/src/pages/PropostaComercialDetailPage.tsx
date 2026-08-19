@@ -8,7 +8,7 @@ import { StateBox } from "../components/StateBox";
 import { StatusBadge } from "../components/StatusBadge";
 import { usePropostaComercialDetail } from "../hooks/usePropostaComercialDetail";
 import { usePropostaComercialPdf } from "../hooks/usePropostaComercialPdf";
-import { displayValue } from "../utils/format";
+import { displayMoneyAmount, displayValue } from "../utils/format";
 import { navigatePropostasList } from "../utils/navigation";
 
 type PropostaComercialDetailPageProps = {
@@ -119,7 +119,7 @@ export function PropostaComercialDetailPage({ propostaInterna }: PropostaComerci
               <div>
                 <span className="pc-highlight-label">Soma R$/mil</span>
                 <strong className="pc-highlight-value">
-                  {displayValue(data.cabecalho.soma_valores_r_mil)}
+                  {displayMoneyAmount(data.cabecalho.soma_valores_r_mil)}
                 </strong>
               </div>
               <div>
