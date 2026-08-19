@@ -74,6 +74,16 @@ export {
   type RoomHeaderProps,
 } from "./RoomHeader";
 export {
+  RoomContextPanel,
+  createDashboardRoomContextPanel,
+  roomContextPanelBemClasses,
+  type DashboardRoomContextPanelProps,
+  type RoomContextPanelClassNames,
+  type RoomContextPanelLabels,
+  type RoomContextPanelPin,
+  type RoomContextPanelProps,
+} from "./RoomContextPanel";
+export {
   detectActiveMention,
   insertMentionToken,
   type ActiveMentionQuery,

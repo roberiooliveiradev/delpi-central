@@ -466,4 +466,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-18",
     description: "Cabeçalho da sala com chips e AvatarStack.",
   }),
+  vc("collaboration", "RoomContextPanel", {
+    addedAt: "2026-08-19",
+    description: "Painel Sobre / participantes / pins da sala (não é coluna Slack).",
+  }),
 ];

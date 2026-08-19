@@ -1,0 +1,110 @@
+.delpi-ui-room-context-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  border-left: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+}
+
+.delpi-ui-room-context-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+}
+
+.delpi-ui-room-context-panel__section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.delpi-ui-room-context-panel__heading {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+.delpi-ui-room-context-panel__body {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
+.delpi-ui-room-context-panel__about-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.delpi-ui-room-context-panel__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  text-decoration: none;
+}
+
+.delpi-ui-room-context-panel__empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+.delpi-ui-room-context-panel__pins {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-room-context-panel__pin {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem 0.25rem;
+  border: none;
+  border-radius: 0.4rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.delpi-ui-room-context-panel__pin:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 6%, transparent);
+}
+
+.delpi-ui-room-context-panel__pin:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+.delpi-ui-room-context-panel__pin-icon {
+  flex: 0 0 auto;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+@media (max-width: 899px) {
+  .delpi-ui-room-context-panel {
+    border-left: none;
+    border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+}
