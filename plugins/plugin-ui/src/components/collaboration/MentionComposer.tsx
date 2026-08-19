@@ -31,6 +31,7 @@ export type MentionComposerClassNames = {
   attach: string;
   send: string;
   footer: string;
+  fileInput: string;
   menu: MentionMenuClassNames;
 };
 
@@ -59,6 +60,10 @@ export type MentionComposerProps = {
   rows?: number;
   showAttach?: boolean;
   onAttachClick?: () => void;
+  onFilesSelected?: (files: File[]) => void;
+  fileAccept?: string;
+  fileMultiple?: boolean;
+  hasAttachments?: boolean;
   footer?: ReactNode;
   className?: string;
   portalScopeClassName?: string;
@@ -79,6 +84,7 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     attach: pair(`${base}__attach`, `${ui}__attach`),
     send: pair(`${base}__send`, `${ui}__send`),
     footer: pair(`${base}__footer`, `${ui}__footer`),
+    fileInput: pair(`${base}__file`, `${ui}__file`),
     menu: mentionMenuBemClasses(prefix),
   };
 }
@@ -101,6 +107,10 @@ export function MentionComposer({
   rows = 3,
   showAttach = false,
   onAttachClick,
+  onFilesSelected,
+  fileAccept,
+  fileMultiple = true,
+  hasAttachments = false,
   footer,
   className,
   portalScopeClassName,
@@ -108,8 +118,17 @@ export function MentionComposer({
 }: MentionComposerProps) {
   const textareaId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
   const menuOpen = Boolean(activeMention) && !disabled;
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const maxPx = 8 * 16;
+    el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
+  }, [value]);
 
   useEffect(() => {
     onMentionQueryChange?.(activeMention ? activeMention.query : null);
@@ -147,7 +166,7 @@ export function MentionComposer({
   };
 
   const canSubmit =
-    !disabled && !submitting && value.trim().length > 0;
+    !disabled && !submitting && (value.trim().length > 0 || hasAttachments);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (menuOpen) {
@@ -198,15 +217,39 @@ export function MentionComposer({
         <div className={classNames.toolbar}>
           <div className={classNames.actions}>
             {showAttach ? (
-              <button
-                type="button"
-                className={classNames.attach}
-                aria-label={labels.attachAriaLabel}
-                disabled={disabled || submitting}
-                onClick={() => onAttachClick?.()}
-              >
-                <Paperclip size={18} aria-hidden />
-              </button>
+              <>
+                <input
+                  ref={fileInputRef}
+                  className={classNames.fileInput}
+                  type="file"
+                  hidden
+                  multiple={fileMultiple}
+                  accept={fileAccept}
+                  disabled={disabled || submitting}
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []);
+                    event.target.value = "";
+                    if (files.length) onFilesSelected?.(files);
+                  }}
+                />
+                <button
+                  type="button"
+                  className={classNames.attach}
+                  aria-label={labels.attachAriaLabel}
+                  disabled={disabled || submitting}
+                  onClick={() => {
+                    if (onFilesSelected) {
+                      fileInputRef.current?.click();
+                      return;
+                    }
+                    onAttachClick?.();
+                  }}
+                >
+                  <Paperclip size={16} aria-hidden />
+                </button>
+              </>
             ) : null}
           </div>
           <button
@@ -216,7 +259,7 @@ export function MentionComposer({
             disabled={!canSubmit}
             onClick={() => onSubmit()}
           >
-            <SendHorizontal size={18} aria-hidden />
+            <SendHorizontal size={16} aria-hidden />
           </button>
         </div>
       </div>
