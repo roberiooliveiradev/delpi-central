@@ -8,7 +8,7 @@
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
 > **Cutover F2c / multi-membro:** [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
 
-**Fora deste documento:** tabelas TOTVS (SC5/SC6/SA1/AD*…). Pedidos, propostas e cadastro de cliente continuam na api-delpi; aqui só há **referências** (`customer_code`+`customer_store`, `order_branch`+`order_number`+`line_item`, etc.). Dicionário CRM Protheus (OV, funil, SX3/SX9): [crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md) e [playbook-crm-totvs-dicionario.md](../../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md).
+**Fora deste documento:** tabelas TOTVS (SC5/SC6/SA1/AD*…). Pedidos, propostas e cadastro de cliente continuam na api-delpi; aqui só há **referências** (`customer_code`+`customer_store`, `order_branch`+`order_number`+`line_item`, etc.). Censo CRM Protheus (volumes, funis, joins): [crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md). Colunas/índices SX3: [playbook-crm-totvs-dicionario.md](../../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md). **Não** importar tarefa/agenda TOTVS (`AD8`/`AD7`/`AD5` vazios nesta base).
 
 ---
 
@@ -420,8 +420,10 @@ Registro imutável de interação (timeline).
 | `won_at` / `lost_at` | TIMESTAMPTZ | |
 | `close_reason_code` | TEXT | |
 | `close_reason_note` | TEXT | |
-| `external_proposal_key` | TEXT | `branch\|number\|revision` |
+| `external_proposal_key` | TEXT | `branch\|number\|revision` — ADY: filial do cabeçalho pode estar vazia; desambiguar com OV |
 | `external_order_key` | TEXT | `branch\|order\|item` ou cabeçalho |
+| `external_opportunity_key` | TEXT | TOTVS `AD1`: `filial\|nropor` (**obrigatório** incluir filial — o número colide entre 01 e 02) |
+| `totvs_process_code` | TEXT | `AD1_PROVEN` — `000001` COMPONENTES (maior volume) ≠ `000002`/`000003` LMP |
 | `entered_stage_at` | TIMESTAMPTZ NOT NULL | para aging |
 | `version` | INT NOT NULL DEFAULT 1 | |
 | `created_at` / `updated_at` | TIMESTAMPTZ NOT NULL | |
@@ -906,7 +908,10 @@ Multi-membro **não** cabe no schema PVA (`sellers.user_id UNIQUE`) — ver [F2C
 |------|-----------|
 | Pedido / item / saldo / entrega | TOTVS via api-delpi |
 | NF saída / billing series | api-delpi |
-| Proposta OV / AD* | api-delpi |
+| Proposta OV / AD1 / ADY / AIJ | api-delpi (leitura viva; não clonar) |
+| Funil TOTVS (`AC1`/`AC2`) | api-delpi — três processos; COMPONENTES ≠ LMP |
+| Tarefa / agenda / visita SIGATEC | **não há dado** (`AD8`/`AD7`/`AD5` = 0) — Meu Dia só commercial-api |
+| Prospect / contato TOTVS | api-delpi (`SUS`/`AC8`); não clonar SA1 |
 | ROL / OTD / hit rate | api-delpi (+ SI metas) |
 | Cadastro SA1 completo | TOTVS |
 
@@ -924,6 +929,7 @@ Multi-membro **não** cabe no schema PVA (`sellers.user_id UNIQUE`) — ver [F2C
 
 ## 12. Referências
 
+- Censo SIGATEC: [crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md)
 - SQL legado: `api-delpi/migrations/plugins/pedidos-venda-abertos/V001__*.sql`, `V002__*.sql`
 - Multi-membro: `commercial-api/migrations/V005__seller_portfolio_members.sql`
 - Estilo documental: [delpi-reports/SCHEMA.md](../delpi-reports/SCHEMA.md)

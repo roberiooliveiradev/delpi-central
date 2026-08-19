@@ -104,6 +104,8 @@ Executa SQL **somente leitura** no SQL Server Protheus.
 
 Variável de ambiente opcional: `ALLOWED_TABLES_PATH` apontando para JSON alternativo.
 
+**Temporário (dev — mapeamento CRM):** `DATA_SQL_SKIP_TABLE_WHITELIST=true` ignora a allowlist e permite `SELECT` em qualquer tabela física. DDL/DML continuam bloqueados. **Não ligar em produção** (`docker-compose.yml` não define o flag; default é `false`). Desligar depois do ETL/inventário.
+
 **Resposta sucesso:**
 
 ```json

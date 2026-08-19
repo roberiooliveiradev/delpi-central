@@ -2,7 +2,9 @@
 
 **Seção curta:** [crm-sigatec.md](../crm-sigatec.md).
 
-Este playbook é o **catálogo completo** extraído do dicionário Protheus da Delpi em **19 ago 2026**.
+Este playbook é o **catálogo de dicionário** (SX2/SX3/SIX/SX9) extraído em **19 ago 2026**.
+
+**Censo vivo** (volumes, funis usados, joins reais, físico vs SX2): **[crm-sigatec.md](../crm-sigatec.md)**. O dicionário sozinho superestima o CRM (182 nomes no recorte; 46 com dado; 67 sem objeto SQL).
 
 ## 1. Método de extração
 
@@ -36,15 +38,15 @@ flowchart LR
   SA1[SA1 Cliente] --> AD1
   SUS[SUS Prospect] --> AD1
   SA3[SA3 Vendedor] --> AD1
-  SU5[SU5 Contato] --> AD1
   AD1 --> ADJ[ADJ Itens OV]
   AD1 --> AIJ[AIJ Historico LMP]
-  AD1 --> ADY[ADY Proposta]
-  AD1 --> AD8[AD8 Tarefa]
+  AD1 --> ADY[ADY Proposta filial vazia]
+  AD1 --> AC8[AC8 Contato x entidade]
+  SU5[SU5 Contato] --> AC8
   ADY --> ADZ[ADZ Itens proposta]
 ```
 
-Cardinalidade SX9 típica a partir de AD1: **1 → N** para AD2, AD3, AD4, AD5, AD7, AD8, AD9, ADC, ADY, ADJ.
+Nesta base `AD8`/`AD5`/`AD7` existem e têm **0** linhas. ADY é compartilhada (`ADY_FILIAL` vazio) — ver censo. Cardinalidade SX9 a partir de AD1: **1 → N** para AD2, AD9, ADC, ADJ.
 
 ## 4. Funil vivo (AC1010 / AC2010)
 
@@ -55,6 +57,8 @@ Cardinalidade SX9 típica a partir de AD1: **1 → N** para AD2, AD3, AD4, AD5, 
 | `` | `000001` | COMPONENTES | 1 Inativo |
 | `` | `000002` | OPORTUNIDADE | 2 Ativo |
 | `` | `000003` | MODIFICACAO | 2 Ativo |
+
+`MSBLQL` **não** descreve o uso: `000001` inativo no cadastro concentra **3075/3767** OVs. Volumes por processo: [crm-sigatec.md](../crm-sigatec.md).
 
 ### 4.2 Estágios
 
@@ -114,43 +118,45 @@ Estágio `000013 ENCERRADO` **não** equivale a ganha. Ver [comercial-taxa-conve
 
 ## 6. Catálogo de tabelas
 
-Total no recorte SX2: **179**. Colunas SX3 dumpadas (exceto SA1/SA3 neste playbook): **1626**. Relações SX9 entre lógicas do recorte: **178**. Índices SIX: **296**.
+Total no recorte SX2: **179** (+ SA1/SA3/SE4 no censo = 182 nomes). Colunas SX3 dumpadas (exceto SA1/SA3 neste playbook): **1626**. Relações SX9 entre lógicas do recorte: **178**. Índices SIX: **296**.
+
+**Censo 19 ago 2026** (`D_E_L_E_T_ = ''`): **46** com dado, **69** físicas vazias, **67** sem objeto SQL. Volumes e joins: [crm-sigatec.md](../crm-sigatec.md). `AD8`/`AD7`/`AD5` = 0 linhas; `ADM`/`ADN`/`AZR` não existem no SQL Server.
 
 ### 6.1 Núcleo OV / LMP
 
 | Física | Lógica | Descrição SX2 | Chave única SX2 | Cols | Whitelist SQL | api-delpi |
 |--------|--------|---------------|-----------------|------|---------------|-----------|
-| `AC1010` | `AC1` | Processos de Venda (Funil Vnd) | `AC1_FILIAL+AC1_PROVEN` | 10 | sim | rótulo de processo |
+| `AC1010` | `AC1` | Processos de Venda (Funil Vnd) | `AC1_FILIAL+AC1_PROVEN` | 10 | sim | 3 funis; 000001 inativo no cadastro, 82% das OVs |
 | `AC2010` | `AC2` | Estágios do Processo de Vendas | `AC2_FILIAL+AC2_PROVEN+AC2_STAGE` | 19 | sim | rótulo de estágio |
 | `ACZ010` | `ACZ` | Regras do Processo de Venda | `ACZ_FILIAL+ACZ_PROVEN+ACZ_ITEM` | 8 | não | — |
-| `AD1010` | `AD1` | Oportunidades de Venda | `AD1_FILIAL+AD1_NROPOR` | 82 | sim | LMP, `/commercial/proposals`, `/commercial/closing-rate` |
-| `ADJ010` | `ADJ` | PROD./CATEG. DA OPORTUNIDADE | `ADJ_FILIAL+ADJ_NROPOR+ADJ_REVISA+ADJ_PROPOS+ADJ_NUMORC+ADJ_ITEM+ADJ_CODAGR+ADJ_CODNIV` | 23 | sim | LMP detalhe / produtos da OV |
-| `AIJ010` | `AIJ` | Evolução da Venda | `AIJ_FILIAL+AIJ_NROPOR+AIJ_REVISA+AIJ_PROVEN+AIJ_STAGE` | 15 | sim | `/history/events`, `/history/flow` |
+| `AD1010` | `AD1` | Oportunidades de Venda | `AD1_FILIAL+AD1_NROPOR` | 82 | sim | **3767 OVs** (1 linha/OV); LMP, closing-rate, proposals |
+| `ADJ010` | `ADJ` | PROD./CATEG. DA OPORTUNIDADE | `ADJ_FILIAL+ADJ_NROPOR+ADJ_REVISA+ADJ_PROPOS+ADJ_NUMORC+ADJ_ITEM+ADJ_CODAGR+ADJ_CODNIV` | 23 | sim | 19250 / 3710 OVs |
+| `AIJ010` | `AIJ` | Evolução da Venda | `AIJ_FILIAL+AIJ_NROPOR+AIJ_REVISA+AIJ_PROVEN+AIJ_STAGE` | 15 | sim | 34589; `/history/events`, `/history/flow` |
 
 ### 6.2 Proposta comercial (ADY/ADZ)
 
 | Física | Lógica | Descrição SX2 | Chave única SX2 | Cols | Whitelist SQL | api-delpi |
 |--------|--------|---------------|-----------------|------|---------------|-----------|
-| `ADY010` | `ADY` | Proposta Comercial Cabeçalho | `ADY_FILIAL+ADY_PROPOS+ADY_PREVIS` | 71 | sim | módulo proposta-comercial |
-| `ADZ010` | `ADZ` | Proposta Comercial Itens | `ADZ_FILIAL+ADZ_PROPOS+ADZ_REVISA+ADZ_FOLDER+ADZ_ITEM` | 39 | sim | módulo proposta-comercial |
+| `ADY010` | `ADY` | Proposta Comercial Cabeçalho | `ADY_FILIAL+ADY_PROPOS+ADY_PREVIS` | 71 | sim | 3437; `ADY_FILIAL` vazio |
+| `ADZ010` | `ADZ` | Proposta Comercial Itens | `ADZ_FILIAL+ADZ_PROPOS+ADZ_REVISA+ADZ_FOLDER+ADZ_ITEM` | 39 | sim | 41861 |
 
 ### 6.3 Conta, contato e equipe
 
 | Física | Lógica | Descrição SX2 | Chave única SX2 | Cols | Whitelist SQL | api-delpi |
 |--------|--------|---------------|-----------------|------|---------------|-----------|
-| `AC8010` | `AC8` | Relação de Contatos x Entidade | `AC8_FILIAL+AC8_CODCON+AC8_ENTIDA+AC8_FILENT+AC8_CODENT` | 19 | não | — |
-| `ACA010` | `ACA` | Equipe de Vendas | `ACA_FILIAL+ACA_GRPREP` | 30 | não | — |
-| `ACH010` | `ACH` | Suspects | `ACH_FILIAL+ACH_CODIGO+ACH_LOJA` | 70 | não | — |
-| `AD2010` | `AD2` | Time de Vendas | `AD2_FILIAL+AD2_NROPOR+AD2_REVISA+AD2_VEND` | 17 | não | — |
-| `AD9010` | `AD9` | Contatos da Oportunidade | `AD9_FILIAL+AD9_NROPOR+AD9_REVISA+AD9_CODCON` | 6 | não | — |
-| `ADK010` | `ADK` | Unidade de Negócio / Canal | `ADK_FILIAL+ADK_COD` | 30 | não | — |
-| `ADM010` | `ADM` | PERFIS DE CONTATO | `ADM_FILIAL+ADM_CODIGO` | 3 | não | — |
-| `ADN010` | `ADN` | PERFIL X CONTATO | `ADN_FILIAL+ADN_CODCON+ADN_CODPER` | 6 | não | — |
-| `AO3010` | `AO3` | Usuários do CRM | `AO3_FILIAL+AO3_CODUSR` | 33 | não | — |
+| `AC8010` | `AC8` | Relação de Contatos x Entidade | `AC8_FILIAL+AC8_CODCON+AC8_ENTIDA+AC8_FILENT+AC8_CODENT` | 19 | não | 168 linhas (SA1 80 / SUS 42 / SA2 46) |
+| `ACA010` | `ACA` | Equipe de Vendas | `ACA_FILIAL+ACA_GRPREP` | 30 | não | 6 |
+| `ACH010` | `ACH` | Suspects | `ACH_FILIAL+ACH_CODIGO+ACH_LOJA` | 70 | não | 2 |
+| `AD2010` | `AD2` | Time de Vendas | `AD2_FILIAL+AD2_NROPOR+AD2_REVISA+AD2_VEND` | 17 | não | 7232 |
+| `AD9010` | `AD9` | Contatos da Oportunidade | `AD9_FILIAL+AD9_NROPOR+AD9_REVISA+AD9_CODCON` | 6 | não | 2826 |
+| `ADK010` | `ADK` | Unidade de Negócio / Canal | `ADK_FILIAL+ADK_COD` | 30 | não | 2 |
+| `ADM010` | `ADM` | PERFIS DE CONTATO | `ADM_FILIAL+ADM_CODIGO` | 3 | não | **sem objeto SQL** |
+| `ADN010` | `ADN` | PERFIL X CONTATO | `ADN_FILIAL+ADN_CODCON+ADN_CODPER` | 6 | não | **sem objeto SQL** |
+| `AO3010` | `AO3` | Usuários do CRM | `AO3_FILIAL+AO3_CODUSR` | 33 | não | 37 (sem coluna física `AO3_NOMUSR`) |
 | `SQB010` | `SQB` | Departamento | `QB_FILIAL+QB_DEPTO` | 21 | sim | departamento contato |
-| `SU5010` | `SU5` | Contatos | `U5_FILIAL+U5_CODCONT` | 79 | sim | contatos (propostas) |
+| `SU5010` | `SU5` | Contatos | `U5_FILIAL+U5_CODCONT` | 79 | sim | 514; `U5_CLIENTE`/`U5_PROSPEC` vazios |
 | `SUM010` | `SUM` | Cargos | `UM_FILIAL+UM_CARGO` | 7 | sim | cargo comercial |
-| `SUS010` | `SUS` | Prospects | `US_FILIAL+US_COD+US_LOJA` | 101 | não | — |
+| `SUS010` | `SUS` | Prospects | `US_FILIAL+US_COD+US_LOJA` | 101 | não | 154 (101 status 1 / 53 status 6) |
 
 ### 6.4 Atividade, agenda e visita
 
@@ -158,10 +164,10 @@ Total no recorte SX2: **179**. Colunas SX3 dumpadas (exceto SA1/SA3 neste playbo
 |--------|--------|---------------|-----------------|------|---------------|-----------|
 | `ACD010` | `ACD` | Eventos | `ACD_FILIAL+ACD_CODIGO` | 23 | não | — |
 | `ACE010` | `ACE` | Grade de Eventos | `` | 14 | não | — |
-| `AD5010` | `AD5` | Apontamento do Contato/Visita | `AD5_FILIAL+AD5_VEND+DTOS(AD5_DATA)+AD5_SEQUEN` | 14 | não | — |
-| `AD6010` | `AD6` | Apontamento dos Custos | `AD6_FILIAL+AD6_VEND+AD6_DATA+AD6_SEQUEN+AD6_ITEM` | 16 | não | — |
-| `AD7010` | `AD7` | Agenda | `` | 39 | não | — |
-| `AD8010` | `AD8` | Tarefas | `AD8_FILIAL+AD8_TAREFA` | 30 | não | — |
+| `AD5010` | `AD5` | Apontamento do Contato/Visita | `AD5_FILIAL+AD5_VEND+DTOS(AD5_DATA)+AD5_SEQUEN` | 14 | não | vazio nesta base |
+| `AD6010` | `AD6` | Apontamento dos Custos | `AD6_FILIAL+AD6_VEND+AD6_DATA+AD6_SEQUEN+AD6_ITEM` | 16 | não | vazio nesta base |
+| `AD7010` | `AD7` | Agenda | `` | 39 | não | vazio nesta base |
+| `AD8010` | `AD8` | Tarefas | `AD8_FILIAL+AD8_TAREFA` | 30 | não | vazio nesta base |
 | `ADS010` | `ADS` | TIPOS DE TAREFAS | `ADS_FILIAL+ADS_CODIGO` | 3 | não | — |
 | `ADT010` | `ADT` | RELAC.COMPONENTE X TP.TAREFA | `ADT_FILIAL+ADT_CODCMP+ADT_CODTAR` | 5 | não | — |
 | `ADX010` | `ADX` | COMPONENTES DA TAREFA | `ADX_FILIAL+ADX_ORCAME+ADX_VERSAO+ADX_TAREFA+ADX_ITEM` | 18 | não | — |
@@ -3741,8 +3747,12 @@ Inclui todas as ligações em que origem **e** destino pertencem ao recorte (AC/
 
 ## 12. Implicações para o CRM Minha Delpi
 
-1. **Não recriar AD1** no Postgres como fonte da OV — ler api-delpi.
-2. **P0 de leitura já existe:** LMP + propostas + closing-rate.
-3. **P3 Meu Dia / reminder:** espelho funcional de AD8/AD5, persistido no commercial-api.
-4. **Prospect (SUS)** ainda fora da whitelist SQL — abrir rota/whitelist só com caso de uso.
+1. **Não recriar AD1** no Postgres como fonte da OV — ler api-delpi. Uma linha por OV; chave `FILIAL+NROPOR` (numeração **não** única entre 01/02).
+2. **Dois funis:** `000001 COMPONENTES` (82% das OVs, cadastro inativo) ≠ LMP `000002`/`000003`. Import só de LMP perde a maioria.
+3. **P0 de leitura já existe** para LMP + propostas + closing-rate — não cobre o funil COMPONENTES.
+4. **Meu Dia / reminder:** `AD8`/`AD5`/`AD7` estão **vazios** — persistir só no commercial-api, sem ETL TOTVS.
+5. **Contato:** usar `AC8`/`AD9`; não `SU5.U5_CLIENTE` (vazio nesta base).
+6. **Proposta ADY:** filial compartilhada; join por `NROPOR` colide entre filiais.
+7. **Dev:** `DATA_SQL_SKIP_TABLE_WHITELIST` para inventário; **não** em produção. Rota nova de leitura ainda precisa de allowlist (ou skip explícito) se for `POST /data/sql`.
+8. Coluna SX3 pode não existir no físico (`AO3_NOMUSR`). Confirmar em `sys.columns` antes de SQL de import.
 5. Qualquer coluna nova: confirmar no SX3 (`GET /system/tables/{t}/columns`) — este dump é um snapshot.

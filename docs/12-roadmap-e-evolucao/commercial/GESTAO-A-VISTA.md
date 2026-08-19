@@ -79,8 +79,8 @@ Início | Visão geral | Minhas tarefas | Meus pedidos | Minha Carteira | Admini
 
 | Nome no Portal | TOTVS | API | Uso |
 |----------------|-------|-----|-----|
-| **Oportunidades (OV)** | AD1010 | `/commercial/proposals` | Lista global (Início) + aba Conta |
-| **Propostas (documento)** | ADY010 | `/propostas-comerciais` | Documento + PDF — launcher |
+| **Oportunidades (OV)** | AD1010 | `/commercial/proposals` | Lista global (Início) + aba Conta. Censo: 3767 OVs; funil `000001` é 82% e **não** é o recorte LMP das rotas `/lmp`. Chave `filial+nropor`. Ver [crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md). |
+| **Propostas (documento)** | ADY010 | `/propostas-comerciais` | Documento + PDF — launcher. `ADY_FILIAL` vazio nesta base; não join por filial com AD1. |
 
 Escopo ADY: **sem** filtro membership nesta wave. Chip Escopo chrome = identidade (`PROPOSALS_CONTENT.list.scopeNote`).
 

@@ -3,7 +3,7 @@ import re
 import json
 import os
 from pathlib import Path
-from app.utils.logger import log_error
+from app.utils.logger import log_error, log_info
 
 
 class SqlValidator:
@@ -32,6 +32,12 @@ class SqlValidator:
     ]
 
     MAX_SELECTS = 10
+
+    @staticmethod
+    def skip_table_whitelist() -> bool:
+        """Temporary bypass of physical-table allowlist (SELECT-only still enforced)."""
+        raw = os.getenv("DATA_SQL_SKIP_TABLE_WHITELIST", "").strip().lower()
+        return raw in {"1", "true", "yes", "on"}
 
     def __init__(self):
         self.allowed_tables = self._load_allowed_tables()
@@ -220,6 +226,13 @@ class SqlValidator:
             )
 
         # 6️⃣ Validação de tabelas físicas (whitelist)
+        if self.skip_table_whitelist():
+            log_info(
+                "[SQL_VALIDATOR] DATA_SQL_SKIP_TABLE_WHITELIST ativo — "
+                "allowlist de tabelas ignorada (somente SELECT)."
+            )
+            return True
+
         cte_names = self._extract_cte_names(sql_up)
 
         tables = re.findall(r"\bFROM\s+([A-Z0-9_]+)", sql_up)

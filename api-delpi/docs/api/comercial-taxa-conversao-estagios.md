@@ -1,7 +1,7 @@
 # Comercial — taxa de conversão, status e estágios do funil (TOTVS)
 
 **Última atualização:** ago/2026  
-**Dicionário CRM TOTVS:** [padroes-totvs/crm-sigatec.md](./padroes-totvs/crm-sigatec.md) · [playbook-crm-totvs-dicionario.md](./padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md)  
+**Dicionário + censo CRM TOTVS:** [padroes-totvs/crm-sigatec.md](./padroes-totvs/crm-sigatec.md) · [playbook-crm-totvs-dicionario.md](./padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md). As rotas LMP/closing-rate cobrem sobretudo `AD1_PROVEN` `000002`/`000003`. O funil `000001 COMPONENTES` tem **3075 OVs** e **zero** status 9 (ganha) nesta base — não usar esses endpoints como retrato de todo o SIGATEC.  
 **Rota analisada:** `GET /commercial/closing-rate` (`operationId`: `get_sales_conversion_rate`)  
 **Série temporal:** `GET /commercial/closing-rate/series` (`operationId`: `get_sales_conversion_rate_series`) — mesma fórmula por bucket (Dia/Semana/Mês/Ano), linhas SC (`01`) e ES (`02`).  
 **Caso de referência:** dashboard comercial com filtro `start_date=2026-05-01` e `end_date=2026-05-31` (maio/2026, todas as filiais).

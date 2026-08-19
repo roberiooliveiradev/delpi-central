@@ -49,7 +49,7 @@ Browser MFEs irmãos (legado coexistente)
 | **Seller portfolio / customers** | **Postgres `commercial-api`** (após F2) | Enriquecimento via api-delpi |
 | **Customer avatar** | **Postgres + volume `commercial-api`** | — |
 | Opportunity / stage history | Postgres commercial-api | Refs externas (proposta/pedido) |
-| Activity / task / worklist | Postgres commercial-api | — |
+| Activity / task / worklist | Postgres commercial-api | SIGATEC `AD8`/`AD7`/`AD5` **vazios** — sem leitura TOTVS |
 | Forecast declarado | Postgres commercial-api | Meta via SI / api-delpi |
 | Sample / order confirmation case | Postgres commercial-api | Pedido via api-delpi |
 | Metas / IDD | strategic-indicators-api | Fontes via api-delpi |
@@ -60,6 +60,7 @@ Browser MFEs irmãos (legado coexistente)
 customer_key  = customer_code + "|" + store
 order_key     = branch + "|" + order_number + "|" + line_item
 proposal_key  = branch + "|" + proposal_number + "|" + revision
+opportunity_key = branch + "|" + ad1_nropor   # número colide entre filiais
 product_key   = normalized product_code
 user_key      = Keycloak sub
 ```

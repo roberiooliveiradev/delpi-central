@@ -27,7 +27,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **[KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md)** | Workshop homologação ROL / carteira / hit rate |
 | **[API-ROUTES.md](./API-ROUTES.md)** | Catálogo commercial-api + api-delpi |
 | **[DATA-MODEL.md](./DATA-MODEL.md)** | Tabelas Postgres schema `commercial` (`seller_portfolio_members`) |
-| **[crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md)** | Dicionário TOTVS CRM (`AD1`/`AIJ`/`ADY`) — [playbook completo](../../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md) |
+| **[crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md)** | Censo vivo SIGATEC (19 ago 2026): 3767 OVs, funil COMPONENTES 82%, `AD8` vazio — [playbook SX3](../../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md) |
 | **[WIREFRAMES.md](./WIREFRAMES.md)** | Wireframes WF-01–10 (+ WF-01R / Meu dia / WF-05R multi-membro) |
 | **[playbook-mfe-page-excellence.md](../../05-plugin-system/playbook-mfe-page-excellence.md)** | Excelência lista+detalhe MFE (P0–P2) — caso Pedidos / WF-02R |
 | **[PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)** | Fronteira api-delpi × commercial-api |

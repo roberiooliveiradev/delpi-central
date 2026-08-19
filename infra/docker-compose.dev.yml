@@ -1236,6 +1236,8 @@ services:
       PORT: ${API_DELPI_PORT}
       ENV: ${API_DELPI_ENV}
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      # Temporário: mapeamento CRM TOTVS (SUS/AD8). Produção permanece com allowlist.
+      DATA_SQL_SKIP_TABLE_WHITELIST: ${DATA_SQL_SKIP_TABLE_WHITELIST:-true}
 
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}

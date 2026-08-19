@@ -69,6 +69,14 @@ class Settings:
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
 
     # ==========================
+    # POST /data/sql — allowlist (temporário para mapeamento CRM)
+    # ==========================
+    DATA_SQL_SKIP_TABLE_WHITELIST: bool = (
+        _get_env("DATA_SQL_SKIP_TABLE_WHITELIST", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
+
+    # ==========================
     # Compatibilidade temporária
     # ==========================
     POSTGRES_PLUGINS_DB: str | None = _get_env("POSTGRES_PLUGINS_DB")

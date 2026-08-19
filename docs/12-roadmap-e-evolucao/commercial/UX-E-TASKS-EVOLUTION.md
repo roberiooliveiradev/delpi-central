@@ -124,6 +124,8 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 
 ### P3 — Paridade CRM (depois)
 
+Censo SIGATEC (19 ago 2026): **não há** tarefas/agenda/visitas no TOTVS (`AD8`/`AD7`/`AD5` = 0). Meu Dia continua **nativo** no commercial-api; P3 não é ETL de atividade Protheus. Ver [crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md).
+
 | Item | Referência mercado | Nota Delpi |
 |------|-------------------|------------|
 | Reminder (e-mail/push antes do due) | HubSpot | **Entregue** — outbox + categoria `commercial_tasks` + job `task-due-scan` |
