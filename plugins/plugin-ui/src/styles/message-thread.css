@@ -3,7 +3,7 @@
   min-width: 0;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .delpi-ui-message-thread__list {
@@ -29,7 +29,8 @@
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
-  max-width: min(75%, 42rem);
+  width: 100%;
+  max-width: none;
 }
 
 .delpi-ui-message-thread__item--mine {
@@ -60,7 +61,7 @@
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
-  max-width: 100%;
+  max-width: min(75%, 42rem);
   padding: 0.65rem 0.85rem;
   border: 1px solid var(--delpi-ui-border, var(--border, #e2e8f0));
   border-radius: 0.75rem;

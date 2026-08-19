@@ -16,7 +16,7 @@ describe("InteractionRoomWorkspace", () => {
     expect(workspace).toMatch(/CommercialResizableColumns/);
     expect(workspace).toMatch(/max-width: 899px/);
     expect(workspace).toMatch(/writeInboxWidthPx/);
-    expect(workspace).toMatch(/variant="pane"/);
+    expect(workspace).toMatch(/density="compact"/);
     expect(app).toMatch(/InteractionRoomWorkspace/);
     expect(app).toMatch(/interaction_room_detail/);
     expect(thread).toMatch(/cm-room-thread__header/);

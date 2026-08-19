@@ -12,5 +12,7 @@ describe("PluginShell interaction rooms badge", () => {
     expect(source).toMatch(/listInteractionRooms/);
     expect(source).toMatch(/useInteractionInboxSync/);
     expect(source).toMatch(/interaction_rooms/);
+    expect(source).toMatch(/dashboard-page--fill/);
+    expect(source).toMatch(/interaction_room_detail/);
   });
 });

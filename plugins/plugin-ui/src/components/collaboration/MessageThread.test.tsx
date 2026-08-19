@@ -1,9 +1,13 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MessageThread, messageThreadBemClasses } from "./MessageThread";
 
 const classNames = messageThreadBemClasses("test");
+const stylesDir = join(dirname(fileURLToPath(import.meta.url)), "../../styles");
 
 afterEach(() => {
   cleanup();
@@ -149,5 +153,19 @@ describe("MessageThread", () => {
     expect(screen.queryByText("Pin message")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Pin message" }));
     expect(onPin).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("message-thread.css host scroll", () => {
+  it("rola no host: lista overflow visible e teto na bolha", () => {
+    const css = readFileSync(join(stylesDir, "message-thread.css"), "utf8");
+    const root = css.match(/\.delpi-ui-message-thread \{[^}]+\}/)?.[0] ?? "";
+    const row = css.match(/\.delpi-ui-message-thread__row \{[^}]+\}/)?.[0] ?? "";
+    const bubble = css.match(/\.delpi-ui-message-thread__bubble \{[^}]+\}/)?.[0] ?? "";
+    expect(root).toMatch(/overflow:\s*visible;/);
+    expect(root).not.toMatch(/overflow-y:\s*auto;/);
+    expect(row).toMatch(/max-width:\s*none;/);
+    expect(row).not.toMatch(/min\(75%/);
+    expect(bubble).toMatch(/max-width:\s*min\(75%,\s*42rem\)/);
   });
 });

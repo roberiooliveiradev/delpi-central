@@ -146,7 +146,7 @@ export function InteractionRoomWorkspace({
         current={content.inboxTitle}
       />
       <CommercialPageHero
-        density={roomId ? "compact" : undefined}
+        density="compact"
         title={content.inboxTitle}
         description={content.inboxSubtitle}
         actions={

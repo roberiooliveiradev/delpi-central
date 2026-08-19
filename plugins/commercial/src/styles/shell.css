@@ -21,6 +21,11 @@
     );
 }
 
+.dashboard-commercial.dashboard-page--fill {
+  height: 100%;
+  overflow: hidden;
+}
+
 .dashboard-commercial button,
 .dashboard-commercial input,
 .dashboard-commercial select {

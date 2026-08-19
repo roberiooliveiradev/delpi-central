@@ -339,8 +339,19 @@ export function PluginShell({
     [basePath, paletteSections],
   );
 
+  const fillViewport =
+    view === "interaction_rooms" || view === "interaction_room_detail";
+
   return (
-    <div className="dashboard-commercial dashboard-page">
+    <div
+      className={[
+        "dashboard-commercial",
+        "dashboard-page",
+        fillViewport ? "dashboard-page--fill" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="cm-page-stack">
         <CommercialTopBar
           aria-label={SHELL_NAV_CONTENT.ariaLabel}
