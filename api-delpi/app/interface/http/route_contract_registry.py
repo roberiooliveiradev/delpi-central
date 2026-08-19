@@ -1150,6 +1150,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "upsert_planejamento_orcamentario_admin_cost_center": RouteContract(
         "budget_org_cost_center", "scalar"
     ),
+    "create_planejamento_orcamentario_admin_cost_center_from_erp": RouteContract(
+        "budget_org_cost_center", "scalar"
+    ),
+    "update_planejamento_orcamentario_admin_cost_center_icon": RouteContract(
+        "budget_org_cost_center", "scalar"
+    ),
+    "list_planejamento_orcamentario_org_erp_cost_centers": RouteContract(
+        "budget_org_cost_center", "paged_list"
+    ),
     "list_planejamento_orcamentario_admin_budget_responsibilities": RouteContract(
         "budget_responsibility", "paged_list"
     ),

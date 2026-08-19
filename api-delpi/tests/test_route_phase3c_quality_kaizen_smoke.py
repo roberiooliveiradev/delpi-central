@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -20,6 +20,13 @@ _REV = 1
 _EVID = "ev-smoke-1"
 
 
+@pytest.fixture(autouse=True)
+def _allow_kaizen_branch():
+    """Gate de unidade usa JWT real; smokes não carregam permissões de filial."""
+    with patch(f"{_KZ}.branch_access_error", return_value=None):
+        yield
+
+
 def _user_patch():
     return patch(
         f"{_KZ}.get_current_user",
@@ -29,7 +36,7 @@ def _user_patch():
 
 def _kaizen_repo(**methods: object) -> MagicMock:
     repo = MagicMock()
-    repo.get_record.return_value = {"id": _REC}
+    repo.get_record.return_value = {"id": _REC, "branch_code": "01"}
     for name, value in methods.items():
         if callable(value):
             repo.configure_mock(**{name: value})
@@ -82,10 +89,12 @@ def test_list_kaizen_audit_log_returns_meta(mock_build) -> None:
 
 
 @patch(f"{_KZ}.build_kaizen_evidence_repository")
-def test_list_kaizen_evidences_returns_meta(mock_build) -> None:
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_list_kaizen_evidences_returns_meta(mock_record, mock_ev) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import list_kaizen_evidences
 
-    mock_build.return_value = MagicMock(list_evidences=MagicMock(return_value=[]))
+    mock_record.return_value = _kaizen_repo()
+    mock_ev.return_value = MagicMock(list_evidences=MagicMock(return_value=[]))
     response = list_kaizen_evidences(_REC)
     assert_envelope_meta(body_json(response), operation_id="list_kaizen_evidences")
 
@@ -114,9 +123,11 @@ async def test_attach_kaizen_evidence_link_returns_meta(
 
 @patch(f"{_KZ}.build_kaizen_evidence_storage")
 @patch(f"{_KZ}.build_kaizen_evidence_repository")
-def test_delete_kaizen_evidence_returns_meta(mock_ev_repo, mock_storage) -> None:
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_delete_kaizen_evidence_returns_meta(mock_record, mock_ev_repo, mock_storage) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import delete_kaizen_evidence
 
+    mock_record.return_value = _kaizen_repo()
     mock_ev_repo.return_value = MagicMock(
         delete_evidence=MagicMock(return_value={"stored_name": "file.bin"})
     )
@@ -126,13 +137,15 @@ def test_delete_kaizen_evidence_returns_meta(mock_ev_repo, mock_storage) -> None
 
 
 @patch(f"{_KZ}.build_kaizen_evidence_repository")
-def test_update_kaizen_evidence_returns_meta(mock_build) -> None:
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_update_kaizen_evidence_returns_meta(mock_record, mock_ev) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import (
         UpdateKaizenEvidenceBody,
         update_kaizen_evidence,
     )
 
-    mock_build.return_value = MagicMock(
+    mock_record.return_value = _kaizen_repo()
+    mock_ev.return_value = MagicMock(
         update_evidence=MagicMock(return_value={"id": _EVID, "stage": "antes"})
     )
     response = update_kaizen_evidence(
@@ -144,9 +157,13 @@ def test_update_kaizen_evidence_returns_meta(mock_build) -> None:
 @patch(f"{_KZ}.FileResponse")
 @patch(f"{_KZ}.build_kaizen_evidence_storage")
 @patch(f"{_KZ}.build_kaizen_evidence_repository")
-def test_download_kaizen_evidence_returns_file(mock_ev_repo, mock_storage, mock_fr) -> None:
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_download_kaizen_evidence_returns_file(
+    mock_record, mock_ev_repo, mock_storage, mock_fr
+) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import download_kaizen_evidence
 
+    mock_record.return_value = _kaizen_repo()
     mock_ev_repo.return_value = MagicMock(
         get_evidence=MagicMock(return_value={"stored_name": "x.bin", "file_name": "x.bin"})
     )
@@ -154,7 +171,7 @@ def test_download_kaizen_evidence_returns_file(mock_ev_repo, mock_storage, mock_
     mock_fr.return_value = MagicMock(status_code=200)
     response = download_kaizen_evidence(_REC, _EVID)
     assert response is not None
-    assert "download_kaizen_evidence" == "download_kaizen_evidence"
+    mock_fr.assert_called_once()
 
 
 @patch(f"{_KZ}.build_kaizen_repository")
@@ -352,3 +369,22 @@ def test_kaizen_summary_series_registered_before_path_param() -> None:
     )
     by_id_idx = next(i for i, path in enumerate(paths) if "{kaizen_id" in path)
     assert series_idx < by_id_idx
+
+
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_get_kaizen_record_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import get_kaizen_record
+
+    mock_build.return_value = _kaizen_repo()
+    response = get_kaizen_record(_REC)
+    assert_envelope_meta(body_json(response), operation_id="get_kaizen_record")
+
+
+def test_kaizen_records_static_paths_registered_before_record_id() -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import router
+
+    paths = [getattr(route, "path", "") for route in router.routes]
+    record_id_idx = next(i for i, path in enumerate(paths) if path.endswith("/{record_id}"))
+    for suffix in ("/export", "/import", "/summary", "/savings-investment/series"):
+        static_idx = next(i for i, path in enumerate(paths) if path.endswith(suffix))
+        assert static_idx < record_id_idx, suffix

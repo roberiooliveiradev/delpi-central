@@ -303,7 +303,7 @@ def test_mini_applicators_pecas_reposicao_returns_meta(mock_build) -> None:
     )
 
 
-@patch(f"{_INSPECOES}._branch_view_allowed", return_value=True)
+@patch(f"{_INSPECOES}.branch_access_error", return_value=None)
 @patch(f"{_INSPECOES}.build_list_inspecoes_entrada_rejeitadas_produto_use_case")
 def test_inspecoes_entrada_rejeitadas_produto_returns_meta(
     mock_build, _mock_branch

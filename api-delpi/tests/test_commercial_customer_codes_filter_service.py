@@ -19,6 +19,10 @@ def test_normalize_blank_is_none():
     assert CommercialCustomerCodesFilterService.normalize("   ") is None
 
 
+def test_normalize_ignores_non_string_non_sequence():
+    assert CommercialCustomerCodesFilterService.normalize(object()) is None
+
+
 def test_normalize_nonempty_without_valid_codes_is_empty_list():
     assert CommercialCustomerCodesFilterService.normalize(",,,") == []
 

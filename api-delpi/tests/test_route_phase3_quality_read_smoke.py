@@ -187,8 +187,9 @@ def test_audit_5s_dashboard_returns_meta(mock_build, _branch) -> None:
     )
 
 
+@patch(f"{_AUDIT}.branch_access_error", return_value=None)
 @patch(f"{_AUDIT}.build_audit_5s_repository")
-def test_list_audit_5s_audits_returns_meta(mock_repo) -> None:
+def test_list_audit_5s_audits_returns_meta(mock_repo, _branch) -> None:
     from app.interface.http.routes.quality.audit_5s_operational_router import list_audits
 
     mock_repo.return_value = MagicMock(
@@ -271,8 +272,9 @@ def test_list_audit_5s_criteria_returns_meta(mock_repo) -> None:
     )
 
 
+@patch(f"{_AUDIT}.branch_access_error", return_value=None)
 @patch(f"{_AUDIT}.build_audit_5s_repository")
-def test_list_audit_5s_areas_returns_meta(mock_repo) -> None:
+def test_list_audit_5s_areas_returns_meta(mock_repo, _branch) -> None:
     from app.interface.http.routes.quality.audit_5s_operational_router import list_areas
 
     mock_repo.return_value = MagicMock(

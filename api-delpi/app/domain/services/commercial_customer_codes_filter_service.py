@@ -16,8 +16,11 @@ class CommercialCustomerCodesFilterService:
             return None
         if isinstance(value, str):
             raw_parts = value.split(",")
-        else:
+        elif isinstance(value, (list, tuple)):
             raw_parts = list(value)
+        else:
+            # FastAPI Query() leftover from a direct handler call is not a code list.
+            return None
         codes: list[str] = []
         seen: set[str] = set()
         for part in raw_parts:

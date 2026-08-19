@@ -403,7 +403,7 @@ def get_kaizen_summary_series(
         ).execute(
             branch=branch,
             date_start=start_date,
-            end_date=end_date,
+            date_end=end_date,
             granularity=granularity,
         )
         return api_delpi_success(

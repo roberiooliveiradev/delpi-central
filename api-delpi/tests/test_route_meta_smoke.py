@@ -66,6 +66,7 @@ def test_commercial_closing_rate_returns_meta(mock_build, _mock_enrich) -> None:
         start_date=None,
         end_date=None,
         customer_segment=None,
+        customer_codes=None,
     )
     _assert_meta(
         _body(response),
@@ -145,8 +146,12 @@ def test_quality_kaizen_by_id_returns_meta(mock_build) -> None:
     )
 
 
+@patch(
+    "app.interface.http.routes.quality.kaizen_records_router.resolve_query_branch",
+    return_value=(None, None),
+)
 @patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
-def test_quality_kaizen_records_list_returns_meta(mock_build) -> None:
+def test_quality_kaizen_records_list_returns_meta(mock_build, _branch) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import list_kaizen_records
 
     mock_repo = MagicMock()
@@ -164,8 +169,12 @@ def test_quality_kaizen_records_list_returns_meta(mock_build) -> None:
     )
 
 
+@patch(
+    "app.interface.http.routes.quality.kaizen_records_router.branch_access_error",
+    return_value=None,
+)
 @patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
-def test_quality_kaizen_records_create_returns_meta(mock_build) -> None:
+def test_quality_kaizen_records_create_returns_meta(mock_build, _branch) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import (
         KaizenRecordBody,
         create_kaizen_record,
@@ -191,8 +200,12 @@ def test_quality_kaizen_records_create_returns_meta(mock_build) -> None:
     )
 
 
+@patch(
+    "app.interface.http.routes.quality.kaizen_records_router.allowed_branch_codes",
+    return_value={"01", "02"},
+)
 @patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
-def test_quality_kaizen_export_returns_meta(mock_build) -> None:
+def test_quality_kaizen_export_returns_meta(mock_build, _allowed) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import export_kaizen_records
 
     mock_repo = MagicMock()
@@ -207,8 +220,12 @@ def test_quality_kaizen_export_returns_meta(mock_build) -> None:
     )
 
 
+@patch(
+    "app.interface.http.routes.quality.kaizen_records_router.resolve_query_branch",
+    return_value=(None, None),
+)
 @patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
-def test_quality_kaizen_records_summary_returns_meta(mock_build) -> None:
+def test_quality_kaizen_records_summary_returns_meta(mock_build, _branch) -> None:
     from app.interface.http.routes.quality.kaizen_records_router import (
         get_kaizen_records_summary,
     )
@@ -261,8 +278,12 @@ def test_quality_kaizen_savings_investment_series_returns_meta(mock_build, _bran
     )
 
 
+@patch(
+    "app.interface.http.routes.quality.kaizen_records_router.branch_access_error",
+    return_value=None,
+)
 @patch("app.interface.http.routes.quality.kaizen_records_router.build_import_kaizens_use_case")
-def test_quality_kaizen_import_returns_meta(mock_build) -> None:
+def test_quality_kaizen_import_returns_meta(mock_build, _branch) -> None:
     from app.application.use_cases.kaizen.import_kaizens_use_case import ImportKaizensResult
     from app.interface.http.routes.quality.kaizen_records_router import (
         ImportKaizensBody,
@@ -687,8 +708,8 @@ def test_ops_abertas_pedidos_venda_returns_meta(mock_build) -> None:
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_resumo_use_case"
@@ -723,8 +744,8 @@ def test_inspecoes_entrada_resumo_returns_meta(mock_build, _mock_branch) -> None
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_pendentes_use_case"
@@ -753,8 +774,8 @@ def test_inspecoes_entrada_pendentes_returns_meta(mock_build, _mock_branch) -> N
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_pendentes_fornecedor_use_case"
@@ -787,8 +808,8 @@ def test_inspecoes_entrada_pendentes_fornecedor_returns_meta(
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_rejeitadas_ensaiador_use_case"
@@ -821,8 +842,8 @@ def test_inspecoes_entrada_rejeitadas_ensaiador_returns_meta(
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_historico_use_case"
@@ -880,8 +901,8 @@ def test_inspecoes_entrada_historico_returns_meta(mock_build, _mock_branch) -> N
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_historico_detalhe_use_case"

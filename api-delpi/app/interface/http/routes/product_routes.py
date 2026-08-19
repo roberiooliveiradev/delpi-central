@@ -755,8 +755,8 @@ def _raw_material_price_dto(
 ) -> ProductRawMaterialPriceRequest:
     return ProductRawMaterialPriceRequest(
         code=code,
-        date_start=start_date,
-        date_end=end_date,
+        date_start=date_start,
+        date_end=date_end,
         branch=branch,
         history_limit=history_limit,
     )
