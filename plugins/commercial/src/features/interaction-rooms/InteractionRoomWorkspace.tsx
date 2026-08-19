@@ -3,11 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { InteractionInboxFilter } from "../../api/interactionRoomsApi";
 import {
   CommercialCatalogSearchBar,
-  CommercialEmptyState,
   CommercialPageHero,
   CommercialPagePath,
   CommercialResizableColumns,
-  CommercialUnderlineNav,
+  CommercialScopeChipBar,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
@@ -64,12 +63,17 @@ export function InteractionRoomWorkspace({
   const parsed = parseInteractionRoomSearch(search);
   const [filter, setFilter] = useState<InteractionInboxFilter>(parsed.filter);
   const [query, setQuery] = useState(parsed.q);
+  const [openRoomTitle, setOpenRoomTitle] = useState<string | null>(null);
 
   useEffect(() => {
     const next = parseInteractionRoomSearch(search);
     setFilter(next.filter);
     setQuery(next.q);
   }, [search]);
+
+  useEffect(() => {
+    if (!roomId) setOpenRoomTitle(null);
+  }, [roomId]);
 
   const roomSearch = buildInteractionRoomSearch({ filter, q: query });
   const listHref = `${buildInteractionRoomsPath(basePath)}${roomSearch}`;
@@ -90,17 +94,18 @@ export function InteractionRoomWorkspace({
     [basePath, roomId],
   );
 
-  const navItems = useMemo(
+  const filterChips = useMemo(
     () =>
       FILTER_IDS.map((id) => ({
         id,
         label: filterLabel(id),
+        active: id === filter,
         onSelect: () => {
           setFilter(id);
           replaceQuery(id, query);
         },
       })),
-    [query, replaceQuery],
+    [filter, query, replaceQuery],
   );
 
   const inbox = (
@@ -118,6 +123,7 @@ export function InteractionRoomWorkspace({
         setQuery(next);
         replaceQuery(filter, next);
       }}
+      onSelectedRoomTitle={setOpenRoomTitle}
       preserveSearch={roomSearch}
     />
   );
@@ -127,24 +133,20 @@ export function InteractionRoomWorkspace({
       roomId={roomId}
       variant="pane"
       inboxHref={listHref}
+      onRoomTitle={setOpenRoomTitle}
     />
-  ) : (
-    <CommercialEmptyState
-      title={content.selectRoomTitle}
-      message={content.selectRoomDescription}
-    />
-  );
+  ) : null;
+
+  const pathCurrent = roomId
+    ? openRoomTitle || content.roomFallbackTitle
+    : content.inboxTitle;
+  const pathBack = roomId
+    ? { label: content.inboxTitle, href: listHref }
+    : { label: "Início", href: buildPluginPath("home", basePath) };
 
   return (
     <section className="cm-page-stack cm-room-workspace">
-      <CommercialPagePath
-        back={
-          roomId
-            ? { label: content.inboxTitle, href: listHref }
-            : { label: "Início", href: buildPluginPath("home", basePath) }
-        }
-        current={content.inboxTitle}
-      />
+      <CommercialPagePath back={pathBack} current={pathCurrent} />
       <CommercialPageHero
         density="compact"
         title={content.inboxTitle}
@@ -163,9 +165,8 @@ export function InteractionRoomWorkspace({
           </div>
         }
       >
-        <CommercialUnderlineNav
-          items={navItems}
-          activeId={filter}
+        <CommercialScopeChipBar
+          chips={filterChips}
           aria-label={content.filtersAriaLabel}
         />
       </CommercialPageHero>
@@ -176,7 +177,7 @@ export function InteractionRoomWorkspace({
           ) : (
             inbox
           )
-        ) : (
+        ) : roomId ? (
           <CommercialResizableColumns
             left={inbox}
             right={thread}
@@ -196,6 +197,8 @@ export function InteractionRoomWorkspace({
               expandAriaLabel: content.inboxExpandAriaLabel,
             }}
           />
+        ) : (
+          inbox
         )}
       </div>
     </section>

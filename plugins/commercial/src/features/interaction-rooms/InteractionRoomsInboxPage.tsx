@@ -14,8 +14,8 @@ import {
   CommercialPageHero,
   CommercialPagePath,
   CommercialRoomInboxList,
+  CommercialScopeChipBar,
   CommercialStateBanner,
-  CommercialUnderlineNav,
 } from "../../app/commercialUi";
 import {
   buildCustomerDetailHref,
@@ -43,6 +43,7 @@ type Props = {
   query?: string;
   onFilterChange?: (filter: InteractionInboxFilter) => void;
   onQueryChange?: (query: string) => void;
+  onSelectedRoomTitle?: (title: string | null) => void;
   preserveSearch?: string;
 };
 
@@ -92,6 +93,7 @@ export function InteractionRoomsInboxPage({
   query: queryProp,
   onFilterChange,
   onQueryChange,
+  onSelectedRoomTitle,
   preserveSearch = "",
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
@@ -135,15 +137,22 @@ export function InteractionRoomsInboxPage({
     return () => controller.abort();
   }, [filter, query, reloadKey, content.loadError]);
 
-  const navItems = useMemo(
+  const filterChips = useMemo(
     () =>
       FILTER_IDS.map((id) => ({
         id,
         label: filterLabel(id),
+        active: id === filter,
         onSelect: () => setFilter(id),
       })),
-    [],
+    [filter],
   );
+
+  useEffect(() => {
+    if (!selectedRoomId) return;
+    const hit = items.find((item) => item.id === selectedRoomId);
+    onSelectedRoomTitle?.(hit?.title ?? null);
+  }, [items, selectedRoomId, onSelectedRoomTitle]);
 
   const itemsById = useMemo(
     () => new Map(items.map((item) => [item.id, item])),
@@ -211,9 +220,8 @@ export function InteractionRoomsInboxPage({
             </div>
           }
         >
-          <CommercialUnderlineNav
-            items={navItems}
-            activeId={filter}
+          <CommercialScopeChipBar
+            chips={filterChips}
             aria-label={content.filtersAriaLabel}
           />
         </CommercialPageHero>

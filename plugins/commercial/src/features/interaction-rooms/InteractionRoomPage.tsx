@@ -20,17 +20,18 @@ import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
+import { CommercialEntityLink } from "../../components/CommercialEntityLink";
 import {
   CommercialActionButton,
+  CommercialAlertQueue,
   CommercialConversationFileDropLayer,
   CommercialEmptyState,
+  CommercialHostDrawer,
   CommercialLoadingCard,
   CommercialMessageThread,
   CommercialPagePath,
   CommercialRoomContextPanel,
   CommercialRoomHeader,
-  CommercialStateBanner,
-  CommercialStatusBadge,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
@@ -55,6 +56,13 @@ type Props = {
   roomId: string;
   variant?: "page" | "pane";
   inboxHref?: string;
+  onRoomTitle?: (title: string | null) => void;
+};
+
+type RoomAlert = {
+  id: string;
+  title: string;
+  tone: "info" | "danger";
 };
 
 function formatMessageTime(iso: string | null | undefined): string {
@@ -69,19 +77,13 @@ function formatMessageTime(iso: string | null | undefined): string {
   });
 }
 
-function kindChipLabel(room: InteractionRoomDto): string {
-  if (room.kind === "process") return INTERACTION_ROOMS_CONTENT.kindProcess;
-  if (room.kind === "wall") return INTERACTION_ROOMS_CONTENT.kindWall;
-  if (room.entity_type) return room.entity_type;
-  return INTERACTION_ROOMS_CONTENT.kindEntity;
-}
-
 /** Página da sala — só kit (header + thread + composer). */
 export function InteractionRoomPage({
   basePath,
   roomId,
   variant = "page",
   inboxHref,
+  onRoomTitle,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
   const backHref =
@@ -92,8 +94,7 @@ export function InteractionRoomPage({
   const [members, setMembers] = useState<InteractionRoomMemberDto[]>([]);
   const [messages, setMessages] = useState<InteractionMessageDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState<RoomAlert[]>([]);
   const [creatingTaskMessageId, setCreatingTaskMessageId] = useState<string | null>(
     null,
   );
@@ -124,6 +125,14 @@ export function InteractionRoomPage({
 
   useInteractionRoomSync(room?.id, onRoomRealtimeEvent, Boolean(room?.id));
 
+  const pushRoomAlert = useCallback((title: string, tone: RoomAlert["tone"]) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setAlerts((prev) => [...prev, { id, title, tone }]);
+    window.setTimeout(() => {
+      setAlerts((prev) => prev.filter((item) => item.id !== id));
+    }, INTERACTION_ROOMS_CONTENT.alertDismissMs);
+  }, []);
+
   const authorIds = useMemo(() => {
     const ids = new Set<string>();
     for (const member of members) {
@@ -141,12 +150,12 @@ export function InteractionRoomPage({
     const id = roomId.trim();
     if (!id) {
       setLoading(false);
-      setError(content.roomMissingId);
+      pushRoomAlert(content.roomMissingId, "danger");
+      onRoomTitle?.(null);
       return;
     }
     const controller = new AbortController();
     setLoading(true);
-    setError(null);
     void (async () => {
       try {
         const [roomData, memberRows, messageRows, pinRows] = await Promise.all([
@@ -157,14 +166,19 @@ export function InteractionRoomPage({
         ]);
         if (controller.signal.aborted) return;
         setRoom(roomData);
+        onRoomTitle?.(roomData.title);
         setMembers(memberRows);
         setMessages([...messageRows].reverse());
         setPinnedMessageIds(new Set(pinRows.map((pin) => pin.message_id)));
         void markInteractionRoomRead(id, controller.signal).catch(() => undefined);
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : content.roomLoadError);
+        pushRoomAlert(
+          err instanceof Error ? err.message : content.roomLoadError,
+          "danger",
+        );
         setRoom(null);
+        onRoomTitle?.(null);
         setMembers([]);
         setMessages([]);
         setPinnedMessageIds(new Set());
@@ -173,7 +187,7 @@ export function InteractionRoomPage({
       }
     })();
     return () => controller.abort();
-  }, [roomId, content.roomMissingId, content.roomLoadError]);
+  }, [roomId, content.roomMissingId, content.roomLoadError, onRoomTitle, pushRoomAlert]);
 
   const onMessageCreated = useCallback((created: InteractionMessageDto) => {
     setMessages((prev) => [...prev, created]);
@@ -184,14 +198,15 @@ export function InteractionRoomPage({
       const id = roomId.trim();
       if (!id || !messageId.trim() || creatingTaskMessageId) return;
       setCreatingTaskMessageId(messageId);
-      setError(null);
-      setSuccess(null);
       try {
         const created = await createTaskFromInteractionMessage(id, messageId);
         setMessages((prev) => [...prev, created.task_ref_message]);
-        setSuccess(content.createTaskOk);
+        pushRoomAlert(content.createTaskOk, "info");
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : content.createTaskError);
+        pushRoomAlert(
+          err instanceof Error ? err.message : content.createTaskError,
+          "danger",
+        );
       } finally {
         setCreatingTaskMessageId(null);
       }
@@ -201,6 +216,7 @@ export function InteractionRoomPage({
       creatingTaskMessageId,
       content.createTaskOk,
       content.createTaskError,
+      pushRoomAlert,
     ],
   );
 
@@ -209,13 +225,11 @@ export function InteractionRoomPage({
       const id = roomId.trim();
       if (!id || !messageId.trim() || pinningMessageId) return;
       setPinningMessageId(messageId);
-      setError(null);
-      setSuccess(null);
       try {
         if (nextPinned) {
           await pinInteractionMessage(id, messageId);
           setPinnedMessageIds((prev) => new Set(prev).add(messageId));
-          setSuccess(content.pinOk);
+          pushRoomAlert(content.pinOk, "info");
         } else {
           await unpinInteractionMessage(id, messageId);
           setPinnedMessageIds((prev) => {
@@ -223,15 +237,18 @@ export function InteractionRoomPage({
             next.delete(messageId);
             return next;
           });
-          setSuccess(content.unpinOk);
+          pushRoomAlert(content.unpinOk, "info");
         }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : content.pinError);
+        pushRoomAlert(
+          err instanceof Error ? err.message : content.pinError,
+          "danger",
+        );
       } finally {
         setPinningMessageId(null);
       }
     },
-    [roomId, pinningMessageId, content.pinOk, content.unpinOk, content.pinError],
+    [roomId, pinningMessageId, content.pinOk, content.unpinOk, content.pinError, pushRoomAlert],
   );
 
   const resolveActions = useCallback(
@@ -353,11 +370,13 @@ export function InteractionRoomPage({
           current={room?.title ?? content.roomFallbackTitle}
         />
       ) : null}
-      {error ? (
-        <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
-      ) : null}
-      {success ? (
-        <CommercialStateBanner variant="success">{success}</CommercialStateBanner>
+      {alerts.length > 0 ? (
+        <div className="cm-room-alert-host">
+          <CommercialAlertQueue
+            items={alerts}
+            aria-label={content.roomAlertsAriaLabel}
+          />
+        </div>
       ) : null}
       {loading ? (
         <CommercialLoadingCard title={content.roomLoadingLabel} variant="panel" />
@@ -372,12 +391,18 @@ export function InteractionRoomPage({
             <CommercialRoomHeader
               title={room.title}
               subtitle={
-                room.entity_key
-                  ? `${kindChipLabel(room)} · ${room.entity_key}`
-                  : kindChipLabel(room)
-              }
-              chips={
-                <CommercialStatusBadge label={kindChipLabel(room)} variant="info" />
+                room.entity_key ? (
+                  entityHref ? (
+                    <CommercialEntityLink
+                      href={entityHref}
+                      title={content.contextOpenEntity}
+                    >
+                      {room.entity_key}
+                    </CommercialEntityLink>
+                  ) : (
+                    room.entity_key
+                  )
+                ) : undefined
               }
               participants={participants}
               participantsAriaLabel={content.roomMembersAriaLabel}
@@ -388,12 +413,17 @@ export function InteractionRoomPage({
                   onClick={() => setContextOpen((open) => !open)}
                 >
                   <PanelRight size={16} aria-hidden />
-                  {content.contextToggle}
                 </CommercialActionButton>
               }
             />
           </div>
-          {contextOpen ? (
+          <CommercialHostDrawer
+            open={contextOpen}
+            title={content.contextToggle}
+            className="cm-room-context-drawer"
+            onClose={() => setContextOpen(false)}
+            closeAriaLabel={content.contextCloseAriaLabel}
+          >
             <CommercialRoomContextPanel
               labels={{
                 about: content.contextAbout,
@@ -408,15 +438,21 @@ export function InteractionRoomPage({
               entityHref={entityHref}
               onOpenEntity={
                 entityHref
-                  ? () => navigatePluginPath(entityHref)
+                  ? () => {
+                      setContextOpen(false);
+                      navigatePluginPath(entityHref);
+                    }
                   : undefined
               }
               participants={participants}
               participantsAriaLabel={content.roomMembersAriaLabel}
               pins={contextPins}
-              onPinSelect={onSelectPin}
+              onPinSelect={(messageId) => {
+                setContextOpen(false);
+                onSelectPin(messageId);
+              }}
             />
-          ) : null}
+          </CommercialHostDrawer>
           <div
             className="cm-room-thread__msgs"
             ref={msgsRef}
@@ -444,7 +480,7 @@ export function InteractionRoomPage({
             <InteractionRoomMessageComposer
               roomId={room.id}
               onMessageCreated={onMessageCreated}
-              onError={(message) => setError(message)}
+              onError={(message) => pushRoomAlert(message, "danger")}
               onAddFilesReady={(addFiles) => {
                 addFilesRef.current = addFiles;
               }}
@@ -452,7 +488,7 @@ export function InteractionRoomPage({
           </div>
         </CommercialConversationFileDropLayer>
       ) : null}
-      {!loading && !room && !error ? (
+      {!loading && !room ? (
         <CommercialEmptyState
           title={content.roomFallbackTitle}
           message={content.roomMissingId}

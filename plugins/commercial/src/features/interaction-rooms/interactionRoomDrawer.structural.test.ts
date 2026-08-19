@@ -12,5 +12,8 @@ describe("CommercialHostDrawer", () => {
     expect(source).toMatch(/createHostContainedDrawerShell/);
     expect(source).toMatch(/CommercialHostDrawer/);
     expect(source).toMatch(/portalScopeClassName: CM_PORTAL_SCOPE/);
+    const page = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
+    expect(page).toMatch(/CommercialHostDrawer/);
+    expect(page).toMatch(/cm-room-context-drawer/);
   });
 });

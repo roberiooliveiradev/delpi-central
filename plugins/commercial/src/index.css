@@ -131,6 +131,11 @@
   align-items: stretch;
 }
 
+.dashboard-commercial .cm-room-workspace__grid > .cm-room-inbox-pane {
+  flex: 1 1 auto;
+  border-right: none;
+}
+
 .dashboard-commercial .cm-room-inbox-pane {
   display: flex;
   flex-direction: column;
@@ -149,6 +154,7 @@
 }
 
 .dashboard-commercial .cm-room-thread {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -162,12 +168,23 @@
   min-height: 0;
 }
 
-.dashboard-commercial .cm-room-thread .cm-room-context-panel {
-  flex: 0 1 auto;
-  max-height: 40vh;
-  overflow-y: auto;
-  border-left: none;
-  border-bottom: 1px solid var(--cm-border, var(--border, #e6e6e6));
+.dashboard-commercial .cm-room-alert-host {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  z-index: 6;
+  width: min(28rem, calc(100% - 1.5rem));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.dashboard-commercial .cm-room-alert-host .cm-alert-queue {
+  pointer-events: auto;
+}
+
+.dashboard-commercial .cm-room-context-drawer {
+  width: min(20rem, 100%);
+  max-width: 20rem;
 }
 
 .dashboard-commercial .cm-room-thread__header {

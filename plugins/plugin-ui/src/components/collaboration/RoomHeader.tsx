@@ -27,7 +27,7 @@ export type RoomHeaderClassNames = {
 export type RoomHeaderProps = {
   title: string;
   classNames: RoomHeaderClassNames;
-  subtitle?: string;
+  subtitle?: ReactNode;
   chips?: ReactNode;
   participants?: AvatarStackItem[];
   participantsAriaLabel?: string;
@@ -71,7 +71,7 @@ export function RoomHeader({
     <header className={rootClass}>
       <div className={classNames.titles}>
         <h2 className={classNames.title}>{title}</h2>
-        {subtitle ? <p className={classNames.subtitle}>{subtitle}</p> : null}
+        {subtitle ? <span className={classNames.subtitle}>{subtitle}</span> : null}
         {chips ? <div className={classNames.chips}>{chips}</div> : null}
       </div>
       <div className={classNames.people}>

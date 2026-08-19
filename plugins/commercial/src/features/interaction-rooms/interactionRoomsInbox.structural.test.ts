@@ -10,7 +10,8 @@ describe("InteractionRoomsInboxPage", () => {
     const source = readFileSync(join(dir, "InteractionRoomsInboxPage.tsx"), "utf8");
     expect(source).toMatch(/CommercialRoomInboxList/);
     expect(source).toMatch(/CommercialCatalogSearchBar/);
-    expect(source).toMatch(/CommercialUnderlineNav/);
+    expect(source).toMatch(/CommercialScopeChipBar/);
+    expect(source).not.toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/listInteractionRooms/);
     expect(source).toMatch(/useInteractionInboxSync/);
     expect(source).toMatch(/CommercialPageHero/);

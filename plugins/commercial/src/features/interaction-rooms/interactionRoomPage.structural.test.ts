@@ -19,7 +19,15 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/mine:/);
     expect(source).toMatch(/CommercialConversationFileDropLayer/);
     expect(source).toMatch(/CommercialRoomContextPanel/);
+    expect(source).toMatch(/CommercialHostDrawer/);
+    expect(source).toMatch(/cm-room-context-drawer/);
+    expect(source).toMatch(/CommercialAlertQueue/);
+    expect(source).toMatch(/cm-room-alert-host/);
+    expect(source).toMatch(/onRoomTitle/);
     expect(source).toMatch(/contextToggle/);
+    expect(source).not.toMatch(/CommercialStateBanner/);
+    expect(source).not.toMatch(/CommercialStatusBadge/);
+    expect(source).not.toMatch(/aria-hidden \/>\s*\{content\.contextToggle\}/);
     expect(source).toMatch(/scrollThreadMessageIntoView/);
     expect(source).toMatch(/shouldStickThreadToBottom/);
     expect(source).toMatch(/useInteractionRoomSync/);

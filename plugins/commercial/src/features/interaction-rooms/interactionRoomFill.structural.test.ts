@@ -14,6 +14,10 @@ describe("interaction room fill CSS", () => {
     expect(css).toMatch(/\.cm-room-thread__msgs \{[\s\S]*?overflow-y:\s*auto;/);
     const fillChunk = css.split("Sala: fill viewport")[1]?.slice(0, 2500) ?? "";
     expect(fillChunk).not.toMatch(/\.delpi-ui-/);
+    expect(css).not.toMatch(/max-height:\s*40vh/);
+    expect(css).toMatch(/\.cm-room-context-drawer \{[\s\S]*?max-width:\s*20rem;/);
+    expect(css).toMatch(/\.cm-room-alert-host \{[\s\S]*?position:\s*absolute;/);
+    expect(css).toMatch(/\.cm-room-workspace__grid > \.cm-room-inbox-pane/);
   });
 
   it("o host do Portal honra dashboard-page--fill (não height auto)", () => {
