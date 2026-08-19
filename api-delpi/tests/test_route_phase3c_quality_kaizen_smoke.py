@@ -257,3 +257,98 @@ def test_implement_kaizen_version_returns_meta(mock_build, _user) -> None:
         _REC, _REV, body=ImplementKaizenVersionBody()
     )
     assert_envelope_meta(body_json(response), operation_id="implement_kaizen_version")
+
+
+@_user_patch()
+@patch(f"{_KZ}.branch_access_error", return_value=None)
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_create_kaizen_record_maps_repository_error(mock_build, _branch, _user) -> None:
+    from app.infrastructure.persistence.plugins.plugin_base_repository import (
+        PluginsRepositoryError,
+    )
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        KaizenRecordBody,
+        create_kaizen_record,
+    )
+
+    mock_build.return_value = _kaizen_repo(
+        create_record=MagicMock(
+            side_effect=PluginsRepositoryError(
+                "Falha ao executar comando com retorno no banco de plugins."
+            )
+        )
+    )
+    response = create_kaizen_record(
+        body=KaizenRecordBody(branch_code="01", title="Kaizen teste"),
+    )
+    body = body_json(response)
+    assert response.status_code == 500
+    assert body.get("success") is False
+    assert "banco de plugins" in (body.get("message") or "")
+
+
+@_user_patch()
+@patch(f"{_KZ}.branch_access_error", return_value=None)
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_create_kaizen_record_maps_status_date_error(mock_build, _branch, _user) -> None:
+    from app.domain.services.kaizen.kaizen_status_date_rules import KaizenStatusDateError
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        KaizenRecordBody,
+        create_kaizen_record,
+    )
+
+    mock_build.return_value = _kaizen_repo(
+        create_record=MagicMock(
+            side_effect=KaizenStatusDateError(
+                "Informe a data de implantação para o status Implantado."
+            )
+        )
+    )
+    response = create_kaizen_record(
+        body=KaizenRecordBody(
+            branch_code="01",
+            title="Kaizen implantado",
+            status="implantado",
+        ),
+    )
+    body = body_json(response)
+    assert response.status_code == 400
+    assert body.get("success") is False
+
+
+@_user_patch()
+@patch(f"{_KZ}.branch_access_error", return_value=None)
+@patch(f"{_KZ}.build_kaizen_repository")
+def test_create_kaizen_version_maps_repository_error(mock_build, _branch, _user) -> None:
+    from app.infrastructure.persistence.plugins.plugin_base_repository import (
+        PluginsRepositoryError,
+    )
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        KaizenRecordBody,
+        create_kaizen_version,
+    )
+
+    mock_build.return_value = _kaizen_repo(
+        create_version=MagicMock(
+            side_effect=PluginsRepositoryError("Versão criada mas não encontrada.")
+        )
+    )
+    response = create_kaizen_version(
+        _REC,
+        body=KaizenRecordBody(branch_code="01", title="Kaizen smoke"),
+    )
+    body = body_json(response)
+    assert response.status_code == 500
+    assert body.get("success") is False
+    assert "Versão criada" in (body.get("message") or "")
+
+
+def test_kaizen_summary_series_registered_before_path_param() -> None:
+    from app.interface.http.routes.quality.quality_router import router
+
+    paths = [getattr(route, "path", "") for route in router.routes]
+    series_idx = next(
+        i for i, path in enumerate(paths) if path.endswith("/kaizens/summary/series")
+    )
+    by_id_idx = next(i for i, path in enumerate(paths) if "{kaizen_id" in path)
+    assert series_idx < by_id_idx

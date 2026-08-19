@@ -354,6 +354,70 @@ def get_kaizen_summary(
         )
 
 
+@router.get(
+    "/kaizens/summary/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_kaizen_summary_series",
+        path="/quality/kaizens/summary/series",
+    ),
+)
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_kaizen_summary_series(
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+):
+    from app.application.use_cases.quality.get_quality_scalar_series_use_case import (
+        GetQualityScalarSeriesUseCase,
+    )
+
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+
+    def fetch_metrics(scope_branch, bucket_start, bucket_end):
+        summary = build_get_kaizen_summary_use_case().execute(
+            KaizenSummaryRequest(
+                title=None,
+                status=None,
+                branch=scope_branch,
+                date_start=bucket_start,
+                date_end=bucket_end,
+            )
+        ).to_dict()
+        return {
+            "total_kaizens": summary.get("total_kaizens"),
+            "total_savings": summary.get("total_savings"),
+        }
+
+    try:
+        result = GetQualityScalarSeriesUseCase(
+            metric="kaizen_summary",
+            fetch_metrics=fetch_metrics,
+        ).execute(
+            branch=branch,
+            date_start=start_date,
+            end_date=end_date,
+            granularity=granularity,
+        )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_kaizen_summary_series",
+            message="Kaizen summary series loaded.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar série kaizen: {exc}")
+        return error_response("Erro interno ao carregar série kaizen.", status_code=500)
+
+
 @router.get("/kaizens/{kaizen_id:path}", **QUALITY_KAIZEN_BY_ID)
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_by_id(kaizen_id: str):
@@ -426,68 +490,6 @@ def get_audit_5s_summary(
             status_code=500,
         )
 
-@router.get(
-    "/kaizens/summary/series",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "get_kaizen_summary_series",
-        path="/quality/kaizens/summary/series",
-    ),
-)
-@require_any_permission(KPI_QUALITY_ACCESS)
-def get_kaizen_summary_series(
-    branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    start_date: str | None = START_DATE_QUERY(),
-    end_date: str | None = END_DATE_QUERY(),
-    date_start: str | None = LEGACY_DATE_START_QUERY(),
-    date_end: str | None = LEGACY_DATE_END_QUERY(),
-    granularity: str = GRANULARITY_QUERY_MONTH(),
-):
-    from app.application.use_cases.quality.get_quality_scalar_series_use_case import (
-        GetQualityScalarSeriesUseCase,
-    )
-
-    start_date, end_date = resolve_period_dates(
-        start_date=start_date,
-        end_date=end_date,
-        date_start=date_start,
-        date_end=date_end,
-    )
-
-    def fetch_metrics(scope_branch, bucket_start, bucket_end):
-        summary = build_get_kaizen_summary_use_case().execute(
-            KaizenSummaryRequest(
-                title=None,
-                status=None,
-                branch=scope_branch,
-                date_start=bucket_start,
-                date_end=bucket_end,
-            )
-        ).to_dict()
-        return {
-            "total_kaizens": summary.get("total_kaizens"),
-            "total_savings": summary.get("total_savings"),
-        }
-
-    try:
-        result = GetQualityScalarSeriesUseCase(
-            metric="kaizen_summary",
-            fetch_metrics=fetch_metrics,
-        ).execute(
-            branch=branch,
-            date_start=start_date,
-            date_end=end_date,
-            granularity=granularity,
-        )
-        return api_delpi_success(
-            result.to_dict(),
-            operation_id="get_kaizen_summary_series",
-            message="Kaizen summary series loaded.",
-        )
-    except ValueError as exc:
-        return error_response(str(exc), status_code=400)
-    except Exception as exc:
-        log_error(f"Erro ao carregar série kaizen: {exc}")
-        return error_response("Erro interno ao carregar série kaizen.", status_code=500)
 
 
 @router.get(

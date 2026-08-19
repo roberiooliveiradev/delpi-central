@@ -573,6 +573,8 @@ def create_kaizen_version(record_id: str, body: KaizenRecordBody = Body(...)):
         if data is None:
             return not_found_response("Kaizen não encontrado.")
         return api_delpi_success(data, operation_id="create_kaizen_version")
+    except KaizenStatusDateError as exc:
+        return error_response(str(exc), status_code=400)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao criar versão do kaizen: {exc}")
         return error_response(str(exc), status_code=500)

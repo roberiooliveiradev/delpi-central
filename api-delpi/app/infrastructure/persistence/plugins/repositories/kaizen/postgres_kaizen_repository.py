@@ -945,100 +945,103 @@ class PostgresKaizenRepository(PluginBaseRepository):
         submodule_id = self._kaizen_submodule_id()
         effective_from = revision_service.resolve_effective_from(enriched)
 
-        row = self.execute_returning_one(
-            """
-            INSERT INTO quality.kaizens (
-                submodule_id, branch_code, title, accountable, sector, investment,
-                savings_type, seconds_per_occurrence, occurrences_per_day, hourly_cost,
-                quantity_saved_per_day, unit_material_cost, fixed_daily_savings,
-                daily_savings, annual_savings, realized_daily_savings, realized_annual_savings,
-                status, date_idea_received, date_committee_approved, date_implemented,
-                date_discontinued,
-                notes, process_description, problem_description, improvement_description,
-                expected_result, category, categories, current_revision_number, created_by_user_id
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s
+        # Lease único: sem isto o pool faz rollback no INSERT e a revisão
+        # estoura FK («Falha ao executar comando com retorno no banco de plugins»).
+        with self.db():
+            row = self.execute_returning_one(
+                """
+                INSERT INTO quality.kaizens (
+                    submodule_id, branch_code, title, accountable, sector, investment,
+                    savings_type, seconds_per_occurrence, occurrences_per_day, hourly_cost,
+                    quantity_saved_per_day, unit_material_cost, fixed_daily_savings,
+                    daily_savings, annual_savings, realized_daily_savings, realized_annual_savings,
+                    status, date_idea_received, date_committee_approved, date_implemented,
+                    date_discontinued,
+                    notes, process_description, problem_description, improvement_description,
+                    expected_result, category, categories, current_revision_number, created_by_user_id
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s
+                )
+                RETURNING id
+                """,
+                (
+                    submodule_id,
+                    enriched["branch_code"],
+                    enriched["title"].strip(),
+                    enriched.get("accountable"),
+                    enriched.get("sector"),
+                    enriched.get("investment"),
+                    enriched["savings_type"],
+                    enriched.get("seconds_per_occurrence"),
+                    enriched.get("occurrences_per_day"),
+                    enriched.get("hourly_cost"),
+                    enriched.get("quantity_saved_per_day"),
+                    enriched.get("unit_material_cost"),
+                    enriched.get("fixed_daily_savings"),
+                    enriched.get("daily_savings"),
+                    enriched.get("annual_savings"),
+                    enriched.get("realized_daily_savings"),
+                    enriched.get("realized_annual_savings"),
+                    enriched.get("status", "recebido"),
+                    enriched.get("date_idea_received"),
+                    enriched.get("date_committee_approved"),
+                    enriched.get("date_implemented"),
+                    enriched.get("date_discontinued"),
+                    enriched.get("notes"),
+                    enriched.get("process_description"),
+                    enriched.get("problem_description"),
+                    enriched.get("improvement_description"),
+                    enriched.get("expected_result"),
+                    enriched.get("category"),
+                    enriched.get("categories"),
+                    created_by_user_id,
+                ),
+                auto_commit=False,
             )
-            RETURNING id
-            """,
-            (
-                submodule_id,
-                enriched["branch_code"],
-                enriched["title"].strip(),
-                enriched.get("accountable"),
-                enriched.get("sector"),
-                enriched.get("investment"),
-                enriched["savings_type"],
-                enriched.get("seconds_per_occurrence"),
-                enriched.get("occurrences_per_day"),
-                enriched.get("hourly_cost"),
-                enriched.get("quantity_saved_per_day"),
-                enriched.get("unit_material_cost"),
-                enriched.get("fixed_daily_savings"),
-                enriched.get("daily_savings"),
-                enriched.get("annual_savings"),
-                enriched.get("realized_daily_savings"),
-                enriched.get("realized_annual_savings"),
-                enriched.get("status", "recebido"),
-                enriched.get("date_idea_received"),
-                enriched.get("date_committee_approved"),
-                enriched.get("date_implemented"),
-                enriched.get("date_discontinued"),
-                enriched.get("notes"),
-                enriched.get("process_description"),
-                enriched.get("problem_description"),
-                enriched.get("improvement_description"),
-                enriched.get("expected_result"),
-                enriched.get("category"),
-                enriched.get("categories"),
-                created_by_user_id,
-            ),
-            auto_commit=False,
-        )
-        if not row:
-            self.rollback()
-            raise PluginsRepositoryError("Falha ao cadastrar kaizen.")
+            if not row:
+                self.rollback()
+                raise PluginsRepositoryError("Falha ao cadastrar kaizen.")
 
-        kaizen_id = str(row["id"])
-        if participants:
-            self._replace_participants(kaizen_id, participants)
+            kaizen_id = str(row["id"])
+            if participants:
+                self._replace_participants(kaizen_id, participants)
 
-        change_type = revision_service.resolve_change_type(None, enriched, is_creation=True)
-        initial_status = str(enriched.get("status", "recebido"))
-        version_status = initial_status if initial_status in _VERSION_STATUSES else "recebido"
-        self._create_revision(
-            kaizen_id=kaizen_id,
-            record=enriched,
-            revision_number=1,
-            change_type=change_type,
-            change_summary="Versão inicial",
-            change_reason=fields.get("change_reason"),
-            effective_from=effective_from,
-            created_by_user_id=created_by_user_id,
-            created_by_name=actor_name,
-            version_status=version_status,
-        )
-        self._append_history(
-            kaizen_id,
-            event_type="kaizen_created",
-            new_value=str(enriched.get("title") or "").strip() or None,
-            actor_user_id=created_by_user_id,
-            actor_name=actor_name,
-        )
-        self._append_audit_log(
-            kaizen_id,
-            event_type="kaizen_created",
-            payload={
-                "title": str(enriched.get("title") or "").strip(),
-                "status": enriched.get("status", "recebido"),
-                "annual_savings": enriched.get("annual_savings"),
-            },
-            actor_user_id=created_by_user_id,
-            actor_name=actor_name,
-        )
-        self.commit()
+            change_type = revision_service.resolve_change_type(None, enriched, is_creation=True)
+            initial_status = str(enriched.get("status", "recebido"))
+            version_status = initial_status if initial_status in _VERSION_STATUSES else "recebido"
+            self._create_revision(
+                kaizen_id=kaizen_id,
+                record=enriched,
+                revision_number=1,
+                change_type=change_type,
+                change_summary="Versão inicial",
+                change_reason=fields.get("change_reason"),
+                effective_from=effective_from,
+                created_by_user_id=created_by_user_id,
+                created_by_name=actor_name,
+                version_status=version_status,
+            )
+            self._append_history(
+                kaizen_id,
+                event_type="kaizen_created",
+                new_value=str(enriched.get("title") or "").strip() or None,
+                actor_user_id=created_by_user_id,
+                actor_name=actor_name,
+            )
+            self._append_audit_log(
+                kaizen_id,
+                event_type="kaizen_created",
+                payload={
+                    "title": str(enriched.get("title") or "").strip(),
+                    "status": enriched.get("status", "recebido"),
+                    "annual_savings": enriched.get("annual_savings"),
+                },
+                actor_user_id=created_by_user_id,
+                actor_name=actor_name,
+            )
+            self.commit()
 
         created = self.get_record(kaizen_id)
         if not created:
@@ -1084,7 +1087,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         changed_fields = revision_service.changed_trigger_fields(current, enriched)
 
-        row = self.execute_returning_one(
+        with self.db():
+            row = self.execute_returning_one(
             """
             UPDATE quality.kaizens
                SET branch_code = %s,
@@ -1154,26 +1158,26 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 record_id,
             ),
             auto_commit=False,
-        )
-        if not row:
-            self.rollback()
-            return None
+            )
+            if not row:
+                self.rollback()
+                return None
 
-        if participants is not None:
-            self._replace_participants(record_id, participants)
+            if participants is not None:
+                self._replace_participants(record_id, participants)
 
-        # Edição inline = CORREÇÃO da versão vigente (não cria versão nova).
-        # A versão vigente é atualizada no lugar; a transição de status é refletida nela.
-        self._apply_correction_to_active_version(
-            record_id,
-            current=current,
-            enriched=enriched,
-            changed_fields=changed_fields,
-            actor_user_id=updated_by_user_id,
-            actor_name=actor_name,
-        )
+            # Edição inline = CORREÇÃO da versão vigente (não cria versão nova).
+            # A versão vigente é atualizada no lugar; a transição de status é refletida nela.
+            self._apply_correction_to_active_version(
+                record_id,
+                current=current,
+                enriched=enriched,
+                changed_fields=changed_fields,
+                actor_user_id=updated_by_user_id,
+                actor_name=actor_name,
+            )
 
-        self.commit()
+            self.commit()
         return self.get_record(record_id)
 
     def _apply_correction_to_active_version(
@@ -1315,38 +1319,42 @@ class PostgresKaizenRepository(PluginBaseRepository):
             kaizen_id,
             explicit=parent_revision_id if isinstance(parent_revision_id, str) else None,
         )
-        revision_id = self._create_revision(
-            kaizen_id=kaizen_id,
-            record=enriched,
-            revision_number=revision_number,
-            change_type="melhoria",
-            change_summary=f"Nova versão v{revision_number} (rascunho)",
-            change_reason=change_reason,
-            effective_from=effective_from,
-            created_by_user_id=created_by_user_id,
-            created_by_name=actor_name,
-            version_status="recebido",
-            parent_revision_id=resolved_parent_id,
-        )
-        if participants_input is not None:
-            self._store_version_participants(revision_id, participants_input)
+        with self.db():
+            revision_id = self._create_revision(
+                kaizen_id=kaizen_id,
+                record=enriched,
+                revision_number=revision_number,
+                change_type="melhoria",
+                change_summary=f"Nova versão v{revision_number} (rascunho)",
+                change_reason=change_reason,
+                effective_from=effective_from,
+                created_by_user_id=created_by_user_id,
+                created_by_name=actor_name,
+                version_status="recebido",
+                parent_revision_id=resolved_parent_id,
+            )
+            if participants_input is not None:
+                self._store_version_participants(revision_id, participants_input)
 
-        self._append_history(
-            kaizen_id,
-            event_type="version_created",
-            new_value=f"v{revision_number}",
-            actor_user_id=created_by_user_id,
-            actor_name=actor_name,
-        )
-        self._append_audit_log(
-            kaizen_id,
-            event_type="version_created",
-            payload={"revision": revision_number},
-            actor_user_id=created_by_user_id,
-            actor_name=actor_name,
-        )
-        self.commit()
-        return self.get_revision(kaizen_id, revision_number)
+            self._append_history(
+                kaizen_id,
+                event_type="version_created",
+                new_value=f"v{revision_number}",
+                actor_user_id=created_by_user_id,
+                actor_name=actor_name,
+            )
+            self._append_audit_log(
+                kaizen_id,
+                event_type="version_created",
+                payload={"revision": revision_number},
+                actor_user_id=created_by_user_id,
+                actor_name=actor_name,
+            )
+            self.commit()
+        created_revision = self.get_revision(kaizen_id, revision_number)
+        if created_revision is None:
+            raise PluginsRepositoryError("Versão criada mas não encontrada.")
+        return created_revision
 
     def update_version(
         self,
@@ -1376,15 +1384,16 @@ class PostgresKaizenRepository(PluginBaseRepository):
             date_committee_approved=enriched.get("date_committee_approved"),
             date_implemented=enriched.get("date_implemented"),
         )
-        self._update_version_snapshot(str(revision["id"]), enriched)
-        self._append_history(
-            kaizen_id,
-            event_type="version_updated",
-            new_value=f"v{revision_number}",
-            actor_user_id=updated_by_user_id,
-            actor_name=actor_name,
-        )
-        self.commit()
+        with self.db():
+            self._update_version_snapshot(str(revision["id"]), enriched)
+            self._append_history(
+                kaizen_id,
+                event_type="version_updated",
+                new_value=f"v{revision_number}",
+                actor_user_id=updated_by_user_id,
+                actor_name=actor_name,
+            )
+            self.commit()
         return self.get_revision(kaizen_id, revision_number)
 
     def implement_version(
@@ -1412,52 +1421,53 @@ class PostgresKaizenRepository(PluginBaseRepository):
             or date.today().isoformat()
         )
 
-        # Fecha a versão implantada vigente (se houver).
-        self.execute(
-            """
-            UPDATE quality.kaizen_revisions
-               SET version_status = 'substituido',
-                   effective_until = %s
-             WHERE kaizen_id = %s
-               AND version_status = 'implantado'
-            """,
-            (effective, kaizen_id),
-            auto_commit=False,
-        )
-        # Ativa a nova versão.
-        self._set_version_status(
-            str(revision["id"]), "implantado", effective_from=effective
-        )
-        self.execute(
-            "UPDATE quality.kaizen_revisions SET effective_until = NULL WHERE id = %s",
-            (str(revision["id"]),),
-            auto_commit=False,
-        )
+        with self.db():
+            # Fecha a versão implantada vigente (se houver).
+            self.execute(
+                """
+                UPDATE quality.kaizen_revisions
+                   SET version_status = 'substituido',
+                       effective_until = %s
+                 WHERE kaizen_id = %s
+                   AND version_status = 'implantado'
+                """,
+                (effective, kaizen_id),
+                auto_commit=False,
+            )
+            # Ativa a nova versão.
+            self._set_version_status(
+                str(revision["id"]), "implantado", effective_from=effective
+            )
+            self.execute(
+                "UPDATE quality.kaizen_revisions SET effective_until = NULL WHERE id = %s",
+                (str(revision["id"]),),
+                auto_commit=False,
+            )
 
-        # Espelha a versão implantada no cabeçalho do kaizen.
-        snapshot = dict(revision.get("snapshot") or {})
-        self._apply_snapshot_to_head(
-            kaizen_id,
-            snapshot=snapshot,
-            effective=effective,
-            updated_by_user_id=updated_by_user_id,
-        )
+            # Espelha a versão implantada no cabeçalho do kaizen.
+            snapshot = dict(revision.get("snapshot") or {})
+            self._apply_snapshot_to_head(
+                kaizen_id,
+                snapshot=snapshot,
+                effective=effective,
+                updated_by_user_id=updated_by_user_id,
+            )
 
-        self._append_history(
-            kaizen_id,
-            event_type="version_implemented",
-            new_value=f"v{revision_number}",
-            actor_user_id=updated_by_user_id,
-            actor_name=actor_name,
-        )
-        self._append_audit_log(
-            kaizen_id,
-            event_type="version_implemented",
-            payload={"revision": revision_number, "effective_from": effective},
-            actor_user_id=updated_by_user_id,
-            actor_name=actor_name,
-        )
-        self.commit()
+            self._append_history(
+                kaizen_id,
+                event_type="version_implemented",
+                new_value=f"v{revision_number}",
+                actor_user_id=updated_by_user_id,
+                actor_name=actor_name,
+            )
+            self._append_audit_log(
+                kaizen_id,
+                event_type="version_implemented",
+                payload={"revision": revision_number, "effective_from": effective},
+                actor_user_id=updated_by_user_id,
+                actor_name=actor_name,
+            )
+            self.commit()
         return self.get_record(kaizen_id)
 
     def _apply_snapshot_to_head(
@@ -1559,37 +1569,38 @@ class PostgresKaizenRepository(PluginBaseRepository):
             )
 
         revision_id = str(revision["id"])
-        # Remove evidências desta versão para não reaparecerem como gerais (FK SET NULL).
-        self.execute(
-            """
-            UPDATE quality.kaizen_evidences
-               SET deleted_at = NOW()
-             WHERE revision_id = %s
-               AND deleted_at IS NULL
-            """,
-            (revision_id,),
-            auto_commit=False,
-        )
-        self.execute(
-            "DELETE FROM quality.kaizen_revisions WHERE id = %s",
-            (revision_id,),
-            auto_commit=False,
-        )
-        self._append_history(
-            kaizen_id,
-            event_type="version_deleted",
-            old_value=f"v{revision_number}",
-            actor_user_id=actor_user_id,
-            actor_name=actor_name,
-        )
-        self._append_audit_log(
-            kaizen_id,
-            event_type="version_deleted",
-            payload={"revision": revision_number, "version_status": status},
-            actor_user_id=actor_user_id,
-            actor_name=actor_name,
-        )
-        self.commit()
+        with self.db():
+            # Remove evidências desta versão para não reaparecerem como gerais (FK SET NULL).
+            self.execute(
+                """
+                UPDATE quality.kaizen_evidences
+                   SET deleted_at = NOW()
+                 WHERE revision_id = %s
+                   AND deleted_at IS NULL
+                """,
+                (revision_id,),
+                auto_commit=False,
+            )
+            self.execute(
+                "DELETE FROM quality.kaizen_revisions WHERE id = %s",
+                (revision_id,),
+                auto_commit=False,
+            )
+            self._append_history(
+                kaizen_id,
+                event_type="version_deleted",
+                old_value=f"v{revision_number}",
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+            self._append_audit_log(
+                kaizen_id,
+                event_type="version_deleted",
+                payload={"revision": revision_number, "version_status": status},
+                actor_user_id=actor_user_id,
+                actor_name=actor_name,
+            )
+            self.commit()
         return True
 
     def _store_version_participants(self, revision_id: str, participants_input: Any) -> None:
@@ -1604,33 +1615,34 @@ class PostgresKaizenRepository(PluginBaseRepository):
         updated_by_user_id: str,
         actor_name: str | None = None,
     ) -> bool:
-        row = self.execute_returning_one(
-            """
-            UPDATE quality.kaizens
-               SET deleted_at = NOW(),
-                   updated_by_user_id = %s,
-                   updated_at = NOW()
-             WHERE id = %s
-               AND deleted_at IS NULL
-            RETURNING id
-            """,
-            (updated_by_user_id, record_id),
-            auto_commit=False,
-        )
-        if row is None:
-            self.rollback()
-            return False
-        self._append_history(
-            record_id,
-            event_type="kaizen_deleted",
-            actor_user_id=updated_by_user_id,
-            actor_name=actor_name,
-        )
-        self._append_audit_log(
-            record_id,
-            event_type="kaizen_deleted",
-            actor_user_id=updated_by_user_id,
-            actor_name=actor_name,
-        )
-        self.commit()
+        with self.db():
+            row = self.execute_returning_one(
+                """
+                UPDATE quality.kaizens
+                   SET deleted_at = NOW(),
+                       updated_by_user_id = %s,
+                       updated_at = NOW()
+                 WHERE id = %s
+                   AND deleted_at IS NULL
+                RETURNING id
+                """,
+                (updated_by_user_id, record_id),
+                auto_commit=False,
+            )
+            if row is None:
+                self.rollback()
+                return False
+            self._append_history(
+                record_id,
+                event_type="kaizen_deleted",
+                actor_user_id=updated_by_user_id,
+                actor_name=actor_name,
+            )
+            self._append_audit_log(
+                record_id,
+                event_type="kaizen_deleted",
+                actor_user_id=updated_by_user_id,
+                actor_name=actor_name,
+            )
+            self.commit()
         return True
