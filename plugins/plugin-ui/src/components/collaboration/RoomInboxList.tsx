@@ -122,17 +122,19 @@ export function RoomInboxList({
           const subtitleNode = subtitle?.(item);
           return (
             <li key={item.id}>
-              <button
-                type="button"
+              <div
                 className={itemClassName(classNames, item)}
-                aria-current={item.selected ? "true" : undefined}
-                onClick={() => onSelect?.(item.id)}
               >
                 <div className={classNames.row}>
                   {leadingNode ? (
                     <div className={classNames.leading}>{leadingNode}</div>
                   ) : null}
-                  <div className={classNames.body}>
+                  <button
+                    type="button"
+                    className={classNames.body}
+                    aria-current={item.selected ? "true" : undefined}
+                    onClick={() => onSelect?.(item.id)}
+                  >
                     <div className={classNames.titleRow}>
                       <div className={classNames.title}>{item.title}</div>
                       <div className={classNames.meta}>
@@ -153,9 +155,9 @@ export function RoomInboxList({
                     {item.preview ? (
                       <div className={classNames.preview}>{item.preview}</div>
                     ) : null}
-                  </div>
+                  </button>
                 </div>
-              </button>
+              </div>
             </li>
           );
         })}

@@ -73,6 +73,33 @@ describe("RoomInboxList", () => {
     expect(screen.getByText("Cliente Pedido 102942")).toBeTruthy();
     expect(screen.getByRole("button").getAttribute("aria-current")).toBe("true");
   });
+
+  it("mantém o avatar leading fora do botão da linha", () => {
+    const { container } = render(
+      <RoomInboxList
+        classNames={classNames}
+        listAriaLabel="Inbox"
+        emptyLabel="No rooms"
+        leading={() => (
+          <a href="/apps/commercial/customers/1/01" title="Abrir conta de WEG">
+            AV
+          </a>
+        )}
+        items={[
+          {
+            id: "r1",
+            title: "Pedido 102942",
+          },
+        ]}
+      />,
+    );
+    const link = screen.getByRole("link", { name: "AV" });
+    const button = screen.getByRole("button", { name: /Pedido 102942/ });
+    expect(button.contains(link)).toBe(false);
+    expect(container.querySelector(".delpi-ui-room-inbox__leading")?.contains(link)).toBe(
+      true,
+    );
+  });
 });
 
 describe("room-inbox.css", () => {

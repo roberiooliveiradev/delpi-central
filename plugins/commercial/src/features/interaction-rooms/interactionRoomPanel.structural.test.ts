@@ -11,6 +11,8 @@ describe("InteractionRoomPanel", () => {
     const source = readFileSync(join(dir, "InteractionRoomPanel.tsx"), "utf8");
     expect(source).toMatch(/CommercialSectionCard/);
     expect(source).toMatch(/CommercialRoomHeader/);
+    expect(source).toMatch(/interactionRoomAuthorAvatarFields/);
+    expect(source).toMatch(/interactionRoomParticipantAvatar/);
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/createTaskFromInteractionMessage/);

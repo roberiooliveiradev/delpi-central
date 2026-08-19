@@ -9,6 +9,8 @@ describe("InteractionRoomPage", () => {
   it("compõe RoomHeader + MessageThread + composer com anexos", () => {
     const source = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(source).toMatch(/CommercialRoomHeader/);
+    expect(source).toMatch(/interactionRoomAuthorAvatarFields/);
+    expect(source).toMatch(/interactionRoomParticipantAvatar/);
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/CommercialMessageThread/);

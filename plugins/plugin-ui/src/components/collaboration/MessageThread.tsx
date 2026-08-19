@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEventHandler, ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
@@ -22,6 +22,10 @@ export type MessageThreadItem = {
   createdAtLabel: string;
   authorName?: string | null;
   authorUserId?: string | null;
+  /** Com `authorLinkTitle`, o avatar vira `<a href>` (mesmo contrato do InitialsAvatar). */
+  authorHref?: string | null;
+  authorLinkTitle?: string | null;
+  onAuthorNavigate?: MouseEventHandler<HTMLAnchorElement>;
   parentId?: string | null;
   mentions?: MentionTextItem[];
   deleted?: boolean;
@@ -195,14 +199,28 @@ export function MessageThread({
               />
             ));
           const avatarName = (message.authorName ?? "").trim();
+          const authorHref = (message.authorHref ?? "").trim();
+          const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
           const avatar = avatarName ? (
-            <InitialsAvatar
-              classNames={classNames.avatar}
-              name={avatarName}
-              colorKey={message.authorUserId ?? avatarName}
-              size="sm"
-              previewable={false}
-            />
+            authorHref && authorLinkTitle ? (
+              <InitialsAvatar
+                classNames={classNames.avatar}
+                name={avatarName}
+                colorKey={message.authorUserId ?? avatarName}
+                size="sm"
+                href={authorHref}
+                title={authorLinkTitle}
+                onNavigate={message.onAuthorNavigate}
+              />
+            ) : (
+              <InitialsAvatar
+                classNames={classNames.avatar}
+                name={avatarName}
+                colorKey={message.authorUserId ?? avatarName}
+                size="sm"
+                previewable={false}
+              />
+            )
           ) : null;
 
           const showAuthor = Boolean(message.authorName && !message.mine && !avatar);

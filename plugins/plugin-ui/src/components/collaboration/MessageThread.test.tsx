@@ -178,6 +178,31 @@ describe("MessageThread", () => {
     expect(container.querySelector("article footer time")?.textContent).toBe("10:00");
   });
 
+  it("avatar do autor vira link quando há href e title", () => {
+    render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno Costa",
+            authorUserId: "u1",
+            createdAtLabel: "10:00",
+            authorHref: "/apps/commercial/users/u1",
+            authorLinkTitle: "Abrir perfil de Bruno Costa",
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByRole("link", { name: "Abrir perfil de Bruno Costa" }).getAttribute("href"),
+    ).toBe("/apps/commercial/users/u1");
+  });
+
   it("coloca a barra de ações fora do article da bolha", () => {
     const { container } = render(
       <MessageThread

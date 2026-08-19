@@ -27,6 +27,7 @@ import {
 } from "../../app/pluginRoutes";
 import { useInteractionInboxSync } from "../../app/CommercialRealtimeProvider";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import { accountLinkTitle } from "../../content/entityLinkHints";
 import { CustomerAvatar } from "../customers/components/CustomerAvatar";
 import {
   customerAvatarKey,
@@ -297,7 +298,7 @@ export function InteractionRoomsInboxPage({
                 hasAvatar={hasAvatar}
                 size="sm"
                 href={href}
-                title={identity.name}
+                title={accountLinkTitle(identity.name)}
                 onNavigate={(event) => onCustomerNavigate(event, href)}
               />
             );

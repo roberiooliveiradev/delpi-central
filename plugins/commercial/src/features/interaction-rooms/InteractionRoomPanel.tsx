@@ -37,6 +37,10 @@ import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./Interactio
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
+import {
+  interactionRoomAuthorAvatarFields,
+  interactionRoomParticipantAvatar,
+} from "./interactionRoomUserLink";
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
 import {
   INTERACTION_ROOM_NARROW_QUERY,
@@ -298,6 +302,13 @@ export function InteractionRoomPanel({
             ? nameFor(message.author_user_id)
             : null,
           authorUserId: message.author_user_id,
+          ...interactionRoomAuthorAvatarFields(
+            message.author_user_id,
+            message.author_user_id
+              ? nameFor(message.author_user_id)
+              : "",
+            basePath,
+          ),
           mine: isOwnInteractionAuthor(message.author_user_id, sessionUserId),
           parentId: message.parent_id,
           deleted: Boolean(message.deleted_at),
@@ -319,11 +330,14 @@ export function InteractionRoomPanel({
 
   const participants = useMemo(
     () =>
-      members.map((member) => ({
-        id: member.user_id,
-        name: nameFor(member.user_id),
-      })),
-    [members, nameFor],
+      members.map((member) =>
+        interactionRoomParticipantAvatar(
+          member.user_id,
+          nameFor(member.user_id),
+          basePath,
+        ),
+      ),
+    [members, nameFor, basePath],
   );
 
   const openHref =

@@ -30,7 +30,6 @@
   font: inherit;
   color: inherit;
   background: transparent;
-  cursor: pointer;
   box-shadow: none;
 }
 
@@ -43,6 +42,10 @@
 }
 
 .delpi-ui-room-inbox__item:focus-visible {
+  outline: none;
+}
+
+.delpi-ui-room-inbox__body:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: 2px;
 }
@@ -73,6 +76,14 @@
   gap: 0.2rem;
   min-width: 0;
   flex: 1;
+  margin: 0;
+  padding: 0;
+  border: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
 }
 
 .delpi-ui-room-inbox__title-row {
