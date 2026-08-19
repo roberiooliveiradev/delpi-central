@@ -1,6 +1,9 @@
 /* Message thread: bubbles, system lines, reply indent. */
 .delpi-ui-message-thread {
   min-width: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .delpi-ui-message-thread__list {
@@ -14,6 +17,30 @@
 
 .delpi-ui-message-thread__item--reply {
   padding-left: 1.5rem;
+}
+
+.delpi-ui-message-thread__item--mine .delpi-ui-message-thread__item--reply,
+.delpi-ui-message-thread__item--mine.delpi-ui-message-thread__item--reply {
+  padding-left: 0;
+  padding-right: 1.5rem;
+}
+
+.delpi-ui-message-thread__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: min(75%, 42rem);
+}
+
+.delpi-ui-message-thread__item--mine {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delpi-ui-message-thread__item--mine .delpi-ui-message-thread__row {
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .delpi-ui-message-thread__system {
@@ -32,7 +59,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  max-width: 42rem;
+  min-width: 0;
+  max-width: 100%;
   padding: 0.65rem 0.85rem;
   border: 1px solid var(--delpi-ui-border, var(--border, #e2e8f0));
   border-radius: 0.75rem;
@@ -40,6 +68,20 @@
     --delpi-ui-surface-elevated,
     var(--delpi-ui-surface, var(--surface, #ffffff))
   );
+}
+
+.delpi-ui-message-thread__bubble--mine {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 40%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  color: var(--delpi-ui-text, var(--text, #0f172a));
 }
 
 .delpi-ui-message-thread__meta {

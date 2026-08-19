@@ -60,6 +60,38 @@ describe("MessageThread", () => {
     expect(container.querySelector(".delpi-ui-mention-text__chip")).not.toBeNull();
   });
 
+  it("aligns mine bubbles to the right without system avatar", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Mine",
+            authorName: "Eu",
+            createdAtLabel: "10:00",
+            mine: true,
+          },
+          {
+            id: "2",
+            kind: "system",
+            bodyText: "Pinned",
+            createdAtLabel: "10:01",
+            mine: true,
+          },
+        ]}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-message-thread__item--mine")).not.toBeNull();
+    expect(container.querySelector(".delpi-ui-message-thread__bubble--mine")).not.toBeNull();
+    expect(
+      container.querySelector('[data-message-kind="system"] .delpi-ui-avatar'),
+    ).toBeNull();
+  });
+
   it("exposes host actions on bubbles", () => {
     const onDelete = vi.fn();
     render(

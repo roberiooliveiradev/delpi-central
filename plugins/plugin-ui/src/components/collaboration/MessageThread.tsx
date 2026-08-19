@@ -2,6 +2,11 @@ import type { ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
+  InitialsAvatar,
+  initialsAvatarBemClasses,
+  type InitialsAvatarClassNames,
+} from "../layout/InitialsAvatar";
+import {
   MentionText,
   mentionTextBemClasses,
   type MentionTextClassNames,
@@ -20,6 +25,7 @@ export type MessageThreadItem = {
   parentId?: string | null;
   mentions?: MentionTextItem[];
   deleted?: boolean;
+  mine?: boolean;
   /** Content under the body (reactions, unfurl, attachments). */
   belowBody?: ReactNode;
 };
@@ -36,8 +42,12 @@ export type MessageThreadClassNames = {
   list: string;
   item: string;
   itemReply: string;
+  itemMine: string;
+  row: string;
+  avatar: InitialsAvatarClassNames;
   system: string;
   bubble: string;
+  bubbleMine: string;
   meta: string;
   author: string;
   time: string;
@@ -78,8 +88,18 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
       `${base}__item ${base}__item--reply`,
       `${ui}__item ${ui}__item--reply`,
     ),
+    itemMine: pair(
+      `${base}__item ${base}__item--mine`,
+      `${ui}__item ${ui}__item--mine`,
+    ),
+    row: pair(`${base}__row`, `${ui}__row`),
+    avatar: initialsAvatarBemClasses(prefix),
     system: pair(`${base}__system`, `${ui}__system`),
     bubble: pair(`${base}__bubble`, `${ui}__bubble`),
+    bubbleMine: pair(
+      `${base}__bubble ${base}__bubble--mine`,
+      `${ui}__bubble ${ui}__bubble--mine`,
+    ),
     meta: pair(`${base}__meta`, `${ui}__meta`),
     author: pair(`${base}__author`, `${ui}__author`),
     time: pair(`${base}__time`, `${ui}__time`),
@@ -93,6 +113,20 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
     empty: pair(`${base}__empty`, `${ui}__empty`),
     mention: mentionTextBemClasses(prefix),
   };
+}
+
+function isSystemKind(kind: MessageThreadKind): boolean {
+  return kind === "system" || kind === "task_ref" || kind === "pin";
+}
+
+function itemClassName(
+  classNames: MessageThreadClassNames,
+  message: MessageThreadItem,
+): string {
+  const parts = [classNames.item];
+  if (message.parentId) parts.push(classNames.itemReply);
+  if (message.mine && !isSystemKind(message.kind)) parts.push(classNames.itemMine);
+  return parts.join(" ");
 }
 
 /**
@@ -125,12 +159,10 @@ export function MessageThread({
     <div className={rootClass}>
       <ul className={classNames.list} aria-label={listAriaLabel}>
         {messages.map((message) => {
-          const isReply = Boolean(message.parentId);
-          const itemClass = isReply ? classNames.itemReply : classNames.item;
-          if (message.kind === "system") {
+          if (isSystemKind(message.kind)) {
             return (
-              <li key={message.id} className={itemClass}>
-                <div className={classNames.system} data-message-kind="system">
+              <li key={message.id} className={itemClassName(classNames, message)}>
+                <div className={classNames.system} data-message-kind={message.kind}>
                   <span className={classNames.body}>{message.bodyText}</span>
                   {message.createdAtLabel ? (
                     <time className={classNames.time}>{message.createdAtLabel}</time>
@@ -154,35 +186,57 @@ export function MessageThread({
                 onMentionActivate={onMentionActivate}
               />
             ));
+          const avatarName = (message.authorName ?? "").trim();
+          const avatar = avatarName ? (
+            <InitialsAvatar
+              classNames={classNames.avatar}
+              name={avatarName}
+              colorKey={message.authorUserId ?? avatarName}
+              size="sm"
+              previewable={false}
+            />
+          ) : null;
 
           return (
-            <li key={message.id} className={itemClass} data-message-kind={message.kind}>
-              <article className={classNames.bubble}>
-                <header className={classNames.meta}>
-                  {message.authorName ? (
-                    <span className={classNames.author}>{message.authorName}</span>
+            <li
+              key={message.id}
+              className={itemClassName(classNames, message)}
+              data-message-kind={message.kind}
+            >
+              <div className={classNames.row}>
+                {message.mine ? null : avatar}
+                <article
+                  className={message.mine ? classNames.bubbleMine : classNames.bubble}
+                >
+                  <header className={classNames.meta}>
+                    {message.authorName && !message.mine ? (
+                      <span className={classNames.author}>{message.authorName}</span>
+                    ) : null}
+                    {message.createdAtLabel ? (
+                      <time className={classNames.time}>{message.createdAtLabel}</time>
+                    ) : null}
+                  </header>
+                  {body}
+                  {actions.length > 0 ? (
+                    <div className={classNames.actions}>
+                      {actions.map((action) => (
+                        <button
+                          key={action.id}
+                          type="button"
+                          className={
+                            action.danger ? classNames.actionDanger : classNames.action
+                          }
+                          onClick={action.onClick}
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
                   ) : null}
-                  {message.createdAtLabel ? (
-                    <time className={classNames.time}>{message.createdAtLabel}</time>
-                  ) : null}
-                </header>
-                {body}
-                {actions.length > 0 ? (
-                  <div className={classNames.actions}>
-                    {actions.map((action) => (
-                      <button
-                        key={action.id}
-                        type="button"
-                        className={action.danger ? classNames.actionDanger : classNames.action}
-                        onClick={action.onClick}
-                      >
-                        {action.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-                {message.belowBody}
-              </article>
+                  {message.belowBody}
+                </article>
+                {message.mine ? avatar : null}
+              </div>
             </li>
           );
         })}
