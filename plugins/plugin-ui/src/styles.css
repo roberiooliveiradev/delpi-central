@@ -74,6 +74,7 @@
 @import "./styles/room-inbox.css";
 @import "./styles/room-header.css";
 @import "./styles/room-context-panel.css";
+@import "./styles/room-side-panel.css";
 @import "./styles/conversation-drop.css";
 @import "./styles/resizable-columns.css";
 @import "./styles/top-bar.css";

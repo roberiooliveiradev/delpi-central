@@ -470,6 +470,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-19",
     description: "Painel Sobre / participantes / pins da sala (embedded no card ou drawer da ficha).",
   }),
+  vc("collaboration", "RoomSidePanel", {
+    addedAt: "2026-08-19",
+    description: "Coluna direita da thread (Neste chat); toggle só no header.",
+  }),
   vc("collaboration", "ConversationFileDropLayer", {
     addedAt: "2026-08-19",
     description: "Overlay de drop de arquivo sobre a coluna da conversa.",

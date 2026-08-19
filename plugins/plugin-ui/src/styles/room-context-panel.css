@@ -40,6 +40,16 @@
   );
 }
 
+.delpi-ui-room-context-panel--flush {
+  max-height: none;
+  overflow: visible;
+}
+
+.delpi-ui-room-context-panel--flush .delpi-ui-room-context-panel__section {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .delpi-ui-room-context-panel__heading {
   margin: 0;
   font-size: 0.75rem;
@@ -129,5 +139,10 @@
   .delpi-ui-room-context-panel--embedded {
     border-bottom: none;
     max-height: min(36vh, 14rem);
+  }
+
+  .delpi-ui-room-context-panel--flush {
+    max-height: none;
+    border-bottom: none;
   }
 }

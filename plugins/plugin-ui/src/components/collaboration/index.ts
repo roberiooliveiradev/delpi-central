@@ -84,6 +84,14 @@ export {
   type RoomContextPanelProps,
 } from "./RoomContextPanel";
 export {
+  RoomSidePanel,
+  createDashboardRoomSidePanel,
+  roomSidePanelBemClasses,
+  type DashboardRoomSidePanelProps,
+  type RoomSidePanelClassNames,
+  type RoomSidePanelProps,
+} from "./RoomSidePanel";
+export {
   ConversationFileDropLayer,
   createDashboardConversationFileDropLayer,
   conversationFileDropLayerBemClasses,

@@ -23,6 +23,7 @@ export type RoomContextPanelPin = {
 export type RoomContextPanelClassNames = {
   root: string;
   embedded: string;
+  flush: string;
   section: string;
   heading: string;
   body: string;
@@ -56,8 +57,10 @@ export type RoomContextPanelProps = {
   participantsAriaLabel?: string;
   pins?: readonly RoomContextPanelPin[];
   onPinSelect?: (messageId: string) => void;
-  /** Sem chrome de sidebar/drawer: card no fluxo da coluna. */
+  /** Sem chrome de sidebar/drawer. */
   embedded?: boolean;
+  /** Sem divisores de seção; o scroller fica no RoomSidePanel. */
+  flush?: boolean;
   className?: string;
   footer?: ReactNode;
 };
@@ -69,6 +72,7 @@ export function roomContextPanelBemClasses(prefix: string): RoomContextPanelClas
   return {
     root: pair(base, ui),
     embedded: pair(`${base}--embedded`, `${ui}--embedded`),
+    flush: pair(`${base}--flush`, `${ui}--flush`),
     section: pair(`${base}__section`, `${ui}__section`),
     heading: pair(`${base}__heading`, `${ui}__heading`),
     body: pair(`${base}__body`, `${ui}__body`),
@@ -95,12 +99,14 @@ export function RoomContextPanel({
   pins = [],
   onPinSelect,
   embedded = false,
+  flush = false,
   className,
   footer,
 }: RoomContextPanelProps) {
   const rootClass = [
     classNames.root,
     embedded ? classNames.embedded : null,
+    flush ? classNames.flush : null,
     className,
   ]
     .filter(Boolean)

@@ -68,4 +68,17 @@ describe("RoomContextPanel", () => {
     const aside = container.querySelector("aside");
     expect(aside?.className).toMatch(/delpi-ui-room-context-panel--embedded/);
   });
+
+  it("aplica o modificador flush no root", () => {
+    const { container } = render(
+      <RoomContextPanel
+        classNames={classNames}
+        labels={labels}
+        flush
+        entityTitle="Order"
+      />,
+    );
+    const aside = container.querySelector("aside");
+    expect(aside?.className).toMatch(/delpi-ui-room-context-panel--flush/);
+  });
 });

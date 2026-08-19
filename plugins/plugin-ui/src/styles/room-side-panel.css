@@ -1,0 +1,33 @@
+/**
+ * RoomSidePanel — coluna direita da thread (.delpi-ui-room-side-panel*).
+ * Mesmo surface da conversa; sem segundo fundo nem divisor no título.
+ */
+
+.delpi-ui-room-side-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 min(20rem, 36%);
+  min-width: 0;
+  min-height: 0;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  border-inline-start: 1px solid
+    color-mix(in srgb, var(--delpi-ui-border, var(--border, #e6e6e6)) 28%, transparent);
+}
+
+.delpi-ui-room-side-panel__title {
+  margin: 0;
+  flex: 0 0 auto;
+  padding: 0.5rem 0.85rem 0.25rem;
+  border: none;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
+.delpi-ui-room-side-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0.85rem 0.85rem;
+}
