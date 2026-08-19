@@ -90,9 +90,7 @@
 }
 
 .dashboard-commercial .cm-room-workspace__grid {
-  display: grid;
-  grid-template-columns: minmax(240px, 20%) minmax(0, 1fr);
-  gap: 12px;
+  display: flex;
   flex: 1;
   min-height: 0;
   align-items: stretch;

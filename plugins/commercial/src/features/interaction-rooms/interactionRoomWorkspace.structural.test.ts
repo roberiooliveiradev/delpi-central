@@ -13,7 +13,9 @@ describe("InteractionRoomWorkspace", () => {
     const thread = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(workspace).toMatch(/parseInteractionRoomSearch/);
     expect(workspace).toMatch(/buildInteractionRoomSearch/);
-    expect(workspace).toMatch(/cm-room-workspace__grid/);
+    expect(workspace).toMatch(/CommercialResizableColumns/);
+    expect(workspace).toMatch(/max-width: 899px/);
+    expect(workspace).toMatch(/writeInboxWidthPx/);
     expect(workspace).toMatch(/variant="pane"/);
     expect(app).toMatch(/InteractionRoomWorkspace/);
     expect(app).toMatch(/interaction_room_detail/);

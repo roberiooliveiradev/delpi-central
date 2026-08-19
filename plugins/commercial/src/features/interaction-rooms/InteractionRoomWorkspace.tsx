@@ -6,6 +6,7 @@ import {
   CommercialEmptyState,
   CommercialPageHero,
   CommercialPagePath,
+  CommercialResizableColumns,
   CommercialUnderlineNav,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
@@ -21,6 +22,13 @@ import {
   buildInteractionRoomSearch,
   parseInteractionRoomSearch,
 } from "./interactionRoomSearch";
+import {
+  readInboxCollapsed,
+  readInboxWidthPx,
+  writeInboxCollapsed,
+  writeInboxWidthPx,
+} from "./interactionRoomSplitStorage";
+import { useMatchMedia } from "./useMatchMedia";
 
 type Props = {
   basePath: string;
@@ -65,6 +73,11 @@ export function InteractionRoomWorkspace({
 
   const roomSearch = buildInteractionRoomSearch({ filter, q: query });
   const listHref = `${buildInteractionRoomsPath(basePath)}${roomSearch}`;
+  const stacked = useMatchMedia("(max-width: 899px)");
+  const [leftWidth, setLeftWidth] = useState<number | undefined>(() =>
+    readInboxWidthPx(),
+  );
+  const [collapsed, setCollapsed] = useState(() => readInboxCollapsed());
 
   const replaceQuery = useCallback(
     (nextFilter: InteractionInboxFilter, nextQuery: string) => {
@@ -88,6 +101,38 @@ export function InteractionRoomWorkspace({
         },
       })),
     [query, replaceQuery],
+  );
+
+  const inbox = (
+    <InteractionRoomsInboxPage
+      basePath={basePath}
+      variant="pane"
+      selectedRoomId={roomId}
+      filter={filter}
+      query={query}
+      onFilterChange={(next) => {
+        setFilter(next);
+        replaceQuery(next, query);
+      }}
+      onQueryChange={(next) => {
+        setQuery(next);
+        replaceQuery(filter, next);
+      }}
+      preserveSearch={roomSearch}
+    />
+  );
+  const thread = roomId ? (
+    <InteractionRoomPage
+      basePath={basePath}
+      roomId={roomId}
+      variant="pane"
+      inboxHref={listHref}
+    />
+  ) : (
+    <CommercialEmptyState
+      title={content.selectRoomTitle}
+      message={content.selectRoomDescription}
+    />
   );
 
   return (
@@ -125,33 +170,31 @@ export function InteractionRoomWorkspace({
         />
       </CommercialPageHero>
       <div className="cm-room-workspace__grid">
-        <InteractionRoomsInboxPage
-          basePath={basePath}
-          variant="pane"
-          selectedRoomId={roomId}
-          filter={filter}
-          query={query}
-          onFilterChange={(next) => {
-            setFilter(next);
-            replaceQuery(next, query);
-          }}
-          onQueryChange={(next) => {
-            setQuery(next);
-            replaceQuery(filter, next);
-          }}
-          preserveSearch={roomSearch}
-        />
-        {roomId ? (
-          <InteractionRoomPage
-            basePath={basePath}
-            roomId={roomId}
-            variant="pane"
-            inboxHref={listHref}
-          />
+        {stacked ? (
+          roomId ? (
+            thread
+          ) : (
+            inbox
+          )
         ) : (
-          <CommercialEmptyState
-            title={content.selectRoomTitle}
-            message={content.selectRoomDescription}
+          <CommercialResizableColumns
+            left={inbox}
+            right={thread}
+            leftWidthPx={leftWidth}
+            collapsed={collapsed}
+            onLeftWidthChange={(widthPx) => {
+              setLeftWidth(widthPx);
+              writeInboxWidthPx(widthPx);
+            }}
+            onCollapsedChange={(next) => {
+              setCollapsed(next);
+              writeInboxCollapsed(next);
+            }}
+            labels={{
+              separatorAriaLabel: content.inboxResizeAriaLabel,
+              collapseAriaLabel: content.inboxCollapseAriaLabel,
+              expandAriaLabel: content.inboxExpandAriaLabel,
+            }}
           />
         )}
       </div>

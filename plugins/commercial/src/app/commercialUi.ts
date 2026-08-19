@@ -73,6 +73,7 @@ import {
   createDashboardReactionBar,
   createDashboardRoomInboxList,
   createDashboardRoomHeader,
+  createDashboardResizableColumns,
   useChartGranularitySelection,
   attachmentFileListBemClasses,
   attachmentPreviewStripBemClasses,
@@ -543,3 +544,4 @@ export const CommercialEntityUnfurlCard = createDashboardEntityUnfurlCard(UI_PRE
 export const CommercialReactionBar = createDashboardReactionBar(UI_PREFIX);
 export const CommercialRoomInboxList = createDashboardRoomInboxList(UI_PREFIX);
 export const CommercialRoomHeader = createDashboardRoomHeader(UI_PREFIX);
+export const CommercialResizableColumns = createDashboardResizableColumns(UI_PREFIX);
