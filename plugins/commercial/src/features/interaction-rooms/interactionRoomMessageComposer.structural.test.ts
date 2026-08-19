@@ -22,6 +22,10 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/uploadRoomMessageAttachment/);
     expect(source).toMatch(/useInteractionMentionSuggest/);
     expect(source).toMatch(/onMentionQueryChange/);
+    expect(source).toMatch(/formatToggleAriaLabel:/);
+    expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
+    expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
+    expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);
     expect(source).not.toMatch(/api-delpi/);
     expect(source).not.toMatch(/owner_type:\s*["']task["']/);
   });

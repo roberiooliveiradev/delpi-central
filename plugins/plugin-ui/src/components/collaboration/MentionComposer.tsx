@@ -1,9 +1,22 @@
-import { Paperclip, SendHorizontal } from "lucide-react";
+import {
+  Bold,
+  Code,
+  Italic,
+  Link,
+  List,
+  ListOrdered,
+  Paperclip,
+  Quote,
+  SendHorizontal,
+  Strikethrough,
+  Type,
+} from "lucide-react";
 import {
   useEffect,
   useId,
   useRef,
   useState,
+  type ClipboardEvent,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
@@ -11,14 +24,18 @@ import {
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
   execRichTextCommand,
+  getRichTextSelectionRange,
   insertRichTextHtmlFragment,
   insertRichTextLink,
+  restoreRichTextSelection,
   runRichTextCommand,
 } from "../rich-text/richTextCommands";
 import {
+  clipboardHasUsefulHtml,
   markdownToRichTextHtml,
   richTextHtmlToMarkdown,
 } from "../rich-text/richTextMarkdown";
+import { stripDangerousRichTextTags } from "../rich-text/richTextHtmlFormat";
 import {
   MentionMenu,
   mentionMenuBemClasses,
@@ -41,6 +58,9 @@ export type MentionComposerClassNames = {
   toolbar: string;
   actions: string;
   attach: string;
+  formatBar: string;
+  formatToggle: string;
+  format: string;
   send: string;
   footer: string;
   fileInput: string;
@@ -53,6 +73,15 @@ export type MentionComposerLabels = {
   attachAriaLabel: string;
   mentionListAriaLabel: string;
   mentionEmptyLabel: string;
+  formatToggleAriaLabel?: string;
+  formatBoldAriaLabel?: string;
+  formatItalicAriaLabel?: string;
+  formatStrikeAriaLabel?: string;
+  formatListAriaLabel?: string;
+  formatOrderedListAriaLabel?: string;
+  formatCodeAriaLabel?: string;
+  formatQuoteAriaLabel?: string;
+  formatLinkAriaLabel?: string;
 };
 
 export type MentionComposerProps = {
@@ -94,11 +123,22 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     toolbar: pair(`${base}__toolbar`, `${ui}__toolbar`),
     actions: pair(`${base}__actions`, `${ui}__actions`),
     attach: pair(`${base}__attach`, `${ui}__attach`),
+    formatBar: pair(`${base}__format-bar`, `${ui}__format-bar`),
+    formatToggle: pair(`${base}__format-toggle`, `${ui}__format-toggle`),
+    format: pair(`${base}__format`, `${ui}__format`),
     send: pair(`${base}__send`, `${ui}__send`),
     footer: pair(`${base}__footer`, `${ui}__footer`),
     fileInput: pair(`${base}__file`, `${ui}__file`),
     menu: mentionMenuBemClasses(prefix),
   };
+}
+
+function escapePlainText(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
 }
 
 function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
@@ -123,6 +163,17 @@ function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
     el.appendChild(range.extractContents());
     range.insertNode(el);
   }
+}
+
+function applyComposerFormat(editor: HTMLElement, kind: string) {
+  if (kind === "bold") runRichTextCommand(editor, "bold");
+  else if (kind === "italic") runRichTextCommand(editor, "italic");
+  else if (kind === "strike") runRichTextCommand(editor, "strikeThrough");
+  else if (kind === "ul") runRichTextCommand(editor, "insertUnorderedList");
+  else if (kind === "ol") runRichTextCommand(editor, "insertOrderedList");
+  else if (kind === "code") wrapSelectionWithTag(editor, "code");
+  else if (kind === "quote") execRichTextCommand("formatBlock", "blockquote");
+  else if (kind === "link") insertRichTextLink(editor, "https://");
 }
 
 /**
@@ -155,9 +206,16 @@ export function MentionComposer({
   const surfaceId = useId();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
   const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
+  const [formatOpen, setFormatOpen] = useState(false);
   const menuOpen = Boolean(activeMention) && !disabled;
   const empty = !value.trim();
+  const showFormat = Boolean(labels.formatToggleAriaLabel);
+
+  const rememberSelection = () => {
+    savedRangeRef.current = getRichTextSelectionRange(surfaceRef.current);
+  };
 
   useEffect(() => {
     const el = surfaceRef.current;
@@ -212,38 +270,60 @@ export function MentionComposer({
     if (!el) return false;
     const key = event.key.toLowerCase();
     if (key === "b" && !event.shiftKey) {
-      runRichTextCommand(el, "bold");
+      applyComposerFormat(el, "bold");
       return true;
     }
     if (key === "i" && !event.shiftKey) {
-      runRichTextCommand(el, "italic");
+      applyComposerFormat(el, "italic");
       return true;
     }
     if (key === "x" && event.shiftKey) {
-      runRichTextCommand(el, "strikeThrough");
+      applyComposerFormat(el, "strike");
       return true;
     }
     if (key === "`" || (key === "e" && !event.shiftKey)) {
-      wrapSelectionWithTag(el, "code");
+      applyComposerFormat(el, "code");
       return true;
     }
     if (key === "8" && event.shiftKey) {
-      runRichTextCommand(el, "insertUnorderedList");
+      applyComposerFormat(el, "ul");
       return true;
     }
     if (key === "7" && event.shiftKey) {
-      runRichTextCommand(el, "insertOrderedList");
+      applyComposerFormat(el, "ol");
       return true;
     }
     if (key === "." && event.shiftKey) {
-      execRichTextCommand("formatBlock", "blockquote");
+      applyComposerFormat(el, "quote");
       return true;
     }
     if (key === "k" && !event.shiftKey) {
-      insertRichTextLink(el, "https://");
+      applyComposerFormat(el, "link");
       return true;
     }
     return false;
+  };
+
+  const runFormat = (kind: string) => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    restoreRichTextSelection(el, savedRangeRef.current);
+    applyComposerFormat(el, kind);
+    emitMarkdownAndMention();
+  };
+
+  const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const el = surfaceRef.current;
+    if (!el) return;
+    const html = event.clipboardData?.getData("text/html") ?? "";
+    const text = event.clipboardData?.getData("text/plain") ?? "";
+    if (clipboardHasUsefulHtml(html)) {
+      insertRichTextHtmlFragment(el, stripDangerousRichTextTags(html));
+    } else if (text) {
+      insertRichTextHtmlFragment(el, stripDangerousRichTextTags(escapePlainText(text)));
+    }
+    emitMarkdownAndMention();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -293,16 +373,65 @@ export function MentionComposer({
           aria-multiline="true"
           aria-label={labels.placeholder}
           data-placeholder={labels.placeholder}
-          onInput={emitMarkdownAndMention}
+          onInput={() => {
+            rememberSelection();
+            emitMarkdownAndMention();
+          }}
+          onPaste={handlePaste}
           onKeyDown={handleKeyDown}
-          onClick={emitMarkdownAndMention}
+          onClick={() => {
+            rememberSelection();
+            emitMarkdownAndMention();
+          }}
           onKeyUp={(event) => {
+            rememberSelection();
             if (event.key === "Escape") return;
             emitMarkdownAndMention();
           }}
+          onMouseUp={rememberSelection}
         />
+        {showFormat && formatOpen ? (
+          <div className={classNames.formatBar} role="toolbar" aria-label={labels.formatToggleAriaLabel}>
+            {(
+              [
+                ["bold", labels.formatBoldAriaLabel ?? "Bold", Bold],
+                ["italic", labels.formatItalicAriaLabel ?? "Italic", Italic],
+                ["strike", labels.formatStrikeAriaLabel ?? "Strikethrough", Strikethrough],
+                ["ul", labels.formatListAriaLabel ?? "List", List],
+                ["ol", labels.formatOrderedListAriaLabel ?? "Numbered list", ListOrdered],
+                ["code", labels.formatCodeAriaLabel ?? "Code", Code],
+                ["quote", labels.formatQuoteAriaLabel ?? "Quote", Quote],
+                ["link", labels.formatLinkAriaLabel ?? "Link", Link],
+              ] as const
+            ).map(([kind, aria, Icon]) => (
+              <button
+                key={kind}
+                type="button"
+                className={classNames.format}
+                aria-label={aria}
+                disabled={disabled || submitting}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => runFormat(kind)}
+              >
+                <Icon size={16} aria-hidden />
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className={classNames.toolbar}>
           <div className={classNames.actions}>
+            {showFormat ? (
+              <button
+                type="button"
+                className={classNames.formatToggle}
+                aria-label={labels.formatToggleAriaLabel}
+                aria-pressed={formatOpen}
+                disabled={disabled || submitting}
+                onClick={() => setFormatOpen((open) => !open)}
+              >
+                <Type size={16} aria-hidden />
+              </button>
+            ) : null}
             {showAttach ? (
               <>
                 <input

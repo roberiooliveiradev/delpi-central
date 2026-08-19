@@ -197,6 +197,47 @@ describe("MentionComposer", () => {
     expect(onFilesSelected).toHaveBeenCalledTimes(1);
     expect(onFilesSelected.mock.calls[0]?.[0]?.[0]?.name).toBe("note.pdf");
   });
+
+  it("abre Formatar, aplica negrito e sanitiza HTML colado sem toolbar de deck", () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "MentionComposer.tsx"),
+      "utf8",
+    );
+    expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
+    expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);
+    expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
+
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const formatLabels = {
+      ...labels,
+      formatToggleAriaLabel: "Format",
+      formatBoldAriaLabel: "Bold",
+    };
+    const { container } = render(
+      <MentionComposer
+        value=""
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={formatLabels}
+        classNames={classNames}
+      />,
+    );
+    expect(container.querySelector("[class*='rich-text-toolbar']")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Format"));
+    expect(screen.getByRole("toolbar", { name: "Format" })).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Bold"));
+    expect(document.execCommand).toHaveBeenCalledWith("bold", false, undefined);
+
+    const surface = screen.getByLabelText("Write a message");
+    fireEvent.paste(surface, {
+      clipboardData: {
+        getData: (type: string) =>
+          type === "text/html" ? "<p>ok<script>alert(1)</script></p>" : "",
+      },
+    });
+    expect(surface.innerHTML.toLowerCase()).not.toContain("<script");
+    expect(surface.innerHTML.toLowerCase()).toContain("ok");
+  });
 });
 
 describe("mention-composer.css", () => {
@@ -214,6 +255,7 @@ describe("mention-composer.css", () => {
     expect(sendBlocks.join("\n")).toMatch(/width:\s*36px;/);
     expect(sendBlocks.join("\n")).toMatch(/border-radius:\s*50%;/);
     expect(css).toMatch(/max-height:\s*min\(40vh, 16rem\)/);
+    expect(css).toMatch(/__format-bar/);
     expect(css).not.toMatch(/textarea::placeholder/);
   });
 });
