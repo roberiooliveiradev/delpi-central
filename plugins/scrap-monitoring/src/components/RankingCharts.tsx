@@ -22,7 +22,7 @@ import {
   CHART_PRODUCT_Y_AXIS_WIDTH,
   CHART_SERIES_HEIGHT_MIN,
   CHART_Y_AXIS_WIDTH,
-  PIE_COLORS,
+  assignDistinctPieColors,
   resolveMotivoChartHeight,
   resolveMotivoPieRadii,
   resolveRankingChartHeight,
@@ -173,12 +173,15 @@ function HorizontalValueBars({
 }
 
 function MotivoPie({ items }: { items: ScrapRankingItem[] }) {
+  const colors = assignDistinctPieColors(
+    items.map((item) => item.code || item.label),
+  );
   const data = items.map((item, index) => ({
     name: item.label || item.code,
     value: item.value,
     sharePct: item.sharePct,
     fullName: item.label || item.code,
-    color: PIE_COLORS[index % PIE_COLORS.length],
+    color: colors[index],
   }));
 
   const height = resolveMotivoChartHeight(items.length);
