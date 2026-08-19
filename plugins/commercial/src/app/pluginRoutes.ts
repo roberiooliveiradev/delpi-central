@@ -30,10 +30,11 @@ export type PluginView =
   | "interaction_room_detail"
   | "not_found";
 
-/** Itens da navegação de topo (IA 2026 — seis áreas + Cliente efêmero fora da carteira). */
+/** Itens da navegação de topo (IA 2026 — sete áreas + Cliente efêmero fora da carteira). */
 export type PluginNavId =
   | "home"
   | "overview"
+  | "interaction_rooms"
   | "my_tasks"
   | "open_orders"
   | "customers"
@@ -723,7 +724,9 @@ export function resolveActiveNavId(
   }
   if (view === "proposals" || view === "proposal_detail") return null;
   if (view === "user_profile") return null;
-  if (view === "interaction_rooms" || view === "interaction_room_detail") return "home";
+  if (view === "interaction_rooms" || view === "interaction_room_detail") {
+    return "interaction_rooms";
+  }
   if (isAnalyticsDeepView(view)) return null;
   if (view === "not_found") return "home";
   if (

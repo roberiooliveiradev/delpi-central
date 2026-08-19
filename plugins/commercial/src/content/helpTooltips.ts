@@ -11,6 +11,8 @@ export const CM_HELP = {
     navHome: "Alertas prioritários, eventos do dia e atalhos para as áreas do portal.",
     navOverview:
       "Dashboard do período: filtros, indicadores, evolução ROL e funil. Sem lista de OVs — use Oportunidades no Início ou na Conta.",
+    navInteractionRooms:
+      "Conversas por pedido, conta, processo e murais da equipe — caixa de entrada e sala no mesmo canvas.",
     navMyTasks: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
     navOrders: "Itens de pedidos de venda em aberto nas carteiras que você atende.",
     navCustomers:

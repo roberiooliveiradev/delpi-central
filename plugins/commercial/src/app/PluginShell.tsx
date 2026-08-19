@@ -5,6 +5,7 @@ import {
   CalendarCheck,
   ClipboardList,
   Home,
+  MessagesSquare,
   Users,
 } from "lucide-react";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
@@ -59,6 +60,7 @@ type PluginShellProps = {
 const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   home: CM_HELP.shell.navHome,
   overview: CM_HELP.shell.navOverview,
+  interaction_rooms: CM_HELP.shell.navInteractionRooms,
   my_tasks: CM_HELP.shell.navMyTasks,
   open_orders: CM_HELP.shell.navOrders,
   customers: CM_HELP.shell.navCustomers,
@@ -69,6 +71,7 @@ const NAV_HELP: Partial<Record<PluginNavId, string>> = {
 const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
   overview: <BarChart3 size={16} strokeWidth={1.75} aria-hidden="true" />,
+  interaction_rooms: <MessagesSquare size={16} strokeWidth={1.75} aria-hidden="true" />,
   my_tasks: <CalendarCheck size={16} strokeWidth={1.75} aria-hidden="true" />,
   open_orders: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
   customers: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,

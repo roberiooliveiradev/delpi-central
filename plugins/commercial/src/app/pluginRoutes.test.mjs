@@ -36,8 +36,8 @@ describe("rotas nativas do pedido comercial", () => {
       relativePath: "interaction-rooms/room-1",
       roomId: "room-1",
     });
-    assert.equal(resolveActiveNavId("interaction_rooms"), "home");
-    assert.equal(resolveActiveNavId("interaction_room_detail"), "home");
+    assert.equal(resolveActiveNavId("interaction_rooms"), "interaction_rooms");
+    assert.equal(resolveActiveNavId("interaction_room_detail"), "interaction_rooms");
     assert.equal(buildPluginPath("interaction_rooms", "/apps/commercial"), inbox);
   });
 
