@@ -18,6 +18,9 @@ describe("CommercialHostDrawer", () => {
     expect(page).not.toMatch(/CommercialHostDrawer/);
     expect(page).toMatch(/cm-room-thread__stage/);
     expect(page).toMatch(/cm-room-thread__msgs/);
-    expect(page).toMatch(/cm-room-thread__context/);
+    expect(page).toMatch(/cm-room-thread__body/);
+    expect(page).toMatch(/cm-room-thread__main/);
+    expect(page).not.toMatch(/cm-room-thread__context/);
+    expect(page).toMatch(/CommercialRoomSidePanel/);
   });
 });

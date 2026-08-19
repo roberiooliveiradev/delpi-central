@@ -16,7 +16,10 @@ describe("interaction room fill CSS", () => {
     const fillChunk = css.split("Sala: fill viewport")[1]?.slice(0, 2500) ?? "";
     expect(fillChunk).not.toMatch(/\.delpi-ui-/);
     expect(css).not.toMatch(/max-height:\s*40vh/);
-    expect(css).toMatch(/\.cm-room-thread__context \{[\s\S]*?flex:\s*0 0 auto;/);
+    expect(css).toMatch(/\.cm-room-thread__body \{[\s\S]*?display:\s*flex;/);
+    expect(css).toMatch(/\.cm-room-thread__main \{[\s\S]*?flex-direction:\s*column;/);
+    expect(css).not.toMatch(/delpi-ui-room-side-panel/);
+    expect(css).not.toMatch(/cm-room-thread__context/);
     expect(css).not.toMatch(/cm-room-context-drawer/);
     expect(css).toMatch(/\.cm-room-alert-host \{[\s\S]*?position:\s*absolute;/);
     expect(css).toMatch(/\.cm-room-workspace__grid > \.cm-room-inbox-pane/);

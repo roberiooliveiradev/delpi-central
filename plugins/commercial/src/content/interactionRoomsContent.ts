@@ -51,7 +51,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   contextMembersEmpty: "Ninguém listado",
   contextSelectRoom: "Selecione uma sala para ver o contexto.",
   contextOpenEntity: "Abrir",
-  contextToggle: "Contexto",
+  contextToggle: "Neste chat",
   contextCloseAriaLabel: "Fechar contexto",
   contextSubtitleParticipantOne: "1 participante",
   contextSubtitleParticipants: "{count} participantes",

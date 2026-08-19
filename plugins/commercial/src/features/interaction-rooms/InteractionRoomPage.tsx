@@ -31,14 +31,14 @@ import {
   CommercialPagePath,
   CommercialRoomContextPanel,
   CommercialRoomHeader,
-  CommercialSectionCard,
+  CommercialRoomSidePanel,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   buildInteractionRoomsPath,
   buildPluginPath,
 } from "../../app/pluginRoutes";
-import { INTERACTION_ROOMS_CONTENT, formatInteractionRoomContextSubtitle } from "../../content/interactionRoomsContent";
+import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
@@ -432,78 +432,72 @@ export function InteractionRoomPage({
               }
             />
           </div>
-          <CommercialSectionCard
-            className="cm-room-thread__context delpi-ui-section-card--compact"
-            title={content.contextToggle}
-            subtitle={formatInteractionRoomContextSubtitle(
-              room.entity_key,
-              participants.length,
-              contextPins.length,
-            )}
-            collapsible
-            open={contextOpen}
-            onOpenChange={setContextOpen}
-          >
-            <CommercialRoomContextPanel
-              embedded
-              labels={{
-                about: content.contextAbout,
-                participants: content.contextParticipants,
-                pins: content.contextPins,
-                pinsEmpty: content.contextPinsEmpty,
-                membersEmpty: content.contextMembersEmpty,
-                openEntity: content.contextOpenEntity,
-              }}
-              entityTitle={room.title}
-              entityKey={room.entity_key}
-              entityHref={entityHref}
-              onOpenEntity={
-                entityHref
-                  ? () => {
-                      navigatePluginPath(entityHref);
-                    }
-                  : undefined
-              }
-              participants={participants}
-              participantsAriaLabel={content.roomMembersAriaLabel}
-              pins={contextPins}
-              onPinSelect={onSelectPin}
-            />
-          </CommercialSectionCard>
-          <div className="cm-room-thread__stage">
-            <div
-              className="cm-room-thread__msgs"
-              ref={msgsRef}
-              onScroll={(event) => {
-                stickToBottomRef.current = shouldStickThreadToBottom(
-                  event.currentTarget,
-                );
-              }}
-            >
-            {threadMessages.length === 0 ? (
-              <CommercialEmptyState
-                title={content.roomEmptyTitle}
-                message={content.roomEmptyDescription}
+          <div className="cm-room-thread__body">
+            <div className="cm-room-thread__main">
+              <div className="cm-room-thread__stage">
+                <div
+                  className="cm-room-thread__msgs"
+                  ref={msgsRef}
+                  onScroll={(event) => {
+                    stickToBottomRef.current = shouldStickThreadToBottom(
+                      event.currentTarget,
+                    );
+                  }}
+                >
+                {threadMessages.length === 0 ? (
+                  <CommercialEmptyState
+                    title={content.roomEmptyTitle}
+                    message={content.roomEmptyDescription}
+                  />
+                ) : (
+                  <CommercialMessageThread
+                    listAriaLabel={content.roomMessagesAriaLabel}
+                    emptyLabel={content.roomEmptyTitle}
+                    messages={threadMessages}
+                    resolveActions={resolveActions}
+                  />
+                )}
+                </div>
+              </div>
+              <div className="cm-room-thread__dock">
+                <InteractionRoomMessageComposer
+                  roomId={room.id}
+                  onMessageCreated={onMessageCreated}
+                  onError={(message) => pushRoomAlert(message, "danger")}
+                  onAddFilesReady={(addFiles) => {
+                    addFilesRef.current = addFiles;
+                  }}
+                />
+              </div>
+            </div>
+            <CommercialRoomSidePanel open={contextOpen} title={content.contextToggle}>
+              <CommercialRoomContextPanel
+                embedded
+                flush
+                labels={{
+                  about: content.contextAbout,
+                  participants: content.contextParticipants,
+                  pins: content.contextPins,
+                  pinsEmpty: content.contextPinsEmpty,
+                  membersEmpty: content.contextMembersEmpty,
+                  openEntity: content.contextOpenEntity,
+                }}
+                entityTitle={room.title}
+                entityKey={room.entity_key}
+                entityHref={entityHref}
+                onOpenEntity={
+                  entityHref
+                    ? () => {
+                        navigatePluginPath(entityHref);
+                      }
+                    : undefined
+                }
+                participants={participants}
+                participantsAriaLabel={content.roomMembersAriaLabel}
+                pins={contextPins}
+                onPinSelect={onSelectPin}
               />
-            ) : (
-              <CommercialMessageThread
-                listAriaLabel={content.roomMessagesAriaLabel}
-                emptyLabel={content.roomEmptyTitle}
-                messages={threadMessages}
-                resolveActions={resolveActions}
-              />
-            )}
-          </div>
-          </div>
-          <div className="cm-room-thread__dock">
-            <InteractionRoomMessageComposer
-              roomId={room.id}
-              onMessageCreated={onMessageCreated}
-              onError={(message) => pushRoomAlert(message, "danger")}
-              onAddFilesReady={(addFiles) => {
-                addFilesRef.current = addFiles;
-              }}
-            />
+            </CommercialRoomSidePanel>
           </div>
         </CommercialConversationFileDropLayer>
       ) : null}

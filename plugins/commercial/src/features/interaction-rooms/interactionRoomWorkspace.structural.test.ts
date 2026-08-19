@@ -26,6 +26,8 @@ describe("InteractionRoomWorkspace", () => {
     expect(app).toMatch(/InteractionRoomWorkspace/);
     expect(app).toMatch(/interaction_room_detail/);
     expect(thread).toMatch(/cm-room-thread__header/);
+    expect(thread).toMatch(/cm-room-thread__body/);
+    expect(thread).toMatch(/cm-room-thread__main/);
     expect(thread).toMatch(/cm-room-thread__msgs/);
     expect(thread).toMatch(/cm-room-thread__dock/);
   });

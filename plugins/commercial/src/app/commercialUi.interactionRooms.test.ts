@@ -9,6 +9,7 @@ import {
   CommercialReactionBar,
   CommercialRoomHeader,
   CommercialRoomInboxList,
+  CommercialRoomSidePanel,
 } from "./commercialUi";
 
 describe("commercialUi interaction room factories", () => {
@@ -21,5 +22,6 @@ describe("commercialUi interaction room factories", () => {
     expect(typeof CommercialReactionBar).toBe("function");
     expect(typeof CommercialRoomInboxList).toBe("function");
     expect(typeof CommercialRoomHeader).toBe("function");
+    expect(typeof CommercialRoomSidePanel).toBe("function");
   });
 });

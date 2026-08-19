@@ -74,6 +74,7 @@ import {
   createDashboardRoomInboxList,
   createDashboardRoomHeader,
   createDashboardRoomContextPanel,
+  createDashboardRoomSidePanel,
   createDashboardResizableColumns,
   createDashboardConversationFileDropLayer,
   useChartGranularitySelection,
@@ -547,6 +548,7 @@ export const CommercialReactionBar = createDashboardReactionBar(UI_PREFIX);
 export const CommercialRoomInboxList = createDashboardRoomInboxList(UI_PREFIX);
 export const CommercialRoomHeader = createDashboardRoomHeader(UI_PREFIX);
 export const CommercialRoomContextPanel = createDashboardRoomContextPanel(UI_PREFIX);
+export const CommercialRoomSidePanel = createDashboardRoomSidePanel(UI_PREFIX);
 export const CommercialResizableColumns = createDashboardResizableColumns(UI_PREFIX);
 export const CommercialConversationFileDropLayer =
   createDashboardConversationFileDropLayer(UI_PREFIX);

@@ -186,13 +186,19 @@
   flex: 0 0 auto;
 }
 
-.dashboard-commercial .cm-room-thread__context {
-  flex: 0 0 auto;
+.dashboard-commercial .cm-room-thread__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   min-width: 0;
 }
 
-.dashboard-commercial.dashboard-page--fill .cm-room-thread__context {
-  padding-inline: var(--cm-gap-xs);
+.dashboard-commercial .cm-room-thread__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-thread__header {
