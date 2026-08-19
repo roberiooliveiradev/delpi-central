@@ -76,14 +76,15 @@ describe("RoomInboxList", () => {
 });
 
 describe("room-inbox.css", () => {
-  it("seleção usa barra 3px e fill, sem borda full", () => {
+  it("seleção usa fill sem barra lateral", () => {
     const css = readFileSync(join(stylesDir, "room-inbox.css"), "utf8");
     const item = css.match(/\.delpi-ui-room-inbox__item \{[^}]+\}/)?.[0] ?? "";
     const selected =
       css.match(/\.delpi-ui-room-inbox__item--selected \{[^}]+\}/)?.[0] ?? "";
     expect(item).toMatch(/border:\s*none;/);
     expect(item).not.toMatch(/border:\s*1px solid/);
-    expect(selected).toMatch(/inset 3px 0 0/);
+    expect(selected).toMatch(/box-shadow:\s*none;/);
+    expect(selected).not.toMatch(/inset 3px/);
     expect(selected).not.toMatch(/border-color:/);
   });
 });

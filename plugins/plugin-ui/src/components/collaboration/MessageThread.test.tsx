@@ -58,7 +58,8 @@ describe("MessageThread", () => {
         ]}
       />,
     );
-    expect(screen.getByText("Bruno")).toBeTruthy();
+    expect(screen.getByText(/Hello/)).toBeTruthy();
+    expect(screen.queryByText("Bruno")).toBeNull();
     expect(screen.getByText("Room created")).toBeTruthy();
     expect(container.querySelector('[data-message-id="1"]')).not.toBeNull();
     expect(container.querySelector('[data-message-id="2"]')).not.toBeNull();
@@ -155,6 +156,28 @@ describe("MessageThread", () => {
     expect(onPin).toHaveBeenCalledTimes(1);
   });
 
+  it("oculta o nome quando há avatar e coloca a hora no rodapé da bolha", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno Costa",
+            createdAtLabel: "10:00",
+          },
+        ]}
+      />,
+    );
+    expect(screen.queryByText("Bruno Costa")).toBeNull();
+    expect(container.querySelector(".delpi-ui-avatar")).not.toBeNull();
+    expect(container.querySelector("article footer time")?.textContent).toBe("10:00");
+  });
+
   it("coloca a barra de ações fora do article da bolha", () => {
     const { container } = render(
       <MessageThread
@@ -201,9 +224,12 @@ describe("message-thread.css host scroll", () => {
     expect(bubble).toMatch(/border:\s*none;/);
     expect(bubble).not.toMatch(/border:\s*1px/);
     const mine = css.match(/\.delpi-ui-message-thread__bubble--mine \{[^}]+\}/)?.[0] ?? "";
-    expect(mine).toMatch(/28%/);
+    expect(mine).toMatch(/22%/);
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
     expect(actions).toMatch(/position:\s*absolute;/);
-    expect(actions).toMatch(/transform:\s*translateY\(calc\(-100%/);
+    expect(actions).not.toMatch(/translateY\(calc\(-100%/);
+    expect(css).toMatch(/padding-top:\s*2\.75rem;/);
+    expect(css).toMatch(/opacity 0\.15s ease 0\.45s/);
+    expect(css).toMatch(/box-shadow:\s*none;/);
   });
 });

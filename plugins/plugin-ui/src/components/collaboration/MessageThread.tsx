@@ -205,6 +205,8 @@ export function MessageThread({
             />
           ) : null;
 
+          const showAuthor = Boolean(message.authorName && !message.mine && !avatar);
+
           return (
             <li
               key={message.id}
@@ -236,16 +238,18 @@ export function MessageThread({
                   <article
                     className={message.mine ? classNames.bubbleMine : classNames.bubble}
                   >
-                    <header className={classNames.meta}>
-                      {message.authorName && !message.mine ? (
+                    {showAuthor ? (
+                      <header className={classNames.meta}>
                         <span className={classNames.author}>{message.authorName}</span>
-                      ) : null}
-                      {message.createdAtLabel ? (
-                        <time className={classNames.time}>{message.createdAtLabel}</time>
-                      ) : null}
-                    </header>
+                      </header>
+                    ) : null}
                     {body}
                     {message.belowBody}
+                    {message.createdAtLabel ? (
+                      <footer className={classNames.meta}>
+                        <time className={classNames.time}>{message.createdAtLabel}</time>
+                      </footer>
+                    ) : null}
                   </article>
                 </div>
                 {message.mine ? avatar : null}

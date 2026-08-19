@@ -48,8 +48,8 @@
 }
 
 .delpi-ui-room-inbox__item--selected {
-  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, transparent);
-  box-shadow: inset 3px 0 0 var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
+  box-shadow: none;
 }
 
 .delpi-ui-room-inbox__item--unread .delpi-ui-room-inbox__title {

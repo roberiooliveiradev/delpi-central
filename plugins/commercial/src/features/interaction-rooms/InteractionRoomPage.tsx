@@ -108,6 +108,7 @@ export function InteractionRoomPage({
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
   const [contextOpen, setContextOpen] = useState(false);
+  const [threadHost, setThreadHost] = useState<HTMLElement | null>(null);
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
@@ -360,7 +361,10 @@ export function InteractionRoomPage({
   }, [threadMessages.length, loading]);
 
   return (
-    <section className={variant === "page" ? "cm-page-stack" : "cm-room-thread"}>
+    <section
+      ref={setThreadHost}
+      className={variant === "page" ? "cm-page-stack" : "cm-room-thread"}
+    >
       {variant === "page" ? (
         <CommercialPagePath
           back={{
@@ -421,6 +425,7 @@ export function InteractionRoomPage({
             open={contextOpen}
             title={content.contextToggle}
             className="cm-room-context-drawer"
+            portalTarget={threadHost}
             onClose={() => setContextOpen(false)}
             closeAriaLabel={content.contextCloseAriaLabel}
           >

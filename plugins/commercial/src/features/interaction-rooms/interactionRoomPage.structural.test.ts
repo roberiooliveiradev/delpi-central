@@ -22,7 +22,7 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/CommercialConversationFileDropLayer/);
     expect(source).toMatch(/CommercialRoomContextPanel/);
     expect(source).toMatch(/CommercialHostDrawer/);
-    expect(source).toMatch(/cm-room-context-drawer/);
+    expect(source).toMatch(/portalTarget=\{threadHost\}/);
     expect(source).toMatch(/CommercialAlertQueue/);
     expect(source).toMatch(/cm-room-alert-host/);
     expect(source).toMatch(/onRoomTitle/);

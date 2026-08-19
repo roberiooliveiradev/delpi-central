@@ -270,10 +270,10 @@ export function createHostContainedDrawerShell(
   const hostSelector = `.${config.portalScopeClassName.trim().split(/\s+/)[0]}`;
 
   return function HostContainedDrawerShell(props: DashboardDrawerShellProps) {
-    const portalTarget =
-      typeof document !== "undefined"
+    const portalTarget = props.portalTarget
+      ?? (typeof document !== "undefined"
         ? resolveHostContainedPortalTarget(hostSelector)
-        : null;
+        : null);
     return (
       <Drawer
         {...props}

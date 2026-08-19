@@ -71,4 +71,36 @@ describe("DrawerShell", () => {
     unmount();
     host.remove();
   });
+
+  it("aceita portalTarget customizado no host do drawer", () => {
+    const plugin = document.createElement("div");
+    plugin.className = "dashboard-commercial";
+    const thread = document.createElement("div");
+    thread.className = "cm-room-thread";
+    plugin.appendChild(thread);
+    document.body.appendChild(plugin);
+
+    const HostDrawer = createHostContainedDrawerShell({
+      prefix: "cm",
+      portalScopeClassName: "dashboard-commercial",
+    });
+
+    const { unmount } = render(
+      <HostDrawer
+        open
+        title="Contexto"
+        portalTarget={thread}
+        onClose={vi.fn()}
+      >
+        <p>Sobre</p>
+      </HostDrawer>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Contexto" });
+    expect(thread.contains(dialog)).toBe(true);
+    expect(plugin.contains(dialog)).toBe(true);
+
+    unmount();
+    plugin.remove();
+  });
 });

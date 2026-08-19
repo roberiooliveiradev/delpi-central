@@ -15,5 +15,6 @@ describe("CommercialHostDrawer", () => {
     const page = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(page).toMatch(/CommercialHostDrawer/);
     expect(page).toMatch(/cm-room-context-drawer/);
+    expect(page).toMatch(/portalTarget=\{threadHost\}/);
   });
 });
