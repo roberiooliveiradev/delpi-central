@@ -13,6 +13,7 @@ import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
 import { getOpenOrdersTotvs } from "../api/openOrdersTotvsApi";
+import { listInteractionRooms } from "../api/interactionRoomsApi";
 import { CM_HELP } from "../content/helpTooltips";
 import {
   collectSearchHits,
@@ -28,9 +29,11 @@ import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
   useCommercialReadyToInvoiceSync,
   useCommercialWorklistSync,
+  useInteractionInboxSync,
 } from "./CommercialRealtimeProvider";
 import { resolveMyTasksNavBadgeCount } from "./myTasksNavBadge";
 import { resolveReadyToInvoiceBadgeCount } from "./myOrdersNavBadge";
+import { sumInboxUnreadCount } from "./interactionRoomsNavBadge";
 import {
   CommercialActionButton,
   CommercialCommandPalette,
@@ -107,6 +110,7 @@ export function PluginShell({
 }: PluginShellProps) {
   const [myTasksBadge, setMyTasksBadge] = useState(0);
   const [myOrdersBadge, setMyOrdersBadge] = useState(0);
+  const [roomsBadge, setRoomsBadge] = useState(0);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -165,8 +169,35 @@ export function PluginShell({
       });
   }, []);
 
+  const refreshRoomsBadge = useCallback(() => {
+    void listInteractionRooms({ filter: "unread", limit: 100 })
+      .then((items) => {
+        setRoomsBadge(sumInboxUnreadCount(items));
+      })
+      .catch(() => {
+        /* keep last known badge */
+      });
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void listInteractionRooms({
+      filter: "unread",
+      limit: 100,
+      signal: controller.signal,
+    })
+      .then((items) => {
+        setRoomsBadge(sumInboxUnreadCount(items));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setRoomsBadge(0);
+      });
+    return () => controller.abort();
+  }, [view]);
+
   useCommercialWorklistSync(refreshMyTasksBadge, showWorklist);
   useCommercialReadyToInvoiceSync(refreshMyOrdersBadge, true);
+  useInteractionInboxSync(refreshRoomsBadge, true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -210,7 +241,9 @@ export function PluginShell({
         ? myTasksBadge || undefined
         : item.id === "open_orders"
           ? myOrdersBadge || undefined
-          : undefined,
+          : item.id === "interaction_rooms"
+            ? roomsBadge || undefined
+            : undefined,
   }));
 
   if (ephemeralClientNav) {
