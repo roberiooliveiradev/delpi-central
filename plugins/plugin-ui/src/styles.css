@@ -115,6 +115,8 @@
 .delpi-ui-help-tooltip--wrap {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
+  width: max-content;
   max-width: 100%;
 }
 
@@ -144,6 +146,8 @@
 }
 
 .delpi-ui-help-tooltip__bubble {
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
   border-radius: 10px;
   padding: 8px 10px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));

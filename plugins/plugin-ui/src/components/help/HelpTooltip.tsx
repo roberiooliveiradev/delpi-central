@@ -115,8 +115,8 @@ function bubbleLayoutStyle(position: BubblePosition | null, positioned: boolean)
   const base: CSSProperties = {
     position: "fixed",
     zIndex: DELPI_UI_OVERLAY_Z_INDEX.helpTooltip,
+    width: "max-content",
     maxWidth: BUBBLE_MAX_WIDTH,
-    minWidth: 200,
     boxSizing: "border-box",
     pointerEvents: "none",
   };

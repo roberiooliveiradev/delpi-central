@@ -77,6 +77,18 @@ describe("HelpTooltip", () => {
     expect(screen.queryByRole("tooltip", { hidden: true })).toBeNull();
   });
 
+  it("balão curto não força min-width de 200px", () => {
+    const { container } = render(
+      <HelpTooltip content="Negrito" wrap>
+        <button type="button">B</button>
+      </HelpTooltip>,
+    );
+    fireEvent.mouseEnter(container.querySelector(".delpi-ui-help-tooltip")!);
+    const bubble = screen.getByRole("tooltip", { hidden: true });
+    expect(bubble.style.minWidth).toBe("");
+    expect(bubble.style.width).toBe("max-content");
+  });
+
   it("não emite warning de key quando wrap tem vários filhos", () => {
     const errors: string[] = [];
     const orig = console.error;
