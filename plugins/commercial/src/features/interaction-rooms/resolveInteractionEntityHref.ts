@@ -107,3 +107,46 @@ export function resolveInteractionEntityHref(
       return null;
   }
 }
+
+export function parseRoomEntityKey(
+  entityKey: string | null | undefined,
+): [string, string] | null {
+  const raw = (entityKey ?? "").trim();
+  const sep = raw.indexOf("|");
+  if (sep <= 0) return null;
+  const left = raw.slice(0, sep).trim();
+  const right = raw.slice(sep + 1).trim();
+  if (!left || !right) return null;
+  return [left, right];
+}
+
+/** `entity_type` + `entity_key` da sala → path do MFE (fail-open). */
+export function resolveRoomEntityHref(
+  basePath: string,
+  entityType?: string | null,
+  entityKey?: string | null,
+): string | null {
+  const kind = (entityType ?? "").trim().toLowerCase();
+  const parsed = parseRoomEntityKey(entityKey);
+  if (!parsed) return null;
+  const [left, right] = parsed;
+  if (kind === "customer") {
+    return resolveInteractionEntityHref(basePath, "customer_detail", {
+      customer_code: left,
+      customer_store: right,
+    });
+  }
+  if (kind === "order") {
+    return resolveInteractionEntityHref(basePath, "order_detail", {
+      branch: left,
+      order: right,
+    });
+  }
+  if (kind === "production_order") {
+    return resolveInteractionEntityHref(basePath, "production_order_detail", {
+      branch: left,
+      production_order: right,
+    });
+  }
+  return null;
+}

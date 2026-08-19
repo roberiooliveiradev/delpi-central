@@ -18,6 +18,9 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/usePortfolioScope/);
     expect(source).toMatch(/mine:/);
     expect(source).toMatch(/CommercialConversationFileDropLayer/);
+    expect(source).toMatch(/CommercialRoomContextPanel/);
+    expect(source).toMatch(/contextToggle/);
+    expect(source).toMatch(/scrollThreadMessageIntoView/);
     expect(source).toMatch(/useInteractionRoomSync/);
     expect(source).toMatch(/applyInteractionRoomRealtime/);
     expect(source).not.toMatch(/cm-message-bubble/);

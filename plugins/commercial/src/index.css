@@ -119,6 +119,14 @@
   min-height: 0;
 }
 
+.dashboard-commercial .cm-room-thread .cm-room-context-panel {
+  flex: 0 1 auto;
+  max-height: 40vh;
+  overflow-y: auto;
+  border-left: none;
+  border-bottom: 1px solid var(--cm-border, var(--border, #e6e6e6));
+}
+
 .dashboard-commercial .cm-room-thread__header {
   flex: 0 0 auto;
 }

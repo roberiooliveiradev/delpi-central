@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PanelRight } from "lucide-react";
 
 import {
   createTaskFromInteractionMessage,
@@ -20,15 +21,18 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import {
+  CommercialActionButton,
   CommercialConversationFileDropLayer,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialMessageThread,
   CommercialPagePath,
+  CommercialRoomContextPanel,
   CommercialRoomHeader,
   CommercialStateBanner,
   CommercialStatusBadge,
 } from "../../app/commercialUi";
+import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   buildInteractionRoomsPath,
   buildPluginPath,
@@ -39,6 +43,11 @@ import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
+import { resolveRoomEntityHref } from "./resolveInteractionEntityHref";
+import {
+  pinTitleFromMessageBody,
+  scrollThreadMessageIntoView,
+} from "./scrollThreadMessageIntoView";
 
 type Props = {
   basePath: string;
@@ -94,6 +103,8 @@ export function InteractionRoomPage({
   const { currentUserId, myPortfolio } = usePortfolioScope();
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
+  const msgsRef = useRef<HTMLDivElement | null>(null);
+  const [contextOpen, setContextOpen] = useState(false);
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
@@ -291,6 +302,37 @@ export function InteractionRoomPage({
     [members, nameFor],
   );
 
+  const entityHref = room
+    ? resolveRoomEntityHref(basePath, room.entity_type, room.entity_key)
+    : null;
+
+  const contextPins = useMemo(
+    () =>
+      [...pinnedMessageIds].map((messageId) => {
+        const message = messages.find((item) => item.id === messageId);
+        const body =
+          message?.deleted_at != null
+            ? content.messageDeleted
+            : message?.body_text;
+        return {
+          id: messageId,
+          messageId,
+          title: pinTitleFromMessageBody(body, content.roomFallbackTitle),
+          dateLabel: formatMessageTime(message?.created_at),
+        };
+      }),
+    [
+      pinnedMessageIds,
+      messages,
+      content.messageDeleted,
+      content.roomFallbackTitle,
+    ],
+  );
+
+  const onSelectPin = useCallback((messageId: string) => {
+    scrollThreadMessageIntoView(msgsRef.current, messageId);
+  }, []);
+
   return (
     <section className={variant === "page" ? "cm-page-stack" : "cm-room-thread"}>
       {variant === "page" ? (
@@ -330,9 +372,43 @@ export function InteractionRoomPage({
               }
               participants={participants}
               participantsAriaLabel={content.roomMembersAriaLabel}
+              actions={
+                <CommercialActionButton
+                  variant="ghost"
+                  aria-label={content.contextToggle}
+                  onClick={() => setContextOpen((open) => !open)}
+                >
+                  <PanelRight size={16} aria-hidden />
+                  {content.contextToggle}
+                </CommercialActionButton>
+              }
             />
           </div>
-          <div className="cm-room-thread__msgs">
+          {contextOpen ? (
+            <CommercialRoomContextPanel
+              labels={{
+                about: content.contextAbout,
+                participants: content.contextParticipants,
+                pins: content.contextPins,
+                pinsEmpty: content.contextPinsEmpty,
+                membersEmpty: content.contextMembersEmpty,
+                openEntity: content.contextOpenEntity,
+              }}
+              entityTitle={room.title}
+              entityKey={room.entity_key}
+              entityHref={entityHref}
+              onOpenEntity={
+                entityHref
+                  ? () => navigatePluginPath(entityHref)
+                  : undefined
+              }
+              participants={participants}
+              participantsAriaLabel={content.roomMembersAriaLabel}
+              pins={contextPins}
+              onPinSelect={onSelectPin}
+            />
+          ) : null}
+          <div className="cm-room-thread__msgs" ref={msgsRef}>
             {threadMessages.length === 0 ? (
               <CommercialEmptyState
                 title={content.roomEmptyTitle}

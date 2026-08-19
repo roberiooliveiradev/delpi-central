@@ -56,6 +56,8 @@ describe("MessageThread", () => {
     );
     expect(screen.getByText("Bruno")).toBeTruthy();
     expect(screen.getByText("Room created")).toBeTruthy();
+    expect(container.querySelector('[data-message-id="1"]')).not.toBeNull();
+    expect(container.querySelector('[data-message-id="2"]')).not.toBeNull();
     expect(container.querySelector(".delpi-ui-message-thread__item--reply")).not.toBeNull();
     expect(container.querySelector(".delpi-ui-mention-text__chip")).not.toBeNull();
   });

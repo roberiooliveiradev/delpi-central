@@ -163,7 +163,11 @@ export function MessageThread({
         {messages.map((message) => {
           if (isSystemKind(message.kind)) {
             return (
-              <li key={message.id} className={itemClassName(classNames, message)}>
+              <li
+                key={message.id}
+                className={itemClassName(classNames, message)}
+                data-message-id={message.id}
+              >
                 <div className={classNames.system} data-message-kind={message.kind}>
                   <span className={classNames.body}>{message.bodyText}</span>
                   {message.createdAtLabel ? (
@@ -203,6 +207,7 @@ export function MessageThread({
             <li
               key={message.id}
               className={itemClassName(classNames, message)}
+              data-message-id={message.id}
               data-message-kind={message.kind}
             >
               <div className={classNames.row}>
