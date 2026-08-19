@@ -15,4 +15,16 @@ describe("interaction room fill CSS", () => {
     const fillChunk = css.split("Sala: fill viewport")[1]?.slice(0, 2500) ?? "";
     expect(fillChunk).not.toMatch(/\.delpi-ui-/);
   });
+
+  it("o host do Portal honra dashboard-page--fill (não height auto)", () => {
+    const portalCss = readFileSync(
+      join(dir, "../../../../../portal/src/index.css"),
+      "utf8",
+    );
+    expect(portalCss).toMatch(/:not\(\.dashboard-page--fill\)/);
+    expect(portalCss).toMatch(
+      /\.app-host-federated__mount:has\(\.dashboard-page--fill\)/,
+    );
+    expect(portalCss).toMatch(/\.content:has\(\.dashboard-page--fill\)/);
+  });
 });
