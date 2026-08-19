@@ -77,6 +77,25 @@ export function snapshotEditablePlaintext(root: HTMLElement): {
   return { text, cursor: prefix.toString().length };
 }
 
+/**
+ * Caret colapsado (caso típico após digitar e clicar em Formatar): envolve o
+ * conteúdo do editor. Seleção já expandida permanece.
+ */
+export function expandCollapsedSelectionForFormat(editor: HTMLElement): void {
+  const selection = window.getSelection();
+  if (!selection) return;
+  if (selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    if (!range.collapsed && editor.contains(range.commonAncestorContainer)) {
+      return;
+    }
+  }
+  const all = document.createRange();
+  all.selectNodeContents(editor);
+  selection.removeAllRanges();
+  selection.addRange(all);
+}
+
 export function setEditablePlainCursor(root: HTMLElement, offset: number): void {
   const nodes = collectTextNodes(root);
   const selection = window.getSelection();

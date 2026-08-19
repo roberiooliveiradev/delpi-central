@@ -36,6 +36,7 @@
   border: none;
   resize: none;
   overflow-y: auto;
+  user-select: text;
   font: inherit;
   font-size: 0.9375rem;
   line-height: 1.45;
@@ -68,6 +69,22 @@
 .delpi-ui-mention-composer__textarea code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.9em;
+}
+
+.delpi-ui-mention-composer__textarea :is(b, strong) {
+  font-weight: 700;
+}
+
+.delpi-ui-mention-composer__textarea :is(i, em) {
+  font-style: italic;
+}
+
+.delpi-ui-mention-composer__textarea :is(s, strike, del) {
+  text-decoration: line-through;
+}
+
+.delpi-ui-mention-composer__textarea a {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 .delpi-ui-mention-composer__toolbar {

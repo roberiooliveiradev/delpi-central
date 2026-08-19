@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MentionComposer, mentionComposerBemClasses } from "./MentionComposer";
 import {
   detectActiveMention,
+  expandCollapsedSelectionForFormat,
   insertMentionToken,
   replaceEditablePlainRange,
   snapshotEditablePlaintext,
@@ -43,6 +44,22 @@ describe("mentionComposerCaret", () => {
     expect(result.token).toBe("@Ana Silva");
     expect(result.nextValue).toBe("Hi @Ana Silva ");
     expect(result.nextCursor).toBe("Hi @Ana Silva ".length);
+  });
+
+  it("expande caret colapsado para o conteúdo inteiro", () => {
+    const root = document.createElement("div");
+    root.textContent = "dsdssssdsds";
+    document.body.appendChild(root);
+    const collapsed = document.createRange();
+    collapsed.selectNodeContents(root);
+    collapsed.collapse(false);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(collapsed);
+    expandCollapsedSelectionForFormat(root);
+    const next = window.getSelection()?.getRangeAt(0);
+    expect(next?.collapsed).toBe(false);
+    expect(next?.toString()).toBe("dsdssssdsds");
+    root.remove();
   });
 
   it("substitui intervalo plano no contenteditable", () => {
@@ -158,12 +175,11 @@ describe("MentionComposer", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it("aplica atalho Ctrl+B via execCommand", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
+  it("aplica Ctrl+B envolvendo o texto em strong", () => {
     render(<Harness initial="Hello" />);
     const surface = screen.getByLabelText("Write a message");
     fireEvent.keyDown(surface, { key: "b", ctrlKey: true });
-    expect(document.execCommand).toHaveBeenCalledWith("bold", false, undefined);
+    expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
   });
 
   it("inserts selected mention from the menu", () => {
@@ -215,7 +231,7 @@ describe("MentionComposer", () => {
     };
     const { container } = render(
       <MentionComposer
-        value=""
+        value="dsdssssdsds"
         onChange={vi.fn()}
         onSubmit={vi.fn()}
         labels={formatLabels}
@@ -223,12 +239,17 @@ describe("MentionComposer", () => {
       />,
     );
     expect(container.querySelector("[class*='rich-text-toolbar']")).toBeNull();
+    const surface = screen.getByLabelText("Write a message");
+    const caret = document.createRange();
+    caret.selectNodeContents(surface);
+    caret.collapse(false);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(caret);
     fireEvent.click(screen.getByLabelText("Format"));
     expect(screen.getByRole("toolbar", { name: "Format" })).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Bold"));
-    expect(document.execCommand).toHaveBeenCalledWith("bold", false, undefined);
+    expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
 
-    const surface = screen.getByLabelText("Write a message");
     fireEvent.paste(surface, {
       clipboardData: {
         getData: (type: string) =>
@@ -256,6 +277,7 @@ describe("mention-composer.css", () => {
     expect(sendBlocks.join("\n")).toMatch(/border-radius:\s*50%;/);
     expect(css).toMatch(/max-height:\s*min\(40vh, 16rem\)/);
     expect(css).toMatch(/__format-bar/);
+    expect(css).toMatch(/font-weight:\s*700/);
     expect(css).not.toMatch(/textarea::placeholder/);
   });
 });

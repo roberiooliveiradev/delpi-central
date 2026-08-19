@@ -84,9 +84,9 @@ export function InteractionRoomMessageComposer({
     onAddFilesReady?.(onFilesSelected);
   }, [onAddFilesReady, onFilesSelected]);
 
-  const onSubmit = useCallback(async () => {
+  const onSubmit = useCallback(async (bodyMarkdown?: string) => {
     const id = roomId.trim();
-    const body = draft.trim();
+    const body = (bodyMarkdown ?? draft).trim();
     if (!id || submitting || disabled) return;
     if (!body && pending.length === 0) return;
 
@@ -150,8 +150,8 @@ export function InteractionRoomMessageComposer({
     <CommercialMentionComposer
       value={draft}
       onChange={setDraft}
-      onSubmit={() => {
-        void onSubmit();
+      onSubmit={(body) => {
+        void onSubmit(body);
       }}
       submitting={submitting}
       disabled={disabled || submitting}

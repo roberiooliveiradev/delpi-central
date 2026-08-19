@@ -44,6 +44,7 @@ import {
 } from "./MentionMenu";
 import {
   detectActiveMention,
+  expandCollapsedSelectionForFormat,
   insertMentionToken,
   replaceEditablePlainRange,
   snapshotEditablePlaintext,
@@ -87,7 +88,8 @@ export type MentionComposerLabels = {
 export type MentionComposerProps = {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void;
+  /** Recebe o markdown atual da superfície (não depender só do state controlado). */
+  onSubmit: (markdown: string) => void;
   labels: MentionComposerLabels;
   classNames: MentionComposerClassNames;
   mentionHits?: readonly MentionMenuHit[];
@@ -166,9 +168,10 @@ function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
 }
 
 function applyComposerFormat(editor: HTMLElement, kind: string) {
-  if (kind === "bold") runRichTextCommand(editor, "bold");
-  else if (kind === "italic") runRichTextCommand(editor, "italic");
-  else if (kind === "strike") runRichTextCommand(editor, "strikeThrough");
+  expandCollapsedSelectionForFormat(editor);
+  if (kind === "bold") wrapSelectionWithTag(editor, "strong");
+  else if (kind === "italic") wrapSelectionWithTag(editor, "em");
+  else if (kind === "strike") wrapSelectionWithTag(editor, "s");
   else if (kind === "ul") runRichTextCommand(editor, "insertUnorderedList");
   else if (kind === "ol") runRichTextCommand(editor, "insertOrderedList");
   else if (kind === "code") wrapSelectionWithTag(editor, "code");
@@ -230,6 +233,22 @@ export function MentionComposer({
     onMentionQueryChange?.(activeMention ? activeMention.query : null);
   }, [activeMention, onMentionQueryChange]);
 
+  useEffect(() => {
+    const persist = () => {
+      const el = surfaceRef.current;
+      if (!el) return;
+      const range = getRichTextSelectionRange(el);
+      if (range) savedRangeRef.current = range;
+    };
+    document.addEventListener("selectionchange", persist);
+    return () => document.removeEventListener("selectionchange", persist);
+  }, []);
+
+  const readMarkdown = () => {
+    const el = surfaceRef.current;
+    return el ? richTextHtmlToMarkdown(el.innerHTML) : value;
+  };
+
   const emitMarkdownAndMention = () => {
     const el = surfaceRef.current;
     if (!el) return;
@@ -260,8 +279,19 @@ export function MentionComposer({
     });
   };
 
+  const liveMarkdown = readMarkdown();
   const canSubmit =
-    !disabled && !submitting && (value.trim().length > 0 || hasAttachments);
+    !disabled &&
+    !submitting &&
+    (liveMarkdown.trim().length > 0 || value.trim().length > 0 || hasAttachments);
+
+  const flushAndSubmit = () => {
+    const markdown = readMarkdown();
+    if (markdown !== value) onChange(markdown);
+    if (!disabled && !submitting && (markdown.trim().length > 0 || hasAttachments)) {
+      onSubmit(markdown);
+    }
+  };
 
   const applyShortcut = (event: KeyboardEvent<HTMLDivElement>): boolean => {
     const mod = event.ctrlKey || event.metaKey;
@@ -340,18 +370,18 @@ export function MentionComposer({
       return;
     }
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-      if (submitOnModEnter && canSubmit) {
+      if (submitOnModEnter) {
         event.preventDefault();
-        onSubmit();
+        flushAndSubmit();
       }
       return;
     }
     if (event.key === "Enter" && event.shiftKey) {
       return;
     }
-    if (event.key === "Enter" && submitOnEnter && canSubmit) {
+    if (event.key === "Enter" && submitOnEnter) {
       event.preventDefault();
-      onSubmit();
+      flushAndSubmit();
     }
   };
 
@@ -427,6 +457,7 @@ export function MentionComposer({
                 aria-label={labels.formatToggleAriaLabel}
                 aria-pressed={formatOpen}
                 disabled={disabled || submitting}
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={() => setFormatOpen((open) => !open)}
               >
                 <Type size={16} aria-hidden />
@@ -473,7 +504,7 @@ export function MentionComposer({
             className={classNames.send}
             aria-label={labels.sendAriaLabel}
             disabled={!canSubmit}
-            onClick={() => onSubmit()}
+            onClick={() => flushAndSubmit()}
           >
             <SendHorizontal size={16} aria-hidden />
           </button>
