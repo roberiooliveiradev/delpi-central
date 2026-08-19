@@ -78,6 +78,8 @@ export type MentionComposerProps = {
   portalScopeClassName?: string;
   /** Submit on Ctrl/Cmd+Enter (default true). */
   submitOnModEnter?: boolean;
+  /** Submit on Enter (Shift+Enter quebra). Default true. */
+  submitOnEnter?: boolean;
 };
 
 export function mentionComposerBemClasses(prefix: string): MentionComposerClassNames {
@@ -148,6 +150,7 @@ export function MentionComposer({
   className,
   portalScopeClassName,
   submitOnModEnter = true,
+  submitOnEnter = true,
 }: MentionComposerProps) {
   const surfaceId = useId();
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -256,12 +259,17 @@ export function MentionComposer({
       emitMarkdownAndMention();
       return;
     }
-    if (
-      submitOnModEnter &&
-      event.key === "Enter" &&
-      (event.ctrlKey || event.metaKey) &&
-      canSubmit
-    ) {
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      if (submitOnModEnter && canSubmit) {
+        event.preventDefault();
+        onSubmit();
+      }
+      return;
+    }
+    if (event.key === "Enter" && event.shiftKey) {
+      return;
+    }
+    if (event.key === "Enter" && submitOnEnter && canSubmit) {
       event.preventDefault();
       onSubmit();
     }

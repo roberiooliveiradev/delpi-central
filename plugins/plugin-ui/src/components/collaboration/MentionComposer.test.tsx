@@ -148,6 +148,16 @@ describe("MentionComposer", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
+  it("Enter envia e Shift+Enter não envia", () => {
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} initial="Hello" />);
+    const surface = screen.getByLabelText("Write a message");
+    fireEvent.keyDown(surface, { key: "Enter", shiftKey: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.keyDown(surface, { key: "Enter" });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
   it("aplica atalho Ctrl+B via execCommand", () => {
     document.execCommand = vi.fn().mockReturnValue(true);
     render(<Harness initial="Hello" />);
@@ -203,7 +213,7 @@ describe("mention-composer.css", () => {
     expect(focus).not.toMatch(/outline:\s*2px/);
     expect(sendBlocks.join("\n")).toMatch(/width:\s*36px;/);
     expect(sendBlocks.join("\n")).toMatch(/border-radius:\s*50%;/);
-    expect(css).toMatch(/\[contenteditable="false"\]/);
+    expect(css).toMatch(/max-height:\s*min\(40vh, 16rem\)/);
     expect(css).not.toMatch(/textarea::placeholder/);
   });
 });
