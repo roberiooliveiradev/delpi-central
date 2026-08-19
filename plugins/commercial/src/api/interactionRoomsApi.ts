@@ -48,6 +48,9 @@ export type InteractionRoomInboxItemDto = InteractionRoomDto & {
   last_message_preview?: string | null;
   last_message_at?: string | null;
   last_author_user_id?: string | null;
+  customer_code?: string | null;
+  customer_store?: string | null;
+  customer_name?: string | null;
 };
 
 export type InteractionRoomMemberDto = {

@@ -1,5 +1,5 @@
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
 
 import {
   listInteractionRooms,
@@ -17,17 +17,26 @@ import {
   CommercialStateBanner,
   CommercialUnderlineNav,
 } from "../../app/commercialUi";
-import { navigatePluginPath } from "../../app/pluginNavigation";
+import {
+  buildCustomerDetailHref,
+  navigatePluginPath,
+} from "../../app/pluginNavigation";
 import {
   buildInteractionRoomPath,
   buildPluginPath,
 } from "../../app/pluginRoutes";
 import { useInteractionInboxSync } from "../../app/CommercialRealtimeProvider";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import { CustomerAvatar } from "../customers/components/CustomerAvatar";
+import {
+  customerAvatarKey,
+  useCustomerAvatarPresence,
+} from "../../hooks/useCustomerAvatarPresence";
 import { formatInboxMetaLabel } from "./formatInboxMetaLabel";
 
 type Props = {
   basePath: string;
+  selectedRoomId?: string | null;
 };
 
 const FILTER_IDS: InteractionInboxFilter[] = [
@@ -55,8 +64,23 @@ function filterLabel(id: InteractionInboxFilter): string {
   return map[id] ?? String(id);
 }
 
+function customerIdentity(item: InteractionRoomInboxItemDto): {
+  code: string;
+  store: string;
+  name: string;
+} | null {
+  const code = (item.customer_code ?? "").trim();
+  const store = (item.customer_store ?? "").trim();
+  if (!code || !store) return null;
+  const name = (item.customer_name ?? "").trim() || code;
+  return { code, store, name };
+}
+
 /** Inbox composta só com kit (RoomInboxList + search + filtros). */
-export function InteractionRoomsInboxPage({ basePath }: Props) {
+export function InteractionRoomsInboxPage({
+  basePath,
+  selectedRoomId = null,
+}: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
   const [filter, setFilter] = useState<InteractionInboxFilter>("all");
   const [query, setQuery] = useState("");
@@ -104,12 +128,42 @@ export function InteractionRoomsInboxPage({ basePath }: Props) {
     [],
   );
 
+  const itemsById = useMemo(
+    () => new Map(items.map((item) => [item.id, item])),
+    [items],
+  );
+
+  const avatarPairs = useMemo(
+    () =>
+      items.flatMap((item) => {
+        const identity = customerIdentity(item);
+        if (!identity) return [];
+        return [
+          {
+            customer_code: identity.code,
+            customer_store: identity.store,
+          },
+        ];
+      }),
+    [items],
+  );
+  const avatarByKey = useCustomerAvatarPresence(avatarPairs);
+
   const onSelect = useCallback(
     (roomId: string) => {
       const href = buildInteractionRoomPath(basePath, roomId);
       if (href) navigatePluginPath(href);
     },
     [basePath],
+  );
+
+  const onCustomerNavigate = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+      event.stopPropagation();
+      event.preventDefault();
+      navigatePluginPath(href);
+    },
+    [],
   );
 
   return (
@@ -169,6 +223,58 @@ export function InteractionRoomsInboxPage({ basePath }: Props) {
             content.unreadBadge.replace("{count}", String(count))
           }
           onSelect={onSelect}
+          leading={(row) => {
+            const dto = itemsById.get(row.id);
+            if (!dto) return null;
+            const identity = customerIdentity(dto);
+            if (!identity) {
+              return (
+                <CustomerAvatar
+                  code="—"
+                  store="—"
+                  name={dto.title}
+                  size="sm"
+                  previewable={false}
+                />
+              );
+            }
+            const href = buildCustomerDetailHref(identity.code, identity.store, {
+              basePath,
+            });
+            const hasAvatar =
+              avatarByKey.get(
+                customerAvatarKey(identity.code, identity.store),
+              ) === true;
+            if (!href) {
+              return (
+                <CustomerAvatar
+                  code={identity.code}
+                  store={identity.store}
+                  name={identity.name}
+                  hasAvatar={hasAvatar}
+                  size="sm"
+                  previewable={false}
+                />
+              );
+            }
+            return (
+              <CustomerAvatar
+                code={identity.code}
+                store={identity.store}
+                name={identity.name}
+                hasAvatar={hasAvatar}
+                size="sm"
+                href={href}
+                title={identity.name}
+                onNavigate={(event) => onCustomerNavigate(event, href)}
+              />
+            );
+          }}
+          subtitle={(row) => {
+            const dto = itemsById.get(row.id);
+            const name = (dto?.customer_name ?? "").trim();
+            return name || kindLabel(dto?.kind ?? "entity");
+          }}
           items={items.map((item) => ({
             id: item.id,
             title: item.title,
@@ -179,6 +285,7 @@ export function InteractionRoomsInboxPage({ basePath }: Props) {
             kindLabel: kindLabel(item.kind),
             unreadCount: item.unread_count,
             mentioned: item.mentioned,
+            selected: Boolean(selectedRoomId) && item.id === selectedRoomId,
           }))}
         />
       ) : null}

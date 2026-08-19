@@ -17,6 +17,10 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/cm-room-inbox-search/);
     expect(source).toMatch(/reloadLabel/);
     expect(source).not.toMatch(/actions=\{\s*<CommercialActionButton/);
+    expect(source).toMatch(/CustomerAvatar/);
+    expect(source).toMatch(/selectedRoomId/);
+    expect(source).toMatch(/customer_name/);
+    expect(source).toMatch(/stopPropagation/);
     expect(source).not.toMatch(/cm-message-bubble|<textarea/);
   });
 });

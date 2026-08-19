@@ -301,7 +301,10 @@ function AppRoutes({
         )
       ) : null}
       {view === "interaction_rooms" ? (
-        <InteractionRoomsInboxPage basePath={basePath} />
+        <InteractionRoomsInboxPage
+          basePath={basePath}
+          selectedRoomId={route.roomId}
+        />
       ) : null}
       {view === "interaction_room_detail" && route.roomId ? (
         <InteractionRoomPage basePath={basePath} roomId={route.roomId} />
