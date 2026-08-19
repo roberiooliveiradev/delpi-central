@@ -322,6 +322,20 @@ export {
   type PageHeroProps,
 } from "./PageHero";
 export {
+  ResizableColumns,
+  createDashboardResizableColumns,
+  resizableColumnsBemClasses,
+  RESIZABLE_COLUMNS_COLLAPSED_RAIL_PX,
+  RESIZABLE_COLUMNS_DEFAULT_LEFT_RATIO,
+  RESIZABLE_COLUMNS_KEYBOARD_STEP_PX,
+  RESIZABLE_COLUMNS_MAX_LEFT_RATIO,
+  RESIZABLE_COLUMNS_MIN_LEFT_PX,
+  type DashboardResizableColumnsProps,
+  type ResizableColumnsClassNames,
+  type ResizableColumnsLabels,
+  type ResizableColumnsProps,
+} from "./ResizableColumns";
+export {
   MetricStrip,
   createDashboardMetricStrip,
   metricStripBemClasses,

@@ -88,6 +88,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights; density comfortable|compact.",
   }),
+  vc("layout", "ResizableColumns", {
+    addedAt: "2026-08-19",
+    description:
+      "Split duas colunas com handle, teclado e colapso (lista | detalhe).",
+  }),
   vc("layout", "ViewTransition", {
     addedAt: "2026-08-06",
     description:
