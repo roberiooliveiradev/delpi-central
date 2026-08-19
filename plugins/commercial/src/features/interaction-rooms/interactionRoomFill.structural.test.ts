@@ -11,6 +11,7 @@ describe("interaction room fill CSS", () => {
     expect(css).toMatch(/\.dashboard-commercial\.dashboard-page--fill \{/);
     expect(css).toMatch(/--cm-page-padding:\s*16px/);
     expect(css).toMatch(/\.dashboard-page--fill \.cm-view-transition--page/);
+    expect(css).toMatch(/\.cm-room-thread__stage \{[\s\S]*?position:\s*relative;/);
     expect(css).toMatch(/\.cm-room-thread__msgs \{[\s\S]*?overflow-y:\s*auto;/);
     const fillChunk = css.split("Sala: fill viewport")[1]?.slice(0, 2500) ?? "";
     expect(fillChunk).not.toMatch(/\.delpi-ui-/);

@@ -103,9 +103,12 @@
   }
 }
 
-/* Contido na área do MFE — não cobre sidebar do Portal (ver createHostContainedDrawerShell). */
+/* Contido na área do MFE — não cobre sidebar do Portal (ver createHostContainedDrawerShell).
+   Host local (stage da conversa): absolute inset 0.
+   Root `.dashboard-*`: inline `position:fixed` + caixa do scrollport. */
 .delpi-ui-drawer-portal--contained {
-  position: fixed;
+  position: absolute;
+  inset: 0;
   min-width: 0;
   min-height: 0;
   box-sizing: border-box;

@@ -112,11 +112,7 @@ export function InteractionRoomPage({
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
   const [contextOpen, setContextOpen] = useState(false);
-  const [msgsHost, setMsgsHost] = useState<HTMLElement | null>(null);
-  const setMsgsEl = useCallback((el: HTMLDivElement | null) => {
-    msgsRef.current = el;
-    setMsgsHost(el);
-  }, []);
+  const [stageHost, setStageHost] = useState<HTMLElement | null>(null);
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
@@ -436,11 +432,35 @@ export function InteractionRoomPage({
               }
             />
           </div>
+          <div className="cm-room-thread__stage" ref={setStageHost}>
+            <div
+              className="cm-room-thread__msgs"
+              ref={msgsRef}
+              onScroll={(event) => {
+                stickToBottomRef.current = shouldStickThreadToBottom(
+                  event.currentTarget,
+                );
+              }}
+            >
+            {threadMessages.length === 0 ? (
+              <CommercialEmptyState
+                title={content.roomEmptyTitle}
+                message={content.roomEmptyDescription}
+              />
+            ) : (
+              <CommercialMessageThread
+                listAriaLabel={content.roomMessagesAriaLabel}
+                emptyLabel={content.roomEmptyTitle}
+                messages={threadMessages}
+                resolveActions={resolveActions}
+              />
+            )}
+          </div>
           <CommercialHostDrawer
             open={contextOpen}
             title={content.contextToggle}
             className="cm-room-context-drawer"
-            portalTarget={msgsHost}
+            portalTarget={stageHost}
             onClose={() => setContextOpen(false)}
             closeAriaLabel={content.contextCloseAriaLabel}
           >
@@ -473,28 +493,6 @@ export function InteractionRoomPage({
               }}
             />
           </CommercialHostDrawer>
-          <div
-            className="cm-room-thread__msgs"
-            ref={setMsgsEl}
-            onScroll={(event) => {
-              stickToBottomRef.current = shouldStickThreadToBottom(
-                event.currentTarget,
-              );
-            }}
-          >
-            {threadMessages.length === 0 ? (
-              <CommercialEmptyState
-                title={content.roomEmptyTitle}
-                message={content.roomEmptyDescription}
-              />
-            ) : (
-              <CommercialMessageThread
-                listAriaLabel={content.roomMessagesAriaLabel}
-                emptyLabel={content.roomEmptyTitle}
-                messages={threadMessages}
-                resolveActions={resolveActions}
-              />
-            )}
           </div>
           <div className="cm-room-thread__dock">
             <InteractionRoomMessageComposer

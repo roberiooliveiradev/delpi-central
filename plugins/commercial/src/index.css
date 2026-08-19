@@ -195,8 +195,17 @@
   padding: var(--cm-gap-sm);
 }
 
-.dashboard-commercial .cm-room-thread__msgs {
+.dashboard-commercial .cm-room-thread__stage {
   position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dashboard-commercial .cm-room-thread__msgs {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;

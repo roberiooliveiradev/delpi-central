@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   containedModalBoxToStyle,
+  containedHostUsesViewportBox,
   measureContainedModalBox,
   resolveContainedModalScrollPort,
 } from "./containedModalViewport";
@@ -124,5 +125,14 @@ describe("containedModalViewport", () => {
       width: 480,
       height: 430,
     });
+  });
+
+  it("só o root dashboard-* usa caixa viewport; host local preenche o próprio elemento", () => {
+    const dashboard = document.createElement("div");
+    dashboard.className = "dashboard-commercial";
+    const stage = document.createElement("div");
+    stage.className = "cm-room-thread__stage";
+    expect(containedHostUsesViewportBox(dashboard)).toBe(true);
+    expect(containedHostUsesViewportBox(stage)).toBe(false);
   });
 });

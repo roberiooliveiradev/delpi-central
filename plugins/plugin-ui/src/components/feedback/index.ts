@@ -152,6 +152,7 @@ export {
   type ModalShellVariant,
 } from "./ModalShell";
 export {
+  containedHostUsesViewportBox,
   measureContainedModalBox,
   resolveContainedModalScrollPort,
   type ContainedModalBox,

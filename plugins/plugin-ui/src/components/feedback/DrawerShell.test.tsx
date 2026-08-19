@@ -76,7 +76,7 @@ describe("DrawerShell", () => {
     const plugin = document.createElement("div");
     plugin.className = "dashboard-commercial";
     const thread = document.createElement("div");
-    thread.className = "cm-room-thread__msgs";
+    thread.className = "cm-room-thread__stage";
     plugin.appendChild(thread);
     document.body.appendChild(plugin);
 
@@ -102,5 +102,33 @@ describe("DrawerShell", () => {
 
     unmount();
     plugin.remove();
+  });
+
+  it("não cai no root do MFE quando portalTarget explícito ainda é null", () => {
+    const host = document.createElement("div");
+    host.className = "dashboard-commercial";
+    document.body.appendChild(host);
+
+    const HostDrawer = createHostContainedDrawerShell({
+      prefix: "cm",
+      portalScopeClassName: "dashboard-commercial",
+    });
+
+    const { container, unmount } = render(
+      <HostDrawer
+        open
+        title="Contexto"
+        portalTarget={null}
+        onClose={vi.fn()}
+      >
+        <p>Sobre</p>
+      </HostDrawer>,
+    );
+
+    expect(container.innerHTML).toBe("");
+    expect(host.querySelector("[role='dialog']")).toBeNull();
+
+    unmount();
+    host.remove();
   });
 });

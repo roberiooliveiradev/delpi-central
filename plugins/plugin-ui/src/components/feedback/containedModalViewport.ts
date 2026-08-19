@@ -17,6 +17,11 @@ export type ContainedModalBox = {
   height: number;
 };
 
+/** Root `.dashboard-*` precisa recortar no scrollport; host local preenche com absolute. */
+export function containedHostUsesViewportBox(host: HTMLElement): boolean {
+  return Array.from(host.classList).some((name) => name.startsWith("dashboard-"));
+}
+
 function isScrollableOverflow(value: string): boolean {
   return value === "auto" || value === "scroll" || value === "overlay";
 }

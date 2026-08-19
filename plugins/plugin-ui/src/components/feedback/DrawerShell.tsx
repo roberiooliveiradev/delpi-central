@@ -3,9 +3,8 @@ import { createPortal } from "react-dom";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
-import {
-  resolveHostContainedPortalTarget,
-} from "./ModalShell";
+import { containedHostUsesViewportBox } from "./containedModalViewport";
+import { resolveHostContainedPortalTarget } from "./ModalShell";
 import { useContainedModalViewportStyle } from "./useContainedModalViewportStyle";
 
 export type DrawerShellClassNames = {
@@ -87,9 +86,11 @@ export function DrawerShell({
   const portalTheme = useDelpiUiPortalTheme(open);
   const containedHost =
     containedInPortalTarget && portalTarget instanceof HTMLElement ? portalTarget : null;
+  const measureViewport =
+    Boolean(containedHost) && containedHostUsesViewportBox(containedHost as HTMLElement);
   const containedViewportStyle = useContainedModalViewportStyle(
-    open && Boolean(containedHost),
-    containedHost,
+    open && measureViewport,
+    measureViewport ? containedHost : null,
   );
 
   useEffect(() => {
@@ -270,8 +271,16 @@ export function createHostContainedDrawerShell(
   const hostSelector = `.${config.portalScopeClassName.trim().split(/\s+/)[0]}`;
 
   return function HostContainedDrawerShell(props: DashboardDrawerShellProps) {
-    const portalTarget = props.portalTarget
-      ?? (typeof document !== "undefined"
+    const hasExplicitTarget = Object.prototype.hasOwnProperty.call(
+      props,
+      "portalTarget",
+    );
+    if (hasExplicitTarget && !(props.portalTarget instanceof HTMLElement)) {
+      return null;
+    }
+    const portalTarget =
+      props.portalTarget ??
+      (typeof document !== "undefined"
         ? resolveHostContainedPortalTarget(hostSelector)
         : null);
     return (
