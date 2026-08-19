@@ -120,6 +120,9 @@ export function RoomInboxList({
           const unread = item.unreadCount ?? 0;
           const leadingNode = leading?.(item);
           const subtitleNode = subtitle?.(item);
+          const trailingNode = trailing?.(item);
+          const hasMeta =
+            unread > 0 || Boolean(item.metaLabel) || trailingNode != null;
           return (
             <li key={item.id}>
               <div
@@ -137,15 +140,17 @@ export function RoomInboxList({
                   >
                     <div className={classNames.titleRow}>
                       <div className={classNames.title}>{item.title}</div>
-                      <div className={classNames.meta}>
-                        {unread > 0 ? (
-                          <span className={classNames.badge}>
-                            {unreadBadgeLabel ? unreadBadgeLabel(unread) : unread}
-                          </span>
-                        ) : null}
-                        {item.metaLabel ? <span>{item.metaLabel}</span> : null}
-                        {trailing?.(item)}
-                      </div>
+                      {hasMeta ? (
+                        <div className={classNames.meta}>
+                          {unread > 0 ? (
+                            <span className={classNames.badge}>
+                              {unreadBadgeLabel ? unreadBadgeLabel(unread) : unread}
+                            </span>
+                          ) : null}
+                          {item.metaLabel ? <span>{item.metaLabel}</span> : null}
+                          {trailingNode}
+                        </div>
+                      ) : null}
                     </div>
                     {subtitleNode ? (
                       <div className={classNames.subtitle}>{subtitleNode}</div>

@@ -113,5 +113,25 @@ describe("room-inbox.css", () => {
     expect(selected).toMatch(/box-shadow:\s*none;/);
     expect(selected).not.toMatch(/inset 3px/);
     expect(selected).not.toMatch(/border-color:/);
+    const body = css.match(/\.delpi-ui-room-inbox__body \{[^}]+\}/)?.[0] ?? "";
+    expect(body).toMatch(/appearance:\s*none;/);
+    expect(body).toMatch(/flex:\s*1 1 0;/);
+    expect(body).toMatch(/width:\s*100%;/);
+    expect(body).toMatch(/border:\s*none;/);
+    const row = css.match(/\.delpi-ui-room-inbox__row \{[^}]+\}/)?.[0] ?? "";
+    expect(row).toMatch(/width:\s*100%;/);
+    expect(row).toMatch(/align-items:\s*stretch;/);
+  });
+
+  it("não reserva coluna de meta vazia na linha", () => {
+    const { container } = render(
+      <RoomInboxList
+        classNames={classNames}
+        listAriaLabel="Inbox"
+        emptyLabel="No rooms"
+        items={[{ id: "r1", title: "BUHLER", kindLabel: "Entidade" }]}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-room-inbox__meta")).toBeNull();
   });
 });
