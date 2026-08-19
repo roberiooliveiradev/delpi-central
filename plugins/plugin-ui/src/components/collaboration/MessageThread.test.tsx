@@ -58,8 +58,8 @@ describe("MessageThread", () => {
         ]}
       />,
     );
-    expect(screen.getByText(/Hello/)).toBeTruthy();
-    expect(screen.queryByText("Bruno")).toBeNull();
+    expect(screen.getAllByText(/Hello/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Bruno").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Room created")).toBeTruthy();
     expect(container.querySelector('[data-message-id="1"]')).not.toBeNull();
     expect(container.querySelector('[data-message-id="2"]')).not.toBeNull();
@@ -94,6 +94,9 @@ describe("MessageThread", () => {
     );
     expect(container.querySelector(".delpi-ui-message-thread__item--mine")).not.toBeNull();
     expect(container.querySelector(".delpi-ui-message-thread__bubble--mine")).not.toBeNull();
+    expect(
+      container.querySelector('[data-message-kind="text"] .delpi-ui-avatar'),
+    ).toBeNull();
     expect(
       container.querySelector('[data-message-kind="system"] .delpi-ui-avatar'),
     ).toBeNull();
@@ -156,7 +159,7 @@ describe("MessageThread", () => {
     expect(onPin).toHaveBeenCalledTimes(1);
   });
 
-  it("oculta o nome quando há avatar e coloca a hora no rodapé da bolha", () => {
+  it("coloca nome e hora acima da bolha e o contexto citado dentro dela", () => {
     const { container } = render(
       <MessageThread
         classNames={classNames}
@@ -166,16 +169,65 @@ describe("MessageThread", () => {
           {
             id: "1",
             kind: "text",
-            bodyText: "Hi",
+            bodyText: "Pergunta original",
             authorName: "Bruno Costa",
-            createdAtLabel: "10:00",
+            authorUserId: "u1",
+            createdAtLabel: "19/08, 14:27",
+          },
+          {
+            id: "2",
+            kind: "text",
+            bodyText: "blz então",
+            authorName: "Eu",
+            authorUserId: "u2",
+            createdAtLabel: "19/08, 14:28",
+            mine: true,
+            parentId: "1",
           },
         ]}
       />,
     );
-    expect(screen.queryByText("Bruno Costa")).toBeNull();
-    expect(container.querySelector(".delpi-ui-avatar")).not.toBeNull();
-    expect(container.querySelector("article footer time")?.textContent).toBe("10:00");
+    expect(screen.getAllByText("Bruno Costa").length).toBeGreaterThanOrEqual(1);
+    const headingTime = container.querySelector(
+      ".delpi-ui-message-thread__item--mine .delpi-ui-message-thread__meta time",
+    );
+    expect(headingTime?.textContent).toBe("19/08, 14:28");
+    expect(container.querySelector("article footer time")).toBeNull();
+    expect(container.querySelector("blockquote")?.textContent).toMatch(/Pergunta original/);
+    expect(container.querySelector(".delpi-ui-message-thread__quote-author")?.textContent).toBe(
+      "Bruno Costa",
+    );
+  });
+
+  it("agrupa mensagens seguidas do mesmo autor sem repetir nome e avatar", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "bom dia.",
+            authorName: "Bruno Costa",
+            authorUserId: "u1",
+            createdAtLabel: "07:43",
+          },
+          {
+            id: "2",
+            kind: "text",
+            bodyText: "segunda linha",
+            authorName: "Bruno Costa",
+            authorUserId: "u1",
+            createdAtLabel: "07:44",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getAllByText("Bruno Costa")).toHaveLength(1);
+    expect(container.querySelectorAll(".delpi-ui-avatar")).toHaveLength(1);
+    expect(container.querySelector(".delpi-ui-message-thread__item--continue")).not.toBeNull();
   });
 
   it("avatar do autor vira link quando há href e title", () => {
@@ -229,8 +281,10 @@ describe("MessageThread", () => {
     expect(article).not.toBeNull();
     expect(actions).not.toBeNull();
     expect(cluster).not.toBeNull();
+    const stack = container.querySelector(".delpi-ui-message-thread__stack");
     expect(article?.contains(actions)).toBe(false);
     expect(cluster?.contains(actions)).toBe(true);
+    expect(stack?.contains(actions)).toBe(true);
     expect(cluster?.contains(article)).toBe(true);
   });
 });
@@ -246,10 +300,11 @@ describe("message-thread.css host scroll", () => {
     expect(root).not.toMatch(/overflow-y:\s*auto;/);
     expect(row).toMatch(/width:\s*max-content;/);
     expect(row).toMatch(/max-width:\s*min\(92%,\s*56rem\)/);
-    expect(row).toMatch(/align-items:\s*flex-end;/);
+    expect(row).toMatch(/align-items:\s*flex-start;/);
     expect(row).toMatch(/gap:\s*0\.5rem;/);
     expect(cluster).toMatch(/max-width:\s*none;/);
     expect(cluster).not.toMatch(/width:\s*fit-content;/);
+    expect(cluster).not.toMatch(/padding-top:\s*2\.75rem;/);
     expect(bubble).toMatch(/width:\s*100%;/);
     expect(bubble).toMatch(/max-width:\s*none;/);
     expect(bubble).not.toMatch(/min\(75%/);
@@ -259,9 +314,9 @@ describe("message-thread.css host scroll", () => {
     expect(mine).toMatch(/22%/);
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
     expect(actions).toMatch(/position:\s*absolute;/);
-    expect(actions).not.toMatch(/translateY\(calc\(-100%/);
-    expect(css).toMatch(/padding-top:\s*2\.75rem;/);
-    expect(css).toMatch(/opacity 0\.15s ease 0\.45s/);
+    expect(actions).toMatch(/translateY\(-50%\)/);
+    expect(css).not.toMatch(/opacity 0\.15s ease 0\.45s/);
+    expect(css).toMatch(/transition:\s*opacity 0\.1s ease;/);
     expect(css).toMatch(/box-shadow:\s*none;/);
   });
 });

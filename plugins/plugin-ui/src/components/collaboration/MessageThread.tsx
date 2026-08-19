@@ -51,6 +51,8 @@ export type MessageThreadClassNames = {
   itemMine: string;
   row: string;
   cluster: string;
+  stack: string;
+  itemContinue: string;
   avatar: InitialsAvatarClassNames;
   system: string;
   bubble: string;
@@ -64,6 +66,11 @@ export type MessageThreadClassNames = {
   actionDanger: string;
   empty: string;
   mention: MentionTextClassNames;
+  quote: string;
+  quoteMeta: string;
+  quoteAuthor: string;
+  quoteTime: string;
+  quoteBody: string;
 };
 
 export type MessageThreadProps = {
@@ -101,6 +108,11 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
     ),
     row: pair(`${base}__row`, `${ui}__row`),
     cluster: pair(`${base}__cluster`, `${ui}__cluster`),
+    stack: pair(`${base}__stack`, `${ui}__stack`),
+    itemContinue: pair(
+      `${base}__item ${base}__item--continue`,
+      `${ui}__item ${ui}__item--continue`,
+    ),
     avatar: initialsAvatarBemClasses(prefix),
     system: pair(`${base}__system`, `${ui}__system`),
     bubble: pair(`${base}__bubble`, `${ui}__bubble`),
@@ -120,6 +132,11 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
     ),
     empty: pair(`${base}__empty`, `${ui}__empty`),
     mention: mentionTextBemClasses(prefix),
+    quote: pair(`${base}__quote`, `${ui}__quote`),
+    quoteMeta: pair(`${base}__quote-meta`, `${ui}__quote-meta`),
+    quoteAuthor: pair(`${base}__quote-author`, `${ui}__quote-author`),
+    quoteTime: pair(`${base}__quote-time`, `${ui}__quote-time`),
+    quoteBody: pair(`${base}__quote-body`, `${ui}__quote-body`),
   };
 }
 
@@ -127,12 +144,38 @@ function isSystemKind(kind: MessageThreadKind): boolean {
   return kind === "system" || kind === "task_ref" || kind === "pin";
 }
 
+function sameAuthorRun(
+  previous: MessageThreadItem | undefined,
+  current: MessageThreadItem,
+): boolean {
+  if (!previous || isSystemKind(previous.kind) || isSystemKind(current.kind)) {
+    return false;
+  }
+  if (Boolean(previous.mine) !== Boolean(current.mine)) return false;
+  const previousKey = (previous.authorUserId ?? previous.authorName ?? "").trim();
+  const currentKey = (current.authorUserId ?? current.authorName ?? "").trim();
+  return previousKey.length > 0 && previousKey === currentKey;
+}
+
+function parentQuote(
+  messages: readonly MessageThreadItem[],
+  message: MessageThreadItem,
+): MessageThreadItem | null {
+  const parentId = (message.parentId ?? "").trim();
+  if (!parentId) return null;
+  const parent = messages.find((item) => item.id === parentId);
+  if (!parent || isSystemKind(parent.kind)) return null;
+  return parent;
+}
+
 function itemClassName(
   classNames: MessageThreadClassNames,
   message: MessageThreadItem,
+  continues: boolean,
 ): string {
   const parts = [classNames.item];
   if (message.parentId) parts.push(classNames.itemReply);
+  if (continues) parts.push(classNames.itemContinue);
   if (message.mine && !isSystemKind(message.kind)) parts.push(classNames.itemMine);
   return parts.join(" ");
 }
@@ -166,12 +209,13 @@ export function MessageThread({
   return (
     <div className={rootClass}>
       <ul className={classNames.list} aria-label={listAriaLabel}>
-        {messages.map((message) => {
+        {messages.map((message, index) => {
+          const continues = sameAuthorRun(messages[index - 1], message);
           if (isSystemKind(message.kind)) {
             return (
               <li
                 key={message.id}
-                className={itemClassName(classNames, message)}
+                className={itemClassName(classNames, message, false)}
                 data-message-id={message.id}
               >
                 <div className={classNames.system} data-message-kind={message.kind}>
@@ -185,6 +229,7 @@ export function MessageThread({
           }
 
           const actions = resolveActions?.(message) ?? [];
+          const quoted = parentQuote(messages, message);
           const body =
             renderBody?.(message) ??
             (message.deleted ? (
@@ -201,7 +246,8 @@ export function MessageThread({
           const avatarName = (message.authorName ?? "").trim();
           const authorHref = (message.authorHref ?? "").trim();
           const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
-          const avatar = avatarName ? (
+          const showAvatar = Boolean(avatarName && !message.mine && !continues);
+          const avatar = showAvatar ? (
             authorHref && authorLinkTitle ? (
               <InitialsAvatar
                 classNames={classNames.avatar}
@@ -222,55 +268,73 @@ export function MessageThread({
               />
             )
           ) : null;
-
-          const showAuthor = Boolean(message.authorName && !message.mine && !avatar);
+          const showAuthor = Boolean(avatarName && !message.mine && !continues);
+          const showHeading = !continues && (showAuthor || Boolean(message.createdAtLabel));
 
           return (
             <li
               key={message.id}
-              className={itemClassName(classNames, message)}
+              className={itemClassName(classNames, message, continues)}
               data-message-id={message.id}
               data-message-kind={message.kind}
             >
               <div className={classNames.row}>
-                {message.mine ? null : avatar}
+                {avatar}
                 <div className={classNames.cluster}>
-                  {actions.length > 0 ? (
-                    <div className={classNames.actions}>
-                      {actions.map((action) => (
-                        <button
-                          key={action.id}
-                          type="button"
-                          className={
-                            action.danger ? classNames.actionDanger : classNames.action
-                          }
-                          aria-label={action.label}
-                          title={action.title ?? action.label}
-                          onClick={action.onClick}
-                        >
-                          {action.icon ?? action.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  <article
-                    className={message.mine ? classNames.bubbleMine : classNames.bubble}
-                  >
-                    {showAuthor ? (
-                      <header className={classNames.meta}>
+                  {showHeading ? (
+                    <header className={classNames.meta}>
+                      {showAuthor ? (
                         <span className={classNames.author}>{message.authorName}</span>
-                      </header>
-                    ) : null}
-                    {body}
-                    {message.belowBody}
-                    {message.createdAtLabel ? (
-                      <footer className={classNames.meta}>
+                      ) : null}
+                      {message.createdAtLabel ? (
                         <time className={classNames.time}>{message.createdAtLabel}</time>
-                      </footer>
+                      ) : null}
+                    </header>
+                  ) : null}
+                  <div className={classNames.stack}>
+                    {actions.length > 0 ? (
+                      <div className={classNames.actions}>
+                        {actions.map((action) => (
+                          <button
+                            key={action.id}
+                            type="button"
+                            className={
+                              action.danger ? classNames.actionDanger : classNames.action
+                            }
+                            aria-label={action.label}
+                            title={action.title ?? action.label}
+                            onClick={action.onClick}
+                          >
+                            {action.icon ?? action.label}
+                          </button>
+                        ))}
+                      </div>
                     ) : null}
-                  </article>
+                    <article
+                      className={message.mine ? classNames.bubbleMine : classNames.bubble}
+                    >
+                      {quoted ? (
+                        <blockquote className={classNames.quote}>
+                          <header className={classNames.quoteMeta}>
+                            {quoted.authorName ? (
+                              <span className={classNames.quoteAuthor}>
+                                {quoted.authorName}
+                              </span>
+                            ) : null}
+                            {quoted.createdAtLabel ? (
+                              <time className={classNames.quoteTime}>
+                                {quoted.createdAtLabel}
+                              </time>
+                            ) : null}
+                          </header>
+                          <p className={classNames.quoteBody}>{quoted.bodyText}</p>
+                        </blockquote>
+                      ) : null}
+                      {body}
+                      {message.belowBody}
+                    </article>
+                  </div>
                 </div>
-                {message.mine ? avatar : null}
               </div>
             </li>
           );

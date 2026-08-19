@@ -1,4 +1,4 @@
-/* Message thread: bubbles, system lines, reply indent. */
+/* Message thread: bubbles, system lines, quoted reply. */
 .delpi-ui-message-thread {
   min-width: 0;
   flex: 1;
@@ -9,25 +9,37 @@
 .delpi-ui-message-thread__list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.delpi-ui-message-thread__item {
+  margin-top: 0.75rem;
+}
+
+.delpi-ui-message-thread__item:first-child {
+  margin-top: 0;
+}
+
+.delpi-ui-message-thread__item--continue {
+  margin-top: 0.25rem;
+}
+
 .delpi-ui-message-thread__item--reply {
-  padding-left: 1.5rem;
+  padding-left: 0;
 }
 
 .delpi-ui-message-thread__item--mine .delpi-ui-message-thread__item--reply,
 .delpi-ui-message-thread__item--mine.delpi-ui-message-thread__item--reply {
   padding-left: 0;
-  padding-right: 1.5rem;
+  padding-right: 0;
 }
 
 .delpi-ui-message-thread__row {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 0.5rem;
   width: max-content;
   max-width: min(92%, 56rem);
@@ -42,16 +54,20 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: 0.2rem;
   flex: 1 1 auto;
   min-width: 0;
   width: auto;
   max-width: none;
-  margin-top: -2.25rem;
-  padding-top: 2.75rem;
 }
 
-.delpi-ui-message-thread__item:first-child .delpi-ui-message-thread__cluster {
-  margin-top: 0;
+.delpi-ui-message-thread__stack {
+  position: relative;
+}
+
+.delpi-ui-message-thread__item--continue:not(.delpi-ui-message-thread__item--mine)
+  .delpi-ui-message-thread__row {
+  padding-left: calc(26px + 0.5rem);
 }
 
 .delpi-ui-message-thread__item--mine {
@@ -106,18 +122,18 @@
 
 .delpi-ui-message-thread__meta {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 0.45rem;
+  min-width: 0;
 }
 
-.delpi-ui-message-thread__meta:has(time) {
+.delpi-ui-message-thread__item--mine .delpi-ui-message-thread__meta {
   justify-content: flex-end;
-  margin-top: 0.15rem;
 }
 
 .delpi-ui-message-thread__author {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--delpi-ui-text, var(--text, #0f172a));
 }
@@ -136,10 +152,49 @@
   word-break: break-word;
 }
 
+.delpi-ui-message-thread__quote {
+  margin: 0 0 0.4rem;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 8%,
+    transparent
+  );
+}
+
+.delpi-ui-message-thread__quote-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.delpi-ui-message-thread__quote-author {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
+.delpi-ui-message-thread__quote-time,
+.delpi-ui-message-thread__quote-body {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+.delpi-ui-message-thread__quote-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .delpi-ui-message-thread__actions {
   position: absolute;
-  top: 0.2rem;
-  right: 0;
+  top: 0;
+  left: 0;
   z-index: 2;
   display: flex;
   flex-wrap: nowrap;
@@ -147,8 +202,14 @@
   margin: 0;
   padding: 0.15rem;
   border-radius: 0.5rem;
+  transform: translateY(-50%);
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
   box-shadow: 0 4px 14px color-mix(in srgb, var(--delpi-ui-text, #0f172a) 12%, transparent);
+}
+
+.delpi-ui-message-thread__item--mine .delpi-ui-message-thread__actions {
+  left: auto;
+  right: 0;
 }
 
 .delpi-ui-message-thread__actions::after {
@@ -164,14 +225,13 @@
   .delpi-ui-message-thread__actions {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s ease 0.45s;
+    transition: opacity 0.1s ease;
   }
 
   .delpi-ui-message-thread__cluster:hover .delpi-ui-message-thread__actions,
   .delpi-ui-message-thread__cluster:focus-within .delpi-ui-message-thread__actions {
     opacity: 1;
     pointer-events: auto;
-    transition-delay: 0s;
   }
 }
 
