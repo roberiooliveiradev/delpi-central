@@ -1,4 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -129,5 +132,18 @@ describe("InitialsAvatar", () => {
     );
     expect(screen.getByRole("link", { name: "Abrir conta de Acme" })).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
+  });
+});
+
+describe("initials-avatar.css", () => {
+  it("aumenta o avatar no hover com transição suave", () => {
+    const css = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "../../styles/initials-avatar.css"),
+      "utf8",
+    );
+    expect(css).toMatch(/\.delpi-ui-avatar \{[\s\S]*?transition:\s*transform 180ms ease;/);
+    expect(css).toMatch(
+      /\.delpi-ui-avatar:hover,\s*\.delpi-ui-avatar:focus-visible \{[\s\S]*?transform:\s*scale\(1\.12\);/,
+    );
   });
 });

@@ -1,4 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { AvatarStack, avatarStackBemClasses } from "./AvatarStack";
@@ -54,5 +57,17 @@ describe("AvatarStack", () => {
     );
     const link = screen.getByRole("link", { name: "Abrir perfil de Ana" });
     expect(link.getAttribute("href")).toBe("/apps/commercial/users/u1");
+  });
+});
+
+describe("avatar-stack.css", () => {
+  it("eleva o item no hover para o scale não ficar atrás da facepile", () => {
+    const css = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "../../styles/avatar-stack.css"),
+      "utf8",
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-avatar-stack__item:hover,\s*\.delpi-ui-avatar-stack__item:focus-within \{[\s\S]*?z-index:\s*2;/,
+    );
   });
 });

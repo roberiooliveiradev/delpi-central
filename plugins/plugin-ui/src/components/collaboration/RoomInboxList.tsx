@@ -19,6 +19,7 @@ export type RoomInboxListClassNames = {
   item: string;
   itemSelected: string;
   itemUnread: string;
+  hit: string;
   row: string;
   leading: string;
   body: string;
@@ -60,6 +61,7 @@ export function roomInboxListBemClasses(prefix: string): RoomInboxListClassNames
       `${base}__item ${base}__item--unread`,
       `${ui}__item ${ui}__item--unread`,
     ),
+    hit: pair(`${base}__hit`, `${ui}__hit`),
     row: pair(`${base}__row`, `${ui}__row`),
     leading: pair(`${base}__leading`, `${ui}__leading`),
     body: pair(`${base}__body`, `${ui}__body`),
@@ -125,19 +127,19 @@ export function RoomInboxList({
             unread > 0 || Boolean(item.metaLabel) || trailingNode != null;
           return (
             <li key={item.id}>
-              <div
-                className={itemClassName(classNames, item)}
-              >
+              <div className={itemClassName(classNames, item)}>
+                <button
+                  type="button"
+                  className={classNames.hit}
+                  aria-label={item.title}
+                  aria-current={item.selected ? "true" : undefined}
+                  onClick={() => onSelect?.(item.id)}
+                />
                 <div className={classNames.row}>
                   {leadingNode ? (
                     <div className={classNames.leading}>{leadingNode}</div>
                   ) : null}
-                  <button
-                    type="button"
-                    className={classNames.body}
-                    aria-current={item.selected ? "true" : undefined}
-                    onClick={() => onSelect?.(item.id)}
-                  >
+                  <div className={classNames.body}>
                     <div className={classNames.titleRow}>
                       <div className={classNames.title}>{item.title}</div>
                       {hasMeta ? (
@@ -160,7 +162,7 @@ export function RoomInboxList({
                     {item.preview ? (
                       <div className={classNames.preview}>{item.preview}</div>
                     ) : null}
-                  </button>
+                  </div>
                 </div>
               </div>
             </li>

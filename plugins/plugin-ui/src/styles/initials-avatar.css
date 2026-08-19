@@ -24,6 +24,20 @@
   overflow: hidden;
   vertical-align: middle;
   user-select: none;
+  transform: scale(1);
+  transform-origin: center;
+  transition: transform 180ms ease;
+}
+
+.delpi-ui-avatar:hover,
+.delpi-ui-avatar:focus-visible {
+  transform: scale(1.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-avatar {
+    transition: none;
+  }
 }
 
 .delpi-ui-avatar--sm {

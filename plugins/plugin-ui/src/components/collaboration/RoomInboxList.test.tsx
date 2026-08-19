@@ -74,7 +74,7 @@ describe("RoomInboxList", () => {
     expect(screen.getByRole("button").getAttribute("aria-current")).toBe("true");
   });
 
-  it("mantém o avatar leading fora do botão da linha", () => {
+  it("o hit da linha cobre o card e o avatar permanece fora do botão", () => {
     const { container } = render(
       <RoomInboxList
         classNames={classNames}
@@ -95,6 +95,7 @@ describe("RoomInboxList", () => {
     );
     const link = screen.getByRole("link", { name: "AV" });
     const button = screen.getByRole("button", { name: /Pedido 102942/ });
+    expect(button.className).toMatch(/delpi-ui-room-inbox__hit/);
     expect(button.contains(link)).toBe(false);
     expect(container.querySelector(".delpi-ui-room-inbox__leading")?.contains(link)).toBe(
       true,
@@ -108,19 +109,25 @@ describe("room-inbox.css", () => {
     const item = css.match(/\.delpi-ui-room-inbox__item \{[^}]+\}/)?.[0] ?? "";
     const selected =
       css.match(/\.delpi-ui-room-inbox__item--selected \{[^}]+\}/)?.[0] ?? "";
+    expect(item).toMatch(/position:\s*relative;/);
     expect(item).toMatch(/border:\s*none;/);
     expect(item).not.toMatch(/border:\s*1px solid/);
     expect(selected).toMatch(/box-shadow:\s*none;/);
     expect(selected).not.toMatch(/inset 3px/);
     expect(selected).not.toMatch(/border-color:/);
+    const hit = css.match(/\.delpi-ui-room-inbox__hit \{[^}]+\}/)?.[0] ?? "";
+    expect(hit).toMatch(/position:\s*absolute;/);
+    expect(hit).toMatch(/inset:\s*0;/);
+    expect(hit).toMatch(/appearance:\s*none;/);
     const body = css.match(/\.delpi-ui-room-inbox__body \{[^}]+\}/)?.[0] ?? "";
-    expect(body).toMatch(/appearance:\s*none;/);
+    expect(body).not.toMatch(/appearance:\s*none;/);
     expect(body).toMatch(/flex:\s*1 1 0;/);
     expect(body).toMatch(/width:\s*100%;/);
     expect(body).toMatch(/border:\s*none;/);
     const row = css.match(/\.delpi-ui-room-inbox__row \{[^}]+\}/)?.[0] ?? "";
     expect(row).toMatch(/width:\s*100%;/);
     expect(row).toMatch(/align-items:\s*stretch;/);
+    expect(row).toMatch(/pointer-events:\s*none;/);
   });
 
   it("não reserva coluna de meta vazia na linha", () => {

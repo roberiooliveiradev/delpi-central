@@ -18,6 +18,7 @@
 }
 
 .delpi-ui-room-inbox__item {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -31,6 +32,7 @@
   color: inherit;
   background: transparent;
   box-shadow: none;
+  cursor: pointer;
 }
 
 .delpi-ui-room-inbox__item:hover {
@@ -41,11 +43,23 @@
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 14%, transparent);
 }
 
-.delpi-ui-room-inbox__item:focus-visible {
-  outline: none;
+.delpi-ui-room-inbox__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: inherit;
+  appearance: none;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
 }
 
-.delpi-ui-room-inbox__body:focus-visible {
+.delpi-ui-room-inbox__hit:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: 2px;
 }
@@ -60,19 +74,24 @@
 }
 
 .delpi-ui-room-inbox__row {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: stretch;
   gap: 0.65rem;
   width: 100%;
   min-width: 0;
+  pointer-events: none;
 }
 
 .delpi-ui-room-inbox__leading {
+  position: relative;
+  z-index: 2;
   flex: 0 0 auto;
+  pointer-events: auto;
 }
 
 .delpi-ui-room-inbox__body {
-  appearance: none;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -88,14 +107,6 @@
   font: inherit;
   color: inherit;
   background: transparent;
-  cursor: pointer;
-}
-
-.delpi-ui-room-inbox__body:hover,
-.delpi-ui-room-inbox__body:active {
-  background: transparent;
-  border: none;
-  box-shadow: none;
 }
 
 .delpi-ui-room-inbox__title-row {

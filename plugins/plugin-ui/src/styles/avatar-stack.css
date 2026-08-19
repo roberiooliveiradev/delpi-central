@@ -30,6 +30,11 @@
   box-shadow: 0 0 0 2px var(--delpi-ui-surface, var(--surface, #0f172a));
 }
 
+.delpi-ui-avatar-stack__item:hover,
+.delpi-ui-avatar-stack__item:focus-within {
+  z-index: 2;
+}
+
 .delpi-ui-avatar-stack__more {
   display: inline-flex;
   align-items: center;
