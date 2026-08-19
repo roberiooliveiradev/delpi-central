@@ -29,6 +29,7 @@ def test_create_evidence_rejects_foreign_action_id():
 def test_create_evidence_passes_action_id_when_valid():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo._plan_exists = MagicMock(return_value=True)  # type: ignore[method-assign]
+    repo._coerce_plan_id = MagicMock(return_value="plan-id")  # type: ignore[method-assign]
     repo.action_belongs_to_plan = MagicMock(return_value=True)  # type: ignore[method-assign]
     repo.execute_returning_one = MagicMock(  # type: ignore[method-assign]
         return_value={

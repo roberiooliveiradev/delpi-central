@@ -273,6 +273,10 @@ def test_consolidated_summary_only_fans_out_per_branch() -> None:
 
     with patch.object(
         StockValueQueryRepository,
+        "_fetch_historical_breakdown_rows",
+        return_value=[],
+    ), patch.object(
+        StockValueQueryRepository,
         "_fetch_branch_bundle",
         side_effect=fake_branch_bundle,
     ):

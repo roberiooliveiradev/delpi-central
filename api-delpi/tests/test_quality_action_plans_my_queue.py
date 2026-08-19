@@ -59,6 +59,7 @@ def test_list_my_queue_include_completed_filter():
 def test_update_action_clears_responsible_user_id():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo._coerce_plan_id = MagicMock(return_value="plan-1")  # type: ignore[method-assign]
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.execute_returning_one = MagicMock(
         return_value={
             "id": "act-1",

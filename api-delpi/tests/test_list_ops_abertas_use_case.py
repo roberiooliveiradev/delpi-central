@@ -90,14 +90,15 @@ def test_ops_repository_falls_back_when_resumo_view_missing() -> None:
         "('42S02', \"Invalid object name 'dbo.VW_OPS_ABERTAS_PRODUTO_RESUMO'.\")"
     )
 
-    with patch.object(repository, "execute_query") as mock_execute:
-        mock_execute.side_effect = [
-            [{"filial": "01", "produto": "X", "numero_op": "1/01/001", "saldo_op": 10}],
-            missing_view_error,
-        ]
+    with patch.object(repository, "_connect"):
+        with patch.object(repository, "execute_query") as mock_execute:
+            mock_execute.side_effect = [
+                [{"filial": "01", "produto": "X", "numero_op": "1/01/001", "saldo_op": 10}],
+                missing_view_error,
+            ]
 
-        with repository:
-            items, resumo = repository.list_open_ops()
+            with repository:
+                items, resumo = repository.list_open_ops()
 
     assert len(items) == 1
     assert resumo == []

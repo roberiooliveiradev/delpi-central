@@ -11,6 +11,8 @@ def test_create_plan_writes_audit_log():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo.next_plan_code = MagicMock(return_value="PAC-2026-0001")
     repo.execute_returning_one = MagicMock(return_value={"id": "plan-1", "code": "PAC-2026-0001", "status": "triage"})
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.append_history = MagicMock()
     repo.append_audit_log = MagicMock()
     repo.commit = MagicMock()

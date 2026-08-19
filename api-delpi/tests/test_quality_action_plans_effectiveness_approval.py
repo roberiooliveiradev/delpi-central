@@ -16,6 +16,8 @@ from app.infrastructure.persistence.plugins.repositories.quality_action_plans.po
 def test_submit_effectiveness_review_writes_history_and_audit_log():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo._plan_exists = MagicMock(return_value=True)
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.get_plan_by_id = MagicMock(
         side_effect=[
             {"id": "plan-1", "effectiveness_approval_status": None},
@@ -46,6 +48,8 @@ def test_submit_effectiveness_review_writes_history_and_audit_log():
 def test_submit_effectiveness_review_blocks_when_pending():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo._plan_exists = MagicMock(return_value=True)
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.get_plan_by_id = MagicMock(
         return_value={"id": "plan-1", "effectiveness_approval_status": "pending_review"}
     )
@@ -67,6 +71,8 @@ def test_submit_effectiveness_review_blocks_when_pending():
 def test_approve_effectiveness_review_applies_proposed_status():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo._plan_exists = MagicMock(return_value=True)
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.get_plan_by_id = MagicMock(
         side_effect=[
             {
@@ -96,6 +102,8 @@ def test_approve_effectiveness_review_applies_proposed_status():
 def test_reject_effectiveness_review_emits_rejection_event():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo._plan_exists = MagicMock(return_value=True)
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.get_plan_by_id = MagicMock(
         side_effect=[
             {

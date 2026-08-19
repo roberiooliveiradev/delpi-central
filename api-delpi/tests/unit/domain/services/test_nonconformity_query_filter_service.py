@@ -50,7 +50,7 @@ def test_apply_nonconformity_text_filters_uses_like_for_item() -> None:
     where, params = qb.build()
 
     assert "QI2_ITEM LIKE ?" in where
-    assert params == ["%9048%"]
+    assert params == ("%9048%",)
 
 
 def test_apply_nonconformity_text_filters_uses_like_for_description() -> None:
@@ -64,4 +64,4 @@ def test_apply_nonconformity_text_filters_uses_like_for_description() -> None:
     where, params = qb.build()
 
     assert "LOWER(QI2_DESCR) LIKE ?" in where
-    assert params == ["%cabo%"]
+    assert params == ("%cabo%",)

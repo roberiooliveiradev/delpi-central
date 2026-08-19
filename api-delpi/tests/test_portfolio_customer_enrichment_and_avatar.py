@@ -76,7 +76,7 @@ def test_enrich_and_avatar_operation_ids_in_router() -> None:
 
 def test_manage_avatar_rejects_empty_identity() -> None:
     repo = MagicMock()
-    use_case = ManageCustomerAvatarUseCase(repository=repo)
+    use_case = ManageCustomerAvatarUseCase(repository=repo, storage=MagicMock())
     try:
         use_case.get_meta(customer_code="", customer_store="01")
         assert False, "expected ValueError"

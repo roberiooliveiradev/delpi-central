@@ -51,15 +51,18 @@ def expand_recurrence_slots(
     duration = end_at - start_at
     max_count = MAX_WEEKLY_OCCURRENCES if frequency == "weekly" else MAX_MONTHLY_OCCURRENCES
     slots: list[tuple[datetime, datetime]] = []
-    current_start = start_at
 
-    while current_start <= until and len(slots) < max_count:
+    occurrence = 0
+    while len(slots) < max_count:
+        if frequency == "weekly":
+            current_start = start_at + timedelta(weeks=interval * occurrence)
+        else:
+            current_start = _add_months(start_at, interval * occurrence)
+        if current_start > until:
+            break
         current_end = current_start + duration
         slots.append((current_start, current_end))
-        if frequency == "weekly":
-            current_start = current_start + timedelta(weeks=interval)
-        else:
-            current_start = _add_months(current_start, interval)
+        occurrence += 1
 
     if not slots:
         raise RecurrenceValidationError("Nenhuma ocorrência gerada para o período informado.")

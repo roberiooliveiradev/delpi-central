@@ -16,6 +16,8 @@ def test_update_plan_allows_customer_product_reference() -> None:
             {"id": "plan-1", "customer_product_reference": "REF-Cliente"},
         ]
     )
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.execute = MagicMock()
     repo.append_history = MagicMock()
     repo.append_audit_log = MagicMock()

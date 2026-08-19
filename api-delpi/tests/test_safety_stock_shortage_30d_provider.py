@@ -596,10 +596,12 @@ def test_finished_product_code_at_first_shortage_from_projection() -> None:
 
 
 def test_sql_includes_material_type_and_last_inbound_party() -> None:
-    materials_sql = materials_for_projection_batch_sql(where_sql="")
+    materials_sql, _params = materials_for_projection_batch_sql(branch="01", where_sql="")
     assert "B1_TPMAT" in materials_sql
     assert "material_type" in materials_sql
-    inbound_sql = last_inbound_party_names_sql(placeholders="?, ?")
+    inbound_sql, _inbound_params = last_inbound_party_names_sql(
+        branch="01", placeholders="?, ?"
+    )
     assert "SD1010" in inbound_sql
     assert "SA1010" in inbound_sql
     assert "A1_NREDUZ" in inbound_sql

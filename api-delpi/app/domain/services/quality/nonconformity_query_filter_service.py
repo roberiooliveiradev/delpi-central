@@ -47,10 +47,21 @@ def match_nonconformity_status_codes(query: str | None) -> list[str] | None:
     if not term:
         return None
 
+    labels = {
+        code: str(label).strip().lower()
+        for code, label in NONCONFORMITY_STATUS_LABELS.items()
+    }
+    exact = [
+        code
+        for code, label in labels.items()
+        if term == label or term == code.lower()
+    ]
+    if exact:
+        return exact
+
     matches = [
         code
-        for code, label in NONCONFORMITY_STATUS_LABELS.items()
-        if term in label.lower() or term in code.lower()
+        for code, label in labels.items()
+        if term in label or term in code.lower()
     ]
-
     return matches or None

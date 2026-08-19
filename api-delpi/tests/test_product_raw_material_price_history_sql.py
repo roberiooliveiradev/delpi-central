@@ -7,9 +7,11 @@ from app.infrastructure.persistence.totvs.product_repositories.product_raw_mater
 )
 
 
+@patch.object(ProductRawMaterialPriceRepository, "_connect")
 @patch.object(ProductRawMaterialPriceRepository, "execute_batch_query")
 def test_fetch_purchase_price_history_default_keeps_issue_basis(
     mock_execute: MagicMock,
+    _connect: MagicMock,
 ) -> None:
     mock_execute.return_value = []
     repo = ProductRawMaterialPriceRepository()
@@ -31,9 +33,11 @@ def test_fetch_purchase_price_history_default_keeps_issue_basis(
     assert "01" in params
 
 
+@patch.object(ProductRawMaterialPriceRepository, "_connect")
 @patch.object(ProductRawMaterialPriceRepository, "execute_batch_query")
 def test_fetch_purchase_price_history_supplier_entry_basis(
     mock_execute: MagicMock,
+    _connect: MagicMock,
 ) -> None:
     mock_execute.return_value = []
     repo = ProductRawMaterialPriceRepository()

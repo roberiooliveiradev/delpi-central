@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
@@ -325,7 +325,24 @@ def test_graph_mail_error_on_unexpected_status() -> None:
             request=httpx.Request("POST", "https://graph.microsoft.com/sendMail"),
         ),
     ]
-    with pytest.raises(GraphMailError, match="rejeitado"):
-        _configured_mail_client(http_client).send_mail(
-            subject=EMAIL_SUBJECT, html_body="<p>x</p>"
-        )
+    rejected = httpx.Response(
+        500,
+        request=httpx.Request("POST", "https://graph.microsoft.com/sendMail"),
+    )
+    http_client.post.side_effect = [
+        httpx.Response(
+            200,
+            json={"access_token": "tok"},
+            request=httpx.Request("POST", "https://example/token"),
+        ),
+        rejected,
+        rejected,
+        rejected,
+    ]
+    with patch(
+        "app.infrastructure.providers.microsoft_graph.microsoft_graph_mail_client.time.sleep"
+    ):
+        with pytest.raises(GraphMailError, match="rejeitado"):
+            _configured_mail_client(http_client).send_mail(
+                subject=EMAIL_SUBJECT, html_body="<p>x</p>"
+            )

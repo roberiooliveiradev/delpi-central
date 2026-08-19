@@ -56,7 +56,7 @@ def test_historico_detalhe_sql_uses_historico_tela_with_filters() -> None:
     next_method = source.find("\n    def ", method_start + 1)
     method_body = source[method_start:] if next_method < 0 else source[method_start:next_method]
     assert "HISTORICO_TELA_VIEW" in method_body
-    assert "Filial = ?" in method_body
+    assert '_where_branch("Filial"' in method_body
     assert "Ordem_Producao" in method_body
     assert "SELECT TOP (" in method_body
     assert "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY" not in method_body

@@ -88,14 +88,13 @@ def test_oee_appointments_materialized_cache_reused_across_pages() -> None:
         "execute_query_multiple",
         return_value=[{"data": rows}],
     ) as sql_mock:
-        with patch.object(repository, "__enter__", return_value=repository):
-            with patch.object(repository, "__exit__", return_value=False):
-                _first_summary, first_page = repository.get_oee_appointments_bundle(
-                    base_request
-                )
-                _second_summary, second_page = repository.get_oee_appointments_bundle(
-                    page_two_request
-                )
+        with patch.object(OverallEquipmentEffectivenessRepository, "_connect"):
+            _first_summary, first_page = repository.get_oee_appointments_bundle(
+                base_request
+            )
+            _second_summary, second_page = repository.get_oee_appointments_bundle(
+                page_two_request
+            )
 
     sql_mock.assert_called_once()
     assert first_page.page == 1

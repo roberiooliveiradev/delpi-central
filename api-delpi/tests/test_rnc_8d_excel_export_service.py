@@ -218,8 +218,11 @@ def test_build_rnc_8d_workbook_embeds_annex_images():
     )
     from openpyxl import load_workbook
 
-    wb = load_workbook(io.BytesIO(content))
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        names = archive.namelist()
+        assert any(name.startswith("xl/media/") for name in names)
+
+    wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
     assert "Anexos(Evidencias)" in wb.sheetnames
     annex = wb["Anexos(Evidencias)"]
     assert annex["D3"].value == "foto-nc.png"
-    assert len(annex._images) >= 1

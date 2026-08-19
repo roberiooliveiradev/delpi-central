@@ -61,5 +61,5 @@ def test_summarize_pa_producible_capacity_uses_bottleneck_material() -> None:
 
     assert capacity["max_pa_producible_from_stock"] == "0"
     assert capacity["limiting_raw_material_code"] == "10160002"
-    assert capacity["materials"][0]["pa_producible_from_stock"] == "117.0"
+    assert capacity["materials"][0]["pa_producible_from_stock"] == "117"
     assert capacity["materials"][1]["pa_producible_from_stock"] == "0.8333"

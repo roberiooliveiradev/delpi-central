@@ -21,6 +21,8 @@ def test_reopen_plan_writes_history_and_audit_log():
             {"id": "plan-1", "status": "in_progress"},
         ]
     )
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.execute = MagicMock()
     repo.append_history = MagicMock()
     repo.append_audit_log = MagicMock()
@@ -148,6 +150,7 @@ def test_delete_plan_use_case_blocks_approved_effectiveness():
 def test_reopen_plan_rejects_non_terminal_status():
     repo = PostgresQualityActionPlanRepository(connection=MagicMock())
     repo.get_plan_by_id = MagicMock(return_value={"id": "plan-1", "status": "in_progress"})
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
 
     try:
         repo.reopen_plan(
@@ -172,6 +175,8 @@ def test_update_plan_status_emits_plan_closed_audit_for_completed():
             {"id": "plan-1", "status": "completed"},
         ]
     )
+    repo._coerce_plan_id = MagicMock(return_value="plan-1")
+    repo.record_plan_revision = MagicMock(return_value=1)
     repo.execute = MagicMock()
     repo.append_history = MagicMock()
     repo.append_audit_log = MagicMock()
@@ -191,6 +196,8 @@ def test_update_plan_status_emits_plan_closed_audit_for_completed():
         entity_id="plan-1",
         event_type="plan_closed",
         actor_user_id="user-1",
+        actor_name=None,
+        actor_email=None,
         payload={
             "previous_status": "waiting_validation",
             "status": "completed",
@@ -248,6 +255,9 @@ def test_reopen_use_case_defaults_target_for_cancelled():
         target_status="triage",
         reason="Reavaliação após nova evidência do cliente.",
         updated_by="user-1",
+        updated_by_name=None,
+        updated_by_email=None,
+        expected_revision_number=None,
     )
 
 

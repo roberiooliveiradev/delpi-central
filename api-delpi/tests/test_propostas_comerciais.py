@@ -944,9 +944,9 @@ def test_pdf_export_request_sanitizes_item_text_overrides() -> None:
 
     payload = PropostaComercialPdfExportRequest(
         itens=[
-            {"item": "01", "descricao": "Descricao editada", "produto": "99999999"},
+            {"item": "01", "descricao": "Descricao editada"},
             {"item": "  ", "descricao": "Ignorado"},
-            {"item": "02", "produto": "88888888"},
+            {"item": "02", "descricao": None},
         ]
     )
 
