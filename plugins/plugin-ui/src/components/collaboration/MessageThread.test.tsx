@@ -116,4 +116,36 @@ describe("MessageThread", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+
+  it("exposes icon actions by accessible name without permanent text", () => {
+    const onPin = vi.fn();
+    render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno",
+            createdAtLabel: "10:00",
+          },
+        ]}
+        resolveActions={() => [
+          {
+            id: "pin",
+            label: "Pin message",
+            title: "Pin message",
+            icon: <span>📌</span>,
+            onClick: onPin,
+          },
+        ]}
+      />,
+    );
+    expect(screen.queryByText("Pin message")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Pin message" }));
+    expect(onPin).toHaveBeenCalledTimes(1);
+  });
 });
