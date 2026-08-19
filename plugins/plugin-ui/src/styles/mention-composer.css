@@ -16,14 +16,22 @@
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
 
+.delpi-ui-mention-composer__body:focus-within {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
 .delpi-ui-mention-composer__textarea {
   width: 100%;
-  min-height: 4.5rem;
+  min-height: 2.75rem;
+  max-height: 8rem;
   margin: 0;
   padding: 0;
   border: none;
-  resize: vertical;
+  resize: none;
+  overflow-y: auto;
   font: inherit;
+  font-size: 0.9375rem;
   line-height: 1.45;
   color: var(--delpi-ui-text, var(--text, #0f172a));
   caret-color: var(--delpi-ui-accent, var(--primary, #089bdb));
@@ -57,13 +65,21 @@
   gap: 0.25rem;
 }
 
+.delpi-ui-mention-composer__file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
 .delpi-ui-mention-composer__attach,
 .delpi-ui-mention-composer__send {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 32px;
+  height: 32px;
   margin: 0;
   padding: 0;
   border: none;

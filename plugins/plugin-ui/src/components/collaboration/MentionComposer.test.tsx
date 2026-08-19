@@ -45,10 +45,12 @@ describe("MentionComposer", () => {
     hits = [] as MentionMenuHit[],
     onSubmit = vi.fn(),
     onMentionQueryChange = vi.fn(),
+    onFilesSelected,
   }: {
     hits?: MentionMenuHit[];
     onSubmit?: () => void;
     onMentionQueryChange?: (q: string | null) => void;
+    onFilesSelected?: (files: File[]) => void;
   }): ReactElement {
     const [value, setValue] = useState("");
     return (
@@ -61,7 +63,7 @@ describe("MentionComposer", () => {
         mentionHits={hits}
         onMentionQueryChange={onMentionQueryChange}
         showAttach
-        onAttachClick={vi.fn()}
+        onFilesSelected={onFilesSelected}
       />
     );
   }
@@ -99,5 +101,19 @@ describe("MentionComposer", () => {
     fireEvent.change(area, { target: { value: "Oi @A", selectionStart: 5 } });
     fireEvent.mouseDown(screen.getByRole("option", { name: /Ana/ }));
     expect(area.value).toMatch(/@Ana/);
+  });
+
+  it("opens the hidden file input when attach is clicked", () => {
+    const onFilesSelected = vi.fn();
+    const { container } = render(<Harness onFilesSelected={onFilesSelected} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    const click = vi.spyOn(input, "click");
+    fireEvent.click(screen.getByLabelText("Attach"));
+    expect(click).toHaveBeenCalledTimes(1);
+    const file = new File(["x"], "note.pdf", { type: "application/pdf" });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(onFilesSelected).toHaveBeenCalledTimes(1);
+    expect(onFilesSelected.mock.calls[0]?.[0]?.[0]?.name).toBe("note.pdf");
   });
 });
