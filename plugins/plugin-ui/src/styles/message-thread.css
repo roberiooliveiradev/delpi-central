@@ -33,6 +33,15 @@
   max-width: none;
 }
 
+.delpi-ui-message-thread__cluster {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: fit-content;
+  max-width: min(75%, 42rem);
+}
+
 .delpi-ui-message-thread__item--mine {
   display: flex;
   justify-content: flex-end;
@@ -63,8 +72,8 @@
   min-width: 0;
   max-width: min(75%, 42rem);
   padding: 0.65rem 0.85rem;
-  border: 1px solid var(--delpi-ui-border, var(--border, #e2e8f0));
-  border-radius: 0.75rem;
+  border: none;
+  border-radius: 1rem;
   background: var(
     --delpi-ui-surface-elevated,
     var(--delpi-ui-surface, var(--surface, #ffffff))
@@ -72,14 +81,9 @@
 }
 
 .delpi-ui-message-thread__bubble--mine {
-  border-color: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 40%,
-    transparent
-  );
   background: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 28%,
     var(--delpi-ui-surface, var(--surface, #ffffff))
   );
   color: var(--delpi-ui-text, var(--text, #0f172a));
@@ -112,20 +116,31 @@
 }
 
 .delpi-ui-message-thread__actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.15rem;
-  margin-top: 0.15rem;
+  margin: 0;
+  padding: 0.15rem;
+  transform: translateY(calc(-100% - 0.25rem));
+  border-radius: 0.5rem;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--delpi-ui-text, #0f172a) 12%, transparent);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .delpi-ui-message-thread__actions {
     opacity: 0;
+    pointer-events: none;
   }
 
-  .delpi-ui-message-thread__item:hover .delpi-ui-message-thread__actions,
-  .delpi-ui-message-thread__item:focus-within .delpi-ui-message-thread__actions {
+  .delpi-ui-message-thread__cluster:hover .delpi-ui-message-thread__actions,
+  .delpi-ui-message-thread__cluster:focus-within .delpi-ui-message-thread__actions {
     opacity: 1;
+    pointer-events: auto;
   }
 }
 

@@ -24,13 +24,14 @@
   width: 100%;
   margin: 0;
   padding: 0.6rem 0.75rem;
-  border: 1px solid transparent;
-  border-radius: 0.65rem;
+  border: none;
+  border-radius: 0.5rem;
   text-align: left;
   font: inherit;
   color: inherit;
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  background: transparent;
   cursor: pointer;
+  box-shadow: none;
 }
 
 .delpi-ui-room-inbox__item:hover {
@@ -47,8 +48,8 @@
 }
 
 .delpi-ui-room-inbox__item--selected {
-  border-color: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 45%, transparent);
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 .delpi-ui-room-inbox__item--unread .delpi-ui-room-inbox__title {

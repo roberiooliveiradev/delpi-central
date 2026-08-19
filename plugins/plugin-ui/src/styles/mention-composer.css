@@ -12,13 +12,19 @@
   gap: 0.35rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
-  border-radius: 0.75rem;
+  border-radius: 1.25rem;
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
 
 .delpi-ui-mention-composer__body:focus-within {
-  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
-  outline-offset: 2px;
+  outline: none;
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 55%,
+    transparent
+  );
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 28%, transparent);
 }
 
 .delpi-ui-mention-composer__textarea {
@@ -89,10 +95,19 @@
   cursor: pointer;
 }
 
-.delpi-ui-mention-composer__attach:hover:not(:disabled),
-.delpi-ui-mention-composer__send:hover:not(:disabled) {
+.delpi-ui-mention-composer__send {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.delpi-ui-mention-composer__attach:hover:not(:disabled) {
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
+}
+
+.delpi-ui-mention-composer__send:hover:not(:disabled) {
+  filter: brightness(1.06);
 }
 
 .delpi-ui-mention-composer__send:disabled,
@@ -102,7 +117,8 @@
 }
 
 .delpi-ui-mention-composer__send:not(:disabled) {
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: #fff;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 .delpi-ui-mention-composer__footer {

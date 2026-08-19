@@ -11,6 +11,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/resolveActions/);
+    expect(source).toMatch(/CommercialMessageThread/);
+    expect(source).not.toMatch(/cm-message-thread__actions/);
     expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/useDirectoryUserLabels/);

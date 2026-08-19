@@ -46,6 +46,7 @@ export type MessageThreadClassNames = {
   itemReply: string;
   itemMine: string;
   row: string;
+  cluster: string;
   avatar: InitialsAvatarClassNames;
   system: string;
   bubble: string;
@@ -95,6 +96,7 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
       `${ui}__item ${ui}__item--mine`,
     ),
     row: pair(`${base}__row`, `${ui}__row`),
+    cluster: pair(`${base}__cluster`, `${ui}__cluster`),
     avatar: initialsAvatarBemClasses(prefix),
     system: pair(`${base}__system`, `${ui}__system`),
     bubble: pair(`${base}__bubble`, `${ui}__bubble`),
@@ -212,18 +214,7 @@ export function MessageThread({
             >
               <div className={classNames.row}>
                 {message.mine ? null : avatar}
-                <article
-                  className={message.mine ? classNames.bubbleMine : classNames.bubble}
-                >
-                  <header className={classNames.meta}>
-                    {message.authorName && !message.mine ? (
-                      <span className={classNames.author}>{message.authorName}</span>
-                    ) : null}
-                    {message.createdAtLabel ? (
-                      <time className={classNames.time}>{message.createdAtLabel}</time>
-                    ) : null}
-                  </header>
-                  {body}
+                <div className={classNames.cluster}>
                   {actions.length > 0 ? (
                     <div className={classNames.actions}>
                       {actions.map((action) => (
@@ -242,8 +233,21 @@ export function MessageThread({
                       ))}
                     </div>
                   ) : null}
-                  {message.belowBody}
-                </article>
+                  <article
+                    className={message.mine ? classNames.bubbleMine : classNames.bubble}
+                  >
+                    <header className={classNames.meta}>
+                      {message.authorName && !message.mine ? (
+                        <span className={classNames.author}>{message.authorName}</span>
+                      ) : null}
+                      {message.createdAtLabel ? (
+                        <time className={classNames.time}>{message.createdAtLabel}</time>
+                      ) : null}
+                    </header>
+                    {body}
+                    {message.belowBody}
+                  </article>
+                </div>
                 {message.mine ? avatar : null}
               </div>
             </li>

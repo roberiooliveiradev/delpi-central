@@ -154,6 +154,37 @@ describe("MessageThread", () => {
     fireEvent.click(screen.getByRole("button", { name: "Pin message" }));
     expect(onPin).toHaveBeenCalledTimes(1);
   });
+
+  it("coloca a barra de ações fora do article da bolha", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno",
+            createdAtLabel: "10:00",
+          },
+        ]}
+        resolveActions={() => [
+          { id: "delete", label: "Delete", onClick: vi.fn(), danger: true },
+        ]}
+      />,
+    );
+    const article = container.querySelector("article");
+    const actions = container.querySelector(".delpi-ui-message-thread__actions");
+    const cluster = container.querySelector(".delpi-ui-message-thread__cluster");
+    expect(article).not.toBeNull();
+    expect(actions).not.toBeNull();
+    expect(cluster).not.toBeNull();
+    expect(article?.contains(actions)).toBe(false);
+    expect(cluster?.contains(actions)).toBe(true);
+    expect(cluster?.contains(article)).toBe(true);
+  });
 });
 
 describe("message-thread.css host scroll", () => {
@@ -167,5 +198,12 @@ describe("message-thread.css host scroll", () => {
     expect(row).toMatch(/max-width:\s*none;/);
     expect(row).not.toMatch(/min\(75%/);
     expect(bubble).toMatch(/max-width:\s*min\(75%,\s*42rem\)/);
+    expect(bubble).toMatch(/border:\s*none;/);
+    expect(bubble).not.toMatch(/border:\s*1px/);
+    const mine = css.match(/\.delpi-ui-message-thread__bubble--mine \{[^}]+\}/)?.[0] ?? "";
+    expect(mine).toMatch(/28%/);
+    const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
+    expect(actions).toMatch(/position:\s*absolute;/);
+    expect(actions).toMatch(/transform:\s*translateY\(calc\(-100%/);
   });
 });

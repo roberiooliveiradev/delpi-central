@@ -1,9 +1,13 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RoomInboxList, roomInboxListBemClasses } from "./RoomInboxList";
 
 const classNames = roomInboxListBemClasses("test");
+const stylesDir = join(dirname(fileURLToPath(import.meta.url)), "../../styles");
 
 afterEach(() => {
   cleanup();
@@ -68,5 +72,18 @@ describe("RoomInboxList", () => {
     expect(screen.getByText("AV")).toBeTruthy();
     expect(screen.getByText("Cliente Pedido 102942")).toBeTruthy();
     expect(screen.getByRole("button").getAttribute("aria-current")).toBe("true");
+  });
+});
+
+describe("room-inbox.css", () => {
+  it("seleção usa barra 3px e fill, sem borda full", () => {
+    const css = readFileSync(join(stylesDir, "room-inbox.css"), "utf8");
+    const item = css.match(/\.delpi-ui-room-inbox__item \{[^}]+\}/)?.[0] ?? "";
+    const selected =
+      css.match(/\.delpi-ui-room-inbox__item--selected \{[^}]+\}/)?.[0] ?? "";
+    expect(item).toMatch(/border:\s*none;/);
+    expect(item).not.toMatch(/border:\s*1px solid/);
+    expect(selected).toMatch(/inset 3px 0 0/);
+    expect(selected).not.toMatch(/border-color:/);
   });
 });
