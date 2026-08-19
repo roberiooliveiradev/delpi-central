@@ -345,14 +345,19 @@ export function findRichTextLinkAtSelection(
   return anchor as HTMLAnchorElement;
 }
 
+/** Remove o elemento preservando os filhos (toggle de ênfase / link). */
+export function unwrapRichTextElement(el: Element) {
+  const parent = el.parentNode;
+  if (!parent) return;
+  while (el.firstChild) {
+    parent.insertBefore(el.firstChild, el);
+  }
+  parent.removeChild(el);
+}
+
 /** Remove a âncora preservando o conteúdo (unlink estrutural, sem depender da seleção). */
 export function unwrapRichTextLink(anchor: HTMLAnchorElement) {
-  const parent = anchor.parentNode;
-  if (!parent) return;
-  while (anchor.firstChild) {
-    parent.insertBefore(anchor.firstChild, anchor);
-  }
-  parent.removeChild(anchor);
+  unwrapRichTextElement(anchor);
 }
 
 /**

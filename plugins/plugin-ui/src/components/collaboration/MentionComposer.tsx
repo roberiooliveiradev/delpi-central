@@ -27,13 +27,10 @@ import { HintAction } from "../help/HintAction";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
   applyRichTextFontSize,
-  execRichTextCommand,
   getRichTextSelectionRange,
   insertRichTextHtmlFragment,
-  insertRichTextLink,
   queryRichTextFontSize,
   restoreRichTextSelection,
-  runRichTextCommand,
 } from "../rich-text/richTextCommands";
 import {
   clipboardHasUsefulHtml,
@@ -47,6 +44,12 @@ import {
   type MentionMenuClassNames,
   type MentionMenuHit,
 } from "./MentionMenu";
+import {
+  emptyComposerFormatFlags,
+  queryComposerFormatFlags,
+  toggleComposerFormat,
+  type ComposerFormatKind,
+} from "./mentionComposerFormat";
 import {
   clampComposerFontSize,
   COMPOSER_FONT_SIZE_DEFAULT,
@@ -182,42 +185,6 @@ function escapePlainText(text: string): string {
     .replace(/\n/g, "<br>");
 }
 
-function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) {
-    insertRichTextHtmlFragment(editor, `<${tag}>\u200b</${tag}>`);
-    return;
-  }
-  const range = selection.getRangeAt(0);
-  if (!editor.contains(range.commonAncestorContainer)) {
-    insertRichTextHtmlFragment(editor, `<${tag}>\u200b</${tag}>`);
-    return;
-  }
-  if (range.collapsed) {
-    insertRichTextHtmlFragment(editor, `<${tag}>\u200b</${tag}>`);
-    return;
-  }
-  const el = document.createElement(tag);
-  try {
-    range.surroundContents(el);
-  } catch {
-    el.appendChild(range.extractContents());
-    range.insertNode(el);
-  }
-}
-
-function applyComposerFormat(editor: HTMLElement, kind: string) {
-  expandCollapsedSelectionForFormat(editor);
-  if (kind === "bold") wrapSelectionWithTag(editor, "strong");
-  else if (kind === "italic") wrapSelectionWithTag(editor, "em");
-  else if (kind === "strike") wrapSelectionWithTag(editor, "s");
-  else if (kind === "ul") runRichTextCommand(editor, "insertUnorderedList");
-  else if (kind === "ol") runRichTextCommand(editor, "insertOrderedList");
-  else if (kind === "code") wrapSelectionWithTag(editor, "code");
-  else if (kind === "quote") execRichTextCommand("formatBlock", "blockquote");
-  else if (kind === "link") insertRichTextLink(editor, "https://");
-}
-
 /**
  * Composer da sala: superfície contenteditable; contrato `value`/`onChange` = markdown.
  * Sem RichTextEditor de deck.
@@ -252,6 +219,7 @@ export function MentionComposer({
   const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
   const [formatOpen, setFormatOpen] = useState(false);
   const [fontSize, setFontSize] = useState(COMPOSER_FONT_SIZE_DEFAULT);
+  const [formatFlags, setFormatFlags] = useState(emptyComposerFormatFlags());
   const menuOpen = Boolean(activeMention) && !disabled;
   const empty = !value.trim();
   const showFormat = Boolean(labels.formatToggleAriaLabel);
@@ -295,6 +263,7 @@ export function MentionComposer({
       if (range) savedRangeRef.current = range;
       const size = queryRichTextFontSize(el);
       if (size) setFontSize(clampComposerFontSize(size));
+      setFormatFlags(queryComposerFormatFlags(el));
     };
     document.addEventListener("selectionchange", persist);
     return () => document.removeEventListener("selectionchange", persist);
@@ -356,45 +325,46 @@ export function MentionComposer({
     if (!el) return false;
     const key = event.key.toLowerCase();
     if (key === "b" && !event.shiftKey) {
-      applyComposerFormat(el, "bold");
+      toggleComposerFormat(el, "bold");
       return true;
     }
     if (key === "i" && !event.shiftKey) {
-      applyComposerFormat(el, "italic");
+      toggleComposerFormat(el, "italic");
       return true;
     }
     if (key === "x" && event.shiftKey) {
-      applyComposerFormat(el, "strike");
+      toggleComposerFormat(el, "strike");
       return true;
     }
     if (key === "`" || (key === "e" && !event.shiftKey)) {
-      applyComposerFormat(el, "code");
+      toggleComposerFormat(el, "code");
       return true;
     }
     if (key === "8" && event.shiftKey) {
-      applyComposerFormat(el, "ul");
+      toggleComposerFormat(el, "ul");
       return true;
     }
     if (key === "7" && event.shiftKey) {
-      applyComposerFormat(el, "ol");
+      toggleComposerFormat(el, "ol");
       return true;
     }
     if (key === "." && event.shiftKey) {
-      applyComposerFormat(el, "quote");
+      toggleComposerFormat(el, "quote");
       return true;
     }
     if (key === "k" && !event.shiftKey) {
-      applyComposerFormat(el, "link");
+      toggleComposerFormat(el, "link");
       return true;
     }
     return false;
   };
 
-  const runFormat = (kind: string) => {
+  const runFormat = (kind: ComposerFormatKind) => {
     const el = surfaceRef.current;
     if (!el) return;
     restoreRichTextSelection(el, savedRangeRef.current);
-    applyComposerFormat(el, kind);
+    toggleComposerFormat(el, kind);
+    setFormatFlags(queryComposerFormatFlags(el));
     emitMarkdownAndMention();
   };
 
@@ -434,6 +404,7 @@ export function MentionComposer({
     if (applyShortcut(event)) {
       event.preventDefault();
       emitMarkdownAndMention();
+      setFormatFlags(queryComposerFormatFlags(surfaceRef.current));
       return;
     }
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
@@ -539,6 +510,7 @@ export function MentionComposer({
                   type="button"
                   className={classNames.format}
                   aria-label={aria}
+                  aria-pressed={formatFlags[kind]}
                   disabled={disabled || submitting}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => runFormat(kind)}

@@ -262,6 +262,10 @@ describe("MentionComposer", () => {
     expect(screen.getByRole("toolbar", { name: "Format" })).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Bold"));
     expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
+    expect(screen.getByLabelText("Bold").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByLabelText("Bold"));
+    expect(surface.innerHTML.toLowerCase()).not.toMatch(/<(strong|b)\b/);
+    expect(screen.getByLabelText("Bold").getAttribute("aria-pressed")).toBe("false");
 
     fireEvent.click(screen.getByLabelText("Increase font size"));
     expect(surface.innerHTML).toMatch(/font-size:\s*18px/);
@@ -297,6 +301,6 @@ describe("mention-composer.css", () => {
     expect(css).not.toMatch(/textarea::placeholder/);
     expect(css).not.toMatch(/--empty::before/);
     expect(css).toMatch(/__placeholder/);
-    expect(css).toMatch(/__font-size/);
+    expect(css).toMatch(/__format\[aria-pressed="true"\]/);
   });
 });

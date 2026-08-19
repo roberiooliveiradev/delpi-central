@@ -168,6 +168,7 @@
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
 }
 
+.delpi-ui-mention-composer__format[aria-pressed="true"],
 .delpi-ui-mention-composer__format-toggle[aria-pressed="true"] {
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 16%, transparent);
