@@ -37,6 +37,12 @@ import { formatInboxMetaLabel } from "./formatInboxMetaLabel";
 type Props = {
   basePath: string;
   selectedRoomId?: string | null;
+  variant?: "page" | "pane";
+  filter?: InteractionInboxFilter;
+  query?: string;
+  onFilterChange?: (filter: InteractionInboxFilter) => void;
+  onQueryChange?: (query: string) => void;
+  preserveSearch?: string;
 };
 
 const FILTER_IDS: InteractionInboxFilter[] = [
@@ -80,10 +86,20 @@ function customerIdentity(item: InteractionRoomInboxItemDto): {
 export function InteractionRoomsInboxPage({
   basePath,
   selectedRoomId = null,
+  variant = "page",
+  filter: filterProp,
+  query: queryProp,
+  onFilterChange,
+  onQueryChange,
+  preserveSearch = "",
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
-  const [filter, setFilter] = useState<InteractionInboxFilter>("all");
-  const [query, setQuery] = useState("");
+  const [filterState, setFilterState] = useState<InteractionInboxFilter>("all");
+  const [queryState, setQueryState] = useState("");
+  const filter = filterProp ?? filterState;
+  const query = queryProp ?? queryState;
+  const setFilter = onFilterChange ?? setFilterState;
+  const setQuery = onQueryChange ?? setQueryState;
   const [items, setItems] = useState<InteractionRoomInboxItemDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,9 +168,9 @@ export function InteractionRoomsInboxPage({
   const onSelect = useCallback(
     (roomId: string) => {
       const href = buildInteractionRoomPath(basePath, roomId);
-      if (href) navigatePluginPath(href);
+      if (href) navigatePluginPath(`${href}${preserveSearch}`);
     },
-    [basePath],
+    [basePath, preserveSearch],
   );
 
   const onCustomerNavigate = useCallback(
@@ -166,35 +182,41 @@ export function InteractionRoomsInboxPage({
     [],
   );
 
+  const chrome = variant === "page";
+
   return (
-    <section className="cm-page-stack">
-      <CommercialPagePath
-        back={{
-          label: "Início",
-          href: buildPluginPath("home", basePath),
-        }}
-        current={content.inboxTitle}
-      />
-      <CommercialPageHero
-        title={content.inboxTitle}
-        description={content.inboxSubtitle}
-        actions={
-          <div className="cm-room-inbox-search">
-            <CommercialCatalogSearchBar
-              value={query}
-              onChange={setQuery}
-              placeholder={content.searchPlaceholder}
-              aria-label={content.searchPlaceholder}
-            />
-          </div>
-        }
-      >
-        <CommercialUnderlineNav
-          items={navItems}
-          activeId={filter}
-          aria-label={content.filtersAriaLabel}
+    <section className={chrome ? "cm-page-stack" : "cm-room-inbox-pane"}>
+      {chrome ? (
+        <CommercialPagePath
+          back={{
+            label: "Início",
+            href: buildPluginPath("home", basePath),
+          }}
+          current={content.inboxTitle}
         />
-      </CommercialPageHero>
+      ) : null}
+      {chrome ? (
+        <CommercialPageHero
+          title={content.inboxTitle}
+          description={content.inboxSubtitle}
+          actions={
+            <div className="cm-room-inbox-search">
+              <CommercialCatalogSearchBar
+                value={query}
+                onChange={setQuery}
+                placeholder={content.searchPlaceholder}
+                aria-label={content.searchPlaceholder}
+              />
+            </div>
+          }
+        >
+          <CommercialUnderlineNav
+            items={navItems}
+            activeId={filter}
+            aria-label={content.filtersAriaLabel}
+          />
+        </CommercialPageHero>
+      ) : null}
       {error ? (
         <CommercialStateBanner variant="error">
           {error}{" "}

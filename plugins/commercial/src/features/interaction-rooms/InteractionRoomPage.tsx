@@ -40,6 +40,8 @@ import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
 type Props = {
   basePath: string;
   roomId: string;
+  variant?: "page" | "pane";
+  inboxHref?: string;
 };
 
 function formatMessageTime(iso: string | null | undefined): string {
@@ -62,10 +64,16 @@ function kindChipLabel(room: InteractionRoomDto): string {
 }
 
 /** Página da sala — só kit (header + thread + composer). */
-export function InteractionRoomPage({ basePath, roomId }: Props) {
+export function InteractionRoomPage({
+  basePath,
+  roomId,
+  variant = "page",
+  inboxHref,
+}: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
-  const inboxHref =
-    buildInteractionRoomsPath(basePath) ?? buildPluginPath("home", basePath);
+  const backHref =
+    inboxHref ??
+    (buildInteractionRoomsPath(basePath) ?? buildPluginPath("home", basePath));
 
   const [room, setRoom] = useState<InteractionRoomDto | null>(null);
   const [members, setMembers] = useState<InteractionRoomMemberDto[]>([]);
@@ -277,14 +285,16 @@ export function InteractionRoomPage({ basePath, roomId }: Props) {
   );
 
   return (
-    <section className="cm-page-stack">
-      <CommercialPagePath
-        back={{
-          label: content.inboxTitle,
-          href: inboxHref,
-        }}
-        current={room?.title ?? content.roomFallbackTitle}
-      />
+    <section className={variant === "page" ? "cm-page-stack" : "cm-room-thread"}>
+      {variant === "page" ? (
+        <CommercialPagePath
+          back={{
+            label: content.inboxTitle,
+            href: backHref,
+          }}
+          current={room?.title ?? content.roomFallbackTitle}
+        />
+      ) : null}
       {error ? (
         <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
       ) : null}
@@ -296,37 +306,43 @@ export function InteractionRoomPage({ basePath, roomId }: Props) {
       ) : null}
       {!loading && room ? (
         <>
-          <CommercialRoomHeader
-            title={room.title}
-            subtitle={
-              room.entity_key
-                ? `${kindChipLabel(room)} · ${room.entity_key}`
-                : kindChipLabel(room)
-            }
-            chips={
-              <CommercialStatusBadge label={kindChipLabel(room)} variant="info" />
-            }
-            participants={participants}
-            participantsAriaLabel={content.roomMembersAriaLabel}
-          />
-          {threadMessages.length === 0 ? (
-            <CommercialEmptyState
-              title={content.roomEmptyTitle}
-              message={content.roomEmptyDescription}
+          <div className="cm-room-thread__header">
+            <CommercialRoomHeader
+              title={room.title}
+              subtitle={
+                room.entity_key
+                  ? `${kindChipLabel(room)} · ${room.entity_key}`
+                  : kindChipLabel(room)
+              }
+              chips={
+                <CommercialStatusBadge label={kindChipLabel(room)} variant="info" />
+              }
+              participants={participants}
+              participantsAriaLabel={content.roomMembersAriaLabel}
             />
-          ) : (
-            <CommercialMessageThread
-              listAriaLabel={content.roomMessagesAriaLabel}
-              emptyLabel={content.roomEmptyTitle}
-              messages={threadMessages}
-              resolveActions={resolveActions}
+          </div>
+          <div className="cm-room-thread__msgs">
+            {threadMessages.length === 0 ? (
+              <CommercialEmptyState
+                title={content.roomEmptyTitle}
+                message={content.roomEmptyDescription}
+              />
+            ) : (
+              <CommercialMessageThread
+                listAriaLabel={content.roomMessagesAriaLabel}
+                emptyLabel={content.roomEmptyTitle}
+                messages={threadMessages}
+                resolveActions={resolveActions}
+              />
+            )}
+          </div>
+          <div className="cm-room-thread__dock">
+            <InteractionRoomMessageComposer
+              roomId={room.id}
+              onMessageCreated={onMessageCreated}
+              onError={(message) => setError(message)}
             />
-          )}
-          <InteractionRoomMessageComposer
-            roomId={room.id}
-            onMessageCreated={onMessageCreated}
-            onError={(message) => setError(message)}
-          />
+          </div>
         </>
       ) : null}
       {!loading && !room && !error ? (

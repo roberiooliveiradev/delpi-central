@@ -10,6 +10,8 @@ export const INTERACTION_ROOMS_CONTENT = {
   searchPlaceholder: "Buscar por título da sala",
   reloadLabel: "Atualizar",
   inboxMetaYesterday: "Ontem",
+  selectRoomTitle: "Selecione uma sala",
+  selectRoomDescription: "Escolha uma conversa na lista para ler e responder.",
   loadingLabel: "Carregando salas…",
   loadError: "Não foi possível carregar as salas.",
   unreadBadge: "{count} não lidas",
