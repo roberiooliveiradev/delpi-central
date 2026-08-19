@@ -3,7 +3,7 @@
 > **Produto ao usuário:** Portal Comercial  
 > **Id técnico:** `commercial` · `basePath` `/apps/commercial`  
 > **UI kit:** `@delpi/plugin-ui` · modais contidos no host  
-> **Status:** IA hub 2026 — top nav Início · Visão geral · Minhas tarefas · Meus pedidos · Minha Carteira · Administração  
+> **Status:** IA hub 2026 — top nav Início · Visão geral · Sala de interação · Minhas tarefas · Meus pedidos · Minha Carteira · Administração  
 > **Design:** [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)
 
 ## Convenções
