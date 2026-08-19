@@ -24,7 +24,8 @@ from commercial_app.application.use_cases.manage_interaction_rooms import (
 )
 from commercial_app.application.services.commercial_realtime_notify import (
     notify_interaction_mention,
-    notify_room_message_changed,
+    notify_interaction_room_activity,
+    notify_room_pin_changed,
     notify_room_reaction_changed,
     notify_worklist_changed,
 )
@@ -452,7 +453,7 @@ def post_interaction_message(
             )
         )
         try:
-            notify_room_message_changed(
+            notify_interaction_room_activity(
                 reason="created",
                 room_id=str(message.room_id),
                 message=message,
@@ -508,7 +509,7 @@ def update_interaction_message(
             body_text=body.body_text,
         )
         try:
-            notify_room_message_changed(
+            notify_interaction_room_activity(
                 reason="updated",
                 room_id=str(message.room_id),
                 message=message,
@@ -555,7 +556,7 @@ def delete_interaction_message(
             actor_user_id=actor,
         )
         try:
-            notify_room_message_changed(
+            notify_interaction_room_activity(
                 reason="deleted",
                 room_id=str(message.room_id),
                 message=message,
@@ -728,6 +729,17 @@ def pin_interaction_message(
             message_id=message_id,
             actor_user_id=actor,
         )
+        try:
+            notify_room_pin_changed(
+                room_id=str(room_id),
+                message_id=str(message_id),
+                action="set",
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_pin_notify_failed")
         return ok(
             pin.to_dict(),
             message=InteractionRoomContentService.message("pinOk"),
@@ -765,6 +777,17 @@ def unpin_interaction_message(
             message_id=message_id,
             actor_user_id=actor,
         )
+        try:
+            notify_room_pin_changed(
+                room_id=str(room_id),
+                message_id=str(message_id),
+                action="clear",
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_unpin_notify_failed")
         return ok(
             {"cleared": cleared},
             message=InteractionRoomContentService.message("unpinOk"),
@@ -822,7 +845,7 @@ def create_task_from_interaction_message(
                 task=task,
                 actor_user_id=actor,
             )
-            notify_room_message_changed(
+            notify_interaction_room_activity(
                 reason="created",
                 room_id=str(result.task_ref_message.room_id),
                 message=result.task_ref_message,

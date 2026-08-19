@@ -29,6 +29,7 @@ WorklistChangeReason = Literal[
 Audience = Literal["assignee", "previous", "team"]
 
 TEAM_ROOM = "team"
+INTERACTION_HUB_ROOM = "interaction"
 
 _UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
@@ -559,14 +560,15 @@ def notify_interaction_attachment(
     actor_display_name: str | None = None,
     reason: str = "uploaded",
 ) -> None:
-    """WS `user:` dos membros da sala — sem worklist.changed."""
+    """Fan-out `room.attachment` em `room:{uuid}` + toast `user:` dos membros (sem worklist)."""
     from commercial_app.domain.services.interaction_room_content_service import (
         InteractionRoomContentService,
     )
 
-    members = [uid.strip() for uid in member_user_ids if uid and str(uid).strip()]
-    if not members:
+    rid = (room_id or "").strip()
+    if not rid:
         return
+    members = [uid.strip() for uid in member_user_ids if uid and str(uid).strip()]
     actor_label = (
         _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
     )
@@ -592,7 +594,7 @@ def notify_interaction_attachment(
     payload = {
         "type": "room.attachment",
         "reason": f"attachment.{action_key}",
-        "roomId": (room_id or "").strip() or None,
+        "roomId": rid,
         "messageId": (message_id or "").strip() or None,
         "attachmentId": (attachment_id or "").strip() or None,
         "fileName": (file_name or "").strip() or None,
@@ -605,8 +607,24 @@ def notify_interaction_attachment(
             "variant": variant,
         },
     }
+    commercial_realtime_hub.schedule_broadcast(
+        interaction_room_key(rid),
+        {**payload, "notification": None},
+    )
+    notify_room_inbox_changed(room_id=rid)
     for uid in members:
         commercial_realtime_hub.schedule_broadcast(user_room(uid), payload)
+
+
+def notify_room_inbox_changed(*, room_id: str) -> None:
+    """Payload leve para a sala `interaction` (inbox refetch, sem body da mensagem)."""
+    rid = str(room_id or "").strip()
+    if not rid:
+        return
+    commercial_realtime_hub.schedule_broadcast(
+        INTERACTION_HUB_ROOM,
+        {"type": "room.inbox.changed", "roomId": rid},
+    )
 
 
 def notify_room_message_changed(
@@ -645,6 +663,60 @@ def notify_room_message_changed(
         "actorClientId": (actor_client_id or "").strip() or None,
     }
     commercial_realtime_hub.schedule_broadcast(interaction_room_key(rid), payload)
+
+
+def notify_interaction_room_activity(
+    *,
+    reason: str,
+    room_id: str,
+    message: Any,
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+) -> None:
+    """Mensagem na thread (`room:`) + sinal de inbox (`interaction`)."""
+    notify_room_message_changed(
+        reason=reason,
+        room_id=room_id,
+        message=message,
+        actor_user_id=actor_user_id,
+        actor_display_name=actor_display_name,
+        actor_client_id=actor_client_id,
+    )
+    notify_room_inbox_changed(room_id=room_id)
+
+
+def notify_room_pin_changed(
+    *,
+    room_id: str,
+    message_id: str,
+    action: str = "set",
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+) -> None:
+    """Fan-out `room.pin` para inscritos + inbox."""
+    rid = str(room_id or "").strip()
+    mid = str(message_id or "").strip()
+    if not rid or not mid:
+        return
+    pin_action = "clear" if str(action or "").strip().lower() == "clear" else "set"
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    commercial_realtime_hub.schedule_broadcast(
+        interaction_room_key(rid),
+        {
+            "type": "room.pin",
+            "roomId": rid,
+            "messageId": mid,
+            "action": pin_action,
+            "actorUserId": (actor_user_id or "").strip() or None,
+            "actorDisplayName": actor_label,
+            "actorClientId": (actor_client_id or "").strip() or None,
+        },
+    )
+    notify_room_inbox_changed(room_id=rid)
 
 
 def notify_room_reaction_changed(

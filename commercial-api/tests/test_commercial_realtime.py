@@ -546,6 +546,8 @@ def test_notify_interaction_attachment_schedules_member_rooms(monkeypatch):
         lambda _uid: "Ana",
     )
     from commercial_app.application.services.commercial_realtime_notify import (
+        INTERACTION_HUB_ROOM,
+        interaction_room_key,
         notify_interaction_attachment,
         user_room,
     )
@@ -561,8 +563,15 @@ def test_notify_interaction_attachment_schedules_member_rooms(monkeypatch):
         reason="uploaded",
     )
     rooms = {room for room, _ in scheduled}
-    assert rooms == {user_room("u1"), user_room("u2")}
-    body = scheduled[0][1]
+    assert interaction_room_key("r1") in rooms
+    assert INTERACTION_HUB_ROOM in rooms
+    assert user_room("u1") in rooms
+    assert user_room("u2") in rooms
+    body = next(
+        payload
+        for _room, payload in scheduled
+        if payload["type"] == "room.attachment" and payload.get("notification")
+    )
     assert body["type"] == "room.attachment"
     assert body["reason"] == "attachment.uploaded"
     assert "proposta.pdf" in body["notification"]["message"]
@@ -617,3 +626,68 @@ def test_notify_room_message_fanout_to_interaction_room(monkeypatch):
     assert scheduled[0][0] == interaction_room_key(str(message.room_id))
     assert scheduled[0][1]["type"] == "room.reaction"
     assert scheduled[0][1]["action"] == "set"
+
+
+def test_notify_interaction_room_activity_includes_inbox(monkeypatch):
+    hub = MagicMock()
+    scheduled: list[tuple[str, dict]] = []
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
+        hub,
+    )
+    from commercial_app.application.services.commercial_realtime_notify import (
+        INTERACTION_HUB_ROOM,
+        interaction_room_key,
+        notify_interaction_room_activity,
+        notify_room_pin_changed,
+    )
+    from commercial_app.domain.entities.interaction_room import InteractionMessage
+    from datetime import datetime, timezone
+    from uuid import UUID
+
+    message = InteractionMessage(
+        id=UUID("00000000-0000-0000-0000-000000000222"),
+        room_id=UUID("00000000-0000-0000-0000-000000000111"),
+        message_kind="text",
+        body_text="olá",
+        created_at=datetime.now(timezone.utc),
+        author_user_id="u1",
+    )
+    notify_interaction_room_activity(
+        reason="created",
+        room_id=str(message.room_id),
+        message=message,
+        actor_user_id="u1",
+    )
+    rooms = {room for room, _ in scheduled}
+    assert interaction_room_key(str(message.room_id)) in rooms
+    assert INTERACTION_HUB_ROOM in rooms
+    inbox = next(p for r, p in scheduled if p["type"] == "room.inbox.changed")
+    assert inbox["roomId"] == str(message.room_id)
+
+    scheduled.clear()
+    notify_room_pin_changed(
+        room_id=str(message.room_id),
+        message_id=str(message.id),
+        action="set",
+        actor_user_id="u1",
+    )
+    types = {payload["type"] for _room, payload in scheduled}
+    assert "room.pin" in types
+    assert "room.inbox.changed" in types
+
+
+def test_realtime_handshake_joins_interaction_hub() -> None:
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "commercial_app"
+        / "interface"
+        / "http"
+        / "routes"
+        / "realtime_routes.py"
+    ).read_text(encoding="utf-8")
+    assert "INTERACTION_HUB_ROOM" in source
+    assert "room_keys = [user_room(user_id), INTERACTION_HUB_ROOM]" in source

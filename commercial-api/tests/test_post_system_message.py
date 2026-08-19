@@ -75,3 +75,31 @@ def test_system_event_kinds_come_from_json() -> None:
         "confirmation_event"
     )
     assert not InteractionRoomContentService.is_allowed_system_event_kind("")
+
+
+def test_notifying_wrapper_emits_activity(monkeypatch) -> None:
+    from unittest.mock import MagicMock
+
+    from commercial_app.application.services.post_system_message_realtime import (
+        NotifyingPostSystemMessageUseCase,
+    )
+
+    room, inner = _room_and_uc()
+    activity = MagicMock()
+    monkeypatch.setattr(
+        "commercial_app.application.services.post_system_message_realtime.notify_interaction_room_activity",
+        activity,
+    )
+    wrapped = NotifyingPostSystemMessageUseCase(inner)
+    msg = wrapped.execute(
+        PostSystemMessageInput(
+            room_id=room.id,
+            event_kind="otd_event",
+            body_text="OTD atrasou",
+        )
+    )
+    assert msg.body_text == "OTD atrasou"
+    activity.assert_called_once()
+    kwargs = activity.call_args.kwargs
+    assert kwargs["reason"] == "created"
+    assert kwargs["room_id"] == str(room.id)

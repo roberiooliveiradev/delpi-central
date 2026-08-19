@@ -26,7 +26,7 @@ def presence_updated_payload(online_user_ids: list[str]) -> dict[str, Any]:
 
 
 class CommercialRealtimeHub:
-    """Salas WebSocket: user:{userId}, team (gestores) e room:{uuid} (subscribe).
+    """Salas WebSocket: user:{userId}, team (gestores), interaction (inbox) e room:{uuid} (subscribe).
 
     Presença: conta sockets por user_id (multi-aba = 1 online). Gestores na
     sala `team` recebem `presence.updated` + snapshot ao entrar.

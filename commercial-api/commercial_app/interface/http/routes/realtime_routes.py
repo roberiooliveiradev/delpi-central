@@ -17,6 +17,7 @@ from commercial_app.application.services.commercial_realtime_hub import (
     commercial_realtime_hub,
 )
 from commercial_app.application.services.commercial_realtime_notify import (
+    INTERACTION_HUB_ROOM,
     TEAM_ROOM,
     user_room,
 )
@@ -94,7 +95,7 @@ async def commercial_realtime_ws(
     user = await resolve_websocket_user(token)
     user_id = str(user.id)
 
-    room_keys = [user_room(user_id)]
+    room_keys = [user_room(user_id), INTERACTION_HUB_ROOM]
     if can_manage_portfolios(user):
         room_keys.append(TEAM_ROOM)
 

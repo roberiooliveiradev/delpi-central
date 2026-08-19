@@ -19,6 +19,9 @@ from commercial_app.application.use_cases.create_task_from_interaction_message i
 from commercial_app.application.use_cases.post_system_message import (
     PostSystemMessageUseCase,
 )
+from commercial_app.application.services.post_system_message_realtime import (
+    NotifyingPostSystemMessageUseCase,
+)
 from commercial_app.application.use_cases.manage_interaction_messages import (
     ManageInteractionMessagesUseCase,
 )
@@ -359,10 +362,11 @@ def build_create_task_from_interaction_message_use_case() -> (
 def build_post_system_message_use_case() -> PostSystemMessageUseCase:
     global _post_system_message_use_case
     if _post_system_message_use_case is None:
-        _post_system_message_use_case = PostSystemMessageUseCase(
+        inner = PostSystemMessageUseCase(
             rooms=build_interaction_room_repository(),
             messages=build_interaction_message_repository(),
         )
+        _post_system_message_use_case = NotifyingPostSystemMessageUseCase(inner)
     return _post_system_message_use_case
 
 

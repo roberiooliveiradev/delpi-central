@@ -114,7 +114,7 @@ def test_create_task_from_message_201(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     monkeypatch.setattr(
         interaction_room_routes,
-        "notify_room_message_changed",
+        "notify_interaction_room_activity",
         MagicMock(),
     )
     portal = MagicMock()
