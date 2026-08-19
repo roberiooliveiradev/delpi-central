@@ -238,6 +238,9 @@ describe("MentionComposer", () => {
       ...labels,
       formatToggleAriaLabel: "Format",
       formatBoldAriaLabel: "Bold",
+      formatFontSizeAriaLabel: "Font size",
+      formatFontSizeDecreaseAriaLabel: "Decrease font size",
+      formatFontSizeIncreaseAriaLabel: "Increase font size",
     };
     const { container } = render(
       <MentionComposer
@@ -259,6 +262,9 @@ describe("MentionComposer", () => {
     expect(screen.getByRole("toolbar", { name: "Format" })).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Bold"));
     expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
+
+    fireEvent.click(screen.getByLabelText("Increase font size"));
+    expect(surface.innerHTML).toMatch(/font-size:\s*18px/);
 
     fireEvent.paste(surface, {
       clipboardData: {
@@ -291,5 +297,6 @@ describe("mention-composer.css", () => {
     expect(css).not.toMatch(/textarea::placeholder/);
     expect(css).not.toMatch(/--empty::before/);
     expect(css).toMatch(/__placeholder/);
+    expect(css).toMatch(/__font-size/);
   });
 });

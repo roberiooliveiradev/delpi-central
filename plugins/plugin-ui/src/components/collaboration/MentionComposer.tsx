@@ -22,13 +22,16 @@ import {
   type ReactNode,
 } from "react";
 
+import { NumberStepperControl } from "../forms/NumberStepperControl";
 import { HintAction } from "../help/HintAction";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
+  applyRichTextFontSize,
   execRichTextCommand,
   getRichTextSelectionRange,
   insertRichTextHtmlFragment,
   insertRichTextLink,
+  queryRichTextFontSize,
   restoreRichTextSelection,
   runRichTextCommand,
 } from "../rich-text/richTextCommands";
@@ -44,6 +47,14 @@ import {
   type MentionMenuClassNames,
   type MentionMenuHit,
 } from "./MentionMenu";
+import {
+  clampComposerFontSize,
+  COMPOSER_FONT_SIZE_DEFAULT,
+  COMPOSER_FONT_SIZE_MAX,
+  COMPOSER_FONT_SIZE_MIN,
+  COMPOSER_FONT_SIZE_PRESETS,
+  COMPOSER_FONT_SIZE_STEP,
+} from "./mentionComposerFontSize";
 import {
   detectActiveMention,
   expandCollapsedSelectionForFormat,
@@ -66,6 +77,7 @@ export type MentionComposerClassNames = {
   formatBar: string;
   formatToggle: string;
   format: string;
+  fontSize: string;
   send: string;
   footer: string;
   fileInput: string;
@@ -87,6 +99,9 @@ export type MentionComposerLabels = {
   formatCodeAriaLabel?: string;
   formatQuoteAriaLabel?: string;
   formatLinkAriaLabel?: string;
+  formatFontSizeAriaLabel?: string;
+  formatFontSizeDecreaseAriaLabel?: string;
+  formatFontSizeIncreaseAriaLabel?: string;
 };
 
 export type MentionComposerProps = {
@@ -134,6 +149,7 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     formatBar: pair(`${base}__format-bar`, `${ui}__format-bar`),
     formatToggle: pair(`${base}__format-toggle`, `${ui}__format-toggle`),
     format: pair(`${base}__format`, `${ui}__format`),
+    fontSize: pair(`${base}__font-size`, `${ui}__font-size`),
     send: pair(`${base}__send`, `${ui}__send`),
     footer: pair(`${base}__footer`, `${ui}__footer`),
     fileInput: pair(`${base}__file`, `${ui}__file`),
@@ -235,6 +251,7 @@ export function MentionComposer({
   const savedRangeRef = useRef<Range | null>(null);
   const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
   const [formatOpen, setFormatOpen] = useState(false);
+  const [fontSize, setFontSize] = useState(COMPOSER_FONT_SIZE_DEFAULT);
   const menuOpen = Boolean(activeMention) && !disabled;
   const empty = !value.trim();
   const showFormat = Boolean(labels.formatToggleAriaLabel);
@@ -276,6 +293,8 @@ export function MentionComposer({
       if (!el) return;
       const range = getRichTextSelectionRange(el);
       if (range) savedRangeRef.current = range;
+      const size = queryRichTextFontSize(el);
+      if (size) setFontSize(clampComposerFontSize(size));
     };
     document.addEventListener("selectionchange", persist);
     return () => document.removeEventListener("selectionchange", persist);
@@ -379,6 +398,17 @@ export function MentionComposer({
     emitMarkdownAndMention();
   };
 
+  const applyFontSize = (nextRaw: number) => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    const next = clampComposerFontSize(nextRaw);
+    restoreRichTextSelection(el, savedRangeRef.current);
+    expandCollapsedSelectionForFormat(el);
+    applyRichTextFontSize(el, next);
+    setFontSize(next);
+    emitMarkdownAndMention();
+  };
+
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
     event.preventDefault();
     const el = surfaceRef.current;
@@ -466,6 +496,32 @@ export function MentionComposer({
         </div>
         {showFormat && formatOpen ? (
           <div className={classNames.formatBar} role="toolbar" aria-label={labels.formatToggleAriaLabel}>
+            <HintAction
+              hint={labels.formatFontSizeAriaLabel ?? "Font size"}
+              ariaLabel={labels.formatFontSizeAriaLabel ?? "Font size"}
+              placement="top"
+            >
+              <div className={classNames.fontSize}>
+                <NumberStepperControl
+                  value={fontSize}
+                  onChange={applyFontSize}
+                  onStepDown={() => applyFontSize(fontSize - COMPOSER_FONT_SIZE_STEP)}
+                  onStepUp={() => applyFontSize(fontSize + COMPOSER_FONT_SIZE_STEP)}
+                  options={COMPOSER_FONT_SIZE_PRESETS}
+                  min={COMPOSER_FONT_SIZE_MIN}
+                  max={COMPOSER_FONT_SIZE_MAX}
+                  clamp={clampComposerFontSize}
+                  disabled={disabled || submitting}
+                  compact
+                  square={false}
+                  aria-label={labels.formatFontSizeAriaLabel ?? "Font size"}
+                  groupAriaLabel={labels.formatFontSizeAriaLabel ?? "Font size"}
+                  stepDownAriaLabel={labels.formatFontSizeDecreaseAriaLabel ?? "Decrease font size"}
+                  stepUpAriaLabel={labels.formatFontSizeIncreaseAriaLabel ?? "Increase font size"}
+                  portalScopeClassName={portalScopeClassName}
+                />
+              </div>
+            </HintAction>
             {(
               [
                 ["bold", labels.formatBoldAriaLabel ?? "Bold", Bold],

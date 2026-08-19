@@ -131,6 +131,12 @@
   gap: 0.15rem;
 }
 
+.delpi-ui-mention-composer__font-size {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-end: 0.2rem;
+}
+
 .delpi-ui-mention-composer__attach,
 .delpi-ui-mention-composer__format,
 .delpi-ui-mention-composer__format-toggle,

@@ -6,6 +6,8 @@ import { marked } from "marked";
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 
+import { readInlineFontSizePx } from "./richTextHtmlFormat";
+
 marked.setOptions({
   gfm: true,
   breaks: false,
@@ -19,6 +21,16 @@ const turndown = new TurndownService({
   strongDelimiter: "**",
 });
 turndown.use(gfm);
+
+turndown.addRule("inlineFontSize", {
+  filter: (node) =>
+    node.nodeName === "SPAN" && Boolean(readInlineFontSizePx(node as Element)),
+  replacement: (content, node) => {
+    const px = readInlineFontSizePx(node as Element);
+    if (!px) return content;
+    return `<span style="font-size:${px}px">${content}</span>`;
+  },
+});
 
 const MD_LINE_HINT =
   /^(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|~~~|\|.+\||-{3,}|\*{3,}|_{3,})/;

@@ -107,3 +107,11 @@ export function stripDangerousRichTextTags(html: string): string {
     return wrapOrphanRichTextNodes(stripped);
   }
 }
+
+export function readInlineFontSizePx(el: Element): number | null {
+  if (!(el instanceof HTMLElement)) return null;
+  const match = (el.style.fontSize || "").match(/^(\d+(?:\.\d+)?)px$/i);
+  if (!match) return null;
+  const px = Math.round(Number(match[1]));
+  return Number.isFinite(px) ? px : null;
+}
