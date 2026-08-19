@@ -18,6 +18,8 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/nameFor/);
+    expect(source).toMatch(/useUserProfilePhotoUrls/);
+    expect(source).toMatch(/photoByUserId/);
     expect(source).toMatch(/usePortfolioScope/);
     expect(source).toMatch(/mine:/);
     expect(source).toMatch(/CommercialConversationFileDropLayer/);

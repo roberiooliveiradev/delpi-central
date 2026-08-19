@@ -18,6 +18,7 @@ import { getCommercialClientId } from "../../app/commercialClientId";
 import { useInteractionRoomSync } from "../../app/CommercialRealtimeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import { CommercialEntityLink } from "../../components/CommercialEntityLink";
@@ -149,6 +150,7 @@ export function InteractionRoomPage({
   }, [members, messages]);
 
   const { nameFor } = useDirectoryUserLabels(authorIds);
+  const photoByUserId = useUserProfilePhotoUrls(authorIds);
 
   useEffect(() => {
     const id = roomId.trim();
@@ -303,6 +305,9 @@ export function InteractionRoomPage({
               ? nameFor(message.author_user_id)
               : "",
             basePath,
+            message.author_user_id
+              ? photoByUserId.get(message.author_user_id)
+              : null,
           ),
           mine: isOwnInteractionAuthor(message.author_user_id, sessionUserId),
           parentId: message.parent_id,
@@ -320,7 +325,7 @@ export function InteractionRoomPage({
           ) : null,
         };
       }),
-    [messages, nameFor, sessionUserId, content.messageDeleted, basePath],
+    [messages, nameFor, sessionUserId, content.messageDeleted, basePath, photoByUserId],
   );
 
   const participants = useMemo(
@@ -330,9 +335,10 @@ export function InteractionRoomPage({
           member.user_id,
           nameFor(member.user_id),
           basePath,
+          photoByUserId.get(member.user_id),
         ),
       ),
-    [members, nameFor, basePath],
+    [members, nameFor, basePath, photoByUserId],
   );
 
   const entityHref = room

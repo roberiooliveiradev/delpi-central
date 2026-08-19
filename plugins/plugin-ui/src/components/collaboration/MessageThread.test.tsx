@@ -255,6 +255,28 @@ describe("MessageThread", () => {
     ).toBe("/apps/commercial/users/u1");
   });
 
+  it("usa a foto do autor quando authorSrc está definido", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno Costa",
+            authorUserId: "u1",
+            createdAtLabel: "10:00",
+            authorSrc: "blob:photo-bruno",
+          },
+        ]}
+      />,
+    );
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:photo-bruno");
+  });
+
   it("coloca a barra de ações fora do article da bolha", () => {
     const { container } = render(
       <MessageThread

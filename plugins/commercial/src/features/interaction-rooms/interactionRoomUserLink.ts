@@ -38,18 +38,22 @@ export function interactionRoomParticipantAvatar(
   userId: string,
   name: string,
   basePath: string,
+  photoSrc?: string | null,
 ): {
   id: string;
   name: string;
+  src?: string | null;
   href?: string;
   title?: string;
   onNavigate?: InteractionRoomUserLink["onNavigate"];
 } {
+  const src = (photoSrc ?? "").trim() || null;
   const link = interactionRoomUserLink(userId, name, basePath);
-  if (!link) return { id: userId, name };
+  if (!link) return { id: userId, name, src };
   return {
     id: userId,
     name,
+    src,
     href: link.href,
     title: link.title,
     onNavigate: link.onNavigate,
@@ -60,15 +64,19 @@ export function interactionRoomAuthorAvatarFields(
   userId: string | null | undefined,
   name: string,
   basePath: string,
+  photoSrc?: string | null,
 ): {
   authorHref?: string;
+  authorSrc?: string | null;
   authorLinkTitle?: string;
   onAuthorNavigate?: InteractionRoomUserLink["onNavigate"];
 } {
+  const authorSrc = (photoSrc ?? "").trim() || null;
   const link = interactionRoomUserLink(userId, name, basePath);
-  if (!link) return {};
+  if (!link) return { authorSrc };
   return {
     authorHref: link.href,
+    authorSrc,
     authorLinkTitle: link.title,
     onAuthorNavigate: link.onNavigate,
   };

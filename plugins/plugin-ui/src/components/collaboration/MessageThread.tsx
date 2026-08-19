@@ -24,6 +24,8 @@ export type MessageThreadItem = {
   authorUserId?: string | null;
   /** Com `authorLinkTitle`, o avatar vira `<a href>` (mesmo contrato do InitialsAvatar). */
   authorHref?: string | null;
+  /** Foto resolvida pelo consumidor (blob URL da plataforma). */
+  authorSrc?: string | null;
   authorLinkTitle?: string | null;
   onAuthorNavigate?: MouseEventHandler<HTMLAnchorElement>;
   parentId?: string | null;
@@ -246,6 +248,7 @@ export function MessageThread({
           const avatarName = (message.authorName ?? "").trim();
           const authorHref = (message.authorHref ?? "").trim();
           const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
+          const authorSrc = (message.authorSrc ?? "").trim() || null;
           const showAvatar = Boolean(avatarName && !message.mine && !continues);
           const avatar = showAvatar ? (
             authorHref && authorLinkTitle ? (
@@ -254,6 +257,7 @@ export function MessageThread({
                 name={avatarName}
                 colorKey={message.authorUserId ?? avatarName}
                 size="sm"
+                src={authorSrc}
                 href={authorHref}
                 title={authorLinkTitle}
                 onNavigate={message.onAuthorNavigate}
@@ -264,6 +268,7 @@ export function MessageThread({
                 name={avatarName}
                 colorKey={message.authorUserId ?? avatarName}
                 size="sm"
+                src={authorSrc}
                 previewable={false}
               />
             )

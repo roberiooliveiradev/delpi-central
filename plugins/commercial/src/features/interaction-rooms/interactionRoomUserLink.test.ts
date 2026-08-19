@@ -11,9 +11,11 @@ describe("interactionRoomUserLink", () => {
       "u-1",
       "Ana Silva",
       "/apps/commercial",
+      "blob:ana",
     );
     expect(participant.href).toContain("/users/u-1");
     expect(participant.title).toBe("Abrir perfil de Ana Silva");
+    expect(participant.src).toBe("blob:ana");
   });
 
   it("retorna null sem userId", () => {
