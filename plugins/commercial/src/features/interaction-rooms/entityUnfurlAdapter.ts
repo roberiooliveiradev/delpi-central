@@ -74,6 +74,8 @@ export function mapPreviewToUnfurlCardModel(
 
 export function shouldUnfurlMentionKind(kind: string): boolean {
   const id = kind.trim().toLowerCase();
-  if (!id || id === "user") return false;
-  return true;
+  if (!id) return false;
+  return (INTERACTION_ROOMS_CONTENT.unfurlPreviewKinds as readonly string[]).includes(
+    id,
+  );
 }

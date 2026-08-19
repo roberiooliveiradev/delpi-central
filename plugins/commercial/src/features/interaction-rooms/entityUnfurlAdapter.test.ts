@@ -38,8 +38,9 @@ describe("entityUnfurlAdapter", () => {
     expect(model.deniedLabel).toMatch(/Sem acesso/);
   });
 
-  it("não unfurla menção de usuário", () => {
+  it("não unfurla menção de usuário nem tarefa sem preview", () => {
     expect(shouldUnfurlMentionKind("user")).toBe(false);
+    expect(shouldUnfurlMentionKind("task")).toBe(false);
     expect(shouldUnfurlMentionKind("order")).toBe(true);
   });
 });

@@ -225,6 +225,17 @@ def test_preview_unknown_kind_raises() -> None:
         _uc().preview(kind="spaceship", ref={}, actor_user_id="u1")
 
 
+def test_preview_task_kind_without_preview_is_opaque() -> None:
+    card = _uc().preview(
+        kind="task",
+        ref={"task_id": "12c22442-c394-42e3-9998-d256928829cc"},
+        actor_user_id="u1",
+    )
+    assert card["accessible"] is False
+    assert card["kind"] == "task"
+    assert card["fields"] == {}
+
+
 def test_preview_route_opaque_200(monkeypatch: pytest.MonkeyPatch) -> None:
     request = _request()
     request.state.user = _User(["commercial.access"])

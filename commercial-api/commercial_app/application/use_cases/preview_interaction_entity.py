@@ -69,14 +69,16 @@ class PreviewInteractionEntityUseCase:
     ) -> dict[str, Any]:
         kind_id = str(kind or "").strip()
         meta = InteractionMentionKindsContentService.get(kind_id)
-        if meta is None or kind_id not in InteractionMentionKindsContentService.preview_enabled_ids():
+        if meta is None:
             raise ValueError(InteractionRoomContentService.error("kindUnknown"))
+        href_strategy = str(meta.get("hrefStrategy") or "")
         clean_ref = {
             str(key): value
             for key, value in (ref or {}).items()
             if str(key).strip()
         }
-        href_strategy = str(meta.get("hrefStrategy") or "")
+        if kind_id not in InteractionMentionKindsContentService.preview_enabled_ids():
+            return self._opaque(kind=kind_id, href_strategy=href_strategy, ref=clean_ref)
         scope = self._customer_scope(
             actor_user_id=actor_user_id,
             unrestricted=unrestricted,
