@@ -79,6 +79,11 @@
   gap: var(--cm-section-gap);
 }
 
+.dashboard-commercial .cm-room-inbox-search {
+  width: 100%;
+  max-width: 20rem;
+}
+
 .dashboard-commercial .cm-shell-chrome {
   display: flex;
   flex-direction: column;

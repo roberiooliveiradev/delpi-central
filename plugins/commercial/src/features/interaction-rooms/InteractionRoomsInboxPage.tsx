@@ -124,27 +124,32 @@ export function InteractionRoomsInboxPage({ basePath }: Props) {
         title={content.inboxTitle}
         description={content.inboxSubtitle}
         actions={
+          <div className="cm-room-inbox-search">
+            <CommercialCatalogSearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder={content.searchPlaceholder}
+              aria-label={content.searchPlaceholder}
+            />
+          </div>
+        }
+      >
+        <CommercialUnderlineNav
+          items={navItems}
+          activeId={filter}
+          aria-label={content.filtersAriaLabel}
+        />
+      </CommercialPageHero>
+      {error ? (
+        <CommercialStateBanner variant="error">
+          {error}{" "}
           <CommercialActionButton
             variant="ghost"
             onClick={() => setReloadKey((value) => value + 1)}
           >
             <RefreshCw size={16} aria-hidden="true" /> {content.reloadLabel}
           </CommercialActionButton>
-        }
-      />
-      <CommercialUnderlineNav
-        items={navItems}
-        activeId={filter}
-        aria-label={content.filtersAriaLabel}
-      />
-      <CommercialCatalogSearchBar
-        value={query}
-        onChange={setQuery}
-        placeholder={content.searchPlaceholder}
-        aria-label={content.searchPlaceholder}
-      />
-      {error ? (
-        <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
+        </CommercialStateBanner>
       ) : null}
       {loading ? (
         <CommercialLoadingCard title={content.loadingLabel} variant="panel" />

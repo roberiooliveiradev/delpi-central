@@ -13,6 +13,10 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/listInteractionRooms/);
     expect(source).toMatch(/useInteractionInboxSync/);
+    expect(source).toMatch(/CommercialPageHero/);
+    expect(source).toMatch(/cm-room-inbox-search/);
+    expect(source).toMatch(/reloadLabel/);
+    expect(source).not.toMatch(/actions=\{\s*<CommercialActionButton/);
     expect(source).not.toMatch(/cm-message-bubble|<textarea/);
   });
 });
