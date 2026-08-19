@@ -475,42 +475,46 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         if self.has_booking_conflict(resource_id, start_at, end_at):
             raise BookingConflictError("Recurso já reservado neste horário.")
 
+        # Lease único: execute(auto_commit=False) sem lease externo devolve a
+        # conexão ao pool com rollback — o INSERT some e get_booking cai no
+        # RETURNING em memória. A API responde sucesso e o calendário fica vazio.
         try:
-            row = self.execute_returning_one(
-                f"""
-                INSERT INTO scheduling.bookings (
-                    resource_id,
-                    branch_code,
-                    title,
-                    notes,
-                    start_at,
-                    end_at,
-                    booked_by_user_id,
-                    booked_by_name,
-                    status,
-                    expires_at,
-                    requester_email,
-                    requester_phone
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING {_BOOKING_RETURNING}
-                """,
-                (
-                    resource_id,
-                    branch_code,
-                    title.strip(),
-                    notes,
-                    start_at,
-                    end_at,
-                    booked_by_user_id,
-                    booked_by_name,
-                    status,
-                    expires_at,
-                    requester_email,
-                    requester_phone,
-                ),
-                auto_commit=False,
-            )
-            self.commit()
+            with self.db():
+                row = self.execute_returning_one(
+                    f"""
+                    INSERT INTO scheduling.bookings (
+                        resource_id,
+                        branch_code,
+                        title,
+                        notes,
+                        start_at,
+                        end_at,
+                        booked_by_user_id,
+                        booked_by_name,
+                        status,
+                        expires_at,
+                        requester_email,
+                        requester_phone
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING {_BOOKING_RETURNING}
+                    """,
+                    (
+                        resource_id,
+                        branch_code,
+                        title.strip(),
+                        notes,
+                        start_at,
+                        end_at,
+                        booked_by_user_id,
+                        booked_by_name,
+                        status,
+                        expires_at,
+                        requester_email,
+                        requester_phone,
+                    ),
+                    auto_commit=False,
+                )
+                self.commit()
         except ExclusionViolation as exc:
             self.rollback()
             raise BookingConflictError("Recurso já reservado neste horário.") from exc
@@ -556,114 +560,115 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         skipped: list[dict[str, Any]] = []
 
         try:
-            series_row = self.execute_returning_one(
-                """
-                INSERT INTO scheduling.recurrence_series (
-                    branch_code,
-                    resource_id,
-                    frequency,
-                    interval_count,
-                    series_start,
-                    series_end,
-                    title,
-                    notes,
-                    booked_by_user_id,
-                    booked_by_name
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id,
-                          branch_code,
-                          resource_id,
-                          frequency,
-                          interval_count,
-                          series_start,
-                          series_end,
-                          title,
-                          notes,
-                          booked_by_user_id,
-                          booked_by_name,
-                          created_at,
-                          updated_at
-                """,
-                (
-                    branch_code,
-                    resource_id,
-                    frequency,
-                    interval,
-                    start_at,
-                    until,
-                    title.strip(),
-                    notes,
-                    booked_by_user_id,
-                    booked_by_name,
-                ),
-                auto_commit=False,
-            )
-            if not series_row:
-                raise PluginsRepositoryError("Falha ao criar série recorrente.")
-
-            series_id = str(series_row["id"])
-
-            for slot_start, slot_end in slots:
-                if self.has_booking_conflict(resource_id, slot_start, slot_end):
-                    skipped.append(
-                        {
-                            "start_at": slot_start.isoformat(),
-                            "end_at": slot_end.isoformat(),
-                            "reason": "Recurso já reservado neste horário.",
-                        }
-                    )
-                    continue
-
-                try:
-                    row = self.execute_returning_one(
-                        f"""
-                        INSERT INTO scheduling.bookings (
-                            resource_id,
-                            branch_code,
-                            title,
-                            notes,
-                            start_at,
-                            end_at,
-                            booked_by_user_id,
-                            booked_by_name,
-                            recurrence_series_id
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING {_BOOKING_RETURNING}
-                        """,
-                        (
-                            resource_id,
-                            branch_code,
-                            title.strip(),
-                            notes,
-                            slot_start,
-                            slot_end,
-                            booked_by_user_id,
-                            booked_by_name,
-                            series_id,
-                        ),
-                        auto_commit=False,
-                    )
-                except ExclusionViolation:
-                    skipped.append(
-                        {
-                            "start_at": slot_start.isoformat(),
-                            "end_at": slot_end.isoformat(),
-                            "reason": "Recurso já reservado neste horário.",
-                        }
-                    )
-                    continue
-
-                if row:
-                    full = self.get_booking(str(row["id"]))
-                    created.append(full or row)
-
-            if not created:
-                self.rollback()
-                raise BookingConflictError(
-                    "Nenhuma ocorrência pôde ser reservada. Todos os horários estão ocupados."
+            with self.db():
+                series_row = self.execute_returning_one(
+                    """
+                    INSERT INTO scheduling.recurrence_series (
+                        branch_code,
+                        resource_id,
+                        frequency,
+                        interval_count,
+                        series_start,
+                        series_end,
+                        title,
+                        notes,
+                        booked_by_user_id,
+                        booked_by_name
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id,
+                              branch_code,
+                              resource_id,
+                              frequency,
+                              interval_count,
+                              series_start,
+                              series_end,
+                              title,
+                              notes,
+                              booked_by_user_id,
+                              booked_by_name,
+                              created_at,
+                              updated_at
+                    """,
+                    (
+                        branch_code,
+                        resource_id,
+                        frequency,
+                        interval,
+                        start_at,
+                        until,
+                        title.strip(),
+                        notes,
+                        booked_by_user_id,
+                        booked_by_name,
+                    ),
+                    auto_commit=False,
                 )
+                if not series_row:
+                    raise PluginsRepositoryError("Falha ao criar série recorrente.")
 
-            self.commit()
+                series_id = str(series_row["id"])
+
+                for slot_start, slot_end in slots:
+                    if self.has_booking_conflict(resource_id, slot_start, slot_end):
+                        skipped.append(
+                            {
+                                "start_at": slot_start.isoformat(),
+                                "end_at": slot_end.isoformat(),
+                                "reason": "Recurso já reservado neste horário.",
+                            }
+                        )
+                        continue
+
+                    try:
+                        row = self.execute_returning_one(
+                            f"""
+                            INSERT INTO scheduling.bookings (
+                                resource_id,
+                                branch_code,
+                                title,
+                                notes,
+                                start_at,
+                                end_at,
+                                booked_by_user_id,
+                                booked_by_name,
+                                recurrence_series_id
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING {_BOOKING_RETURNING}
+                            """,
+                            (
+                                resource_id,
+                                branch_code,
+                                title.strip(),
+                                notes,
+                                slot_start,
+                                slot_end,
+                                booked_by_user_id,
+                                booked_by_name,
+                                series_id,
+                            ),
+                            auto_commit=False,
+                        )
+                    except ExclusionViolation:
+                        skipped.append(
+                            {
+                                "start_at": slot_start.isoformat(),
+                                "end_at": slot_end.isoformat(),
+                                "reason": "Recurso já reservado neste horário.",
+                            }
+                        )
+                        continue
+
+                    if row:
+                        full = self.get_booking(str(row["id"]))
+                        created.append(full or row)
+
+                if not created:
+                    self.rollback()
+                    raise BookingConflictError(
+                        "Nenhuma ocorrência pôde ser reservada. Todos os horários estão ocupados."
+                    )
+
+                self.commit()
         except BookingConflictError:
             self.rollback()
             raise
