@@ -48,6 +48,7 @@ import {
   pinTitleFromMessageBody,
   scrollThreadMessageIntoView,
 } from "./scrollThreadMessageIntoView";
+import { shouldStickThreadToBottom } from "./threadStickToBottom";
 
 type Props = {
   basePath: string;
@@ -104,6 +105,7 @@ export function InteractionRoomPage({
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
   const msgsRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
   const [contextOpen, setContextOpen] = useState(false);
   const threadRef = useRef({
     messages,
@@ -330,8 +332,15 @@ export function InteractionRoomPage({
   );
 
   const onSelectPin = useCallback((messageId: string) => {
+    stickToBottomRef.current = false;
     scrollThreadMessageIntoView(msgsRef.current, messageId);
   }, []);
+
+  useEffect(() => {
+    const el = msgsRef.current;
+    if (!el || !stickToBottomRef.current) return;
+    el.scrollTop = el.scrollHeight;
+  }, [threadMessages.length, loading]);
 
   return (
     <section className={variant === "page" ? "cm-page-stack" : "cm-room-thread"}>
@@ -408,7 +417,15 @@ export function InteractionRoomPage({
               onPinSelect={onSelectPin}
             />
           ) : null}
-          <div className="cm-room-thread__msgs" ref={msgsRef}>
+          <div
+            className="cm-room-thread__msgs"
+            ref={msgsRef}
+            onScroll={(event) => {
+              stickToBottomRef.current = shouldStickThreadToBottom(
+                event.currentTarget,
+              );
+            }}
+          >
             {threadMessages.length === 0 ? (
               <CommercialEmptyState
                 title={content.roomEmptyTitle}

@@ -21,6 +21,7 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/CommercialRoomContextPanel/);
     expect(source).toMatch(/contextToggle/);
     expect(source).toMatch(/scrollThreadMessageIntoView/);
+    expect(source).toMatch(/shouldStickThreadToBottom/);
     expect(source).toMatch(/useInteractionRoomSync/);
     expect(source).toMatch(/applyInteractionRoomRealtime/);
     expect(source).not.toMatch(/cm-message-bubble/);
