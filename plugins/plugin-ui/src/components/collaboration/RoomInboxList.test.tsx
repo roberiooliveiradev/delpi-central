@@ -46,4 +46,27 @@ describe("RoomInboxList", () => {
     expect(onSelect).toHaveBeenCalledWith("r1");
     expect(screen.getByText("2 unread")).toBeTruthy();
   });
+
+  it("renders leading and subtitle slots", () => {
+    render(
+      <RoomInboxList
+        classNames={classNames}
+        listAriaLabel="Inbox"
+        emptyLabel="No rooms"
+        leading={() => <span>AV</span>}
+        subtitle={(item) => `Cliente ${item.title}`}
+        items={[
+          {
+            id: "r1",
+            title: "Pedido 102942",
+            preview: "Atualização",
+            selected: true,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("AV")).toBeTruthy();
+    expect(screen.getByText("Cliente Pedido 102942")).toBeTruthy();
+    expect(screen.getByRole("button").getAttribute("aria-current")).toBe("true");
+  });
 });

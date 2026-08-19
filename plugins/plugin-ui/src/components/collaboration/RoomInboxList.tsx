@@ -19,7 +19,12 @@ export type RoomInboxListClassNames = {
   item: string;
   itemSelected: string;
   itemUnread: string;
+  row: string;
+  leading: string;
+  body: string;
+  titleRow: string;
   title: string;
+  subtitle: string;
   preview: string;
   meta: string;
   badge: string;
@@ -33,6 +38,8 @@ export type RoomInboxListProps = {
   emptyLabel: string;
   unreadBadgeLabel?: (count: number) => string;
   onSelect?: (id: string) => void;
+  leading?: (item: RoomInboxListItem) => ReactNode;
+  subtitle?: (item: RoomInboxListItem) => ReactNode;
   trailing?: (item: RoomInboxListItem) => ReactNode;
   className?: string;
 };
@@ -53,7 +60,12 @@ export function roomInboxListBemClasses(prefix: string): RoomInboxListClassNames
       `${base}__item ${base}__item--unread`,
       `${ui}__item ${ui}__item--unread`,
     ),
+    row: pair(`${base}__row`, `${ui}__row`),
+    leading: pair(`${base}__leading`, `${ui}__leading`),
+    body: pair(`${base}__body`, `${ui}__body`),
+    titleRow: pair(`${base}__title-row`, `${ui}__title-row`),
     title: pair(`${base}__title`, `${ui}__title`),
+    subtitle: pair(`${base}__subtitle`, `${ui}__subtitle`),
     preview: pair(`${base}__preview`, `${ui}__preview`),
     meta: pair(`${base}__meta`, `${ui}__meta`),
     badge: pair(`${base}__badge`, `${ui}__badge`),
@@ -65,8 +77,12 @@ function itemClassName(
   classNames: RoomInboxListClassNames,
   item: RoomInboxListItem,
 ): string {
+  const unread = (item.unreadCount ?? 0) > 0 || item.mentioned;
+  if (item.selected && unread) {
+    return `${classNames.itemSelected} ${classNames.itemUnread}`;
+  }
   if (item.selected) return classNames.itemSelected;
-  if ((item.unreadCount ?? 0) > 0 || item.mentioned) return classNames.itemUnread;
+  if (unread) return classNames.itemUnread;
   return classNames.item;
 }
 
@@ -80,6 +96,8 @@ export function RoomInboxList({
   emptyLabel,
   unreadBadgeLabel,
   onSelect,
+  leading,
+  subtitle,
   trailing,
   className,
 }: RoomInboxListProps) {
@@ -100,6 +118,8 @@ export function RoomInboxList({
       <ul className={classNames.list} aria-label={listAriaLabel}>
         {items.map((item) => {
           const unread = item.unreadCount ?? 0;
+          const leadingNode = leading?.(item);
+          const subtitleNode = subtitle?.(item);
           return (
             <li key={item.id}>
               <button
@@ -108,19 +128,32 @@ export function RoomInboxList({
                 aria-current={item.selected ? "true" : undefined}
                 onClick={() => onSelect?.(item.id)}
               >
-                <div className={classNames.title}>{item.title}</div>
-                {item.preview ? (
-                  <div className={classNames.preview}>{item.preview}</div>
-                ) : null}
-                <div className={classNames.meta}>
-                  {item.kindLabel ? <span>{item.kindLabel}</span> : null}
-                  {item.metaLabel ? <span>{item.metaLabel}</span> : null}
-                  {unread > 0 ? (
-                    <span className={classNames.badge}>
-                      {unreadBadgeLabel ? unreadBadgeLabel(unread) : unread}
-                    </span>
+                <div className={classNames.row}>
+                  {leadingNode ? (
+                    <div className={classNames.leading}>{leadingNode}</div>
                   ) : null}
-                  {trailing?.(item)}
+                  <div className={classNames.body}>
+                    <div className={classNames.titleRow}>
+                      <div className={classNames.title}>{item.title}</div>
+                      <div className={classNames.meta}>
+                        {unread > 0 ? (
+                          <span className={classNames.badge}>
+                            {unreadBadgeLabel ? unreadBadgeLabel(unread) : unread}
+                          </span>
+                        ) : null}
+                        {item.metaLabel ? <span>{item.metaLabel}</span> : null}
+                        {trailing?.(item)}
+                      </div>
+                    </div>
+                    {subtitleNode ? (
+                      <div className={classNames.subtitle}>{subtitleNode}</div>
+                    ) : item.kindLabel ? (
+                      <div className={classNames.subtitle}>{item.kindLabel}</div>
+                    ) : null}
+                    {item.preview ? (
+                      <div className={classNames.preview}>{item.preview}</div>
+                    ) : null}
+                  </div>
                 </div>
               </button>
             </li>
