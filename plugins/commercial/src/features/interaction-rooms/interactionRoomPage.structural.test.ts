@@ -13,6 +13,7 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
+    expect(source).toMatch(/useDirectoryUserLabels/);
     expect(source).toMatch(/useInteractionRoomSync/);
     expect(source).toMatch(/applyInteractionRoomRealtime/);
     expect(source).not.toMatch(/cm-message-bubble/);

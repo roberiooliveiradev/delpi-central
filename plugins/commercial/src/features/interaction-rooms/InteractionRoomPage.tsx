@@ -15,6 +15,7 @@ import {
 } from "../../api/interactionRoomsApi";
 import { getCommercialClientId } from "../../app/commercialClientId";
 import { useInteractionRoomSync } from "../../app/CommercialRealtimeProvider";
+import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import {
