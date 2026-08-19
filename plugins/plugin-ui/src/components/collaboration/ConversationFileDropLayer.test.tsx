@@ -30,7 +30,7 @@ describe("ConversationFileDropLayer", () => {
     fireEvent.dragOver(root, { dataTransfer: { files: [] } });
     expect(screen.getByRole("status").textContent).toBe("Drop files");
     const pdf = new File(["x"], "a.pdf", { type: "application/pdf" });
-    const huge = new File(["too-big-file-content-here"], "big.pdf", {
+    const huge = new File([new Uint8Array(2048)], "big.pdf", {
       type: "application/pdf",
     });
     fireEvent.drop(root, { dataTransfer: { files: [pdf, huge] } });
