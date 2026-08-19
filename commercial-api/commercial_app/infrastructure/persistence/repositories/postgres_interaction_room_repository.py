@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Sequence
 from uuid import UUID
 
@@ -186,6 +186,27 @@ class PostgresInteractionRoomRepository(
         )
         return [room for row in rows if (room := _row_room(row)) is not None]
 
+    def list_all(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Sequence[InteractionRoom]:
+        rows = self.fetch_all(
+            f"""
+            SELECT {_ROOM_COLUMNS}
+              FROM commercial.interaction_rooms
+             WHERE deleted_at IS NULL
+             ORDER BY updated_at DESC
+             LIMIT %s OFFSET %s
+            """,
+            (
+                max(1, min(int(limit), 200)),
+                max(0, int(offset)),
+            ),
+        )
+        return [room for row in rows if (room := _row_room(row)) is not None]
+
     def list_members(self, room_id: UUID) -> Sequence[InteractionRoomMember]:
         rows = self.fetch_all(
             f"""
@@ -259,10 +280,11 @@ class PostgresInteractionRoomRepository(
         if read_at is None:
             row = self.execute_returning_one(
                 f"""
-                UPDATE commercial.interaction_room_members
+                INSERT INTO commercial.interaction_room_members (
+                    room_id, user_id, role, last_read_at
+                ) VALUES (%s, %s, 'member', NOW())
+                ON CONFLICT (room_id, user_id) DO UPDATE
                    SET last_read_at = NOW()
-                 WHERE room_id = %s
-                   AND user_id = %s
              RETURNING {_MEMBER_COLUMNS}
                 """,
                 (str(room_id), user_id.strip()),
@@ -270,12 +292,13 @@ class PostgresInteractionRoomRepository(
         else:
             row = self.execute_returning_one(
                 f"""
-                UPDATE commercial.interaction_room_members
-                   SET last_read_at = %s
-                 WHERE room_id = %s
-                   AND user_id = %s
+                INSERT INTO commercial.interaction_room_members (
+                    room_id, user_id, role, last_read_at
+                ) VALUES (%s, %s, 'member', %s)
+                ON CONFLICT (room_id, user_id) DO UPDATE
+                   SET last_read_at = EXCLUDED.last_read_at
              RETURNING {_MEMBER_COLUMNS}
                 """,
-                (read_at, str(room_id), user_id.strip()),
+                (str(room_id), user_id.strip(), read_at),
             )
         return _row_member(row)

@@ -819,6 +819,8 @@ Histórico operacional ancorado em registro (`kind`: `entity` \| `process` \| `w
 
 #### `interaction_room_members`
 
+Estado por usuário (**não** ACL): `last_read_at` (cursor de inbox; upsert em `mark_read`), participantes que abriram a sala (`resolve`) ou foram adicionados explicitamente. Acesso à sala = `commercial.access` na borda HTTP/WS.
+
 | Coluna | Tipo | Constraints / notas |
 |--------|------|---------------------|
 | `id` | UUID | PK |

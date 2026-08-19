@@ -19,7 +19,7 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 
 | Código | Nome UI | Onde vale |
 |--------|---------|-----------|
-| `commercial.access` | Acessar Portal Comercial | Início, Meus pedidos, Minhas tarefas, follow-ups, Visão geral / OTD / OV, Propostas + PDF, **sala de interação** (membership da sala), auditoria quando exposta; Minha Carteira só com **membership** ou `manage` |
+| `commercial.access` | Acessar Portal Comercial | Início, Meus pedidos, Minhas tarefas, follow-ups, Visão geral / OTD / OV, Propostas + PDF, **sala de interação (global)**, auditoria quando exposta; Minha Carteira só com **membership** ou `manage` |
 | `commercial.manage` | Administrar Portal Comercial | **Vê tudo** (todas as carteiras/clientes + salas), Administração (CRUD), filtro «Todas as carteiras», worklist `scope=team`, jobs ops |
 | `commercial.billing.notify` | Receber notificação de faturamento | Destinatário da notificação «Pronto para faturar» — **não** libera telas admin nem escopo |
 
@@ -56,7 +56,7 @@ Antes de criar permission code:
 
 **Proibido:** criar `commercial.<feature>.view` por padrão; fragmentar o catálogo sem justificativa aqui.
 
-Exemplos: OTD/OV → `access`; Administração de grupos → `manage`; notificação pronto para faturar → `billing.notify`; notificações de tarefas → só envolvidos + `access` (sem code novo); **sala de interação (P2-SALA)** → `access` / `manage` (sem permission code novo; dado por membership da sala).
+Exemplos: OTD/OV → `access`; Administração de grupos → `manage`; notificação pronto para faturar → `billing.notify`; notificações de tarefas → só envolvidos + `access` (sem code novo); **sala de interação (P2-SALA)** → `access` global (inbox e thread para todos com Portal; unfurl de entidade continua por carteira).
 
 ## Papéis sugeridos (criar na Minha Delpi)
 

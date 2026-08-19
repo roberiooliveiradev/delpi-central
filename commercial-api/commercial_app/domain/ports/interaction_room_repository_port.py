@@ -57,6 +57,15 @@ class InteractionRoomRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_all(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Sequence[InteractionRoom]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_members(self, room_id: UUID) -> Sequence[InteractionRoomMember]:
         raise NotImplementedError
 

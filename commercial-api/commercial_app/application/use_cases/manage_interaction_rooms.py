@@ -16,6 +16,9 @@ from commercial_app.domain.ports.interaction_room_repository_port import (
 from commercial_app.domain.services.interaction_mention_kinds_content_service import (
     InteractionMentionKindsContentService,
 )
+from commercial_app.domain.services.interaction_room_access_service import (
+    InteractionRoomAccessService,
+)
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
 )
@@ -32,30 +35,11 @@ class ResolveInteractionRoomInput:
 
 
 class ManageInteractionRoomsUseCase:
-    """Resolve lazy, get, membership e last_read da sala."""
+    """Resolve lazy, get, participantes e last_read da sala."""
 
     def __init__(self, repository: InteractionRoomRepositoryPort) -> None:
         self._rooms = repository
-
-    def _require_member(
-        self,
-        *,
-        room_id: UUID,
-        actor_user_id: str,
-    ) -> InteractionRoomMember:
-        member = self._rooms.get_member(
-            room_id=room_id,
-            user_id=actor_user_id.strip(),
-        )
-        if member is None:
-            raise PermissionError(InteractionRoomContentService.error("accessDenied"))
-        return member
-
-    def _require_room(self, room_id: UUID) -> InteractionRoom:
-        room = self._rooms.get_by_id(room_id)
-        if room is None:
-            raise LookupError(InteractionRoomContentService.error("roomNotFound"))
-        return room
+        self._access = InteractionRoomAccessService(repository)
 
     def resolve(self, request: ResolveInteractionRoomInput) -> InteractionRoom:
         actor = (request.actor_user_id or "").strip()
@@ -121,9 +105,8 @@ class ManageInteractionRoomsUseCase:
         return self._rooms.get_by_id(room.id) or room
 
     def get(self, *, room_id: UUID, actor_user_id: str) -> InteractionRoom:
-        room = self._require_room(room_id)
-        self._require_member(room_id=room.id, actor_user_id=actor_user_id)
-        return room
+        _ = (actor_user_id or "").strip()
+        return self._access.require_room_exists(room_id)
 
     def list_members(
         self,
@@ -131,8 +114,8 @@ class ManageInteractionRoomsUseCase:
         room_id: UUID,
         actor_user_id: str,
     ) -> Sequence[InteractionRoomMember]:
-        room = self._require_room(room_id)
-        self._require_member(room_id=room.id, actor_user_id=actor_user_id)
+        _ = (actor_user_id or "").strip()
+        room = self._access.require_room_exists(room_id)
         return self._rooms.list_members(room.id)
 
     def add_member(
@@ -143,8 +126,8 @@ class ManageInteractionRoomsUseCase:
         user_id: str,
         role: str = "member",
     ) -> InteractionRoomMember:
-        room = self._require_room(room_id)
-        self._require_member(room_id=room.id, actor_user_id=actor_user_id)
+        room = self._access.require_room_exists(room_id)
+        _ = (actor_user_id or "").strip()
         target = (user_id or "").strip()
         if not target:
             raise ValueError(InteractionRoomContentService.error("userIdRequired"))
@@ -161,8 +144,8 @@ class ManageInteractionRoomsUseCase:
         actor_user_id: str,
         user_id: str,
     ) -> None:
-        room = self._require_room(room_id)
-        self._require_member(room_id=room.id, actor_user_id=actor_user_id)
+        room = self._access.require_room_exists(room_id)
+        _ = (actor_user_id or "").strip()
         target = (user_id or "").strip()
         if not target:
             raise ValueError(InteractionRoomContentService.error("userIdRequired"))
@@ -177,13 +160,15 @@ class ManageInteractionRoomsUseCase:
         actor_user_id: str,
         read_at: datetime | None = None,
     ) -> InteractionRoomMember:
-        room = self._require_room(room_id)
-        self._require_member(room_id=room.id, actor_user_id=actor_user_id)
+        room = self._access.require_room_exists(room_id)
+        actor = (actor_user_id or "").strip()
+        if not actor:
+            raise ValueError(InteractionRoomContentService.error("userIdRequired"))
         member = self._rooms.mark_read(
             room_id=room.id,
-            user_id=actor_user_id.strip(),
+            user_id=actor,
             read_at=read_at,
         )
         if member is None:
-            raise PermissionError(InteractionRoomContentService.error("accessDenied"))
+            raise RuntimeError("Falha ao marcar sala como lida.")
         return member

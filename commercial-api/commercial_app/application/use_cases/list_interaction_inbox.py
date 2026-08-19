@@ -83,7 +83,7 @@ class ListInteractionInboxUseCase:
         cap = max(1, min(int(limit or 50), 100))
         # Busca um pouco a mais antes dos filtros locais.
         fetch_cap = min(200, max(cap * 3, cap))
-        rooms = self._rooms.list_for_user(user_id=actor, limit=fetch_cap, offset=0)
+        rooms = self._rooms.list_all(limit=fetch_cap, offset=0)
         needle = (query or "").strip().lower()
         items: list[InteractionRoomInboxItem] = []
         for room in rooms:

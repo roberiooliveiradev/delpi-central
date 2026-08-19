@@ -132,9 +132,8 @@ class ManageAttachmentsUseCase:
             message = self._messages.get_by_id(message_id)
             if message is None or message.deleted_at is not None:
                 raise LookupError(InteractionRoomContentService.error("messageNotFound"))
-            actor = (actor_user_id or "").strip()
-            if self._rooms.get_member(room_id=message.room_id, user_id=actor) is None:
-                raise PermissionError(InteractionRoomContentService.error("accessDenied"))
+            if self._rooms.get_by_id(message.room_id) is None:
+                raise LookupError(InteractionRoomContentService.error("roomNotFound"))
             return
 
     def list(

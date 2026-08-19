@@ -21,6 +21,9 @@ from commercial_app.domain.ports.interaction_message_repository_port import (
 from commercial_app.domain.ports.interaction_room_repository_port import (
     InteractionRoomRepositoryPort,
 )
+from commercial_app.domain.services.interaction_room_access_service import (
+    InteractionRoomAccessService,
+)
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
 )
@@ -45,7 +48,7 @@ class CreateTaskFromInteractionMessageResult:
 
 
 class CreateTaskFromInteractionMessageUseCase:
-    """Membership + create_task + mensagem task_ref na sala."""
+    """Create_task + mensagem task_ref na sala (acesso global na borda)."""
 
     def __init__(
         self,
@@ -59,6 +62,7 @@ class CreateTaskFromInteractionMessageUseCase:
         self._messages = messages
         self._worklist = worklist
         self._interaction_messages = interaction_messages
+        self._access = InteractionRoomAccessService(rooms)
 
     def execute(
         self,
@@ -69,10 +73,7 @@ class CreateTaskFromInteractionMessageUseCase:
         actor = (request.actor_user_id or "").strip()
         if not actor:
             raise ValueError(InteractionRoomContentService.error("userIdRequired"))
-        if self._rooms.get_by_id(request.room_id) is None:
-            raise LookupError(InteractionRoomContentService.error("roomNotFound"))
-        if self._rooms.get_member(room_id=request.room_id, user_id=actor) is None:
-            raise PermissionError(InteractionRoomContentService.error("accessDenied"))
+        self._access.require_room_exists(request.room_id)
 
         message = self._messages.get_by_id(request.message_id)
         if message is None:

@@ -117,6 +117,19 @@ class InMemoryInteractionRoomRepo(InteractionRoomRepositoryPort):
         ]
         return items[offset : offset + limit]
 
+    def list_all(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Sequence[InteractionRoom]:
+        items = sorted(
+            [room for room in self.rooms.values() if room.deleted_at is None],
+            key=lambda room: room.updated_at,
+            reverse=True,
+        )
+        return items[offset : offset + limit]
+
     def list_members(self, room_id: UUID) -> Sequence[InteractionRoomMember]:
         return [
             member
@@ -162,9 +175,17 @@ class InMemoryInteractionRoomRepo(InteractionRoomRepositoryPort):
         user_id: str,
         read_at: datetime | None = None,
     ) -> InteractionRoomMember | None:
+        if self.get_by_id(room_id) is None:
+            return None
         member = self.members.get((room_id, user_id))
         if member is None:
-            return None
+            member = InteractionRoomMember(
+                id=uuid4(),
+                room_id=room_id,
+                user_id=user_id,
+                role="member",
+                created_at=datetime.now(timezone.utc),
+            )
         updated = InteractionRoomMember(
             id=member.id,
             room_id=member.room_id,
@@ -203,7 +224,7 @@ def test_resolve_entity_is_idempotent_and_adds_member() -> None:
     assert repo.get_member(room_id=first.id, user_id="u2") is not None
 
 
-def test_get_requires_membership() -> None:
+def test_get_allows_user_without_prior_membership() -> None:
     repo = InMemoryInteractionRoomRepo()
     uc = ManageInteractionRoomsUseCase(repo)
     room = uc.resolve(
@@ -215,9 +236,23 @@ def test_get_requires_membership() -> None:
         )
     )
     assert uc.get(room_id=room.id, actor_user_id="u1").id == room.id
-    with pytest.raises(PermissionError) as exc:
-        uc.get(room_id=room.id, actor_user_id="stranger")
-    assert str(exc.value) == InteractionRoomContentService.error("accessDenied")
+    assert uc.get(room_id=room.id, actor_user_id="stranger").id == room.id
+
+
+def test_mark_read_without_prior_membership() -> None:
+    repo = InMemoryInteractionRoomRepo()
+    uc = ManageInteractionRoomsUseCase(repo)
+    room = uc.resolve(
+        ResolveInteractionRoomInput(
+            kind="entity",
+            entity_type="order",
+            entity_key="01|2",
+            actor_user_id="u1",
+        )
+    )
+    read = uc.mark_read(room_id=room.id, actor_user_id="stranger")
+    assert read.last_read_at is not None
+    assert repo.get_member(room_id=room.id, user_id="stranger") is not None
 
 
 def test_mark_read_and_members() -> None:

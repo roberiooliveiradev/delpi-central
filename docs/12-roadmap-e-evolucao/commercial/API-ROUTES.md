@@ -361,7 +361,7 @@ Presença online: evento WS `presence.updated` na sala `team` (só manage).
 
 ### 3.21 Interaction rooms (P2-SALA — V019–V021)
 
-Prefixo `/interaction-rooms`. Permissão: `commercial.access` (dado por membership); `commercial.manage` = irrestrito. **Sem** code RBAC novo. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` (protocolo `subscribe`/`unsubscribe` + eventos `room.*`) — **sem** segundo endpoint.
+Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — qualquer usuário com acesso ao Portal vê e participa de **todas** as salas; inbox lista todas (`list_all`). **Sem** code RBAC novo. `interaction_room_members` guarda `last_read_at` e participantes, **não** ACL. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` (protocolo `subscribe`/`unsubscribe` + eventos `room.*`) — **sem** segundo endpoint.
 
 | Method | Path | operationId | Permissão | entity | shape | WF |
 |--------|------|-------------|-----------|--------|-------|-----|
@@ -389,7 +389,7 @@ Prefixo `/interaction-rooms`. Permissão: `commercial.access` (dado por membersh
 
 **Publisher interno (sem HTTP):** `post_system_message` — kinds allowlist `otd_event` \| `process_stage` (JSON); para OTD/CONF futuros.
 
-**UI:** inbox + thread + painel embutido — [plugins/commercial/README.md](../../../plugins/commercial/README.md) · WF-SALA. RBAC: só `commercial.access` / `commercial.manage`.
+**UI:** inbox + thread + painel embutido — [plugins/commercial/README.md](../../../plugins/commercial/README.md) · WF-SALA. RBAC: `commercial.access` global (todas as salas); `commercial.manage` inclui `access`.
 
 **Não criar:** rotas api-delpi; `GET /products/search` público; HTTP de `otd_event`; path PT; permission code novo da sala.
 

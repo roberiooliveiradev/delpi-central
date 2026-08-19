@@ -30,6 +30,28 @@ def _uc():
     )
 
 
+def test_inbox_lists_all_rooms_without_membership() -> None:
+    rooms, messages, room_uc, msg_uc, inbox = _uc()
+    order_room = room_uc.resolve(
+        ResolveInteractionRoomInput(
+            kind="entity",
+            entity_type="order",
+            entity_key="01|999",
+            actor_user_id="u1",
+            title="Pedido 999",
+        )
+    )
+    msg_uc.post(
+        PostInteractionMessageInput(
+            room_id=order_room.id,
+            actor_user_id="u1",
+            body_text="visível para todos com access",
+        )
+    )
+    items = inbox.execute(actor_user_id="u2", filter_key="all")
+    assert order_room.id in {item.id for item in items}
+
+
 def test_inbox_lists_preview_unread_and_filters() -> None:
     rooms, messages, room_uc, msg_uc, inbox = _uc()
     order_room = room_uc.resolve(

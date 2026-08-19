@@ -82,11 +82,7 @@ def can_subscribe_interaction_room(user_id: str, room_id: str) -> bool:
     actor = str(user_id or "").strip()
     if not actor:
         return False
-    member = build_interaction_room_repository().get_member(
-        room_id=parsed,
-        user_id=actor,
-    )
-    return member is not None
+    return build_interaction_room_repository().get_by_id(parsed) is not None
 
 
 @router.websocket("/ws")

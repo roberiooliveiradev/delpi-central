@@ -15,7 +15,7 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 
 - **Auth:** JWT em query `token` → `validate_token` + **RBAC via core-api** (`load_user_rbac`), igual ao middleware HTTP. Exige `commercial.access`. O access token Keycloak **não** carrega permissões Delpi — checar só o JWT quebrava o handshake (401 em loop).
 - **Salas no connect:** `user:{sub}` sempre; `team` se gestor (`commercial.manage`).
-- **Salas sob demanda:** `room:{uuid}` após `subscribe` (membro da interaction room).
+- **Salas sob demanda:** `room:{uuid}` após `subscribe` (qualquer usuário com `commercial.access`; sala deve existir).
 - **Keepalive:** cliente envia texto `ping`; servidor responde `{ "type": "pong" }`.
 - **Outros textos JSON:** `subscribe` / `unsubscribe` (protocolo da sala — abaixo).
 - **Middleware HTTP:** path `/commercial/realtime/ws` é público no JWT middleware (token na query; auth no handler).
@@ -45,7 +45,7 @@ Aceita `room_id` como alias de `roomId`. Outros `type` (exceto `ping`) são igno
 | `unsubscribed` | Leave OK |
 | `error` | `code`: `roomIdInvalid` \| `accessDenied` \| `subscribeFailed` \| `unsubscribeFailed` |
 
-`accessDenied`: usuário **não** é membro da interaction room (fail-closed via repositório). UUID inválido → `roomIdInvalid` **sem** tentar join.
+`accessDenied`: sala **inexistente** ou removida (fail-closed via repositório). UUID inválido → `roomIdInvalid` **sem** tentar join. Acesso à plataforma (`commercial.access`) é validado no handshake WS — **não** exige linha em `interaction_room_members`.
 
 ### Chave de sala
 

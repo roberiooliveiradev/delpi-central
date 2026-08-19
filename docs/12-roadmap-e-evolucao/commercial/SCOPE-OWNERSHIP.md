@@ -54,7 +54,7 @@
 | `GET /analytics/open-portfolio-summary` | commercial-api filtra open-orders (summary só; sem `items`) | MFE → commercial-api → `GET …/totvs-open-orders` |
 | Propostas ADY `/proposal-documents*` | commercial-api (RBAC) | MFE → commercial-api → api-delpi `commercial-proposals` |
 | Production / products BFF | commercial-api (RBAC) | MFE → commercial-api → api-delpi production/products |
-| `/interaction-rooms*` (sala P0) | commercial-api (membership da sala + `access`/`manage`) | MFE → commercial-api — **sem** api-delpi |
+| `/interaction-rooms*` (sala P0) | commercial-api (`commercial.access` global) | MFE → commercial-api — **sem** api-delpi |
 | PVA `GET /pedidos-venda-abertos/` | Legado: membership + **`for_open_orders`** (sem vínculo → consolidado) | Só plugin PVA |
 | PVA `…/clientes/…/notas-fiscais` | Legado: `customer_allowed` / membership clássico | Só plugin PVA |
 

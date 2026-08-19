@@ -326,7 +326,7 @@ def test_update_and_delete_only_author() -> None:
     assert uc.list_messages(room_id=room.id, actor_user_id="u1") == []
 
 
-def test_post_requires_body_and_membership() -> None:
+def test_post_requires_body() -> None:
     rooms = InMemoryInteractionRoomRepo()
     messages = InMemoryInteractionMessageRepo()
     uc = ManageInteractionMessagesUseCase(rooms=rooms, messages=messages)
@@ -340,11 +340,11 @@ def test_post_requires_body_and_membership() -> None:
             )
         )
     assert str(empty.value) == InteractionRoomContentService.error("bodyRequired")
-    with pytest.raises(PermissionError):
-        uc.post(
-            PostInteractionMessageInput(
-                room_id=room.id,
-                actor_user_id="stranger",
-                body_text="oi",
-            )
+    posted = uc.post(
+        PostInteractionMessageInput(
+            room_id=room.id,
+            actor_user_id="stranger",
+            body_text="oi",
         )
+    )
+    assert posted.body_text == "oi"

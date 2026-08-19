@@ -288,7 +288,7 @@ def test_room_message_rejects_invalid_owner_id(tmp_path: Path) -> None:
         pass
 
 
-def test_room_message_forbidden_for_non_member(tmp_path: Path) -> None:
+def test_room_message_allows_non_member(tmp_path: Path) -> None:
     rooms = InMemoryInteractionRoomRepo()
     messages = InMemoryInteractionMessageRepo()
     room = _open_room(rooms)
@@ -305,15 +305,12 @@ def test_room_message_forbidden_for_non_member(tmp_path: Path) -> None:
         rooms=rooms,
         messages=messages,
     )
-    try:
-        uc.upload(
-            owner_type="room_message",
-            owner_id=str(posted.id),
-            original_name="x.pdf",
-            content=b"%PDF-1.4",
-            mime_type="application/pdf",
-            uploaded_by_user_id="u2",
-        )
-        assert False, "expected PermissionError"
-    except PermissionError as exc:
-        assert str(exc) == InteractionRoomContentService.error("accessDenied")
+    attachment = uc.upload(
+        owner_type="room_message",
+        owner_id=str(posted.id),
+        original_name="x.pdf",
+        content=b"%PDF-1.4",
+        mime_type="application/pdf",
+        uploaded_by_user_id="u2",
+    )
+    assert attachment.owner_type == "room_message"

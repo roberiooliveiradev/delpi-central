@@ -19,6 +19,9 @@ from commercial_app.domain.ports.interaction_room_repository_port import (
 from commercial_app.domain.services.interaction_mention_kinds_content_service import (
     InteractionMentionKindsContentService,
 )
+from commercial_app.domain.services.interaction_room_access_service import (
+    InteractionRoomAccessService,
+)
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
 )
@@ -35,7 +38,7 @@ class PostInteractionMessageInput:
 
 
 class ManageInteractionMessagesUseCase:
-    """CRUD de mensagens com gate de membership e autor."""
+    """CRUD de mensagens — acesso global via commercial.access na borda."""
 
     def __init__(
         self,
@@ -45,15 +48,13 @@ class ManageInteractionMessagesUseCase:
     ) -> None:
         self._rooms = rooms
         self._messages = messages
+        self._access = InteractionRoomAccessService(rooms)
 
-    def _require_member(self, *, room_id: UUID, actor_user_id: str) -> None:
+    def _require_room_access(self, *, room_id: UUID, actor_user_id: str) -> None:
         actor = (actor_user_id or "").strip()
         if not actor:
             raise ValueError(InteractionRoomContentService.error("userIdRequired"))
-        if self._rooms.get_by_id(room_id) is None:
-            raise LookupError(InteractionRoomContentService.error("roomNotFound"))
-        if self._rooms.get_member(room_id=room_id, user_id=actor) is None:
-            raise PermissionError(InteractionRoomContentService.error("accessDenied"))
+        self._access.require_room_exists(room_id)
 
     def _validate_mentions(
         self,
@@ -80,7 +81,7 @@ class ManageInteractionMessagesUseCase:
         before_id: UUID | None = None,
         query: str | None = None,
     ) -> Sequence[InteractionMessage]:
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         return self._messages.list_for_room(
             room_id=room_id,
             limit=limit,
@@ -90,7 +91,7 @@ class ManageInteractionMessagesUseCase:
         )
 
     def post(self, request: PostInteractionMessageInput) -> InteractionMessage:
-        self._require_member(
+        self._require_room_access(
             room_id=request.room_id,
             actor_user_id=request.actor_user_id,
         )
@@ -122,7 +123,7 @@ class ManageInteractionMessagesUseCase:
         actor_user_id: str,
         body_text: str,
     ) -> InteractionMessage:
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         message = self._messages.get_by_id(message_id)
         if (
             message is None
@@ -149,7 +150,7 @@ class ManageInteractionMessagesUseCase:
         message_id: UUID,
         actor_user_id: str,
     ) -> InteractionMessage:
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         message = self._messages.get_by_id(message_id)
         if (
             message is None
@@ -187,7 +188,7 @@ class ManageInteractionMessagesUseCase:
         actor_user_id: str,
         code: str,
     ):
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         self._require_message_in_room(room_id=room_id, message_id=message_id)
         reaction_code = (code or "").strip()
         if not reaction_code:
@@ -206,7 +207,7 @@ class ManageInteractionMessagesUseCase:
         actor_user_id: str,
         code: str,
     ) -> None:
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         self._require_message_in_room(room_id=room_id, message_id=message_id)
         reaction_code = (code or "").strip()
         if not reaction_code:
@@ -223,7 +224,7 @@ class ManageInteractionMessagesUseCase:
         room_id: UUID,
         actor_user_id: str,
     ) -> Sequence[InteractionPin]:
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         return self._messages.list_pins(room_id)
 
     def pin(
@@ -233,7 +234,7 @@ class ManageInteractionMessagesUseCase:
         message_id: UUID,
         actor_user_id: str,
     ) -> InteractionPin:
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         self._require_message_in_room(room_id=room_id, message_id=message_id)
         return self._messages.pin_message(
             room_id=room_id,
@@ -248,6 +249,6 @@ class ManageInteractionMessagesUseCase:
         message_id: UUID,
         actor_user_id: str,
     ) -> bool:
-        self._require_member(room_id=room_id, actor_user_id=actor_user_id)
+        self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         self._require_message_in_room(room_id=room_id, message_id=message_id)
         return self._messages.unpin_message(room_id=room_id, message_id=message_id)

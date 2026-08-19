@@ -182,21 +182,21 @@ def test_creates_task_linked_to_room_and_message() -> None:
     )
 
 
-def test_rejects_non_member() -> None:
+def test_allows_non_member() -> None:
     rooms = FakeRooms()
     messages = FakeMessages()
     room_id, message_id = _seed_room_message(rooms=rooms, messages=messages)
-    uc, _ = _use_case(rooms, messages)
+    uc, tasks = _use_case(rooms, messages)
 
-    with pytest.raises(PermissionError) as exc:
-        uc.execute(
-            CreateTaskFromInteractionMessageInput(
-                room_id=room_id,
-                message_id=message_id,
-                actor_user_id="stranger",
-            )
+    result = uc.execute(
+        CreateTaskFromInteractionMessageInput(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id="stranger",
         )
-    assert str(exc.value) == InteractionRoomContentService.error("accessDenied")
+    )
+    assert result.task.title
+    assert tasks.items[result.task.id].source_interaction_message_id == message_id
 
 
 def test_rejects_deleted_message() -> None:

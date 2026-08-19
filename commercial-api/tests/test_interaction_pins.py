@@ -102,16 +102,15 @@ def test_pin_list_and_unpin_use_case() -> None:
     assert uc.list_pins(room_id=room_id, actor_user_id="user-pin") == []
 
 
-def test_pin_rejects_non_member() -> None:
+def test_pin_allows_non_member() -> None:
     rooms, messages, room_id, message_id = _seed_member_and_message()
     uc = ManageInteractionMessagesUseCase(rooms=rooms, messages=messages)
-    with pytest.raises(PermissionError) as exc:
-        uc.pin(
-            room_id=room_id,
-            message_id=message_id,
-            actor_user_id="stranger",
-        )
-    assert str(exc.value) == InteractionRoomContentService.error("accessDenied")
+    pin = uc.pin(
+        room_id=room_id,
+        message_id=message_id,
+        actor_user_id="stranger",
+    )
+    assert pin.message_id == message_id
 
 
 def test_pin_routes_meta(monkeypatch: pytest.MonkeyPatch) -> None:
