@@ -24,6 +24,7 @@ import {
 } from "../../app/pluginRoutes";
 import { useInteractionInboxSync } from "../../app/CommercialRealtimeProvider";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import { formatInboxMetaLabel } from "./formatInboxMetaLabel";
 
 type Props = {
   basePath: string;
@@ -172,7 +173,9 @@ export function InteractionRoomsInboxPage({ basePath }: Props) {
             id: item.id,
             title: item.title,
             preview: item.last_message_preview,
-            metaLabel: item.last_message_at ?? undefined,
+            metaLabel: formatInboxMetaLabel(item.last_message_at, {
+              yesterdayLabel: content.inboxMetaYesterday,
+            }),
             kindLabel: kindLabel(item.kind),
             unreadCount: item.unread_count,
             mentioned: item.mentioned,

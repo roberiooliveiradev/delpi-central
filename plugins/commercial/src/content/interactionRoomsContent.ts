@@ -9,6 +9,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   filtersAriaLabel: "Filtros da caixa de entrada",
   searchPlaceholder: "Buscar por título da sala",
   reloadLabel: "Atualizar",
+  inboxMetaYesterday: "Ontem",
   loadingLabel: "Carregando salas…",
   loadError: "Não foi possível carregar as salas.",
   unreadBadge: "{count} não lidas",
