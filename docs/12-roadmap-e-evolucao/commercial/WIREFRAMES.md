@@ -1280,26 +1280,26 @@ flowchart LR
 
 #### WF-SALA-01 — Inbox + sala (desktop)
 
-Split ~**20% lista / 80% thread** (`ResizableColumns`, colapsar, persistência). Não é layout de três colunas. A conversa tem **três containers**: header | scroll de mensagens | composer. Contexto abre **dentro** da thread (toggle no header), não como coluna Slack.
+Split ~**20% lista / 80% thread** (`ResizableColumns`, colapsar, persistência). Não é layout de três colunas **da inbox**. A conversa tem header de largura total e, abaixo, `__main` (scroll de mensagens + composer) + painel **Neste chat** à direita quando o ícone do header está aberto. O painel **não** é coluna Slack no workspace.
 
 ```text
 +-- Portal ---------------------------------------------------------------+
 | [sidebar Minha Delpi] | Inicio  Visao geral  Sala  Tarefas  Pedidos …  |
 |                       +-------------------------------------------------+
 |                       | PageHero: Sala de interacao                     |
-|                       | UnderlineNav filtros + CatalogSearchBar         |
+|                       | chips no hero                                   |
 |                       +--------+----------------------------------------+
-|                       | Inbox  | A header: RoomHeader  [Contexto]       |
-|                       | ~20%   | ----------------------------------------|
-|                       | scroll | B msgs: MessageThread (mine dir.)      |
-|                       | proprio|     drop overlay na coluna             |
-|                       |        | ----------------------------------------|
-|                       |        | C dock: MentionComposer (clip=file)    |
+|                       | Inbox  | HEADER  titulo  chave  [RC][UC] [icon] |
+|                       | ~20%   | +-- main ------------+-- Neste chat --+|
+|                       | scroll | | msgs (bolhas)      | Sobre          ||
+|                       |        | |                    | Participantes  ||
+|                       |        | | dock composer      | Fixadas        ||
+|                       |        | +--------------------+----------------+|
 |                       +--------+----------------------------------------+
 +-------------------------------------------------------------------------+
 ```
 
-Abaixo de 900px: lista **ou** detalhe. Painel de contexto (Sobre / Participantes / Fixadas) só com o toggle, `max-height` 40vh, pin → `scrollIntoView`.
+Abaixo de 900px: lista **ou** detalhe. Painel Neste chat só com o toggle do header; fechado, o chat ocupa 100% da coluna. Pin → `scrollIntoView`. Sem X no painel.
 
 Clique no card navega `/:roomId` (query `filter`/`q` preservada).
 
@@ -1363,7 +1363,7 @@ EmptyState: Nenhuma mensagem. A conversa deste pedido fica registrada aqui.
 
 `SectionRouteCard` Operação: item «Sala de interação» + badge não lidas.
 
-**Mapa tela → kit:** `PageHero`, `PagePath`, `UnderlineNav`, `CatalogSearchBar`, `RoomInboxList`, `RoomHeader`, `MessageThread`, `MentionComposer`, `MentionMenu`, `MentionText`, `EntityUnfurlCard`, `ReactionBar`, `FileDropzone`, `EmptyState`, `LoadingActivityCard`, `SectionRouteCard`, drawer host-contained.
+**Mapa tela → kit:** `PageHero`, `PagePath`, `UnderlineNav`, `CatalogSearchBar`, `RoomInboxList`, `RoomHeader`, `RoomSidePanel`, `RoomContextPanel`, `MessageThread`, `MentionComposer`, `MentionMenu`, `MentionText`, `EntityUnfurlCard`, `ReactionBar`, `FileDropzone`, `EmptyState`, `LoadingActivityCard`, `SectionRouteCard`, drawer host-contained.
 
 **Fora P0:** mural kanban, DM 1:1, call/vídeo, tela OTD nova.
 

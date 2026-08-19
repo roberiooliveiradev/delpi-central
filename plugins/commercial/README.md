@@ -258,7 +258,7 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 ## Sala de interação
 
-Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%, com três containers na thread (header, mensagens, composer). O painel de contexto não é uma terceira coluna — abre dentro da conversa. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomContextPanel`).
+Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%. Na thread, o painel **Neste chat** (`RoomSidePanel`) abre à direita e encolhe msgs+composer; fechado, some. Não é terceira coluna da inbox. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomSidePanel`, `RoomContextPanel`).
 
 **Backlog (não iniciado):** fill viewport, lista 100% sem sala, chips no hero, drawer Contexto, composer markdown, anexos/reply/delete — [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md).
 
