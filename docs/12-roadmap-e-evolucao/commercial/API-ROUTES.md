@@ -361,7 +361,7 @@ Presença online: evento WS `presence.updated` na sala `team` (só manage).
 
 ### 3.21 Interaction rooms (P2-SALA — V019–V021)
 
-Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — qualquer usuário com acesso ao Portal vê e participa de **todas** as salas; inbox lista todas (`list_all`). **Sem** code RBAC novo. `interaction_room_members` guarda `last_read_at` e participantes, **não** ACL. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` (protocolo `subscribe`/`unsubscribe` + eventos `room.*`) — **sem** segundo endpoint.
+Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — qualquer usuário com acesso ao Portal vê e participa de **todas** as salas; inbox lista todas (`list_all`). **Sem** code RBAC novo. `interaction_room_members` guarda `last_read_at` e participantes, **não** ACL. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` — handshake `user:` + `interaction` (inbox `room.inbox.changed`); `subscribe` em `room:{uuid}` para a thread (`room.message.*`, `room.reaction`, `room.pin`); **sem** segundo endpoint.
 
 | Method | Path | operationId | Permissão | entity | shape | WF |
 |--------|------|-------------|-----------|--------|-------|-----|

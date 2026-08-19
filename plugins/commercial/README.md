@@ -286,7 +286,7 @@ Contrato HTTP completo: [API-ROUTES.md § 3.21](../../docs/12-roadmap-e-evolucao
 
 Anexos de mensagem: `owner_type=room_message` em `/attachments` (mesmo volume `commercial-attachments`). Publisher interno `post_system_message` (`otd_event` / `process_stage`) **não** tem rota HTTP.
 
-RBAC: **`commercial.access` (global)** — inbox e thread para todos com acesso ao Portal; **sem** permission code novo. Unfurl de entidade continua fail-closed por carteira.
+RBAC: **`commercial.access` (global)** — inbox e thread para todos com acesso ao Portal; **sem** permission code novo. Unfurl de entidade continua fail-closed por carteira. Tempo real: mesmo WS `/commercial/realtime/ws` — thread via `subscribe` `room:{uuid}`; inbox via handshake `interaction` + `room.inbox.changed`.
 
 ## RBAC (capacidades)
 

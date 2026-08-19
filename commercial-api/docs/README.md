@@ -33,7 +33,7 @@ API dona do estado Delpi do **Portal Comercial** (carteiras, worklist, contatos 
 | Tarefa a partir da mensagem | `create_task_from_interaction_message` (+ mensagem `task_ref`) |
 | System events | use case `post_system_message` (**sem** rota HTTP) — `otd_event` / `process_stage` |
 | Anexos | `owner_type=room_message` em `/attachments` (volume `commercial-attachments`) |
-| Acesso | `InteractionRoomAccessService` — **`commercial.access` global** na borda; `interaction_room_members` = leitura/participantes |
+| Acesso | `InteractionRoomAccessService` — **`commercial.access` global** na borda; WS `interaction` + `room:{uuid}` |
 | MFE | `plugins/commercial` — inbox, page, panel na ficha; **nunca** api-delpi |
 
 Confirmação de pedidos (P2-CONF) e Graph Outlook/Teams (T11) permanecem backlog — não misturar com o contrato da sala.

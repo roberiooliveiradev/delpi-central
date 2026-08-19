@@ -14,7 +14,7 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 ```
 
 - **Auth:** JWT em query `token` → `validate_token` + **RBAC via core-api** (`load_user_rbac`), igual ao middleware HTTP. Exige `commercial.access`. O access token Keycloak **não** carrega permissões Delpi — checar só o JWT quebrava o handshake (401 em loop).
-- **Salas no connect:** `user:{sub}` sempre; `team` se gestor (`commercial.manage`).
+- **Salas no connect:** `user:{sub}` sempre; `interaction` (inbox leve) para todo `commercial.access`; `team` se gestor (`commercial.manage`).
 - **Salas sob demanda:** `room:{uuid}` após `subscribe` (qualquer usuário com `commercial.access`; sala deve existir).
 - **Keepalive:** cliente envia texto `ping`; servidor responde `{ "type": "pong" }`.
 - **Outros textos JSON:** `subscribe` / `unsubscribe` (protocolo da sala — abaixo).
@@ -91,6 +91,24 @@ Após PUT/DELETE de reação na mensagem.
 
 `action`: `set` | `clear`.
 
+#### `room.pin`
+
+Após POST/DELETE pin. Fan-out em `room:{uuid}` + sinal de inbox.
+
+```json
+{
+  "type": "room.pin",
+  "roomId": "uuid",
+  "messageId": "uuid",
+  "action": "set",
+  "actorUserId": "seller-a",
+  "actorDisplayName": "Ana",
+  "actorClientId": "client-uuid"
+}
+```
+
+`action`: `set` | `clear`.
+
 ### Eventos no fio (`user:` — sem exigir subscribe da sala)
 
 #### `room.mention`
@@ -118,7 +136,7 @@ Se o destinatário estiver **offline** no Comercial → Core notificação categ
 
 #### `room.attachment`
 
-Upload/delete de anexo com `owner_type=room_message`. Fan-out em `user:` de **cada membro** da sala — **não** emite `worklist.changed`.
+Upload/delete de anexo com `owner_type=room_message`. Fan-out em `room:{uuid}` (sem `notification`, thread inscrita) **e** toast em `user:` dos membros atuais. **Não** emite `worklist.changed`. Inbox recebe `room.inbox.changed`.
 
 ```json
 {
@@ -139,9 +157,13 @@ Upload/delete de anexo com `owner_type=room_message`. Fan-out em `user:` de **ca
 }
 ```
 
-### Inbox HTTP (fora do WS)
+### Inbox (`interaction` + HTTP)
 
-`GET /interaction-rooms?filter=all|unread|mentioned|process|wall&q=&limit=` (`operation_id=list_interaction_rooms`) — preview + `unread_count`; o MFE combina com eventos WS para atualizar sem F5.
+Handshake: todo socket com `commercial.access` entra na sala `interaction`.
+
+`room.inbox.changed` `{ "type": "room.inbox.changed", "roomId": "<uuid>" }` — **sem** body da mensagem. O MFE faz debounce (400 ms) e chama `GET /interaction-rooms` (`operation_id=list_interaction_rooms`).
+
+Eventos de mensagem/pin/system/anexo também emitem este sinal.
 
 ## Eventos (worklist / carteira / conta)
 
