@@ -76,7 +76,7 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 | (forecast) | WF-09 | **backlog** | Não implementado — não inventar UI |
 | (confirmação de pedidos) | **WF-CONF** | **stub** | Ata alinhamento 2 §9–10 — epico P2-CONF; sem UI inventada |
 | (reunião Diretoria) | **WF-DIR** | **stub** | Ata alinhamento 2 §34 — aguardar modelo Junior/Laércio |
-| `/interaction-rooms` · `/:roomId` | **WF-SALA-01…08** | **Existe** (P0) | P2-SALA — kit + commercial-api § 3.21 |
+| `/interaction-rooms` · `/:roomId` | **WF-SALA-01…08** | **entregue** | Workspace 20/80 + 3 containers na thread; P2-SALA — kit + commercial-api § 3.21 |
 | WF-G «Gestão» top nav | — | **supersedido** | Substituído por WF-OV + top «Visão geral» |
 
 ### Índice — refinamento ago/2026 (Conta · Propostas · Grupos · Tarefas)
@@ -1280,47 +1280,28 @@ flowchart LR
 
 #### WF-SALA-01 — Inbox + sala (desktop)
 
-Lista à esquerda (~320px), thread à direita. Filtros = `UnderlineNav`. Busca = `CatalogSearchBar`.
+Split ~**20% lista / 80% thread** (`ResizableColumns`, colapsar, persistência). Não é layout de três colunas. A conversa tem **três containers**: header | scroll de mensagens | composer. Contexto abre **dentro** da thread (toggle no header), não como coluna Slack.
 
 ```text
 +-- Portal ---------------------------------------------------------------+
-| [sidebar Minha Delpi] | Inicio  Visao geral  Tarefas  Pedidos  Carteira |
+| [sidebar Minha Delpi] | Inicio  Visao geral  Sala  Tarefas  Pedidos …  |
 |                       +-------------------------------------------------+
 |                       | PageHero: Sala de interacao                     |
-|                       | PagePath: Inicio / Sala de interacao            |
-|                       | UnderlineNav: [Todas] Nao lidas  Mencionaram-me |
-|                       |                   Processos  Mural              |
-|                       | CatalogSearchBar: ····· buscar salas ·····      |
-|                       +------------------+------------------------------+
-|                       | RoomInboxList    | RoomHeader                   |
-|                       | * ACME 000123/01 | Pedido 102942 / filial 01    |
-|                       |   Pedido 102942  | chips: [Conta ACME] [OV 4412]|
-|                       |   Ana agora  (2) | avatars: Ana Joao +2  [Membros]|
-|                       |                  +------------------------------+
-|                       |   Handoff 102942 | MessageThread                |
-|                       |   Oferta>Compras |                              |
-|                       |   Joao 14:02     | -- 18 ago 2026 --------------|
-|                       |                  | [sys] Engenharia recebeu a OV|
-|                       |   Mural equipe   |                              |
-|                       |   (kind=wall)    | (Ana 09:41)                  |
-|                       |   pin: aviso SI  | @Joao falta confirmar        |
-|                       |                  | @produto 90AAAA01 no pedido  |
-|                       |                  | @102942.                     |
-|                       |                  | [Unfurl produto] [Unfurl ped]|
-|                       |                  | [PDF proposta.pdf]           |
-|                       |                  | ReactionBar: +1  ok  2       |
-|                       |                  | [Responder] [Criar tarefa]   |
-|                       |                  | [Fixar]                      |
-|                       |                  |   thread (2)  v              |
-|                       |                  +------------------------------+
-|                       |                  | MentionComposer              |
-|                       |                  |  Mensagem a equipe...     @  |
-|                       |                  |  [anexar]              [Enviar]|
-|                       +------------------+------------------------------+
+|                       | UnderlineNav filtros + CatalogSearchBar         |
+|                       +--------+----------------------------------------+
+|                       | Inbox  | A header: RoomHeader  [Contexto]       |
+|                       | ~20%   | ----------------------------------------|
+|                       | scroll | B msgs: MessageThread (mine dir.)      |
+|                       | proprio|     drop overlay na coluna             |
+|                       |        | ----------------------------------------|
+|                       |        | C dock: MentionComposer (clip=file)    |
+|                       +--------+----------------------------------------+
 +-------------------------------------------------------------------------+
 ```
 
-Linha com `*` = sala aberta / unread badge. Clique navega `/:roomId`.
+Abaixo de 900px: lista **ou** detalhe. Painel de contexto (Sobre / Participantes / Fixadas) só com o toggle, `max-height` 40vh, pin → `scrollIntoView`.
+
+Clique no card navega `/:roomId` (query `filter`/`q` preservada).
 
 #### WF-SALA-02 — Mensagens (tipos no thread)
 

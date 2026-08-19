@@ -258,7 +258,9 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 ## Sala de interação
 
-Inbox e thread nativos (WF-SALA). Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`MessageThread`, composer, room header).
+Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%, com três containers na thread (header, mensagens, composer). O painel de contexto não é uma terceira coluna — abre dentro da conversa. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomContextPanel`).
+
+Rebuild: remote `plugin-ui` **antes** do MFE `dashboard-commercial` (`./infra/scripts/up-dev-sequential.sh`).
 
 Contrato HTTP completo: [API-ROUTES.md § 3.21](../../docs/12-roadmap-e-evolucao/commercial/API-ROUTES.md). Paths EN (prefixo `/interaction-rooms`):
 
