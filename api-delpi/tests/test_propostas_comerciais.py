@@ -178,7 +178,7 @@ def test_formatter_formats_document_fields() -> None:
     assert PropostaComercialFormatter.format_phone("(47) 3370-5502") == "(47) 3370-5502"
     assert PropostaComercialFormatter.format_phone("4733705502") == "(47) 3370-5502"
     assert PropostaComercialFormatter.format_ncm("85444200") == "8544.42.00"
-    assert PropostaComercialFormatter.format_currency(40041.56) == "R$ 40.041,56"
+    assert PropostaComercialFormatter.format_currency(40041.56) == "40.041,56"
     assert PropostaComercialFormatter.format_date("20260612") == "2026-06-12"
     assert PropostaComercialFormatter.format_integer_days(45.0) == 45
     assert PropostaComercialFormatter.format_lote_minimo_mil(3000.0) == "3,000"
@@ -202,10 +202,10 @@ def _sample_detail() -> dict:
             "validade_dias": 30,
             "filial": "01",
             "status": "A",
-            "soma_valores_r_mil": "R$ 1.507.588,55",
+            "soma_valores_r_mil": "1.507.588,55",
             "soma_valores_r_mil_numerico": 1507588.55,
             "total_liquido_r_mil": 31977.189816,
-            "total_liquido_r_mil_formatado": "R$ 31.977,19",
+            "total_liquido_r_mil_formatado": "31.977,19",
         },
         "empresa": {
             "nome": "DELPI COMPONENTES LTDA",
@@ -269,19 +269,19 @@ def _sample_detail() -> dict:
                 "ncm": "8544.42.00",
                 "quantidade": 1.0,
                 "unidade": "MI",
-                "preco_unitario": "R$ 40.041,56",
+                "preco_unitario": "40.041,56",
                 "preco_unitario_numerico": 40041.56,
                 "valor_bruto_r_mil": 40041.56,
-                "valor_bruto_r_mil_formatado": "R$ 40.041,56",
+                "valor_bruto_r_mil_formatado": "40.041,56",
                 "aliquota_icms": 12.0,
                 "aliquota_pis_cofins": 9.25,
                 "valor_apos_icms_r_mil": 35236.5728,
                 "valor_liquido_r_mil": 31977.189816,
-                "valor_liquido_r_mil_formatado": "R$ 31.977,19",
+                "valor_liquido_r_mil_formatado": "31.977,19",
                 "id_formacao_preco": "008583",
                 "status_calculo_valor_liquido": "OK",
                 "fonte_valor_liquido": "calculo_formacao_preco_icms_efetivo_pis_cofins",
-                "valor_total": "R$ 40.041,56",
+                "valor_total": "40.041,56",
                 "valor_total_numerico": 40041.56,
                 "prazo_dias": 45,
                 "lote_minimo_numerico": 0,
@@ -400,7 +400,7 @@ def test_get_proposta_comercial_use_case_groups_detail() -> None:
     result = use_case.execute("004845")
 
     assert result["cabecalho"]["numero_ov"] == "OV003581"
-    assert result["cabecalho"]["soma_valores_r_mil"] == "R$ 1.507.588,55"
+    assert result["cabecalho"]["soma_valores_r_mil"] == "1.507.588,55"
     assert result["cabecalho"]["soma_valores_r_mil_numerico"] == 1507588.55
     assert result["empresa"]["site"] == "www.delpi.com.br"
     assert result["empresa"]["inscricao_estadual"] == "253282144"
@@ -454,6 +454,9 @@ def test_formatter_item_calculates_valor_liquido_from_icms_and_pis_cofins() -> N
     assert item["fonte_valor_liquido"] == "calculo_formacao_preco_icms_efetivo_pis_cofins"
     assert item["status_calculo_valor_liquido"] == "OK"
     assert item["preco_unitario_numerico"] == 9728.78
+    assert item["preco_unitario"] == "9.728,78"
+    assert item["valor_bruto_r_mil_formatado"] == "9.728,78"
+    assert item["valor_liquido_r_mil_formatado"] == "7.769,40"
 
 
 def test_formatter_item_without_formacao_preco_keeps_null_liquido() -> None:

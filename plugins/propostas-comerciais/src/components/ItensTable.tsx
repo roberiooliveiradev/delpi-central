@@ -8,7 +8,7 @@ import {
   ITEM_COLUMN_KEYS,
   type PropostaComercialItemColumnKey,
 } from "../constants/propostaComercialLabels";
-import { displayValue, formatLoteMinimoMil } from "../utils/format";
+import { displayMoneyAmount, displayValue, formatLoteMinimoMil } from "../utils/format";
 import { PcNativeTextAreaControl } from "./pcFormFields";
 
 const PC_TABLE = dataTableBemClasses("pc");
@@ -168,12 +168,12 @@ export function ItensTable(props: ItensTableProps) {
                   {item.quantidade.toLocaleString("pt-BR")} {item.unidade}
                 </td>
                 <td data-label={columnLabels.valor_bruto}>
-                  {displayValue(item.valor_bruto_r_mil_formatado ?? item.preco_unitario)}
+                  {displayMoneyAmount(item.valor_bruto_r_mil_formatado ?? item.preco_unitario)}
                 </td>
                 <td data-label={columnLabels.valor_liquido}>
-                  {displayValue(item.valor_liquido_r_mil_formatado)}
+                  {displayMoneyAmount(item.valor_liquido_r_mil_formatado)}
                 </td>
-                <td data-label={columnLabels.total}>{displayValue(item.valor_total)}</td>
+                <td data-label={columnLabels.total}>{displayMoneyAmount(item.valor_total)}</td>
                 <td data-label={columnLabels.prazo}>
                   {props.editable && draft ? (
                     <TableCellInput

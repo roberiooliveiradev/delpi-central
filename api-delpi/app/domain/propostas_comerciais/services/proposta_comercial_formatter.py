@@ -71,14 +71,18 @@ class PropostaComercialFormatter:
 
     @staticmethod
     def format_currency(value: Any) -> str | None:
+        """Formata o montante sem símbolo de moeda.
+
+        O prefixo (R$, US$ etc.) fica só nos rótulos de cabeçalho/coluna,
+        que o usuário pode editar na revisão do PDF.
+        """
         if value is None or value == "":
             return None
         try:
             amount = float(value)
         except (TypeError, ValueError):
             return None
-        formatted = f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        return f"R$ {formatted}"
+        return f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     @staticmethod
     def format_date(value: Any) -> str | None:
