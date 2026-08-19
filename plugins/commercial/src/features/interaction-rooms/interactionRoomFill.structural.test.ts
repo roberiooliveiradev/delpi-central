@@ -22,6 +22,8 @@ describe("interaction room fill CSS", () => {
     expect(css).not.toMatch(/cm-room-thread__context/);
     expect(css).not.toMatch(/cm-room-context-drawer/);
     expect(css).toMatch(/\.cm-room-alert-host \{[\s\S]*?position:\s*absolute;/);
+    expect(css).toMatch(/\.cm-room-inbox-pane \{[\s\S]*?gap:\s*var\(--cm-gap-sm\);/);
+    expect(css).toMatch(/\.cm-room-inbox-pane__body \{[\s\S]*?display:\s*flex;/);
     expect(css).toMatch(/\.cm-room-workspace__grid > \.cm-room-inbox-pane/);
   });
 

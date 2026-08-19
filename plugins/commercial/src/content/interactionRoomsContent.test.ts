@@ -5,6 +5,7 @@ import { INTERACTION_ROOMS_CONTENT, formatInteractionRoomContextSubtitle } from 
 describe("INTERACTION_ROOMS_CONTENT", () => {
   it("usa Neste chat no título e no ícone do painel", () => {
     expect(INTERACTION_ROOMS_CONTENT.contextToggle).toBe("Neste chat");
+    expect(INTERACTION_ROOMS_CONTENT.inboxToolbarTitle).toBe("Conversas");
   });
 });
 

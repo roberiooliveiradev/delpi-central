@@ -6,6 +6,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   inboxEmptyDescription:
     "Abra um pedido ou conta e use a sala na ficha, ou aguarde a caixa de entrada ser preenchida.",
   inboxListAriaLabel: "Salas de interação",
+  inboxToolbarTitle: "Conversas",
   filtersAriaLabel: "Filtros da caixa de entrada",
   searchPlaceholder: "Buscar por título da sala",
   reloadLabel: "Atualizar",

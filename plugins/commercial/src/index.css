@@ -114,6 +114,30 @@
   max-width: 20rem;
 }
 
+.dashboard-commercial .cm-room-inbox-pane .cm-room-inbox-search {
+  max-width: none;
+}
+
+.dashboard-commercial .cm-room-inbox-pane__toolbar {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-room-inbox-pane__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-gap-sm);
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-room-inbox-pane__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-room-workspace {
   flex: 1;
   min-height: 0;
@@ -139,6 +163,7 @@
 .dashboard-commercial .cm-room-inbox-pane {
   display: flex;
   flex-direction: column;
+  gap: var(--cm-gap-sm);
   min-width: 0;
   min-height: 0;
   overflow: hidden;

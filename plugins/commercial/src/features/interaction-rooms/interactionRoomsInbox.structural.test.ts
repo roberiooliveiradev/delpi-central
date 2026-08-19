@@ -14,8 +14,12 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).not.toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/listInteractionRooms/);
     expect(source).toMatch(/useInteractionInboxSync/);
-    expect(source).toMatch(/CommercialPageHero/);
+    expect(source).toMatch(/CommercialSectionCard/);
+    expect(source).not.toMatch(/CommercialPageHero/);
+    expect(source).not.toMatch(/CommercialPagePath/);
     expect(source).toMatch(/cm-room-inbox-search/);
+    expect(source).toMatch(/cm-room-inbox-pane__toolbar/);
+    expect(source).toMatch(/cm-room-inbox-pane__filters/);
     expect(source).toMatch(/reloadLabel/);
     expect(source).not.toMatch(/actions=\{\s*<CommercialActionButton/);
     expect(source).toMatch(/CustomerAvatar/);

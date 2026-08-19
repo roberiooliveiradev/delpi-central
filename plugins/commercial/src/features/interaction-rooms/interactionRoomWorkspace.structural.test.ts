@@ -16,11 +16,9 @@ describe("InteractionRoomWorkspace", () => {
     expect(workspace).toMatch(/CommercialResizableColumns/);
     expect(workspace).toMatch(/max-width: 899px/);
     expect(workspace).toMatch(/writeInboxWidthPx/);
-    expect(workspace).toMatch(/density="compact"/);
-    expect(workspace).toMatch(/CommercialScopeChipBar/);
+    expect(workspace).not.toMatch(/CommercialPageHero/);
+    expect(workspace).not.toMatch(/CommercialPagePath/);
     expect(workspace).not.toMatch(/CommercialUnderlineNav/);
-    expect(workspace).toMatch(/onSelectedRoomTitle/);
-    expect(workspace).toMatch(/pathCurrent/);
     expect(workspace).not.toMatch(/selectRoomTitle/);
     expect(workspace).toMatch(/roomId \? \(/);
     expect(app).toMatch(/InteractionRoomWorkspace/);

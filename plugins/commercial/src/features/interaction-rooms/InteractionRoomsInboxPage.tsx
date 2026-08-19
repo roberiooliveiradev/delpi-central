@@ -11,20 +11,16 @@ import {
   CommercialCatalogSearchBar,
   CommercialEmptyState,
   CommercialLoadingCard,
-  CommercialPageHero,
-  CommercialPagePath,
   CommercialRoomInboxList,
   CommercialScopeChipBar,
+  CommercialSectionCard,
   CommercialStateBanner,
 } from "../../app/commercialUi";
 import {
   buildCustomerDetailHref,
   navigatePluginPath,
 } from "../../app/pluginNavigation";
-import {
-  buildInteractionRoomPath,
-  buildPluginPath,
-} from "../../app/pluginRoutes";
+import { buildInteractionRoomPath } from "../../app/pluginRoutes";
 import { useInteractionInboxSync } from "../../app/CommercialRealtimeProvider";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { accountLinkTitle } from "../../content/entityLinkHints";
@@ -89,7 +85,6 @@ function customerIdentity(item: InteractionRoomInboxItemDto): {
 export function InteractionRoomsInboxPage({
   basePath,
   selectedRoomId = null,
-  variant = "page",
   filter: filterProp,
   query: queryProp,
   onFilterChange,
@@ -146,7 +141,7 @@ export function InteractionRoomsInboxPage({
         active: id === filter,
         onSelect: () => setFilter(id),
       })),
-    [filter],
+    [filter, setFilter],
   );
 
   useEffect(() => {
@@ -193,40 +188,27 @@ export function InteractionRoomsInboxPage({
     [],
   );
 
-  const chrome = variant === "page";
-
   return (
-    <section className={chrome ? "cm-page-stack" : "cm-room-inbox-pane"}>
-      {chrome ? (
-        <CommercialPagePath
-          back={{
-            label: "Início",
-            href: buildPluginPath("home", basePath),
-          }}
-          current={content.inboxTitle}
-        />
-      ) : null}
-      {chrome ? (
-        <CommercialPageHero
-          title={content.inboxTitle}
-          description={content.inboxSubtitle}
-          actions={
-            <div className="cm-room-inbox-search">
-              <CommercialCatalogSearchBar
-                value={query}
-                onChange={setQuery}
-                placeholder={content.searchPlaceholder}
-                aria-label={content.searchPlaceholder}
-              />
-            </div>
-          }
-        >
+    <section className="cm-room-inbox-pane">
+      <CommercialSectionCard
+        className="cm-room-inbox-pane__toolbar"
+        title={content.inboxToolbarTitle}
+      >
+        <div className="cm-room-inbox-pane__filters">
+          <div className="cm-room-inbox-search">
+            <CommercialCatalogSearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder={content.searchPlaceholder}
+              aria-label={content.searchPlaceholder}
+            />
+          </div>
           <CommercialScopeChipBar
             chips={filterChips}
             aria-label={content.filtersAriaLabel}
           />
-        </CommercialPageHero>
-      ) : null}
+        </div>
+      </CommercialSectionCard>
       {error ? (
         <CommercialStateBanner variant="error">
           {error}{" "}
@@ -238,6 +220,7 @@ export function InteractionRoomsInboxPage({
           </CommercialActionButton>
         </CommercialStateBanner>
       ) : null}
+      <div className="cm-room-inbox-pane__body">
       {loading ? (
         <CommercialLoadingCard title={content.loadingLabel} variant="panel" />
       ) : null}
@@ -322,6 +305,7 @@ export function InteractionRoomsInboxPage({
           }))}
         />
       ) : null}
+      </div>
     </section>
   );
 }

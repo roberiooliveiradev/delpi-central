@@ -1,18 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { InteractionInboxFilter } from "../../api/interactionRoomsApi";
-import {
-  CommercialCatalogSearchBar,
-  CommercialPageHero,
-  CommercialPagePath,
-  CommercialResizableColumns,
-  CommercialScopeChipBar,
-} from "../../app/commercialUi";
+import { CommercialResizableColumns } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   buildInteractionRoomPath,
   buildInteractionRoomsPath,
-  buildPluginPath,
 } from "../../app/pluginRoutes";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomPage } from "./InteractionRoomPage";
@@ -35,25 +28,6 @@ type Props = {
   search?: string;
 };
 
-const FILTER_IDS: InteractionInboxFilter[] = [
-  "all",
-  "unread",
-  "mentioned",
-  "process",
-  "wall",
-];
-
-function filterLabel(id: InteractionInboxFilter): string {
-  const map: Record<string, string> = {
-    all: INTERACTION_ROOMS_CONTENT.filterAll,
-    unread: INTERACTION_ROOMS_CONTENT.filterUnread,
-    mentioned: INTERACTION_ROOMS_CONTENT.filterMentioned,
-    process: INTERACTION_ROOMS_CONTENT.filterProcess,
-    wall: INTERACTION_ROOMS_CONTENT.filterWall,
-  };
-  return map[id] ?? String(id);
-}
-
 export function InteractionRoomWorkspace({
   basePath,
   roomId = null,
@@ -63,17 +37,12 @@ export function InteractionRoomWorkspace({
   const parsed = parseInteractionRoomSearch(search);
   const [filter, setFilter] = useState<InteractionInboxFilter>(parsed.filter);
   const [query, setQuery] = useState(parsed.q);
-  const [openRoomTitle, setOpenRoomTitle] = useState<string | null>(null);
 
   useEffect(() => {
     const next = parseInteractionRoomSearch(search);
     setFilter(next.filter);
     setQuery(next.q);
   }, [search]);
-
-  useEffect(() => {
-    if (!roomId) setOpenRoomTitle(null);
-  }, [roomId]);
 
   const roomSearch = buildInteractionRoomSearch({ filter, q: query });
   const listHref = `${buildInteractionRoomsPath(basePath)}${roomSearch}`;
@@ -94,20 +63,6 @@ export function InteractionRoomWorkspace({
     [basePath, roomId],
   );
 
-  const filterChips = useMemo(
-    () =>
-      FILTER_IDS.map((id) => ({
-        id,
-        label: filterLabel(id),
-        active: id === filter,
-        onSelect: () => {
-          setFilter(id);
-          replaceQuery(id, query);
-        },
-      })),
-    [filter, query, replaceQuery],
-  );
-
   const inbox = (
     <InteractionRoomsInboxPage
       basePath={basePath}
@@ -123,7 +78,6 @@ export function InteractionRoomWorkspace({
         setQuery(next);
         replaceQuery(filter, next);
       }}
-      onSelectedRoomTitle={setOpenRoomTitle}
       preserveSearch={roomSearch}
     />
   );
@@ -133,43 +87,11 @@ export function InteractionRoomWorkspace({
       roomId={roomId}
       variant="pane"
       inboxHref={listHref}
-      onRoomTitle={setOpenRoomTitle}
     />
   ) : null;
 
-  const pathCurrent = roomId
-    ? openRoomTitle || content.roomFallbackTitle
-    : content.inboxTitle;
-  const pathBack = roomId
-    ? { label: content.inboxTitle, href: listHref }
-    : { label: "Início", href: buildPluginPath("home", basePath) };
-
   return (
     <section className="cm-page-stack cm-room-workspace">
-      <CommercialPagePath back={pathBack} current={pathCurrent} />
-      <CommercialPageHero
-        density="compact"
-        title={content.inboxTitle}
-        description={content.inboxSubtitle}
-        actions={
-          <div className="cm-room-inbox-search">
-            <CommercialCatalogSearchBar
-              value={query}
-              onChange={(value) => {
-                setQuery(value);
-                replaceQuery(filter, value);
-              }}
-              placeholder={content.searchPlaceholder}
-              aria-label={content.searchPlaceholder}
-            />
-          </div>
-        }
-      >
-        <CommercialScopeChipBar
-          chips={filterChips}
-          aria-label={content.filtersAriaLabel}
-        />
-      </CommercialPageHero>
       <div className="cm-room-workspace__grid">
         {stacked ? (
           roomId ? (

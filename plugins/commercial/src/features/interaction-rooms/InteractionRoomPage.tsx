@@ -29,16 +29,11 @@ import {
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialMessageThread,
-  CommercialPagePath,
   CommercialRoomContextPanel,
   CommercialRoomHeader,
   CommercialRoomSidePanel,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
-import {
-  buildInteractionRoomsPath,
-  buildPluginPath,
-} from "../../app/pluginRoutes";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
@@ -87,13 +82,9 @@ export function InteractionRoomPage({
   basePath,
   roomId,
   variant = "page",
-  inboxHref,
   onRoomTitle,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
-  const backHref =
-    inboxHref ??
-    (buildInteractionRoomsPath(basePath) ?? buildPluginPath("home", basePath));
 
   const [room, setRoom] = useState<InteractionRoomDto | null>(null);
   const [members, setMembers] = useState<InteractionRoomMemberDto[]>([]);
@@ -380,16 +371,7 @@ export function InteractionRoomPage({
   }, [threadMessages.length, loading]);
 
   return (
-    <section className={variant === "page" ? "cm-page-stack" : "cm-room-thread"}>
-      {variant === "page" ? (
-        <CommercialPagePath
-          back={{
-            label: content.inboxTitle,
-            href: backHref,
-          }}
-          current={room?.title ?? content.roomFallbackTitle}
-        />
-      ) : null}
+    <section className={variant === "page" ? "cm-page-stack cm-room-thread" : "cm-room-thread"}>
       {alerts.length > 0 ? (
         <div className="cm-room-alert-host">
           <CommercialAlertQueue
