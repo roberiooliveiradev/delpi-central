@@ -8,7 +8,7 @@
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)  
 > **Cutover F2c / multi-membro:** [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
 
-**Fora deste documento:** tabelas TOTVS (SC5/SC6/SA1/AD*…). Pedidos, propostas e cadastro de cliente continuam na api-delpi; aqui só há **referências** (`customer_code`+`customer_store`, `order_branch`+`order_number`+`line_item`, etc.).
+**Fora deste documento:** tabelas TOTVS (SC5/SC6/SA1/AD*…). Pedidos, propostas e cadastro de cliente continuam na api-delpi; aqui só há **referências** (`customer_code`+`customer_store`, `order_branch`+`order_number`+`line_item`, etc.). Dicionário CRM Protheus (OV, funil, SX3/SX9): [crm-sigatec.md](../../../../api-delpi/docs/api/padroes-totvs/crm-sigatec.md) e [playbook-crm-totvs-dicionario.md](../../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-crm-totvs-dicionario.md).
 
 ---
 

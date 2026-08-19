@@ -15,3 +15,4 @@ Playbooks de **domínio Protheus** da biblioteca. Índice completo: [../README.m
 | [playbook-producao-consumo-compras-perdas-op.md](./playbook-producao-consumo-compras-perdas-op.md) | Produção / perdas / OP |
 | [playbook-pa-inspecao-expedicao.md](./playbook-pa-inspecao-expedicao.md) | Inspeção / expedição |
 | [playbook-correcao-estoque-supplies-inventario.md](./playbook-correcao-estoque-supplies-inventario.md) | Estoque × inventário |
+| [playbook-crm-totvs-dicionario.md](./playbook-crm-totvs-dicionario.md) | CRM TOTVS (SIGATEC) — dicionário |
