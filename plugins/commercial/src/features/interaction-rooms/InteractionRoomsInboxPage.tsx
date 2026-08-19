@@ -22,6 +22,7 @@ import {
   buildInteractionRoomPath,
   buildPluginPath,
 } from "../../app/pluginRoutes";
+import { useInteractionInboxSync } from "../../app/CommercialRealtimeProvider";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 
 type Props = {
@@ -62,6 +63,11 @@ export function InteractionRoomsInboxPage({ basePath }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  useInteractionInboxSync(
+    () => setReloadKey((value) => value + 1),
+    true,
+  );
 
   useEffect(() => {
     const controller = new AbortController();

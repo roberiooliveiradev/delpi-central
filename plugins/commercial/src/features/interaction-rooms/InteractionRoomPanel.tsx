@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createTaskFromInteractionMessage,
@@ -25,7 +25,11 @@ import {
   CommercialStateBanner,
 } from "../../app/commercialUi";
 import { buildInteractionRoomPath } from "../../app/pluginRoutes";
+import { getCommercialClientId } from "../../app/commercialClientId";
+import { useInteractionRoomSync } from "../../app/CommercialRealtimeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
+import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
+import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
@@ -83,6 +87,22 @@ export function InteractionRoomPanel({
     () => new Set(),
   );
   const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
+  const threadRef = useRef({
+    messages,
+    pinnedMessageIds,
+  });
+  threadRef.current = { messages, pinnedMessageIds };
+
+  const onRoomRealtimeEvent = useCallback((event: CommercialInteractionRoomEvent) => {
+    const next = applyInteractionRoomRealtime(threadRef.current, event, {
+      ignoreActorClientId: getCommercialClientId(),
+    });
+    threadRef.current = next;
+    setMessages(next.messages);
+    setPinnedMessageIds(next.pinnedMessageIds);
+  }, []);
+
+  useInteractionRoomSync(room?.id, onRoomRealtimeEvent, Boolean(room?.id));
 
   const authorIds = useMemo(() => {
     const ids = new Set<string>();

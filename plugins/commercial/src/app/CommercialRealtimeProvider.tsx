@@ -405,6 +405,37 @@ export function useInteractionRoomSync(
   }, [enabled, roomId, subscribeInteractionRoomEvents]);
 }
 
+const INBOX_SYNC_DEBOUNCE_MS = 400;
+
+/**
+ * Inbox: `room.inbox.changed` na sala handshake `interaction` → debounce refetch.
+ */
+export function useInteractionInboxSync(onChanged: () => void, enabled = true) {
+  const { subscribeInteractionRoomEvents } = useCommercialRealtime();
+  const onChangedRef = useRef(onChanged);
+
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  }, [onChanged]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let timer: number | null = null;
+    const unsubscribe = subscribeInteractionRoomEvents((event) => {
+      if (event.type !== "room.inbox.changed") return;
+      if (timer != null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        onChangedRef.current();
+      }, INBOX_SYNC_DEBOUNCE_MS);
+    });
+    return () => {
+      unsubscribe();
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [enabled, subscribeInteractionRoomEvents]);
+}
+
 /** Refetch badge / lista quando chega `orders.ready_to_invoice`. */
 export function useCommercialReadyToInvoiceSync(onChanged: () => void, enabled = true) {
   const { subscribeReadyToInvoice } = useCommercialRealtime();
@@ -548,6 +579,7 @@ export function useCommercialRealtimeNotices(enabled = true) {
     subscribePortfolioChanged,
     subscribeAccountChanged,
     subscribeReadyToInvoice,
+    subscribeInteractionRoomEvents,
   } = useCommercialRealtime();
   const { notifyInfo, notifySuccess, notifyWarning, notifyError } =
     useCommercialFloatingNotice();
@@ -701,11 +733,42 @@ export function useCommercialRealtimeNotices(enabled = true) {
       });
     });
 
+    const unsubRoom = subscribeInteractionRoomEvents((event) => {
+      if (event.type !== "room.mention" && event.type !== "room.attachment") {
+        return;
+      }
+      if (event.actorClientId && event.actorClientId === clientId) {
+        return;
+      }
+      const fromServer = event.notification;
+      if (
+        !fromServer ||
+        typeof fromServer.title !== "string" ||
+        typeof fromServer.message !== "string"
+      ) {
+        return;
+      }
+      const variant = fromServer.variant || "info";
+      const id =
+        event.type === "room.mention"
+          ? `cm-rt-mention-${event.messageId || event.roomId}`
+          : `cm-rt-attach-${event.attachmentId || event.messageId || event.roomId}`;
+      publishByVariant(
+        {
+          title: fromServer.title,
+          message: fromServer.message,
+          variant,
+        },
+        { title: fromServer.title, id, autoDismissMs: 6500 },
+      );
+    });
+
     return () => {
       unsubWorklist();
       unsubPortfolio();
       unsubAccount();
       unsubReady();
+      unsubRoom();
     };
   }, [
     clientId,
@@ -719,5 +782,6 @@ export function useCommercialRealtimeNotices(enabled = true) {
     subscribePortfolioChanged,
     subscribeAccountChanged,
     subscribeReadyToInvoice,
+    subscribeInteractionRoomEvents,
   ]);
 }

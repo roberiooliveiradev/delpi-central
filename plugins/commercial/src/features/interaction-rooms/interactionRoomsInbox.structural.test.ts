@@ -12,6 +12,7 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/CommercialCatalogSearchBar/);
     expect(source).toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/listInteractionRooms/);
+    expect(source).toMatch(/useInteractionInboxSync/);
     expect(source).not.toMatch(/cm-message-bubble|<textarea/);
   });
 });

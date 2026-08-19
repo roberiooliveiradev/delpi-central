@@ -28,7 +28,9 @@ describe("interactionRoomRealtime protocol", () => {
     expect(isInteractionRoomFanoutType("room.mention")).toBe(false);
     expect(isInteractionRoomUserType("room.mention")).toBe(true);
     expect(isInteractionRoomUserType("room.attachment")).toBe(true);
-    expect(isInteractionRoomEventType("room.message.deleted")).toBe(true);
+    expect(isInteractionRoomFanoutType("room.pin")).toBe(true);
+    expect(isInteractionRoomFanoutType("room.inbox.changed")).toBe(true);
+    expect(isInteractionRoomEventType("room.inbox.changed")).toBe(true);
     expect(isInteractionRoomEventType("worklist.changed")).toBe(false);
   });
 

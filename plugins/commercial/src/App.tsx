@@ -318,9 +318,9 @@ function RealtimeShell({
   getAccessToken: () => string | undefined;
   children: ReactNode;
 }) {
-  const { canViewWorklist, isAdmin, myPortfolios } = usePortfolioScope();
-  // WS: worklist.view OU quem tem carteira (accounts.view) / manage — alinhado à API.
-  const realtimeEnabled = canViewWorklist || isAdmin || myPortfolios.length > 0;
+  const { canViewWorklist } = usePortfolioScope();
+  // Socket = commercial.access (canViewWorklist deriva de capabilities.access).
+  const realtimeEnabled = canViewWorklist;
   return (
     <CommercialRealtimeProvider getAccessToken={getAccessToken} enabled={realtimeEnabled}>
       <CommercialRealtimeNoticesBridge enabled={realtimeEnabled} />

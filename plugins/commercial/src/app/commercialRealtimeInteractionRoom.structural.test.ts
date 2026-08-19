@@ -12,6 +12,7 @@ describe("CommercialRealtimeProvider interaction room", () => {
     expect(source).toMatch(/leaveInteractionRoom/);
     expect(source).toMatch(/subscribeInteractionRoomEvents/);
     expect(source).toMatch(/useInteractionRoomSync/);
+    expect(source).toMatch(/useInteractionInboxSync/);
     expect(source).toMatch(/buildInteractionRoomSubscribePayload/);
     expect(source).toMatch(/desiredInteractionRoomIdsRef/);
     expect(source).toMatch(/isInteractionRoomEventType/);

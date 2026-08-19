@@ -16,6 +16,8 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/resolveInteractionRoom/);
+    expect(source).toMatch(/useInteractionRoomSync/);
+    expect(source).toMatch(/applyInteractionRoomRealtime/);
     expect(source).toMatch(/CommercialHostDrawer/);
     expect(source).toMatch(/INTERACTION_ROOM_NARROW_QUERY|max-width: 768px/);
     expect(source).not.toMatch(/<textarea/);

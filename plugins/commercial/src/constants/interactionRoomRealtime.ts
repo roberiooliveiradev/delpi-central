@@ -50,11 +50,27 @@ export type CommercialRoomAttachmentEvent = {
   memberUserIds?: string[];
   actorUserId?: string | null;
   actorDisplayName?: string | null;
+  actorClientId?: string | null;
   notification?: {
     title?: string;
     message?: string;
     variant?: string;
   } | null;
+};
+
+export type CommercialRoomPinEvent = {
+  type: "room.pin";
+  roomId: string;
+  messageId?: string;
+  action?: "set" | "clear" | string;
+  actorUserId?: string | null;
+  actorDisplayName?: string | null;
+  actorClientId?: string | null;
+};
+
+export type CommercialRoomInboxChangedEvent = {
+  type: "room.inbox.changed";
+  roomId: string;
 };
 
 export type CommercialRoomSubscribeAckEvent = {
@@ -75,13 +91,17 @@ export type CommercialInteractionRoomEvent =
   | CommercialRoomMessageEvent
   | CommercialRoomReactionEvent
   | CommercialRoomMentionEvent
-  | CommercialRoomAttachmentEvent;
+  | CommercialRoomAttachmentEvent
+  | CommercialRoomPinEvent
+  | CommercialRoomInboxChangedEvent;
 
 const ROOM_FANOUT_TYPES = new Set([
   "room.message.created",
   "room.message.updated",
   "room.message.deleted",
   "room.reaction",
+  "room.pin",
+  "room.inbox.changed",
 ]);
 
 const ROOM_USER_TYPES = new Set(["room.mention", "room.attachment"]);
