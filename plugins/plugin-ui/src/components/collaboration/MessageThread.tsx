@@ -35,6 +35,8 @@ export type MessageThreadAction = {
   label: string;
   onClick: () => void;
   danger?: boolean;
+  title?: string;
+  icon?: ReactNode;
 };
 
 export type MessageThreadClassNames = {
@@ -226,9 +228,11 @@ export function MessageThread({
                           className={
                             action.danger ? classNames.actionDanger : classNames.action
                           }
+                          aria-label={action.label}
+                          title={action.title ?? action.label}
                           onClick={action.onClick}
                         >
-                          {action.label}
+                          {action.icon ?? action.label}
                         </button>
                       ))}
                     </div>

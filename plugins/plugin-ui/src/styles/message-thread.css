@@ -113,15 +113,31 @@
 .delpi-ui-message-thread__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.15rem;
   margin-top: 0.15rem;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .delpi-ui-message-thread__actions {
+    opacity: 0;
+  }
+
+  .delpi-ui-message-thread__item:hover .delpi-ui-message-thread__actions,
+  .delpi-ui-message-thread__item:focus-within .delpi-ui-message-thread__actions {
+    opacity: 1;
+  }
+}
+
 .delpi-ui-message-thread__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   margin: 0;
-  padding: 0.15rem 0.4rem;
+  padding: 0;
   border: none;
-  border-radius: 0.35rem;
+  border-radius: 0.4rem;
   font: inherit;
   font-size: 0.75rem;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
