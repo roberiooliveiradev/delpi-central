@@ -27,7 +27,29 @@
     color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 28%, transparent);
 }
 
+.delpi-ui-mention-composer__field {
+  position: relative;
+  min-width: 0;
+}
+
+.delpi-ui-mention-composer__placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
 .delpi-ui-mention-composer__textarea {
+  position: relative;
+  z-index: 1;
   width: 100%;
   min-height: 2.75rem;
   max-height: min(40vh, 16rem);
@@ -45,12 +67,6 @@
   color: var(--delpi-ui-text, var(--text, #0f172a));
   caret-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: transparent;
-}
-
-.delpi-ui-mention-composer__textarea--empty::before {
-  content: attr(data-placeholder);
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
-  pointer-events: none;
 }
 
 .delpi-ui-mention-composer__textarea:focus {

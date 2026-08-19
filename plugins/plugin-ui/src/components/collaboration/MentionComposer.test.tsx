@@ -103,13 +103,22 @@ describe("MentionComposer", () => {
   }
 
   it("renderiza contenteditable markdown, não textarea nativo", () => {
-    render(<Harness />);
+    const { container } = render(<Harness />);
     const surface = screen.getByLabelText("Write a message");
     expect(surface.tagName).toBe("DIV");
     expect(surface.getAttribute("contenteditable")).toBe("true");
     expect(screen.queryByRole("textbox", { name: "Write a message" })).toBe(surface);
     expect(screen.getByLabelText("Send")).toBeTruthy();
     expect(screen.getByLabelText("Attach")).toBeTruthy();
+    expect(surface.textContent ?? "").toBe("");
+    expect(surface.getAttribute("data-placeholder")).toBeNull();
+    expect(surface.getAttribute("aria-placeholder")).toBe("Write a message");
+    const overlay = container.querySelector("[class*='placeholder']");
+    expect(overlay?.textContent).toBe("Write a message");
+    fireEvent.focus(surface);
+    const range = window.getSelection()?.getRangeAt(0);
+    expect(range?.collapsed).toBe(true);
+    expect(range?.startOffset).toBe(0);
   });
 
   it("round-trip: markdown controlado vira HTML e o input devolve markdown", () => {
@@ -222,6 +231,7 @@ describe("MentionComposer", () => {
     expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
+    expect(source).toMatch(/HintAction/);
 
     document.execCommand = vi.fn().mockReturnValue(true);
     const formatLabels = {
@@ -279,5 +289,7 @@ describe("mention-composer.css", () => {
     expect(css).toMatch(/__format-bar/);
     expect(css).toMatch(/font-weight:\s*700/);
     expect(css).not.toMatch(/textarea::placeholder/);
+    expect(css).not.toMatch(/--empty::before/);
+    expect(css).toMatch(/__placeholder/);
   });
 });

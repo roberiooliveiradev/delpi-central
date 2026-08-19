@@ -18,9 +18,11 @@ import {
   useState,
   type ClipboardEvent,
   type KeyboardEvent,
+  type ReactElement,
   type ReactNode,
 } from "react";
 
+import { HintAction } from "../help/HintAction";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
   execRichTextCommand,
@@ -54,7 +56,9 @@ import {
 export type MentionComposerClassNames = {
   root: string;
   body: string;
+  field: string;
   textarea: string;
+  placeholder: string;
   empty: string;
   toolbar: string;
   actions: string;
@@ -120,7 +124,9 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
   return {
     root: pair(base, ui),
     body: pair(`${base}__body`, `${ui}__body`),
+    field: pair(`${base}__field`, `${ui}__field`),
     textarea: pair(`${base}__textarea`, `${ui}__textarea`),
+    placeholder: pair(`${base}__placeholder`, `${ui}__placeholder`),
     empty: pair(`${base}__textarea--empty`, `${ui}__textarea--empty`),
     toolbar: pair(`${base}__toolbar`, `${ui}__toolbar`),
     actions: pair(`${base}__actions`, `${ui}__actions`),
@@ -133,6 +139,23 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     fileInput: pair(`${base}__file`, `${ui}__file`),
     menu: mentionMenuBemClasses(prefix),
   };
+}
+
+function placeCaretAtStart(editor: HTMLElement) {
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  range.collapse(true);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}
+
+function ComposerHint({ hint, children }: { hint: string; children: ReactElement }) {
+  return (
+    <HintAction hint={hint} ariaLabel={hint} placement="top">
+      {children}
+    </HintAction>
+  );
 }
 
 function escapePlainText(text: string): string {
@@ -218,6 +241,20 @@ export function MentionComposer({
 
   const rememberSelection = () => {
     savedRangeRef.current = getRichTextSelectionRange(surfaceRef.current);
+  };
+
+  const resetEmptySurface = () => {
+    const el = surfaceRef.current;
+    if (!el || value.trim()) return;
+    if (el.innerHTML && el.innerHTML !== "") {
+      el.innerHTML = "";
+    }
+    placeCaretAtStart(el);
+  };
+
+  const handleSurfaceFocus = () => {
+    resetEmptySurface();
+    rememberSelection();
   };
 
   useEffect(() => {
@@ -386,40 +423,47 @@ export function MentionComposer({
   };
 
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
-  const surfaceClass = [classNames.textarea, empty ? classNames.empty : null]
-    .filter(Boolean)
-    .join(" ");
+  const surfaceClass = classNames.textarea;
 
   return (
     <div className={rootClass}>
       <div className={classNames.body}>
-        <div
-          id={surfaceId}
-          ref={surfaceRef}
-          className={surfaceClass}
-          role="textbox"
-          contentEditable={!(disabled || submitting)}
-          suppressContentEditableWarning
-          aria-multiline="true"
-          aria-label={labels.placeholder}
-          data-placeholder={labels.placeholder}
-          onInput={() => {
-            rememberSelection();
-            emitMarkdownAndMention();
-          }}
-          onPaste={handlePaste}
-          onKeyDown={handleKeyDown}
-          onClick={() => {
-            rememberSelection();
-            emitMarkdownAndMention();
-          }}
-          onKeyUp={(event) => {
-            rememberSelection();
-            if (event.key === "Escape") return;
-            emitMarkdownAndMention();
-          }}
-          onMouseUp={rememberSelection}
-        />
+        <div className={classNames.field}>
+          {empty ? (
+            <span className={classNames.placeholder} aria-hidden="true">
+              {labels.placeholder}
+            </span>
+          ) : null}
+          <div
+            id={surfaceId}
+            ref={surfaceRef}
+            className={surfaceClass}
+            role="textbox"
+            contentEditable={!(disabled || submitting)}
+            suppressContentEditableWarning
+            aria-multiline="true"
+            aria-label={labels.placeholder}
+            aria-placeholder={labels.placeholder}
+            onFocus={handleSurfaceFocus}
+            onInput={() => {
+              rememberSelection();
+              emitMarkdownAndMention();
+            }}
+            onPaste={handlePaste}
+            onKeyDown={handleKeyDown}
+            onClick={() => {
+              resetEmptySurface();
+              rememberSelection();
+              emitMarkdownAndMention();
+            }}
+            onKeyUp={(event) => {
+              rememberSelection();
+              if (event.key === "Escape") return;
+              emitMarkdownAndMention();
+            }}
+            onMouseUp={rememberSelection}
+          />
+        </div>
         {showFormat && formatOpen ? (
           <div className={classNames.formatBar} role="toolbar" aria-label={labels.formatToggleAriaLabel}>
             {(
@@ -434,34 +478,37 @@ export function MentionComposer({
                 ["link", labels.formatLinkAriaLabel ?? "Link", Link],
               ] as const
             ).map(([kind, aria, Icon]) => (
-              <button
-                key={kind}
-                type="button"
-                className={classNames.format}
-                aria-label={aria}
-                disabled={disabled || submitting}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => runFormat(kind)}
-              >
-                <Icon size={16} aria-hidden />
-              </button>
+              <ComposerHint key={kind} hint={aria}>
+                <button
+                  type="button"
+                  className={classNames.format}
+                  aria-label={aria}
+                  disabled={disabled || submitting}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => runFormat(kind)}
+                >
+                  <Icon size={16} aria-hidden />
+                </button>
+              </ComposerHint>
             ))}
           </div>
         ) : null}
         <div className={classNames.toolbar}>
           <div className={classNames.actions}>
             {showFormat ? (
-              <button
-                type="button"
-                className={classNames.formatToggle}
-                aria-label={labels.formatToggleAriaLabel}
-                aria-pressed={formatOpen}
-                disabled={disabled || submitting}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => setFormatOpen((open) => !open)}
-              >
-                <Type size={16} aria-hidden />
-              </button>
+              <ComposerHint hint={labels.formatToggleAriaLabel ?? "Format"}>
+                <button
+                  type="button"
+                  className={classNames.formatToggle}
+                  aria-label={labels.formatToggleAriaLabel}
+                  aria-pressed={formatOpen}
+                  disabled={disabled || submitting}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setFormatOpen((open) => !open)}
+                >
+                  <Type size={16} aria-hidden />
+                </button>
+              </ComposerHint>
             ) : null}
             {showAttach ? (
               <>
@@ -481,33 +528,37 @@ export function MentionComposer({
                     if (files.length) onFilesSelected?.(files);
                   }}
                 />
-                <button
-                  type="button"
-                  className={classNames.attach}
-                  aria-label={labels.attachAriaLabel}
-                  disabled={disabled || submitting}
-                  onClick={() => {
-                    if (onFilesSelected) {
-                      fileInputRef.current?.click();
-                      return;
-                    }
-                    onAttachClick?.();
-                  }}
-                >
-                  <Paperclip size={16} aria-hidden />
-                </button>
+                <ComposerHint hint={labels.attachAriaLabel}>
+                  <button
+                    type="button"
+                    className={classNames.attach}
+                    aria-label={labels.attachAriaLabel}
+                    disabled={disabled || submitting}
+                    onClick={() => {
+                      if (onFilesSelected) {
+                        fileInputRef.current?.click();
+                        return;
+                      }
+                      onAttachClick?.();
+                    }}
+                  >
+                    <Paperclip size={16} aria-hidden />
+                  </button>
+                </ComposerHint>
               </>
             ) : null}
           </div>
-          <button
-            type="button"
-            className={classNames.send}
-            aria-label={labels.sendAriaLabel}
-            disabled={!canSubmit}
-            onClick={() => flushAndSubmit()}
-          >
-            <SendHorizontal size={16} aria-hidden />
-          </button>
+          <ComposerHint hint={labels.sendAriaLabel}>
+            <button
+              type="button"
+              className={classNames.send}
+              aria-label={labels.sendAriaLabel}
+              disabled={!canSubmit}
+              onClick={() => flushAndSubmit()}
+            >
+              <SendHorizontal size={16} aria-hidden />
+            </button>
+          </ComposerHint>
         </div>
       </div>
       {footer ? <div className={classNames.footer}>{footer}</div> : null}
