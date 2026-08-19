@@ -1,10 +1,32 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  PIE_COLORS,
+  assignDistinctPieColors,
   resolveMotivoChartHeight,
   resolveMotivoPieRadii,
   resolveRankingChartHeight,
 } from "./chartTheme";
+
+describe("assignDistinctPieColors", () => {
+  it("não começa com uma rampa de azuis nos primeiros índices", () => {
+    expect(PIE_COLORS[0]).not.toBe(PIE_COLORS[1]);
+    expect(PIE_COLORS[1]).toBe("#f59e0b");
+    expect(PIE_COLORS[2]).toBe("#16a34a");
+    expect(PIE_COLORS[3]).toBe("#e11d48");
+  });
+
+  it("atribui cores distintas para os motivos do ranking", () => {
+    const keys = ["FM", "FP", "FH", "M3", "RB", "F1"];
+    const colors = assignDistinctPieColors(keys);
+    expect(new Set(colors).size).toBe(keys.length);
+  });
+
+  it("é estável para o mesmo código na mesma ordem", () => {
+    const keys = ["FM", "FP", "FH"];
+    expect(assignDistinctPieColors(keys)).toEqual(assignDistinctPieColors(keys));
+  });
+});
 
 describe("chartTheme responsive heights", () => {
   it("aumenta altura do Motivo conforme itens da legenda", () => {

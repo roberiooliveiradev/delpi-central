@@ -6,18 +6,54 @@ export const CHART_COLORS = {
   muted: "#64748b",
 } as const;
 
+/**
+ * Paleta categórica da rosca Motivo — hues intercalados (não uma rampa de azul).
+ * Os primeiros índices são os fatias maiores do ranking.
+ */
 export const PIE_COLORS = [
   "#089bdb",
-  "#003866",
-  "#0ea5e9",
-  "#6366f1",
-  "#14b8a6",
   "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#22c55e",
-  "#64748b",
+  "#16a34a",
+  "#e11d48",
+  "#7c3aed",
+  "#ea580c",
+  "#0d9488",
+  "#2563eb",
+  "#ca8a04",
+  "#db2777",
+  "#65a30d",
+  "#78716c",
 ] as const;
+
+function hashPieKey(value: string): number {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/** Uma cor por fatia, estável pelo código do motivo e sem repetir na mesma rosca. */
+export function assignDistinctPieColors(keys: string[]): string[] {
+  const used = new Set<number>();
+  const paletteSize = PIE_COLORS.length;
+  const probeStep = 5;
+
+  return keys.map((raw, index) => {
+    const key = raw.trim().toUpperCase() || `idx:${index}`;
+    let slot = hashPieKey(key) % paletteSize;
+    let attempts = 0;
+    while (used.has(slot) && attempts < paletteSize) {
+      slot = (slot + probeStep) % paletteSize;
+      attempts += 1;
+    }
+    if (used.has(slot)) {
+      slot = index % paletteSize;
+    }
+    used.add(slot);
+    return PIE_COLORS[slot];
+  });
+}
 
 export const CHART_RANKING_HEIGHT = 300;
 export const CHART_PRODUCT_RANKING_HEIGHT = 380;
