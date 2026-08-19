@@ -14,6 +14,7 @@ API dona do estado Delpi do **Portal Comercial** (carteiras, worklist, contatos 
 | [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) | `access` / `manage` (sem code novo da sala) |
 | [SCOPE-OWNERSHIP.md](../../docs/12-roadmap-e-evolucao/commercial/SCOPE-OWNERSHIP.md) | Ownership Portal × PVA |
 | [plugins/commercial/README.md](../../plugins/commercial/README.md) | Rotas UI + tabela HTTP da sala |
+| [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md) | Backlog sala (E1–E8 Front/Back; **não iniciado**) |
 
 ## Architecture (neste pacote)
 

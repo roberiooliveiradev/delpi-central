@@ -18,6 +18,7 @@
 | **Consolidação nativa** | Gestão + Propostas ADY + elevar ops (kit) | **em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
 | **F2c** | Depreciar PVA | **adiado** — só após Comercial superar + pedido explícito |
 | **P3 CRM** | Reminder/checklist avançado | **bloqueado** até consolidação |
+| **Sala interação** | Fill / chips / drawer / composer markdown (E1–E8) | **backlog** — [ROADMAP-INTERACTION-ROOM.md](./ROADMAP-INTERACTION-ROOM.md) |
 
 ## Paridade UX (F2b harden)
 
@@ -89,6 +90,7 @@ Só após [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 1
 - [x] Tasks P2 Anexos (volume persistente)
 - [x] Realtime worklist (WebSocket Meu dia + Início) — [realtime-worklist.md](../../../commercial-api/docs/architecture/realtime-worklist.md)
 - [ ] **Correção futura:** tarefas concluídas na UI Meu dia (hoje só `status=done` no banco — somem da fila) — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 3.1
+- [ ] **Sala de interação** — layout Teams / fill / composer (`body_text` markdown) — [ROADMAP-INTERACTION-ROOM.md](./ROADMAP-INTERACTION-ROOM.md)
 - [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
 - [ ] Homologação assinada Wave G+ ([HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md))
 - [ ] F2c flip menu + redirects
