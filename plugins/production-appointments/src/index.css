@@ -201,6 +201,9 @@
   background: var(--pa-surface);
   width: fit-content;
   max-width: 100%;
+}.dashboard-production-appointments .pa-table-view-modes__item{
+  display: inline-flex;
+  align-items: center;
 }.dashboard-production-appointments .pa-table-view-modes__btn{
   display: inline-flex;
   align-items: center;
@@ -221,8 +224,6 @@
 }.dashboard-production-appointments .pa-table-view-modes__btn--active{
   color: var(--pa-title);
   background: color-mix(in srgb, var(--pa-accent) 14%, transparent);
-}.dashboard-production-appointments .pa-table-view-modes__help{
-  flex-shrink: 0;
 }.dashboard-production-appointments .pa-detail-toolbar{
   display: flex;
   justify-content: flex-start;

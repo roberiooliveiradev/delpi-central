@@ -2,6 +2,7 @@ import { HelpCircle } from "lucide-react";
 import {
   Children,
   cloneElement,
+  Fragment,
   isValidElement,
   useCallback,
   useEffect,
@@ -168,7 +169,18 @@ function wrapChildrenDescribedBy(children: ReactNode, tooltipId: string): ReactN
   const items = Children.toArray(children);
   if (items.length === 0) return null;
   if (items.length === 1) return wrapChildDescribedBy(items[0], tooltipId);
-  return items.map((child) => wrapChildDescribedBy(child, tooltipId));
+  // Fragment único: o <span> raiz não pode receber um array (warning de key no React 19).
+  return (
+    <>
+      {items.map((child, index) => {
+        const wrapped = wrapChildDescribedBy(child, tooltipId);
+        if (isValidElement(wrapped) && wrapped.key != null) {
+          return wrapped;
+        }
+        return <Fragment key={`help-wrap-${index}`}>{wrapped}</Fragment>;
+      })}
+    </>
+  );
 }
 
 /** Balão explicativo com portal no body (seguro em layouts com transform/overflow). */

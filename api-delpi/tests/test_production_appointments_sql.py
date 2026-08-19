@@ -1,9 +1,16 @@
+from app.domain.production.production_appointments.production_appointments_scope import (
+    PRODUCED_QTY_SCOPE_PA_LAST_ROUTING_OPERATION,
+    PRODUCED_QTY_SCOPE_WORK_CENTER,
+    produced_qty_scope,
+    restrict_produced_qty_to_pa_last_routing_operation,
+)
 from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
     build_appointments_list_query,
     build_appointments_where,
     build_by_op_query,
     build_series_query,
     build_summary_by_ct_query,
+    build_summary_totals_query,
     build_work_centers_catalog_query,
 )
 
@@ -149,6 +156,68 @@ def test_summary_by_ct_converts_mi_with_display_factor() -> None:
     assert "IN ('', 'MI')" in query
     assert "THEN 1000" in query
     assert params[0] == "01"
+
+
+def test_produced_qty_scope_defaults_to_pa_last_routing_operation() -> None:
+    assert produced_qty_scope() == PRODUCED_QTY_SCOPE_PA_LAST_ROUTING_OPERATION
+    assert produced_qty_scope(work_center="CT-23") == PRODUCED_QTY_SCOPE_WORK_CENTER
+    assert restrict_produced_qty_to_pa_last_routing_operation() is True
+    assert restrict_produced_qty_to_pa_last_routing_operation(work_center="CT-70") is False
+    assert restrict_produced_qty_to_pa_last_routing_operation(
+        group_by="day_work_center"
+    ) is False
+
+
+def test_summary_totals_qty_produced_restricted_to_pa_last_routing_operation() -> None:
+    query, _params = build_summary_totals_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+    )
+    assert "OUTER APPLY" in query
+    assert "FROM SG2010 SG2 WITH (NOLOCK)" in query
+    assert "LAST_OP.last_oper" in query
+    assert "ORDER BY SG2.G2_OPERAC DESC" in query
+    assert "UPPER(LTRIM(RTRIM(SB1.B1_TIPO))) = 'PA'" in query
+    assert "AS qty_produced" in query
+    assert "SELECT MAX(RTRIM(LTRIM(SG2.G2_OPERAC)))" not in query
+
+
+def test_summary_totals_qty_produced_unrestricted_when_work_center_filtered() -> None:
+    query, params = build_summary_totals_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        work_center="CT-23",
+    )
+    assert "OUTER APPLY" not in query
+    assert "LAST_OP.last_oper" not in query
+    assert "LTRIM(RTRIM(SH1.H1_CTRAB)) = ?" in query
+    assert "CT-23" in params
+
+
+def test_series_day_qty_produced_restricted_to_pa_last_routing_operation() -> None:
+    query, _params = build_series_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        group_by="day",
+    )
+    assert "OUTER APPLY" in query
+    assert "LAST_OP.last_oper" in query
+    assert "UPPER(LTRIM(RTRIM(SB1.B1_TIPO))) = 'PA'" in query
+
+
+def test_series_day_work_center_qty_produced_unrestricted() -> None:
+    query, _params = build_series_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        group_by="day_work_center",
+    )
+    assert "OUTER APPLY" not in query
+    assert "LAST_OP.last_oper" not in query
+    assert "GROUP BY LTRIM(RTRIM(SH6.H6_DTAPONT)), SH1.H1_CTRAB, HB.HB_NOME" in query
 
 
 def test_by_op_exposes_unit_for_normalize() -> None:

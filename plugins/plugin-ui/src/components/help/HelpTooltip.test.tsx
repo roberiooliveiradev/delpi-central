@@ -76,4 +76,25 @@ describe("HelpTooltip", () => {
     fireEvent.mouseEnter(container.querySelector(".delpi-ui-help-tooltip")!);
     expect(screen.queryByRole("tooltip", { hidden: true })).toBeNull();
   });
+
+  it("não emite warning de key quando wrap tem vários filhos", () => {
+    const errors: string[] = [];
+    const orig = console.error;
+    console.error = (...args: unknown[]) => {
+      errors.push(String(args[0]));
+    };
+    try {
+      render(
+        <HelpTooltip content="Ajuda" wrap>
+          <span>A</span>
+          <span>B</span>
+        </HelpTooltip>,
+      );
+    } finally {
+      console.error = orig;
+    }
+    expect(errors.some((message) => message.includes('unique "key" prop'))).toBe(
+      false,
+    );
+  });
 });

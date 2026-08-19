@@ -12,6 +12,9 @@ from app.application.services.production.production_operational_summary_service 
 from app.domain.ports.production_appointments.production_appointments_repository_port import (
     ProductionAppointmentsRepositoryPort,
 )
+from app.domain.production.production_appointments.production_appointments_scope import (
+    produced_qty_scope,
+)
 from app.domain.services.production.production_operational_quantity_service import (
     ProductionOperationalQuantityService,
 )
@@ -146,6 +149,9 @@ class GetProductionAppointmentsSummaryUseCase:
                 "op_count": int(totals.get("op_count") or 0),
                 "work_center_count": int(totals.get("work_center_count") or 0),
                 "unit": display_unit,
+                "qty_produced_scope": produced_qty_scope(
+                    work_center=request.work_center
+                ),
             },
             "items": by_ct,
             "summary": build_period_summary(

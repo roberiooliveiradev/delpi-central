@@ -12,7 +12,9 @@ Acompanhar **apontamentos de produção** (`SH6010`, tipo `P`) por **centro de t
 - lista / summary / série temporal;
 - drill-down por OP.
 
-**Fora de escopo:** PPM, NC, eficiência %, MOD. CT de inspeção final entra nos totais como qualquer CT (metadado `is_final_inspection` opcional no catálogo).
+**Fora de escopo:** PPM, NC, eficiência %, MOD.
+
+KPI **Qtd. produzida** do painel (sem filtro de CT) = apontamentos da **última operação do roteiro** (`SG2.G2_OPERAC` máxima) do produto acabado (`B1_TIPO = PA`). A tabela por CT continua com **todos** os centros; `is_final_inspection` identifica o CT de inspeção (metadado, não o recorte do KPI).
 
 ## Modelo de dados (TOTVS)
 
@@ -28,6 +30,7 @@ SH6010 (apontamento)
 | `SH1010` | vínculo recurso → CT |
 | `SHB010` | cadastro CT (`HB_COD`, `HB_NOME`) |
 | `SB1010` | tipo/descrição do produto (opcional na listagem) |
+| `SG2010` | Roteiro: última operação do PA para o KPI Qtd. produzida |
 | `SC2010` | enriquecer OP no drill-down (fase 1+, se útil) |
 
 Filtros canônicos: `D_E_L_E_T_ = ' '`, período em `H6_DTAPONT` (`>= start` e `< end_exclusive`), filial `H6_FILIAL`.

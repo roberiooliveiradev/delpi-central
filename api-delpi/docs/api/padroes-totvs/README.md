@@ -27,6 +27,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Cadastro de cliente (SA1) | [cadastro-cliente.md](./cadastro-cliente.md) | `A1_NREDUZ` vs `A1_NOME`, bloqueio, loja `1`/`01`, busca carteira |
 | Materiais de terceiros / SB6 | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) | Remessa/retorno `B6_PODER3`, chave sem `B6_TPCF`, saldo atual |
 | Tempo padrão / eficiência | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) | `HY_TEMPAD` vs `HY_TEMPOM`; KPI OEE/SI/EF compartilham a mesma expressão |
+| Produção — entrada em estoque | [producao-entrada-estoque.md](./producao-entrada-estoque.md) | Última operação do roteiro do PA (`SG2`) vs inspeção / `SD3` PR0 |
 | Pedido de venda — criador | [pedido-venda-criador.md](./pedido-venda-criador.md) | SC5 sem usuário criador resolvível; `C5_MSUIDT` = UUID técnico |
 | Transportadoras | [transportadora.md](./transportadora.md) | `SA4` / `A4_NREDUZ` na emissão de NF |
 
@@ -60,6 +61,7 @@ Permanece em `docs/roadmaps/` (fora desta biblioteca): `playbook-api-delpi-conso
 |--------------------|--------|
 | `app/domain/totvs/protheus_warehouses.py` | [armazem-custo.md](./armazem-custo.md) |
 | `app/domain/totvs/protheus_product_types.py` | [cadastro-produto.md](./cadastro-produto.md) · OTD PC MP |
+| `production_appointments_scope.PA_STOCK_ENTRY_PRODUCT_TYPE` | [producao-entrada-estoque.md](./producao-entrada-estoque.md) |
 | `app/domain/totvs/protheus_third_party_materials.py` | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) |
 | `REFUGOS_COST_WAREHOUSE` / `refugos_scope.py` | [armazem-custo.md](./armazem-custo.md) · [cadastro-produto.md](./cadastro-produto.md) |
 | `PRIMARY_WAREHOUSE` (estoque de segurança) | [armazem-custo.md](./armazem-custo.md) (alinhar semanticamente) |

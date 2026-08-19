@@ -4,7 +4,10 @@
 **Plugin previsto:** `production-appointments` (nome portal: Apontamento de Produção)  
 **Spec / Fase 0:** [`docs/12-roadmap-e-evolucao/production-appointments/`](../../../docs/12-roadmap-e-evolucao/production-appointments/)
 
-Acompanha apontamentos de produção (`SH6010`, tipo `P`) por centro de trabalho via `SH1010` → `SHB010`.  
+Acompanha apontamentos de produção (`SH6010`, tipo `P`) por centro de trabalho via `SH1010` → `SHB010`.
+
+No **painel**, `totals.qty_produced` (KPI Qtd. produzida) e a série agregada por dia/mês somam só a **última operação do roteiro** (`SG2`) do produto acabado (`B1_TIPO = PA`) — apontamento que gera entrada em estoque. O ranking `items[]` por CT continua com todos os centros. Com filtro `work_center`, o KPI passa a ser o volume daquele CT.
+
 CT de inspeção final + OP mãe alimentam o total produzido canônico (`/produced-totals`), consumido também por PPM e shipping-status.
 
 ## Permissões
@@ -36,8 +39,9 @@ Gate: `branch_access_error(branch)` em toda rota com `branch`.
 
 `GET /series` agrega produzida/perdida por `granularity` (`day`|`month`) e `group_by` (`day`|`day_work_center`):
 
-- `day` — `bucket` Protheus `YYYYMMDD` → `periodo` / `appointment_date` ISO `YYYY-MM-DD`
-- `month` — `bucket` Protheus `YYYYMM` → `periodo` / `appointment_date` ISO `YYYY-MM`
+- `day` / `month` sem `work_center` — `qty_produced` só na última operação do roteiro do PA (alinhado ao KPI do painel)
+- `day_work_center` ou `work_center` informado — `qty_produced` do(s) CT(s) do recorte
+- `qty_lost` permanece a soma de todos os apontamentos do recorte
 
 Resposta: `points[]` com `bucket`, `periodo`, `appointment_date` (ISO), `qty_produced`, `qty_lost`, `appointment_count`.
 
@@ -85,7 +89,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   "http://localhost/apps/api-delpi/production/appointments/summary?branch=01&date_start=2026-06-15&date_end=2026-07-15"
 ```
 
-`data.totals` e `data.items[]` (por CT) incluem `qty_produced`, `qty_lost`, `appointment_count`; itens trazem `is_final_inspection` quando aplicável.
+`data.totals.qty_produced` no painel (sem `work_center`) é a soma **só na última operação do roteiro do PA**; `qty_produced_scope` = `pa_last_routing_operation`. `data.items[]` (por CT) continua com todos os centros e `is_final_inspection`. Com `work_center`, o KPI usa o volume daquele CT (`qty_produced_scope` = `work_center`). `qty_lost`, contagem de apontamentos/OPs/CTs e a tabela não mudam de escopo.
 
 Na **lista** (`GET /production/appointments`), cada item traz também:
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { TabHintCell } from "@delpi/plugin-ui/index";
 
 import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type {
@@ -158,12 +158,12 @@ export function AppointmentsTables({
         sortable: true,
         sortValue: (row) => row.work_center,
         render: (row) => (
-          <>
+          <span className="pa-table__ct-cell">
             {row.work_center}
             {isInspection(row.is_final_inspection) ? (
               <span className="pa-badge">Inspeção final</span>
             ) : null}
-          </>
+          </span>
         ),
       },
       {
@@ -328,23 +328,16 @@ export function AppointmentsTables({
   const viewSwitcher = (
     <div className="pa-table-view-modes" role="tablist" aria-label="Modo de visualização da tabela">
       {VIEW_MODES.map((mode) => (
-        <button
+        <TabHintCell
           key={mode.id}
-          type="button"
-          role="tab"
-          aria-selected={viewMode === mode.id}
-          className={`pa-table-view-modes__btn${
-            viewMode === mode.id ? " pa-table-view-modes__btn--active" : ""
-          }`}
-          onClick={() => setViewMode(mode.id)}
-        >
-          {mode.label}
-          <HelpTooltip
-            content={mode.hint}
-            ariaLabel={`Ajuda: ${mode.label}`}
-            className="pa-table-view-modes__help"
-          />
-        </button>
+          label={mode.label}
+          hint={mode.hint}
+          active={viewMode === mode.id}
+          onSelect={() => setViewMode(mode.id)}
+          cellClassName="pa-table-view-modes__item"
+          tabClassName="pa-table-view-modes__btn"
+          tabActiveClassName="pa-table-view-modes__btn--active"
+        />
       ))}
     </div>
   );

@@ -27,6 +27,8 @@ Quantidade de PA em expedição =
 SUM(H6_QTDPROD) dos apontamentos do PA no CT de INSPEÇÃO FINAL.
 ```
 
+O KPI **Qtd. produzida** do plugin `production-appointments` (summary/série agregada, sem filtro de CT) **não** usa esta regra de inspeção: soma a **última operação do roteiro** (`MAX(SG2.G2_OPERAC)`) do PA — apontamento que gera entrada em estoque (`SD3` CF `PR0`). Expedição / PPM / `produced-totals` continuam neste playbook (inspeção final). Ver [producao-entrada-estoque.md](../producao-entrada-estoque.md).
+
 Perda na inspeção:
 
 ```text
