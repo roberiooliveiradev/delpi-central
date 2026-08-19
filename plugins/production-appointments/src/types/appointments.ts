@@ -30,6 +30,8 @@ export type AppointmentTotals = {
   qty_lost: number;
   op_count: number;
   work_center_count: number;
+  /** `pa_last_routing_operation` no painel; `work_center` no detalhe/filtro de um CT. */
+  qty_produced_scope?: "pa_last_routing_operation" | "work_center";
 };
 
 export type WorkCenterSummaryRow = {

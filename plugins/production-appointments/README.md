@@ -29,7 +29,7 @@ Doc: [api-delpi/docs/api/production-appointments.md](../../api-delpi/docs/api/pr
 
 ## Estado desta entrega
 
-MFE com filtros (período, CT, OP, produto, OP mãe), KPIs, série temporal e uma tabela com modos de visualização (por CT, apontamentos, por OP). A busca das abas **Apontamentos** e **Por OP** é server-side (`search` na api-delpi).
+MFE com filtros (período, CT, OP, produto, OP mãe), KPIs, série temporal e uma tabela com modos de visualização (por CT, apontamentos, por OP). O KPI **Qtd. produzida** considera só a última operação do roteiro do PA (entrada em estoque); a tabela por CT soma todos os centros. A busca das abas **Apontamentos** e **Por OP** é server-side (`search` na api-delpi).
 
 ## UI (`@delpi/plugin-ui`)
 

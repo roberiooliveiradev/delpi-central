@@ -509,7 +509,7 @@ Documentação completa: [controle-retrabalhos.md](./controle-retrabalhos.md) ·
 
 **Permissão:** `production-appointments.access`, `production-appointments.view`, `production-appointments.view.filial-sc`, `production-appointments.view.filial-es` ou `api-delpi.access`
 
-Apontamentos SH6010 por centro de trabalho (SH1→SHB). Inclui CT de inspeção final nos totais. Plugin previsto: `production-appointments`.
+Apontamentos SH6010 por centro de trabalho (SH1→SHB). KPI de quantidade produzida no painel = última operação do roteiro do PA (`SG2`). Ranking por CT inclui todos os centros. Plugin: `production-appointments`.
 
 | Método | Endpoint | Descrição |
 |---|---|---|

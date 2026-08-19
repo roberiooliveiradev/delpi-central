@@ -16,7 +16,7 @@ export const PA_HELP_TOOLTIPS = {
     appointments:
       "Total de apontamentos de produção (SH6, tipo P) no período e filtros selecionados.",
     qtyProduced:
-      "Soma da quantidade produzida apontada (H6_QTDPROD), já convertida para peças/UN pela API quando a UM do produto é MI.",
+      "Considera apenas apontamentos da última operação do roteiro do produto acabado (PA) — a operação que gera entrada em estoque. Quando essa operação é INSPECIONAR, coincide com a inspeção final; em outros PAs pode ser outro CT. Não inclui operações intermediárias nem PI. Se um CT estiver filtrado, o card mostra só aquele centro.",
     qtyLost:
       "Soma da quantidade perdida no apontamento (H6_QTDPERD) — peças registradas como perda na operação/CT, convertidas para UN pela API. Não é o módulo de refugos de matéria-prima.",
     opCount:
@@ -26,7 +26,7 @@ export const PA_HELP_TOOLTIPS = {
   },
   charts: {
     series:
-      "Evolução das quantidades produzida e perdida (já convertidas para peças/UN pela API). Use o filtro de CT para restringir o traçado.",
+      "A linha de produzida segue só a última operação do roteiro do PA (entrada em estoque). A linha de perdida soma todos os CTs. Use o filtro de CT para restringir o traçado àquele centro.",
     seriesGranularity:
       "Até cerca de 1 mês a série usa Dia; períodos maiores passam para Mês automaticamente. Você pode alternar Dia/Mês manualmente.",
   },

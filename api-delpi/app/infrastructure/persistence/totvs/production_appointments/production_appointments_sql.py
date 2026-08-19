@@ -13,6 +13,8 @@ from __future__ import annotations
 from app.domain.production.production_appointments.production_appointments_scope import (
     CT_INSPECAO_NOME_SQL_LIKE,
     MOTHER_OP_SUFFIX,
+    PA_STOCK_ENTRY_PRODUCT_TYPE,
+    restrict_produced_qty_to_pa_last_routing_operation,
 )
 from app.domain.services.production.production_appointments_list_search_service import (
     ProductionAppointmentsListSearchService,
@@ -67,6 +69,60 @@ def _qty_display_expr(column_sql: str) -> str:
         f"WHEN {um} IN ('', 'MI') THEN {factor:g} "
         f"ELSE 1.0 END)"
     )
+
+
+# Seek no índice SG20103 (G2_FILIAL, G2_PRODUTO, G2_OPERAC). Não agregar o SG2
+# inteiro nem usar LTRIM/RTRIM na chave — isso impede o índice e pesa o KPI.
+_LAST_ROUTING_OP_JOIN = """
+OUTER APPLY (
+    SELECT TOP 1 RTRIM(LTRIM(SG2.G2_OPERAC)) AS last_oper
+    FROM SG2010 SG2 WITH (NOLOCK)
+    WHERE SG2.D_E_L_E_T_ = ' '
+      AND SG2.G2_FILIAL = SH6.H6_FILIAL
+      AND SG2.G2_PRODUTO = SH6.H6_PRODUTO
+    ORDER BY SG2.G2_OPERAC DESC
+) LAST_OP
+"""
+
+
+def _pa_last_routing_operation_pred() -> str:
+    """PA cuja operação apontada é a última do roteiro SG2 (entrada em estoque)."""
+    pa = PA_STOCK_ENTRY_PRODUCT_TYPE
+    return (
+        f"UPPER(LTRIM(RTRIM(SB1.B1_TIPO))) = '{pa}' "
+        "AND RTRIM(LTRIM(SH6.H6_OPERAC)) = LAST_OP.last_oper"
+    )
+
+
+def _produced_qty_last_op_join(
+    *,
+    work_center: str | None = None,
+    group_by: str | None = None,
+) -> str:
+    if restrict_produced_qty_to_pa_last_routing_operation(
+        work_center=work_center,
+        group_by=group_by,
+    ):
+        return _LAST_ROUTING_OP_JOIN
+    return ""
+
+
+def _sum_qty_produced_expr(
+    qty_prod: str,
+    *,
+    work_center: str | None = None,
+    group_by: str | None = None,
+) -> str:
+    """SUM de produzida: última operação do PA no KPI/série agregada; senão o recorte."""
+    if restrict_produced_qty_to_pa_last_routing_operation(
+        work_center=work_center,
+        group_by=group_by,
+    ):
+        return (
+            f"SUM(CASE WHEN {_pa_last_routing_operation_pred()} "
+            f"THEN {qty_prod} ELSE 0 END)"
+        )
+    return f"SUM({qty_prod})"
 
 
 def build_appointments_where(
@@ -341,14 +397,17 @@ def build_summary_totals_query(
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
     qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
+    qty_produced_sum = _sum_qty_produced_expr(qty_prod, work_center=work_center)
+    last_op_join = _produced_qty_last_op_join(work_center=work_center)
     sql = f"""
     SELECT
         COUNT(*) AS appointment_count,
-        SUM({qty_prod}) AS qty_produced,
+        {qty_produced_sum} AS qty_produced,
         SUM({qty_lost}) AS qty_lost,
         COUNT(DISTINCT LTRIM(RTRIM(SH6.H6_OP))) AS op_count,
         COUNT(DISTINCT LTRIM(RTRIM(SH1.H1_CTRAB))) AS work_center_count
     {_BASE_FROM}
+    {last_op_join}
     WHERE {where}
     """
     return sql, tuple(params)
@@ -377,6 +436,15 @@ def build_series_query(
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
     qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
+    qty_produced_sum = _sum_qty_produced_expr(
+        qty_prod,
+        work_center=work_center,
+        group_by=group_by,
+    )
+    last_op_join = _produced_qty_last_op_join(
+        work_center=work_center,
+        group_by=group_by,
+    )
     date_col = "LTRIM(RTRIM(SH6.H6_DTAPONT))"
     if granularity == "month":
         bucket_expr = f"LEFT({date_col}, 6)"
@@ -391,9 +459,10 @@ def build_series_query(
             LTRIM(RTRIM(HB.HB_NOME)) AS work_center_name,
             {_IS_FINAL_INSPECTION_EXPR} AS is_final_inspection,
             COUNT(*) AS appointment_count,
-            SUM({qty_prod}) AS qty_produced,
+            {qty_produced_sum} AS qty_produced,
             SUM({qty_lost}) AS qty_lost
         {_BASE_FROM}
+        {last_op_join}
         WHERE {where}
         GROUP BY {bucket_expr}, SH1.H1_CTRAB, HB.HB_NOME
         ORDER BY {bucket_expr}, SH1.H1_CTRAB
@@ -403,9 +472,10 @@ def build_series_query(
         SELECT
             {bucket_expr} AS appointment_date,
             COUNT(*) AS appointment_count,
-            SUM({qty_prod}) AS qty_produced,
+            {qty_produced_sum} AS qty_produced,
             SUM({qty_lost}) AS qty_lost
         {_BASE_FROM}
+        {last_op_join}
         WHERE {where}
         GROUP BY {bucket_expr}
         ORDER BY {bucket_expr}

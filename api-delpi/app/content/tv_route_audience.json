@@ -3003,13 +3003,13 @@
       "locale": {
         "en": {
           "summary": "Production appointments time series",
-          "description": "Produced and lost quantities from SH6 appointments, aggregated by day or month (optional day×work-center).",
+          "description": "Produced qty at the PA last routing operation (unless a work center is filtered); lost qty from all SH6 appointments, aggregated by day or month (optional day×work-center).",
           "whenToUse": "Use for a line chart of produced vs lost quantity over the selected period with day or month granularity.",
           "label": "Production appointments — time series"
         },
         "pt-BR": {
           "summary": "Série temporal de apontamentos de produção",
-          "description": "Quantidades produzida e perdida dos apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
+          "description": "Qtd. produzida na última operação do roteiro do PA (salvo filtro de um CT); qtd. perdida de todos os apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
           "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período, com granularidade dia ou mês.",
           "label": "Apontamento de produção — série temporal"
         }
@@ -3037,14 +3037,14 @@
       "locale": {
         "en": {
           "summary": "Production appointments summary",
-          "description": "KPI totals (appointments, produced/lost qty, OP and work-center counts) plus breakdown by work center.",
-          "whenToUse": "Use for KPI cards and work-center summary of production appointments in the period.",
+          "description": "KPI totals: produced qty is the last routing operation of the finished good (PA); lost qty and appointment counts cover all work centers, plus breakdown by CT.",
+          "whenToUse": "Use for KPI cards (stock-entry produced qty) and work-center summary of production appointments in the period.",
           "label": "Production appointments — summary"
         },
         "pt-BR": {
           "summary": "Resumo de apontamentos de produção",
-          "description": "Totais de KPI (apontamentos, qtd. produzida/perdida, OPs e CTs) e detalhe por centro de trabalho.",
-          "whenToUse": "Use nos cards de KPI e no resumo por CT dos apontamentos no período.",
+          "description": "Totais de KPI: qtd. produzida só na última operação do roteiro do PA; perda e contagens cobrem todos os CTs, com detalhe por centro de trabalho.",
+          "whenToUse": "Use nos cards de KPI (quantidade que entra em estoque) e no resumo por CT dos apontamentos no período.",
           "label": "Apontamento de produção — resumo"
         }
       }
