@@ -143,9 +143,6 @@ function readCreateTaskDeepLink(): {
       taskTitle: "",
       taskType: "",
       bucket: null,
-      customerStore: "",
-      assigneeUserId: "",
-      bucket: null,
     };
   }
   const params = new URLSearchParams(window.location.search);

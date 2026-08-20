@@ -2,12 +2,18 @@
  * Room message inline attachment helpers — list/rewrite use the kit parser
  * so `"align=…"` titles never pollute `attachment:pending:` ids.
  */
+import {
+  listInlineAttachmentIdsFromMarkdown,
+  listInlinePendingIdsFromMarkdown,
+  parseMarkdownImages,
+  rewriteInlinePendingInMarkdown,
+} from "@delpi/plugin-ui/index";
+
 export {
   listInlineAttachmentIdsFromMarkdown,
   listInlinePendingIdsFromMarkdown,
   rewriteInlinePendingInMarkdown,
-} from "@delpi/plugin-ui/index";
-import { parseMarkdownImages } from "@delpi/plugin-ui/index";
+};
 
 export function countFilesTowardAttachmentCap(
   pendingAttachmentCount: number,
