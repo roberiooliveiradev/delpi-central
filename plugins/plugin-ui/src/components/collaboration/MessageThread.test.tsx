@@ -268,7 +268,7 @@ describe("MessageThread", () => {
     );
   });
 
-  it("agrupa mensagens seguidas do mesmo autor sem repetir nome e avatar", () => {
+  it("repete nome, avatar e horário em cada bloco do mesmo autor", () => {
     const { container } = render(
       <MessageThread
         classNames={classNames}
@@ -294,9 +294,41 @@ describe("MessageThread", () => {
         ]}
       />,
     );
-    expect(screen.getAllByText("Bruno Costa")).toHaveLength(1);
-    expect(container.querySelectorAll(".delpi-ui-avatar")).toHaveLength(1);
-    expect(container.querySelector(".delpi-ui-message-thread__item--continue")).not.toBeNull();
+    expect(screen.getAllByText("Bruno Costa")).toHaveLength(2);
+    expect(container.querySelectorAll(".delpi-ui-avatar")).toHaveLength(2);
+    expect(screen.getByText("07:43")).toBeTruthy();
+    expect(screen.getByText("07:44")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-message-thread__item--continue")).toBeNull();
+  });
+
+  it("repete horário em cada bloco das próprias mensagens", () => {
+    render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "a",
+            authorName: "Eu",
+            createdAtLabel: "15:11",
+            mine: true,
+          },
+          {
+            id: "2",
+            kind: "text",
+            bodyText: "b",
+            authorName: "Eu",
+            createdAtLabel: "15:12",
+            mine: true,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("15:11")).toBeTruthy();
+    expect(screen.getByText("15:12")).toBeTruthy();
   });
 
   it("avatar do autor vira link quando há href e title", () => {

@@ -175,19 +175,6 @@ function isSystemKind(kind: MessageThreadKind): boolean {
   return kind === "system" || kind === "task_ref" || kind === "pin";
 }
 
-function sameAuthorRun(
-  previous: MessageThreadItem | undefined,
-  current: MessageThreadItem,
-): boolean {
-  if (!previous || isSystemKind(previous.kind) || isSystemKind(current.kind)) {
-    return false;
-  }
-  if (Boolean(previous.mine) !== Boolean(current.mine)) return false;
-  const previousKey = (previous.authorUserId ?? previous.authorName ?? "").trim();
-  const currentKey = (current.authorUserId ?? current.authorName ?? "").trim();
-  return previousKey.length > 0 && previousKey === currentKey;
-}
-
 function parentQuote(
   messages: readonly MessageThreadItem[],
   message: MessageThreadItem,
@@ -202,12 +189,10 @@ function parentQuote(
 function itemClassName(
   classNames: MessageThreadClassNames,
   message: MessageThreadItem,
-  continues: boolean,
   editing: boolean,
 ): string {
   const parts = [classNames.item];
   if (message.parentId) parts.push(classNames.itemReply);
-  if (continues) parts.push(classNames.itemContinue);
   if (message.mine && !isSystemKind(message.kind)) parts.push(classNames.itemMine);
   if (editing) parts.push(classNames.itemEditing);
   return parts.join(" ");
@@ -283,8 +268,7 @@ export function MessageThread({
   return (
     <div className={rootClass}>
       <ul className={classNames.list} aria-label={listAriaLabel}>
-        {messages.map((message, index) => {
-          const continues = sameAuthorRun(messages[index - 1], message);
+        {messages.map((message) => {
           const isEditing =
             Boolean(activeEditingId) &&
             message.id === activeEditingId &&
@@ -293,7 +277,7 @@ export function MessageThread({
             return (
               <li
                 key={message.id}
-                className={itemClassName(classNames, message, false, false)}
+                className={itemClassName(classNames, message, false)}
                 data-message-id={message.id}
               >
                 <div className={classNames.system} data-message-kind={message.kind}>
@@ -327,7 +311,7 @@ export function MessageThread({
           const authorHref = (message.authorHref ?? "").trim();
           const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
           const authorSrc = (message.authorSrc ?? "").trim() || null;
-          const showAvatar = Boolean(avatarName && !message.mine && !continues);
+          const showAvatar = Boolean(avatarName && !message.mine);
           const avatar = showAvatar ? (
             authorHref && authorLinkTitle ? (
               <InitialsAvatar
@@ -351,13 +335,13 @@ export function MessageThread({
               />
             )
           ) : null;
-          const showAuthor = Boolean(avatarName && !message.mine && !continues);
-          const showHeading = !continues && (showAuthor || Boolean(message.createdAtLabel));
+          const showAuthor = Boolean(avatarName && !message.mine);
+          const showHeading = showAuthor || Boolean(message.createdAtLabel);
 
           return (
             <li
               key={message.id}
-              className={itemClassName(classNames, message, continues, isEditing)}
+              className={itemClassName(classNames, message, isEditing)}
               data-message-id={message.id}
               data-message-kind={message.kind}
               data-editing={isEditing ? "true" : undefined}
