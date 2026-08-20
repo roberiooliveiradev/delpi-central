@@ -179,6 +179,12 @@
     color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 28%, transparent);
 }
 
+/* Portal `:focus-visible { box-shadow: var(--focus-ring) }` não deve anelar o contenteditable. */
+.delpi-ui-mention-composer__body :is(:focus, :focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
 .delpi-ui-mention-composer__field {
   position: relative;
   min-width: 0;
@@ -364,9 +370,11 @@
 }
 
 .delpi-ui-mention-composer__inline-image {
+  position: relative;
   display: block;
-  margin: 0.5rem 0;
+  width: fit-content;
   max-width: min(100%, 28rem);
+  margin: 0.5rem auto;
   border-radius: 0.5rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 6%, transparent);
@@ -374,9 +382,35 @@
 
 .delpi-ui-mention-composer__inline-image img {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
   max-height: min(40vh, 16rem);
   object-fit: contain;
   vertical-align: middle;
+}
+
+.delpi-ui-mention-composer__inline-image-remove {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+  color: #fff;
+  background: color-mix(in srgb, #0f172a 72%, transparent);
+  cursor: pointer;
+}
+
+.delpi-ui-mention-composer__inline-image-remove:hover {
+  background: #0f172a;
 }

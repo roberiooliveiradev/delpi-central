@@ -337,6 +337,15 @@ export function InteractionRoomMessageComposer({
     [pending.length, inlineFiles, onError],
   );
 
+  const onInlineImageRemoved = useCallback((pendingId: string) => {
+    setInlineFiles((prev) => {
+      if (!(pendingId in prev)) return prev;
+      const next = { ...prev };
+      delete next[pendingId];
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     onAddFilesReady?.(onFilesSelected);
   }, [onAddFilesReady, onFilesSelected]);
@@ -562,6 +571,7 @@ export function InteractionRoomMessageComposer({
         onFilesSelected={onFilesSelected}
         fileAccept={ROOM_ATTACH_ACCEPT}
         onInlineImagesInserted={onInlineImagesInserted}
+        onInlineImageRemoved={onInlineImageRemoved}
         pendingAttachments={pendingAttachments}
         onRemovePendingAttachment={onRemovePending}
         replyTo={banner ?? null}

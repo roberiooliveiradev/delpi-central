@@ -509,9 +509,75 @@ describe("mention-composer.css", () => {
     expect(prose).toMatch(/padding-left:\s*1\.25rem/);
     expect(css).toMatch(/__document-tray/);
     expect(css).toMatch(/__image-thumbs/);
+    expect(css).toMatch(/__inline-image-remove/);
+    expect(css).toMatch(/margin:\s*0\.5rem auto/);
+    expect(css).toMatch(/\.delpi-ui-mention-composer__body :is\(:focus, :focus-visible\)/);
     expect(css).toMatch(/position:\s*absolute/);
   });
 
+  it("limpa o DOM quando value fica vazio mesmo com o editor focado", () => {
+    function ClearHarness(): ReactElement {
+      const [value, setValue] = useState("hello");
+      return (
+        <>
+          <button type="button" onClick={() => setValue("")}>
+            Clear
+          </button>
+          <MentionComposer
+            value={value}
+            onChange={setValue}
+            onSubmit={vi.fn()}
+            labels={labels}
+            classNames={classNames}
+          />
+        </>
+      );
+    }
+    render(<ClearHarness />);
+    const surface = screen.getByLabelText("Write a message");
+    surface.focus();
+    expect(document.activeElement).toBe(surface);
+    expect(surface.textContent).toContain("hello");
+    fireEvent.click(screen.getByText("Clear"));
+    expect(surface.innerHTML).toBe("");
+  });
+
+  it("remove figure inline pelo botão X e notifica pendingId", () => {
+    const onRemoved = vi.fn();
+    const file = new File(["x"], "shot.png", { type: "image/png" });
+    render(
+      <MentionComposer
+        value=""
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={labels}
+        classNames={classNames}
+        onInlineImageRemoved={onRemoved}
+      />,
+    );
+    const surface = screen.getByLabelText("Write a message");
+    const dt = {
+      files: {
+        length: 1,
+        0: file,
+        item: () => file,
+        [Symbol.iterator]: function* () {
+          yield file;
+        },
+      } as unknown as FileList,
+      items: undefined,
+      getData: () => "",
+    } as unknown as DataTransfer;
+    fireEvent.paste(surface, { clipboardData: dt });
+    const remove = surface.querySelector("[data-inline-image-remove]");
+    expect(remove).toBeTruthy();
+    fireEvent.click(remove!);
+    expect(surface.querySelector("figure")).toBeNull();
+    expect(onRemoved).toHaveBeenCalled();
+  });
+});
+
+describe("mention-composer pending strip", () => {
   it("separa imagens na pílula e documentos na bandeja", () => {
     const onRemove = vi.fn();
     render(

@@ -102,9 +102,11 @@
 }
 
 .delpi-ui-message-thread__inline-image {
+  position: relative;
   display: block;
-  margin: 0.5rem 0;
+  width: fit-content;
   max-width: min(100%, 28rem);
+  margin: 0.5rem auto;
   border-radius: 0.5rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 6%, transparent);
@@ -112,9 +114,15 @@
 
 .delpi-ui-message-thread__inline-image img {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
   max-height: min(48vh, 20rem);
   object-fit: contain;
   cursor: zoom-in;
+}
+
+/* Remove control is composer-only. */
+.delpi-ui-message-thread__body--rich .delpi-ui-mention-composer__inline-image-remove {
+  display: none;
 }

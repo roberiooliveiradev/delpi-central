@@ -44,6 +44,8 @@ describe("mentionComposerInlineImage", () => {
     const html = inlineImageBlockHtml(insert!);
     expect(html).toContain("data-attachment-pending=");
     expect(html).toContain(`attachment:pending:${insert!.pendingId}`);
+    expect(html).toContain("data-inline-image-remove");
+    expect(html).not.toMatch(/<p><\/p>/);
     const md = richTextHtmlToMarkdown(html);
     expect(md).toContain(`![foto.webp](attachment:pending:${insert!.pendingId})`);
   });

@@ -132,6 +132,7 @@ export type MentionComposerClassNames = {
   imageThumbs: string;
   imageThumb: string;
   imageThumbRemove: string;
+  inlineImageRemove: string;
   documentTray: string;
   documentTrayStrip: AttachmentPreviewStripClassNames;
   replyBanner: string;
@@ -208,6 +209,8 @@ export type MentionComposerProps = {
    * Host keeps File map keyed by `pendingId` for upload after send.
    */
   onInlineImagesInserted?: (items: readonly MentionComposerInlineImageInsert[]) => void;
+  /** Host remove File do mapa quando o usuário apaga a figure inline. */
+  onInlineImageRemoved?: (pendingId: string) => void;
   /** @deprecated Prefer `pendingAttachments` (E6.S7). Kept for rare custom footers. */
   footer?: ReactNode;
   /** Active reply target shown above the pill (Teams-style strip). */
@@ -245,6 +248,7 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     imageThumbs: pair(`${base}__image-thumbs`, `${ui}__image-thumbs`),
     imageThumb: pair(`${base}__image-thumb`, `${ui}__image-thumb`),
     imageThumbRemove: pair(`${base}__image-thumb-remove`, `${ui}__image-thumb-remove`),
+    inlineImageRemove: pair(`${base}__inline-image-remove`, `${ui}__inline-image-remove`),
     documentTray: pair(`${base}__document-tray`, `${ui}__document-tray`),
     documentTrayStrip: attachmentPreviewStripBemClasses(prefix),
     replyBanner: pair(`${base}__reply-banner`, `${ui}__reply-banner`),
@@ -306,6 +310,7 @@ export function MentionComposer({
   pendingAttachments = [],
   onRemovePendingAttachment,
   onInlineImagesInserted,
+  onInlineImageRemoved,
   footer,
   replyTo = null,
   onCancelReply,
@@ -436,9 +441,11 @@ export function MentionComposer({
       };
       return;
     }
-    // Preserva a pilha nativa / custom enquanto o editor está focado.
-    if (document.activeElement === el) return;
-    el.innerHTML = value.trim() ? markdownToRichTextHtml(value) : "";
+    // Clear pós-envio (`value=""`) deve aplicar mesmo com o editor focado;
+    // senão o DOM antigo reemite no próximo input e “ressuscita” o rascunho.
+    const clearing = !value.trim();
+    if (!clearing && document.activeElement === el) return;
+    el.innerHTML = clearing ? "" : markdownToRichTextHtml(value);
     lastStableRef.current = {
       markdown: value,
       html: el.innerHTML,
@@ -640,9 +647,17 @@ export function MentionComposer({
     const inserts = buildInlineImageInserts(files);
     if (inserts.length === 0) return false;
     commitBeforeMutation();
+    const removeLabel =
+      labels.pendingRemoveAriaLabel ?? ((fileName: string) => `Remove ${fileName}`);
     insertRichTextHtmlFragment(
       el,
-      inserts.map((item) => inlineImageBlockHtml(item)).join(""),
+      inserts
+        .map((item) =>
+          inlineImageBlockHtml(item, {
+            removeAriaLabel: removeLabel(item.file.name || "image"),
+          }),
+        )
+        .join(""),
     );
     normalizeComposerFormatShells(el);
     lastStableRef.current = readSnapshot();
@@ -651,6 +666,21 @@ export function MentionComposer({
     onInlineImagesInserted?.(inserts);
     rememberSelection();
     return true;
+  };
+
+  const removeInlineImageFigure = (figure: Element) => {
+    const el = surfaceRef.current;
+    if (!el || !figure.isConnected) return;
+    const img = figure.querySelector("img");
+    const pendingId = (img?.getAttribute("data-attachment-pending") || "").trim();
+    commitBeforeMutation();
+    figure.remove();
+    normalizeComposerFormatShells(el);
+    lastStableRef.current = readSnapshot();
+    refreshHistoryFlags();
+    emitMarkdownAndMention();
+    if (pendingId) onInlineImageRemoved?.(pendingId);
+    rememberSelection();
   };
 
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
@@ -872,10 +902,25 @@ export function MentionComposer({
             onDragOver={handleSurfaceDragOver}
             onDrop={handleSurfaceDrop}
             onKeyDown={handleKeyDown}
-            onClick={() => {
+            onClick={(event) => {
+              const target = event.target as HTMLElement | null;
+              const removeBtn = target?.closest?.("[data-inline-image-remove]");
+              if (removeBtn) {
+                event.preventDefault();
+                event.stopPropagation();
+                const figure = removeBtn.closest("figure.delpi-ui-mention-composer__inline-image");
+                if (figure) removeInlineImageFigure(figure);
+                return;
+              }
               resetEmptySurface();
               rememberSelection();
               emitMarkdownAndMention();
+            }}
+            onMouseDown={(event) => {
+              const target = event.target as HTMLElement | null;
+              if (target?.closest?.("[data-inline-image-remove]")) {
+                event.preventDefault();
+              }
             }}
             onKeyUp={(event) => {
               rememberSelection();

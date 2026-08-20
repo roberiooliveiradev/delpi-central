@@ -138,6 +138,25 @@ export function InteractionRoomPanel({
     }));
   }, []);
 
+  const mergeAttachmentThumbUrls = useCallback((urls: Record<string, string>) => {
+    setAttachmentThumbUrls((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const [id, url] of Object.entries(urls)) {
+        if (!url) {
+          if (id in next) {
+            delete next[id];
+            changed = true;
+          }
+        } else if (next[id] !== url) {
+          next[id] = url;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, []);
+
   const onRoomRealtimeEvent = useCallback((event: CommercialInteractionRoomEvent) => {
     if (event.type === "room.attachment") {
       const messageId = (event.messageId || "").trim();
@@ -485,9 +504,7 @@ export function InteractionRoomPanel({
                   excludeAttachmentIds={listInlineAttachmentIdsFromMarkdown(
                     message.body_text,
                   )}
-                  onThumbUrlsChange={(urls) => {
-                    setAttachmentThumbUrls((prev) => ({ ...prev, ...urls }));
-                  }}
+                  onThumbUrlsChange={mergeAttachmentThumbUrls}
                   onItemsChange={(items) => {
                     for (const item of items) {
                       attachmentMetaRef.current[item.id] = item;
@@ -515,6 +532,7 @@ export function InteractionRoomPanel({
       attachmentEpochByMessageId,
       room?.id,
       onMessageReactionsChange,
+      mergeAttachmentThumbUrls,
     ],
   );
 

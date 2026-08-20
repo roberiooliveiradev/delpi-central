@@ -87,16 +87,23 @@ export function InteractionRoomMessageAttachments({
   useEffect(() => {
     let cancelled = false;
 
-    const clearThumbs = () => {
+    const clearThumbs = (notify: boolean) => {
+      const previousIds = Object.keys(thumbUrlsRef.current);
       for (const url of Object.values(thumbUrlsRef.current)) {
         URL.revokeObjectURL(url);
       }
       thumbUrlsRef.current = {};
       setThumbUrls({});
+      if (notify && previousIds.length > 0) {
+        // Empty string = revoked — parent must drop these keys (not merge forever).
+        const cleared: Record<string, string> = {};
+        for (const id of previousIds) cleared[id] = "";
+        onThumbUrlsChange?.(cleared);
+      }
     };
 
     if (items.length === 0) {
-      clearThumbs();
+      clearThumbs(true);
       return () => {
         cancelled = true;
       };
@@ -118,7 +125,7 @@ export function InteractionRoomMessageAttachments({
         for (const url of Object.values(next)) URL.revokeObjectURL(url);
         return;
       }
-      clearThumbs();
+      clearThumbs(false);
       thumbUrlsRef.current = next;
       setThumbUrls(next);
       onThumbUrlsChange?.(next);
@@ -126,7 +133,7 @@ export function InteractionRoomMessageAttachments({
 
     return () => {
       cancelled = true;
-      clearThumbs();
+      clearThumbs(true);
     };
   }, [items, onThumbUrlsChange]);
 

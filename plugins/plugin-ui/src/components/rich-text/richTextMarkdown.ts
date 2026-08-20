@@ -247,6 +247,18 @@ export function enhanceAttachmentImagesInHtml(html: string): string {
       figure.setAttribute("contenteditable", "false");
       img.parentNode?.insertBefore(figure, img);
       figure.appendChild(img);
+      if (src.startsWith("attachment:pending:")) {
+        const btn = doc.createElement("button");
+        btn.type = "button";
+        btn.className = "delpi-ui-mention-composer__inline-image-remove";
+        btn.setAttribute("data-inline-image-remove", "1");
+        btn.setAttribute("contenteditable", "false");
+        btn.setAttribute("tabindex", "-1");
+        const alt = img.getAttribute("alt") || "image";
+        btn.setAttribute("aria-label", `Remove ${alt}`);
+        btn.textContent = "×";
+        figure.appendChild(btn);
+      }
     }
     return root.innerHTML;
   } catch {

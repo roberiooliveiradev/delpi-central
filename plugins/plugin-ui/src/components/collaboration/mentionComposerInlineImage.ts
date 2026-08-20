@@ -62,16 +62,23 @@ export function buildInlineImageInserts(files: readonly File[]): MentionComposer
   });
 }
 
-export function inlineImageBlockHtml(insert: MentionComposerInlineImageInsert): string {
+export function inlineImageBlockHtml(
+  insert: MentionComposerInlineImageInsert,
+  options?: { removeAriaLabel?: string },
+): string {
   const alt = escapeAttr(insert.file.name || "image");
   const src = escapeAttr(insert.previewUrl);
   const pending = escapeAttr(insert.pendingId);
+  const removeLabel = escapeAttr(
+    options?.removeAriaLabel ?? `Remove ${insert.file.name || "image"}`,
+  );
   return (
-    `<p></p>` +
     `<figure class="delpi-ui-mention-composer__inline-image" contenteditable="false">` +
     `<img src="${src}" alt="${alt}" ${PENDING_ATTR}="${pending}" data-attachment-href="attachment:pending:${pending}" />` +
-    `</figure>` +
-    `<p></p>`
+    `<button type="button" class="delpi-ui-mention-composer__inline-image-remove" data-inline-image-remove="1" contenteditable="false" tabindex="-1" aria-label="${removeLabel}">` +
+    `×` +
+    `</button>` +
+    `</figure>`
   );
 }
 
