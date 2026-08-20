@@ -211,7 +211,12 @@ export function unwrapFormatInSelection(editor: HTMLElement, selector: string): 
 
   const fullText = hit.textContent ?? "";
   if (range.toString() === fullText) {
+    const preParent =
+      hit.tagName.toLowerCase() === "code" && hit.parentElement?.tagName === "PRE"
+        ? hit.parentElement
+        : null;
     unwrapRichTextElement(hit);
+    if (preParent?.isConnected) unwrapRichTextElement(preParent);
     return;
   }
 
@@ -290,6 +295,43 @@ function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
   }
 }
 
+/** Código: inline `<code>` ou bloco `<pre><code>` se a seleção tiver quebra de linha. */
+function wrapSelectionAsCode(editor: HTMLElement) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) {
+    insertRichTextHtmlFragment(editor, `<code>\u200b</code>`);
+    return;
+  }
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) {
+    insertRichTextHtmlFragment(editor, `<code>\u200b</code>`);
+    return;
+  }
+  if (range.collapsed) {
+    insertRichTextHtmlFragment(editor, `<code>\u200b</code>`);
+    return;
+  }
+  if (!range.toString().includes("\n")) {
+    wrapSelectionWithTag(editor, "code");
+    return;
+  }
+  const pre = document.createElement("pre");
+  const code = document.createElement("code");
+  try {
+    code.appendChild(range.extractContents());
+  } catch {
+    code.textContent = range.toString();
+    range.deleteContents();
+  }
+  pre.appendChild(code);
+  range.insertNode(pre);
+  selection.removeAllRanges();
+  const after = document.createRange();
+  after.selectNodeContents(code);
+  after.collapse(false);
+  selection.addRange(after);
+}
+
 function selectionIsCollapsed(editor: HTMLElement): boolean {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return true;
@@ -313,6 +355,7 @@ function toggleInlineFormat(
 
   if (collapsed) {
     if (active) unwrapFormatInSelection(editor, selector);
+    else if (kind === "code") wrapSelectionAsCode(editor);
     else wrapSelectionWithTag(editor, tag);
     return;
   }
@@ -326,6 +369,8 @@ function toggleInlineFormat(
 
   if (active || (execCmd && queryRichTextCommandState(execCmd))) {
     unwrapFormatInSelection(editor, selector);
+  } else if (kind === "code") {
+    wrapSelectionAsCode(editor);
   } else {
     wrapSelectionWithTag(editor, tag);
   }

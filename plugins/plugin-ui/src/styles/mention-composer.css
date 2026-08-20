@@ -78,13 +78,87 @@
   cursor: not-allowed;
 }
 
-.delpi-ui-mention-composer__textarea :is(p, ul, ol, blockquote, pre) {
+.delpi-ui-mention-composer__textarea :is(p, ul, ol) {
   margin: 0;
 }
 
+/* Código inline — chip estilo Teams */
 .delpi-ui-mention-composer__textarea code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.9em;
+  font-size: 0.85em;
+  padding: 0.12em 0.4em;
+  border-radius: 0.35rem;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-text, var(--text, #0f172a)) 14%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 10%,
+    transparent
+  );
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
+/* Bloco de código — container com destaque */
+.delpi-ui-mention-composer__textarea pre {
+  display: block;
+  margin: 0.45rem 0;
+  padding: 0.55rem 0.7rem;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-text, var(--text, #0f172a)) 14%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 8%,
+    transparent
+  );
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.delpi-ui-mention-composer__textarea pre code {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.85em;
+}
+
+/* Citação — faixa + espaçamento + aspas (Teams-like) */
+.delpi-ui-mention-composer__textarea blockquote {
+  position: relative;
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.85rem 0.5rem 1.15rem;
+  border: none;
+  border-left: 3px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-radius: 0 0.45rem 0.45rem 0;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    transparent
+  );
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+.delpi-ui-mention-composer__textarea blockquote::before {
+  content: "“";
+  position: absolute;
+  top: 0.15rem;
+  left: 0.35rem;
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.delpi-ui-mention-composer__textarea blockquote > :first-child {
+  margin-top: 0;
+}
+
+.delpi-ui-mention-composer__textarea blockquote > :last-child {
+  margin-bottom: 0;
 }
 
 .delpi-ui-mention-composer__textarea :is(b, strong) {
@@ -97,6 +171,11 @@
 
 .delpi-ui-mention-composer__textarea :is(s, strike, del) {
   text-decoration: line-through;
+}
+
+.delpi-ui-mention-composer__textarea u {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
 }
 
 .delpi-ui-mention-composer__textarea a {

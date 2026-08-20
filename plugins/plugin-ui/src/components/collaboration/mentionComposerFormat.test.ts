@@ -211,4 +211,40 @@ describe("toggleComposerFormat", () => {
     expect(editor.innerHTML.toLowerCase()).not.toMatch(/<code\b/);
     editor.remove();
   });
+
+  it("código com quebra de linha vira bloco pre>code", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const editor = document.createElement("div");
+    editor.appendChild(document.createTextNode("linha1\nlinha2"));
+    document.body.appendChild(editor);
+    selectAll(editor);
+    toggleComposerFormat(editor, "code");
+    expect(editor.innerHTML.toLowerCase()).toMatch(/<pre\b/);
+    expect(editor.innerHTML.toLowerCase()).toMatch(/<code\b/);
+    expect(editor.textContent).toContain("linha1");
+    expect(editor.textContent).toContain("linha2");
+    editor.remove();
+  });
+
+  it("citação aplica blockquote", () => {
+    document.execCommand = vi.fn().mockImplementation((cmd: string, _show?: boolean, value?: string) => {
+      if (cmd === "formatBlock" && value === "blockquote") {
+        const selection = window.getSelection();
+        const range = selection?.getRangeAt(0);
+        if (!range) return false;
+        const bq = document.createElement("blockquote");
+        bq.appendChild(range.extractContents());
+        range.insertNode(bq);
+        return true;
+      }
+      return true;
+    });
+    const editor = document.createElement("div");
+    editor.textContent = "citacao";
+    document.body.appendChild(editor);
+    selectAll(editor);
+    toggleComposerFormat(editor, "quote");
+    expect(editor.innerHTML.toLowerCase()).toMatch(/<blockquote\b/);
+    editor.remove();
+  });
 });

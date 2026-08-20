@@ -452,5 +452,11 @@ describe("mention-composer.css", () => {
     expect(css).not.toMatch(/--empty::before/);
     expect(css).toMatch(/__placeholder/);
     expect(css).toMatch(/__format\[aria-pressed="true"\]/);
+    expect(css).toMatch(/\.delpi-ui-mention-composer__textarea code \{/);
+    expect(css).toMatch(/\.delpi-ui-mention-composer__textarea pre \{/);
+    expect(css).toMatch(/\.delpi-ui-mention-composer__textarea blockquote \{/);
+    expect(css).toMatch(/blockquote::before/);
+    expect(css).toMatch(/border-left:\s*3px/);
+    expect(css).toMatch(/content:\s*"“"/);
   });
 });
