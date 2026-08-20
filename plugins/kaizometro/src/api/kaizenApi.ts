@@ -6,6 +6,7 @@ import {
   httpPost,
   httpPostForm,
   httpPut,
+  httpPutForm,
   unwrapApiDelpiEnvelope,
   type ApiEnvelope,
 } from "./httpClient";
@@ -275,13 +276,35 @@ export async function uploadKaizenEvidence(
 export async function updateKaizenEvidence(
   id: string,
   evidenceId: string,
-  payload: { stage?: KaizenEvidenceStage; description?: string },
+  payload: {
+    stage?: KaizenEvidenceStage;
+    description?: string;
+    externalUrl?: string;
+  },
 ): Promise<KaizenEvidence> {
+  const body: Record<string, string> = {};
+  if (payload.stage != null) body.stage = payload.stage;
+  if (payload.description != null) body.description = payload.description;
+  if (payload.externalUrl != null) body.external_url = payload.externalUrl;
   const envelope = await httpPatch<ApiEnvelope<KaizenEvidence>>(
     `${API_BASE}/${id}/evidences/${evidenceId}`,
-    payload,
+    body,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao atualizar evidência.");
+}
+
+export async function replaceKaizenEvidenceFile(
+  id: string,
+  evidenceId: string,
+  file: File,
+): Promise<KaizenEvidence> {
+  const form = new FormData();
+  form.set("file", file);
+  const envelope = await httpPutForm<ApiEnvelope<KaizenEvidence>>(
+    `${API_BASE}/${id}/evidences/${evidenceId}/file`,
+    form,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao substituir arquivo da evidência.");
 }
 
 export async function deleteKaizenEvidence(id: string, evidenceId: string): Promise<void> {

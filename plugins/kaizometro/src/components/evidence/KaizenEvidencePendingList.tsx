@@ -132,7 +132,7 @@ function PendingItem({
           <TextAreaField
             id={`${item.id}-desc`}
             label="Descrição"
-            rows={3}
+            rows={5}
             span={false}
             value={item.description}
             onChange={(value) => onChange(item.id, { description: value })}

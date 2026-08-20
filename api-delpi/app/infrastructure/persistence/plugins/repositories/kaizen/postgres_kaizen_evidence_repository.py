@@ -99,6 +99,23 @@ class PostgresKaizenEvidenceRepository(PluginBaseRepository):
         if "description" in fields:
             sets.append("description = %s")
             params.append(fields["description"])
+        if "external_url" in fields:
+            sets.append("external_url = %s")
+            params.append(fields["external_url"])
+        for column in (
+            "type",
+            "file_name",
+            "stored_name",
+            "mime_type",
+            "size_bytes",
+        ):
+            if column in fields:
+                if column == "type":
+                    value = fields["type"] if fields["type"] in _VALID_TYPES else "attachment"
+                else:
+                    value = fields[column]
+                sets.append(f"{column} = %s")
+                params.append(value)
         if not sets:
             return self.get_evidence(kaizen_id, evidence_id)
 

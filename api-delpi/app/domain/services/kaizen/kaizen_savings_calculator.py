@@ -4,6 +4,10 @@ from typing import Any, Mapping, Optional
 
 SAVINGS_TYPES = frozenset({"tempo", "material", "financeiro", "qualitativo", "misto"})
 
+# Projeção anual = diária × dias úteis (seg–sex, sem feriados).
+# Distinto da validade do kaizen (1 ano corrido desde a implantação).
+ANNUAL_BUSINESS_DAYS = 261
+
 
 def _to_float(value: Any) -> Optional[float]:
     if value is None or value == "":
@@ -118,9 +122,10 @@ def calculate_daily_savings(fields: Mapping[str, Any]) -> Optional[float]:
 
 
 def calculate_annual_savings(daily_savings: Optional[float]) -> Optional[float]:
+    """Projeção anual em dias úteis — não usar 365 (ano corrido = só validade)."""
     if daily_savings is None:
         return None
-    return round(daily_savings * 365, 2)
+    return round(daily_savings * ANNUAL_BUSINESS_DAYS, 2)
 
 
 def resolve_realized_daily_savings(

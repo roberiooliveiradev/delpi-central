@@ -30,6 +30,7 @@ import {
 } from "../components/ui";
 import { detailPath, newPath } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { ANNUAL_BUSINESS_DAYS } from "../content/savingsConstants";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
 import type {
   KaizenSavingsInvestmentSeries,
@@ -376,14 +377,14 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
               tone="success"
               label="Ganho anual vigente"
               value={formatCurrency(summary.active_annual_savings)}
-              sub={`${formatInteger(summary.active_count)} kaizens contabilizando`}
+              sub={`${formatInteger(summary.active_count)} kaizens · projeção ×${ANNUAL_BUSINESS_DAYS} dias úteis`}
             />
             <KpiCard
               icon={<CheckCircle2 size={22} />}
               tone="muted"
               label="Ganho realizado / ano"
               value={formatCurrency(summary.realized_annual_savings)}
-              sub="Economia efetivamente medida"
+              sub={`Medido × ${ANNUAL_BUSINESS_DAYS} dias úteis (seg–sex)`}
             />
             <KpiCard
               icon={<Wrench size={22} />}

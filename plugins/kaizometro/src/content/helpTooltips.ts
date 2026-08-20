@@ -1,3 +1,9 @@
+import {
+  ANNUAL_BUSINESS_DAYS,
+  ANNUAL_SAVINGS_EXPLANATION,
+  ANNUAL_SAVINGS_FORMULA_LABEL,
+} from "./savingsConstants";
+
 export const KAIZEN_HELP_TOOLTIPS = {
   sections: {
     identification: "Dados que identificam o kaizen: título, unidade, setor e categoria da melhoria.",
@@ -8,7 +14,9 @@ export const KAIZEN_HELP_TOOLTIPS = {
     stage:
       "Estágio operacional (status) e datas da versão vigente. Editar aqui é uma correção da versão atual — não cria uma nova versão.",
     savings:
-      "Parâmetros e economia calculada pela API. A economia estimada é comparada com a realizada (efetividade).",
+      `Parâmetros e economia calculada pela API. Economia/ano = ${ANNUAL_SAVINGS_FORMULA_LABEL} ` +
+      `(segunda a sexta, sem feriados). A validade de contabilização no painel é outro conceito: ` +
+      `1 ano corrido desde a implantação — não use 365 no cálculo da projeção anual.`,
     evidences:
       "Registro visual do processo. Anexe fotos do Antes e Depois, PDFs, planilhas e documentos, ou um link externo.",
     revisions:
@@ -42,39 +50,56 @@ export const KAIZEN_HELP_TOOLTIPS = {
     status:
       "Estágio da versão vigente: recebido, aprovado (comitê), implantado, descontinuado ou cancelado. Aprovado conta na quantidade sem ganhos; Implantado conta quantidade e ganhos. Alterar aqui corrige a versão atual, sem criar uma nova.",
     dateImplemented:
-      "Data em que a melhoria entrou em operação. Obrigatória para o status Implantado. Define a vigência da versão implantada, a validade de 1 ano da economia e os ganhos financeiros.",
+      "Data em que a melhoria entrou em operação. Obrigatória para o status Implantado. Define a vigência da versão implantada, a validade de 1 ano corrido da economia e os ganhos financeiros.",
     savingsType:
       "Como a economia é medida: tempo (segundos/ocorrências), material, financeira fixa, qualitativa ou mista.",
     realizedDailySavings:
-      "Economia diária realizada. Se não informada, usa a mesma estimativa calculada pelos parâmetros; informe um valor distinto quando houver medição após a implantação.",
+      "Economia diária realizada (medida). Se não informada, usa a estimativa calculada pelos parâmetros. A projeção anual usa este valor × " +
+      `${ANNUAL_BUSINESS_DAYS} dias úteis — não × 365.`,
     savingsValidity:
-      "O kaizen contabiliza ganhos financeiros por 1 ano a partir da implantação; depois disso deixa de somar no run-rate.",
-    estimatedDaily: "Economia diária estimada pela API a partir dos parâmetros informados.",
-    estimatedAnnual: "Projeção anual da economia estimada (diária × dias úteis do ano).",
+      "Validade (ano corrido): o kaizen contabiliza ganhos no painel por 1 ano a partir da implantação (até a data mostrada). " +
+      `Isso é diferente da projeção economia/ano, que multiplica a diária por ${ANNUAL_BUSINESS_DAYS} dias úteis.`,
+    estimatedDaily:
+      "Economia diária estimada pela API a partir dos parâmetros. Base da projeção anual " +
+      `(× ${ANNUAL_BUSINESS_DAYS} dias úteis).`,
+    estimatedAnnual:
+      `Projeção anual estimada: ${ANNUAL_SAVINGS_FORMULA_LABEL} (segunda a sexta, sem feriados). ` +
+      `Por quê dias úteis: a operação industrial tipicamente não gera o mesmo ganho em sábados, domingos e feriados. ` +
+      `Não confundir com a validade (1 ano corrido desde a implantação).`,
     realizedAnnual:
-      "Projeção anual da economia realizada (diária × 365). Sem medição informada, espelha a estimada calculada.",
+      `Projeção anual realizada: realizada/dia × ${ANNUAL_BUSINESS_DAYS} dias úteis (segunda a sexta, sem feriados). ` +
+      `Sem medição informada, espelha a estimada. Validade de contabilização no painel permanece 1 ano corrido.`,
     effectiveness: "Relação entre a economia realizada e a estimada (quão perto do previsto o ganho ficou).",
   },
   savingsParams: {
     seconds_per_occurrence: "Tempo (em segundos) economizado a cada vez que o processo acontece.",
-    occurrences_per_day: "Quantas vezes por dia o processo/ganho acontece.",
+    occurrences_per_day: "Quantas vezes por dia (útil de operação) o processo/ganho acontece.",
     hourly_cost: "Custo por hora usado para converter o tempo economizado em dinheiro.",
     quantity_saved_per_day: "Quantidade de material economizada por dia (peças, kg, litros…).",
     unit_material_cost: "Custo unitário do material economizado, na mesma unidade da quantidade.",
-    fixed_daily_savings: "Valor fixo economizado por dia, quando o ganho já é conhecido em R$.",
+    fixed_daily_savings:
+      `Valor fixo economizado por dia útil. A API projeta o ano com × ${ANNUAL_BUSINESS_DAYS} dias úteis.`,
+  },
+  formNotes: {
+    annualProjection: ANNUAL_SAVINGS_EXPLANATION,
   },
   evidence: {
     upload: "Arraste um ou vários arquivos, ou clique para escolher na pasta. Depois defina a etapa de cada um e envie.",
     stage: "Antes / Depois documentam a transformação; Geral para anexos que não são comparativos.",
     link: "Use para referenciar um arquivo ou página externa em vez de anexar o binário.",
+    edit:
+      "Altere a descrição, a etapa (Antes/Depois/Geral) ou troque o arquivo/foto mantendo o mesmo registro. A descrição pode ser longa — use o campo amplo no formulário de edição.",
+    description:
+      "Texto livre que explica a evidência. Aparece no card e na ficha; use quantas linhas precisar.",
   },
   improvements: {
     launch:
       "Cria uma cópia da versão ativa como rascunho (Recebido) e a seleciona. Edite as seções ali mesmo e, ao final, clique em “Salvar e tornar ativa”. A versão ativa segue contabilizando até lá.",
     periodGain:
-      "Soma dos ganhos das versões que estiveram implantadas no intervalo, respeitando a validade de 1 ano de cada uma e sem projetar dias futuros. Rascunhos não contam.",
+      "Soma dos ganhos das versões que estiveram implantadas no intervalo, respeitando a validade de 1 ano corrido de cada uma e sem projetar dias futuros. Rascunhos não contam.",
     currentSavings:
-      "Economia contabilizada hoje: a versão implantada vigente, dentro da sua validade de 1 ano.",
+      "Economia contabilizada hoje: a versão implantada vigente, dentro da sua validade de 1 ano corrido. " +
+      `O valor “/ ano” exibido usa a projeção ${ANNUAL_SAVINGS_FORMULA_LABEL}.`,
     implement:
       "Torna esta versão a vigente usando a data implantação informada no estágio. A versão implantada anterior passa a Substituída e para de contabilizar.",
     editDraft:

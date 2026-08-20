@@ -570,14 +570,14 @@ Documentação completa: [scrap-monitoring.md](./scrap-monitoring.md).
 
 **Ganhos (`total_savings`):** para cada kaizen *implantado* com dias ativos no período, soma `daily_savings × dias ativos`. Kaizens implantados antes do `date_start` continuam gerando ganho nos dias do intervalo (desde a data de implantação até `date_end`).
 
-**Listagem (`list_kaizen`):** itens com `id`, `annual_savings` (`daily_savings × 365`) e demais campos cadastrais. O dashboard de qualidade usa chamada sem datas para catálogo completo na tabela.
+**Listagem (`list_kaizen`):** itens com `id`, `annual_savings` (`daily_savings × 261 dias úteis`) e demais campos cadastrais. O dashboard de qualidade usa chamada sem datas para catálogo completo na tabela.
 
 #### Cálculo
 
 ```
 horas_poupadas_dia = (segundos_por_ocorrencia × ocorrencias_por_dia) / 3600
 daily_savings      = horas_poupadas_dia × custo_hora   # arredondado em 2 casas
-annual_savings     = daily_savings × 365               # arredondado em 2 casas
+annual_savings     = daily_savings × 261             # dias úteis (seg–sex); validade do kaizen = 1 ano corrido (separado)
 ```
 
 Se alguma das três entradas estiver ausente, `daily_savings` e `annual_savings` são `null` e o kaizen não contribui para `total_savings`.

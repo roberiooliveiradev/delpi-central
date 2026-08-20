@@ -104,6 +104,8 @@ Body JSON (campos principais):
 
 Se `savings_type` for omitido, a API infere (`tempo`, `material`, `financeiro`, `qualitativo` ou `misto`) e recalcula `daily_savings` / `annual_savings`.
 
+**Projeção anual:** `annual_savings = daily_savings × 261` dias úteis (segunda a sexta, sem feriados). **Não** usar 365. A **validade** de contabilização no painel é outro conceito: **1 ano corrido** desde a implantação (`kaizen_savings_validity`).
+
 ### POST — import (JSON)
 
 Importa kaizens a partir do JSON exportado (`GET .../export`). **Não há** mais `import-from-sheet` — o Kaizômetro usa somente PostgreSQL.

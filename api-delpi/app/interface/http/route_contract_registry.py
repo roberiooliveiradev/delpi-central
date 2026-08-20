@@ -646,6 +646,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_kaizen_evidences": RouteContract("kaizen_evidence", "paged_list"),
     "attach_kaizen_evidence": RouteContract("kaizen_evidence", "scalar"),
     "update_kaizen_evidence": RouteContract("kaizen_evidence", "scalar"),
+    "replace_kaizen_evidence_file": RouteContract("kaizen_evidence", "scalar"),
     "delete_kaizen_evidence": RouteContract("kaizen_evidence", "scalar"),
     "get_quality_action_plans_dashboard": RouteContract(
         "quality_action_plan_dashboard", "scalar"

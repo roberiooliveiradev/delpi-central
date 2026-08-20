@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -152,6 +152,41 @@ def test_update_kaizen_evidence_returns_meta(mock_record, mock_ev) -> None:
         _REC, _EVID, body=UpdateKaizenEvidenceBody(stage="antes")
     )
     assert_envelope_meta(body_json(response), operation_id="update_kaizen_evidence")
+
+
+@pytest.mark.asyncio
+@_user_patch()
+@patch(f"{_KZ}.build_kaizen_evidence_storage")
+@patch(f"{_KZ}.build_kaizen_evidence_repository")
+@patch(f"{_KZ}.build_kaizen_repository")
+async def test_replace_kaizen_evidence_file_returns_meta(
+    mock_record, mock_ev_repo, mock_storage, _user
+) -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        replace_kaizen_evidence_file,
+    )
+
+    mock_record.return_value = _kaizen_repo()
+    mock_ev_repo.return_value = MagicMock(
+        get_evidence=MagicMock(
+            return_value={"id": _EVID, "type": "photo", "stored_name": "old.bin"}
+        ),
+        update_evidence=MagicMock(
+            return_value={"id": _EVID, "stored_name": "new.bin", "type": "photo"}
+        ),
+    )
+    mock_storage.return_value = MagicMock(
+        save=MagicMock(return_value="new.bin"),
+        delete_file=MagicMock(),
+    )
+    upload = MagicMock()
+    upload.filename = "foto.jpg"
+    upload.content_type = "image/jpeg"
+    upload.read = AsyncMock(return_value=b"fake-image-bytes")
+
+    response = await replace_kaizen_evidence_file(_REC, _EVID, file=upload)
+    assert_envelope_meta(body_json(response), operation_id="replace_kaizen_evidence_file")
+    mock_storage.return_value.delete_file.assert_called_once()
 
 
 @patch(f"{_KZ}.FileResponse")

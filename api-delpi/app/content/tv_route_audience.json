@@ -6131,6 +6131,23 @@
       },
       "category": "quality"
     },
+    "replace_kaizen_evidence_file": {
+      "locale": {
+        "en": {
+          "summary": "Replace kaizen evidence file",
+          "description": "Replace the binary file of an existing kaizen evidence while keeping the same evidence id.",
+          "label": "Replace Kaizen Evidence File",
+          "whenToUse": "Use to swap the photo or attachment of a kaizen evidence without recreating the record."
+        },
+        "pt-BR": {
+          "summary": "Substituir arquivo da evidência de kaizen",
+          "description": "Substitui o arquivo/foto de uma evidência existente mantendo o mesmo id.",
+          "label": "Substituir arquivo da evidência",
+          "whenToUse": "Use para trocar a foto ou anexo de uma evidência sem recriar o registro."
+        }
+      },
+      "category": "quality"
+    },
     "update_kaizen_record": {
       "locale": {
         "en": {

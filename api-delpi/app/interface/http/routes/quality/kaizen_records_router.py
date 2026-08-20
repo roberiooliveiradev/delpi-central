@@ -154,6 +154,7 @@ class UpdateKaizenRecordBody(BaseModel):
 class UpdateKaizenEvidenceBody(BaseModel):
     stage: str | None = Field(default=None, pattern="^(antes|depois|geral)$", json_schema_extra={"enum": list(KAIZEN_EVIDENCE_STAGE_VALUES)})
     description: str | None = None
+    external_url: str | None = None
 
 
 class ImplementKaizenVersionBody(BaseModel):
@@ -862,6 +863,77 @@ def download_kaizen_evidence(record_id: str, evidence_id: str):
         return error_response("Erro interno ao baixar evidência do kaizen.", status_code=500)
 
 
+@router.put(
+    "/{record_id}/evidences/{evidence_id}/file",
+    operation_id="replace_kaizen_evidence_file",
+)
+@require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
+async def replace_kaizen_evidence_file(
+    record_id: str,
+    evidence_id: str,
+    file: UploadFile = File(...),
+):
+    """Substitui o binário da evidência (mesmo id); apaga o arquivo anterior no volume."""
+    try:
+        record_repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(record_repo, record_id)
+        if err is not None:
+            return err
+        repo = build_kaizen_evidence_repository()
+        evidence = repo.get_evidence(record_id, evidence_id)
+        if evidence is None:
+            return not_found_response("Evidência não encontrada.")
+        if evidence.get("type") == "link":
+            return error_response(
+                "Evidência do tipo link não possui arquivo para substituir.",
+                status_code=400,
+            )
+
+        content = await file.read()
+        storage = build_kaizen_evidence_storage()
+        try:
+            stored_name = storage.save(
+                kaizen_id=record_id,
+                original_name=file.filename or "arquivo",
+                content=content,
+                mime_type=file.content_type,
+            )
+        except KaizenEvidenceStorageError as exc:
+            return error_response(str(exc), status_code=400)
+
+        previous_stored = evidence.get("stored_name")
+        mime = file.content_type or ""
+        evidence_type = "photo" if mime.startswith("image/") else (
+            "document"
+            if mime in (
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+            else "attachment"
+        )
+        data = repo.update_evidence(
+            record_id,
+            evidence_id,
+            {
+                "type": evidence_type,
+                "file_name": file.filename,
+                "stored_name": stored_name,
+                "mime_type": file.content_type,
+                "size_bytes": len(content),
+            },
+        )
+        if previous_stored and previous_stored != stored_name:
+            storage.delete_file(kaizen_id=record_id, stored_name=previous_stored)
+        return api_delpi_success(data, operation_id="replace_kaizen_evidence_file")
+    except Exception as exc:
+        log_error(f"Erro ao substituir arquivo da evidência do kaizen: {exc}")
+        return error_response(
+            "Erro interno ao substituir arquivo da evidência do kaizen.",
+            status_code=500,
+        )
+
+
 @router.patch("/{record_id}/evidences/{evidence_id}", operation_id="update_kaizen_evidence")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def update_kaizen_evidence(
@@ -875,7 +947,15 @@ def update_kaizen_evidence(
         if err is not None:
             return err
         repo = build_kaizen_evidence_repository()
-        data = repo.update_evidence(record_id, evidence_id, body.model_dump(exclude_unset=True))
+        payload = body.model_dump(exclude_unset=True)
+        if (
+            "external_url" in payload
+            and not (payload.get("external_url") or "").strip()
+        ):
+            current = repo.get_evidence(record_id, evidence_id)
+            if current and current.get("type") == "link":
+                return error_response("URL obrigatória para evidência do tipo link.", status_code=400)
+        data = repo.update_evidence(record_id, evidence_id, payload)
         if data is None:
             return not_found_response("Evidência não encontrada.")
         return api_delpi_success(data, operation_id="update_kaizen_evidence")

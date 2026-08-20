@@ -3774,6 +3774,13 @@
       "stable": true
     },
     {
+      "operationId": "replace_kaizen_evidence_file",
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "download_kaizen_evidence",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",

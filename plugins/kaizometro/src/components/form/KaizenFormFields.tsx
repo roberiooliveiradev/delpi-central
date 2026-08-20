@@ -4,6 +4,7 @@ import { DateField, FormFieldShell, SelectField, TextAreaField, TextField } from
 import { KaizenParticipantsField } from "./KaizenParticipantsField";
 import { SavingsParamFields } from "./SavingsParamFields";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { ANNUAL_SAVINGS_FORMULA_LABEL } from "../../content/savingsConstants";
 import {
   BRANCHES,
   KAIZEN_STATUSES,
@@ -181,8 +182,11 @@ export function KaizenFormFields({
       <FormSection
         title="Economia"
         hint={KAIZEN_HELP_TOOLTIPS.sections.savings}
-        description="Escolha o tipo — só os parâmetros que se aplicam a ele aparecem."
+        description={`Escolha o tipo — só os parâmetros que se aplicam a ele aparecem. Economia/ano = ${ANNUAL_SAVINGS_FORMULA_LABEL} (seg–sex, sem feriados); validade no painel = 1 ano corrido.`}
       >
+        <p className="kz-field kz-span-2 kz-form-note">
+          {KAIZEN_HELP_TOOLTIPS.formNotes.annualProjection}
+        </p>
         <SelectField
           id="kz-savings-type"
           label="Tipo de economia"

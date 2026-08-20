@@ -97,7 +97,7 @@ Fonte: PostgreSQL via `GET /quality/kaizens/summary` (Kaizômetro / Minha Delpi)
 daily_savings = (segundos_por_ocorrencia × ocorrencias_por_dia / 3600) × custo_hora
 ```
 
-**Campo no frontend:** `list_kaizen[].daily_savings`, `list_kaizen[].annual_savings` (`daily_savings × 365`) e `total_savings` (soma ponderada por dias ativos no período filtrado).
+**Campo no frontend:** `list_kaizen[].daily_savings`, `list_kaizen[].annual_savings` (`daily_savings × 261 dias úteis`) e `total_savings` (soma ponderada por dias ativos no período filtrado).
 
 **Listagem completa (tabela do dashboard):** chamar `/kaizens/summary` **sem** `date_start`/`date_end` para todos os kaizens implantados; KPIs e gráficos continuam usando o período filtrado.
 

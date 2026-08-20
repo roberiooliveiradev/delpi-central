@@ -45,6 +45,10 @@ import {
 } from "../components/ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
+  ANNUAL_BUSINESS_DAYS,
+  ANNUAL_SAVINGS_FORMULA_LABEL,
+} from "../content/savingsConstants";
+import {
   BRANCHES,
   KAIZEN_STATUSES,
   SAVINGS_TYPES,
@@ -730,7 +734,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
       <EditableSectionCard
         title="Economia"
         hint={KAIZEN_HELP_TOOLTIPS.sections.savings}
-        description="Parâmetros e economia calculada pela API"
+        description={`Parâmetros e economia calculada pela API. Economia/ano = ${ANNUAL_SAVINGS_FORMULA_LABEL} (seg–sex, sem feriados). Validade no painel = 1 ano corrido.`}
         isEditing={isEditing("economia")}
         onEdit={() => beginSectionEdit("economia")}
         onCancel={() => cancelSection("economia")}
@@ -751,7 +755,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
               value={formatCurrency(view.daily_savings)}
             />
             <ReadOnlyField
-              label="Estimada / ano"
+              label={`Estimada / ano (×${ANNUAL_BUSINESS_DAYS} d.úteis)`}
               hint={KAIZEN_HELP_TOOLTIPS.fields.estimatedAnnual}
               value={formatCurrency(view.annual_savings)}
             />
@@ -761,7 +765,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
               value={formatCurrency(view.realized_daily_savings)}
             />
             <ReadOnlyField
-              label="Realizada / ano"
+              label={`Realizada / ano (×${ANNUAL_BUSINESS_DAYS} d.úteis)`}
               hint={KAIZEN_HELP_TOOLTIPS.fields.realizedAnnual}
               value={formatCurrency(view.realized_annual_savings)}
             />
@@ -771,7 +775,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
               value={effectivenessLabel(view)}
             />
             <ReadOnlyField
-              label="Contabiliza ganhos"
+              label="Contabiliza ganhos (validade 1 ano corrido)"
               hint={KAIZEN_HELP_TOOLTIPS.fields.savingsValidity}
               value={savingsAccountingLabel(view)}
               wide
@@ -781,6 +785,9 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
         }
         editContent={
           <FormGrid>
+            <p className="kz-field kz-span-2 kz-form-note">
+              {KAIZEN_HELP_TOOLTIPS.formNotes.annualProjection}
+            </p>
             <SelectField
               id="kz-d-savings-type"
               label="Tipo de economia"

@@ -152,6 +152,20 @@ export async function httpPostForm<T>(
   return parseJson<T>(response);
 }
 
+export async function httpPutForm<T>(
+  url: string,
+  form: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: form,
+    signal: options.signal,
+  });
+  return parseJson<T>(response);
+}
+
 export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "DELETE",

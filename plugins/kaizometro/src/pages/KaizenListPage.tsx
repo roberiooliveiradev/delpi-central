@@ -17,6 +17,7 @@ import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenRecordFilters } from "../components/KaizenRecordFilters";
 import { StateAlert } from "../components/ui";
 import { detailPath, newPath } from "../constants/kaizen";
+import { ANNUAL_BUSINESS_DAYS } from "../content/savingsConstants";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
@@ -175,7 +176,7 @@ export function KaizenListPage({ onNavigate, branchOptions }: Props) {
       },
       {
         key: "annual_savings",
-        header: "Economia/ano",
+        header: `Economia/ano (×${ANNUAL_BUSINESS_DAYS} d.úteis)`,
         className: "kz-table__col--numeric",
         render: (row) => formatCurrency(row.annual_savings),
         sortable: true,
