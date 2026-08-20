@@ -35,6 +35,7 @@ import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
+import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
@@ -96,6 +97,9 @@ export function InteractionRoomPanel({
   );
   const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [attachmentEpochByMessageId, setAttachmentEpochByMessageId] = useState<
+    Record<string, number>
+  >({});
   const { currentUserId, myPortfolio } = usePortfolioScope();
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
@@ -105,14 +109,28 @@ export function InteractionRoomPanel({
   });
   threadRef.current = { messages, pinnedMessageIds };
 
+  const bumpMessageAttachments = useCallback((messageId: string) => {
+    const id = messageId.trim();
+    if (!id) return;
+    setAttachmentEpochByMessageId((prev) => ({
+      ...prev,
+      [id]: (prev[id] ?? 0) + 1,
+    }));
+  }, []);
+
   const onRoomRealtimeEvent = useCallback((event: CommercialInteractionRoomEvent) => {
+    if (event.type === "room.attachment") {
+      const messageId = (event.messageId || "").trim();
+      if (messageId) bumpMessageAttachments(messageId);
+      return;
+    }
     const next = applyInteractionRoomRealtime(threadRef.current, event, {
       ignoreActorClientId: getCommercialClientId(),
     });
     threadRef.current = next;
     setMessages(next.messages);
     setPinnedMessageIds(next.pinnedMessageIds);
-  }, []);
+  }, [bumpMessageAttachments]);
 
   useInteractionRoomSync(room?.id, onRoomRealtimeEvent, Boolean(room?.id));
 
@@ -133,6 +151,7 @@ export function InteractionRoomPanel({
   useEffect(() => {
     const key = entityKey?.trim() ?? "";
     setEditingMessageId(null);
+    setAttachmentEpochByMessageId({});
     if (!key) {
       setLoading(false);
       setRoom(null);
@@ -339,12 +358,21 @@ export function InteractionRoomPanel({
             label: mention.label,
             ref: mention.ref,
           })),
-          belowBody: hasUnfurl ? (
-            <InteractionRoomMentionUnfurls
-              basePath={basePath}
-              mentions={mentionDtos}
-            />
-          ) : null,
+          belowBody:
+            message.deleted_at != null ? null : (
+              <>
+                <InteractionRoomMessageAttachments
+                  messageId={message.id}
+                  reloadToken={attachmentEpochByMessageId[message.id] ?? 0}
+                />
+                {hasUnfurl ? (
+                  <InteractionRoomMentionUnfurls
+                    basePath={basePath}
+                    mentions={mentionDtos}
+                  />
+                ) : null}
+              </>
+            ),
         };
       }),
     [
@@ -355,6 +383,7 @@ export function InteractionRoomPanel({
       content.messageEditedSuffix,
       basePath,
       photoByUserId,
+      attachmentEpochByMessageId,
     ],
   );
 
@@ -437,6 +466,7 @@ export function InteractionRoomPanel({
           roomId={room.id}
           disabled={Boolean(editingMessageId)}
           onMessageCreated={onMessageCreated}
+          onMessageAttachmentsSettled={bumpMessageAttachments}
           onError={(message) => setError(message)}
           onAddFilesReady={(addFiles) => {
             addFilesRef.current = addFiles;

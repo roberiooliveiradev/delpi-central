@@ -36,6 +36,7 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/clearComposerDraft/);
     expect(source).toMatch(/updateInteractionMessage/);
     expect(source).toMatch(/mode === "edit"/);
+    expect(source).toMatch(/onMessageAttachmentsSettled/);
     expect(source).toMatch(/seedMentions|initialMentions/);
     expect(source).toMatch(/composerSaveEditAriaLabel/);
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);

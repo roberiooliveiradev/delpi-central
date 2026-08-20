@@ -262,6 +262,10 @@
   margin-bottom: var(--cm-gap-xs, 0.35rem);
 }
 
+.dashboard-commercial .cm-room-thread__message-attachments {
+  margin-top: var(--cm-gap-xs, 0.5rem);
+}
+
 .dashboard-commercial.dashboard-page--fill .cm-room-thread__dock {
   padding: var(--cm-gap-sm);
 }

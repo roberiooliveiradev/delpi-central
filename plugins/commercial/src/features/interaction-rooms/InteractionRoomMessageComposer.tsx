@@ -49,6 +49,8 @@ type Props = {
   }[];
   onMessageCreated: (message: InteractionMessageDto) => void;
   onMessageUpdated?: (message: InteractionMessageDto) => void;
+  /** After POST uploads finish (success or partial failure). */
+  onMessageAttachmentsSettled?: (messageId: string) => void;
   onCancelEdit?: () => void;
   onError: (message: string) => void;
   onAddFilesReady?: (addFiles: (files: File[]) => void) => void;
@@ -68,6 +70,7 @@ export function InteractionRoomMessageComposer({
   initialMentions = [],
   onMessageCreated,
   onMessageUpdated,
+  onMessageAttachmentsSettled,
   onCancelEdit,
   onError,
   onAddFilesReady,
@@ -231,6 +234,9 @@ export function InteractionRoomMessageComposer({
           );
         }
       }
+      if (files.length > 0) {
+        onMessageAttachmentsSettled?.(created.id);
+      }
     } catch (err: unknown) {
       onError(err instanceof Error ? err.message : content.roomSendError);
     } finally {
@@ -253,6 +259,7 @@ export function InteractionRoomMessageComposer({
     resetMentions,
     onMessageCreated,
     onMessageUpdated,
+    onMessageAttachmentsSettled,
     onCancelEdit,
     onError,
   ]);
