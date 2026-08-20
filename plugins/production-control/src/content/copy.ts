@@ -45,6 +45,11 @@ export const copy = {
     sequenceSaved: "Sequência salva.",
     sequenceError: "Não foi possível salvar a sequência.",
     dragHandle: "Reordenar",
+    operatorLink: "Link do operador",
+    operatorLinkHint:
+      "Copia o link público do cockpit desta filial para o operador acompanhar a fila em tempo real.",
+    operatorLinkCopied: "Link copiado!",
+    operatorLinkError: "Não foi possível copiar o link.",
     periodLabel: "Período",
     periodFrom: "De",
     periodTo: "até",

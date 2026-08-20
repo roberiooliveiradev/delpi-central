@@ -57,6 +57,8 @@ export DRAWING_PDF_LIBRARY_DIR="/mnt/x/DESENHOS DELPI EM PDF"
 
 Permissão: `api-delpi.access` (`API_DELPI_ACCESS`).
 
+O cockpit público do operador (`public-hub` → `production-control-api`) **não** consome estas rotas: o BFF do PCP monta a mesma pasta do FILESERVER e serve o PDF direto do disco após validar o PA na fila publicada. Esta biblioteca segue dedicada ao chat e às consultas de produto na api-delpi.
+
 ### Catálogo — filtros (`GET /products/drawings`)
 
 | Parâmetro | Descrição |

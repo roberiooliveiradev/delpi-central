@@ -254,6 +254,25 @@ Compartilhamento (QR/link/PNG) fica no MFE autenticado `kaizometro` (botão **Co
 
 Ver `src/apps/kaizen/` · doc: [plugins/kaizometro/README.md](../kaizometro/README.md).
 
+### Fila de produção — cockpit do operador (`production-control`)
+
+Link aberto para o chão de fábrica acompanhar a carga máquina do próprio posto:
+
+| Página | Rota | `load` |
+|---|---|---|
+| Cockpit | `/p/production-control/cockpit/aberto?branch=01` | `GET /apps/production-control-api/public/machine-load/aberto?branch=01` |
+
+- **Filial na query** (`branch=01` SC, `02` ES); ausente ou inválida cai em `01`.
+- **Seleção de posto** na primeira abertura; a escolha fica em `localStorage` por filial, com botão **Trocar posto** no cabeçalho.
+- **Tempo real:** `WS /apps/production-control-api/public/machine-load/{token}/ws?branch=…` avisa (`machine_load_updated`) quando o PCP reordena a fila ou atualiza do TOTVS; o cliente refaz a leitura HTTP. Fallback de polling a cada 90s e reconexão a cada 5s.
+- **Somente leitura:** sem drag-and-drop, sem PATCH — o sequenciamento é exclusivo do PCP. A resposta pública omite `refreshed_by` e `sequence_updated_by`.
+- **Copiar OP:** botão ao lado de cada ordem, com fallback `execCommand` para tablet em HTTP (sem Clipboard API).
+- **Desenho do PA:** botão **Ver desenho** no cartão quando há `pa_product_code`. O hub chama `GET /apps/production-control-api/public/machine-load/{token}/drawings/{pa}/pdf?branch=…`; o próprio BFF lê o arquivo da pasta do FILESERVER montada no container (`/drawing-pdfs`) e só entrega se o PA estiver na fila publicada. A api-delpi **não** participa desse fluxo. Pré-requisito de infra: `PC_DRAWING_PDF_HOST_PATH` apontando para o share ([infra/README-ambiente.md](../../infra/README-ambiente.md) § Biblioteca PDF de desenhos).
+
+O PCP copia o link pelo botão **Link do operador** na página Carga máquina do MFE `production-control`.
+
+Ver `src/apps/production-control/` · doc: [plugins/production-control/README.md](../production-control/README.md).
+
 ### Painéis TV (`tv-dashboard`)
 
 Apresentação rotativa em modo **kiosk** (sem logo DELPI):

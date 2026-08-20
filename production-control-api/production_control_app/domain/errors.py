@@ -19,3 +19,7 @@ class DelpiGatewayError(ProductionControlError):
 
 class SnapshotNotFound(ProductionControlError):
     """Snapshot da carga máquina ausente para o escopo pedido."""
+
+
+class DrawingNotFound(ProductionControlError):
+    """PDF do desenho indisponível ou PA fora da fila publicada."""

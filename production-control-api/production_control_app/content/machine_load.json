@@ -3,5 +3,18 @@
   "defaultWindowDays": 7,
   "maxWindowDays": 90,
   "operationsPageSize": 300,
-  "manualLaborToolCode": "MOD"
+  "manualLaborToolCode": "MOD",
+  "publicCockpit": {
+    "token": "aberto",
+    "messages": {
+      "invalidToken": "Link do cockpit inválido ou desativado.",
+      "paCodeRequired": "Informe o código do PA.",
+      "paNotInPublishedQueue": "Este PA não está na fila publicada desta filial.",
+      "drawingNotFound": "Desenho não encontrado para este PA.",
+      "drawingCodeInvalid": "Código do PA inválido para busca de desenho.",
+      "drawingLibraryUnavailable": "Biblioteca de desenhos indisponível: pasta não montada no servidor.",
+      "drawingLibraryEmpty": "A pasta de desenhos está vazia no servidor. Monte o compartilhamento do FILESERVER e recrie o serviço.",
+      "drawingLibraryUnreadable": "Não foi possível ler a pasta de desenhos no servidor."
+    }
+  }
 }

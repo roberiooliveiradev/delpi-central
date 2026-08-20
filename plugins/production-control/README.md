@@ -32,6 +32,8 @@ Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
 **Reordenar (DnD):** no CT ativo, arraste pela alça da linha para mudar a sequência. No drop, o MFE aplica a ordem na UI e chama `PATCH /machine-load/sequence` (só aquele CT). **Ctrl+Z** desfaz e **Ctrl+Shift+Z** refaz (pilha local + PATCH). A tabela não usa sort por coluna, para não conflitar com a ordem manual. A barra de período mostra `Sequência ajustada em…` quando houver `sequence_updated_at`.
 
+**Cockpit do operador (link público):** o botão **Link do operador** na barra de período copia `…/p/production-control/cockpit/aberto?branch={filial}` — página aberta no `public-hub`, sem login. O operador escolhe o posto na primeira abertura (a escolha fica no navegador dele), acompanha a fila em tempo real via WebSocket, copia a OP e abre o **desenho do PA** quando o arquivo existe na pasta do FILESERVER montada no `production-control-api`. É **somente leitura**: o sequenciamento continua exclusivo do PCP. Ver [plugins/public-hub/README.md](../public-hub/README.md) § *Fila de produção*.
+
 ## API
 
 Base: `/apps/production-control-api`
@@ -45,6 +47,9 @@ Base: `/apps/production-control-api`
 | POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS |
 | PATCH | `/machine-load/sequence?branch=&workCenter=&startDate=&endDate=` | Persiste a ordem manual do CT (`ordered_keys`) |
 | GET | `/problem-analysis?branch=&issueId=` | Inbox de exceções |
+| GET | `/public/machine-load/{token}?branch=&workCenter=` | Cockpit do operador (público, somente leitura) |
+| GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=` | PDF do desenho do PA lido da pasta do FILESERVER montada no BFF (público, PA precisa estar na fila) |
+| WS | `/public/machine-load/{token}/ws?branch=` | Aviso de mudança da fila para o cockpit |
 
 Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi/docs/api/production-pcp-orders.md) e [production-machine-load.md](../../api-delpi/docs/api/production-machine-load.md).
 

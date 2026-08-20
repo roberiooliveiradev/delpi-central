@@ -386,14 +386,18 @@ Guia completo: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ## Biblioteca PDF de desenhos (FILESERVER dev)
 
-O `api-delpi` em dev lê PDFs do **FILESERVER** (`X:\DESENHOS DELPI EM PDF`), não da pasta gitignored `minha-delpi-ai-api/desenhos/`.
+O `api-delpi` em dev lê PDFs do **FILESERVER** (`X:\DESENHOS DELPI EM PDF`), não da pasta gitignored `minha-delpi-ai-api/desenhos/`. O cockpit do operador (`public-hub`) **não** passa mais pela `api-delpi`: o `production-control-api` monta a mesma pasta e serve o PDF direto do disco.
 
 | Variável | Onde | Default dev |
 |----------|------|-------------|
 | `DRAWING_PDF_FILESERVER_HOST_PATH` | `infra/.env` / `.env.local` | `/mnt/x/DESENHOS DELPI EM PDF` |
 | `DRAWING_PDF_LIBRARY_DIR` | container api-delpi | `/drawing-pdfs` |
+| `PC_DRAWING_PDF_HOST_PATH` | `infra/.env` / `.env.local` | `/mnt/x/DESENHOS DELPI EM PDF` |
+| `PC_DRAWING_PDF_LIBRARY_DIR` | container production-control-api | `/drawing-pdfs` |
 
-**Montar X: no WSL** (se `/mnt/x` estiver vazio):
+**Produção (`srv-api`):** o share do FILESERVER precisa estar montado no host (CIFS/SMB) e `PC_DRAWING_PDF_HOST_PATH` apontando para ele (default `/mnt/fileserver/desenhos`); o compose entrega o bind `:ro` para o `production-control-api`. Sem o mount o cockpit mostra mensagem explícita de pasta ausente/vazia, não "desenho não encontrado".
+
+**Montar X: no WSL** (se `/mnt/x` estiver vazio **ou** a pasta `DESENHOS DELPI EM PDF` existir mas sem PDFs — stub sem o drive `X:`):
 
 ```bash
 sudo mkdir -p /mnt/x && sudo mount -t drvfs X: /mnt/x
@@ -408,6 +412,11 @@ DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/x/DESENHOS DELPI EM PDF
 
 docker compose -f infra/docker-compose.dev.yml up -d --force-recreate api-delpi
 docker exec delpi-api-delpi ls /drawing-pdfs | wc -l
+
+# Cockpit do operador (mesma pasta, mount próprio do plugin)
+PC_DRAWING_PDF_HOST_PATH=/mnt/x/DESENHOS DELPI EM PDF
+docker compose -f infra/docker-compose.dev.yml up -d --force-recreate production-control-api
+docker exec delpi-production-control-api ls /drawing-pdfs | wc -l
 ```
 
 Catálogo: `GET /apps/api-delpi/products/drawings?page_size=5` (via gateway).

@@ -113,6 +113,10 @@ class DrawingPdfLibraryStorage:
         return self._build_match(normalized, selected)
 
     def resolve_pdf_path(self, product_code: str) -> Path:
+        unavailable = self._library_unavailability_reason()
+        if unavailable:
+            raise DrawingPdfLibraryStorageError(unavailable)
+
         match = self.find_drawing(product_code)
         if match is None:
             raise DrawingPdfLibraryStorageError(
@@ -377,6 +381,20 @@ class DrawingPdfLibraryStorage:
     def _numeric_prefix(self, code: str) -> str | None:
         match = _NUMERIC_PREFIX_PATTERN.match(code)
         return match.group(1) if match else None
+
+    def _library_unavailability_reason(self) -> str | None:
+        if not self.base_dir.is_dir():
+            return "Biblioteca de desenhos indisponível: pasta não montada no servidor."
+        try:
+            next(self.base_dir.iterdir())
+        except StopIteration:
+            return (
+                "A pasta de desenhos no servidor está vazia. "
+                "Monte o FILESERVER no host e recrie a api-delpi."
+            )
+        except OSError:
+            return "Biblioteca de desenhos indisponível: não foi possível ler a pasta."
+        return None
 
     def _stem_matches_request(self, stem: str, requested_code: str, numeric_prefix: str) -> bool:
         if stem == requested_code:

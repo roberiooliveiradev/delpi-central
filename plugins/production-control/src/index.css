@@ -626,6 +626,32 @@
   cursor: pointer;
 }
 
+.dashboard-production-control .ppc-period__operator-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--ppc-border);
+  background: transparent;
+  color: var(--ppc-text-muted, var(--ppc-text));
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-period__operator-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.dashboard-production-control .ppc-period__operator-link:hover {
+  border-style: solid;
+  border-color: var(--ppc-accent);
+  color: var(--ppc-accent);
+}
+
 .dashboard-production-control .ppc-period__apply {
   border-color: transparent;
   background: var(--ppc-accent);

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -9,12 +10,18 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from production_control_app.middleware.auth_middleware import jwt_middleware
 
+from production_control_app.application.services.machine_load_realtime_hub import (
+    machine_load_realtime_hub,
+)
 from production_control_app.config import settings
 from production_control_app.core.responses import fail
 from production_control_app.interface.http.routes.machine_load_routes import (
     router as machine_load_router,
 )
 from production_control_app.interface.http.routes.overview_routes import router as overview_router
+from production_control_app.interface.http.routes.public_machine_load_routes import (
+    router as public_machine_load_router,
+)
 from production_control_app.interface.http.routes.problem_analysis_routes import (
     router as problem_analysis_router,
 )
@@ -48,7 +55,12 @@ ALLOWED_ORIGINS = build_allowed_origins()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     run_migrations_on_startup()
-    yield
+    machine_load_realtime_hub.bind_loop(asyncio.get_running_loop())
+    worker = asyncio.create_task(machine_load_realtime_hub.worker())
+    try:
+        yield
+    finally:
+        worker.cancel()
 
 
 app = FastAPI(
@@ -95,4 +107,5 @@ def health():
 app.include_router(subplugin_router)
 app.include_router(overview_router)
 app.include_router(machine_load_router)
+app.include_router(public_machine_load_router)
 app.include_router(problem_analysis_router)

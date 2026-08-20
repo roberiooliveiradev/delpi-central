@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import logging
+from collections.abc import Callable
 from datetime import date, datetime, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -18,8 +20,13 @@ from production_control_app.domain.services.current_month_period import (
     today_in_timezone,
 )
 
+logger = logging.getLogger(__name__)
+
 _CONTENT_PATH = Path(__file__).resolve().parents[2] / "content" / "machine_load.json"
 _SNAPSHOT_SCHEMA_VERSION = 1
+
+# Campos com identidade interna do PCP — não expostos no cockpit público do operador.
+_INTERNAL_IDENTITY_FIELDS = ("refreshed_by", "sequence_updated_by")
 
 _STATUS_FIELDS = (
     "production_status",
@@ -109,10 +116,12 @@ class MachineLoadService:
         *,
         snapshots: MachineLoadSnapshotRepositoryPort,
         branch_access: BranchAccessService | None = None,
+        change_notifier: Callable[..., None] | None = None,
     ) -> None:
         self._gateway = gateway
         self._snapshots = snapshots
         self._branch_access = branch_access or BranchAccessService()
+        self._change_notifier = change_notifier
 
     def resolve_window(
         self,
@@ -174,6 +183,55 @@ class MachineLoadService:
             branch=branch,
         )
 
+    def build_public(
+        self,
+        *,
+        branch: str,
+        work_center: str | None = None,
+    ) -> dict[str, Any]:
+        """Cockpit do operador: leitura anônima do snapshot congelado, sem puxar o TOTVS.
+
+        Diferente de ``build``, nunca faz seed: um link público não pode disparar carga
+        no ERP nem materializar snapshot novo.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        start, end = self.resolve_window(start_date=None, end_date=None)
+        row = self._snapshots.get(branch=code, start_date=start, end_date=end)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila deste período ainda não foi publicada pelo PCP."
+            )
+        payload = self._present(
+            row,
+            work_center=work_center,
+            seeded=False,
+            branch=code,
+        )
+        return self._strip_internal_identity(payload)
+
+    def public_snapshot_contains_pa(self, *, branch: str, pa_code: str) -> bool:
+        """Confere se o PA aparece na fila congelada da janela default — sem puxar o TOTVS."""
+        code = self._branch_access.assert_valid_branch(branch)
+        wanted = str(pa_code or "").strip()
+        if not wanted:
+            return False
+        start, end = self.resolve_window(start_date=None, end_date=None)
+        row = self._snapshots.get(branch=code, start_date=start, end_date=end)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila deste período ainda não foi publicada pelo PCP."
+            )
+        payload = self._decode_payload(row)
+        operations = _dict_items(payload.get("operations"))
+        if not operations and isinstance(payload.get("operations"), list):
+            operations = _dict_items(payload["operations"])
+        wanted_key = wanted.upper()
+        for item in operations:
+            pa = str(item.get("pa_product_code") or "").strip()
+            if pa.upper() == wanted_key:
+                return True
+        return False
+
     def refresh(
         self,
         user: object | None,
@@ -186,12 +244,14 @@ class MachineLoadService:
         self._assert_can_view(user, branch)
         start, end = self.resolve_window(start_date=start_date, end_date=end_date)
         row = self._pull_and_store(user, branch=branch, start=start, end=end)
-        return self._present(
+        presented = self._present(
             row,
             work_center=work_center,
             seeded=False,
             branch=branch,
         )
+        self._notify_change(branch=branch, reason="refresh")
+        return presented
 
     def reorder_sequence(
         self,
@@ -237,12 +297,41 @@ class MachineLoadService:
             end_date=end,
             payload=payload,
         )
-        return self._present(
+        presented = self._present(
             updated,
             work_center=center,
             seeded=False,
             branch=branch,
         )
+        self._notify_change(branch=branch, reason="sequence", work_center=center)
+        return presented
+
+    def _notify_change(
+        self,
+        *,
+        branch: str,
+        reason: str,
+        work_center: str | None = None,
+    ) -> None:
+        if self._change_notifier is None:
+            return
+        try:
+            self._change_notifier(branch=branch, reason=reason, work_center=work_center)
+        except Exception:  # noqa: BLE001
+            # Aviso de tempo real é best-effort: nunca derruba a escrita já persistida.
+            logger.exception("machine_load_change_notify_failed")
+
+    @staticmethod
+    def _strip_internal_identity(payload: dict[str, Any]) -> dict[str, Any]:
+        public_payload = dict(payload)
+        snapshot = public_payload.get("snapshot")
+        if isinstance(snapshot, dict):
+            public_payload["snapshot"] = {
+                key: value
+                for key, value in snapshot.items()
+                if key not in _INTERNAL_IDENTITY_FIELDS
+            }
+        return public_payload
 
     @staticmethod
     def _decode_payload(row: dict[str, Any]) -> dict[str, Any]:
