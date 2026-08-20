@@ -2950,3 +2950,70 @@ TRAINING_AGENT_INTERACTION_INDEX = [
         "fixture": "PROJECT_SOURCES_SLOT_CASES",
     },
 ]
+
+# E2.S1 — Matriz de famílias (web / text / API / skills) × gates do chat base.
+# Cada caso cobre ≥1 família da tabela em chat-intelligence-base.md § Matriz de fluxos.
+FLOW_FAMILY_MATRIX_CASES = [
+    {
+        "id": "FF-WEB-01",
+        "family": "web",
+        "message": "pesquise na web sobre normas ISO 9001",
+        "expects": {
+            "web_explicit": True,
+            "blocks_external_action": True,
+            "text_task_pure": False,
+        },
+    },
+    {
+        "id": "FF-TEXT-01",
+        "family": "text_task",
+        "message": "corrija o português deste texto: Olá tudo bom",
+        "expects": {
+            "text_task_pure": True,
+            "text_correction": True,
+            "web_explicit": False,
+            "blocks_external_action": False,
+        },
+    },
+    {
+        "id": "FF-API-01",
+        "family": "operational_api",
+        "message": "qual o estoque do produto 10080047?",
+        "expects": {
+            "operational_data_request": True,
+            "web_explicit": False,
+            "blocks_external_action": False,
+            "text_task_pure": False,
+        },
+    },
+    {
+        "id": "FF-API-02",
+        "family": "operational_api_retry",
+        "message": "tente novamente",
+        "expects": {
+            "retry_or_continue": True,
+            "web_explicit": False,
+        },
+    },
+    {
+        "id": "FF-SKILL-01",
+        "family": "skill_company_knowledge",
+        "message": "qual o estoque do produto 10080047?",
+        "skills": {"companyKnowledge": True},
+        "expects": {
+            "operational_data_request": True,
+            "preserves_rag_on_fast_path": True,
+            "blocks_external_action": False,
+        },
+    },
+    {
+        "id": "FF-MULTI-01",
+        "family": "multi_intent",
+        "message": "estrutura e roteiro do produto 90260149",
+        "expects": {
+            "multi_scope_intent": True,
+            "operational_data_request": True,
+            "text_task_pure": False,
+        },
+    },
+]

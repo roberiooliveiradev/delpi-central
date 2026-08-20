@@ -65,6 +65,21 @@ O composer envia `responseMode` (`fast` | `normal` | `thinker`) em cada mensagem
 
 **Matriz completa, gate de product overview e metadata:** [`chat-response-modes.md`](./chat-response-modes.md).
 
+### Matriz de fluxos × tools / RAG / budget (ago/2026)
+
+Todos os fluxos passam pelo mesmo `ChatTurnPreparationService` + `contextBudget` por modo. Famílias canônicas:
+
+| Família | Exemplos | Tools | RAG documental | Budget |
+|---------|----------|-------|----------------|--------|
+| **Web** | `pesquise na web…` | `web_search`; **bloqueia** `execute_external_action` no turno | skip se síntese web basta | histórico/síntese pelo modo; latency **não** corta tool web |
+| **Text task** | correção, e-mail, tradução pura | skip tools | skip | histórico pelo modo (`conversationEvidence` em correção de ordem) |
+| **Operacional / API** | estoque, KPI, OpenAPI, SQL | `execute_external_action` (com agente) | skip se tool ok; sem tapa-buraco em miss | `toolContextMaxChars` + `maxMultiActionsPerTurn` |
+| **Skills** | `companyKnowledge`, desenho, SQL authoring | só **habilitam** caminhos | `preserves_rag_on_fast_path` **não** mascara miss de tool | RAG skill usa budget do modo |
+| **Message search** | «o que eu pedi», correção | passo interno sessão | skip doc | `messageSearch*` do modo |
+| **Clarify / multi-intent** | ambíguo; estrutura+roteiro | chips / 1ª action no fast | skip | modo limita multi-actions |
+
+Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (≥1 caso web, text, API, skill).
+
 ---
 
 ## Pipeline base
