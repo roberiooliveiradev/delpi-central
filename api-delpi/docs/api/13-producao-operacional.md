@@ -65,6 +65,8 @@ Rotas REST que encapsulam SQL validado de produção, consumo, perdas, OPs e ran
 
 **Catálogo de OPs (view `VW_PCP_ORDENS_PRODUCAO`):** `/production/pcp-orders/{summary,items,ranking}` — ver [production-pcp-orders.md](./production-pcp-orders.md). Não confundir com `/production/orders/*` (SC2010).
 
+**Carga máquina (`SH8010`):** `/production/machine-load/{work-centers,operations}` — fila de operações já alocadas por centro de trabalho, com ferramenta (`H8_FERRAM`) e entrega do PA. Ver [production-machine-load.md](./production-machine-load.md). Não confundir com `/production/work-centers/order-summary` (só contagem de OPs por CT).
+
 ---
 
 ## Compras — ranking global (`/purchases`)

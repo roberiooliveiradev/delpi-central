@@ -1,5 +1,7 @@
 """Filtros SQL compartilhados para OPs de produto acabado (PA) em produção."""
 
+from app.domain.totvs.protheus_production_orders import MOTHER_ORDER_SEQUENCE
+
 # PA elegível no OTD e detalhe de OP: C2_PRODUTO começa com 9 (PA DELPI) ou 8 (amostras/teste).
 SC2_PA_PRODUCT_CODE_PREFIXES: tuple[str, ...] = ("9", "8")
 
@@ -15,7 +17,9 @@ def _product_code_prefix_clause(column: str) -> str:
 SC2_PA_PRODUCT_CODE_PREFIX_SQL = _product_code_prefix_clause("OP.C2_PRODUTO")
 
 # OTD considera só OP mãe (sequência 001) — entrega consolidada, não OPs vinculadas (002+).
-SC2_MOTHER_OP_SEQUENCE_SQL = "RTRIM(LTRIM(OP.C2_SEQUEN)) = '001'"
+SC2_MOTHER_OP_SEQUENCE_SQL = (
+    f"RTRIM(LTRIM(OP.C2_SEQUEN)) = '{MOTHER_ORDER_SEQUENCE}'"
+)
 
 # Variante para consultas com alias LINKED em OPs vinculadas.
 LINKED_PA_PRODUCT_CODE_PREFIX_SQL = _product_code_prefix_clause("LINKED.C2_PRODUTO")

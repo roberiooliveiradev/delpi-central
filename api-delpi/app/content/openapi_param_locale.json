@@ -3351,6 +3351,22 @@
             "label": "Quantidade ↓"
           }
         },
+        "schedule_asc": {
+          "en": {
+            "label": "Schedule ↑"
+          },
+          "pt-BR": {
+            "label": "Programação ↑"
+          }
+        },
+        "schedule_desc": {
+          "en": {
+            "label": "Schedule ↓"
+          },
+          "pt-BR": {
+            "label": "Programação ↓"
+          }
+        },
         "stock_value_asc": {
           "en": {
             "label": "Stock value ↑"
@@ -4358,6 +4374,44 @@
         "pt-BR": {
           "label": "Centro de trabalho",
           "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
+        }
+      }
+    },
+    "scheduled_start": {
+      "locale": {
+        "en": {
+          "label": "Scheduled start",
+          "description": "Start of the scheduled operation window (H8_DTINI, YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Início programado",
+          "description": "Início da janela de operações programadas (H8_DTINI, AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "scheduled_end": {
+      "locale": {
+        "en": {
+          "label": "Scheduled end",
+          "description": "End of the scheduled operation window (H8_DTINI, YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Fim programado",
+          "description": "Fim da janela de operações programadas (H8_DTINI, AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "tool": {
+      "locale": {
+        "en": {
+          "label": "Tool",
+          "description": "Tool allocated to the operation (H8_FERRAM). MOD means manual labor."
+        },
+        "pt-BR": {
+          "label": "Ferramenta",
+          "description": "Ferramenta alocada na operação (H8_FERRAM). MOD indica mão de obra."
         }
       }
     },
