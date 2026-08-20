@@ -346,3 +346,21 @@
 .delpi-ui-mention-composer__footer {
   min-width: 0;
 }
+
+.delpi-ui-mention-composer__inline-image {
+  display: block;
+  margin: 0.5rem 0;
+  max-width: min(100%, 28rem);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 6%, transparent);
+}
+
+.delpi-ui-mention-composer__inline-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(40vh, 16rem);
+  object-fit: contain;
+  vertical-align: middle;
+}

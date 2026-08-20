@@ -144,4 +144,16 @@ describe("markdownToRichTextHtml / richTextHtmlToMarkdown", () => {
     expect(bubble.toLowerCase()).toMatch(/<code\b/);
     expect(bubble).toContain("Mais qualidade.");
   });
+
+  it("round-trip attachment:pending e attachment:uuid", () => {
+    const md =
+      "antes\n\n![a](attachment:pending:abc123)\n\nmeio\n\n![b](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)\n\ndepois";
+    const html = markdownToRichTextHtml(md);
+    expect(html).toContain("data-attachment-pending=\"abc123\"");
+    expect(html).toContain("data-attachment-id=\"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\"");
+    expect(html).toContain("delpi-ui-mention-composer__inline-image");
+    const back = richTextHtmlToMarkdown(html);
+    expect(back).toContain("![a](attachment:pending:abc123)");
+    expect(back).toContain("![b](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)");
+  });
 });

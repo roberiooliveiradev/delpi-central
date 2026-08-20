@@ -218,7 +218,40 @@ export function markdownToRichTextHtml(markdown: string): string {
   if (!source) return "<p></p>";
   const parsed = marked.parse(source, { async: false });
   const html = typeof parsed === "string" ? parsed.trim() : "";
-  return html || "<p></p>";
+  if (!html) return "<p></p>";
+  return enhanceAttachmentImagesInHtml(html);
+}
+
+/** Marca `<img src="attachment:…">` do marked com data attrs para o composer/bolha. */
+export function enhanceAttachmentImagesInHtml(html: string): string {
+  if (!html.includes("attachment:")) return html;
+  try {
+    const doc = new DOMParser().parseFromString(`<div id="root">${html}</div>`, "text/html");
+    const root = doc.getElementById("root");
+    if (!root) return html;
+    for (const img of Array.from(root.querySelectorAll("img"))) {
+      const src = (img.getAttribute("src") || "").trim();
+      if (!src.startsWith("attachment:")) continue;
+      img.setAttribute("data-attachment-href", src);
+      if (src.startsWith("attachment:pending:")) {
+        img.setAttribute("data-attachment-pending", src.slice("attachment:pending:".length));
+      } else {
+        img.setAttribute(
+          "data-attachment-id",
+          src.slice("attachment:".length),
+        );
+      }
+      img.removeAttribute("src");
+      const figure = doc.createElement("figure");
+      figure.className = "delpi-ui-mention-composer__inline-image delpi-ui-message-thread__inline-image";
+      figure.setAttribute("contenteditable", "false");
+      img.parentNode?.insertBefore(figure, img);
+      figure.appendChild(img);
+    }
+    return root.innerHTML;
+  } catch {
+    return html;
+  }
 }
 
 export function richTextHtmlToMarkdown(html: string): string {

@@ -100,3 +100,21 @@
 .delpi-ui-message-thread__body--rich blockquote > :last-child {
   margin-bottom: 0;
 }
+
+.delpi-ui-message-thread__inline-image {
+  display: block;
+  margin: 0.5rem 0;
+  max-width: min(100%, 28rem);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 6%, transparent);
+}
+
+.delpi-ui-message-thread__inline-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(48vh, 20rem);
+  object-fit: contain;
+  cursor: zoom-in;
+}
