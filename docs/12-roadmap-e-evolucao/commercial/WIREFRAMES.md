@@ -1285,19 +1285,19 @@ Split ~**20% lista / 80% thread** (`ResizableColumns`, colapsar, persistência).
 ```text
 +-- Portal ---------------------------------------------------------------+
 | [sidebar Minha Delpi] | Inicio  Visao geral  Sala  Tarefas  Pedidos …  |
-|                       +-------------------------------------------------+
-|                       | PageHero: Sala de interacao                     |
-|                       | chips no hero                                   |
 |                       +--------+----------------------------------------+
 |                       | Inbox  | HEADER  titulo  chave  [RC][UC] [icon] |
 |                       | ~20%   | +-- main ------------+-- Neste chat --+|
-|                       | scroll | | msgs (bolhas)      | Sobre          ||
-|                       |        | |                    | Participantes  ||
-|                       |        | | dock composer      | Fixadas        ||
-|                       |        | +--------------------+----------------+|
+|                       | toolbar| | msgs (bolhas)      | Sobre          ||
+|                       | filtros| |                    | Participantes  ||
+|                       | busca  | | dock composer      | Fixadas        ||
+|                       | scroll | +--------------------+----------------+|
+|                       | cards  |                                        |
 |                       +--------+----------------------------------------+
 +-------------------------------------------------------------------------+
 ```
+
+Chrome da inbox: filtros (`ScopeChipBar`) + busca na **toolbar do pane** (não PageHero). Retry só no `StateBanner` («Tentar de novo»).
 
 Abaixo de 900px: lista **ou** detalhe. Painel Neste chat só com o toggle do header; fechado, o chat ocupa 100% da coluna. Pin → `scrollIntoView`. Sem X no painel.
 
@@ -1383,7 +1383,7 @@ EmptyState: Nenhuma mensagem. A conversa deste pedido fica registrada aqui.
 
 `SectionRouteCard` Operação: item «Sala de interação» + badge não lidas.
 
-**Mapa tela → kit:** `PageHero`, `PagePath`, `UnderlineNav`, `CatalogSearchBar`, `RoomInboxList`, `RoomHeader`, `RoomSidePanel`, `RoomContextPanel`, `MessageThread` (`editingId` / `renderEditSlot`), `MentionComposer` (`replyTo`, markdown contenteditable), `MentionMenu`, `MentionText`, `EntityUnfurlCard`, `ReactionBar` (`emojiAdd` → `EmojiInsertMenu`), `FileDropzone`, `EmptyState`, `LoadingActivityCard`, `SectionRouteCard`, drawer host-contained.
+**Mapa tela → kit:** `ResizableColumns`, `ScopeChipBar`, `CatalogSearchBar`, `RoomInboxList`, `RoomHeader`, `RoomSidePanel`, `RoomContextPanel`, `MessageThread` (`mine`, `editingId` / `renderEditSlot`), `MentionComposer` (`replyTo`, markdown contenteditable), `ConversationFileDropLayer`, `MentionMenu`, `MentionText`, `EntityUnfurlCard`, `ReactionBar` (`emojiAdd` → `EmojiInsertMenu`), `EmptyState`, `LoadingActivityCard`, `SectionRouteCard`, drawer host-contained.
 
 **Fora P0:** mural kanban, DM 1:1, call/vídeo, tela OTD nova.
 
