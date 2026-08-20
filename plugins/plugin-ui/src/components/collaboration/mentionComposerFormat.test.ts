@@ -41,6 +41,25 @@ function collapseCaretAtEnd(editor: HTMLElement) {
   selection?.addRange(range);
 }
 
+function collapseCaretAfterText(editor: HTMLElement, needle: string) {
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode() as Text | null;
+  while (node) {
+    const idx = node.data.indexOf(needle);
+    if (idx >= 0) {
+      const range = document.createRange();
+      range.setStart(node, idx + needle.length);
+      range.collapse(true);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      return;
+    }
+    node = walker.nextNode() as Text | null;
+  }
+  throw new Error(`needle not found: ${needle}`);
+}
+
 describe("toggleComposerFormat", () => {
   it("liga e desliga negrito no trecho e reporta o estado", () => {
     const editor = document.createElement("div");
@@ -91,6 +110,44 @@ describe("toggleComposerFormat", () => {
       /<(strong|b)>mensagem inteira<\/(strong|b)>/,
     );
     editor.remove();
+  });
+
+  it("caret no fim do negrito: desativar não remove o trecho já escrito", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const editor = document.createElement("div");
+    editor.innerHTML = "prefixo <strong>dsdsd dsds</strong>";
+    document.body.appendChild(editor);
+    collapseCaretAfterText(editor, "dsdsd dsds");
+    expect(queryComposerFormatFlags(editor).bold).toBe(true);
+
+    toggleComposerFormat(editor, "bold");
+
+    const html = editor.innerHTML.toLowerCase();
+    expect(html).toMatch(/<(strong|b)[^>]*>dsdsd dsds<\/(strong|b)>/);
+    expect(queryComposerFormatFlags(editor).bold).toBe(false);
+    const selection = window.getSelection();
+    expect(selection?.getRangeAt(0)?.collapsed).toBe(true);
+    editor.remove();
+  });
+
+  it("caret no fim de italic/strike/code: desativar preserva o trecho", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    for (const [kind, htmlTag, selector] of [
+      ["italic", "em", "em, i"],
+      ["strike", "s", "s, strike, del"],
+      ["code", "code", "code"],
+    ] as const) {
+      const editor = document.createElement("div");
+      editor.innerHTML = `<${htmlTag}>trecho</${htmlTag}>`;
+      document.body.appendChild(editor);
+      collapseCaretAfterText(editor, "trecho");
+      toggleComposerFormat(editor, kind);
+      expect(editor.innerHTML.toLowerCase()).toMatch(
+        new RegExp(`<${htmlTag}\\b[^>]*>trecho</${htmlTag}>`),
+      );
+      expect(queryComposerFormatFlags(editor)[kind]).toBe(false);
+      editor.remove();
+    }
   });
 
   it("liga e desliga italic e strike", () => {

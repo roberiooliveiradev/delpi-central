@@ -446,10 +446,23 @@ export function MentionComposer({
     return false;
   };
 
+  const restoreSelectionForMutation = () => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    const live = getRichTextSelectionRange(el);
+    // Seleção viva expandida tem prioridade sobre range salvo colapsado (stale).
+    if (live && !live.collapsed) {
+      restoreRichTextSelection(el, live);
+      savedRangeRef.current = live;
+      return;
+    }
+    restoreRichTextSelection(el, savedRangeRef.current);
+  };
+
   const runFormat = (kind: ComposerFormatKind) => {
     const el = surfaceRef.current;
     if (!el) return;
-    restoreRichTextSelection(el, savedRangeRef.current);
+    restoreSelectionForMutation();
     commitBeforeMutation();
     toggleComposerFormat(el, kind);
     setFormatFlags(queryComposerFormatFlags(el));
@@ -495,7 +508,7 @@ export function MentionComposer({
     const el = surfaceRef.current;
     if (!el) return;
     const next = clampComposerFontSize(nextRaw);
-    restoreRichTextSelection(el, savedRangeRef.current);
+    restoreSelectionForMutation();
     commitBeforeMutation();
     applyRichTextFontSize(el, next);
     setFontSize(next);
