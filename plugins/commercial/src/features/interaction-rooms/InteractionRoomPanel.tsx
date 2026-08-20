@@ -48,7 +48,7 @@ import {
   interactionRoomParticipantAvatar,
 } from "./interactionRoomUserLink";
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
-import { buildReplyComposerBanner } from "./interactionRoomReply";
+import { buildEditComposerBanner, buildReplyComposerBanner } from "./interactionRoomReply";
 import {
   INTERACTION_ROOM_NARROW_QUERY,
   useMatchMedia,
@@ -496,6 +496,17 @@ export function InteractionRoomPanel({
     [replyTarget, nameFor],
   );
 
+  const editTarget = useMemo(() => {
+    const id = (editingMessageId || "").trim();
+    if (!id) return null;
+    return messages.find((row) => row.id === id) ?? null;
+  }, [messages, editingMessageId]);
+
+  const editBanner = useMemo(
+    () => buildEditComposerBanner(editTarget),
+    [editTarget],
+  );
+
   const participants = useMemo(
     () =>
       members.map((member) =>
@@ -548,37 +559,25 @@ export function InteractionRoomPanel({
             emptyLabel={content.panelEmptyTitle}
             messages={threadMessages}
             resolveActions={resolveActions}
-            editingId={editingMessageId}
             onParentQuoteClick={onParentQuoteClick}
-            renderEditSlot={(message) => {
-              const source =
-                messages.find((row) => row.id === message.id) ?? null;
-              return (
-              <InteractionRoomMessageComposer
-                roomId={room.id}
-                mode="edit"
-                editMessageId={message.id}
-                initialMarkdown={source?.body_text ?? message.bodyText}
-                initialMentions={(source?.mentions ?? []).map((mention) => ({
-                  kind: mention.mention_kind,
-                  ref: { ...mention.ref },
-                  label: mention.label,
-                }))}
-                onMessageCreated={onMessageCreated}
-                onMessageUpdated={onMessageUpdated}
-                onCancelEdit={() => setEditingMessageId(null)}
-                onError={(text) => setError(text)}
-              />
-              );
-            }}
           />
           </div>
         )}
         <InteractionRoomMessageComposer
           roomId={room.id}
-          disabled={Boolean(editingMessageId)}
-          replyToMessageId={replyMessageId}
-          replyBanner={replyBanner}
+          mode={editingMessageId ? "edit" : "compose"}
+          editMessageId={editingMessageId}
+          initialMarkdown={editTarget?.body_text ?? ""}
+          initialMentions={(editTarget?.mentions ?? []).map((mention) => ({
+            kind: mention.mention_kind,
+            ref: { ...mention.ref },
+            label: mention.label,
+          }))}
+          editBanner={editBanner}
+          onCancelEdit={() => setEditingMessageId(null)}
+          onMessageUpdated={onMessageUpdated}
+          replyToMessageId={editingMessageId ? null : replyMessageId}
+          replyBanner={editingMessageId ? null : replyBanner}
           onCancelReply={() => setReplyMessageId(null)}
           onMessageCreated={onMessageCreated}
           onMessageAttachmentsSettled={bumpMessageAttachments}

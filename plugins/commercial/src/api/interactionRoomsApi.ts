@@ -15,6 +15,7 @@ import {
   httpPut,
 } from "./httpClient";
 import type { CommercialAttachmentDto } from "./attachmentsApi";
+import { deleteAttachment } from "./attachmentsApi";
 import type { CommercialTaskDto } from "./worklistApi";
 
 export const INTERACTION_ROOMS_API_BASE = "/interaction-rooms";
@@ -561,4 +562,11 @@ export async function downloadRoomMessageAttachmentBlob(
     commercialApiUrl(`/attachments/${encodeURIComponent(attachmentId)}/content`),
     { signal },
   );
+}
+
+export async function deleteRoomMessageAttachment(
+  attachmentId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await deleteAttachment(attachmentId, signal);
 }

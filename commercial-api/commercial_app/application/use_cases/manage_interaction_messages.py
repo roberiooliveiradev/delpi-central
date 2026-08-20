@@ -141,9 +141,9 @@ class ManageInteractionMessagesUseCase:
             raise PermissionError(InteractionRoomContentService.error("notAuthor"))
         if (message.message_kind or "").strip() != "text":
             raise ValueError(InteractionRoomContentService.error("messageKindInvalid"))
-        if not str(body_text or "").strip():
-            raise ValueError(InteractionRoomContentService.error("bodyRequired"))
-        InteractionMessageBodyPolicyService.assert_markdown_body(str(body_text))
+        # Body vazio permitido (mensagem só com anexos após edição).
+        if str(body_text or "").strip():
+            InteractionMessageBodyPolicyService.assert_markdown_body(str(body_text))
         next_mentions = (
             self._validate_mentions(mentions) if replace_mentions else None
         )

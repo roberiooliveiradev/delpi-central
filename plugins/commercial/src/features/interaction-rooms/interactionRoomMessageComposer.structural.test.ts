@@ -36,11 +36,17 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/clearComposerDraft/);
     expect(source).toMatch(/updateInteractionMessage/);
     expect(source).toMatch(/mode === "edit"/);
+    expect(source).toMatch(/listRoomMessageAttachments/);
+    expect(source).toMatch(/deleteRoomMessageAttachment/);
+    expect(source).toMatch(/editBanner/);
+    expect(source).toMatch(/clearComposerDraft/);
     expect(source).toMatch(/replyToMessageId|parent_id/);
     expect(source).toMatch(/replyBanner/);
     expect(source).toMatch(/onMessageAttachmentsSettled/);
     expect(source).toMatch(/seedMentions|initialMentions/);
     expect(source).toMatch(/composerSaveEditAriaLabel/);
+    expect(source).toMatch(/showAttach/);
+    expect(source).not.toMatch(/showAttach=\{!isEdit\}/);
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);

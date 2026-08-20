@@ -21,3 +21,14 @@ export function buildReplyComposerBanner(
   const preview = truncateReplyPreview(message.body_text || "");
   return preview ? { label, preview } : { label };
 }
+
+export function buildEditComposerBanner(
+  message: InteractionMessageDto | null | undefined,
+): { label: string; preview?: string } | null {
+  if (!message) return null;
+  const preview = truncateReplyPreview(message.body_text || "");
+  return {
+    label: INTERACTION_ROOMS_CONTENT.editBannerLabel,
+    preview: preview || INTERACTION_ROOMS_CONTENT.editBannerFallbackPreview,
+  };
+}

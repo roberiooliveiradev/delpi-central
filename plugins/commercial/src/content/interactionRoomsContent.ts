@@ -39,6 +39,8 @@ export const INTERACTION_ROOMS_CONTENT = {
   messageDeleted: "Mensagem removida.",
   editActionLabel: "Editar",
   editCancelLabel: "Cancelar",
+  editBannerLabel: "Editando mensagem",
+  editBannerFallbackPreview: "Mensagem",
   messageEditedSuffix: "editado",
   replyActionLabel: "Responder",
   replyCancelAriaLabel: "Cancelar resposta",

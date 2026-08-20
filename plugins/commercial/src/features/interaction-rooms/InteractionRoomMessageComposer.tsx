@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  deleteRoomMessageAttachment,
+  downloadRoomMessageAttachmentBlob,
+  listRoomMessageAttachments,
   postInteractionMessage,
   updateInteractionMessage,
   uploadRoomMessageAttachment,
   type InteractionMessageDto,
 } from "../../api/interactionRoomsApi";
-import {
-  CM_PORTAL_SCOPE,
-  CommercialActionButton,
-  CommercialMentionComposer,
-} from "../../app/commercialUi";
+import { CommercialMentionComposer, CM_PORTAL_SCOPE } from "../../app/commercialUi";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import {
   clearComposerDraft,
@@ -29,15 +28,39 @@ import { useInteractionMentionSuggest } from "./useInteractionMentionSuggest";
 export const ROOM_ATTACH_ACCEPT =
   ".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain";
 
-type PendingFile = {
+type PendingLocal = {
+  kind: "local";
   id: string;
   file: File;
 };
 
+type PendingRemote = {
+  kind: "remote";
+  id: string;
+  fileName: string;
+  contentType: string | null;
+  byteSize: number;
+  previewUrl: string | null;
+};
+
+type PendingItem = PendingLocal | PendingRemote;
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isImageAttachment(fileName: string, contentType: string | null): boolean {
+  const ct = (contentType || "").toLowerCase();
+  if (ct.startsWith("image/")) return true;
+  return /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(fileName || "");
+}
+
 type Props = {
   roomId: string;
   disabled?: boolean;
-  /** compose (default) = POST + anexos; edit = PATCH body/mentions in-place. */
+  /** compose (default) = POST; edit = PATCH body/mentions + sync anexos no dock. */
   mode?: "compose" | "edit";
   editMessageId?: string | null;
   initialMarkdown?: string;
@@ -51,9 +74,11 @@ type Props = {
   replyToMessageId?: string | null;
   replyBanner?: { label: string; preview?: string } | null;
   onCancelReply?: () => void;
+  /** Banner do modo edit (reusa faixa replyTo do kit). */
+  editBanner?: { label: string; preview?: string } | null;
   onMessageCreated: (message: InteractionMessageDto) => void;
   onMessageUpdated?: (message: InteractionMessageDto) => void;
-  /** After POST uploads finish (success or partial failure). */
+  /** After POST/PATCH attachment sync finishes. */
   onMessageAttachmentsSettled?: (messageId: string) => void;
   onCancelEdit?: () => void;
   onError: (message: string) => void;
@@ -61,9 +86,8 @@ type Props = {
 };
 
 /**
- * Composer da sala: MentionComposer + anexos (owner_type=room_message após POST).
- * Rascunho (texto + arquivos) sobrevive a F5 por roomId no modo compose.
- * Modo edit: PATCH body + replace de mentions; sem anexos nesta S*.
+ * Composer da sala no dock: compose + edição completa (texto e anexos).
+ * Ao entrar em edit, limpa rascunho local e carrega body + anexos da mensagem.
  */
 export function InteractionRoomMessageComposer({
   roomId,
@@ -75,6 +99,7 @@ export function InteractionRoomMessageComposer({
   replyToMessageId = null,
   replyBanner = null,
   onCancelReply,
+  editBanner = null,
   onMessageCreated,
   onMessageUpdated,
   onMessageAttachmentsSettled,
@@ -87,9 +112,11 @@ export function InteractionRoomMessageComposer({
   const [draft, setDraft] = useState(() =>
     isEdit ? initialMarkdown : readComposerDraftText(roomId),
   );
-  const [pending, setPending] = useState<PendingFile[]>([]);
+  const [pending, setPending] = useState<PendingItem[]>([]);
   const [draftHydrated, setDraftHydrated] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
+  const [baselineRemoteIds, setBaselineRemoteIds] = useState<string[]>([]);
+  const previewUrlsRef = useRef<string[]>([]);
   const {
     hits,
     onMentionQueryChange,
@@ -105,23 +132,50 @@ export function InteractionRoomMessageComposer({
     return map;
   }, [hits]);
 
+  const revokePreviewUrls = useCallback(() => {
+    for (const url of previewUrlsRef.current) {
+      URL.revokeObjectURL(url);
+    }
+    previewUrlsRef.current = [];
+  }, []);
+
   const pendingAttachments = useMemo(
     () =>
-      pending.map((item) => ({
-        id: item.id,
-        fileName: item.file.name,
-        contentType: item.file.type || null,
-        file: item.file,
-        detail: `${Math.max(1, Math.round(item.file.size / 1024))} KB`,
-      })),
+      pending.map((item) => {
+        if (item.kind === "local") {
+          return {
+            id: item.id,
+            fileName: item.file.name,
+            contentType: item.file.type || null,
+            file: item.file,
+            detail: formatBytes(item.file.size),
+          };
+        }
+        return {
+          id: item.id,
+          fileName: item.fileName,
+          contentType: item.contentType,
+          previewUrl: item.previewUrl,
+          detail: formatBytes(item.byteSize),
+        };
+      }),
     [pending],
   );
 
   useEffect(() => {
-    if (isEdit) {
+    let cancelled = false;
+
+    const loadEdit = async () => {
+      const messageId = (editMessageId || "").trim();
+      if (!isEdit || !messageId) return;
+
+      // Limpa o que havia no input (texto/anexos de compose).
+      void clearComposerDraft(roomId);
+      revokePreviewUrls();
       setDraft(initialMarkdown);
       setPending([]);
-      setDraftHydrated(true);
+      setBaselineRemoteIds([]);
+      setDraftHydrated(false);
       seedMentions(
         initialMentions.map((mention) => ({
           kind: mention.kind,
@@ -129,24 +183,89 @@ export function InteractionRoomMessageComposer({
           label: mention.label,
         })),
       );
-      return;
+
+      try {
+        const items = await listRoomMessageAttachments(messageId);
+        if (cancelled) return;
+        const remotes: PendingRemote[] = [];
+        const createdUrls: string[] = [];
+        for (const item of items) {
+          let previewUrl: string | null = null;
+          if (isImageAttachment(item.file_name, item.content_type)) {
+            try {
+              const blob = await downloadRoomMessageAttachmentBlob(item.id);
+              if (cancelled) {
+                for (const url of createdUrls) URL.revokeObjectURL(url);
+                return;
+              }
+              previewUrl = URL.createObjectURL(blob);
+              createdUrls.push(previewUrl);
+            } catch {
+              /* thumb opcional */
+            }
+          }
+          remotes.push({
+            kind: "remote",
+            id: item.id,
+            fileName: item.file_name,
+            contentType: item.content_type || null,
+            byteSize: item.byte_size,
+            previewUrl,
+          });
+        }
+        if (cancelled) {
+          for (const url of createdUrls) URL.revokeObjectURL(url);
+          return;
+        }
+        previewUrlsRef.current = createdUrls;
+        setPending(remotes);
+        setBaselineRemoteIds(remotes.map((row) => row.id));
+        setDraftHydrated(true);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        setDraftHydrated(true);
+        onError(
+          err instanceof Error ? err.message : content.attachUploadError,
+        );
+      }
+    };
+
+    if (isEdit) {
+      void loadEdit();
+      return () => {
+        cancelled = true;
+      };
     }
-    let cancelled = false;
+
+    revokePreviewUrls();
     setDraft(readComposerDraftText(roomId));
     setPending([]);
+    setBaselineRemoteIds([]);
     setDraftHydrated(false);
     resetMentions();
     void readComposerDraftFiles(roomId).then((files) => {
       if (cancelled) return;
-      setPending(files);
+      setPending(
+        files.map((item) => ({
+          kind: "local" as const,
+          id: item.id,
+          file: item.file,
+        })),
+      );
       setDraftHydrated(true);
     });
     return () => {
       cancelled = true;
     };
-    // Seed mentions only when opening/switching the edited message — not on every parent re-render.
+    // Seed mentions / anexos só ao abrir/trocar a mensagem editada.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- initialMentions snapshot on editMessageId
-  }, [roomId, isEdit, editMessageId, initialMarkdown, resetMentions, seedMentions]);
+  }, [roomId, isEdit, editMessageId, initialMarkdown, resetMentions, seedMentions, revokePreviewUrls]);
+
+  useEffect(() => {
+    return () => {
+      revokePreviewUrls();
+    };
+  }, [revokePreviewUrls]);
 
   useEffect(() => {
     if (isEdit || !draftHydrated) return;
@@ -155,12 +274,16 @@ export function InteractionRoomMessageComposer({
 
   useEffect(() => {
     if (isEdit || !draftHydrated) return;
-    void writeComposerDraftFiles(roomId, pending);
+    const locals = pending.filter((item): item is PendingLocal => item.kind === "local");
+    void writeComposerDraftFiles(
+      roomId,
+      locals.map((item) => ({ id: item.id, file: item.file })),
+    );
   }, [roomId, pending, draftHydrated, isEdit]);
 
   const onFilesSelected = useCallback(
     (files: File[]) => {
-      if (isEdit || !files.length) return;
+      if (!files.length) return;
       const gated = gatePendingAttachments(pending.length, files);
       if (!gated.ok) {
         onError(gated.message);
@@ -169,18 +292,46 @@ export function InteractionRoomMessageComposer({
       setPending((prev) => [
         ...prev,
         ...gated.files.map((file) => ({
+          kind: "local" as const,
           id: `pending-${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
           file,
         })),
       ]);
     },
-    [pending.length, onError, isEdit],
+    [pending.length, onError],
   );
 
   useEffect(() => {
-    if (isEdit) return;
     onAddFilesReady?.(onFilesSelected);
-  }, [onAddFilesReady, onFilesSelected, isEdit]);
+  }, [onAddFilesReady, onFilesSelected]);
+
+  const onRemovePending = useCallback((id: string) => {
+    setPending((prev) => {
+      const next: PendingItem[] = [];
+      for (const item of prev) {
+        if (item.id !== id) {
+          next.push(item);
+          continue;
+        }
+        if (item.kind === "remote" && item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl);
+          previewUrlsRef.current = previewUrlsRef.current.filter(
+            (url) => url !== item.previewUrl,
+          );
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const onCancelEditClick = useCallback(() => {
+    revokePreviewUrls();
+    setPending([]);
+    setBaselineRemoteIds([]);
+    setDraft("");
+    resetMentions();
+    onCancelEdit?.();
+  }, [onCancelEdit, resetMentions, revokePreviewUrls]);
 
   const onSubmit = useCallback(async (bodyMarkdown?: string) => {
     const id = roomId.trim();
@@ -188,10 +339,17 @@ export function InteractionRoomMessageComposer({
     if (!id || submitting || disabled) return;
 
     if (isEdit && editMessageId) {
-      if (!body) return;
+      const remotesKept = pending.filter(
+        (item): item is PendingRemote => item.kind === "remote",
+      );
+      const locals = pending.filter(
+        (item): item is PendingLocal => item.kind === "local",
+      );
+      if (!body && remotesKept.length === 0 && locals.length === 0) return;
+
       setSubmitting(true);
       try {
-        if (interactionMessageLooksLikeRawHtml(body)) {
+        if (body && interactionMessageLooksLikeRawHtml(body)) {
           onError(content.bodyHtmlRejected);
           return;
         }
@@ -200,8 +358,35 @@ export function InteractionRoomMessageComposer({
           body_text: body,
           mentions,
         });
+
+        const keptIds = new Set(remotesKept.map((item) => item.id));
+        const toDelete = baselineRemoteIds.filter((remoteId) => !keptIds.has(remoteId));
+        for (const attachmentId of toDelete) {
+          try {
+            await deleteRoomMessageAttachment(attachmentId);
+          } catch (err: unknown) {
+            onError(
+              err instanceof Error ? err.message : content.attachUploadError,
+            );
+          }
+        }
+        for (const item of locals) {
+          try {
+            await uploadRoomMessageAttachment(editMessageId, item.file);
+          } catch (err: unknown) {
+            onError(
+              err instanceof Error ? err.message : content.attachUploadError,
+            );
+          }
+        }
+
+        revokePreviewUrls();
+        setPending([]);
+        setBaselineRemoteIds([]);
+        setDraft("");
         resetMentions();
         onMessageUpdated?.(updated);
+        onMessageAttachmentsSettled?.(editMessageId);
         onCancelEdit?.();
       } catch (err: unknown) {
         onError(err instanceof Error ? err.message : content.roomUpdateError);
@@ -226,7 +411,9 @@ export function InteractionRoomMessageComposer({
         mentions,
         parent_id: replyToMessageId?.trim() || null,
       });
-      const files = [...pending];
+      const files = pending.filter(
+        (item): item is PendingLocal => item.kind === "local",
+      );
       setDraft("");
       setPending([]);
       resetMentions();
@@ -259,6 +446,7 @@ export function InteractionRoomMessageComposer({
     disabled,
     isEdit,
     editMessageId,
+    baselineRemoteIds,
     replyToMessageId,
     content.attachUploadError,
     content.bodyHtmlRejected,
@@ -272,22 +460,14 @@ export function InteractionRoomMessageComposer({
     onCancelReply,
     onCancelEdit,
     onError,
+    revokePreviewUrls,
   ]);
+
+  const banner = isEdit ? editBanner : replyBanner;
+  const onCancelBanner = isEdit ? onCancelEditClick : onCancelReply;
 
   return (
     <div>
-      {isEdit && onCancelEdit ? (
-        <div className="cm-room-thread__edit-cancel">
-          <CommercialActionButton
-            type="button"
-            variant="ghost"
-            onClick={onCancelEdit}
-            disabled={submitting}
-          >
-            {content.editCancelLabel}
-          </CommercialActionButton>
-        </div>
-      ) : null}
       <CommercialMentionComposer
         value={draft}
         onChange={setDraft}
@@ -303,19 +483,13 @@ export function InteractionRoomMessageComposer({
           const full = hitsById.get(hit.id);
           if (full) onMentionInserted(full);
         }}
-        showAttach={!isEdit}
-        onFilesSelected={isEdit ? undefined : onFilesSelected}
+        showAttach
+        onFilesSelected={onFilesSelected}
         fileAccept={ROOM_ATTACH_ACCEPT}
-        pendingAttachments={isEdit ? [] : pendingAttachments}
-        onRemovePendingAttachment={
-          isEdit
-            ? undefined
-            : (id) => {
-                setPending((prev) => prev.filter((row) => row.id !== id));
-              }
-        }
-        replyTo={!isEdit ? replyBanner : null}
-        onCancelReply={!isEdit ? onCancelReply : undefined}
+        pendingAttachments={pendingAttachments}
+        onRemovePendingAttachment={onRemovePending}
+        replyTo={banner ?? null}
+        onCancelReply={onCancelBanner}
         labels={{
           placeholder: content.composerPlaceholder,
           sendAriaLabel: isEdit
@@ -344,7 +518,9 @@ export function InteractionRoomMessageComposer({
           pendingDocumentsHeading: content.pendingAttachmentsHeading,
           pendingDocumentOpenAriaLabel: (fileName) => `Abrir prévia de ${fileName}`,
           pendingRemoveAriaLabel: (fileName) => `Remover ${fileName}`,
-          replyCancelAriaLabel: content.replyCancelAriaLabel,
+          replyCancelAriaLabel: isEdit
+            ? content.editCancelLabel
+            : content.replyCancelAriaLabel,
         }}
       />
     </div>
