@@ -39,8 +39,8 @@ def test_calculate_daily_savings_tempo():
         }
     )
     assert daily == 100.0
-    assert ANNUAL_BUSINESS_DAYS == 261
-    assert calculate_annual_savings(daily) == 26100.0
+    assert ANNUAL_BUSINESS_DAYS == 253
+    assert calculate_annual_savings(daily) == 25300.0
 
 
 def test_calculate_daily_savings_material():
@@ -84,7 +84,7 @@ def test_enrich_realized_savings_computes_annual():
         }
     )
     assert enriched["realized_daily_savings"] == 15.0
-    assert enriched["realized_annual_savings"] == 3915.0
+    assert enriched["realized_annual_savings"] == 3795.0
 
 
 def test_enrich_realized_savings_absent_falls_back_to_calculated():
@@ -98,7 +98,7 @@ def test_enrich_realized_savings_absent_falls_back_to_calculated():
     )
     assert enriched["daily_savings"] == 20.0
     assert enriched["realized_daily_savings"] == 20.0
-    assert enriched["realized_annual_savings"] == 5220.0
+    assert enriched["realized_annual_savings"] == 5060.0
 
 
 def test_enrich_realized_savings_absent_qualitativo_is_none():
@@ -112,8 +112,8 @@ def test_enrich_realized_savings_absent_qualitativo_is_none():
 def test_resolve_realized_savings_prefers_explicit_measurement():
     row = {
         "daily_savings": 100.0,
-        "annual_savings": 26100.0,
+        "annual_savings": 25300.0,
         "realized_daily_savings": 80.0,
     }
     assert resolve_realized_daily_savings(row) == 80.0
-    assert resolve_realized_annual_savings(row) == 20880.0
+    assert resolve_realized_annual_savings(row) == 20240.0

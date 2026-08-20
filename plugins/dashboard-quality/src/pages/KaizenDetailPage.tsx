@@ -146,7 +146,7 @@ export function KaizenDetailPage({ kaizenId, pathname }: KaizenDetailPageProps) 
             <KpiCard
               title="Economia projetada/ano"
               value={formatCurrency(data.annual_savings)}
-              subtitle={`Economia diária × ${ANNUAL_BUSINESS_DAYS} dias úteis (seg–sex, sem feriados)`}
+              subtitle={`Economia diária × ${ANNUAL_BUSINESS_DAYS} dias úteis (constante Delpi)`}
               icon={<Wallet size={22} />}
               loading={loading && !data}
             />
@@ -162,9 +162,9 @@ export function KaizenDetailPage({ kaizenId, pathname }: KaizenDetailPageProps) 
               <h2 className="dq-section-title">Cálculo da economia</h2>
               <p className="dq-detail-card__hint">
                 Economia diária = (segundos × ocorrências/dia ÷ 3600) × custo hora.
-                Economia/ano = diária × {ANNUAL_BUSINESS_DAYS} dias úteis (segunda a
-                sexta, sem feriados). A validade de contabilização no painel é 1 ano
-                corrido desde a implantação — conceito separado.
+                Economia/ano = diária × {ANNUAL_BUSINESS_DAYS} dias úteis (constante
+                Delpi). A validade de contabilização no painel é 1 ano corrido desde a
+                implantação — conceito separado.
               </p>
               <DetailFieldGrid fields={savingsFields} />
             </article>

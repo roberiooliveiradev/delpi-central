@@ -384,7 +384,7 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
               tone="muted"
               label="Ganho realizado / ano"
               value={formatCurrency(summary.realized_annual_savings)}
-              sub={`Medido × ${ANNUAL_BUSINESS_DAYS} dias úteis (seg–sex)`}
+              sub={`Medido × ${ANNUAL_BUSINESS_DAYS} dias úteis`}
             />
             <KpiCard
               icon={<Wrench size={22} />}

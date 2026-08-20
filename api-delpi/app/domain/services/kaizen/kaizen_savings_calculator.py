@@ -4,9 +4,9 @@ from typing import Any, Mapping, Optional
 
 SAVINGS_TYPES = frozenset({"tempo", "material", "financeiro", "qualitativo", "misto"})
 
-# Projeção anual = diária × dias úteis (seg–sex, sem feriados).
+# Projeção anual = diária × dias úteis (constante Delpi).
 # Distinto da validade do kaizen (1 ano corrido desde a implantação).
-ANNUAL_BUSINESS_DAYS = 261
+ANNUAL_BUSINESS_DAYS = 253
 
 
 def _to_float(value: Any) -> Optional[float]:

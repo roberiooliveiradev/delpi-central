@@ -944,7 +944,7 @@ QUALITY_KAIZEN_SUMMARY = agent_route(
         "Parâmetros: title, status, branch, date_start, date_end. "
         "Sem date_start/date_end na listagem retorna todos os kaizens implantados "
         "(útil para catálogo completo no dashboard). "
-        "Campos calculados: daily_savings, annual_savings (daily_savings × 261 dias úteis: seg–sex, sem feriados; distinto da validade de 1 ano corrido). "
+        "Campos calculados: daily_savings, annual_savings (daily_savings × 253 dias úteis; distinto da validade de 1 ano corrido). "
         "Para detalhe de um kaizen (parâmetros do cálculo, investimento, responsável), "
         "use GET /quality/kaizens/{kaizen_id} com o id retornado em list_kaizen[].id."
     ),

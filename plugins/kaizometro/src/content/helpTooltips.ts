@@ -15,7 +15,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
       "Estágio operacional (status) e datas da versão vigente. Editar aqui é uma correção da versão atual — não cria uma nova versão.",
     savings:
       `Parâmetros e economia calculada pela API. Economia/ano = ${ANNUAL_SAVINGS_FORMULA_LABEL} ` +
-      `(segunda a sexta, sem feriados). A validade de contabilização no painel é outro conceito: ` +
+      `(constante Delpi). A validade de contabilização no painel é outro conceito: ` +
       `1 ano corrido desde a implantação — não use 365 no cálculo da projeção anual.`,
     evidences:
       "Registro visual do processo. Anexe fotos do Antes e Depois, PDFs, planilhas e documentos, ou um link externo.",
@@ -63,11 +63,11 @@ export const KAIZEN_HELP_TOOLTIPS = {
       "Economia diária estimada pela API a partir dos parâmetros. Base da projeção anual " +
       `(× ${ANNUAL_BUSINESS_DAYS} dias úteis).`,
     estimatedAnnual:
-      `Projeção anual estimada: ${ANNUAL_SAVINGS_FORMULA_LABEL} (segunda a sexta, sem feriados). ` +
-      `Por quê dias úteis: a operação industrial tipicamente não gera o mesmo ganho em sábados, domingos e feriados. ` +
+      `Projeção anual estimada: ${ANNUAL_SAVINGS_FORMULA_LABEL} (constante Delpi de dias úteis). ` +
+      `Por quê dias úteis: a operação tipicamente não gera o mesmo ganho em todos os dias do calendário. ` +
       `Não confundir com a validade (1 ano corrido desde a implantação).`,
     realizedAnnual:
-      `Projeção anual realizada: realizada/dia × ${ANNUAL_BUSINESS_DAYS} dias úteis (segunda a sexta, sem feriados). ` +
+      `Projeção anual realizada: realizada/dia × ${ANNUAL_BUSINESS_DAYS} dias úteis (constante Delpi). ` +
       `Sem medição informada, espelha a estimada. Validade de contabilização no painel permanece 1 ano corrido.`,
     effectiveness: "Relação entre a economia realizada e a estimada (quão perto do previsto o ganho ficou).",
   },
