@@ -84,6 +84,7 @@ import {
   createMentionComposerHistory,
   type MentionComposerHistorySnapshot,
 } from "./mentionComposerHistory";
+import { normalizeComposerFormatShells } from "./mentionComposerNormalize";
 
 /** Coalesce de digitação antes de empilhar na pilha custom (ms). */
 export const COMPOSER_TYPING_COALESCE_MS = 400;
@@ -496,15 +497,19 @@ export function MentionComposer({
     if (!el) return;
     el.focus();
     el.innerHTML = snapshot.html;
-    setEditablePlainCursor(el, snapshot.cursor);
+    // Undo/redo: limpa cascas vazias (ex.: `<code>\u200b</code>`) que viram bolhas.
+    normalizeComposerFormatShells(el);
+    const plainAfter = snapshotEditablePlaintext(el);
+    const cursor = Math.min(snapshot.cursor, plainAfter.text.length);
+    setEditablePlainCursor(el, cursor);
     savedRangeRef.current = getRichTextSelectionRange(el);
-    lastStableRef.current = snapshot;
+    const markdown = richTextHtmlToMarkdown(el.innerHTML);
+    lastStableRef.current = { markdown, html: el.innerHTML, cursor };
     setFormatFlags(queryComposerFormatFlags(el));
     const size = queryRichTextFontSize(el);
     if (size) setFontSize(clampComposerFontSize(size));
-    onChange(snapshot.markdown);
-    const plain = snapshotEditablePlaintext(el);
-    setActiveMention(detectActiveMention(plain.text, plain.cursor));
+    onChange(markdown);
+    setActiveMention(detectActiveMention(plainAfter.text, cursor));
     refreshHistoryFlags();
   };
 
@@ -561,6 +566,7 @@ export function MentionComposer({
     } else if (text) {
       insertRichTextHtmlFragment(el, stripDangerousRichTextTags(escapePlainText(text)));
     }
+    normalizeComposerFormatShells(el);
     lastStableRef.current = readSnapshot();
     emitMarkdownAndMention();
   };

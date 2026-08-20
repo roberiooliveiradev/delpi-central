@@ -8,6 +8,10 @@ import {
   unwrapRichTextElement,
   unwrapRichTextLink,
 } from "../rich-text/richTextCommands";
+import {
+  isComposerShellContentEmpty,
+  normalizeComposerFormatShells,
+} from "./mentionComposerNormalize";
 
 export const COMPOSER_FORMAT_KINDS = [
   "bold",
@@ -140,7 +144,7 @@ function stripMatchingTags(root: Node, selector: string): void {
 }
 
 function makeTaggedFragment(tag: string, frag: DocumentFragment): HTMLElement | null {
-  if (!frag.hasChildNodes()) return null;
+  if (!frag.hasChildNodes() || isComposerShellContentEmpty(frag)) return null;
   const el = document.createElement(tag);
   el.appendChild(frag);
   return el;
@@ -178,8 +182,15 @@ export function exitInlineFormatAtCaret(
   if (afterEl) parent.insertBefore(afterEl, hit);
   parent.removeChild(hit);
 
+  normalizeComposerFormatShells(editor);
+
   const next = document.createRange();
-  next.setStart(marker, marker.data.length);
+  if (marker.isConnected) {
+    next.setStart(marker, marker.data.length);
+  } else {
+    next.selectNodeContents(editor);
+    next.collapse(false);
+  }
   next.collapse(true);
   selection.removeAllRanges();
   selection.addRange(next);
@@ -261,9 +272,11 @@ export function unwrapFormatInSelection(editor: HTMLElement, selector: string): 
   }
   parent.removeChild(hit);
 
+  normalizeComposerFormatShells(editor);
+
   const midStart = beforeEl ? 1 : 0;
   const midNode = inserted[midStart];
-  if (midNode) {
+  if (midNode && midNode.isConnected) {
     const sel = document.createRange();
     sel.selectNodeContents(midNode);
     selection.removeAllRanges();
@@ -271,19 +284,42 @@ export function unwrapFormatInSelection(editor: HTMLElement, selector: string): 
   }
 }
 
+function placeCaretInsideLastEmptyShell(editor: HTMLElement, tag: string): void {
+  const shells = editor.querySelectorAll(tag);
+  const last = shells[shells.length - 1];
+  if (!(last instanceof HTMLElement) || !editor.contains(last)) return;
+  if (!isComposerShellContentEmpty(last)) return;
+  const selection = window.getSelection();
+  if (!selection) return;
+  let text = last.firstChild;
+  if (!text || text.nodeType !== Node.TEXT_NODE) {
+    text = document.createTextNode("\u200b");
+    last.appendChild(text);
+  }
+  const range = document.createRange();
+  const len = text.textContent?.length ?? 0;
+  range.setStart(text, len);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
 function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) {
     insertRichTextHtmlFragment(editor, `<${tag}>\u200b</${tag}>`);
+    placeCaretInsideLastEmptyShell(editor, tag);
     return;
   }
   const range = selection.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) {
     insertRichTextHtmlFragment(editor, `<${tag}>\u200b</${tag}>`);
+    placeCaretInsideLastEmptyShell(editor, tag);
     return;
   }
   if (range.collapsed) {
     insertRichTextHtmlFragment(editor, `<${tag}>\u200b</${tag}>`);
+    placeCaretInsideLastEmptyShell(editor, tag);
     return;
   }
   const node = document.createElement(tag);
@@ -300,15 +336,18 @@ function wrapSelectionAsCode(editor: HTMLElement) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) {
     insertRichTextHtmlFragment(editor, `<code>\u200b</code>`);
+    placeCaretInsideLastEmptyShell(editor, "code");
     return;
   }
   const range = selection.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) {
     insertRichTextHtmlFragment(editor, `<code>\u200b</code>`);
+    placeCaretInsideLastEmptyShell(editor, "code");
     return;
   }
   if (range.collapsed) {
     insertRichTextHtmlFragment(editor, `<code>\u200b</code>`);
+    placeCaretInsideLastEmptyShell(editor, "code");
     return;
   }
   if (!range.toString().includes("\n")) {
@@ -382,10 +421,18 @@ function toggleInlineFormat(
  */
 export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKind): void {
   if (INLINE_TOGGLE_KINDS.has(kind)) {
+    const collapsed = selectionIsCollapsed(editor);
+    const selector = SELECTOR[kind]!;
+    const wasActive = isInside(editor, selector!);
     toggleInlineFormat(
       editor,
       kind as "bold" | "italic" | "strike" | "underline" | "code",
     );
+    // Só preserva `<code>\u200b</code>` (etc.) recém-criado para digitação.
+    // Após desligar formato / unwrap, remove cascas vazias (bolhas fantasmas).
+    normalizeComposerFormatShells(editor, {
+      preserveActiveTypingShell: collapsed && !wasActive,
+    });
     return;
   }
 
@@ -393,15 +440,18 @@ export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKi
 
   if (kind === "ul") {
     runRichTextCommand(editor, "insertUnorderedList");
+    normalizeComposerFormatShells(editor);
     return;
   }
   if (kind === "ol") {
     runRichTextCommand(editor, "insertOrderedList");
+    normalizeComposerFormatShells(editor);
     return;
   }
   if (kind === "quote") {
     if (active) unwrapFormatInSelection(editor, "blockquote");
     else execRichTextCommand("formatBlock", "blockquote");
+    normalizeComposerFormatShells(editor);
     return;
   }
   if (kind === "link") {
@@ -414,7 +464,10 @@ export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKi
       } else if (range && range.toString() !== (anchor.textContent ?? "")) {
         const before = editor.innerHTML;
         runRichTextCommand(editor, "unlink");
-        if (editor.innerHTML !== before) return;
+        if (editor.innerHTML !== before) {
+          normalizeComposerFormatShells(editor);
+          return;
+        }
         unwrapFormatInSelection(editor, "a");
       } else {
         unwrapRichTextLink(anchor);
@@ -422,5 +475,6 @@ export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKi
     } else {
       insertRichTextLink(editor, "https://");
     }
+    normalizeComposerFormatShells(editor);
   }
 }

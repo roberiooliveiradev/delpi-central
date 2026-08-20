@@ -226,6 +226,48 @@ describe("toggleComposerFormat", () => {
     editor.remove();
   });
 
+  it("desfazer código (unwrap) não deixa bolhas code vazias", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const editor = document.createElement("div");
+    editor.innerHTML =
+      'antes <code>sdfuiusdfihwf</code><code>\u200b</code><code>\u200b</code> depois';
+    document.body.appendChild(editor);
+    const full = Array.from(editor.querySelectorAll("code")).find(
+      (el) => (el.textContent ?? "").includes("sdfuiusdfihwf"),
+    )!;
+    const range = document.createRange();
+    range.selectNodeContents(full);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    toggleComposerFormat(editor, "code");
+    expect(editor.querySelectorAll("code")).toHaveLength(0);
+    expect(editor.textContent?.replace(/\u200b/g, "")).toContain("sdfuiusdfihwf");
+    expect(editor.textContent?.replace(/\u200b/g, "")).toContain("antes");
+    expect(editor.textContent?.replace(/\u200b/g, "")).toContain("depois");
+    editor.remove();
+  });
+
+  it("exit no fim do code não deixa casca vazia vizinha", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const editor = document.createElement("div");
+    const code = document.createElement("code");
+    code.textContent = "abc";
+    editor.appendChild(code);
+    document.body.appendChild(editor);
+    const selection = window.getSelection()!;
+    const range = document.createRange();
+    range.setStart(code.firstChild!, 3);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    toggleComposerFormat(editor, "code");
+    for (const el of Array.from(editor.querySelectorAll("code"))) {
+      expect((el.textContent ?? "").replace(/\u200b/g, "").trim().length).toBeGreaterThan(0);
+    }
+    expect(editor.textContent?.replace(/\u200b/g, "")).toContain("abc");
+    editor.remove();
+  });
+
   it("citação aplica blockquote", () => {
     document.execCommand = vi.fn().mockImplementation((cmd: string, _show?: boolean, value?: string) => {
       if (cmd === "formatBlock" && value === "blockquote") {

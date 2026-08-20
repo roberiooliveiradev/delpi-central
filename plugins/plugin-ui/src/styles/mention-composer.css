@@ -98,6 +98,13 @@
   color: var(--delpi-ui-text, var(--text, #0f172a));
 }
 
+/* Cascas vazias (falha de unwrap/undo) não devem aparecer como chip. */
+.delpi-ui-mention-composer__textarea code:empty {
+  display: none;
+  padding: 0;
+  border: none;
+}
+
 /* Bloco de código — container com destaque */
 .delpi-ui-mention-composer__textarea pre {
   display: block;

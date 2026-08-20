@@ -128,3 +128,8 @@ export {
   messageBodyHtmlFromMarkdown,
   messageBodyHtmlIsPlainParagraph,
 } from "./messageThreadMarkdown";
+export {
+  isComposerShellContentEmpty,
+  normalizeComposerFormatShells,
+  type NormalizeComposerFormatShellsOptions,
+} from "./mentionComposerNormalize";

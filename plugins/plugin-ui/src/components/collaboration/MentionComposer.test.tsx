@@ -491,6 +491,7 @@ describe("mention-composer.css", () => {
     expect(css).toMatch(/__placeholder/);
     expect(css).toMatch(/__format\[aria-pressed="true"\]/);
     expect(css).toMatch(/\.delpi-ui-mention-composer__textarea code \{/);
+    expect(css).toMatch(/code:empty/);
     expect(css).toMatch(/\.delpi-ui-mention-composer__textarea pre \{/);
     expect(css).toMatch(/\.delpi-ui-mention-composer__textarea blockquote \{/);
     expect(css).toMatch(/blockquote::before/);
