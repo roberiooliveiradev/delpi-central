@@ -1898,6 +1898,8 @@ services:
       DELPI_API_CALLER_APP: production-control-api
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
 
+      PC_DRAWING_PDF_LIBRARY_DIR: ${PC_DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
+
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
       PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
@@ -1905,6 +1907,10 @@ services:
       PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
       PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    volumes:
+      # Share de desenhos do FILESERVER montado no host (CIFS/SMB) — somente leitura.
+      - ${PC_DRAWING_PDF_HOST_PATH:-/mnt/fileserver/desenhos}:/drawing-pdfs:ro
 
     depends_on:
       keycloak:

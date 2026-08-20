@@ -9,6 +9,7 @@ import {
 import { GripVertical } from "lucide-react";
 
 import { MachineLoadStatusCell } from "../components/MachineLoadStatusCell";
+import { OperatorCockpitLinkButton } from "../components/OperatorCockpitLinkButton";
 import { usePpcConfirm } from "../components/PpcConfirmDialogProvider";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { patchMachineLoadSequence } from "../api/ppcApi";
@@ -401,6 +402,7 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
             {copy.machineLoad.periodReset}
           </button>
         ) : null}
+        <OperatorCockpitLinkButton branch={branch} />
         {data ? (
           <span className="ppc-period__summary">
             {copy.machineLoad.summary(

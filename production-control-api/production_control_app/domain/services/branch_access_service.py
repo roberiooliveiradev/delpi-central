@@ -16,11 +16,16 @@ class BranchAccessService:
         if not can(user, PC_ACCESS):
             raise PermissionError("Você não tem permissão para acessar o Portal PCP.")
 
-    def assert_can_view_branch(self, user: object | None, branch: str) -> None:
-        self.assert_can_access(user)
+    def assert_valid_branch(self, branch: str) -> str:
+        """Valida o código da filial sem exigir usuário (leitura pública)."""
         code = (branch or "").strip()
         if code not in ALLOWED_BRANCHES:
             raise InvalidBranch("Filial inválida. Use 01 ou 02.")
+        return code
+
+    def assert_can_view_branch(self, user: object | None, branch: str) -> None:
+        self.assert_can_access(user)
+        code = self.assert_valid_branch(branch)
         permission = BRANCH_VIEW_PERMISSIONS[code]
         if not can(user, permission):
             raise BranchAccessDenied("Sem permissão para esta filial.")

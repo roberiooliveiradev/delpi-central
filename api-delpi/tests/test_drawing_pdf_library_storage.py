@@ -118,6 +118,14 @@ def test_list_catalog_pagination(library_dir: Path) -> None:
     assert len(result["items"]) == 2
 
 
+def test_resolve_pdf_path_empty_library_is_explicit(tmp_path: Path) -> None:
+    empty = tmp_path / "empty-share"
+    empty.mkdir()
+    storage = DrawingPdfLibraryStorage(empty)
+    with pytest.raises(DrawingPdfLibraryStorageError, match="vazia"):
+        storage.resolve_pdf_path("90262910")
+
+
 def test_list_catalog_empty_library(tmp_path: Path) -> None:
     storage = DrawingPdfLibraryStorage(tmp_path / "missing")
     result = storage.list_catalog(page=1, page_size=50)

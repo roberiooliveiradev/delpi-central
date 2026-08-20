@@ -1,4 +1,4 @@
-"""JWT do Portal PCP — health público mesmo com ASGI root_path."""
+"""JWT do Portal PCP — health e cockpit do operador públicos mesmo com ASGI root_path."""
 
 from __future__ import annotations
 
@@ -18,7 +18,14 @@ def _is_public_health(path: str) -> bool:
     return normalized.endswith("/production-control-api/health")
 
 
+def _is_public_route(path: str) -> bool:
+    """Rotas do cockpit do operador — link aberto, somente leitura."""
+    normalized = normalize_path(path)
+    return normalized.startswith("/public/") or "/production-control-api/public/" in normalized
+
+
 async def jwt_middleware(request: Request, call_next):
-    if _is_public_health(request.url.path):
+    path = request.url.path
+    if _is_public_health(path) or _is_public_route(path):
         return await call_next(request)
     return await _base_jwt_middleware(request, call_next)

@@ -9,6 +9,7 @@ import { muralAcessosPages } from "../apps/mural-acessos/pages";
 import { canalDenunciaPages } from "../apps/canal-denuncia/pages";
 import { codigoEticaPages } from "../apps/codigo-etica/pages";
 import { centralAgendamentoPages } from "../apps/central-agendamento/pages";
+import { productionControlPages } from "../apps/production-control/pages";
 
 /**
  * Registro de páginas públicas por app. Para adicionar um novo app público,
@@ -25,4 +26,5 @@ export const publicRegistry: PublicRegistry = {
   "canal-denuncia": canalDenunciaPages,
   "codigo-etica": codigoEticaPages,
   "central-agendamento": centralAgendamentoPages,
+  "production-control": productionControlPages,
 };

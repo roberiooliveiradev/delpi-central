@@ -31,6 +31,10 @@ class Settings:
     VITE_KC_URL: str | None = _get_env("VITE_KC_URL")
     PUBLIC_BASE_URL: str | None = _get_env("PUBLIC_BASE_URL")
 
+    PC_DRAWING_PDF_LIBRARY_DIR: str = _get_env(
+        "PC_DRAWING_PDF_LIBRARY_DIR", default="/drawing-pdfs"
+    )
+
     DELPI_API_URL: str = _get_env("DELPI_API_URL", default="http://delpi-api-delpi:8000")
     DELPI_API_TIMEOUT: float = float(_get_env("DELPI_API_TIMEOUT", default="30"))
     DELPI_API_CALLER_APP: str = _get_env("DELPI_API_CALLER_APP", default="production-control-api")

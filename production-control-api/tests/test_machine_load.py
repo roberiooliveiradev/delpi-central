@@ -1,13 +1,26 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
 from production_control_app.application.services.machine_load_service import MachineLoadService
-from production_control_app.domain.errors import BranchAccessDenied, SnapshotNotFound
+from production_control_app.application.services.public_cockpit_access_service import (
+    PublicCockpitAccessService,
+)
+from production_control_app.application.services.public_machine_load_drawing_service import (
+    PublicMachineLoadDrawingService,
+)
+from production_control_app.domain.errors import (
+    BranchAccessDenied,
+    DrawingNotFound,
+    InvalidBranch,
+    SnapshotNotFound,
+)
+from production_control_app.domain.product_drawing_pdf import DrawingFile
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.domain.services.current_month_period import forward_window_bounds
 
@@ -494,3 +507,265 @@ def test_reorder_sequence_without_snapshot_is_not_found() -> None:
             end_date="2026-08-26",
             ordered_keys=[{"production_order": "A1", "operation_code": "01"}],
         )
+
+
+# ---------------------------------------------------------------------------
+# Cockpit público do operador (link aberto, somente leitura)
+# ---------------------------------------------------------------------------
+
+
+class RecordingNotifier:
+    def __init__(self) -> None:
+        self.events: list[dict[str, Any]] = []
+
+    def __call__(self, *, branch: str, reason: str, work_center: str | None = None) -> None:
+        self.events.append({"branch": branch, "reason": reason, "work_center": work_center})
+
+
+def _service_with_notifier(
+    gateway: FakeGateway,
+    snapshots: FakeSnapshotRepo,
+    notifier: RecordingNotifier,
+) -> MachineLoadService:
+    return MachineLoadService(
+        gateway,
+        snapshots=snapshots,
+        branch_access=BranchAccessService(),
+        change_notifier=notifier,
+    )
+
+
+def _seed_default_window_snapshot(
+    service: MachineLoadService,
+    snapshots: FakeSnapshotRepo,
+) -> tuple[date, date]:
+    """Semeia o snapshot na janela padrão — a leitura pública não aceita período custom."""
+    start, end = service.resolve_window(start_date=None, end_date=None)
+    snapshots.upsert(
+        branch="01",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": [
+                {**_OPERATION, "production_order": "B1"},
+                {**_OPERATION, "production_order": "B2"},
+            ],
+            "summary": {"work_center_count": 2, "operation_count": 2},
+            "sequence_updated_at": "2026-08-19T22:10:00+00:00",
+            "sequence_updated_by": "planner-1",
+        },
+        refreshed_by="planner-1",
+    )
+    return start, end
+
+
+def test_public_build_returns_queue_in_pcp_order() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_default_window_snapshot(service, snapshots)
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert payload["selected"]["work_center"] == "CT-02"
+    assert [item["production_order"] for item in payload["selected"]["items"]] == ["B1", "B2"]
+    assert payload["work_centers"]
+
+
+def test_public_build_hides_pcp_identity() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_default_window_snapshot(service, snapshots)
+
+    payload = service.build_public(branch="01")
+
+    assert "refreshed_by" not in payload["snapshot"]
+    assert "sequence_updated_by" not in payload["snapshot"]
+    assert payload["snapshot"]["refreshed_at"]
+    assert payload["snapshot"]["sequence_updated_at"]
+
+
+def test_public_build_never_seeds_from_totvs() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway, FakeSnapshotRepo())
+
+    with pytest.raises(SnapshotNotFound):
+        service.build_public(branch="01")
+
+    assert gateway.calls == []
+
+
+def test_public_build_rejects_unknown_branch() -> None:
+    with pytest.raises(InvalidBranch):
+        _service(FakeGateway()).build_public(branch="09")
+
+
+def test_reorder_sequence_notifies_connected_cockpits() -> None:
+    snapshots = FakeSnapshotRepo()
+    notifier = RecordingNotifier()
+    service = _service_with_notifier(FakeGateway(), snapshots, notifier)
+    start, end = _seed_multi_center_snapshot(snapshots)
+
+    service.reorder_sequence(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-01A",
+        start_date=start.isoformat(),
+        end_date=end.isoformat(),
+        ordered_keys=[
+            {"production_order": "A3", "operation_code": "01"},
+            {"production_order": "A1", "operation_code": "01"},
+            {"production_order": "A2", "operation_code": "01"},
+        ],
+    )
+
+    assert notifier.events == [
+        {"branch": "01", "reason": "sequence", "work_center": "CT-01A"}
+    ]
+
+
+def test_refresh_notifies_connected_cockpits() -> None:
+    notifier = RecordingNotifier()
+    service = _service_with_notifier(FakeGateway(), FakeSnapshotRepo(), notifier)
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert notifier.events == [{"branch": "01", "reason": "refresh", "work_center": None}]
+
+
+def test_failed_notification_does_not_break_the_write() -> None:
+    snapshots = FakeSnapshotRepo()
+
+    def exploding_notifier(**_kwargs: Any) -> None:
+        raise RuntimeError("hub fora do ar")
+
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        branch_access=BranchAccessService(),
+        change_notifier=exploding_notifier,
+    )
+    start, end = _seed_multi_center_snapshot(snapshots)
+
+    payload = service.reorder_sequence(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-02",
+        start_date=start.isoformat(),
+        end_date=end.isoformat(),
+        ordered_keys=[
+            {"production_order": "B2", "operation_code": "03"},
+            {"production_order": "B1", "operation_code": "03"},
+        ],
+    )
+
+    assert [item["production_order"] for item in payload["selected"]["items"]] == ["B2", "B1"]
+    assert snapshots.payload_updates == 1
+
+
+def test_public_cockpit_token_matches_catalog_slug() -> None:
+    access = PublicCockpitAccessService()
+
+    assert access.is_valid_token(access.token()) is True
+    assert access.is_valid_token(" ABERTO ") is True
+    assert access.is_valid_token("outro-token") is False
+    assert access.is_valid_token(None) is False
+
+
+class FakeDrawingLibrary:
+    def __init__(self, *, missing: bool = False) -> None:
+        self.calls: list[str] = []
+        self.missing = missing
+        self.file = DrawingFile(path=Path("/drawing-pdfs/90262957.pdf"), filename="90262957.pdf")
+
+    def resolve_pdf(self, code: str) -> DrawingFile:
+        self.calls.append(code)
+        if self.missing:
+            raise DrawingNotFound("missing on fileserver")
+        return self.file
+
+
+def _drawing_service(
+    snapshots: FakeSnapshotRepo,
+    drawings: FakeDrawingLibrary,
+) -> PublicMachineLoadDrawingService:
+    return PublicMachineLoadDrawingService(
+        access=PublicCockpitAccessService(),
+        machine_load=_service(FakeGateway(), snapshots),
+        drawings=drawings,
+    )
+
+
+def _seed_public_queue_with_pa(
+    service: MachineLoadService,
+    snapshots: FakeSnapshotRepo,
+    *,
+    pa_code: str = "90262957",
+) -> None:
+    start, end = service.resolve_window(start_date=None, end_date=None)
+    snapshots.upsert(
+        branch="01",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": [
+                {**_OPERATION, "production_order": "B1", "pa_product_code": pa_code},
+                {**_OPERATION, "production_order": "B2", "pa_product_code": None},
+            ],
+            "summary": {"work_center_count": 2, "operation_count": 2},
+        },
+        refreshed_by="planner-1",
+    )
+
+
+def test_public_drawing_returns_pdf_when_pa_is_in_queue() -> None:
+    snapshots = FakeSnapshotRepo()
+    drawings = FakeDrawingLibrary()
+    machine_load = _service(FakeGateway(), snapshots)
+    _seed_public_queue_with_pa(machine_load, snapshots)
+    service = _drawing_service(snapshots, drawings)
+
+    drawing = service.open_pdf(token="aberto", branch="01", pa_code="90262957")
+
+    assert drawing.filename == "90262957.pdf"
+    assert drawings.calls == ["90262957"]
+
+
+def test_public_drawing_rejects_pa_outside_published_queue() -> None:
+    snapshots = FakeSnapshotRepo()
+    drawings = FakeDrawingLibrary()
+    machine_load = _service(FakeGateway(), snapshots)
+    _seed_public_queue_with_pa(machine_load, snapshots)
+    service = _drawing_service(snapshots, drawings)
+
+    with pytest.raises(DrawingNotFound, match="não está na fila publicada"):
+        service.open_pdf(token="aberto", branch="01", pa_code="99999999")
+
+    assert drawings.calls == []
+
+
+def test_public_drawing_rejects_invalid_token() -> None:
+    snapshots = FakeSnapshotRepo()
+    drawings = FakeDrawingLibrary()
+    machine_load = _service(FakeGateway(), snapshots)
+    _seed_public_queue_with_pa(machine_load, snapshots)
+    service = _drawing_service(snapshots, drawings)
+
+    with pytest.raises(DrawingNotFound, match="inválido"):
+        service.open_pdf(token="outro", branch="01", pa_code="90262957")
+
+    assert drawings.calls == []
+
+
+def test_public_drawing_maps_missing_fileserver_pdf() -> None:
+    snapshots = FakeSnapshotRepo()
+    drawings = FakeDrawingLibrary(missing=True)
+    machine_load = _service(FakeGateway(), snapshots)
+    _seed_public_queue_with_pa(machine_load, snapshots)
+    service = _drawing_service(snapshots, drawings)
+
+    with pytest.raises(DrawingNotFound, match="missing on fileserver"):
+        service.open_pdf(token="aberto", branch="01", pa_code="90262957")
+
+    assert drawings.calls == ["90262957"]
