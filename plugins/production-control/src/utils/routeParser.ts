@@ -7,6 +7,7 @@ export type PpcRoute = {
   workCenter: string | null;
   startDate: string | null;
   endDate: string | null;
+  locateQuery: string | null;
   branch: PpcBranch;
   pathname: string;
 };
@@ -38,6 +39,7 @@ function parseSearch(search: string): {
   workCenter: string | null;
   startDate: string | null;
   endDate: string | null;
+  locateQuery: string | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -47,6 +49,7 @@ function parseSearch(search: string): {
     workCenter: params.get("ct")?.trim() || null,
     startDate: isoDateOrNull(params.get("startDate")),
     endDate: isoDateOrNull(params.get("endDate")),
+    locateQuery: params.get("locate")?.trim() || null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
@@ -65,6 +68,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     workCenter: query.workCenter,
     startDate: query.startDate,
     endDate: query.endDate,
+    locateQuery: query.locateQuery,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
   };
@@ -77,6 +81,7 @@ export function buildPpcHref(input: {
   workCenter?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  locateQuery?: string | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -88,6 +93,7 @@ export function buildPpcHref(input: {
   if (input.workCenter) params.set("ct", input.workCenter);
   if (input.startDate) params.set("startDate", input.startDate);
   if (input.endDate) params.set("endDate", input.endDate);
+  if (input.locateQuery) params.set("locate", input.locateQuery);
   return `${path}?${params.toString()}`;
 }
 

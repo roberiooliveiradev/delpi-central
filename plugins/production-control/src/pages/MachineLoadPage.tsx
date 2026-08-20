@@ -1,18 +1,32 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import {
   createDashboardLoadingActivityCard,
   DataTable,
   dataTableBemClasses,
   UnderlineNav,
   underlineNavBemClasses,
+  type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { GripVertical } from "lucide-react";
+import { ArrowDownNarrowWide, CalendarOff, GripVertical } from "lucide-react";
 
+import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
+import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
+import { MachineLoadRowContextMenu } from "../components/MachineLoadRowContextMenu";
 import { MachineLoadStatusCell } from "../components/MachineLoadStatusCell";
+import { MachineLoadTransferModal } from "../components/MachineLoadTransferModal";
+import { MachineLoadWithdrawnModal } from "../components/MachineLoadWithdrawnModal";
 import { OperatorCockpitLinkButton } from "../components/OperatorCockpitLinkButton";
 import { usePpcConfirm } from "../components/PpcConfirmDialogProvider";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
-import { patchMachineLoadSequence } from "../api/ppcApi";
+import {
+  fetchMachineLoadLocate,
+  optimizeMachineLoadDeliverySequence,
+  patchMachineLoadSequence,
+  prioritizeMachineLoadConjunto,
+  restoreMachineLoadConjunto,
+  transferMachineLoadOperation,
+  withdrawMachineLoadConjunto,
+} from "../api/ppcApi";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useMachineLoad } from "../hooks/useMachineLoad";
@@ -22,10 +36,17 @@ import {
   keysFromOperations,
   useMachineLoadSequenceHistory,
 } from "../hooks/useMachineLoadSequenceHistory";
-import type { MachineLoadOperation, MachineLoadPayload, PpcBranch } from "../types";
+import type {
+  MachineLoadLocatePayload,
+  MachineLoadLocateStop,
+  MachineLoadOperation,
+  MachineLoadPayload,
+  PpcBranch,
+} from "../types";
 import { formatIsoDate, formatIsoDayMonth } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
+import { machineLoadLocateRowKey } from "../utils/machineLoadLocate";
 import { machineLoadRowModifierClass } from "../utils/machineLoadStatus";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
@@ -53,9 +74,18 @@ type MachineLoadPageProps = {
   workCenter: string | null;
   startDate: string | null;
   endDate: string | null;
+  locateQuery?: string | null;
 };
 
-export function MachineLoadPage({ branch, workCenter, startDate, endDate }: MachineLoadPageProps) {
+const HIGHLIGHT_MS = 3200;
+
+export function MachineLoadPage({
+  branch,
+  workCenter,
+  startDate,
+  endDate,
+  locateQuery = null,
+}: MachineLoadPageProps) {
   const confirm = usePpcConfirm();
   const { data, loading, refreshing, error, refreshFromTotvs, applyPayload } = useMachineLoad({
     branch,
@@ -70,18 +100,171 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
   const [rows, setRows] = useState<MachineLoadOperation[]>([]);
   const [sequenceBusy, setSequenceBusy] = useState(false);
   const [sequenceNotice, setSequenceNotice] = useState<string | null>(null);
+  const [locateDraft, setLocateDraft] = useState(locateQuery ?? "");
+  const [locateLoading, setLocateLoading] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
+  const [locateResult, setLocateResult] = useState<MachineLoadLocatePayload | null>(null);
+  const [highlightKey, setHighlightKey] = useState<string | null>(null);
+  const locateAutoKeyRef = useRef<string | null>(null);
+  const [rowMenu, setRowMenu] = useState<{
+    operation: MachineLoadOperation;
+    position: FixedPanelPoint;
+  } | null>(null);
+  const [conjuntoModalOpen, setConjuntoModalOpen] = useState(false);
+  const [conjuntoModalOrder, setConjuntoModalOrder] = useState<string | null>(null);
+  const [conjuntoModalPa, setConjuntoModalPa] = useState<string | null>(null);
+  const [conjuntoModalLoading, setConjuntoModalLoading] = useState(false);
+  const [conjuntoModalError, setConjuntoModalError] = useState<string | null>(null);
+  const [conjuntoModalResult, setConjuntoModalResult] = useState<MachineLoadLocatePayload | null>(null);
+  const [withdrawnModalOpen, setWithdrawnModalOpen] = useState(false);
+  const [transferOperation, setTransferOperation] = useState<MachineLoadOperation | null>(null);
 
+  // Sem recorte na URL, «De» mostra a entrega mais antiga que sobrou na fila.
   useEffect(() => {
-    setDraftStart(startDate ?? period?.start_date ?? "");
+    setDraftStart(startDate ?? period?.oldest_due_date ?? period?.start_date ?? "");
     setDraftEnd(endDate ?? period?.end_date ?? "");
-  }, [startDate, endDate, period?.start_date, period?.end_date]);
+  }, [startDate, endDate, period?.oldest_due_date, period?.start_date, period?.end_date]);
 
   const selectedCenter = data?.selected.work_center ?? null;
   const workCenters = data?.work_centers ?? [];
+  const withdrawnEntries = data?.withdrawn?.items ?? [];
+  const missingDueDates = data?.summary.missing_due_date_count ?? 0;
+  // O horizonte da fila é o que foi puxado do TOTVS, não o recorte da tela.
+  const periodHint = useMemo(() => {
+    const pulledEnd = period?.pulled_end ?? period?.end_date;
+    if (!pulledEnd) return null;
+    const pulledStart = period?.pulled_start;
+    return pulledStart
+      ? copy.machineLoad.periodHint(formatIsoDate(pulledStart), formatIsoDate(pulledEnd))
+      : copy.machineLoad.periodHintOpenStart(formatIsoDate(pulledEnd));
+  }, [period?.pulled_start, period?.pulled_end, period?.end_date]);
 
   useEffect(() => {
     setRows(data?.selected.items ?? []);
   }, [data]);
+
+  const runLocate = useCallback(
+    async (rawQuery: string) => {
+      const query = rawQuery.trim();
+      if (!query) {
+        setLocateError(copy.machineLoad.locate.emptyQuery);
+        setLocateResult(null);
+        return;
+      }
+      setLocateLoading(true);
+      setLocateError(null);
+      try {
+        const payload = await fetchMachineLoadLocate({ branch, query });
+        setLocateResult(payload);
+        setLocateDraft(query);
+        navigatePpc(
+          buildPpcHref({
+            subpluginId: "machine-load",
+            branch,
+            workCenter: workCenter ?? selectedCenter,
+            startDate,
+            endDate,
+            locateQuery: query,
+          }),
+        );
+      } catch (err: unknown) {
+        setLocateResult(null);
+        setLocateError(
+          err instanceof Error ? err.message : copy.machineLoad.loadError,
+        );
+      } finally {
+        setLocateLoading(false);
+      }
+    },
+    [branch, endDate, selectedCenter, startDate, workCenter],
+  );
+
+  const clearLocate = useCallback(() => {
+    setLocateResult(null);
+    setLocateError(null);
+    setLocateDraft("");
+    locateAutoKeyRef.current = null;
+    navigatePpc(
+      buildPpcHref({
+        subpluginId: "machine-load",
+        branch,
+        workCenter: workCenter ?? selectedCenter,
+        startDate,
+        endDate,
+        locateQuery: null,
+      }),
+    );
+  }, [branch, endDate, selectedCenter, startDate, workCenter]);
+
+  useEffect(() => {
+    const query = locateQuery?.trim() || "";
+    if (!query) return;
+    const key = `${branch}|${startDate ?? ""}|${endDate ?? ""}|${query}`;
+    if (locateAutoKeyRef.current === key) return;
+    locateAutoKeyRef.current = key;
+    setLocateDraft(query);
+    void runLocate(query);
+  }, [branch, endDate, locateQuery, runLocate, startDate]);
+
+  useEffect(() => {
+    if (!highlightKey) return;
+    const timer = window.setTimeout(() => setHighlightKey(null), HIGHLIGHT_MS);
+    const row = document.querySelector<HTMLElement>(`[data-ppc-locate-key="${highlightKey}"]`);
+    row?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return () => window.clearTimeout(timer);
+  }, [highlightKey, rows]);
+
+  const goToStop = useCallback(
+    (stop: MachineLoadLocateStop) => {
+      const key = machineLoadLocateRowKey(stop);
+      setHighlightKey(key);
+      navigatePpc(
+        buildPpcHref({
+          subpluginId: "machine-load",
+          branch,
+          workCenter: stop.work_center,
+          startDate,
+          endDate,
+          locateQuery: (locateResult?.query ?? locateDraft.trim()) || null,
+        }),
+      );
+    },
+    [branch, endDate, locateDraft, locateResult?.query, startDate],
+  );
+
+  const closeRowMenu = useCallback(() => setRowMenu(null), []);
+
+  const openConjuntoTraceModal = useCallback(
+    async (conjuntoKey: string, paCode?: string | null) => {
+      const key = conjuntoKey.trim();
+      if (!key) return;
+      setConjuntoModalOrder(key);
+      setConjuntoModalPa(paCode?.trim() || null);
+      setConjuntoModalOpen(true);
+      setConjuntoModalLoading(true);
+      setConjuntoModalError(null);
+      setConjuntoModalResult(null);
+      try {
+        const payload = await fetchMachineLoadLocate({ branch, query: key });
+        setConjuntoModalResult(payload);
+      } catch (err: unknown) {
+        setConjuntoModalResult(null);
+        setConjuntoModalError(err instanceof Error ? err.message : copy.machineLoad.loadError);
+      } finally {
+        setConjuntoModalLoading(false);
+      }
+    },
+    [branch],
+  );
+
+  const closeConjuntoModal = useCallback(() => {
+    setConjuntoModalOpen(false);
+    setConjuntoModalOrder(null);
+    setConjuntoModalPa(null);
+    setConjuntoModalError(null);
+    setConjuntoModalResult(null);
+    setConjuntoModalLoading(false);
+  }, []);
 
   const scopeKey = [
     branch,
@@ -106,8 +289,6 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
         const payload = await patchMachineLoadSequence({
           branch,
           workCenter: selectedCenter,
-          startDate,
-          endDate,
           orderedKeys,
         });
         applyPayload(payload);
@@ -122,15 +303,164 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
         setSequenceBusy(false);
       }
     },
-    [
-      applyPayload,
-      branch,
-      data?.selected.items,
-      endDate,
-      history,
-      selectedCenter,
-      startDate,
-    ],
+    [applyPayload, branch, data?.selected.items, history, selectedCenter],
+  );
+
+  const prioritizeConjunto = useCallback(
+    async (conjuntoKey: string) => {
+      const key = conjuntoKey.trim();
+      if (!key || sequenceBusy) return;
+      const accepted = await confirm({
+        title: copy.machineLoad.rowActions.prioritizeConfirmTitle(key),
+        message: copy.machineLoad.rowActions.prioritizeConfirmMessage,
+        confirmLabel: copy.machineLoad.rowActions.prioritizeConfirmAction,
+        cancelLabel: copy.machineLoad.rowActions.prioritizeCancel,
+        variant: "default",
+      });
+      if (!accepted) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      try {
+        const payload = await prioritizeMachineLoadConjunto({
+          branch,
+          orderNumber: key,
+          workCenter: selectedCenter,
+        });
+        applyPayload(payload);
+        // A priorização mexe em vários CTs; o histórico só cobre o CT ativo.
+        history.reset();
+        setSequenceNotice(payload.prioritization.message);
+      } catch (err: unknown) {
+        setSequenceNotice(
+          err instanceof Error ? err.message : copy.machineLoad.rowActions.prioritizeError,
+        );
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [applyPayload, branch, confirm, history, selectedCenter, sequenceBusy],
+  );
+
+  const optimizeDeliverySequence = useCallback(async () => {
+    if (sequenceBusy) return;
+    const accepted = await confirm({
+      title: copy.machineLoad.optimizeDelivery.confirmTitle,
+      message: copy.machineLoad.optimizeDelivery.confirmMessage,
+      confirmLabel: copy.machineLoad.optimizeDelivery.confirmAction,
+      cancelLabel: copy.machineLoad.optimizeDelivery.cancel,
+      variant: "default",
+    });
+    if (!accepted) return;
+    setSequenceBusy(true);
+    setSequenceNotice(null);
+    try {
+      const payload = await optimizeMachineLoadDeliverySequence({
+        branch,
+        workCenter: selectedCenter,
+      });
+      applyPayload(payload);
+      // A otimização atravessa todos os CTs; o histórico só cobre o CT ativo.
+      history.reset();
+      setSequenceNotice(payload.optimization.message);
+    } catch (err: unknown) {
+      setSequenceNotice(
+        err instanceof Error ? err.message : copy.machineLoad.optimizeDelivery.error,
+      );
+    } finally {
+      setSequenceBusy(false);
+    }
+  }, [applyPayload, branch, confirm, history, selectedCenter, sequenceBusy]);
+
+  const withdrawConjunto = useCallback(
+    async (conjuntoKey: string) => {
+      const key = conjuntoKey.trim();
+      if (!key || sequenceBusy) return;
+      const accepted = await confirm({
+        title: copy.machineLoad.rowActions.withdrawConfirmTitle(key),
+        message: copy.machineLoad.rowActions.withdrawConfirmMessage,
+        confirmLabel: copy.machineLoad.rowActions.withdrawConfirmAction,
+        cancelLabel: copy.machineLoad.rowActions.withdrawCancel,
+        variant: "danger",
+      });
+      if (!accepted) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      try {
+        const payload = await withdrawMachineLoadConjunto({
+          branch,
+          orderNumber: key,
+          workCenter: selectedCenter,
+        });
+        applyPayload(payload);
+        // A retirada some com operações de vários CTs; o histórico só cobre o CT ativo.
+        history.reset();
+        setSequenceNotice(payload.withdrawal.message);
+      } catch (err: unknown) {
+        setSequenceNotice(
+          err instanceof Error ? err.message : copy.machineLoad.rowActions.withdrawError,
+        );
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [applyPayload, branch, confirm, history, selectedCenter, sequenceBusy],
+  );
+
+  const restoreConjunto = useCallback(
+    async (conjuntoKey: string) => {
+      const key = conjuntoKey.trim();
+      if (!key || sequenceBusy) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      try {
+        const payload = await restoreMachineLoadConjunto({
+          branch,
+          orderNumber: key,
+          workCenter: selectedCenter,
+        });
+        applyPayload(payload);
+        history.reset();
+        setSequenceNotice(payload.withdrawal.message);
+        if ((payload.withdrawn?.items.length ?? 0) === 0) setWithdrawnModalOpen(false);
+      } catch (err: unknown) {
+        setSequenceNotice(
+          err instanceof Error ? err.message : copy.machineLoad.rowActions.restoreError,
+        );
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [applyPayload, branch, history, selectedCenter, sequenceBusy],
+  );
+
+  const sendOperationToWorkCenter = useCallback(
+    async (operation: MachineLoadOperation, targetWorkCenter: string) => {
+      const target = targetWorkCenter.trim();
+      if (!target || sequenceBusy) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      try {
+        const payload = await transferMachineLoadOperation({
+          branch,
+          productionOrder: operation.production_order,
+          operationCode: operation.operation_code,
+          targetWorkCenter: target,
+          workCenter: selectedCenter,
+        });
+        applyPayload(payload);
+        // A operação muda de fila; o histórico de Ctrl+Z é do CT ativo.
+        history.reset();
+        setSequenceNotice(payload.transfer.message);
+        setTransferOperation(null);
+      } catch (err: unknown) {
+        setSequenceNotice(
+          err instanceof Error ? err.message : copy.machineLoad.rowActions.transferError,
+        );
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [applyPayload, branch, history, selectedCenter, sequenceBusy],
   );
 
   const onReorder = useCallback(
@@ -162,8 +492,6 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
         const payload: MachineLoadPayload = await patchMachineLoadSequence({
           branch,
           workCenter: selectedCenter,
-          startDate,
-          endDate,
           orderedKeys: keys,
         });
         applyPayload(payload);
@@ -177,16 +505,7 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
         setSequenceBusy(false);
       }
     },
-    [
-      applyPayload,
-      branch,
-      data?.selected.items,
-      endDate,
-      rows,
-      selectedCenter,
-      sequenceBusy,
-      startDate,
-    ],
+    [applyPayload, branch, data?.selected.items, rows, selectedCenter, sequenceBusy],
   );
 
   useEffect(() => {
@@ -249,7 +568,19 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
       {
         key: "production_order",
         header: copy.machineLoad.columns.productionOrder,
-        render: (row: MachineLoadOperation) => row.production_order || "—",
+        render: (row: MachineLoadOperation) => (
+          <span className="ppc-load__order">
+            {row.production_order || "—"}
+            {row.transferred_from ? (
+              <span
+                className="ppc-load__transferred"
+                title={copy.machineLoad.transfer.originBadgeTitle(row.transferred_from)}
+              >
+                {copy.machineLoad.transfer.originBadge(row.transferred_from)}
+              </span>
+            ) : null}
+          </span>
+        ),
       },
       {
         key: "product",
@@ -296,6 +627,7 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
     workCenter?: string | null;
     startDate?: string | null;
     endDate?: string | null;
+    locateQuery?: string | null;
   }) => {
     navigatePpc(
       buildPpcHref({
@@ -304,6 +636,10 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
         workCenter: next.workCenter !== undefined ? next.workCenter : selectedCenter,
         startDate: next.startDate !== undefined ? next.startDate : startDate,
         endDate: next.endDate !== undefined ? next.endDate : endDate,
+        locateQuery:
+          next.locateQuery !== undefined
+            ? next.locateQuery
+            : (locateResult?.query ?? locateDraft.trim()) || null,
       }),
     );
   };
@@ -358,12 +694,29 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
         title={copy.machineLoad.title}
         subtitle={copy.machineLoad.subtitle}
         titleHint={helpTooltips.machineLoad}
+        badge={selectedCenter}
+        stats={
+          data ? (
+            <>
+              <span className="ppc-header__chip">{copy.machineLoad.summary(
+                data.summary.work_center_count,
+                data.summary.operation_count,
+              )}</span>
+              {data.summary.in_production_count > 0 ? (
+                <span className="ppc-header__chip ppc-header__chip--running">
+                  {copy.machineLoad.inProductionSummary(data.summary.in_production_count)}
+                </span>
+              ) : null}
+            </>
+          ) : null
+        }
         branch={branch}
         subpluginId="machine-load"
         workCenter={selectedCenter}
         startDate={startDate}
         endDate={endDate}
         onRefresh={onRefreshClick}
+        refreshBusy={refreshing}
       />
 
       <form
@@ -402,7 +755,49 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
             {copy.machineLoad.periodReset}
           </button>
         ) : null}
+        {periodHint ? <span className="ppc-period__hint">{periodHint}</span> : null}
+        {missingDueDates > 0 ? (
+          <span className="ppc-period__warning" role="status">
+            {copy.machineLoad.periodMissingDueDate(missingDueDates)}
+          </span>
+        ) : null}
+      </form>
+
+      <MachineLoadLocatePanel
+        draftQuery={locateDraft}
+        onDraftQueryChange={setLocateDraft}
+        onSearch={runLocate}
+        onClear={clearLocate}
+        loading={locateLoading}
+        error={locateError}
+        result={locateResult}
+        onGoToStop={goToStop}
+      />
+
+      <div className="ppc-period ppc-period--meta">
         <OperatorCockpitLinkButton branch={branch} />
+        <button
+          type="button"
+          className="ppc-period__optimize"
+          onClick={optimizeDeliverySequence}
+          disabled={sequenceBusy || !data || data.summary.operation_count === 0}
+          title={copy.machineLoad.optimizeDelivery.hint}
+        >
+          <ArrowDownNarrowWide size={15} strokeWidth={1.75} aria-hidden />
+          {sequenceBusy
+            ? copy.machineLoad.optimizeDelivery.busy
+            : copy.machineLoad.optimizeDelivery.label}
+        </button>
+        {withdrawnEntries.length > 0 ? (
+          <button
+            type="button"
+            className="ppc-period__withdrawn"
+            onClick={() => setWithdrawnModalOpen(true)}
+          >
+            <CalendarOff size={15} strokeWidth={1.75} aria-hidden />
+            {copy.machineLoad.withdrawn.openButton(withdrawnEntries.length)}
+          </button>
+        ) : null}
         {data ? (
           <span className="ppc-period__summary">
             {copy.machineLoad.summary(
@@ -429,7 +824,7 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
             ) : null}
           </span>
         ) : null}
-      </form>
+      </div>
 
       {loading && !data ? (
         <LoadingCard title={copy.machineLoad.loading} description={copy.machineLoad.loadingHint} />
@@ -492,11 +887,27 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
               rows={rows}
               rowKey={(row) => `${row.production_order}-${row.operation_code}`}
               getRowClassName={(row, index) =>
-                [machineLoadRowModifierClass(row), reorder.rowClassName(index)]
+                [
+                  machineLoadRowModifierClass(row),
+                  reorder.rowClassName(index),
+                  highlightKey === machineLoadLocateRowKey(row)
+                    ? "ppc-load__row--locate-hit"
+                    : null,
+                ]
                   .filter(Boolean)
                   .join(" ") || undefined
               }
-              getRowProps={(_row, index) => reorder.rowDropProps(index)}
+              getRowProps={(row, index) => ({
+                ...reorder.rowDropProps(index),
+                "data-ppc-locate-key": machineLoadLocateRowKey(row),
+                onContextMenu: (event: MouseEvent) => {
+                  event.preventDefault();
+                  setRowMenu({
+                    operation: row,
+                    position: { x: event.clientX, y: event.clientY },
+                  });
+                },
+              })}
               emptyMessage={copy.machineLoad.emptyOperations}
               loading={loading}
               classNames={tableClassNames}
@@ -506,6 +917,54 @@ export function MachineLoadPage({ branch, workCenter, startDate, endDate }: Mach
           </div>
         </section>
       ) : null}
+
+      <MachineLoadRowContextMenu
+        open={Boolean(rowMenu)}
+        position={rowMenu?.position ?? null}
+        operation={rowMenu?.operation ?? null}
+        onClose={closeRowMenu}
+        onTraceConjunto={(conjuntoKey) => {
+          const pa = rowMenu?.operation?.pa_product_code?.trim() || null;
+          void openConjuntoTraceModal(conjuntoKey, pa);
+        }}
+        onPrioritizeConjunto={(conjuntoKey) => void prioritizeConjunto(conjuntoKey)}
+        onWithdrawConjunto={(conjuntoKey) => void withdrawConjunto(conjuntoKey)}
+        onTransferOperation={(operation) => setTransferOperation(operation)}
+        prioritizeDisabled={sequenceBusy}
+        withdrawDisabled={sequenceBusy}
+        transferDisabled={sequenceBusy}
+      />
+
+      <MachineLoadTransferModal
+        open={Boolean(transferOperation)}
+        operation={transferOperation}
+        workCenters={workCenters}
+        busy={sequenceBusy}
+        onClose={() => setTransferOperation(null)}
+        onConfirm={(target) => {
+          if (!transferOperation) return;
+          void sendOperationToWorkCenter(transferOperation, target);
+        }}
+      />
+
+      <MachineLoadWithdrawnModal
+        open={withdrawnModalOpen}
+        entries={withdrawnEntries}
+        busy={sequenceBusy}
+        onClose={() => setWithdrawnModalOpen(false)}
+        onRestore={(orderNumber) => void restoreConjunto(orderNumber)}
+      />
+
+      <MachineLoadLocateModal
+        open={conjuntoModalOpen}
+        productionOrder={conjuntoModalOrder}
+        paCode={conjuntoModalPa}
+        loading={conjuntoModalLoading}
+        error={conjuntoModalError}
+        result={conjuntoModalResult}
+        onClose={closeConjuntoModal}
+        onGoToStop={goToStop}
+      />
     </div>
   );
 }

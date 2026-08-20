@@ -1,4 +1,4 @@
-"""Port — snapshot congelado da carga máquina."""
+"""Port — snapshot congelado da carga máquina (uma fila viva por filial)."""
 
 from __future__ import annotations
 
@@ -9,14 +9,8 @@ from typing import Any
 
 class MachineLoadSnapshotRepositoryPort(ABC):
     @abstractmethod
-    def get(
-        self,
-        *,
-        branch: str,
-        start_date: date,
-        end_date: date,
-    ) -> dict[str, Any] | None:
-        """Retorna linha com payload_json + refreshed_at, ou None."""
+    def get(self, *, branch: str) -> dict[str, Any] | None:
+        """Retorna a fila da filial (payload_json + janela + refreshed_at), ou None."""
 
     @abstractmethod
     def upsert(
@@ -30,15 +24,8 @@ class MachineLoadSnapshotRepositoryPort(ABC):
         schema_version: int = 1,
         source: str = "api-delpi",
     ) -> dict[str, Any]:
-        """Insere ou substitui o snapshot do escopo; devolve a linha gravada."""
+        """Substitui a fila da filial; ``start_date``/``end_date`` são a janela puxada."""
 
     @abstractmethod
-    def update_payload(
-        self,
-        *,
-        branch: str,
-        start_date: date,
-        end_date: date,
-        payload: dict[str, Any],
-    ) -> dict[str, Any]:
+    def update_payload(self, *, branch: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Atualiza só o JSON (ex.: sequência manual) sem mexer em refreshed_at."""

@@ -11,8 +11,9 @@ type Options = {
 };
 
 /**
- * Escuta as mudanças que o PCP faz na fila (reordenação e atualização do TOTVS).
- * O socket só carrega o aviso; quem busca o conteúdo é a leitura HTTP pública.
+ * Escuta mudanças estruturais da fila (reordenação e refresh TOTVS pelo PCP).
+ * Status de apontamento (em produção / já apontada) não passa por este canal —
+ * o cockpit faz polling HTTP periódico com enrich ao vivo.
  */
 export function usePublicMachineLoadRealtime({ token, branch, onChanged }: Options): boolean {
   const [connected, setConnected] = useState(false);

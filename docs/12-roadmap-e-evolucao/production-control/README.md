@@ -25,7 +25,7 @@ Home: `/apps/production-control?branch=01`. Carga máquina: `/apps/production-co
 | Subplugin | Estado | Escopo |
 |-----------|--------|--------|
 | `home` | ativo | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
-| `machine-load` | ativo | Sequenciamento SH8 congelado por filial/janela + status HZA vivo + refresh sob confirmação |
+| `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação |
 | `problem-analysis` | ativo | Inbox de exceções + detalhe da OP |
 | `capacity` | em breve | Capacidade e ocupação percentual por CT |
 

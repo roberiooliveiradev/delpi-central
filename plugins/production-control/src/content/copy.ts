@@ -50,19 +50,122 @@ export const copy = {
       "Copia o link público do cockpit desta filial para o operador acompanhar a fila em tempo real.",
     operatorLinkCopied: "Link copiado!",
     operatorLinkError: "Não foi possível copiar o link.",
-    periodLabel: "Período",
+    periodLabel: "Entrega do PA",
     periodFrom: "De",
     periodTo: "até",
     periodApply: "Aplicar",
     periodReset: "Voltar ao padrão",
+    periodHint: (from: string, to: string) =>
+      `Fila puxada por entrega do PA: ${from} até ${to}. «De/até» filtra o que já está congelado — use Atualizar para puxar outro horizonte do TOTVS.`,
+    periodHintOpenStart: (to: string) =>
+      `Fila puxada por entrega do PA até ${to}, incluindo o que está atrasado. «De/até» filtra o que já está congelado — use Atualizar para puxar outro horizonte do TOTVS.`,
+    periodMissingDueDate: (n: number) =>
+      `${n} operaç${n === 1 ? "ão" : "ões"} sem data de entrega do PA — verifique o vínculo com a OP mãe no TOTVS.`,
+    optimizeDelivery: {
+      label: "Otimizar por entrega",
+      hint: "Reordena a fila de todos os centros pela data de entrega do PA, sem ultrapassar operação já iniciada.",
+      confirmTitle: "Reordenar a fila pela entrega do PA?",
+      confirmMessage:
+        "Todos os centros de trabalho desta filial são resequenciados da entrega mais próxima para a mais distante. Operações já iniciadas continuam onde estão, e conjuntos fora da programação não voltam à fila.",
+      confirmAction: "Otimizar fila",
+      cancel: "Cancelar",
+      busy: "Otimizando a fila…",
+      error: "Não foi possível otimizar a fila pela entrega do PA.",
+    },
     tabsAria: "Centros de trabalho",
     emptyCenters: "Nenhuma operação alocada no período.",
-    emptyCentersHint: "Ajuste o período ou confira a programação no TOTVS.",
+    emptyCentersHint: "Ajuste o recorte de entrega ou atualize a carga máquina a partir do TOTVS.",
     emptyOperations: "Nenhuma operação alocada neste centro de trabalho no período.",
     summary: (centers: number, operations: number) =>
       `${centers} centro${centers === 1 ? "" : "s"} · ${operations} operaç${operations === 1 ? "ão" : "ões"}`,
     inProductionSummary: (running: number) =>
       `${running} em produção agora`,
+    locate: {
+      label: "Rastreio",
+      placeholder: "Conjunto (OP) ou produto (PA)…",
+      search: "Buscar",
+      searching: "Rastreando…",
+      clear: "Limpar rastreio",
+      close: "Fechar",
+      emptyQuery: "Informe o número do conjunto (OP) ou o código do produto (PA).",
+      panelTitle: "Previsão de produção",
+      /** Conjunto = C2_NUM (6 dígitos): todas as OPs que começam com esse número. */
+      journeyConjunto: (c2Num: string) => `Conjunto ${c2Num}`,
+      /** Código do PA = produto do conjunto, não o conjunto em si. */
+      journeyProduct: (pa: string) => `Produto ${pa}`,
+      stops: (n: number) => `${n} parad${n === 1 ? "a" : "as"}`,
+      due: (when: string) => `Entrega ${when}`,
+      position: (pos: number, size: number) => `Posição ${pos}/${size}`,
+      schedule: "Programada",
+      goToQueue: "Ir à fila",
+      progressLabel: "Progresso",
+      hint: "Conjunto = C2_NUM (6 primeiros dígitos da OP). Ex.: 10840401003 rastreia todas as OPs 108404…. Produto (PA) lista os conjuntos daquele acabado.",
+    },
+    rowActions: {
+      menuAria: "Ações da operação",
+      traceConjunto: "Rastrear produção do conjunto",
+      traceConjuntoDisabled: "Rastrear conjunto (sem OP neste registro)",
+      traceConjuntoTitle: (c2Num: string) => `Produção do conjunto ${c2Num}`,
+      traceConjuntoLead: (pa: string | null) =>
+        pa
+          ? `Todas as ordens do mesmo C2_NUM (prefixo de 6 dígitos) na fila do período. Produto do conjunto: ${pa}.`
+          : "Todas as ordens do mesmo C2_NUM (prefixo de 6 dígitos) na fila do período.",
+      prioritizeConjunto: "Priorizar conjunto",
+      prioritizeConjuntoDisabled: "Priorizar conjunto (sem OP neste registro)",
+      prioritizeConfirmTitle: (c2Num: string) => `Priorizar conjunto ${c2Num}?`,
+      prioritizeConfirmMessage:
+        "Todas as OPs deste conjunto vão para o topo da fila nos seus centros de trabalho. Operações já iniciadas continuam à frente — o conjunto entra logo depois delas.",
+      prioritizeConfirmAction: "Priorizar",
+      prioritizeCancel: "Cancelar",
+      prioritizeError: "Não foi possível priorizar o conjunto.",
+      withdrawConjunto: "Retirar conjunto da programação",
+      withdrawConjuntoDisabled: "Retirar conjunto (sem OP neste registro)",
+      withdrawConfirmTitle: (c2Num: string) => `Retirar o conjunto ${c2Num} da programação?`,
+      withdrawConfirmMessage:
+        "Todas as OPs deste conjunto saem da fila em todos os centros de trabalho e deixam de aparecer no cockpit do operador. Você pode devolvê-las depois pelo botão «Fora da programação».",
+      withdrawConfirmAction: "Retirar da programação",
+      withdrawCancel: "Cancelar",
+      withdrawError: "Não foi possível retirar o conjunto da programação.",
+      restoreError: "Não foi possível devolver o conjunto à fila.",
+      transferOperation: "Enviar para outro centro de trabalho",
+      transferOperationDisabled: "Enviar para outro CT (sem OP neste registro)",
+      transferError: "Não foi possível transferir a operação de centro de trabalho.",
+    },
+    transfer: {
+      modalTitle: "Enviar para outro centro de trabalho",
+      lead: "A operação sai da fila do centro atual e entra no fim da fila do destino. Depois é só reordenar ou priorizar por lá.",
+      operationSummary: (order: string, operation: string) => `OP ${order} · operação ${operation}`,
+      currentCenter: (center: string) => `Centro atual: ${center}`,
+      selectLabel: "Centro de trabalho de destino",
+      selectPlaceholder: "Escolha o centro de destino",
+      selectHint: "A lista traz os centros com fila neste período.",
+      noTargets: "Não há outro centro de trabalho com fila neste período.",
+      confirmAction: "Enviar",
+      cancel: "Cancelar",
+      originBadge: (center: string) => `veio de ${center}`,
+      originBadgeTitle: (center: string) => `Operação transferida do centro ${center}`,
+    },
+    withdrawn: {
+      openButton: (count: number) =>
+        count === 1 ? "Fora da programação (1)" : `Fora da programação (${count})`,
+      openButtonEmpty: "Fora da programação",
+      modalTitle: "Conjuntos fora da programação",
+      lead: "Estes conjuntos não aparecem na fila do PCP nem no cockpit do operador. Devolver recoloca cada OP na posição original.",
+      empty: "Nenhum conjunto fora da programação neste período.",
+      conjuntoLabel: (c2Num: string) => `Conjunto ${c2Num}`,
+      productLabel: (pa: string) => `Produto ${pa}`,
+      operations: (count: number) =>
+        count === 1 ? "1 operação" : `${count} operações`,
+      centers: (centers: string[]) => centers.join(", "),
+      withdrawnBy: (who: string | null, when: string | null) => {
+        if (who && when) return `Retirado por ${who} em ${when}`;
+        if (who) return `Retirado por ${who}`;
+        if (when) return `Retirado em ${when}`;
+        return "Retirado da programação";
+      },
+      restoreAction: "Devolver à fila",
+      locateBadge: "Fora da programação",
+    },
     manualTool: "Mão de obra",
     columns: {
       schedule: "Programação",

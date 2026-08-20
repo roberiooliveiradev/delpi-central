@@ -1153,17 +1153,18 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "lines",
+      "openEndedDateRange": true,
       "tvConstraints": {
         "maxRows": 200
       },
-      "openEndedDateRange": true,
+      "tableFields": "lines",
       "valueFields": [
         "sales_order_otd_pct",
         "late_percentage",
         "late_lines",
         "total_lines"
       ],
+      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
       "valueFieldTypes": {
         "sales_order_otd_pct": "number",
         "late_percentage": "number",
@@ -1171,8 +1172,7 @@
         "total_lines": "number",
         "promised_date": "date",
         "invoice_date": "date"
-      },
-      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida."
+      }
     },
     {
       "operationId": "get_sales_order_otd_series",
@@ -1451,10 +1451,10 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
       },
+      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
@@ -1527,10 +1527,10 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
       },
+      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
@@ -6345,6 +6345,13 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items",
+        "comparable_goal"
+      ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
@@ -6353,14 +6360,7 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      },
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items",
-        "comparable_goal"
-      ]
+      }
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -6482,6 +6482,7 @@
         "end_date"
       ],
       "openEndedDateRange": true,
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
         "sale_number": "Número da OV",
@@ -6490,8 +6491,7 @@
         "customer_name": "Cliente",
         "product_code": "Código do produto",
         "status": "Status"
-      },
-      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar."
+      }
     },
     {
       "operationId": "export_lmp_nonconformities",
@@ -7144,27 +7144,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldLabels": {
-        "total_investment_in_period": "Investimento total",
-        "total_gross_costs_until_now": "Investimento total",
-        "total_gross_savings_in_period": "Economia bruta",
-        "total_hours_saved_until_now": "Horas economizadas",
-        "implemented_solutions_count": "Soluções ativas",
-        "solutions_started_in_period_count": "Soluções iniciadas no período",
-        "total_net_savings_until_now": "Economia líquida",
-        "average_roi": "ROI médio",
-        "month": "Mês",
-        "gross_savings_month": "Economia bruta (mês)",
-        "gross_costs_month": "Custos brutos (mês)",
-        "gross_investment_month": "Investimento bruto (mês)",
-        "gross_recurring_investment_month": "Invest. recorrente (mês)",
-        "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
-        "investment_total_month": "Investimento total (mês)",
-        "net_savings_month": "Economia líquida (mês)",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "valueFields": [
         "total_investment_in_period",
         "total_gross_savings_in_period",
@@ -7186,6 +7165,27 @@
         "shared_resource_cost_month": "number",
         "investment_total_month": "number",
         "net_savings_month": "number"
+      },
+      "valueFieldLabels": {
+        "total_investment_in_period": "Investimento total",
+        "total_gross_costs_until_now": "Investimento total",
+        "total_gross_savings_in_period": "Economia bruta",
+        "total_hours_saved_until_now": "Horas economizadas",
+        "implemented_solutions_count": "Soluções ativas",
+        "solutions_started_in_period_count": "Soluções iniciadas no período",
+        "total_net_savings_until_now": "Economia líquida",
+        "average_roi": "ROI médio",
+        "month": "Mês",
+        "gross_savings_month": "Economia bruta (mês)",
+        "gross_costs_month": "Custos brutos (mês)",
+        "gross_investment_month": "Investimento bruto (mês)",
+        "gross_recurring_investment_month": "Invest. recorrente (mês)",
+        "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
+        "investment_total_month": "Investimento total (mês)",
+        "net_savings_month": "Economia líquida (mês)",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
       }
     },
     {
@@ -7262,7 +7262,19 @@
         "start_date",
         "end_date"
       ],
+      "openEndedDateRange": true,
       "tableFields": "points",
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -7278,22 +7290,10 @@
           "direction": "asc"
         }
       ],
-      "openEndedDateRange": true,
       "valueFieldLabels": {
         "periodo": "Período",
         "economia_bruta": "Economia",
         "investimento": "Investimento"
-      },
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
       }
     },
     {
@@ -11812,7 +11812,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -13231,13 +13231,13 @@
         "tempo_real_horas",
         "tempo_previsto_horas"
       ],
+      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
       "valueFieldTypes": {
         "eficiencia_percentual": "number",
         "resultado_mod": "number",
         "tempo_real_horas": "number",
         "tempo_previsto_horas": "number"
-      },
-      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center."
+      }
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -13399,20 +13399,20 @@
       "tvConstraints": {
         "maxRows": 200
       },
-      "valueFieldLabels": {
-        "efficiency_pct": "Eficiência %",
-        "appointment_count": "Apontamentos",
-        "work_center": "Centro de trabalho"
-      },
       "valueFields": [
         "efficiency_pct",
         "appointment_count"
       ],
+      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
       "valueFieldTypes": {
         "efficiency_pct": "number",
         "appointment_count": "number"
       },
-      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado)."
+      "valueFieldLabels": {
+        "efficiency_pct": "Eficiência %",
+        "appointment_count": "Apontamentos",
+        "work_center": "Centro de trabalho"
+      }
     },
     {
       "operationId": "get_production_losses_records",
@@ -13600,6 +13600,20 @@
           "format": "date",
           "description": "Fim da janela de operações programadas (H8_DTINI, AAAA-MM-DD)."
         },
+        "delivery_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Início da entrega",
+          "format": "date",
+          "description": "Início do intervalo da data de entrega prevista (AAAA-MM-DD)."
+        },
+        "delivery_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Fim da entrega",
+          "format": "date",
+          "description": "Fim do intervalo da data de entrega prevista (AAAA-MM-DD)."
+        },
         "work_center": {
           "type": "string",
           "optional": true,
@@ -13671,6 +13685,20 @@
           "label": "Fim programado",
           "format": "date",
           "description": "Fim da janela de operações programadas (H8_DTINI, AAAA-MM-DD)."
+        },
+        "delivery_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Início da entrega",
+          "format": "date",
+          "description": "Início do intervalo da data de entrega prevista (AAAA-MM-DD)."
+        },
+        "delivery_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Fim da entrega",
+          "format": "date",
+          "description": "Fim do intervalo da data de entrega prevista (AAAA-MM-DD)."
         },
         "work_center": {
           "type": "string",
@@ -13992,6 +14020,19 @@
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "seriesField": "points",
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -14006,20 +14047,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "seriesField": "points",
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      }
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -15668,11 +15696,11 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       },
+      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
@@ -18808,17 +18836,17 @@
       "labelAliases": [
         "Auditoria 5S — resumo"
       ],
+      "valueFields": [
+        "value",
+        "average_score"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      },
-      "valueFields": [
-        "value",
-        "average_score"
-      ]
+      }
     },
     {
       "operationId": "get_audit_5s_summary_series",
@@ -19422,6 +19450,11 @@
         "Kaizens — resumo e listagem (PostgreSQL)",
         "Kaizens — resumo e listagem (Google Sheets)"
       ],
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
@@ -19430,12 +19463,7 @@
         "ideas_goal": "Ideias / meta",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      },
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ]
+      }
     },
     {
       "operationId": "get_kaizen_summary_series",
@@ -20046,28 +20074,28 @@
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "defaultParams": {
-        "type": "customer"
-      },
       "labelAliases": [
         "Qualidade — dias sem NC no cliente",
         "Dias sem defeitos no cliente"
       ],
-      "valueFieldLabels": {
-        "value": "Dias sem NC",
-        "current_days_without_nc": "Dias atuais sem NC",
-        "record_days_without_nc": "Recorde de dias sem NC",
-        "last_nc_date": "Data da última NC"
-      },
       "valueFields": [
         "value",
         "current_days_without_nc"
       ],
+      "defaultParams": {
+        "type": "customer"
+      },
       "valueFieldTypes": {
         "value": "number",
         "current_days_without_nc": "number",
         "record_days_without_nc": "number",
         "nc_count": "number"
+      },
+      "valueFieldLabels": {
+        "value": "Dias sem NC",
+        "current_days_without_nc": "Dias atuais sem NC",
+        "record_days_without_nc": "Recorde de dias sem NC",
+        "last_nc_date": "Data da última NC"
       }
     },
     {
@@ -20255,6 +20283,11 @@
       "labelAliases": [
         "Qualidade — PPM externo"
       ],
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -20266,12 +20299,7 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ]
+      }
     },
     {
       "operationId": "list_ppm_internal",
@@ -20459,6 +20487,11 @@
         "Qualidade — PPM interno",
         "PPM Interno — realizado"
       ],
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -20470,12 +20503,7 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ]
+      }
     },
     {
       "operationId": "get_produced_quantity",
@@ -21049,6 +21077,13 @@
         "end_date"
       ],
       "tableFields": "items",
+      "valueFields": [
+        "value",
+        "sharePct",
+        "percentual",
+        "quantity",
+        "occurrenceCount"
+      ],
       "valueFieldLabels": {
         "value": "Valor (R$)",
         "sharePct": "Participação (%)",
@@ -21057,14 +21092,7 @@
         "occurrenceCount": "Ocorrências",
         "code": "Código",
         "label": "Descrição"
-      },
-      "valueFields": [
-        "value",
-        "sharePct",
-        "percentual",
-        "quantity",
-        "occurrenceCount"
-      ]
+      }
     },
     {
       "operationId": "get_refugos_registros",
@@ -22726,16 +22754,17 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "lines",
+      "openEndedDateRange": true,
       "tvConstraints": {
         "maxRows": 200
       },
-      "openEndedDateRange": true,
+      "tableFields": "lines",
       "valueFields": [
         "purchase_order_otd_pct",
         "late_lines",
         "total_lines"
       ],
+      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
       "valueFieldTypes": {
         "purchase_order_otd_pct": "number",
         "late_lines": "number",
@@ -22744,8 +22773,7 @@
         "receipt_entry_date": "date",
         "invoice_issue_date": "date",
         "purchase_order_issue_date": "date"
-      },
-      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view."
+      }
     },
     {
       "operationId": "get_supplies_purchase_order_otd_series",
@@ -23386,11 +23414,15 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 50,
         "requiresBranchPermission": true
       },
+      "tableFields": "items",
+      "valueFields": [
+        "stock_value",
+        "quantity"
+      ],
       "defaultParams": {
         "page": 1,
         "page_size": 50,
@@ -23400,11 +23432,7 @@
       "valueFieldLabels": {
         "stock_value": "Valor (R$)",
         "quantity": "Quantidade"
-      },
-      "valueFields": [
-        "stock_value",
-        "quantity"
-      ]
+      }
     },
     {
       "operationId": "get_supplies_stock_balances_summary",
@@ -23447,21 +23475,21 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "by_warehouse",
       "tvConstraints": {
         "maxRows": 12,
         "requiresBranchPermission": true
       },
-      "valueFieldLabels": {
-        "product_count": "Qtd. de produtos",
-        "total_stock_value": "Valor do estoque (R$)",
-        "total_quantity": "Quantidade total"
-      },
+      "tableFields": "by_warehouse",
       "valueFields": [
         "product_count",
         "total_stock_value",
         "total_quantity"
-      ]
+      ],
+      "valueFieldLabels": {
+        "product_count": "Qtd. de produtos",
+        "total_stock_value": "Valor do estoque (R$)",
+        "total_quantity": "Quantidade total"
+      }
     },
     {
       "operationId": "get_supplies_stock_value",
@@ -23542,11 +23570,11 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
       },
+      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",

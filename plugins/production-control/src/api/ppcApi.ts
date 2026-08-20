@@ -1,6 +1,11 @@
 import { httpGet, httpPatch, httpPost, ppcApiUrl, unwrapEnvelope } from "./httpClient";
 import type {
+  MachineLoadLocatePayload,
+  MachineLoadOptimizePayload,
   MachineLoadPayload,
+  MachineLoadPrioritizePayload,
+  MachineLoadTransferPayload,
+  MachineLoadWithdrawPayload,
   OverviewPayload,
   ProblemAnalysisPayload,
   Subplugin,
@@ -69,8 +74,6 @@ export async function refreshMachineLoad(params: {
 export async function patchMachineLoadSequence(params: {
   branch: string;
   workCenter: string;
-  startDate?: string | null;
-  endDate?: string | null;
   orderedKeys: Array<{ production_order: string; operation_code: string }>;
   signal?: AbortSignal;
 }): Promise<MachineLoadPayload> {
@@ -78,8 +81,6 @@ export async function patchMachineLoadSequence(params: {
     branch: params.branch,
     workCenter: params.workCenter,
   });
-  if (params.startDate) search.set("startDate", params.startDate);
-  if (params.endDate) search.set("endDate", params.endDate);
   const envelope = await httpPatch<{
     success: boolean;
     message?: string;
@@ -90,6 +91,126 @@ export async function patchMachineLoadSequence(params: {
     { signal: params.signal },
   );
   return unwrapEnvelope(envelope, "Não foi possível salvar a sequência da carga máquina.");
+}
+
+/** Leva todas as OPs do conjunto (C2_NUM) ao topo da fila de cada centro de trabalho. */
+export async function prioritizeMachineLoadConjunto(params: {
+  branch: string;
+  orderNumber: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadPrioritizePayload> {
+  const search = new URLSearchParams({
+    branch: params.branch,
+    orderNumber: params.orderNumber,
+  });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadPrioritizePayload;
+  }>(ppcApiUrl(`/machine-load/prioritize?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível priorizar o conjunto.");
+}
+
+/** Reordena a fila de todos os centros pela entrega do PA, sem ultrapassar ops já iniciadas. */
+export async function optimizeMachineLoadDeliverySequence(params: {
+  branch: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadOptimizePayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadOptimizePayload;
+  }>(ppcApiUrl(`/machine-load/optimize-delivery?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível otimizar a fila pela entrega do PA.");
+}
+
+/** Tira o conjunto (C2_NUM) da programação: some da fila de todos os centros e do cockpit. */
+export async function withdrawMachineLoadConjunto(params: {
+  branch: string;
+  orderNumber: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadWithdrawPayload> {
+  return postMachineLoadWithdrawal("withdraw", params, "Não foi possível retirar o conjunto da programação.");
+}
+
+/** Devolve o conjunto retirado à fila, na posição original. */
+export async function restoreMachineLoadConjunto(params: {
+  branch: string;
+  orderNumber: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadWithdrawPayload> {
+  return postMachineLoadWithdrawal("restore", params, "Não foi possível devolver o conjunto à fila.");
+}
+
+async function postMachineLoadWithdrawal(
+  action: "withdraw" | "restore",
+  params: {
+    branch: string;
+    orderNumber: string;
+    workCenter?: string | null;
+    signal?: AbortSignal;
+  },
+  errorMessage: string,
+): Promise<MachineLoadWithdrawPayload> {
+  const search = new URLSearchParams({
+    branch: params.branch,
+    orderNumber: params.orderNumber,
+  });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadWithdrawPayload;
+  }>(ppcApiUrl(`/machine-load/${action}?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, errorMessage);
+}
+
+/** Move uma operação para o fim da fila de outro centro de trabalho. */
+export async function transferMachineLoadOperation(params: {
+  branch: string;
+  productionOrder: string;
+  operationCode: string;
+  targetWorkCenter: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadTransferPayload> {
+  const search = new URLSearchParams({
+    branch: params.branch,
+    productionOrder: params.productionOrder,
+    operationCode: params.operationCode,
+    targetWorkCenter: params.targetWorkCenter,
+  });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadTransferPayload;
+  }>(ppcApiUrl(`/machine-load/transfer?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível transferir a operação de centro de trabalho.");
+}
+
+export async function fetchMachineLoadLocate(params: {
+  branch: string;
+  query: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadLocatePayload> {
+  const search = new URLSearchParams({
+    branch: params.branch,
+    q: params.query,
+  });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadLocatePayload;
+  }>(ppcApiUrl(`/machine-load/locate?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível rastrear a OP ou o conjunto.");
 }
 
 export async function fetchProblemAnalysis(params: {

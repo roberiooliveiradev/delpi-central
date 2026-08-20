@@ -40,8 +40,8 @@ class ProductionOrdersGateway(Protocol):
         self,
         *,
         branch: str,
-        scheduled_start: str,
-        scheduled_end: str,
+        delivery_start: str | None,
+        delivery_end: str,
     ) -> dict[str, Any]:
         ...
 
@@ -49,8 +49,8 @@ class ProductionOrdersGateway(Protocol):
         self,
         *,
         branch: str,
-        scheduled_start: str,
-        scheduled_end: str,
+        delivery_start: str | None,
+        delivery_end: str,
         work_center: str | None,
         page: int,
         page_size: int,

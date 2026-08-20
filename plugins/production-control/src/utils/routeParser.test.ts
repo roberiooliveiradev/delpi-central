@@ -21,16 +21,17 @@ describe("parsePpcPath", () => {
     expect(route.issueId).toBe("delayed-order:01|A");
   });
 
-  it("reads work center and scheduling window from query", () => {
+  it("reads work center, period and locate query from the deep link", () => {
     const route = parsePpcPath(
       "/apps/production-control/machine-load",
-      "?branch=01&ct=CT-02&startDate=2026-08-24&endDate=2026-08-28",
+      "?branch=01&ct=CT-02&startDate=2026-08-24&endDate=2026-08-28&locate=90262910",
       "02",
     );
     expect(route.subpluginId).toBe("machine-load");
     expect(route.workCenter).toBe("CT-02");
     expect(route.startDate).toBe("2026-08-24");
     expect(route.endDate).toBe("2026-08-28");
+    expect(route.locateQuery).toBe("90262910");
   });
 
   it("ignores malformed dates instead of forwarding them to the API", () => {
@@ -61,7 +62,7 @@ describe("buildPpcHref", () => {
     ).toBe("/apps/production-control/problem-analysis?branch=01&issue=delayed-order%3A01%7CA");
   });
 
-  it("keeps the work center tab and the period in the deep link", () => {
+  it("keeps the work center tab, period and locate query in the deep link", () => {
     expect(
       buildPpcHref({
         subpluginId: "machine-load",
@@ -69,9 +70,10 @@ describe("buildPpcHref", () => {
         workCenter: "CT-02",
         startDate: "2026-08-24",
         endDate: "2026-08-28",
+        locateQuery: "90262910",
       }),
     ).toBe(
-      "/apps/production-control/machine-load?branch=02&ct=CT-02&startDate=2026-08-24&endDate=2026-08-28",
+      "/apps/production-control/machine-load?branch=02&ct=CT-02&startDate=2026-08-24&endDate=2026-08-28&locate=90262910",
     );
   });
 });

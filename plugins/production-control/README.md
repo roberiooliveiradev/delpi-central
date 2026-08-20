@@ -19,16 +19,28 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: production-
 | Rota | Tela |
 |------|------|
 | `/apps/production-control?branch=` | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
-| `…/machine-load?branch=01\|02&ct=&startDate=&endDate=` | Carga máquina (abas por centro de trabalho) |
+| `…/machine-load?branch=01\|02&ct=&startDate=&endDate=&locate=` | Carga máquina (abas por centro de trabalho) |
 | `…/problem-analysis?branch=01\|02&issue=` | Análise de problemas (inbox + detalhe) |
 
 Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
-**Carga máquina:** uma aba por centro de trabalho (`UnderlineNav` `mode="tabs"`) com a fila de operações alocadas — situação, OP completa, produto da operação, quantidade (3 casas), ferramenta, operação, código do PA e entrega do PA. O deep link (`?ct=`, `?startDate=`, `?endDate=`) reabre a mesma aba e janela; trocar de filial ou de CT preserva o período.
+**Carga máquina:** uma aba por centro de trabalho (`UnderlineNav` `mode="tabs"`) com a fila de operações alocadas — situação, OP completa, produto da operação, quantidade (3 casas), ferramenta, operação, código do PA e entrega do PA. O deep link (`?ct=`, `?startDate=`, `?endDate=`, `?locate=`) reabre a mesma aba, recorte de entrega e rastreio; trocar de filial ou de CT preserva o recorte.
+
+**Rastreio conjunto / produto:** campo na barra da Carga máquina busca conjunto (`C2_NUM` — 6 primeiros dígitos da OP completa `H8_OP`/`C2_OP`), produto (PA) ou intermediário via `GET /machine-load/locate`. Ex.: OP `10840401003` rastreia **todas** as OPs que começam com `108404` (um único conjunto). Busca por PA lista cada C2_NUM daquele produto. Botão direito → **Rastrear produção do conjunto** usa o C2_NUM da linha.
+
+**Priorizar conjunto (botão direito):** a segunda ação do menu leva **todas** as OPs do conjunto (mesmo `C2_NUM`) ao topo da fila em cada centro de trabalho onde elas aparecem, via `POST /machine-load/prioritize`. Operação **já iniciada** (em produção ou já apontada) não é ultrapassada — o conjunto entra logo depois dela. Há confirmação antes de aplicar; o aviso da barra informa em quantos centros a fila mudou. Como a mudança atravessa vários CTs, a pilha de Ctrl+Z do CT ativo é zerada.
+
+**Retirar conjunto da programação (botão direito):** a terceira ação tira **todas** as OPs do conjunto da fila em todos os centros (`POST /machine-load/withdraw`), some com elas do cockpit do operador e recalcula resumo e contadores das abas. Nada é apagado: as operações continuam no snapshot na posição original. O botão **Fora da programação (N)**, na barra ao lado do link do operador, abre a lista dos conjuntos retirados (produto, operações, centros, quem retirou e quando) com **Devolver à fila** (`POST /machine-load/restore`), que recoloca cada OP onde estava. A retirada sobrevive ao **Atualizar** do TOTVS; o rastreio ainda encontra o conjunto, marcado com o selo *Fora da programação*. Como a mudança atravessa vários CTs, a pilha de Ctrl+Z do CT ativo é zerada.
+
+**Enviar para outro centro de trabalho (botão direito):** a quarta ação abre um modal com o resumo da operação (OP, operação, descrição, centro atual) e um **select** com os demais centros com fila no período. Ao confirmar, `POST /machine-load/transfer` move só aquela operação para o **fim** da fila do destino — de lá o PCP reordena por DnD ou prioriza o conjunto. A linha passa a exibir o selo *veio de {CT}* enquanto estiver fora do centro de origem; devolvê-la ao centro original apaga o selo. A transferência sobrevive ao **Atualizar** do TOTVS e, como muda a fila de dois CTs, zera a pilha de Ctrl+Z do CT ativo.
+
+**Otimizar por entrega (barra):** o botão ⇅ *Otimizar por entrega*, ao lado do link do operador, chama `POST /machine-load/optimize-delivery` e resequencia a fila de **todos** os centros da filial pela data de entrega do PA — o carga máquina do TOTVS às vezes deixa material de mês seguinte à frente do que está vencendo. Operações já iniciadas continuam onde estão, empate na mesma entrega preserva a ordem atual e operação sem entrega vai para o fim do seu centro. Conjuntos fora da programação não voltam à fila. Há confirmação antes de aplicar; o aviso da barra informa quantos centros mudaram e quantas operações trocaram de posição. Como a mudança atravessa vários CTs, a pilha de Ctrl+Z do CT ativo é zerada e o cockpit do operador atualiza sozinho.
 
 **Em produção agora:** a coluna *Situação* mostra `production_status` vindo da API (apontamento `HZA010`). Operação rodando ganha linha verde, ponto pulsante, nome do operador e horário de início. Operação *Já apontada* exibe o último operador, tacha a linha e suaviza o contraste. A aba do centro de trabalho recebe o ponto só quando há OP em produção; o resumo do período mostra quantas estão na máquina. A UI é render-only — quem decide o status é a api-delpi, o MFE só mapeia `production_status` → rótulo e variante (`utils/machineLoadStatus.ts`).
 
-**Fila congelada:** o sequenciamento SH8 fica salvo no BFF (`machine_load_snapshots`). A primeira visita da filial/período faz seed automático; depois disso, só o botão **Atualizar** (com confirmação) chama `POST /machine-load/refresh` e **substitui** a fila — inclusive qualquer ordem manual. O status HZA continua vivo a cada GET. Trocar de centro de trabalho não regenera a fila.
+**Fila congelada:** o sequenciamento SH8 fica salvo no BFF (`machine_load_snapshots`), **uma fila viva por filial**. A primeira visita da filial faz seed automático; depois disso, só o botão **Atualizar** (com confirmação) chama `POST /machine-load/refresh` e **substitui** a fila — inclusive qualquer ordem manual. Virada de dia não reseeda: a fila continua a mesma até o PCP atualizar. O status HZA continua vivo a cada GET. Trocar de centro de trabalho ou de recorte não regenera a fila.
+
+**Período = entrega do PA:** o formulário da barra filtra por **data de entrega do PA** (`COALESCE(PA.DT_ENTREGA, C2_DATPRF)`), não pela programação. Sem recorte na URL, «De» já vem com a entrega mais antiga presente na fila e continua editável; «até» é hoje + 14 dias, o horizonte que o **Atualizar** puxa do TOTVS. Aplicar «De/até» é **lente de leitura** — recorta a fila congelada e esconde centros sem operação visível, sem chamar o ERP; **Voltar ao padrão** limpa o recorte. Se sobrar operação sem entrega, a barra avisa quantas são (falha de vínculo com a OP mãe no TOTVS).
 
 **Reordenar (DnD):** no CT ativo, arraste pela alça da linha para mudar a sequência. No drop, o MFE aplica a ordem na UI e chama `PATCH /machine-load/sequence` (só aquele CT). **Ctrl+Z** desfaz e **Ctrl+Shift+Z** refaz (pilha local + PATCH). A tabela não usa sort por coluna, para não conflitar com a ordem manual. A barra de período mostra `Sequência ajustada em…` quando houver `sequence_updated_at`.
 
@@ -44,8 +56,14 @@ Base: `/apps/production-control-api`
 | GET | `/subplugins` | Catálogo filtrado por permissão |
 | GET | `/overview?branch=` | Gestão à vista (OTD + atrasos) |
 | GET | `/machine-load?branch=&workCenter=&startDate=&endDate=` | Centros de trabalho + fila do CT ativo (snapshot) |
-| POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS |
-| PATCH | `/machine-load/sequence?branch=&workCenter=&startDate=&endDate=` | Persiste a ordem manual do CT (`ordered_keys`) |
+| GET | `/machine-load/locate?branch=&q=` | Rastreio de conjunto (C2_NUM, 6 dígitos) ou produto (PA) |
+| POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS (janela por entrega do PA) |
+| PATCH | `/machine-load/sequence?branch=&workCenter=` | Persiste a ordem manual do CT (`ordered_keys`) |
+| POST | `/machine-load/prioritize?branch=&orderNumber=&workCenter=` | Prioriza o conjunto (C2_NUM) no topo da fila de todos os CTs |
+| POST | `/machine-load/optimize-delivery?branch=&workCenter=` | Reordena a fila de todos os CTs pela entrega do PA |
+| POST | `/machine-load/withdraw?branch=&orderNumber=&workCenter=` | Tira o conjunto da programação (some da fila e do cockpit) |
+| POST | `/machine-load/restore?branch=&orderNumber=&workCenter=` | Devolve o conjunto retirado à posição original |
+| POST | `/machine-load/transfer?branch=&productionOrder=&operationCode=&targetWorkCenter=&workCenter=` | Move a operação para o fim da fila de outro CT |
 | GET | `/problem-analysis?branch=&issueId=` | Inbox de exceções |
 | GET | `/public/machine-load/{token}?branch=&workCenter=` | Cockpit do operador (público, somente leitura) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=` | PDF do desenho do PA lido da pasta do FILESERVER montada no BFF (público, PA precisa estar na fila) |

@@ -1,4 +1,4 @@
-"""Repositório Postgres — snapshots da carga máquina."""
+"""Repositório Postgres — snapshot da carga máquina (uma fila viva por filial)."""
 
 from __future__ import annotations
 
@@ -16,35 +16,30 @@ from production_control_app.infrastructure.persistence.plugins_postgres_connecti
 
 _TABLE = f"{PC_SCHEMA_NAME}.machine_load_snapshots"
 
+_COLUMNS = """
+    id::text AS id,
+    branch,
+    start_date,
+    end_date,
+    payload_json,
+    schema_version,
+    source,
+    refreshed_at,
+    refreshed_by
+"""
+
 
 class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
-    def get(
-        self,
-        *,
-        branch: str,
-        start_date: date,
-        end_date: date,
-    ) -> dict[str, Any] | None:
+    def get(self, *, branch: str) -> dict[str, Any] | None:
         query = f"""
-            SELECT
-                id::text AS id,
-                branch,
-                start_date,
-                end_date,
-                payload_json,
-                schema_version,
-                source,
-                refreshed_at,
-                refreshed_by
+            SELECT {_COLUMNS}
             FROM {_TABLE}
             WHERE branch = %s
-              AND start_date = %s
-              AND end_date = %s
             LIMIT 1
         """
         with get_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(query, (branch, start_date, end_date))
+                cursor.execute(query, (branch,))
                 row = cursor.fetchone()
         return dict(row) if row is not None else None
 
@@ -72,22 +67,15 @@ class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
             ) VALUES (
                 %s, %s, %s, %s::jsonb, %s, %s, NOW(), %s
             )
-            ON CONFLICT (branch, start_date, end_date) DO UPDATE SET
+            ON CONFLICT (branch) DO UPDATE SET
+                start_date = EXCLUDED.start_date,
+                end_date = EXCLUDED.end_date,
                 payload_json = EXCLUDED.payload_json,
                 schema_version = EXCLUDED.schema_version,
                 source = EXCLUDED.source,
                 refreshed_at = NOW(),
                 refreshed_by = EXCLUDED.refreshed_by
-            RETURNING
-                id::text AS id,
-                branch,
-                start_date,
-                end_date,
-                payload_json,
-                schema_version,
-                source,
-                refreshed_at,
-                refreshed_by
+            RETURNING {_COLUMNS}
         """
         payload_text = json.dumps(payload, ensure_ascii=False, default=str)
         with get_connection() as connection:
@@ -110,35 +98,17 @@ class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
             raise RuntimeError("Falha ao gravar snapshot da carga máquina.")
         return dict(row)
 
-    def update_payload(
-        self,
-        *,
-        branch: str,
-        start_date: date,
-        end_date: date,
-        payload: dict[str, Any],
-    ) -> dict[str, Any]:
+    def update_payload(self, *, branch: str, payload: dict[str, Any]) -> dict[str, Any]:
         query = f"""
             UPDATE {_TABLE}
             SET payload_json = %s::jsonb
             WHERE branch = %s
-              AND start_date = %s
-              AND end_date = %s
-            RETURNING
-                id::text AS id,
-                branch,
-                start_date,
-                end_date,
-                payload_json,
-                schema_version,
-                source,
-                refreshed_at,
-                refreshed_by
+            RETURNING {_COLUMNS}
         """
         payload_text = json.dumps(payload, ensure_ascii=False, default=str)
         with get_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(query, (payload_text, branch, start_date, end_date))
+                cursor.execute(query, (payload_text, branch))
                 row = cursor.fetchone()
             connection.commit()
         if row is None:

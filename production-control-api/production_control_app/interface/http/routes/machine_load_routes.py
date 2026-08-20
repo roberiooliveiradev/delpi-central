@@ -67,14 +67,15 @@ def get_machine_load(
     start_date: str | None = Query(
         default=None,
         alias="startDate",
-        description="Início da janela programada (YYYY-MM-DD)",
+        description="Recorte de leitura: entrega do PA a partir de (YYYY-MM-DD)",
     ),
     end_date: str | None = Query(
         default=None,
         alias="endDate",
-        description="Fim da janela programada (YYYY-MM-DD)",
+        description="Recorte de leitura: entrega do PA até (YYYY-MM-DD)",
     ),
 ):
+    """Fila congelada da filial. As datas só recortam a leitura — não puxam o TOTVS."""
     user = resolve_user(request)
     try:
         data = build_machine_load_service().build(
@@ -98,12 +99,12 @@ def refresh_machine_load(
     start_date: str | None = Query(
         default=None,
         alias="startDate",
-        description="Início da janela programada (YYYY-MM-DD)",
+        description="Entrega do PA a partir de (YYYY-MM-DD); vazio traz tudo que está atrasado",
     ),
     end_date: str | None = Query(
         default=None,
         alias="endDate",
-        description="Fim da janela programada (YYYY-MM-DD)",
+        description="Entrega do PA até (YYYY-MM-DD); default hoje + 14 dias",
     ),
 ):
     """Regenera o snapshot congelado a partir do TOTVS (ação explícita do PCP)."""
@@ -127,16 +128,6 @@ def patch_machine_load_sequence(
         alias="workCenter",
         description="Centro de trabalho cuja sequência será reordenada",
     ),
-    start_date: str | None = Query(
-        default=None,
-        alias="startDate",
-        description="Início da janela programada (YYYY-MM-DD)",
-    ),
-    end_date: str | None = Query(
-        default=None,
-        alias="endDate",
-        description="Fim da janela programada (YYYY-MM-DD)",
-    ),
     body: SequenceReorderBody = Body(...),
 ):
     """Persiste a ordem manual das operações de um centro de trabalho no snapshot."""
@@ -146,10 +137,195 @@ def patch_machine_load_sequence(
             user,
             branch=branch,
             work_center=work_center,
-            start_date=start_date,
-            end_date=end_date,
             ordered_keys=[item.model_dump() for item in body.ordered_keys],
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
     return ok(data, message="Sequência da carga máquina salva.")
+
+
+@router.post("/machine-load/prioritize")
+def prioritize_machine_load_conjunto(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    order_number: str = Query(
+        ...,
+        alias="orderNumber",
+        min_length=6,
+        max_length=30,
+        description="Conjunto (C2_NUM) ou OP completa — os 6 primeiros dígitos definem o conjunto",
+    ),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta",
+    ),
+):
+    """Leva todas as OPs do conjunto ao topo da fila de cada centro, sem ultrapassar ops já iniciadas."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().prioritize_conjunto(
+            user,
+            branch=branch,
+            order_number=order_number,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data, message=data.get("prioritization", {}).get("message"))
+
+
+@router.post("/machine-load/optimize-delivery")
+def optimize_machine_load_delivery_sequence(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta",
+    ),
+):
+    """Resequencia a fila de todos os centros pela entrega do PA, sem ultrapassar ops já iniciadas."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().optimize_delivery_sequence(
+            user,
+            branch=branch,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data, message=data.get("optimization", {}).get("message"))
+
+
+@router.post("/machine-load/withdraw")
+def withdraw_machine_load_conjunto(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    order_number: str = Query(
+        ...,
+        alias="orderNumber",
+        min_length=6,
+        max_length=30,
+        description="Conjunto (C2_NUM) ou OP completa — os 6 primeiros dígitos definem o conjunto",
+    ),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta",
+    ),
+):
+    """Retira o conjunto da programação: some da fila de todos os centros e do cockpit público."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().withdraw_conjunto(
+            user,
+            branch=branch,
+            order_number=order_number,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data, message=data.get("withdrawal", {}).get("message"))
+
+
+@router.post("/machine-load/restore")
+def restore_machine_load_conjunto(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    order_number: str = Query(
+        ...,
+        alias="orderNumber",
+        min_length=6,
+        max_length=30,
+        description="Conjunto (C2_NUM) retirado que volta para a fila",
+    ),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta",
+    ),
+):
+    """Devolve o conjunto retirado à fila, na posição original do snapshot."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().restore_conjunto(
+            user,
+            branch=branch,
+            order_number=order_number,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data, message=data.get("withdrawal", {}).get("message"))
+
+
+@router.post("/machine-load/transfer")
+def transfer_machine_load_operation(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    production_order: str = Query(
+        ...,
+        alias="productionOrder",
+        min_length=1,
+        max_length=30,
+        description="OP completa (H8_OP / C2_OP) da operação transferida",
+    ),
+    operation_code: str = Query(
+        ...,
+        alias="operationCode",
+        min_length=1,
+        max_length=10,
+        description="Código da operação dentro da OP",
+    ),
+    target_work_center: str = Query(
+        ...,
+        alias="targetWorkCenter",
+        min_length=1,
+        max_length=20,
+        description="Centro de trabalho de destino",
+    ),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta; vazio usa o destino",
+    ),
+):
+    """Move a operação para o fim da fila de outro centro de trabalho."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().transfer_operation(
+            user,
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+            target_work_center=target_work_center,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data, message=data.get("transfer", {}).get("message"))
+
+
+@router.get("/machine-load/locate")
+def locate_machine_load(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    q: str = Query(
+        ...,
+        min_length=1,
+        max_length=40,
+        description="Conjunto (C2_NUM / OP completa) ou produto (PA)",
+    ),
+):
+    """Rastreia conjunto (C2_NUM: todas as OPs com o mesmo prefixo de 6 dígitos) ou lista conjuntos do PA."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().locate(
+            user,
+            branch=branch,
+            query=q,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data)

@@ -22,8 +22,6 @@ from production_control_app.domain.errors import (
 )
 from production_control_app.domain.product_drawing_pdf import DrawingFile
 from production_control_app.domain.services.branch_access_service import BranchAccessService
-from production_control_app.domain.services.current_month_period import forward_window_bounds
-
 _WORK_CENTERS = [
     {
         "work_center": "CT-01A",
@@ -73,16 +71,16 @@ class FakeGateway:
         self,
         *,
         branch: str,
-        scheduled_start: str,
-        scheduled_end: str,
+        delivery_start: str | None,
+        delivery_end: str,
     ) -> dict[str, Any]:
         self.calls.append(
             (
                 "work_centers",
                 {
                     "branch": branch,
-                    "scheduled_start": scheduled_start,
-                    "scheduled_end": scheduled_end,
+                    "delivery_start": delivery_start,
+                    "delivery_end": delivery_end,
                 },
             )
         )
@@ -107,8 +105,8 @@ class FakeGateway:
         self,
         *,
         branch: str,
-        scheduled_start: str,
-        scheduled_end: str,
+        delivery_start: str | None,
+        delivery_end: str,
         work_center: str | None,
         page: int,
         page_size: int,
@@ -118,8 +116,8 @@ class FakeGateway:
                 "operations",
                 {
                     "branch": branch,
-                    "scheduled_start": scheduled_start,
-                    "scheduled_end": scheduled_end,
+                    "delivery_start": delivery_start,
+                    "delivery_end": delivery_end,
                     "work_center": work_center,
                     "page": page,
                     "page_size": page_size,
@@ -170,19 +168,15 @@ class FakeGateway:
 
 
 class FakeSnapshotRepo:
+    """Uma fila viva por filial — igual ao Postgres depois da V003."""
+
     def __init__(self) -> None:
-        self.rows: dict[tuple[str, date, date], dict[str, Any]] = {}
+        self.rows: dict[str, dict[str, Any]] = {}
         self.upserts = 0
         self.payload_updates = 0
 
-    def get(
-        self,
-        *,
-        branch: str,
-        start_date: date,
-        end_date: date,
-    ) -> dict[str, Any] | None:
-        return self.rows.get((branch, start_date, end_date))
+    def get(self, *, branch: str) -> dict[str, Any] | None:
+        return self.rows.get(branch)
 
     def upsert(
         self,
@@ -207,19 +201,11 @@ class FakeSnapshotRepo:
             "refreshed_at": datetime(2026, 8, 19, 22, 0, tzinfo=timezone.utc),
             "refreshed_by": refreshed_by,
         }
-        self.rows[(branch, start_date, end_date)] = row
+        self.rows[branch] = row
         return row
 
-    def update_payload(
-        self,
-        *,
-        branch: str,
-        start_date: date,
-        end_date: date,
-        payload: dict[str, Any],
-    ) -> dict[str, Any]:
-        key = (branch, start_date, end_date)
-        existing = self.rows.get(key)
+    def update_payload(self, *, branch: str, payload: dict[str, Any]) -> dict[str, Any]:
+        existing = self.rows.get(branch)
         if existing is None:
             raise RuntimeError("Snapshot da carga máquina não encontrado para atualizar.")
         self.payload_updates += 1
@@ -227,7 +213,7 @@ class FakeSnapshotRepo:
             **existing,
             "payload_json": payload,
         }
-        self.rows[key] = updated
+        self.rows[branch] = updated
         return updated
 
 
@@ -251,12 +237,13 @@ def _service(gateway: FakeGateway, snapshots: FakeSnapshotRepo | None = None) ->
     )
 
 
-def test_forward_window_defaults_to_seven_days_ahead() -> None:
-    start, end = forward_window_bounds(
-        timezone="America/Sao_Paulo", days=7, today=date(2026, 8, 19)
+def test_delivery_window_defaults_to_open_start_and_fourteen_days_ahead() -> None:
+    """O PCP precisa ver o atrasado; o horizonte é a entrega de hoje + 14 dias."""
+    start, end = _service(FakeGateway()).resolve_delivery_window(
+        start_date=None, end_date=None, today=date(2026, 8, 19)
     )
-    assert start.isoformat() == "2026-08-19"
-    assert end.isoformat() == "2026-08-26"
+    assert start is None
+    assert end.isoformat() == "2026-09-02"
 
 
 def test_first_visit_seeds_snapshot_from_totvs() -> None:
@@ -344,27 +331,93 @@ def test_no_work_center_skips_operations_selection() -> None:
     assert payload["selected"]["items"] == []
 
 
-def test_explicit_period_is_forwarded_to_the_gateway() -> None:
+def test_first_pull_uses_the_delivery_window_with_an_open_start() -> None:
     gateway = FakeGateway()
-    _service(gateway).build(
+    _service(gateway).build(_user(*FULL_PERMS), branch="01")
+    call = next(params for name, params in gateway.calls if name == "work_centers")
+    assert call["delivery_start"] is None
+    assert call["delivery_end"]
+
+
+def test_explicit_period_is_forwarded_to_the_gateway_on_refresh() -> None:
+    gateway = FakeGateway()
+    _service(gateway).refresh(
         _user(*FULL_PERMS),
         branch="01",
         start_date="2026-08-24",
         end_date="2026-08-28",
     )
     call = next(params for name, params in gateway.calls if name == "work_centers")
-    assert call["scheduled_start"] == "2026-08-24"
-    assert call["scheduled_end"] == "2026-08-28"
+    assert call["delivery_start"] == "2026-08-24"
+    assert call["delivery_end"] == "2026-08-28"
 
 
 def test_inverted_period_is_rejected() -> None:
     with pytest.raises(ValueError):
-        _service(FakeGateway()).build(
+        _service(FakeGateway()).refresh(
             _user(*FULL_PERMS),
             branch="01",
             start_date="2026-08-28",
             end_date="2026-08-24",
         )
+
+
+def _seed_delivery_snapshot(snapshots: FakeSnapshotRepo) -> None:
+    """Fila congelada com entregas em datas diferentes nos dois centros."""
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 18),
+        end_date=date(2026, 9, 2),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": [
+                {
+                    **_OPERATION,
+                    "work_center": "CT-01A",
+                    "production_order": "A1",
+                    "due_date": "2026-08-18",
+                },
+                {
+                    **_OPERATION,
+                    "work_center": "CT-02",
+                    "production_order": "B1",
+                    "due_date": "2026-08-30",
+                },
+            ],
+            "summary": {"work_center_count": 2, "operation_count": 2},
+        },
+        refreshed_by="seed",
+    )
+
+
+def test_period_is_a_read_lens_and_does_not_pull_totvs() -> None:
+    gateway = FakeGateway()
+    snapshots = FakeSnapshotRepo()
+    _seed_delivery_snapshot(snapshots)
+
+    payload = _service(gateway, snapshots).build(
+        _user(*FULL_PERMS),
+        branch="01",
+        start_date="2026-08-25",
+        end_date="2026-09-02",
+    )
+
+    assert [name for name, _ in gateway.calls if name in {"work_centers", "operations"}] == []
+    assert payload["period"]["filtered"] is True
+    assert [center["work_center"] for center in payload["work_centers"]] == ["CT-02"]
+    assert payload["summary"]["operation_count"] == 1
+
+
+def test_period_without_filter_shows_the_oldest_delivery_as_start() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_delivery_snapshot(snapshots)
+
+    payload = _service(FakeGateway(), snapshots).build(_user(*FULL_PERMS), branch="01")
+
+    assert payload["period"]["field"] == "delivery_date"
+    assert payload["period"]["start_date"] == "2026-08-18"
+    assert payload["period"]["end_date"] == "2026-09-02"
+    assert payload["period"]["filtered"] is False
 
 
 def test_branch_without_permission_is_denied() -> None:
@@ -410,15 +463,13 @@ def _seed_multi_center_snapshot(snapshots: FakeSnapshotRepo) -> tuple[date, date
 def test_reorder_sequence_permutes_only_target_work_center() -> None:
     snapshots = FakeSnapshotRepo()
     start, end = _seed_multi_center_snapshot(snapshots)
-    refreshed_before = snapshots.get(branch="01", start_date=start, end_date=end)["refreshed_at"]
+    refreshed_before = snapshots.get(branch="01")["refreshed_at"]
     service = _service(FakeGateway(), snapshots)
 
     payload = service.reorder_sequence(
         _user(*FULL_PERMS),
         branch="01",
         work_center="CT-01A",
-        start_date=start.isoformat(),
-        end_date=end.isoformat(),
         ordered_keys=[
             {"production_order": "A3", "operation_code": "01"},
             {"production_order": "A1", "operation_code": "01"},
@@ -428,7 +479,7 @@ def test_reorder_sequence_permutes_only_target_work_center() -> None:
 
     assert snapshots.payload_updates == 1
     assert snapshots.upserts == 1
-    row = snapshots.get(branch="01", start_date=start, end_date=end)
+    row = snapshots.get(branch="01")
     assert row["refreshed_at"] == refreshed_before
     stored_ops = row["payload_json"]["operations"]
     ct01 = [op for op in stored_ops if op["work_center"] == "CT-01A"]
@@ -450,8 +501,6 @@ def test_reorder_sequence_rejects_incomplete_permutation() -> None:
             _user(*FULL_PERMS),
             branch="01",
             work_center="CT-01A",
-            start_date=start.isoformat(),
-            end_date=end.isoformat(),
             ordered_keys=[
                 {"production_order": "A1", "operation_code": "01"},
                 {"production_order": "A2", "operation_code": "01"},
@@ -469,8 +518,6 @@ def test_reorder_sequence_rejects_extra_key() -> None:
             _user(*FULL_PERMS),
             branch="01",
             work_center="CT-01A",
-            start_date=start.isoformat(),
-            end_date=end.isoformat(),
             ordered_keys=[
                 {"production_order": "A1", "operation_code": "01"},
                 {"production_order": "A2", "operation_code": "01"},
@@ -490,8 +537,6 @@ def test_reorder_sequence_rejects_unknown_work_center() -> None:
             _user(*FULL_PERMS),
             branch="01",
             work_center="CT-ZZZ",
-            start_date=start.isoformat(),
-            end_date=end.isoformat(),
             ordered_keys=[{"production_order": "A1", "operation_code": "01"}],
         )
 
@@ -503,8 +548,6 @@ def test_reorder_sequence_without_snapshot_is_not_found() -> None:
             _user(*FULL_PERMS),
             branch="01",
             work_center="CT-01A",
-            start_date="2026-08-19",
-            end_date="2026-08-26",
             ordered_keys=[{"production_order": "A1", "operation_code": "01"}],
         )
 
@@ -540,7 +583,7 @@ def _seed_default_window_snapshot(
     snapshots: FakeSnapshotRepo,
 ) -> tuple[date, date]:
     """Semeia o snapshot na janela padrão — a leitura pública não aceita período custom."""
-    start, end = service.resolve_window(start_date=None, end_date=None)
+    start, end = service.resolve_delivery_window(start_date=None, end_date=None)
     snapshots.upsert(
         branch="01",
         start_date=start,
@@ -610,8 +653,6 @@ def test_reorder_sequence_notifies_connected_cockpits() -> None:
         _user(*FULL_PERMS),
         branch="01",
         work_center="CT-01A",
-        start_date=start.isoformat(),
-        end_date=end.isoformat(),
         ordered_keys=[
             {"production_order": "A3", "operation_code": "01"},
             {"production_order": "A1", "operation_code": "01"},
@@ -651,8 +692,6 @@ def test_failed_notification_does_not_break_the_write() -> None:
         _user(*FULL_PERMS),
         branch="01",
         work_center="CT-02",
-        start_date=start.isoformat(),
-        end_date=end.isoformat(),
         ordered_keys=[
             {"production_order": "B2", "operation_code": "03"},
             {"production_order": "B1", "operation_code": "03"},
@@ -702,7 +741,7 @@ def _seed_public_queue_with_pa(
     *,
     pa_code: str = "90262957",
 ) -> None:
-    start, end = service.resolve_window(start_date=None, end_date=None)
+    start, end = service.resolve_delivery_window(start_date=None, end_date=None)
     snapshots.upsert(
         branch="01",
         start_date=start,
@@ -769,3 +808,884 @@ def test_public_drawing_maps_missing_fileserver_pdf() -> None:
         service.open_pdf(token="aberto", branch="01", pa_code="90262957")
 
     assert drawings.calls == ["90262957"]
+
+
+def _seed_locate_snapshot(snapshots: FakeSnapshotRepo) -> tuple[date, date]:
+    start = date(2026, 8, 19)
+    end = date(2026, 8, 26)
+    ops = [
+        {
+            **_OPERATION,
+            "work_center": "CT-01A",
+            "work_center_name": "CORTE E DECAPE",
+            "production_order": "10840401003",
+            "operation_code": "01",
+            "operation_description": "CORTAR",
+            "product_code": "50233616",
+            "pa_product_code": "90262910",
+            "pa_due_date": "2026-08-24",
+            "scheduled_date": "2026-08-19",
+            "scheduled_start_time": "06:02",
+            "production_status": "started",
+        },
+        {
+            **_OPERATION,
+            "work_center": "CT-02",
+            "work_center_name": "APLICAÇÃO DE TERMINAIS",
+            "production_order": "10840401003",
+            "operation_code": "03",
+            "operation_description": "APLICAR",
+            "product_code": "50233617",
+            "pa_product_code": "90262910",
+            "pa_due_date": "2026-08-24",
+            "scheduled_date": "2026-08-20",
+            "scheduled_start_time": "07:00",
+            "production_status": "not_started",
+        },
+        {
+            **_OPERATION,
+            "work_center": "CT-01A",
+            "work_center_name": "CORTE E DECAPE",
+            "production_order": "10840402001",
+            "operation_code": "01",
+            "operation_description": "CORTAR",
+            "product_code": "50233999",
+            "pa_product_code": "90262910",
+            "pa_due_date": "2026-08-24",
+            "scheduled_date": "2026-08-22",
+            "scheduled_start_time": "09:00",
+            "production_status": "not_started",
+        },
+        {
+            **_OPERATION,
+            "work_center": "CT-01A",
+            "work_center_name": "CORTE E DECAPE",
+            "production_order": "24640401002",
+            "operation_code": "01",
+            "operation_description": "CORTAR",
+            "product_code": "50234000",
+            "pa_product_code": "90262910",
+            "pa_due_date": "2026-08-25",
+            "scheduled_date": "2026-08-23",
+            "scheduled_start_time": "10:00",
+            "production_status": "not_started",
+        },
+        {
+            **_OPERATION,
+            "work_center": "CT-01A",
+            "work_center_name": "CORTE E DECAPE",
+            "production_order": "99900001001",
+            "operation_code": "01",
+            "product_code": "50111111",
+            "pa_product_code": "90111111",
+            "scheduled_date": "2026-08-21",
+            "scheduled_start_time": "08:00",
+        },
+    ]
+    snapshots.upsert(
+        branch="01",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": 5},
+        },
+        refreshed_by="seed",
+    )
+    return start, end
+
+
+def test_locate_by_pa_lists_each_conjunto_of_product() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_locate_snapshot(snapshots)
+    payload = _service(FakeGateway(), snapshots).locate(
+        _user(*FULL_PERMS),
+        branch="01",
+        query="90262910",
+    )
+
+    assert payload["match_count"] == 4
+    assert payload["journey_count"] == 2
+    assert payload["message"] is None
+    keys = [journey["key"] for journey in payload["journeys"]]
+    assert keys == ["108404", "246404"]
+    assert all(journey["kind"] == "op" for journey in payload["journeys"])
+    first = payload["journeys"][0]
+    assert first["pa_product_code"] == "90262910"
+    assert first["pa_due_date"] == "2026-08-24"
+    assert [stop["production_order"] for stop in first["stops"]] == [
+        "10840401003",
+        "10840401003",
+        "10840402001",
+    ]
+    assert first["stops"][0]["queue_position"] == 1
+    assert first["stops"][0]["queue_size"] == 4
+    assert first["stops"][1]["queue_position"] == 1
+    assert first["stops"][1]["queue_size"] == 1
+
+
+def test_locate_by_op_expands_all_orders_of_conjunto_c2_num() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_locate_snapshot(snapshots)
+    payload = _service(FakeGateway(), snapshots).locate(
+        _user(*FULL_PERMS),
+        branch="01",
+        query="10840401003",
+    )
+
+    assert payload["match_count"] == 3
+    assert payload["journey_count"] == 1
+    journey = payload["journeys"][0]
+    assert journey["kind"] == "op"
+    assert journey["key"] == "108404"
+    assert journey["pa_product_code"] == "90262910"
+    orders = [stop["production_order"] for stop in journey["stops"]]
+    assert orders == ["10840401003", "10840401003", "10840402001"]
+    assert "24640401002" not in orders
+
+
+def test_locate_by_c2_num_prefix_alone() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_locate_snapshot(snapshots)
+    payload = _service(FakeGateway(), snapshots).locate(
+        _user(*FULL_PERMS),
+        branch="01",
+        query="108404",
+    )
+
+    assert payload["journey_count"] == 1
+    assert payload["journeys"][0]["key"] == "108404"
+    assert payload["match_count"] == 3
+
+
+def test_locate_no_match_returns_empty_with_message() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_locate_snapshot(snapshots)
+    payload = _service(FakeGateway(), snapshots).locate(
+        _user(*FULL_PERMS),
+        branch="01",
+        query="00000000",
+    )
+    assert payload["match_count"] == 0
+    assert payload["journeys"] == []
+    assert payload["message"]
+    assert "00000000" in payload["message"]
+
+
+def test_locate_empty_query_is_rejected() -> None:
+    with pytest.raises(ValueError, match="OP|conjunto"):
+        _service(FakeGateway()).locate(_user(*FULL_PERMS), branch="01", query="  ")
+
+
+def test_locate_without_snapshot_is_not_found() -> None:
+    with pytest.raises(SnapshotNotFound):
+        _service(FakeGateway(), FakeSnapshotRepo()).locate(
+            _user(*FULL_PERMS),
+            branch="01",
+            query="90262910",
+        )
+
+
+def _seed_priority_snapshot(snapshots: FakeSnapshotRepo) -> tuple[date, date]:
+    start = date(2026, 8, 19)
+    end = date(2026, 8, 26)
+    ops = [
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "99900001001", "operation_code": "01"},
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "88800001001", "operation_code": "02"},
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "10840401003", "operation_code": "03"},
+        {**_OPERATION, "work_center": "CT-02", "production_order": "77700001001", "operation_code": "01"},
+        {**_OPERATION, "work_center": "CT-02", "production_order": "10840402001", "operation_code": "05"},
+    ]
+    snapshots.upsert(
+        branch="01",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": 5},
+        },
+        refreshed_by="seed",
+    )
+    return start, end
+
+
+def _queue(snapshots: FakeSnapshotRepo, start: date, end: date, center: str) -> list[str]:
+    payload = snapshots.rows["01"]["payload_json"]
+    return [
+        f"{item['production_order']}:{item['operation_code']}"
+        for item in payload["operations"]
+        if item["work_center"] == center
+    ]
+
+
+def test_prioritize_conjunto_moves_all_orders_to_top_of_each_center() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    payload = _service(FakeGateway(), snapshots).prioritize_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="108404",
+        work_center="CT-01A",
+    )
+
+    assert snapshots.payload_updates == 1
+    assert _queue(snapshots, start, end, "CT-01A")[0] == "10840401003:03"
+    assert _queue(snapshots, start, end, "CT-02")[0] == "10840402001:05"
+    prioritization = payload["prioritization"]
+    assert prioritization["order_number"] == "108404"
+    assert sorted(prioritization["work_centers"]) == ["CT-01A", "CT-02"]
+    assert prioritization["operation_count"] == 2
+    assert prioritization["kept_ahead_count"] == 0
+    assert "108404" in prioritization["message"]
+
+
+def test_prioritize_conjunto_keeps_started_operation_ahead() -> None:
+    gateway = FakeGateway()
+    gateway.status_by_key[("99900001001", "01")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+        "active_operator_name": "SILVANA ANDRADE DOS SANTOS",
+        "active_operator_count": 1,
+        "appointment_count": 3,
+    }
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    payload = _service(gateway, snapshots).prioritize_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="108404",
+    )
+
+    assert _queue(snapshots, start, end, "CT-01A") == [
+        "99900001001:01",
+        "10840401003:03",
+        "88800001001:02",
+    ]
+    assert payload["prioritization"]["kept_ahead_count"] == 1
+
+
+def test_prioritize_conjunto_accepts_full_production_order() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    payload = _service(FakeGateway(), snapshots).prioritize_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="10840401003",
+    )
+
+    assert payload["prioritization"]["order_number"] == "108404"
+    assert _queue(snapshots, start, end, "CT-02")[0] == "10840402001:05"
+
+
+def test_prioritize_conjunto_not_in_queue_is_rejected() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    with pytest.raises(ValueError, match="123456"):
+        _service(FakeGateway(), snapshots).prioritize_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="123456",
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_prioritize_conjunto_requires_order_number_with_six_digits() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    with pytest.raises(ValueError):
+        _service(FakeGateway(), snapshots).prioritize_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="1084",
+        )
+
+
+def test_prioritize_conjunto_without_snapshot_is_not_found() -> None:
+    with pytest.raises(SnapshotNotFound):
+        _service(FakeGateway(), FakeSnapshotRepo()).prioritize_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="108404",
+        )
+
+
+def test_prioritize_conjunto_denies_user_without_permission() -> None:
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    with pytest.raises((PermissionError, BranchAccessDenied)):
+        _service(FakeGateway(), snapshots).prioritize_conjunto(
+            _user("production-control.access"),
+            branch="01",
+            order_number="108404",
+        )
+
+
+def _seed_optimization_snapshot(snapshots: FakeSnapshotRepo) -> None:
+    ops = [
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "99900001001", "operation_code": "01", "due_date": "2026-09-30"},
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "88800001001", "operation_code": "02", "due_date": "2026-08-21"},
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "10840401003", "operation_code": "03", "due_date": None, "pa_due_date": None},
+        {**_OPERATION, "work_center": "CT-02", "production_order": "77700001001", "operation_code": "01", "due_date": "2026-10-15"},
+        {**_OPERATION, "work_center": "CT-02", "production_order": "10840402001", "operation_code": "05", "due_date": "2026-08-25"},
+    ]
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 9, 3),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": 5},
+        },
+        refreshed_by="seed",
+    )
+
+
+def _center_orders(snapshots: FakeSnapshotRepo, center: str) -> list[str]:
+    return [
+        item["production_order"]
+        for item in snapshots.rows["01"]["payload_json"]["operations"]
+        if item["work_center"] == center
+    ]
+
+
+def test_optimize_delivery_sequence_orders_every_work_center_by_pa_due_date() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_optimization_snapshot(snapshots)
+
+    payload = _service(FakeGateway(), snapshots).optimize_delivery_sequence(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-01A",
+    )
+
+    assert snapshots.payload_updates == 1
+    # Sem entrega vai para o fim da fila do próprio centro.
+    assert _center_orders(snapshots, "CT-01A") == [
+        "88800001001",
+        "99900001001",
+        "10840401003",
+    ]
+    assert _center_orders(snapshots, "CT-02") == ["10840402001", "77700001001"]
+    optimization = payload["optimization"]
+    assert sorted(optimization["work_centers"]) == ["CT-01A", "CT-02"]
+    assert optimization["moved_operation_count"] == 4
+    assert optimization["missing_due_date_count"] == 1
+    assert snapshots.rows["01"]["payload_json"]["sequence_updated_by"]
+
+
+def test_optimize_delivery_sequence_is_idempotent() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_optimization_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    service.optimize_delivery_sequence(_user(*FULL_PERMS), branch="01")
+    payload = service.optimize_delivery_sequence(_user(*FULL_PERMS), branch="01")
+
+    assert snapshots.payload_updates == 1
+    assert payload["optimization"]["work_centers"] == []
+    assert payload["optimization"]["moved_operation_count"] == 0
+
+
+def test_optimize_delivery_sequence_keeps_withdrawn_conjunto_out_of_the_queue() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_optimization_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+    service.withdraw_conjunto(_user(*FULL_PERMS), branch="01", order_number="108404")
+
+    payload = service.optimize_delivery_sequence(_user(*FULL_PERMS), branch="01")
+
+    stored = snapshots.rows["01"]["payload_json"]["operations"]
+    # O conjunto retirado continua gravado na posição original do payload.
+    assert [item["production_order"] for item in stored if item["work_center"] == "CT-01A"] == [
+        "88800001001",
+        "99900001001",
+        "10840401003",
+    ]
+    assert payload["withdrawn"]["conjunto_count"] == 1
+    visible = [item["production_order"] for item in payload["selected"]["items"]]
+    assert "10840401003" not in visible
+
+
+def test_optimize_delivery_sequence_notifies_connected_cockpits() -> None:
+    snapshots = FakeSnapshotRepo()
+    notifier = RecordingNotifier()
+    service = _service_with_notifier(FakeGateway(), snapshots, notifier)
+    _seed_optimization_snapshot(snapshots)
+
+    service.optimize_delivery_sequence(_user(*FULL_PERMS), branch="01", work_center="CT-01A")
+
+    assert notifier.events == [
+        {"branch": "01", "reason": "delivery_sequence", "work_center": None}
+    ]
+
+
+def test_optimize_delivery_sequence_without_snapshot_is_not_found() -> None:
+    with pytest.raises(SnapshotNotFound):
+        _service(FakeGateway(), FakeSnapshotRepo()).optimize_delivery_sequence(
+            _user(*FULL_PERMS),
+            branch="01",
+        )
+
+
+def test_optimize_delivery_sequence_denies_user_without_permission() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_optimization_snapshot(snapshots)
+    with pytest.raises((PermissionError, BranchAccessDenied)):
+        _service(FakeGateway(), snapshots).optimize_delivery_sequence(
+            _user("production-control.access"),
+            branch="01",
+        )
+
+
+def _withdraw(
+    service: MachineLoadService,
+    start: date,
+    end: date,
+    *,
+    order_number: str = "108404",
+    work_center: str | None = "CT-01A",
+) -> dict[str, Any]:
+    return service.withdraw_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number=order_number,
+        work_center=work_center,
+    )
+
+
+def test_withdraw_conjunto_removes_every_operation_from_the_queue() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    payload = _withdraw(service, start, end)
+
+    assert [item["production_order"] for item in payload["selected"]["items"]] == [
+        "99900001001",
+        "88800001001",
+    ]
+    other = service.build(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-02",
+    )
+    assert [item["production_order"] for item in other["selected"]["items"]] == ["77700001001"]
+
+
+def test_withdraw_conjunto_reports_entry_and_counts() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    payload = _withdraw(service, start, end)
+
+    withdrawal = payload["withdrawal"]
+    assert withdrawal["order_number"] == "108404"
+    assert withdrawal["action"] == "withdrawn"
+    assert withdrawal["operation_count"] == 2
+    assert sorted(withdrawal["work_centers"]) == ["CT-01A", "CT-02"]
+    assert "108404" in withdrawal["message"]
+
+    assert payload["withdrawn"]["conjunto_count"] == 1
+    assert payload["withdrawn"]["operation_count"] == 2
+    entry = payload["withdrawn"]["items"][0]
+    assert entry["order_number"] == "108404"
+    assert entry["withdrawn_by"]
+    assert entry["withdrawn_at"]
+    assert payload["summary"]["operation_count"] == 3
+    counts = {item["work_center"]: item["operation_count"] for item in payload["work_centers"]}
+    assert counts == {"CT-01A": 2, "CT-02": 1}
+
+
+def test_withdrawn_conjunto_stays_in_the_snapshot_at_the_original_position() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    _withdraw(service, start, end)
+
+    assert _queue(snapshots, start, end, "CT-01A") == [
+        "99900001001:01",
+        "88800001001:02",
+        "10840401003:03",
+    ]
+
+
+def test_restore_conjunto_brings_the_queue_back() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+    _withdraw(service, start, end)
+
+    payload = service.restore_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="10840401003",
+        work_center="CT-01A",
+    )
+
+    assert payload["withdrawal"]["action"] == "restored"
+    assert payload["withdrawn"]["conjunto_count"] == 0
+    assert [item["production_order"] for item in payload["selected"]["items"]] == [
+        "99900001001",
+        "88800001001",
+        "10840401003",
+    ]
+
+
+def test_withdraw_twice_is_rejected_and_restore_requires_a_withdrawal() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+    _withdraw(service, start, end)
+
+    with pytest.raises(ValueError, match="108404"):
+        _withdraw(service, start, end)
+    with pytest.raises(ValueError, match="777000"):
+        service.restore_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="777000",
+        )
+
+
+def test_withdraw_conjunto_outside_the_queue_is_rejected() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    with pytest.raises(ValueError, match="123456"):
+        _withdraw(service, start, end, order_number="123456")
+    with pytest.raises(ValueError):
+        _withdraw(service, start, end, order_number="1084")
+    with pytest.raises((PermissionError, BranchAccessDenied)):
+        service.withdraw_conjunto(
+            _user("production-control.access"),
+            branch="01",
+            order_number="108404",
+        )
+
+
+def test_withdraw_conjunto_without_snapshot_is_not_found() -> None:
+    with pytest.raises(SnapshotNotFound):
+        _service(FakeGateway(), FakeSnapshotRepo()).withdraw_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="108404",
+        )
+
+
+def test_withdraw_conjunto_notifies_connected_cockpits() -> None:
+    snapshots = FakeSnapshotRepo()
+    notifier = RecordingNotifier()
+    service = _service_with_notifier(FakeGateway(), snapshots, notifier)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    _withdraw(service, start, end)
+
+    assert notifier.events == [
+        {"branch": "01", "reason": "withdrawal", "work_center": None}
+    ]
+
+
+def test_prioritize_ignores_withdrawn_operations() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+    _withdraw(service, start, end)
+
+    service.prioritize_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="888000",
+    )
+
+    # A retirada segue no fim do array, na posição em que estava.
+    assert _queue(snapshots, start, end, "CT-01A") == [
+        "88800001001:02",
+        "99900001001:01",
+        "10840401003:03",
+    ]
+    with pytest.raises(ValueError, match="108404"):
+        service.prioritize_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="108404",
+        )
+
+
+def test_reorder_sequence_ignores_withdrawn_operations() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+    _withdraw(service, start, end)
+
+    service.reorder_sequence(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-01A",
+        ordered_keys=[
+            {"production_order": "88800001001", "operation_code": "02"},
+            {"production_order": "99900001001", "operation_code": "01"},
+        ],
+    )
+
+    assert _queue(snapshots, start, end, "CT-01A") == [
+        "88800001001:02",
+        "99900001001:01",
+        "10840401003:03",
+    ]
+
+
+def test_locate_marks_withdrawn_stops() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+    _withdraw(service, start, end)
+
+    result = service.locate(
+        _user(*FULL_PERMS),
+        branch="01",
+        query="108404",
+    )
+
+    journey = result["journeys"][0]
+    assert journey["is_withdrawn"] is True
+    assert all(stop["is_withdrawn"] for stop in journey["stops"])
+    assert all(stop["queue_position"] == 0 for stop in journey["stops"])
+
+
+def _transfer(
+    service: MachineLoadService,
+    start: date,
+    end: date,
+    *,
+    production_order: str = "10840401003",
+    operation_code: str = "03",
+    target: str = "CT-02",
+    work_center: str | None = "CT-01A",
+) -> dict[str, Any]:
+    return service.transfer_operation(
+        _user(*FULL_PERMS),
+        branch="01",
+        production_order=production_order,
+        operation_code=operation_code,
+        target_work_center=target,
+        work_center=work_center,
+    )
+
+
+def test_transfer_operation_moves_it_to_the_end_of_the_target_queue() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    payload = _transfer(service, start, end)
+
+    assert _queue(snapshots, start, end, "CT-01A") == ["99900001001:01", "88800001001:02"]
+    assert _queue(snapshots, start, end, "CT-02") == [
+        "77700001001:01",
+        "10840402001:05",
+        "10840401003:03",
+    ]
+    transfer = payload["transfer"]
+    assert transfer["source_work_center"] == "CT-01A"
+    assert transfer["target_work_center"] == "CT-02"
+    assert transfer["returned_to_origin"] is False
+    assert "CT-02" in transfer["message"]
+
+
+def test_transfer_operation_updates_center_name_and_counts() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    payload = _transfer(service, start, end, work_center="CT-02")
+
+    moved = next(
+        item
+        for item in payload["selected"]["items"]
+        if item["production_order"] == "10840401003"
+    )
+    assert moved["work_center"] == "CT-02"
+    assert moved["work_center_name"] == "APLICAÇÃO DE TERMINAIS"
+    assert moved["transferred_from"] == "CT-01A"
+    counts = {item["work_center"]: item["operation_count"] for item in payload["work_centers"]}
+    assert counts == {"CT-01A": 2, "CT-02": 3}
+
+
+def test_transfer_operation_back_to_origin_clears_the_mark() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+    _transfer(service, start, end)
+
+    payload = _transfer(service, start, end, target="CT-01A", work_center="CT-01A")
+
+    assert payload["transfer"]["returned_to_origin"] is True
+    moved = next(
+        item
+        for item in payload["selected"]["items"]
+        if item["production_order"] == "10840401003"
+    )
+    assert "transferred_from" not in moved
+    assert snapshots.rows["01"]["payload_json"]["transferred_operations"] == []
+
+
+def test_transfer_operation_rejects_invalid_requests() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    with pytest.raises(ValueError, match="CT-99"):
+        _transfer(service, start, end, target="CT-99")
+    with pytest.raises(ValueError, match="CT-01A"):
+        _transfer(service, start, end, target="CT-01A")
+    with pytest.raises(ValueError, match="12345678901"):
+        _transfer(service, start, end, production_order="12345678901")
+    with pytest.raises(ValueError):
+        _transfer(service, start, end, target="  ")
+    with pytest.raises((PermissionError, BranchAccessDenied)):
+        service.transfer_operation(
+            _user("production-control.access"),
+            branch="01",
+            production_order="10840401003",
+            operation_code="03",
+            target_work_center="CT-02",
+        )
+
+
+def test_transfer_operation_of_withdrawn_conjunto_is_rejected() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+    _withdraw(service, start, end)
+
+    with pytest.raises(ValueError, match="10840401003"):
+        _transfer(service, start, end)
+
+
+def test_transfer_operation_without_snapshot_is_not_found() -> None:
+    with pytest.raises(SnapshotNotFound):
+        _service(FakeGateway(), FakeSnapshotRepo()).transfer_operation(
+            _user(*FULL_PERMS),
+            branch="01",
+            production_order="10840401003",
+            operation_code="03",
+            target_work_center="CT-02",
+        )
+
+
+def test_transfer_operation_notifies_connected_cockpits() -> None:
+    snapshots = FakeSnapshotRepo()
+    notifier = RecordingNotifier()
+    service = _service_with_notifier(FakeGateway(), snapshots, notifier)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    _transfer(service, start, end)
+
+    assert notifier.events == [
+        {"branch": "01", "reason": "transfer", "work_center": "CT-02"}
+    ]
+
+
+def test_refresh_replays_transfers_over_the_new_queue() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = service.resolve_delivery_window(start_date=None, end_date=None)
+    snapshots.upsert(
+        branch="01",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": [
+                {**_OPERATION, "work_center": center["work_center"]} for center in _WORK_CENTERS
+            ],
+            "summary": {"work_center_count": 2, "operation_count": 2},
+        },
+        refreshed_by="planner-1",
+    )
+    service.transfer_operation(
+        _user(*FULL_PERMS),
+        branch="01",
+        production_order="24640401002",
+        operation_code="03",
+        target_work_center="CT-02",
+        work_center="CT-01A",
+    )
+
+    payload = service.refresh(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-01A",
+    )
+
+    # O TOTVS devolve a OP no CT-01A; o replay a leva de volta ao CT-02.
+    assert payload["selected"]["items"] == []
+    stored = snapshots.rows["01"]["payload_json"]
+    assert [item["work_center"] for item in stored["operations"]] == ["CT-02", "CT-02"]
+    assert len(stored["transferred_operations"]) == 1
+
+
+def _seed_withdrawal_public_snapshot(
+    service: MachineLoadService,
+    snapshots: FakeSnapshotRepo,
+) -> tuple[date, date]:
+    """Janela padrão com o conjunto 246404 — o mesmo que o FakeGateway devolve no refresh."""
+    start, end = service.resolve_delivery_window(start_date=None, end_date=None)
+    snapshots.upsert(
+        branch="01",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": [
+                {**_OPERATION, "work_center": center["work_center"], "pa_product_code": "90262910"}
+                for center in _WORK_CENTERS
+            ],
+            "summary": {"work_center_count": 2, "operation_count": 2},
+        },
+        refreshed_by="planner-1",
+    )
+    return start, end
+
+
+def test_refresh_keeps_conjunto_out_of_the_schedule() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_withdrawal_public_snapshot(service, snapshots)
+    service.withdraw_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="246404",
+    )
+
+    payload = service.refresh(
+        _user(*FULL_PERMS),
+        branch="01",
+    )
+
+    assert payload["withdrawn"]["conjunto_count"] == 1
+    assert payload["selected"]["items"] == []
+    assert payload["summary"]["operation_count"] == 0
+
+
+def test_public_cockpit_does_not_see_withdrawn_conjunto() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_withdrawal_public_snapshot(service, snapshots)
+    service.withdraw_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="246404",
+    )
+
+    public_payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert public_payload["selected"]["items"] == []
+    assert "withdrawn" not in public_payload
+    assert service.public_snapshot_contains_pa(branch="01", pa_code="90262910") is False

@@ -56,7 +56,7 @@ A janela de recência existe porque a base tem milhares de apontamentos abertos 
 
 ### Snapshot no Portal PCP
 
-O congelamento da fila **não** fica na api-delpi. O `production-control-api` grava o sequenciamento em `production_control.machine_load_snapshots` e só regenera via `POST /machine-load/refresh`. Em cada leitura, o BFF chama:
+O congelamento da fila **não** fica na api-delpi. O `production-control-api` grava o sequenciamento em `production_control.machine_load_snapshots` — **uma fila viva por filial** — e só regenera via `POST /machine-load/refresh`, puxando por entrega do PA. Em cada leitura, o BFF chama:
 
 `POST /production/machine-load/appointment-status`
 
@@ -64,17 +64,26 @@ para reaplicar o status HZA vivo sem remontar a SH8. Body: `{ "branch", "items":
 
 ## Filtros (EN)
 
-Comuns às duas rotas: `branch` (`01` \| `02`), `scheduled_start` / `scheduled_end` (ISO `YYYY-MM-DD`, convertidos para `YYYYMMDD` do Protheus e aplicados em `H8_DTINI`), `work_center`, `product_code`, `production_order`, `tool`, `open_only` (default `true` — mantém só `C2_QUANT > C2_QUJE`).
+Comuns às duas rotas: `branch` (`01` \| `02`), `work_center`, `product_code`, `production_order`, `tool`, `open_only` (default `true` — mantém só `C2_QUANT > C2_QUJE`), mais **uma** das duas janelas abaixo.
 
-Janela default: 7 dias; máximo 90 (`DEFAULT_WINDOW_DAYS` / `MAX_WINDOW_DAYS`).
+| Janela | Parâmetros | Campo filtrado |
+|---|---|---|
+| **Entrega do PA** (preferida pelo PCP) | `delivery_start` / `delivery_end` | `due_date` = `COALESCE(PA.DT_ENTREGA, C2_DATPRF)` |
+| Programação (legado) | `scheduled_start` / `scheduled_end` | `H8_DTINI` |
+
+Quando `delivery_start` ou `delivery_end` chega, a janela de programação é **ignorada** — o PCP planeja por entrega, não por data de apontamento. `delivery_start` pode vir vazio para trazer também o atrasado; nesse caso só o teto é aplicado. Janela de programação: default 7 dias, máximo 90 (`DEFAULT_WINDOW_DAYS` / `MAX_WINDOW_DAYS`).
 
 `operations` ainda aceita `page`, `page_size` (default 100, máximo 500) e `sort`: `schedule_asc` (default), `schedule_desc`, `due_date_asc`, `due_date_desc`, `op_asc`, `qty_desc`.
 
+### Data de entrega efetiva
+
+`due_date` nasce da OP mãe (`PA.DT_ENTREGA`) e cai para a previsão da própria OP (`C2_DATPRF`) quando o vínculo com a mãe não existe; `due_date_source` diz de onde veio (`mother_order` \| `order`). O agregado de centros devolve `missing_due_date_count` para o consumidor sinalizar OP sem nenhuma das duas datas — situação que **não deveria existir** no cadastro.
+
 ## Contrato
 
-**Centro de trabalho:** `work_center`, `work_center_name`, `operation_count`, `order_count`, `in_production_count`, `first_scheduled_date`, `last_scheduled_date`.
+**Centro de trabalho:** `work_center`, `work_center_name`, `operation_count`, `order_count`, `in_production_count`, `first_scheduled_date`, `last_scheduled_date`, `first_due_date`, `last_due_date`, `missing_due_date_count`.
 
-**Operação:** `branch`, `work_center`, `work_center_name`, `scheduled_date`, `scheduled_start_time`, `production_order`, `operation_code`, `operation_description`, `tool`, `is_manual_operation`, `product_code`, `product_description`, `unit`, `planned_qty`, `pending_qty`, `pa_due_date`, `pa_product_code`.
+**Operação:** `branch`, `work_center`, `work_center_name`, `scheduled_date`, `scheduled_start_time`, `production_order`, `operation_code`, `operation_description`, `tool`, `is_manual_operation`, `product_code`, `product_description`, `unit`, `planned_qty`, `pending_qty`, `pa_due_date`, `pa_product_code`, `due_date`, `due_date_source`.
 
 **Produção (derivado da `HZA010`):** `production_status`, `is_in_production`, `production_started_date`, `production_started_time`, `active_operator_code`, `active_operator_name`, `active_operator_count`, `appointment_count`, `last_appointment_date`.
 

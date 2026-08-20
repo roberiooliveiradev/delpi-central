@@ -24,6 +24,12 @@ class MachineLoadResponseAssembler:
     ) -> dict[str, Any]:
         items = MachineLoadOperationMapper.map_work_centers(rows)
         branch = request.window.branch
+        due_dates = [
+            value
+            for key in ("first_due_date", "last_due_date")
+            for item in items
+            if (value := item.get(key))
+        ]
         return {
             "filters": request.filters_dict(),
             "items": items,
@@ -35,6 +41,13 @@ class MachineLoadResponseAssembler:
                 "order_count": sum(int(item.get("order_count") or 0) for item in items),
                 "in_production_count": sum(
                     int(item.get("in_production_count") or 0) for item in items
+                ),
+                # Entrega mais antiga/mais nova da fila inteira: é o que o PCP usa
+                # como início real do período (não existe "de" fixo).
+                "first_due_date": min(due_dates) if due_dates else None,
+                "last_due_date": max(due_dates) if due_dates else None,
+                "missing_due_date_count": sum(
+                    int(item.get("missing_due_date_count") or 0) for item in items
                 ),
                 "branch": branch,
                 "branch_filter_applied": branch is not None,

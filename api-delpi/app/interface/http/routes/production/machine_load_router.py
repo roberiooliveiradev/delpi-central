@@ -56,6 +56,17 @@ _WORK_CENTER_FIELDS = {
         "type": "string",
         "format": "date",
     },
+    "first_due_date": {
+        "label": "Entrega mais antiga",
+        "type": "string",
+        "format": "date",
+    },
+    "last_due_date": {
+        "label": "Entrega mais distante",
+        "type": "string",
+        "format": "date",
+    },
+    "missing_due_date_count": {"label": "Sem data de entrega", "type": "integer"},
 }
 
 _OPERATION_FIELDS = {
@@ -72,6 +83,8 @@ _OPERATION_FIELDS = {
     "pending_qty": {"label": "Saldo", "type": "number"},
     "unit": {"label": "Unidade", "type": "string"},
     "pa_due_date": {"label": "Entrega do PA", "type": "string", "format": "date"},
+    "due_date": {"label": "Entrega efetiva", "type": "string", "format": "date"},
+    "due_date_source": {"label": "Origem da entrega", "type": "string"},
     "pa_product_code": {"label": "PA", "type": "string"},
     "production_status": {"label": "Status de produção", "type": "string"},
     "is_in_production": {"label": "Em produção agora", "type": "boolean"},
@@ -116,6 +129,8 @@ class MachineLoadCommonQuery:
         branch: str | None = None,
         scheduled_start: str | None = None,
         scheduled_end: str | None = None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
         work_center: str | None = None,
         product_code: str | None = None,
         production_order: str | None = None,
@@ -125,6 +140,8 @@ class MachineLoadCommonQuery:
         self.branch = branch
         self.scheduled_start = scheduled_start
         self.scheduled_end = scheduled_end
+        self.delivery_start = delivery_start
+        self.delivery_end = delivery_end
         self.work_center = work_center
         self.product_code = product_code
         self.production_order = production_order
@@ -141,6 +158,20 @@ def machine_load_common_query(
     scheduled_end: Optional[str] = Query(
         default=None,
         description="Scheduled start range end (H8_DTINI, YYYY-MM-DD). Defaults to today + 7 days.",
+    ),
+    delivery_start: Optional[str] = Query(
+        default=None,
+        description=(
+            "Effective delivery date range begin (mother order DT_ENTREGA, "
+            "C2_DATPRF fallback; YYYY-MM-DD). Replaces the scheduled window."
+        ),
+    ),
+    delivery_end: Optional[str] = Query(
+        default=None,
+        description=(
+            "Effective delivery date range end (mother order DT_ENTREGA, "
+            "C2_DATPRF fallback; YYYY-MM-DD). Replaces the scheduled window."
+        ),
     ),
     work_center: Optional[str] = Query(
         default=None,
@@ -171,6 +202,8 @@ def machine_load_common_query(
         branch=branch,
         scheduled_start=scheduled_start,
         scheduled_end=scheduled_end,
+        delivery_start=delivery_start,
+        delivery_end=delivery_end,
         work_center=work_center,
         product_code=product_code,
         production_order=production_order,
@@ -184,6 +217,8 @@ def _window(common: MachineLoadCommonQuery) -> MachineLoadWindow:
         branch=common.branch,
         scheduled_start=common.scheduled_start,
         scheduled_end=common.scheduled_end,
+        delivery_start=common.delivery_start,
+        delivery_end=common.delivery_end,
     )
 
 
