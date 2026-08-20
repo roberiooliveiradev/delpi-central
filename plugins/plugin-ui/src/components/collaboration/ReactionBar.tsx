@@ -1,4 +1,16 @@
+import { Plus } from "lucide-react";
+import { useRef, useState } from "react";
+
+import {
+  EMOJI_CATALOG,
+  type EmojiCatalogItem,
+} from "../../content/emojiCatalog";
 import { delpiUiClass } from "../../utils/delpiUiClass";
+import {
+  EmojiInsertMenu,
+  emojiInsertMenuBemClasses,
+  type EmojiInsertMenuClassNames,
+} from "./EmojiInsertMenu";
 
 export type ReactionBarItem = {
   code: string;
@@ -13,17 +25,28 @@ export type ReactionBarClassNames = {
   chipActive: string;
   count: string;
   add: string;
+  emojiMenu: EmojiInsertMenuClassNames;
 };
 
 export type ReactionBarProps = {
   items: readonly ReactionBarItem[];
   classNames: ReactionBarClassNames;
-  /** Codes the host allows to add (shown as secondary chips). */
+  /**
+   * @deprecated Prefer `emojiAdd` («+» + EmojiInsertMenu). Kept for simple catalogs.
+   */
   availableCodes?: readonly { code: string; label: string }[];
   onToggle?: (code: string) => void;
   onAdd?: (code: string) => void;
   addAriaLabel?: string;
   listAriaLabel: string;
+  /** Opens curated emoji grid from «+» (Sala / collaboration). */
+  emojiAdd?: {
+    listAriaLabel: string;
+    items?: readonly EmojiCatalogItem[];
+    /** Default: emoji `id` as reaction code. */
+    codeForItem?: (item: EmojiCatalogItem) => string;
+    portalScopeClassName?: string;
+  };
   className?: string;
 };
 
@@ -40,11 +63,13 @@ export function reactionBarBemClasses(prefix: string): ReactionBarClassNames {
     ),
     count: pair(`${base}__count`, `${ui}__count`),
     add: pair(`${base}__add`, `${ui}__add`),
+    emojiMenu: emojiInsertMenuBemClasses(prefix),
   };
 }
 
 /**
  * Reaction chips. Codes and labels come from the host catalog.
+ * «+» opens EmojiInsertMenu when `emojiAdd` is set.
  */
 export function ReactionBar({
   items,
@@ -54,12 +79,16 @@ export function ReactionBar({
   onAdd,
   addAriaLabel,
   listAriaLabel,
+  emojiAdd,
   className,
 }: ReactionBarProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const addAnchorRef = useRef<HTMLButtonElement>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const unused = availableCodes.filter(
     (opt) => !items.some((item) => item.code === opt.code),
   );
+  const useEmojiMenu = Boolean(emojiAdd && onAdd && addAriaLabel);
 
   return (
     <div className={rootClass} role="group" aria-label={listAriaLabel}>
@@ -79,19 +108,46 @@ export function ReactionBar({
           ) : null}
         </button>
       ))}
-      {onAdd && unused.length > 0 && addAriaLabel
-        ? unused.map((opt) => (
-            <button
-              key={`add-${opt.code}`}
-              type="button"
-              className={classNames.add}
-              aria-label={`${addAriaLabel}: ${opt.label}`}
-              onClick={() => onAdd(opt.code)}
-            >
-              {opt.label}
-            </button>
-          ))
-        : null}
+      {useEmojiMenu ? (
+        <>
+          <button
+            ref={addAnchorRef}
+            type="button"
+            className={classNames.add}
+            aria-label={addAriaLabel}
+            aria-expanded={emojiOpen}
+            onClick={() => setEmojiOpen((open) => !open)}
+          >
+            <Plus size={14} aria-hidden />
+          </button>
+          <EmojiInsertMenu
+            open={emojiOpen}
+            onOpenChange={setEmojiOpen}
+            anchorRef={addAnchorRef}
+            classNames={classNames.emojiMenu}
+            listAriaLabel={emojiAdd!.listAriaLabel}
+            items={emojiAdd!.items ?? EMOJI_CATALOG}
+            portalScopeClassName={emojiAdd!.portalScopeClassName}
+            onSelect={(item) => {
+              const code = (emojiAdd!.codeForItem?.(item) ?? item.id).trim();
+              if (code) onAdd?.(code);
+              setEmojiOpen(false);
+            }}
+          />
+        </>
+      ) : onAdd && unused.length > 0 && addAriaLabel ? (
+        unused.map((opt) => (
+          <button
+            key={`add-${opt.code}`}
+            type="button"
+            className={classNames.add}
+            aria-label={`${addAriaLabel}: ${opt.label}`}
+            onClick={() => onAdd(opt.code)}
+          >
+            {opt.label}
+          </button>
+        ))
+      ) : null}
     </div>
   );
 }

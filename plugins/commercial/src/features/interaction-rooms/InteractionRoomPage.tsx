@@ -39,6 +39,7 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
+import { InteractionRoomMessageReactions } from "./InteractionRoomMessageReactions";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
@@ -224,6 +225,17 @@ export function InteractionRoomPage({
     );
     setEditingMessageId(null);
   }, []);
+
+  const onMessageReactionsChange = useCallback(
+    (messageId: string, reactions: InteractionMessageDto["reactions"]) => {
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === messageId ? { ...item, reactions: reactions ?? [] } : item,
+        ),
+      );
+    },
+    [],
+  );
 
   const onCreateTaskFromMessage = useCallback(
     async (messageId: string) => {
@@ -419,6 +431,14 @@ export function InteractionRoomPage({
           belowBody:
             message.deleted_at != null ? null : (
               <>
+                <InteractionRoomMessageReactions
+                  roomId={roomId}
+                  messageId={message.id}
+                  reactions={message.reactions ?? []}
+                  sessionUserId={sessionUserId}
+                  onReactionsChange={onMessageReactionsChange}
+                  onError={(text) => pushRoomAlert(text, "danger")}
+                />
                 <InteractionRoomMessageAttachments
                   messageId={message.id}
                   reloadToken={attachmentEpochByMessageId[message.id] ?? 0}
@@ -442,6 +462,9 @@ export function InteractionRoomPage({
       basePath,
       photoByUserId,
       attachmentEpochByMessageId,
+      roomId,
+      onMessageReactionsChange,
+      pushRoomAlert,
     ],
   );
 

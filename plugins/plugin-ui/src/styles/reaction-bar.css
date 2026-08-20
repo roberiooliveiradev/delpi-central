@@ -35,9 +35,17 @@
 .delpi-ui-reaction-bar__add {
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
   border-style: dashed;
+  min-width: 1.85rem;
+  justify-content: center;
+  padding-inline: 0.4rem;
 }
 
 .delpi-ui-reaction-bar__chip:disabled {
   cursor: default;
   opacity: 0.85;
+}
+
+.delpi-ui-reaction-bar__add:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }

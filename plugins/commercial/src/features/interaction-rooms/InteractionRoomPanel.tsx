@@ -38,6 +38,7 @@ import type { CommercialInteractionRoomEvent } from "../../constants/interaction
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
+import { InteractionRoomMessageReactions } from "./InteractionRoomMessageReactions";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
@@ -229,6 +230,17 @@ export function InteractionRoomPanel({
     );
     setEditingMessageId(null);
   }, []);
+
+  const onMessageReactionsChange = useCallback(
+    (messageId: string, reactions: InteractionMessageDto["reactions"]) => {
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === messageId ? { ...item, reactions: reactions ?? [] } : item,
+        ),
+      );
+    },
+    [],
+  );
 
   const onCreateTaskFromMessage = useCallback(
     async (messageId: string) => {
@@ -425,6 +437,14 @@ export function InteractionRoomPanel({
           belowBody:
             message.deleted_at != null ? null : (
               <>
+                <InteractionRoomMessageReactions
+                  roomId={room?.id ?? ""}
+                  messageId={message.id}
+                  reactions={message.reactions ?? []}
+                  sessionUserId={sessionUserId}
+                  onReactionsChange={onMessageReactionsChange}
+                  onError={(text) => setError(text)}
+                />
                 <InteractionRoomMessageAttachments
                   messageId={message.id}
                   reloadToken={attachmentEpochByMessageId[message.id] ?? 0}
@@ -448,6 +468,8 @@ export function InteractionRoomPanel({
       basePath,
       photoByUserId,
       attachmentEpochByMessageId,
+      room?.id,
+      onMessageReactionsChange,
     ],
   );
 

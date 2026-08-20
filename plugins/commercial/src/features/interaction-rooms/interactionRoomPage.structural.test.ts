@@ -56,6 +56,7 @@ describe("InteractionRoomPage", () => {
     expect(source).not.toMatch(/window\.confirm/);
     expect(source).toMatch(/onReplyMessage:/);
     expect(source).toMatch(/replyToMessageId=/);
+    expect(source).toMatch(/InteractionRoomMessageReactions/);
     expect(source).toMatch(/InteractionRoomMessageAttachments/);
     expect(source).toMatch(/onMessageAttachmentsSettled/);
     expect(source).toMatch(/room\.attachment/);

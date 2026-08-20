@@ -32,4 +32,25 @@ describe("ReactionBar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add reaction: ❤️" }));
     expect(onAdd).toHaveBeenCalledWith("heart");
   });
+
+  it("opens emoji menu from + and adds by catalog id", () => {
+    const onAdd = vi.fn();
+    render(
+      <ReactionBar
+        classNames={classNames}
+        listAriaLabel="Reactions"
+        addAriaLabel="Add reaction"
+        items={[]}
+        onAdd={onAdd}
+        emojiAdd={{ listAriaLabel: "Pick emoji" }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add reaction" }));
+    expect(screen.getByRole("dialog", { name: "Pick emoji" })).toBeTruthy();
+    const first = screen.getByRole("listbox").querySelector("button");
+    expect(first).toBeTruthy();
+    fireEvent.mouseDown(first!);
+    expect(onAdd).toHaveBeenCalled();
+    expect(String(onAdd.mock.calls[0]?.[0] || "").length).toBeGreaterThan(0);
+  });
 });
