@@ -1,9 +1,40 @@
 {
   "timezone": "America/Sao_Paulo",
-  "defaultWindowDays": 7,
-  "maxWindowDays": 90,
+  "defaultDeliveryWindowDays": 14,
   "operationsPageSize": 300,
   "manualLaborToolCode": "MOD",
+  "locate": {
+    "queryRequired": "Informe o número do conjunto (C2_NUM / OP) ou o código do produto (PA).",
+    "noMatches": "Nenhum conjunto ou produto encontrado para «{query}» neste período."
+  },
+  "prioritize": {
+    "orderNumberRequired": "Informe o número do conjunto (C2_NUM) com ao menos 6 dígitos.",
+    "notInQueue": "Nenhuma operação do conjunto «{conjunto}» está na fila deste período.",
+    "applied": "Conjunto {conjunto} priorizado em {centers} centro(s) de trabalho.",
+    "nothingToDo": "Conjunto {conjunto} já está no topo possível da fila (operações já iniciadas seguem à frente)."
+  },
+  "optimizeDelivery": {
+    "emptyQueue": "Não há operações na fila desta filial para otimizar.",
+    "applied": "Fila reordenada por entrega do PA em {centers} centro(s): {operations} operação(ões) mudaram de posição.",
+    "nothingToDo": "A fila já está ordenada pela entrega do PA em todos os centros."
+  },
+  "withdrawal": {
+    "orderNumberRequired": "Informe o número do conjunto (C2_NUM) com ao menos 6 dígitos.",
+    "notInQueue": "Nenhuma operação do conjunto «{conjunto}» está na fila deste período.",
+    "alreadyWithdrawn": "O conjunto {conjunto} já está fora da programação.",
+    "notWithdrawn": "O conjunto {conjunto} não está fora da programação neste período.",
+    "applied": "Conjunto {conjunto} retirado da programação: {operations} operação(ões) em {centers} centro(s) de trabalho.",
+    "restored": "Conjunto {conjunto} devolvido à fila em {centers} centro(s) de trabalho."
+  },
+  "transfer": {
+    "operationRequired": "Informe a OP e a operação que serão transferidas.",
+    "targetRequired": "Escolha o centro de trabalho de destino.",
+    "unknownTarget": "Centro de trabalho «{center}» não existe neste período.",
+    "sameCenter": "A operação já está no centro {center}.",
+    "notInQueue": "Operação {order}/{operation} não está na fila deste período.",
+    "withdrawn": "O conjunto da OP {order} está fora da programação. Devolva-o à fila antes de transferir.",
+    "applied": "OP {order} operação {operation} movida de {source} para {target} (entrou no fim da fila)."
+  },
   "publicCockpit": {
     "token": "aberto",
     "messages": {

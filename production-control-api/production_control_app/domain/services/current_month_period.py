@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 
@@ -18,15 +18,3 @@ def current_month_bounds(*, timezone: str, today: date | None = None) -> tuple[d
         today = today_in_timezone(timezone)
     start = today.replace(day=1)
     return start, today
-
-
-def forward_window_bounds(
-    *,
-    timezone: str,
-    days: int,
-    today: date | None = None,
-) -> tuple[date, date]:
-    """Hoje até hoje + N dias — janela de programação olhando para frente."""
-    if today is None:
-        today = today_in_timezone(timezone)
-    return today, today + timedelta(days=max(0, days))

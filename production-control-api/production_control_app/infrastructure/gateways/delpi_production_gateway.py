@@ -129,16 +129,16 @@ class DelpiProductionGateway:
         self,
         *,
         branch: str,
-        scheduled_start: str,
-        scheduled_end: str,
+        delivery_start: str | None,
+        delivery_end: str,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
             "/production/machine-load/work-centers",
             params={
                 "branch": branch,
-                "scheduled_start": scheduled_start,
-                "scheduled_end": scheduled_end,
+                "delivery_start": delivery_start,
+                "delivery_end": delivery_end,
                 "open_only": True,
             },
         )
@@ -147,8 +147,8 @@ class DelpiProductionGateway:
         self,
         *,
         branch: str,
-        scheduled_start: str,
-        scheduled_end: str,
+        delivery_start: str | None,
+        delivery_end: str,
         work_center: str | None,
         page: int,
         page_size: int,
@@ -158,8 +158,8 @@ class DelpiProductionGateway:
             "/production/machine-load/operations",
             params={
                 "branch": branch,
-                "scheduled_start": scheduled_start,
-                "scheduled_end": scheduled_end,
+                "delivery_start": delivery_start,
+                "delivery_end": delivery_end,
                 "work_center": work_center,
                 "open_only": True,
                 "page": page,
