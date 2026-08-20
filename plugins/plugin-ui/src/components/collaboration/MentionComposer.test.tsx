@@ -8,7 +8,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MentionComposer, mentionComposerBemClasses } from "./MentionComposer";
 import {
   detectActiveMention,
-  expandCollapsedSelectionForFormat,
   insertMentionToken,
   replaceEditablePlainRange,
   snapshotEditablePlaintext,
@@ -44,22 +43,6 @@ describe("mentionComposerCaret", () => {
     expect(result.token).toBe("@Ana Silva");
     expect(result.nextValue).toBe("Hi @Ana Silva ");
     expect(result.nextCursor).toBe("Hi @Ana Silva ".length);
-  });
-
-  it("expande caret colapsado para o conteúdo inteiro", () => {
-    const root = document.createElement("div");
-    root.textContent = "dsdssssdsds";
-    document.body.appendChild(root);
-    const collapsed = document.createRange();
-    collapsed.selectNodeContents(root);
-    collapsed.collapse(false);
-    window.getSelection()?.removeAllRanges();
-    window.getSelection()?.addRange(collapsed);
-    expandCollapsedSelectionForFormat(root);
-    const next = window.getSelection()?.getRangeAt(0);
-    expect(next?.collapsed).toBe(false);
-    expect(next?.toString()).toBe("dsdssssdsds");
-    root.remove();
   });
 
   it("substitui intervalo plano no contenteditable", () => {

@@ -60,7 +60,6 @@ import {
 } from "./mentionComposerFontSize";
 import {
   detectActiveMention,
-  expandCollapsedSelectionForFormat,
   insertMentionToken,
   replaceEditablePlainRange,
   snapshotEditablePlaintext,
@@ -373,7 +372,6 @@ export function MentionComposer({
     if (!el) return;
     const next = clampComposerFontSize(nextRaw);
     restoreRichTextSelection(el, savedRangeRef.current);
-    expandCollapsedSelectionForFormat(el);
     applyRichTextFontSize(el, next);
     setFontSize(next);
     emitMarkdownAndMention();
