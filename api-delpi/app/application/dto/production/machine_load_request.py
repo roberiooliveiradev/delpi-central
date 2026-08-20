@@ -50,7 +50,11 @@ def _protheus_date(value: date) -> str:
 
 @dataclass(frozen=True, slots=True)
 class MachineLoadWindow:
-    """Janela de programação sobre H8_DTINI. Default: hoje até hoje + 7 dias.
+    """Janela da carga máquina — programação (H8_DTINI) ou entrega efetiva do PA.
+
+    Com ``delivery_start`` / ``delivery_end`` o recorte é a **entrega**: é como o
+    PCP planeja (o que vence primeiro), e a janela de programação deixa de valer.
+    O início pode ficar aberto, para não esconder OP atrasada.
 
     ``reference`` é o "hoje" do turno: dele saem as janelas de recência do
     apontamento (HZA), independentes do período escolhido pelo usuário.
@@ -60,6 +64,8 @@ class MachineLoadWindow:
     scheduled_end: date
     branch: str | None
     reference: date
+    delivery_start: date | None = None
+    delivery_end: date | None = None
 
     @classmethod
     def resolve(
@@ -68,6 +74,8 @@ class MachineLoadWindow:
         branch: str | None,
         scheduled_start: str | None = None,
         scheduled_end: str | None = None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
         today: date | None = None,
     ) -> MachineLoadWindow:
         normalized_branch = str(branch or "").strip() or None
@@ -97,6 +105,19 @@ class MachineLoadWindow:
         else:
             start, end = parsed_start, parsed_end
 
+        parsed_delivery_start = _parse_iso_date(delivery_start)
+        parsed_delivery_end = _parse_iso_date(delivery_end)
+        if delivery_start and parsed_delivery_start is None:
+            raise ValueError("delivery_start inválida. Use o formato YYYY-MM-DD.")
+        if delivery_end and parsed_delivery_end is None:
+            raise ValueError("delivery_end inválida. Use o formato YYYY-MM-DD.")
+        if (
+            parsed_delivery_start is not None
+            and parsed_delivery_end is not None
+            and parsed_delivery_start > parsed_delivery_end
+        ):
+            raise ValueError("delivery_start não pode ser posterior a delivery_end.")
+
         if start > end:
             raise ValueError(
                 "scheduled_start não pode ser posterior a scheduled_end."
@@ -108,12 +129,22 @@ class MachineLoadWindow:
             scheduled_end=end,
             branch=normalized_branch,
             reference=reference,
+            delivery_start=parsed_delivery_start,
+            delivery_end=parsed_delivery_end,
         )
+
+    @property
+    def filters_by_delivery(self) -> bool:
+        return self.delivery_start is not None or self.delivery_end is not None
 
     def filter_kwargs(self) -> dict[str, Any]:
         return {
             "scheduled_start": _protheus_date(self.scheduled_start),
             "scheduled_end": _protheus_date(self.scheduled_end),
+            "delivery_start": (
+                self.delivery_start.isoformat() if self.delivery_start else None
+            ),
+            "delivery_end": self.delivery_end.isoformat() if self.delivery_end else None,
             "branch": self.branch,
             "appointment_active_since": _protheus_date(
                 self.reference - timedelta(days=ACTIVE_APPOINTMENT_LOOKBACK_DAYS)
@@ -127,6 +158,11 @@ class MachineLoadWindow:
         return {
             "scheduled_start": self.scheduled_start.isoformat(),
             "scheduled_end": self.scheduled_end.isoformat(),
+            "delivery_start": (
+                self.delivery_start.isoformat() if self.delivery_start else None
+            ),
+            "delivery_end": self.delivery_end.isoformat() if self.delivery_end else None,
+            "period_field": "delivery_date" if self.filters_by_delivery else "scheduled_date",
             "branch": self.branch,
         }
 

@@ -143,6 +143,8 @@ class MachineLoadOperationMapper:
             "produced_qty": round(produced, 6),
             "pending_qty": pending_qty,
             "pa_due_date": _iso_date(row.get("pa_due_date")),
+            "due_date": _iso_date(row.get("due_date")),
+            "due_date_source": _clean(row.get("due_date_source")) or None,
             "pa_production_order": _clean(row.get("pa_production_order")) or None,
             "pa_product_code": _clean(row.get("pa_product_code")) or None,
             "pa_product_description": _clean(row.get("pa_product_description")) or None,
@@ -163,6 +165,9 @@ class MachineLoadOperationMapper:
             "in_production_count": _as_int(row.get("in_production_count")),
             "first_scheduled_date": _iso_date(row.get("first_scheduled_date")),
             "last_scheduled_date": _iso_date(row.get("last_scheduled_date")),
+            "first_due_date": _iso_date(row.get("first_due_date")),
+            "last_due_date": _iso_date(row.get("last_due_date")),
+            "missing_due_date_count": _as_int(row.get("missing_due_date_count")),
         }
 
     @classmethod

@@ -38096,7 +38096,7 @@
       ],
       "deprecated": false,
       "xDelpi": {
-        "entity": "planejamento_orcamentario_admin_cost_center_from_erp",
+        "entity": "budget_org_cost_center",
         "shape": "scalar",
         "presentationStrategy": "as_delivered"
       }
@@ -38111,7 +38111,7 @@
       ],
       "deprecated": false,
       "xDelpi": {
-        "entity": "planejamento_orcamentario_admin_cost_center_icon",
+        "entity": "budget_org_cost_center",
         "shape": "scalar",
         "presentationStrategy": "as_delivered"
       }
@@ -42167,8 +42167,8 @@
         }
       ],
       "xDelpi": {
-        "entity": "planejamento_orcamentario_org_erp_cost_centers",
-        "shape": "scalar",
+        "entity": "budget_org_cost_center",
+        "shape": "paged_list",
         "params": {
           "branch": {
             "locale": {
@@ -49018,6 +49018,22 @@
           "format": "date"
         },
         {
+          "name": "delivery_start",
+          "in": "query",
+          "required": false,
+          "description": "Effective delivery date range begin (mother order DT_ENTREGA, C2_DATPRF fallback; YYYY-MM-DD). Replaces the scheduled window.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "delivery_end",
+          "in": "query",
+          "required": false,
+          "description": "Effective delivery date range end (mother order DT_ENTREGA, C2_DATPRF fallback; YYYY-MM-DD). Replaces the scheduled window.",
+          "type": "string",
+          "format": "date"
+        },
+        {
           "name": "work_center",
           "in": "query",
           "required": false,
@@ -49462,6 +49478,32 @@
               }
             }
           },
+          "delivery_start": {
+            "locale": {
+              "en": {
+                "description": "Start of delivery date range (YYYY-MM-DD).",
+                "label": "Delivery start"
+              },
+              "pt-BR": {
+                "description": "Início do intervalo da data de entrega prevista (AAAA-MM-DD).",
+                "label": "Início da entrega"
+              }
+            },
+            "format": "date"
+          },
+          "delivery_end": {
+            "locale": {
+              "en": {
+                "description": "End of delivery date range (YYYY-MM-DD).",
+                "label": "Delivery end"
+              },
+              "pt-BR": {
+                "description": "Fim do intervalo da data de entrega prevista (AAAA-MM-DD).",
+                "label": "Fim da entrega"
+              }
+            },
+            "format": "date"
+          },
           "open_only": {
             "locale": {
               "en": {
@@ -49519,6 +49561,22 @@
           "in": "query",
           "required": false,
           "description": "Scheduled start range end (H8_DTINI, YYYY-MM-DD). Defaults to today + 7 days.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "delivery_start",
+          "in": "query",
+          "required": false,
+          "description": "Effective delivery date range begin (mother order DT_ENTREGA, C2_DATPRF fallback; YYYY-MM-DD). Replaces the scheduled window.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "delivery_end",
+          "in": "query",
+          "required": false,
+          "description": "Effective delivery date range end (mother order DT_ENTREGA, C2_DATPRF fallback; YYYY-MM-DD). Replaces the scheduled window.",
           "type": "string",
           "format": "date"
         },
@@ -49704,6 +49762,32 @@
                 "label": "Ferramenta"
               }
             }
+          },
+          "delivery_start": {
+            "locale": {
+              "en": {
+                "description": "Start of delivery date range (YYYY-MM-DD).",
+                "label": "Delivery start"
+              },
+              "pt-BR": {
+                "description": "Início do intervalo da data de entrega prevista (AAAA-MM-DD).",
+                "label": "Início da entrega"
+              }
+            },
+            "format": "date"
+          },
+          "delivery_end": {
+            "locale": {
+              "en": {
+                "description": "End of delivery date range (YYYY-MM-DD).",
+                "label": "Delivery end"
+              },
+              "pt-BR": {
+                "description": "Fim do intervalo da data de entrega prevista (AAAA-MM-DD).",
+                "label": "Fim da entrega"
+              }
+            },
+            "format": "date"
           },
           "open_only": {
             "locale": {

@@ -31,14 +31,26 @@ _SCHEDULE_KEYS = "OA.H8_DTINI {0}, OA.H8_HRINI {0}, OA.H8_OP {0}, OA.H8_OPER {0}
 
 _IN_PRODUCTION_EXPR = "CASE WHEN ISNULL(AP.active_count, 0) > 0 THEN 1 ELSE 0 END"
 
+# Entrega da própria OP (SC2, YYYYMMDD) — só entra quando a OP mãe não está na view PCP.
+_ORDER_DUE_DATE_EXPR = "TRY_CONVERT(DATE, NULLIF(LTRIM(RTRIM(OP.C2_DATPRF)), ''), 112)"
+
+# Entrega efetiva: a data da OP mãe manda; sem mãe, a previsão da própria OP evita
+# operação sem data (o PCP planeja por entrega, então ninguém pode ficar sem ela).
+DUE_DATE_EXPR = f"COALESCE(PA.DT_ENTREGA, {_ORDER_DUE_DATE_EXPR})"
+DUE_DATE_SOURCE_EXPR = (
+    "CASE WHEN PA.DT_ENTREGA IS NOT NULL THEN 'mother_order'"
+    f" WHEN {_ORDER_DUE_DATE_EXPR} IS NOT NULL THEN 'order'"
+    " ELSE '' END"
+)
+
 # Em produção primeiro: o operador olha a máquina para saber o que está rodando.
 _PRODUCTION_FIRST = f"{_IN_PRODUCTION_EXPR} DESC"
 
 SORT_SQL = {
     SORT_SCHEDULE_ASC: f"{_PRODUCTION_FIRST}, {_SCHEDULE_KEYS.format('ASC')}",
     SORT_SCHEDULE_DESC: f"{_PRODUCTION_FIRST}, {_SCHEDULE_KEYS.format('DESC')}",
-    SORT_DUE_DATE_ASC: f"PA.DT_ENTREGA ASC, {_SCHEDULE_KEYS.format('ASC')}",
-    SORT_DUE_DATE_DESC: f"PA.DT_ENTREGA DESC, {_SCHEDULE_KEYS.format('ASC')}",
+    SORT_DUE_DATE_ASC: f"{DUE_DATE_EXPR} ASC, {_SCHEDULE_KEYS.format('ASC')}",
+    SORT_DUE_DATE_DESC: f"{DUE_DATE_EXPR} DESC, {_SCHEDULE_KEYS.format('ASC')}",
     SORT_ORDER_ASC: "OA.H8_OP ASC, OA.H8_OPER ASC",
     SORT_QTY_DESC: (
         "CAST(OP.C2_QUANT AS DECIMAL(18, 6)) DESC, " + _SCHEDULE_KEYS.format("ASC")
@@ -144,6 +156,8 @@ def build_base_where(
     *,
     scheduled_start: str,
     scheduled_end: str,
+    delivery_start: str | None = None,
+    delivery_end: str | None = None,
     branch: str | None = None,
     work_center: str | None = None,
     product_code: str | None = None,
@@ -151,18 +165,35 @@ def build_base_where(
     tool: str | None = None,
     open_only: bool | None = True,
 ) -> tuple[str, tuple]:
-    """Filtro comum. Datas já em YYYYMMDD (formato nativo da H8_DTINI).
+    """Filtro comum. Programação em YYYYMMDD (nativo da H8_DTINI); entrega em ISO.
 
-    O que está em produção agora entra mesmo com alocação fora do período: a
-    programação costuma ficar para trás e a máquina precisa aparecer rodando.
+    Com ``delivery_start`` / ``delivery_end`` o recorte passa a ser a **entrega
+    efetiva** do PA e a janela de programação é ignorada — é assim que o PCP
+    enxerga a fila (o que vence primeiro, mesmo alocado para daqui a meses).
+
+    O que está em produção agora entra mesmo fora do período: a programação
+    costuma ficar para trás e a máquina precisa aparecer rodando.
     """
     branch_sql, branch_params = _branch_filter_sql(branch)
+    params: list = []
+    if delivery_start or delivery_end:
+        period_parts = []
+        if delivery_start:
+            period_parts.append(f"{DUE_DATE_EXPR} >= ?")
+            params.append(delivery_start)
+        if delivery_end:
+            period_parts.append(f"{DUE_DATE_EXPR} <= ?")
+            params.append(delivery_end)
+    else:
+        period_parts = ["OA.H8_DTINI >= ?", "OA.H8_DTINI <= ?"]
+        params.extend([scheduled_start, scheduled_end])
+
     clauses = [
         "OA.D_E_L_E_T_ = ''",
-        f"((OA.H8_DTINI >= ? AND OA.H8_DTINI <= ?) OR {_IN_PRODUCTION_EXPR} = 1)",
+        f"(({' AND '.join(period_parts)}) OR {_IN_PRODUCTION_EXPR} = 1)",
         branch_sql,
     ]
-    params: list = [scheduled_start, scheduled_end, *branch_params]
+    params.extend(branch_params)
 
     if work_center:
         clauses.append("LTRIM(RTRIM(OA.H8_CTRAB)) = ?")
@@ -204,7 +235,10 @@ def build_work_centers_query(**filters) -> tuple[str, tuple]:
             COUNT(DISTINCT LTRIM(RTRIM(OA.H8_OP))) AS order_count,
             SUM({_IN_PRODUCTION_EXPR}) AS in_production_count,
             MIN(OA.H8_DTINI) AS first_scheduled_date,
-            MAX(OA.H8_DTINI) AS last_scheduled_date
+            MAX(OA.H8_DTINI) AS last_scheduled_date,
+            MIN({DUE_DATE_EXPR}) AS first_due_date,
+            MAX({DUE_DATE_EXPR}) AS last_due_date,
+            SUM(CASE WHEN {DUE_DATE_EXPR} IS NULL THEN 1 ELSE 0 END) AS missing_due_date_count
         {_from_clause()}
         WHERE {where_sql}
           AND LTRIM(RTRIM(OA.H8_CTRAB)) <> ''
@@ -257,6 +291,8 @@ def build_operations_query(
             CAST(OP.C2_QUJE AS DECIMAL(18, 6)) AS produced_qty,
             CAST(OP.C2_QUANT - OP.C2_QUJE AS DECIMAL(18, 6)) AS pending_qty,
             PA.DT_ENTREGA AS pa_due_date,
+            {DUE_DATE_EXPR} AS due_date,
+            {DUE_DATE_SOURCE_EXPR} AS due_date_source,
             LTRIM(RTRIM(ISNULL(PA.OP_CHAVE, ''))) AS pa_production_order,
             LTRIM(RTRIM(ISNULL(PA.PRODUTO, ''))) AS pa_product_code,
             LTRIM(RTRIM(ISNULL(PA.DESC_PRODUTO, ''))) AS pa_product_description,

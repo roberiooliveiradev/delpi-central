@@ -85,6 +85,46 @@ def test_pa_due_date_comes_from_mother_order() -> None:
     assert "PA.DT_ENTREGA AS pa_due_date" in query
 
 
+def test_delivery_window_replaces_the_scheduled_window() -> None:
+    """O PCP planeja por entrega: com delivery_*, a programação não recorta mais."""
+    query, params = sql.build_operations_count_query(
+        **_filters(delivery_start="2026-08-01", delivery_end="2026-09-03")
+    )
+    assert "OA.H8_DTINI >= ?" not in query
+    assert f"{sql.DUE_DATE_EXPR} >= ?" in query
+    assert f"{sql.DUE_DATE_EXPR} <= ?" in query
+    assert params == (*_JOIN_PARAMS, "2026-08-01", "2026-09-03", "01")
+
+
+def test_delivery_window_accepts_an_open_start() -> None:
+    """Sem início, tudo que está atrasado continua na fila."""
+    query, params = sql.build_operations_count_query(**_filters(delivery_end="2026-09-03"))
+    assert f"{sql.DUE_DATE_EXPR} >= ?" not in query
+    assert f"{sql.DUE_DATE_EXPR} <= ?" in query
+    assert params == (*_JOIN_PARAMS, "2026-09-03", "01")
+
+
+def test_running_operations_survive_the_delivery_window() -> None:
+    query, _ = sql.build_operations_count_query(**_filters(delivery_end="2026-09-03"))
+    assert "OR CASE WHEN ISNULL(AP.active_count, 0) > 0 THEN 1 ELSE 0 END = 1" in query
+
+
+def test_effective_due_date_falls_back_to_the_order_forecast() -> None:
+    """Sem OP mãe na view PCP, a previsão da própria OP evita operação sem entrega."""
+    query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
+    assert "COALESCE(PA.DT_ENTREGA, TRY_CONVERT(DATE," in query
+    assert "OP.C2_DATPRF" in query
+    assert "AS due_date" in query
+    assert "AS due_date_source" in query
+
+
+def test_work_centers_query_exposes_delivery_bounds() -> None:
+    query, _ = sql.build_work_centers_query(**_filters())
+    assert "AS first_due_date" in query
+    assert "AS last_due_date" in query
+    assert "AS missing_due_date_count" in query
+
+
 def test_appointment_join_matches_branch_order_and_operation() -> None:
     query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
     assert OPERATION_APPOINTMENT_TABLE in query
