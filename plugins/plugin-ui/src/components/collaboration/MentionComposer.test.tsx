@@ -262,6 +262,43 @@ describe("MentionComposer", () => {
     expect(surface.innerHTML.toLowerCase()).not.toContain("<script");
     expect(surface.innerHTML.toLowerCase()).toContain("ok");
   });
+
+  it("fonte com caret colapsado não seleciona a mensagem inteira", () => {
+    const formatLabels = {
+      ...labels,
+      formatToggleAriaLabel: "Format",
+      formatFontSizeAriaLabel: "Font size",
+      formatFontSizeDecreaseAriaLabel: "Decrease font size",
+      formatFontSizeIncreaseAriaLabel: "Increase font size",
+    };
+    render(
+      <MentionComposer
+        value="mensagem fonte"
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={formatLabels}
+        classNames={classNames}
+      />,
+    );
+    const surface = screen.getByLabelText("Write a message");
+    const caret = document.createRange();
+    caret.selectNodeContents(surface);
+    caret.collapse(false);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(caret);
+
+    fireEvent.click(screen.getByLabelText("Format"));
+    fireEvent.click(screen.getByLabelText("Increase font size"));
+
+    const selection = window.getSelection();
+    expect(selection?.toString()).not.toBe("mensagem fonte");
+    expect(selection?.getRangeAt(0)?.collapsed).toBe(true);
+    expect(surface.innerHTML).toMatch(/font-size:\s*18px/);
+    expect(readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "mentionComposerCaret.ts"),
+      "utf8",
+    )).not.toMatch(/expandCollapsedSelectionForFormat/);
+  });
 });
 
 describe("mention-composer.css", () => {
