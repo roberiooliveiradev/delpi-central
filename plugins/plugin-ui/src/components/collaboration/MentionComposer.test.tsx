@@ -246,6 +246,11 @@ describe("MentionComposer", () => {
     fireEvent.click(screen.getByLabelText("Bold"));
     expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
     expect(screen.getByLabelText("Bold").getAttribute("aria-pressed")).toBe("true");
+    // Re-seleciona o trecho: caret colapsado só sai do estilo de digitação (não unwrap).
+    const again = document.createRange();
+    again.selectNodeContents(surface);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(again);
     fireEvent.click(screen.getByLabelText("Bold"));
     expect(surface.innerHTML.toLowerCase()).not.toMatch(/<(strong|b)\b/);
     expect(screen.getByLabelText("Bold").getAttribute("aria-pressed")).toBe("false");

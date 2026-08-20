@@ -42,12 +42,19 @@ const WRAP_TAG: Partial<Record<ComposerFormatKind, string>> = {
   code: "code",
 };
 
-/** B/I/S → execCommand nativo (toggle Word/Teams no trecho). */
+/** B/I/S → execCommand nativo (toggle Word/Teams no trecho expandido). */
 const EXEC_TOGGLE: Partial<Record<ComposerFormatKind, string>> = {
   bold: "bold",
   italic: "italic",
   strike: "strikeThrough",
 };
+
+const INLINE_TOGGLE_KINDS = new Set<ComposerFormatKind>([
+  "bold",
+  "italic",
+  "strike",
+  "code",
+]);
 
 export function emptyComposerFormatFlags(): ComposerFormatFlags {
   return {
@@ -125,9 +132,55 @@ function stripMatchingTags(root: Node, selector: string): void {
   }
 }
 
+function makeTaggedFragment(tag: string, frag: DocumentFragment): HTMLElement | null {
+  if (!frag.hasChildNodes()) return null;
+  const el = document.createElement(tag);
+  el.appendChild(frag);
+  return el;
+}
+
+/**
+ * Caret colapsado dentro do formato: sai do estilo para digitação seguinte
+ * sem remover o formato do texto já escrito (Word/Teams).
+ * Divide o elemento no caret e posiciona o caret no meio (texto plano).
+ */
+export function exitInlineFormatAtCaret(
+  editor: HTMLElement,
+  hit: Element,
+  selection: Selection,
+  range: Range,
+): void {
+  const parent = hit.parentNode;
+  if (!parent || !editor.contains(hit)) return;
+
+  const tag = hit.tagName;
+  const beforeRange = document.createRange();
+  beforeRange.selectNodeContents(hit);
+  beforeRange.setEnd(range.startContainer, range.startOffset);
+
+  const afterRange = document.createRange();
+  afterRange.selectNodeContents(hit);
+  afterRange.setStart(range.endContainer, range.endOffset);
+
+  const beforeEl = makeTaggedFragment(tag, beforeRange.cloneContents());
+  const afterEl = makeTaggedFragment(tag, afterRange.cloneContents());
+  const marker = document.createTextNode("\u200b");
+
+  if (beforeEl) parent.insertBefore(beforeEl, hit);
+  parent.insertBefore(marker, hit);
+  if (afterEl) parent.insertBefore(afterEl, hit);
+  parent.removeChild(hit);
+
+  const next = document.createRange();
+  next.setStart(marker, marker.data.length);
+  next.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(next);
+}
+
 /**
  * Remove o formato só no trecho selecionado (split Word-like).
- * Caret colapsado ou seleção cobrindo o elemento inteiro → unwrap do elemento.
+ * Caret colapsado → sai do estilo da digitação (não unwrap do trecho anterior).
  */
 export function unwrapFormatInSelection(editor: HTMLElement, selector: string): void {
   const hit = matchingFormatElement(editor, selector);
@@ -138,13 +191,23 @@ export function unwrapFormatInSelection(editor: HTMLElement, selector: string): 
     return;
   }
   const range = selection.getRangeAt(0);
+
+  if (range.collapsed) {
+    // Blockquote (bloco): unwrap integral.
+    if (hit.tagName.toLowerCase() === "blockquote") {
+      unwrapRichTextElement(hit);
+      return;
+    }
+    exitInlineFormatAtCaret(editor, hit, selection, range);
+    return;
+  }
+
   const fullText = hit.textContent ?? "";
-  if (range.collapsed || range.toString() === fullText) {
+  if (range.toString() === fullText) {
     unwrapRichTextElement(hit);
     return;
   }
 
-  // Blockquote (bloco): unwrap integral — split parcial não faz sentido tipográfico.
   if (hit.tagName.toLowerCase() === "blockquote") {
     unwrapRichTextElement(hit);
     return;
@@ -167,15 +230,8 @@ export function unwrapFormatInSelection(editor: HTMLElement, selector: string): 
   if (!parent) return;
 
   const tag = hit.tagName;
-  const makeTagged = (frag: DocumentFragment): HTMLElement | null => {
-    if (!frag.hasChildNodes()) return null;
-    const el = document.createElement(tag);
-    el.appendChild(frag);
-    return el;
-  };
-
-  const beforeEl = makeTagged(beforeFrag);
-  const afterEl = makeTagged(afterFrag);
+  const beforeEl = makeTaggedFragment(tag, beforeFrag);
+  const afterEl = makeTaggedFragment(tag, afterFrag);
   const midNodes = Array.from(midFrag.childNodes);
 
   const inserted: Node[] = [];
@@ -227,30 +283,54 @@ function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
   }
 }
 
-function toggleInlineViaExecOrFallback(
+function selectionIsCollapsed(editor: HTMLElement): boolean {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return true;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return true;
+  return range.collapsed;
+}
+
+/**
+ * B/I/S/code com caret: liga estilo de digitação ou sai sem apagar o trecho.
+ * Com seleção expandida: execCommand (B/I/S) ou wrap/unwrap.
+ */
+function toggleInlineFormat(
   editor: HTMLElement,
-  kind: "bold" | "italic" | "strike",
+  kind: "bold" | "italic" | "strike" | "code",
 ): void {
-  const cmd = EXEC_TOGGLE[kind]!;
   const selector = SELECTOR[kind]!;
   const tag = WRAP_TAG[kind]!;
-  const before = editor.innerHTML;
-  runRichTextCommand(editor, cmd);
-  if (editor.innerHTML !== before) return;
+  const collapsed = selectionIsCollapsed(editor);
+  const active = isInside(editor, selector);
 
-  // jsdom / ambiente sem efeito de execCommand: fallback Word-like.
-  const active = isInside(editor, selector) || queryRichTextCommandState(cmd);
-  if (active) unwrapFormatInSelection(editor, selector);
-  else wrapSelectionWithTag(editor, tag);
+  if (collapsed) {
+    if (active) unwrapFormatInSelection(editor, selector);
+    else wrapSelectionWithTag(editor, tag);
+    return;
+  }
+
+  const execCmd = EXEC_TOGGLE[kind];
+  if (execCmd) {
+    const before = editor.innerHTML;
+    runRichTextCommand(editor, execCmd);
+    if (editor.innerHTML !== before) return;
+  }
+
+  if (active || (execCmd && queryRichTextCommandState(execCmd))) {
+    unwrapFormatInSelection(editor, selector);
+  } else {
+    wrapSelectionWithTag(editor, tag);
+  }
 }
 
 /**
  * Liga/desliga o formato no trecho (ou estilo de digitação no caret).
- * B/I/S preferem execCommand nativo; fallback split/unwrap sem expand-all.
+ * Inline: caret colapsado nunca unwrap do texto já escrito.
  */
 export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKind): void {
-  if (kind === "bold" || kind === "italic" || kind === "strike") {
-    toggleInlineViaExecOrFallback(editor, kind);
+  if (INLINE_TOGGLE_KINDS.has(kind)) {
+    toggleInlineFormat(editor, kind as "bold" | "italic" | "strike" | "code");
     return;
   }
 
@@ -274,7 +354,9 @@ export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKi
     if (anchor) {
       const selection = window.getSelection();
       const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
-      if (range && !range.collapsed && range.toString() !== (anchor.textContent ?? "")) {
+      if (range?.collapsed) {
+        exitInlineFormatAtCaret(editor, anchor, selection!, range);
+      } else if (range && range.toString() !== (anchor.textContent ?? "")) {
         const before = editor.innerHTML;
         runRichTextCommand(editor, "unlink");
         if (editor.innerHTML !== before) return;
@@ -285,11 +367,5 @@ export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKi
     } else {
       insertRichTextLink(editor, "https://");
     }
-    return;
-  }
-
-  if (kind === "code") {
-    if (active) unwrapFormatInSelection(editor, "code");
-    else wrapSelectionWithTag(editor, "code");
   }
 }
