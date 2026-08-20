@@ -292,7 +292,8 @@
   margin: 0;
   padding: 0.15rem;
   border-radius: 0.5rem;
-  transform: translateY(-50%);
+  /* Acima da bolha — não sobrepõe a primeira linha do texto. */
+  transform: translateY(calc(-100% - 0.2rem));
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
   box-shadow: 0 4px 14px color-mix(in srgb, var(--delpi-ui-text, #0f172a) 12%, transparent);
 }
@@ -309,7 +310,8 @@
   top: 100%;
   right: 0;
   left: 0;
-  height: 0.85rem;
+  /* Ponte de hover até a bolha (gap + metade da altura visual). */
+  height: 1.1rem;
 }
 
 @media (hover: hover) and (pointer: fine) {

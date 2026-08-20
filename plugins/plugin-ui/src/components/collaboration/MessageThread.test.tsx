@@ -380,7 +380,7 @@ describe("message-thread.css host scroll", () => {
     expect(mine).toMatch(/22%/);
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
     expect(actions).toMatch(/position:\s*absolute;/);
-    expect(actions).toMatch(/translateY\(-50%\)/);
+    expect(actions).toMatch(/translateY\(calc\(-100% - 0\.2rem\)\)/);
     expect(actions).toMatch(/right:\s*0;/);
     expect(actions).toMatch(/left:\s*auto;/);
     const mineActions =
