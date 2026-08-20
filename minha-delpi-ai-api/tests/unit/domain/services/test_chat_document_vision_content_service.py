@@ -28,6 +28,14 @@ def test_vlm_prompt_describe_image_from_bundle():
     assert "conteúdo visual" in prompt.lower()
 
 
+def test_vlm_drawing_ocr_prompt_and_settings_from_bundle():
+    prompt = ChatDocumentVisionContentService.vlm_drawing_ocr_prompt()
+
+    assert "CARIMBO:" in prompt
+    assert ChatDocumentVisionContentService.vlm_max_images() == 3
+    assert ChatDocumentVisionContentService.vlm_section_markers()["stamp"] == ("CARIMBO",)
+
+
 def test_attachment_intent_uses_bundle_patterns():
     assert ChatAttachmentDocumentIntentService.is_document_content_question(
         "extrair texto deste pdf anexo"

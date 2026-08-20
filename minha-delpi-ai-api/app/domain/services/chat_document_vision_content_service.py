@@ -93,6 +93,125 @@ class ChatDocumentVisionContentService:
         )
 
     @classmethod
+    def vlm_setting_int(cls, key: str, default: int) -> int:
+        raw = ChatAssistantContentService.get_node(_BUNDLE, "vlm", key)
+
+        try:
+            return max(0, int(raw))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def vlm_setting_bool(cls, key: str, default: bool = False) -> bool:
+        raw = ChatAssistantContentService.get_node(_BUNDLE, "vlm", key)
+
+        if isinstance(raw, bool):
+            return raw
+
+        if raw is None:
+            return default
+
+        return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+    @classmethod
+    def vlm_drawing_regions(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(_BUNDLE, "vlm", "drawingRegions")
+
+        if not items:
+            return ("stamp", "bom")
+
+        return tuple(str(item).strip() for item in items if str(item).strip())
+
+    @classmethod
+    def vlm_max_images(cls) -> int:
+        return max(1, cls.vlm_setting_int("maxImages", 3))
+
+    @classmethod
+    def vlm_include_overview(cls) -> bool:
+        return cls.vlm_setting_bool("includeOverview", True)
+
+    @classmethod
+    def vlm_partial_hint_min_chars(cls) -> int:
+        return max(0, cls.vlm_setting_int("partialHintMinChars", 8))
+
+    @classmethod
+    def vlm_partial_hint_max_chars(cls) -> int:
+        return max(1, cls.vlm_setting_int("partialHintMaxChars", 400))
+
+    @classmethod
+    def vlm_section_markers(cls) -> dict[str, tuple[str, ...]]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "vlm", "sectionMarkers")
+
+        if not isinstance(node, dict):
+            return {
+                "stamp": ("CARIMBO",),
+                "bom": ("BOM",),
+                "page": ("PAGINA", "PÁGINA"),
+            }
+
+        resolved: dict[str, tuple[str, ...]] = {}
+
+        for key, value in node.items():
+            region = str(key or "").strip()
+
+            if not region:
+                continue
+
+            if isinstance(value, list):
+                markers = tuple(
+                    str(item).strip().upper()
+                    for item in value
+                    if str(item).strip()
+                )
+            else:
+                token = str(value or "").strip().upper()
+                markers = (token,) if token else tuple()
+
+            if markers:
+                resolved[region] = markers
+
+        return resolved or {
+            "stamp": ("CARIMBO",),
+            "bom": ("BOM",),
+            "page": ("PAGINA", "PÁGINA"),
+        }
+
+    @classmethod
+    def vlm_drawing_ocr_prompt(cls, *, partial_ocr: str | None = None) -> str:
+        base = ChatAssistantContentService.get(
+            _BUNDLE,
+            "vlm",
+            "prompts",
+            "ocrDrawingRegions",
+            default="",
+        )
+        hint_source = str(partial_ocr or "").strip()
+        min_chars = cls.vlm_partial_hint_min_chars()
+
+        if not base or len(hint_source) < min_chars:
+            return base
+
+        max_chars = cls.vlm_partial_hint_max_chars()
+        truncated = hint_source[:max_chars]
+
+        if len(hint_source) > max_chars:
+            truncated = f"{truncated}…"
+
+        hint = ChatAssistantContentService.format(
+            _BUNDLE,
+            "vlm",
+            "prompts",
+            "ocrPartialHint",
+            default="",
+            partialOcr=truncated,
+        )
+
+        if not hint:
+            return base
+
+        return f"{base}\n\n{hint}"
+
+    @classmethod
     def context_label(cls, key: str) -> str:
         return ChatAssistantContentService.get(
             _BUNDLE,
