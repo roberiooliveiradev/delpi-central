@@ -22,11 +22,14 @@ export {
   RICH_TEXT_HTML_SUGGEST_TAGS,
 } from "./richTextHtmlAssist";
 export {
+  applyAttachmentImageSources,
   clipboardHasUsefulHtml,
   clipboardLooksLikeMarkdown,
+  enhanceAttachmentImagesInHtml,
   markdownToRichTextHtml,
   normalizeRichTextHtmlForMarkdown,
   richTextHtmlToMarkdown,
+  type ResolveAttachmentImageSrc,
 } from "./richTextMarkdown";
 export {
   buildRichTextTableHtml,

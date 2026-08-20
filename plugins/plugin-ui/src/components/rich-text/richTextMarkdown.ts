@@ -8,6 +8,12 @@ import { marked } from "marked";
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 
+import {
+  ensureInlineImageCaretAnchors,
+  INLINE_IMAGE_ALIGN_ATTR,
+  parseAlignFromImageTitle,
+  readInlineImageFigureAlign,
+} from "../collaboration/mentionComposerInlineImage";
 import { readInlineFontSizePx } from "./richTextHtmlFormat";
 
 marked.setOptions({
@@ -38,6 +44,24 @@ turndown.addRule("inlineFontSize", {
 turndown.addRule("underline", {
   filter: (node) => node.nodeName === "U",
   replacement: (content) => `<u>${content}</u>`,
+});
+
+/** Parágrafo com text-align ≠ left — HTML island (mesmo padrão underline/font-size). */
+turndown.addRule("paragraphTextAlign", {
+  filter: (node) => {
+    if (node.nodeName !== "P") return false;
+    const align = String((node as HTMLElement).style?.textAlign || "")
+      .trim()
+      .toLowerCase();
+    return Boolean(align) && align !== "left" && align !== "start";
+  },
+  replacement: (content, node) => {
+    const align = String((node as HTMLElement).style.textAlign || "")
+      .trim()
+      .toLowerCase();
+    if (!align || align === "left" || align === "start") return content;
+    return `\n\n<p style="text-align:${align}">${content}</p>\n\n`;
+  },
 });
 
 /**
@@ -92,7 +116,13 @@ turndown.addRule("attachmentInlineImage", {
       (pending ? `attachment:pending:${pending}` : "");
     if (!href.startsWith("attachment:")) return "";
     const alt = (img.getAttribute("alt") || "").replace(/[[\]]/g, "");
-    return `\n\n![${alt}](${href})\n\n`;
+    const figure =
+      root.nodeName === "FIGURE"
+        ? root
+        : (img.closest("figure") as HTMLElement | null);
+    const align = readInlineImageFigureAlign(figure);
+    const title = align !== "left" ? ` "align=${align}"` : "";
+    return `\n\n![${alt}](${href}${title})\n\n`;
   },
 });
 
@@ -241,23 +271,70 @@ export function enhanceAttachmentImagesInHtml(html: string): string {
           src.slice("attachment:".length),
         );
       }
+      const title = img.getAttribute("title") || "";
+      const align = parseAlignFromImageTitle(title);
+      if (title) img.removeAttribute("title");
       img.removeAttribute("src");
       const figure = doc.createElement("figure");
-      figure.className = "delpi-ui-mention-composer__inline-image delpi-ui-message-thread__inline-image";
+      figure.className =
+        "delpi-ui-mention-composer__inline-image delpi-ui-message-thread__inline-image";
       figure.setAttribute("contenteditable", "false");
+      figure.setAttribute(INLINE_IMAGE_ALIGN_ATTR, align);
       img.parentNode?.insertBefore(figure, img);
       figure.appendChild(img);
-      if (src.startsWith("attachment:pending:")) {
-        const btn = doc.createElement("button");
-        btn.type = "button";
-        btn.className = "delpi-ui-mention-composer__inline-image-remove";
-        btn.setAttribute("data-inline-image-remove", "1");
-        btn.setAttribute("contenteditable", "false");
-        btn.setAttribute("tabindex", "-1");
-        const alt = img.getAttribute("alt") || "image";
-        btn.setAttribute("aria-label", `Remove ${alt}`);
-        btn.textContent = "×";
-        figure.appendChild(btn);
+
+      // Lift figure out of a wrapping empty `<p>` so caret anchors sit as siblings.
+      const parent = figure.parentElement;
+      if (parent && parent.tagName === "P" && parent.parentNode) {
+        parent.parentNode.insertBefore(figure, parent);
+        if (!parent.textContent?.trim() && !parent.querySelector("img, figure, table")) {
+          parent.remove();
+        }
+      }
+
+      const btn = doc.createElement("button");
+      btn.type = "button";
+      btn.className = "delpi-ui-mention-composer__inline-image-remove";
+      btn.setAttribute("data-inline-image-remove", "1");
+      btn.setAttribute("contenteditable", "false");
+      btn.setAttribute("tabindex", "-1");
+      const alt = img.getAttribute("alt") || "image";
+      btn.setAttribute("aria-label", `Remove ${alt}`);
+      btn.textContent = "×";
+      figure.appendChild(btn);
+    }
+    ensureInlineImageCaretAnchors(root);
+    return root.innerHTML;
+  } catch {
+    return html;
+  }
+}
+
+export type ResolveAttachmentImageSrc = (
+  attachmentId: string,
+) => string | null | undefined;
+
+/** Resolve `src` for `<img data-attachment-id>` (bubble + composer hydrate). */
+export function applyAttachmentImageSources(
+  html: string,
+  resolve?: ResolveAttachmentImageSrc,
+): string {
+  if (!resolve || !html.includes("data-attachment-id")) return html;
+  if (typeof DOMParser === "undefined") return html;
+  try {
+    const doc = new DOMParser().parseFromString(
+      `<div id="__att_root">${html}</div>`,
+      "text/html",
+    );
+    const root = doc.getElementById("__att_root");
+    if (!root) return html;
+    for (const img of Array.from(root.querySelectorAll("img[data-attachment-id]"))) {
+      const id = img.getAttribute("data-attachment-id") || "";
+      if (!id) continue;
+      const src = resolve(id);
+      if (src) {
+        img.setAttribute("src", src);
+        img.setAttribute("loading", "lazy");
       }
     }
     return root.innerHTML;

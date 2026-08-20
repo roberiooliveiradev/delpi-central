@@ -564,6 +564,8 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 
 Dois caminhos: **clip/drop-thread** → thumbs + `belowBody`; **colar/drop na superfície** → bloco no caret → `attachment:pending:` → upload → PATCH `attachment:{uuid}`. Policy rejeita `http(s)|data|blob` em `![]()`. Dedup: id no body não aparece de novo na strip.
 
+**Alinhamento (Word-like, bloco no fluxo):** toolbar Formatar com Align L/C/R/J — parágrafo via `text-align`; figure via `data-align` (default esquerda; justify = largura 100%). Persistência no markdown: título `"align=…"` no `![alt](attachment:…)` + HTML island de `text-align` no `<p>`. Edit: `resolveAttachmentImageSrc` hidrata `src` na figure; strip só com anexos **fora** do body; × na figure remove pending ou uuid remoto. Sem float mid-palavra.
+
 ## Fora do escopo
 
 Virtualização, typing, presence, emoji-mart/GIF, paginação de mensagens antigas, date separators, api-delpi, patch MF, rebuild de todos os MFEs, mudar TopBar/`PageHero` globais, restyle profundo de `EntityUnfurlCard`, mover `CustomerAvatar` para o kit, headings/tabelas/cor no chat, Loop do Teams, aba Preview estilo GitHub, coluna HTML no banco, prévia tela cheia estilo WhatsApp, bandeja única estilo Slack para imagem+pdf, `![](https://…)`, float mid-palavra.

@@ -1,4 +1,8 @@
-import { markdownToRichTextHtml } from "../rich-text/richTextMarkdown";
+import {
+  applyAttachmentImageSources,
+  markdownToRichTextHtml,
+  type ResolveAttachmentImageSrc,
+} from "../rich-text/richTextMarkdown";
 import { stripDangerousRichTextTags } from "../rich-text/richTextHtmlFormat";
 import {
   parseMentionText,
@@ -47,7 +51,7 @@ function displayMentionLabel(value: string): string {
  * Menções viram chips (span) — unfurl/clique ficam no host via belowBody / plain path.
  */
 export type MessageBodyHtmlOptions = {
-  resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
+  resolveAttachmentImageSrc?: ResolveAttachmentImageSrc;
 };
 
 /** UUIDs em `![…](attachment:{uuid})` — ignora `pending:`. */
@@ -79,34 +83,6 @@ export function messageBodyHtmlFromMarkdown(
   if (!cleaned) return "";
   const withSrc = applyAttachmentImageSources(cleaned, options?.resolveAttachmentImageSrc);
   return enrichMessageHtmlMentions(withSrc, mentions, chipClassName);
-}
-
-function applyAttachmentImageSources(
-  html: string,
-  resolve?: MessageBodyHtmlOptions["resolveAttachmentImageSrc"],
-): string {
-  if (!resolve || !html.includes("data-attachment-id")) return html;
-  if (typeof DOMParser === "undefined") return html;
-  try {
-    const doc = new DOMParser().parseFromString(
-      `<div id="__att_root">${html}</div>`,
-      "text/html",
-    );
-    const root = doc.getElementById("__att_root");
-    if (!root) return html;
-    for (const img of Array.from(root.querySelectorAll("img[data-attachment-id]"))) {
-      const id = img.getAttribute("data-attachment-id") || "";
-      if (!id) continue;
-      const src = resolve(id);
-      if (src) {
-        img.setAttribute("src", src);
-        img.setAttribute("loading", "lazy");
-      }
-    }
-    return root.innerHTML;
-  } catch {
-    return html;
-  }
 }
 
 /** True when HTML is a single plain paragraph (prefer MentionText interativo). */

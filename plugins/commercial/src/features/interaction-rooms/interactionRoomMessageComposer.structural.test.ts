@@ -29,8 +29,16 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/useInteractionMentionSuggest/);
     expect(source).toMatch(/onMentionQueryChange/);
     expect(source).toMatch(/formatToggleAriaLabel:/);
+    expect(source).toMatch(/formatAlignLeftAriaLabel:/);
+    expect(source).toMatch(/formatAlignCenterAriaLabel:/);
+    expect(source).toMatch(/formatAlignRightAriaLabel:/);
+    expect(source).toMatch(/formatAlignJustifyAriaLabel:/);
     expect(source).toMatch(/formatUndoAriaLabel:/);
     expect(source).toMatch(/formatRedoAriaLabel:/);
+    expect(source).toMatch(/resolveAttachmentImageSrc/);
+    expect(source).toMatch(/onInlineAttachmentRemoved/);
+    expect(source).toMatch(/listInlineAttachmentIdsFromMarkdown/);
+    expect(source).toMatch(/inlineThumbUrls/);
     expect(source).toMatch(/gatePendingAttachments/);
     expect(source).toMatch(/interactionMessageLooksLikeRawHtml/);
     expect(source).toMatch(/bodyHtmlRejected/);

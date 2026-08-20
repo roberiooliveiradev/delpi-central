@@ -1,4 +1,8 @@
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
   Code,
   Italic,
@@ -42,13 +46,17 @@ import {
 } from "../layout/EditorHistoryActions";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
+  applyRichTextAlign,
   applyRichTextFontSize,
   getRichTextSelectionRange,
   insertRichTextHtmlFragment,
+  queryRichTextAlign,
   queryRichTextFontSize,
   restoreRichTextSelection,
+  type RichTextAlign,
 } from "../rich-text/richTextCommands";
 import {
+  applyAttachmentImageSources,
   clipboardHasUsefulHtml,
   markdownToRichTextHtml,
   richTextHtmlToMarkdown,
@@ -102,8 +110,13 @@ import { normalizeComposerFormatShells } from "./mentionComposerNormalize";
 import {
   buildInlineImageInserts,
   collectClipboardImageFiles,
+  ensureInlineImageCaretAnchors,
+  findInlineImageFigureFromSelection,
+  INLINE_IMAGE_FIGURE_SELECTOR,
   inlineImageBlockHtml,
   isComposerInlineImageFile,
+  readInlineImageFigureAlign,
+  setInlineImageFigureAlign,
   type MentionComposerInlineImageInsert,
 } from "./mentionComposerInlineImage";
 
@@ -167,6 +180,10 @@ export type MentionComposerLabels = {
   formatCodeAriaLabel?: string;
   formatQuoteAriaLabel?: string;
   formatLinkAriaLabel?: string;
+  formatAlignLeftAriaLabel?: string;
+  formatAlignCenterAriaLabel?: string;
+  formatAlignRightAriaLabel?: string;
+  formatAlignJustifyAriaLabel?: string;
   formatFontSizeAriaLabel?: string;
   formatFontSizeDecreaseAriaLabel?: string;
   formatFontSizeIncreaseAriaLabel?: string;
@@ -211,6 +228,10 @@ export type MentionComposerProps = {
   onInlineImagesInserted?: (items: readonly MentionComposerInlineImageInsert[]) => void;
   /** Host remove File do mapa quando o usuário apaga a figure inline. */
   onInlineImageRemoved?: (pendingId: string) => void;
+  /** Host ao remover figure com `data-attachment-id` (uuid remoto no edit). */
+  onInlineAttachmentRemoved?: (attachmentId: string) => void;
+  /** Resolve blob/URL para `<img data-attachment-id>` no hydrate (edit). */
+  resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
   /** @deprecated Prefer `pendingAttachments` (E6.S7). Kept for rare custom footers. */
   footer?: ReactNode;
   /** Active reply target shown above the pill (Teams-style strip). */
@@ -311,6 +332,8 @@ export function MentionComposer({
   onRemovePendingAttachment,
   onInlineImagesInserted,
   onInlineImageRemoved,
+  onInlineAttachmentRemoved,
+  resolveAttachmentImageSrc,
   footer,
   replyTo = null,
   onCancelReply,
@@ -344,6 +367,7 @@ export function MentionComposer({
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [fontSize, setFontSize] = useState(COMPOSER_FONT_SIZE_DEFAULT);
   const [formatFlags, setFormatFlags] = useState(emptyComposerFormatFlags());
+  const [alignActive, setAlignActive] = useState<RichTextAlign | null>(null);
   const [historyTick, setHistoryTick] = useState(0);
   const menuOpen = Boolean(activeMention) && !disabled;
   const empty = !value.trim();
@@ -429,6 +453,13 @@ export function MentionComposer({
     rememberSelection();
   };
 
+  const hydrateSurfaceHtml = (markdown: string): string => {
+    if (!markdown.trim()) return "";
+    let html = markdownToRichTextHtml(markdown);
+    html = applyAttachmentImageSources(html, resolveAttachmentImageSrc);
+    return html;
+  };
+
   useEffect(() => {
     const el = surfaceRef.current;
     if (!el) return;
@@ -445,14 +476,29 @@ export function MentionComposer({
     // senão o DOM antigo reemite no próximo input e “ressuscita” o rascunho.
     const clearing = !value.trim();
     if (!clearing && document.activeElement === el) return;
-    el.innerHTML = clearing ? "" : markdownToRichTextHtml(value);
+    el.innerHTML = clearing ? "" : hydrateSurfaceHtml(value);
+    if (!clearing) ensureInlineImageCaretAnchors(el);
     lastStableRef.current = {
       markdown: value,
       html: el.innerHTML,
       cursor: value.length,
     };
     historyRef.current.clear();
-  }, [value]);
+  }, [value, resolveAttachmentImageSrc]);
+
+  useEffect(() => {
+    const el = surfaceRef.current;
+    if (!el || !resolveAttachmentImageSrc) return;
+    const next = applyAttachmentImageSources(el.innerHTML, resolveAttachmentImageSrc);
+    if (next !== el.innerHTML) {
+      el.innerHTML = next;
+      ensureInlineImageCaretAnchors(el);
+      lastStableRef.current = {
+        ...lastStableRef.current,
+        html: el.innerHTML,
+      };
+    }
+  }, [resolveAttachmentImageSrc]);
 
   useEffect(() => {
     onMentionQueryChange?.(activeMention ? activeMention.query : null);
@@ -467,6 +513,12 @@ export function MentionComposer({
       const size = queryRichTextFontSize(el);
       if (size) setFontSize(clampComposerFontSize(size));
       setFormatFlags(queryComposerFormatFlags(el));
+      const figure = findInlineImageFigureFromSelection(el);
+      if (figure) {
+        setAlignActive(readInlineImageFigureAlign(figure));
+      } else {
+        setAlignActive(queryRichTextAlign());
+      }
       refreshHistoryFlags();
     };
     document.addEventListener("selectionchange", persist);
@@ -616,6 +668,24 @@ export function MentionComposer({
     applySnapshot(next);
   };
 
+  const applyAlign = (align: RichTextAlign) => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    restoreSelectionForMutation();
+    commitBeforeMutation();
+    const figure = findInlineImageFigureFromSelection(el);
+    if (figure) {
+      setInlineImageFigureAlign(figure, align);
+      setAlignActive(align);
+    } else {
+      applyRichTextAlign(el, align);
+      setAlignActive(align);
+    }
+    lastStableRef.current = readSnapshot();
+    refreshHistoryFlags();
+    emitMarkdownAndMention();
+  };
+
   const applyFontSize = (nextRaw: number) => {
     const el = surfaceRef.current;
     if (!el) return;
@@ -659,6 +729,7 @@ export function MentionComposer({
         )
         .join(""),
     );
+    ensureInlineImageCaretAnchors(el);
     normalizeComposerFormatShells(el);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
@@ -673,13 +744,16 @@ export function MentionComposer({
     if (!el || !figure.isConnected) return;
     const img = figure.querySelector("img");
     const pendingId = (img?.getAttribute("data-attachment-pending") || "").trim();
+    const attachmentId = (img?.getAttribute("data-attachment-id") || "").trim();
     commitBeforeMutation();
     figure.remove();
+    ensureInlineImageCaretAnchors(el);
     normalizeComposerFormatShells(el);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
     emitMarkdownAndMention();
     if (pendingId) onInlineImageRemoved?.(pendingId);
+    if (attachmentId) onInlineAttachmentRemoved?.(attachmentId);
     rememberSelection();
   };
 
@@ -908,7 +982,7 @@ export function MentionComposer({
               if (removeBtn) {
                 event.preventDefault();
                 event.stopPropagation();
-                const figure = removeBtn.closest("figure.delpi-ui-mention-composer__inline-image");
+                const figure = removeBtn.closest(INLINE_IMAGE_FIGURE_SELECTOR);
                 if (figure) removeInlineImageFigure(figure);
                 return;
               }
@@ -1004,6 +1078,28 @@ export function MentionComposer({
                   disabled={disabled || submitting}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => runFormat(kind)}
+                >
+                  <Icon size={16} aria-hidden />
+                </button>
+              </ComposerHint>
+            ))}
+            {(
+              [
+                ["left", labels.formatAlignLeftAriaLabel ?? "Align left", AlignLeft],
+                ["center", labels.formatAlignCenterAriaLabel ?? "Align center", AlignCenter],
+                ["right", labels.formatAlignRightAriaLabel ?? "Align right", AlignRight],
+                ["justify", labels.formatAlignJustifyAriaLabel ?? "Justify", AlignJustify],
+              ] as const
+            ).map(([align, aria, Icon]) => (
+              <ComposerHint key={align} hint={aria}>
+                <button
+                  type="button"
+                  className={classNames.format}
+                  aria-label={aria}
+                  aria-pressed={alignActive === align}
+                  disabled={disabled || submitting}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyAlign(align)}
                 >
                   <Icon size={16} aria-hidden />
                 </button>

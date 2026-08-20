@@ -24,6 +24,7 @@ import {
 } from "./interactionMessageAttachmentGate";
 import {
   countFilesTowardAttachmentCap,
+  listInlineAttachmentIdsFromMarkdown,
   listInlinePendingIdsFromMarkdown,
   rewriteInlinePendingInMarkdown,
 } from "./interactionRoomInlineAttachments";
@@ -119,6 +120,7 @@ export function InteractionRoomMessageComposer({
   );
   const [pending, setPending] = useState<PendingItem[]>([]);
   const [inlineFiles, setInlineFiles] = useState<Record<string, File>>({});
+  const [inlineThumbUrls, setInlineThumbUrls] = useState<Record<string, string>>({});
   const [draftHydrated, setDraftHydrated] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
   const [baselineRemoteIds, setBaselineRemoteIds] = useState<string[]>([]);
@@ -143,6 +145,7 @@ export function InteractionRoomMessageComposer({
       URL.revokeObjectURL(url);
     }
     previewUrlsRef.current = [];
+    setInlineThumbUrls({});
   }, []);
 
   const pendingAttachments = useMemo(
@@ -180,6 +183,7 @@ export function InteractionRoomMessageComposer({
       revokePreviewUrls();
       setDraft(initialMarkdown);
       setPending([]);
+      setInlineFiles({});
       setBaselineRemoteIds([]);
       setDraftHydrated(false);
       seedMentions(
@@ -193,9 +197,13 @@ export function InteractionRoomMessageComposer({
       try {
         const items = await listRoomMessageAttachments(messageId);
         if (cancelled) return;
+        const inlineIds = new Set(listInlineAttachmentIdsFromMarkdown(initialMarkdown));
         const remotes: PendingRemote[] = [];
+        const inlineThumbs: Record<string, string> = {};
         const createdUrls: string[] = [];
+        const allRemoteIds: string[] = [];
         for (const item of items) {
+          allRemoteIds.push(item.id);
           let previewUrl: string | null = null;
           if (isImageAttachment(item.file_name, item.content_type)) {
             try {
@@ -209,6 +217,10 @@ export function InteractionRoomMessageComposer({
             } catch {
               /* thumb opcional */
             }
+          }
+          if (inlineIds.has(item.id)) {
+            if (previewUrl) inlineThumbs[item.id] = previewUrl;
+            continue;
           }
           remotes.push({
             kind: "remote",
@@ -224,8 +236,9 @@ export function InteractionRoomMessageComposer({
           return;
         }
         previewUrlsRef.current = createdUrls;
+        setInlineThumbUrls(inlineThumbs);
         setPending(remotes);
-        setBaselineRemoteIds(remotes.map((row) => row.id));
+        setBaselineRemoteIds(allRemoteIds);
         setDraftHydrated(true);
       } catch (err: unknown) {
         if (cancelled) return;
@@ -246,6 +259,7 @@ export function InteractionRoomMessageComposer({
     revokePreviewUrls();
     setDraft(readComposerDraftText(roomId));
     setPending([]);
+    setInlineFiles({});
     setBaselineRemoteIds([]);
     setDraftHydrated(false);
     resetMentions();
@@ -346,6 +360,23 @@ export function InteractionRoomMessageComposer({
     });
   }, []);
 
+  const onInlineAttachmentRemoved = useCallback((attachmentId: string) => {
+    setInlineThumbUrls((prev) => {
+      const url = prev[attachmentId];
+      if (!url) return prev;
+      URL.revokeObjectURL(url);
+      previewUrlsRef.current = previewUrlsRef.current.filter((item) => item !== url);
+      const next = { ...prev };
+      delete next[attachmentId];
+      return next;
+    });
+  }, []);
+
+  const resolveAttachmentImageSrc = useCallback(
+    (attachmentId: string) => inlineThumbUrls[attachmentId] ?? null,
+    [inlineThumbUrls],
+  );
+
   useEffect(() => {
     onAddFilesReady?.(onFilesSelected);
   }, [onAddFilesReady, onFilesSelected]);
@@ -428,7 +459,10 @@ export function InteractionRoomMessageComposer({
           mentions,
         });
 
-        const keptIds = new Set(remotesKept.map((item) => item.id));
+        const keptIds = new Set([
+          ...remotesKept.map((item) => item.id),
+          ...listInlineAttachmentIdsFromMarkdown(bodyText),
+        ]);
         const toDelete = baselineRemoteIds.filter((remoteId) => !keptIds.has(remoteId));
         for (const attachmentId of toDelete) {
           try {
@@ -572,6 +606,8 @@ export function InteractionRoomMessageComposer({
         fileAccept={ROOM_ATTACH_ACCEPT}
         onInlineImagesInserted={onInlineImagesInserted}
         onInlineImageRemoved={onInlineImageRemoved}
+        onInlineAttachmentRemoved={onInlineAttachmentRemoved}
+        resolveAttachmentImageSrc={resolveAttachmentImageSrc}
         pendingAttachments={pendingAttachments}
         onRemovePendingAttachment={onRemovePending}
         replyTo={banner ?? null}
@@ -592,6 +628,10 @@ export function InteractionRoomMessageComposer({
           formatCodeAriaLabel: content.formatCodeAriaLabel,
           formatQuoteAriaLabel: content.formatQuoteAriaLabel,
           formatLinkAriaLabel: content.formatLinkAriaLabel,
+          formatAlignLeftAriaLabel: content.formatAlignLeftAriaLabel,
+          formatAlignCenterAriaLabel: content.formatAlignCenterAriaLabel,
+          formatAlignRightAriaLabel: content.formatAlignRightAriaLabel,
+          formatAlignJustifyAriaLabel: content.formatAlignJustifyAriaLabel,
           formatFontSizeAriaLabel: content.formatFontSizeAriaLabel,
           formatFontSizeDecreaseAriaLabel: content.formatFontSizeDecreaseAriaLabel,
           formatFontSizeIncreaseAriaLabel: content.formatFontSizeIncreaseAriaLabel,

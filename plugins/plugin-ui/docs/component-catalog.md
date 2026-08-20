@@ -1319,7 +1319,7 @@ Primitivos neutros para threads estilo Teams/Slack (Portal Comercial). **Sem HTT
 |--------|-----------|
 | `MentionText` | Corpo com chips `@`; `parseMentionText` + slots de click/href. |
 | `MentionMenu` | Listbox agrupada via `AnchoredPanelPortal` (teclado ↑↓ Enter). |
-| `MentionComposer` | **Contenteditable** markdown (não textarea cru): `value`/`onChange` em markdown; `formatToggle` (B/I/S/lista/código/quote/link); `EmojiInsertMenu`; `submitOnEnter` (Shift+Enter = quebra); faixa `replyTo` + `onCancelReply`; thumbs na pílula + `__document-tray` para não-imagem; anexar/enviar. |
+| `MentionComposer` | **Contenteditable** markdown (não textarea cru): `value`/`onChange` em markdown; `formatToggle` (B/I/S/lista/código/quote/link + Align L/C/R/J para parágrafo e figure `data-align`); `EmojiInsertMenu`; `submitOnEnter` (Shift+Enter = quebra); faixa `replyTo` + `onCancelReply`; thumbs na pílula + `__document-tray` para não-imagem; imagens inline (colar/drop) com âncoras caret, × remove, `resolveAttachmentImageSrc` no edit; anexar/enviar. |
 | `MessageThread` | Bolhas, `system`, replies; ações via `resolveActions` **fora** do `<article>`; edição in-place com `editingId` + `renderEditSlot`. |
 | `EntityUnfurlCard` | Preview genérico (ok / `accessible: false`) — sem `if` de entidade. |
 | `ReactionBar` | Chips de reação; `emojiAdd` abre `EmojiInsertMenu` no «+» (código = emoji `id` por default). |
