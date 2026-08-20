@@ -218,6 +218,8 @@ export function InteractionRoomMessageComposer({
         formatFontSizeAriaLabel: content.formatFontSizeAriaLabel,
         formatFontSizeDecreaseAriaLabel: content.formatFontSizeDecreaseAriaLabel,
         formatFontSizeIncreaseAriaLabel: content.formatFontSizeIncreaseAriaLabel,
+        formatUndoAriaLabel: content.formatUndoAriaLabel,
+        formatRedoAriaLabel: content.formatRedoAriaLabel,
         mentionListAriaLabel: content.composerMentionListAriaLabel,
         mentionEmptyLabel: content.composerMentionEmptyLabel,
       }}

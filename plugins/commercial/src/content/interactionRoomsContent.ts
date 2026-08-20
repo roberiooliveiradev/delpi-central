@@ -75,6 +75,8 @@ export const INTERACTION_ROOMS_CONTENT = {
   formatFontSizeAriaLabel: "Tamanho da fonte",
   formatFontSizeDecreaseAriaLabel: "Diminuir fonte",
   formatFontSizeIncreaseAriaLabel: "Aumentar fonte",
+  formatUndoAriaLabel: "Desfazer",
+  formatRedoAriaLabel: "Refazer",
   composerMentionListAriaLabel: "Sugestões de menção",
   composerMentionEmptyLabel: "Nenhuma sugestão",
   panelTitle: "Sala de interação",

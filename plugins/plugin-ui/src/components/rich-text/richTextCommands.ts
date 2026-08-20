@@ -404,6 +404,14 @@ export function queryRichTextCommandState(command: string): boolean {
   }
 }
 
+export function queryRichTextCommandEnabled(command: string): boolean {
+  try {
+    return document.queryCommandEnabled(command);
+  } catch {
+    return false;
+  }
+}
+
 export function queryRichTextAlign(): RichTextAlign | null {
   if (queryRichTextCommandState("justifyCenter")) return "center";
   if (queryRichTextCommandState("justifyRight")) return "right";

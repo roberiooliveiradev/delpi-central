@@ -7,9 +7,11 @@ import {
   ListOrdered,
   Paperclip,
   Quote,
+  Redo2,
   SendHorizontal,
   Strikethrough,
   Type,
+  Undo2,
 } from "lucide-react";
 import {
   useEffect,
@@ -24,13 +26,19 @@ import {
 
 import { NumberStepperControl } from "../forms/NumberStepperControl";
 import { HintAction } from "../help/HintAction";
+import {
+  appendShortcutHint,
+  editorModKeyLabel,
+} from "../layout/EditorHistoryActions";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
   applyRichTextFontSize,
   getRichTextSelectionRange,
   insertRichTextHtmlFragment,
+  queryRichTextCommandEnabled,
   queryRichTextFontSize,
   restoreRichTextSelection,
+  runRichTextCommand,
 } from "../rich-text/richTextCommands";
 import {
   clipboardHasUsefulHtml,
@@ -104,6 +112,8 @@ export type MentionComposerLabels = {
   formatFontSizeAriaLabel?: string;
   formatFontSizeDecreaseAriaLabel?: string;
   formatFontSizeIncreaseAriaLabel?: string;
+  formatUndoAriaLabel?: string;
+  formatRedoAriaLabel?: string;
 };
 
 export type MentionComposerProps = {
@@ -219,9 +229,16 @@ export function MentionComposer({
   const [formatOpen, setFormatOpen] = useState(false);
   const [fontSize, setFontSize] = useState(COMPOSER_FONT_SIZE_DEFAULT);
   const [formatFlags, setFormatFlags] = useState(emptyComposerFormatFlags());
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const menuOpen = Boolean(activeMention) && !disabled;
   const empty = !value.trim();
   const showFormat = Boolean(labels.formatToggleAriaLabel);
+
+  const refreshHistoryFlags = () => {
+    setCanUndo(queryRichTextCommandEnabled("undo"));
+    setCanRedo(queryRichTextCommandEnabled("redo"));
+  };
 
   const rememberSelection = () => {
     savedRangeRef.current = getRichTextSelectionRange(surfaceRef.current);
@@ -246,7 +263,8 @@ export function MentionComposer({
     if (!el) return;
     const current = richTextHtmlToMarkdown(el.innerHTML);
     if (current === value) return;
-    if (document.activeElement === el && value.trim()) return;
+    // Preserva a pilha nativa de undo/redo enquanto o editor está focado.
+    if (document.activeElement === el) return;
     el.innerHTML = value.trim() ? markdownToRichTextHtml(value) : "";
   }, [value]);
 
@@ -263,6 +281,7 @@ export function MentionComposer({
       const size = queryRichTextFontSize(el);
       if (size) setFontSize(clampComposerFontSize(size));
       setFormatFlags(queryComposerFormatFlags(el));
+      refreshHistoryFlags();
     };
     document.addEventListener("selectionchange", persist);
     return () => document.removeEventListener("selectionchange", persist);
@@ -364,6 +383,17 @@ export function MentionComposer({
     restoreRichTextSelection(el, savedRangeRef.current);
     toggleComposerFormat(el, kind);
     setFormatFlags(queryComposerFormatFlags(el));
+    refreshHistoryFlags();
+    emitMarkdownAndMention();
+  };
+
+  const runHistory = (command: "undo" | "redo") => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    restoreRichTextSelection(el, savedRangeRef.current);
+    runRichTextCommand(el, command);
+    setFormatFlags(queryComposerFormatFlags(el));
+    refreshHistoryFlags();
     emitMarkdownAndMention();
   };
 
@@ -374,6 +404,7 @@ export function MentionComposer({
     restoreRichTextSelection(el, savedRangeRef.current);
     applyRichTextFontSize(el, next);
     setFontSize(next);
+    refreshHistoryFlags();
     emitMarkdownAndMention();
   };
 
@@ -403,6 +434,7 @@ export function MentionComposer({
       event.preventDefault();
       emitMarkdownAndMention();
       setFormatFlags(queryComposerFormatFlags(surfaceRef.current));
+      refreshHistoryFlags();
       return;
     }
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
@@ -423,6 +455,11 @@ export function MentionComposer({
 
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
   const surfaceClass = classNames.textarea;
+  const modKey = editorModKeyLabel();
+  const undoLabel = labels.formatUndoAriaLabel ?? "Undo";
+  const redoLabel = labels.formatRedoAriaLabel ?? "Redo";
+  const undoHint = appendShortcutHint(undoLabel, `${modKey}+Z`);
+  const redoHint = appendShortcutHint(redoLabel, `${modKey}+Y`);
 
   return (
     <div className={rootClass}>
@@ -465,6 +502,30 @@ export function MentionComposer({
         </div>
         {showFormat && formatOpen ? (
           <div className={classNames.formatBar} role="toolbar" aria-label={labels.formatToggleAriaLabel}>
+            <ComposerHint hint={undoHint}>
+              <button
+                type="button"
+                className={classNames.format}
+                aria-label={undoLabel}
+                disabled={disabled || submitting || !canUndo}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => runHistory("undo")}
+              >
+                <Undo2 size={16} aria-hidden />
+              </button>
+            </ComposerHint>
+            <ComposerHint hint={redoHint}>
+              <button
+                type="button"
+                className={classNames.format}
+                aria-label={redoLabel}
+                disabled={disabled || submitting || !canRedo}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => runHistory("redo")}
+              >
+                <Redo2 size={16} aria-hidden />
+              </button>
+            </ComposerHint>
             <HintAction
               hint={labels.formatFontSizeAriaLabel ?? "Font size"}
               ariaLabel={labels.formatFontSizeAriaLabel ?? "Font size"}
