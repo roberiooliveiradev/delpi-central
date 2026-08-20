@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** E7.S1–S4 em `main`; E7.S5 inbox empty/loading/preview já no código (hardening de testes). Docker rebuild pendente se daemon offline.  
+> **Status:** **E7 entregue** em `main` (S1–S5 código + S6 fecho documental). Smoke/rebuild `--fase remote|mfe` **adiado** — Docker daemon offline no host. Próximo: **E8** docs.  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -490,12 +490,18 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - **Backend (commercial-api):** nenhum.
 - **Testes:** `interactionRoomsInbox.structural.test.ts` (empty/loading/preview/unread).
 
-### E7.S6 — Fecho E7 — custo M
+### E7.S6 — Fecho E7 — custo M ✅ (ops adiado)
 
 - **Front (plugin-ui / kit):** nenhum de produto.
 - **Front (MFE commercial):** nenhum de produto.
 - **Backend (commercial-api):** nenhum de produto.
-- **Ops:** `--fase mfe --build commercial`. Smoke anexos, reply, delete, reações, empty.
+- **Ops (quando Docker voltar):**
+  ```bash
+  ./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
+  ./infra/scripts/up-dev-sequential.sh --fase mfe --build commercial
+  ```
+  Smoke: anexos na bolha, reply, delete, reações, inbox empty/loading/preview.
+- **Nota:** fecho documental feito com daemon offline; rebuild não bloqueia E8 docs.
 
 ## E8 — Documentação (após o código)
 
