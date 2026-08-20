@@ -20,11 +20,14 @@ export type ComposerDraftStoredFile = {
   type: string;
   lastModified: number;
   buffer: ArrayBuffer;
+  /** clip = faixa de anexos; inline = colada no caret (`attachment:pending:`). */
+  role: "clip" | "inline";
 };
 
 export type ComposerDraftPendingFile = {
   id: string;
   file: File;
+  role: "clip" | "inline";
 };
 
 function textKey(roomId: string): string {
@@ -93,6 +96,7 @@ async function fileToStored(
     type: item.file.type,
     lastModified: item.file.lastModified,
     buffer,
+    role: item.role === "inline" ? "inline" : "clip",
   };
 }
 
@@ -101,7 +105,11 @@ function storedToFile(item: ComposerDraftStoredFile): ComposerDraftPendingFile {
     type: item.type,
     lastModified: item.lastModified,
   });
-  return { id: item.id, file };
+  return {
+    id: item.id,
+    file,
+    role: item.role === "inline" ? "inline" : "clip",
+  };
 }
 
 export async function readComposerDraftFiles(

@@ -5,6 +5,7 @@ import {
   listInlineAttachmentIdsFromMarkdown,
   listInlinePendingIdsFromMarkdown,
   rewriteInlinePendingInMarkdown,
+  stripMissingInlinePendingFromMarkdown,
 } from "./interactionRoomInlineAttachments";
 
 describe("interactionRoomInlineAttachments", () => {
@@ -37,6 +38,15 @@ describe("interactionRoomInlineAttachments", () => {
         { x: "11111111-2222-3333-4444-555555555555" },
       ),
     ).toBe("![a](attachment:11111111-2222-3333-4444-555555555555)");
+  });
+
+  it("remove pending órfão do rascunho", () => {
+    expect(
+      stripMissingInlinePendingFromMarkdown(
+        "a ![ok](attachment:pending:keep) ![x](attachment:pending:gone) b",
+        new Set(["keep"]),
+      ),
+    ).toBe("a ![ok](attachment:pending:keep)  b");
   });
 
   it("soma teto anexo+inline", () => {

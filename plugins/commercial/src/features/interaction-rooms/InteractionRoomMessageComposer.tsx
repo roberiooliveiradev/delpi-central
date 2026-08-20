@@ -27,6 +27,7 @@ import {
   listInlineAttachmentIdsFromMarkdown,
   listInlinePendingIdsFromMarkdown,
   rewriteInlinePendingInMarkdown,
+  stripMissingInlinePendingFromMarkdown,
 } from "./interactionRoomInlineAttachments";
 import type { InteractionMentionHit } from "./mentionSuggestAdapter";
 import { useInteractionMentionSuggest } from "./useInteractionMentionSuggest";
@@ -265,13 +266,29 @@ export function InteractionRoomMessageComposer({
     resetMentions();
     void readComposerDraftFiles(roomId).then((files) => {
       if (cancelled) return;
+      const clip = files.filter((item) => item.role !== "inline");
+      const inline = files.filter((item) => item.role === "inline");
+      const nextInline: Record<string, File> = {};
+      const thumbs: Record<string, string> = {};
+      const createdUrls: string[] = [];
+      for (const item of inline) {
+        nextInline[item.id] = item.file;
+        const url = URL.createObjectURL(item.file);
+        createdUrls.push(url);
+        thumbs[item.id] = url;
+      }
+      previewUrlsRef.current = createdUrls;
+      setInlineFiles(nextInline);
+      setInlineThumbUrls(thumbs);
       setPending(
-        files.map((item) => ({
+        clip.map((item) => ({
           kind: "local" as const,
           id: item.id,
           file: item.file,
         })),
       );
+      const available = new Set(Object.keys(nextInline));
+      setDraft((prev) => stripMissingInlinePendingFromMarkdown(prev, available));
       setDraftHydrated(true);
     });
     return () => {
@@ -295,11 +312,16 @@ export function InteractionRoomMessageComposer({
   useEffect(() => {
     if (isEdit || !draftHydrated) return;
     const locals = pending.filter((item): item is PendingLocal => item.kind === "local");
-    void writeComposerDraftFiles(
-      roomId,
-      locals.map((item) => ({ id: item.id, file: item.file })),
-    );
-  }, [roomId, pending, draftHydrated, isEdit]);
+    const inlineEntries = Object.entries(inlineFiles).map(([id, file]) => ({
+      id,
+      file,
+      role: "inline" as const,
+    }));
+    void writeComposerDraftFiles(roomId, [
+      ...locals.map((item) => ({ id: item.id, file: item.file, role: "clip" as const })),
+      ...inlineEntries,
+    ]);
+  }, [roomId, pending, inlineFiles, draftHydrated, isEdit]);
 
   const onFilesSelected = useCallback(
     (files: File[]) => {
@@ -347,6 +369,16 @@ export function InteractionRoomMessageComposer({
         }
         return next;
       });
+      setInlineThumbUrls((prev) => {
+        const next = { ...prev };
+        for (const item of items) {
+          if (next[item.pendingId]) continue;
+          const url = URL.createObjectURL(item.file);
+          previewUrlsRef.current = [...previewUrlsRef.current, url];
+          next[item.pendingId] = url;
+        }
+        return next;
+      });
     },
     [pending.length, inlineFiles, onError],
   );
@@ -354,6 +386,15 @@ export function InteractionRoomMessageComposer({
   const onInlineImageRemoved = useCallback((pendingId: string) => {
     setInlineFiles((prev) => {
       if (!(pendingId in prev)) return prev;
+      const next = { ...prev };
+      delete next[pendingId];
+      return next;
+    });
+    setInlineThumbUrls((prev) => {
+      const url = prev[pendingId];
+      if (!url) return prev;
+      URL.revokeObjectURL(url);
+      previewUrlsRef.current = previewUrlsRef.current.filter((item) => item !== url);
       const next = { ...prev };
       delete next[pendingId];
       return next;

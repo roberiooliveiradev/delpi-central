@@ -46,6 +46,8 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/bodyHtmlRejected/);
     expect(source).toMatch(/readComposerDraftText/);
     expect(source).toMatch(/writeComposerDraftFiles/);
+    expect(source).toMatch(/role:\s*"inline"/);
+    expect(source).toMatch(/stripMissingInlinePendingFromMarkdown/);
     expect(source).toMatch(/clearComposerDraft/);
     expect(source).toMatch(/updateInteractionMessage/);
     expect(source).toMatch(/mode === "edit"/);

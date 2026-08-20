@@ -314,12 +314,17 @@ export type ResolveAttachmentImageSrc = (
   attachmentId: string,
 ) => string | null | undefined;
 
-/** Resolve `src` for `<img data-attachment-id>` (bubble + composer hydrate). */
+/** Resolve `src` for `<img data-attachment-id|data-attachment-pending>` (bubble + composer). */
 export function applyAttachmentImageSources(
   html: string,
   resolve?: ResolveAttachmentImageSrc,
 ): string {
-  if (!resolve || !html.includes("data-attachment-id")) return html;
+  if (
+    !resolve ||
+    (!html.includes("data-attachment-id") && !html.includes("data-attachment-pending"))
+  ) {
+    return html;
+  }
   if (typeof DOMParser === "undefined") return html;
   try {
     const doc = new DOMParser().parseFromString(
@@ -328,8 +333,14 @@ export function applyAttachmentImageSources(
     );
     const root = doc.getElementById("__att_root");
     if (!root) return html;
-    for (const img of Array.from(root.querySelectorAll("img[data-attachment-id]"))) {
-      const id = img.getAttribute("data-attachment-id") || "";
+    const imgs = root.querySelectorAll(
+      "img[data-attachment-id], img[data-attachment-pending]",
+    );
+    for (const img of Array.from(imgs)) {
+      const id =
+        img.getAttribute("data-attachment-id") ||
+        img.getAttribute("data-attachment-pending") ||
+        "";
       if (!id) continue;
       const src = resolve(id);
       if (src) {
