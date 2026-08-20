@@ -530,6 +530,11 @@ export function InteractionRoomPage({
     scrollThreadMessageIntoView(msgsRef.current, messageId);
   }, []);
 
+  const onParentQuoteClick = useCallback((parentId: string) => {
+    stickToBottomRef.current = false;
+    scrollThreadMessageIntoView(msgsRef.current, parentId);
+  }, []);
+
   useEffect(() => {
     const el = msgsRef.current;
     if (!el || !stickToBottomRef.current) return;
@@ -610,6 +615,7 @@ export function InteractionRoomPage({
                     messages={threadMessages}
                     resolveActions={resolveActions}
                     editingId={editingMessageId}
+                    onParentQuoteClick={onParentQuoteClick}
                     renderEditSlot={(message) => {
                       const source =
                         messages.find((row) => row.id === message.id) ?? null;

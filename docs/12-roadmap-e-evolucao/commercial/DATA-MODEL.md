@@ -871,10 +871,10 @@ Estado por usuário (**não** ACL): `last_read_at` (cursor de inbox; upsert em `
 |--------|------|---------------------|
 | `message_id` | UUID | NOT NULL, FK → `interaction_messages` ON DELETE CASCADE |
 | `user_id` | TEXT | NOT NULL |
-| `code` | TEXT | NOT NULL — código do conjunto JSON (ex. `ok`) |
+| `code` | TEXT | NOT NULL — emoji id / código do conjunto |
 | `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
 
-**PK:** `(message_id, user_id, code)`.
+**PK:** `(message_id, user_id, code)`. **Regra de negócio:** no máximo **uma** reação por usuário por mensagem — `set_reaction` remove outros `code` do mesmo `(message_id, user_id)` antes do upsert.
 
 #### `interaction_pins`
 

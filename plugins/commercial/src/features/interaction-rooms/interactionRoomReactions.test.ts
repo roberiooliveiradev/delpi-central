@@ -52,6 +52,23 @@ describe("interactionRoomReactions", () => {
     ]);
   });
 
+  it("troca reação: uma por pessoa ao ativar outro código", () => {
+    const base = [
+      { message_id: "m1", user_id: "u1", code: "thumbsup" },
+      { message_id: "m1", user_id: "u2", code: "thumbsup" },
+    ];
+    const swapped = applyLocalReactionToggle(base, {
+      messageId: "m1",
+      userId: "u1",
+      code: "heart",
+      nextActive: true,
+    });
+    expect(swapped).toEqual([
+      { message_id: "m1", user_id: "u2", code: "thumbsup" },
+      { message_id: "m1", user_id: "u1", code: "heart" },
+    ]);
+  });
+
   it("label cai no code quando fora do catálogo", () => {
     expect(reactionLabelForCode("custom-code")).toBe("custom-code");
   });

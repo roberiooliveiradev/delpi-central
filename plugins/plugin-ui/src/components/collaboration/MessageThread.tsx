@@ -96,6 +96,8 @@ export type MessageThreadProps = {
   /** Override body render (default: markdown sanitizado + MentionText no plano). */
   renderBody?: (message: MessageThreadItem) => ReactNode;
   onMentionActivate?: MentionTextPropsOnActivate;
+  /** Click na citação da resposta → host rola até a mensagem pai (como pin). */
+  onParentQuoteClick?: (parentId: string) => void;
   className?: string;
 };
 
@@ -254,6 +256,7 @@ export function MessageThread({
   renderEditSlot,
   renderBody,
   onMentionActivate,
+  onParentQuoteClick,
   className,
 }: MessageThreadProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
@@ -382,21 +385,44 @@ export function MessageThread({
                       className={message.mine ? classNames.bubbleMine : classNames.bubble}
                     >
                       {quoted ? (
-                        <blockquote className={classNames.quote}>
-                          <header className={classNames.quoteMeta}>
-                            {quoted.authorName ? (
-                              <span className={classNames.quoteAuthor}>
-                                {quoted.authorName}
-                              </span>
-                            ) : null}
-                            {quoted.createdAtLabel ? (
-                              <time className={classNames.quoteTime}>
-                                {quoted.createdAtLabel}
-                              </time>
-                            ) : null}
-                          </header>
-                          <p className={classNames.quoteBody}>{quoted.bodyText}</p>
-                        </blockquote>
+                        onParentQuoteClick ? (
+                          <button
+                            type="button"
+                            className={classNames.quote}
+                            data-parent-id={quoted.id}
+                            onClick={() => onParentQuoteClick(quoted.id)}
+                          >
+                            <header className={classNames.quoteMeta}>
+                              {quoted.authorName ? (
+                                <span className={classNames.quoteAuthor}>
+                                  {quoted.authorName}
+                                </span>
+                              ) : null}
+                              {quoted.createdAtLabel ? (
+                                <time className={classNames.quoteTime}>
+                                  {quoted.createdAtLabel}
+                                </time>
+                              ) : null}
+                            </header>
+                            <p className={classNames.quoteBody}>{quoted.bodyText}</p>
+                          </button>
+                        ) : (
+                          <blockquote className={classNames.quote}>
+                            <header className={classNames.quoteMeta}>
+                              {quoted.authorName ? (
+                                <span className={classNames.quoteAuthor}>
+                                  {quoted.authorName}
+                                </span>
+                              ) : null}
+                              {quoted.createdAtLabel ? (
+                                <time className={classNames.quoteTime}>
+                                  {quoted.createdAtLabel}
+                                </time>
+                              ) : null}
+                            </header>
+                            <p className={classNames.quoteBody}>{quoted.bodyText}</p>
+                          </blockquote>
+                        )
                       ) : null}
                       {body}
                       {isEditing ? null : message.belowBody}

@@ -60,16 +60,21 @@ export function applyLocalReactionToggle(
   const userId = options.userId.trim();
   const code = options.code.trim();
   if (!messageId || !userId || !code) return [...reactions];
-  const without = reactions.filter(
-    (row) =>
-      !(
-        String(row.user_id || "").trim() === userId &&
-        String(row.code || "").trim() === code
-      ),
+  if (!options.nextActive) {
+    return reactions.filter(
+      (row) =>
+        !(
+          String(row.user_id || "").trim() === userId &&
+          String(row.code || "").trim() === code
+        ),
+    );
+  }
+  // Uma reação por pessoa: ao ativar outro emoji, remove as anteriores do user.
+  const withoutMine = reactions.filter(
+    (row) => String(row.user_id || "").trim() !== userId,
   );
-  if (!options.nextActive) return without;
   return [
-    ...without,
+    ...withoutMine,
     {
       message_id: messageId,
       user_id: userId,

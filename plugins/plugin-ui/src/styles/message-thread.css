@@ -185,15 +185,39 @@
 }
 
 .delpi-ui-message-thread__quote {
-  margin: 0 0 0.4rem;
-  padding: 0.45rem 0.6rem;
+  display: block;
+  width: 100%;
+  margin: 0 0 0.45rem;
+  padding: 0.45rem 0.65rem 0.45rem 0.7rem;
   border: none;
-  border-radius: 0.45rem;
+  border-left: 3px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-radius: 0 0.5rem 0.5rem 0;
   background: color-mix(
     in srgb,
-    var(--delpi-ui-text, var(--text, #0f172a)) 8%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
     transparent
   );
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+
+button.delpi-ui-message-thread__quote {
+  cursor: pointer;
+}
+
+button.delpi-ui-message-thread__quote:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 20%,
+    transparent
+  );
+}
+
+button.delpi-ui-message-thread__quote:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
 }
 
 .delpi-ui-message-thread__quote-meta {
@@ -207,7 +231,7 @@
 .delpi-ui-message-thread__quote-author {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--delpi-ui-text, var(--text, #0f172a));
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 .delpi-ui-message-thread__quote-time,
@@ -221,6 +245,10 @@
 .delpi-ui-message-thread__quote-body {
   white-space: pre-wrap;
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .delpi-ui-message-thread__actions {

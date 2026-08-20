@@ -430,4 +430,37 @@ describe("message-thread.css host scroll", () => {
     expect(prose).toMatch(/__body--rich pre/);
     expect(prose).toMatch(/__body--rich blockquote/);
   });
+
+  it("cita reply clicável chama onParentQuoteClick", () => {
+    const onParentQuoteClick = vi.fn();
+    render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        onParentQuoteClick={onParentQuoteClick}
+        messages={[
+          {
+            id: "parent-1",
+            kind: "text",
+            bodyText: "Original",
+            authorName: "Ana",
+            createdAtLabel: "10:00",
+          },
+          {
+            id: "reply-1",
+            kind: "text",
+            bodyText: "Resposta",
+            authorName: "Bruno",
+            createdAtLabel: "10:01",
+            parentId: "parent-1",
+            mine: true,
+          },
+        ]}
+      />,
+    );
+    const quote = screen.getByRole("button", { name: /Ana/i });
+    fireEvent.click(quote);
+    expect(onParentQuoteClick).toHaveBeenCalledWith("parent-1");
+  });
 });

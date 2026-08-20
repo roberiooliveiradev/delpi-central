@@ -38,6 +38,7 @@ import type { CommercialInteractionRoomEvent } from "../../constants/interaction
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
+import { scrollThreadMessageIntoView } from "./scrollThreadMessageIntoView";
 import { InteractionRoomMessageReactions } from "./InteractionRoomMessageReactions";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
@@ -110,11 +111,16 @@ export function InteractionRoomPanel({
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const confirm = useCommercialConfirm();
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
+  const msgsRef = useRef<HTMLDivElement | null>(null);
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
   });
   threadRef.current = { messages, pinnedMessageIds };
+
+  const onParentQuoteClick = useCallback((parentId: string) => {
+    scrollThreadMessageIntoView(msgsRef.current, parentId);
+  }, []);
 
   const bumpMessageAttachments = useCallback((messageId: string) => {
     const id = messageId.trim();
@@ -536,12 +542,14 @@ export function InteractionRoomPanel({
             message={content.panelEmptyDescription}
           />
         ) : (
+          <div className="cm-room-thread__msgs" ref={msgsRef}>
           <CommercialMessageThread
             listAriaLabel={content.roomMessagesAriaLabel}
             emptyLabel={content.panelEmptyTitle}
             messages={threadMessages}
             resolveActions={resolveActions}
             editingId={editingMessageId}
+            onParentQuoteClick={onParentQuoteClick}
             renderEditSlot={(message) => {
               const source =
                 messages.find((row) => row.id === message.id) ?? null;
@@ -564,6 +572,7 @@ export function InteractionRoomPanel({
               );
             }}
           />
+          </div>
         )}
         <InteractionRoomMessageComposer
           roomId={room.id}

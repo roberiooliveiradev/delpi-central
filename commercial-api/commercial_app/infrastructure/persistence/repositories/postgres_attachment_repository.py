@@ -93,7 +93,9 @@ class PostgresAttachmentRepository(PluginBaseRepository, AttachmentRepositoryPor
         byte_size: int,
         uploaded_by_user_id: str,
     ) -> CommercialAttachment:
-        row = self.fetch_one(
+        # INSERT precisa de execute_returning_one (commit). fetch_one não
+        # confirma a transação — arquivo no disco ficava órfão e a strip vazia.
+        row = self.execute_returning_one(
             f"""
             INSERT INTO commercial.attachments (
                 owner_type, owner_id, file_name, storage_key,
@@ -117,7 +119,7 @@ class PostgresAttachmentRepository(PluginBaseRepository, AttachmentRepositoryPor
         return record
 
     def delete(self, attachment_id: UUID) -> CommercialAttachment | None:
-        row = self.fetch_one(
+        row = self.execute_returning_one(
             f"""
             DELETE FROM commercial.attachments
              WHERE id = %s

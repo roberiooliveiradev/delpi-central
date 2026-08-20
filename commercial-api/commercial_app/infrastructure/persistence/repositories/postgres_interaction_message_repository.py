@@ -387,6 +387,19 @@ class PostgresInteractionMessageRepository(
         user_id: str,
         code: str,
     ) -> InteractionReaction:
+        mid = str(message_id)
+        uid = user_id.strip()
+        reaction_code = code.strip()
+        # Uma reação por pessoa: trocar = apagar as demais do mesmo user.
+        self.execute(
+            """
+            DELETE FROM commercial.interaction_reactions
+             WHERE message_id = %s
+               AND user_id = %s
+               AND code <> %s
+            """,
+            (mid, uid, reaction_code),
+        )
         row = self.execute_returning_one(
             f"""
             INSERT INTO commercial.interaction_reactions (message_id, user_id, code)
@@ -395,7 +408,7 @@ class PostgresInteractionMessageRepository(
                SET created_at = commercial.interaction_reactions.created_at
          RETURNING {_REACTION_COLUMNS}
             """,
-            (str(message_id), user_id.strip(), code.strip()),
+            (mid, uid, reaction_code),
         )
         reaction = _row_reaction(row)
         if reaction is None:

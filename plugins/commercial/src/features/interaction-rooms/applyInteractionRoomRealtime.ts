@@ -66,14 +66,18 @@ function applyReaction(
   return messages.map((message) => {
     if (message.id !== messageId) return message;
     const current = [...(message.reactions ?? [])];
-    const without = current.filter(
-      (item) => !(item.user_id === userId && item.code === code),
-    );
     if (action === "clear") {
-      return { ...message, reactions: without };
+      return {
+        ...message,
+        reactions: current.filter(
+          (item) => !(item.user_id === userId && item.code === code),
+        ),
+      };
     }
-    without.push({ message_id: messageId, user_id: userId, code });
-    return { ...message, reactions: without };
+    // set: uma reação por pessoa — remove todas do user e grava a nova.
+    const withoutMine = current.filter((item) => item.user_id !== userId);
+    withoutMine.push({ message_id: messageId, user_id: userId, code });
+    return { ...message, reactions: withoutMine };
   });
 }
 
