@@ -47,6 +47,10 @@ type Props = {
     ref: Record<string, unknown>;
     label: string;
   }[];
+  /** When set (compose mode), POST includes parent_id. */
+  replyToMessageId?: string | null;
+  replyBanner?: { label: string; preview?: string } | null;
+  onCancelReply?: () => void;
   onMessageCreated: (message: InteractionMessageDto) => void;
   onMessageUpdated?: (message: InteractionMessageDto) => void;
   /** After POST uploads finish (success or partial failure). */
@@ -68,6 +72,9 @@ export function InteractionRoomMessageComposer({
   editMessageId = null,
   initialMarkdown = "",
   initialMentions = [],
+  replyToMessageId = null,
+  replyBanner = null,
+  onCancelReply,
   onMessageCreated,
   onMessageUpdated,
   onMessageAttachmentsSettled,
@@ -217,6 +224,7 @@ export function InteractionRoomMessageComposer({
       const created = await postInteractionMessage(id, {
         body_text: bodyText,
         mentions,
+        parent_id: replyToMessageId?.trim() || null,
       });
       const files = [...pending];
       setDraft("");
@@ -224,6 +232,7 @@ export function InteractionRoomMessageComposer({
       resetMentions();
       void clearComposerDraft(id);
       onMessageCreated(created);
+      onCancelReply?.();
 
       for (const item of files) {
         try {
@@ -250,6 +259,7 @@ export function InteractionRoomMessageComposer({
     disabled,
     isEdit,
     editMessageId,
+    replyToMessageId,
     content.attachmentOnlyBody,
     content.attachUploadError,
     content.bodyHtmlRejected,
@@ -260,6 +270,7 @@ export function InteractionRoomMessageComposer({
     onMessageCreated,
     onMessageUpdated,
     onMessageAttachmentsSettled,
+    onCancelReply,
     onCancelEdit,
     onError,
   ]);
@@ -304,6 +315,8 @@ export function InteractionRoomMessageComposer({
                 setPending((prev) => prev.filter((row) => row.id !== id));
               }
         }
+        replyTo={!isEdit ? replyBanner : null}
+        onCancelReply={!isEdit ? onCancelReply : undefined}
         labels={{
           placeholder: content.composerPlaceholder,
           sendAriaLabel: isEdit
@@ -332,6 +345,7 @@ export function InteractionRoomMessageComposer({
           pendingDocumentsHeading: content.pendingAttachmentsHeading,
           pendingDocumentOpenAriaLabel: (fileName) => `Abrir prévia de ${fileName}`,
           pendingRemoveAriaLabel: (fileName) => `Remover ${fileName}`,
+          replyCancelAriaLabel: content.replyCancelAriaLabel,
         }}
       />
     </div>

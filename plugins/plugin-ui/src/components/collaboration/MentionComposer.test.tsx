@@ -538,6 +538,29 @@ describe("mention-composer.css", () => {
     expect(onRemove).toHaveBeenCalledWith("img-1");
   });
 
+  it("shows reply banner above the pill and cancels", () => {
+    const onCancelReply = vi.fn();
+    render(
+      <MentionComposer
+        value=""
+        onChange={() => undefined}
+        onSubmit={() => undefined}
+        labels={{
+          ...labels,
+          replyCancelAriaLabel: "Cancel reply",
+        }}
+        classNames={classNames}
+        replyTo={{ label: "Replying to Ana", preview: "Hello there" }}
+        onCancelReply={onCancelReply}
+      />,
+    );
+    expect(screen.getByTestId("mention-composer-reply-banner")).toBeTruthy();
+    expect(screen.getByText("Replying to Ana")).toBeTruthy();
+    expect(screen.getByText("Hello there")).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Cancel reply"));
+    expect(onCancelReply).toHaveBeenCalledTimes(1);
+  });
+
   it("emoji-insert-menu.css usa grade sem borda full de caixa", () => {
     const css = readFileSync(join(stylesDir, "emoji-insert-menu.css"), "utf8");
     expect(css).toMatch(/\.delpi-ui-emoji-insert-menu \{/);

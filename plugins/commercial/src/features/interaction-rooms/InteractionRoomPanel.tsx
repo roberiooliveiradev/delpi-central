@@ -97,6 +97,7 @@ export function InteractionRoomPanel({
   );
   const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [replyMessageId, setReplyMessageId] = useState<string | null>(null);
   const [attachmentEpochByMessageId, setAttachmentEpochByMessageId] = useState<
     Record<string, number>
   >({});
@@ -151,6 +152,7 @@ export function InteractionRoomPanel({
   useEffect(() => {
     const key = entityKey?.trim() ?? "";
     setEditingMessageId(null);
+    setReplyMessageId(null);
     setAttachmentEpochByMessageId({});
     if (!key) {
       setLoading(false);
@@ -305,9 +307,15 @@ export function InteractionRoomPanel({
         },
         pinningMessageId,
         onEditMessage: (messageId) => {
+          setReplyMessageId(null);
           setEditingMessageId(messageId);
         },
         editingMessageId,
+        onReplyMessage: (messageId) => {
+          setEditingMessageId(null);
+          setReplyMessageId(messageId);
+        },
+        replyMessageId,
       }),
     [
       onCreateTaskFromMessage,
@@ -316,6 +324,7 @@ export function InteractionRoomPanel({
       onTogglePin,
       pinningMessageId,
       editingMessageId,
+      replyMessageId,
     ],
   );
 

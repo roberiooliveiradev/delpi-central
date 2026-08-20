@@ -1,8 +1,8 @@
 /**
- * Slots de ação do MessageThread (tarefa + pin + editar) — host monta, kit só renderiza.
+ * Slots de ação do MessageThread (tarefa + pin + editar + responder) — host monta, kit só renderiza.
  */
 import { createElement } from "react";
-import { ListTodo, Pencil, Pin, PinOff } from "lucide-react";
+import { ListTodo, MessageSquareReply, Pencil, Pin, PinOff } from "lucide-react";
 import type { MessageThreadAction, MessageThreadItem } from "@delpi/plugin-ui/index";
 
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
@@ -13,6 +13,7 @@ export const CREATE_TASK_MESSAGE_ACTION_ID = "create-task";
 export const PIN_MESSAGE_ACTION_ID = "pin-message";
 export const UNPIN_MESSAGE_ACTION_ID = "unpin-message";
 export const EDIT_MESSAGE_ACTION_ID = "edit-message";
+export const REPLY_MESSAGE_ACTION_ID = "reply-message";
 
 export function canCreateTaskFromMessage(
   message: Pick<MessageThreadItem, "kind" | "deleted">,
@@ -38,6 +39,12 @@ export function canEditMessage(
   if (message.deleted) return false;
   if (!message.mine) return false;
   return String(message.kind || "").trim() === "text";
+}
+
+export function canReplyMessage(
+  message: Pick<MessageThreadItem, "kind" | "deleted">,
+): boolean {
+  return canCreateTaskFromMessage(message);
 }
 
 export function buildCreateTaskMessageAction(options: {
@@ -103,6 +110,26 @@ export function buildEditMessageAction(options: {
   };
 }
 
+export function buildReplyMessageAction(options: {
+  message: Pick<MessageThreadItem, "id" | "kind" | "deleted">;
+  onReply: (messageId: string) => void;
+  busy?: boolean;
+}): MessageThreadAction | null {
+  if (!canReplyMessage(options.message)) return null;
+  if (options.busy) return null;
+  const label = INTERACTION_ROOMS_CONTENT.replyActionLabel;
+  return {
+    id: REPLY_MESSAGE_ACTION_ID,
+    label,
+    title: label,
+    icon: createElement(MessageSquareReply, {
+      size: ACTION_ICON_SIZE,
+      "aria-hidden": true,
+    }),
+    onClick: () => options.onReply(options.message.id),
+  };
+}
+
 export function resolveInteractionMessageActions(options: {
   message: MessageThreadItem;
   onCreateTask: (messageId: string) => void;
@@ -112,8 +139,18 @@ export function resolveInteractionMessageActions(options: {
   pinningMessageId?: string | null;
   onEditMessage?: (messageId: string) => void;
   editingMessageId?: string | null;
+  onReplyMessage?: (messageId: string) => void;
+  replyMessageId?: string | null;
 }): MessageThreadAction[] {
   const actions: MessageThreadAction[] = [];
+  if (options.onReplyMessage) {
+    const reply = buildReplyMessageAction({
+      message: options.message,
+      onReply: options.onReplyMessage,
+      busy: options.replyMessageId === options.message.id,
+    });
+    if (reply) actions.push(reply);
+  }
   if (options.onEditMessage) {
     const edit = buildEditMessageAction({
       message: options.message,

@@ -27,6 +27,7 @@ export {
   type MentionComposerLabels,
   type MentionComposerPendingAttachment,
   type MentionComposerProps,
+  type MentionComposerReplyTo,
 } from "./MentionComposer";
 export {
   isPendingImageAttachment,

@@ -126,8 +126,20 @@ export type MentionComposerClassNames = {
   imageThumbRemove: string;
   documentTray: string;
   documentTrayStrip: AttachmentPreviewStripClassNames;
+  replyBanner: string;
+  replyText: string;
+  replyLabel: string;
+  replyPreview: string;
+  replyCancel: string;
   menu: MentionMenuClassNames;
   emojiMenu: EmojiInsertMenuClassNames;
+};
+
+export type MentionComposerReplyTo = {
+  /** e.g. "Respondendo a Ana" */
+  label: string;
+  /** Truncated parent body preview. */
+  preview?: string;
 };
 
 export type MentionComposerLabels = {
@@ -158,6 +170,7 @@ export type MentionComposerLabels = {
   pendingDocumentOpenAriaLabel?: (fileName: string) => string;
   pendingRemoveAriaLabel?: (fileName: string) => string;
   pendingDocumentsEmptyLabel?: string;
+  replyCancelAriaLabel?: string;
 };
 
 export type MentionComposerProps = {
@@ -184,6 +197,9 @@ export type MentionComposerProps = {
   onRemovePendingAttachment?: (id: string) => void;
   /** @deprecated Prefer `pendingAttachments` (E6.S7). Kept for rare custom footers. */
   footer?: ReactNode;
+  /** Active reply target shown above the pill (Teams-style strip). */
+  replyTo?: MentionComposerReplyTo | null;
+  onCancelReply?: () => void;
   className?: string;
   portalScopeClassName?: string;
   /** Submit on Ctrl/Cmd+Enter (default true). */
@@ -218,6 +234,11 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     imageThumbRemove: pair(`${base}__image-thumb-remove`, `${ui}__image-thumb-remove`),
     documentTray: pair(`${base}__document-tray`, `${ui}__document-tray`),
     documentTrayStrip: attachmentPreviewStripBemClasses(prefix),
+    replyBanner: pair(`${base}__reply-banner`, `${ui}__reply-banner`),
+    replyText: pair(`${base}__reply-text`, `${ui}__reply-text`),
+    replyLabel: pair(`${base}__reply-label`, `${ui}__reply-label`),
+    replyPreview: pair(`${base}__reply-preview`, `${ui}__reply-preview`),
+    replyCancel: pair(`${base}__reply-cancel`, `${ui}__reply-cancel`),
     menu: mentionMenuBemClasses(prefix),
     emojiMenu: emojiInsertMenuBemClasses(prefix),
   };
@@ -272,6 +293,8 @@ export function MentionComposer({
   pendingAttachments = [],
   onRemovePendingAttachment,
   footer,
+  replyTo = null,
+  onCancelReply,
   className,
   portalScopeClassName,
   submitOnModEnter = true,
@@ -688,6 +711,30 @@ export function MentionComposer({
 
   return (
     <div className={rootClass}>
+      {replyTo ? (
+        <div
+          className={classNames.replyBanner}
+          data-testid="mention-composer-reply-banner"
+        >
+          <div className={classNames.replyText}>
+            <span className={classNames.replyLabel}>{replyTo.label}</span>
+            {replyTo.preview ? (
+              <span className={classNames.replyPreview}>{replyTo.preview}</span>
+            ) : null}
+          </div>
+          {onCancelReply ? (
+            <button
+              type="button"
+              className={classNames.replyCancel}
+              aria-label={labels.replyCancelAriaLabel ?? "Cancel reply"}
+              disabled={disabled || submitting}
+              onClick={onCancelReply}
+            >
+              <X size={16} aria-hidden />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {pendingDocuments.length > 0 ? (
         <div className={classNames.documentTray} data-testid="mention-composer-document-tray">
           <AttachmentPreviewStrip

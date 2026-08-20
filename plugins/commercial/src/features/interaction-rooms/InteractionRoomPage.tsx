@@ -45,6 +45,7 @@ import {
   interactionRoomParticipantAvatar,
 } from "./interactionRoomUserLink";
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
+import { buildReplyComposerBanner } from "./interactionRoomReply";
 import { resolveRoomEntityHref } from "./resolveInteractionEntityHref";
 import {
   pinTitleFromMessageBody,
@@ -100,6 +101,7 @@ export function InteractionRoomPage({
   );
   const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [replyMessageId, setReplyMessageId] = useState<string | null>(null);
   const [attachmentEpochByMessageId, setAttachmentEpochByMessageId] = useState<
     Record<string, number>
   >({});
@@ -165,6 +167,7 @@ export function InteractionRoomPage({
   useEffect(() => {
     const id = roomId.trim();
     setEditingMessageId(null);
+    setReplyMessageId(null);
     setAttachmentEpochByMessageId({});
     if (!id) {
       setLoading(false);
@@ -297,9 +300,15 @@ export function InteractionRoomPage({
         },
         pinningMessageId,
         onEditMessage: (messageId) => {
+          setReplyMessageId(null);
           setEditingMessageId(messageId);
         },
         editingMessageId,
+        onReplyMessage: (messageId) => {
+          setEditingMessageId(null);
+          setReplyMessageId(messageId);
+        },
+        replyMessageId,
       }),
     [
       onCreateTaskFromMessage,
@@ -308,6 +317,7 @@ export function InteractionRoomPage({
       onTogglePin,
       pinningMessageId,
       editingMessageId,
+      replyMessageId,
     ],
   );
 
@@ -377,6 +387,23 @@ export function InteractionRoomPage({
       photoByUserId,
       attachmentEpochByMessageId,
     ],
+  );
+
+  const replyTarget = useMemo(() => {
+    const id = (replyMessageId || "").trim();
+    if (!id) return null;
+    return messages.find((row) => row.id === id) ?? null;
+  }, [messages, replyMessageId]);
+
+  const replyBanner = useMemo(
+    () =>
+      buildReplyComposerBanner(
+        replyTarget,
+        replyTarget?.author_user_id
+          ? nameFor(replyTarget.author_user_id)
+          : null,
+      ),
+    [replyTarget, nameFor],
   );
 
   const participants = useMemo(
@@ -533,6 +560,9 @@ export function InteractionRoomPage({
                 <InteractionRoomMessageComposer
                   roomId={room.id}
                   disabled={Boolean(editingMessageId)}
+                  replyToMessageId={replyMessageId}
+                  replyBanner={replyBanner}
+                  onCancelReply={() => setReplyMessageId(null)}
                   onMessageCreated={onMessageCreated}
                   onMessageAttachmentsSettled={bumpMessageAttachments}
                   onError={(message) => pushRoomAlert(message, "danger")}
