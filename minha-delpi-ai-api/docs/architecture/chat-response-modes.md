@@ -6,6 +6,20 @@ Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-
 
 ---
 
+## Orçamento de contexto por modo (ago/2026)
+
+Além de `generationLimits`, o bundle declara `contextBudget` por modo (`historyMaxMessages`, RAG, tool clip, `messageSearch*`). Serviço canônico: `ChatResponseModeContextBudgetService`. Em `openai_compatible`, o prompt é truncado no cliente pelo budget (`num_ctx` continua só informativo no metadata).
+
+| Modo | history | ragMaxChars | maxTokens (JSON) |
+|------|---------|-------------|------------------|
+| fast | 4 | 4000 | 256 |
+| normal | 12 | 9000 | 1024 |
+| thinker | 20 | 12000 | 2048 |
+
+Overrides ENV de geração (`CHAT_RESPONSE_MODE_*`) continuam válidos.
+
+---
+
 ## Princípio
 
 Os modos são **perfis de geração LLM** (`LlmGenerationConfig`) com presets distintos de latência. Com **Playbook 19** (`llmProseEverywhere`), toda prosa operacional passa por síntese LLM; visuais permanecem nativos no MFE.

@@ -29,3 +29,10 @@ def test_pipeline_effect_text():
 def test_commentary_lead_depth_by_mode():
     assert ChatResponseModeContentService.commentary_lead_depth_for_mode("fast") == "brief"
     assert ChatResponseModeContentService.commentary_lead_depth_for_mode("thinker") == "expanded"
+
+
+def test_context_budget_node_present_for_modes():
+    for mode in ("fast", "normal", "thinker"):
+        node = ChatResponseModeContentService.context_budget_node(mode)
+        assert isinstance(node, dict)
+        assert int(node.get("historyMaxMessages") or 0) >= 1

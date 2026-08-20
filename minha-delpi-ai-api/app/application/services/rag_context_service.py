@@ -34,11 +34,28 @@ class RagContextService:
         *,
         min_score: float | None = None,
         chunk_filter: Callable[[dict], bool] | None = None,
+        max_chunks: int | None = None,
+        max_chars: int | None = None,
     ) -> dict:
+        from app.domain.services.chat_response_mode_context_budget_service import (
+            ChatResponseModeContextBudgetService,
+        )
+        from app.infrastructure.llm.llm_request_context import get_active_config
+
+        try:
+            budget = ChatResponseModeContextBudgetService.resolve(
+                get_active_config().response_mode
+            )
+            resolved_max_chunks = max(1, int(max_chunks or budget.rag_max_chunks))
+            resolved_max_chars = max(500, int(max_chars or budget.rag_max_chars))
+        except Exception:
+            resolved_max_chunks = max(1, int(max_chunks or Settings.MAX_CONTEXT_CHUNKS))
+            resolved_max_chars = max(500, int(max_chars or Settings.MAX_CONTEXT_CHARS))
+
         chunks = self.search_knowledge_use_case.execute(
             SearchKnowledgeRequest(
                 query=query,
-                limit=Settings.MAX_CONTEXT_CHUNKS,
+                limit=resolved_max_chunks,
                 filters=filters,
             )
         )
@@ -118,7 +135,7 @@ class RagContextService:
             if used_count >= self.MAX_CHUNKS_PER_DOCUMENT:
                 continue
 
-            remaining = Settings.MAX_CONTEXT_CHARS - total_chars
+            remaining = resolved_max_chars - total_chars
 
             if remaining <= 0:
                 break

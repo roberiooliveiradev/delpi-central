@@ -263,11 +263,46 @@ class ChatTurnLlmAssemblyService:
 
             from app.infrastructure.llm.llm_request_context import get_active_config
 
+            active_mode = get_active_config().response_mode
+            from app.domain.services.chat_conversation_message_search_service import (
+                ChatConversationMessageSearchService,
+            )
+            from app.domain.services.chat_response_mode_context_budget_service import (
+                ChatResponseModeContextBudgetService,
+            )
+
+            budget = ChatResponseModeContextBudgetService.resolve(active_mode)
+            history_clipped = len(previous_messages or []) > budget.history_max_messages
+            memory_snap = (
+                workspace_context.get("workingMemory")
+                if isinstance(workspace_context.get("workingMemory"), dict)
+                else {}
+            )
+            message_search = ChatConversationMessageSearchService.search(
+                message=message,
+                previous_messages=previous_messages,
+                response_mode=active_mode,
+                history_clipped=history_clipped,
+                context_refresh_suggested=bool(
+                    memory_snap.get("contextRefreshSuggested")
+                ),
+            )
+            evidence_block = str(message_search.get("promptBlock") or "").strip()
+            tool_context_text = str(tool_context.get("context") or "")
+            if evidence_block:
+                tool_context_text = (
+                    f"{evidence_block}\n\n{tool_context_text}".strip()
+                    if tool_context_text
+                    else evidence_block
+                )
+                if "conversation_message_search" not in pipeline_stages:
+                    pipeline_stages.append("conversation_message_search")
+
             llm_messages = prompt_builder_service.build_messages(
                 history=history,
                 current_message=message,
                 rag_context=rag["context"],
-                tool_context=tool_context["context"],
+                tool_context=tool_context_text,
                 project_prompt=workspace_context.get("projectPrompt"),
                 agent_prompt=workspace_context.get("agentPrompt"),
                 admin_guidelines_prompt=merged_admin_guidelines,
@@ -302,7 +337,7 @@ class ChatTurnLlmAssemblyService:
                 if isinstance(tool_context, dict)
                 else None,
                 skills=workspace_context.get("skills"),
-                response_mode=get_active_config().response_mode,
+                response_mode=active_mode,
                 tool_calls=tool_calls,
                 host_surface_prompt=host_surface_prompt,
             )

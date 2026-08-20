@@ -36,6 +36,9 @@ from app.application.services.chat_web_search_synthesis_service import (
     ChatWebSearchSynthesisService,
 )
 from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
+from app.domain.services.chat_response_mode_context_budget_service import (
+    ChatResponseModeContextBudgetService,
+)
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
@@ -270,7 +273,9 @@ class SendChatMessageUseCase:
                 request=request,
             ),
             prepare_history=self.turn_support.prepare_history,
-            history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
+            history_keep=ChatResponseModeContextBudgetService.history_keep(
+                request.response_mode
+            ),
             fast_path_enabled=resolve_chat_intelligence_runtime().fast_path_enabled,
             fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
             resolve_user_identity_answer=lambda msg: (

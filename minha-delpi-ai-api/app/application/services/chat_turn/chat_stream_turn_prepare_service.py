@@ -32,6 +32,9 @@ from app.domain.exceptions.chat_exceptions import (
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_message_branch_service import ChatMessageBranchService
+from app.domain.services.chat_response_mode_context_budget_service import (
+    ChatResponseModeContextBudgetService,
+)
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.llm.llm_request_context import llm_generation_scope
 
@@ -210,7 +213,9 @@ class ChatStreamTurnPrepareService:
                     request=request,
                 ),
                 prepare_history=self.turn_support.prepare_history,
-                history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
+                history_keep=ChatResponseModeContextBudgetService.history_keep(
+                    request.response_mode
+                ),
                 fast_path_enabled=resolve_chat_intelligence_runtime().fast_path_enabled,
                 fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
                 resolve_user_identity_answer=lambda msg: (

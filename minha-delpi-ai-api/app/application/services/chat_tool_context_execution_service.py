@@ -513,7 +513,18 @@ class ChatToolContextExecutionService:
             )
 
         context = "\n\n".join(context_blocks)
-        context = context[: Settings.MAX_CONTEXT_CHARS]
+        try:
+            from app.domain.services.chat_response_mode_context_budget_service import (
+                ChatResponseModeContextBudgetService,
+            )
+            from app.infrastructure.llm.llm_request_context import get_active_config
+
+            tool_cap = ChatResponseModeContextBudgetService.resolve(
+                get_active_config().response_mode
+            ).tool_context_max_chars
+        except Exception:
+            tool_cap = Settings.MAX_CONTEXT_CHARS
+        context = context[: max(500, int(tool_cap))]
 
         return ToolExecutionState(
             context=context,

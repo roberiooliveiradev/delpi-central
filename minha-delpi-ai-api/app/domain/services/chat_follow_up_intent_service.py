@@ -43,10 +43,39 @@ class ChatFollowUpIntentService:
         if ChatProductQueryIntentService.extract_product_code(message):
             return False
 
+        if cls.is_retry_or_continue_request(message):
+            return True
+
         return any(re.search(pattern, normalized) for pattern in cls._FOLLOW_UP_PATTERNS)
 
     @classmethod
+    def is_retry_or_continue_request(cls, message: str | None) -> bool:
+        """«tente novamente» / continue — herda foco operacional e não deve usar fast path."""
+        from app.domain.services.chat_error_auto_recovery_service import (
+            ChatErrorAutoRecoveryService,
+        )
+
+        if ChatErrorAutoRecoveryService.looks_like_recovery_request(message):
+            return True
+
+        normalized = (message or "").strip().lower()
+        return bool(
+            re.search(
+                r"\b("
+                r"tente\s+novamente|tentar\s+novamente|tente\s+de\s+novo|"
+                r"repita\s+(?:a\s+)?consulta|repetir\s+(?:a\s+)?consulta|"
+                r"mesma\s+consulta|consulta\s+anterior|"
+                r"de\s+novo\b"
+                r")",
+                normalized,
+            )
+        )
+
+    @classmethod
     def follow_up_type(cls, message: str | None) -> str | None:
+        if cls.is_retry_or_continue_request(message):
+            return "retry"
+
         if not cls.is_operational_follow_up(message):
             return None
 

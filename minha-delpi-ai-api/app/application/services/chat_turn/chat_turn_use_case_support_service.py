@@ -187,13 +187,33 @@ class ChatTurnUseCaseSupportService:
             attachment_ids=attachment_ids,
         )
 
-    def prepare_history(self, previous_messages) -> tuple[str, list]:
+    def prepare_history(
+        self,
+        previous_messages,
+        *,
+        max_messages: int | None = None,
+    ) -> tuple[str, list]:
         if self.chat_history_summary_service:
-            return self.chat_history_summary_service.prepare_history(previous_messages)
+            return self.chat_history_summary_service.prepare_history(
+                previous_messages,
+                max_messages=max_messages,
+            )
 
-        keep = Settings.CHAT_HISTORY_MAX_MESSAGES
+        from app.domain.services.chat_response_mode_context_budget_service import (
+            ChatResponseModeContextBudgetService,
+        )
+        from app.infrastructure.llm.llm_request_context import get_active_config
 
-        return "", list(previous_messages[-keep:])
+        keep = max_messages
+        if keep is None:
+            try:
+                keep = ChatResponseModeContextBudgetService.history_keep(
+                    get_active_config().response_mode
+                )
+            except Exception:
+                keep = Settings.CHAT_HISTORY_MAX_MESSAGES
+
+        return "", list(previous_messages[-max(1, int(keep)) :])
 
     def build_workspace_context(
         self,

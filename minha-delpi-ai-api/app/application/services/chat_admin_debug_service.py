@@ -410,6 +410,18 @@ class ChatAdminDebugService:
             "llm": cls._build_llm_debug_block(messages=compact_llm_messages),
         }
 
+        try:
+            from app.domain.services.chat_response_mode_context_budget_service import (
+                ChatResponseModeContextBudgetService,
+            )
+            from app.infrastructure.llm.llm_request_context import get_active_config
+
+            payload["contextBudget"] = ChatResponseModeContextBudgetService.resolve(
+                get_active_config().response_mode
+            ).as_admin_debug()
+        except Exception:
+            payload["contextBudget"] = None
+
         if memory_block is not None:
             payload["memory"] = memory_block
 

@@ -140,8 +140,8 @@ def test_normal_mode_default_limits_from_json(monkeypatch):
     config = ChatResponseModeService.resolve("normal")
     assert config.response_mode == "normal"
     assert config.model == "qwen2.5:1.5b"
-    assert config.max_tokens == 256
-    assert config.num_ctx == 1536
+    assert config.max_tokens == 1024
+    assert config.num_ctx == 4096
     assert config.temperature == 0.1
 
 
@@ -153,8 +153,8 @@ def test_thinker_mode_default_limits_from_json(monkeypatch):
     config = ChatResponseModeService.resolve("thinker")
     assert config.response_mode == "thinker"
     assert config.model == "qwen2.5:3b"
-    assert config.max_tokens == 512
-    assert config.num_ctx == 2048
+    assert config.max_tokens == 2048
+    assert config.num_ctx == 8192
     assert config.temperature == 0.15
 
 

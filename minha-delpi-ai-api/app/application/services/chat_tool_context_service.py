@@ -92,11 +92,21 @@ class ChatToolContextService:
                 "nativeToolCalling": {"used": False, "providerSupports": False},
             }
 
+        from app.domain.services.chat_operational_retry_message_service import (
+            ChatOperationalRetryMessageService,
+        )
+
+        rewritten, did_rewrite = ChatOperationalRetryMessageService.rewrite_if_needed(
+            message,
+            previous_messages,
+        )
+        effective_message = rewritten if did_rewrite else message
+
         preparation = self._pre_turn_service.prepare_turn(
             self,
             user_id=user_id,
             access_token=access_token,
-            message=message,
+            message=effective_message,
             allowed_action_ids=allowed_action_ids,
             actions_enabled=actions_enabled,
             conversation_context=conversation_context,

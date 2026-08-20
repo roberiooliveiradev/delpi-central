@@ -1,0 +1,18 @@
+{
+  "explicitTriggers": [
+    "o que eu pedi",
+    "o que eu falei",
+    "releia a conversa",
+    "lembra o que eu",
+    "você não seguiu",
+    "voce nao seguiu",
+    "eu pedi",
+    "como eu pedi",
+    "conforme eu pedi",
+    "siga o que falei",
+    "relembrar o que eu pedi"
+  ],
+  "promptBlockTitle": "Evidências da conversa (mensagens recuperadas)",
+  "promptBlockIntro": "Use estes trechos reais da sessão. Não invente conteúdo fora deles.",
+  "emptyHitsClarify": "Não encontrei trechos anteriores suficientes na conversa. Pode reformular o que quer que eu retome?"
+}

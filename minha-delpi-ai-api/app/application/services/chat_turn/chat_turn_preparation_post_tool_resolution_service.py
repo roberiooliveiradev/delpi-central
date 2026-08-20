@@ -155,6 +155,34 @@ class ChatTurnPreparationPostToolResolutionService:
         if tv_mutation_turn:
             skip_rag = True
 
+        # Miss operacional com agente ativo: não inundar LLM com RAG de skills.
+        tool_calls_list = (
+            tool_context.get("toolCalls") if isinstance(tool_context, dict) else None
+        ) or []
+        if (
+            not skip_rag
+            and not tool_calls_list
+            and isinstance(workspace_context, dict)
+        ):
+            from app.application.services.chat_workspace_agent_activation_service import (
+                ChatWorkspaceAgentActivationService,
+            )
+            from app.application.services.chat_capabilities_service import (
+                ChatCapabilitiesService,
+            )
+            from app.domain.services.chat_follow_up_intent_service import (
+                ChatFollowUpIntentService,
+            )
+
+            if ChatWorkspaceAgentActivationService.operational_tools_enabled(
+                workspace_context
+            ) and (
+                ChatFollowUpIntentService.is_retry_or_continue_request(message)
+                or ChatFollowUpIntentService.is_operational_follow_up(message)
+                or ChatCapabilitiesService.looks_like_operational_data_request(message)
+            ):
+                skip_rag = True
+
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,

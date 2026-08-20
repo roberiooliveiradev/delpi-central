@@ -25,8 +25,37 @@ class ChatHistorySummaryService:
         messages,
         *,
         max_messages: int | None = None,
+        summary_max_chars: int | None = None,
     ) -> tuple[str, list]:
-        keep = max(1, max_messages or Settings.CHAT_HISTORY_MAX_MESSAGES)
+        from app.domain.services.chat_response_mode_context_budget_service import (
+            ChatResponseModeContextBudgetService,
+        )
+        from app.infrastructure.llm.llm_request_context import get_active_config
+
+        budget = None
+        try:
+            budget = ChatResponseModeContextBudgetService.resolve(
+                get_active_config().response_mode
+            )
+        except Exception:
+            budget = None
+
+        keep = max(
+            1,
+            int(
+                max_messages
+                or (budget.history_max_messages if budget else None)
+                or Settings.CHAT_HISTORY_MAX_MESSAGES
+            ),
+        )
+        summary_cap = max(
+            100,
+            int(
+                summary_max_chars
+                or (budget.history_summary_max_chars if budget else None)
+                or Settings.CHAT_HISTORY_SUMMARY_MAX_CHARS
+            ),
+        )
         intelligence = self.intelligence_settings_service.resolve()
 
         if not intelligence.chat_history_summary_enabled:
@@ -50,7 +79,7 @@ class ChatHistorySummaryService:
         if not summary:
             return "", recent
 
-        clipped = summary[: Settings.CHAT_HISTORY_SUMMARY_MAX_CHARS]
+        clipped = summary[:summary_cap]
 
         return clipped, recent
 

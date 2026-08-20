@@ -226,6 +226,16 @@ class ChatResponseModeContentService:
         return max(1, value)
 
     @classmethod
+    def context_budget_node(cls, mode: str) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "contextBudget",
+            str(mode or "").strip().lower(),
+        )
+
+        return node if isinstance(node, dict) else {}
+
+    @classmethod
     def quality_fallback_min_chars(cls) -> int:
         return cls._node_int("qualityFallbackMinChars", default=40)
 

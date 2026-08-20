@@ -102,6 +102,23 @@ class ChatFastPathService:
 
         normalized = _normalize_text(text)
 
+        # Retry / follow-up operacional nunca esvazia tools (ex.: «tente novamente»).
+        from app.domain.services.chat_error_auto_recovery_service import (
+            ChatErrorAutoRecoveryService,
+        )
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        if ChatErrorAutoRecoveryService.looks_like_recovery_request(text):
+            return False
+
+        if ChatFollowUpIntentService.is_operational_follow_up(text):
+            return False
+
+        if ChatFollowUpIntentService.is_retry_or_continue_request(text):
+            return False
+
         if _KNOWLEDGE_HINT_RE.search(normalized):
             return False
 

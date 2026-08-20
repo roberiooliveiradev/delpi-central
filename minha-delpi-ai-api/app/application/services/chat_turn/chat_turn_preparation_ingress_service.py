@@ -177,7 +177,10 @@ class ChatTurnPreparationIngressService:
                     )
                 )
 
-            history_summary, history = prepare_history(history_source)
+            history_summary, history = prepare_history(
+                history_source,
+                max_messages=max(1, int(history_keep)),
+            )
 
             if on_stream_activity:
                 from app.application.services.chat_stream_activity_service import (

@@ -63,21 +63,53 @@
   "generationLimits": {
     "fast": {
       "model": "qwen2.5:1.5b",
-      "maxTokens": 96,
-      "numCtx": 512,
+      "maxTokens": 256,
+      "numCtx": 1024,
       "temperature": 0.2
     },
     "normal": {
       "model": "qwen2.5:1.5b",
-      "maxTokens": 256,
-      "numCtx": 1536,
+      "maxTokens": 1024,
+      "numCtx": 4096,
       "temperature": 0.1
     },
     "thinker": {
       "model": "qwen2.5:3b",
-      "maxTokens": 512,
-      "numCtx": 2048,
+      "maxTokens": 2048,
+      "numCtx": 8192,
       "temperature": 0.15
+    }
+  },
+  "contextBudget": {
+    "fast": {
+      "historyMaxMessages": 4,
+      "historySummaryMaxChars": 600,
+      "ragMaxChunks": 3,
+      "ragMaxChars": 4000,
+      "toolContextMaxChars": 4000,
+      "messageSearchMaxHits": 3,
+      "messageSearchMaxChars": 1500,
+      "messageSearchLookbackMessages": 40
+    },
+    "normal": {
+      "historyMaxMessages": 12,
+      "historySummaryMaxChars": 1500,
+      "ragMaxChunks": 6,
+      "ragMaxChars": 9000,
+      "toolContextMaxChars": 9000,
+      "messageSearchMaxHits": 6,
+      "messageSearchMaxChars": 3500,
+      "messageSearchLookbackMessages": 80
+    },
+    "thinker": {
+      "historyMaxMessages": 20,
+      "historySummaryMaxChars": 2500,
+      "ragMaxChunks": 8,
+      "ragMaxChars": 12000,
+      "toolContextMaxChars": 12000,
+      "messageSearchMaxHits": 10,
+      "messageSearchMaxChars": 6000,
+      "messageSearchLookbackMessages": 120
     }
   },
   "latencyTargetsSec": {
