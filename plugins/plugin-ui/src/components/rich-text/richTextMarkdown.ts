@@ -59,6 +59,43 @@ turndown.addRule("fencedCodeBlock", {
   },
 });
 
+/** Sala: `![alt](attachment:…)` / pending — não emitir blob: ou http. */
+turndown.addRule("attachmentInlineImage", {
+  filter: (node) => {
+    if (node.nodeName === "IMG") {
+      const el = node as HTMLElement;
+      const href = el.getAttribute("data-attachment-href") || "";
+      return (
+        Boolean(el.getAttribute("data-attachment-pending")) ||
+        href.startsWith("attachment:")
+      );
+    }
+    if (node.nodeName === "FIGURE") {
+      return Boolean(
+        (node as Element).querySelector(
+          "img[data-attachment-pending], img[data-attachment-href^='attachment:']",
+        ),
+      );
+    }
+    return false;
+  },
+  replacement: (_content, node) => {
+    const root = node as HTMLElement;
+    const img =
+      root.nodeName === "IMG"
+        ? root
+        : (root.querySelector("img") as HTMLElement | null);
+    if (!img) return "";
+    const pending = img.getAttribute("data-attachment-pending") || "";
+    const href =
+      img.getAttribute("data-attachment-href") ||
+      (pending ? `attachment:pending:${pending}` : "");
+    if (!href.startsWith("attachment:")) return "";
+    const alt = (img.getAttribute("alt") || "").replace(/[[\]]/g, "");
+    return `\n\n![${alt}](${href})\n\n`;
+  },
+});
+
 const MD_LINE_HINT =
   /^(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|~~~|\|.+\||-{3,}|\*{3,}|_{3,})/;
 const MD_INLINE_HINT = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\[[^\]]+\]\([^)]+\))/;

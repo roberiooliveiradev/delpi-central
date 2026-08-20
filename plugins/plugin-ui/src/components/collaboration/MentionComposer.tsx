@@ -23,6 +23,7 @@ import {
   useRef,
   useState,
   type ClipboardEvent,
+  type DragEvent,
   type KeyboardEvent,
   type ReactElement,
   type ReactNode,
@@ -98,6 +99,13 @@ import {
   type MentionComposerHistorySnapshot,
 } from "./mentionComposerHistory";
 import { normalizeComposerFormatShells } from "./mentionComposerNormalize";
+import {
+  buildInlineImageInserts,
+  collectClipboardImageFiles,
+  inlineImageBlockHtml,
+  isComposerInlineImageFile,
+  type MentionComposerInlineImageInsert,
+} from "./mentionComposerInlineImage";
 
 export type { MentionComposerPendingAttachment } from "./mentionComposerPending";
 
@@ -195,6 +203,11 @@ export type MentionComposerProps = {
   /** Pending files: images → thumbs in pill; documents → floating `__document-tray`. */
   pendingAttachments?: readonly MentionComposerPendingAttachment[];
   onRemovePendingAttachment?: (id: string) => void;
+  /**
+   * Images pasted/dropped on the surface (inline at caret) — not clip attachments.
+   * Host keeps File map keyed by `pendingId` for upload after send.
+   */
+  onInlineImagesInserted?: (items: readonly MentionComposerInlineImageInsert[]) => void;
   /** @deprecated Prefer `pendingAttachments` (E6.S7). Kept for rare custom footers. */
   footer?: ReactNode;
   /** Active reply target shown above the pill (Teams-style strip). */
@@ -292,6 +305,7 @@ export function MentionComposer({
   hasAttachments = false,
   pendingAttachments = [],
   onRemovePendingAttachment,
+  onInlineImagesInserted,
   footer,
   replyTo = null,
   onCancelReply,
@@ -620,10 +634,34 @@ export function MentionComposer({
     rememberSelection();
   };
 
+  const insertInlineImages = (files: readonly File[]) => {
+    const el = surfaceRef.current;
+    if (!el || files.length === 0) return false;
+    const inserts = buildInlineImageInserts(files);
+    if (inserts.length === 0) return false;
+    commitBeforeMutation();
+    insertRichTextHtmlFragment(
+      el,
+      inserts.map((item) => inlineImageBlockHtml(item)).join(""),
+    );
+    normalizeComposerFormatShells(el);
+    lastStableRef.current = readSnapshot();
+    refreshHistoryFlags();
+    emitMarkdownAndMention();
+    onInlineImagesInserted?.(inserts);
+    rememberSelection();
+    return true;
+  };
+
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
     event.preventDefault();
     const el = surfaceRef.current;
     if (!el) return;
+    const imageFiles = collectClipboardImageFiles(event.clipboardData);
+    if (imageFiles.length > 0) {
+      insertInlineImages(imageFiles);
+      return;
+    }
     commitBeforeMutation();
     const html = event.clipboardData?.getData("text/html") ?? "";
     const text = event.clipboardData?.getData("text/plain") ?? "";
@@ -635,6 +673,22 @@ export function MentionComposer({
     normalizeComposerFormatShells(el);
     lastStableRef.current = readSnapshot();
     emitMarkdownAndMention();
+  };
+
+  const handleSurfaceDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!event.dataTransfer?.types?.includes("Files")) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleSurfaceDrop = (event: DragEvent<HTMLDivElement>) => {
+    const files = event.dataTransfer?.files
+      ? Array.from(event.dataTransfer.files).filter(isComposerInlineImageFile)
+      : [];
+    if (files.length === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    insertInlineImages(files);
   };
 
   const handleSurfaceBlur = () => {
@@ -815,6 +869,8 @@ export function MentionComposer({
               emitMarkdownAndMention();
             }}
             onPaste={handlePaste}
+            onDragOver={handleSurfaceDragOver}
+            onDrop={handleSurfaceDrop}
             onKeyDown={handleKeyDown}
             onClick={() => {
               resetEmptySurface();
