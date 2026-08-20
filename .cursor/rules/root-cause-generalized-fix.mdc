@@ -30,6 +30,7 @@ Complementa: `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.
 | Rota X falha, Y ok | Regra transversal incompleta — não criar `ChatOperational{Rota}*` |
 | Fix só no MFE | Comportamento nasce na API — corrigir pipeline/metadata primeiro |
 | Flag só num perfil | Shape/contrato OpenAPI deveria disparar a regra para toda a família |
+| Overlay / toolbar cortada ou scroll fantasma | Abspos dentro de `overflow` scrollável; paliativo clip/padding — ver **`plugins-overlay-positioning.mdc`** |
 
 ## O que NÃO fazer
 
@@ -37,6 +38,7 @@ Complementa: `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.
 - Patch no componente React quando o `renderPlan` ou o prune da API está errado.
 - Duplicar dedup/prune entre `Send*` e `Stream*` ou entre API e MFE.
 - Entregar sem teste que cobre **pelo menos** um caso além do bug reportado (generalização).
+- «Resolver» corte de popover/toolbar com `overflow: clip`, padding-fantasma ou abspos no scroll — **`plugins-overlay-positioning.mdc`**.
 
 ## O que fazer
 

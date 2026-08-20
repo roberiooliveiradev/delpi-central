@@ -9,7 +9,7 @@ Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e
 
 ## Checklist obrigatório (nesta ordem)
 
-1. **Diretrizes Cursor** — consultar `development-standards-index.mdc` e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `plugins-reusable-components`, `centralized-rules-first`, etc.).
+1. **Diretrizes Cursor** — consultar `development-standards-index.mdc` (se existir) e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `plugins-reusable-components`, `plugins-overlay-positioning`, `centralized-rules-first`, etc.).
 2. **Inventário do existente** — mapear o que já há (kit `plugin-ui`, rotas, permissões, CSS, clones); preferir **estender** o módulo canônico a reinventar.
 3. **Pesquisa de mercado** — padrões/libs/UX de referência; travar P0 vs fora na tabela de decisões.
 4. **Fluxos** — diagramas mermaid (estados, happy path, erros) no corpo do plano.

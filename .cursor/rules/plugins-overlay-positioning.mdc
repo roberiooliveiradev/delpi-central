@@ -1,0 +1,70 @@
+---
+description: Overlays/toolbars/popovers — portal + coords (flip/clamp); proibir gambiarra CSS de clip/padding
+globs: plugins/**/*
+alwaysApply: true
+---
+
+# Overlays e toolbars flutuantes — posicionamento canônico
+
+## Princípio
+
+UI flutuante (toolbar de mensagem, menu, emoji picker, select, ribbon popover) **não** se “conserta” com CSS paliativo. **Sempre** usar o posicionamento inteligente do kit:
+
+```
+âncora (bolha/botão) → AnchoredPanelPortal | FixedPanelPortal
+                     → resolveAnchoredPanelCoords (flip + clamp + horizontalAlign)
+                     → createPortal(document.body) + portalScopeClassName do MFE
+```
+
+Complementa: `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `root-cause-generalized-fix.mdc`, `centralized-rules-first.mdc`.
+
+## Módulo canônico
+
+| Necessidade | Onde |
+|-------------|------|
+| Painel ancorado a um elemento | `AnchoredPanelPortal` + `useAnchoredPanelPosition` |
+| Painel em ponto (cursor) | `FixedPanelPortal` |
+| Flip / clamp viewport | `resolveAnchoredPanelCoords` (`preferredPlacement`, `allowFlip`, `horizontalAlign: start\|end`) |
+| Escopo CSS no body | `portalScopeClassName` (ex.: `dashboard-commercial`) |
+| Toolbar de mensagem | `MessageThreadActionsBar` (portal; não abspos na thread) |
+| Emoji / menções | `EmojiInsertMenu`, `MentionMenu` (já via portal) |
+
+Doc: `plugins/plugin-ui/docs/component-catalog.md` (collaboration / shape).
+
+## Anti-padrão (gambiarra) — proibido
+
+Incidente ago/2026 (Sala): toolbar de opções `position: absolute` + `translateY` / `bottom: 100%` dentro de `overflow-y: auto` → corte nas bordas; “fixes” com `overflow: clip`, `padding-top` fantasma na lista ou `transform` na barra — **infla scroll**, **corta popover**, **não generaliza**.
+
+| Gambiarra | Por quê é errado | Canônico |
+|-----------|------------------|----------|
+| `overflow: clip` / `hidden` no ancestral para “não vazar scroll” | Corta portal/filho e esconde UI | Portal no `body` + coords |
+| `padding-top` / margem falsa para “reservar” toolbar | Espaço morto; não resolve laterais nem flip | `resolveAnchoredPanelCoords` + `preferredPlacement` |
+| `position: absolute` + `transform` na toolbar dentro do scroll | Containing block + clip; scrollHeight fantasma | `AnchoredPanelPortal` (`position: fixed` medido) |
+| Largura fixa sem `max-width: min(…, 100vw − …)` | Estoura viewport em bolhas estreitas | Tamanho **ajustável** + clamp horizontal |
+| Recalcular `top/left` ad hoc no MFE / `getBoundingClientRect` solto | Duplica o kit; diverge do flip | Estender `anchoredPanelCoords` + teste |
+| `z-index` + abspos “por cima” sem portal | Continua sujeito ao overflow do host | Portal + `DELPI_UI_OVERLAY_Z_INDEX` |
+
+**⚠ Desvio de clean architecture:** paliativo de clip/padding/abspos para overlay → **canônico:** `AnchoredPanelPortal` / `resolveAnchoredPanelCoords` → **risco:** regressão de corte, scroll fantasma, UX inconsistente.
+
+## O que fazer
+
+1. Overlay novo ou bug de “cortou na borda” → **primeiro** portal + coords (estender `horizontalAlign` / placement se faltar).
+2. Superfície: `max-width: min(Nrem, calc(100vw - 1rem))` e `flex-wrap` quando couber — tamanho **fluido**, não corte duro.
+3. Hover com portal: abrir/fechar no host com delay; `onPanelMouseEnter` / `Leave` no portal (ponte de hover).
+4. Teste: coords (`anchoredPanelCoords.test.ts`) e/ou assertiva de que a barra **não** vive dentro do scroll host.
+5. Rebuild: fase `remote` (`plugin-ui`) antes do MFE.
+
+## O que NÃO fazer
+
+- Patch só no MFE (`index.css`) para overlay do kit.
+- Reintroduzir toolbar abspos no `MessageThread` / listas com scroll.
+- Inventar segundo motor de posicionamento (Floating UI paralelo) sem ADR — evoluir o canônico do kit.
+- Aceitar “só um padding resolve” em code review.
+
+## Checklist antes de merge (overlay / toolbar)
+
+- [ ] Flutua via `AnchoredPanelPortal` ou `FixedPanelPortal`?
+- [ ] Flip + clamp cobertos (ou teste de coords novo)?
+- [ ] Sem `overflow: clip` / padding-fantasma / abspos+transform no ancestral scrollável?
+- [ ] `portalScopeClassName` do MFE quando o painel vai ao `body`?
+- [ ] Tamanho com teto relativo ao viewport?

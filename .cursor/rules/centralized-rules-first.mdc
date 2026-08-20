@@ -27,6 +27,7 @@ alwaysApply: true
 | Veredito factual / coerência síntese LLM | `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService` (por `profileKey`) | Serviço `*RouteName*` ou `if path` em enrichment/quality |
 | Vazamento de instrução na síntese LLM | `llm_synthesis_delivery.json` + `ChatLlmSynthesisLeakGuardService` (finalize meta, operacional, web) | `ChatCapabilitiesLeak*`, `ChatOperationalLeak*`, filtro só no MFE, `if` no use case |
 | Prosa template vs lead `dataAnswer` | `presentation_profiles` → `dataAnswerLeadAlignment` + `ChatPresentationProseDeliveryService` | Heurística de markdown no `ChatRichPresentationTextService` |
+| Overlay / toolbar / popover (corte, scroll fantasma) | **`plugins-overlay-positioning.mdc`** → `AnchoredPanelPortal` + `resolveAnchoredPanelCoords` | `overflow: clip`, padding-fantasma, abspos+transform dentro de scroll |
 
 ## Desacoplamento vs. centralização
 
@@ -46,6 +47,7 @@ Ver definição completa: `presentation-operational-decoupling.mdc`.
 - Serviço `*CapabilitiesLeak*` / `*OperationalLeak*` / `*WebSearchLeak*` — usar `ChatLlmSynthesisLeakGuardService` + markers no JSON da família.
 - Novo `*_presenter.py` por rota ou entidade — usar `ChatSchemaDrivenPresentationService` (regra `schema-first-presentation-delivered.mdc`).
 - Fix só no agente ou só na UI quando o comportamento é transversal ao chat base.
+- Paliativo visual de overlay (`overflow: clip`, padding-fantasma, toolbar abspos no scroll) — ver **`plugins-overlay-positioning.mdc`**.
 
 ## O que fazer
 
@@ -60,3 +62,4 @@ Ver definição completa: `presentation-operational-decoupling.mdc`.
 - [ ] Existe um único ponto de verdade para a regra?
 - [ ] Nenhum consumidor novo bypassa o módulo canônico?
 - [ ] Teste de regressão cobre o bug que motivou a mudança?
+- [ ] Overlay/toolbar: sem clip/padding paliativo — **`plugins-overlay-positioning.mdc`**?

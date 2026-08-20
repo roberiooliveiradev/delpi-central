@@ -79,6 +79,10 @@ CSS de domínio no MFE só vale para elementos **não** providos pelo `plugin-ui
 ### Sintoma típico (anti-padrão documentado)
 
 Onda de poda remove CSS local **sem** dual-class/tokens → cards colados, loading «prateado» no escuro. **Correção:** tokens + CSS no kit; **jamais** recolocar CSS do componente no MFE.
+
+### Overlays / toolbars flutuantes (anti-padrão documentado — ago/2026)
+
+Toolbar abspos dentro de lista com `overflow-y: auto` + “fix” com `overflow: clip` / `padding-top` → corte e scroll fantasma. **Canônico:** `AnchoredPanelPortal` + `resolveAnchoredPanelCoords` — regra **`plugins-overlay-positioning.mdc`**.
 ---
 
 ## O que usar do pacote (hoje)

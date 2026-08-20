@@ -175,6 +175,7 @@ Ver regra dedicada **`plugins-reusable-components.mdc`** — resumo:
 - **Vazamento CSS:** `body`, `:root`, `*` global, classes sem `.dashboard-{nome}` — ver § Anti-vazamento CSS.
 - CSS global fora do root do plugin; estilos do template Vite (`#root { max-width: 1280px }`, etc.).
 - **CSS de componente do kit no MFE:** zero, em hipótese alguma — ver § CSS de `@delpi/plugin-ui`.
+- **Gambiarra de overlay:** `overflow: clip`, padding-fantasma ou abspos+transform para “não cortar” toolbar/menu — ver **`plugins-overlay-positioning.mdc`** (portal + coords).
 - Componentes com aparência Material/Ant/Bootstrap desalinhada do portal.
 - Gráficos com paleta aleatória, eixos `#64748b` fixos ou sem legenda/estado vazio no escuro.
 - Ignorar dark mode ou testar só em um tema.
