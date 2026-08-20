@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** **E7 + E8.S1–S3 entregues** (código + docs UX/API/DATA-MODEL/catálogo). Resta **E8.S4 verify** (smoke quando Docker voltar).  
+> **Status:** **roadmap concluído** (E1–E7 + E8.S1–S4). E8.S4 verify verde (grep CSS, vitest, pytest, vite build, rebuild sequencial).  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -525,16 +525,18 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - **Front (MFE commercial):** nenhum.
 - **Backend (commercial-api):** nenhum.
 
-### E8.S4 — Verify — custo M
+### E8.S4 — Verify — custo M ✅
 
 - **Front (plugin-ui / kit):** nenhum de produto salvo fix de regressão.
-- **Front (MFE commercial):** nenhum de produto salvo fix de regressão.
+- **Front (MFE commercial):** grep zero `.delpi-ui-` no CSS — removidos seletores kit em favoritos (`[role="menuitem"]`) e ROL (só `.cm-chart-view-shell`).
 - **Backend (commercial-api):** nenhum de produto salvo fix de regressão.
-- **Ops:** grep zero `.delpi-ui-` no CSS commercial; vitest kit + commercial; pytest commercial-api (rotas + testes de doc); `npx vite build` plugin-ui e commercial; sequential remote + mfe (+ api). Commit só se houver fix.
+- **Ops (2026-08-20):** grep zero `.delpi-ui-` no CSS commercial; vitest kit collaboration (114) + commercial interaction-rooms (81); pytest `test_interaction_*` + task-from-message (110) com `PYTHONPATH` shared; `npx vite build` plugin-ui e commercial; sequential `--fase remote --build plugin-ui` + `--fase mfe --build commercial`.
 
 ---
 
-## Critérios de pronto (implementação futura)
+## Critérios de pronto
+
+*(Verificados em E8.S4 — 2026-08-20.)*
 
 - Inbox + thread preenchem a altura abaixo do hero; composer colado no fundo da coluna **quando há sala**.
 - Sem conversa selecionada: lista em **tela cheia** abaixo do hero (sem split / empty).

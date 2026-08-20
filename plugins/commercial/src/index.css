@@ -1165,8 +1165,7 @@
   flex: 0 0 auto;
 }
 
-.dashboard-commercial .cm-rol-series > .cm-chart-view-shell,
-.dashboard-commercial .cm-rol-series > .delpi-ui-chart-view-shell {
+.dashboard-commercial .cm-rol-series > .cm-chart-view-shell {
   flex: 1 1 auto;
   min-width: 0;
 }
