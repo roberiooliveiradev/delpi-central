@@ -12,6 +12,8 @@ describe("INTERACTION_ROOMS_CONTENT", () => {
     expect(INTERACTION_ROOMS_CONTENT.formatUnderlineAriaLabel).toBe("Sublinhado");
     expect(INTERACTION_ROOMS_CONTENT.formatEmojiAriaLabel).toBe("Emoji");
     expect(INTERACTION_ROOMS_CONTENT.emojiMenuAriaLabel).toBe("Inserir emoji");
+    expect(INTERACTION_ROOMS_CONTENT.attachMaxCount).toBe(10);
+    expect(INTERACTION_ROOMS_CONTENT.attachMaxBytes).toBe(20 * 1024 * 1024);
   });
 });
 

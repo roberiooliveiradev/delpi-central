@@ -2,7 +2,7 @@ import { useState, type DragEvent, type ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
-export const CONVERSATION_FILE_DROP_MAX_BYTES = 10 * 1024 * 1024;
+export const CONVERSATION_FILE_DROP_MAX_BYTES = 20 * 1024 * 1024;
 
 export type ConversationFileDropLayerClassNames = {
   root: string;

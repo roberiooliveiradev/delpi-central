@@ -17,7 +17,10 @@
     "entityTypeUnknown": "Tipo de registro não reconhecido para a sala.",
     "messageDeletedForTask": "Não é possível criar tarefa a partir de mensagem removida.",
     "messageNotInRoom": "A mensagem não pertence a esta sala.",
-    "systemEventKindInvalid": "Tipo de evento de sistema inválido."
+    "systemEventKindInvalid": "Tipo de evento de sistema inválido.",
+    "bodyHtmlNotAllowed": "Envie o texto em markdown; HTML cru não é aceito.",
+    "attachmentTooLarge": "Cada arquivo pode ter no máximo {maxMb} MB.",
+    "attachmentLimitExceeded": "No máximo {max} arquivos por mensagem."
   },
   "messages": {
     "listRoomsOk": "Salas carregadas.",
@@ -88,6 +91,8 @@
     "taskRefMessageKind": "task_ref",
     "systemMessageKind": "system",
     "systemEventKinds": ["otd_event", "process_stage"],
-    "reservedMessageKinds": ["otd_event", "confirmation_event", "wall_post"]
+    "reservedMessageKinds": ["otd_event", "confirmation_event", "wall_post"],
+    "messageAttachmentMaxCount": 10,
+    "messageAttachmentMaxBytes": 20971520
   }
 }

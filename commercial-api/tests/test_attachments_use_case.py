@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
+
 from commercial_app.application.services.attachment_storage import AttachmentStorage
 from commercial_app.application.use_cases.manage_attachments import ManageAttachmentsUseCase
 from commercial_app.domain.entities.attachment import CommercialAttachment
@@ -266,6 +268,45 @@ def test_room_message_upload_uses_disk_subdir(tmp_path: Path) -> None:
         actor_user_id="u1",
     )
     assert [item.id for item in listed] == [uploaded.id]
+
+
+def test_room_message_rejects_eleventh_attachment(tmp_path: Path) -> None:
+    rooms = InMemoryInteractionRoomRepo()
+    messages = InMemoryInteractionMessageRepo()
+    room = _open_room(rooms)
+    posted = messages.create_message(
+        room_id=room.id,
+        author_user_id="u1",
+        message_kind="text",
+        body_text="anexo",
+    )
+    repo = _MemoryAttachments()
+    uc = ManageAttachmentsUseCase(
+        repository=repo,
+        storage=AttachmentStorage(base_dir=str(tmp_path)),
+        task_repository=_MemoryTasks(_task()),
+        rooms=rooms,
+        messages=messages,
+    )
+    for index in range(10):
+        uc.upload(
+            owner_type="room_message",
+            owner_id=str(posted.id),
+            original_name=f"f{index}.pdf",
+            content=b"%PDF",
+            mime_type="application/pdf",
+            uploaded_by_user_id="u1",
+        )
+    with pytest.raises(ValueError) as exc:
+        uc.upload(
+            owner_type="room_message",
+            owner_id=str(posted.id),
+            original_name="extra.pdf",
+            content=b"%PDF",
+            mime_type="application/pdf",
+            uploaded_by_user_id="u1",
+        )
+    assert "10" in str(exc.value)
 
 
 def test_room_message_rejects_invalid_owner_id(tmp_path: Path) -> None:

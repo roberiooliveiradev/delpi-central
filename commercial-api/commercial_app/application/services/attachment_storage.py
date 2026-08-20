@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from commercial_app.config import settings
+from commercial_app.domain.services.interaction_room_content_service import (
+    InteractionRoomContentService,
+)
 
 ALLOWED_ATTACHMENT_MIME_TYPES = {
     "application/pdf",
@@ -21,12 +24,30 @@ ALLOWED_ATTACHMENT_MIME_TYPES = {
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
-MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
+# Fallback se o JSON de settings não carregar (alinhado a messageAttachmentMaxBytes).
+MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
 _SAFE_PART = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 class AttachmentStorageError(ValueError):
     pass
+
+
+def attachment_max_bytes() -> int:
+    return max(
+        1,
+        InteractionRoomContentService.setting_int(
+            "messageAttachmentMaxBytes",
+            MAX_ATTACHMENT_BYTES,
+        ),
+    )
+
+
+def attachment_max_count() -> int:
+    return max(
+        1,
+        InteractionRoomContentService.setting_int("messageAttachmentMaxCount", 10),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,8 +67,15 @@ class AttachmentStorage:
     def validate_upload(self, *, mime_type: str | None, size_bytes: int) -> None:
         if size_bytes <= 0:
             raise AttachmentStorageError("Arquivo vazio.")
-        if size_bytes > MAX_ATTACHMENT_BYTES:
-            raise AttachmentStorageError("Arquivo excede o limite de 10 MB.")
+        limit = attachment_max_bytes()
+        if size_bytes > limit:
+            max_mb = max(1, limit // (1024 * 1024))
+            raise AttachmentStorageError(
+                InteractionRoomContentService.error(
+                    "attachmentTooLarge",
+                    maxMb=str(max_mb),
+                )
+            )
         normalized = (mime_type or "").lower().split(";")[0].strip()
         if normalized not in ALLOWED_ATTACHMENT_MIME_TYPES:
             raise AttachmentStorageError(

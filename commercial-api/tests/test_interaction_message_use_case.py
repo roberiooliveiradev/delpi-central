@@ -348,3 +348,33 @@ def test_post_requires_body() -> None:
         )
     )
     assert posted.body_text == "oi"
+
+
+def test_post_and_update_reject_raw_html() -> None:
+    rooms = InMemoryInteractionRoomRepo()
+    messages = InMemoryInteractionMessageRepo()
+    room = _open_room(rooms)
+    uc = ManageInteractionMessagesUseCase(rooms=rooms, messages=messages)
+    with pytest.raises(ValueError) as exc:
+        uc.post(
+            PostInteractionMessageInput(
+                room_id=room.id,
+                actor_user_id="u1",
+                body_text="<p>html</p>",
+            )
+        )
+    assert str(exc.value) == InteractionRoomContentService.error("bodyHtmlNotAllowed")
+    msg = uc.post(
+        PostInteractionMessageInput(
+            room_id=room.id,
+            actor_user_id="u1",
+            body_text="ok <u>sub</u>",
+        )
+    )
+    with pytest.raises(ValueError):
+        uc.update(
+            room_id=room.id,
+            message_id=msg.id,
+            actor_user_id="u1",
+            body_text="<div>x</div>",
+        )

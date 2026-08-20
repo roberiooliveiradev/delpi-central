@@ -16,6 +16,9 @@ from commercial_app.domain.ports.interaction_message_repository_port import (
 from commercial_app.domain.ports.interaction_room_repository_port import (
     InteractionRoomRepositoryPort,
 )
+from commercial_app.domain.services.interaction_message_body_policy_service import (
+    InteractionMessageBodyPolicyService,
+)
 from commercial_app.domain.services.interaction_mention_kinds_content_service import (
     InteractionMentionKindsContentService,
 )
@@ -101,6 +104,8 @@ class ManageInteractionMessagesUseCase:
         body = request.body_text if request.body_text is not None else ""
         if kind == "text" and not str(body).strip():
             raise ValueError(InteractionRoomContentService.error("bodyRequired"))
+        if kind == "text":
+            InteractionMessageBodyPolicyService.assert_markdown_body(str(body))
         if request.parent_id is not None:
             parent = self._messages.get_by_id(request.parent_id)
             if parent is None or parent.room_id != request.room_id:
@@ -135,6 +140,7 @@ class ManageInteractionMessagesUseCase:
             raise PermissionError(InteractionRoomContentService.error("notAuthor"))
         if not str(body_text or "").strip():
             raise ValueError(InteractionRoomContentService.error("bodyRequired"))
+        InteractionMessageBodyPolicyService.assert_markdown_body(str(body_text))
         updated = self._messages.update_body(
             message_id=message_id,
             body_text=body_text,

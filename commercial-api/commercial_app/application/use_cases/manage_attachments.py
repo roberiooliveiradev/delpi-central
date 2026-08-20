@@ -8,6 +8,7 @@ from uuid import UUID
 from commercial_app.application.services.attachment_storage import (
     AttachmentStorage,
     AttachmentStorageError,
+    attachment_max_count,
 )
 from commercial_app.domain.entities.attachment import CommercialAttachment
 from commercial_app.domain.entities.task import CommercialTask
@@ -179,6 +180,16 @@ class ManageAttachmentsUseCase:
         )
         kind = owner_type.strip().lower()
         oid = owner_id.strip()
+        if kind == "room_message":
+            existing = self._repo.list_for_owner(owner_type=kind, owner_id=oid)
+            limit = attachment_max_count()
+            if len(existing) >= limit:
+                raise ValueError(
+                    InteractionRoomContentService.error(
+                        "attachmentLimitExceeded",
+                        max=str(limit),
+                    )
+                )
         try:
             stored = self._storage.save(
                 owner_type=kind,

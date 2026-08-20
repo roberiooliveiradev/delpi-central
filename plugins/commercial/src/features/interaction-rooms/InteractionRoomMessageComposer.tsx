@@ -18,6 +18,10 @@ import {
   writeComposerDraftFiles,
   writeComposerDraftText,
 } from "./interactionRoomComposerDraftStorage";
+import {
+  gatePendingAttachments,
+  interactionMessageLooksLikeRawHtml,
+} from "./interactionMessageAttachmentGate";
 import type { InteractionMentionHit } from "./mentionSuggestAdapter";
 import { useInteractionMentionSuggest } from "./useInteractionMentionSuggest";
 
@@ -103,16 +107,24 @@ export function InteractionRoomMessageComposer({
     void writeComposerDraftFiles(roomId, pending);
   }, [roomId, pending, draftHydrated]);
 
-  const onFilesSelected = useCallback((files: File[]) => {
-    if (!files.length) return;
-    setPending((prev) => [
-      ...prev,
-      ...files.map((file) => ({
-        id: `pending-${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
-        file,
-      })),
-    ]);
-  }, []);
+  const onFilesSelected = useCallback(
+    (files: File[]) => {
+      if (!files.length) return;
+      const gated = gatePendingAttachments(pending.length, files);
+      if (!gated.ok) {
+        onError(gated.message);
+        return;
+      }
+      setPending((prev) => [
+        ...prev,
+        ...gated.files.map((file) => ({
+          id: `pending-${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+          file,
+        })),
+      ]);
+    },
+    [pending.length, onError],
+  );
 
   useEffect(() => {
     onAddFilesReady?.(onFilesSelected);
@@ -127,6 +139,10 @@ export function InteractionRoomMessageComposer({
     setSubmitting(true);
     try {
       const bodyText = body || content.attachmentOnlyBody;
+      if (interactionMessageLooksLikeRawHtml(bodyText)) {
+        onError(content.bodyHtmlRejected);
+        return;
+      }
       const mentions = takeMentionsForBody(bodyText);
       const created = await postInteractionMessage(id, {
         body_text: bodyText,
@@ -161,6 +177,7 @@ export function InteractionRoomMessageComposer({
     disabled,
     content.attachmentOnlyBody,
     content.attachUploadError,
+    content.bodyHtmlRejected,
     content.roomSendError,
     takeMentionsForBody,
     resetMentions,
