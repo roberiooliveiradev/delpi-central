@@ -214,6 +214,8 @@ describe("MentionComposer", () => {
     expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
+    expect(source).not.toMatch(/setInlineImageFigureAlign/);
+    expect(source).toMatch(/applyRichTextAlign\(el,/);
     expect(source).toMatch(/HintAction/);
 
     document.execCommand = vi.fn().mockReturnValue(true);

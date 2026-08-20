@@ -111,12 +111,9 @@ import {
   buildInlineImageInserts,
   collectClipboardImageFiles,
   ensureInlineImageCaretAnchors,
-  findInlineImageFigureFromSelection,
   INLINE_IMAGE_FIGURE_SELECTOR,
   inlineImageBlockHtml,
   isComposerInlineImageFile,
-  readInlineImageFigureAlign,
-  setInlineImageFigureAlign,
   type MentionComposerInlineImageInsert,
 } from "./mentionComposerInlineImage";
 
@@ -668,14 +665,8 @@ export function MentionComposer({
     if (!el) return;
     restoreSelectionForMutation();
     commitBeforeMutation();
-    const figure = findInlineImageFigureFromSelection(el);
-    if (figure) {
-      setInlineImageFigureAlign(figure, align);
-      setAlignActive(align);
-    } else {
-      applyRichTextAlign(el, align);
-      setAlignActive(align);
-    }
+    applyRichTextAlign(el, align);
+    setAlignActive(queryRichTextAlign(el) ?? align);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
     emitMarkdownAndMention();
