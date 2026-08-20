@@ -32,6 +32,12 @@ turndown.addRule("inlineFontSize", {
   },
 });
 
+/** Sublinhado não tem marcador GFM — persiste como HTML inline no markdown. */
+turndown.addRule("underline", {
+  filter: (node) => node.nodeName === "U",
+  replacement: (content) => `<u>${content}</u>`,
+});
+
 const MD_LINE_HINT =
   /^(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|~~~|\|.+\||-{3,}|\*{3,}|_{3,})/;
 const MD_INLINE_HINT = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\[[^\]]+\]\([^)]+\))/;
@@ -66,7 +72,7 @@ export function clipboardHasUsefulHtml(html: string | undefined | null): boolean
     .replace(/<\/?(?:html|body|head|meta|fragment|span)(?:\s[^>]*)?>/gi, " ")
     .replace(/<br\s*\/?>/gi, " ")
     .trim();
-  return /<(?:p|div|table|ul|ol|li|h[1-6]|b|i|strong|em|a|blockquote|pre|code|tr|td|th)\b/i.test(
+  return /<(?:p|div|table|ul|ol|li|h[1-6]|b|i|strong|em|u|s|a|blockquote|pre|code|tr|td|th)\b/i.test(
     stripped,
   );
 }

@@ -13,6 +13,7 @@ export const COMPOSER_FORMAT_KINDS = [
   "bold",
   "italic",
   "strike",
+  "underline",
   "ul",
   "ol",
   "code",
@@ -28,6 +29,7 @@ const SELECTOR: Record<ComposerFormatKind, string | null> = {
   bold: "strong, b",
   italic: "em, i",
   strike: "s, strike, del",
+  underline: "u",
   ul: "ul",
   ol: "ol",
   code: "code",
@@ -39,20 +41,23 @@ const WRAP_TAG: Partial<Record<ComposerFormatKind, string>> = {
   bold: "strong",
   italic: "em",
   strike: "s",
+  underline: "u",
   code: "code",
 };
 
-/** B/I/S → execCommand nativo (toggle Word/Teams no trecho expandido). */
+/** Inline via execCommand quando a seleção está expandida. */
 const EXEC_TOGGLE: Partial<Record<ComposerFormatKind, string>> = {
   bold: "bold",
   italic: "italic",
   strike: "strikeThrough",
+  underline: "underline",
 };
 
 const INLINE_TOGGLE_KINDS = new Set<ComposerFormatKind>([
   "bold",
   "italic",
   "strike",
+  "underline",
   "code",
 ]);
 
@@ -61,6 +66,7 @@ export function emptyComposerFormatFlags(): ComposerFormatFlags {
     bold: false,
     italic: false,
     strike: false,
+    underline: false,
     ul: false,
     ol: false,
     code: false,
@@ -110,6 +116,7 @@ export function queryComposerFormatFlags(editor: HTMLElement | null): ComposerFo
     bold: isInside(editor, SELECTOR.bold!) || queryRichTextCommandState("bold"),
     italic: isInside(editor, SELECTOR.italic!) || queryRichTextCommandState("italic"),
     strike: isInside(editor, SELECTOR.strike!) || queryRichTextCommandState("strikeThrough"),
+    underline: isInside(editor, SELECTOR.underline!) || queryRichTextCommandState("underline"),
     ul: isInside(editor, SELECTOR.ul!) || queryRichTextCommandState("insertUnorderedList"),
     ol: isInside(editor, SELECTOR.ol!) || queryRichTextCommandState("insertOrderedList"),
     code: isInside(editor, SELECTOR.code!),
@@ -292,12 +299,12 @@ function selectionIsCollapsed(editor: HTMLElement): boolean {
 }
 
 /**
- * B/I/S/code com caret: liga estilo de digitação ou sai sem apagar o trecho.
- * Com seleção expandida: execCommand (B/I/S) ou wrap/unwrap.
+ * B/I/S/U/code com caret: liga estilo de digitação ou sai sem apagar o trecho.
+ * Com seleção expandida: execCommand ou wrap/unwrap.
  */
 function toggleInlineFormat(
   editor: HTMLElement,
-  kind: "bold" | "italic" | "strike" | "code",
+  kind: "bold" | "italic" | "strike" | "underline" | "code",
 ): void {
   const selector = SELECTOR[kind]!;
   const tag = WRAP_TAG[kind]!;
@@ -330,7 +337,10 @@ function toggleInlineFormat(
  */
 export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKind): void {
   if (INLINE_TOGGLE_KINDS.has(kind)) {
-    toggleInlineFormat(editor, kind as "bold" | "italic" | "strike" | "code");
+    toggleInlineFormat(
+      editor,
+      kind as "bold" | "italic" | "strike" | "underline" | "code",
+    );
     return;
   }
 

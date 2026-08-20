@@ -210,6 +210,7 @@ export function InteractionRoomMessageComposer({
         formatBoldAriaLabel: content.formatBoldAriaLabel,
         formatItalicAriaLabel: content.formatItalicAriaLabel,
         formatStrikeAriaLabel: content.formatStrikeAriaLabel,
+        formatUnderlineAriaLabel: content.formatUnderlineAriaLabel,
         formatListAriaLabel: content.formatListAriaLabel,
         formatOrderedListAriaLabel: content.formatOrderedListAriaLabel,
         formatCodeAriaLabel: content.formatCodeAriaLabel,

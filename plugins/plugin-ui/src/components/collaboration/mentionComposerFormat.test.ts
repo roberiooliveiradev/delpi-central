@@ -130,12 +130,13 @@ describe("toggleComposerFormat", () => {
     editor.remove();
   });
 
-  it("caret no fim de italic/strike/code: desativar preserva o trecho", () => {
+  it("caret no fim de italic/strike/underline/code: desativar preserva o trecho", () => {
     document.execCommand = vi.fn().mockReturnValue(true);
-    for (const [kind, htmlTag, selector] of [
-      ["italic", "em", "em, i"],
-      ["strike", "s", "s, strike, del"],
-      ["code", "code", "code"],
+    for (const [kind, htmlTag] of [
+      ["italic", "em"],
+      ["strike", "s"],
+      ["underline", "u"],
+      ["code", "code"],
     ] as const) {
       const editor = document.createElement("div");
       editor.innerHTML = `<${htmlTag}>trecho</${htmlTag}>`;
@@ -148,6 +149,20 @@ describe("toggleComposerFormat", () => {
       expect(queryComposerFormatFlags(editor)[kind]).toBe(false);
       editor.remove();
     }
+  });
+
+  it("liga e desliga sublinhado no trecho", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const editor = document.createElement("div");
+    editor.textContent = "sub";
+    document.body.appendChild(editor);
+    selectAll(editor);
+    toggleComposerFormat(editor, "underline");
+    expect(editor.innerHTML.toLowerCase()).toMatch(/<u\b/);
+    selectAll(editor);
+    toggleComposerFormat(editor, "underline");
+    expect(editor.innerHTML.toLowerCase()).not.toMatch(/<u\b/);
+    editor.remove();
   });
 
   it("liga e desliga italic e strike", () => {

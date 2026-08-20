@@ -67,6 +67,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   formatBoldAriaLabel: "Negrito",
   formatItalicAriaLabel: "Itálico",
   formatStrikeAriaLabel: "Riscado",
+  formatUnderlineAriaLabel: "Sublinhado",
   formatListAriaLabel: "Lista",
   formatOrderedListAriaLabel: "Lista numerada",
   formatCodeAriaLabel: "Código",

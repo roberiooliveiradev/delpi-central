@@ -11,6 +11,7 @@ import {
   SendHorizontal,
   Strikethrough,
   Type,
+  Underline,
   Undo2,
 } from "lucide-react";
 import {
@@ -110,6 +111,7 @@ export type MentionComposerLabels = {
   formatBoldAriaLabel?: string;
   formatItalicAriaLabel?: string;
   formatStrikeAriaLabel?: string;
+  formatUnderlineAriaLabel?: string;
   formatListAriaLabel?: string;
   formatOrderedListAriaLabel?: string;
   formatCodeAriaLabel?: string;
@@ -437,6 +439,7 @@ export function MentionComposer({
     };
     if (key === "b" && !event.shiftKey) return run("bold");
     if (key === "i" && !event.shiftKey) return run("italic");
+    if (key === "u" && !event.shiftKey) return run("underline");
     if (key === "x" && event.shiftKey) return run("strike");
     if (key === "`" || (key === "e" && !event.shiftKey)) return run("code");
     if (key === "8" && event.shiftKey) return run("ul");
@@ -689,6 +692,7 @@ export function MentionComposer({
                 ["bold", labels.formatBoldAriaLabel ?? "Bold", Bold],
                 ["italic", labels.formatItalicAriaLabel ?? "Italic", Italic],
                 ["strike", labels.formatStrikeAriaLabel ?? "Strikethrough", Strikethrough],
+                ["underline", labels.formatUnderlineAriaLabel ?? "Underline", Underline],
                 ["ul", labels.formatListAriaLabel ?? "List", List],
                 ["ol", labels.formatOrderedListAriaLabel ?? "Numbered list", ListOrdered],
                 ["code", labels.formatCodeAriaLabel ?? "Code", Code],

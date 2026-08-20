@@ -59,6 +59,12 @@ describe("markdownToRichTextHtml / richTextHtmlToMarkdown", () => {
     expect(markdownToRichTextHtml(md)).toMatch(/font-size:\s*18px/);
   });
 
+  it("preserva sublinhado <u> no round-trip markdown", () => {
+    const md = richTextHtmlToMarkdown("<p><u>hi</u></p>");
+    expect(md).toContain("<u>hi</u>");
+    expect(markdownToRichTextHtml(md)).toContain("<u>");
+  });
+
   it("vazio vira parágrafo mínimo / string vazia", () => {
     expect(markdownToRichTextHtml("")).toBe("<p></p>");
     expect(richTextHtmlToMarkdown("<p></p>")).toBe("");
