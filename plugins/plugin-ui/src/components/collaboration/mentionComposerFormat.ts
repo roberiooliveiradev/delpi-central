@@ -111,11 +111,6 @@ export function queryComposerFormatFlags(editor: HTMLElement | null): ComposerFo
   };
 }
 
-function unwrapClosest(editor: HTMLElement, selector: string): void {
-  const hit = matchingFormatElement(editor, selector);
-  if (hit) unwrapRichTextElement(hit);
-}
-
 function stripMatchingTags(root: Node, selector: string): void {
   if (root instanceof Element && root.matches?.(selector)) {
     const parent = root.parentNode;
@@ -148,14 +143,63 @@ export function unwrapFormatInSelection(editor: HTMLElement, selector: string): 
     unwrapRichTextElement(hit);
     return;
   }
-  const frag = range.extractContents();
-  stripMatchingTags(frag, selector);
-  range.insertNode(frag);
-  selection.removeAllRanges();
-  try {
-    selection.addRange(range);
-  } catch {
-    /* range pode ter invalidado após extract/insert */
+
+  // Blockquote (bloco): unwrap integral — split parcial não faz sentido tipográfico.
+  if (hit.tagName.toLowerCase() === "blockquote") {
+    unwrapRichTextElement(hit);
+    return;
+  }
+
+  const beforeRange = document.createRange();
+  beforeRange.selectNodeContents(hit);
+  beforeRange.setEnd(range.startContainer, range.startOffset);
+
+  const afterRange = document.createRange();
+  afterRange.selectNodeContents(hit);
+  afterRange.setStart(range.endContainer, range.endOffset);
+
+  const beforeFrag = beforeRange.cloneContents();
+  const midFrag = range.cloneContents();
+  stripMatchingTags(midFrag, selector);
+  const afterFrag = afterRange.cloneContents();
+
+  const parent = hit.parentNode;
+  if (!parent) return;
+
+  const tag = hit.tagName;
+  const makeTagged = (frag: DocumentFragment): HTMLElement | null => {
+    if (!frag.hasChildNodes()) return null;
+    const el = document.createElement(tag);
+    el.appendChild(frag);
+    return el;
+  };
+
+  const beforeEl = makeTagged(beforeFrag);
+  const afterEl = makeTagged(afterFrag);
+  const midNodes = Array.from(midFrag.childNodes);
+
+  const inserted: Node[] = [];
+  if (beforeEl) {
+    parent.insertBefore(beforeEl, hit);
+    inserted.push(beforeEl);
+  }
+  for (const node of midNodes) {
+    parent.insertBefore(node, hit);
+    inserted.push(node);
+  }
+  if (afterEl) {
+    parent.insertBefore(afterEl, hit);
+    inserted.push(afterEl);
+  }
+  parent.removeChild(hit);
+
+  const midStart = beforeEl ? 1 : 0;
+  const midNode = inserted[midStart];
+  if (midNode) {
+    const sel = document.createRange();
+    sel.selectNodeContents(midNode);
+    selection.removeAllRanges();
+    selection.addRange(sel);
   }
 }
 
