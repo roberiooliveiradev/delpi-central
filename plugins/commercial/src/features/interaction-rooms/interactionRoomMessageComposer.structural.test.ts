@@ -23,6 +23,9 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/useInteractionMentionSuggest/);
     expect(source).toMatch(/onMentionQueryChange/);
     expect(source).toMatch(/formatToggleAriaLabel:/);
+    expect(source).toMatch(/readComposerDraftText/);
+    expect(source).toMatch(/writeComposerDraftFiles/);
+    expect(source).toMatch(/clearComposerDraft/);
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);

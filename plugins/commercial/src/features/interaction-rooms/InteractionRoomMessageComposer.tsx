@@ -11,6 +11,13 @@ import {
   CommercialMentionComposer,
 } from "../../app/commercialUi";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import {
+  clearComposerDraft,
+  readComposerDraftFiles,
+  readComposerDraftText,
+  writeComposerDraftFiles,
+  writeComposerDraftText,
+} from "./interactionRoomComposerDraftStorage";
 import type { InteractionMentionHit } from "./mentionSuggestAdapter";
 import { useInteractionMentionSuggest } from "./useInteractionMentionSuggest";
 
@@ -31,7 +38,8 @@ type Props = {
 };
 
 /**
- * Composer da sala: MentionComposer + FileDropzone (owner_type=room_message após POST).
+ * Composer da sala: MentionComposer + anexos (owner_type=room_message após POST).
+ * Rascunho (texto + arquivos) sobrevive a F5 por roomId.
  */
 export function InteractionRoomMessageComposer({
   roomId,
@@ -41,8 +49,9 @@ export function InteractionRoomMessageComposer({
   onAddFilesReady,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(() => readComposerDraftText(roomId));
   const [pending, setPending] = useState<PendingFile[]>([]);
+  const [draftHydrated, setDraftHydrated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const {
     hits,
@@ -68,6 +77,31 @@ export function InteractionRoomMessageComposer({
       })),
     [pending],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    setDraft(readComposerDraftText(roomId));
+    setPending([]);
+    setDraftHydrated(false);
+    void readComposerDraftFiles(roomId).then((files) => {
+      if (cancelled) return;
+      setPending(files);
+      setDraftHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!draftHydrated) return;
+    writeComposerDraftText(roomId, draft);
+  }, [roomId, draft, draftHydrated]);
+
+  useEffect(() => {
+    if (!draftHydrated) return;
+    void writeComposerDraftFiles(roomId, pending);
+  }, [roomId, pending, draftHydrated]);
 
   const onFilesSelected = useCallback((files: File[]) => {
     if (!files.length) return;
@@ -102,6 +136,7 @@ export function InteractionRoomMessageComposer({
       setDraft("");
       setPending([]);
       resetMentions();
+      void clearComposerDraft(id);
       onMessageCreated(created);
 
       for (const item of files) {
