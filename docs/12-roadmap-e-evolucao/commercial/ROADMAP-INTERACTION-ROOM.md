@@ -560,9 +560,13 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - Documentação alinhada ao entregue: WF-SALA, § 3.21, DATA-MODEL `body_text`, README commercial + commercial-api, catálogo kit; testes `test_interaction_rooms_*_doc.py` verdes.
 - Cada etapa E1–E7 fechada com containers atualizados, erros corrigidos e push **antes** da etapa seguinte.
 
+## Apêndice — imagens anexo + coladas no caret (ago/2026)
+
+Dois caminhos: **clip/drop-thread** → thumbs + `belowBody`; **colar/drop na superfície** → bloco no caret → `attachment:pending:` → upload → PATCH `attachment:{uuid}`. Policy rejeita `http(s)|data|blob` em `![]()`. Dedup: id no body não aparece de novo na strip.
+
 ## Fora do escopo
 
-Virtualização, typing, presence, rascunho em localStorage, emoji-mart/GIF, editar anexos de mensagem já enviada, paginação de mensagens antigas, date separators, painel embutido da ficha (`InteractionRoomPanel`) além do que já herda o kit, api-delpi, patch MF, rebuild de todos os MFEs, mudar TopBar/`PageHero` globais, restyle profundo de `EntityUnfurlCard`, mover `CustomerAvatar` para o kit, headings/tabelas/cor no chat, Loop do Teams, aba Preview estilo GitHub, coluna HTML no banco, prévia tela cheia estilo WhatsApp, bandeja única estilo Slack para imagem+pdf.
+Virtualização, typing, presence, emoji-mart/GIF, paginação de mensagens antigas, date separators, api-delpi, patch MF, rebuild de todos os MFEs, mudar TopBar/`PageHero` globais, restyle profundo de `EntityUnfurlCard`, mover `CustomerAvatar` para o kit, headings/tabelas/cor no chat, Loop do Teams, aba Preview estilo GitHub, coluna HTML no banco, prévia tela cheia estilo WhatsApp, bandeja única estilo Slack para imagem+pdf, `![](https://…)`, float mid-palavra.
 
 ## Impacto
 
