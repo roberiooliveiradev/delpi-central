@@ -92,6 +92,13 @@ class ExternalActionScoreGapClarificationService:
         if gap > cls.max_absolute_gap():
             return None
 
+        # Empate só semântico (sem overlap lexical real) → ruído de embedding.
+        # Ex.: «Responda apenas: KIMI_OK» empatava rotas playbook_report.
+        lexical_a = bool(top.get("selectionLexicalMatched"))
+        lexical_b = bool(rival.get("selectionLexicalMatched"))
+        if not lexical_a and not lexical_b:
+            return None
+
         label_a = cls._label(top)
         label_b = cls._label(rival)
         operation_a = str(top.get("operationId") or top.get("actionId") or "").strip()

@@ -8,6 +8,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.external_actions.external_action_manifest_text_service import (
     ExternalActionManifestTextService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionSelectionSupportService:
@@ -75,7 +78,9 @@ class ExternalActionSelectionSupportService:
                 allowed_action_ids=allowed_action_ids,
             )
             if ranked and any(action.get("selectionScore") is not None for action in ranked):
-                return ranked
+                # Sempre anota overlap lexical (não reordena) — score-gap e execute
+                # precisam distinguir empate semântico com evidência lexical real.
+                return self.ensure_lexical_ranking(message, ranked)
             return self.ensure_lexical_ranking(message, ranked or candidates)
 
         return self.ensure_lexical_ranking(message, candidates)
@@ -94,6 +99,7 @@ class ExternalActionSelectionSupportService:
                 lexical = cls.lexical_overlap_score(message, row)
                 if lexical > 0:
                     row["selectionLexicalMatched"] = True
+                    row["selectionLexicalScore"] = round(lexical, 4)
                 scored.append(row)
             return scored
 
@@ -104,6 +110,7 @@ class ExternalActionSelectionSupportService:
             row["selectionScore"] = round(lexical, 4)
             if lexical > 0:
                 row["selectionLexicalMatched"] = True
+                row["selectionLexicalScore"] = round(lexical, 4)
                 row["selectionReason"] = row.get("selectionReason") or ""
             scored.append((lexical, row))
 
@@ -118,24 +125,81 @@ class ExternalActionSelectionSupportService:
         return [row for score, row in scored if score > 0]
 
     @classmethod
+    def _lexical_settings(cls) -> dict:
+        node = ExternalActionResponseContentService.get_node(
+            "actionSelection",
+            "lexicalOverlap",
+        )
+        if not isinstance(node, dict):
+            node = {}
+
+        try:
+            min_token_len = int(node.get("minTokenLength", 3))
+        except (TypeError, ValueError):
+            min_token_len = 3
+
+        stopwords_raw = node.get("stopwords") or []
+        stopwords = {
+            str(item).strip().lower()
+            for item in stopwords_raw
+            if str(item).strip()
+        }
+
+        return {
+            "minTokenLength": max(2, min_token_len),
+            "stopwords": stopwords,
+        }
+
+    @classmethod
+    def _tokenize_for_lexical(cls, text: str, *, min_token_len: int) -> list[str]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+        if not normalized:
+            return []
+
+        raw = (
+            normalized.replace("/", " ")
+            .replace("-", " ")
+            .replace("_", " ")
+            .replace("=", " ")
+            .replace("|", " ")
+            .replace(";", " ")
+            .replace(":", " ")
+            .replace(",", " ")
+            .replace(".", " ")
+            .replace("«", " ")
+            .replace("»", " ")
+        )
+        return [
+            token
+            for token in raw.split()
+            if len(token) >= min_token_len
+        ]
+
+    @classmethod
     def lexical_overlap_score(cls, message: str, action: dict) -> float:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        settings = cls._lexical_settings()
+        min_len = int(settings["minTokenLength"])
+        stopwords = settings["stopwords"]
+
         tokens = [
             token
-            for token in normalized.replace("/", " ").replace("-", " ").replace("_", " ").split()
-            if len(token) >= 2
+            for token in cls._tokenize_for_lexical(message, min_token_len=min_len)
+            if token not in stopwords
         ]
         if not tokens:
             return 0.0
 
-        haystack = ChatMessageNormalizationService.normalize_for_matching(
-            ExternalActionManifestTextService.build(action).lower()
+        haystack = ExternalActionManifestTextService.build_for_lexical(action)
+        hay_tokens = set(
+            cls._tokenize_for_lexical(haystack, min_token_len=min_len)
         )
+        if not hay_tokens:
+            return 0.0
 
         hits = 0.0
         for token in tokens:
-            if token in haystack:
-                # Tokens mais específicos pesam mais.
+            # Match por token inteiro — nunca substring (evita ok∈playbook).
+            if token in hay_tokens:
                 hits += 1.0 + min(len(token), 12) * 0.05
         return hits
 

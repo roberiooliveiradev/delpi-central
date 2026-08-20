@@ -19,6 +19,7 @@ def test_score_gap_clarifies_when_top_two_close():
             "summary": "OTD detalhe",
             "path": "/production/otd",
             "selectionScore": 0.51,
+            "selectionLexicalMatched": True,
         },
         {
             "actionId": "a2",
@@ -26,6 +27,7 @@ def test_score_gap_clarifies_when_top_two_close():
             "summary": "OEE detalhe",
             "path": "/production/oee",
             "selectionScore": 0.49,
+            "selectionLexicalMatched": True,
         },
     ]
 
@@ -37,6 +39,75 @@ def test_score_gap_clarifies_when_top_two_close():
     )
     assert "OTD" in clarification["arguments"]["directAnswer"]
     assert clarification["arguments"]["scoreGap"] <= 0.05
+
+
+def test_score_gap_skips_semantic_tie_without_lexical_like_kimi_ok():
+    """Empate semântico sem overlap lexical real → não abrir «rotas próximas»."""
+    ranked = [
+        {
+            "actionId": "a1",
+            "operationId": "get_production_orders_finished_without_consumption",
+            "summary": "OPs finalizadas sem consumo de componentes",
+            "selectionScore": 0.47,
+        },
+        {
+            "actionId": "a2",
+            "operationId": "get_refugos_health",
+            "summary": "Indicador — Refugos health",
+            "selectionScore": 0.44,
+        },
+    ]
+
+    assert ExternalActionScoreGapClarificationService.maybe_build(ranked) is None
+
+
+def test_lexical_ok_token_does_not_match_playbook_shape():
+    """Regressão: «ok» de KIMI_OK não pode casar substring em playbook_report."""
+    from app.application.services.external_actions.external_action_selection_support_service import (
+        ExternalActionSelectionSupportService,
+    )
+
+    action = {
+        "method": "GET",
+        "path": "/production/orders/finished-without-consumption",
+        "summary": "OPs finalizadas sem consumo de componentes",
+        "operationId": "get_production_orders_finished_without_consumption",
+        "delpiMetadata": {"entity": "production_orders", "shape": "playbook_report"},
+        "parametersSchema": [
+            {
+                "name": "branch",
+                "description": "Branch scope: all (no branch filter)",
+                "schema": {"enum": ["all", "01", "02"]},
+            }
+        ],
+    }
+
+    score = ExternalActionSelectionSupportService.lexical_overlap_score(
+        "Responda apenas: KIMI_OK",
+        action,
+    )
+    assert score == 0.0
+
+
+def test_lexical_overlap_matches_otd_whole_token():
+    from app.application.services.external_actions.external_action_selection_support_service import (
+        ExternalActionSelectionSupportService,
+    )
+
+    action = {
+        "method": "GET",
+        "path": "/production/otd",
+        "summary": "OTD produção",
+        "operationId": "get_production_otd",
+        "delpiMetadata": {"shape": "playbook_report"},
+    }
+
+    score = ExternalActionSelectionSupportService.lexical_overlap_score(
+        "mostrar otd de produção",
+        action,
+    )
+    assert score > 0
+
 
 
 def test_score_gap_skips_when_gap_large():

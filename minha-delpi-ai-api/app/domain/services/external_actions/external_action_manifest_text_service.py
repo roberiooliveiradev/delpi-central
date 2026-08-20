@@ -72,6 +72,103 @@ class ExternalActionManifestTextService:
         return text[:max_chars] if max_chars > 0 else text
 
     @classmethod
+    def build_for_lexical(cls, action: dict | None) -> str:
+        """Texto enxuto para overlap lexical (sem prosa EN de params/shape).
+
+        Evita falso positivo: token ``ok`` de «KIMI_OK» dentro de ``playbook_report``,
+        ou ``get``/``no``/``all`` em descrições OpenAPI genéricas.
+        """
+        if not isinstance(action, dict):
+            return ""
+
+        settings = cls._settings()
+        parts: list[str] = []
+
+        path = str(action.get("path") or "").strip()
+        if path:
+            parts.append(path)
+
+        summary = str(action.get("summary") or "").strip()
+        if summary:
+            parts.append(summary)
+
+        description = str(action.get("description") or "").strip()
+        if description:
+            parts.append(description)
+
+        operation_id = str(
+            action.get("operationId") or action.get("operation_id") or ""
+        ).strip()
+        if operation_id:
+            parts.append(operation_id)
+
+        tags = action.get("tags") or []
+        if isinstance(tags, list):
+            tag_text = " ".join(str(item).strip() for item in tags if str(item).strip())
+        else:
+            tag_text = str(tags).strip()
+        if tag_text:
+            parts.append(tag_text)
+
+        when_to_use = str(
+            action.get("whenToUse") or action.get("when_to_use") or ""
+        ).strip()
+        if when_to_use:
+            parts.append(when_to_use)
+
+        # Só nomes de params + enums (não description em inglês).
+        for chunk in cls._parameter_lexical_tokens(action, settings):
+            parts.append(chunk)
+
+        delpi = action.get("delpiMetadata")
+        if delpi is None:
+            delpi = action.get("delpi_metadata")
+        if isinstance(delpi, dict):
+            entity = str(delpi.get("entity") or "").strip()
+            if entity:
+                parts.append(entity)
+
+        text = " ".join(part for part in parts if part)
+        max_chars = int(settings["maxChars"])
+        return text[:max_chars] if max_chars > 0 else text
+
+    @classmethod
+    def _parameter_lexical_tokens(
+        cls,
+        action: dict,
+        settings: dict[str, Any],
+    ) -> list[str]:
+        schema = action.get("parametersSchema")
+        if schema is None:
+            schema = action.get("parameters_schema")
+        if not isinstance(schema, list):
+            return []
+
+        tokens: list[str] = []
+        max_params = int(settings["maxParameters"])
+        max_enums = int(settings["maxEnumValues"])
+
+        for param in schema:
+            if len(tokens) >= max_params:
+                break
+            if not isinstance(param, dict):
+                continue
+
+            name = str(param.get("name") or "").strip()
+            if name:
+                tokens.append(name)
+
+            schema_node = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+            enum_values = schema_node.get("enum") if isinstance(schema_node, dict) else None
+            if isinstance(enum_values, list) and enum_values:
+                for item in enum_values[:max_enums]:
+                    value = str(item).strip()
+                    if value:
+                        tokens.append(value)
+
+        return tokens
+
+    @classmethod
     def _settings(cls) -> dict[str, Any]:
         node = ExternalActionResponseContentService.get_node(
             "actionSelection",

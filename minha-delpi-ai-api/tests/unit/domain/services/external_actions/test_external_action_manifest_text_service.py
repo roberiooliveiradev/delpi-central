@@ -87,4 +87,34 @@ def test_lexical_overlap_uses_manifest_enums():
         action,
     )
     assert score > 0
-    assert "late" in ExternalActionManifestTextService.build(action)
+    lexical_text = ExternalActionManifestTextService.build_for_lexical(action)
+    assert "late" in lexical_text
+    assert "playbook" not in lexical_text
+
+
+def test_build_for_lexical_excludes_shape_playbook():
+    text = ExternalActionManifestTextService.build_for_lexical(
+        {
+            "method": "GET",
+            "path": "/production/otd",
+            "summary": "OTD produção",
+            "operationId": "get_production_otd",
+            "delpiMetadata": {
+                "entity": "production_otd",
+                "shape": "playbook_report",
+            },
+            "parametersSchema": [
+                {
+                    "name": "branch",
+                    "description": "all (no branch filter)",
+                    "schema": {"enum": ["all", "01"]},
+                }
+            ],
+        }
+    )
+    assert "playbook" not in text.lower()
+    assert "no branch" not in text.lower()
+    assert "production_otd" in text or "otd" in text.lower()
+    assert "branch" in text
+    assert "all" in text
+

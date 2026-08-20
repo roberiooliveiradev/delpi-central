@@ -65,10 +65,21 @@ class ExternalActionGenericRouteSelectionService:
             return None
 
         try:
-            if float(action["selectionScore"]) <= 0:
-                return None
+            top_score = float(action["selectionScore"])
         except (TypeError, ValueError):
             return None
+
+        if top_score <= 0:
+            return None
+
+        # Sem overlap lexical: só executa com score semântico alto (JSON).
+        if not action.get("selectionLexicalMatched"):
+            pure_execute = ExternalActionScoreGapClarificationService._score_gap_float(
+                "minTopScorePureSemanticExecute",
+                0.55,
+            )
+            if top_score < pure_execute:
+                return None
 
         parameters = {}
 

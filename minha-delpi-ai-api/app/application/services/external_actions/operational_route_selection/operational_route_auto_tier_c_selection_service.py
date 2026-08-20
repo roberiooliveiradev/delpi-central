@@ -58,10 +58,20 @@ class OperationalRouteAutoTierCSelectionService:
             return None
 
         try:
-            if float(top["selectionScore"]) <= 0:
-                return None
+            top_score = float(top["selectionScore"])
         except (TypeError, ValueError):
             return None
+
+        if top_score <= 0:
+            return None
+
+        if not top.get("selectionLexicalMatched"):
+            pure_execute = ExternalActionScoreGapClarificationService._score_gap_float(
+                "minTopScorePureSemanticExecute",
+                0.55,
+            )
+            if top_score < pure_execute:
+                return None
 
         route = OperationalRouteRegistryService.route_by_operation_id(operation_id)
 
