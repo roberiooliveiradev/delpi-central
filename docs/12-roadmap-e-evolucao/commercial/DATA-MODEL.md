@@ -791,7 +791,8 @@ Padrão comum:
 | `created_at` | TIMESTAMPTZ NOT NULL | |
 
 **Índice:** `(owner_type, owner_id)`.  
-**Sala:** `owner_type=room_message`, `owner_id` = `interaction_messages.id`. Path no disco `{base}/room_message/{id}/`.
+**Sala:** `owner_type=room_message`, `owner_id` = `interaction_messages.id`. Path no disco `{base}/room_message/{id}/`.  
+**Dois usos na mensagem:** (1) **anexo** — só metadado + strip UI; (2) **inline** — mesmo registro, referenciado no `body_text` como `![…](attachment:{uuid})` (ver § 8.1).
 
 ### 8.1 Sala de interação (P2-SALA — V019–V021 · P0 entregue)
 
@@ -844,14 +845,14 @@ Estado por usuário (**não** ACL): `last_read_at` (cursor de inbox; upsert em `
 | `parent_id` | UUID | NULL — FK → `interaction_messages(id)` (thread) |
 | `author_user_id` | TEXT | NULL quando `message_kind=system` |
 | `message_kind` | TEXT | NOT NULL — check `IN ('text', 'system', 'task_ref', 'pin')`; JSON reserva `otd_event`, `confirmation_event`, `wall_post` |
-| `body_text` | TEXT | NOT NULL, default `''` — **markdown** (nunca HTML); preview de inbox = texto plano |
+| `body_text` | TEXT | NOT NULL, default `''` — **markdown** (nunca HTML); preview de inbox = texto plano; imagens inline = `![alt](attachment:{uuid})` (draft cliente: `attachment:pending:{clientId}` até PATCH) |
 | `edited_at` | TIMESTAMPTZ | NULL |
 | `deleted_at` | TIMESTAMPTZ | NULL — soft delete |
 | `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
 
 **Índices:** `(room_id, created_at DESC)`; `(parent_id)` WHERE `parent_id IS NOT NULL`.
 
-**Contrato API:** POST/PATCH rejeitam HTML cru (422); PATCH `mentions[]` = replace; anexos da mensagem ≤ 10 × 20 MB (`room_message`).
+**Contrato API:** POST/PATCH rejeitam HTML cru (422); PATCH `mentions[]` = replace; anexos da mensagem ≤ 10 × 20 MB (`room_message`). Inline: só scheme `attachment:` / `attachment:pending:` em `![]()` — rejeitar `http(s)|data|blob`. Anexo via clip continua sem token no markdown.
 
 #### `interaction_mentions`
 

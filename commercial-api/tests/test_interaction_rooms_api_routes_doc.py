@@ -64,3 +64,6 @@ def test_message_contract_markdown_limits_and_parent() -> None:
     assert "parent_id" in section
     assert "20 MB" in section or "20MB" in section
     assert "mentions" in section.lower()
+    assert "attachment:" in section
+    assert "pending:" in section
+    assert "belowBody" in section

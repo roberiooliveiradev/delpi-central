@@ -391,7 +391,8 @@ Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — q
 - POST/PATCH rejeitam HTML cru → **422** (`bodyHtmlNotAllowed` em `interaction_room.json`).
 - PATCH com `mentions` presente **substitui** o conjunto (lista vazia limpa); omitir `mentions` não altera menções.
 - Reply: POST com `parent_id` (UUID da mensagem pai na mesma sala).
-- Anexos (`owner_type=room_message`, § 3.18): teto **10 arquivos** por mensagem e **20 MB** por arquivo — host recusa antes do upload; API **422** se passar.
+- Anexos (`owner_type=room_message`, § 3.18): teto **10 arquivos** por mensagem e **20 MB** por arquivo — host recusa antes do upload; API **422** se passar. Caminho **anexo** (clip / strip `belowBody`) **inalterado**.
+- **Imagens no caret (inline):** markdown `![alt](attachment:{uuid})` após upload. No draft do cliente: `![alt](attachment:pending:{clientId})` — o host faz POST da mensagem → upload § 3.18 → **PATCH** reescrevendo `pending:` → uuid. URLs `http(s):`, `data:`, `blob:` em `![]()` → **422**. Imagens só-anexo **não** usam token no `body_text`. Ids citados no body **não** devem duplicar na galeria `belowBody`.
 
 **Alterações (paths existentes):** § 3.18 `owner_type=room_message`; § 3.6 `create_task` campos `related_entity_*` / `source_interaction_message_id`; WS protocolo sala (`room.*`).
 
