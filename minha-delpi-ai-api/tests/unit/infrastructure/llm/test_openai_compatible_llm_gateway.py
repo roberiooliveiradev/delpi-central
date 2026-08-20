@@ -127,6 +127,9 @@ def test_stream_yields_reasoning_when_content_delta_absent(gateway):
         chunks = list(gateway.stream([{"role": "user", "content": "oi"}]))
 
     assert chunks == ["OK"]
+
+
+def test_stream_yields_utf8_chunks_from_bytes(gateway):
     lines = [
         b'data: {"choices":[{"delta":{"content":"Ol"}}]}',
         'data: {"choices":[{"delta":{"content":"\u00e1"}}]}'.encode("utf-8"),
