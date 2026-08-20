@@ -48,6 +48,8 @@ describe("mentionComposerInlineImage", () => {
     const [insert] = buildInlineImageInserts([file]);
     expect(insert).toBeTruthy();
     const html = inlineImageInlineHtml(insert!);
+    expect(html.startsWith("\u200b")).toBe(true);
+    expect(html.endsWith("\u200b")).toBe(true);
     expect(html).toContain("<span class=\"delpi-ui-mention-composer__inline-image\"");
     expect(html).not.toContain("<figure");
     expect(html).not.toMatch(/<p><br><\/p>/);

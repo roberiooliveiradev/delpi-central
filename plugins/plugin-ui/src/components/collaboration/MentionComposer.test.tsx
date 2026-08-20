@@ -215,7 +215,9 @@ describe("MentionComposer", () => {
     expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
     expect(source).not.toMatch(/setInlineImageFigureAlign/);
+    expect(source).toMatch(/ensureComposerParagraphFlow\(el\)/);
     expect(source).toMatch(/applyRichTextAlign\(el,/);
+    expect(source).toMatch(/insertComposerParagraph\(surface\)/);
     expect(source).toMatch(/HintAction/);
 
     document.execCommand = vi.fn().mockReturnValue(true);
@@ -515,7 +517,9 @@ describe("mention-composer.css", () => {
     expect(css).toMatch(/display:\s*inline-block/);
     expect(css).toMatch(/max-height:\s*8rem/);
     expect(css).not.toMatch(/\.delpi-ui-mention-composer__inline-image \{[^}]*display:\s*block;/);
+    expect(css).toMatch(/\.delpi-ui-mention-composer__inline-image \{[^}]*vertical-align:\s*baseline/);
     expect(prose).toMatch(/\.delpi-ui-message-thread__inline-image \{[^}]*display:\s*inline-block/);
+    expect(prose).toMatch(/\.delpi-ui-message-thread__inline-image \{[^}]*vertical-align:\s*baseline/);
     expect(prose).toMatch(/max-height:\s*8rem/);
     expect(css).toMatch(/\.delpi-ui-mention-composer__body :is\(:focus, :focus-visible\)/);
     expect(css).toMatch(/position:\s*absolute/);

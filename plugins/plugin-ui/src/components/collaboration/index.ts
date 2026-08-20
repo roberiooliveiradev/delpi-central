@@ -146,7 +146,10 @@ export {
   messageBodyHtmlIsPlainParagraph,
 } from "./messageThreadMarkdown";
 export {
+  ensureComposerParagraphFlow,
+  insertComposerParagraph,
   isComposerShellContentEmpty,
+  normalizeComposerContent,
   normalizeComposerFormatShells,
   type NormalizeComposerFormatShellsOptions,
 } from "./mentionComposerNormalize";

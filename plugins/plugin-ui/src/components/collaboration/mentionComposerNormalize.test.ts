@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ensureComposerParagraphFlow,
+  insertComposerParagraph,
   isComposerShellContentEmpty,
   normalizeComposerFormatShells,
 } from "./mentionComposerNormalize";
@@ -61,6 +63,96 @@ describe("normalizeComposerFormatShells", () => {
     normalizeComposerFormatShells(editor);
     expect(editor.querySelector("code")).toBeNull();
     expect(editor.textContent).toContain("x");
+    editor.remove();
+  });
+});
+
+describe("ensureComposerParagraphFlow", () => {
+  it("envolve imagem órfã (irmã do editor) num <p> e coloca ZWSP dos dois lados", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML =
+      "<p>antes</p>" +
+      '<span class="delpi-ui-mention-composer__inline-image" contenteditable="false">' +
+      '<img alt="x" />' +
+      "</span>" +
+      "depois";
+    document.body.appendChild(editor);
+    ensureComposerParagraphFlow(editor);
+    const paragraphs = Array.from(editor.querySelectorAll(":scope > p"));
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0]?.textContent).toBe("antes");
+    const imageP = paragraphs[1]!;
+    const image = imageP.querySelector(".delpi-ui-mention-composer__inline-image");
+    expect(image).not.toBeNull();
+    expect(image?.parentElement).toBe(imageP);
+    expect(image?.previousSibling?.nodeType).toBe(Node.TEXT_NODE);
+    expect(image?.previousSibling?.textContent).toBe("\u200b");
+    expect(imageP.textContent).toContain("depois");
+    editor.remove();
+  });
+
+  it("quebra <br> em parágrafos novos sem inverter a ordem", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML = "<p>um<br>dois<br>tres</p>";
+    document.body.appendChild(editor);
+    ensureComposerParagraphFlow(editor);
+    const texts = Array.from(editor.querySelectorAll(":scope > p")).map((p) =>
+      (p.textContent ?? "").replace(/\u200b/g, ""),
+    );
+    expect(texts).toEqual(["um", "dois", "tres"]);
+    editor.remove();
+  });
+
+  it("separa texto antes do <br> da imagem no mesmo <p>", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML =
+      "<p>titulo<br>" +
+      '<span class="delpi-ui-mention-composer__inline-image"><img alt="x" /></span>' +
+      "lado</p>";
+    document.body.appendChild(editor);
+    ensureComposerParagraphFlow(editor);
+    const paragraphs = Array.from(editor.querySelectorAll(":scope > p"));
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0]?.textContent).toBe("titulo");
+    expect(paragraphs[1]?.querySelector(".delpi-ui-mention-composer__inline-image")).not.toBeNull();
+    expect(paragraphs[1]?.textContent).toContain("lado");
+    editor.remove();
+  });
+
+  it("promove <div> filho do editor a <p>", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML = "<div>bloco</div>";
+    document.body.appendChild(editor);
+    ensureComposerParagraphFlow(editor);
+    expect(editor.querySelector(":scope > div")).toBeNull();
+    expect(editor.querySelector(":scope > p")?.textContent).toBe("bloco");
+    editor.remove();
+  });
+
+  it("não envolve wrapper inline que já contém <p> (preserva seleção de formato)", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML = "<strong><p>negrito</p></strong>";
+    document.body.appendChild(editor);
+    ensureComposerParagraphFlow(editor);
+    expect(editor.querySelector(":scope > strong > p")?.textContent).toBe("negrito");
+    expect(editor.querySelectorAll(":scope > p")).toHaveLength(0);
+    editor.remove();
+  });
+
+  it("insertComposerParagraph cria um <p> novo após o bloco do caret", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>linha</p>";
+    document.body.appendChild(editor);
+    const text = editor.querySelector("p")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, text.length);
+    range.collapse(true);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    insertComposerParagraph(editor);
+    expect(editor.querySelectorAll(":scope > p").length).toBeGreaterThanOrEqual(2);
     editor.remove();
   });
 });

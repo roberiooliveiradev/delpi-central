@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyRichTextAlign,
   applyRichTextFontSize,
+  findRichTextAlignBlock,
   isRichTextRangeInEditor,
   normalizeRichTextLinkUrl,
   queryRichTextAlign,
@@ -219,6 +220,37 @@ describe("restoreRichTextSelection", () => {
     expect(restored.startOffset).toBe(1);
     expect(restored.endOffset).toBe(4);
     expect(editor.contains(restored.commonAncestorContainer)).toBe(true);
+
+    document.body.removeChild(editor);
+  });
+});
+
+describe("applyRichTextAlign", () => {
+  it("com caret na imagem aplica no <p> pai, não no primeiro parágrafo", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML =
+      "<p>antes</p>" +
+      '<p>x<span class="delpi-ui-mention-composer__inline-image" contenteditable="false">' +
+      '<img alt="shot" />' +
+      "</span>depois</p>";
+    document.body.appendChild(editor);
+
+    const image = editor.querySelector(".delpi-ui-mention-composer__inline-image")!;
+    const range = document.createRange();
+    range.selectNode(image);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    expect(findRichTextAlignBlock(editor)?.textContent).toContain("depois");
+    applyRichTextAlign(editor, "center");
+
+    const first = editor.querySelector("p") as HTMLElement;
+    const second = editor.querySelectorAll("p")[1] as HTMLElement;
+    expect(first.style.textAlign).toBe("");
+    expect(second.style.textAlign).toBe("center");
+    expect(queryRichTextAlign(editor)).toBe("center");
 
     document.body.removeChild(editor);
   });

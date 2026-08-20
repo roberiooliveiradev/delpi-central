@@ -104,7 +104,7 @@
 .delpi-ui-message-thread__inline-image {
   position: relative;
   display: inline-block;
-  vertical-align: middle;
+  vertical-align: baseline;
   max-width: min(100%, 14rem);
   max-height: 8rem;
   margin: 0 0.15rem;

@@ -146,12 +146,12 @@ export function inlineImageInlineHtml(
     options?.removeAriaLabel ?? `Remove ${insert.file.name || "image"}`,
   );
   return (
-    `<span class="delpi-ui-mention-composer__inline-image" contenteditable="false">` +
+    `\u200b<span class="delpi-ui-mention-composer__inline-image" contenteditable="false">` +
     `<img src="${src}" alt="${alt}" ${PENDING_ATTR}="${pending}" data-attachment-href="attachment:pending:${pending}" />` +
     `<button type="button" class="delpi-ui-mention-composer__inline-image-remove" data-inline-image-remove="1" contenteditable="false" tabindex="-1" aria-label="${removeLabel}">` +
     `×` +
     `</button>` +
-    `</span>`
+    `</span>\u200b`
   );
 }
 

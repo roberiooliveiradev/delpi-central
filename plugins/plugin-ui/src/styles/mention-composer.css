@@ -372,7 +372,7 @@
 .delpi-ui-mention-composer__inline-image {
   position: relative;
   display: inline-block;
-  vertical-align: middle;
+  vertical-align: baseline;
   max-width: min(100%, 14rem);
   max-height: 8rem;
   margin: 0 0.15rem;
@@ -388,7 +388,7 @@
   height: auto;
   max-height: 8rem;
   object-fit: contain;
-  vertical-align: middle;
+  vertical-align: baseline;
 }
 
 .delpi-ui-mention-composer__inline-image-remove {

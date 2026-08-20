@@ -55,6 +55,15 @@ import {
   restoreRichTextSelection,
   type RichTextAlign,
 } from "../rich-text/richTextCommands";
+
+function tryDocumentExecCommand(command: string, value?: string): boolean {
+  try {
+    if (typeof document.execCommand !== "function") return false;
+    return Boolean(document.execCommand(command, false, value));
+  } catch {
+    return false;
+  }
+}
 import {
   applyAttachmentImageSources,
   clipboardHasUsefulHtml,
@@ -106,7 +115,12 @@ import {
   createMentionComposerHistory,
   type MentionComposerHistorySnapshot,
 } from "./mentionComposerHistory";
-import { normalizeComposerFormatShells } from "./mentionComposerNormalize";
+import {
+  ensureComposerParagraphFlow,
+  insertComposerParagraph,
+  normalizeComposerContent,
+  normalizeComposerFormatShells,
+} from "./mentionComposerNormalize";
 import {
   buildInlineImageInserts,
   collectClipboardImageFiles,
@@ -446,6 +460,7 @@ export function MentionComposer({
 
   const handleSurfaceFocus = () => {
     resetEmptySurface();
+    tryDocumentExecCommand("defaultParagraphSeparator", "p");
     rememberSelection();
   };
 
@@ -473,6 +488,7 @@ export function MentionComposer({
     const clearing = !value.trim();
     if (!clearing && document.activeElement === el) return;
     el.innerHTML = clearing ? "" : hydrateSurfaceHtml(value);
+    if (!clearing) ensureComposerParagraphFlow(el);
     lastStableRef.current = {
       markdown: value,
       html: el.innerHTML,
@@ -626,7 +642,7 @@ export function MentionComposer({
     el.focus();
     el.innerHTML = snapshot.html;
     // Undo/redo: limpa cascas vazias (ex.: `<code>\u200b</code>`) que viram bolhas.
-    normalizeComposerFormatShells(el);
+    normalizeComposerContent(el);
     const plainAfter = snapshotEditablePlaintext(el);
     const cursor = Math.min(snapshot.cursor, plainAfter.text.length);
     setEditablePlainCursor(el, cursor);
@@ -662,6 +678,7 @@ export function MentionComposer({
     if (!el) return;
     restoreSelectionForMutation();
     commitBeforeMutation();
+    ensureComposerParagraphFlow(el);
     applyRichTextAlign(el, align);
     setAlignActive(queryRichTextAlign(el) ?? align);
     lastStableRef.current = readSnapshot();
@@ -712,7 +729,7 @@ export function MentionComposer({
         )
         .join(""),
     );
-    normalizeComposerFormatShells(el);
+    normalizeComposerContent(el);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
     emitMarkdownAndMention();
@@ -729,7 +746,7 @@ export function MentionComposer({
     const attachmentId = (img?.getAttribute("data-attachment-id") || "").trim();
     commitBeforeMutation();
     figure.remove();
-    normalizeComposerFormatShells(el);
+    normalizeComposerContent(el);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
     emitMarkdownAndMention();
@@ -755,7 +772,7 @@ export function MentionComposer({
     } else if (text) {
       insertRichTextHtmlFragment(el, stripDangerousRichTextTags(escapePlainText(text)));
     }
-    normalizeComposerFormatShells(el);
+    normalizeComposerContent(el);
     lastStableRef.current = readSnapshot();
     emitMarkdownAndMention();
   };
@@ -827,6 +844,10 @@ export function MentionComposer({
         return;
       }
       if (event.shiftKey) {
+        event.preventDefault();
+        insertComposerParagraph(surface);
+        lastStableRef.current = readSnapshot();
+        emitMarkdownAndMention();
         return;
       }
       if (submitOnEnter) {

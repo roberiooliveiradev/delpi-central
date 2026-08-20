@@ -310,8 +310,11 @@ export function queryRichTextFontSize(editor: HTMLElement | null): number | null
 export function applyRichTextAlign(editor: HTMLElement | null, align: RichTextAlign) {
   if (!editor) return;
   focusEditor(editor);
-  const block = findRichTextAlignBlock(editor);
-  if (!block) return;
+  let block = findRichTextAlignBlock(editor);
+  if (!block) {
+    const last = editor.querySelector("p:last-of-type");
+    block = (last as HTMLElement | null) ?? editor;
+  }
   if (align === "left") {
     block.style.removeProperty("text-align");
   } else {
@@ -319,9 +322,14 @@ export function applyRichTextAlign(editor: HTMLElement | null, align: RichTextAl
   }
 }
 
-const ALIGN_BLOCK_SELECTOR = "p,div,li,h1,h2,h3,h4,h5,h6,blockquote";
+/** Blocks that can carry `text-align`. Never the editor host (`div` surface). */
+const ALIGN_BLOCK_SELECTOR = "p,li,h1,h2,h3,h4,h5,h6,blockquote";
 
-/** Bloco de parágrafo mais próximo da seleção (ou primeiro bloco do editor). */
+const INLINE_IMAGE_ALIGN_SELECTOR =
+  "span.delpi-ui-mention-composer__inline-image, span.delpi-ui-message-thread__inline-image, " +
+  "figure.delpi-ui-mention-composer__inline-image, figure.delpi-ui-message-thread__inline-image";
+
+/** Bloco da seleção — se o caret está na imagem, o `<p>` pai (não o primeiro `p` do editor). */
 export function findRichTextAlignBlock(editor: HTMLElement | null): HTMLElement | null {
   if (!editor) return null;
   const selection = window.getSelection();
@@ -335,13 +343,24 @@ export function findRichTextAlignBlock(editor: HTMLElement | null): HTMLElement 
     const node = selection.anchorNode;
     el = node instanceof Element ? node : node.parentElement;
   }
-  if (!el) el = editor;
-  const closest = el.closest(ALIGN_BLOCK_SELECTOR);
-  if (closest && editor.contains(closest) && closest !== editor) {
-    return closest as HTMLElement;
+  const image = el?.closest(INLINE_IMAGE_ALIGN_SELECTOR);
+  if (image && editor.contains(image)) {
+    const parent = image.parentElement;
+    if (parent && parent !== editor && parent.matches(ALIGN_BLOCK_SELECTOR)) {
+      return parent;
+    }
   }
-  const first = editor.querySelector(ALIGN_BLOCK_SELECTOR);
-  return (first as HTMLElement | null) ?? editor;
+  if (el && editor.contains(el)) {
+    const closest = el.closest(ALIGN_BLOCK_SELECTOR);
+    if (closest && editor.contains(closest) && closest !== editor) {
+      return closest as HTMLElement;
+    }
+    const innerDiv = el.closest("div");
+    if (innerDiv && innerDiv !== editor && editor.contains(innerDiv)) {
+      return innerDiv as HTMLElement;
+    }
+  }
+  return null;
 }
 
 function normalizeAlignValue(raw: string): RichTextAlign | null {

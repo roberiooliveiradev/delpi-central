@@ -5,6 +5,29 @@
 
 const INLINE_SHELL_SELECTOR = "code, strong, b, em, i, s, strike, del, u, a";
 
+const INLINE_IMAGE_SELECTOR =
+  "span.delpi-ui-mention-composer__inline-image, span.delpi-ui-message-thread__inline-image, " +
+  "figure.delpi-ui-mention-composer__inline-image, figure.delpi-ui-message-thread__inline-image";
+
+const BLOCK_TAGS = new Set([
+  "P",
+  "DIV",
+  "UL",
+  "OL",
+  "LI",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "H6",
+  "BLOCKQUOTE",
+  "PRE",
+  "TABLE",
+]);
+
+const CARET_ZWSP = "\u200b";
+
 export type NormalizeComposerFormatShellsOptions = {
   /**
    * Mantém a casca vazia sob o caret (modo digitação: `<code>\u200b</code>`).
@@ -93,6 +116,209 @@ function removeEmptyBlockShells(editor: HTMLElement): boolean {
   return changed;
 }
 
+function isBlockElement(node: Node | null): boolean {
+  return node instanceof Element && BLOCK_TAGS.has(node.tagName);
+}
+
+function elementContainsBlock(node: Node): boolean {
+  if (!(node instanceof Element)) return false;
+  if (isBlockElement(node)) return true;
+  return Boolean(
+    node.querySelector("p, div, ul, ol, li, h1, h2, h3, h4, h5, h6, blockquote, pre, table"),
+  );
+}
+
+type ComposerSelectionSnapshot = {
+  startContainer: Node;
+  startOffset: number;
+  endContainer: Node;
+  endOffset: number;
+};
+
+function snapshotComposerSelection(editor: HTMLElement): ComposerSelectionSnapshot | null {
+  const selection = editor.ownerDocument.defaultView?.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return null;
+  return {
+    startContainer: range.startContainer,
+    startOffset: range.startOffset,
+    endContainer: range.endContainer,
+    endOffset: range.endOffset,
+  };
+}
+
+function restoreComposerSelection(
+  editor: HTMLElement,
+  snapshot: ComposerSelectionSnapshot | null,
+): void {
+  if (!snapshot) return;
+  if (!editor.contains(snapshot.startContainer) || !editor.contains(snapshot.endContainer)) {
+    return;
+  }
+  try {
+    const range = editor.ownerDocument.createRange();
+    range.setStart(snapshot.startContainer, snapshot.startOffset);
+    range.setEnd(snapshot.endContainer, snapshot.endOffset);
+    const selection = editor.ownerDocument.defaultView?.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  } catch {
+    /* range may be stale after an aggressive rewrite */
+  }
+}
+
+function isProtectedHost(el: Element): boolean {
+  return Boolean(el.closest("pre, code, table"));
+}
+
+function insertZwsp(doc: Document, ref: Node, before: boolean): void {
+  const text = doc.createTextNode(CARET_ZWSP);
+  if (before) {
+    ref.parentNode?.insertBefore(text, ref);
+  } else {
+    ref.parentNode?.insertBefore(text, ref.nextSibling);
+  }
+}
+
+function hasCaretAnchor(node: Node | null, before: boolean): boolean {
+  if (!node) return false;
+  if (node.nodeType === Node.TEXT_NODE) {
+    return (node.textContent ?? "").length > 0;
+  }
+  if (!(node instanceof Element)) return false;
+  if (node.matches?.(INLINE_IMAGE_SELECTOR)) return false;
+  if (node.tagName === "BR") return true;
+  return (node.textContent ?? "").length > 0 || node.childNodes.length > 0;
+}
+
+/** ZWSP before/after each image so the caret can sit on both sides in the same `<p>`. */
+export function ensureInlineImageCaretZwsp(editor: HTMLElement): void {
+  const doc = editor.ownerDocument;
+  for (const wrap of Array.from(editor.querySelectorAll(INLINE_IMAGE_SELECTOR))) {
+    if (!editor.contains(wrap) || isProtectedHost(wrap)) continue;
+    if (!hasCaretAnchor(wrap.previousSibling, true)) insertZwsp(doc, wrap, true);
+    if (!hasCaretAnchor(wrap.nextSibling, false)) insertZwsp(doc, wrap, false);
+  }
+}
+
+/** Wrap editor-level orphans (text / image / br) into `<p>` — insertHTML often lifts the span. */
+export function wrapComposerOrphanInlines(editor: HTMLElement): void {
+  const doc = editor.ownerDocument;
+  const children = Array.from(editor.childNodes);
+  let run: Node[] = [];
+  const flush = () => {
+    if (run.length === 0) return;
+    const p = doc.createElement("p");
+    editor.insertBefore(p, run[0] ?? null);
+    for (const node of run) p.appendChild(node);
+    run = [];
+  };
+  for (const node of children) {
+    if (isBlockElement(node) || elementContainsBlock(node)) {
+      flush();
+      continue;
+    }
+    run.push(node);
+  }
+  flush();
+}
+
+/** Browser `defaultParagraphSeparator=div` → promote editor-level `<div>` to `<p>`. */
+export function promoteComposerDivsToParagraphs(editor: HTMLElement): void {
+  const doc = editor.ownerDocument;
+  for (const child of Array.from(editor.children)) {
+    if (child.tagName !== "DIV" || isProtectedHost(child)) continue;
+    const p = doc.createElement("p");
+    while (child.firstChild) p.appendChild(child.firstChild);
+    child.replaceWith(p);
+  }
+}
+
+function firstDirectBreak(block: HTMLElement): HTMLBRElement | null {
+  for (const node of Array.from(block.childNodes)) {
+    if (node instanceof HTMLBRElement) return node;
+  }
+  return null;
+}
+
+function splitParagraphAtFirstBreak(block: HTMLElement): void {
+  if (isProtectedHost(block)) return;
+  const br = firstDirectBreak(block);
+  // Trailing `<br>` is an empty-paragraph placeholder — do not recurse forever.
+  if (!br || !br.nextSibling) return;
+  const next = block.ownerDocument.createElement("p");
+  let sibling = br.nextSibling;
+  while (sibling) {
+    const move = sibling;
+    sibling = sibling.nextSibling;
+    next.appendChild(move);
+  }
+  br.remove();
+  if (!next.childNodes.length) next.appendChild(block.ownerDocument.createElement("br"));
+  block.parentNode?.insertBefore(next, block.nextSibling);
+  splitParagraphAtFirstBreak(next);
+}
+
+/** Shift+Enter `<br>` inside a paragraph becomes a new `<p>` (Word Enter). Skip pre/code. */
+export function splitComposerBreaksIntoParagraphs(editor: HTMLElement): void {
+  for (const block of Array.from(editor.querySelectorAll("p"))) {
+    if (!editor.contains(block) || isProtectedHost(block)) continue;
+    splitParagraphAtFirstBreak(block);
+  }
+}
+
+/**
+ * After paste/insert/align: image stays in a `<p>`, line breaks are paragraphs,
+ * caret can land before the image.
+ */
+export function ensureComposerParagraphFlow(editor: HTMLElement | null): void {
+  if (!editor) return;
+  const selection = snapshotComposerSelection(editor);
+  wrapComposerOrphanInlines(editor);
+  promoteComposerDivsToParagraphs(editor);
+  splitComposerBreaksIntoParagraphs(editor);
+  ensureInlineImageCaretZwsp(editor);
+  restoreComposerSelection(editor, selection);
+}
+
+/** Shift+Enter: new `<p>` (Word). Falls back when execCommand is missing (jsdom). */
+export function insertComposerParagraph(editor: HTMLElement | null): void {
+  if (!editor) return;
+  let usedExec = false;
+  try {
+    if (typeof editor.ownerDocument.execCommand === "function") {
+      usedExec = Boolean(editor.ownerDocument.execCommand("insertParagraph"));
+    }
+  } catch {
+    usedExec = false;
+  }
+  if (!usedExec) {
+    const doc = editor.ownerDocument;
+    const next = doc.createElement("p");
+    next.appendChild(doc.createElement("br"));
+    const selection = doc.defaultView?.getSelection();
+    const anchor = selection?.anchorNode ?? null;
+    const host = anchor instanceof Element ? anchor : anchor?.parentElement ?? null;
+    const block = host?.closest("p");
+    if (block && editor.contains(block) && block !== editor) {
+      block.after(next);
+    } else {
+      editor.appendChild(next);
+    }
+    try {
+      const range = doc.createRange();
+      range.setStart(next, 0);
+      range.collapse(true);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    } catch {
+      /* ignore */
+    }
+  }
+  ensureComposerParagraphFlow(editor);
+}
+
 /**
  * Normaliza o contenteditable após mutação de formato / undo / redo / paste.
  * Idempotente.
@@ -112,4 +338,16 @@ export function normalizeComposerFormatShells(
     const b = removeEmptyBlockShells(editor);
     if (!a && !b) break;
   }
+}
+
+/**
+ * After paste / image insert / undo restore — shells first, then paragraph flow.
+ * Format toggles must call only `normalizeComposerFormatShells` (no wrap/`<p>`).
+ */
+export function normalizeComposerContent(
+  editor: HTMLElement | null,
+  options?: NormalizeComposerFormatShellsOptions,
+): void {
+  normalizeComposerFormatShells(editor, options);
+  ensureComposerParagraphFlow(editor);
 }
