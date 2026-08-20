@@ -4,13 +4,16 @@ import {
   CREATE_TASK_MESSAGE_ACTION_ID,
   EDIT_MESSAGE_ACTION_ID,
   PIN_MESSAGE_ACTION_ID,
+  REPLY_MESSAGE_ACTION_ID,
   UNPIN_MESSAGE_ACTION_ID,
   buildCreateTaskMessageAction,
   buildEditMessageAction,
   buildPinMessageAction,
+  buildReplyMessageAction,
   canCreateTaskFromMessage,
   canEditMessage,
   canPinMessage,
+  canReplyMessage,
   resolveInteractionMessageActions,
 } from "./messageThreadTaskAction";
 
@@ -34,6 +37,12 @@ describe("messageThreadTaskAction", () => {
     expect(canEditMessage({ kind: "text", deleted: false, mine: false })).toBe(false);
     expect(canEditMessage({ kind: "system", deleted: false, mine: true })).toBe(false);
     expect(canEditMessage({ kind: "text", deleted: true, mine: true })).toBe(false);
+  });
+
+  it("permite responder nas mesmas regras de criar tarefa", () => {
+    expect(canReplyMessage({ kind: "text", deleted: false })).toBe(true);
+    expect(canReplyMessage({ kind: "system", deleted: false })).toBe(false);
+    expect(canReplyMessage({ kind: "text", deleted: true })).toBe(false);
   });
 
   it("monta ação create-task sem botão local no kit", () => {
@@ -65,6 +74,17 @@ describe("messageThreadTaskAction", () => {
         onEdit,
       }),
     ).toBeNull();
+  });
+
+  it("monta ação responder", () => {
+    const onReply = vi.fn();
+    const action = buildReplyMessageAction({
+      message: { id: "m1", kind: "text", deleted: false },
+      onReply,
+    });
+    expect(action?.id).toBe(REPLY_MESSAGE_ACTION_ID);
+    action?.onClick();
+    expect(onReply).toHaveBeenCalledWith("m1");
   });
 
   it("monta pin/unpin conforme estado", () => {
@@ -104,7 +124,7 @@ describe("messageThreadTaskAction", () => {
     expect(actions.map((a) => a.id)).toEqual([PIN_MESSAGE_ACTION_ID]);
   });
 
-  it("resolveActions inclui edit + create-task + pin para mine", () => {
+  it("resolveActions inclui reply + edit + create-task + pin para mine", () => {
     const actions = resolveInteractionMessageActions({
       message: {
         id: "m1",
@@ -117,8 +137,10 @@ describe("messageThreadTaskAction", () => {
       pinnedMessageIds: new Set(),
       onTogglePin: () => undefined,
       onEditMessage: () => undefined,
+      onReplyMessage: () => undefined,
     });
     expect(actions.map((a) => a.id)).toEqual([
+      REPLY_MESSAGE_ACTION_ID,
       EDIT_MESSAGE_ACTION_ID,
       CREATE_TASK_MESSAGE_ACTION_ID,
       PIN_MESSAGE_ACTION_ID,

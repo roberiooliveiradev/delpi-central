@@ -44,6 +44,7 @@ import {
   interactionRoomParticipantAvatar,
 } from "./interactionRoomUserLink";
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
+import { buildReplyComposerBanner } from "./interactionRoomReply";
 import {
   INTERACTION_ROOM_NARROW_QUERY,
   useMatchMedia,
@@ -396,6 +397,23 @@ export function InteractionRoomPanel({
     ],
   );
 
+  const replyTarget = useMemo(() => {
+    const id = (replyMessageId || "").trim();
+    if (!id) return null;
+    return messages.find((row) => row.id === id) ?? null;
+  }, [messages, replyMessageId]);
+
+  const replyBanner = useMemo(
+    () =>
+      buildReplyComposerBanner(
+        replyTarget,
+        replyTarget?.author_user_id
+          ? nameFor(replyTarget.author_user_id)
+          : null,
+      ),
+    [replyTarget, nameFor],
+  );
+
   const participants = useMemo(
     () =>
       members.map((member) =>
@@ -474,6 +492,9 @@ export function InteractionRoomPanel({
         <InteractionRoomMessageComposer
           roomId={room.id}
           disabled={Boolean(editingMessageId)}
+          replyToMessageId={replyMessageId}
+          replyBanner={replyBanner}
+          onCancelReply={() => setReplyMessageId(null)}
           onMessageCreated={onMessageCreated}
           onMessageAttachmentsSettled={bumpMessageAttachments}
           onError={(message) => setError(message)}

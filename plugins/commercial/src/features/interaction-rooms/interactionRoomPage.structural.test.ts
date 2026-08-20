@@ -50,6 +50,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/disabled=\{Boolean\(editingMessageId\)\}/);
     expect(source).toMatch(/messageEditedSuffix/);
     expect(source).toMatch(/onEditMessage:/);
+    expect(source).toMatch(/onReplyMessage:/);
+    expect(source).toMatch(/replyToMessageId=/);
     expect(source).toMatch(/InteractionRoomMessageAttachments/);
     expect(source).toMatch(/onMessageAttachmentsSettled/);
     expect(source).toMatch(/room\.attachment/);
