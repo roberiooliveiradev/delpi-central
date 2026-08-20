@@ -45,4 +45,4 @@ RUN chmod +x /entrypoint.sh /app/scripts/install_vision_extras.sh
 EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["flask", "run", "--host=0.0.0.0", "--port=8000"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8000", "--with-threads"]

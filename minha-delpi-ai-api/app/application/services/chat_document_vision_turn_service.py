@@ -290,15 +290,18 @@ class ChatDocumentVisionTurnService:
                 phase="ocr",
             )
 
-        metadata = cls.build_attachment_vision_metadata(
-            user_id=user_id,
-            session_id=session_id,
-            attachment_ids=attachment_ids,
-            skills=skills,
-            intent_route=intent_route,
-            has_agent=has_agent,
-            persist=persist,
-            message=message,
+        metadata = cls._run_blocking_with_ocr_heartbeat(
+            lambda: cls.build_attachment_vision_metadata(
+                user_id=user_id,
+                session_id=session_id,
+                attachment_ids=attachment_ids,
+                skills=skills,
+                intent_route=intent_route,
+                has_agent=has_agent,
+                persist=persist,
+                message=message,
+            ),
+            on_stream_activity=on_stream_activity,
         )
 
         if on_stream_activity and metadata:

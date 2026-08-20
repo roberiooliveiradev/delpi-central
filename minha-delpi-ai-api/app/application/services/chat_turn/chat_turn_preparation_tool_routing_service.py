@@ -538,18 +538,23 @@ class ChatTurnPreparationToolRoutingService:
                 tool_context["clarifyInsteadOfGuess"] = True
 
             if skip_flags.skip_tools_for_attachment_document:
-                from app.application.services.chat_document_vision_service import (
-                    ChatDocumentVisionService,
+                from app.application.services.chat_document_vision_turn_service import (
+                    ChatDocumentVisionTurnService,
                 )
 
-                vision_meta = ChatDocumentVisionService.build_attachment_vision_metadata(
-                    user_id=str(getattr(request, "user_id", "") or ""),
-                    session_id=str(getattr(request, "session_id", "") or ""),
-                    attachment_ids=[
-                        str(item) for item in skip_flags.request_attachment_ids
-                    ],
-                    skills=workspace_context.get("skills"),
-                    message=message,
+                vision_meta, _activation = (
+                    ChatDocumentVisionTurnService.run_attachment_vision_with_progress(
+                        user_id=str(getattr(request, "user_id", "") or ""),
+                        session_id=str(getattr(request, "session_id", "") or ""),
+                        attachment_ids=[
+                            str(item) for item in skip_flags.request_attachment_ids
+                        ],
+                        skills=workspace_context.get("skills"),
+                        intent_route="attachment_document",
+                        has_agent=bool(workspace_context.get("agent")),
+                        on_stream_activity=on_stream_activity,
+                        message=message,
+                    )
                 )
 
                 if vision_meta:

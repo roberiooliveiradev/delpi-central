@@ -56,3 +56,48 @@ def test_run_blocking_with_ocr_heartbeat_worker_runs_inside_app_context():
 
     assert result == "ok"
     assert seen["in_context"] is True
+
+
+def test_run_attachment_vision_with_progress_uses_ocr_heartbeat(monkeypatch):
+    from app.domain.services.chat_document_vision_skill_service import (
+        DocumentVisionActivation,
+    )
+
+    events: list[dict] = []
+
+    monkeypatch.setattr(
+        ChatStreamActivityService,
+        "ocr_heartbeat_interval_seconds",
+        classmethod(lambda cls: 0.01),
+    )
+    monkeypatch.setattr(
+        "app.application.services.chat_document_vision_turn_service.ChatDocumentVisionSkillService.resolve_attachment_turn_activation",
+        lambda *_args, **_kwargs: DocumentVisionActivation(
+            enabled=True,
+            mode="attachment_turn",
+        ),
+    )
+
+    def slow_meta(cls, **_kwargs):
+        time.sleep(0.05)
+        return {"engine": "tesseract", "charCount": 12}
+
+    monkeypatch.setattr(
+        ChatDocumentVisionTurnService,
+        "build_attachment_vision_metadata",
+        classmethod(slow_meta),
+    )
+
+    metadata, activation = ChatDocumentVisionTurnService.run_attachment_vision_with_progress(
+        user_id="u1",
+        session_id="s1",
+        attachment_ids=["a1"],
+        on_stream_activity=events.append,
+    )
+
+    assert activation.enabled is True
+    assert metadata and metadata["engine"] == "tesseract"
+    assert any(event.get("phase") == "document_vision" for event in events)
+    assert any(
+        "reconhecendo" in str(event.get("message") or "").lower() for event in events
+    )

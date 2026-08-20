@@ -338,7 +338,7 @@ class ChatStreamActivityService:
         try:
             return max(15.0, float(str(raw).strip()))
         except (TypeError, ValueError):
-            return 45.0
+            return 20.0
 
     @classmethod
     def emit_document_vision_progress(

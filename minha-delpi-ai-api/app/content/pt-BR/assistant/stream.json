@@ -98,7 +98,7 @@
       "dimensions_ocr": "Lendo cotas e decapes…"
     },
     "documentVisionOcrHeartbeat": "Ainda reconhecendo texto do desenho…",
-    "ocrHeartbeatIntervalSeconds": 45,
+    "ocrHeartbeatIntervalSeconds": 20,
     "progressCompleteTemplate": "Cerca de {percent}% concluído…",
     "pipelineTotals": {
       "drawingWithPdf": 18,

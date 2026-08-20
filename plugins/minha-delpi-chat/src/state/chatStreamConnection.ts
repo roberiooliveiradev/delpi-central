@@ -14,6 +14,8 @@ export function isIncompleteChatStreamError(error: unknown): boolean {
     normalized.includes("failed to fetch") ||
     normalized.includes("networkerror") ||
     normalized.includes("network request failed") ||
-    normalized.includes("load failed")
+    normalized.includes("load failed") ||
+    // Firefox: ReadableStream.abort mid-SSE (OCR longo / recreate da API)
+    normalized.includes("error in input stream")
   );
 }
