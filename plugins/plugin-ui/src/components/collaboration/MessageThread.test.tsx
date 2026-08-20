@@ -381,6 +381,14 @@ describe("message-thread.css host scroll", () => {
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
     expect(actions).toMatch(/position:\s*absolute;/);
     expect(actions).toMatch(/translateY\(-50%\)/);
+    expect(actions).toMatch(/right:\s*0;/);
+    expect(actions).toMatch(/left:\s*auto;/);
+    const mineActions =
+      css.match(
+        /\.delpi-ui-message-thread__item--mine \.delpi-ui-message-thread__actions \{[^}]+\}/,
+      )?.[0] ?? "";
+    expect(mineActions).toMatch(/left:\s*0;/);
+    expect(mineActions).toMatch(/right:\s*auto;/);
     expect(css).not.toMatch(/opacity 0\.15s ease 0\.45s/);
     expect(css).toMatch(/transition:\s*opacity 0\.1s ease;/);
     expect(css).toMatch(/box-shadow:\s*none;/);

@@ -283,7 +283,8 @@
 .delpi-ui-message-thread__actions {
   position: absolute;
   top: 0;
-  left: 0;
+  left: auto;
+  right: 0;
   z-index: 2;
   display: flex;
   flex-wrap: nowrap;
@@ -296,9 +297,10 @@
   box-shadow: 0 4px 14px color-mix(in srgb, var(--delpi-ui-text, #0f172a) 12%, transparent);
 }
 
+/* Minhas: à esquerda — não cobre a borda direita da bolha alinhada à direita. */
 .delpi-ui-message-thread__item--mine .delpi-ui-message-thread__actions {
-  left: auto;
-  right: 0;
+  left: 0;
+  right: auto;
 }
 
 .delpi-ui-message-thread__actions::after {
