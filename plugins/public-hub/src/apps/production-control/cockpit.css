@@ -1,18 +1,49 @@
 /* Cockpit público do operador — alvos grandes para uso em tablet no chão de fábrica. */
 
+/* ---------- Palco do shell: o cockpit usa a largura toda e traz a própria marca ---------- */
+
+.pub-content--fullpage:has(.pcp-pub) {
+  max-width: 100%;
+}
+
+.pub-stage--fullpage:has(.pcp-pub) {
+  padding: 0 0 32px;
+  gap: 0;
+}
+
+/* O logo vive dentro da barra de marca; o badge flutuante duplicaria a identidade. */
+.pub-stage--fullpage:has(.pcp-pub) .pub-logo--compact {
+  display: none;
+}
+
+/* O botão de tema fica sobre o gradiente escuro da barra. */
+.pub-stage--fullpage:has(.pcp-pub) .pub-theme-toggle {
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* ---------- Tokens e base ---------- */
+
 .pcp-pub {
+  --pcp-brand: var(--pub-secondary, #003866);
+  --pcp-brand-light: var(--pub-primary, #089bdb);
   --pcp-accent: var(--pub-accent, #089bdb);
   --pcp-title: var(--pub-text, #003866);
   --pcp-text: var(--pub-text-body, #33475a);
   --pcp-muted: var(--pub-text-soft, #5a6b7d);
+  --pcp-faint: var(--pub-text-faint, #8595a5);
   --pcp-surface: var(--pub-card-bg, #ffffff);
   --pcp-border: var(--pub-card-border, #e4e7ec);
   --pcp-running: #0f7b4a;
   --pcp-danger: var(--pub-danger, #b42318);
+  --pcp-shell: min(1360px, 100%);
+  --pcp-gutter: clamp(12px, 2vw, 24px);
+  --pcp-cols: minmax(220px, 1.7fr) minmax(150px, 1.1fr) 132px 118px 112px minmax(180px, auto);
   box-sizing: border-box;
-  width: min(1080px, 100%);
-  margin: 0 auto;
-  padding: 16px 12px 32px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   color: var(--pcp-text);
 }
 
@@ -22,55 +53,143 @@
   box-sizing: border-box;
 }
 
-/* ---------- Cabeçalho ---------- */
+.pcp-pub__wrap {
+  width: var(--pcp-shell);
+  margin: 0 auto;
+  padding: 18px var(--pcp-gutter) 8px;
+}
 
-.pcp-pub__header {
+/* ---------- Barra de marca ---------- */
+
+.pcp-pub__brandbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  color: #ffffff;
+  background:
+    radial-gradient(120% 200% at 88% -60%, rgba(255, 255, 255, 0.22), transparent 62%),
+    linear-gradient(118deg, var(--pcp-brand) 0%, #0c5f97 56%, var(--pcp-brand-light) 100%);
+  box-shadow: 0 10px 30px rgba(0, 40, 70, 0.24);
+}
+
+.pcp-pub__brandbar-inner {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-start;
+  gap: 14px 20px;
+  align-items: center;
   justify-content: space-between;
+  width: var(--pcp-shell);
+  margin: 0 auto;
+  padding: 14px var(--pcp-gutter) 16px;
+}
+
+.pcp-pub__identity {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.pcp-pub__logo {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--pub-logo-bg, #ffffff);
+  box-shadow: 0 4px 14px rgba(0, 20, 40, 0.28);
+}
+
+.pcp-pub__logo img {
+  display: block;
+  width: 74%;
+  height: auto;
+}
+
+.pcp-pub__identity-text {
+  min-width: 0;
 }
 
 .pcp-pub__eyebrow {
   margin: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--pcp-accent);
+  color: rgba(255, 255, 255, 0.76);
 }
 
-.pcp-pub__header h1 {
-  margin: 4px 0 6px;
-  font-size: clamp(1.5rem, 4vw, 2.1rem);
-  line-height: 1.15;
-  color: var(--pcp-title);
+.pcp-pub__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  margin: 3px 0 0;
 }
 
-.pcp-pub__meta {
+.pcp-pub__brandbar h1 {
   margin: 0;
-  font-size: 0.95rem;
-  color: var(--pcp-muted);
+  font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: #ffffff;
+}
+
+.pcp-pub__code {
+  padding: 3px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pcp-pub__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pcp-pub__chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pcp-pub__chip--running {
+  color: #ffffff;
+  background: rgba(46, 204, 113, 0.28);
 }
 
 .pcp-pub__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  /* Reserva o canto do botão de tema fixo do shell. */
+  padding-right: 52px;
 }
 
 .pcp-pub__live {
   display: inline-flex;
   gap: 7px;
   align-items: center;
-  padding: 7px 12px;
-  border: 1px solid var(--pcp-border);
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--pcp-muted);
-  background: var(--pcp-surface);
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .pcp-pub__live-dot {
@@ -81,7 +200,7 @@
 }
 
 .pcp-pub__live--on {
-  color: var(--pcp-running);
+  color: #7ef0b4;
 }
 
 .pcp-pub__live--on .pcp-pub__live-dot {
@@ -89,7 +208,7 @@
 }
 
 .pcp-pub__live--off {
-  color: var(--pcp-muted);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 @keyframes pcp-pub-pulse {
@@ -111,26 +230,43 @@
 .pcp-pub__ghost {
   min-height: 44px;
   padding: 10px 16px;
-  border: 1px solid var(--pcp-border);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 12px;
   font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--pcp-title);
-  background: var(--pcp-surface);
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
   cursor: pointer;
 }
 
-.pcp-pub__ghost:hover {
-  border-color: var(--pcp-accent);
-  color: var(--pcp-accent);
+.pcp-pub__ghost:hover,
+.pcp-pub__ghost:focus-visible {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
 }
 
+/* Fora da barra de marca (visualizador de desenho) o botão volta ao tema do card. */
+.pcp-pub__ghost--plain {
+  border-color: var(--pub-card-border, #e4e7ec);
+  color: var(--pub-text, #003866);
+  background: var(--pub-card-bg, #ffffff);
+}
+
+.pcp-pub__ghost--plain:hover,
+.pcp-pub__ghost--plain:focus-visible {
+  border-color: var(--pub-accent, #089bdb);
+  color: var(--pub-accent, #089bdb);
+  background: var(--pub-card-bg, #ffffff);
+}
+
+/* ---------- Avisos ---------- */
+
 .pcp-pub__notice {
-  margin: 14px 0 0;
-  padding: 10px 14px;
+  margin: 0;
+  padding: 9px 14px;
   border-left: 3px solid var(--pcp-accent);
   border-radius: 0 10px 10px 0;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   color: var(--pcp-muted);
   background: color-mix(in srgb, var(--pcp-accent) 8%, transparent);
 }
@@ -145,21 +281,22 @@
 }
 
 .pcp-pub__empty {
-  margin: 24px 0;
-  padding: 28px 16px;
+  margin: 20px 0;
+  padding: 32px 16px;
   border: 1px dashed var(--pcp-border);
   border-radius: 14px;
   text-align: center;
   color: var(--pcp-muted);
+  background: var(--pcp-surface);
 }
 
 /* ---------- Seleção de posto ---------- */
 
 .pcp-pub__search {
   width: 100%;
-  min-height: 48px;
+  min-height: 50px;
   margin-top: 16px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border: 1px solid var(--pub-input-border, #d0d7de);
   border-radius: 12px;
   font-size: 1rem;
@@ -169,34 +306,37 @@
 
 .pcp-pub__centers {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
   margin-top: 18px;
 }
 
 .pcp-pub__center {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-height: 108px;
-  padding: 16px;
+  gap: 5px;
+  min-height: 120px;
+  padding: 18px;
   border: 1px solid var(--pcp-border);
   border-radius: 16px;
   text-align: left;
   background: var(--pcp-surface);
-  box-shadow: var(--pub-card-shadow, 0 10px 24px rgba(3, 40, 70, 0.08));
+  box-shadow: 0 1px 2px rgba(3, 40, 70, 0.06);
   cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .pcp-pub__center:hover,
 .pcp-pub__center:focus-visible {
   border-color: var(--pcp-accent);
+  box-shadow: 0 8px 22px rgba(3, 40, 70, 0.12);
   transform: translateY(-1px);
 }
 
 .pcp-pub__center-code {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--pcp-title);
 }
 
@@ -211,43 +351,84 @@
   color: var(--pcp-muted);
 }
 
-/* ---------- Fila ---------- */
+/* ---------- Fila: cabeçalho de colunas + linhas alinhadas ---------- */
+
+.pcp-pub__queue-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 20px 0 8px;
+  /* +1px do lado esquerdo compensa a borda do card, mantendo as colunas alinhadas. */
+  padding: 0 17px 0 21px;
+}
+
+.pcp-pub__queue-head .pcp-pub__row > span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__row-end {
+  text-align: right;
+}
 
 .pcp-pub__queue {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin: 16px 0 0;
+  gap: 8px;
+  margin: 0;
   padding: 0;
   list-style: none;
-  counter-reset: none;
 }
 
 .pcp-pub__card {
+  position: relative;
   display: flex;
-  gap: 12px;
-  padding: 14px;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 16px 14px 20px;
   border: 1px solid var(--pcp-border);
-  border-left: 4px solid var(--pcp-border);
   border-radius: 14px;
   background: var(--pcp-surface);
+  box-shadow: 0 1px 2px rgba(3, 40, 70, 0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pcp-pub__card:hover {
+  border-color: color-mix(in srgb, var(--pcp-accent) 40%, var(--pcp-border));
+  box-shadow: 0 6px 18px rgba(3, 40, 70, 0.1);
+}
+
+/* Trilho de status — substitui a borda grossa à esquerda. */
+.pcp-pub__card::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--pcp-rail, var(--pcp-border));
 }
 
 .pcp-pub__card--running {
-  border-left-color: var(--pcp-running);
+  --pcp-rail: var(--pcp-running);
+  background: color-mix(in srgb, var(--pcp-running) 5%, var(--pcp-surface));
 }
 
 .pcp-pub__card--queued {
-  border-left-color: var(--pcp-accent);
+  --pcp-rail: var(--pcp-accent);
 }
 
 .pcp-pub__card--done {
-  border-left-color: var(--pcp-muted);
+  --pcp-rail: var(--pcp-faint);
   opacity: 0.72;
 }
 
 /* Operação já apontada: linha inteira tachada, igual à visão do PCP. */
-.pcp-pub__card--done .pcp-pub__card-body {
+.pcp-pub__card--done .pcp-pub__row {
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
@@ -255,49 +436,118 @@
 .pcp-pub__card--done .pcp-pub__badge,
 .pcp-pub__card--done .pcp-pub__copy,
 .pcp-pub__card--done .pcp-pub__operator,
-.pcp-pub__card--done .pcp-pub__drawing {
+.pcp-pub__card--done .pcp-pub__drawing,
+.pcp-pub__card--done .pcp-pub__cell-label {
   text-decoration: none;
 }
 
 .pcp-pub__position {
-  display: flex;
+  display: grid;
   flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
+  place-items: center;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: var(--pcp-title);
   background: color-mix(in srgb, var(--pcp-accent) 12%, transparent);
 }
 
-.pcp-pub__card-body {
+.pcp-pub__position--ghost {
+  height: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--pcp-faint);
+  background: transparent;
+}
+
+.pcp-pub__row {
+  display: grid;
   flex: 1 1 auto;
+  grid-template-columns: var(--pcp-cols);
+  gap: 8px 16px;
+  align-items: start;
   min-width: 0;
 }
 
-.pcp-pub__card-top {
+.pcp-pub__cell {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* Em tela larga os rótulos vivem no cabeçalho da lista. */
+.pcp-pub__cell-label {
+  display: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__cell-value {
+  font-size: 0.92rem;
+  color: var(--pcp-text);
+}
+
+.pcp-pub__cell-sub {
+  font-size: 0.8rem;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub__num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__cell--status {
+  align-items: flex-end;
+  text-align: right;
 }
 
 .pcp-pub__order {
   display: inline-flex;
-  gap: 6px;
+  gap: 7px;
   align-items: center;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
   color: var(--pcp-title);
 }
 
+.pcp-pub__order strong {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 .pcp-pub__order-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__product {
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.9rem;
+  color: var(--pcp-text);
+  text-overflow: ellipsis;
+}
+
+.pcp-pub__product strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__pa {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
   color: var(--pcp-muted);
 }
 
@@ -306,8 +556,8 @@
   gap: 4px;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 38px;
+  min-height: 38px;
   padding: 0 8px;
   border: 1px solid var(--pcp-border);
   border-radius: 10px;
@@ -341,10 +591,28 @@
 }
 
 .pcp-pub__badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
   padding: 5px 11px;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.pcp-pub__badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pcp-pub-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pcp-pub__badge-dot {
+    animation: none;
+  }
 }
 
 .pcp-pub__badge--running {
@@ -362,47 +630,18 @@
   background: color-mix(in srgb, var(--pcp-muted) 16%, transparent);
 }
 
-.pcp-pub__product {
-  margin: 8px 0 0;
-  font-size: 0.98rem;
-  color: var(--pcp-text);
-}
-
-.pcp-pub__facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px 16px;
-  margin: 10px 0 0;
-}
-
-.pcp-pub__fact dt {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--pcp-muted);
-}
-
-.pcp-pub__fact dd {
-  margin: 2px 0 0;
-  font-size: 0.92rem;
-  color: var(--pcp-text);
-}
-
 .pcp-pub__operator {
-  margin: 10px 0 0;
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--pcp-muted);
 }
 
 .pcp-pub__drawing {
-  margin-top: 12px;
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid var(--pcp-accent);
-  border-radius: 12px;
-  font-size: 0.95rem;
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid color-mix(in srgb, var(--pcp-accent) 45%, transparent);
+  border-radius: 10px;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--pcp-accent);
   background: color-mix(in srgb, var(--pcp-accent) 10%, transparent);
@@ -411,8 +650,11 @@
 
 .pcp-pub__drawing:hover,
 .pcp-pub__drawing:focus-visible {
+  border-color: var(--pcp-accent);
   background: color-mix(in srgb, var(--pcp-accent) 18%, transparent);
 }
+
+/* ---------- Visualizador de desenho ---------- */
 
 .pcp-pub-viewer {
   position: fixed;
@@ -455,23 +697,69 @@
   background: #525659;
 }
 
+/* ---------- Rodapé ---------- */
+
 .pcp-pub__footer {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: space-between;
-  margin-top: 18px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pcp-border);
   font-size: 0.8rem;
-  color: var(--pcp-muted);
+  color: var(--pcp-faint);
 }
 
-@media (max-width: 560px) {
-  .pcp-pub__header {
-    flex-direction: column;
+/* ---------- Telas estreitas: a linha volta a empilhar ---------- */
+
+@media (max-width: 900px) {
+  .pcp-pub__queue-head {
+    display: none;
+  }
+
+  .pcp-pub__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+  }
+
+  .pcp-pub__cell--order,
+  .pcp-pub__cell--status {
+    grid-column: 1 / -1;
+  }
+
+  .pcp-pub__cell-label {
+    display: block;
+  }
+
+  .pcp-pub__cell--status {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .pcp-pub__card {
+    padding: 14px 14px 14px 18px;
+  }
+}
+
+@media (max-width: 620px) {
+  .pcp-pub__brandbar-inner {
+    align-items: flex-start;
+  }
+
+  /* Com a barra quebrada em duas linhas, o botão de tema passa a cobrir o título. */
+  .pcp-pub__identity {
+    padding-right: 52px;
   }
 
   .pcp-pub__actions {
     width: 100%;
     justify-content: space-between;
+    padding-right: 0;
+  }
+
+  .pcp-pub__logo {
+    width: 40px;
+    height: 40px;
   }
 }

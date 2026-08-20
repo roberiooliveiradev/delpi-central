@@ -114,70 +114,92 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
   const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
   const items = payload.selected.work_center === workCenter ? payload.selected.items : [];
+  const running = activeCenter?.in_production_count ?? 0;
 
   return (
     <section className="pcp-pub">
-      <header className="pcp-pub__header">
-        <div className="pcp-pub__identity">
-          <p className="pcp-pub__eyebrow">Fila de produção · Filial {branch}</p>
-          <h1>{activeCenter?.work_center_name || workCenter}</h1>
-          <p className="pcp-pub__meta">
-            Posto {workCenter} · {items.length} {items.length === 1 ? "operação" : "operações"}
-            {activeCenter?.in_production_count
-              ? ` · ${activeCenter.in_production_count} em produção`
-              : ""}
-          </p>
-        </div>
-        <div className="pcp-pub__actions">
-          <span
-            className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
-            title={
-              connected
-                ? "Conectado: a fila atualiza sozinha quando o PCP altera."
-                : "Sem conexão ao vivo: atualizando periodicamente."
-            }
-          >
-            <span className="pcp-pub__live-dot" aria-hidden="true" />
-            {connected ? "Ao vivo" : "Reconectando"}
-          </span>
-          <button type="button" className="pcp-pub__ghost" onClick={clearWorkCenter}>
-            Trocar posto
-          </button>
-        </div>
-      </header>
+      <BrandBar
+        eyebrow={`Fila de produção · Filial ${branch}`}
+        title={activeCenter?.work_center_name || workCenter}
+        code={workCenter}
+        stats={
+          <>
+            <span className="pcp-pub__chip">
+              {items.length} {items.length === 1 ? "operação" : "operações"}
+            </span>
+            {running ? (
+              <span className="pcp-pub__chip pcp-pub__chip--running">{running} em produção</span>
+            ) : null}
+          </>
+        }
+        actions={
+          <>
+            <span
+              className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
+              title={
+                connected
+                  ? "Conectado: a fila atualiza sozinha quando o PCP altera."
+                  : "Sem conexão ao vivo: atualizando periodicamente."
+              }
+            >
+              <span className="pcp-pub__live-dot" aria-hidden="true" />
+              {connected ? "Ao vivo" : "Reconectando"}
+            </span>
+            <button type="button" className="pcp-pub__ghost" onClick={clearWorkCenter}>
+              Trocar posto
+            </button>
+          </>
+        }
+      />
 
-      <p className="pcp-pub__notice">
-        Sequência definida pelo PCP — esta tela é somente leitura e atualiza automaticamente.
-      </p>
-
-      {error ? <p className="pcp-pub__error">{error}</p> : null}
-
-      {items.length === 0 ? (
-        <p className="pcp-pub__empty">
-          {loading ? "Carregando fila…" : "Nenhuma operação programada para este posto."}
+      <div className="pcp-pub__wrap">
+        <p className="pcp-pub__notice">
+          Sequência definida pelo PCP — esta tela é somente leitura e atualiza automaticamente.
         </p>
-      ) : (
-        <ol className="pcp-pub__queue">
-          {items.map((item, index) => (
-            <OperationCard
-              key={`${item.production_order}::${item.operation_code}`}
-              position={index + 1}
-              operation={item}
-              onOpenDrawing={setDrawingPa}
-            />
-          ))}
-        </ol>
-      )}
 
-      <footer className="pcp-pub__footer">
-        <span>
-          Atualizado às{" "}
-          {updatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-        </span>
-        {payload.snapshot.refreshed_at ? (
-          <span>Fila publicada em {formatDateTime(payload.snapshot.refreshed_at)}</span>
-        ) : null}
-      </footer>
+        {error ? <p className="pcp-pub__error">{error}</p> : null}
+
+        {items.length === 0 ? (
+          <p className="pcp-pub__empty">
+            {loading ? "Carregando fila…" : "Nenhuma operação programada para este posto."}
+          </p>
+        ) : (
+          <>
+            <div className="pcp-pub__queue-head" aria-hidden="true">
+              <span className="pcp-pub__position pcp-pub__position--ghost">#</span>
+              <div className="pcp-pub__row">
+                <span>OP / Produto</span>
+                <span>Operação</span>
+                <span>Pendente</span>
+                <span>Programada</span>
+                <span>Entrega</span>
+                <span className="pcp-pub__row-end">Status</span>
+              </div>
+            </div>
+
+            <ol className="pcp-pub__queue">
+              {items.map((item, index) => (
+                <OperationCard
+                  key={`${item.production_order}::${item.operation_code}`}
+                  position={index + 1}
+                  operation={item}
+                  onOpenDrawing={setDrawingPa}
+                />
+              ))}
+            </ol>
+          </>
+        )}
+
+        <footer className="pcp-pub__footer">
+          <span>
+            Atualizado às{" "}
+            {updatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+          {payload.snapshot.refreshed_at ? (
+            <span>Fila publicada em {formatDateTime(payload.snapshot.refreshed_at)}</span>
+          ) : null}
+        </footer>
+      </div>
 
       {drawingPa ? (
         <DrawingViewer
@@ -188,6 +210,42 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         />
       ) : null}
     </section>
+  );
+}
+
+/** Faixa de marca fixa no topo — identidade DELPI e posto em destaque para leitura à distância. */
+function BrandBar({
+  eyebrow,
+  title,
+  code,
+  stats,
+  actions,
+}: {
+  eyebrow: string;
+  title: string;
+  code?: string | null;
+  stats?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <header className="pcp-pub__brandbar">
+      <div className="pcp-pub__brandbar-inner">
+        <div className="pcp-pub__identity">
+          <span className="pcp-pub__logo">
+            <img src="/p/logoMinhaDelpi.svg" alt="Minha DELPI" draggable={false} />
+          </span>
+          <div className="pcp-pub__identity-text">
+            <p className="pcp-pub__eyebrow">{eyebrow}</p>
+            <div className="pcp-pub__title-row">
+              <h1>{title}</h1>
+              {code ? <span className="pcp-pub__code">{code}</span> : null}
+            </div>
+            {stats ? <div className="pcp-pub__stats">{stats}</div> : null}
+          </div>
+        </div>
+        {actions ? <div className="pcp-pub__actions">{actions}</div> : null}
+      </div>
+    </header>
   );
 }
 
@@ -211,48 +269,54 @@ function WorkCenterPicker({ branch, workCenters, onSelect }: PickerProps) {
 
   return (
     <section className="pcp-pub pcp-pub--picker">
-      <header className="pcp-pub__header pcp-pub__header--picker">
-        <div className="pcp-pub__identity">
-          <p className="pcp-pub__eyebrow">Filial {branch}</p>
-          <h1>Escolha o seu posto de trabalho</h1>
-          <p className="pcp-pub__meta">
-            A escolha fica salva neste aparelho; você pode trocar depois pelo cabeçalho.
-          </p>
-        </div>
-      </header>
+      <BrandBar
+        eyebrow={`Fila de produção · Filial ${branch}`}
+        title="Escolha o seu posto de trabalho"
+        stats={
+          <span className="pcp-pub__chip">
+            {workCenters.length} {workCenters.length === 1 ? "posto" : "postos"}
+          </span>
+        }
+      />
 
-      {workCenters.length > 8 ? (
-        <input
-          className="pcp-pub__search"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Buscar posto ou máquina…"
-          aria-label="Buscar posto de trabalho"
-        />
-      ) : null}
+      <div className="pcp-pub__wrap">
+        <p className="pcp-pub__notice">
+          A escolha fica salva neste aparelho; você pode trocar depois pelo cabeçalho.
+        </p>
 
-      {filtered.length === 0 ? (
-        <p className="pcp-pub__empty">Nenhum posto encontrado.</p>
-      ) : (
-        <div className="pcp-pub__centers">
-          {filtered.map((item) => (
-            <button
-              key={item.work_center}
-              type="button"
-              className="pcp-pub__center"
-              onClick={() => onSelect(item.work_center)}
-            >
-              <span className="pcp-pub__center-code">{item.work_center}</span>
-              <span className="pcp-pub__center-name">{item.work_center_name}</span>
-              <span className="pcp-pub__center-meta">
-                {item.operation_count} {item.operation_count === 1 ? "operação" : "operações"}
-                {item.in_production_count ? ` · ${item.in_production_count} em produção` : ""}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+        {workCenters.length > 8 ? (
+          <input
+            className="pcp-pub__search"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar posto ou máquina…"
+            aria-label="Buscar posto de trabalho"
+          />
+        ) : null}
+
+        {filtered.length === 0 ? (
+          <p className="pcp-pub__empty">Nenhum posto encontrado.</p>
+        ) : (
+          <div className="pcp-pub__centers">
+            {filtered.map((item) => (
+              <button
+                key={item.work_center}
+                type="button"
+                className="pcp-pub__center"
+                onClick={() => onSelect(item.work_center)}
+              >
+                <span className="pcp-pub__center-code">{item.work_center}</span>
+                <span className="pcp-pub__center-name">{item.work_center_name}</span>
+                <span className="pcp-pub__center-meta">
+                  {item.operation_count} {item.operation_count === 1 ? "operação" : "operações"}
+                  {item.in_production_count ? ` · ${item.in_production_count} em produção` : ""}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -273,49 +337,74 @@ function OperationCard({
       <span className="pcp-pub__position" aria-label={`Posição ${position}`}>
         {position}
       </span>
-      <div className="pcp-pub__card-body">
-        <div className="pcp-pub__card-top">
+
+      <div className="pcp-pub__row">
+        <div className="pcp-pub__cell pcp-pub__cell--order">
           <span className="pcp-pub__order">
             <span className="pcp-pub__order-label">OP</span>
             <strong>{operation.production_order}</strong>
             <CopyValueButton value={operation.production_order} label="Copiar OP" />
           </span>
-          <span className={`pcp-pub__badge pcp-pub__badge--${status.tone}`}>{status.label}</span>
+          <p className="pcp-pub__product">
+            <strong>{operation.product_code}</strong> {operation.product_description}
+          </p>
+          {paCode ? <span className="pcp-pub__pa">PA {paCode}</span> : null}
         </div>
 
-        <p className="pcp-pub__product">
-          <strong>{operation.product_code}</strong> {operation.product_description}
-        </p>
-
-        <dl className="pcp-pub__facts">
-          <Fact label="Operação">
+        <div className="pcp-pub__cell">
+          <span className="pcp-pub__cell-label">Operação</span>
+          <span className="pcp-pub__cell-value">
             {operation.operation_code} · {operation.operation_description}
-          </Fact>
-          <Fact label="PA">{paCode || "—"}</Fact>
-          <Fact label="Pendente">
+          </span>
+          {operation.tool ? (
+            <span className="pcp-pub__cell-sub">Ferramenta {operation.tool}</span>
+          ) : null}
+        </div>
+
+        <div className="pcp-pub__cell">
+          <span className="pcp-pub__cell-label">Pendente</span>
+          <span className="pcp-pub__cell-value pcp-pub__num">
             {formatQty(operation.pending_qty)} {formatUnit(operation.unit)}
-          </Fact>
-          <Fact label="Ferramenta">{operation.tool || "—"}</Fact>
-          <Fact label="Programada">
+          </span>
+        </div>
+
+        <div className="pcp-pub__cell">
+          <span className="pcp-pub__cell-label">Programada</span>
+          <span className="pcp-pub__cell-value pcp-pub__num">
             {formatDate(operation.scheduled_date)}
-            {operation.scheduled_start_time ? ` · ${operation.scheduled_start_time}` : ""}
-          </Fact>
-          <Fact label="Entrega PA">{formatDate(operation.pa_due_date)}</Fact>
-        </dl>
+          </span>
+          {operation.scheduled_start_time ? (
+            <span className="pcp-pub__cell-sub">{operation.scheduled_start_time}</span>
+          ) : null}
+        </div>
 
-        {status.operatorNote ? (
-          <p className="pcp-pub__operator">{status.operatorNote}</p>
-        ) : null}
+        <div className="pcp-pub__cell">
+          <span className="pcp-pub__cell-label">Entrega</span>
+          <span className="pcp-pub__cell-value pcp-pub__num">
+            {formatDate(operation.pa_due_date)}
+          </span>
+        </div>
 
-        {paCode ? (
-          <button
-            type="button"
-            className="pcp-pub__drawing"
-            onClick={() => onOpenDrawing(paCode)}
-          >
-            Ver desenho
-          </button>
-        ) : null}
+        <div className="pcp-pub__cell pcp-pub__cell--status">
+          <span className={`pcp-pub__badge pcp-pub__badge--${status.tone}`}>
+            {status.tone === "running" ? (
+              <span className="pcp-pub__badge-dot" aria-hidden="true" />
+            ) : null}
+            {status.label}
+          </span>
+          {status.operatorNote ? (
+            <span className="pcp-pub__operator">{status.operatorNote}</span>
+          ) : null}
+          {paCode ? (
+            <button
+              type="button"
+              className="pcp-pub__drawing"
+              onClick={() => onOpenDrawing(paCode)}
+            >
+              Ver desenho
+            </button>
+          ) : null}
+        </div>
       </div>
     </li>
   );
@@ -374,7 +463,7 @@ function DrawingViewer({
     <div className="pcp-pub-viewer" role="dialog" aria-modal="true" aria-labelledby="pcp-pub-viewer-title">
       <div className="pcp-pub-viewer__bar">
         <h2 id="pcp-pub-viewer-title">Desenho {paCode}</h2>
-        <button type="button" className="pcp-pub__ghost" onClick={onClose}>
+        <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
           Fechar
         </button>
       </div>
@@ -383,15 +472,6 @@ function DrawingViewer({
       {status === "ready" && objectUrl ? (
         <iframe className="pcp-pub-viewer__frame" title={`Desenho ${paCode}`} src={objectUrl} />
       ) : null}
-    </div>
-  );
-}
-
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="pcp-pub__fact">
-      <dt>{label}</dt>
-      <dd>{children}</dd>
     </div>
   );
 }
@@ -515,9 +595,9 @@ function formatQty(value: number): string {
 
 /** Unidade de chão de fábrica: TOTVS envia MI (milheiro); o operador lê como peça. */
 function formatUnit(unit: string | null): string {
-  const cleaned = (unit || "").trim().toUpperCase();
-  if (!cleaned || cleaned === "MI") return "PÇ";
-  return unit!.trim();
+  const cleaned = (unit ?? "").trim();
+  if (!cleaned || cleaned.toUpperCase() === "MI") return "PÇ";
+  return cleaned;
 }
 
 function formatDate(value: string | null): string {
