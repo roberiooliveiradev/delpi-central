@@ -22,6 +22,11 @@ import {
   gatePendingAttachments,
   interactionMessageLooksLikeRawHtml,
 } from "./interactionMessageAttachmentGate";
+import {
+  countFilesTowardAttachmentCap,
+  listInlinePendingIdsFromMarkdown,
+  rewriteInlinePendingInMarkdown,
+} from "./interactionRoomInlineAttachments";
 import type { InteractionMentionHit } from "./mentionSuggestAdapter";
 import { useInteractionMentionSuggest } from "./useInteractionMentionSuggest";
 
@@ -113,6 +118,7 @@ export function InteractionRoomMessageComposer({
     isEdit ? initialMarkdown : readComposerDraftText(roomId),
   );
   const [pending, setPending] = useState<PendingItem[]>([]);
+  const [inlineFiles, setInlineFiles] = useState<Record<string, File>>({});
   const [draftHydrated, setDraftHydrated] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
   const [baselineRemoteIds, setBaselineRemoteIds] = useState<string[]>([]);
@@ -284,7 +290,11 @@ export function InteractionRoomMessageComposer({
   const onFilesSelected = useCallback(
     (files: File[]) => {
       if (!files.length) return;
-      const gated = gatePendingAttachments(pending.length, files);
+      const current = countFilesTowardAttachmentCap(
+        pending.length,
+        Object.keys(inlineFiles).length,
+      );
+      const gated = gatePendingAttachments(current, files);
       if (!gated.ok) {
         onError(gated.message);
         return;
@@ -298,7 +308,33 @@ export function InteractionRoomMessageComposer({
         })),
       ]);
     },
-    [pending.length, onError],
+    [pending.length, inlineFiles, onError],
+  );
+
+  const onInlineImagesInserted = useCallback(
+    (items: readonly { pendingId: string; file: File }[]) => {
+      if (!items.length) return;
+      const current = countFilesTowardAttachmentCap(
+        pending.length,
+        Object.keys(inlineFiles).length,
+      );
+      const gated = gatePendingAttachments(
+        current,
+        items.map((item) => item.file),
+      );
+      if (!gated.ok) {
+        onError(gated.message);
+        return;
+      }
+      setInlineFiles((prev) => {
+        const next = { ...prev };
+        for (const item of items) {
+          next[item.pendingId] = item.file;
+        }
+        return next;
+      });
+    },
+    [pending.length, inlineFiles, onError],
   );
 
   useEffect(() => {
@@ -327,11 +363,30 @@ export function InteractionRoomMessageComposer({
   const onCancelEditClick = useCallback(() => {
     revokePreviewUrls();
     setPending([]);
+    setInlineFiles({});
     setBaselineRemoteIds([]);
     setDraft("");
     resetMentions();
     onCancelEdit?.();
   }, [onCancelEdit, resetMentions, revokePreviewUrls]);
+
+  const uploadInlineAndRewrite = useCallback(
+    async (messageId: string, bodyText: string): Promise<string> => {
+      const pendingIds = listInlinePendingIdsFromMarkdown(bodyText);
+      if (pendingIds.length === 0) return bodyText;
+      const pendingToUuid: Record<string, string> = {};
+      for (const pendingId of pendingIds) {
+        const file = inlineFiles[pendingId];
+        if (!file) {
+          throw new Error(content.bodyInlineImageMissing);
+        }
+        const uploaded = await uploadRoomMessageAttachment(messageId, file);
+        pendingToUuid[pendingId] = uploaded.id;
+      }
+      return rewriteInlinePendingInMarkdown(bodyText, pendingToUuid);
+    },
+    [inlineFiles, content.bodyInlineImageMissing],
+  );
 
   const onSubmit = useCallback(async (bodyMarkdown?: string) => {
     const id = roomId.trim();
@@ -345,6 +400,7 @@ export function InteractionRoomMessageComposer({
       const locals = pending.filter(
         (item): item is PendingLocal => item.kind === "local",
       );
+      const inlinePending = listInlinePendingIdsFromMarkdown(body);
       if (!body && remotesKept.length === 0 && locals.length === 0) return;
 
       setSubmitting(true);
@@ -353,9 +409,13 @@ export function InteractionRoomMessageComposer({
           onError(content.bodyHtmlRejected);
           return;
         }
-        const mentions = takeMentionsForBody(body);
+        let bodyText = body;
+        if (inlinePending.length > 0) {
+          bodyText = await uploadInlineAndRewrite(editMessageId, bodyText);
+        }
+        const mentions = takeMentionsForBody(bodyText);
         const updated = await updateInteractionMessage(id, editMessageId, {
-          body_text: body,
+          body_text: bodyText,
           mentions,
         });
 
@@ -382,6 +442,7 @@ export function InteractionRoomMessageComposer({
 
         revokePreviewUrls();
         setPending([]);
+        setInlineFiles({});
         setBaselineRemoteIds([]);
         setDraft("");
         resetMentions();
@@ -396,11 +457,12 @@ export function InteractionRoomMessageComposer({
       return;
     }
 
+    const inlinePending = listInlinePendingIdsFromMarkdown(body);
     if (!body && pending.length === 0) return;
 
     setSubmitting(true);
     try {
-      const bodyText = body;
+      let bodyText = body;
       if (bodyText && interactionMessageLooksLikeRawHtml(bodyText)) {
         onError(content.bodyHtmlRejected);
         return;
@@ -414,11 +476,23 @@ export function InteractionRoomMessageComposer({
       const files = pending.filter(
         (item): item is PendingLocal => item.kind === "local",
       );
+
+      if (inlinePending.length > 0) {
+        bodyText = await uploadInlineAndRewrite(created.id, bodyText);
+        const rewritten = await updateInteractionMessage(id, created.id, {
+          body_text: bodyText,
+          mentions: takeMentionsForBody(bodyText),
+        });
+        onMessageCreated(rewritten);
+      } else {
+        onMessageCreated(created);
+      }
+
       setDraft("");
       setPending([]);
+      setInlineFiles({});
       resetMentions();
       void clearComposerDraft(id);
-      onMessageCreated(created);
       onCancelReply?.();
 
       for (const item of files) {
@@ -430,7 +504,7 @@ export function InteractionRoomMessageComposer({
           );
         }
       }
-      if (files.length > 0) {
+      if (files.length > 0 || inlinePending.length > 0) {
         onMessageAttachmentsSettled?.(created.id);
       }
     } catch (err: unknown) {
@@ -461,6 +535,7 @@ export function InteractionRoomMessageComposer({
     onCancelEdit,
     onError,
     revokePreviewUrls,
+    uploadInlineAndRewrite,
   ]);
 
   const banner = isEdit ? editBanner : replyBanner;
@@ -486,6 +561,7 @@ export function InteractionRoomMessageComposer({
         showAttach
         onFilesSelected={onFilesSelected}
         fileAccept={ROOM_ATTACH_ACCEPT}
+        onInlineImagesInserted={onInlineImagesInserted}
         pendingAttachments={pendingAttachments}
         onRemovePendingAttachment={onRemovePending}
         replyTo={banner ?? null}

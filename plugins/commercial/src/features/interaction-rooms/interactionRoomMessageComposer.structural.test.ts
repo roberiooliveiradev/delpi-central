@@ -18,6 +18,9 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/onRemovePendingAttachment=/);
     expect(source).toMatch(/CommercialMentionComposer/);
     expect(source).toMatch(/onFilesSelected=/);
+    expect(source).toMatch(/onInlineImagesInserted=/);
+    expect(source).toMatch(/rewriteInlinePendingInMarkdown/);
+    expect(source).toMatch(/uploadInlineAndRewrite/);
     expect(source).not.toMatch(/hasAttachments=/);
     expect(source).not.toMatch(/body_html/);
     expect(source).toMatch(/body_text:/);

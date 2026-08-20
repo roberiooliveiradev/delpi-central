@@ -126,6 +126,10 @@ export const INTERACTION_ROOMS_CONTENT = {
   attachMaxCount: 10,
   attachMaxBytes: 20 * 1024 * 1024,
   bodyHtmlRejected: "Envie o texto em markdown; HTML cru não é aceito.",
+  bodyInlineImageRejected:
+    "Imagens no texto só podem usar anexos da mensagem; remova links externos.",
+  bodyInlineImageMissing:
+    "Não foi possível enviar uma imagem colada. Cole de novo ou anexe pelo clipe.",
   mentionKindGroupFallback: "Outros",
   mentionKindGroupLabels: {
     user: "Pessoas",
