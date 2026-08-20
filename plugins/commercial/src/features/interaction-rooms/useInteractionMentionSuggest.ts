@@ -79,11 +79,21 @@ export function useInteractionMentionSuggest() {
     setHits([]);
   }, []);
 
+  const seedMentions = useCallback((mentions: readonly InteractionMentionPayload[]) => {
+    pendingRef.current = mentions.map((mention) => ({
+      kind: mention.kind,
+      ref: { ...mention.ref },
+      label: mention.label,
+    }));
+    setHits([]);
+  }, []);
+
   return {
     hits,
     onMentionQueryChange,
     onMentionInserted,
     takeMentionsForBody,
     resetMentions,
+    seedMentions,
   };
 }

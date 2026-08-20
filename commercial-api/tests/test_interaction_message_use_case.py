@@ -114,10 +114,29 @@ class InMemoryInteractionMessageRepo(InteractionMessageRepositoryPort):
         *,
         message_id: UUID,
         body_text: str,
+        mentions: Sequence[tuple[str, Mapping[str, object], str]] | None = None,
+        replace_mentions: bool = False,
     ) -> InteractionMessage | None:
         message = self.messages.get(message_id)
         if message is None or message.deleted_at is not None:
             return None
+        if replace_mentions:
+            mention_rows: list[InteractionMention] = []
+            for kind, ref, label in mentions or ():
+                mention_kind = str(kind or "").strip()
+                mention_label = str(label or "").strip()
+                if not mention_kind or not mention_label:
+                    continue
+                mention_rows.append(
+                    InteractionMention(
+                        id=uuid4(),
+                        message_id=message_id,
+                        mention_kind=mention_kind,
+                        ref=dict(ref),
+                        label=mention_label,
+                    )
+                )
+            self.mentions[message_id] = mention_rows
         updated = InteractionMessage(
             id=message.id,
             room_id=message.room_id,
@@ -324,6 +343,42 @@ def test_update_and_delete_only_author() -> None:
     deleted = uc.delete(room_id=room.id, message_id=msg.id, actor_user_id="u1")
     assert deleted.deleted_at is not None
     assert uc.list_messages(room_id=room.id, actor_user_id="u1") == []
+
+
+def test_update_replaces_mentions_empty_clears() -> None:
+    rooms = InMemoryInteractionRoomRepo()
+    messages = InMemoryInteractionMessageRepo()
+    room = _open_room(rooms)
+    uc = ManageInteractionMessagesUseCase(rooms=rooms, messages=messages)
+    msg = uc.post(
+        PostInteractionMessageInput(
+            room_id=room.id,
+            actor_user_id="u1",
+            body_text="Oi @Ana",
+            mentions=[("user", {"user_id": "u2"}, "@Ana")],
+        )
+    )
+    assert len(msg.mentions) == 1
+    cleared = uc.update(
+        room_id=room.id,
+        message_id=msg.id,
+        actor_user_id="u1",
+        body_text="Sem menção",
+        mentions=[],
+        replace_mentions=True,
+    )
+    assert cleared.body_text == "Sem menção"
+    assert cleared.mentions == ()
+    replaced = uc.update(
+        room_id=room.id,
+        message_id=msg.id,
+        actor_user_id="u1",
+        body_text="Oi @Bruno",
+        mentions=[("user", {"user_id": "u3"}, "@Bruno")],
+        replace_mentions=True,
+    )
+    assert len(replaced.mentions) == 1
+    assert replaced.mentions[0].label == "@Bruno"
 
 
 def test_post_requires_body() -> None:

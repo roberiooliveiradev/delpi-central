@@ -34,6 +34,10 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/readComposerDraftText/);
     expect(source).toMatch(/writeComposerDraftFiles/);
     expect(source).toMatch(/clearComposerDraft/);
+    expect(source).toMatch(/updateInteractionMessage/);
+    expect(source).toMatch(/mode === "edit"/);
+    expect(source).toMatch(/seedMentions|initialMentions/);
+    expect(source).toMatch(/composerSaveEditAriaLabel/);
     expect(source).not.toMatch(/<RichTextToolbar|<RichTextEditor/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);

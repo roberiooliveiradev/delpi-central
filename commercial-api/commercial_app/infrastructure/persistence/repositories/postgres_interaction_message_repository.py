@@ -298,23 +298,71 @@ class PostgresInteractionMessageRepository(
         *,
         message_id: UUID,
         body_text: str,
+        mentions: Sequence[tuple[str, Mapping[str, object], str]] | None = None,
+        replace_mentions: bool = False,
     ) -> InteractionMessage | None:
-        row = self.execute_returning_one(
-            f"""
-            UPDATE commercial.interaction_messages
-               SET body_text = %s,
-                   edited_at = NOW()
-             WHERE id = %s
-               AND deleted_at IS NULL
-               AND message_kind = 'text'
-         RETURNING {_MESSAGE_COLUMNS}
-            """,
-            (body_text or "", str(message_id)),
-        )
-        base = _row_message_base(row)
-        if base is None:
-            return None
-        return self._hydrate([base])[0]
+        with self.db():
+            row = self.execute_returning_one(
+                f"""
+                UPDATE commercial.interaction_messages
+                   SET body_text = %s,
+                       edited_at = NOW()
+                 WHERE id = %s
+                   AND deleted_at IS NULL
+                   AND message_kind = 'text'
+             RETURNING {_MESSAGE_COLUMNS}
+                """,
+                (body_text or "", str(message_id)),
+                auto_commit=False,
+            )
+            base = _row_message_base(row)
+            if base is None:
+                self.rollback()
+                return None
+            try:
+                if replace_mentions:
+                    self.execute(
+                        """
+                        DELETE FROM commercial.interaction_mentions
+                         WHERE message_id = %s
+                        """,
+                        (str(message_id),),
+                        auto_commit=False,
+                    )
+                    for kind, ref, label in mentions or ():
+                        mention_kind = str(kind or "").strip()
+                        mention_label = str(label or "").strip()
+                        if not mention_kind or not mention_label:
+                            continue
+                        self.execute(
+                            f"""
+                            INSERT INTO commercial.interaction_mentions (
+                                message_id, mention_kind, ref, label
+                            ) VALUES (%s, %s, %s::jsonb, %s)
+                            """,
+                            (
+                                str(message_id),
+                                mention_kind,
+                                json.dumps(dict(ref)),
+                                mention_label,
+                            ),
+                            auto_commit=False,
+                        )
+                self.execute(
+                    """
+                    UPDATE commercial.interaction_rooms
+                       SET updated_at = NOW()
+                     WHERE id = %s
+                       AND deleted_at IS NULL
+                    """,
+                    (str(base.room_id),),
+                    auto_commit=False,
+                )
+                self.commit()
+            except Exception:
+                self.rollback()
+                raise
+            return self.get_by_id(base.id)
 
     def soft_delete(self, *, message_id: UUID) -> InteractionMessage | None:
         row = self.execute_returning_one(

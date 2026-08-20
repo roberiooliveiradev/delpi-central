@@ -27,6 +27,8 @@ class PostInteractionMessageBody(BaseModel):
 
 class UpdateInteractionMessageBody(BaseModel):
     body_text: str = Field(..., min_length=1)
+    # When set (incl. empty list), replaces all mentions; omit to leave unchanged.
+    mentions: list[dict] | None = None
 
 
 class CreateTaskFromInteractionMessageBody(BaseModel):

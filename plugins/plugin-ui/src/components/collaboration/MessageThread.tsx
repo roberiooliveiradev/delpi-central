@@ -68,6 +68,8 @@ export type MessageThreadClassNames = {
   time: string;
   body: string;
   bodyRich: string;
+  editSlot: string;
+  itemEditing: string;
   actions: string;
   action: string;
   actionDanger: string;
@@ -87,6 +89,10 @@ export type MessageThreadProps = {
   emptyLabel: string;
   /** Host builds edit/delete/reply/pin/task actions per message. */
   resolveActions?: (message: MessageThreadItem) => MessageThreadAction[];
+  /** When set, that message shows `renderEditSlot` instead of the body. */
+  editingId?: string | null;
+  /** In-place composer (or other editor) while `editingId` matches. */
+  renderEditSlot?: (message: MessageThreadItem) => ReactNode;
   /** Override body render (default: markdown sanitizado + MentionText no plano). */
   renderBody?: (message: MessageThreadItem) => ReactNode;
   onMentionActivate?: MentionTextPropsOnActivate;
@@ -134,6 +140,11 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
     bodyRich: pair(
       `${base}__body ${base}__body--rich`,
       `${ui}__body ${ui}__body--rich`,
+    ),
+    editSlot: pair(`${base}__edit-slot`, `${ui}__edit-slot`),
+    itemEditing: pair(
+      `${base}__item ${base}__item--editing`,
+      `${ui}__item ${ui}__item--editing`,
     ),
     actions: pair(`${base}__actions`, `${ui}__actions`),
     action: pair(`${base}__action`, `${ui}__action`),
@@ -183,11 +194,13 @@ function itemClassName(
   classNames: MessageThreadClassNames,
   message: MessageThreadItem,
   continues: boolean,
+  editing: boolean,
 ): string {
   const parts = [classNames.item];
   if (message.parentId) parts.push(classNames.itemReply);
   if (continues) parts.push(classNames.itemContinue);
   if (message.mine && !isSystemKind(message.kind)) parts.push(classNames.itemMine);
+  if (editing) parts.push(classNames.itemEditing);
   return parts.join(" ");
 }
 
@@ -237,11 +250,14 @@ export function MessageThread({
   listAriaLabel,
   emptyLabel,
   resolveActions,
+  editingId = null,
+  renderEditSlot,
   renderBody,
   onMentionActivate,
   className,
 }: MessageThreadProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const activeEditingId = (editingId ?? "").trim();
 
   if (messages.length === 0) {
     return (
@@ -258,11 +274,15 @@ export function MessageThread({
       <ul className={classNames.list} aria-label={listAriaLabel}>
         {messages.map((message, index) => {
           const continues = sameAuthorRun(messages[index - 1], message);
+          const isEditing =
+            Boolean(activeEditingId) &&
+            message.id === activeEditingId &&
+            Boolean(renderEditSlot);
           if (isSystemKind(message.kind)) {
             return (
               <li
                 key={message.id}
-                className={itemClassName(classNames, message, false)}
+                className={itemClassName(classNames, message, false, false)}
                 data-message-id={message.id}
               >
                 <div className={classNames.system} data-message-kind={message.kind}>
@@ -275,11 +295,18 @@ export function MessageThread({
             );
           }
 
-          const actions = resolveActions?.(message) ?? [];
+          const actions = isEditing ? [] : resolveActions?.(message) ?? [];
           const quoted = parentQuote(messages, message);
-          const body =
-            renderBody?.(message) ??
-            defaultMessageBody(message, classNames, onMentionActivate);
+          const body = isEditing
+            ? (
+                <div className={classNames.editSlot}>
+                  {renderEditSlot?.(message)}
+                </div>
+              )
+            : (
+                renderBody?.(message) ??
+                defaultMessageBody(message, classNames, onMentionActivate)
+              );
           const avatarName = (message.authorName ?? "").trim();
           const authorHref = (message.authorHref ?? "").trim();
           const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
@@ -314,9 +341,10 @@ export function MessageThread({
           return (
             <li
               key={message.id}
-              className={itemClassName(classNames, message, continues)}
+              className={itemClassName(classNames, message, continues, isEditing)}
               data-message-id={message.id}
               data-message-kind={message.kind}
+              data-editing={isEditing ? "true" : undefined}
             >
               <div className={classNames.row}>
                 {avatar}
@@ -371,7 +399,7 @@ export function MessageThread({
                         </blockquote>
                       ) : null}
                       {body}
-                      {message.belowBody}
+                      {isEditing ? null : message.belowBody}
                     </article>
                   </div>
                 </div>

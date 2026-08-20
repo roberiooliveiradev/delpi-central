@@ -58,3 +58,29 @@ def test_post_rejects_unknown_mention_kind() -> None:
         )
     assert str(exc.value) == InteractionRoomContentService.error("kindUnknown")
     assert messages.messages == {}
+
+
+def test_update_replaces_mentions_like_post() -> None:
+    rooms = InMemoryInteractionRoomRepo()
+    messages = InMemoryInteractionMessageRepo()
+    uc = ManageInteractionMessagesUseCase(rooms=rooms, messages=messages)
+    room = _open_room(rooms)
+    posted = uc.post(
+        PostInteractionMessageInput(
+            room_id=room.id,
+            actor_user_id="u1",
+            body_text="Ver @Ana",
+            mentions=[("user", {"user_id": "u2"}, "@Ana")],
+        )
+    )
+    updated = uc.update(
+        room_id=room.id,
+        message_id=posted.id,
+        actor_user_id="u1",
+        body_text="Ver pedido 102942",
+        mentions=[("order", {"branch": "01", "order": "102942"}, "102942")],
+        replace_mentions=True,
+    )
+    stored = messages.list_mentions_for_message(updated.id)
+    assert len(stored) == 1
+    assert stored[0].mention_kind == "order"

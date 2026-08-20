@@ -1,8 +1,8 @@
 /**
- * Slots de ação do MessageThread (tarefa + pin) — host monta, kit só renderiza.
+ * Slots de ação do MessageThread (tarefa + pin + editar) — host monta, kit só renderiza.
  */
 import { createElement } from "react";
-import { ListTodo, Pin, PinOff } from "lucide-react";
+import { ListTodo, Pencil, Pin, PinOff } from "lucide-react";
 import type { MessageThreadAction, MessageThreadItem } from "@delpi/plugin-ui/index";
 
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
@@ -12,6 +12,7 @@ const ACTION_ICON_SIZE = 16;
 export const CREATE_TASK_MESSAGE_ACTION_ID = "create-task";
 export const PIN_MESSAGE_ACTION_ID = "pin-message";
 export const UNPIN_MESSAGE_ACTION_ID = "unpin-message";
+export const EDIT_MESSAGE_ACTION_ID = "edit-message";
 
 export function canCreateTaskFromMessage(
   message: Pick<MessageThreadItem, "kind" | "deleted">,
@@ -29,6 +30,14 @@ export function canPinMessage(
   const kind = String(message.kind || "").trim();
   if (kind === "system") return false;
   return true;
+}
+
+export function canEditMessage(
+  message: Pick<MessageThreadItem, "kind" | "deleted" | "mine">,
+): boolean {
+  if (message.deleted) return false;
+  if (!message.mine) return false;
+  return String(message.kind || "").trim() === "text";
 }
 
 export function buildCreateTaskMessageAction(options: {
@@ -77,6 +86,23 @@ export function buildPinMessageAction(options: {
   };
 }
 
+export function buildEditMessageAction(options: {
+  message: Pick<MessageThreadItem, "id" | "kind" | "deleted" | "mine">;
+  onEdit: (messageId: string) => void;
+  busy?: boolean;
+}): MessageThreadAction | null {
+  if (!canEditMessage(options.message)) return null;
+  if (options.busy) return null;
+  const label = INTERACTION_ROOMS_CONTENT.editActionLabel;
+  return {
+    id: EDIT_MESSAGE_ACTION_ID,
+    label,
+    title: label,
+    icon: createElement(Pencil, { size: ACTION_ICON_SIZE, "aria-hidden": true }),
+    onClick: () => options.onEdit(options.message.id),
+  };
+}
+
 export function resolveInteractionMessageActions(options: {
   message: MessageThreadItem;
   onCreateTask: (messageId: string) => void;
@@ -84,8 +110,18 @@ export function resolveInteractionMessageActions(options: {
   pinnedMessageIds?: ReadonlySet<string>;
   onTogglePin?: (messageId: string, nextPinned: boolean) => void;
   pinningMessageId?: string | null;
+  onEditMessage?: (messageId: string) => void;
+  editingMessageId?: string | null;
 }): MessageThreadAction[] {
   const actions: MessageThreadAction[] = [];
+  if (options.onEditMessage) {
+    const edit = buildEditMessageAction({
+      message: options.message,
+      onEdit: options.onEditMessage,
+      busy: options.editingMessageId === options.message.id,
+    });
+    if (edit) actions.push(edit);
+  }
   const createTask = buildCreateTaskMessageAction({
     message: options.message,
     onCreateTask: options.onCreateTask,

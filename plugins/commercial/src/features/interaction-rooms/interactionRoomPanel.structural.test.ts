@@ -28,6 +28,12 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/applyInteractionRoomRealtime/);
     expect(source).toMatch(/CommercialHostDrawer/);
     expect(source).toMatch(/INTERACTION_ROOM_NARROW_QUERY|max-width: 768px/);
+    expect(source).toMatch(/editingId=\{editingMessageId\}/);
+    expect(source).toMatch(/renderEditSlot=/);
+    expect(source).toMatch(/mode="edit"/);
+    expect(source).toMatch(/disabled=\{Boolean\(editingMessageId\)\}/);
+    expect(source).toMatch(/messageEditedSuffix/);
+    expect(source).toMatch(/onEditMessage:/);
     expect(source).not.toMatch(/<textarea/);
     expect(source).not.toMatch(/cm-message-bubble/);
   });

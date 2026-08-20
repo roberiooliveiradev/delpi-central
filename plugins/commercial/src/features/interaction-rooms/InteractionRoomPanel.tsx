@@ -95,6 +95,7 @@ export function InteractionRoomPanel({
     () => new Set(),
   );
   const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const { currentUserId, myPortfolio } = usePortfolioScope();
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
@@ -131,6 +132,7 @@ export function InteractionRoomPanel({
 
   useEffect(() => {
     const key = entityKey?.trim() ?? "";
+    setEditingMessageId(null);
     if (!key) {
       setLoading(false);
       setRoom(null);
@@ -193,6 +195,13 @@ export function InteractionRoomPanel({
 
   const onMessageCreated = useCallback((created: InteractionMessageDto) => {
     setMessages((prev) => [...prev, created]);
+  }, []);
+
+  const onMessageUpdated = useCallback((updated: InteractionMessageDto) => {
+    setMessages((prev) =>
+      prev.map((item) => (item.id === updated.id ? updated : item)),
+    );
+    setEditingMessageId(null);
   }, []);
 
   const onCreateTaskFromMessage = useCallback(
@@ -261,6 +270,7 @@ export function InteractionRoomPanel({
       id: string;
       kind: string;
       deleted?: boolean;
+      mine?: boolean;
       bodyText: string;
       createdAtLabel: string;
     }) =>
@@ -275,6 +285,10 @@ export function InteractionRoomPanel({
           void onTogglePin(messageId, nextPinned);
         },
         pinningMessageId,
+        onEditMessage: (messageId) => {
+          setEditingMessageId(messageId);
+        },
+        editingMessageId,
       }),
     [
       onCreateTaskFromMessage,
@@ -282,6 +296,7 @@ export function InteractionRoomPanel({
       pinnedMessageIds,
       onTogglePin,
       pinningMessageId,
+      editingMessageId,
     ],
   );
 
@@ -299,7 +314,9 @@ export function InteractionRoomPanel({
             message.deleted_at != null
               ? content.messageDeleted
               : message.body_text,
-          createdAtLabel: formatMessageTime(message.created_at),
+          createdAtLabel: message.edited_at
+            ? `${formatMessageTime(message.created_at)} · ${content.messageEditedSuffix}`
+            : formatMessageTime(message.created_at),
           authorName: message.author_user_id
             ? nameFor(message.author_user_id)
             : null,
@@ -330,7 +347,15 @@ export function InteractionRoomPanel({
           ) : null,
         };
       }),
-    [messages, nameFor, sessionUserId, content.messageDeleted, basePath, photoByUserId],
+    [
+      messages,
+      nameFor,
+      sessionUserId,
+      content.messageDeleted,
+      content.messageEditedSuffix,
+      basePath,
+      photoByUserId,
+    ],
   );
 
   const participants = useMemo(
@@ -384,10 +409,33 @@ export function InteractionRoomPanel({
             emptyLabel={content.panelEmptyTitle}
             messages={threadMessages}
             resolveActions={resolveActions}
+            editingId={editingMessageId}
+            renderEditSlot={(message) => {
+              const source =
+                messages.find((row) => row.id === message.id) ?? null;
+              return (
+              <InteractionRoomMessageComposer
+                roomId={room.id}
+                mode="edit"
+                editMessageId={message.id}
+                initialMarkdown={source?.body_text ?? message.bodyText}
+                initialMentions={(source?.mentions ?? []).map((mention) => ({
+                  kind: mention.mention_kind,
+                  ref: { ...mention.ref },
+                  label: mention.label,
+                }))}
+                onMessageCreated={onMessageCreated}
+                onMessageUpdated={onMessageUpdated}
+                onCancelEdit={() => setEditingMessageId(null)}
+                onError={(text) => setError(text)}
+              />
+              );
+            }}
           />
         )}
         <InteractionRoomMessageComposer
           roomId={room.id}
+          disabled={Boolean(editingMessageId)}
           onMessageCreated={onMessageCreated}
           onError={(message) => setError(message)}
           onAddFilesReady={(addFiles) => {

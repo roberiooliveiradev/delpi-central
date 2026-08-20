@@ -507,6 +507,8 @@ def update_interaction_message(
             message_id=message_id,
             actor_user_id=actor,
             body_text=body.body_text,
+            mentions=_mentions_from_body(body.mentions),
+            replace_mentions=body.mentions is not None,
         )
         try:
             notify_interaction_room_activity(
@@ -517,6 +519,13 @@ def update_interaction_message(
                 actor_display_name=actor_display_name_from_request(request),
                 actor_client_id=client_id_from_request(request),
             )
+            if body.mentions is not None:
+                notify_interaction_mention(
+                    message=message,
+                    actor_user_id=actor,
+                    actor_display_name=actor_display_name_from_request(request),
+                    actor_client_id=client_id_from_request(request),
+                )
         except Exception:  # noqa: BLE001
             logger.exception("interaction_message_update_notify_failed")
         return ok(

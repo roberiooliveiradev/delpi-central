@@ -44,6 +44,12 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/useInteractionRoomSync/);
     expect(source).toMatch(/applyInteractionRoomRealtime/);
     expect(source).not.toMatch(/cm-message-bubble/);
+    expect(source).toMatch(/editingId=\{editingMessageId\}/);
+    expect(source).toMatch(/renderEditSlot=/);
+    expect(source).toMatch(/mode="edit"/);
+    expect(source).toMatch(/disabled=\{Boolean\(editingMessageId\)\}/);
+    expect(source).toMatch(/messageEditedSuffix/);
+    expect(source).toMatch(/onEditMessage:/);
     expect(source).not.toMatch(/<textarea/);
   });
 });

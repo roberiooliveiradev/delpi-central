@@ -256,6 +256,12 @@
   background: var(--cm-surface-muted, var(--surface-muted, #f8fafc));
 }
 
+.dashboard-commercial .cm-room-thread__edit-cancel {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--cm-gap-xs, 0.35rem);
+}
+
 .dashboard-commercial.dashboard-page--fill .cm-room-thread__dock {
   padding: var(--cm-gap-sm);
 }

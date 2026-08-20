@@ -172,6 +172,18 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
+.delpi-ui-message-thread__item--editing .delpi-ui-message-thread__bubble,
+.delpi-ui-message-thread__item--editing .delpi-ui-message-thread__bubble--mine {
+  width: min(100%, 36rem);
+  max-width: 100%;
+  padding: 0.45rem 0.55rem;
+}
+
+.delpi-ui-message-thread__edit-slot {
+  min-width: 0;
+  width: 100%;
+}
+
 .delpi-ui-message-thread__quote {
   margin: 0 0 0.4rem;
   padding: 0.45rem 0.6rem;

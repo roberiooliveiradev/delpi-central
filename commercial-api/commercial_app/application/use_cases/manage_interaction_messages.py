@@ -127,6 +127,8 @@ class ManageInteractionMessagesUseCase:
         message_id: UUID,
         actor_user_id: str,
         body_text: str,
+        mentions: Sequence[tuple[str, Mapping[str, object], str]] | None = None,
+        replace_mentions: bool = False,
     ) -> InteractionMessage:
         self._require_room_access(room_id=room_id, actor_user_id=actor_user_id)
         message = self._messages.get_by_id(message_id)
@@ -138,12 +140,19 @@ class ManageInteractionMessagesUseCase:
             raise LookupError(InteractionRoomContentService.error("messageNotFound"))
         if (message.author_user_id or "").strip() != actor_user_id.strip():
             raise PermissionError(InteractionRoomContentService.error("notAuthor"))
+        if (message.message_kind or "").strip() != "text":
+            raise ValueError(InteractionRoomContentService.error("messageKindInvalid"))
         if not str(body_text or "").strip():
             raise ValueError(InteractionRoomContentService.error("bodyRequired"))
         InteractionMessageBodyPolicyService.assert_markdown_body(str(body_text))
+        next_mentions = (
+            self._validate_mentions(mentions) if replace_mentions else None
+        )
         updated = self._messages.update_body(
             message_id=message_id,
             body_text=body_text,
+            mentions=next_mentions,
+            replace_mentions=replace_mentions,
         )
         if updated is None:
             raise LookupError(InteractionRoomContentService.error("messageNotFound"))

@@ -351,15 +351,27 @@ export async function postInteractionMessage(
   return unwrapEnvelope(response, "Erro ao enviar mensagem.");
 }
 
+export type UpdateInteractionMessageInput = {
+  body_text: string;
+  /** When provided (incl. empty), replaces mentions on the server. */
+  mentions?: PostInteractionMessageInput["mentions"];
+};
+
 export async function updateInteractionMessage(
   roomId: string,
   messageId: string,
-  bodyText: string,
+  input: UpdateInteractionMessageInput,
   signal?: AbortSignal,
 ): Promise<InteractionMessageDto> {
+  const payload: Record<string, unknown> = {
+    body_text: input.body_text,
+  };
+  if (input.mentions !== undefined) {
+    payload.mentions = input.mentions;
+  }
   const response = await httpPatch<ApiSuccessResponse<InteractionMessageDto>>(
     interactionRoomsUrl(interactionRoomMessagePath(roomId, messageId)),
-    { body_text: bodyText },
+    payload,
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao atualizar mensagem.");

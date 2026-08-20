@@ -50,7 +50,10 @@ class InteractionMessageRepositoryPort(ABC):
         *,
         message_id: UUID,
         body_text: str,
+        mentions: Sequence[tuple[str, Mapping[str, object], str]] | None = None,
+        replace_mentions: bool = False,
     ) -> InteractionMessage | None:
+        """When replace_mentions is True, mentions (even empty) replace existing rows."""
         raise NotImplementedError
 
     @abstractmethod

@@ -94,7 +94,7 @@ def test_update_and_delete_meta(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     request = _request("/interaction-rooms/x/messages/y", method="PATCH")
     request.state.user = _User(["commercial.access"])
-    update_body = SimpleNamespace(body_text="editado")
+    update_body = SimpleNamespace(body_text="editado", mentions=None)
     updated = interaction_room_routes.update_interaction_message(
         request,
         room_id=msg.room_id,
@@ -103,6 +103,26 @@ def test_update_and_delete_meta(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert updated.status_code == 200
     assert b"update_interaction_message" in updated.body
+    fake_uc.update.assert_called_once()
+    call_kwargs = fake_uc.update.call_args.kwargs
+    assert call_kwargs["body_text"] == "editado"
+    assert call_kwargs["replace_mentions"] is False
+
+    update_with_mentions = SimpleNamespace(
+        body_text="editado @Ana",
+        mentions=[{"mention_kind": "user", "ref": {"user_id": "u2"}, "label": "@Ana"}],
+    )
+    fake_uc.update.reset_mock()
+    updated_mentions = interaction_room_routes.update_interaction_message(
+        request,
+        room_id=msg.room_id,
+        message_id=msg.id,
+        body=update_with_mentions,
+    )
+    assert updated_mentions.status_code == 200
+    mention_kwargs = fake_uc.update.call_args.kwargs
+    assert mention_kwargs["replace_mentions"] is True
+    assert mention_kwargs["mentions"] is not None
 
     delete_req = _request("/interaction-rooms/x/messages/y", method="DELETE")
     delete_req.state.user = _User(["commercial.access"])

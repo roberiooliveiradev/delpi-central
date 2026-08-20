@@ -127,6 +127,36 @@ describe("MessageThread", () => {
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
+  it("swaps body for edit slot when editingId matches", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        editingId="1"
+        renderEditSlot={() => <div data-testid="edit-slot">Editor</div>}
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Original",
+            authorName: "Bruno",
+            createdAtLabel: "10:00",
+            mine: true,
+          },
+        ]}
+        resolveActions={() => [
+          { id: "edit", label: "Edit", onClick: () => undefined },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId("edit-slot").textContent).toBe("Editor");
+    expect(screen.queryByText("Original")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    expect(container.querySelector(".delpi-ui-message-thread__item--editing")).not.toBeNull();
+    expect(container.querySelector(".delpi-ui-message-thread__edit-slot")).not.toBeNull();
+  });
+
   it("exposes icon actions by accessible name without permanent text", () => {
     const onPin = vi.fn();
     render(
