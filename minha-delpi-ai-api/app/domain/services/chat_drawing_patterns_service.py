@@ -1218,6 +1218,10 @@ class ChatDrawingPatternsService:
         return cls.extraction_confidence_node("dimensionAmbiguous", 0.75)
 
     @classmethod
+    def extraction_confidence_dimension_length_only(cls) -> float:
+        return cls.extraction_confidence_node("dimensionLengthOnly", 0.96)
+
+    @classmethod
     def extraction_confidence_balloon_pending(cls) -> float:
         return cls.extraction_confidence_node("balloonPending", 0.6)
 

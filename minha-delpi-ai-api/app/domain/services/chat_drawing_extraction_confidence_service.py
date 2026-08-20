@@ -227,7 +227,16 @@ class ChatDrawingExtractionConfidenceService:
         if has_left_decape and has_right_decape:
             return 1.0
 
-        if has_length or has_decape or has_segments:
+        # Comprimento total lido: suficiente para o gate de leitura (BOM/carimbo
+        # já separados). Não empurrar para o fluxo «confiança abaixo do limiar»
+        # só porque faltam segmentos/decapes — isso pedia confirmação indevida
+        # mesmo com Kimi/API e checklist OK (ex.: 90264277).
+        if has_length:
+            if not has_decape or not has_segments:
+                reasons.append("dimensions_length_only")
+            return ChatDrawingPatternsService.extraction_confidence_dimension_length_only()
+
+        if has_decape or has_segments:
             reasons.append("dimensions_partial")
             return ChatDrawingPatternsService.extraction_confidence_dimension_ambiguous()
 

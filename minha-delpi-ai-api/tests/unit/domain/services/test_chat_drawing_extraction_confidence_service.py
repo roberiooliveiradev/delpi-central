@@ -102,6 +102,65 @@ def test_evaluate_for_extraction_flat_mp_bom_without_intermediates():
     assert "dimensions_partial" not in result.reasons
 
 
+def test_evaluate_for_extraction_total_length_only_does_not_force_low_confidence_gate():
+    """Comprimento total lido + BOM rica: não cair no pending «confiança da leitura»."""
+    result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
+        pdf_extract={
+            "productCode": "90264277",
+            "revision": "00",
+            "legible": True,
+            "charCount": 4974,
+            "componentCodes": [
+                "10080018",
+                "10080158",
+                "10380037",
+                "50226055",
+                "50226056",
+                "50226057",
+            ],
+            "intermediateCodes": ["50226055", "50226056", "50226057"],
+            "validationScopes": {
+                "bom": {"available": True, "charCount": 1539},
+                "dimensions": {"available": True, "charCount": 854},
+                "stamp": {"available": True, "charCount": 32},
+            },
+            "dimensions": {"totalLengthMm": 1000.0},
+            "documentVision": {
+                "legibilityScore": 1.0,
+                "hasTitleBlock": False,
+                "stages": ["fitz_embedded", "pypdf", "region_ocr"],
+            },
+            "sourceMetadata": {"stages": ["fitz_embedded", "pypdf", "region_ocr"]},
+        }
+    )
+
+    assert result.meets_threshold is True
+    assert result.score_percent >= 95
+    assert "dimensions_partial" not in result.reasons
+    assert "dimensions_length_only" in result.reasons
+    assert result.components.get("dimensions", 0) >= 0.95
+
+
+def test_evaluate_for_extraction_partial_without_total_length_stays_below_threshold():
+    result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
+        pdf_extract={
+            "productCode": "90264277",
+            "revision": "00",
+            "legible": True,
+            "charCount": 1200,
+            "componentCodes": ["10080018", "10080158", "10380037", "50226055"],
+            "intermediateCodes": ["50226055"],
+            "validationScopes": {"bom": {"available": True}},
+            "dimensions": {"leftDecapeMm": 6.0},
+            "sourceMetadata": {"stages": ["region_ocr"]},
+        }
+    )
+
+    assert result.meets_threshold is False
+    assert "dimensions_partial" in result.reasons
+    assert result.components.get("dimensions") == 0.75
+
+
 def test_extraction_confidence_meets_threshold_with_title_block_and_clean_checklist():
     result = ChatDrawingExtractionConfidenceService.evaluate(
         pdf_extract={
