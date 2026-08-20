@@ -285,8 +285,20 @@ class ChatResponseModeService:
         )
 
     @classmethod
+    def _looks_like_ollama_model_tag(cls, model: str) -> bool:
+        """Tags locais ``qwen2.5:1.5b`` — não usar como id OpenRouter/Kimi."""
+        value = str(model or "").strip()
+        return bool(value) and ":" in value and "/" not in value
+
+    @classmethod
     def _env_model(cls, key: str, fallback: str | None = None) -> str:
         value = os.getenv(key, "").strip()
+
+        if ChatDomainConfigService.llm_provider() == "openai_compatible":
+            default = cls._provider_default_model()
+            if not value or cls._looks_like_ollama_model_tag(value):
+                return default
+            return value
 
         if value:
             return value
@@ -327,15 +339,13 @@ class ChatResponseModeService:
             ChatResponseModeContentService,
         )
 
-        fast_model = os.getenv(
-            "CHAT_RESPONSE_MODE_FAST_MODEL",
-            ChatResponseModeContentService.generation_limit_model("fast", default="qwen2.5:1.5b"),
-        ).strip()
-
         return LlmGenerationConfig(
-            model=fast_model or ChatResponseModeContentService.generation_limit_model(
-                "fast",
-                default="qwen2.5:1.5b",
+            model=cls._env_model(
+                "CHAT_RESPONSE_MODE_FAST_MODEL",
+                ChatResponseModeContentService.generation_limit_model(
+                    "fast",
+                    default="qwen2.5:1.5b",
+                ),
             ),
             max_tokens=int(
                 os.getenv(

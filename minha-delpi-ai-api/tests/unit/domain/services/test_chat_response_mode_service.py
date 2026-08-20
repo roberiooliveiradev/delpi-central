@@ -22,6 +22,21 @@ def test_fast_mode_uses_smaller_limits(monkeypatch):
     assert config.max_tokens == 256
 
 
+def test_openai_compatible_modes_inherit_kimi_over_ollama_tags(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
+    monkeypatch.delenv("LLM_TEXT_MODEL", raising=False)
+    monkeypatch.setenv("KIMI_MODEL", "moonshotai/kimi-k3")
+    monkeypatch.setenv("KIMI_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv("KIMI_API_KEY", "sk-or-test")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_FAST_MODEL", "qwen2.5:1.5b")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MODEL", "qwen2.5:1.5b")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_THINKER_MODEL", "qwen2.5:3b")
+
+    assert ChatResponseModeService.resolve("fast").model == "moonshotai/kimi-k3"
+    assert ChatResponseModeService.resolve("normal").model == "moonshotai/kimi-k3"
+    assert ChatResponseModeService.resolve("thinker").model == "moonshotai/kimi-k3"
+
+
 def test_thinker_mode_expands_context(monkeypatch):
     monkeypatch.setenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "4096")
     config = ChatResponseModeService.resolve("thinker")

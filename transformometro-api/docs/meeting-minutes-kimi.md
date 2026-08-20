@@ -136,7 +136,12 @@ KIMI_MODEL=moonshotai/kimi-k3
 # KIMI_TIMEOUT_SECONDS=180
 # KIMI_MAX_TRANSCRIPT_CHARS=20000
 # KIMI_MAX_OUTPUT_TOKENS=4096
+
+# Chat Minha Delpi — mesmo Kimi (sem duplicar LLM_TEXT_*):
+# LLM_PROVIDER=openai_compatible
 ```
+
+O `minha-delpi-ai-api` recebe as mesmas `KIMI_*` no Compose; com `LLM_PROVIDER=openai_compatible`, `LLM_TEXT_*` vazio herda `KIMI_*`. Ver [tutorial-conectar-llm-externo.md](../../minha-delpi-ai-api/docs/operations/tutorial-conectar-llm-externo.md) § 4.0.
 
 Exemplos versionados: `transformometro-api/.env.example`, `infra/env.local.example`.
 

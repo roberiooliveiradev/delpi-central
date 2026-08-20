@@ -220,6 +220,16 @@ services:
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.2}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-320}
 
+      # Texto OpenAI-compatible: LLM_TEXT_* opcional; com openai_compatible herda KIMI_* (atas)
+      LLM_TEXT_BASE_URL: ${LLM_TEXT_BASE_URL:-}
+      LLM_TEXT_MODEL: ${LLM_TEXT_MODEL:-}
+      LLM_TEXT_API_KEY: ${LLM_TEXT_API_KEY:-}
+      LLM_TEXT_TIMEOUT_SECONDS: ${LLM_TEXT_TIMEOUT_SECONDS:-0}
+      KIMI_API_KEY: ${KIMI_API_KEY:-}
+      KIMI_BASE_URL: ${KIMI_BASE_URL:-https://openrouter.ai/api/v1}
+      KIMI_MODEL: ${KIMI_MODEL:-moonshotai/kimi-k3}
+      KIMI_TIMEOUT_SECONDS: ${KIMI_TIMEOUT_SECONDS:-180}
+
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
       OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-300}

@@ -553,22 +553,36 @@ Dispatch do Core (`POST /integrations/notifications`) envia e-mail quando a cate
 
 Página pública: `/p/transformometro/sign/{token}` (plugin `public-hub`). API sem JWT: `/apps/transformometro-api/public/meeting-minutes/sign-invites/{token}`.
 
-### Kimi / OpenRouter (geração de ata)
+### Kimi / OpenRouter (atas + chat Minha Delpi)
 
 Opcional no boot; **obrigatório** para `POST /transformometro/meeting-minutes/generate-from-transcript` (botão «Gerar ata com IA» no MFE).
 
+As mesmas variáveis alimentam o **chat** quando `LLM_PROVIDER=openai_compatible` (herança `LLM_TEXT_*` ← `KIMI_*` no `minha-delpi-ai-api`).
+
 | Variável | Default | Notas |
 |----------|---------|-------|
-| `KIMI_API_KEY` | vazio | Sem chave → 502 claro na geração |
+| `KIMI_API_KEY` | vazio | Sem chave → 502 na geração de ata; chat exige chave se `openai_compatible` |
 | `KIMI_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible |
 | `KIMI_MODEL` | `moonshotai/kimi-k3` | |
+| `LLM_PROVIDER` | `ollama` | Em prod com Kimi no chat: `openai_compatible` |
+| `LLM_TEXT_*` | vazio | Opcional; se vazio com `openai_compatible`, herda `KIMI_*` |
 
-Definir em `infra/.env`. Compose (dev e prod) repassa ao serviço `transformometro-api`. Detalhes, limites e smoke: [transformometro-api/docs/atas-kimi.md](../transformometro-api/docs/atas-kimi.md).
+Definir em `infra/.env`. Compose (dev e prod) repassa `KIMI_*` a `transformometro-api` **e** a `minha-delpi-ai-api`. Detalhes: [meeting-minutes-kimi.md](../transformometro-api/docs/meeting-minutes-kimi.md) · [tutorial LLM externo](../minha-delpi-ai-api/docs/operations/tutorial-conectar-llm-externo.md).
+
+```bash
+# Prod — atas + chat no mesmo OpenRouter
+KIMI_API_KEY=sk-or-v1-...
+KIMI_BASE_URL=https://openrouter.ai/api/v1
+KIMI_MODEL=moonshotai/kimi-k3
+LLM_PROVIDER=openai_compatible
+```
 
 ```bash
 sudo mkdir -p /var/lib/delpi/revisao-evidencias /var/lib/delpi/processo-arquivos \
   /var/lib/delpi/transformometro/atas/signatures /var/lib/delpi/transformometro/atas/pdfs
-docker compose -f docker-compose.yml up -d --force-recreate transformometro-api
+# recreate após mudar env:
+# ./infra/scripts/up-prod-sequential.sh --fase api  # ou force-recreate dos dois serviços
+docker compose -f docker-compose.yml up -d --force-recreate transformometro-api minha-delpi-ai-api
 ```
 
 ---

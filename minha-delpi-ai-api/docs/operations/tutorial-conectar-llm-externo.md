@@ -146,6 +146,34 @@ Resposta esperada em `/admin/llm/status`:
 
 Todos usam `LLM_PROVIDER=openai_compatible` e variam só URL, modelo e key.
 
+### 4.0 Kimi / OpenRouter (mesmo token das atas Transformômetro)
+
+Em produção, as atas já usam `KIMI_*`. O chat **herda** essas variáveis quando `LLM_TEXT_*` está vazio:
+
+```env
+# Já usadas pelo transformometro-api (gerar ata com IA)
+KIMI_API_KEY=sk-or-v1-...
+KIMI_BASE_URL=https://openrouter.ai/api/v1
+KIMI_MODEL=moonshotai/kimi-k3
+
+# Chat Minha Delpi — um switch; credenciais = KIMI_*
+LLM_PROVIDER=openai_compatible
+```
+
+Não é necessário copiar a chave em `LLM_TEXT_API_KEY`. Cadeia de resolução:
+
+`LLM_TEXT_*` → `KIMI_*` → `VLLM_*` (legado).
+
+Compose (dev/prod) injeta `KIMI_*` e `LLM_TEXT_*` no serviço `minha-delpi-ai-api`. Após mudar o `.env`:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d --force-recreate minha-delpi-ai-api
+```
+
+Modos Rápida/Normal/Pensador: com `openai_compatible`, tags Ollama (`qwen2.5:1.5b`) em `CHAT_RESPONSE_MODE_*_MODEL` são **ignoradas** e o chat usa `KIMI_MODEL` / `LLM_TEXT_MODEL`. Para outro modelo OpenRouter por modo, use id com `/` (ex.: `moonshotai/kimi-k3`).
+
+Doc atas: [meeting-minutes-kimi.md](../../../transformometro-api/docs/meeting-minutes-kimi.md).
+
 ### 4.1 OpenAI
 
 ```env

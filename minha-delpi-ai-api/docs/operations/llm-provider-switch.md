@@ -33,7 +33,7 @@ EMBEDDING_MODEL=bge-m3
 
 ## API externa OpenAI-compatible
 
-Funciona com OpenAI, Azure OpenAI, Groq, Together, vLLM remoto, etc.
+Funciona com OpenAI, Azure OpenAI, Groq, Together, vLLM remoto, **Kimi/OpenRouter** (mesmo `KIMI_*` das atas), etc.
 
 ```env
 LLM_PROVIDER=openai_compatible
@@ -41,6 +41,12 @@ LLM_TEXT_BASE_URL=https://api.openai.com/v1
 LLM_TEXT_MODEL=gpt-4o-mini
 LLM_TEXT_API_KEY=sk-...
 LLM_TEXT_TIMEOUT_SECONDS=120
+
+# Kimi — herança das atas (LLM_TEXT_* opcional quando vazio):
+# KIMI_API_KEY=sk-or-v1-...
+# KIMI_BASE_URL=https://openrouter.ai/api/v1
+# KIMI_MODEL=moonshotai/kimi-k3
+# LLM_PROVIDER=openai_compatible
 
 # Aliases legados (ainda suportados)
 # LLM_PROVIDER=vllm
