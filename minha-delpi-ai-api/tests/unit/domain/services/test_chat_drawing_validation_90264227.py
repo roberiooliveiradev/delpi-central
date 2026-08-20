@@ -251,6 +251,7 @@ def _pdf_extract_low_confidence() -> dict:
                 "components": {"legibility": 0.48},
                 "reasons": ["component_codes_missing", "dimensions_missing"],
             },
+            "llmSolve": {"attempted": True, "resolved": False},
         },
     }
 

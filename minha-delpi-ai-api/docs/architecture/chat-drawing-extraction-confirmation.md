@@ -26,7 +26,8 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
             → re-score
        → [score ≥ 95%] stoppedReason=confirmation_reached
        → [senão] próxima tentativa genérica
-  → validação (gate assertivo inalterado)
+  → ChatDrawingExtractionLlmSolveService.apply_if_needed  (VLM se ainda < limiar)
+  → validação (pending ao usuário só se LLM esgotado e score ainda baixo)
 ```
 
 ## Módulos
@@ -37,7 +38,9 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
 | `ChatDrawingTesseractConfirmationService` | domain | Executa até `maxPasses` de re-OCR focal e re-parse |
 | `ChatDrawingRegionService.ocr_selected_drawing_regions` | domain | OCR Tesseract em `stamp` / `title` / `bom` / `dimensions` |
 | `ChatDrawingExtractionQualityRetryService` | domain | Orquestra confirmação entre tentativas |
-| `ChatDrawingValidationAssertionService` | domain | Gate pós-extração (sem mudança na Onda A) |
+| `ChatDrawingExtractionLlmSolveService` | application | VLM/LLM após OCR < limiar; metadata `extractionQualityRetry.llmSolve` |
+| `ChatDrawingExtractionUserEscalationService` | domain | Pending ao usuário só se LLM esgotado |
+| `ChatDrawingValidationAssertionService` | domain | Gate pós-extração (respeita política de escalação) |
 
 ## Configuração (`drawing_stamp.json`)
 
@@ -68,8 +71,15 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
 | `stoppedReason: confirmation_reached` | Confirmação focal atingiu ≥ 95% |
 | `confirmationAttempts[]` | Passes com `plan`, `scoreBefore`, `scoreAfter`, `improved` |
 | `sourceMetadata.stages` | Inclui `tesseract_confirmation` após confirmação |
+| `llmSolve.attempted` / `resolved` | Solve VLM após OCR; gate de pending ao usuário |
 
-## Onda B — âncora `/analyser` (BOM)
+## Onda C — solve LLM/VLM antes de escalar ao usuário
+
+Ordem canônica: OCR/Tesseract (+ confirmação) → **VLM** (`llmSolve`) → só então `extraction_confidence` pending / ask-user.
+
+Config: `drawing_stamp.json` → `extractionQualityRetry.llmSolve` (`enabled`, `whenBelowTarget`, `requireBeforeUserEscalation`, `useDrawingRegions`, `purpose`).
+
+Textos pós-LLM: `drawing_validation.json` → `recommendationPendingAfterLlm`, detectors `askUserAfterLlm` / `whyEscalatedAfterLlm`.
 
 Após `ChatDrawingProductCodeResolutionService` resolver o código no pré-turno, se `bom_scope` ou `bom_completeness` < 95%:
 

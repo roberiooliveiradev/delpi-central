@@ -49,6 +49,7 @@ class ChatDrawingAmbiguityIntelligenceService:
             cls._detect_low_confidence(
                 items or [],
                 extraction_confidence,
+                pdf_extract=pdf_extract,
             )
         )
         signals.extend(
@@ -176,10 +177,29 @@ class ChatDrawingAmbiguityIntelligenceService:
         cls,
         items: list[dict[str, Any]],
         extraction_confidence: dict[str, Any] | None,
+        *,
+        pdf_extract: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
+        from app.domain.services.chat_drawing_extraction_user_escalation_service import (
+            ChatDrawingExtractionUserEscalationService,
+        )
+
         detector = cls._detectors().get("extraction_below_threshold") or {}
 
         if not isinstance(detector, dict):
+            return []
+
+        meets = True
+
+        if isinstance(extraction_confidence, dict):
+            meets = bool(extraction_confidence.get("meetsThreshold", True))
+
+        escalate = ChatDrawingExtractionUserEscalationService.allows_user_escalation(
+            pdf_extract=pdf_extract,
+            meets_threshold=meets,
+        )
+
+        if not escalate:
             return []
 
         template_key = str(detector.get("templateKey") or "extraction_confidence")
@@ -189,11 +209,6 @@ class ChatDrawingAmbiguityIntelligenceService:
             for item in items
             if isinstance(item, dict)
         )
-
-        meets = True
-
-        if isinstance(extraction_confidence, dict):
-            meets = bool(extraction_confidence.get("meetsThreshold", True))
 
         if meets and not pending_confidence:
             return []
@@ -210,11 +225,14 @@ class ChatDrawingAmbiguityIntelligenceService:
         if score is not None and threshold is not None:
             evidence_parts.append(f"score={score}% limiar={threshold}%")
 
+        after_llm = ChatDrawingExtractionUserEscalationService.used_llm_solve(pdf_extract)
+
         return [
             cls._build_signal(
                 detector_id="extraction_below_threshold",
                 detector=detector,
                 evidence="; ".join(evidence_parts) if evidence_parts else None,
+                after_llm=after_llm,
             )
         ]
 
@@ -279,14 +297,20 @@ class ChatDrawingAmbiguityIntelligenceService:
         detector_id: str,
         detector: dict[str, Any],
         evidence: str | None = None,
+        after_llm: bool = False,
     ) -> dict[str, Any]:
         kind = str(detector.get("kind") or "")
         kind_meta = cls._kind_meta(kind)
         title = str(kind_meta.get("title") or kind)
-        why = str(detector.get("whyEscalated") or "").strip()
+        why_key = "whyEscalatedAfterLlm" if after_llm else "whyEscalated"
+        ask_key = "askUserAfterLlm" if after_llm else "askUser"
+        why = str(
+            detector.get(why_key) or detector.get("whyEscalated") or ""
+        ).strip()
         system_did_not = str(detector.get("systemDidNot") or "").strip()
         ask_user = str(
-            detector.get("askUser")
+            detector.get(ask_key)
+            or detector.get("askUser")
             or kind_meta.get("defaultAskUser")
             or ""
         ).strip()

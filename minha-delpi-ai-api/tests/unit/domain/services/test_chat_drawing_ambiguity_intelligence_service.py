@@ -220,11 +220,16 @@ def test_low_confidence_signal_from_pending_extraction_item():
             status="pending",
             pdf_evidence="70%",
             api_evidence="—",
-            recommendation_field="recommendationPending",
+            recommendation_field="recommendationPendingAfterLlm",
         )
     ]
     signals = ChatDrawingAmbiguityIntelligenceService.collect_signals(
         items=items,
+        pdf_extract={
+            "extractionQualityRetry": {
+                "llmSolve": {"attempted": True, "resolved": False},
+            },
+        },
         extraction_confidence={
             "meetsThreshold": False,
             "scorePercent": 70,

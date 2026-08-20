@@ -77,3 +77,8 @@ def test_drawing_stamp_extraction_quality_retry_profiles():
     assert len(attempts) >= 5
     assert attempts[0].get("id") == "standard"
     assert attempts[-1].get("regionOcrEngines") == ["tesseract", "easyocr"]
+
+    llm_solve = retry.get("llmSolve") or {}
+
+    assert llm_solve.get("enabled") is True
+    assert llm_solve.get("requireBeforeUserEscalation") is True

@@ -40,6 +40,9 @@ def test_assertion_demotes_pdf_conflicts_but_keeps_api_authoritative():
                 "stages": ["fitz_embedded", "region_ocr"],
             },
             "validationScopes": {"bom": {"available": True}},
+            "extractionQualityRetry": {
+                "llmSolve": {"attempted": True, "resolved": False},
+            },
         },
     )
 
@@ -89,6 +92,9 @@ def test_assertion_demotes_total_length_when_low_confidence():
                 "dimensions": {"available": False, "sourceKey": "unavailable"}
             },
             "dimensions": {"totalLengthMm": 1.0},
+            "extractionQualityRetry": {
+                "llmSolve": {"attempted": True, "resolved": False},
+            },
         },
     )
 

@@ -1218,13 +1218,49 @@ class ChatDrawingPatternsService:
         return cls.extraction_confidence_node("dimensionAmbiguous", 0.75)
 
     @classmethod
-    def extraction_confidence_dimension_length_only(cls) -> float:
-        return cls.extraction_confidence_node("dimensionLengthOnly", 0.96)
-
-    @classmethod
     def extraction_confidence_balloon_pending(cls) -> float:
         return cls.extraction_confidence_node("balloonPending", 0.6)
 
     @classmethod
     def extraction_confidence_pdf_conflict(cls) -> float:
         return cls.extraction_confidence_node("pdfConflict", 0.5)
+
+    @classmethod
+    def extraction_confidence_gate_critical_components(cls) -> tuple[str, ...]:
+        node = cls.validation_layer("extractionConfidence", {})
+
+        if not isinstance(node, dict):
+            return (
+                "legibility",
+                "stamp",
+                "bom_scope",
+                "ocr_regions",
+                "bom_completeness",
+            )
+
+        raw = node.get("gateCriticalComponents")
+
+        if not isinstance(raw, list):
+            return (
+                "legibility",
+                "stamp",
+                "bom_scope",
+                "ocr_regions",
+                "bom_completeness",
+            )
+
+        resolved = tuple(
+            str(item).strip() for item in raw if str(item).strip()
+        )
+
+        return resolved or (
+            "legibility",
+            "stamp",
+            "bom_scope",
+            "ocr_regions",
+            "bom_completeness",
+        )
+
+    @classmethod
+    def extraction_confidence_gate_optional_fail_below(cls) -> float:
+        return cls.extraction_confidence_node("gateOptionalFailBelow", 0.6)

@@ -102,8 +102,8 @@ def test_evaluate_for_extraction_flat_mp_bom_without_intermediates():
     assert "dimensions_partial" not in result.reasons
 
 
-def test_evaluate_for_extraction_total_length_only_does_not_force_low_confidence_gate():
-    """Comprimento total lido + BOM rica: não cair no pending «confiança da leitura»."""
+def test_evaluate_for_extraction_optional_partial_dimensions_do_not_veto_gate():
+    """Cotas parciais ficam no componente, mas não derrubam o gate de leitura núcleo."""
     result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
         pdf_extract={
             "productCode": "90264277",
@@ -136,12 +136,11 @@ def test_evaluate_for_extraction_total_length_only_does_not_force_low_confidence
 
     assert result.meets_threshold is True
     assert result.score_percent >= 95
-    assert "dimensions_partial" not in result.reasons
-    assert "dimensions_length_only" in result.reasons
-    assert result.components.get("dimensions", 0) >= 0.95
+    assert "dimensions_partial" in result.reasons
+    assert result.components.get("dimensions") == 0.75
 
 
-def test_evaluate_for_extraction_partial_without_total_length_stays_below_threshold():
+def test_evaluate_for_extraction_optional_decape_only_does_not_veto_gate():
     result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
         pdf_extract={
             "productCode": "90264277",
@@ -156,9 +155,48 @@ def test_evaluate_for_extraction_partial_without_total_length_stays_below_thresh
         }
     )
 
-    assert result.meets_threshold is False
+    assert result.meets_threshold is True
     assert "dimensions_partial" in result.reasons
     assert result.components.get("dimensions") == 0.75
+
+
+def test_evaluate_for_extraction_missing_dimensions_still_fail_gate():
+    result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
+        pdf_extract={
+            "productCode": "90264277",
+            "revision": "00",
+            "legible": True,
+            "charCount": 1200,
+            "componentCodes": ["10080018", "10080158", "10380037", "50226055"],
+            "intermediateCodes": ["50226055"],
+            "validationScopes": {"bom": {"available": True}},
+            "sourceMetadata": {"stages": ["region_ocr"]},
+        }
+    )
+
+    assert result.meets_threshold is False
+    assert "dimensions_missing" in result.reasons
+    assert result.components.get("dimensions", 1.0) < 0.6
+
+
+def test_evaluate_for_extraction_weak_core_still_fails_even_with_full_dimensions():
+    result = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
+        pdf_extract={
+            "productCode": "",
+            "legible": False,
+            "charCount": 10,
+            "componentCodes": [],
+            "dimensions": {
+                "leftDecapeMm": 4.0,
+                "rightDecapeMm": 8.0,
+                "segmentLengthsMm": [100.0, 200.0],
+            },
+            "sourceMetadata": {"stages": ["fitz_embedded"]},
+        }
+    )
+
+    assert result.meets_threshold is False
+    assert result.components.get("dimensions") == 1.0
 
 
 def test_extraction_confidence_meets_threshold_with_title_block_and_clean_checklist():

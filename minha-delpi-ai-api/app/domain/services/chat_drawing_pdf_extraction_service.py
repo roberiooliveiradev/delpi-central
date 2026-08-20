@@ -33,9 +33,20 @@ class ChatDrawingPdfExtractionService:
             ChatDrawingExtractionQualityRetryService,
         )
 
-        return ChatDrawingExtractionQualityRetryService.extract_until_confident(
+        resolved_name = filename or Path(storage_path).name
+        payload = ChatDrawingExtractionQualityRetryService.extract_until_confident(
             storage_path,
-            filename=filename or Path(storage_path).name,
+            filename=resolved_name,
+        )
+
+        from app.application.services.chat_drawing_extraction_llm_solve_service import (
+            ChatDrawingExtractionLlmSolveService,
+        )
+
+        return ChatDrawingExtractionLlmSolveService.apply_if_needed(
+            storage_path,
+            filename=resolved_name,
+            pdf_extract=payload,
         )
 
     @classmethod

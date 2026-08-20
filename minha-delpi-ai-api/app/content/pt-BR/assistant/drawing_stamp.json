@@ -59,6 +59,14 @@
       "view": "full",
       "comment": "Onda B — após productCode resolvido, re-OCR focal na região BOM e injeta códigos esperados do /analyser encontrados no haystack OCR."
     },
+    "llmSolve": {
+      "enabled": true,
+      "whenBelowTarget": true,
+      "requireBeforeUserEscalation": true,
+      "useDrawingRegions": true,
+      "purpose": "ocr",
+      "comment": "Após esgotar OCR/Tesseract (e confirmação focal), tenta VLM/LLM. Só então permite pending/aviso «não consegui ler» ao usuário."
+    },
     "attempts": [
       { "id": "standard", "enableRegionOcr": null },
       {

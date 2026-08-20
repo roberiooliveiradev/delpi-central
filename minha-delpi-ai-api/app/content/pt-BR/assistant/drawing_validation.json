@@ -234,7 +234,8 @@
       "item": "Confiança da leitura do PDF",
       "rule": "Divergências PDF × SG1010 só são críticas com confiança ≥ 95%",
       "recommendationOk": "Leitura apta para cruzamento automático",
-      "recommendationPending": "Conferir manualmente BOM/cotas antes de reprovar por leitura OCR"
+      "recommendationPending": "Conferir manualmente BOM/cotas antes de reprovar por leitura OCR",
+      "recommendationPendingAfterLlm": "OCR e o modelo de visão não estabilizaram a leitura. Confira o PDF ou reenvie com melhor qualidade."
     },
     "revision_cross_ok": {
       "section": "Cabeçalho",
@@ -627,8 +628,10 @@
         "scope": "extraction",
         "templateKey": "extraction_confidence",
         "whyEscalated": "a confiança da leitura do PDF ficou abaixo do limiar para cruzamento automático seguro",
+        "whyEscalatedAfterLlm": "OCR e o modelo de visão não estabilizaram a leitura abaixo do limiar",
         "systemDidNot": "reprovação automática por divergências PDF × cadastro nestes itens",
-        "askUser": "Confera BOM e cotas no PDF; se a leitura estiver correta, confirme a revisão ou peça reanálise."
+        "askUser": "Confera BOM e cotas no PDF; se a leitura estiver correta, confirme a revisão ou peça reanálise.",
+        "askUserAfterLlm": "Não consegui estabilizar a leitura do desenho com OCR nem com o modelo de visão. Confira o PDF, melhore a qualidade ou descreva o que precisa analisar."
       },
       "asserted_ok_under_ambiguity": {
         "kind": "self_contradiction",
@@ -688,9 +691,16 @@
       "segmentPending": 0.55,
       "decapeConflict": 0.6,
       "dimensionAmbiguous": 0.75,
-      "dimensionLengthOnly": 0.96,
       "balloonPending": 0.6,
-      "pdfConflict": 0.5
+      "pdfConflict": 0.5,
+      "gateCriticalComponents": [
+        "legibility",
+        "stamp",
+        "bom_scope",
+        "ocr_regions",
+        "bom_completeness"
+      ],
+      "gateOptionalFailBelow": 0.6
     }
   },
   "patterns": {

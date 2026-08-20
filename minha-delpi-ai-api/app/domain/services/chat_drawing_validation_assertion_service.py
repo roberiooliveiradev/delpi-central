@@ -9,6 +9,9 @@ from app.domain.services.chat_drawing_extraction_confidence_service import (
     ChatDrawingExtractionConfidenceService,
     ExtractionConfidenceResult,
 )
+from app.domain.services.chat_drawing_extraction_user_escalation_service import (
+    ChatDrawingExtractionUserEscalationService,
+)
 from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
 from app.domain.services.chat_drawing_validation_content_service import (
     ChatDrawingValidationContentService,
@@ -31,8 +34,21 @@ class ChatDrawingValidationAssertionService:
         confidence = ChatDrawingExtractionConfidenceService.resolve_gate_confidence(
             pdf_extract=pdf_meta,
         )
-        adjusted = cls._apply_confidence_gate(items, confidence)
-        adjusted = cls._prepend_confidence_item(adjusted, confidence)
+        escalate = ChatDrawingExtractionUserEscalationService.allows_user_escalation(
+            pdf_extract=pdf_meta,
+            meets_threshold=confidence.meets_threshold,
+        )
+        adjusted = cls._apply_confidence_gate(
+            items,
+            confidence,
+            escalate_to_user=escalate,
+        )
+        adjusted = cls._prepend_confidence_item(
+            adjusted,
+            confidence,
+            pdf_extract=pdf_meta,
+            escalate_to_user=escalate,
+        )
 
         return adjusted, confidence
 
@@ -41,8 +57,10 @@ class ChatDrawingValidationAssertionService:
         cls,
         items: list[dict[str, Any]],
         confidence: ExtractionConfidenceResult,
+        *,
+        escalate_to_user: bool,
     ) -> list[dict[str, Any]]:
-        if confidence.meets_threshold:
+        if confidence.meets_threshold or not escalate_to_user:
             return items
 
         pdf_dependent_keys = ChatDrawingPatternsService.validation_pdf_dependent_template_keys()
@@ -87,10 +105,26 @@ class ChatDrawingValidationAssertionService:
         cls,
         items: list[dict[str, Any]],
         confidence: ExtractionConfidenceResult,
+        *,
+        pdf_extract: dict[str, Any] | None,
+        escalate_to_user: bool,
     ) -> list[dict[str, Any]]:
         content = ChatDrawingValidationContentService
-        status = "ok" if confidence.meets_threshold else "pending"
-        recommendation_field = "recommendationOk" if confidence.meets_threshold else "recommendationPending"
+
+        if confidence.meets_threshold:
+            status = "ok"
+            recommendation_field = "recommendationOk"
+        elif escalate_to_user:
+            status = "pending"
+            recommendation_field = (
+                "recommendationPendingAfterLlm"
+                if ChatDrawingExtractionUserEscalationService.used_llm_solve(pdf_extract)
+                else "recommendationPending"
+            )
+        else:
+            # OCR baixo, LLM ainda não esgotado / resolveu parcialmente — sem pending ao usuário.
+            status = "ok"
+            recommendation_field = "recommendationOk"
 
         confidence_item = content.item_from_template(
             "extraction_confidence",
@@ -103,7 +137,9 @@ class ChatDrawingValidationAssertionService:
             api_evidence=content.evidence("dash"),
             recommendation_field=recommendation_field,
         )
-        confidence_item["extractionConfidence"] = confidence.to_metadata()
+        confidence_meta = confidence.to_metadata()
+        confidence_meta["userEscalationAllowed"] = escalate_to_user
+        confidence_item["extractionConfidence"] = confidence_meta
 
         insert_at = 0
 

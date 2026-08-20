@@ -59,7 +59,7 @@ class ChatDrawingExtractionConfidenceService:
         components["bom_completeness"] = cls._bom_completeness_component(pdf_meta, reasons)
         components["dimensions"] = cls._dimensions_extraction_component(pdf_meta, reasons)
 
-        score = min(components.values()) if components else 0.0
+        score = cls._gate_score(components)
 
         return ExtractionConfidenceResult(
             score=score,
@@ -68,6 +68,44 @@ class ChatDrawingExtractionConfidenceService:
             components=components,
             reasons=tuple(reasons),
         )
+
+    @classmethod
+    def _gate_score(cls, components: dict[str, float]) -> float:
+        """Score do gate de leitura: críticos no min(); opcionais só se estiverem ruinosos.
+
+        Componentes fora de ``gateCriticalComponents`` (ex.: cotas parciais) entram
+        no metadado/reasons, mas só derrubam o gate se ficarem abaixo de
+        ``gateOptionalFailBelow`` — evita pending «confiança da leitura» quando
+        a leitura núcleo (carimbo/BOM/OCR) está ok.
+        """
+        if not components:
+            return 0.0
+
+        critical = set(
+            ChatDrawingPatternsService.extraction_confidence_gate_critical_components()
+        )
+        optional_fail_below = (
+            ChatDrawingPatternsService.extraction_confidence_gate_optional_fail_below()
+        )
+        values: list[float] = []
+
+        for key, value in components.items():
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError):
+                continue
+
+            if key in critical:
+                values.append(numeric)
+                continue
+
+            if numeric < optional_fail_below:
+                values.append(numeric)
+
+        if not values:
+            return min(float(value) for value in components.values())
+
+        return min(values)
 
     @classmethod
     def resolve_gate_confidence(
@@ -227,16 +265,7 @@ class ChatDrawingExtractionConfidenceService:
         if has_left_decape and has_right_decape:
             return 1.0
 
-        # Comprimento total lido: suficiente para o gate de leitura (BOM/carimbo
-        # já separados). Não empurrar para o fluxo «confiança abaixo do limiar»
-        # só porque faltam segmentos/decapes — isso pedia confirmação indevida
-        # mesmo com Kimi/API e checklist OK (ex.: 90264277).
-        if has_length:
-            if not has_decape or not has_segments:
-                reasons.append("dimensions_length_only")
-            return ChatDrawingPatternsService.extraction_confidence_dimension_length_only()
-
-        if has_decape or has_segments:
+        if has_length or has_decape or has_segments:
             reasons.append("dimensions_partial")
             return ChatDrawingPatternsService.extraction_confidence_dimension_ambiguous()
 

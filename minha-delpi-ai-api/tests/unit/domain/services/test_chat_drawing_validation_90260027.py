@@ -83,6 +83,9 @@ def _pdf_extract_low_confidence() -> dict:
             "hasTitleBlock": True,
             "stages": ["fitz_embedded"],
         },
+        "extractionQualityRetry": {
+            "llmSolve": {"attempted": True, "resolved": False},
+        },
     }
 
 
