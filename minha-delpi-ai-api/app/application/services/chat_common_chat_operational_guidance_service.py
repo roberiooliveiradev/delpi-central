@@ -121,3 +121,46 @@ class ChatCommonChatOperationalGuidanceService:
             lines.append(agent_hint)
 
         return "\n".join(lines).strip()
+
+    @classmethod
+    def build_follow_up_suggestions(cls, message: str | None) -> list[dict]:
+        query = str(message or "").strip()
+        if not query:
+            return []
+
+        label = ChatTurnPreparationContentService.get(
+            "directAnswers",
+            "commonChatOperationalGuidance",
+            "activateAndResendLabel",
+        ) or "Ativar agente e repetir esta consulta"
+
+        return [
+            {
+                "label": label,
+                "query": query,
+                "group": "ajuda",
+                "priority": 1,
+                "action": "activate_agent_and_resend",
+            }
+        ]
+
+    @classmethod
+    def attach_pending_to_metadata(
+        cls,
+        metadata: dict,
+        *,
+        message: str | None,
+        pipeline_stages: list[str] | None,
+    ) -> None:
+        stages = [str(item) for item in (pipeline_stages or [])]
+        if "common_chat_operational_guidance" not in stages:
+            return
+
+        query = str(message or "").strip()
+        if not query:
+            return
+
+        metadata["pendingOperationalQuery"] = query
+        suggestions = cls.build_follow_up_suggestions(query)
+        if suggestions:
+            metadata["followUpSuggestions"] = suggestions

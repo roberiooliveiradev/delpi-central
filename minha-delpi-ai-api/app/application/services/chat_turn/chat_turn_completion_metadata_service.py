@@ -121,6 +121,16 @@ class ChatTurnCompletionMetadataService:
             previous_messages=turn.previous_messages,
         )
 
+        from app.application.services.chat_common_chat_operational_guidance_service import (
+            ChatCommonChatOperationalGuidanceService,
+        )
+
+        ChatCommonChatOperationalGuidanceService.attach_pending_to_metadata(
+            assistant_metadata,
+            message=turn.request.message,
+            pipeline_stages=turn.pipeline_stages,
+        )
+
         from app.application.services.chat_web_search_research_activity_service import (
             ChatWebSearchResearchActivityService,
         )
