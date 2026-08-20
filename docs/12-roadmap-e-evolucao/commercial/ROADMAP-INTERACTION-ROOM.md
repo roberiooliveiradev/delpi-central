@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** **E7 entregue** em `main` (S1–S5 código + S6 fecho documental). Smoke/rebuild `--fase remote|mfe` **adiado** — Docker daemon offline no host. Próximo: **E8** docs.  
+> **Status:** **E7 entregue**; **E8.S1** (WIREFRAMES + README MFE) em andamento/commit. Smoke Docker adiados.  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -505,7 +505,7 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 
 ## E8 — Documentação (após o código)
 
-### E8.S1 — UX: WF-SALA + README MFE — custo M
+### E8.S1 — UX: WF-SALA + README MFE — custo M ✅
 
 - **Front (plugin-ui / kit):** nenhum de código.
 - **Front (MFE commercial):** docs [`WIREFRAMES.md`](./WIREFRAMES.md) WF-SALA-01…08 + [`plugins/commercial/README.md`](../../../plugins/commercial/README.md).

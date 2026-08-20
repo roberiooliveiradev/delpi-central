@@ -1309,20 +1309,33 @@ Clique no card navega `/:roomId` (query `filter`/`q` preservada).
 +-- MessageThread ------------------------------------------------------+
 | -- segunda-feira, 18 de agosto --------------------------------------|
 |  [system]  Engenharia recebeu a OV 4412 · 09:12                      |
-|  [Ana avatar]  Ana Silva · 09:41                                     |
+|  [Ana avatar]  Ana Silva · 09:41 · editado                           |
 |  Preciso que o @Joao Costa (Compras) confirme o                      |
 |  @produto 90AAAA01 neste @pedido 102942.                             |
 |  +----------------------------------------------+                    |
 |  | EntityUnfurlCard  Produto 90AAAA01           |                    |
 |  +----------------------------------------------+                    |
-|  AttachmentPreviewStrip: [proposta.pdf]                              |
-|  ReactionBar  [ok 2]                                                 |
-|  acoes: Responder · Criar tarefa · Fixar                             |
+|  AttachmentPreviewStrip / lightbox: [proposta.pdf] [foto.jpg]        |
+|  ReactionBar  [👍 2] [+]  → EmojiInsertMenu                          |
+|  acoes: Responder · Editar · Criar tarefa · Fixar · Excluir          |
 |    [Joao] reply · OP 00118901001                                     |
 |  [task_ref]  Tarefa criada · [Abrir Meu Dia]                         |
+|  -- soft-delete: bolha «Mensagem excluída» (sem acoes) ------------- |
++----------------------------------------------------------------------+
+
+Composer com replyTo (faixa citação + cancelar):
++-- MentionComposer ----------------------------------------+
+|  Respondendo a Ana · Preciso que o @Joao…        [x]     |
+|  contenteditable markdown · @ · anexos · Enviar          |
++-----------------------------------------------------------+
+
+Edicao in-place (editingId + renderEditSlot no mesmo item):
++-- MessageThread item --editing --------------------------------------+
+|  MentionComposer (seed body + mentions) · Salvar / Cancelar          |
 +----------------------------------------------------------------------+
 ```
 
+Ações do autor: Editar / Excluir (`danger` + confirm host-contained). Responder preenche `parent_id` no POST. Reações: PUT/DELETE no código emoji.
 #### WF-SALA-03 — Menu `@` (MentionMenu)
 
 Composer aberto; menu ancorado (`AnchoredPanelPortal`), agrupado pessoa / objeto.
@@ -1346,6 +1359,10 @@ Composer aberto; menu ancorado (`AnchoredPanelPortal`), agrupado pessoa / objeto
 
 #### WF-SALA-05 — Vazio
 
+**Inbox (sem salas):** `CommercialEmptyState` + `CommercialLoadingCard` no carregamento; preview da lista = `markdownToPlainPreview(last_message_preview)` + badge `unread_count`.
+
+**Thread (sem mensagens):**
+
 ```text
 EmptyState: Nenhuma mensagem. A conversa deste pedido fica registrada aqui.
 [Escrever a primeira mensagem] + MentionComposer
@@ -1363,7 +1380,7 @@ EmptyState: Nenhuma mensagem. A conversa deste pedido fica registrada aqui.
 
 `SectionRouteCard` Operação: item «Sala de interação» + badge não lidas.
 
-**Mapa tela → kit:** `PageHero`, `PagePath`, `UnderlineNav`, `CatalogSearchBar`, `RoomInboxList`, `RoomHeader`, `RoomSidePanel`, `RoomContextPanel`, `MessageThread`, `MentionComposer`, `MentionMenu`, `MentionText`, `EntityUnfurlCard`, `ReactionBar`, `FileDropzone`, `EmptyState`, `LoadingActivityCard`, `SectionRouteCard`, drawer host-contained.
+**Mapa tela → kit:** `PageHero`, `PagePath`, `UnderlineNav`, `CatalogSearchBar`, `RoomInboxList`, `RoomHeader`, `RoomSidePanel`, `RoomContextPanel`, `MessageThread` (`editingId` / `renderEditSlot`), `MentionComposer` (`replyTo`, markdown contenteditable), `MentionMenu`, `MentionText`, `EntityUnfurlCard`, `ReactionBar` (`emojiAdd` → `EmojiInsertMenu`), `FileDropzone`, `EmptyState`, `LoadingActivityCard`, `SectionRouteCard`, drawer host-contained.
 
 **Fora P0:** mural kanban, DM 1:1, call/vídeo, tela OTD nova.
 

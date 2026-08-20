@@ -258,9 +258,9 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 ## Sala de interação
 
-Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%. Na thread, o painel **Neste chat** (`RoomSidePanel`) abre à direita e encolhe msgs+composer; fechado, some. Não é terceira coluna da inbox. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomSidePanel`, `RoomContextPanel`).
+Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%. Sem sala selecionada, a inbox ocupa 100% (sem coluna vazia). Na thread, o painel **Neste chat** (`RoomSidePanel`) abre à direita e encolhe msgs+composer; fechado, some. Não é terceira coluna da inbox. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomSidePanel`, `RoomContextPanel`, `ReactionBar`, `EmojiInsertMenu`).
 
-**Backlog (não iniciado):** fill viewport, lista 100% sem sala, chips no hero, drawer Contexto, composer markdown, anexos/reply/delete — [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md).
+**Entregue (E1–E7):** fill viewport, lista 100% sem sala, chips no hero, Contexto à direita, composer markdown + mentions, anexos na bolha, reply (`parent_id`), editar in-place, excluir com confirm host-contained, reações, inbox empty/loading/preview. Roadmap e fecho: [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md). **Próximo:** E8 docs (contrato/catálogo). Smoke de containers se o Docker estiver offline no host — rebuild `plugin-ui` antes do MFE `commercial`.
 
 Rebuild: remote `plugin-ui` **antes** do MFE `dashboard-commercial` (`./infra/scripts/up-dev-sequential.sh`).
 
