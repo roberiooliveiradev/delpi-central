@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** **roadmap concluído** (E1–E7 + E8.S1–S4). E8.S4 verify verde (grep CSS, vitest, pytest, vite build, rebuild sequencial).  
+> **Status:** **roadmap sala concluído** (E1–E8). **Extensão:** imagens coladas no caret (`attachment:`) + anexos clip (ago/2026).  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -39,7 +39,7 @@ O visual atual falha porque o split **não herda altura do viewport**, o **Conte
 - Cada **E*.S*** de código/doc = testes + commit PT + **push** `origin/main`.
 - **Fecho de cada etapa En:** containers (script sequencial) → corrigir → commit + push **antes** de En+1.
 - **Documentação (E8.S1–S3):** depois de E7 e **antes** do verify. Não misturar parágrafo de README em cada S* de código.
-- **Composer E6:** UX Teams — WYSIWYG compacto; **não** montar `RichTextEditor` de deck. Persistência = **markdown em `body_text`**. Subconjunto: `**negrito**` `*itálico*` `~~riscado~~` `` `código` `` cerca ` ``` ` listas `-`/`1.` quote `>` link `[texto](url)`. Sem H1–H3, tabela, cor, underline, imagem. Mentions `@` = token no markdown + payload `mentions`. Envio: HTML do editor → `richTextHtmlToMarkdown`. Bolha: markdown → HTML sanitizado. POST rejeita HTML cru. Preview da inbox = texto plano. Markdown **sem** `![]()`.
+- **Composer E6:** UX Teams — WYSIWYG compacto; **não** montar `RichTextEditor` de deck. Persistência = **markdown em `body_text`**. Subconjunto: `**negrito**` `*itálico*` `~~riscado~~` `` `código` `` cerca ` ``` ` listas `-`/`1.` quote `>` link `[texto](url)`. Imagens **inline** (colar no caret): `![alt](attachment:{uuid})` / draft `attachment:pending:{clientId}` — URLs externas em `![]()` rejeitadas. Imagens **anexo** (clip): thumbs na pílula + `belowBody` sem token no markdown. Sem H1–H3, tabela, cor. Mentions `@` = token no markdown + payload `mentions`. Envio: HTML do editor → `richTextHtmlToMarkdown`. Bolha: markdown → HTML sanitizado. POST rejeita HTML cru. Preview da inbox = texto plano.
 - **Altura do input:** pílula cresce; `min-height: 2.75rem`; `max-height: min(40vh, 16rem)`; scroll interno depois do teto. Toolbar não entra no scroller. Dock `flex-shrink: 0`.
 - **Enter:** Enter envia; Shift+Enter quebra; Ctrl/Cmd+Enter envia. Menu `@` aberto: Enter escolhe o hit (`submitOnEnter`).
 - **Colar:** WYSIWYG na superfície; HTML sanitizado; no Send vira markdown; banco não guarda HTML.

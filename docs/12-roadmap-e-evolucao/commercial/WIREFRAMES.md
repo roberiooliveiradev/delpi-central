@@ -1327,6 +1327,9 @@ Composer com replyTo (faixa citação + cancelar):
 +-- MentionComposer ----------------------------------------+
 |  Respondendo a Ana · Preciso que o @Joao…        [x]     |
 |  contenteditable markdown · @ · anexos · Enviar          |
+|  · clip = anexo (thumbs pílula / belowBody)               |
+|  · colar imagem no caret = bloco inline no body           |
+|  · markdown `![…](attachment:{uuid})` após upload         |
 +-----------------------------------------------------------+
 
 Edicao in-place (editingId + renderEditSlot no mesmo item):

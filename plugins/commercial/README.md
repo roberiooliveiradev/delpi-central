@@ -260,7 +260,7 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%. Sem sala selecionada, a inbox ocupa 100% (sem coluna vazia). Na thread, o painel **Neste chat** (`RoomSidePanel`) abre à direita e encolhe msgs+composer; fechado, some. Não é terceira coluna da inbox. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomSidePanel`, `RoomContextPanel`, `ReactionQuickBar`, `ReactionBar`, `EmojiInsertMenu`).
 
-**Entregue (E1–E7):** fill viewport, lista 100% sem sala, chips no hero, Contexto à direita, composer markdown + mentions, anexos na bolha, reply (`parent_id`), editar in-place, excluir com confirm host-contained, reações, inbox empty/loading/preview. Roadmap e fecho: [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md). **Próximo:** E8 docs (contrato/catálogo). Smoke de containers se o Docker estiver offline no host — rebuild `plugin-ui` antes do MFE `commercial`.
+**Entregue (E1–E8 + imagens inline):** fill viewport, lista 100% sem sala, chips no hero, Contexto à direita, composer markdown + mentions, **dois caminhos de imagem** (clip → anexo/`belowBody`; colar no caret → `![…](attachment:{uuid})` no body), anexos na bolha com dedup, reply (`parent_id`), editar in-place, excluir com confirm host-contained, reações, inbox empty/loading/preview. Roadmap: [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md). Rebuild `plugin-ui` antes do MFE `commercial`.
 
 Rebuild: remote `plugin-ui` **antes** do MFE `dashboard-commercial` (`./infra/scripts/up-dev-sequential.sh`).
 
@@ -288,7 +288,7 @@ Contrato HTTP completo: [API-ROUTES.md § 3.21](../../docs/12-roadmap-e-evolucao
 | GET | `/interaction-rooms/entity-preview` | `preview_interaction_entity` |
 | POST | `/interaction-rooms/{room_id}/messages/{message_id}/tasks` | `create_task_from_interaction_message` |
 
-Anexos de mensagem: `owner_type=room_message` em `/attachments` (mesmo volume `commercial-attachments`). Publisher interno `post_system_message` (`otd_event` / `process_stage`) **não** tem rota HTTP.
+Anexos de mensagem: `owner_type=room_message` em `/attachments` (mesmo volume `commercial-attachments`). Imagens coladas no caret usam o mesmo store e o scheme `attachment:` / `attachment:pending:` no `body_text` (PATCH rewrite pós-upload). Publisher interno `post_system_message` (`otd_event` / `process_stage`) **não** tem rota HTTP.
 
 RBAC: **`commercial.access` (global)** — inbox e thread para todos com acesso ao Portal; **sem** permission code novo. Unfurl de entidade continua fail-closed por carteira. Tempo real: mesmo WS `/commercial/realtime/ws` — thread via `subscribe` `room:{uuid}`; inbox via handshake `interaction` + `room.inbox.changed`.
 

@@ -28,3 +28,4 @@ def test_wireframes_include_sala_ids_and_kit() -> None:
     missing_kit = [item for item in _KIT if item not in DOC]
     assert not missing_kit, missing_kit
     assert "/interaction-rooms" in DOC
+    assert "attachment:" in DOC or "colar imagem" in DOC.lower()
