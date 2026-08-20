@@ -562,9 +562,9 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 
 ## Apêndice — imagens anexo + coladas no caret (ago/2026)
 
-Dois caminhos: **clip/drop-thread** → thumbs + `belowBody`; **colar/drop na superfície** → bloco no caret → `attachment:pending:` → upload → PATCH `attachment:{uuid}`. Policy rejeita `http(s)|data|blob` em `![]()`. Dedup: id no body não aparece de novo na strip.
+Dois caminhos: **clip/drop-thread** → thumbs + `belowBody`; **colar/drop na superfície** → **span inline no parágrafo** (modelo Word) → `attachment:pending:` → upload → PATCH `attachment:{uuid}`. Policy rejeita `http(s)|data|blob` em `![]()`. Dedup: id no body não aparece de novo na strip. Rascunho: Files inline no IndexedDB (sobrevivem F5).
 
-**Alinhamento (Word-like, bloco no fluxo):** toolbar Formatar com Align L/C/R/J — parágrafo via `text-align`; figure via `data-align` (default esquerda; justify = largura 100%). Persistência no markdown: título `"align=…"` no `![alt](attachment:…)` + HTML island de `text-align` no `<p>`. Edit: `resolveAttachmentImageSrc` hidrata `src` na figure; strip só com anexos **fora** do body; × na figure remove pending ou uuid remoto. Sem float mid-palavra.
+**Alinhamento (Word-like, imagem no parágrafo):** toolbar Formatar Align L/C/R/J aplica **só** `text-align` no bloco (`<p>`); texto e imagem andam juntos. Sem `data-align` na imagem e sem title `"align=…"` no markdown (legado `align=` no title migra para `text-align` no enhance). Persistência: `![alt](attachment:{uuid})` **inline** na linha + HTML island `<p style="text-align:…">` quando ≠ left. Parser canônico no kit (`parseMarkdownImages`) separa href do title. Edit: `resolveAttachmentImageSrc` hidrata `src` no span; strip só com anexos **fora** do body. **Supersede:** plano figure-bloco + `data-align` (ago/2026). Sem float mid-palavra.
 
 ## Fora do escopo
 
