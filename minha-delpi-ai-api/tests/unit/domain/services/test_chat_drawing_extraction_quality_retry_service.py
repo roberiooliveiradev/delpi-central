@@ -12,6 +12,20 @@ from app.domain.services.chat_vision_memory_guard_service import (
 )
 
 
+def _disable_llm_defer(monkeypatch) -> None:
+    """Testes do loop OCR completo sem o atalho defer_to_llm."""
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_should_defer_to_llm",
+        classmethod(lambda cls, *, attempt_index: False),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_try_confirmation_pass",
+        classmethod(lambda cls, *args, **kwargs: (None, [])),
+    )
+
+
 def test_retry_stops_on_first_attempt_when_confident(monkeypatch):
     attempts = []
 
@@ -63,6 +77,7 @@ def test_retry_stops_on_first_attempt_when_confident(monkeypatch):
 
 
 def test_retry_runs_multiple_attempts_until_max(monkeypatch):
+    _disable_llm_defer(monkeypatch)
     scores = [0.5, 0.7, 0.82, 0.88, 0.91]
     call = {"index": 0}
 
@@ -128,7 +143,58 @@ def test_retry_runs_multiple_attempts_until_max(monkeypatch):
     assert retry.get("selectedScorePercent") == 91
 
 
+def test_retry_defers_to_llm_after_first_attempt_when_enabled(monkeypatch):
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_try_confirmation_pass",
+        classmethod(lambda cls, *args, **kwargs: (None, [])),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_max_attempts",
+        classmethod(lambda cls: 5),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_attempt_profiles",
+        classmethod(lambda cls: [{"id": f"a{i}"} for i in range(5)]),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionQualityRetryService,
+        "_extract_once",
+        staticmethod(
+            lambda storage_path, *, filename="", attempt=None: {
+                "productCode": "90264276",
+                "sourceMetadata": {"stages": ["region_ocr"]},
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        ChatDrawingExtractionConfidenceService,
+        "evaluate_for_extraction",
+        classmethod(
+            lambda cls, *, pdf_extract: ExtractionConfidenceResult(
+                score=0.5,
+                threshold=0.95,
+                meets_threshold=False,
+                components={"legibility": 0.5},
+                reasons=("weak",),
+            )
+        ),
+    )
+
+    result = ChatDrawingExtractionQualityRetryService.extract_until_confident(
+        "/tmp/x.pdf",
+        filename="x.pdf",
+    )
+    retry = result.get("extractionQualityRetry") or {}
+
+    assert retry.get("stoppedReason") == "defer_to_llm"
+    assert retry.get("attemptCount") == 1
+
+
 def test_retry_releases_memory_between_attempts(monkeypatch):
+    _disable_llm_defer(monkeypatch)
     released = {"count": 0}
 
     def fake_release(cls) -> None:
@@ -191,6 +257,7 @@ def test_retry_releases_memory_between_attempts(monkeypatch):
 
 
 def test_retry_stops_after_two_attempts_without_improvement(monkeypatch):
+    _disable_llm_defer(monkeypatch)
     monkeypatch.setattr(
         ChatDrawingExtractionQualityRetryService,
         "_max_attempts",
@@ -246,6 +313,7 @@ def test_retry_stops_after_two_attempts_without_improvement(monkeypatch):
 
 
 def test_retry_continues_after_stall_when_distinct_profiles_remain(monkeypatch):
+    _disable_llm_defer(monkeypatch)
     monkeypatch.setattr(
         ChatDrawingExtractionQualityRetryService,
         "_max_attempts",
@@ -323,6 +391,7 @@ def test_retry_continues_after_stall_when_distinct_profiles_remain(monkeypatch):
 
 
 def test_retry_stops_after_embedded_only_when_ocr_gate_met(monkeypatch):
+    _disable_llm_defer(monkeypatch)
     attempts = []
 
     def fake_extract(storage_path, *, filename="", attempt=None):

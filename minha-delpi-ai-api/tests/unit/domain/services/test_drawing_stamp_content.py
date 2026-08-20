@@ -82,3 +82,4 @@ def test_drawing_stamp_extraction_quality_retry_profiles():
 
     assert llm_solve.get("enabled") is True
     assert llm_solve.get("requireBeforeUserEscalation") is True
+    assert int(llm_solve.get("maxOcrAttemptsBeforeLlm") or 0) >= 1

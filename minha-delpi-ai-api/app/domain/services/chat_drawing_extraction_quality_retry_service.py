@@ -142,14 +142,25 @@ class ChatDrawingExtractionQualityRetryService:
                 ):
                     best = result
 
-                if confidence.meets_threshold:
-                    return cls._attach_retry_metadata(
-                        pdf_extract,
-                        history=history,
-                        selected=result,
-                        target=target,
-                        stopped_reason="confirmation_reached",
-                    )
+            if confidence.meets_threshold:
+                return cls._attach_retry_metadata(
+                    pdf_extract,
+                    history=history,
+                    selected=result,
+                    target=target,
+                    stopped_reason="confirmation_reached",
+                )
+
+            if cls._should_defer_to_llm(attempt_index=index):
+                selected = best or result
+
+                return cls._attach_retry_metadata(
+                    selected.pdf_extract,
+                    history=history,
+                    selected=selected,
+                    target=target,
+                    stopped_reason="defer_to_llm",
+                )
 
             if (
                 best is not None
@@ -552,6 +563,26 @@ class ChatDrawingExtractionQualityRetryService:
     @classmethod
     def _enabled(cls) -> bool:
         return bool(cls._retry_config().get("enabled", True))
+
+    @classmethod
+    def _should_defer_to_llm(cls, *, attempt_index: int) -> bool:
+        """Para o loop OCR pesado e deixa o VLM do processo pai tentar."""
+        from app.domain.services.chat_drawing_extraction_user_escalation_service import (
+            ChatDrawingExtractionUserEscalationService,
+        )
+
+        if not ChatDrawingExtractionUserEscalationService.llm_solve_enabled():
+            return False
+
+        config = ChatDrawingExtractionUserEscalationService.llm_solve_config()
+        raw = config.get("maxOcrAttemptsBeforeLlm", 1)
+
+        try:
+            max_before = max(1, int(raw))
+        except (TypeError, ValueError):
+            max_before = 1
+
+        return attempt_index + 1 >= max_before
 
     @classmethod
     def _target_confidence(cls) -> float:

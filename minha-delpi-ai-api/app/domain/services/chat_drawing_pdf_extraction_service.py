@@ -29,24 +29,15 @@ class ChatDrawingPdfExtractionService:
 
     @classmethod
     def extract_from_storage_path(cls, storage_path: str, *, filename: str = "") -> dict[str, Any]:
+        """OCR + retry de qualidade. O solve VLM/LLM roda no processo pai (turn service)."""
         from app.domain.services.chat_drawing_extraction_quality_retry_service import (
             ChatDrawingExtractionQualityRetryService,
         )
 
         resolved_name = filename or Path(storage_path).name
-        payload = ChatDrawingExtractionQualityRetryService.extract_until_confident(
+        return ChatDrawingExtractionQualityRetryService.extract_until_confident(
             storage_path,
             filename=resolved_name,
-        )
-
-        from app.application.services.chat_drawing_extraction_llm_solve_service import (
-            ChatDrawingExtractionLlmSolveService,
-        )
-
-        return ChatDrawingExtractionLlmSolveService.apply_if_needed(
-            storage_path,
-            filename=resolved_name,
-            pdf_extract=payload,
         )
 
     @classmethod
@@ -290,6 +281,10 @@ class ChatDrawingPdfExtractionService:
         from app.domain.services.chat_drawing_bom_vision_refinement_service import (
             ChatDrawingBomVisionRefinementService,
         )
+
+        # Confirmação Tesseract / re-parse leve: skip refine BOM (Pillow filter segfault).
+        if bool(meta.get("skipBomVisionRefinement")):
+            return payload
 
         return ChatDrawingBomVisionRefinementService.apply(
             payload,

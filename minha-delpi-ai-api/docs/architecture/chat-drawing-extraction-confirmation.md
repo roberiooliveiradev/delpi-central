@@ -75,9 +75,13 @@ ChatDrawingPdfExtractionService.extract_from_storage_path
 
 ## Onda C — solve LLM/VLM antes de escalar ao usuário
 
-Ordem canônica: OCR/Tesseract (+ confirmação) → **VLM** (`llmSolve`) → só então `extraction_confidence` pending / ask-user.
+Ordem canônica: OCR leve (até `maxOcrAttemptsBeforeLlm` + confirmação) → **VLM no processo pai** (`llmSolve`) → só então `extraction_confidence` pending / ask-user.
 
-Config: `drawing_stamp.json` → `extractionQualityRetry.llmSolve` (`enabled`, `whenBelowTarget`, `requireBeforeUserEscalation`, `useDrawingRegions`, `purpose`).
+O VLM **não** roda dentro do filho OCR (segfault Pillow no refine BOM). Em crash/OCR vazio o pai ainda tenta VLM lendo o PDF.
+
+Config: `drawing_stamp.json` → `extractionQualityRetry.llmSolve` (`enabled`, `whenBelowTarget`, `requireBeforeUserEscalation`, `maxOcrAttemptsBeforeLlm`, `useDrawingRegions`, `purpose`).
+
+Metadata: `stoppedReason: defer_to_llm` quando o loop OCR para cedo para o VLM.
 
 Textos pós-LLM: `drawing_validation.json` → `recommendationPendingAfterLlm`, detectors `askUserAfterLlm` / `whyEscalatedAfterLlm`.
 

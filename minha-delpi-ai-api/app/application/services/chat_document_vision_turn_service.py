@@ -263,6 +263,14 @@ class ChatDocumentVisionTurnService:
                 exit_code=exc.exit_code,
             )
 
+        enriched = cls._apply_llm_solve_for_attachments(
+            enriched,
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+            on_stream_activity=on_stream_activity,
+        )
+
         if activation.enabled and on_stream_activity and enriched:
             engine = (
                 enriched.get("extractor")
@@ -324,6 +332,13 @@ class ChatDocumentVisionTurnService:
         except (MemoryError, VisionMemoryLimitedError):
             ChatVisionMemoryGuardService.release_ocr_memory()
             enriched = ChatVisionMemoryGuardService.attach_memory_limited_metadata(base)
+            # Ainda tenta VLM no pai — OCR pode ter falhado por memória.
+            enriched = cls._apply_llm_solve_in_parent(
+                storage_path,
+                filename=filename,
+                pdf_extract=enriched,
+                on_stream_activity=on_stream_activity,
+            )
             return enriched, activation
         except VisionOcrProcessCrashedError as exc:
             logger.error(
@@ -332,7 +347,20 @@ class ChatDocumentVisionTurnService:
             )
             ChatVisionMemoryGuardService.release_ocr_memory()
             enriched = cls._attach_process_crashed_metadata(base, exit_code=exc.exit_code)
+            enriched = cls._apply_llm_solve_in_parent(
+                storage_path,
+                filename=filename,
+                pdf_extract=enriched,
+                on_stream_activity=on_stream_activity,
+            )
             return enriched, activation
+
+        enriched = cls._apply_llm_solve_in_parent(
+            storage_path,
+            filename=filename,
+            pdf_extract=enriched,
+            on_stream_activity=on_stream_activity,
+        )
 
         if activation.enabled and on_stream_activity and enriched:
             engine = (
@@ -348,6 +376,61 @@ class ChatDocumentVisionTurnService:
             )
 
         return enriched, activation
+
+    @classmethod
+    def _apply_llm_solve_in_parent(
+        cls,
+        storage_path: str,
+        *,
+        filename: str,
+        pdf_extract: dict[str, Any] | None,
+        on_stream_activity: Callable[..., Any] | None = None,
+    ) -> dict[str, Any]:
+        """VLM/LLM no processo Flask — fora do filho OCR (segfault Pillow)."""
+        from app.application.services.chat_drawing_extraction_llm_solve_service import (
+            ChatDrawingExtractionLlmSolveService,
+        )
+
+        payload = dict(pdf_extract) if isinstance(pdf_extract, dict) else {}
+
+        if on_stream_activity:
+            ChatStreamActivityService.emit_document_vision_progress(
+                on_stream_activity,
+                phase="vlm",
+            )
+
+        return ChatDrawingExtractionLlmSolveService.apply_if_needed(
+            storage_path,
+            filename=filename or "",
+            pdf_extract=payload,
+        )
+
+    @classmethod
+    def _apply_llm_solve_for_attachments(
+        cls,
+        pdf_extract: dict[str, Any] | None,
+        *,
+        user_id: str | None,
+        session_id: str | None,
+        attachment_ids: list | None,
+        on_stream_activity: Callable[..., Any] | None = None,
+    ) -> dict[str, Any]:
+        payload = dict(pdf_extract) if isinstance(pdf_extract, dict) else {}
+        attachment = ChatDocumentVisionService._resolve_first_document_attachment(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )
+
+        if not attachment:
+            return payload
+
+        return cls._apply_llm_solve_in_parent(
+            str(attachment.storage_path or ""),
+            filename=str(attachment.original_filename or ""),
+            pdf_extract=payload,
+            on_stream_activity=on_stream_activity,
+        )
 
     @classmethod
     def run_attachment_vision_with_progress(

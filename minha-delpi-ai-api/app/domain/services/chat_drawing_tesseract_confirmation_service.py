@@ -245,6 +245,7 @@ class ChatDrawingTesseractConfirmationService:
             "regions": existing_regions,
             "stages": stages,
             "extractor": "tesseract_confirmation",
+            "skipBomVisionRefinement": True,
         }
 
         if existing_region_texts.get("stamp"):

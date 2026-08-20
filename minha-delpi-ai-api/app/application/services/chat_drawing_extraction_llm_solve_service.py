@@ -33,8 +33,14 @@ class ChatDrawingExtractionLlmSolveService:
     ) -> dict[str, Any]:
         payload = dict(pdf_extract) if isinstance(pdf_extract, dict) else {}
 
+        # Crash/OCR vazio: ainda permite VLM ler o PDF do storage_path.
         if not payload:
-            return payload
+            payload = {
+                "legible": False,
+                "charCount": 0,
+                "fullText": "",
+                "sourceMetadata": {"stages": [], "processCrashedBeforeLlm": True},
+            }
 
         confidence = ChatDrawingExtractionConfidenceService.evaluate_for_extraction(
             pdf_extract=payload,

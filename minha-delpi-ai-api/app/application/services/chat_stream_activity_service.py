@@ -76,7 +76,7 @@ class ChatStreamActivityService:
 
     @classmethod
     def _document_vision_progress(cls, step_key: str) -> tuple[int, int]:
-        order = {"start": 1, "ocr": 2, "complete": 3}
+        order = {"start": 1, "ocr": 2, "vlm": 3, "complete": 4}
         step = cls._DRAWING_PREP_STEPS + order.get(step_key, 1)
         total = cls._pipeline_total(drawing=True, has_pdf=True)
 
@@ -367,6 +367,16 @@ class ChatStreamActivityService:
                 cls.document_vision_step(
                     step_key="ocr",
                     message="Reconhecendo texto (Tesseract)…",
+                    state="active",
+                )
+            )
+            return
+
+        if phase == "vlm":
+            on_stream_activity(
+                cls.document_vision_step(
+                    step_key="vlm",
+                    message="Reforçando leitura com modelo de visão…",
                     state="active",
                 )
             )

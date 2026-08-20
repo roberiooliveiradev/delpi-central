@@ -63,9 +63,10 @@
       "enabled": true,
       "whenBelowTarget": true,
       "requireBeforeUserEscalation": true,
+      "maxOcrAttemptsBeforeLlm": 1,
       "useDrawingRegions": true,
       "purpose": "ocr",
-      "comment": "Após esgotar OCR/Tesseract (e confirmação focal), tenta VLM/LLM. Só então permite pending/aviso «não consegui ler» ao usuário."
+      "comment": "Após esgotar OCR leve (maxOcrAttemptsBeforeLlm + confirmação), tenta VLM no processo pai. Só então pending «não consegui ler». Não rodar VLM dentro do filho OCR (segfault Pillow)."
     },
     "attempts": [
       { "id": "standard", "enableRegionOcr": null },
