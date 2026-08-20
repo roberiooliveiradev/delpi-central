@@ -32,6 +32,13 @@ export {
   type ResolveAttachmentImageSrc,
 } from "./richTextMarkdown";
 export {
+  listInlineAttachmentIdsFromMarkdown,
+  listInlinePendingIdsFromMarkdown,
+  parseMarkdownImages,
+  rewriteInlinePendingInMarkdown,
+  type MarkdownImageToken,
+} from "./markdownImageTokens";
+export {
   buildRichTextTableHtml,
   insertRichTextTable,
   normalizeRichTextPastedHtml,
