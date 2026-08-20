@@ -218,6 +218,9 @@ class ChatDocumentVisionPipelineService:
             if ocr.get("detailOcrApplied"):
                 stages.append("tesseract_region_detail")
 
+            if ocr.get("regionOcrAttempted"):
+                stages.append("tesseract_region_ocr")
+
             if ocr.get("fullText"):
                 merged_text = f"{full_text}\n\n{ocr['fullText']}".strip()
                 native = cls.build_from_text(
@@ -242,6 +245,20 @@ class ChatDocumentVisionPipelineService:
                 )
             elif ocr.get("warnings"):
                 warnings.extend(ocr["warnings"])
+
+            if ocr.get("regionOcrAttempted"):
+                native = dict(native)
+                native["regionOcrAttempted"] = True
+                native["regionTexts"] = (
+                    ocr.get("regionTexts")
+                    if isinstance(ocr.get("regionTexts"), dict)
+                    else {}
+                )
+                native["stampText"] = str(ocr.get("stampText") or "")
+                native["bomText"] = str(ocr.get("bomText") or "")
+                native["stampCrop"] = bool(ocr.get("stampCrop"))
+                if isinstance(ocr.get("regions"), dict):
+                    native["regions"] = ocr.get("regions")
 
         if backend == "auto":
             native = vision_service()._maybe_vlm_fallback(
@@ -456,6 +473,24 @@ class ChatDocumentVisionPipelineService:
         if isinstance(source_metadata, dict) and isinstance(source_metadata.get("regions"), dict):
             result["regions"] = source_metadata["regions"]
 
+        if isinstance(source_metadata, dict):
+            if source_metadata.get("vlmFallback"):
+                result["vlmFallback"] = True
+
+            if source_metadata.get("vlmRegionsSent") is not None:
+                result["vlmRegionsSent"] = list(source_metadata.get("vlmRegionsSent") or [])
+
+            if source_metadata.get("vlmImageCount") is not None:
+                try:
+                    result["vlmImageCount"] = int(source_metadata.get("vlmImageCount") or 0)
+                except (TypeError, ValueError):
+                    result["vlmImageCount"] = 0
+
+            region_texts_meta = source_metadata.get("regionTexts")
+
+            if isinstance(region_texts_meta, dict):
+                result["regionTexts"] = region_texts_meta
+
         return result
 
     @classmethod
@@ -479,7 +514,7 @@ class ChatDocumentVisionPipelineService:
         if not char_count and full_text:
             char_count = len(full_text.strip())
 
-        return {
+        finalized = {
             "schemaVersion": cls.SCHEMA_VERSION,
             "engine": engine,
             "stages": stages,
@@ -510,4 +545,26 @@ class ChatDocumentVisionPipelineService:
             "visionPurpose": vision_purpose or payload.get("visionPurpose"),
             "charCount": char_count,
             "regions": payload.get("regions") if isinstance(payload.get("regions"), dict) else {},
+            "vlmFallback": bool(payload.get("vlmFallback")),
+            "vlmRegionsSent": list(payload.get("vlmRegionsSent") or [])
+            if payload.get("vlmRegionsSent") is not None
+            else None,
+            "vlmImageCount": payload.get("vlmImageCount"),
+            "regionTexts": payload.get("regionTexts")
+            if isinstance(payload.get("regionTexts"), dict)
+            else None,
         }
+
+        if finalized.get("vlmRegionsSent") is None:
+            finalized.pop("vlmRegionsSent", None)
+
+        if finalized.get("vlmImageCount") is None:
+            finalized.pop("vlmImageCount", None)
+
+        if not finalized.get("vlmFallback"):
+            finalized.pop("vlmFallback", None)
+
+        if finalized.get("regionTexts") is None:
+            finalized.pop("regionTexts", None)
+
+        return finalized

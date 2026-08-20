@@ -56,11 +56,16 @@ class ChatDocumentVisionStageService:
         if vision_purpose:
             fallback_purpose = vision_purpose
 
+        use_drawing_regions = cls._payload_suggests_drawing_regions(payload, stages=stages)
+        partial_ocr_texts = cls._partial_ocr_texts_from_payload(payload)
+
         vlm = vision_service()._stage_ollama_vlm(
             storage_path,
             filename=filename,
             content_type=content_type,
             purpose=fallback_purpose,
+            use_drawing_regions=use_drawing_regions,
+            partial_ocr_texts=partial_ocr_texts,
         )
         warnings.extend(vlm.get("warnings") or [])
 
@@ -85,14 +90,101 @@ class ChatDocumentVisionStageService:
             return payload
 
         stages.append("ollama_vlm")
+        source_metadata: dict[str, Any] = {
+            "vlmFallback": True,
+            "vlmRegionsSent": list(vlm.get("vlmRegionsSent") or []),
+            "vlmImageCount": int(vlm.get("vlmImageCount") or 0),
+            "filename": filename,
+        }
+
+        region_texts = vlm.get("regionTexts") if isinstance(vlm.get("regionTexts"), dict) else {}
+        stamp_text = str(vlm.get("stampText") or region_texts.get("stamp") or "").strip()
+        bom_text = str(vlm.get("bomText") or region_texts.get("bom") or "").strip()
+
+        if not region_texts and not stamp_text and not bom_text:
+            prior_regions = (
+                payload.get("regionTexts")
+                if isinstance(payload.get("regionTexts"), dict)
+                else {}
+            )
+            region_texts = dict(prior_regions)
+            stamp_text = str(payload.get("stampText") or region_texts.get("stamp") or "").strip()
+            bom_text = str(payload.get("bomText") or region_texts.get("bom") or "").strip()
+
+        if region_texts:
+            source_metadata["regionTexts"] = region_texts
+
+        if stamp_text:
+            source_metadata["stampText"] = stamp_text
+
+        if bom_text:
+            source_metadata["bomText"] = bom_text
+
+        prior_regions_meta = payload.get("regions") if isinstance(payload.get("regions"), dict) else {}
+
+        if prior_regions_meta:
+            source_metadata["regions"] = prior_regions_meta
+
         return vision_service()._build_from_text(
             vlm_text,
             engine="ollama_vlm",
             stages=stages,
             page_count=payload.get("pageCount"),
             warnings=warnings,
-            source_metadata={"vlmFallback": True},
+            source_metadata=source_metadata,
         )
+
+    @classmethod
+    def _payload_suggests_drawing_regions(
+        cls,
+        payload: dict[str, Any],
+        *,
+        stages: list[str] | None = None,
+    ) -> bool:
+        if payload.get("stampCrop") or payload.get("regionOcrAttempted"):
+            return True
+
+        if str(payload.get("stampText") or "").strip():
+            return True
+
+        region_texts = payload.get("regionTexts")
+
+        if isinstance(region_texts, dict) and any(
+            str(value or "").strip() for value in region_texts.values()
+        ):
+            return True
+
+        stage_tokens = list(stages or [])
+        payload_stages = payload.get("stages") if isinstance(payload.get("stages"), list) else []
+        stage_tokens.extend(str(item) for item in payload_stages)
+
+        return any(
+            str(stage)
+            in {
+                "tesseract_stamp_crop",
+                "tesseract_region_detail",
+                "tesseract_region_ocr",
+            }
+            for stage in stage_tokens
+        )
+
+    @classmethod
+    def _partial_ocr_texts_from_payload(cls, payload: dict[str, Any]) -> dict[str, str]:
+        region_texts = (
+            payload.get("regionTexts")
+            if isinstance(payload.get("regionTexts"), dict)
+            else {}
+        )
+        return {
+            "stamp": str(
+                payload.get("stampText") or region_texts.get("stamp") or ""
+            ).strip(),
+            "bom": str(payload.get("bomText") or region_texts.get("bom") or "").strip(),
+            "title": str(payload.get("titleText") or region_texts.get("title") or "").strip(),
+            "dimensions": str(
+                payload.get("dimensionsText") or region_texts.get("dimensions") or ""
+            ).strip(),
+        }
 
     @classmethod
     def stage_native(
@@ -174,6 +266,7 @@ class ChatDocumentVisionStageService:
             regions: dict[str, Any] = {}
             region_texts: dict[str, str] = {}
             detail_ocr_applied = False
+            region_ocr_attempted = False
 
             for index in range(page_count):
                 page = document.load_page(index)
@@ -190,6 +283,7 @@ class ChatDocumentVisionStageService:
                         ChatDrawingRegionService,
                     )
 
+                    region_ocr_attempted = True
                     region_texts, regions = ChatDrawingRegionService.ocr_drawing_regions(
                         page,
                         matrix=matrix,
@@ -231,6 +325,7 @@ class ChatDocumentVisionStageService:
             "stampCrop": stamp_crop_used,
             "stampText": stamp_text if stamp_crop_used else "",
             "detailOcrApplied": detail_ocr_applied,
+            "regionOcrAttempted": region_ocr_attempted,
             "regionTexts": region_texts,
             "bomText": region_texts.get("bom", ""),
             "dimensionsText": region_texts.get("dimensions", ""),
@@ -615,48 +710,58 @@ class ChatDocumentVisionStageService:
         filename: str,
         content_type: str,
         purpose: str | None = None,
+        use_drawing_regions: bool = False,
+        partial_ocr_texts: dict[str, str] | None = None,
     ) -> dict[str, Any]:
+        from app.application.services.chat_document_vision.chat_document_vision_vlm_payload_service import (
+            ChatDocumentVisionVlmPayloadService,
+        )
         from app.domain.services.chat_document_vision_content_service import (
             ChatDocumentVisionContentService,
         )
 
         warnings: list[str] = []
-        max_vlm_pages = max(
-            1,
-            min(3, int(vision_runtime().get("documentVisionMaxPages", 10))),
+        resolved_purpose = purpose or ChatDocumentVisionContentService.vision_purpose("ocr")
+        is_image = ChatDocumentVisionConfigService.is_image(content_type, filename)
+
+        payload = ChatDocumentVisionVlmPayloadService.build(
+            storage_path,
+            filename=filename,
+            content_type=content_type,
+            use_drawing_regions=use_drawing_regions,
+            partial_ocr_texts=partial_ocr_texts,
+            purpose=resolved_purpose,
+            is_image=is_image,
         )
-
-        images_b64: list[str] = []
-
-        if ChatDocumentVisionConfigService.is_pdf(content_type, filename, storage_path):
-            pages, page_warnings = cls.rasterize_pdf_pages(storage_path)
-            warnings.extend(page_warnings)
-            images_b64 = [vision_service()._pil_to_base64_png(page) for page in pages[:max_vlm_pages]]
-        elif ChatDocumentVisionConfigService.is_image(content_type, filename):
-            try:
-                from PIL import Image
-
-                with Image.open(storage_path) as image:
-                    images_b64 = [vision_service()._pil_to_base64_png(image.convert("RGB"))]
-            except Exception as exc:
-                warnings.append(f"vlm_image_open_failed:{exc.__class__.__name__}")
-        else:
-            warnings.append("vlm_unsupported_content_type")
-            return {"fullText": "", "warnings": warnings}
+        warnings.extend(payload.get("warnings") or [])
+        images_b64 = list(payload.get("imagesB64") or [])
+        prompt = str(payload.get("prompt") or "")
+        vlm_regions_sent = list(payload.get("vlmRegionsSent") or [])
+        vlm_image_count = int(payload.get("vlmImageCount") or len(images_b64))
+        drawing_mode = (
+            isinstance(payload.get("promptContext"), dict)
+            and payload["promptContext"].get("mode") == "drawing_regions"
+        )
 
         if not images_b64:
             warnings.append("vlm_no_images")
-            return {"fullText": "", "imageDescription": "", "warnings": warnings}
-
-        resolved_purpose = purpose or ChatDocumentVisionContentService.vision_purpose("ocr")
-        prompt = ChatDocumentVisionContentService.vlm_prompt(
-            resolved_purpose,
-            is_image=ChatDocumentVisionConfigService.is_image(content_type, filename),
-        )
+            return {
+                "fullText": "",
+                "imageDescription": "",
+                "warnings": warnings,
+                "vlmRegionsSent": vlm_regions_sent,
+                "vlmImageCount": vlm_image_count,
+            }
 
         if not prompt:
             warnings.append("vlm_prompt_missing")
-            return {"fullText": "", "imageDescription": "", "warnings": warnings}
+            return {
+                "fullText": "",
+                "imageDescription": "",
+                "warnings": warnings,
+                "vlmRegionsSent": vlm_regions_sent,
+                "vlmImageCount": vlm_image_count,
+            }
 
         max_predict = min(
             4096,
@@ -675,11 +780,22 @@ class ChatDocumentVisionStageService:
             engine = f"{gateway.provider_name()}_vlm"
         except Exception as exc:
             warnings.append(f"vlm_request_failed:{exc.__class__.__name__}")
-            return {"fullText": "", "warnings": warnings}
+            return {
+                "fullText": "",
+                "warnings": warnings,
+                "vlmRegionsSent": vlm_regions_sent,
+                "vlmImageCount": vlm_image_count,
+            }
 
         if not content:
             warnings.append("vlm_empty_response")
-            return {"fullText": "", "imageDescription": "", "warnings": warnings}
+            return {
+                "fullText": "",
+                "imageDescription": "",
+                "warnings": warnings,
+                "vlmRegionsSent": vlm_regions_sent,
+                "vlmImageCount": vlm_image_count,
+            }
 
         describe_purpose = ChatDocumentVisionContentService.vision_purpose("describe")
         hybrid_purpose = ChatDocumentVisionContentService.vision_purpose("hybrid")
@@ -691,6 +807,8 @@ class ChatDocumentVisionStageService:
                 "imageDescription": description,
                 "engine": engine,
                 "warnings": warnings,
+                "vlmRegionsSent": vlm_regions_sent,
+                "vlmImageCount": vlm_image_count,
             }
 
         if resolved_purpose == hybrid_purpose:
@@ -702,15 +820,105 @@ class ChatDocumentVisionStageService:
                 warnings=warnings,
             )
             built["imageDescription"] = cls.truncate_vision_text(image_description)
+            built["vlmRegionsSent"] = vlm_regions_sent
+            built["vlmImageCount"] = vlm_image_count
+            return built
+
+        if drawing_mode:
+            sections = cls.parse_drawing_vlm_response(content)
+            stamp_text = str(sections.get("stamp") or "").strip()
+            bom_text = str(sections.get("bom") or "").strip()
+            page_text = str(sections.get("page") or "").strip()
+            region_texts = {
+                key: value
+                for key, value in {
+                    "stamp": stamp_text,
+                    "bom": bom_text,
+                    "page": page_text,
+                }.items()
+                if value
+            }
+            merged_text = "\n\n".join(
+                part
+                for part in (stamp_text, bom_text, page_text)
+                if part
+            ).strip() or cls.truncate_vision_text(content)
+            built = vision_service()._build_from_text(
+                cls.truncate_vision_text(merged_text),
+                engine=engine,
+                stages=[engine],
+                warnings=warnings,
+                source_metadata={
+                    "vlmFallback": True,
+                    "vlmRegionsSent": vlm_regions_sent,
+                    "vlmImageCount": vlm_image_count,
+                    "regionTexts": region_texts,
+                    "stampText": stamp_text,
+                    "bomText": bom_text,
+                },
+            )
+            built["regionTexts"] = region_texts
+            built["stampText"] = stamp_text
+            built["bomText"] = bom_text
+            built["vlmRegionsSent"] = vlm_regions_sent
+            built["vlmImageCount"] = vlm_image_count
             return built
 
         text = cls.truncate_vision_text(content)
-        return vision_service()._build_from_text(
+        built = vision_service()._build_from_text(
             text,
             engine=engine,
             stages=[engine],
             warnings=warnings,
         )
+        built["vlmRegionsSent"] = vlm_regions_sent
+        built["vlmImageCount"] = vlm_image_count
+        return built
+
+    @classmethod
+    def parse_drawing_vlm_response(cls, content: str) -> dict[str, str]:
+        """Extrai seções CARIMBO/BOM/PAGINA da resposta VLM regional."""
+        import re
+
+        from app.domain.services.chat_document_vision_content_service import (
+            ChatDocumentVisionContentService,
+        )
+
+        normalized = str(content or "").strip()
+        markers = ChatDocumentVisionContentService.vlm_section_markers()
+        sections: dict[str, str] = {}
+
+        if not normalized or not markers:
+            return sections
+
+        ordered_regions = [key for key in ("stamp", "bom", "page") if key in markers]
+        remaining = [key for key in markers if key not in ordered_regions]
+        region_order = [*ordered_regions, *remaining]
+
+        for index, region in enumerate(region_order):
+            region_markers = markers.get(region) or ()
+
+            if not region_markers:
+                continue
+
+            start_alt = "|".join(re.escape(marker) for marker in region_markers)
+            next_markers: list[str] = []
+
+            for later in region_order[index + 1 :]:
+                next_markers.extend(markers.get(later) or ())
+
+            if next_markers:
+                end_alt = "|".join(re.escape(marker) for marker in next_markers)
+                pattern = rf"(?:{start_alt})\s*:\s*(.*?)(?=(?:{end_alt})\s*:|$)"
+            else:
+                pattern = rf"(?:{start_alt})\s*:\s*(.*)$"
+
+            match = re.search(pattern, normalized, flags=re.IGNORECASE | re.DOTALL)
+
+            if match:
+                sections[region] = str(match.group(1) or "").strip()
+
+        return sections
 
     @classmethod
     def parse_hybrid_vlm_response(cls, content: str) -> tuple[str, str]:
