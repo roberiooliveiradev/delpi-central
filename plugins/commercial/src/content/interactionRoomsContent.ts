@@ -9,7 +9,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   inboxToolbarTitle: "Conversas",
   filtersAriaLabel: "Filtros da caixa de entrada",
   searchPlaceholder: "Buscar por título da sala",
-  reloadLabel: "Atualizar",
+  reloadLabel: "Tentar de novo",
   inboxMetaYesterday: "Ontem",
   selectRoomTitle: "Selecione uma sala",
   selectRoomDescription: "Escolha uma conversa na lista para ler e responder.",

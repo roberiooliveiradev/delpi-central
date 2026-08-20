@@ -21,6 +21,9 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/cm-room-inbox-pane__toolbar/);
     expect(source).toMatch(/cm-room-inbox-pane__filters/);
     expect(source).toMatch(/reloadLabel/);
+    expect(readFileSync(join(dir, "../../content/interactionRoomsContent.ts"), "utf8")).toMatch(
+      /reloadLabel:\s*"Tentar de novo"/,
+    );
     expect(source).not.toMatch(/actions=\{\s*<CommercialActionButton/);
     expect(source).toMatch(/CustomerAvatar/);
     expect(source).toMatch(/selectedRoomId/);
