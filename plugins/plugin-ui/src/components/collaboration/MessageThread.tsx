@@ -109,6 +109,10 @@ export type MessageThreadProps = {
   portalScopeClassName?: string;
   /** Nome acessível da toolbar de opções (host). */
   actionsToolbarAriaLabel?: string;
+  /** Resolve URL autenticada para `attachment:{uuid}` no body. */
+  resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
+  /** Clique em imagem inline do body (lightbox no host). */
+  onAttachmentImageClick?: (attachmentId: string) => void;
   className?: string;
 };
 
@@ -214,6 +218,8 @@ function defaultMessageBody(
   message: MessageThreadItem,
   classNames: MessageThreadClassNames,
   onMentionActivate: MentionTextPropsOnActivate | undefined,
+  resolveAttachmentImageSrc?: MessageThreadProps["resolveAttachmentImageSrc"],
+  onAttachmentImageClick?: MessageThreadProps["onAttachmentImageClick"],
 ): ReactNode {
   if (message.deleted) {
     return <span className={classNames.body}>{message.bodyText}</span>;
@@ -223,6 +229,7 @@ function defaultMessageBody(
     message.bodyText,
     message.mentions,
     classNames.mention.chip,
+    { resolveAttachmentImageSrc },
   );
 
   if (!html || messageBodyHtmlIsPlainParagraph(html)) {
@@ -242,6 +249,13 @@ function defaultMessageBody(
       className={classNames.bodyRich}
       // HTML já passou por stripDangerousRichTextTags + enrich de menções.
       dangerouslySetInnerHTML={{ __html: html }}
+      onClick={(event) => {
+        if (!onAttachmentImageClick) return;
+        const target = event.target as HTMLElement | null;
+        const img = target?.closest?.("img[data-attachment-id]") as HTMLElement | null;
+        const id = img?.getAttribute("data-attachment-id")?.trim();
+        if (id) onAttachmentImageClick(id);
+      }}
     />
   );
 }
@@ -260,6 +274,8 @@ export function MessageThread({
   resolveActionExtras,
   portalScopeClassName,
   actionsToolbarAriaLabel,
+  resolveAttachmentImageSrc,
+  onAttachmentImageClick,
   className,
 }: MessageThreadProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
@@ -315,6 +331,8 @@ export function MessageThread({
               onParentQuoteClick={onParentQuoteClick}
               portalScopeClassName={portalScopeClassName}
               actionsToolbarAriaLabel={actionsToolbarAriaLabel}
+              resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+              onAttachmentImageClick={onAttachmentImageClick}
             />
           );
         })}
@@ -336,6 +354,8 @@ type MessageThreadTextItemProps = {
   onParentQuoteClick?: MessageThreadProps["onParentQuoteClick"];
   portalScopeClassName?: string;
   actionsToolbarAriaLabel?: string;
+  resolveAttachmentImageSrc?: MessageThreadProps["resolveAttachmentImageSrc"];
+  onAttachmentImageClick?: MessageThreadProps["onAttachmentImageClick"];
 };
 
 function MessageThreadTextItem({
@@ -351,6 +371,8 @@ function MessageThreadTextItem({
   onParentQuoteClick,
   portalScopeClassName,
   actionsToolbarAriaLabel,
+  resolveAttachmentImageSrc,
+  onAttachmentImageClick,
 }: MessageThreadTextItemProps) {
   const anchorRef = useRef<HTMLElement | null>(null);
   const { open, setOpen, onAnchorEnter, onAnchorLeave } = useMessageThreadActionsOpen();
@@ -363,7 +385,14 @@ function MessageThreadTextItem({
   const body = isEditing ? (
     <div className={classNames.editSlot}>{renderEditSlot?.(message)}</div>
   ) : (
-    renderBody?.(message) ?? defaultMessageBody(message, classNames, onMentionActivate)
+    renderBody?.(message) ??
+    defaultMessageBody(
+      message,
+      classNames,
+      onMentionActivate,
+      resolveAttachmentImageSrc,
+      onAttachmentImageClick,
+    )
   );
   const avatarName = (message.authorName ?? "").trim();
   const authorHref = (message.authorHref ?? "").trim();

@@ -139,6 +139,7 @@ export {
 } from "./mentionComposerCaret";
 export { parseMentionText } from "./parseMentionText";
 export {
+  attachmentIdsInMarkdown,
   enrichMessageHtmlMentions,
   markdownToPlainPreview,
   messageBodyHtmlFromMarkdown,
