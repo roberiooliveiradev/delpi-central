@@ -381,28 +381,27 @@ def test_update_replaces_mentions_empty_clears() -> None:
     assert replaced.mentions[0].label == "@Bruno"
 
 
-def test_post_requires_body() -> None:
+def test_post_allows_empty_body_for_attachment_only() -> None:
     rooms = InMemoryInteractionRoomRepo()
     messages = InMemoryInteractionMessageRepo()
     uc = ManageInteractionMessagesUseCase(rooms=rooms, messages=messages)
     room = _open_room(rooms)
-    with pytest.raises(ValueError) as empty:
-        uc.post(
-            PostInteractionMessageInput(
-                room_id=room.id,
-                actor_user_id="u1",
-                body_text="   ",
-            )
-        )
-    assert str(empty.value) == InteractionRoomContentService.error("bodyRequired")
     posted = uc.post(
+        PostInteractionMessageInput(
+            room_id=room.id,
+            actor_user_id="u1",
+            body_text="   ",
+        )
+    )
+    assert posted.body_text == "   "
+    with_text = uc.post(
         PostInteractionMessageInput(
             room_id=room.id,
             actor_user_id="stranger",
             body_text="oi",
         )
     )
-    assert posted.body_text == "oi"
+    assert with_text.body_text == "oi"
 
 
 def test_post_and_update_reject_raw_html() -> None:

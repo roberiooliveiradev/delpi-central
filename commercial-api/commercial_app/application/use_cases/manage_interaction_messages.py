@@ -102,9 +102,8 @@ class ManageInteractionMessagesUseCase:
         if kind not in MESSAGE_KINDS:
             raise ValueError(InteractionRoomContentService.error("messageKindInvalid"))
         body = request.body_text if request.body_text is not None else ""
-        if kind == "text" and not str(body).strip():
-            raise ValueError(InteractionRoomContentService.error("bodyRequired"))
-        if kind == "text":
+        # Texto vazio é válido (mensagem só com anexo — upload no POST seguinte).
+        if kind == "text" and str(body).strip():
             InteractionMessageBodyPolicyService.assert_markdown_body(str(body))
         if request.parent_id is not None:
             parent = self._messages.get_by_id(request.parent_id)

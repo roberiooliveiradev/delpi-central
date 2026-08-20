@@ -215,8 +215,8 @@ export function InteractionRoomMessageComposer({
 
     setSubmitting(true);
     try {
-      const bodyText = body || content.attachmentOnlyBody;
-      if (interactionMessageLooksLikeRawHtml(bodyText)) {
+      const bodyText = body;
+      if (bodyText && interactionMessageLooksLikeRawHtml(bodyText)) {
         onError(content.bodyHtmlRejected);
         return;
       }
@@ -260,7 +260,6 @@ export function InteractionRoomMessageComposer({
     isEdit,
     editMessageId,
     replyToMessageId,
-    content.attachmentOnlyBody,
     content.attachUploadError,
     content.bodyHtmlRejected,
     content.roomSendError,
