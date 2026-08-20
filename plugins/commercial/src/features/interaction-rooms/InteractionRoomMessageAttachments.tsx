@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { CommercialAttachmentDto } from "../../api/attachmentsApi";
 import {
@@ -16,6 +16,12 @@ type Props = {
   messageId: string;
   /** Bump to reload after local upload or `room.attachment` WS. */
   reloadToken?: number;
+  /** Hide attachments already rendered inline in `body_text`. */
+  excludeAttachmentIds?: readonly string[];
+  /** Notifica thumbs (incl. excluídos) para `resolveAttachmentImageSrc` na thread. */
+  onThumbUrlsChange?: (urls: Record<string, string>) => void;
+  /** Metadados para lightbox de imagem inline. */
+  onItemsChange?: (items: readonly CommercialAttachmentDto[]) => void;
 };
 
 function formatBytes(value: number): string {
@@ -36,6 +42,9 @@ function isImageAttachment(item: CommercialAttachmentDto): boolean {
 export function InteractionRoomMessageAttachments({
   messageId,
   reloadToken = 0,
+  excludeAttachmentIds = [],
+  onThumbUrlsChange,
+  onItemsChange,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
   const id = messageId.trim();
@@ -43,6 +52,14 @@ export function InteractionRoomMessageAttachments({
   const [preview, setPreview] = useState<TaskAttachmentPreviewTarget>(null);
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
   const thumbUrlsRef = useRef<Record<string, string>>({});
+  const excludeSet = useMemo(
+    () => new Set(excludeAttachmentIds.map((value) => value.trim()).filter(Boolean)),
+    [excludeAttachmentIds],
+  );
+  const visibleItems = useMemo(
+    () => items.filter((item) => !excludeSet.has(item.id)),
+    [items, excludeSet],
+  );
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     if (!id) {
@@ -53,11 +70,13 @@ export function InteractionRoomMessageAttachments({
       const next = await listRoomMessageAttachments(id, signal);
       if (signal?.aborted) return;
       setItems(next);
+      onItemsChange?.(next);
     } catch {
       if (signal?.aborted) return;
       setItems([]);
+      onItemsChange?.([]);
     }
-  }, [id]);
+  }, [id, onItemsChange]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -102,21 +121,22 @@ export function InteractionRoomMessageAttachments({
       clearThumbs();
       thumbUrlsRef.current = next;
       setThumbUrls(next);
+      onThumbUrlsChange?.(next);
     })();
 
     return () => {
       cancelled = true;
       clearThumbs();
     };
-  }, [items]);
+  }, [items, onThumbUrlsChange]);
 
-  if (items.length === 0) return null;
+  if (visibleItems.length === 0) return null;
 
   return (
     <div className="cm-room-thread__message-attachments">
       <CommercialAttachmentPreviewStrip
         mode="preview"
-        items={items.map((item) => ({
+        items={visibleItems.map((item) => ({
           id: item.id,
           fileName: item.file_name,
           contentType: item.content_type,

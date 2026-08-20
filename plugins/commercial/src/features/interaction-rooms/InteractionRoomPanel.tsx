@@ -39,6 +39,12 @@ import type { CommercialInteractionRoomEvent } from "../../constants/interaction
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
+import { listInlineAttachmentIdsFromMarkdown } from "./interactionRoomInlineAttachments";
+import {
+  TaskAttachmentPreviewModal,
+  type TaskAttachmentPreviewTarget,
+} from "../my-day/TaskAttachmentPreviewModal";
+import type { CommercialAttachmentDto } from "../../api/attachmentsApi";
 import { scrollThreadMessageIntoView } from "./scrollThreadMessageIntoView";
 import {
   InteractionRoomMessageReactionQuickBar,
@@ -103,6 +109,11 @@ export function InteractionRoomPanel({
   const [attachmentEpochByMessageId, setAttachmentEpochByMessageId] = useState<
     Record<string, number>
   >({});
+  const [attachmentThumbUrls, setAttachmentThumbUrls] = useState<Record<string, string>>(
+    {},
+  );
+  const [inlinePreview, setInlinePreview] = useState<TaskAttachmentPreviewTarget>(null);
+  const attachmentMetaRef = useRef<Record<string, CommercialAttachmentDto>>({});
   const { currentUserId, myPortfolio } = usePortfolioScope();
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const confirm = useCommercialConfirm();
@@ -471,6 +482,17 @@ export function InteractionRoomPanel({
                 <InteractionRoomMessageAttachments
                   messageId={message.id}
                   reloadToken={attachmentEpochByMessageId[message.id] ?? 0}
+                  excludeAttachmentIds={listInlineAttachmentIdsFromMarkdown(
+                    message.body_text,
+                  )}
+                  onThumbUrlsChange={(urls) => {
+                    setAttachmentThumbUrls((prev) => ({ ...prev, ...urls }));
+                  }}
+                  onItemsChange={(items) => {
+                    for (const item of items) {
+                      attachmentMetaRef.current[item.id] = item;
+                    }
+                  }}
                 />
                 {hasUnfurl ? (
                   <InteractionRoomMentionUnfurls
@@ -580,6 +602,20 @@ export function InteractionRoomPanel({
             onParentQuoteClick={onParentQuoteClick}
             portalScopeClassName={CM_PORTAL_SCOPE}
             actionsToolbarAriaLabel={content.messageActionsToolbarAriaLabel}
+            resolveAttachmentImageSrc={(attachmentId) =>
+              attachmentThumbUrls[attachmentId] ?? null
+            }
+            onAttachmentImageClick={(attachmentId) => {
+              const row = attachmentMetaRef.current[attachmentId];
+              if (!row) return;
+              setInlinePreview({
+                kind: "remote",
+                id: row.id,
+                fileName: row.file_name,
+                contentType: row.content_type,
+                byteSize: row.byte_size,
+              });
+            }}
           />
           </div>
         )}
@@ -662,6 +698,11 @@ export function InteractionRoomPanel({
     <CommercialSectionCard title={content.panelTitle} actions={openRoomAction}>
       {statusBlock}
       {roomBody}
+      <TaskAttachmentPreviewModal
+        open={Boolean(inlinePreview)}
+        target={inlinePreview}
+        onClose={() => setInlinePreview(null)}
+      />
     </CommercialSectionCard>
   );
 }
