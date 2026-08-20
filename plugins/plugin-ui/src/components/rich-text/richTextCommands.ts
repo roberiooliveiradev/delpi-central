@@ -308,13 +308,62 @@ export function queryRichTextFontSize(editor: HTMLElement | null): number | null
 }
 
 export function applyRichTextAlign(editor: HTMLElement | null, align: RichTextAlign) {
-  const map: Record<RichTextAlign, string> = {
-    left: "justifyLeft",
-    center: "justifyCenter",
-    right: "justifyRight",
-    justify: "justifyFull",
-  };
-  runRichTextCommand(editor, map[align]);
+  if (!editor) return;
+  focusEditor(editor);
+  const block = findRichTextAlignBlock(editor);
+  if (!block) return;
+  if (align === "left") {
+    block.style.removeProperty("text-align");
+  } else {
+    block.style.textAlign = align;
+  }
+}
+
+const ALIGN_BLOCK_SELECTOR = "p,div,li,h1,h2,h3,h4,h5,h6,blockquote";
+
+/** Bloco de parágrafo mais próximo da seleção (ou primeiro bloco do editor). */
+export function findRichTextAlignBlock(editor: HTMLElement | null): HTMLElement | null {
+  if (!editor) return null;
+  const selection = window.getSelection();
+  let el: Element | null = null;
+  if (
+    selection &&
+    selection.rangeCount > 0 &&
+    selection.anchorNode &&
+    editor.contains(selection.anchorNode)
+  ) {
+    const node = selection.anchorNode;
+    el = node instanceof Element ? node : node.parentElement;
+  }
+  if (!el) el = editor;
+  const closest = el.closest(ALIGN_BLOCK_SELECTOR);
+  if (closest && editor.contains(closest) && closest !== editor) {
+    return closest as HTMLElement;
+  }
+  const first = editor.querySelector(ALIGN_BLOCK_SELECTOR);
+  return (first as HTMLElement | null) ?? editor;
+}
+
+function normalizeAlignValue(raw: string): RichTextAlign | null {
+  const value = raw.trim().toLowerCase();
+  if (value === "center" || value === "middle") return "center";
+  if (value === "right" || value === "end") return "right";
+  if (value === "justify") return "justify";
+  if (value === "left" || value === "start" || value === "") return "left";
+  return null;
+}
+
+/** Lê `text-align` do bloco da seleção (estilo inline; fallback computed). */
+export function queryRichTextAlign(editor?: HTMLElement | null): RichTextAlign | null {
+  const block = findRichTextAlignBlock(editor ?? null);
+  if (!block) return null;
+  const inline = normalizeAlignValue(block.style.textAlign || "");
+  if (inline) return inline;
+  try {
+    return normalizeAlignValue(window.getComputedStyle(block).textAlign || "") ?? "left";
+  } catch {
+    return "left";
+  }
 }
 
 export function insertRichTextLink(editor: HTMLElement | null, url: string) {
@@ -410,12 +459,4 @@ export function queryRichTextCommandEnabled(command: string): boolean {
   } catch {
     return false;
   }
-}
-
-export function queryRichTextAlign(): RichTextAlign | null {
-  if (queryRichTextCommandState("justifyCenter")) return "center";
-  if (queryRichTextCommandState("justifyRight")) return "right";
-  if (queryRichTextCommandState("justifyFull")) return "justify";
-  if (queryRichTextCommandState("justifyLeft")) return "left";
-  return null;
 }

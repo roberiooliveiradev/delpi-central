@@ -513,12 +513,7 @@ export function MentionComposer({
       const size = queryRichTextFontSize(el);
       if (size) setFontSize(clampComposerFontSize(size));
       setFormatFlags(queryComposerFormatFlags(el));
-      const figure = findInlineImageFigureFromSelection(el);
-      if (figure) {
-        setAlignActive(readInlineImageFigureAlign(figure));
-      } else {
-        setAlignActive(queryRichTextAlign());
-      }
+      setAlignActive(queryRichTextAlign(el) ?? "left");
       refreshHistoryFlags();
     };
     document.addEventListener("selectionchange", persist);

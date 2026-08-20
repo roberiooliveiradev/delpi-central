@@ -2,9 +2,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyRichTextAlign,
   applyRichTextFontSize,
   isRichTextRangeInEditor,
   normalizeRichTextLinkUrl,
+  queryRichTextAlign,
   restoreRichTextSelection,
   unwrapRichTextLink,
 } from "./richTextCommands";

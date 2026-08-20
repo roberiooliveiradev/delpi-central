@@ -184,7 +184,7 @@ export function RichTextToolbar({
   const strikeActive = queryRichTextCommandState("strikeThrough");
   const bulletActive = queryRichTextCommandState("insertUnorderedList");
   const orderedActive = queryRichTextCommandState("insertOrderedList");
-  const alignActive = queryRichTextAlign();
+  const alignActive = queryRichTextAlign(editorRef.current);
 
   function withEditor(action: (editor: HTMLElement) => void) {
     if (formatDisabled) return;
