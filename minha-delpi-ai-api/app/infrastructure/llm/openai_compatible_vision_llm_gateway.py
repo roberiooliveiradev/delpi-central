@@ -59,7 +59,16 @@ class OpenAiCompatibleVisionLlmGateway(VisionLlmGatewayPort):
         if not choices:
             return ""
 
-        return str((choices[0].get("message") or {}).get("content") or "").strip()
+        from app.infrastructure.llm.openai_compatible_llm_gateway import (
+            _visible_assistant_text,
+        )
+
+        choice = choices[0] if isinstance(choices[0], dict) else {}
+        message = choice.get("message") if isinstance(choice.get("message"), dict) else {}
+        return _visible_assistant_text(
+            message,
+            finish_reason=choice.get("finish_reason"),
+        )
 
     def _headers(self) -> dict:
         headers = {

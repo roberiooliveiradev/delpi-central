@@ -34,3 +34,28 @@ def test_describe_returns_content(gateway):
         )
 
     assert content == "texto extraído"
+
+
+def test_describe_falls_back_to_reasoning_when_content_empty(gateway):
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {
+        "choices": [
+            {
+                "finish_reason": "stop",
+                "message": {"content": None, "reasoning": "  90261842 REV 01  "},
+            }
+        ],
+    }
+
+    with patch(
+        "app.infrastructure.llm.openai_compatible_vision_llm_gateway.requests.post",
+        return_value=response,
+    ):
+        content = gateway.describe(
+            prompt="extraia o texto",
+            images_b64=["abc123"],
+            max_tokens=512,
+        )
+
+    assert content == "90261842 REV 01"
