@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** E6 composer/markdown entregue (`main`); E7 resto da página em andamento.  
+> **Status:** E7.S1–S4 em `main`; E7.S5 inbox empty/loading/preview já no código (hardening de testes). Docker rebuild pendente se daemon offline.  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -483,12 +483,12 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - **Backend (commercial-api):** nenhum — `set_interaction_message_reaction` / `clear_interaction_message_reaction` já existem.
 - **Testes:** vitest host.
 
-### E7.S5 — Inbox empty / loading / preview — custo P
+### E7.S5 — Inbox empty / loading / preview — custo P ✅
 
 - **Front (plugin-ui / kit):** `EmptyState` / `LoadingCard` já existem.
-- **Front (MFE commercial):** inbox usa helper plano E6.S5; badge unread (campo já no DTO).
+- **Front (MFE commercial):** `CommercialLoadingCard` + `CommercialEmptyState`; preview via `markdownToPlainPreview`; badge `unread_count`.
 - **Backend (commercial-api):** nenhum.
-- **Testes:** vitest inbox.
+- **Testes:** `interactionRoomsInbox.structural.test.ts` (empty/loading/preview/unread).
 
 ### E7.S6 — Fecho E7 — custo M
 
