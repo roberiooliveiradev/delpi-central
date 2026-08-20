@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 675,
+  "operation_count": 678,
   "operations": [
     {
       "method": "POST",
@@ -1591,6 +1591,20 @@
           "required": false,
           "description": "Search query parameter.",
           "type": "string"
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Filter proposals that include this product code (ADJ.ADJ_PROD).",
+          "type": "string"
+        },
+        {
+          "name": "product_group",
+          "in": "query",
+          "required": false,
+          "description": "Filter proposals that include a product in this Protheus group (SB1.B1_GRUPO).",
+          "type": "string"
         }
       ],
       "xDelpi": {
@@ -1728,6 +1742,30 @@
               "pt-BR": {
                 "description": "Quantidade de linhas por página.",
                 "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "product_group": {
+            "locale": {
+              "en": {
+                "description": "Product group query parameter.",
+                "label": "Product group"
+              },
+              "pt-BR": {
+                "description": "Grupo de produto no Protheus.",
+                "label": "Grupo de produto"
               }
             }
           },
@@ -13191,6 +13229,340 @@
     },
     {
       "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
+      "operationId": "get_si_indicator_quality_ppm_external_components_meta",
+      "summary": "PPM Externo Chicotes — goal",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_meta",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Externo Chicotes — goal",
+            "description": "Goal (comparable) for SI indicator «PPM Externo Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the PPM Externo Chicotes goal.",
+            "label": "PPM Externo Chicotes — goal"
+          },
+          "pt-BR": {
+            "summary": "PPM Externo Chicotes — meta",
+            "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
+            "label": "PPM Externo Chicotes — meta"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
+          "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
+          "label": "PPM Externo Chicotes — meta"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Goal (comparable) for SI indicator «PPM Externo Chicotes» (IGD view)."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
+      "operationId": "get_si_indicator_quality_ppm_external_components_realized",
+      "summary": "PPM Externo Chicotes — actual",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_realized",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Externo Chicotes — actual",
+            "description": "Actual value for SI indicator «PPM Externo Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the actual PPM Externo Chicotes.",
+            "label": "PPM Externo Chicotes — actual"
+          },
+          "pt-BR": {
+            "summary": "PPM Externo Chicotes — realizado",
+            "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
+            "label": "PPM Externo Chicotes — realizado"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
+          "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
+          "label": "PPM Externo Chicotes — realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Actual value for SI indicator «PPM Externo Chicotes» (IGD view)."
+    },
+    {
+      "method": "GET",
       "path": "/dashboard/indicators/quality-ppm-external-plugs/meta",
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
       "summary": "PPM Externo Plugues — goal",
@@ -13355,462 +13727,6 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Goal (comparable) for SI indicator «PPM Externo Plugues» (IGD view)."
-    },
-    {
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
-      "operationId": "get_si_indicator_quality_ppm_external_components_meta",
-      "summary": "PPM Externo Chicotes — goal",
-      "tags": [
-        "Dashboard"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "competence",
-          "required": false,
-          "description": "Reference month as YYYY-MM.",
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "branch",
-          "required": false,
-          "description": "TOTVS branch code (01/02) when applicable.",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "dashboard_si_indicator_meta",
-        "shape": "scalar",
-        "category": "quality",
-        "locale": {
-          "en": {
-            "summary": "PPM Externo Chicotes — goal",
-            "description": "Goal (comparable) for SI indicator «PPM Externo Chicotes» (IGD view).",
-            "whenToUse": "Use as a KPI card for the PPM Externo Chicotes goal.",
-            "label": "PPM Externo Chicotes — goal"
-          },
-          "pt-BR": {
-            "summary": "PPM Externo Chicotes — meta",
-            "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
-            "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
-            "label": "PPM Externo Chicotes — meta"
-          }
-        },
-        "params": {
-          "competence": {
-            "locale": {
-              "en": {
-                "label": "Competence",
-                "description": "Competence query parameter."
-              },
-              "pt-BR": {
-                "label": "Competência",
-                "description": "Competência no formato AAAA-MM (mês de referência)."
-              }
-            }
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "label": "Start date",
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data início",
-                "description": "Início do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "label": "End date",
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data fim",
-                "description": "Fim do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "branch": {
-            "locale": {
-              "en": {
-                "label": "Branch",
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
-              },
-              "pt-BR": {
-                "label": "Filial",
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
-              }
-            }
-          }
-        },
-        "tv": {
-          "whenToUse": "Usar no card KPI da meta de PPM Externo Chicotes.",
-          "description": "Meta (comparable goal) do indicador SI «PPM Externo Chicotes» (visão IGD).",
-          "label": "PPM Externo Chicotes — meta"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Goal (comparable) for SI indicator «PPM Externo Chicotes» (IGD view)."
-    },
-    {
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
-      "operationId": "get_si_indicator_quality_ppm_external_components_realized",
-      "summary": "PPM Externo Chicotes — actual",
-      "tags": [
-        "Dashboard"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "competence",
-          "required": false,
-          "description": "Reference month as YYYY-MM.",
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "branch",
-          "required": false,
-          "description": "TOTVS branch code (01/02) when applicable.",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "dashboard_si_indicator_realized",
-        "shape": "scalar",
-        "category": "quality",
-        "locale": {
-          "en": {
-            "summary": "PPM Externo Chicotes — actual",
-            "description": "Actual value for SI indicator «PPM Externo Chicotes» (IGD view).",
-            "whenToUse": "Use as a KPI card for the actual PPM Externo Chicotes.",
-            "label": "PPM Externo Chicotes — actual"
-          },
-          "pt-BR": {
-            "summary": "PPM Externo Chicotes — realizado",
-            "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
-            "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
-            "label": "PPM Externo Chicotes — realizado"
-          }
-        },
-        "params": {
-          "competence": {
-            "locale": {
-              "en": {
-                "label": "Competence",
-                "description": "Competence query parameter."
-              },
-              "pt-BR": {
-                "label": "Competência",
-                "description": "Competência no formato AAAA-MM (mês de referência)."
-              }
-            }
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "label": "Start date",
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data início",
-                "description": "Início do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "label": "End date",
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data fim",
-                "description": "Fim do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "branch": {
-            "locale": {
-              "en": {
-                "label": "Branch",
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
-              },
-              "pt-BR": {
-                "label": "Filial",
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
-              }
-            }
-          }
-        },
-        "tv": {
-          "whenToUse": "Usar no card KPI do realizado de PPM Externo Chicotes.",
-          "description": "Valor realizado do indicador SI «PPM Externo Chicotes» (visão IGD).",
-          "label": "PPM Externo Chicotes — realizado"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Actual value for SI indicator «PPM Externo Chicotes» (IGD view)."
-    },
-    {
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
-      "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
-      "summary": "PPM Interno Chicotes — goal",
-      "tags": [
-        "Dashboard"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "competence",
-          "required": false,
-          "description": "Reference month as YYYY-MM.",
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "branch",
-          "required": false,
-          "description": "TOTVS branch code (01/02) when applicable.",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "dashboard_si_indicator_meta",
-        "shape": "scalar",
-        "category": "quality",
-        "locale": {
-          "en": {
-            "summary": "PPM Interno Chicotes — goal",
-            "description": "Goal (comparable) for SI indicator «PPM Interno Chicotes» (IGD view).",
-            "whenToUse": "Use as a KPI card for the PPM Interno Chicotes goal.",
-            "label": "PPM Interno Chicotes — goal"
-          },
-          "pt-BR": {
-            "summary": "PPM Interno Chicotes — meta",
-            "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
-            "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
-            "label": "PPM Interno Chicotes — meta"
-          }
-        },
-        "params": {
-          "competence": {
-            "locale": {
-              "en": {
-                "label": "Competence",
-                "description": "Competence query parameter."
-              },
-              "pt-BR": {
-                "label": "Competência",
-                "description": "Competência no formato AAAA-MM (mês de referência)."
-              }
-            }
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "label": "Start date",
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data início",
-                "description": "Início do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "label": "End date",
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data fim",
-                "description": "Fim do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "branch": {
-            "locale": {
-              "en": {
-                "label": "Branch",
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
-              },
-              "pt-BR": {
-                "label": "Filial",
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
-              }
-            }
-          }
-        },
-        "tv": {
-          "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
-          "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
-          "label": "PPM Interno Chicotes — meta"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Goal (comparable) for SI indicator «PPM Interno Chicotes» (IGD view)."
-    },
-    {
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
-      "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
-      "summary": "PPM Interno Chicotes — actual",
-      "tags": [
-        "Dashboard"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "competence",
-          "required": false,
-          "description": "Reference month as YYYY-MM.",
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD).",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "branch",
-          "required": false,
-          "description": "TOTVS branch code (01/02) when applicable.",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "dashboard_si_indicator_realized",
-        "shape": "scalar",
-        "category": "quality",
-        "locale": {
-          "en": {
-            "summary": "PPM Interno Chicotes — actual",
-            "description": "Actual value for SI indicator «PPM Interno Chicotes» (IGD view).",
-            "whenToUse": "Use as a KPI card for the actual PPM Interno Chicotes.",
-            "label": "PPM Interno Chicotes — actual"
-          },
-          "pt-BR": {
-            "summary": "PPM Interno Chicotes — realizado",
-            "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
-            "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
-            "label": "PPM Interno Chicotes — realizado"
-          }
-        },
-        "params": {
-          "competence": {
-            "locale": {
-              "en": {
-                "label": "Competence",
-                "description": "Competence query parameter."
-              },
-              "pt-BR": {
-                "label": "Competência",
-                "description": "Competência no formato AAAA-MM (mês de referência)."
-              }
-            }
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "label": "Start date",
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data início",
-                "description": "Início do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "label": "End date",
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
-              },
-              "pt-BR": {
-                "label": "Data fim",
-                "description": "Fim do período (AAAA-MM-DD)."
-              }
-            }
-          },
-          "branch": {
-            "locale": {
-              "en": {
-                "label": "Branch",
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
-              },
-              "pt-BR": {
-                "label": "Filial",
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
-              }
-            }
-          }
-        },
-        "tv": {
-          "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
-          "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
-          "label": "PPM Interno Chicotes — realizado"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Actual value for SI indicator «PPM Interno Chicotes» (IGD view)."
     },
     {
       "method": "GET",
@@ -14312,6 +14228,340 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Actual value for SI indicator «PPM Externo» (IGD view)."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
+      "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
+      "summary": "PPM Interno Chicotes — goal",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_meta",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Interno Chicotes — goal",
+            "description": "Goal (comparable) for SI indicator «PPM Interno Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the PPM Interno Chicotes goal.",
+            "label": "PPM Interno Chicotes — goal"
+          },
+          "pt-BR": {
+            "summary": "PPM Interno Chicotes — meta",
+            "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
+            "label": "PPM Interno Chicotes — meta"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI da meta de PPM Interno Chicotes.",
+          "description": "Meta (comparable goal) do indicador SI «PPM Interno Chicotes» (visão IGD).",
+          "label": "PPM Interno Chicotes — meta"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Goal (comparable) for SI indicator «PPM Interno Chicotes» (IGD view)."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
+      "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
+      "summary": "PPM Interno Chicotes — actual",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_si_indicator_realized",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "PPM Interno Chicotes — actual",
+            "description": "Actual value for SI indicator «PPM Interno Chicotes» (IGD view).",
+            "whenToUse": "Use as a KPI card for the actual PPM Interno Chicotes.",
+            "label": "PPM Interno Chicotes — actual"
+          },
+          "pt-BR": {
+            "summary": "PPM Interno Chicotes — realizado",
+            "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
+            "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
+            "label": "PPM Interno Chicotes — realizado"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI do realizado de PPM Interno Chicotes.",
+          "description": "Valor realizado do indicador SI «PPM Interno Chicotes» (visão IGD).",
+          "label": "PPM Interno Chicotes — realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Actual value for SI indicator «PPM Interno Chicotes» (IGD view)."
     },
     {
       "method": "GET",
@@ -45235,13 +45485,13 @@
         "locale": {
           "en": {
             "summary": "Production appointments time series",
-            "description": "Produced and lost quantities from SH6 appointments, aggregated by day or month (optional day×work-center).",
+            "description": "Produced qty at the PA last routing operation (unless a work center is filtered); lost qty from all SH6 appointments, aggregated by day or month (optional day×work-center).",
             "whenToUse": "Use for a line chart of produced vs lost quantity over the selected period with day or month granularity.",
             "label": "Production appointments — time series"
           },
           "pt-BR": {
             "summary": "Série temporal de apontamentos de produção",
-            "description": "Quantidades produzida e perdida dos apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
+            "description": "Qtd. produzida na última operação do roteiro do PA (salvo filtro de um CT); qtd. perdida de todos os apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
             "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período, com granularidade dia ou mês.",
             "label": "Apontamento de produção — série temporal"
           }
@@ -45536,12 +45786,12 @@
         },
         "tv": {
           "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período, com granularidade dia ou mês.",
-          "description": "Quantidades produzida e perdida dos apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
+          "description": "Qtd. produzida na última operação do roteiro do PA (salvo filtro de um CT); qtd. perdida de todos os apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
           "label": "Apontamento de produção — série temporal"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Produced and lost quantities from SH6 appointments, aggregated by day or month (optional day×work-center)."
+      "description": "Produced qty at the PA last routing operation (unless a work center is filtered); lost qty from all SH6 appointments, aggregated by day or month (optional day×work-center)."
     },
     {
       "method": "GET",
@@ -45636,14 +45886,14 @@
         "locale": {
           "en": {
             "summary": "Production appointments summary",
-            "description": "KPI totals (appointments, produced/lost qty, OP and work-center counts) plus breakdown by work center.",
-            "whenToUse": "Use for KPI cards and work-center summary of production appointments in the period.",
+            "description": "KPI totals: produced qty is the last routing operation of the finished good (PA); lost qty and appointment counts cover all work centers, plus breakdown by CT.",
+            "whenToUse": "Use for KPI cards (stock-entry produced qty) and work-center summary of production appointments in the period.",
             "label": "Production appointments — summary"
           },
           "pt-BR": {
             "summary": "Resumo de apontamentos de produção",
-            "description": "Totais de KPI (apontamentos, qtd. produzida/perdida, OPs e CTs) e detalhe por centro de trabalho.",
-            "whenToUse": "Use nos cards de KPI e no resumo por CT dos apontamentos no período.",
+            "description": "Totais de KPI: qtd. produzida só na última operação do roteiro do PA; perda e contagens cobrem todos os CTs, com detalhe por centro de trabalho.",
+            "whenToUse": "Use nos cards de KPI (quantidade que entra em estoque) e no resumo por CT dos apontamentos no período.",
             "label": "Apontamento de produção — resumo"
           }
         },
@@ -45804,13 +46054,13 @@
           }
         },
         "tv": {
-          "whenToUse": "Use nos cards de KPI e no resumo por CT dos apontamentos no período.",
-          "description": "Totais de KPI (apontamentos, qtd. produzida/perdida, OPs e CTs) e detalhe por centro de trabalho.",
+          "whenToUse": "Use nos cards de KPI (quantidade que entra em estoque) e no resumo por CT dos apontamentos no período.",
+          "description": "Totais de KPI: qtd. produzida só na última operação do roteiro do PA; perda e contagens cobrem todos os CTs, com detalhe por centro de trabalho.",
           "label": "Apontamento de produção — resumo"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "KPI totals (appointments, produced/lost qty, OP and work-center counts) plus breakdown by work center."
+      "description": "KPI totals: produced qty is the last routing operation of the finished good (PA); lost qty and appointment counts cover all work centers, plus breakdown by CT."
     },
     {
       "method": "GET",
@@ -48688,6 +48938,794 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Production losses top materials."
+    },
+    {
+      "method": "POST",
+      "path": "/production/machine-load/appointment-status",
+      "operationId": "get_production_machine_load_appointment_status",
+      "summary": "Lista — Status de apontamento hza das operações da carga máquina",
+      "tags": [
+        "Produção — Carga máquina"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "production_machine_load_appointment_status",
+        "shape": "list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna status de apontamento HZA das operações da carga máquina via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/production/machine-load/operations",
+      "operationId": "get_production_machine_load_operations",
+      "summary": "Machine load operations",
+      "tags": [
+        "Produção — Carga máquina"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (1-based).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Page size.",
+          "type": "integer",
+          "default": 100
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort: schedule_asc, schedule_desc, due_date_asc, due_date_desc, op_asc, qty_desc.",
+          "type": "string",
+          "default": "schedule_asc"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "scheduled_start",
+          "in": "query",
+          "required": false,
+          "description": "Scheduled start range begin (H8_DTINI, YYYY-MM-DD). Defaults to today.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "scheduled_end",
+          "in": "query",
+          "required": false,
+          "description": "Scheduled start range end (H8_DTINI, YYYY-MM-DD). Defaults to today + 7 days.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "work_center",
+          "in": "query",
+          "required": false,
+          "description": "Work center code filter (H8_CTRAB).",
+          "type": "string"
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Product code filter (C2_PRODUTO).",
+          "type": "string"
+        },
+        {
+          "name": "production_order",
+          "in": "query",
+          "required": false,
+          "description": "Production order key filter (H8_OP).",
+          "type": "string"
+        },
+        {
+          "name": "tool",
+          "in": "query",
+          "required": false,
+          "description": "Tool code filter (H8_FERRAM). MOD means manual labor.",
+          "type": "string"
+        },
+        {
+          "name": "open_only",
+          "in": "query",
+          "required": false,
+          "description": "When true (default), only open orders (C2_QUANT > C2_QUJE).",
+          "type": "boolean"
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_machine_load_operations",
+        "shape": "paged_list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Machine load operations",
+            "description": "Paged queue of allocated operations (SH8) with production order, product, quantity, tool, operation description and finished good due date.",
+            "whenToUse": "Use for the sequencing table of a work center or to check what a tool or order runs next.",
+            "label": "Machine load operations"
+          },
+          "pt-BR": {
+            "summary": "Operações da carga máquina",
+            "description": "Fila paginada de operações alocadas (SH8) com OP, produto, quantidade, ferramenta, descrição da operação e entrega do PA.",
+            "whenToUse": "Usar na tabela de sequenciamento de um centro de trabalho ou para ver o que uma ferramenta/OP produz em seguida.",
+            "label": "Operações da carga máquina"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "production_order": {
+            "locale": {
+              "en": {
+                "description": "Production order query parameter.",
+                "label": "Production order"
+              },
+              "pt-BR": {
+                "description": "Ordem(ns) de produção (CSV).",
+                "label": "Ordem de produção"
+              }
+            }
+          },
+          "sort": {
+            "locale": {
+              "en": {
+                "description": "Sort query parameter.",
+                "label": "Sort"
+              },
+              "pt-BR": {
+                "description": "Critério de ordenação da listagem.",
+                "label": "Ordenação"
+              }
+            },
+            "enumLabels": {
+              "cost_asc": {
+                "en": {
+                  "label": "Cost ↑"
+                },
+                "pt-BR": {
+                  "label": "Custo ↑"
+                }
+              },
+              "cost_desc": {
+                "en": {
+                  "label": "Cost ↓"
+                },
+                "pt-BR": {
+                  "label": "Custo ↓"
+                }
+              },
+              "created_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "date_asc": {
+                "en": {
+                  "label": "Date ↑"
+                },
+                "pt-BR": {
+                  "label": "Data ↑"
+                }
+              },
+              "date_desc": {
+                "en": {
+                  "label": "Date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data ↓"
+                }
+              },
+              "delay_asc": {
+                "en": {
+                  "label": "Delay ↑"
+                },
+                "pt-BR": {
+                  "label": "Atraso ↑"
+                }
+              },
+              "delay_desc": {
+                "en": {
+                  "label": "Delay ↓"
+                },
+                "pt-BR": {
+                  "label": "Atraso ↓"
+                }
+              },
+              "delivery_asc": {
+                "en": {
+                  "label": "Delivery ↑"
+                },
+                "pt-BR": {
+                  "label": "Entrega ↑"
+                }
+              },
+              "delivery_desc": {
+                "en": {
+                  "label": "Delivery ↓"
+                },
+                "pt-BR": {
+                  "label": "Entrega ↓"
+                }
+              },
+              "due_date_asc": {
+                "en": {
+                  "label": "Due date ↑"
+                },
+                "pt-BR": {
+                  "label": "Vencimento ↑"
+                }
+              },
+              "due_date_desc": {
+                "en": {
+                  "label": "Due date ↓"
+                },
+                "pt-BR": {
+                  "label": "Vencimento ↓"
+                }
+              },
+              "hours_asc": {
+                "en": {
+                  "label": "Hours ↑"
+                },
+                "pt-BR": {
+                  "label": "Horas ↑"
+                }
+              },
+              "hours_desc": {
+                "en": {
+                  "label": "Hours ↓"
+                },
+                "pt-BR": {
+                  "label": "Horas ↓"
+                }
+              },
+              "issue_asc": {
+                "en": {
+                  "label": "Issue ↑"
+                },
+                "pt-BR": {
+                  "label": "Emissão ↑"
+                }
+              },
+              "issue_desc": {
+                "en": {
+                  "label": "Issue ↓"
+                },
+                "pt-BR": {
+                  "label": "Emissão ↓"
+                }
+              },
+              "op_asc": {
+                "en": {
+                  "label": "OP ↑"
+                },
+                "pt-BR": {
+                  "label": "OP ↑"
+                }
+              },
+              "op_desc": {
+                "en": {
+                  "label": "OP ↓"
+                },
+                "pt-BR": {
+                  "label": "OP ↓"
+                }
+              },
+              "priority_desc": {
+                "en": {
+                  "label": "Priority ↓"
+                },
+                "pt-BR": {
+                  "label": "Prioridade ↓"
+                }
+              },
+              "product_code_asc": {
+                "en": {
+                  "label": "Product code ↑"
+                },
+                "pt-BR": {
+                  "label": "Código ↑"
+                }
+              },
+              "product_code_desc": {
+                "en": {
+                  "label": "Product code ↓"
+                },
+                "pt-BR": {
+                  "label": "Código ↓"
+                }
+              },
+              "qty_asc": {
+                "en": {
+                  "label": "Quantity ↑"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↑"
+                }
+              },
+              "qty_desc": {
+                "en": {
+                  "label": "Quantity ↓"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↓"
+                }
+              },
+              "quantity_asc": {
+                "en": {
+                  "label": "Quantity ↑"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↑"
+                }
+              },
+              "quantity_desc": {
+                "en": {
+                  "label": "Quantity ↓"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↓"
+                }
+              },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
+                }
+              },
+              "stock_value_asc": {
+                "en": {
+                  "label": "Stock value ↑"
+                },
+                "pt-BR": {
+                  "label": "Valor ↑"
+                }
+              },
+              "stock_value_desc": {
+                "en": {
+                  "label": "Stock value ↓"
+                },
+                "pt-BR": {
+                  "label": "Valor ↓"
+                }
+              }
+            }
+          },
+          "work_center": {
+            "locale": {
+              "en": {
+                "description": "Work center query parameter.",
+                "label": "Work center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
+                "label": "Centro de trabalho"
+              }
+            }
+          },
+          "scheduled_start": {
+            "locale": {
+              "en": {
+                "description": "Start of the scheduled operation window (H8_DTINI, YYYY-MM-DD).",
+                "label": "Scheduled start"
+              },
+              "pt-BR": {
+                "description": "Início da janela de operações programadas (H8_DTINI, AAAA-MM-DD).",
+                "label": "Início programado"
+              }
+            },
+            "format": "date"
+          },
+          "scheduled_end": {
+            "locale": {
+              "en": {
+                "description": "End of the scheduled operation window (H8_DTINI, YYYY-MM-DD).",
+                "label": "Scheduled end"
+              },
+              "pt-BR": {
+                "description": "Fim da janela de operações programadas (H8_DTINI, AAAA-MM-DD).",
+                "label": "Fim programado"
+              }
+            },
+            "format": "date"
+          },
+          "tool": {
+            "locale": {
+              "en": {
+                "description": "Tool allocated to the operation (H8_FERRAM). MOD means manual labor.",
+                "label": "Tool"
+              },
+              "pt-BR": {
+                "description": "Ferramenta alocada na operação (H8_FERRAM). MOD indica mão de obra.",
+                "label": "Ferramenta"
+              }
+            }
+          },
+          "open_only": {
+            "locale": {
+              "en": {
+                "description": "When true, only open production orders.",
+                "label": "Open orders only"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, retorna apenas OPs em aberto.",
+                "label": "Somente em aberto"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar na tabela de sequenciamento de um centro de trabalho ou para ver o que uma ferramenta/OP produz em seguida.",
+          "description": "Fila paginada de operações alocadas (SH8) com OP, produto, quantidade, ferramenta, descrição da operação e entrega do PA.",
+          "label": "Operações da carga máquina"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Paged queue of allocated operations (SH8) with production order, product, quantity, tool, operation description and finished good due date."
+    },
+    {
+      "method": "GET",
+      "path": "/production/machine-load/work-centers",
+      "operationId": "get_production_machine_load_work_centers",
+      "summary": "Machine load work centers",
+      "tags": [
+        "Produção — Carga máquina"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "scheduled_start",
+          "in": "query",
+          "required": false,
+          "description": "Scheduled start range begin (H8_DTINI, YYYY-MM-DD). Defaults to today.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "scheduled_end",
+          "in": "query",
+          "required": false,
+          "description": "Scheduled start range end (H8_DTINI, YYYY-MM-DD). Defaults to today + 7 days.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "work_center",
+          "in": "query",
+          "required": false,
+          "description": "Work center code filter (H8_CTRAB).",
+          "type": "string"
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Product code filter (C2_PRODUTO).",
+          "type": "string"
+        },
+        {
+          "name": "production_order",
+          "in": "query",
+          "required": false,
+          "description": "Production order key filter (H8_OP).",
+          "type": "string"
+        },
+        {
+          "name": "tool",
+          "in": "query",
+          "required": false,
+          "description": "Tool code filter (H8_FERRAM). MOD means manual labor.",
+          "type": "string"
+        },
+        {
+          "name": "open_only",
+          "in": "query",
+          "required": false,
+          "description": "When true (default), only open orders (C2_QUANT > C2_QUJE).",
+          "type": "boolean"
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_machine_load_work_centers",
+        "shape": "list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Machine load work centers",
+            "description": "Work centers with operations allocated in the scheduling window, with operation and order counts.",
+            "whenToUse": "Use to build work center tabs or to know where the shop floor load is concentrated.",
+            "label": "Machine load work centers"
+          },
+          "pt-BR": {
+            "summary": "Centros de trabalho da carga máquina",
+            "description": "Centros de trabalho com operações alocadas na janela programada, com contagem de operações e OPs.",
+            "whenToUse": "Usar para montar abas por centro de trabalho ou ver onde a carga da fábrica está concentrada.",
+            "label": "Centros de trabalho da carga máquina"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "production_order": {
+            "locale": {
+              "en": {
+                "description": "Production order query parameter.",
+                "label": "Production order"
+              },
+              "pt-BR": {
+                "description": "Ordem(ns) de produção (CSV).",
+                "label": "Ordem de produção"
+              }
+            }
+          },
+          "work_center": {
+            "locale": {
+              "en": {
+                "description": "Work center query parameter.",
+                "label": "Work center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
+                "label": "Centro de trabalho"
+              }
+            }
+          },
+          "scheduled_start": {
+            "locale": {
+              "en": {
+                "description": "Start of the scheduled operation window (H8_DTINI, YYYY-MM-DD).",
+                "label": "Scheduled start"
+              },
+              "pt-BR": {
+                "description": "Início da janela de operações programadas (H8_DTINI, AAAA-MM-DD).",
+                "label": "Início programado"
+              }
+            },
+            "format": "date"
+          },
+          "scheduled_end": {
+            "locale": {
+              "en": {
+                "description": "End of the scheduled operation window (H8_DTINI, YYYY-MM-DD).",
+                "label": "Scheduled end"
+              },
+              "pt-BR": {
+                "description": "Fim da janela de operações programadas (H8_DTINI, AAAA-MM-DD).",
+                "label": "Fim programado"
+              }
+            },
+            "format": "date"
+          },
+          "tool": {
+            "locale": {
+              "en": {
+                "description": "Tool allocated to the operation (H8_FERRAM). MOD means manual labor.",
+                "label": "Tool"
+              },
+              "pt-BR": {
+                "description": "Ferramenta alocada na operação (H8_FERRAM). MOD indica mão de obra.",
+                "label": "Ferramenta"
+              }
+            }
+          },
+          "open_only": {
+            "locale": {
+              "en": {
+                "description": "When true, only open production orders.",
+                "label": "Open orders only"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, retorna apenas OPs em aberto.",
+                "label": "Somente em aberto"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar para montar abas por centro de trabalho ou ver onde a carga da fábrica está concentrada.",
+          "description": "Centros de trabalho com operações alocadas na janela programada, com contagem de operações e OPs.",
+          "label": "Centros de trabalho da carga máquina"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Work centers with operations allocated in the scheduling window, with operation and order counts."
     },
     {
       "method": "GET",
@@ -52537,6 +53575,22 @@
                   "label": "Quantidade ↓"
                 }
               },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
+                }
+              },
               "stock_value_asc": {
                 "en": {
                   "label": "Stock value ↑"
@@ -54403,6 +55457,22 @@
                   "label": "Quantidade ↓"
                 }
               },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
+                }
+              },
               "stock_value_asc": {
                 "en": {
                   "label": "Stock value ↑"
@@ -56247,6 +57317,22 @@
                   "label": "Quantidade ↓"
                 }
               },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
+                }
+              },
               "stock_value_asc": {
                 "en": {
                   "label": "Stock value ↑"
@@ -56941,6 +58027,22 @@
                 },
                 "pt-BR": {
                   "label": "Quantidade ↓"
+                }
+              },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
                 }
               },
               "stock_value_asc": {
@@ -68673,7 +69775,7 @@
           "name": "pending_only",
           "in": "query",
           "required": false,
-          "description": "Return only pending items when true.",
+          "description": "When true, return open NCs: awaiting registration plus open and in_progress plans.",
           "type": "boolean",
           "default": false
         },
@@ -68884,11 +69986,11 @@
           "pending_only": {
             "locale": {
               "en": {
-                "description": "Return only pending items when true.",
+                "description": "When true, return open NCs: awaiting registration plus open and in_progress plans.",
                 "label": "Pending only"
               },
               "pt-BR": {
-                "description": "Retorna apenas itens pendentes quando verdadeiro.",
+                "description": "Retorna NCs em aberto: aguardando registro, plano em registro e aguardando evidências.",
                 "label": "Somente pendentes"
               }
             }
@@ -69251,6 +70353,22 @@
                 },
                 "pt-BR": {
                   "label": "Quantidade ↓"
+                }
+              },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
                 }
               },
               "stock_value_asc": {
@@ -76187,13 +77305,13 @@
         "locale": {
           "en": {
             "summary": "Days without quality nonconformity",
-            "description": "Current and record calendar days without TOTVS QI2 nonconformity. Same type filter as the quality dashboard; default is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional product_prefix (9048 plugs, 9026 components). No period: history until today.",
+            "description": "Current and record calendar days without TOTVS QI2 nonconformity. Same type filter as the quality dashboard; default is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional product_prefix (9048 plugs, 9026 components). Closes on the previous calendar day (today's QI2_OCORRE is excluded).",
             "whenToUse": "Use as a TV KPI card for days without customer nonconformity (or another type via the type parameter).",
             "label": "Days without customer NC"
           },
           "pt-BR": {
             "summary": "Dias sem não conformidade de qualidade",
-            "description": "Dias corridos atuais e recorde sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente (QI2_TIPO=2). Filial opcional 01|02|all. Prefixo opcional 9048 (plugues) ou 9026 (componentes). Sem período: histórico até hoje.",
+            "description": "Dias corridos atuais e recorde sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente (QI2_TIPO=2). Filial opcional 01|02|all. Prefixo opcional 9048 (plugues) ou 9026 (componentes). Fecha no dia anterior (NC com ocorrência de hoje não entra).",
             "whenToUse": "Use em card KPI na TV para o placar de dias sem NC de cliente (ou outro tipo via parâmetro type).",
             "label": "Dias sem NC de cliente"
           }
@@ -76322,12 +77440,12 @@
         },
         "tv": {
           "whenToUse": "Use em card KPI na TV para o placar de dias sem NC de cliente (ou outro tipo via parâmetro type).",
-          "description": "Dias corridos atuais e recorde sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente (QI2_TIPO=2). Filial opcional 01|02|all. Prefixo opcional 9048 (plugues) ou 9026 (componentes). Sem período: histórico até hoje.",
+          "description": "Dias corridos atuais e recorde sem NC TOTVS (QI2), no mesmo filtro de tipo do dashboard de qualidade. Default: cliente (QI2_TIPO=2). Filial opcional 01|02|all. Prefixo opcional 9048 (plugues) ou 9026 (componentes). Fecha no dia anterior (NC com ocorrência de hoje não entra).",
           "label": "Dias sem NC de cliente"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Current and record calendar days without TOTVS QI2 nonconformity. Same type filter as the quality dashboard; default is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional product_prefix (9048 plugs, 9026 components). No period: history until today."
+      "description": "Current and record calendar days without TOTVS QI2 nonconformity. Same type filter as the quality dashboard; default is customer (QI2_TIPO=2). Optional branch 01|02|all. Optional product_prefix (9048 plugs, 9026 components). Closes on the previous calendar day (today's QI2_OCORRE is excluded)."
     },
     {
       "method": "GET",
@@ -89119,6 +90237,22 @@
                 },
                 "pt-BR": {
                   "label": "Quantidade ↓"
+                }
+              },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
                 }
               },
               "stock_value_asc": {

@@ -1,0 +1,10 @@
+{
+  "criticalDelayDays": 7,
+  "pageSize": 100,
+  "titles": {
+    "delayedOrder": "OP {order} atrasada ({days} dias)"
+  },
+  "kinds": {
+    "delayed_order": "Ordem atrasada"
+  }
+}

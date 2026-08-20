@@ -11,6 +11,7 @@ entrada em estoque. Ranking por CT permanece com todos os centros.
 from __future__ import annotations
 
 from app.domain.totvs.protheus_product_types import PRODUCT_TYPE_FINISHED_GOOD
+from app.domain.totvs.protheus_production_orders import MOTHER_ORDER_SEQUENCE
 
 # Mesma convenção de nome SHB do domínio qualidade; sem acoplar rotas PPM.
 CT_INSPECAO_NOME_SQL_LIKE = "%INSPE%FINAL%"
@@ -67,4 +68,4 @@ FINISHED_OPS_GRANULARITY_OPTIONS = TEMPORAL_GRANULARITY_OPTIONS
 SERIES_GRANULARITY_OPTIONS = TEMPORAL_GRANULARITY_OPTIONS
 
 # OP mãe Protheus — sequência 001 (mesmo critério OTD / C2_SEQUEN).
-MOTHER_OP_SUFFIX = "001"
+MOTHER_OP_SUFFIX = MOTHER_ORDER_SEQUENCE

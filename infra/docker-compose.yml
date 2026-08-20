@@ -811,6 +811,23 @@ services:
     networks:
       - delpi-network
 
+  production-control:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: production-control/Dockerfile
+      target: production
+
+    container_name: delpi-production-control
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   public-hub:
     depends_on:
       - plugin-ui
@@ -1838,6 +1855,66 @@ services:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/customer-experience/photos:/app/data/customer-experience/photos
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/customer-experience/qr:/app/data/customer-experience/qr
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/customer-experience/form-images:/app/data/customer-experience/form-images
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  production-control-api:
+    build:
+      context: ..
+      dockerfile: production-control-api/Dockerfile
+
+    container_name: delpi-production-control-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      PC_API_ROOT_PATH: /apps/production-control-api
+      PC_RUN_MIGRATIONS_ON_STARTUP: ${PC_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: production-control-api
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      core-api:
+        condition: service_started
+      api-delpi:
+        condition: service_started
 
     logging:
       driver: "json-file"

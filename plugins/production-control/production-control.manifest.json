@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "production-control",
+  "name": "Portal PCP",
+  "description": "Plataforma de planejamento e controle da produção: gestão à vista, carga máquina e análise de problemas.",
+  "category": "producao",
+  "icon": "factory",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/production-control",
+  "entry": "/apps/production-control/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "production-control.access",
+      "name": "Acessar Portal PCP",
+      "description": "Abrir o Portal PCP no menu da Minha Delpi.",
+      "module": "production-control"
+    },
+    {
+      "code": "production-control.problem-analysis.view",
+      "name": "Análise de problemas",
+      "description": "Ver a inbox de exceções operacionais (OPs atrasadas).",
+      "module": "production-control"
+    },
+    {
+      "code": "production-control.machine-load.view",
+      "name": "Carga máquina",
+      "description": "Ver o sequenciamento de operações alocadas por centro de trabalho.",
+      "module": "production-control"
+    },
+    {
+      "code": "production-control.view.filial-01",
+      "name": "Portal PCP — filial 01 (SC)",
+      "description": "Consultar dados TOTVS da filial 01.",
+      "module": "production-control"
+    },
+    {
+      "code": "production-control.view.filial-02",
+      "name": "Portal PCP — filial 02 (ES)",
+      "description": "Consultar dados TOTVS da filial 02.",
+      "module": "production-control"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/production-control",
+      "label": "Portal PCP",
+      "permission": "production-control.access",
+      "icon": "factory",
+      "order": 35,
+      "showInMenu": true,
+      "menuGroup": "Produção"
+    },
+    {
+      "path": "/apps/production-control/home",
+      "label": "Gestão à vista",
+      "permission": "production-control.access",
+      "icon": "layout-dashboard",
+      "order": 35,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/production-control/machine-load",
+      "label": "Carga máquina",
+      "permission": "production-control.machine-load.view",
+      "icon": "layout-grid",
+      "order": 36,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/production-control/problem-analysis",
+      "label": "Análise de problemas",
+      "permission": "production-control.problem-analysis.view",
+      "icon": "triangle-alert",
+      "order": 37,
+      "showInMenu": false
+    }
+  ],
+  "backend": {
+    "required": true,
+    "serviceName": "production-control-api",
+    "baseUrl": "/apps/production-control-api",
+    "validateJwt": true,
+    "issuer": "http://localhost/auth/realms/delpi",
+    "audience": "delpi-central"
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}

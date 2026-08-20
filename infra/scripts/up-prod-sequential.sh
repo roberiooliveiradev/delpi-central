@@ -132,6 +132,7 @@ FASE_MFE=(
   invoice-issuance
   strategic-indicators
   customer-experience
+  production-control
   cultura-delpi
   codigo-etica
   guias-procedimentos
@@ -156,6 +157,7 @@ FASE_API=(
   cipa-api
   comite-etica-conduta-api
   customer-experience-api
+  production-control-api
   tv-dashboard-api
 )
 

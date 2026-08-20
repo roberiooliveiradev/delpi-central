@@ -186,10 +186,14 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/pcp-orders/summary` | Resumo de OPs (abertas, atrasadas, saldos). |
 | GET | `/production/pcp-orders/items` | Listagem paginada de OPs (view `VW_PCP_ORDENS_PRODUCAO`). |
 | GET | `/production/pcp-orders/ranking` | Ranking top N por produto, armazém ou OP. |
+| GET | `/production/machine-load/work-centers` | Centros de trabalho com operações alocadas na janela (contagem por CT). |
+| GET | `/production/machine-load/operations` | Fila de operações alocadas de um CT (ferramenta, operação, entrega do PA). |
 
 Doc: [production-unproductive-hours.md](./production-unproductive-hours.md). View: `VW_BI_RT_HORAS_IMPRODUTIVAS` (`DESCRICAO_MOTIVO`) — não confundir com [`/retrabalhos`](./controle-retrabalhos.md), filtro `MOTIVO=RT`.
 
 Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_ORDENS_PRODUCAO` — não confundir com [`/production/orders/*`](./13-producao-operacional.md) (SC2010).
+
+Doc carga máquina: [production-machine-load.md](./production-machine-load.md). Fonte `SH8010` (alocação) — `H8_QUANT` **não** é a quantidade da OP; usar `C2_QUANT`. Entrega do PA vem da OP mãe (`LEFT(H8_OP, 8) + '001'`).
 
 **Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Fórmula canônica (`HY_TEMPAD`): [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md). Changelog jun/2026 + alinhamento ago/2026: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
 

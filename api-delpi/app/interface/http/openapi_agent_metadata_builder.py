@@ -68,6 +68,15 @@ _ENTITY_LABELS: dict[str, str] = {
     "production_pcp_orders_summary": "resumo de ordens de produção (OPs)",
     "production_pcp_orders_items": "itens de ordens de produção (OPs)",
     "production_pcp_orders_ranking": "ranking de ordens de produção (OPs)",
+    "production_machine_load_work_centers": (
+        "centros de trabalho com operações alocadas (carga máquina)"
+    ),
+    "production_machine_load_operations": (
+        "fila de operações alocadas por centro de trabalho (carga máquina)"
+    ),
+    "production_machine_load_appointment_status": (
+        "status de apontamento HZA das operações da carga máquina"
+    ),
     "supplies_safety_stock_detail": (
         "detalhe de estoque de segurança com cobertura de compras, "
         "empenhos e extrato projetado de saldo"

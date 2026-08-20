@@ -29,6 +29,8 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Materiais de terceiros / SB6 | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) | Remessa/retorno `B6_PODER3`, chave sem `B6_TPCF`, saldo atual |
 | Tempo padrão / eficiência | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) | `HY_TEMPAD` vs `HY_TEMPOM`; KPI OEE/SI/EF compartilham a mesma expressão |
 | Produção — entrada em estoque | [producao-entrada-estoque.md](./producao-entrada-estoque.md) | Última operação do roteiro do PA (`SG2`) vs inspeção / `SD3` PR0 |
+| Chave da OP e alocação SH8 | [ordem-producao-chave.md](./ordem-producao-chave.md) | `C2_OP` 11 posições, OP mãe `001`, `H8_FERRAM`, `H8_QUANT` não é quantidade |
+| Apontamento de operação HZA | [apontamento-operacao-hza.md](./apontamento-operacao-hza.md) | `HZA010`, "em produção agora" vs status aberto, operador em `SYS_USR` |
 | Pedido de venda — criador | [pedido-venda-criador.md](./pedido-venda-criador.md) | SC5 sem usuário criador resolvível; `C5_MSUIDT` = UUID técnico |
 | Pedido de venda — postergação | [pedido-venda-postergacao.md](./pedido-venda-postergacao.md) | Sem campo TOTVS; heurística BFF `availability` (entrega após o mês) |
 | Transportadoras | [transportadora.md](./transportadora.md) | `SA4` / `A4_NREDUZ` na emissão de NF |
@@ -66,6 +68,8 @@ Permanece em `docs/roadmaps/` (fora desta biblioteca): `playbook-api-delpi-conso
 | `app/domain/totvs/protheus_product_types.py` | [cadastro-produto.md](./cadastro-produto.md) · OTD PC MP |
 | `production_appointments_scope.PA_STOCK_ENTRY_PRODUCT_TYPE` | [producao-entrada-estoque.md](./producao-entrada-estoque.md) |
 | `app/domain/totvs/protheus_third_party_materials.py` | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) |
+| `app/domain/totvs/protheus_production_orders.py` | [ordem-producao-chave.md](./ordem-producao-chave.md) |
+| `app/domain/totvs/protheus_operation_appointments.py` · `protheus_users.py` | [apontamento-operacao-hza.md](./apontamento-operacao-hza.md) |
 | `REFUGOS_COST_WAREHOUSE` / `refugos_scope.py` | [armazem-custo.md](./armazem-custo.md) · [cadastro-produto.md](./cadastro-produto.md) |
 | `PRIMARY_WAREHOUSE` (estoque de segurança) | [armazem-custo.md](./armazem-custo.md) (alinhar semanticamente) |
 | `production_meta_por_hora` / `production_tempo_previsto` | [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md) |
@@ -91,7 +95,7 @@ Resumo:
 
 ## Backlog de padrões (ainda sem seção curta)
 
-- Apontamentos / OP (`SC2`, sufixo mãe `001`, datas `C2_DATRF`) — ver playbooks de produção; tempo padrão → [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md)
+- Datas de OP (`C2_DATRF`, `C2_DATPRF`) — ver playbooks de produção; chave e sufixo mãe já cobertos em [ordem-producao-chave.md](./ordem-producao-chave.md); tempo padrão → [apontamentos-tempo-padrao.md](./apontamentos-tempo-padrao.md)
 - Compras válidas / frete MP — changelog + diretivas
 - Datas Protheus `YYYYMMDD` / `YYYYMM` e janelas closed-open
 - Motivos de refugo (`CYO` / `BC_MOTIVO`)

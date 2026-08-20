@@ -7910,6 +7910,40 @@
         }
       }
     },
+    "get_production_machine_load_work_centers": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Machine load work centers",
+          "description": "Work centers with operations allocated in the scheduling window, with operation and order counts.",
+          "whenToUse": "Use to build work center tabs or to know where the shop floor load is concentrated.",
+          "label": "Machine load work centers"
+        },
+        "pt-BR": {
+          "summary": "Centros de trabalho da carga máquina",
+          "description": "Centros de trabalho com operações alocadas na janela programada, com contagem de operações e OPs.",
+          "whenToUse": "Usar para montar abas por centro de trabalho ou ver onde a carga da fábrica está concentrada.",
+          "label": "Centros de trabalho da carga máquina"
+        }
+      }
+    },
+    "get_production_machine_load_operations": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Machine load operations",
+          "description": "Paged queue of allocated operations (SH8) with production order, product, quantity, tool, operation description and finished good due date.",
+          "whenToUse": "Use for the sequencing table of a work center or to check what a tool or order runs next.",
+          "label": "Machine load operations"
+        },
+        "pt-BR": {
+          "summary": "Operações da carga máquina",
+          "description": "Fila paginada de operações alocadas (SH8) com OP, produto, quantidade, ferramenta, descrição da operação e entrega do PA.",
+          "whenToUse": "Usar na tabela de sequenciamento de um centro de trabalho ou para ver o que uma ferramenta/OP produz em seguida.",
+          "label": "Operações da carga máquina"
+        }
+      }
+    },
     "get_production_pcp_orders_ranking": {
       "category": "production",
       "locale": {
