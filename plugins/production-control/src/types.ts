@@ -116,19 +116,103 @@ export type MachineLoadOperation = {
   active_operator_count: number;
   appointment_count: number;
   last_appointment_date: string | null;
+  /** Centro de trabalho de origem, quando o PCP transferiu a operação. */
+  transferred_from?: string | null;
+};
+
+export type MachineLoadLocateStop = {
+  work_center: string;
+  work_center_name: string;
+  production_order: string;
+  operation_code: string;
+  operation_description: string;
+  product_code: string;
+  product_description: string;
+  pa_product_code: string | null;
+  pa_due_date: string | null;
+  scheduled_date: string | null;
+  scheduled_start_time: string | null;
+  pending_qty: number | null;
+  unit: string | null;
+  tool: string;
+  production_status: ProductionStatus;
+  is_in_production: boolean;
+  production_started_time: string | null;
+  active_operator_name: string | null;
+  queue_position: number;
+  queue_size: number;
+  /** Conjunto fora da programação: a parada aparece no rastreio, mas não na fila. */
+  is_withdrawn?: boolean;
+};
+
+export type MachineLoadLocateJourney = {
+  kind: "pa" | "op";
+  key: string;
+  label: string;
+  pa_product_code: string | null;
+  pa_due_date: string | null;
+  stop_count: number;
+  is_withdrawn?: boolean;
+  stops: MachineLoadLocateStop[];
+};
+
+export type MachineLoadLocatePayload = {
+  query: string;
+  match_count: number;
+  journey_count: number;
+  message: string | null;
+  period: {
+    start_date: string | null;
+    end_date: string | null;
+    field?: "delivery_date";
+  };
+  snapshot: {
+    refreshed_at: string | null;
+    seeded: boolean;
+    schema_version?: number;
+  };
+  journeys: MachineLoadLocateJourney[];
+};
+
+/** Conjunto (C2_NUM) que o PCP tirou da programação — some da fila e do cockpit. */
+export type MachineLoadWithdrawnEntry = {
+  order_number: string;
+  withdrawn_at: string | null;
+  withdrawn_by: string | null;
+  operation_count: number;
+  work_centers: string[];
+  pa_product_code: string | null;
+  pa_due_date: string | null;
+};
+
+export type MachineLoadWithdrawnSummary = {
+  conjunto_count: number;
+  operation_count: number;
+  items: MachineLoadWithdrawnEntry[];
 };
 
 export type MachineLoadPayload = {
   branch: string;
+  /** Janela por **entrega do PA**: a fila congelada é uma só; «De/até» é lente de leitura. */
   period: {
-    start_date: string;
-    end_date: string;
+    start_date: string | null;
+    end_date: string | null;
+    field?: "delivery_date";
+    /** Janela realmente puxada do TOTVS na última atualização. */
+    pulled_start?: string | null;
+    pulled_end?: string | null;
+    /** Entrega mais antiga presente na fila — sugestão do campo «De». */
+    oldest_due_date?: string | null;
+    /** A tela está restringindo a fila com o «De/até» informado. */
+    filtered?: boolean;
   };
   summary: {
     work_center_count: number;
     operation_count: number;
     order_count: number;
     in_production_count: number;
+    /** Operações sem entrega do PA nem previsão da OP — não deveriam existir. */
+    missing_due_date_count?: number;
   };
   snapshot: {
     refreshed_at: string | null;
@@ -138,6 +222,7 @@ export type MachineLoadPayload = {
     sequence_updated_at?: string | null;
     sequence_updated_by?: string | null;
   };
+  withdrawn?: MachineLoadWithdrawnSummary;
   work_centers: MachineLoadWorkCenter[];
   selected: {
     work_center: string | null;
@@ -150,4 +235,58 @@ export type MachineLoadPayload = {
       is_complete?: boolean;
     };
   };
+};
+
+/** Resultado da priorização de um conjunto (C2_NUM) nas filas dos centros. */
+export type MachineLoadPrioritization = {
+  order_number: string;
+  work_centers: string[];
+  operation_count: number;
+  kept_ahead_count: number;
+  message: string;
+};
+
+export type MachineLoadPrioritizePayload = MachineLoadPayload & {
+  prioritization: MachineLoadPrioritization;
+};
+
+/** Resultado de reordenar a fila de todos os centros pela entrega do PA. */
+export type MachineLoadDeliveryOptimization = {
+  work_centers: string[];
+  moved_operation_count: number;
+  kept_ahead_count: number;
+  missing_due_date_count: number;
+  message: string;
+};
+
+export type MachineLoadOptimizePayload = MachineLoadPayload & {
+  optimization: MachineLoadDeliveryOptimization;
+};
+
+/** Resultado de retirar o conjunto da programação ou devolvê-lo à fila. */
+export type MachineLoadWithdrawal = {
+  order_number: string;
+  action: "withdrawn" | "restored";
+  operation_count: number;
+  work_centers: string[];
+  message: string;
+};
+
+export type MachineLoadWithdrawPayload = MachineLoadPayload & {
+  withdrawal: MachineLoadWithdrawal;
+};
+
+/** Resultado de mover uma operação para outro centro de trabalho. */
+export type MachineLoadTransfer = {
+  production_order: string;
+  operation_code: string;
+  source_work_center: string;
+  target_work_center: string;
+  target_work_center_name: string | null;
+  returned_to_origin: boolean;
+  message: string;
+};
+
+export type MachineLoadTransferPayload = MachineLoadPayload & {
+  transfer: MachineLoadTransfer;
 };

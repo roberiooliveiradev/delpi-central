@@ -88,6 +88,13 @@ export function useMachineLoadSequenceHistory(scopeKey: string) {
     [bump],
   );
 
+  /** Limpa undo/redo quando a fila muda fora do CT ativo (ex.: priorização de conjunto). */
+  const reset = useCallback(() => {
+    undoRef.current = [];
+    redoRef.current = [];
+    bump();
+  }, [bump]);
+
   const bindKeyboard = useCallback(
     (handlers: { onUndo: () => void; onRedo: () => void }) => {
       const onKeyDown = (event: KeyboardEvent) => {
@@ -112,6 +119,7 @@ export function useMachineLoadSequenceHistory(scopeKey: string) {
     redo,
     rememberForRedo,
     rememberForUndoAfterRedo,
+    reset,
     bindKeyboard,
   };
 }

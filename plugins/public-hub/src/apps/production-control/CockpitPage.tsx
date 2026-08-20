@@ -10,7 +10,7 @@ import {
 import { usePublicMachineLoadRealtime } from "./usePublicMachineLoadRealtime";
 import "./cockpit.css";
 
-const POLLING_FALLBACK_MS = 90_000;
+const LIVE_STATUS_POLL_MS = 15_000;
 const STORAGE_PREFIX = "delpi.pcp.cockpit.work-center";
 
 type Props = {
@@ -53,19 +53,24 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [drawingPa, setDrawingPa] = useState<string | null>(null);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
+  const reloadGenerationRef = useRef(0);
 
   const reload = useCallback(
-    async (center: string | null) => {
-      setLoading(true);
+    async (center: string | null, options?: { quiet?: boolean }) => {
+      const quiet = options?.quiet === true;
+      const generation = ++reloadGenerationRef.current;
+      if (!quiet) setLoading(true);
       try {
         const next = await fetchPublicMachineLoad(token, branch, center);
+        if (generation !== reloadGenerationRef.current) return;
         setPayload(next);
         setUpdatedAt(new Date());
         setError(null);
       } catch (err) {
+        if (generation !== reloadGenerationRef.current) return;
         setError(err instanceof Error ? err.message : "Não foi possível atualizar a fila.");
       } finally {
-        setLoading(false);
+        if (!quiet && generation === reloadGenerationRef.current) setLoading(false);
       }
     },
     [token, branch],
@@ -80,16 +85,27 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     token,
     branch,
     onChanged: useCallback(() => {
-      void reload(workCenterRef.current);
+      // Sequência/refresh do PCP: atualiza sem flicker de loading.
+      void reload(workCenterRef.current, { quiet: true });
     }, [reload]),
   });
 
+  // Status ao vivo (em produção / já apontada) vem do enrich no GET — o WS não cobre apontamentos.
   useEffect(() => {
-    const timer = window.setInterval(() => {
+    const refreshLiveStatus = () => {
       if (document.visibilityState === "hidden") return;
-      void reload(workCenterRef.current);
-    }, POLLING_FALLBACK_MS);
-    return () => window.clearInterval(timer);
+      void reload(workCenterRef.current, { quiet: true });
+    };
+
+    const timer = window.setInterval(refreshLiveStatus, LIVE_STATUS_POLL_MS);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refreshLiveStatus();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [reload]);
 
   const selectWorkCenter = (center: string) => {
@@ -138,8 +154,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
               title={
                 connected
-                  ? "Conectado: a fila atualiza sozinha quando o PCP altera."
-                  : "Sem conexão ao vivo: atualizando periodicamente."
+                  ? "Conectado: sequência do PCP ao vivo; status das OPs a cada 15s."
+                  : "Sem socket: status e fila atualizam a cada 15s."
               }
             >
               <span className="pcp-pub__live-dot" aria-hidden="true" />
@@ -237,8 +253,8 @@ function BrandBar({
           <div className="pcp-pub__identity-text">
             <p className="pcp-pub__eyebrow">{eyebrow}</p>
             <div className="pcp-pub__title-row">
-              <h1>{title}</h1>
               {code ? <span className="pcp-pub__code">{code}</span> : null}
+              <h1>{title}</h1>
             </div>
             {stats ? <div className="pcp-pub__stats">{stats}</div> : null}
           </div>
@@ -332,6 +348,8 @@ function OperationCard({
 }) {
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
+  // No chão de fábrica o operador lê o PA; o intermediário fica só como fallback.
+  const displayProductCode = paCode || operation.product_code;
   return (
     <li className={`pcp-pub__card pcp-pub__card--${status.tone}`}>
       <span className="pcp-pub__position" aria-label={`Posição ${position}`}>
@@ -346,9 +364,11 @@ function OperationCard({
             <CopyValueButton value={operation.production_order} label="Copiar OP" />
           </span>
           <p className="pcp-pub__product">
-            <strong>{operation.product_code}</strong> {operation.product_description}
+            <strong className={paCode ? "pcp-pub__product-code--pa" : undefined}>
+              {displayProductCode}
+            </strong>{" "}
+            {operation.product_description}
           </p>
-          {paCode ? <span className="pcp-pub__pa">PA {paCode}</span> : null}
         </div>
 
         <div className="pcp-pub__cell">

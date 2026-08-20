@@ -13,6 +13,14 @@ export const HostContainedDialog = createHostContainedModalShell({
   containedLayout: "dialog",
 });
 
+/** Diálogo mais largo para jornadas / painéis densos (rastreio do conjunto). */
+export const HostContainedWideDialog = createHostContainedModalShell({
+  prefix: "ppc",
+  portalScopeClassName: PPC_ROOT_CLASS,
+  containedLayout: "dialog",
+  variant: "wide",
+});
+
 const confirmClasses = confirmModalBemClasses("ppc", {
   actionsBlock: "form-actions",
   actionsAlign: "end",

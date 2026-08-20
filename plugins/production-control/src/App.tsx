@@ -55,6 +55,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         workCenter={route.workCenter}
         startDate={route.startDate}
         endDate={route.endDate}
+        locateQuery={route.locateQuery}
       />
     );
   }
