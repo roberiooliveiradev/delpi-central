@@ -47,26 +47,53 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
+def _first_env(*names: str, default: str = "") -> str:
+    for name in names:
+        value = _env(name)
+        if value:
+            return value
+    return default
+
+
 def resolve_vision_llm_config() -> VisionLlmConfig:
+    """Resolve VLM.
+
+    Com ``VISION_LLM_PROVIDER=openai_compatible``, a cadeia de credenciais é:
+
+    ``VISION_LLM_*`` → ``LLM_TEXT_*`` → ``KIMI_*`` (mesmo token do chat/atas) → ``VLLM_*``.
+
+    Em produção basta ``KIMI_*`` + ``VISION_LLM_PROVIDER=openai_compatible`` (mesmo modelo
+    multimodal do texto, ex. ``moonshotai/kimi-k3``).
+    """
     provider = resolve_vision_llm_provider_name()
 
     if provider == "openai_compatible":
-        base_url = (
-            _env("VISION_LLM_BASE_URL")
-            or _env("LLM_TEXT_BASE_URL")
-            or _env("VLLM_BASE_URL", "http://vllm:8000/v1")
+        base_url = _first_env(
+            "VISION_LLM_BASE_URL",
+            "LLM_TEXT_BASE_URL",
+            "KIMI_BASE_URL",
+            "VLLM_BASE_URL",
+            default="http://vllm:8000/v1",
         ).rstrip("/")
-        model = (
-            _env("VISION_LLM_MODEL")
-            or _env("CHAT_DOCUMENT_VISION_OLLAMA_MODEL", "gpt-4o-mini")
+        model = _first_env(
+            "VISION_LLM_MODEL",
+            "LLM_TEXT_MODEL",
+            "KIMI_MODEL",
+            "VLLM_MODEL",
+            default="gpt-4o-mini",
         )
-        api_key = _env("VISION_LLM_API_KEY") or _env("LLM_TEXT_API_KEY") or _env(
+        api_key = _first_env(
+            "VISION_LLM_API_KEY",
+            "LLM_TEXT_API_KEY",
+            "KIMI_API_KEY",
             "VLLM_API_KEY",
-            "",
+            default="",
         )
-        timeout = _env_float(
-            "CHAT_DOCUMENT_VISION_TIMEOUT_SECONDS",
-            _env_float("OLLAMA_TIMEOUT_SECONDS", 300.0),
+        timeout = (
+            _env_float("VISION_LLM_TIMEOUT_SECONDS", 0.0)
+            or _env_float("CHAT_DOCUMENT_VISION_TIMEOUT_SECONDS", 0.0)
+            or _env_float("KIMI_TIMEOUT_SECONDS", 0.0)
+            or _env_float("OLLAMA_TIMEOUT_SECONDS", 300.0)
         )
     else:
         base_url = (

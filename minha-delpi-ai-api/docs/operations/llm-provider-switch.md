@@ -61,11 +61,15 @@ EMBEDDING_MODEL=bge-m3
 # EMBEDDING_BASE_URL=https://api.openai.com/v1
 # EMBEDDING_API_KEY=sk-...
 
-# Visão (VLM documentos)
+# Visão (VLM documentos) — eixo independente do texto
 VISION_LLM_PROVIDER=ollama
+# Mesma Kimi/OpenRouter do chat (herda KIMI_* se VISION_LLM_* vazio):
+# VISION_LLM_PROVIDER=openai_compatible
+# Ou OpenAI dedicado:
 # VISION_LLM_PROVIDER=openai_compatible
 # VISION_LLM_BASE_URL=https://api.openai.com/v1
 # VISION_LLM_MODEL=gpt-4o-mini
+# VISION_LLM_API_KEY=sk-...
 ```
 
 **Warmup:** com provider externo o startup **não** aquece modelo local (`LLM_WARMUP_ON_STARTUP` só afeta Ollama).
@@ -102,7 +106,7 @@ Resposta esperada de `/admin/llm/status`:
 
 - `text.provider` — `ollama` ou `openai_compatible`
 - `embedding.provider` — `ollama` (até P2)
-- `vision.provider` — `ollama` (até P3)
+- `vision.provider` — `ollama` ou `openai_compatible`
 
 ---
 
