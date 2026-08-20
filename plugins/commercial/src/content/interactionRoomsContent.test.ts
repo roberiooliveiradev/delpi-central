@@ -7,6 +7,8 @@ describe("INTERACTION_ROOMS_CONTENT", () => {
     expect(INTERACTION_ROOMS_CONTENT.contextToggle).toBe("Neste chat");
     expect(INTERACTION_ROOMS_CONTENT.inboxToolbarTitle).toBe("Conversas");
     expect(INTERACTION_ROOMS_CONTENT.formatFontSizeAriaLabel).toBe("Tamanho da fonte");
+    expect(INTERACTION_ROOMS_CONTENT.formatUndoAriaLabel).toBe("Desfazer");
+    expect(INTERACTION_ROOMS_CONTENT.formatRedoAriaLabel).toBe("Refazer");
   });
 });
 

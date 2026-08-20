@@ -299,6 +299,50 @@ describe("MentionComposer", () => {
       "utf8",
     )).not.toMatch(/expandCollapsedSelectionForFormat/);
   });
+
+  it("expõe Desfazer/Refazer via execCommand sem RichTextEditor", () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "MentionComposer.tsx"),
+      "utf8",
+    );
+    expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
+    expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);
+    expect(source).not.toMatch(/<EditorHistoryActions/);
+    expect(source).toMatch(/runRichTextCommand\(el, command\)/);
+    expect(source).toMatch(/appendShortcutHint/);
+
+    const exec = vi.fn().mockReturnValue(true);
+    document.execCommand = exec;
+    document.queryCommandEnabled = vi.fn((cmd: string) => cmd === "undo" || cmd === "redo");
+
+    const formatLabels = {
+      ...labels,
+      formatToggleAriaLabel: "Format",
+      formatUndoAriaLabel: "Undo",
+      formatRedoAriaLabel: "Redo",
+    };
+    render(
+      <MentionComposer
+        value="abc"
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={formatLabels}
+        classNames={classNames}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Format"));
+    const undoBtn = screen.getByLabelText("Undo");
+    const redoBtn = screen.getByLabelText("Redo");
+    expect(undoBtn.getAttribute("aria-label")).toBe("Undo");
+    expect(redoBtn.getAttribute("aria-label")).toBe("Redo");
+
+    // Habilita após selectionchange simulado via clique na superfície.
+    fireEvent.click(screen.getByLabelText("Write a message"));
+    fireEvent.click(undoBtn);
+    expect(exec).toHaveBeenCalledWith("undo", false, undefined);
+    fireEvent.click(redoBtn);
+    expect(exec).toHaveBeenCalledWith("redo", false, undefined);
+  });
 });
 
 describe("mention-composer.css", () => {

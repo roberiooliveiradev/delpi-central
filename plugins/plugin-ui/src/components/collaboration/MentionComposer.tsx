@@ -591,7 +591,13 @@ export function MentionComposer({
                   aria-pressed={formatOpen}
                   disabled={disabled || submitting}
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => setFormatOpen((open) => !open)}
+                  onClick={() => {
+                    setFormatOpen((open) => {
+                      const next = !open;
+                      if (next) refreshHistoryFlags();
+                      return next;
+                    });
+                  }}
                 >
                   <Type size={16} aria-hidden />
                 </button>
