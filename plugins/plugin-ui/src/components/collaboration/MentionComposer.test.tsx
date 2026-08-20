@@ -253,11 +253,11 @@ describe("MentionComposer", () => {
     );
     expect(container.querySelector("[class*='rich-text-toolbar']")).toBeNull();
     const surface = screen.getByLabelText("Write a message");
-    const caret = document.createRange();
-    caret.selectNodeContents(surface);
-    caret.collapse(false);
+    // Seleção explícita do trecho (Word): caret colapsado NÃO formata a mensagem inteira.
+    const all = document.createRange();
+    all.selectNodeContents(surface);
     window.getSelection()?.removeAllRanges();
-    window.getSelection()?.addRange(caret);
+    window.getSelection()?.addRange(all);
     fireEvent.click(screen.getByLabelText("Format"));
     expect(screen.getByRole("toolbar", { name: "Format" })).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Bold"));

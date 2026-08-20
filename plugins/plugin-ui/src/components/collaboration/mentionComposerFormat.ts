@@ -8,7 +8,6 @@ import {
   unwrapRichTextElement,
   unwrapRichTextLink,
 } from "../rich-text/richTextCommands";
-import { expandCollapsedSelectionForFormat } from "./mentionComposerCaret";
 
 export const COMPOSER_FORMAT_KINDS = [
   "bold",
@@ -41,6 +40,13 @@ const WRAP_TAG: Partial<Record<ComposerFormatKind, string>> = {
   italic: "em",
   strike: "s",
   code: "code",
+};
+
+/** B/I/S → execCommand nativo (toggle Word/Teams no trecho). */
+const EXEC_TOGGLE: Partial<Record<ComposerFormatKind, string>> = {
+  bold: "bold",
+  italic: "italic",
+  strike: "strikeThrough",
 };
 
 export function emptyComposerFormatFlags(): ComposerFormatFlags {
@@ -80,6 +86,9 @@ function matchingFormatElement(editor: HTMLElement, selector: string): Element |
   if (range.collapsed && startHit && editor.contains(startHit) && startHit !== editor) {
     return startHit;
   }
+  // Seleção parcial nas bordas: qualquer ponta dentro do formato conta (Word).
+  if (startHit && editor.contains(startHit) && startHit !== editor) return startHit;
+  if (endHit && editor.contains(endHit) && endHit !== editor) return endHit;
   return null;
 }
 
@@ -107,6 +116,49 @@ function unwrapClosest(editor: HTMLElement, selector: string): void {
   if (hit) unwrapRichTextElement(hit);
 }
 
+function stripMatchingTags(root: Node, selector: string): void {
+  if (root instanceof Element && root.matches?.(selector)) {
+    const parent = root.parentNode;
+    if (!parent) return;
+    while (root.firstChild) parent.insertBefore(root.firstChild, root);
+    parent.removeChild(root);
+    return;
+  }
+  if (!(root instanceof Element) && !(root instanceof DocumentFragment)) return;
+  for (const hit of Array.from(root.querySelectorAll(selector))) {
+    unwrapRichTextElement(hit);
+  }
+}
+
+/**
+ * Remove o formato só no trecho selecionado (split Word-like).
+ * Caret colapsado ou seleção cobrindo o elemento inteiro → unwrap do elemento.
+ */
+export function unwrapFormatInSelection(editor: HTMLElement, selector: string): void {
+  const hit = matchingFormatElement(editor, selector);
+  if (!hit) return;
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) {
+    unwrapRichTextElement(hit);
+    return;
+  }
+  const range = selection.getRangeAt(0);
+  const fullText = hit.textContent ?? "";
+  if (range.collapsed || range.toString() === fullText) {
+    unwrapRichTextElement(hit);
+    return;
+  }
+  const frag = range.extractContents();
+  stripMatchingTags(frag, selector);
+  range.insertNode(frag);
+  selection.removeAllRanges();
+  try {
+    selection.addRange(range);
+  } catch {
+    /* range pode ter invalidado após extract/insert */
+  }
+}
+
 function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) {
@@ -131,9 +183,33 @@ function wrapSelectionWithTag(editor: HTMLElement, tag: string) {
   }
 }
 
-/** Liga/desliga o formato no trecho selecionado (ou na mensagem, se o caret estiver colapsado). */
+function toggleInlineViaExecOrFallback(
+  editor: HTMLElement,
+  kind: "bold" | "italic" | "strike",
+): void {
+  const cmd = EXEC_TOGGLE[kind]!;
+  const selector = SELECTOR[kind]!;
+  const tag = WRAP_TAG[kind]!;
+  const before = editor.innerHTML;
+  runRichTextCommand(editor, cmd);
+  if (editor.innerHTML !== before) return;
+
+  // jsdom / ambiente sem efeito de execCommand: fallback Word-like.
+  const active = isInside(editor, selector) || queryRichTextCommandState(cmd);
+  if (active) unwrapFormatInSelection(editor, selector);
+  else wrapSelectionWithTag(editor, tag);
+}
+
+/**
+ * Liga/desliga o formato no trecho (ou estilo de digitação no caret).
+ * B/I/S preferem execCommand nativo; fallback split/unwrap sem expand-all.
+ */
 export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKind): void {
-  expandCollapsedSelectionForFormat(editor);
+  if (kind === "bold" || kind === "italic" || kind === "strike") {
+    toggleInlineViaExecOrFallback(editor, kind);
+    return;
+  }
+
   const active = queryComposerFormatFlags(editor)[kind];
 
   if (kind === "ul") {
