@@ -19,3 +19,27 @@ class ChatToolContextContentService:
     @classmethod
     def format(cls, *path: str, **values: str) -> str:
         return ChatAssistantContentService.format(cls._BUNDLE, *path, **values)
+
+    @classmethod
+    def get_node(cls, *path: str):
+        return ChatAssistantContentService.get_node(cls._BUNDLE, *path)
+
+    @classmethod
+    def native_max_schemas_per_call(cls, *, default: int = 12) -> int:
+        node = cls.get_node("nativeToolCalling")
+        raw = node.get("maxSchemasPerCall") if isinstance(node, dict) else None
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return max(1, int(default))
+
+    @classmethod
+    def native_default_max_tool_calls(cls, *, default: int = 3) -> int:
+        node = cls.get_node("nativeToolCalling")
+        raw = node.get("defaultMaxToolCalls") if isinstance(node, dict) else None
+
+        try:
+            return max(1, int(raw))
+        except (TypeError, ValueError):
+            return max(1, int(default))

@@ -61,6 +61,17 @@ class ChatToolContextSelectionService:
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []
 
+        deterministic_tools = host.tool_selection_service.select_tools(
+            message,
+            attachment_context=attachment_context,
+            previous_messages=previous_messages,
+        )
+        shortlist_tool_names = [
+            str(item.get("name") or "").strip()
+            for item in deterministic_tools
+            if isinstance(item, dict) and str(item.get("name") or "").strip()
+        ]
+
         if host.native_tool_calling_service:
             native_result = host.native_tool_calling_service.select_tools(
                 message=message,
@@ -72,6 +83,8 @@ class ChatToolContextSelectionService:
                     if isinstance(getattr(host, "_access_token", None), str)
                     else None
                 ),
+                max_tool_calls=max_external_action_calls,
+                shortlist_tool_names=shortlist_tool_names or None,
             )
             native_meta = native_result.get("meta") or native_meta
             native_selections = list(native_result.get("selections") or [])
@@ -79,11 +92,7 @@ class ChatToolContextSelectionService:
         if native_selections:
             selected_tools = native_selections
         else:
-            selected_tools = host.tool_selection_service.select_tools(
-                message,
-                attachment_context=attachment_context,
-                previous_messages=previous_messages,
-            )
+            selected_tools = list(deterministic_tools)
 
         from app.application.services.chat_tv_dashboard_platform_tool_selection_service import (
             ChatTvDashboardPlatformToolSelectionService,

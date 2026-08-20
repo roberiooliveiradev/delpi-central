@@ -74,5 +74,11 @@
     "header": "[Ferramenta autorizada com erro: {tool_name}]",
     "selectionFailed": "A ferramenta foi selecionada, mas não conseguiu retornar dados.",
     "policy": "Regra obrigatória: não invente o resultado. Explique o erro em português simples e peça apenas os parâmetros faltantes quando aplicável."
+  },
+  "nativeToolCalling": {
+    "systemPrompt": "Selecione ferramentas necessárias para responder à pergunta. Use apenas as funções disponíveis. Se nenhuma ferramenta for necessária, responda sem chamá-las.",
+    "selectionReason": "Ferramenta selecionada via tool-calling nativo do LLM.",
+    "maxSchemasPerCall": 12,
+    "defaultMaxToolCalls": 3
   }
 }
