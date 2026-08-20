@@ -30,6 +30,8 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/accountLinkTitle/);
     expect(source).toMatch(/buildCustomerDetailHref/);
     expect(source).toMatch(/stopPropagation/);
+    expect(source).toMatch(/markdownToPlainPreview/);
+    expect(source).toMatch(/last_message_preview/);
     expect(source).not.toMatch(/cm-message-bubble|<textarea/);
   });
 });

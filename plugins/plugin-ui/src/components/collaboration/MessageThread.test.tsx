@@ -309,6 +309,50 @@ describe("MessageThread", () => {
     expect(stack?.contains(actions)).toBe(true);
     expect(cluster?.contains(article)).toBe(true);
   });
+
+  it("renders markdown rich body with strong when not plain", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "md",
+            kind: "text",
+            bodyText: "**hello** and `code`",
+            authorName: "Ana",
+            createdAtLabel: "10:00",
+          },
+        ]}
+      />,
+    );
+    const rich = container.querySelector(".delpi-ui-message-thread__body--rich");
+    expect(rich).not.toBeNull();
+    expect(rich?.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
+    expect(rich?.innerHTML.toLowerCase()).toMatch(/<code\b/);
+  });
+
+  it("keeps MentionText for plain body with @mention", () => {
+    render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hello @Ana",
+            authorName: "Bruno",
+            createdAtLabel: "10:00",
+            mentions: [{ kind: "user", label: "Ana" }],
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Ana").className).toMatch(/mention-text__chip/);
+  });
 });
 
 describe("message-thread.css host scroll", () => {
@@ -340,5 +384,9 @@ describe("message-thread.css host scroll", () => {
     expect(css).not.toMatch(/opacity 0\.15s ease 0\.45s/);
     expect(css).toMatch(/transition:\s*opacity 0\.1s ease;/);
     expect(css).toMatch(/box-shadow:\s*none;/);
+    expect(css).toMatch(/__body--rich/);
+    expect(css).toMatch(/__body--rich code/);
+    expect(css).toMatch(/__body--rich pre/);
+    expect(css).toMatch(/__body--rich blockquote/);
   });
 });

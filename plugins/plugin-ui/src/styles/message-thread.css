@@ -152,6 +152,95 @@
   word-break: break-word;
 }
 
+.delpi-ui-message-thread__body--rich {
+  white-space: normal;
+}
+
+.delpi-ui-message-thread__body--rich > :first-child {
+  margin-top: 0;
+}
+
+.delpi-ui-message-thread__body--rich > :last-child {
+  margin-bottom: 0;
+}
+
+.delpi-ui-message-thread__body--rich :is(p, ul, ol, blockquote, pre) {
+  margin: 0.35rem 0;
+}
+
+.delpi-ui-message-thread__body--rich :is(ul, ol) {
+  padding-left: 1.25rem;
+}
+
+.delpi-ui-message-thread__body--rich code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  padding: 0.12em 0.4em;
+  border-radius: 0.35rem;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-text, var(--text, #0f172a)) 14%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 10%,
+    transparent
+  );
+}
+
+.delpi-ui-message-thread__body--rich pre {
+  display: block;
+  margin: 0.45rem 0;
+  padding: 0.55rem 0.7rem;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-text, var(--text, #0f172a)) 14%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 8%,
+    transparent
+  );
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.delpi-ui-message-thread__body--rich pre code {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.delpi-ui-message-thread__body--rich blockquote {
+  position: relative;
+  margin: 0.45rem 0;
+  padding: 0.4rem 0.75rem 0.4rem 1rem;
+  border: none;
+  border-left: 3px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-radius: 0 0.4rem 0.4rem 0;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    transparent
+  );
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+.delpi-ui-message-thread__body--rich blockquote::before {
+  content: "“";
+  position: absolute;
+  top: 0.1rem;
+  left: 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.delpi-ui-message-thread__body--rich a {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
 .delpi-ui-message-thread__quote {
   margin: 0 0 0.4rem;
   padding: 0.45rem 0.6rem;

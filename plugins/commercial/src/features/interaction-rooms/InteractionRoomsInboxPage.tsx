@@ -16,6 +16,7 @@ import {
   CommercialSectionCard,
   CommercialStateBanner,
 } from "../../app/commercialUi";
+import { markdownToPlainPreview } from "@delpi/plugin-ui/index";
 import {
   buildCustomerDetailHref,
   navigatePluginPath,
@@ -294,7 +295,7 @@ export function InteractionRoomsInboxPage({
           items={items.map((item) => ({
             id: item.id,
             title: item.title,
-            preview: item.last_message_preview,
+            preview: markdownToPlainPreview(item.last_message_preview ?? ""),
             metaLabel: formatInboxMetaLabel(item.last_message_at, {
               yesterdayLabel: content.inboxMetaYesterday,
             }),

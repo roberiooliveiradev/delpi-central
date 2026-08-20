@@ -12,6 +12,10 @@ import {
   type MentionTextClassNames,
   type MentionTextItem,
 } from "./MentionText";
+import {
+  messageBodyHtmlFromMarkdown,
+  messageBodyHtmlIsPlainParagraph,
+} from "./messageThreadMarkdown";
 
 export type MessageThreadKind = "text" | "system" | "task_ref" | "pin" | string;
 
@@ -63,6 +67,7 @@ export type MessageThreadClassNames = {
   author: string;
   time: string;
   body: string;
+  bodyRich: string;
   actions: string;
   action: string;
   actionDanger: string;
@@ -82,7 +87,7 @@ export type MessageThreadProps = {
   emptyLabel: string;
   /** Host builds edit/delete/reply/pin/task actions per message. */
   resolveActions?: (message: MessageThreadItem) => MessageThreadAction[];
-  /** Override body render (default: MentionText). */
+  /** Override body render (default: markdown sanitizado + MentionText no plano). */
   renderBody?: (message: MessageThreadItem) => ReactNode;
   onMentionActivate?: MentionTextPropsOnActivate;
   className?: string;
@@ -126,6 +131,10 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
     author: pair(`${base}__author`, `${ui}__author`),
     time: pair(`${base}__time`, `${ui}__time`),
     body: pair(`${base}__body`, `${ui}__body`),
+    bodyRich: pair(
+      `${base}__body ${base}__body--rich`,
+      `${ui}__body ${ui}__body--rich`,
+    ),
     actions: pair(`${base}__actions`, `${ui}__actions`),
     action: pair(`${base}__action`, `${ui}__action`),
     actionDanger: pair(
@@ -186,6 +195,42 @@ function itemClassName(
  * Message list with bubbles, system lines, and reply indent.
  * Action labels and body formatting policy live in the host.
  */
+function defaultMessageBody(
+  message: MessageThreadItem,
+  classNames: MessageThreadClassNames,
+  onMentionActivate: MentionTextPropsOnActivate | undefined,
+): ReactNode {
+  if (message.deleted) {
+    return <span className={classNames.body}>{message.bodyText}</span>;
+  }
+
+  const html = messageBodyHtmlFromMarkdown(
+    message.bodyText,
+    message.mentions,
+    classNames.mention.chip,
+  );
+
+  if (!html || messageBodyHtmlIsPlainParagraph(html)) {
+    return (
+      <MentionText
+        classNames={classNames.mention}
+        className={classNames.body}
+        text={message.bodyText}
+        mentions={message.mentions}
+        onMentionActivate={onMentionActivate}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={classNames.bodyRich}
+      // HTML já passou por stripDangerousRichTextTags + enrich de menções.
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
 export function MessageThread({
   messages,
   classNames,
@@ -234,17 +279,7 @@ export function MessageThread({
           const quoted = parentQuote(messages, message);
           const body =
             renderBody?.(message) ??
-            (message.deleted ? (
-              <span className={classNames.body}>{message.bodyText}</span>
-            ) : (
-              <MentionText
-                classNames={classNames.mention}
-                className={classNames.body}
-                text={message.bodyText}
-                mentions={message.mentions}
-                onMentionActivate={onMentionActivate}
-              />
-            ));
+            defaultMessageBody(message, classNames, onMentionActivate);
           const avatarName = (message.authorName ?? "").trim();
           const authorHref = (message.authorHref ?? "").trim();
           const authorLinkTitle = (message.authorLinkTitle ?? "").trim();

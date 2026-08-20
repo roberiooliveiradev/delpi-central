@@ -122,3 +122,9 @@ export {
   type ActiveMentionQuery,
 } from "./mentionComposerCaret";
 export { parseMentionText } from "./parseMentionText";
+export {
+  enrichMessageHtmlMentions,
+  markdownToPlainPreview,
+  messageBodyHtmlFromMarkdown,
+  messageBodyHtmlIsPlainParagraph,
+} from "./messageThreadMarkdown";
