@@ -26,8 +26,20 @@
     "hybrid": "hybrid"
   },
   "vlm": {
+    "maxImages": 3,
+    "drawingRegions": ["stamp", "bom"],
+    "includeOverview": true,
+    "partialHintMinChars": 8,
+    "partialHintMaxChars": 400,
+    "sectionMarkers": {
+      "stamp": ["CARIMBO"],
+      "bom": ["BOM"],
+      "page": ["PAGINA", "PÁGINA"]
+    },
     "prompts": {
       "ocr": "Extraia todo o texto visível deste documento técnico (carimbo, lista de materiais, cotas, notas). Responda apenas com o texto extraído, sem comentários.",
+      "ocrDrawingRegions": "As imagens estão nesta ordem: (1) CARIMBO do desenho (canto inferior direito — priorize código do produto 90xxxxxx, REV, REF/cliente), (2) BOM / lista de materiais (tabular: POS, CÓDIGO, QTD, UM, DESCRIÇÃO), (3) visão geral da página quando houver terceira imagem.\nTranscreva apenas o que for legível. Não invente códigos, revisões ou linhas de BOM ausentes.\nResponda exatamente neste formato:\nCARIMBO:\n...\nBOM:\n...\nPAGINA:\n...",
+      "ocrPartialHint": "Dica do OCR parcial (pode conter erros; use só como pista, não copie cegamente):\n{partialOcr}",
       "describeImage": "Descreva em português o conteúdo visual desta imagem: objetos, pessoas, cenário, cores, layout e qualquer texto legível resumido. Seja objetivo e factual; não invente detalhes ausentes.",
       "describeDocument": "Descreva em português o conteúdo visual deste documento (layout, diagramas, tabelas, carimbo, cotas). Mencione elementos visíveis mesmo quando o OCR falhar. Não invente códigos ou revisões ausentes.",
       "hybrid": "Responda em português com duas seções obrigatórias:\nDESCRIÇÃO: resumo visual objetivo do conteúdo.\nTEXTO: transcrição literal de todo texto visível.\nNão invente dados ausentes."
