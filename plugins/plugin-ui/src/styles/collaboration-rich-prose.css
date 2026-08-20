@@ -103,30 +103,14 @@
 
 .delpi-ui-message-thread__inline-image {
   position: relative;
-  display: block;
-  width: fit-content;
-  max-width: min(100%, 28rem);
-  margin: 0.5rem 0;
+  display: inline-block;
+  vertical-align: middle;
+  max-width: min(100%, 14rem);
+  max-height: 8rem;
+  margin: 0 0.15rem;
   border-radius: 0.5rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 6%, transparent);
-}
-
-.delpi-ui-message-thread__inline-image[data-align="left"] {
-  margin-inline: 0;
-}
-
-.delpi-ui-message-thread__inline-image[data-align="center"] {
-  margin-inline: auto;
-}
-
-.delpi-ui-message-thread__inline-image[data-align="right"] {
-  margin-inline: 0 0 0 auto;
-}
-
-.delpi-ui-message-thread__inline-image[data-align="justify"] {
-  width: 100%;
-  max-width: 100%;
 }
 
 .delpi-ui-message-thread__inline-image img {
@@ -134,14 +118,9 @@
   width: auto;
   max-width: 100%;
   height: auto;
-  max-height: min(48vh, 20rem);
+  max-height: 8rem;
   object-fit: contain;
   cursor: zoom-in;
-}
-
-.delpi-ui-message-thread__inline-image[data-align="justify"] img {
-  width: 100%;
-  object-fit: contain;
 }
 
 /* Remove control is composer-only. */

@@ -512,13 +512,11 @@ describe("mention-composer.css", () => {
     expect(css).toMatch(/__document-tray/);
     expect(css).toMatch(/__image-thumbs/);
     expect(css).toMatch(/__inline-image-remove/);
-    expect(css).toMatch(/margin:\s*0\.5rem 0/);
-    expect(css).not.toMatch(/\.delpi-ui-mention-composer__inline-image \{[^}]*margin:\s*0\.5rem auto/);
-    expect(css).toMatch(/\[data-align="center"\]/);
-    expect(css).toMatch(/\[data-align="right"\]/);
-    expect(css).toMatch(/\[data-align="justify"\]/);
-    expect(prose).toMatch(/\.delpi-ui-message-thread__inline-image \{[^}]*margin:\s*0\.5rem 0/);
-    expect(prose).toMatch(/\[data-align="center"\]/);
+    expect(css).toMatch(/display:\s*inline-block/);
+    expect(css).toMatch(/max-height:\s*8rem/);
+    expect(css).not.toMatch(/\.delpi-ui-mention-composer__inline-image \{[^}]*display:\s*block;/);
+    expect(prose).toMatch(/\.delpi-ui-message-thread__inline-image \{[^}]*display:\s*inline-block/);
+    expect(prose).toMatch(/max-height:\s*8rem/);
     expect(css).toMatch(/\.delpi-ui-mention-composer__body :is\(:focus, :focus-visible\)/);
     expect(css).toMatch(/position:\s*absolute/);
   });
@@ -581,6 +579,7 @@ describe("mention-composer.css", () => {
     expect(remove).toBeTruthy();
     fireEvent.click(remove!);
     expect(surface.querySelector("figure")).toBeNull();
+    expect(surface.querySelector("span.delpi-ui-mention-composer__inline-image")).toBeNull();
     expect(onRemoved).toHaveBeenCalled();
   });
 });

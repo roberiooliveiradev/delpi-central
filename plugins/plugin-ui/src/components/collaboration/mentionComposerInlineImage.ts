@@ -1,7 +1,7 @@
 /**
- * Inline image blocks in MentionComposer (paste/drop at caret).
- * Persist as markdown `![alt](attachment:pending:{id})` via Turndown rule;
- * optional title `"align=center|right|justify"` when not left.
+ * Inline images in MentionComposer (paste/drop at caret) — Word-like:
+ * span+img inside the paragraph so caret can sit left/right on the same line.
+ * Persist as markdown `![alt](attachment:pending:{id})` via Turndown.
  */
 import { resolveFilePreviewKind } from "../preview/resolveFilePreviewKind";
 import type { RichTextAlign } from "../rich-text/richTextCommands";
@@ -14,15 +14,15 @@ export type MentionComposerInlineImageInsert = {
 
 export type InlineImageAlign = RichTextAlign;
 
+/** @deprecated Align lives on the paragraph `text-align`; kept for legacy DOM. */
 export const INLINE_IMAGE_ALIGN_ATTR = "data-align";
 
-/** Composer + bubble figure roots. */
+/** Composer + bubble inline image wrappers (span; figure kept for legacy HTML). */
 export const INLINE_IMAGE_FIGURE_SELECTOR =
+  "span.delpi-ui-mention-composer__inline-image, span.delpi-ui-message-thread__inline-image, " +
   "figure.delpi-ui-mention-composer__inline-image, figure.delpi-ui-message-thread__inline-image";
 
 const PENDING_ATTR = "data-attachment-pending";
-
-const CARET_ANCHOR_HTML = "<p><br></p>";
 
 export function isComposerInlineImageFile(file: File): boolean {
   return resolveFilePreviewKind({ fileName: file.name, mimeType: file.type }) === "image";
@@ -84,7 +84,7 @@ export function normalizeInlineImageAlign(
   return "left";
 }
 
-/** Title from markdown `![alt](url "align=center")` or bare align token. */
+/** Title from markdown `![alt](url "align=center")` or bare align token (legacy). */
 export function parseAlignFromImageTitle(
   title: string | null | undefined,
 ): InlineImageAlign {
@@ -97,6 +97,7 @@ export function parseAlignFromImageTitle(
   return normalizeInlineImageAlign(raw);
 }
 
+/** @deprecated Prefer paragraph text-align. */
 export function setInlineImageFigureAlign(
   figure: Element,
   align: InlineImageAlign,
@@ -104,6 +105,7 @@ export function setInlineImageFigureAlign(
   figure.setAttribute(INLINE_IMAGE_ALIGN_ATTR, normalizeInlineImageAlign(align));
 }
 
+/** @deprecated Prefer paragraph text-align. */
 export function readInlineImageFigureAlign(
   figure: Element | null | undefined,
 ): InlineImageAlign {
@@ -124,67 +126,16 @@ export function findInlineImageFigureFromSelection(
   return figure as HTMLElement;
 }
 
-function ownerDocumentOf(root: ParentNode): Document {
-  if (root instanceof Document) return root;
-  if (root instanceof Element) return root.ownerDocument ?? document;
-  return document;
-}
-
-function isEditableCaretAnchor(node: Node | null | undefined): boolean {
-  if (!node) return false;
-  if (node.nodeType === Node.TEXT_NODE) {
-    return Boolean((node.textContent ?? "").trim());
-  }
-  if (node.nodeType !== Node.ELEMENT_NODE) return false;
-  const el = node as Element;
-  if (el.matches?.(INLINE_IMAGE_FIGURE_SELECTOR)) return false;
-  const tag = el.tagName;
-  return (
-    tag === "P" ||
-    tag === "DIV" ||
-    tag === "LI" ||
-    tag === "H1" ||
-    tag === "H2" ||
-    tag === "H3" ||
-    tag === "H4" ||
-    tag === "H5" ||
-    tag === "H6" ||
-    tag === "BLOCKQUOTE" ||
-    tag === "PRE"
-  );
-}
-
-function createCaretAnchor(doc: Document): HTMLParagraphElement {
-  const p = doc.createElement("p");
-  p.appendChild(doc.createElement("br"));
-  return p;
-}
-
 /**
- * Ensures editable `<p><br></p>` siblings before/after each inline figure so
- * the caret can land around `contenteditable=false` blocks.
+ * No-op: Word-like inline images sit inside `<p>`; caret does not need sibling anchors.
+ * Kept so call sites compile until hydrate drops the import in E3.S2.
  */
-export function ensureInlineImageCaretAnchors(root: ParentNode): void {
-  const host =
-    root instanceof Element
-      ? root
-      : root instanceof Document
-        ? root.body
-        : null;
-  if (!host || typeof host.querySelectorAll !== "function") return;
-  const doc = ownerDocumentOf(root);
-  const figures = Array.from(host.querySelectorAll(INLINE_IMAGE_FIGURE_SELECTOR));
-  for (const figure of figures) {
-    if (!isEditableCaretAnchor(figure.previousSibling)) {
-      figure.parentNode?.insertBefore(createCaretAnchor(doc), figure);
-    }
-    if (!isEditableCaretAnchor(figure.nextSibling)) {
-      figure.parentNode?.insertBefore(createCaretAnchor(doc), figure.nextSibling);
-    }
-  }
+export function ensureInlineImageCaretAnchors(_root: ParentNode): void {
+  /* intentionally empty */
 }
 
-export function inlineImageBlockHtml(
+/** Span+img fragment for insert at caret (same paragraph). */
+export function inlineImageInlineHtml(
   insert: MentionComposerInlineImageInsert,
   options?: { removeAriaLabel?: string },
 ): string {
@@ -194,14 +145,22 @@ export function inlineImageBlockHtml(
   const removeLabel = escapeAttr(
     options?.removeAriaLabel ?? `Remove ${insert.file.name || "image"}`,
   );
-  const figure =
-    `<figure class="delpi-ui-mention-composer__inline-image" contenteditable="false" ${INLINE_IMAGE_ALIGN_ATTR}="left">` +
+  return (
+    `<span class="delpi-ui-mention-composer__inline-image" contenteditable="false">` +
     `<img src="${src}" alt="${alt}" ${PENDING_ATTR}="${pending}" data-attachment-href="attachment:pending:${pending}" />` +
     `<button type="button" class="delpi-ui-mention-composer__inline-image-remove" data-inline-image-remove="1" contenteditable="false" tabindex="-1" aria-label="${removeLabel}">` +
     `×` +
     `</button>` +
-    `</figure>`;
-  return `${CARET_ANCHOR_HTML}${figure}${CARET_ANCHOR_HTML}`;
+    `</span>`
+  );
+}
+
+/** @deprecated Use `inlineImageInlineHtml`. */
+export function inlineImageBlockHtml(
+  insert: MentionComposerInlineImageInsert,
+  options?: { removeAriaLabel?: string },
+): string {
+  return inlineImageInlineHtml(insert, options);
 }
 
 export function composerInlineImagePendingAttr(): string {

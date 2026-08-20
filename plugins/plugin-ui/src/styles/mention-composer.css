@@ -371,30 +371,14 @@
 
 .delpi-ui-mention-composer__inline-image {
   position: relative;
-  display: block;
-  width: fit-content;
-  max-width: min(100%, 28rem);
-  margin: 0.5rem 0;
+  display: inline-block;
+  vertical-align: middle;
+  max-width: min(100%, 14rem);
+  max-height: 8rem;
+  margin: 0 0.15rem;
   border-radius: 0.5rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--delpi-ui-text, #0f172a) 6%, transparent);
-}
-
-.delpi-ui-mention-composer__inline-image[data-align="left"] {
-  margin-inline: 0;
-}
-
-.delpi-ui-mention-composer__inline-image[data-align="center"] {
-  margin-inline: auto;
-}
-
-.delpi-ui-mention-composer__inline-image[data-align="right"] {
-  margin-inline: 0 0 0 auto;
-}
-
-.delpi-ui-mention-composer__inline-image[data-align="justify"] {
-  width: 100%;
-  max-width: 100%;
 }
 
 .delpi-ui-mention-composer__inline-image img {
@@ -402,20 +386,15 @@
   width: auto;
   max-width: 100%;
   height: auto;
-  max-height: min(40vh, 16rem);
+  max-height: 8rem;
   object-fit: contain;
   vertical-align: middle;
 }
 
-.delpi-ui-mention-composer__inline-image[data-align="justify"] img {
-  width: 100%;
-  object-fit: contain;
-}
-
 .delpi-ui-mention-composer__inline-image-remove {
   position: absolute;
-  top: 0.35rem;
-  right: 0.35rem;
+  top: 0.2rem;
+  right: 0.2rem;
   z-index: 2;
   display: inline-flex;
   align-items: center;
