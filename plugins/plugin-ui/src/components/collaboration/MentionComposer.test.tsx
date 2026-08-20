@@ -490,13 +490,16 @@ describe("mention-composer.css", () => {
     expect(css).not.toMatch(/--empty::before/);
     expect(css).toMatch(/__placeholder/);
     expect(css).toMatch(/__format\[aria-pressed="true"\]/);
-    expect(css).toMatch(/\.delpi-ui-mention-composer__textarea code \{/);
-    expect(css).toMatch(/code:empty/);
-    expect(css).toMatch(/\.delpi-ui-mention-composer__textarea pre \{/);
-    expect(css).toMatch(/\.delpi-ui-mention-composer__textarea blockquote \{/);
-    expect(css).toMatch(/blockquote::before/);
-    expect(css).toMatch(/border-left:\s*3px/);
-    expect(css).toMatch(/content:\s*"“"/);
+    expect(css).not.toMatch(/\.delpi-ui-mention-composer__textarea pre \{/);
+    const prose = readFileSync(join(stylesDir, "collaboration-rich-prose.css"), "utf8");
+    expect(prose).toMatch(/\.delpi-ui-mention-composer__textarea code,/);
+    expect(prose).toMatch(/\.delpi-ui-mention-composer__textarea pre,/);
+    expect(prose).toMatch(/\.delpi-ui-mention-composer__textarea blockquote,/);
+    expect(prose).toMatch(/code:empty/);
+    expect(prose).toMatch(/blockquote::before/);
+    expect(prose).toMatch(/border-left:\s*3px/);
+    expect(prose).toMatch(/content:\s*"“"/);
+    expect(prose).toMatch(/padding-left:\s*1\.25rem/);
   });
 
   it("emoji-insert-menu.css usa grade sem borda full de caixa", () => {

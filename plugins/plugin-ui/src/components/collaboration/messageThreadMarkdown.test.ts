@@ -32,6 +32,13 @@ describe("messageBodyHtmlFromMarkdown", () => {
     expect(html.toLowerCase()).not.toContain("<script");
   });
 
+  it("fence markdown vira pre>code na bolha", () => {
+    const html = messageBodyHtmlFromMarkdown("```\nMais qualidade.\n```");
+    expect(html.toLowerCase()).toMatch(/<pre\b/);
+    expect(html.toLowerCase()).toMatch(/<code\b/);
+    expect(html).toContain("Mais qualidade.");
+  });
+
   it("enriquece menções com chip", () => {
     const html = messageBodyHtmlFromMarkdown("Oi @Ana", [
       { kind: "user", label: "Ana" },

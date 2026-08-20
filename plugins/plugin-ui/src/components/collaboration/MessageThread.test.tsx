@@ -393,8 +393,11 @@ describe("message-thread.css host scroll", () => {
     expect(css).toMatch(/transition:\s*opacity 0\.1s ease;/);
     expect(css).toMatch(/box-shadow:\s*none;/);
     expect(css).toMatch(/__body--rich/);
-    expect(css).toMatch(/__body--rich code/);
-    expect(css).toMatch(/__body--rich pre/);
-    expect(css).toMatch(/__body--rich blockquote/);
+    expect(css).not.toMatch(/__body--rich code \{/);
+    expect(css).not.toMatch(/__body--rich pre \{/);
+    const prose = readFileSync(join(stylesDir, "collaboration-rich-prose.css"), "utf8");
+    expect(prose).toMatch(/__body--rich code/);
+    expect(prose).toMatch(/__body--rich pre/);
+    expect(prose).toMatch(/__body--rich blockquote/);
   });
 });

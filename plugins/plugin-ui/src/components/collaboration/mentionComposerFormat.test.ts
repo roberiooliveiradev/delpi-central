@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  insertNewlineInComposerCode,
   queryComposerFormatFlags,
+  selectionIsInsideComposerCode,
   toggleComposerFormat,
 } from "./mentionComposerFormat";
 
@@ -287,6 +289,35 @@ describe("toggleComposerFormat", () => {
     selectAll(editor);
     toggleComposerFormat(editor, "quote");
     expect(editor.innerHTML.toLowerCase()).toMatch(/<blockquote\b/);
+    editor.remove();
+  });
+
+  it("Enter em pre/code insere \\n textual sem br", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML = "<pre><code>ab</code></pre>";
+    document.body.appendChild(editor);
+    const code = editor.querySelector("code")!;
+    const text = code.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, 1);
+    range.collapse(true);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    expect(selectionIsInsideComposerCode(editor)).toBe(true);
+    expect(insertNewlineInComposerCode(editor)).toBe(true);
+    expect(code.textContent).toBe("a\nb");
+    expect(editor.innerHTML.toLowerCase()).not.toContain("<br");
+    editor.remove();
+  });
+
+  it("fora de code, insertNewlineInComposerCode retorna false", () => {
+    const editor = document.createElement("div");
+    editor.textContent = "prosa";
+    document.body.appendChild(editor);
+    collapseCaretAtEnd(editor);
+    expect(selectionIsInsideComposerCode(editor)).toBe(false);
+    expect(insertNewlineInComposerCode(editor)).toBe(false);
     editor.remove();
   });
 });

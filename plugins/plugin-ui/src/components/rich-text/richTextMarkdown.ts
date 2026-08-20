@@ -1,6 +1,8 @@
 /**
- * Markdown ↔ HTML for RichTextEditor (GFM subset).
- * Storage remains HTML; these helpers only convert at the editor edge.
+ * Markdown ↔ HTML for collaboration composer / message bubble (GFM subset).
+ * Chat persistence = markdown in `body_text`; these helpers convert at the
+ * composer submit edge and the MessageThread render edge (deck editor may
+ * still store HTML separately).
  */
 import { marked } from "marked";
 import TurndownService from "turndown";
@@ -36,6 +38,25 @@ turndown.addRule("inlineFontSize", {
 turndown.addRule("underline", {
   filter: (node) => node.nodeName === "U",
   replacement: (content) => `<u>${content}</u>`,
+});
+
+/**
+ * Fence estável para `<pre><code>` (e `<pre>` já normalizado).
+ * Garante backticks mesmo se o plugin GFM falhar em edge cases.
+ */
+turndown.addRule("fencedCodeBlock", {
+  filter: (node) => {
+    if (node.nodeName !== "PRE") return false;
+    const el = node as HTMLElement;
+    const code = el.querySelector(":scope > code");
+    return Boolean(code) || Boolean((el.textContent ?? "").trim());
+  },
+  replacement: (_content, node) => {
+    const el = node as HTMLElement;
+    const code = el.querySelector(":scope > code");
+    const raw = (code?.textContent ?? el.textContent ?? "").replace(/\n$/, "");
+    return `\n\n\`\`\`\n${raw}\n\`\`\`\n\n`;
+  },
 });
 
 const MD_LINE_HINT =
@@ -77,6 +98,84 @@ export function clipboardHasUsefulHtml(html: string | undefined | null): boolean
   );
 }
 
+const BLOCK_BREAK_TAGS = new Set(["DIV", "P", "LI"]);
+
+/**
+ * Flatten contenteditable artifacts inside a code host so Turndown sees real `\n`.
+ * Replaces `<br>` and block wrappers with text newlines; unwraps nested inlines.
+ */
+function flattenCodeHostContent(host: Element, ownerDoc: Document): void {
+  const walk = (parent: Node) => {
+    const children = Array.from(parent.childNodes);
+    for (const child of children) {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as Element;
+        const tag = el.tagName;
+        if (tag === "BR") {
+          parent.replaceChild(ownerDoc.createTextNode("\n"), el);
+          continue;
+        }
+        if (BLOCK_BREAK_TAGS.has(tag)) {
+          walk(el);
+          const frag = ownerDoc.createDocumentFragment();
+          while (el.firstChild) frag.appendChild(el.firstChild);
+          frag.appendChild(ownerDoc.createTextNode("\n"));
+          parent.replaceChild(frag, el);
+          continue;
+        }
+        // Unwrap other wrappers inside code (span, font, etc.) keeping text.
+        if (tag !== "CODE") {
+          walk(el);
+          const frag = ownerDoc.createDocumentFragment();
+          while (el.firstChild) frag.appendChild(el.firstChild);
+          parent.replaceChild(frag, el);
+          continue;
+        }
+        walk(el);
+      }
+    }
+  };
+  walk(host);
+}
+
+/**
+ * Prepara HTML do contenteditable para Turndown estável (chat composer).
+ * - `pre` sem `code` → envolve em `<code>`
+ * - `<br>` / `div` / `p` dentro de `pre`/`code` → `\n` textuais
+ */
+export function normalizeRichTextHtmlForMarkdown(html: string): string {
+  const source = (html ?? "").trim();
+  if (!source || typeof DOMParser === "undefined") return source;
+  try {
+    const doc = new DOMParser().parseFromString(
+      `<div id="__md_root">${source}</div>`,
+      "text/html",
+    );
+    const root = doc.getElementById("__md_root");
+    if (!root) return source;
+
+    for (const pre of Array.from(root.querySelectorAll("pre"))) {
+      let code = pre.querySelector(":scope > code");
+      if (!code) {
+        code = doc.createElement("code");
+        while (pre.firstChild) code.appendChild(pre.firstChild);
+        pre.appendChild(code);
+      }
+      flattenCodeHostContent(code, doc);
+    }
+
+    // Inline `<code>` com <br> (raro) também.
+    for (const code of Array.from(root.querySelectorAll("code"))) {
+      if (code.parentElement?.tagName === "PRE") continue;
+      if (code.querySelector("br, div, p")) flattenCodeHostContent(code, doc);
+    }
+
+    return root.innerHTML;
+  } catch {
+    return source;
+  }
+}
+
 export function markdownToRichTextHtml(markdown: string): string {
   const source = (markdown ?? "").trim();
   if (!source) return "<p></p>";
@@ -89,7 +188,8 @@ export function richTextHtmlToMarkdown(html: string): string {
   const source = (html ?? "").trim();
   if (!source || source === "<p></p>") return "";
   try {
-    return turndown.turndown(source).trim();
+    const normalized = normalizeRichTextHtmlForMarkdown(source);
+    return turndown.turndown(normalized).trim();
   } catch {
     return "";
   }

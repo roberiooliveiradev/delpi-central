@@ -25,6 +25,7 @@ export {
   clipboardHasUsefulHtml,
   clipboardLooksLikeMarkdown,
   markdownToRichTextHtml,
+  normalizeRichTextHtmlForMarkdown,
   richTextHtmlToMarkdown,
 } from "./richTextMarkdown";
 export {

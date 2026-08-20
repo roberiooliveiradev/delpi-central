@@ -60,6 +60,7 @@ import {
 } from "./MentionMenu";
 import {
   emptyComposerFormatFlags,
+  insertNewlineInComposerCode,
   queryComposerFormatFlags,
   toggleComposerFormat,
   type ComposerFormatKind,
@@ -612,12 +613,22 @@ export function MentionComposer({
       }
       return;
     }
-    if (event.key === "Enter" && event.shiftKey) {
-      return;
-    }
-    if (event.key === "Enter" && submitOnEnter) {
-      event.preventDefault();
-      flushAndSubmit();
+    if (event.key === "Enter") {
+      const surface = surfaceRef.current;
+      if (surface && insertNewlineInComposerCode(surface)) {
+        event.preventDefault();
+        normalizeComposerFormatShells(surface, { preserveActiveTypingShell: true });
+        lastStableRef.current = readSnapshot();
+        emitMarkdownAndMention();
+        return;
+      }
+      if (event.shiftKey) {
+        return;
+      }
+      if (submitOnEnter) {
+        event.preventDefault();
+        flushAndSubmit();
+      }
     }
   };
 

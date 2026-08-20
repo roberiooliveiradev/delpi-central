@@ -478,3 +478,36 @@ export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKi
     normalizeComposerFormatShells(editor);
   }
 }
+
+/** True when the caret (or selection) is inside a `pre` or `code` host. */
+export function selectionIsInsideComposerCode(editor: HTMLElement): boolean {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return false;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return false;
+  const node =
+    range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+      ? (range.commonAncestorContainer as Element)
+      : range.commonAncestorContainer.parentElement;
+  return Boolean(node?.closest("pre, code"));
+}
+
+/**
+ * Insert a real `\n` text node inside `pre`/`code` (Enter / Shift+Enter).
+ * Avoids contenteditable `<br>` that breaks Turndown fences.
+ */
+export function insertNewlineInComposerCode(editor: HTMLElement): boolean {
+  if (!selectionIsInsideComposerCode(editor)) return false;
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return false;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return false;
+  range.deleteContents();
+  const text = document.createTextNode("\n");
+  range.insertNode(text);
+  range.setStartAfter(text);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  return true;
+}

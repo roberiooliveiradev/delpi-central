@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { messageBodyHtmlFromMarkdown } from "../collaboration/messageThreadMarkdown";
 import {
   clipboardHasUsefulHtml,
   clipboardLooksLikeMarkdown,
   markdownToRichTextHtml,
+  normalizeRichTextHtmlForMarkdown,
   richTextHtmlToMarkdown,
 } from "./richTextMarkdown";
 
@@ -22,9 +24,18 @@ describe("clipboardLooksLikeMarkdown", () => {
 
 describe("clipboardHasUsefulHtml", () => {
   it("detecta HTML rico e ignora envelope vazio", () => {
-    expect(clipboardHasUsefulHtml('<p>Olá</p>')).toBe(true);
+    expect(clipboardHasUsefulHtml("<p>Olá</p>")).toBe(true);
     expect(clipboardHasUsefulHtml("<html><body>texto</body></html>")).toBe(false);
     expect(clipboardHasUsefulHtml("")).toBe(false);
+  });
+});
+
+describe("normalizeRichTextHtmlForMarkdown", () => {
+  it("envolve pre solto em code e troca br por newline", () => {
+    const out = normalizeRichTextHtmlForMarkdown("<pre>a<br>b</pre>");
+    expect(out.toLowerCase()).toMatch(/<pre><code>/);
+    expect(out).toContain("a\nb");
+    expect(out.toLowerCase()).not.toContain("<br");
   });
 });
 
@@ -68,5 +79,69 @@ describe("markdownToRichTextHtml / richTextHtmlToMarkdown", () => {
   it("vazio vira parágrafo mínimo / string vazia", () => {
     expect(markdownToRichTextHtml("")).toBe("<p></p>");
     expect(richTextHtmlToMarkdown("<p></p>")).toBe("");
+  });
+
+  it("round-trip pre>code com newlines reais preserva fence e linhas", () => {
+    const html =
+      "<pre><code>Opção 3: Mais qualidade.\nMais qualidade.\nMais qualidade.</code></pre>";
+    const md = richTextHtmlToMarkdown(html);
+    expect(md).toMatch(/```[\s\S]*Opção 3: Mais qualidade\./);
+    expect(md).toContain("Mais qualidade.");
+    const back = markdownToRichTextHtml(md);
+    expect(back.toLowerCase()).toMatch(/<pre\b/);
+    expect(back.toLowerCase()).toMatch(/<code\b/);
+    expect(back).toContain("Mais qualidade.");
+  });
+
+  it("pre>code com <br> internos vira fence com newlines", () => {
+    const html = "<pre><code>linha1<br>linha2<br/>linha3</code></pre>";
+    const md = richTextHtmlToMarkdown(html);
+    expect(md).toMatch(/```/);
+    expect(md).toContain("linha1");
+    expect(md).toContain("linha2");
+    expect(md).toContain("linha3");
+    const back = markdownToRichTextHtml(md);
+    expect(back.toLowerCase()).toMatch(/<pre\b/);
+    expect(back.toLowerCase()).toMatch(/<code\b/);
+    expect(back).toContain("linha1");
+    expect(back).toContain("linha3");
+  });
+
+  it("pre solto normaliza para fence e volta com pre+code", () => {
+    const md = richTextHtmlToMarkdown("<pre>solto\nbloco</pre>");
+    expect(md).toMatch(/```[\s\S]*solto/);
+    const back = markdownToRichTextHtml(md);
+    expect(back.toLowerCase()).toMatch(/<pre\b/);
+    expect(back.toLowerCase()).toMatch(/<code\b/);
+    expect(back).toContain("solto");
+  });
+
+  it("preserva code inline, quote, listas e ênfase no round-trip", () => {
+    const html = [
+      "<p>inline <code>x</code> e <strong>b</strong> <em>i</em> <s>s</s> <u>u</u></p>",
+      "<blockquote><p>citação</p></blockquote>",
+      "<ul><li>um</li><li>dois</li></ul>",
+    ].join("");
+    const md = richTextHtmlToMarkdown(html);
+    expect(md).toContain("`x`");
+    expect(md).toMatch(/\*\*b\*\*/);
+    expect(md).toMatch(/(^|\n)>\s*citação/m);
+    expect(md).toMatch(/[-*]\s+um/);
+    const back = markdownToRichTextHtml(md);
+    expect(back.toLowerCase()).toMatch(/<code\b/);
+    expect(back.toLowerCase()).toMatch(/<blockquote\b/);
+    expect(back.toLowerCase()).toMatch(/<ul\b/);
+    expect(back.toLowerCase()).toMatch(/<(strong|b)\b/);
+  });
+
+  it("fixture Opção 3 com div/br no pre ainda fecha fence na bolha", () => {
+    const composerHtml =
+      "<pre><code>Opção 3: Mais qualidade.<br><div>Mais qualidade.</div>Mais qualidade.</code></pre>";
+    const md = richTextHtmlToMarkdown(composerHtml);
+    expect(md).toMatch(/```/);
+    const bubble = messageBodyHtmlFromMarkdown(md);
+    expect(bubble.toLowerCase()).toMatch(/<pre\b/);
+    expect(bubble.toLowerCase()).toMatch(/<code\b/);
+    expect(bubble).toContain("Mais qualidade.");
   });
 });
