@@ -215,6 +215,17 @@ class ChatDrawingRegionService:
         return image
 
     @classmethod
+    def render_region_image(
+        cls,
+        page: Any,
+        *,
+        bbox: list[float] | tuple[float, ...],
+        matrix: Any,
+    ) -> Any | None:
+        """Rasteriza um crop de região (bbox normalizado) como PIL RGB."""
+        return cls._render_region_image(page, bbox=bbox, matrix=matrix)
+
+    @classmethod
     def _render_region_image(
         cls,
         page: Any,
