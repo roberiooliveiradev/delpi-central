@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Any, Callable, TypeVar
 
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.application.services.chat_stream_activity_service import ChatStreamActivityService
-from app.domain.exceptions.vision_exceptions import VisionMemoryLimitedError
+from app.domain.exceptions.vision_exceptions import (
+    VisionMemoryLimitedError,
+    VisionOcrProcessCrashedError,
+)
+from app.domain.services.chat_document_vision_content_service import (
+    ChatDocumentVisionContentService,
+)
 from app.domain.services.chat_document_vision_skill_service import (
     ChatDocumentVisionSkillService,
     DocumentVisionActivation,
@@ -15,6 +22,11 @@ from app.domain.services.chat_document_vision_skill_service import (
 from app.domain.services.chat_vision_memory_guard_service import (
     ChatVisionMemoryGuardService,
 )
+from app.infrastructure.vision.document_vision_ocr_process_runner import (
+    DocumentVisionOcrProcessRunner,
+)
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -31,6 +43,21 @@ class ChatDocumentVisionTurnService:
             return None
 
         return None
+
+    @classmethod
+    def _attach_process_crashed_metadata(
+        cls,
+        payload: dict[str, Any] | None,
+        *,
+        exit_code: int | None = None,
+    ) -> dict[str, Any]:
+        merged = dict(payload) if isinstance(payload, dict) else {}
+        merged["processCrashed"] = True
+        merged["engine"] = merged.get("engine") or "none"
+        merged["charCount"] = int(merged.get("charCount") or 0)
+        if exit_code is not None:
+            merged["processExitCode"] = int(exit_code)
+        return merged
 
     @classmethod
     def _run_blocking_with_ocr_heartbeat(
@@ -73,6 +100,34 @@ class ChatDocumentVisionTurnService:
         return result["value"]
 
     @classmethod
+    def _run_ocr_job(
+        cls,
+        job: dict[str, Any],
+        *,
+        inline_operation: Callable[[], T],
+        on_stream_activity: Callable[..., Any] | None,
+    ) -> T:
+        if not ChatDocumentVisionContentService.process_isolation_enabled():
+            return cls._run_blocking_with_ocr_heartbeat(
+                inline_operation,
+                on_stream_activity=on_stream_activity,
+            )
+
+        def _heartbeat() -> None:
+            if on_stream_activity is None:
+                return
+            on_stream_activity(ChatStreamActivityService.document_vision_ocr_heartbeat())
+
+        return DocumentVisionOcrProcessRunner.run(
+            job,
+            timeout_seconds=float(
+                ChatDocumentVisionContentService.process_isolation_timeout_seconds()
+            ),
+            heartbeat=_heartbeat if on_stream_activity is not None else None,
+            heartbeat_interval_seconds=ChatStreamActivityService.ocr_heartbeat_interval_seconds(),
+        )
+
+    @classmethod
     def should_run_for_drawing(cls, skills: dict | None = None) -> bool:
         return ChatDocumentVisionSkillService.should_run_for_drawing(skills)
 
@@ -104,8 +159,20 @@ class ChatDocumentVisionTurnService:
         if not cls.should_run_for_drawing(skills):
             return dict(parsed) if isinstance(parsed, dict) else {}
 
-        return cls._run_blocking_with_ocr_heartbeat(
-            lambda: ChatDocumentVisionService.enrich_drawing_extract(
+        kwargs = {
+            "parsed": parsed,
+            "user_id": user_id,
+            "session_id": session_id,
+            "attachment_ids": attachment_ids,
+            "skills": skills,
+        }
+
+        return cls._run_ocr_job(
+            {
+                "kind": DocumentVisionOcrProcessRunner.JOB_ENRICH_DRAWING,
+                "kwargs": kwargs,
+            },
+            inline_operation=lambda: ChatDocumentVisionService.enrich_drawing_extract(
                 parsed,
                 user_id=user_id,
                 session_id=session_id,
@@ -185,6 +252,16 @@ class ChatDocumentVisionTurnService:
             enriched = ChatVisionMemoryGuardService.attach_memory_limited_metadata(
                 dict(parsed) if isinstance(parsed, dict) else {}
             )
+        except VisionOcrProcessCrashedError as exc:
+            logger.error(
+                "document_vision_ocr_process_crashed",
+                extra={"exit_code": exc.exit_code, "mode": "drawing_enrich"},
+            )
+            ChatVisionMemoryGuardService.release_ocr_memory()
+            enriched = cls._attach_process_crashed_metadata(
+                dict(parsed) if isinstance(parsed, dict) else {},
+                exit_code=exc.exit_code,
+            )
 
         if activation.enabled and on_stream_activity and enriched:
             engine = (
@@ -229,8 +306,15 @@ class ChatDocumentVisionTurnService:
             return base, activation
 
         try:
-            vision = cls._run_blocking_with_ocr_heartbeat(
-                lambda: ChatDocumentVisionService._extract_drawing_pdf(
+            vision = cls._run_ocr_job(
+                {
+                    "kind": DocumentVisionOcrProcessRunner.JOB_EXTRACT_DRAWING_PDF,
+                    "kwargs": {
+                        "storage_path": storage_path,
+                        "filename": filename,
+                    },
+                },
+                inline_operation=lambda: ChatDocumentVisionService._extract_drawing_pdf(
                     storage_path,
                     filename=filename,
                 ),
@@ -240,6 +324,14 @@ class ChatDocumentVisionTurnService:
         except (MemoryError, VisionMemoryLimitedError):
             ChatVisionMemoryGuardService.release_ocr_memory()
             enriched = ChatVisionMemoryGuardService.attach_memory_limited_metadata(base)
+            return enriched, activation
+        except VisionOcrProcessCrashedError as exc:
+            logger.error(
+                "document_vision_ocr_process_crashed",
+                extra={"exit_code": exc.exit_code, "mode": "drawing_storage"},
+            )
+            ChatVisionMemoryGuardService.release_ocr_memory()
+            enriched = cls._attach_process_crashed_metadata(base, exit_code=exc.exit_code)
             return enriched, activation
 
         if activation.enabled and on_stream_activity and enriched:
@@ -290,19 +382,41 @@ class ChatDocumentVisionTurnService:
                 phase="ocr",
             )
 
-        metadata = cls._run_blocking_with_ocr_heartbeat(
-            lambda: cls.build_attachment_vision_metadata(
-                user_id=user_id,
-                session_id=session_id,
-                attachment_ids=attachment_ids,
-                skills=skills,
-                intent_route=intent_route,
-                has_agent=has_agent,
-                persist=persist,
-                message=message,
-            ),
-            on_stream_activity=on_stream_activity,
-        )
+        kwargs = {
+            "user_id": user_id,
+            "session_id": session_id,
+            "attachment_ids": attachment_ids,
+            "skills": skills,
+            "intent_route": intent_route,
+            "has_agent": has_agent,
+            "persist": persist,
+            "message": message,
+        }
+
+        try:
+            metadata = cls._run_ocr_job(
+                {
+                    "kind": DocumentVisionOcrProcessRunner.JOB_ATTACHMENT_METADATA,
+                    "kwargs": kwargs,
+                },
+                inline_operation=lambda: cls.build_attachment_vision_metadata(**kwargs),
+                on_stream_activity=on_stream_activity,
+            )
+        except (MemoryError, VisionMemoryLimitedError):
+            ChatVisionMemoryGuardService.release_ocr_memory()
+            metadata = ChatVisionMemoryGuardService.attach_memory_limited_metadata(
+                {"engine": "none", "charCount": 0}
+            )
+        except VisionOcrProcessCrashedError as exc:
+            logger.error(
+                "document_vision_ocr_process_crashed",
+                extra={"exit_code": exc.exit_code, "mode": "attachment"},
+            )
+            ChatVisionMemoryGuardService.release_ocr_memory()
+            metadata = cls._attach_process_crashed_metadata(
+                {"engine": "none", "charCount": 0},
+                exit_code=exc.exit_code,
+            )
 
         if on_stream_activity and metadata:
             ChatStreamActivityService.emit_document_vision_progress(

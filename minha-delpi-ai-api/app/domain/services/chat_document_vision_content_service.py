@@ -524,6 +524,37 @@ class ChatDocumentVisionContentService:
             return 512
 
     @classmethod
+    def process_isolation_enabled(cls) -> bool:
+        raw = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "pdfExtraction",
+            "processIsolation",
+            "enabled",
+        )
+
+        if isinstance(raw, bool):
+            return raw
+
+        if raw is None:
+            return True
+
+        return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+    @classmethod
+    def process_isolation_timeout_seconds(cls) -> int:
+        raw = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "pdfExtraction",
+            "processIsolation",
+            "timeoutSeconds",
+        )
+
+        try:
+            return max(30, int(raw))
+        except (TypeError, ValueError):
+            return 300
+
+    @classmethod
     def memory_guard_easyocr_lazy_release(cls) -> bool:
         raw = ChatAssistantContentService.get_node(
             _BUNDLE,

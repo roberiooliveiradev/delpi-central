@@ -107,6 +107,10 @@
       "minAvailableMbForDrawingOcr": 512,
       "easyocrLazyRelease": true
     },
+    "processIsolation": {
+      "enabled": true,
+      "timeoutSeconds": 300
+    },
     "layoutProfiles": {
       "generic": {
         "enableRegionOcr": false

@@ -38,6 +38,62 @@ def test_run_blocking_with_ocr_heartbeat_pulses_while_waiting(monkeypatch):
     assert all(event["phase"] == "document_vision" for event in events)
 
 
+def test_run_attachment_vision_survives_ocr_process_crash(monkeypatch):
+    from app.domain.exceptions.vision_exceptions import VisionOcrProcessCrashedError
+    from app.domain.services.chat_document_vision_content_service import (
+        ChatDocumentVisionContentService,
+    )
+    from app.domain.services.chat_document_vision_skill_service import (
+        DocumentVisionActivation,
+    )
+    from app.infrastructure.vision.document_vision_ocr_process_runner import (
+        DocumentVisionOcrProcessRunner,
+    )
+
+    events: list[dict] = []
+
+    monkeypatch.setattr(
+        ChatDocumentVisionContentService,
+        "process_isolation_enabled",
+        classmethod(lambda cls: True),
+    )
+    monkeypatch.setattr(
+        ChatDocumentVisionContentService,
+        "process_isolation_timeout_seconds",
+        classmethod(lambda cls: 30),
+    )
+    monkeypatch.setattr(
+        ChatStreamActivityService,
+        "ocr_heartbeat_interval_seconds",
+        classmethod(lambda cls: 0.01),
+    )
+    monkeypatch.setattr(
+        "app.application.services.chat_document_vision_turn_service.ChatDocumentVisionSkillService.resolve_attachment_turn_activation",
+        lambda *_args, **_kwargs: DocumentVisionActivation(
+            enabled=True,
+            mode="attachment_turn",
+        ),
+    )
+
+    def boom(*_args, **_kwargs):
+        raise VisionOcrProcessCrashedError("vision_ocr_process_signal_11", exit_code=-11)
+
+    monkeypatch.setattr(DocumentVisionOcrProcessRunner, "run", staticmethod(boom))
+
+    metadata, activation = ChatDocumentVisionTurnService.run_attachment_vision_with_progress(
+        user_id="u1",
+        session_id="s1",
+        attachment_ids=["a1"],
+        on_stream_activity=events.append,
+    )
+
+    assert activation.enabled is True
+    assert metadata is not None
+    assert metadata.get("processCrashed") is True
+    assert metadata.get("processExitCode") == -11
+    assert any(event.get("phase") == "document_vision" for event in events)
+
+
 def test_run_blocking_with_ocr_heartbeat_worker_runs_inside_app_context():
     from flask import Flask, has_app_context
 
@@ -59,12 +115,20 @@ def test_run_blocking_with_ocr_heartbeat_worker_runs_inside_app_context():
 
 
 def test_run_attachment_vision_with_progress_uses_ocr_heartbeat(monkeypatch):
+    from app.domain.services.chat_document_vision_content_service import (
+        ChatDocumentVisionContentService,
+    )
     from app.domain.services.chat_document_vision_skill_service import (
         DocumentVisionActivation,
     )
 
     events: list[dict] = []
 
+    monkeypatch.setattr(
+        ChatDocumentVisionContentService,
+        "process_isolation_enabled",
+        classmethod(lambda cls: False),
+    )
     monkeypatch.setattr(
         ChatStreamActivityService,
         "ocr_heartbeat_interval_seconds",
