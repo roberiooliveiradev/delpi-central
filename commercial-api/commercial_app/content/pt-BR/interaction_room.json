@@ -19,6 +19,7 @@
     "messageNotInRoom": "A mensagem não pertence a esta sala.",
     "systemEventKindInvalid": "Tipo de evento de sistema inválido.",
     "bodyHtmlNotAllowed": "Envie o texto em markdown; HTML cru não é aceito.",
+    "bodyInlineImageUrlNotAllowed": "Imagens no texto só podem usar anexos da mensagem (attachment:), não links externos.",
     "attachmentTooLarge": "Cada arquivo pode ter no máximo {maxMb} MB.",
     "attachmentLimitExceeded": "No máximo {max} arquivos por mensagem."
   },
@@ -93,6 +94,8 @@
     "systemEventKinds": ["otd_event", "process_stage"],
     "reservedMessageKinds": ["otd_event", "confirmation_event", "wall_post"],
     "messageAttachmentMaxCount": 10,
-    "messageAttachmentMaxBytes": 20971520
+    "messageAttachmentMaxBytes": 20971520,
+    "markdownImagePattern": "!\\[([^\\]]*)]\\(([^)]+)\\)",
+    "allowedAttachmentImageHrefPattern": "^attachment:(?:pending:[A-Za-z0-9_-]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
   }
 }

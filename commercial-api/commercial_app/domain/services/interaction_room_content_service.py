@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,8 @@ class InteractionRoomContentService:
     @classmethod
     def clear_cache(cls) -> None:
         load_interaction_room_messages.cache_clear()
+        cls.markdown_image_pattern.cache_clear()
+        cls.allowed_attachment_image_href_pattern.cache_clear()
 
     @classmethod
     def bundle(cls) -> dict[str, Any]:
@@ -142,6 +145,24 @@ class InteractionRoomContentService:
         raw = cls._section("settings").get(key)
         value = str(raw or "").strip()
         return value or default
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def markdown_image_pattern(cls) -> re.Pattern[str]:
+        raw = cls.setting_str(
+            "markdownImagePattern",
+            r"!\[([^\]]*)]\(([^)]+)\)",
+        )
+        return re.compile(raw)
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def allowed_attachment_image_href_pattern(cls) -> re.Pattern[str]:
+        raw = cls.setting_str(
+            "allowedAttachmentImageHrefPattern",
+            r"^attachment:(?:pending:[A-Za-z0-9_-]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+        )
+        return re.compile(raw)
 
     @classmethod
     def task_title_from_message_body(cls, body_text: str) -> str:
