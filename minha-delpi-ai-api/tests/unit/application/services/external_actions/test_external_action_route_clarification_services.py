@@ -58,6 +58,73 @@ def test_score_gap_skips_when_gap_large():
     assert ExternalActionScoreGapClarificationService.maybe_build(ranked) is None
 
 
+def test_score_gap_skips_zero_scores_like_kimi_ok_smoke():
+    """Mensagem sem overlap lexical → scores 0; não abrir «rotas próximas»."""
+    ranked = [
+        {
+            "actionId": "console-alerts",
+            "operationId": "get_console_alerts",
+            "summary": "Avaliar alertas do console",
+            "selectionScore": 0.0,
+        },
+        {
+            "actionId": "nc-list",
+            "operationId": "list_non_conformities",
+            "summary": "Não conformidades — listagem",
+            "selectionScore": 0.0,
+        },
+    ]
+
+    assert ExternalActionScoreGapClarificationService.maybe_build(ranked) is None
+
+
+def test_score_gap_skips_weak_semantic_tie():
+    ranked = [
+        {
+            "actionId": "a1",
+            "operationId": "get_a",
+            "summary": "A",
+            "selectionScore": 0.22,
+        },
+        {
+            "actionId": "a2",
+            "operationId": "get_b",
+            "summary": "B",
+            "selectionScore": 0.21,
+        },
+    ]
+
+    assert ExternalActionScoreGapClarificationService.maybe_build(ranked) is None
+
+
+def test_lexical_ranking_drops_zero_overlap():
+    from app.application.services.external_actions.external_action_selection_support_service import (
+        ExternalActionSelectionSupportService,
+    )
+
+    ranked = ExternalActionSelectionSupportService.ensure_lexical_ranking(
+        "Responda apenas: KIMI_OK",
+        [
+            {
+                "actionId": "console-alerts",
+                "operationId": "get_console_alerts",
+                "summary": "Avaliar alertas do console",
+                "path": "/console/alerts",
+                "method": "GET",
+            },
+            {
+                "actionId": "nc-list",
+                "operationId": "list_non_conformities",
+                "summary": "Não conformidades — listagem",
+                "path": "/quality/non-conformities",
+                "method": "GET",
+            },
+        ],
+    )
+
+    assert ranked == []
+
+
 def test_catalog_miss_clarifies_when_requires_tool(monkeypatch):
     class _Route:
         requires_tool = True

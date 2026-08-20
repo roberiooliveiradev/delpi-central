@@ -114,7 +114,8 @@ class ExternalActionSelectionSupportService:
                 len(str(item[1].get("path") or "")),
             )
         )
-        return [row for _, row in scored]
+        # Sem overlap lexical → lista vazia (evita top-2 com score 0 e score-gap falso).
+        return [row for score, row in scored if score > 0]
 
     @classmethod
     def lexical_overlap_score(cls, message: str, action: dict) -> float:

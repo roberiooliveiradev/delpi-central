@@ -64,6 +64,12 @@ class ExternalActionGenericRouteSelectionService:
         if action.get("selectionScore") is None:
             return None
 
+        try:
+            if float(action["selectionScore"]) <= 0:
+                return None
+        except (TypeError, ValueError):
+            return None
+
         parameters = {}
 
         if build_date_branch_parameters:

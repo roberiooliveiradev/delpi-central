@@ -185,7 +185,10 @@
     ],
     "scoreGap": {
       "maxAbsoluteGap": 0.05,
-      "clarificationToolName": "clarify_route_selection"
+      "clarificationToolName": "clarify_route_selection",
+      "minTopScoreSemantic": 0.35,
+      "minTopScoreLexical": 1.5,
+      "lexicalScoreFloor": 1.01
     },
     "routeClarification": {
       "scoreGapDirectAnswer": "Encontrei mais de uma rota possível e o ranking ficou empatado. Qual você quer?\n\n1. **{labelA}** (`{operationIdA}`)\n2. **{labelB}** (`{operationIdB}`)\n\nResponda indicando a opção 1 ou 2, ou reformule a pergunta.",

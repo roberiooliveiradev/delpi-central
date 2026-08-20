@@ -31,6 +31,32 @@ class ExternalActionScoreGapClarificationService:
             return 0.05
 
     @classmethod
+    def _score_gap_float(cls, key: str, default: float) -> float:
+        node = ExternalActionResponseContentService.get_node(
+            "actionSelection",
+            "scoreGap",
+        )
+        if not isinstance(node, dict):
+            return default
+        try:
+            return float(node.get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def min_top_score_for(cls, top_score: float) -> float:
+        """Limiar mínimo do 1º colocado antes de pedir clarificação.
+
+        Scores semânticos ficam em ~0–1; overlap lexical costuma ser > 1 quando há hit.
+        Empate 0–0 (mensagem sem overlap, ex. «Responda apenas: KIMI_OK») não deve
+        abrir UI de «rotas próximas».
+        """
+        lexical_floor = cls._score_gap_float("lexicalScoreFloor", 1.01)
+        if top_score > lexical_floor:
+            return cls._score_gap_float("minTopScoreLexical", 1.5)
+        return cls._score_gap_float("minTopScoreSemantic", 0.35)
+
+    @classmethod
     def is_clarification_tool_call(cls, tool_call: dict | None) -> bool:
         if not isinstance(tool_call, dict):
             return False
@@ -38,7 +64,7 @@ class ExternalActionScoreGapClarificationService:
 
     @classmethod
     def maybe_build(cls, ranked: list[dict]) -> dict | None:
-        """Se top-2 empatados, retorna tool call de clarificação; senão None."""
+        """Se top-2 empatados **e** relevantes, retorna tool call de clarificação; senão None."""
         if len(ranked) < 2:
             return None
 
@@ -52,7 +78,15 @@ class ExternalActionScoreGapClarificationService:
 
         try:
             gap = abs(float(score_a) - float(score_b))
+            top_score = float(score_a)
+            rival_score = float(score_b)
         except (TypeError, ValueError):
+            return None
+
+        if top_score <= 0 or rival_score <= 0:
+            return None
+
+        if top_score < cls.min_top_score_for(top_score):
             return None
 
         if gap > cls.max_absolute_gap():
