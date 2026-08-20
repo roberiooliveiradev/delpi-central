@@ -429,7 +429,7 @@ function MessageThreadTextItem({
                 actions={actions}
                 actionExtras={actionExtras}
                 anchorRef={anchorRef}
-                alignEnd={Boolean(message.mine)}
+                alignEnd={!message.mine}
                 portalScopeClassName={portalScopeClassName}
                 toolbarAriaLabel={actionsToolbarAriaLabel}
                 open={open}

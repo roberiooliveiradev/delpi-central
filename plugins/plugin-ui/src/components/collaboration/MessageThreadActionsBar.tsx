@@ -17,7 +17,7 @@ export type MessageThreadActionsBarProps = {
   actions: readonly MessageThreadAction[];
   actionExtras: ReactNode;
   anchorRef: RefObject<HTMLElement | null>;
-  /** Bolhas próprias alinham a barra à direita do âncora. */
+  /** Outros: alinhar à direita da bolha; minhas: à esquerda. */
   alignEnd?: boolean;
   portalScopeClassName?: string;
   toolbarAriaLabel?: string;

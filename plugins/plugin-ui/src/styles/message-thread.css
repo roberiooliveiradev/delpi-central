@@ -252,14 +252,16 @@ button.delpi-ui-message-thread__quote:focus-visible {
   overflow: hidden;
 }
 
-/* Surface da toolbar — posição vem do AnchoredPanelPortal (fixed + coords). */
+/* Surface da toolbar — posição via AnchoredPanelPortal (fixed + coords).
+ * Sempre uma linha; o clamp do viewport desloca o painel inteiro. */
 .delpi-ui-message-thread__actions {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.15rem;
   box-sizing: border-box;
-  max-width: min(22rem, calc(100vw - 1rem));
+  width: max-content;
+  max-width: calc(100vw - 1rem);
   margin: 0;
   padding: 0.15rem;
   border-radius: 0.5rem;

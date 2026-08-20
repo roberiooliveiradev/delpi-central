@@ -461,6 +461,11 @@ describe("MessageThread", () => {
 
 describe("message-thread.css host scroll", () => {
   it("rola no host: overflow visible; toolbar via portal (sem abspos/padding gambiarra)", () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "MessageThread.tsx"),
+      "utf8",
+    );
+    expect(source).toMatch(/alignEnd=\{!message\.mine\}/);
     const css = readFileSync(join(stylesDir, "message-thread.css"), "utf8");
     const root = css.match(/\.delpi-ui-message-thread \{[^}]+\}/)?.[0] ?? "";
     const list = css.match(/\.delpi-ui-message-thread__list \{[^}]+\}/)?.[0] ?? "";
@@ -487,7 +492,9 @@ describe("message-thread.css host scroll", () => {
     expect(mine).toMatch(/22%/);
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
     expect(actions).toMatch(/inline-flex/);
-    expect(actions).toMatch(/max-width:\s*min\(22rem/);
+    expect(actions).toMatch(/flex-wrap:\s*nowrap/);
+    expect(actions).toMatch(/width:\s*max-content/);
+    expect(actions).toMatch(/max-width:\s*calc\(100vw - 1rem\)/);
     expect(actions).not.toMatch(/position:\s*absolute/);
     expect(actions).not.toMatch(/translateY/);
     expect(actions).not.toMatch(/bottom:\s*100%/);
