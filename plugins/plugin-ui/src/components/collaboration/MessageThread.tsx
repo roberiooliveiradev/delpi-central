@@ -1,4 +1,4 @@
-import type { MouseEventHandler, ReactNode } from "react";
+import { useRef, type MouseEventHandler, type ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
@@ -12,6 +12,10 @@ import {
   type MentionTextClassNames,
   type MentionTextItem,
 } from "./MentionText";
+import {
+  MessageThreadActionsBar,
+  useMessageThreadActionsOpen,
+} from "./MessageThreadActionsBar";
 import {
   messageBodyHtmlFromMarkdown,
   messageBodyHtmlIsPlainParagraph,
@@ -101,6 +105,10 @@ export type MessageThreadProps = {
   onParentQuoteClick?: (parentId: string) => void;
   /** Conteúdo à esquerda das actions (ex.: reações rápidas). */
   resolveActionExtras?: (message: MessageThreadItem) => ReactNode;
+  /** Escopo CSS do MFE nos portais (toolbar / menus). */
+  portalScopeClassName?: string;
+  /** Nome acessível da toolbar de opções (host). */
+  actionsToolbarAriaLabel?: string;
   className?: string;
 };
 
@@ -250,6 +258,8 @@ export function MessageThread({
   onMentionActivate,
   onParentQuoteClick,
   resolveActionExtras,
+  portalScopeClassName,
+  actionsToolbarAriaLabel,
   className,
 }: MessageThreadProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
@@ -290,155 +300,187 @@ export function MessageThread({
             );
           }
 
-          const actions = isEditing ? [] : resolveActions?.(message) ?? [];
-          const actionExtras =
-            isEditing || message.deleted
-              ? null
-              : resolveActionExtras?.(message) ?? null;
-          const showActionsBar = actions.length > 0 || Boolean(actionExtras);
-          const quoted = parentQuote(messages, message);
-          const body = isEditing
-            ? (
-                <div className={classNames.editSlot}>
-                  {renderEditSlot?.(message)}
-                </div>
-              )
-            : (
-                renderBody?.(message) ??
-                defaultMessageBody(message, classNames, onMentionActivate)
-              );
-          const avatarName = (message.authorName ?? "").trim();
-          const authorHref = (message.authorHref ?? "").trim();
-          const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
-          const authorSrc = (message.authorSrc ?? "").trim() || null;
-          const showAvatar = Boolean(avatarName && !message.mine);
-          const avatar = showAvatar ? (
-            authorHref && authorLinkTitle ? (
-              <InitialsAvatar
-                classNames={classNames.avatar}
-                name={avatarName}
-                colorKey={message.authorUserId ?? avatarName}
-                size="sm"
-                src={authorSrc}
-                href={authorHref}
-                title={authorLinkTitle}
-                onNavigate={message.onAuthorNavigate}
-              />
-            ) : (
-              <InitialsAvatar
-                classNames={classNames.avatar}
-                name={avatarName}
-                colorKey={message.authorUserId ?? avatarName}
-                size="sm"
-                src={authorSrc}
-                previewable={false}
-              />
-            )
-          ) : null;
-          const showAuthor = Boolean(avatarName && !message.mine);
-          const showHeading = showAuthor || Boolean(message.createdAtLabel);
-
           return (
-            <li
+            <MessageThreadTextItem
               key={message.id}
-              className={itemClassName(classNames, message, isEditing)}
-              data-message-id={message.id}
-              data-message-kind={message.kind}
-              data-editing={isEditing ? "true" : undefined}
-            >
-              <div className={classNames.row}>
-                {avatar}
-                <div className={classNames.cluster}>
-                  {showHeading ? (
-                    <header className={classNames.meta}>
-                      {showAuthor ? (
-                        <span className={classNames.author}>{message.authorName}</span>
-                      ) : null}
-                      {message.createdAtLabel ? (
-                        <time className={classNames.time}>{message.createdAtLabel}</time>
-                      ) : null}
-                    </header>
-                  ) : null}
-                  <div className={classNames.stack}>
-                    {showActionsBar ? (
-                      <div className={classNames.actions}>
-                        {actionExtras}
-                        {actionExtras && actions.length > 0 ? (
-                          <span
-                            className={classNames.actionsDivider}
-                            aria-hidden
-                          />
-                        ) : null}
-                        {actions.map((action) => (
-                          <button
-                            key={action.id}
-                            type="button"
-                            className={
-                              action.danger ? classNames.actionDanger : classNames.action
-                            }
-                            aria-label={action.label}
-                            title={action.title ?? action.label}
-                            onClick={action.onClick}
-                          >
-                            {action.icon ?? action.label}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    <article
-                      className={message.mine ? classNames.bubbleMine : classNames.bubble}
-                    >
-                      {quoted ? (
-                        onParentQuoteClick ? (
-                          <button
-                            type="button"
-                            className={classNames.quote}
-                            data-parent-id={quoted.id}
-                            onClick={() => onParentQuoteClick(quoted.id)}
-                          >
-                            <header className={classNames.quoteMeta}>
-                              {quoted.authorName ? (
-                                <span className={classNames.quoteAuthor}>
-                                  {quoted.authorName}
-                                </span>
-                              ) : null}
-                              {quoted.createdAtLabel ? (
-                                <time className={classNames.quoteTime}>
-                                  {quoted.createdAtLabel}
-                                </time>
-                              ) : null}
-                            </header>
-                            <p className={classNames.quoteBody}>{quoted.bodyText}</p>
-                          </button>
-                        ) : (
-                          <blockquote className={classNames.quote}>
-                            <header className={classNames.quoteMeta}>
-                              {quoted.authorName ? (
-                                <span className={classNames.quoteAuthor}>
-                                  {quoted.authorName}
-                                </span>
-                              ) : null}
-                              {quoted.createdAtLabel ? (
-                                <time className={classNames.quoteTime}>
-                                  {quoted.createdAtLabel}
-                                </time>
-                              ) : null}
-                            </header>
-                            <p className={classNames.quoteBody}>{quoted.bodyText}</p>
-                          </blockquote>
-                        )
-                      ) : null}
-                      {body}
-                      {isEditing ? null : message.belowBody}
-                    </article>
-                  </div>
-                </div>
-              </div>
-            </li>
+              message={message}
+              messages={messages}
+              classNames={classNames}
+              isEditing={isEditing}
+              resolveActions={resolveActions}
+              resolveActionExtras={resolveActionExtras}
+              renderEditSlot={renderEditSlot}
+              renderBody={renderBody}
+              onMentionActivate={onMentionActivate}
+              onParentQuoteClick={onParentQuoteClick}
+              portalScopeClassName={portalScopeClassName}
+              actionsToolbarAriaLabel={actionsToolbarAriaLabel}
+            />
           );
         })}
       </ul>
     </div>
+  );
+}
+
+type MessageThreadTextItemProps = {
+  message: MessageThreadItem;
+  messages: readonly MessageThreadItem[];
+  classNames: MessageThreadClassNames;
+  isEditing: boolean;
+  resolveActions?: MessageThreadProps["resolveActions"];
+  resolveActionExtras?: MessageThreadProps["resolveActionExtras"];
+  renderEditSlot?: MessageThreadProps["renderEditSlot"];
+  renderBody?: MessageThreadProps["renderBody"];
+  onMentionActivate?: MessageThreadProps["onMentionActivate"];
+  onParentQuoteClick?: MessageThreadProps["onParentQuoteClick"];
+  portalScopeClassName?: string;
+  actionsToolbarAriaLabel?: string;
+};
+
+function MessageThreadTextItem({
+  message,
+  messages,
+  classNames,
+  isEditing,
+  resolveActions,
+  resolveActionExtras,
+  renderEditSlot,
+  renderBody,
+  onMentionActivate,
+  onParentQuoteClick,
+  portalScopeClassName,
+  actionsToolbarAriaLabel,
+}: MessageThreadTextItemProps) {
+  const anchorRef = useRef<HTMLElement | null>(null);
+  const { open, setOpen, onAnchorEnter, onAnchorLeave } = useMessageThreadActionsOpen();
+
+  const actions = isEditing ? [] : resolveActions?.(message) ?? [];
+  const actionExtras =
+    isEditing || message.deleted ? null : resolveActionExtras?.(message) ?? null;
+  const showActionsBar = actions.length > 0 || Boolean(actionExtras);
+  const quoted = parentQuote(messages, message);
+  const body = isEditing ? (
+    <div className={classNames.editSlot}>{renderEditSlot?.(message)}</div>
+  ) : (
+    renderBody?.(message) ?? defaultMessageBody(message, classNames, onMentionActivate)
+  );
+  const avatarName = (message.authorName ?? "").trim();
+  const authorHref = (message.authorHref ?? "").trim();
+  const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
+  const authorSrc = (message.authorSrc ?? "").trim() || null;
+  const showAvatar = Boolean(avatarName && !message.mine);
+  const avatar = showAvatar ? (
+    authorHref && authorLinkTitle ? (
+      <InitialsAvatar
+        classNames={classNames.avatar}
+        name={avatarName}
+        colorKey={message.authorUserId ?? avatarName}
+        size="sm"
+        src={authorSrc}
+        href={authorHref}
+        title={authorLinkTitle}
+        onNavigate={message.onAuthorNavigate}
+      />
+    ) : (
+      <InitialsAvatar
+        classNames={classNames.avatar}
+        name={avatarName}
+        colorKey={message.authorUserId ?? avatarName}
+        size="sm"
+        src={authorSrc}
+        previewable={false}
+      />
+    )
+  ) : null;
+  const showAuthor = Boolean(avatarName && !message.mine);
+  const showHeading = showAuthor || Boolean(message.createdAtLabel);
+
+  return (
+    <li
+      className={itemClassName(classNames, message, isEditing)}
+      data-message-id={message.id}
+      data-message-kind={message.kind}
+      data-editing={isEditing ? "true" : undefined}
+    >
+      <div className={classNames.row}>
+        {avatar}
+        <div
+          className={classNames.cluster}
+          onMouseEnter={showActionsBar ? onAnchorEnter : undefined}
+          onMouseLeave={showActionsBar ? onAnchorLeave : undefined}
+          onFocus={showActionsBar ? onAnchorEnter : undefined}
+          onBlur={showActionsBar ? onAnchorLeave : undefined}
+        >
+          {showHeading ? (
+            <header className={classNames.meta}>
+              {showAuthor ? (
+                <span className={classNames.author}>{message.authorName}</span>
+              ) : null}
+              {message.createdAtLabel ? (
+                <time className={classNames.time}>{message.createdAtLabel}</time>
+              ) : null}
+            </header>
+          ) : null}
+          <div className={classNames.stack}>
+            {showActionsBar ? (
+              <MessageThreadActionsBar
+                classNames={classNames}
+                actions={actions}
+                actionExtras={actionExtras}
+                anchorRef={anchorRef}
+                alignEnd={Boolean(message.mine)}
+                portalScopeClassName={portalScopeClassName}
+                toolbarAriaLabel={actionsToolbarAriaLabel}
+                open={open}
+                onOpenChange={setOpen}
+                onPanelEnter={onAnchorEnter}
+                onPanelLeave={onAnchorLeave}
+              />
+            ) : null}
+            <article
+              ref={anchorRef}
+              className={message.mine ? classNames.bubbleMine : classNames.bubble}
+            >
+              {quoted ? (
+                onParentQuoteClick ? (
+                  <button
+                    type="button"
+                    className={classNames.quote}
+                    data-parent-id={quoted.id}
+                    onClick={() => onParentQuoteClick(quoted.id)}
+                  >
+                    <header className={classNames.quoteMeta}>
+                      {quoted.authorName ? (
+                        <span className={classNames.quoteAuthor}>{quoted.authorName}</span>
+                      ) : null}
+                      {quoted.createdAtLabel ? (
+                        <time className={classNames.quoteTime}>{quoted.createdAtLabel}</time>
+                      ) : null}
+                    </header>
+                    <p className={classNames.quoteBody}>{quoted.bodyText}</p>
+                  </button>
+                ) : (
+                  <blockquote className={classNames.quote}>
+                    <header className={classNames.quoteMeta}>
+                      {quoted.authorName ? (
+                        <span className={classNames.quoteAuthor}>{quoted.authorName}</span>
+                      ) : null}
+                      {quoted.createdAtLabel ? (
+                        <time className={classNames.quoteTime}>{quoted.createdAtLabel}</time>
+                      ) : null}
+                    </header>
+                    <p className={classNames.quoteBody}>{quoted.bodyText}</p>
+                  </blockquote>
+                )
+              ) : null}
+              {body}
+              {isEditing ? null : message.belowBody}
+            </article>
+          </div>
+        </div>
+      </div>
+    </li>
   );
 }
 

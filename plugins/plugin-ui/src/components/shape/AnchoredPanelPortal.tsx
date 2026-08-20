@@ -32,6 +32,8 @@ export type AnchoredPanelPortalProps = {
   preferredPlacement?: AnchoredPanelPlacement;
   /** false = não inverte o lado preferido (ver `resolveAnchoredPanelCoords`). */
   allowFlip?: boolean;
+  /** Alinhamento horizontal em top/bottom (`end` = à direita do âncora). */
+  horizontalAlign?: "start" | "end";
   /** Folga em px entre âncora e painel. */
   gap?: number;
   /**
@@ -55,6 +57,8 @@ export type AnchoredPanelPortalProps = {
    * compact = ribbon / catálogo / popovers densos (host-density-compact.css).
    */
   density?: "comfortable" | "compact";
+  onPanelMouseEnter?: () => void;
+  onPanelMouseLeave?: () => void;
   children: ReactNode;
 };
 
@@ -70,11 +74,14 @@ export function AnchoredPanelPortal({
   matchAnchorWidth = false,
   preferredPlacement = "bottom",
   allowFlip = true,
+  horizontalAlign = "start",
   gap,
   portalScopeClassName,
   onDismiss,
   exclusive = true,
   density,
+  onPanelMouseEnter,
+  onPanelMouseLeave,
   children,
 }: AnchoredPanelPortalProps) {
   const reactId = useId();
@@ -90,6 +97,7 @@ export function AnchoredPanelPortal({
     matchAnchorWidth,
     preferredPlacement,
     allowFlip,
+    horizontalAlign,
     ...(gap != null ? { gap } : null),
   });
   const theme = useDelpiUiPortalTheme(open, anchorRef);
@@ -157,6 +165,8 @@ export function AnchoredPanelPortal({
       aria-label={ariaLabel}
       data-delpi-anchored-exclusive={resolvedExclusive ? "true" : "false"}
       {...(density ? { "data-delpi-ui-density": density } : {})}
+      onMouseEnter={onPanelMouseEnter}
+      onMouseLeave={onPanelMouseLeave}
     >
       {children}
     </div>

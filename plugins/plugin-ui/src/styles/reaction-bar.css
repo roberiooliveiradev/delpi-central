@@ -53,9 +53,10 @@
 /* Toolbar compacta (hover options) — 5 quick + «+». */
 .delpi-ui-reaction-quick-bar {
   display: inline-flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.05rem;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   border: none;

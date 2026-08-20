@@ -15,6 +15,12 @@ export type AnchoredPanelCoordsInput = {
    * Útil na ribbon do editor (evita painel subir e cobrir a faixa).
    */
   allowFlip?: boolean;
+  /**
+   * Alinhamento horizontal em placements `top`/`bottom`.
+   * `start` = borda esquerda do âncora; `end` = borda direita (bolhas «mine»).
+   * Sempre faz clamp no viewport.
+   */
+  horizontalAlign?: "start" | "end";
 };
 
 export type AnchoredPanelCoords = {
@@ -51,6 +57,7 @@ export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): Anc
   const gap = input.gap ?? 4;
   const margin = input.margin ?? 8;
   const allowFlip = input.allowFlip !== false;
+  const horizontalAlign = input.horizontalAlign === "end" ? "end" : "start";
   const { anchor, panelWidth, panelHeight, viewportWidth: vw, viewportHeight: vh } = input;
   const preferred = input.preferredPlacement ?? "bottom";
 
@@ -60,8 +67,12 @@ export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): Anc
   };
 
   const alignHorizontalBelow = (): number => {
-    if (panelWidth <= 0) return anchor.left;
-    return clamp(anchor.left, margin, Math.max(margin, vw - panelWidth - margin));
+    if (panelWidth <= 0) {
+      return horizontalAlign === "end" ? anchor.right : anchor.left;
+    }
+    const preferredLeft =
+      horizontalAlign === "end" ? anchor.right - panelWidth : anchor.left;
+    return clamp(preferredLeft, margin, Math.max(margin, vw - panelWidth - margin));
   };
 
   const tryRight = (): AnchoredPanelCoords | null => {

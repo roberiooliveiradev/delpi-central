@@ -25,6 +25,7 @@ import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import { CommercialEntityLink } from "../../components/CommercialEntityLink";
 import {
+  CM_PORTAL_SCOPE,
   CommercialActionButton,
   CommercialAlertQueue,
   CommercialConversationFileDropLayer,
@@ -643,6 +644,8 @@ export function InteractionRoomPage({
                     resolveActions={resolveActions}
                     resolveActionExtras={resolveActionExtras}
                     onParentQuoteClick={onParentQuoteClick}
+                    portalScopeClassName={CM_PORTAL_SCOPE}
+                    actionsToolbarAriaLabel={content.messageActionsToolbarAriaLabel}
                   />
                 )}
                 </div>

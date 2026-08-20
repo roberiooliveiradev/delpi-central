@@ -104,7 +104,7 @@ describe("MessageThread", () => {
 
   it("exposes host actions on bubbles", () => {
     const onDelete = vi.fn();
-    render(
+    const { container } = render(
       <MessageThread
         classNames={classNames}
         listAriaLabel="Messages"
@@ -128,6 +128,7 @@ describe("MessageThread", () => {
         ]}
       />,
     );
+    fireEvent.mouseEnter(container.querySelector(".delpi-ui-message-thread__cluster")!);
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
@@ -159,7 +160,8 @@ describe("MessageThread", () => {
         ]}
       />,
     );
-    const actions = container.querySelector(".delpi-ui-message-thread__actions");
+    fireEvent.mouseEnter(container.querySelector(".delpi-ui-message-thread__cluster")!);
+    const actions = document.body.querySelector(".delpi-ui-message-thread__actions");
     expect(actions).not.toBeNull();
     expect(screen.getByTestId("reaction-extras")).toBeTruthy();
     expect(actions?.querySelector(".delpi-ui-message-thread__actions-divider")).not.toBeNull();
@@ -198,7 +200,7 @@ describe("MessageThread", () => {
 
   it("exposes icon actions by accessible name without permanent text", () => {
     const onPin = vi.fn();
-    render(
+    const { container } = render(
       <MessageThread
         classNames={classNames}
         listAriaLabel="Messages"
@@ -223,6 +225,7 @@ describe("MessageThread", () => {
         ]}
       />,
     );
+    fireEvent.mouseEnter(container.querySelector(".delpi-ui-message-thread__cluster")!);
     expect(screen.queryByText("Pin message")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Pin message" }));
     expect(onPin).toHaveBeenCalledTimes(1);
@@ -378,7 +381,7 @@ describe("MessageThread", () => {
     expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:photo-bruno");
   });
 
-  it("coloca a barra de ações fora do article da bolha", () => {
+  it("coloca a barra de ações em portal no body (fora do scroll da thread)", () => {
     const { container } = render(
       <MessageThread
         classNames={classNames}
@@ -399,15 +402,15 @@ describe("MessageThread", () => {
       />,
     );
     const article = container.querySelector("article");
-    const actions = container.querySelector(".delpi-ui-message-thread__actions");
     const cluster = container.querySelector(".delpi-ui-message-thread__cluster");
     expect(article).not.toBeNull();
-    expect(actions).not.toBeNull();
     expect(cluster).not.toBeNull();
-    const stack = container.querySelector(".delpi-ui-message-thread__stack");
-    expect(article?.contains(actions)).toBe(false);
-    expect(cluster?.contains(actions)).toBe(true);
-    expect(stack?.contains(actions)).toBe(true);
+    fireEvent.mouseEnter(container.querySelector(".delpi-ui-message-thread__cluster")!);
+    const actionsInTree = container.querySelector(".delpi-ui-message-thread__actions");
+    expect(actionsInTree).toBeNull();
+    const actionsInBody = document.body.querySelector(".delpi-ui-message-thread__actions");
+    expect(actionsInBody).not.toBeNull();
+    expect(article?.contains(actionsInBody)).toBe(false);
     expect(cluster?.contains(article)).toBe(true);
   });
 
@@ -457,7 +460,7 @@ describe("MessageThread", () => {
 });
 
 describe("message-thread.css host scroll", () => {
-  it("rola no host: overflow visible + padding para toolbar; actions sem transform", () => {
+  it("rola no host: overflow visible; toolbar via portal (sem abspos/padding gambiarra)", () => {
     const css = readFileSync(join(stylesDir, "message-thread.css"), "utf8");
     const root = css.match(/\.delpi-ui-message-thread \{[^}]+\}/)?.[0] ?? "";
     const list = css.match(/\.delpi-ui-message-thread__list \{[^}]+\}/)?.[0] ?? "";
@@ -466,8 +469,8 @@ describe("message-thread.css host scroll", () => {
     const cluster = css.match(/\.delpi-ui-message-thread__cluster \{[^}]+\}/)?.[0] ?? "";
     expect(root).toMatch(/overflow:\s*visible;/);
     expect(root).not.toMatch(/overflow-y:\s*auto;/);
-    expect(root).not.toMatch(/overflow-x:\s*clip;/);
-    expect(list).toMatch(/padding:\s*2\.75rem 0 0;/);
+    expect(list).toMatch(/padding:\s*0;/);
+    expect(list).not.toMatch(/2\.75rem/);
     expect(row).toMatch(/width:\s*max-content;/);
     expect(row).toMatch(/max-width:\s*min\(92%,\s*56rem\)/);
     expect(row).toMatch(/align-items:\s*flex-start;/);
@@ -483,19 +486,13 @@ describe("message-thread.css host scroll", () => {
     const mine = css.match(/\.delpi-ui-message-thread__bubble--mine \{[^}]+\}/)?.[0] ?? "";
     expect(mine).toMatch(/22%/);
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
-    expect(actions).toMatch(/position:\s*absolute;/);
-    expect(actions).toMatch(/bottom:\s*100%;/);
+    expect(actions).toMatch(/inline-flex/);
+    expect(actions).toMatch(/max-width:\s*min\(22rem/);
+    expect(actions).not.toMatch(/position:\s*absolute/);
     expect(actions).not.toMatch(/translateY/);
-    expect(actions).toMatch(/right:\s*0;/);
-    expect(actions).toMatch(/left:\s*auto;/);
-    const mineActions =
-      css.match(
-        /\.delpi-ui-message-thread__item--mine \.delpi-ui-message-thread__actions \{[^}]+\}/,
-      )?.[0] ?? "";
-    expect(mineActions).toMatch(/left:\s*0;/);
-    expect(mineActions).toMatch(/right:\s*auto;/);
+    expect(actions).not.toMatch(/bottom:\s*100%/);
     expect(css).not.toMatch(/opacity 0\.15s ease 0\.45s/);
-    expect(css).toMatch(/transition:\s*opacity 0\.1s ease;/);
+    expect(css).not.toMatch(/cluster:hover \.delpi-ui-message-thread__actions/);
     expect(css).toMatch(/box-shadow:\s*none;/);
     expect(css).toMatch(/__body--rich/);
     expect(css).not.toMatch(/__body--rich code \{/);

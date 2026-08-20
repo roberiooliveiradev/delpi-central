@@ -1,7 +1,5 @@
 /* Message thread: bubbles, system lines, quoted reply.
- * Overflow visible no thread — popovers (EmojiInsertMenu via portal) e a
- * toolbar abspos não podem ser clipados. O padding-top da lista reserva a
- * altura da toolbar da 1ª mensagem para ela não inflar o scroll do host. */
+ * Toolbar de opções vai ao body via AnchoredPanelPortal (flip + clamp). */
 .delpi-ui-message-thread {
   min-width: 0;
   flex: 1;
@@ -14,8 +12,7 @@
   flex-direction: column;
   gap: 0;
   margin: 0;
-  /* Reserva a altura da toolbar (quick reactions + actions) da 1ª mensagem. */
-  padding: 2.75rem 0 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -255,52 +252,19 @@ button.delpi-ui-message-thread__quote:focus-visible {
   overflow: hidden;
 }
 
+/* Surface da toolbar — posição vem do AnchoredPanelPortal (fixed + coords). */
 .delpi-ui-message-thread__actions {
-  position: absolute;
-  top: auto;
-  bottom: 100%;
-  left: auto;
-  right: 0;
-  z-index: 3;
-  display: flex;
-  flex-wrap: nowrap;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.15rem;
-  margin: 0 0 0.2rem;
+  box-sizing: border-box;
+  max-width: min(22rem, calc(100vw - 1rem));
+  margin: 0;
   padding: 0.15rem;
   border-radius: 0.5rem;
-  /* Sem transform — evita containing block que prende position:fixed / clip de popover. */
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
   box-shadow: 0 4px 14px color-mix(in srgb, var(--delpi-ui-text, #0f172a) 12%, transparent);
-}
-
-/* Minhas: à esquerda — não cobre a borda direita da bolha alinhada à direita. */
-.delpi-ui-message-thread__item--mine .delpi-ui-message-thread__actions {
-  left: 0;
-  right: auto;
-}
-
-.delpi-ui-message-thread__actions::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  right: 0;
-  left: 0;
-  /* Ponte de hover até a bolha (gap + metade da altura visual). */
-  height: 1.1rem;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .delpi-ui-message-thread__actions {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.1s ease;
-  }
-
-  .delpi-ui-message-thread__cluster:hover .delpi-ui-message-thread__actions,
-  .delpi-ui-message-thread__cluster:focus-within .delpi-ui-message-thread__actions {
-    opacity: 1;
-    pointer-events: auto;
-  }
 }
 
 .delpi-ui-message-thread__action {

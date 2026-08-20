@@ -16,6 +16,7 @@ import {
 } from "../../api/interactionRoomsApi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
+  CM_PORTAL_SCOPE,
   CommercialActionButton,
   CommercialConversationFileDropLayer,
   CommercialEmptyState,
@@ -577,6 +578,8 @@ export function InteractionRoomPanel({
             resolveActions={resolveActions}
             resolveActionExtras={resolveActionExtras}
             onParentQuoteClick={onParentQuoteClick}
+            portalScopeClassName={CM_PORTAL_SCOPE}
+            actionsToolbarAriaLabel={content.messageActionsToolbarAriaLabel}
           />
           </div>
         )}

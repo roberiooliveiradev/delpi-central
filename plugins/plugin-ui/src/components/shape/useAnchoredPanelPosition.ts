@@ -22,6 +22,8 @@ export type AnchoredPanelPositionOptions = {
   preferredPlacement?: AnchoredPanelPlacement;
   /** false = não inverte bottom↔top (ribbon). Default true. */
   allowFlip?: boolean;
+  /** Alinhamento horizontal em top/bottom. */
+  horizontalAlign?: "start" | "end";
 };
 
 function resolvePositionOptions(
@@ -33,6 +35,7 @@ function resolvePositionOptions(
       matchAnchorWidth: false,
       preferredPlacement: "bottom",
       allowFlip: true,
+      horizontalAlign: "start",
     };
   }
   return {
@@ -40,6 +43,7 @@ function resolvePositionOptions(
     matchAnchorWidth: Boolean(options?.matchAnchorWidth),
     preferredPlacement: options?.preferredPlacement ?? "bottom",
     allowFlip: options?.allowFlip !== false,
+    horizontalAlign: options?.horizontalAlign === "end" ? "end" : "start",
   };
 }
 
@@ -49,7 +53,8 @@ export function useAnchoredPanelPosition(
   panelRef: RefObject<HTMLElement | null>,
   options: number | AnchoredPanelPositionOptions = 4,
 ): CSSProperties {
-  const { gap, matchAnchorWidth, preferredPlacement, allowFlip } = resolvePositionOptions(options);
+  const { gap, matchAnchorWidth, preferredPlacement, allowFlip, horizontalAlign } =
+    resolvePositionOptions(options);
   const [style, setStyle] = useState<CSSProperties>({
     position: "fixed",
     top: -9999,
@@ -104,6 +109,7 @@ export function useAnchoredPanelPosition(
         viewportHeight: window.innerHeight,
         preferredPlacement,
         allowFlip,
+        horizontalAlign,
       });
 
       setStyle({
@@ -144,7 +150,16 @@ export function useAnchoredPanelPosition(
       window.visualViewport?.removeEventListener("scroll", update);
       resizeObserver?.disconnect();
     };
-  }, [allowFlip, anchorRef, gap, matchAnchorWidth, open, panelRef, preferredPlacement]);
+  }, [
+    allowFlip,
+    anchorRef,
+    gap,
+    horizontalAlign,
+    matchAnchorWidth,
+    open,
+    panelRef,
+    preferredPlacement,
+  ]);
 
   return style;
 }

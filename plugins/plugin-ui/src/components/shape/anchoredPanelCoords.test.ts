@@ -59,19 +59,20 @@ describe("resolveAnchoredPanelCoords", () => {
     expect(next.left).toBe(100);
   });
 
-  it("allowFlip false mantém bottom mesmo sem espaço (clamp)", () => {
+  it("horizontalAlign end ancora à direita e faz clamp no viewport", () => {
     const next = resolveAnchoredPanelCoords({
-      anchor: { left: 40, top: 700, right: 80, bottom: 740, width: 40, height: 40 },
-      panelWidth: 200,
-      panelHeight: 200,
-      viewportWidth: 800,
+      anchor: { left: 20, top: 200, right: 80, bottom: 240, width: 60, height: 40 },
+      panelWidth: 240,
+      panelHeight: 40,
+      viewportWidth: 400,
       viewportHeight: 800,
-      preferredPlacement: "bottom",
-      allowFlip: false,
+      preferredPlacement: "top",
+      horizontalAlign: "end",
       gap: 4,
       margin: 8,
     });
-    expect(next.placement).toBe("bottom");
-    expect(next.top).toBe(800 - 200 - 8);
+    expect(next.placement).toBe("top");
+    // preferredLeft = 80 - 240 = -160 → clamp para margin 8
+    expect(next.left).toBe(8);
   });
 });

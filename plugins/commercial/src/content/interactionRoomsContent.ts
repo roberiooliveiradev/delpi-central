@@ -36,6 +36,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   roomSendError: "Não foi possível enviar a mensagem.",
   roomMembersAriaLabel: "Participantes da sala",
   roomMessagesAriaLabel: "Mensagens da sala",
+  messageActionsToolbarAriaLabel: "Opções da mensagem",
   messageDeleted: "Mensagem removida.",
   editActionLabel: "Editar",
   editCancelLabel: "Cancelar",

@@ -14,6 +14,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/resolveActionExtras/);
+    expect(source).toMatch(/portalScopeClassName=\{CM_PORTAL_SCOPE\}/);
+    expect(source).toMatch(/messageActionsToolbarAriaLabel/);
     expect(source).toMatch(/InteractionRoomMessageReactionQuickBar/);
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).not.toMatch(/cm-message-thread__actions/);
