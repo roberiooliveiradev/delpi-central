@@ -300,7 +300,7 @@ describe("MentionComposer", () => {
     )).not.toMatch(/expandCollapsedSelectionForFormat/);
   });
 
-  it("expõe Desfazer/Refazer via execCommand sem RichTextEditor", () => {
+  it("expõe Desfazer/Refazer via pilha markdown sem RichTextEditor", () => {
     const source = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), "MentionComposer.tsx"),
       "utf8",
@@ -308,40 +308,48 @@ describe("MentionComposer", () => {
     expect(source).not.toMatch(/from ["'][^"']*RichTextToolbar["']/);
     expect(source).not.toMatch(/from ["'][^"']*RichTextEditor["']/);
     expect(source).not.toMatch(/<EditorHistoryActions/);
-    expect(source).toMatch(/runRichTextCommand\(el, command\)/);
+    expect(source).not.toMatch(/runRichTextCommand\(el, command\)/);
+    expect(source).not.toMatch(/queryRichTextCommandEnabled/);
+    expect(source).toMatch(/createMentionComposerHistory/);
     expect(source).toMatch(/appendShortcutHint/);
+    expect(source).toMatch(/runHistory\("undo"\)/);
 
-    const exec = vi.fn().mockReturnValue(true);
-    document.execCommand = exec;
-    document.queryCommandEnabled = vi.fn((cmd: string) => cmd === "undo" || cmd === "redo");
+    document.execCommand = vi.fn().mockReturnValue(true);
 
+    const onChange = vi.fn();
     const formatLabels = {
       ...labels,
       formatToggleAriaLabel: "Format",
+      formatBoldAriaLabel: "Bold",
       formatUndoAriaLabel: "Undo",
       formatRedoAriaLabel: "Redo",
     };
     render(
       <MentionComposer
         value="abc"
-        onChange={vi.fn()}
+        onChange={onChange}
         onSubmit={vi.fn()}
         labels={formatLabels}
         classNames={classNames}
       />,
     );
-    fireEvent.click(screen.getByLabelText("Format"));
-    const undoBtn = screen.getByLabelText("Undo");
-    const redoBtn = screen.getByLabelText("Redo");
-    expect(undoBtn.getAttribute("aria-label")).toBe("Undo");
-    expect(redoBtn.getAttribute("aria-label")).toBe("Redo");
+    const surface = screen.getByLabelText("Write a message");
+    const all = document.createRange();
+    all.selectNodeContents(surface);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(all);
 
-    // Habilita após selectionchange simulado via clique na superfície.
-    fireEvent.click(screen.getByLabelText("Write a message"));
+    fireEvent.click(screen.getByLabelText("Format"));
+    const undoBtn = screen.getByLabelText("Undo") as HTMLButtonElement;
+    expect(Boolean(undoBtn.disabled)).toEqual(true);
+    fireEvent.click(screen.getByLabelText("Bold"));
+    expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
+    expect(Boolean(undoBtn.disabled)).toEqual(false);
+
     fireEvent.click(undoBtn);
-    expect(exec).toHaveBeenCalledWith("undo", false, undefined);
-    fireEvent.click(redoBtn);
-    expect(exec).toHaveBeenCalledWith("redo", false, undefined);
+    expect(surface.innerHTML.toLowerCase()).not.toMatch(/<(strong|b)\b/);
+    expect(surface.textContent?.replace(/\u200b/g, "")).toContain("abc");
+    expect(document.execCommand).not.toHaveBeenCalledWith("undo", false, undefined);
   });
 });
 

@@ -35,10 +35,8 @@ import {
   applyRichTextFontSize,
   getRichTextSelectionRange,
   insertRichTextHtmlFragment,
-  queryRichTextCommandEnabled,
   queryRichTextFontSize,
   restoreRichTextSelection,
-  runRichTextCommand,
 } from "../rich-text/richTextCommands";
 import {
   clipboardHasUsefulHtml,
@@ -241,15 +239,16 @@ export function MentionComposer({
   const [formatOpen, setFormatOpen] = useState(false);
   const [fontSize, setFontSize] = useState(COMPOSER_FONT_SIZE_DEFAULT);
   const [formatFlags, setFormatFlags] = useState(emptyComposerFormatFlags());
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
+  const [historyTick, setHistoryTick] = useState(0);
   const menuOpen = Boolean(activeMention) && !disabled;
   const empty = !value.trim();
   const showFormat = Boolean(labels.formatToggleAriaLabel);
+  const canUndo = historyRef.current.canUndo();
+  const canRedo = historyRef.current.canRedo();
+  void historyTick;
 
   const refreshHistoryFlags = () => {
-    setCanUndo(queryRichTextCommandEnabled("undo"));
-    setCanRedo(queryRichTextCommandEnabled("redo"));
+    setHistoryTick((tick) => tick + 1);
   };
 
   const readSnapshot = (): MentionComposerHistorySnapshot => {
@@ -441,16 +440,39 @@ export function MentionComposer({
     emitMarkdownAndMention();
   };
 
+  const applySnapshot = (snapshot: MentionComposerHistorySnapshot) => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    el.focus();
+    el.innerHTML = snapshot.markdown.trim()
+      ? markdownToRichTextHtml(snapshot.markdown)
+      : "";
+    setEditablePlainCursor(el, snapshot.cursor);
+    savedRangeRef.current = getRichTextSelectionRange(el);
+    lastStableRef.current = snapshot;
+    setFormatFlags(queryComposerFormatFlags(el));
+    const size = queryRichTextFontSize(el);
+    if (size) setFontSize(clampComposerFontSize(size));
+    onChange(snapshot.markdown);
+    const plain = snapshotEditablePlaintext(el);
+    setActiveMention(detectActiveMention(plain.text, plain.cursor));
+    refreshHistoryFlags();
+  };
+
   const runHistory = (command: "undo" | "redo") => {
     const el = surfaceRef.current;
     if (!el) return;
     flushTypingCoalesce();
-    restoreRichTextSelection(el, savedRangeRef.current);
-    runRichTextCommand(el, command);
-    setFormatFlags(queryComposerFormatFlags(el));
-    lastStableRef.current = readSnapshot();
-    refreshHistoryFlags();
-    emitMarkdownAndMention();
+    const current = readSnapshot();
+    const next =
+      command === "undo"
+        ? historyRef.current.undo(current)
+        : historyRef.current.redo(current);
+    if (!next) {
+      refreshHistoryFlags();
+      return;
+    }
+    applySnapshot(next);
   };
 
   const applyFontSize = (nextRaw: number) => {
@@ -493,6 +515,20 @@ export function MentionComposer({
         setActiveMention(null);
       }
       return;
+    }
+    const mod = event.ctrlKey || event.metaKey;
+    if (mod && !event.altKey) {
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        runHistory("undo");
+        return;
+      }
+      if (key === "y" || (key === "z" && event.shiftKey)) {
+        event.preventDefault();
+        runHistory("redo");
+        return;
+      }
     }
     if (applyShortcut(event)) {
       event.preventDefault();
