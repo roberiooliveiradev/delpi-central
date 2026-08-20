@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** **E7 entregue**; **E8.S1** (WIREFRAMES + README MFE) em andamento/commit. Smoke Docker adiados.  
+> **Status:** **E7 entregue**; **E8.S1–S2** docs (UX + contrato API/DATA-MODEL). Próximo: E8.S3 catálogo kit. Smoke Docker adiados.  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -512,7 +512,7 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - **Backend (commercial-api):** nenhum de código; gate `test_interaction_rooms_wireframes_doc.py`.
 - **Não fazer:** reescrever WF no meio de E1–E7.
 
-### E8.S2 — Contrato API + DATA-MODEL — custo M
+### E8.S2 — Contrato API + DATA-MODEL — custo M ✅
 
 - **Front (plugin-ui / kit):** nenhum de código.
 - **Front (MFE commercial):** nenhum de código.

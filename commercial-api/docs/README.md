@@ -14,7 +14,7 @@ API dona do estado Delpi do **Portal Comercial** (carteiras, worklist, contatos 
 | [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) | `access` / `manage` (sem code novo da sala) |
 | [SCOPE-OWNERSHIP.md](../../docs/12-roadmap-e-evolucao/commercial/SCOPE-OWNERSHIP.md) | Ownership Portal × PVA |
 | [plugins/commercial/README.md](../../plugins/commercial/README.md) | Rotas UI + tabela HTTP da sala |
-| [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md) | Backlog sala (E1–E8 Front/Back; **não iniciado**) |
+| [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md) | Roadmap sala — **E1–E7 entregues**; E8 docs |
 
 ## Architecture (neste pacote)
 
@@ -33,7 +33,8 @@ API dona do estado Delpi do **Portal Comercial** (carteiras, worklist, contatos 
 | Conteúdo PT / kinds | `commercial_app/content/pt-BR/interaction_room.json` · `interaction_mention_kinds.json` |
 | Tarefa a partir da mensagem | `create_task_from_interaction_message` (+ mensagem `task_ref`) |
 | System events | use case `post_system_message` (**sem** rota HTTP) — `otd_event` / `process_stage` |
-| Anexos | `owner_type=room_message` em `/attachments` (volume `commercial-attachments`) |
+| Anexos | `owner_type=room_message` em `/attachments` (volume `commercial-attachments`; teto 10 × 20 MB) |
+| Mensagem | `body_text` markdown; POST/PATCH 422 se HTML cru; PATCH `mentions[]` = replace; reply via `parent_id` |
 | Acesso | `InteractionRoomAccessService` — **`commercial.access` global** na borda; WS `interaction` + `room:{uuid}` |
 | MFE | `plugins/commercial` — inbox, page, panel na ficha; **nunca** api-delpi |
 

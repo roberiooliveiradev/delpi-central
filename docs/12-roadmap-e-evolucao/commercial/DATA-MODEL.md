@@ -844,12 +844,14 @@ Estado por usuário (**não** ACL): `last_read_at` (cursor de inbox; upsert em `
 | `parent_id` | UUID | NULL — FK → `interaction_messages(id)` (thread) |
 | `author_user_id` | TEXT | NULL quando `message_kind=system` |
 | `message_kind` | TEXT | NOT NULL — check `IN ('text', 'system', 'task_ref', 'pin')`; JSON reserva `otd_event`, `confirmation_event`, `wall_post` |
-| `body_text` | TEXT | NOT NULL, default `''` |
+| `body_text` | TEXT | NOT NULL, default `''` — **markdown** (nunca HTML); preview de inbox = texto plano |
 | `edited_at` | TIMESTAMPTZ | NULL |
 | `deleted_at` | TIMESTAMPTZ | NULL — soft delete |
 | `created_at` | TIMESTAMPTZ | NOT NULL, default `NOW()` |
 
 **Índices:** `(room_id, created_at DESC)`; `(parent_id)` WHERE `parent_id IS NOT NULL`.
+
+**Contrato API:** POST/PATCH rejeitam HTML cru (422); PATCH `mentions[]` = replace; anexos da mensagem ≤ 10 × 20 MB (`room_message`).
 
 #### `interaction_mentions`
 

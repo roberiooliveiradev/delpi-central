@@ -34,6 +34,8 @@ def test_data_model_documents_interaction_tables_in_english() -> None:
     assert "V020" in DOC
     assert "V021" in DOC
     assert "uq_commercial_interaction_rooms_wall_global" in DOC
+    assert "markdown" in DOC.lower()
+    assert "parent_id" in DOC
 
 
 def test_data_model_has_no_portuguese_table_names() -> None:

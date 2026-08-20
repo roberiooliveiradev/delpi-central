@@ -373,8 +373,8 @@ Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — q
 | DELETE | `/interaction-rooms/{room_id}/members/{user_id}` | `remove_interaction_room_member` | access | `interaction_room_member` | `scalar` | |
 | POST | `/interaction-rooms/{room_id}/read` | `mark_interaction_room_read` | access | `interaction_room_member` | `scalar` | `last_read_at` |
 | GET | `/interaction-rooms/{room_id}/messages` | `list_interaction_messages` | access | `interaction_message` | `paged_list` | cursor, `parent_id`, `q` |
-| POST | `/interaction-rooms/{room_id}/messages` | `post_interaction_message` | access | `interaction_message` | `scalar` | body + `mentions[]` |
-| PATCH | `/interaction-rooms/{room_id}/messages/{message_id}` | `update_interaction_message` | access | `interaction_message` | `scalar` | só autor |
+| POST | `/interaction-rooms/{room_id}/messages` | `post_interaction_message` | access | `interaction_message` | `scalar` | `body_text` markdown + `mentions[]` + `parent_id?` |
+| PATCH | `/interaction-rooms/{room_id}/messages/{message_id}` | `update_interaction_message` | access | `interaction_message` | `scalar` | só autor; `body_text` + `mentions[]` (replace) |
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}` | `delete_interaction_message` | access | `interaction_message` | `scalar` | soft |
 | PUT | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `set_interaction_message_reaction` | access | `interaction_reaction` | `scalar` | |
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `clear_interaction_message_reaction` | access | `interaction_reaction` | `scalar` | |
@@ -384,6 +384,14 @@ Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — q
 | GET | `/interaction-rooms/mention-suggest` | `suggest_interaction_mentions` | access | `interaction_mention` | `list` | query `q`, `kinds` |
 | GET | `/interaction-rooms/entity-preview` | `preview_interaction_entity` | access | `interaction_mention` | `scalar` | card opaco sem RBAC |
 | POST | `/interaction-rooms/{room_id}/messages/{message_id}/tasks` | `create_task_from_interaction_message` | access | `task` | `scalar` | body `{ description? }` · resposta `{ task, task_ref_message }` |
+
+**Contrato de mensagem (`body_text`):**
+
+- Persistência = **markdown** em `body_text` (coluna TEXT). Banco **não** guarda HTML.
+- POST/PATCH rejeitam HTML cru → **422** (`bodyHtmlNotAllowed` em `interaction_room.json`).
+- PATCH com `mentions` presente **substitui** o conjunto (lista vazia limpa); omitir `mentions` não altera menções.
+- Reply: POST com `parent_id` (UUID da mensagem pai na mesma sala).
+- Anexos (`owner_type=room_message`, § 3.18): teto **10 arquivos** por mensagem e **20 MB** por arquivo — host recusa antes do upload; API **422** se passar.
 
 **Alterações (paths existentes):** § 3.18 `owner_type=room_message`; § 3.6 `create_task` campos `related_entity_*` / `source_interaction_message_id`; WS protocolo sala (`room.*`).
 

@@ -55,3 +55,12 @@ def test_attachments_and_tasks_note_room_message() -> None:
     assert "Sala de interação" in DOC or "P2-SALA" in DOC
     assert "post_system_message" in DOC
     assert "task_ref_message" in DOC
+
+
+def test_message_contract_markdown_limits_and_parent() -> None:
+    section = DOC.split("### 3.21")[-1].split("## 4.")[0]
+    assert "markdown" in section.lower()
+    assert "422" in section
+    assert "parent_id" in section
+    assert "20 MB" in section or "20MB" in section
+    assert "mentions" in section.lower()
