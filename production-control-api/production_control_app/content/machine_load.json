@@ -1,0 +1,7 @@
+{
+  "timezone": "America/Sao_Paulo",
+  "defaultWindowDays": 7,
+  "maxWindowDays": 90,
+  "operationsPageSize": 300,
+  "manualLaborToolCode": "MOD"
+}

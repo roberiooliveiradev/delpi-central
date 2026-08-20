@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type DragEvent,
+  type HTMLAttributes,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -133,7 +134,9 @@ export type DataTableProps<T> = {
   emptyMessage?: string;
   loading?: boolean;
   onRowClick?: (row: T) => void;
-  getRowClassName?: (row: T) => string | undefined;
+  getRowClassName?: (row: T, index: number) => string | undefined;
+  /** Props extras na <tr> (ex.: drag-and-drop de linhas). */
+  getRowProps?: (row: T, index: number) => HTMLAttributes<HTMLTableRowElement> | undefined;
   sortKey?: string | null;
   sortDirection?: "asc" | "desc";
   onSortChange?: (columnKey: string) => void;
@@ -338,6 +341,7 @@ export function DataTable<T>({
   loading = false,
   onRowClick,
   getRowClassName,
+  getRowProps,
   sortKey = null,
   sortDirection = "asc",
   onSortChange,
@@ -741,23 +745,25 @@ export function DataTable<T>({
           const isExpanded = expandable && expandedRowKey != null && expandedRowKey === key;
           const colSpan = columns.length + (indexColumn ? 1 : 0);
           const rowClass = [
-            getRowClassName?.(row),
+            getRowClassName?.(row, index),
             onRowClick ? classNames.rowClickable : "",
             rowSelected ? "delpi-ui-table__row--selected" : "",
             isExpanded ? "delpi-ui-table__row--expanded" : "",
           ]
             .filter(Boolean)
             .join(" ");
+          const extraRowProps = getRowProps?.(row, index) ?? {};
 
           return (
             <Fragment key={key}>
               <tr
-                className={rowClass || undefined}
+                {...extraRowProps}
+                className={[rowClass, extraRowProps.className].filter(Boolean).join(" ") || undefined}
                 aria-selected={rowSelected || undefined}
                 aria-expanded={expandable ? isExpanded : undefined}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                tabIndex={onRowClick ? 0 : undefined}
-                role={onRowClick && rowClickRole === "button" ? "button" : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : extraRowProps.onClick}
+                tabIndex={onRowClick ? 0 : extraRowProps.tabIndex}
+                role={onRowClick && rowClickRole === "button" ? "button" : extraRowProps.role}
                 onKeyDown={
                   onRowClick
                     ? (event) => {
@@ -766,7 +772,7 @@ export function DataTable<T>({
                           onRowClick(row);
                         }
                       }
-                    : undefined
+                    : extraRowProps.onKeyDown
                 }
               >
                 {indexColumn ? (

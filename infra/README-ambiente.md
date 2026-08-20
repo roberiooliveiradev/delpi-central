@@ -283,7 +283,7 @@ Ver também `infra/.env.prod.cpu.example` (desliga spell-check web e reduz conte
 
 ### Pool de conexões `postgres-plugins`
 
-Vários processos (api-delpi, commercial-api, transformometro-api, strategic-indicators-api, maintenance-api, …) compartilham o mesmo Postgres. Cada um usa um **pool limitado** (`PluginsConnectionPool`) com acquire/release — não manter conexão eterna por thread/singleton.
+Vários processos (api-delpi, commercial-api, transformometro-api, strategic-indicators-api, maintenance-api, production-control-api, …) compartilham o mesmo Postgres. Cada um usa um **pool limitado** (`PluginsConnectionPool`) com acquire/release — não manter conexão eterna por thread/singleton.
 
 | Variável | Default | Notas |
 |----------|---------|--------|
