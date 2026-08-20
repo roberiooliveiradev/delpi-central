@@ -115,7 +115,7 @@
   box-shadow: none;
   background: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 22%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 18%,
     var(--delpi-ui-surface, var(--surface, #ffffff))
   );
   color: var(--delpi-ui-text, var(--text, #0f172a));
