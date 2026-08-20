@@ -14,6 +14,7 @@ class ChatCatalogSelectionPendingService:
     """
 
     KIND_CATALOG_ROUTE = "catalog_route"
+    KIND_SCORE_GAP_ROUTE = "score_gap_route"
     METADATA_KEY = "selectionPending"
     FOLLOW_UP_KEY = "selectionFollowUpSuggestions"
 
@@ -58,7 +59,7 @@ class ChatCatalogSelectionPendingService:
         score_gap: float | None = None,
         prompt: str | None = None,
     ) -> dict[str, Any] | None:
-        cleaned = cls._normalize_candidates(candidates)
+        cleaned = cls._normalize_candidates(candidates, kind=kind)
         if not cleaned:
             return None
 
@@ -81,8 +82,8 @@ class ChatCatalogSelectionPendingService:
             "prompt": prompt_text,
             "scoreGap": score_gap,
             "candidates": cleaned,
-            "confirmLabel": cls.message(confirm_key) or "Adicionar selecionadas",
-            "cancelLabel": cls.message(cancel_key) or "Cancelar",
+            "confirmLabel": cls.message(confirm_key),
+            "cancelLabel": cls.message(cancel_key),
             "resume": {
                 "mode": "structured_action",
                 "action": "catalog_route_selection",
@@ -124,7 +125,7 @@ class ChatCatalogSelectionPendingService:
             score_gap = None
         return cls.build(
             candidates=candidates,
-            kind=cls.KIND_CATALOG_ROUTE,
+            kind=cls.KIND_SCORE_GAP_ROUTE,
             multi_select=False,
             score_gap=score_gap,
         )
@@ -155,7 +156,10 @@ class ChatCatalogSelectionPendingService:
                 "reason": str(item.get("reason") or "").strip() or None,
                 "operationId": operation_id,
                 "path": str(item.get("path") or "").strip() or None,
-                "query": cls._resume_query_for_ids([operation_id]),
+                "query": cls._resume_query_for_ids(
+                    [operation_id],
+                    kind=cls.KIND_CATALOG_ROUTE,
+                ),
             }
             if isinstance(evidence, dict) and evidence:
                 row["evidence"] = evidence
@@ -221,22 +225,46 @@ class ChatCatalogSelectionPendingService:
         return out
 
     @classmethod
-    def build_resume_message(cls, operation_ids: list[str]) -> str:
+    def build_resume_message(
+        cls,
+        operation_ids: list[str],
+        *,
+        kind: str = KIND_CATALOG_ROUTE,
+    ) -> str:
         ids = [str(item).strip() for item in operation_ids if str(item).strip()]
         if not ids:
             return ""
-        return cls._resume_query_for_ids(ids)
+        return cls._resume_query_for_ids(ids, kind=kind)
 
     @classmethod
-    def _resume_query_for_ids(cls, operation_ids: list[str]) -> str:
-        prefix = cls.message("resumePrefix") or "adicione no slide as fontes:"
+    def _resume_prefix_for_kind(cls, kind: str) -> str:
+        kinds = cls._bundle().get("kinds") or {}
+        kind_cfg = kinds.get(kind) if isinstance(kinds.get(kind), dict) else {}
+        prefix_key = str(
+            kind_cfg.get("resumePrefixKey")
+            or ("resumePrefix" if kind == cls.KIND_CATALOG_ROUTE else "resumePrefixRoute")
+        )
+        return cls.message(prefix_key)
+
+    @classmethod
+    def _resume_query_for_ids(
+        cls,
+        operation_ids: list[str],
+        *,
+        kind: str = KIND_CATALOG_ROUTE,
+    ) -> str:
+        prefix = cls._resume_prefix_for_kind(kind)
         joined = ", ".join(operation_ids)
+        if not prefix:
+            return joined
         return f"{prefix} {joined}".strip()
 
     @classmethod
     def _normalize_candidates(
         cls,
         candidates: list[dict[str, Any]],
+        *,
+        kind: str = KIND_CATALOG_ROUTE,
     ) -> list[dict[str, Any]]:
         cap = cls.setting_int("maxCandidates", 5)
         out: list[dict[str, Any]] = []
@@ -257,7 +285,7 @@ class ChatCatalogSelectionPendingService:
                 "operationId": item.get("operationId") or candidate_id,
                 "path": item.get("path"),
                 "query": str(item.get("query") or "").strip()
-                or cls._resume_query_for_ids([candidate_id]),
+                or cls._resume_query_for_ids([candidate_id], kind=kind),
             }
             evidence = item.get("evidence")
             if isinstance(evidence, dict) and evidence.get("shape"):

@@ -41,6 +41,24 @@
     "o que voce sabe fazer",
     "o que você sabe fazer"
   ],
+  "limits": {
+    "shortContextReplyMaxChars": 48
+  },
+  "shortContextReplyPatterns": [
+    "^filial\\s*0?[12]$",
+    "^0?[12]$",
+    "^filial\\s+\\d{1,4}$",
+    "^hoje$",
+    "^ontem$",
+    "^amanha$",
+    "^amanhã$",
+    "^este mes$",
+    "^este mês$",
+    "^mes passado$",
+    "^mês passado$",
+    "^\\d{5,}$",
+    "^\\d{1,2}[/.-]\\d{1,2}([/.-]\\d{2,4})?$"
+  ],
   "ragDocumentTerms": [
     "documento",
     "norma",

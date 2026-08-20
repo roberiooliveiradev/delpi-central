@@ -11,14 +11,25 @@
       "multiSelectDefault": true,
       "promptKey": "promptCatalogRoute",
       "confirmLabelKey": "confirmSelected",
-      "cancelLabelKey": "cancelSelection"
+      "cancelLabelKey": "cancelSelection",
+      "resumePrefixKey": "resumePrefix"
+    },
+    "score_gap_route": {
+      "multiSelectDefault": false,
+      "promptKey": "promptScoreGapRoute",
+      "confirmLabelKey": "confirmSelectedRoute",
+      "cancelLabelKey": "cancelSelection",
+      "resumePrefixKey": "resumePrefixRoute"
     }
   },
   "messages": {
     "promptCatalogRoute": "Encontrei {count} fonte(s) próximas. Selecione quais adicionar ao slide:",
+    "promptScoreGapRoute": "Encontrei {count} rotas próximas para a sua pergunta. Qual deseja consultar?",
     "confirmSelected": "Adicionar selecionadas",
+    "confirmSelectedRoute": "Consultar selecionada",
     "cancelSelection": "Cancelar",
     "evidenceUnavailable": "Prévia indisponível para esta fonte.",
-    "resumePrefix": "adicione no slide as fontes:"
+    "resumePrefix": "adicione no slide as fontes:",
+    "resumePrefixRoute": "consultar rota:"
   }
 }

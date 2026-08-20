@@ -46,6 +46,24 @@ def test_build_from_score_gap_clarification():
     assert pending["multiSelect"] is False
     assert pending["scoreGap"] == 0.02
     assert pending["candidates"][0]["id"] == "op_a"
+    assert pending.get("kind") == "score_gap_route"
+    assert "slide" not in str(pending.get("prompt") or "").lower()
+    assert "rota" in str(pending.get("prompt") or "").lower()
+    assert pending["candidates"][0]["query"]
+    assert "slide" not in str(pending["candidates"][0]["query"]).lower()
+
+
+def test_score_gap_resume_prefix_is_route_not_slide():
+    from app.application.services.chat_catalog_selection_pending_service import (
+        ChatCatalogSelectionPendingService,
+    )
+
+    text = ChatCatalogSelectionPendingService.build_resume_message(
+        ["op_a"],
+        kind=ChatCatalogSelectionPendingService.KIND_SCORE_GAP_ROUTE,
+    )
+    assert "slide" not in text.lower()
+    assert "op_a" in text
 
 
 def test_attach_to_assistant_metadata_and_follow_ups():

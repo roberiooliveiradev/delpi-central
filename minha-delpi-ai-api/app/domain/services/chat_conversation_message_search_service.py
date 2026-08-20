@@ -14,9 +14,26 @@ from app.domain.services.chat_response_mode_context_budget_service import (
     ChatResponseModeContextBudgetService,
 )
 
+_COMPILED_LISTS: dict[str, tuple[re.Pattern[str], ...]] = {}
+
 
 class ChatConversationMessageSearchService:
     _BUNDLE = "conversation_message_search"
+
+    @classmethod
+    def is_session_review_request(cls, message: str | None) -> bool:
+        """Pergunta meta sobre o histórico da sessão — não é consulta operacional."""
+        normalized = ChatMessageNormalizationService.normalize_for_matching(
+            message or "",
+        )
+        if not normalized:
+            return False
+
+        for token in cls._trigger_list("sessionReviewTriggers"):
+            if token and token in normalized:
+                return True
+
+        return False
 
     @classmethod
     def should_search(
@@ -32,13 +49,16 @@ class ChatConversationMessageSearchService:
         if ChatFollowUpIntentService.is_retry_or_continue_request(message):
             return True
 
+        if cls.is_session_review_request(message):
+            return True
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(
             message or "",
         )
         if not normalized:
             return False
 
-        for token in cls._explicit_triggers():
+        for token in cls._trigger_list("explicitTriggers"):
             if token and token in normalized:
                 return True
 
@@ -47,12 +67,9 @@ class ChatConversationMessageSearchService:
         ):
             return True
 
-        # Correções típicas («não é X, é Y», «eu pedi em tabela»).
-        if re.search(
-            r"\b(n[aã]o\s+[eé]\b|eu\s+pedi|como\s+pedi|em\s+vez\s+de|corrija)\b",
-            normalized,
-        ):
-            return True
+        for pattern in cls._correction_cue_patterns():
+            if pattern.search(normalized):
+                return True
 
         return False
 
@@ -165,8 +182,8 @@ class ChatConversationMessageSearchService:
         return "\n".join(line for line in lines if line).strip()
 
     @classmethod
-    def _explicit_triggers(cls) -> list[str]:
-        node = ChatAssistantContentService.get_node(cls._BUNDLE, "explicitTriggers")
+    def _trigger_list(cls, key: str) -> list[str]:
+        node = ChatAssistantContentService.get_node(cls._BUNDLE, key)
         if not isinstance(node, list):
             return []
         return [
@@ -174,6 +191,31 @@ class ChatConversationMessageSearchService:
             for item in node
             if str(item).strip()
         ]
+
+    @classmethod
+    def _correction_cue_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        cache_key = "correctionCue"
+        if cache_key not in _COMPILED_LISTS:
+            raw = ChatAssistantContentService.list(
+                cls._BUNDLE,
+                "patternLists",
+                cache_key,
+            )
+            compiled: list[re.Pattern[str]] = []
+            for item in raw:
+                text = str(item or "").strip()
+                if not text:
+                    continue
+                try:
+                    compiled.append(re.compile(text, re.IGNORECASE))
+                except re.error:
+                    continue
+            _COMPILED_LISTS[cache_key] = tuple(compiled)
+        return _COMPILED_LISTS[cache_key]
+
+    @classmethod
+    def invalidate_cache(cls) -> None:
+        _COMPILED_LISTS.clear()
 
     @classmethod
     def _tokens(cls, message: str | None) -> set[str]:

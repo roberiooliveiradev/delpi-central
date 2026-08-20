@@ -29,6 +29,40 @@ def test_resolve_skip_tool_flags_for_assistant_identity_question():
     assert flags.skip_tools_for_user_identity is False
 
 
+def test_resolve_skip_tool_flags_for_session_review():
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="o que me diz sobre a conversa?",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[
+            {"role": "user", "content": "estoque 10080055"},
+            {"role": "assistant", "content": "Saldo total"},
+        ],
+    )
+
+    assert flags.skip_tools_for_session_review is True
+    assert ChatTurnPreparationToolRoutingService.should_skip_tools(
+        canvas_action=None,
+        canvas_operational_update=False,
+        pre_capability_answer=None,
+        missing_product_code_answer=None,
+        ambiguous_period_answer=None,
+        missing_date_answer=None,
+        common_chat_operational_answer=None,
+        routing_disambiguation_answer=None,
+        learning_term_confirmation_answer=None,
+        interpretation_without_data_answer=None,
+        skip_flags=flags,
+        small_talk_direct=None,
+        utility_direct=None,
+        web_save_sources_direct=None,
+        project_sources_direct=None,
+        web_post_search_direct=None,
+        attachment_welcome_direct=None,
+        unclear_direct=None,
+        text_task_pure=False,
+    ) is True
+
+
 def test_should_skip_tools_for_small_talk():
     flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
         message="oi",
@@ -86,7 +120,7 @@ def test_run_tool_phase_skips_tools_for_text_task():
         routing_disambiguation_answer=None,
         learning_term_confirmation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
@@ -140,7 +174,7 @@ def test_run_tool_phase_invokes_build_tool_context_with_request_once():
         routing_disambiguation_answer=None,
         learning_term_confirmation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
@@ -188,7 +222,7 @@ def test_run_tool_phase_skips_tools_for_assistant_identity_question():
         routing_disambiguation_answer=None,
         learning_term_confirmation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, True, False, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, True, False, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,

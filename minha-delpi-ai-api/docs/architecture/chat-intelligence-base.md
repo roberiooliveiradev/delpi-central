@@ -75,11 +75,12 @@ Todos os fluxos passam pelo mesmo `ChatTurnPreparationService` + `contextBudget`
 | **Text task** | correção, e-mail, tradução pura | skip tools | skip | histórico pelo modo (`conversationEvidence` em correção de ordem) |
 | **Operacional / API** | estoque, KPI, OpenAPI, SQL | `execute_external_action` (com agente) | skip se tool ok; sem tapa-buraco em miss | `toolContextMaxChars` + `maxMultiActionsPerTurn` |
 | **Skills** | `companyKnowledge`, desenho, SQL authoring | só **habilitam** caminhos | `preserves_rag_on_fast_path` **não** mascara miss de tool | RAG skill usa budget do modo |
-| **Message search** | «o que eu pedi», correção | passo interno sessão | skip doc | `messageSearch*` do modo |
+| **Message search / session review** | «o que eu pedi», «o que me diz sobre a conversa?» | skip tools (`session_review`); evidência via `ChatConversationMessageSearchService` | skip doc | `messageSearch*` do modo |
 | **Clarify / multi-intent** | ambíguo; estrutura+roteiro | chips / 1ª action no fast | skip | modo limita multi-actions |
 
-Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (≥1 caso web, text, API, skill).
+Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (≥1 caso web, text, API, skill, message_search).
 
+**Follow-up operacional ≠ memória sozinha:** `operationalFocus` / entidades na memória **não** transformam qualquer mensagem em `operational_query`. Só follow-up operacional explícito, keywords operacionais ou reply curto de parâmetro (`shortContextReplyPatterns`). Meta-conversa → `session_review` + skip tools.
 ---
 
 ## Pipeline base

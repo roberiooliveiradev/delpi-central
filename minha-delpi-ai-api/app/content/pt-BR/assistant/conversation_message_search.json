@@ -12,6 +12,34 @@
     "siga o que falei",
     "relembrar o que eu pedi"
   ],
+  "sessionReviewTriggers": [
+    "sobre a conversa",
+    "sobre essa conversa",
+    "sobre esta conversa",
+    "resumo da conversa",
+    "resumo dessa conversa",
+    "resumo desta conversa",
+    "o que me diz sobre a conversa",
+    "o que diz sobre a conversa",
+    "o que falamos",
+    "o que a gente falou",
+    "recapitule a conversa",
+    "recapitula a conversa",
+    "retome a conversa",
+    "retoma a conversa",
+    "contexto da conversa",
+    "historico da conversa",
+    "histórico da conversa",
+    "o que ja pedi",
+    "o que já pedi",
+    "o que eu pedi antes",
+    "resumo do que pedi"
+  ],
+  "patternLists": {
+    "correctionCue": [
+      "\\b(n[aã]o\\s+[eé]\\b|eu\\s+pedi|como\\s+pedi|em\\s+vez\\s+de|corrija)\\b"
+    ]
+  },
   "promptBlockTitle": "Evidências da conversa (mensagens recuperadas)",
   "promptBlockIntro": "Use estes trechos reais da sessão. Não invente conteúdo fora deles.",
   "emptyHitsClarify": "Não encontrei trechos anteriores suficientes na conversa. Pode reformular o que quer que eu retome?"

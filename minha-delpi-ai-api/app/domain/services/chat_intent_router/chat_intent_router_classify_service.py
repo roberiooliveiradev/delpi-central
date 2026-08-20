@@ -291,13 +291,32 @@ class ChatIntentRouterClassifyService:
             ChatPresentationFormatRefinementService,
         )
 
-        if ChatIntentRouterHeuristicsService.looks_presentation(normalized) and not (
-            ChatPresentationFormatRefinementService.looks_like_format_refinement(normalized)
-        ):
+        if ChatIntentRouterHeuristicsService.looks_presentation(normalized):
+            if ChatPresentationFormatRefinementService.looks_like_format_refinement(
+                normalized
+            ):
+                return ChatIntentRouterSupportService.with_decision(
+                    IntentRouteResult(
+                        intent="follow_up",
+                        sub_intent="format_refinement",
+                        is_follow_up=True,
+                        confidence=0.88,
+                        requires_tool=False,
+                        requires_rag=False,
+                        requires_llm=False,
+                        priority_applied=5,
+                        flags=("format_refinement", "skip_tools"),
+                    ),
+                    decision="format_refinement",
+                    reason="presentation_format_refinement",
+                )
+
             return ChatIntentRouterSupportService.with_decision(
                 IntentRouteResult(
                     intent="presentation_task",
-                    sub_intent=ChatIntentRouterHeuristicsService.presentation_sub_intent(normalized),
+                    sub_intent=ChatIntentRouterHeuristicsService.presentation_sub_intent(
+                        normalized
+                    ),
                     confidence=0.86,
                     requires_tool=False,
                     requires_llm=True,
@@ -322,9 +341,28 @@ class ChatIntentRouterClassifyService:
 
         from app.domain.services.chat_follow_up_intent_service import ChatFollowUpIntentService
 
-        is_follow_up = bool(memory_entities) or ChatFollowUpIntentService.is_operational_follow_up(
+        operational_follow_up = ChatFollowUpIntentService.is_operational_follow_up(
             normalized
         )
+        is_follow_up = bool(memory_entities) or operational_follow_up
+
+        if ChatIntentRouterHeuristicsService.looks_conversation_meta(normalized):
+            return ChatIntentRouterSupportService.with_decision(
+                IntentRouteResult(
+                    intent="session_review",
+                    sub_intent="conversation_meta",
+                    is_follow_up=False,
+                    confidence=0.91,
+                    requires_tool=False,
+                    requires_rag=False,
+                    requires_llm=True,
+                    priority_applied=5,
+                    resolved_params=resolved_params,
+                    flags=("conversation_meta", "skip_tools"),
+                ),
+                decision="session_review",
+                reason="conversation_meta_question",
+            )
 
         from app.domain.services.chat_web_search_history_service import (
             ChatWebSearchHistoryService,
@@ -437,11 +475,18 @@ class ChatIntentRouterClassifyService:
 
         department_kpi = ChatIntentRouterHeuristicsService.resolve_department_kpi(normalized)
 
+        memory_anchored_operational = bool(memory_entities) and (
+            operational_follow_up
+            or ChatIntentRouterHeuristicsService.looks_operational(normalized)
+            or ChatIntentRouterHeuristicsService.looks_like_short_context_reply(normalized)
+        )
+
         if (
             operational_optimize
             or ChatIntentRouterHeuristicsService.looks_operational(normalized)
             or department_kpi
-            or is_follow_up
+            or operational_follow_up
+            or memory_anchored_operational
         ):
             sub = ChatIntentRouterHeuristicsService.operational_sub_intent(normalized)
 

@@ -91,8 +91,15 @@ INTENT_ROUTER_REGRESSION_CASES: list[dict[str, Any]] = [
     },
     {
         "id": "R11",
-        "message": "Mostre em gráfico",
+        "message": "exporte csv",
         "expected_intent": "presentation_task",
+    },
+    {
+        "id": "R11b",
+        "message": "Mostre em gráfico",
+        "expected_intent": "follow_up",
+        "expected_sub_intent": "format_refinement",
+        "requires_tool": False,
     },
     {
         "id": "R12",
@@ -134,5 +141,24 @@ INTENT_ROUTER_REGRESSION_CASES: list[dict[str, Any]] = [
         "expected_intent": "operational_query",
         "expected_sub_intent": "product_lookup",
         "expected_ambiguous": False,
+    },
+    {
+        "id": "R17",
+        "message": "o que me diz sobre a conversa?",
+        "expected_intent": "session_review",
+        "requires_tool": False,
+        "history": [
+            {"role": "user", "content": "estoque 10080055"},
+            {"role": "assistant", "content": "Saldo disponível total"},
+        ],
+        "workspace_context": {
+            "workingMemory": {
+                "operationalFocus": {
+                    "productCode": "10080055",
+                    "branch": "02",
+                }
+            }
+        },
+        "allowed_action_ids": ["action-1"],
     },
 ]

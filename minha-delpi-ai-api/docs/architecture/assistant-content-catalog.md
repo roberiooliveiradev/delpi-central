@@ -47,11 +47,11 @@ Wrappers especializados (mantêm API estável):
 | `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |
 | Changelog integrado | `docs/changelog/2026-06-product-directives-chat.md` | Roteamento, apresentação, MFE filtros, modos Automático/Tabela/Texto |
 | `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `operational_route_registry.json` |
-| `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, operacional) | `ChatIntentRouterService` |
+| `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, `shortContextReplyPatterns` / `limits`) | `ChatIntentRouterService`, `ChatIntentRouterContentService` |
 | `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |
 | `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |
 | `error_handling.json` | Erros recuperáveis, chips, SQL tipado | `ChatErrorHandlingClassifier`, SQL interpretation |
-| `conversation_message_search.json` | Triggers e textos da busca de mensagens da sessão (refresh de contexto) | `ChatConversationMessageSearchService` |
+| `conversation_message_search.json` | Triggers de busca na sessão + `sessionReviewTriggers` (meta-conversa) + cues de correção | `ChatConversationMessageSearchService` |
 | `sql_execution_errors.json` | Ponte tipos SQL → `error_handling.types` | `ChatSqlExecutionErrorInterpretationService` |
 | `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
 | `structure_comparison.json` | Comparação BOM/ficha | `ChatStructureComparisonService` |
@@ -73,7 +73,7 @@ Wrappers especializados (mantêm API estável):
 | `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
 | `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
 | `interactivity.json` | Chips, refinamentos, disponibilidade (`hideUnavailableSuggestions`, labels operacionais/SQL) | `ChatInteractivityContentService`, `ChatInteractivitySuggestionAvailabilityService`, `ChatInteractivitySuggestionService` |
-| `selection_pending.json` | Prompt/labels/caps do contrato `selectionPending` (multi-candidatos) | `ChatCatalogSelectionPendingService` |
+| `selection_pending.json` | Prompt/labels/caps do contrato `selectionPending`; kinds `catalog_route` (slide) e `score_gap_route` (rota) | `ChatCatalogSelectionPendingService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
 | `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |

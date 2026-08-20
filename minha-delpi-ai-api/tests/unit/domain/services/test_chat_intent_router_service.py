@@ -24,6 +24,52 @@ def test_classify_text_task_pure():
     assert route.priority_applied == 3
 
 
+def test_classify_conversation_meta_not_operational_with_memory_focus():
+    route = ChatIntentRouterService.classify(
+        "o que me diz sobre a conversa?",
+        previous_messages=[
+            {"role": "user", "content": "estoque 10080055"},
+            {"role": "assistant", "content": "Saldo 26623"},
+        ],
+        workspace_context={
+            "actionsEnabled": True,
+            "allowedActionIds": ["action-1"],
+            "workingMemory": {
+                "operationalFocus": {
+                    "productCode": "10080055",
+                    "branch": "02",
+                }
+            },
+        },
+        allowed_action_ids=["action-1"],
+    )
+
+    assert route.intent == "session_review"
+    assert route.requires_tool is False
+    assert route.decision == "session_review"
+
+
+def test_classify_filial_short_reply_stays_operational_with_memory():
+    route = ChatIntentRouterService.classify(
+        "filial 02",
+        previous_messages=[
+            {"role": "user", "content": "estoque 10080055"},
+            {"role": "assistant", "content": "Saldo total"},
+        ],
+        workspace_context={
+            "actionsEnabled": True,
+            "allowedActionIds": ["action-1"],
+            "workingMemory": {
+                "operationalFocus": {"productCode": "10080055", "branch": "01"}
+            },
+        },
+        allowed_action_ids=["action-1"],
+    )
+
+    assert route.intent == "operational_query"
+    assert route.is_follow_up is True
+
+
 def test_classify_operational_stock():
     route = ChatIntentRouterService.classify("qual o estoque do produto 10080001?")
 

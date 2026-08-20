@@ -233,6 +233,39 @@ class ChatIntentRouterHeuristicsService:
             for phrase in cls.intent_router_terms("selfHelpPhrases")
         )
 
+    @classmethod
+    def looks_conversation_meta(cls, message: str) -> bool:
+        """Delega ao módulo canônico de message search (família session review)."""
+        from app.domain.services.chat_conversation_message_search_service import (
+            ChatConversationMessageSearchService,
+        )
+
+        return ChatConversationMessageSearchService.is_session_review_request(message)
+
+    @classmethod
+    def looks_like_short_context_reply(cls, message: str) -> bool:
+        """Resposta curta que só completa parâmetro (filial/data/código) com foco ativo."""
+        from app.domain.services.chat_intent_router_content_service import (
+            ChatIntentRouterContentService,
+        )
+
+        normalized = " ".join(str(message or "").strip().lower().split())
+        max_chars = ChatIntentRouterContentService.limit_int(
+            "shortContextReplyMaxChars",
+            48,
+        )
+
+        if not normalized or len(normalized) > max_chars:
+            return False
+
+        if cls.looks_conversation_meta(normalized):
+            return False
+
+        return any(
+            pattern.fullmatch(normalized)
+            for pattern in ChatIntentRouterContentService.short_context_reply_patterns()
+        )
+
     @staticmethod
     def looks_identity_question(message: str) -> bool:
         from app.domain.services.chat_assistant_identity_service import (

@@ -14,14 +14,32 @@ def invalidate_assistant_content_cache(bundle: str | None = None) -> None:
     if ChatAssistantContentService._port is not None:
         ChatAssistantContentService._port.invalidate_cache(bundle)
 
-    try:
-        from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-            ChatTvDashboardCopilotIntentService,
-        )
+        try:
+            from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+                ChatTvDashboardCopilotIntentService,
+            )
 
-        ChatTvDashboardCopilotIntentService._normalized_phrases.cache_clear()
-    except Exception:
-        pass
+            ChatTvDashboardCopilotIntentService._normalized_phrases.cache_clear()
+        except Exception:
+            pass
+
+        try:
+            from app.domain.services.chat_intent_router_content_service import (
+                ChatIntentRouterContentService,
+            )
+
+            ChatIntentRouterContentService.invalidate_cache()
+        except Exception:
+            pass
+
+        try:
+            from app.domain.services.chat_conversation_message_search_service import (
+                ChatConversationMessageSearchService,
+            )
+
+            ChatConversationMessageSearchService.invalidate_cache()
+        except Exception:
+            pass
 
 
 @lru_cache(maxsize=32)

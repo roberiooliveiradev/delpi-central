@@ -31,6 +31,7 @@ class ChatTurnPreparationSkipToolFlags:
     skip_tools_for_attachment_document: bool
     skip_tools_for_inactive_agent: bool
     skip_tools_for_project_sources_content: bool
+    skip_tools_for_session_review: bool
     request_attachment_ids: list[str]
 
 
@@ -281,6 +282,14 @@ class ChatTurnPreparationToolRoutingService:
             previous_messages=history_source,
         )
 
+        from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+            ChatIntentRouterHeuristicsService,
+        )
+
+        skip_tools_for_session_review = (
+            ChatIntentRouterHeuristicsService.looks_conversation_meta(message)
+        )
+
         return ChatTurnPreparationSkipToolFlags(
             skip_tools_for_user_identity=skip_tools_for_user_identity,
             skip_tools_for_assistant_identity=skip_tools_for_assistant_identity,
@@ -288,6 +297,7 @@ class ChatTurnPreparationToolRoutingService:
             skip_tools_for_attachment_document=skip_tools_for_attachment_document,
             skip_tools_for_inactive_agent=skip_tools_for_inactive_agent,
             skip_tools_for_project_sources_content=skip_tools_for_project_sources_content,
+            skip_tools_for_session_review=skip_tools_for_session_review,
             request_attachment_ids=request_attachment_ids,
         )
 
@@ -332,6 +342,7 @@ class ChatTurnPreparationToolRoutingService:
                 or skip_flags.skip_tools_for_attachment_document
                 or skip_flags.skip_tools_for_inactive_agent
                 or skip_flags.skip_tools_for_project_sources_content
+                or skip_flags.skip_tools_for_session_review
                 or small_talk_direct
                 or utility_direct
                 or web_save_sources_direct
@@ -373,6 +384,8 @@ class ChatTurnPreparationToolRoutingService:
             pipeline_stages.append("identity_shortcut")
         elif skip_flags.skip_tools_for_assistant_identity:
             pipeline_stages.append("assistant_identity_shortcut")
+        elif skip_flags.skip_tools_for_session_review:
+            pipeline_stages.append("session_review")
         elif skip_flags.skip_tools_for_data_interpretation:
             pipeline_stages.append("data_interpretation")
         elif canvas_action:

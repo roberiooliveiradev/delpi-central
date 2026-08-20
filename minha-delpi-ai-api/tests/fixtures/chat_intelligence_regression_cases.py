@@ -3016,4 +3016,15 @@ FLOW_FAMILY_MATRIX_CASES = [
             "text_task_pure": False,
         },
     },
+    {
+        "id": "FF-SESSION-01",
+        "family": "message_search",
+        "message": "o que me diz sobre a conversa?",
+        "expects": {
+            "session_review": True,
+            "web_explicit": False,
+            "text_task_pure": False,
+            "operational_data_request": False,
+        },
+    },
 ]

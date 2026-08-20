@@ -7,6 +7,9 @@ import pytest
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.domain.services.chat_conversation_message_search_service import (
+    ChatConversationMessageSearchService,
+)
 from app.domain.services.chat_follow_up_intent_service import ChatFollowUpIntentService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
@@ -75,6 +78,12 @@ def test_flow_family_matrix_gates(case: dict):
             "multi_scope_intent"
         ]
 
+    if "session_review" in expects:
+        assert (
+            ChatConversationMessageSearchService.is_session_review_request(message)
+            is expects["session_review"]
+        )
+
 
 def test_flow_family_matrix_covers_required_families():
     families = {str(item["family"]) for item in FLOW_FAMILY_MATRIX_CASES}
@@ -83,3 +92,4 @@ def test_flow_family_matrix_covers_required_families():
     assert "text_task" in families
     assert "operational_api" in families
     assert "skill_company_knowledge" in families
+    assert "message_search" in families

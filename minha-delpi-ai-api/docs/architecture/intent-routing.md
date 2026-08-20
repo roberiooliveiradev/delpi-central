@@ -26,6 +26,8 @@ Mensagem → normalização → segurança → classificação (classify)
 | `ChatActivePendingService` | Pendências (`clarification`) |
 | `ChatReferenceResolutionService` / memória | Follow-up e `resolvedParams` |
 | `ChatWebSearchIntentService` | Detecção de `web_search` explícito |
+| `ChatConversationMessageSearchService` | `session_review` / meta-conversa + evidências da sessão |
+| `ChatIntentRouterContentService` | Limites/padrões de `intent_router.json` (ex.: reply curto de filial) |
 
 ## Prioridade (resumo)
 
@@ -33,8 +35,8 @@ Mensagem → normalização → segurança → classificação (classify)
 2. Clarificação (`activePending`)  
 3. Tarefa textual / e-mail  
 4. Lousa  
-5. Follow-up / apresentação  
-6. Consulta operacional  
+5. Follow-up / apresentação / **session review (meta-conversa)** / **format refinement** (`follow_up` + `format_refinement`)  
+6. Consulta operacional (só com sinal operacional ou reply curto ancorado — **não** só por memória)  
 7. Web explícita  
 8. RAG documental  
 9. SQL (gerar/revisar/explicar/executar)  
@@ -47,6 +49,7 @@ Mensagem → normalização → segurança → classificação (classify)
 - `metadata.adminDebug.intentRoute` — compatibilidade admin  
 - `metadata.intentRouterMetrics` — snapshot para métricas  
 - `metadata.routingDisambiguationSuggestions` — botões Cadastro/Estoque/Fornecedores… (MFE)
+- `metadata.selectionPending.kind` — `catalog_route` (slide/TV) vs `score_gap_route` (clarificação de rota; prompt sem «slide»)
 
 ## Admin
 
@@ -55,7 +58,7 @@ Mensagem → normalização → segurança → classificação (classify)
 
 ## Testes
 
-- Regressão R1–R15: `tests/fixtures/intent_router_regression_cases.py`, `tests/unit/domain/services/test_intent_router.py`  
+- Regressão R1–R17: `tests/fixtures/intent_router_regression_cases.py`, `tests/unit/domain/services/test_intent_router.py`  
 - Script: `scripts/run_intent_routing_validation.sh`
 
 ## Documentação de produto
