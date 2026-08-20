@@ -152,8 +152,36 @@ describe("markdownToRichTextHtml / richTextHtmlToMarkdown", () => {
     expect(html).toContain("data-attachment-pending=\"abc123\"");
     expect(html).toContain("data-attachment-id=\"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\"");
     expect(html).toContain("delpi-ui-mention-composer__inline-image");
+    expect(html).toContain("<span");
+    expect(html).not.toContain("<figure");
     const back = richTextHtmlToMarkdown(html);
     expect(back).toContain("![a](attachment:pending:abc123)");
     expect(back).toContain("![b](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)");
+  });
+
+  it("imagem no mesmo parágrafo + text-align no p (modelo Word)", () => {
+    const md = 'ola ![x](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee) fim';
+    const html = markdownToRichTextHtml(md);
+    expect(html).toMatch(/<p[^>]*>.*ola.*span.*fim/i);
+    expect(html).not.toContain("<figure");
+    const centered = richTextHtmlToMarkdown(
+      '<p style="text-align:center">ola <span class="delpi-ui-mention-composer__inline-image" contenteditable="false"><img alt="x" data-attachment-href="attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" data-attachment-id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" /></span> fim</p>',
+    );
+    expect(centered).toContain('style="text-align:center"');
+    expect(centered).toContain(
+      "![x](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)",
+    );
+    expect(centered).not.toMatch(/align=center/);
+  });
+
+  it("title align legado vira text-align no p no enhance", () => {
+    const html = markdownToRichTextHtml(
+      '![shot](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee "align=center")',
+    );
+    expect(html).toMatch(/text-align:\s*center/i);
+    expect(html).not.toMatch(/data-align=/);
+    const back = richTextHtmlToMarkdown(html);
+    expect(back).toContain("![shot](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)");
+    expect(back).not.toMatch(/"align=/);
   });
 });

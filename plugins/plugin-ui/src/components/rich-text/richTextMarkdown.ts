@@ -8,12 +8,7 @@ import { marked } from "marked";
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 
-import {
-  ensureInlineImageCaretAnchors,
-  INLINE_IMAGE_ALIGN_ATTR,
-  parseAlignFromImageTitle,
-  readInlineImageFigureAlign,
-} from "../collaboration/mentionComposerInlineImage";
+import { parseAlignFromImageTitle } from "../collaboration/mentionComposerInlineImage";
 import { readInlineFontSizePx } from "./richTextHtmlFormat";
 
 marked.setOptions({
@@ -83,7 +78,7 @@ turndown.addRule("fencedCodeBlock", {
   },
 });
 
-/** Sala: `![alt](attachment:…)` / pending — não emitir blob: ou http. */
+/** Sala: `![alt](attachment:…)` / pending — inline no parágrafo; sem title de align. */
 turndown.addRule("attachmentInlineImage", {
   filter: (node) => {
     if (node.nodeName === "IMG") {
@@ -94,7 +89,7 @@ turndown.addRule("attachmentInlineImage", {
         href.startsWith("attachment:")
       );
     }
-    if (node.nodeName === "FIGURE") {
+    if (node.nodeName === "FIGURE" || node.nodeName === "SPAN") {
       return Boolean(
         (node as Element).querySelector(
           "img[data-attachment-pending], img[data-attachment-href^='attachment:']",
@@ -111,18 +106,17 @@ turndown.addRule("attachmentInlineImage", {
         : (root.querySelector("img") as HTMLElement | null);
     if (!img) return "";
     const pending = img.getAttribute("data-attachment-pending") || "";
+    const id = img.getAttribute("data-attachment-id") || "";
     const href =
       img.getAttribute("data-attachment-href") ||
-      (pending ? `attachment:pending:${pending}` : "");
+      (pending
+        ? `attachment:pending:${pending}`
+        : id
+          ? `attachment:${id}`
+          : "");
     if (!href.startsWith("attachment:")) return "";
     const alt = (img.getAttribute("alt") || "").replace(/[[\]]/g, "");
-    const figure =
-      root.nodeName === "FIGURE"
-        ? root
-        : (img.closest("figure") as HTMLElement | null);
-    const align = readInlineImageFigureAlign(figure);
-    const title = align !== "left" ? ` "align=${align}"` : "";
-    return `\n\n![${alt}](${href}${title})\n\n`;
+    return `![${alt}](${href})`;
   },
 });
 
@@ -261,6 +255,7 @@ export function enhanceAttachmentImagesInHtml(html: string): string {
     if (!root) return html;
     for (const img of Array.from(root.querySelectorAll("img"))) {
       const src = (img.getAttribute("src") || "").trim();
+      if (src.startsWith("blob:") || src.startsWith("data:")) continue;
       if (!src.startsWith("attachment:")) continue;
       img.setAttribute("data-attachment-href", src);
       if (src.startsWith("attachment:pending:")) {
@@ -275,21 +270,18 @@ export function enhanceAttachmentImagesInHtml(html: string): string {
       const align = parseAlignFromImageTitle(title);
       if (title) img.removeAttribute("title");
       img.removeAttribute("src");
-      const figure = doc.createElement("figure");
-      figure.className =
-        "delpi-ui-mention-composer__inline-image delpi-ui-message-thread__inline-image";
-      figure.setAttribute("contenteditable", "false");
-      figure.setAttribute(INLINE_IMAGE_ALIGN_ATTR, align);
-      img.parentNode?.insertBefore(figure, img);
-      figure.appendChild(img);
 
-      // Lift figure out of a wrapping empty `<p>` so caret anchors sit as siblings.
-      const parent = figure.parentElement;
-      if (parent && parent.tagName === "P" && parent.parentNode) {
-        parent.parentNode.insertBefore(figure, parent);
-        if (!parent.textContent?.trim() && !parent.querySelector("img, figure, table")) {
-          parent.remove();
-        }
+      const wrapper = doc.createElement("span");
+      wrapper.className =
+        "delpi-ui-mention-composer__inline-image delpi-ui-message-thread__inline-image";
+      wrapper.setAttribute("contenteditable", "false");
+      img.parentNode?.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+
+      // Legacy markdown title `"align=…"` → paragraph text-align (Word model).
+      const parent = wrapper.parentElement;
+      if (parent && parent.tagName === "P" && align !== "left") {
+        parent.style.textAlign = align;
       }
 
       const btn = doc.createElement("button");
@@ -301,9 +293,8 @@ export function enhanceAttachmentImagesInHtml(html: string): string {
       const alt = img.getAttribute("alt") || "image";
       btn.setAttribute("aria-label", `Remove ${alt}`);
       btn.textContent = "×";
-      figure.appendChild(btn);
+      wrapper.appendChild(btn);
     }
-    ensureInlineImageCaretAnchors(root);
     return root.innerHTML;
   } catch {
     return html;

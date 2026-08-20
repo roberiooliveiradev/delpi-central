@@ -110,7 +110,6 @@ import { normalizeComposerFormatShells } from "./mentionComposerNormalize";
 import {
   buildInlineImageInserts,
   collectClipboardImageFiles,
-  ensureInlineImageCaretAnchors,
   INLINE_IMAGE_FIGURE_SELECTOR,
   inlineImageBlockHtml,
   isComposerInlineImageFile,
@@ -474,7 +473,6 @@ export function MentionComposer({
     const clearing = !value.trim();
     if (!clearing && document.activeElement === el) return;
     el.innerHTML = clearing ? "" : hydrateSurfaceHtml(value);
-    if (!clearing) ensureInlineImageCaretAnchors(el);
     lastStableRef.current = {
       markdown: value,
       html: el.innerHTML,
@@ -489,7 +487,6 @@ export function MentionComposer({
     const next = applyAttachmentImageSources(el.innerHTML, resolveAttachmentImageSrc);
     if (next !== el.innerHTML) {
       el.innerHTML = next;
-      ensureInlineImageCaretAnchors(el);
       lastStableRef.current = {
         ...lastStableRef.current,
         html: el.innerHTML,
@@ -715,7 +712,6 @@ export function MentionComposer({
         )
         .join(""),
     );
-    ensureInlineImageCaretAnchors(el);
     normalizeComposerFormatShells(el);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
@@ -733,7 +729,6 @@ export function MentionComposer({
     const attachmentId = (img?.getAttribute("data-attachment-id") || "").trim();
     commitBeforeMutation();
     figure.remove();
-    ensureInlineImageCaretAnchors(el);
     normalizeComposerFormatShells(el);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
