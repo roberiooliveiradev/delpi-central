@@ -7,7 +7,6 @@ import {
 } from "../../api/interactionRoomsApi";
 import {
   CM_PORTAL_SCOPE,
-  CommercialAttachmentPreviewStrip,
   CommercialMentionComposer,
 } from "../../app/commercialUi";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
@@ -44,6 +43,7 @@ type Props = {
 /**
  * Composer da sala: MentionComposer + anexos (owner_type=room_message após POST).
  * Rascunho (texto + arquivos) sobrevive a F5 por roomId.
+ * Pendentes: imagens na pílula; documentos na bandeja do kit (E6.S7).
  */
 export function InteractionRoomMessageComposer({
   roomId,
@@ -71,12 +71,13 @@ export function InteractionRoomMessageComposer({
     return map;
   }, [hits]);
 
-  const stripItems = useMemo(
+  const pendingAttachments = useMemo(
     () =>
       pending.map((item) => ({
         id: item.id,
         fileName: item.file.name,
         contentType: item.file.type || null,
+        file: item.file,
         detail: `${Math.max(1, Math.round(item.file.size / 1024))} KB`,
       })),
     [pending],
@@ -185,19 +186,6 @@ export function InteractionRoomMessageComposer({
     onError,
   ]);
 
-  const footer =
-    pending.length > 0 ? (
-      <CommercialAttachmentPreviewStrip
-        mode="manage"
-        heading={content.pendingAttachmentsHeading}
-        items={stripItems}
-        onOpen={() => undefined}
-        onRemove={(item) => {
-          setPending((prev) => prev.filter((row) => row.id !== item.id));
-        }}
-      />
-    ) : null;
-
   return (
     <CommercialMentionComposer
       value={draft}
@@ -217,8 +205,10 @@ export function InteractionRoomMessageComposer({
       showAttach
       onFilesSelected={onFilesSelected}
       fileAccept={ROOM_ATTACH_ACCEPT}
-      hasAttachments={pending.length > 0}
-      footer={footer}
+      pendingAttachments={pendingAttachments}
+      onRemovePendingAttachment={(id) => {
+        setPending((prev) => prev.filter((row) => row.id !== id));
+      }}
       labels={{
         placeholder: content.composerPlaceholder,
         sendAriaLabel: content.composerSendAriaLabel,
@@ -242,6 +232,9 @@ export function InteractionRoomMessageComposer({
         emojiMenuAriaLabel: content.emojiMenuAriaLabel,
         mentionListAriaLabel: content.composerMentionListAriaLabel,
         mentionEmptyLabel: content.composerMentionEmptyLabel,
+        pendingDocumentsHeading: content.pendingAttachmentsHeading,
+        pendingDocumentOpenAriaLabel: (fileName) => `Abrir prévia de ${fileName}`,
+        pendingRemoveAriaLabel: (fileName) => `Remover ${fileName}`,
       }}
     />
   );

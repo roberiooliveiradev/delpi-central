@@ -25,8 +25,13 @@ export {
   type DashboardMentionComposerProps,
   type MentionComposerClassNames,
   type MentionComposerLabels,
+  type MentionComposerPendingAttachment,
   type MentionComposerProps,
 } from "./MentionComposer";
+export {
+  isPendingImageAttachment,
+  partitionPendingAttachments,
+} from "./mentionComposerPending";
 export {
   EmojiInsertMenu,
   createDashboardEmojiInsertMenu,

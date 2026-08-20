@@ -1,9 +1,26 @@
 /* Message composer with in-kit textarea + @ menu anchor. */
 .delpi-ui-mention-composer {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   min-width: 0;
+}
+
+/* Documentos pendentes — bandeja flutuante acima da pílula (Teams/iMessage). */
+.delpi-ui-mention-composer__document-tray {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  z-index: 2;
+  margin-bottom: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
+  border-radius: 0.85rem;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-shadow: 0 8px 24px
+    color-mix(in srgb, var(--delpi-ui-text, var(--text, #0f172a)) 12%, transparent);
 }
 
 .delpi-ui-mention-composer__body {
@@ -14,6 +31,64 @@
   border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
   border-radius: 1.25rem;
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
+/* Imagens pendentes — thumbs dentro da pílula. */
+.delpi-ui-mention-composer__image-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.delpi-ui-mention-composer__image-thumb {
+  position: relative;
+  width: 4.25rem;
+  height: 4.25rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 0.55rem;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-text, var(--text, #0f172a)) 12%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 6%,
+    transparent
+  );
+}
+
+.delpi-ui-mention-composer__image-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.delpi-ui-mention-composer__image-thumb-remove {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background: color-mix(in srgb, #0f172a 72%, transparent);
+  cursor: pointer;
+}
+
+.delpi-ui-mention-composer__image-thumb-remove:hover:not(:disabled) {
+  background: #0f172a;
+}
+
+.delpi-ui-mention-composer__image-thumb-remove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .delpi-ui-mention-composer__body:focus-within {

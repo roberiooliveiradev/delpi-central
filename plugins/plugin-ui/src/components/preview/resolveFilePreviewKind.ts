@@ -15,8 +15,18 @@ function normalizeName(fileName?: string | null): string {
   return (fileName ?? "").toLowerCase();
 }
 
-function isImage(mime: string, declaredType?: string | null): boolean {
-  return declaredType === "image" || mime.startsWith("image/");
+function isImage(mime: string, name: string, declaredType?: string | null): boolean {
+  return (
+    declaredType === "image"
+    || mime.startsWith("image/")
+    || name.endsWith(".png")
+    || name.endsWith(".jpg")
+    || name.endsWith(".jpeg")
+    || name.endsWith(".gif")
+    || name.endsWith(".webp")
+    || name.endsWith(".bmp")
+    || name.endsWith(".svg")
+  );
 }
 
 function isPdf(mime: string, declaredType?: string | null): boolean {
@@ -63,7 +73,7 @@ export function resolveFilePreviewKind(input: ResolveFilePreviewKindInput): File
   const name = normalizeName(input.fileName);
   const declared = input.declaredType?.toLowerCase() ?? null;
 
-  if (isImage(mime, declared)) return "image";
+  if (isImage(mime, name, declared)) return "image";
   if (isPdf(mime, declared)) return "pdf";
   if (isSpreadsheet(mime, name, declared)) return "spreadsheet";
   if (isDocx(mime, name)) return "docx";

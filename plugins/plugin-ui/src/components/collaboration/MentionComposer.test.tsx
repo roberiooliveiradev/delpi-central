@@ -500,6 +500,42 @@ describe("mention-composer.css", () => {
     expect(prose).toMatch(/border-left:\s*3px/);
     expect(prose).toMatch(/content:\s*"“"/);
     expect(prose).toMatch(/padding-left:\s*1\.25rem/);
+    expect(css).toMatch(/__document-tray/);
+    expect(css).toMatch(/__image-thumbs/);
+    expect(css).toMatch(/position:\s*absolute/);
+  });
+
+  it("separa imagens na pílula e documentos na bandeja", () => {
+    const onRemove = vi.fn();
+    render(
+      <MentionComposer
+        classNames={classNames}
+        labels={labels}
+        value=""
+        onChange={() => undefined}
+        onSubmit={() => undefined}
+        pendingAttachments={[
+          {
+            id: "img-1",
+            fileName: "foto.png",
+            contentType: "image/png",
+            previewUrl: "blob:test-img",
+          },
+          {
+            id: "doc-1",
+            fileName: "relatorio.pdf",
+            contentType: "application/pdf",
+            detail: "12 KB",
+          },
+        ]}
+        onRemovePendingAttachment={onRemove}
+      />,
+    );
+    expect(screen.getByTestId("mention-composer-image-thumbs")).toBeTruthy();
+    expect(screen.getByTestId("mention-composer-document-tray")).toBeTruthy();
+    expect(screen.getByText("relatorio.pdf")).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Remove foto.png"));
+    expect(onRemove).toHaveBeenCalledWith("img-1");
   });
 
   it("emoji-insert-menu.css usa grade sem borda full de caixa", () => {

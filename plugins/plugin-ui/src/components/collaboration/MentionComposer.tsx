@@ -14,10 +14,12 @@ import {
   Type,
   Underline,
   Undo2,
+  X,
 } from "lucide-react";
 import {
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ClipboardEvent,
@@ -27,6 +29,11 @@ import {
 } from "react";
 
 import { NumberStepperControl } from "../forms/NumberStepperControl";
+import {
+  AttachmentPreviewStrip,
+  attachmentPreviewStripBemClasses,
+  type AttachmentPreviewStripClassNames,
+} from "../forms/AttachmentPreviewStrip";
 import { HintAction } from "../help/HintAction";
 import {
   appendShortcutHint,
@@ -66,6 +73,11 @@ import {
   type ComposerFormatKind,
 } from "./mentionComposerFormat";
 import {
+  partitionPendingAttachments,
+  usePendingImageObjectUrls,
+  type MentionComposerPendingAttachment,
+} from "./mentionComposerPending";
+import {
   clampComposerFontSize,
   COMPOSER_FONT_SIZE_DEFAULT,
   COMPOSER_FONT_SIZE_MAX,
@@ -87,6 +99,8 @@ import {
 } from "./mentionComposerHistory";
 import { normalizeComposerFormatShells } from "./mentionComposerNormalize";
 
+export type { MentionComposerPendingAttachment } from "./mentionComposerPending";
+
 /** Coalesce de digitação antes de empilhar na pilha custom (ms). */
 export const COMPOSER_TYPING_COALESCE_MS = 400;
 
@@ -107,6 +121,11 @@ export type MentionComposerClassNames = {
   send: string;
   footer: string;
   fileInput: string;
+  imageThumbs: string;
+  imageThumb: string;
+  imageThumbRemove: string;
+  documentTray: string;
+  documentTrayStrip: AttachmentPreviewStripClassNames;
   menu: MentionMenuClassNames;
   emojiMenu: EmojiInsertMenuClassNames;
 };
@@ -134,6 +153,11 @@ export type MentionComposerLabels = {
   formatRedoAriaLabel?: string;
   formatEmojiAriaLabel?: string;
   emojiMenuAriaLabel?: string;
+  /** Heading above the floating document tray. */
+  pendingDocumentsHeading?: string;
+  pendingDocumentOpenAriaLabel?: (fileName: string) => string;
+  pendingRemoveAriaLabel?: (fileName: string) => string;
+  pendingDocumentsEmptyLabel?: string;
 };
 
 export type MentionComposerProps = {
@@ -155,6 +179,10 @@ export type MentionComposerProps = {
   fileAccept?: string;
   fileMultiple?: boolean;
   hasAttachments?: boolean;
+  /** Pending files: images → thumbs in pill; documents → floating `__document-tray`. */
+  pendingAttachments?: readonly MentionComposerPendingAttachment[];
+  onRemovePendingAttachment?: (id: string) => void;
+  /** @deprecated Prefer `pendingAttachments` (E6.S7). Kept for rare custom footers. */
   footer?: ReactNode;
   className?: string;
   portalScopeClassName?: string;
@@ -185,6 +213,11 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     send: pair(`${base}__send`, `${ui}__send`),
     footer: pair(`${base}__footer`, `${ui}__footer`),
     fileInput: pair(`${base}__file`, `${ui}__file`),
+    imageThumbs: pair(`${base}__image-thumbs`, `${ui}__image-thumbs`),
+    imageThumb: pair(`${base}__image-thumb`, `${ui}__image-thumb`),
+    imageThumbRemove: pair(`${base}__image-thumb-remove`, `${ui}__image-thumb-remove`),
+    documentTray: pair(`${base}__document-tray`, `${ui}__document-tray`),
+    documentTrayStrip: attachmentPreviewStripBemClasses(prefix),
     menu: mentionMenuBemClasses(prefix),
     emojiMenu: emojiInsertMenuBemClasses(prefix),
   };
@@ -236,6 +269,8 @@ export function MentionComposer({
   fileAccept,
   fileMultiple = true,
   hasAttachments = false,
+  pendingAttachments = [],
+  onRemovePendingAttachment,
   footer,
   className,
   portalScopeClassName,
@@ -247,6 +282,13 @@ export function MentionComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const emojiAnchorRef = useRef<HTMLButtonElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const { images: pendingImages, documents: pendingDocuments } = useMemo(
+    () => partitionPendingAttachments(pendingAttachments),
+    [pendingAttachments],
+  );
+  const imagePreviewUrls = usePendingImageObjectUrls(pendingImages);
+  const hasPendingFiles = pendingAttachments.length > 0;
+  const effectiveHasAttachments = hasAttachments || hasPendingFiles;
   const historyRef = useRef(createMentionComposerHistory());
   const lastStableRef = useRef<MentionComposerHistorySnapshot>({
     markdown: value,
@@ -434,13 +476,13 @@ export function MentionComposer({
   const canSubmit =
     !disabled &&
     !submitting &&
-    (liveMarkdown.trim().length > 0 || value.trim().length > 0 || hasAttachments);
+    (liveMarkdown.trim().length > 0 || value.trim().length > 0 || effectiveHasAttachments);
 
   const flushAndSubmit = () => {
     flushTypingCoalesce();
     const markdown = readMarkdown();
     if (markdown !== value) onChange(markdown);
-    if (!disabled && !submitting && (markdown.trim().length > 0 || hasAttachments)) {
+    if (!disabled && !submitting && (markdown.trim().length > 0 || effectiveHasAttachments)) {
       onSubmit(markdown);
     }
   };
@@ -639,10 +681,69 @@ export function MentionComposer({
   const redoLabel = labels.formatRedoAriaLabel ?? "Redo";
   const undoHint = appendShortcutHint(undoLabel, `${modKey}+Z`);
   const redoHint = appendShortcutHint(redoLabel, `${modKey}+Y`);
+  const removePendingLabel =
+    labels.pendingRemoveAriaLabel ?? ((fileName: string) => `Remove ${fileName}`);
+  const openPendingLabel =
+    labels.pendingDocumentOpenAriaLabel ?? ((fileName: string) => `Open ${fileName}`);
 
   return (
     <div className={rootClass}>
+      {pendingDocuments.length > 0 ? (
+        <div className={classNames.documentTray} data-testid="mention-composer-document-tray">
+          <AttachmentPreviewStrip
+            mode="manage"
+            heading={labels.pendingDocumentsHeading}
+            items={pendingDocuments.map((item) => ({
+              id: item.id,
+              fileName: item.fileName,
+              contentType: item.contentType,
+              previewUrl: item.previewUrl,
+              detail: item.detail,
+              busy: item.busy,
+            }))}
+            onOpen={() => undefined}
+            onRemove={
+              onRemovePendingAttachment
+                ? (item) => onRemovePendingAttachment(item.id)
+                : undefined
+            }
+            classNames={classNames.documentTrayStrip}
+            labels={{
+              empty: labels.pendingDocumentsEmptyLabel ?? "No documents",
+              openAriaLabel: openPendingLabel,
+              removeAriaLabel: removePendingLabel,
+            }}
+          />
+        </div>
+      ) : null}
       <div className={classNames.body}>
+        {pendingImages.length > 0 ? (
+          <div
+            className={classNames.imageThumbs}
+            role="list"
+            data-testid="mention-composer-image-thumbs"
+          >
+            {pendingImages.map((item) => {
+              const src = imagePreviewUrls.get(item.id) ?? item.previewUrl ?? "";
+              return (
+                <div key={item.id} className={classNames.imageThumb} role="listitem">
+                  {src ? <img src={src} alt="" /> : null}
+                  {onRemovePendingAttachment ? (
+                    <button
+                      type="button"
+                      className={classNames.imageThumbRemove}
+                      aria-label={removePendingLabel(item.fileName)}
+                      disabled={disabled || submitting || item.busy}
+                      onClick={() => onRemovePendingAttachment(item.id)}
+                    >
+                      <X size={14} aria-hidden />
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
         <div className={classNames.field}>
           {empty ? (
             <span className={classNames.placeholder} aria-hidden="true">
