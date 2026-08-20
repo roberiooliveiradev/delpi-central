@@ -765,7 +765,9 @@ class PostgresKaizenRepository(PluginBaseRepository):
         revisions = self.list_revisions(kaizen_id)
         start = _date.fromisoformat(date_start) if date_start else None
         end = _date.fromisoformat(date_end) if date_end else None
-        total = savings_timeline_service.period_savings(revisions, start, end)
+        total = savings_timeline_service.period_savings(
+            revisions, start, end, project_future=True
+        )
         current = savings_timeline_service.current_active_savings(revisions)
         return {
             "kaizen_id": kaizen_id,

@@ -850,7 +850,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
       <SectionCard
         title="Ganhos e validade"
         hint={KAIZEN_HELP_TOOLTIPS.improvements.periodGain}
-        subtitle="Economia ativa hoje e ganho acumulado por período — só a versão implantada contabiliza, respeitando a validade de 1 ano."
+        subtitle="Economia ativa hoje e ganho no período selecionado — a ficha projeta até o fim da validade de 1 ano; só a versão implantada contabiliza."
       >
         <KaizenImprovementsPanel record={record} revisions={revisions} />
       </SectionCard>

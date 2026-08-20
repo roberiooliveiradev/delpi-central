@@ -8,6 +8,10 @@ melhoria, de `daily_savings × dias ativos` dentro do período, respeitando:
   * o fim da vigência (`effective_until` — quando outra melhoria assumiu), e
   * o teto de 1 ano da própria melhoria (`savings_valid_until`).
 
+Dashboard / competência: por padrão **não projeta** dias após hoje
+(`project_future=False`). A ficha (`savings-timeline`) usa `project_future=True`
+para projetar até o fim da validade dentro do intervalo escolhido.
+
 Como as vigências são sequenciais (uma melhoria fecha a anterior), no máximo uma
 melhoria está ativa em cada instante; lançar uma nova melhoria "renova" o
 aniversário do kaizen.
@@ -58,6 +62,7 @@ def revision_last_active_day(
     effective_until: Optional[date],
     *,
     today: Optional[date] = None,
+    project_future: bool = False,
 ) -> Optional[date]:
     """Último dia em que a melhoria contabiliza (menor entre fim de vigência e teto de 1 ano)."""
     if effective_from is None:
@@ -68,9 +73,9 @@ def revision_last_active_day(
     if effective_until is not None:
         # A melhoria seguinte assumiu em effective_until; conta até o dia anterior.
         candidates.append(effective_until - timedelta(days=1))
-    else:
+    elif not project_future:
         candidates.append(reference_today)
-    return min(candidates)
+    return min(c for c in candidates if c is not None)
 
 
 def revision_active_days_in_range(
@@ -80,16 +85,25 @@ def revision_active_days_in_range(
     range_end: Optional[date],
     *,
     today: Optional[date] = None,
+    project_future: bool = False,
 ) -> int:
     if effective_from is None:
         return 0
     reference_today = today or date.today()
-    last_day = revision_last_active_day(effective_from, effective_until, today=reference_today)
+    last_day = revision_last_active_day(
+        effective_from,
+        effective_until,
+        today=reference_today,
+        project_future=project_future,
+    )
     if last_day is None:
         return 0
     start = max(effective_from, range_start or effective_from)
-    # Cap explícito em ``today``: mesmo com range_end futuro, não projeta ganho.
-    end = min(last_day, range_end or reference_today, reference_today)
+    # Sem projeção: cap em ``today``. Com projeção (ficha): até validade/fim do período.
+    if project_future:
+        end = min(last_day, range_end or last_day)
+    else:
+        end = min(last_day, range_end or reference_today, reference_today)
     if start > end:
         return 0
     return (end - start).days + 1
@@ -101,8 +115,14 @@ def period_savings(
     range_end: Optional[date] = None,
     *,
     today: Optional[date] = None,
+    project_future: bool = False,
 ) -> float:
-    """Ganho total do período somando cada melhoria dentro da sua validade."""
+    """Ganho total do período somando cada melhoria dentro da sua validade.
+
+    ``project_future=False`` (default, dashboard): não conta dias após hoje.
+    ``project_future=True`` (ficha / timeline): projeta até o fim da validade
+    dentro do intervalo pedido.
+    """
     total = 0.0
     for revision in revisions:
         if not _version_counts(revision):
@@ -116,6 +136,7 @@ def period_savings(
             range_start,
             range_end,
             today=today,
+            project_future=project_future,
         )
         total += daily * active_days
     return round(total, 2)

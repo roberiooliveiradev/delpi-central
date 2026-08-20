@@ -125,3 +125,30 @@ def test_period_savings_zero_for_future_range():
         today=date(2026, 7, 8),
     )
     assert total == 0.0
+
+
+def test_period_savings_projects_future_when_requested():
+    """Ficha do kaizen: intervalo futuro dentro da validade projeta diária × dias."""
+    revisions = [_rev(1, "2026-01-10", None, 10.0, version_status="implantado")]
+    total = timeline.period_savings(
+        revisions,
+        date(2026, 8, 1),
+        date(2026, 8, 31),
+        today=date(2026, 7, 8),
+        project_future=True,
+    )
+    assert total == 31 * 10.0
+
+
+def test_period_savings_projection_still_capped_by_validity():
+    revisions = [_rev(1, "2026-01-10", None, 10.0, version_status="implantado")]
+    # Validade até 2027-01-09; intervalo pedido vai além.
+    total = timeline.period_savings(
+        revisions,
+        date(2026, 12, 1),
+        date(2027, 6, 1),
+        today=date(2026, 7, 8),
+        project_future=True,
+    )
+    # 2026-12-01 .. 2027-01-09 = 40 dias
+    assert total == 40 * 10.0
