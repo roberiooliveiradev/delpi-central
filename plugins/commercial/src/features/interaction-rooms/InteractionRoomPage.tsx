@@ -3,6 +3,7 @@ import { PanelRight } from "lucide-react";
 
 import {
   createTaskFromInteractionMessage,
+  deleteInteractionMessage,
   getInteractionRoom,
   listInteractionMessages,
   listInteractionRoomMembers,
@@ -15,6 +16,7 @@ import {
   type InteractionRoomMemberDto,
 } from "../../api/interactionRoomsApi";
 import { getCommercialClientId } from "../../app/commercialClientId";
+import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useInteractionRoomSync } from "../../app/CommercialRealtimeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
@@ -102,11 +104,13 @@ export function InteractionRoomPage({
   const [pinningMessageId, setPinningMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyMessageId, setReplyMessageId] = useState<string | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [attachmentEpochByMessageId, setAttachmentEpochByMessageId] = useState<
     Record<string, number>
   >({});
   const { currentUserId, myPortfolio } = usePortfolioScope();
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
+  const confirm = useCommercialConfirm();
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
@@ -279,6 +283,52 @@ export function InteractionRoomPage({
     [roomId, pinningMessageId, content.pinOk, content.unpinOk, content.pinError, pushRoomAlert],
   );
 
+  const onDeleteMessage = useCallback(
+    async (messageId: string) => {
+      const id = roomId.trim();
+      if (!id || !messageId.trim() || deletingMessageId) return;
+      const ok = await confirm({
+        title: content.deleteConfirmTitle,
+        message: content.deleteConfirmMessage,
+        confirmLabel: content.deleteConfirmLabel,
+        cancelLabel: content.deleteCancelLabel,
+        variant: "danger",
+      });
+      if (!ok) return;
+      setDeletingMessageId(messageId);
+      try {
+        const deleted = await deleteInteractionMessage(id, messageId);
+        setMessages((prev) =>
+          prev.map((item) => (item.id === deleted.id ? deleted : item)),
+        );
+        if (editingMessageId === messageId) setEditingMessageId(null);
+        if (replyMessageId === messageId) setReplyMessageId(null);
+        pushRoomAlert(content.deleteOk, "info");
+      } catch (err: unknown) {
+        pushRoomAlert(
+          err instanceof Error ? err.message : content.deleteError,
+          "danger",
+        );
+      } finally {
+        setDeletingMessageId(null);
+      }
+    },
+    [
+      roomId,
+      deletingMessageId,
+      confirm,
+      content.deleteConfirmTitle,
+      content.deleteConfirmMessage,
+      content.deleteConfirmLabel,
+      content.deleteCancelLabel,
+      content.deleteOk,
+      content.deleteError,
+      editingMessageId,
+      replyMessageId,
+      pushRoomAlert,
+    ],
+  );
+
   const resolveActions = useCallback(
     (message: {
       id: string;
@@ -309,6 +359,10 @@ export function InteractionRoomPage({
           setReplyMessageId(messageId);
         },
         replyMessageId,
+        onDeleteMessage: (messageId) => {
+          void onDeleteMessage(messageId);
+        },
+        deletingMessageId,
       }),
     [
       onCreateTaskFromMessage,
@@ -318,6 +372,8 @@ export function InteractionRoomPage({
       pinningMessageId,
       editingMessageId,
       replyMessageId,
+      onDeleteMessage,
+      deletingMessageId,
     ],
   );
 

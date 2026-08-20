@@ -34,6 +34,10 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/disabled=\{Boolean\(editingMessageId\)\}/);
     expect(source).toMatch(/messageEditedSuffix/);
     expect(source).toMatch(/onEditMessage:/);
+    expect(source).toMatch(/onDeleteMessage:/);
+    expect(source).toMatch(/useCommercialConfirm/);
+    expect(source).toMatch(/deleteInteractionMessage/);
+    expect(source).not.toMatch(/window\.confirm/);
     expect(source).toMatch(/onReplyMessage:/);
     expect(source).toMatch(/replyToMessageId=/);
     expect(source).toMatch(/InteractionRoomMessageAttachments/);

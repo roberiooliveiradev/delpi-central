@@ -2,15 +2,18 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   CREATE_TASK_MESSAGE_ACTION_ID,
+  DELETE_MESSAGE_ACTION_ID,
   EDIT_MESSAGE_ACTION_ID,
   PIN_MESSAGE_ACTION_ID,
   REPLY_MESSAGE_ACTION_ID,
   UNPIN_MESSAGE_ACTION_ID,
   buildCreateTaskMessageAction,
+  buildDeleteMessageAction,
   buildEditMessageAction,
   buildPinMessageAction,
   buildReplyMessageAction,
   canCreateTaskFromMessage,
+  canDeleteMessage,
   canEditMessage,
   canPinMessage,
   canReplyMessage,
@@ -37,6 +40,11 @@ describe("messageThreadTaskAction", () => {
     expect(canEditMessage({ kind: "text", deleted: false, mine: false })).toBe(false);
     expect(canEditMessage({ kind: "system", deleted: false, mine: true })).toBe(false);
     expect(canEditMessage({ kind: "text", deleted: true, mine: true })).toBe(false);
+  });
+
+  it("permite excluir nas mesmas regras de editar", () => {
+    expect(canDeleteMessage({ kind: "text", deleted: false, mine: true })).toBe(true);
+    expect(canDeleteMessage({ kind: "text", deleted: false, mine: false })).toBe(false);
   });
 
   it("permite responder nas mesmas regras de criar tarefa", () => {
@@ -87,6 +95,18 @@ describe("messageThreadTaskAction", () => {
     expect(onReply).toHaveBeenCalledWith("m1");
   });
 
+  it("monta ação excluir com danger", () => {
+    const onDelete = vi.fn();
+    const action = buildDeleteMessageAction({
+      message: { id: "m1", kind: "text", deleted: false, mine: true },
+      onDelete,
+    });
+    expect(action?.id).toBe(DELETE_MESSAGE_ACTION_ID);
+    expect(action?.danger).toBe(true);
+    action?.onClick();
+    expect(onDelete).toHaveBeenCalledWith("m1");
+  });
+
   it("monta pin/unpin conforme estado", () => {
     const onTogglePin = vi.fn();
     const pin = buildPinMessageAction({
@@ -124,7 +144,7 @@ describe("messageThreadTaskAction", () => {
     expect(actions.map((a) => a.id)).toEqual([PIN_MESSAGE_ACTION_ID]);
   });
 
-  it("resolveActions inclui reply + edit + create-task + pin para mine", () => {
+  it("resolveActions inclui reply + edit + create-task + pin + delete para mine", () => {
     const actions = resolveInteractionMessageActions({
       message: {
         id: "m1",
@@ -138,12 +158,14 @@ describe("messageThreadTaskAction", () => {
       onTogglePin: () => undefined,
       onEditMessage: () => undefined,
       onReplyMessage: () => undefined,
+      onDeleteMessage: () => undefined,
     });
     expect(actions.map((a) => a.id)).toEqual([
       REPLY_MESSAGE_ACTION_ID,
       EDIT_MESSAGE_ACTION_ID,
       CREATE_TASK_MESSAGE_ACTION_ID,
       PIN_MESSAGE_ACTION_ID,
+      DELETE_MESSAGE_ACTION_ID,
     ]);
   });
 

@@ -2,7 +2,7 @@
  * Slots de ação do MessageThread (tarefa + pin + editar + responder) — host monta, kit só renderiza.
  */
 import { createElement } from "react";
-import { ListTodo, MessageSquareReply, Pencil, Pin, PinOff } from "lucide-react";
+import { ListTodo, MessageSquareReply, Pencil, Pin, PinOff, Trash2 } from "lucide-react";
 import type { MessageThreadAction, MessageThreadItem } from "@delpi/plugin-ui/index";
 
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
@@ -14,6 +14,7 @@ export const PIN_MESSAGE_ACTION_ID = "pin-message";
 export const UNPIN_MESSAGE_ACTION_ID = "unpin-message";
 export const EDIT_MESSAGE_ACTION_ID = "edit-message";
 export const REPLY_MESSAGE_ACTION_ID = "reply-message";
+export const DELETE_MESSAGE_ACTION_ID = "delete-message";
 
 export function canCreateTaskFromMessage(
   message: Pick<MessageThreadItem, "kind" | "deleted">,
@@ -39,6 +40,12 @@ export function canEditMessage(
   if (message.deleted) return false;
   if (!message.mine) return false;
   return String(message.kind || "").trim() === "text";
+}
+
+export function canDeleteMessage(
+  message: Pick<MessageThreadItem, "kind" | "deleted" | "mine">,
+): boolean {
+  return canEditMessage(message);
 }
 
 export function canReplyMessage(
@@ -130,6 +137,24 @@ export function buildReplyMessageAction(options: {
   };
 }
 
+export function buildDeleteMessageAction(options: {
+  message: Pick<MessageThreadItem, "id" | "kind" | "deleted" | "mine">;
+  onDelete: (messageId: string) => void;
+  busy?: boolean;
+}): MessageThreadAction | null {
+  if (!canDeleteMessage(options.message)) return null;
+  if (options.busy) return null;
+  const label = INTERACTION_ROOMS_CONTENT.deleteActionLabel;
+  return {
+    id: DELETE_MESSAGE_ACTION_ID,
+    label,
+    title: label,
+    icon: createElement(Trash2, { size: ACTION_ICON_SIZE, "aria-hidden": true }),
+    danger: true,
+    onClick: () => options.onDelete(options.message.id),
+  };
+}
+
 export function resolveInteractionMessageActions(options: {
   message: MessageThreadItem;
   onCreateTask: (messageId: string) => void;
@@ -141,6 +166,8 @@ export function resolveInteractionMessageActions(options: {
   editingMessageId?: string | null;
   onReplyMessage?: (messageId: string) => void;
   replyMessageId?: string | null;
+  onDeleteMessage?: (messageId: string) => void;
+  deletingMessageId?: string | null;
 }): MessageThreadAction[] {
   const actions: MessageThreadAction[] = [];
   if (options.onReplyMessage) {
@@ -174,6 +201,14 @@ export function resolveInteractionMessageActions(options: {
       busy: options.pinningMessageId === options.message.id,
     });
     if (pin) actions.push(pin);
+  }
+  if (options.onDeleteMessage) {
+    const del = buildDeleteMessageAction({
+      message: options.message,
+      onDelete: options.onDeleteMessage,
+      busy: options.deletingMessageId === options.message.id,
+    });
+    if (del) actions.push(del);
   }
   return actions;
 }
