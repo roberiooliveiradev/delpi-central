@@ -70,9 +70,17 @@ import {
   detectActiveMention,
   insertMentionToken,
   replaceEditablePlainRange,
+  setEditablePlainCursor,
   snapshotEditablePlaintext,
   type ActiveMentionQuery,
 } from "./mentionComposerCaret";
+import {
+  createMentionComposerHistory,
+  type MentionComposerHistorySnapshot,
+} from "./mentionComposerHistory";
+
+/** Coalesce de digitação antes de empilhar na pilha custom (ms). */
+export const COMPOSER_TYPING_COALESCE_MS = 400;
 
 export type MentionComposerClassNames = {
   root: string;
@@ -225,6 +233,10 @@ export function MentionComposer({
   const surfaceRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const historyRef = useRef(createMentionComposerHistory());
+  const lastStableRef = useRef<MentionComposerHistorySnapshot>({ markdown: value, cursor: 0 });
+  const typingBeforeRef = useRef<MentionComposerHistorySnapshot | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
   const [formatOpen, setFormatOpen] = useState(false);
   const [fontSize, setFontSize] = useState(COMPOSER_FONT_SIZE_DEFAULT);
@@ -238,6 +250,51 @@ export function MentionComposer({
   const refreshHistoryFlags = () => {
     setCanUndo(queryRichTextCommandEnabled("undo"));
     setCanRedo(queryRichTextCommandEnabled("redo"));
+  };
+
+  const readSnapshot = (): MentionComposerHistorySnapshot => {
+    const el = surfaceRef.current;
+    if (!el) return { markdown: value, cursor: value.length };
+    const markdown = richTextHtmlToMarkdown(el.innerHTML);
+    const plain = snapshotEditablePlaintext(el);
+    return { markdown, cursor: plain.cursor };
+  };
+
+  const flushTypingCoalesce = () => {
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    const before = typingBeforeRef.current;
+    typingBeforeRef.current = null;
+    if (!before) return;
+    const after = readSnapshot();
+    historyRef.current.commit(before, after);
+    lastStableRef.current = after;
+  };
+
+  const commitBeforeMutation = () => {
+    flushTypingCoalesce();
+    const before = readSnapshot();
+    historyRef.current.pushBefore(before);
+    lastStableRef.current = before;
+  };
+
+  const noteTypingInput = () => {
+    if (!typingBeforeRef.current) {
+      typingBeforeRef.current = { ...lastStableRef.current };
+    }
+    lastStableRef.current = readSnapshot();
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      typingTimerRef.current = null;
+      const before = typingBeforeRef.current;
+      typingBeforeRef.current = null;
+      if (!before) return;
+      const after = readSnapshot();
+      historyRef.current.commit(before, after);
+      lastStableRef.current = after;
+    }, COMPOSER_TYPING_COALESCE_MS);
   };
 
   const rememberSelection = () => {
@@ -262,10 +319,15 @@ export function MentionComposer({
     const el = surfaceRef.current;
     if (!el) return;
     const current = richTextHtmlToMarkdown(el.innerHTML);
-    if (current === value) return;
-    // Preserva a pilha nativa de undo/redo enquanto o editor está focado.
+    if (current === value) {
+      lastStableRef.current = { markdown: value, cursor: lastStableRef.current.cursor };
+      return;
+    }
+    // Preserva a pilha nativa / custom enquanto o editor está focado.
     if (document.activeElement === el) return;
     el.innerHTML = value.trim() ? markdownToRichTextHtml(value) : "";
+    lastStableRef.current = { markdown: value, cursor: value.length };
+    historyRef.current.clear();
   }, [value]);
 
   useEffect(() => {
@@ -287,6 +349,12 @@ export function MentionComposer({
     return () => document.removeEventListener("selectionchange", persist);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
+  }, []);
+
   const readMarkdown = () => {
     const el = surfaceRef.current;
     return el ? richTextHtmlToMarkdown(el.innerHTML) : value;
@@ -304,6 +372,7 @@ export function MentionComposer({
   const applyHit = (hit: MentionMenuHit) => {
     const el = surfaceRef.current;
     if (!activeMention || !el) return;
+    commitBeforeMutation();
     const snap = snapshotEditablePlaintext(el);
     const { nextValue, nextCursor, token } = insertMentionToken(
       snap.text,
@@ -315,6 +384,7 @@ export function MentionComposer({
     replaceEditablePlainRange(el, activeMention.start, snap.cursor, insertion);
     const markdown = richTextHtmlToMarkdown(el.innerHTML);
     onChange(markdown);
+    lastStableRef.current = readSnapshot();
     setActiveMention(null);
     onMentionInserted?.(hit, token);
     requestAnimationFrame(() => {
@@ -329,6 +399,7 @@ export function MentionComposer({
     (liveMarkdown.trim().length > 0 || value.trim().length > 0 || hasAttachments);
 
   const flushAndSubmit = () => {
+    flushTypingCoalesce();
     const markdown = readMarkdown();
     if (markdown !== value) onChange(markdown);
     if (!disabled && !submitting && (markdown.trim().length > 0 || hasAttachments)) {
@@ -342,38 +413,19 @@ export function MentionComposer({
     const el = surfaceRef.current;
     if (!el) return false;
     const key = event.key.toLowerCase();
-    if (key === "b" && !event.shiftKey) {
-      toggleComposerFormat(el, "bold");
+    const run = (kind: ComposerFormatKind) => {
+      commitBeforeMutation();
+      toggleComposerFormat(el, kind);
       return true;
-    }
-    if (key === "i" && !event.shiftKey) {
-      toggleComposerFormat(el, "italic");
-      return true;
-    }
-    if (key === "x" && event.shiftKey) {
-      toggleComposerFormat(el, "strike");
-      return true;
-    }
-    if (key === "`" || (key === "e" && !event.shiftKey)) {
-      toggleComposerFormat(el, "code");
-      return true;
-    }
-    if (key === "8" && event.shiftKey) {
-      toggleComposerFormat(el, "ul");
-      return true;
-    }
-    if (key === "7" && event.shiftKey) {
-      toggleComposerFormat(el, "ol");
-      return true;
-    }
-    if (key === "." && event.shiftKey) {
-      toggleComposerFormat(el, "quote");
-      return true;
-    }
-    if (key === "k" && !event.shiftKey) {
-      toggleComposerFormat(el, "link");
-      return true;
-    }
+    };
+    if (key === "b" && !event.shiftKey) return run("bold");
+    if (key === "i" && !event.shiftKey) return run("italic");
+    if (key === "x" && event.shiftKey) return run("strike");
+    if (key === "`" || (key === "e" && !event.shiftKey)) return run("code");
+    if (key === "8" && event.shiftKey) return run("ul");
+    if (key === "7" && event.shiftKey) return run("ol");
+    if (key === "." && event.shiftKey) return run("quote");
+    if (key === "k" && !event.shiftKey) return run("link");
     return false;
   };
 
@@ -381,8 +433,10 @@ export function MentionComposer({
     const el = surfaceRef.current;
     if (!el) return;
     restoreRichTextSelection(el, savedRangeRef.current);
+    commitBeforeMutation();
     toggleComposerFormat(el, kind);
     setFormatFlags(queryComposerFormatFlags(el));
+    lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
     emitMarkdownAndMention();
   };
@@ -390,9 +444,11 @@ export function MentionComposer({
   const runHistory = (command: "undo" | "redo") => {
     const el = surfaceRef.current;
     if (!el) return;
+    flushTypingCoalesce();
     restoreRichTextSelection(el, savedRangeRef.current);
     runRichTextCommand(el, command);
     setFormatFlags(queryComposerFormatFlags(el));
+    lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
     emitMarkdownAndMention();
   };
@@ -402,8 +458,10 @@ export function MentionComposer({
     if (!el) return;
     const next = clampComposerFontSize(nextRaw);
     restoreRichTextSelection(el, savedRangeRef.current);
+    commitBeforeMutation();
     applyRichTextFontSize(el, next);
     setFontSize(next);
+    lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
     emitMarkdownAndMention();
   };
@@ -412,6 +470,7 @@ export function MentionComposer({
     event.preventDefault();
     const el = surfaceRef.current;
     if (!el) return;
+    commitBeforeMutation();
     const html = event.clipboardData?.getData("text/html") ?? "";
     const text = event.clipboardData?.getData("text/plain") ?? "";
     if (clipboardHasUsefulHtml(html)) {
@@ -419,7 +478,12 @@ export function MentionComposer({
     } else if (text) {
       insertRichTextHtmlFragment(el, stripDangerousRichTextTags(escapePlainText(text)));
     }
+    lastStableRef.current = readSnapshot();
     emitMarkdownAndMention();
+  };
+
+  const handleSurfaceBlur = () => {
+    flushTypingCoalesce();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -432,6 +496,7 @@ export function MentionComposer({
     }
     if (applyShortcut(event)) {
       event.preventDefault();
+      lastStableRef.current = readSnapshot();
       emitMarkdownAndMention();
       setFormatFlags(queryComposerFormatFlags(surfaceRef.current));
       refreshHistoryFlags();
@@ -481,8 +546,10 @@ export function MentionComposer({
             aria-label={labels.placeholder}
             aria-placeholder={labels.placeholder}
             onFocus={handleSurfaceFocus}
+            onBlur={handleSurfaceBlur}
             onInput={() => {
               rememberSelection();
+              noteTypingInput();
               emitMarkdownAndMention();
             }}
             onPaste={handlePaste}
