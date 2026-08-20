@@ -52,6 +52,9 @@ class ChatAdminDebugService:
                 "contextAssertiveness",
                 "intelligence",
                 "trustSignals",
+                "llm",
+                "metrics",
+                "responseQuality",
                 "textCorrectionMetrics",
                 "textCorrectionTask",
                 "textCorrectionQuality",
@@ -127,7 +130,122 @@ class ChatAdminDebugService:
         if isinstance(trust_signals, list) and trust_signals:
             admin_debug_payload["trustSignals"] = trust_signals
 
+        ChatAdminDebugService._sync_llm_runtime_into_admin_debug(
+            admin_debug_payload,
+            metadata=metadata,
+            intelligence_metadata=intelligence_metadata,
+        )
+
         metadata["adminDebug"] = admin_debug_payload
+
+    @classmethod
+    def _build_llm_debug_block(cls, *, messages: list[dict] | None = None) -> dict[str, Any]:
+        from app.application.services.chat_llm_metadata_service import ChatLlmMetadataService
+
+        snapshot = ChatLlmMetadataService.build_runtime_snapshot()
+        block: dict[str, Any] = {
+            "provider": snapshot["provider"],
+            "model": snapshot["model"],
+            "responseMode": snapshot["responseMode"],
+            "baseUrl": snapshot["baseUrl"],
+            "configuredProvider": snapshot["configuredProvider"],
+            "configuredModel": snapshot["configuredModel"],
+            "maxTokens": snapshot["maxTokens"],
+            "numCtx": snapshot["numCtx"],
+            "temperature": snapshot["temperature"],
+            "costRates": snapshot.get("costRates") or {},
+            "messages": list(messages or []),
+        }
+        block["usage"] = cls._usage_from_messages(block["messages"])
+        return block
+
+    @classmethod
+    def _usage_from_messages(cls, messages: list) -> dict[str, Any]:
+        prompt_chars = 0
+        prompt_messages = 0
+
+        for item in messages:
+            if not isinstance(item, dict):
+                continue
+            prompt_messages += 1
+            prompt_chars += len(str(item.get("content") or ""))
+
+        return {
+            "promptMessages": prompt_messages,
+            "promptChars": prompt_chars,
+            "tokenSource": "estimated",
+        }
+
+    @classmethod
+    def _sync_llm_runtime_into_admin_debug(
+        cls,
+        admin_debug_payload: dict,
+        *,
+        metadata: dict,
+        intelligence_metadata: dict | None,
+    ) -> None:
+        existing = admin_debug_payload.get("llm")
+        messages = (
+            existing.get("messages")
+            if isinstance(existing, dict) and isinstance(existing.get("messages"), list)
+            else []
+        )
+        block = cls._build_llm_debug_block(messages=messages)
+
+        # Preferência: campos já gravados no metadata do assistente (mesmo turno).
+        for key in (
+            "provider",
+            "model",
+            "responseMode",
+            "baseUrl",
+            "configuredProvider",
+            "configuredModel",
+            "maxTokens",
+            "numCtx",
+            "temperature",
+            "costRates",
+        ):
+            nested = metadata.get("llm") if isinstance(metadata.get("llm"), dict) else {}
+            value = metadata.get(key)
+            if value is None and isinstance(nested, dict):
+                value = nested.get(key)
+            if value is not None and value != "":
+                block[key] = value
+
+        usage = dict(block.get("usage") or {})
+        metrics = metadata.get("metrics") if isinstance(metadata.get("metrics"), dict) else {}
+        if metrics:
+            usage.update(
+                {
+                    "promptTokensEstimated": metrics.get("promptTokensEstimated"),
+                    "completionTokensEstimated": metrics.get("completionTokensEstimated"),
+                    "totalTokensEstimated": metrics.get("totalTokensEstimated"),
+                    "estimatedCost": metrics.get("estimatedCost"),
+                    "latencyMs": metrics.get("latencyMs"),
+                    "tokenSource": "estimated",
+                }
+            )
+        block["usage"] = usage
+
+        # Espelha metrics no adminDebug para consumo/custo sem abrir o JSON raiz.
+        if metrics:
+            admin_debug_payload["metrics"] = {
+                "latencyMs": metrics.get("latencyMs"),
+                "promptTokensEstimated": metrics.get("promptTokensEstimated"),
+                "completionTokensEstimated": metrics.get("completionTokensEstimated"),
+                "totalTokensEstimated": metrics.get("totalTokensEstimated"),
+                "estimatedCost": metrics.get("estimatedCost"),
+            }
+
+        response_quality = metadata.get("responseQuality")
+        if isinstance(response_quality, dict) and "llmSkipped" in response_quality:
+            block["skipped"] = bool(response_quality.get("llmSkipped"))
+        elif isinstance(intelligence_metadata, dict):
+            quality = intelligence_metadata.get("responseQuality")
+            if isinstance(quality, dict) and "llmSkipped" in quality:
+                block["skipped"] = bool(quality.get("llmSkipped"))
+
+        admin_debug_payload["llm"] = block
 
     @staticmethod
     def sync_text_correction_trace(metadata: dict) -> None:
@@ -289,9 +407,7 @@ class ChatAdminDebugService:
                 "toolContextText": tool_context_text,
             },
             "rag": rag_debug,
-            "llm": {
-                "messages": compact_llm_messages,
-            },
+            "llm": cls._build_llm_debug_block(messages=compact_llm_messages),
         }
 
         if memory_block is not None:

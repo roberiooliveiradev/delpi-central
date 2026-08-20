@@ -55,3 +55,6 @@ class ChatResponseMetadataService:
                         "simpleTurn": snapshot.get("simpleTurn"),
                     }
                 )
+                llm_block = admin_debug.get("llm")
+                if isinstance(llm_block, dict):
+                    llm_block["skipped"] = bool(quality.get("llmSkipped"))

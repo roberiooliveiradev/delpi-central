@@ -975,7 +975,8 @@ Payload típico (campos principais):
 | `pipeline` | `operationalOptimize`, `analysisMode`, `fastPath`, **`skipRag`**, `historySummary` |
 | `tooling` | `toolCalls`, `selectedExternalAction`, texto de contexto de tools |
 | `rag` | `sources`, `ragContextText`, `retrievedSourceCount`, `visibleSourceCount`, `retrievedChunkCount`, opcional `sourcesNote` |
-| `llm` | Mensagens enviadas ao modelo (truncadas) |
+| `llm` | **`provider`**, **`model`**, `responseMode`, `baseUrl`, params (`maxTokens`/`numCtx`/`temperature`), **`usage`** (tokens≈, custo≈, latência, chars), `costRates`, `skipped`, mensagens |
+| `metrics` | Espelho do consumo do turno: `latencyMs`, tokens estimados, `estimatedCost` |
 | `recordedAt` | ISO UTC do turno |
 
 Para perguntas de identidade, espere `pipeline.skipRag: false`. `rag.sources` pode vir vazio no JSON exposto (fontes globais ocultas) — use `rag.ragContextText`, `rag.retrievedSourceCount` vs. `rag.visibleSourceCount` e `rag.sourcesNote`. Se só houver normas técnicas na base, o filtro esvazia o contexto e a resposta vem do fallback canônico (sem LLM).

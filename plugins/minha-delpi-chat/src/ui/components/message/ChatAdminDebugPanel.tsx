@@ -322,6 +322,126 @@ function AdminContextAssertivenessSummary({
   );
 }
 
+function formatTokenCount(value: unknown): string | null {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return null;
+  }
+
+  return String(Math.round(value));
+}
+
+function formatEstimatedCost(value: unknown, currency: string): string | null {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return null;
+  }
+
+  const digits = value < 0.01 ? 6 : 4;
+  return `${currency} ${value.toFixed(digits)}`;
+}
+
+function AdminLlmRuntimeSummary({ llm }: { llm: Record<string, unknown> }) {
+  const provider = String(llm.provider ?? "").trim();
+  const model = String(llm.model ?? "").trim();
+  const usage = (llm.usage as Record<string, unknown> | undefined) ?? {};
+  const costRates = (llm.costRates as Record<string, unknown> | undefined) ?? {};
+  const currency = String(costRates.currency ?? "BRL").trim() || "BRL";
+
+  if (!provider && !model) {
+    return null;
+  }
+
+  const responseMode = String(llm.responseMode ?? "").trim();
+  const baseUrl = String(llm.baseUrl ?? "").trim();
+  const skipped = llm.skipped === true;
+  const configuredProvider = String(llm.configuredProvider ?? "").trim();
+  const configuredModel = String(llm.configuredModel ?? "").trim();
+  const maxTokens =
+    typeof llm.maxTokens === "number" ? Math.round(llm.maxTokens) : null;
+  const numCtx = typeof llm.numCtx === "number" ? Math.round(llm.numCtx) : null;
+  const temperature =
+    typeof llm.temperature === "number" ? Number(llm.temperature.toFixed(2)) : null;
+  const promptTokens = formatTokenCount(usage.promptTokensEstimated);
+  const completionTokens = formatTokenCount(usage.completionTokensEstimated);
+  const totalTokens = formatTokenCount(usage.totalTokensEstimated);
+  const estimatedCost = formatEstimatedCost(usage.estimatedCost, currency);
+  const latencyMs = formatTimingMs(usage.latencyMs);
+  const promptMessages =
+    typeof usage.promptMessages === "number" ? Math.round(usage.promptMessages) : null;
+  const promptChars =
+    typeof usage.promptChars === "number" ? Math.round(usage.promptChars) : null;
+
+  return (
+    <div className="mdc-chat-admin-debug__timings" aria-label="LLM do turno">
+      {provider ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>llm</strong> {provider}
+          {model ? ` · ${model}` : ""}
+        </span>
+      ) : null}
+      {responseMode ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>modo</strong> {responseMode}
+        </span>
+      ) : null}
+      {skipped ? (
+        <span className="mdc-chat-admin-debug__timing-chip mdc-chat-admin-debug__assertiveness-chip--warn">
+          llm skipped
+        </span>
+      ) : null}
+      {maxTokens !== null || numCtx !== null || temperature !== null ? (
+        <span
+          className="mdc-chat-admin-debug__timing-chip"
+          title="Parâmetros de geração (max_tokens / num_ctx / temperature)"
+        >
+          <strong>params</strong>
+          {maxTokens !== null ? ` max=${maxTokens}` : ""}
+          {numCtx !== null ? ` ctx=${numCtx}` : ""}
+          {temperature !== null ? ` temp=${temperature}` : ""}
+        </span>
+      ) : null}
+      {promptTokens || completionTokens || totalTokens ? (
+        <span
+          className="mdc-chat-admin-debug__timing-chip"
+          title="Tokens estimados (heurística chars/4 — não é usage da API)"
+        >
+          <strong>tokens≈</strong>
+          {promptTokens ? ` p${promptTokens}` : ""}
+          {completionTokens ? ` c${completionTokens}` : ""}
+          {totalTokens ? ` Σ${totalTokens}` : ""}
+        </span>
+      ) : null}
+      {estimatedCost ? (
+        <span className="mdc-chat-admin-debug__timing-chip" title="Custo estimado pelas taxas configuradas">
+          <strong>custo≈</strong> {estimatedCost}
+        </span>
+      ) : null}
+      {latencyMs ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>latência</strong> {latencyMs}
+        </span>
+      ) : null}
+      {promptMessages !== null || promptChars !== null ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>prompt</strong>
+          {promptMessages !== null ? ` ${promptMessages} msg` : ""}
+          {promptChars !== null ? ` · ${promptChars} chars` : ""}
+        </span>
+      ) : null}
+      {baseUrl ? (
+        <span className="mdc-chat-admin-debug__timing-chip" title={baseUrl}>
+          <strong>endpoint</strong> {baseUrl.replace(/^https?:\/\//, "").slice(0, 48)}
+        </span>
+      ) : null}
+      {configuredProvider && configuredProvider !== provider ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>cfg</strong> {configuredProvider}
+          {configuredModel ? ` · ${configuredModel}` : ""}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
   const json = useMemo(() => safeJson(debug ?? {}), [debug]);
   const intelligence = (debug?.intelligence as Record<string, unknown> | undefined) ?? null;
@@ -329,6 +449,7 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
   const contextAssertiveness =
     (debug?.contextAssertiveness as Record<string, unknown> | undefined) ?? null;
   const intentRoute = (debug?.intentRoute as Record<string, unknown> | undefined) ?? null;
+  const llmRuntime = (debug?.llm as Record<string, unknown> | undefined) ?? null;
   const drawingTrace =
     (debug?.drawingAnalysisTrace as Record<string, unknown> | undefined) ?? null;
   const documentVisionTrace =
@@ -354,12 +475,13 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
           <Bug size={16} aria-hidden="true" />
           <span>Diagnóstico (admin)</span>
           <span className="mdc-chat-admin-debug__summary-hint">
-            intenção · tools · RAG · anexo · desenho
+            intenção · llm · tools · RAG · anexo · desenho
           </span>
         </summary>
 
         <div className="mdc-chat-admin-debug__content">
           {intentRoute ? <AdminIntentRouteSummary intentRoute={intentRoute} /> : null}
+          {llmRuntime ? <AdminLlmRuntimeSummary llm={llmRuntime} /> : null}
           {webSearchTrace ? <AdminWebSearchTraceSummary trace={webSearchTrace} /> : null}
           {documentVisionTrace ? (
             <AdminDocumentVisionTraceSummary trace={documentVisionTrace} />

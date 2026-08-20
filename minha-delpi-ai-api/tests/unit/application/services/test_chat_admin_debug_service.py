@@ -66,7 +66,27 @@ def test_attach_includes_intelligence_timings():
         "pipeline": {"stages": ["utility_direct"], "skipRag": True},
         "nativeToolCalling": {"used": False},
     }
-    metadata: dict = {}
+    metadata: dict = {
+        "provider": "openai_compatible",
+        "model": "moonshotai/kimi-k3",
+        "responseMode": "normal",
+        "llm": {
+            "provider": "openai_compatible",
+            "model": "moonshotai/kimi-k3",
+            "baseUrl": "https://openrouter.ai/api/v1",
+            "maxTokens": 256,
+            "numCtx": 1536,
+            "temperature": 0.1,
+        },
+        "metrics": {
+            "latencyMs": 18218,
+            "promptTokensEstimated": 4200,
+            "completionTokensEstimated": 380,
+            "totalTokensEstimated": 4580,
+            "estimatedCost": 0.012345,
+        },
+        "responseQuality": {"llmSkipped": False},
+    }
 
     ChatAdminDebugService.attach_to_assistant_metadata(
         metadata,
@@ -76,7 +96,45 @@ def test_attach_includes_intelligence_timings():
 
     assert metadata["adminDebug"]["intelligence"]["timings"]["llm_done_ms"] == 890
     assert metadata["adminDebug"]["intelligence"]["pipeline"]["stages"] == ["utility_direct"]
+    assert metadata["adminDebug"]["llm"]["provider"] == "openai_compatible"
+    assert metadata["adminDebug"]["llm"]["model"] == "moonshotai/kimi-k3"
+    assert metadata["adminDebug"]["llm"]["baseUrl"] == "https://openrouter.ai/api/v1"
+    assert metadata["adminDebug"]["llm"]["skipped"] is False
+    assert metadata["adminDebug"]["llm"]["usage"]["promptTokensEstimated"] == 4200
+    assert metadata["adminDebug"]["llm"]["usage"]["completionTokensEstimated"] == 380
+    assert metadata["adminDebug"]["llm"]["usage"]["totalTokensEstimated"] == 4580
+    assert metadata["adminDebug"]["llm"]["usage"]["estimatedCost"] == 0.012345
+    assert metadata["adminDebug"]["llm"]["usage"]["latencyMs"] == 18218
+    assert metadata["adminDebug"]["metrics"]["totalTokensEstimated"] == 4580
+    assert metadata["adminDebug"]["llm"]["maxTokens"] == 256
+    assert metadata["adminDebug"]["llm"]["temperature"] == 0.1
 
+
+def test_build_includes_llm_runtime_fields(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
+    monkeypatch.setenv("KIMI_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv("KIMI_MODEL", "moonshotai/kimi-k3")
+    monkeypatch.setenv("KIMI_API_KEY", "sk-or-test")
+    monkeypatch.delenv("LLM_TEXT_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_TEXT_MODEL", raising=False)
+    monkeypatch.delenv("LLM_TEXT_API_KEY", raising=False)
+
+    payload = ChatAdminDebugService.build(
+        workspace_context={"agentId": None, "skills": {}},
+        tool_context={"context": "", "toolCalls": []},
+        rag={"context": "", "sources": []},
+        llm_messages=[{"role": "user", "content": "oi"}],
+        history_summary="",
+        operational_optimize=False,
+        analysis_mode=False,
+        fast_path=False,
+        skip_rag=True,
+    )
+
+    assert payload["llm"]["provider"] == "openai_compatible"
+    assert payload["llm"]["model"]
+    assert payload["llm"]["baseUrl"] == "https://openrouter.ai/api/v1"
+    assert payload["llm"]["messages"][0]["role"] == "user"
 
 def test_resolve_client_admin_debug_merges_assertiveness_from_metadata():
     build_payload = {"pipeline": {"skipRag": True}}
