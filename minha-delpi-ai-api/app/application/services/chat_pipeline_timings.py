@@ -18,6 +18,9 @@ class ChatPipelineTimings:
 
         return max(0, int((end - start) * 1000))
 
+    def elapsed_sec(self) -> float:
+        return max(0.0, time.perf_counter() - self._started_at)
+
     def to_dict(self) -> dict:
         total_ms = max(0, int((time.perf_counter() - self._started_at) * 1000))
 

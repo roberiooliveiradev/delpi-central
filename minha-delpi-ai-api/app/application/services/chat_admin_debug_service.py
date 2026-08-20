@@ -399,6 +399,9 @@ class ChatAdminDebugService:
                 "skipRag": bool(skip_rag),
                 "textCorrectionMode": bool(workspace_context.get("textCorrectionMode")),
                 "historySummary": cls._truncate_text(str(history_summary or ""), limits),
+                "degradedStages": list(tool_context.get("degradedStages") or [])
+                if isinstance(tool_context.get("degradedStages"), list)
+                else [],
             },
             "intentRoute": intent_route if isinstance(intent_route, dict) else None,
             "tooling": {

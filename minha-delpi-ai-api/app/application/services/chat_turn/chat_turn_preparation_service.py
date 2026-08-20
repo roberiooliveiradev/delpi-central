@@ -197,6 +197,15 @@ class ChatTurnPreparationService:
         text_correction_subtype = pre_tool.text_correction_subtype
         interpretation_without_data_answer = pre_tool.interpretation_without_data_answer
 
+        from app.application.services.chat_history_summary_service import (
+            ChatHistorySummaryService,
+        )
+
+        if history_summary or len(history) < len(history_source):
+            history_summary = ChatHistorySummaryService.ensure_preserved_facts(
+                history_summary,
+                working_memory_snapshot,
+            )
         for stage in pre_tool.pipeline_stage_additions:
             if stage not in pipeline_stages:
                 pipeline_stages.append(stage)
@@ -340,12 +349,13 @@ class ChatTurnPreparationService:
             semantic_memory_service=self.semantic_memory_service,
             on_stream_activity=on_stream_activity,
             previous_messages=history_source,
+            response_mode=getattr(request, "response_mode", None),
         )
         rag = rag_phase.rag
         sources = rag_phase.sources
         workspace_context = rag_phase.workspace_context
         conversation_context = rag_phase.conversation_context
-
+        skip_rag = bool(rag_phase.skip_rag)
         rag_web_fallback = ChatTurnPreparationRagWebFallbackService.apply(
             message=message,
             skip_rag=skip_rag,

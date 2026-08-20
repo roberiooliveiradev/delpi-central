@@ -117,6 +117,14 @@
     "normal": 5,
     "thinker": 15
   },
+  "latencyDegradation": {
+    "messageSearchLookbackFactor": 0.5,
+    "minMessageSearchLookback": 10,
+    "stages": {
+      "rag": "rag",
+      "messageSearch": "message_search"
+    }
+  },
   "qualityFallbackMinChars": 40,
   "commentaryLead": {
     "depthByMode": {

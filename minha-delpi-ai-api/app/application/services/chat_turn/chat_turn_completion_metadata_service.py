@@ -268,6 +268,21 @@ class ChatTurnCompletionMetadataService:
             latency_ms=latency_ms,
         )
 
+        from app.application.services.chat_soft_agent_handoff_service import (
+            ChatSoftAgentHandoffService,
+        )
+
+        intent_routing = assistant_metadata.get("intentRouting")
+        ChatSoftAgentHandoffService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=turn.request.message,
+            workspace_context=turn.workspace_context,
+            tool_calls=tool_calls,
+            tool_context=turn.tool_context if isinstance(turn.tool_context, dict) else None,
+            pipeline_stages=turn.pipeline_stages,
+            intent_route=intent_routing if isinstance(intent_routing, dict) else None,
+        )
+
         from app.application.services.chat_error_handling_telemetry_service import (
             ChatErrorHandlingTelemetryService,
         )

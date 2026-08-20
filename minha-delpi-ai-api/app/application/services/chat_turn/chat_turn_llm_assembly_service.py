@@ -286,6 +286,11 @@ class ChatTurnLlmAssemblyService:
                 context_refresh_suggested=bool(
                     memory_snap.get("contextRefreshSuggested")
                 ),
+                degraded_stages=(
+                    tool_context.get("degradedStages")
+                    if isinstance(tool_context.get("degradedStages"), list)
+                    else None
+                ),
             )
             evidence_block = str(message_search.get("promptBlock") or "").strip()
             tool_context_text = str(tool_context.get("context") or "")

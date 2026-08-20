@@ -180,6 +180,11 @@ class ChatTurnPreparationIngressService:
             history_summary, history = prepare_history(
                 history_source,
                 max_messages=max(1, int(history_keep)),
+                memory_snapshot=(
+                    workspace_context.get("workingMemory")
+                    if isinstance(workspace_context.get("workingMemory"), dict)
+                    else None
+                ),
             )
 
             if on_stream_activity:

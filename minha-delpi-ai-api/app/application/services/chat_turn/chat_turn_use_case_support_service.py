@@ -192,11 +192,13 @@ class ChatTurnUseCaseSupportService:
         previous_messages,
         *,
         max_messages: int | None = None,
+        memory_snapshot: dict | None = None,
     ) -> tuple[str, list]:
         if self.chat_history_summary_service:
             return self.chat_history_summary_service.prepare_history(
                 previous_messages,
                 max_messages=max_messages,
+                memory_snapshot=memory_snapshot,
             )
 
         from app.domain.services.chat_response_mode_context_budget_service import (
@@ -213,7 +215,19 @@ class ChatTurnUseCaseSupportService:
             except Exception:
                 keep = Settings.CHAT_HISTORY_MAX_MESSAGES
 
-        return "", list(previous_messages[-max(1, int(keep)) :])
+        recent = list(previous_messages[-max(1, int(keep)) :])
+
+        if memory_snapshot and len(previous_messages) > len(recent):
+            from app.application.services.chat_history_summary_service import (
+                ChatHistorySummaryService,
+            )
+
+            return (
+                ChatHistorySummaryService.ensure_preserved_facts("", memory_snapshot),
+                recent,
+            )
+
+        return "", recent
 
     def build_workspace_context(
         self,

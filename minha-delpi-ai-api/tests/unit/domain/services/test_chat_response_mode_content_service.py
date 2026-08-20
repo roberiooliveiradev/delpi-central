@@ -31,6 +31,12 @@ def test_commentary_lead_depth_by_mode():
     assert ChatResponseModeContentService.commentary_lead_depth_for_mode("thinker") == "expanded"
 
 
+def test_latency_target_sec_present_for_modes():
+    assert ChatResponseModeContentService.latency_target_sec("fast", default=1) == 3
+    assert ChatResponseModeContentService.latency_target_sec("normal", default=1) == 5
+    assert ChatResponseModeContentService.latency_target_sec("thinker", default=1) == 15
+
+
 def test_context_budget_node_present_for_modes():
     for mode in ("fast", "normal", "thinker"):
         node = ChatResponseModeContentService.context_budget_node(mode)

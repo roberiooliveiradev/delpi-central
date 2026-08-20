@@ -201,15 +201,20 @@ class ChatInteractivitySuggestionService:
                 ):
                     continue
 
-                collected.append(
-                    {
-                        "label": label,
-                        "query": query,
-                        "group": str(source.get("group") or "consultar"),
-                        "priority": int(source.get("priority") or 100),
-                        "sourceKey": key,
-                    }
-                )
+                collected_item: dict[str, Any] = {
+                    "label": label,
+                    "query": query,
+                    "group": str(source.get("group") or "consultar"),
+                    "priority": int(source.get("priority") or 100),
+                    "sourceKey": key,
+                }
+                action = str(item.get("action") or "").strip()
+                if action:
+                    collected_item["action"] = action
+                inline_action = str(item.get("inlineAction") or "").strip()
+                if inline_action:
+                    collected_item["inlineAction"] = inline_action
+                collected.append(collected_item)
 
         return collected
 
@@ -260,6 +265,11 @@ class ChatInteractivitySuggestionService:
 
         if inline_action:
             enriched["inlineAction"] = inline_action
+
+        action = str(item.get("action") or "").strip()
+
+        if action:
+            enriched["action"] = action
 
         return enriched
 

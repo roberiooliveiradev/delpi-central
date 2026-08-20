@@ -120,7 +120,7 @@ def run_scenario(
             history_source=history,
             build_tool_context=build_tool_context,
             maybe_extend_tool_context=lambda **kwargs: kwargs["tool_context"],
-            prepare_history=lambda items: ("", list(items[-8:])),
+            prepare_history=lambda items, **_kwargs: ("", list(items[-8:])),
             history_keep=8,
             fast_path_enabled=True,
             fast_path_max_chars=48,

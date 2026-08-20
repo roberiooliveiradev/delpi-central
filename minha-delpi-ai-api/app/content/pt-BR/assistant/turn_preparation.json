@@ -15,6 +15,9 @@
       "agentHint": "Para consultar **dados reais**, abra o menu **+** no composer e escolha um **agente especializado** (ex.: **Agente Minha DELPI**).",
       "activateAndResendLabel": "Ativar Agente Minha DELPI e repetir esta consulta"
     },
+    "softAgentHandoff": {
+      "switchAndResendLabel": "Trocar para Agente Minha DELPI e repetir esta consulta"
+    },
     "productionOperational": {
       "actionMissingFromCatalog": "A rota operacional **{pathLabel}** ainda não está no catálogo do provider **{providerKey}**. No builder do agente, use **Atualizar rotas** (ou rode o script de reimport pós-deploy) e habilite a action neste agente.",
       "actionNotEnabledOnAgent": "A rota **{pathLabel}** já existe no catálogo (`{actionId}`), mas não está **habilitada** neste agente. No builder → Rotas OpenAPI, marque a action como ativa."
@@ -111,5 +114,21 @@
       "unsupportedFormat": "O formato **{format}** não está disponível para o último resultado. Use as opções da barra (tabela, gráfico, texto…) ou peça explicitamente um formato suportado.",
       "llmSystemPrompt": "Você classifica pedidos de mudança de visualização de dados já mostrados no chat corporativo. Responda APENAS JSON válido: {\"format\":\"chart|table|text|tree|dashboard|canvas|kpi|none\"}. chart=gráfico/barras/pizza/linha; table=tabela/planilha; text=narrativa/resumo sem painel; tree=árvore/hierarquia/BOM; dashboard=painel composto; canvas=lousa; kpi=cards de indicadores; none=pedido não é troca de formato ou está ambíguo demais."
     }
+  },
+  "historySummary": {
+    "systemPrompt": "Você resume conversas anteriores de chat corporativo em português do Brasil. Preserve fatos, pedidos do usuário, respostas do assistente, números, códigos e decisões. Não invente informação. Máximo 8 frases objetivas.",
+    "priorityInstruction": "Os fatos preservados abaixo têm prioridade máxima: inclua-os no resumo mesmo que o histórico antigo seja longo.",
+    "userPromptTemplate": "Resuma a conversa anterior:\n\n{conversation}",
+    "userPromptWithPriorityTemplate": "Fatos preservados (prioridade máxima):\n{priorityFacts}\n\nResuma a conversa anterior sem omitir esses fatos:\n\n{conversation}",
+    "preservedFactsHeader": "Fatos preservados da memória de trabalho:",
+    "sectionLabels": {
+      "userCorrections": "Correções do usuário",
+      "behaviorInstructions": "Instruções de comportamento",
+      "operationalFocus": "Foco operacional"
+    },
+    "maxCorrections": 8,
+    "maxBehaviorItems": 8,
+    "maxFocusItems": 12,
+    "maxItemChars": 160
   }
 }

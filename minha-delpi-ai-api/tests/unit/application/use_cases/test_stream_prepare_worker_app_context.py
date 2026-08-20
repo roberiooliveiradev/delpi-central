@@ -34,7 +34,7 @@ def test_stream_prepare_history_runs_inside_app_context():
 
     chat_history_summary_service = MagicMock()
 
-    def _prepare_history(_messages):
+    def _prepare_history(_messages, **_kwargs):
         context_flags["has_app_context"] = has_app_context()
         return "", []
 

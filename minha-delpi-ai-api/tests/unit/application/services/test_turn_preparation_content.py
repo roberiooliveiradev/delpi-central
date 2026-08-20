@@ -52,6 +52,17 @@ def test_production_operational_gap_messages_exist():
     assert "habilitada" in disabled.lower()
 
 
+def test_soft_agent_handoff_label_reads_turn_preparation_json():
+    label = ChatTurnPreparationContentService.get(
+        "directAnswers",
+        "softAgentHandoff",
+        "switchAndResendLabel",
+    )
+
+    assert "agente" in label.lower()
+    assert "trocar" in label.lower() or "repetir" in label.lower()
+
+
 def test_resolve_interpretation_without_data_when_no_tool_history():
     answer = ChatTurnPreparationDirectAnswerService.resolve_interpretation_without_data(
         message="explique os dados acima",

@@ -59,6 +59,26 @@ def test_build_includes_intent_route_when_provided():
     assert payload["intentRoute"]["intent"] == "operational_query"
 
 
+def test_build_includes_degraded_stages_from_tool_context():
+    payload = ChatAdminDebugService.build(
+        workspace_context={"agentId": None, "skills": {}},
+        tool_context={
+            "context": "",
+            "toolCalls": [],
+            "degradedStages": ["rag", "message_search"],
+        },
+        rag={"context": "", "sources": []},
+        llm_messages=[],
+        history_summary="",
+        operational_optimize=False,
+        analysis_mode=False,
+        fast_path=False,
+        skip_rag=True,
+    )
+
+    assert payload["pipeline"]["degradedStages"] == ["rag", "message_search"]
+
+
 def test_attach_includes_intelligence_timings():
     admin_debug = {"pipeline": {"skipRag": True}}
     intelligence = {

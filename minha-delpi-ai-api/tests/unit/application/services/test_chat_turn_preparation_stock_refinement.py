@@ -71,7 +71,7 @@ def test_stock_branch_refinement_skips_rag_and_keeps_operational_mode():
         history_source=_STOCK_HISTORY,
         build_tool_context=build_tool_context,
         maybe_extend_tool_context=lambda **kwargs: kwargs["tool_context"],
-        prepare_history=lambda history: ("", list(history)),
+        prepare_history=lambda history, **_kwargs: ("", list(history)),
         history_keep=12,
         fast_path_enabled=True,
         fast_path_max_chars=30,

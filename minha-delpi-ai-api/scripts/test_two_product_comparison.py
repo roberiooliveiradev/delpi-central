@@ -120,7 +120,7 @@ def main() -> int:
                 history_source=history,
                 build_tool_context=build_tool_context,
                 maybe_extend_tool_context=lambda **kwargs: kwargs["tool_context"],
-                prepare_history=lambda items: ("", list(items[-12:])),
+                prepare_history=lambda items, **_kwargs: ("", list(items[-12:])),
                 history_keep=12,
                 fast_path_enabled=True,
                 fast_path_max_chars=48,

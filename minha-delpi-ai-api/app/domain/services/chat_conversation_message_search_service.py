@@ -65,8 +65,17 @@ class ChatConversationMessageSearchService:
         response_mode: str | None = None,
         history_clipped: bool = False,
         context_refresh_suggested: bool = False,
+        degraded_stages: list[str] | None = None,
     ) -> dict[str, Any]:
+        from app.domain.services.chat_latency_budget_service import (
+            ChatLatencyBudgetService,
+        )
+
         budget = ChatResponseModeContextBudgetService.resolve(response_mode)
+        lookback_limit = ChatLatencyBudgetService.resolve_message_search_lookback(
+            budget.message_search_lookback_messages,
+            degraded_stages=degraded_stages,
+        )
         triggered = cls.should_search(
             message,
             history_clipped=history_clipped,
@@ -81,9 +90,7 @@ class ChatConversationMessageSearchService:
                 "query": str(message or "").strip(),
             }
 
-        lookback = list(previous_messages or [])[
-            -budget.message_search_lookback_messages :
-        ]
+        lookback = list(previous_messages or [])[-lookback_limit:]
         query_tokens = cls._tokens(message)
         scored: list[tuple[float, dict[str, Any]]] = []
 
@@ -128,7 +135,9 @@ class ChatConversationMessageSearchService:
             "promptBlock": cls.format_prompt_block(hits),
             "query": str(message or "").strip(),
             "lookback": len(lookback),
+            "lookbackLimit": lookback_limit,
             "hitCount": len(hits),
+            "degraded": bool(degraded_stages),
         }
 
     @classmethod

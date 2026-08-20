@@ -10,7 +10,6 @@ from app.application.services.chat_assistant_identity_service import (
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
-from app.infrastructure.config.settings import Settings
 
 
 @dataclass(frozen=True)
@@ -19,6 +18,7 @@ class ChatTurnPreparationRagResult:
     sources: list[dict]
     workspace_context: dict
     conversation_context: str
+    skip_rag: bool = False
 
 
 class ChatTurnPreparationRagService:
@@ -44,6 +44,40 @@ class ChatTurnPreparationRagService:
             field,
             default=default,
             **values,
+        )
+
+    @classmethod
+    def _requires_documentary_rag(
+        cls,
+        *,
+        message: str,
+        assistant_identity_question: bool,
+        technical_description_normas: bool,
+        tool_context: dict,
+        workspace_context: dict | None,
+        previous_messages: list | None,
+    ) -> bool:
+        if assistant_identity_question or technical_description_normas:
+            return True
+
+        if cls._is_drawing_analysis_turn(message, tool_context):
+            return True
+
+        from app.domain.services.chat_project_sources_intent_service import (
+            ChatProjectSourcesIntentService,
+        )
+
+        memory_snapshot = None
+        if isinstance(workspace_context, dict):
+            working_memory = workspace_context.get("workingMemory")
+            memory_snapshot = working_memory if isinstance(working_memory, dict) else None
+
+        return bool(
+            ChatProjectSourcesIntentService.is_content_question(
+                message,
+                memory_snapshot=memory_snapshot,
+                previous_messages=previous_messages,
+            )
         )
 
     @classmethod
@@ -104,6 +138,7 @@ class ChatTurnPreparationRagService:
         semantic_memory_service,
         on_stream_activity: Callable[..., None] | None = None,
         previous_messages: list | None = None,
+        response_mode: str | None = None,
     ) -> ChatTurnPreparationRagResult:
         assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
             message
@@ -111,10 +146,53 @@ class ChatTurnPreparationRagService:
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
         )
+        from app.domain.services.chat_latency_budget_service import (
+            ChatLatencyBudgetService,
+        )
 
         technical_description_normas = (
             ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message)
         )
+        requires_documentary_rag = cls._requires_documentary_rag(
+            message=message,
+            assistant_identity_question=assistant_identity_question,
+            technical_description_normas=technical_description_normas,
+            tool_context=tool_context,
+            workspace_context=workspace_context,
+            previous_messages=previous_messages,
+        )
+
+        elapsed_sec = 0.0
+        if pipeline_timings is not None and hasattr(pipeline_timings, "elapsed_sec"):
+            elapsed_sec = float(pipeline_timings.elapsed_sec())
+
+        resolved_mode = response_mode
+        if not resolved_mode and isinstance(tool_context, dict):
+            resolved_mode = tool_context.get("responseMode")
+
+        ChatLatencyBudgetService.maybe_mark_message_search_degraded(
+            elapsed_sec=elapsed_sec,
+            response_mode=resolved_mode,
+            tool_context=tool_context if isinstance(tool_context, dict) else None,
+        )
+
+        skip_rag, degraded_rag_stage = (
+            ChatLatencyBudgetService.maybe_skip_optional_documentary_rag(
+                skip_rag=skip_rag,
+                elapsed_sec=elapsed_sec,
+                response_mode=resolved_mode,
+                tool_context=tool_context if isinstance(tool_context, dict) else None,
+                requires_documentary_rag=requires_documentary_rag,
+            )
+        )
+
+        if degraded_rag_stage and isinstance(tool_context, dict):
+            ChatLatencyBudgetService.append_degraded_stage(
+                tool_context,
+                degraded_rag_stage,
+            )
+            if "latency_budget" not in pipeline_stages:
+                pipeline_stages.append("latency_budget")
 
         if on_stream_activity and not skip_rag:
             from app.application.services.chat_stream_activity_service import (
@@ -349,4 +427,5 @@ class ChatTurnPreparationRagService:
             sources=sources,
             workspace_context=workspace_context,
             conversation_context=conversation_context,
+            skip_rag=bool(skip_rag),
         )

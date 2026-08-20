@@ -242,7 +242,8 @@ cd minha-delpi-ai-api
 | `normalLlmBudget.skipProsePanelRules` | `true` | Omite regras de painel no addon (Normal — latência) |
 | `thinkerLlmBudget.maxFactsChars` | `520` | Cap de fatos no prompt Pensador |
 | `generationLimits` | ver JSON | Tokens/ctx/temperature por modo |
-| `latencyTargetsSec` | fast 3 / normal 5 / thinker 15 | Metas de latência para smoke |
+| `latencyTargetsSec` | fast 3 / normal 5 / thinker 15 | Metas de latência; prep acima do alvo degrada RAG documental opcional |
+| `latencyDegradation` | lookbackFactor 0.5, stages rag/message_search | Estágios em `tool_context.degradedStages` / adminDebug |
 | `qualityFallbackMinChars` | `40` | Mínimo do fallback commentary pós-LLM (Normal/Pensador) |
 | `commentaryLead.depthByMode` | fast→brief, normal→standard, thinker→expanded | Profundidade do lead `dataCommentary` |
 | `commentaryLead.profiles` | brief / standard / expanded | Limites de destaques, atenção, limitações, próximos passos |
