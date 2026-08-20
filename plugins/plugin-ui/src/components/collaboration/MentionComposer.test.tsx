@@ -481,6 +481,13 @@ describe("mention-composer.css", () => {
     expect(body).toMatch(/border-radius:\s*1\.25rem;/);
     expect(focus).toMatch(/box-shadow:/);
     expect(focus).not.toMatch(/outline:\s*2px/);
+    const textareaFocus =
+      css.match(
+        /\.delpi-ui-mention-composer__textarea:focus-visible \{[^}]+\}/,
+      )?.[0] ?? "";
+    expect(textareaFocus).toMatch(/outline:\s*none/);
+    expect(textareaFocus).toMatch(/box-shadow:\s*none/);
+    expect(textareaFocus).toMatch(/border:\s*none/);
     expect(sendBlocks.join("\n")).toMatch(/width:\s*36px;/);
     expect(sendBlocks.join("\n")).toMatch(/border-radius:\s*50%;/);
     expect(css).toMatch(/max-height:\s*min\(40vh, 16rem\)/);

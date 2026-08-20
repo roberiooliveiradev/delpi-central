@@ -182,6 +182,9 @@
 .delpi-ui-mention-composer__field {
   position: relative;
   min-width: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .delpi-ui-mention-composer__placeholder {
@@ -208,6 +211,7 @@
   margin: 0;
   padding: 0;
   border: none;
+  border-radius: 0;
   resize: none;
   overflow-y: auto;
   user-select: text;
@@ -219,10 +223,22 @@
   color: var(--delpi-ui-text, var(--text, #0f172a));
   caret-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: transparent;
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.delpi-ui-mention-composer__textarea:focus {
+/* Só o destaque de `__body` — sem outline/ring no contenteditable (host MFE / UA). */
+.delpi-ui-mention-composer .delpi-ui-mention-composer__textarea:focus,
+.delpi-ui-mention-composer .delpi-ui-mention-composer__textarea:focus-visible,
+.delpi-ui-mention-composer__textarea:focus,
+.delpi-ui-mention-composer__textarea:focus-visible {
   outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+  border: none;
 }
 
 .delpi-ui-mention-composer__textarea[contenteditable="false"] {
