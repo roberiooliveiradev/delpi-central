@@ -59,7 +59,7 @@ Barrels locais:
 - `components/data/index.ts` — DataTable, Pagination, LoadingActivity, Timeline
 - `components/form/index.ts` — formulário e domínio de campos
 - `components/detail/index.ts` — ficha, versões, evidências, changelog
-- `components/evidence/index.ts` — dropzone, fila, preview
+- `components/evidence/index.ts` — dropzone, fila, preview, edição inline (`KaizenEvidenceEditForm`)
 
 `CategoryMultiSelectField` (`src/components/form/`) usa `createDashboardCreatableMultiSelectField`.
 

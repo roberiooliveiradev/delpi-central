@@ -4,15 +4,21 @@ import { ImagePlus, Save } from "lucide-react";
 import type { KaizenEvidence, KaizenEvidenceStage } from "../../types/kaizen";
 import { EVIDENCE_STAGE_OPTIONS } from "../../constants/evidenceStages";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { Modal, SelectField, TextAreaField, TextField } from "../ui";
+import {
+  FormActions,
+  FormGrid,
+  SelectField,
+  TextAreaField,
+  TextField,
+  TitleWithHelp,
+} from "../ui";
 import { KZ_GHOST_BTN } from "../ui/ghostChrome";
 import { formatEvidenceFileSize, isImageFile } from "./kaizenEvidenceUtils";
 
 type Props = {
-  open: boolean;
-  evidence: KaizenEvidence | null;
+  evidence: KaizenEvidence;
   saving?: boolean;
-  onClose: () => void;
+  onCancel: () => void;
   onSave: (payload: {
     stage: KaizenEvidenceStage;
     description: string;
@@ -21,27 +27,30 @@ type Props = {
   }) => void;
 };
 
-export function KaizenEvidenceEditModal({
-  open,
+export function KaizenEvidenceEditForm({
   evidence,
   saving = false,
-  onClose,
+  onCancel,
   onSave,
 }: Props) {
-  const [stage, setStage] = useState<KaizenEvidenceStage>("geral");
-  const [description, setDescription] = useState("");
-  const [externalUrl, setExternalUrl] = useState("");
+  const [stage, setStage] = useState<KaizenEvidenceStage>(evidence.stage);
+  const [description, setDescription] = useState(evidence.description ?? "");
+  const [externalUrl, setExternalUrl] = useState(evidence.external_url ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!open || !evidence) return;
     setStage(evidence.stage);
     setDescription(evidence.description ?? "");
     setExternalUrl(evidence.external_url ?? "");
     setFile(null);
-  }, [open, evidence]);
+  }, [evidence]);
+
+  useEffect(() => {
+    rootRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [evidence.id]);
 
   useEffect(() => {
     if (!file || !isImageFile(file)) {
@@ -53,12 +62,8 @@ export function KaizenEvidenceEditModal({
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  if (!evidence) return null;
-
   const isLink = evidence.type === "link";
-  const canSave =
-    !saving &&
-    (isLink ? externalUrl.trim().length > 0 : true);
+  const canSave = !saving && (isLink ? externalUrl.trim().length > 0 : true);
 
   function handleSubmit() {
     if (!canSave) return;
@@ -71,10 +76,22 @@ export function KaizenEvidenceEditModal({
   }
 
   return (
-    <Modal open={open} title="Editar evidência" onClose={saving ? () => undefined : onClose}>
-      <div className="kz-evidence-edit">
+    <section
+      ref={rootRef}
+      className="kz-evidence-edit"
+      aria-labelledby="kz-evidence-edit-title"
+    >
+      <header className="kz-evidence-edit__head">
+        <div className="kz-evidence-edit__title" id="kz-evidence-edit-title">
+          <TitleWithHelp
+            title="Editar evidência"
+            hint={KAIZEN_HELP_TOOLTIPS.evidence.edit}
+          />
+        </div>
         <p className="kz-evidence-edit__hint">{KAIZEN_HELP_TOOLTIPS.evidence.edit}</p>
+      </header>
 
+      <FormGrid>
         <SelectField
           id="kz-ev-edit-stage"
           label="Etapa"
@@ -83,7 +100,6 @@ export function KaizenEvidenceEditModal({
           onChange={(value) => setStage(value as KaizenEvidenceStage)}
           options={EVIDENCE_STAGE_OPTIONS}
         />
-
         <TextAreaField
           id="kz-ev-edit-desc"
           label="Descrição"
@@ -93,7 +109,6 @@ export function KaizenEvidenceEditModal({
           value={description}
           onChange={setDescription}
         />
-
         {isLink ? (
           <TextField
             id="kz-ev-edit-url"
@@ -104,7 +119,7 @@ export function KaizenEvidenceEditModal({
             onChange={setExternalUrl}
           />
         ) : (
-          <div className="kz-evidence-edit__file">
+          <div className="kz-evidence-edit__file kz-span-2">
             <span className="kz-evidence-edit__file-label">Arquivo / foto</span>
             <p className="kz-evidence-edit__file-current">
               Atual: {evidence.file_name || "arquivo"}
@@ -125,8 +140,7 @@ export function KaizenEvidenceEditModal({
               className="kz-evidence-edit__file-input"
               accept="image/*,.pdf,.xlsx,.xls,.csv,.doc,.docx,.txt"
               onChange={(event) => {
-                const next = event.target.files?.[0] ?? null;
-                setFile(next);
+                setFile(event.target.files?.[0] ?? null);
               }}
             />
             <button
@@ -140,27 +154,27 @@ export function KaizenEvidenceEditModal({
             </button>
           </div>
         )}
+      </FormGrid>
 
-        <div className="kz-evidence-edit__actions">
-          <button
-            type="button"
-            className={KZ_GHOST_BTN}
-            disabled={saving}
-            onClick={onClose}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="kz-primary-btn"
-            disabled={!canSave}
-            onClick={handleSubmit}
-          >
-            <Save size={14} aria-hidden="true" />
-            {saving ? "Salvando…" : "Salvar alterações"}
-          </button>
-        </div>
-      </div>
-    </Modal>
+      <FormActions align="end">
+        <button
+          type="button"
+          className={KZ_GHOST_BTN}
+          disabled={saving}
+          onClick={onCancel}
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          className="kz-primary-btn"
+          disabled={!canSave}
+          onClick={handleSubmit}
+        >
+          <Save size={14} aria-hidden="true" />
+          {saving ? "Salvando…" : "Salvar alterações"}
+        </button>
+      </FormActions>
+    </section>
   );
 }

@@ -555,6 +555,61 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}.dashboard-kaizometro .kz-evidence--editing{
+  outline: 2px solid color-mix(in srgb, var(--kz-accent) 55%, transparent);
+  outline-offset: 1px;
+}.dashboard-kaizometro .kz-evidence-edit{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid color-mix(in srgb, var(--kz-accent) 28%, var(--kz-card-border));
+  background: color-mix(in srgb, var(--kz-accent) 6%, var(--kz-card-bg));
+}.dashboard-kaizometro .kz-evidence-edit__head{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}.dashboard-kaizometro .kz-evidence-edit__title{
+  margin: 0;
+  font-size: var(--kz-font-md);
+  font-weight: 700;
+  color: var(--kz-accent);
+}.dashboard-kaizometro .kz-evidence-edit__hint{
+  margin: 0;
+  font-size: var(--kz-font-sm);
+  line-height: 1.45;
+  color: var(--kz-text-muted);
+}.dashboard-kaizometro .kz-evidence-edit textarea{
+  min-height: 140px;
+  resize: vertical;
+}.dashboard-kaizometro .kz-evidence-edit__file{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}.dashboard-kaizometro .kz-evidence-edit__file-label{
+  font-size: var(--kz-font-xs);
+  font-weight: 700;
+  color: var(--kz-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}.dashboard-kaizometro .kz-evidence-edit__file-current{
+  margin: 0;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text);
+}.dashboard-kaizometro .kz-evidence-edit__file-input{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}.dashboard-kaizometro .kz-evidence-edit__preview{
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: var(--kz-control-radius);
+  border: 1px solid var(--kz-card-border);
+  background: color-mix(in srgb, var(--kz-text-muted) 8%, var(--kz-card-bg));
 }.dashboard-kaizometro .kz-evidence-upload{
   display: flex;
   flex-direction: column;
@@ -1488,71 +1543,6 @@
   gap: 16px;
   max-width: 460px;
   color: var(--kz-text);
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit,
-.kz-modal-overlay .kz-evidence-edit{
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-width: 520px;
-  color: var(--kz-text);
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit__hint,
-.kz-modal-overlay .kz-evidence-edit__hint{
-  margin: 0;
-  font-size: var(--kz-font-sm);
-  line-height: 1.45;
-  color: var(--kz-text-muted);
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit textarea,
-.kz-modal-overlay .kz-evidence-edit textarea{
-  min-height: 140px;
-  resize: vertical;
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit__file,
-.kz-modal-overlay .kz-evidence-edit__file{
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit__file-label,
-.kz-modal-overlay .kz-evidence-edit__file-label{
-  font-size: var(--kz-font-xs);
-  font-weight: 700;
-  color: var(--kz-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit__file-current,
-.kz-modal-overlay .kz-evidence-edit__file-current{
-  margin: 0;
-  font-size: var(--kz-font-sm);
-  color: var(--kz-text);
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit__file-input,
-.kz-modal-overlay .kz-evidence-edit__file-input{
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit__preview,
-.kz-modal-overlay .kz-evidence-edit__preview{
-  width: 100%;
-  max-height: 180px;
-  object-fit: contain;
-  border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-card-border);
-  background: color-mix(in srgb, var(--kz-text-muted) 8%, var(--kz-card-bg));
-}
-.dashboard-kaizometro.kz-modal-overlay .kz-evidence-edit__actions,
-.kz-modal-overlay .kz-evidence-edit__actions{
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-top: 4px;
 }
 .dashboard-kaizometro.kz-modal-overlay .kz-share-modal__hint,
 .kz-modal-overlay .kz-share-modal__hint{

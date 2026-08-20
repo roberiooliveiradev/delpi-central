@@ -22,7 +22,7 @@ import {
   createPendingUploadId,
   inferEvidenceTypeFromFile,
   KaizenEvidenceDropzone,
-  KaizenEvidenceEditModal,
+  KaizenEvidenceEditForm,
   KaizenEvidencePendingList,
   KaizenEvidencePreviewModal,
   type EvidencePreviewSource,
@@ -147,6 +147,7 @@ function EvidenceCard({
   kaizenId,
   evidence,
   presentation,
+  selected,
   onPreview,
   onEdit,
   onDelete,
@@ -154,6 +155,7 @@ function EvidenceCard({
   kaizenId: string;
   evidence: KaizenEvidence;
   presentation: "view" | "edit";
+  selected?: boolean;
   onPreview: (evidence: KaizenEvidence) => void;
   onEdit: (evidence: KaizenEvidence) => void;
   onDelete: (evidence: KaizenEvidence) => void;
@@ -162,7 +164,15 @@ function EvidenceCard({
   const caption = evidence.description || evidence.file_name || "Evidência";
   const canManage = presentation === "edit";
   return (
-    <figure className={`kz-evidence${presentation === "view" ? " kz-evidence--view" : ""}`}>
+    <figure
+      className={[
+        "kz-evidence",
+        presentation === "view" ? "kz-evidence--view" : "",
+        selected ? "kz-evidence--editing" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {previewable ? (
         <button
           type="button"
@@ -433,7 +443,12 @@ export function KaizenEvidencePanel({
                 <EmptyHint>Sem registros.</EmptyHint>
               ) : (
                 grouped[stageKey].map((evidence) => (
-                  <EvidenceCard key={evidence.id} evidence={evidence} {...cardProps} />
+                  <EvidenceCard
+                    key={evidence.id}
+                    evidence={evidence}
+                    selected={editTarget?.id === evidence.id}
+                    {...cardProps}
+                  />
                 ))
               )}
             </div>
@@ -456,7 +471,12 @@ export function KaizenEvidencePanel({
               ) : null
             ) : (
               grouped.geral.map((evidence) => (
-                <EvidenceCard key={evidence.id} evidence={evidence} {...cardProps} />
+                <EvidenceCard
+                  key={evidence.id}
+                  evidence={evidence}
+                  selected={editTarget?.id === evidence.id}
+                  {...cardProps}
+                />
               ))
             )}
           </div>
@@ -464,6 +484,17 @@ export function KaizenEvidencePanel({
       ) : null}
 
       {loading ? <LoadingHint>Carregando evidências…</LoadingHint> : null}
+
+      {isEditMode && editTarget ? (
+        <KaizenEvidenceEditForm
+          evidence={editTarget}
+          saving={editing}
+          onCancel={() => {
+            if (!editing) setEditTarget(null);
+          }}
+          onSave={(payload) => void handleEditSave(payload)}
+        />
+      ) : null}
 
       {isEditMode ? (
         <div className="kz-evidence-upload">
@@ -567,15 +598,6 @@ export function KaizenEvidencePanel({
       ) : null}
 
       <KaizenEvidencePreviewModal source={previewSource} onClose={() => setPreviewSource(null)} />
-      <KaizenEvidenceEditModal
-        open={editTarget != null}
-        evidence={editTarget}
-        saving={editing}
-        onClose={() => {
-          if (!editing) setEditTarget(null);
-        }}
-        onSave={(payload) => void handleEditSave(payload)}
-      />
     </div>
   );
 }

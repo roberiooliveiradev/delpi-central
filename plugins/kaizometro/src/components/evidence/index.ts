@@ -7,7 +7,7 @@ export {
   KaizenEvidencePreviewModal,
   type EvidencePreviewSource,
 } from "./KaizenEvidencePreviewModal";
-export { KaizenEvidenceEditModal } from "./KaizenEvidenceEditModal";
+export { KaizenEvidenceEditForm } from "./KaizenEvidenceEditForm";
 export {
   canPreviewEvidence,
   canPreviewLocalFile,

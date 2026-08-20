@@ -88,7 +88,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     stage: "Antes / Depois documentam a transformação; Geral para anexos que não são comparativos.",
     link: "Use para referenciar um arquivo ou página externa em vez de anexar o binário.",
     edit:
-      "Altere a descrição, a etapa (Antes/Depois/Geral) ou troque o arquivo/foto mantendo o mesmo registro. A descrição pode ser longa — use o campo amplo no formulário de edição.",
+      "Altere a descrição, a etapa (Antes/Depois/Geral) ou troque o arquivo/foto mantendo o mesmo registro. A edição fica na própria página — a descrição pode ser longa.",
     description:
       "Texto livre que explica a evidência. Aparece no card e na ficha; use quantas linhas precisar.",
   },
