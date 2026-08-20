@@ -6,15 +6,15 @@ import {
   snapshotsEqual,
 } from "./mentionComposerHistory";
 
-function snap(markdown: string, cursor = markdown.length) {
-  return { markdown, cursor };
+function snap(markdown: string, html = markdown, cursor = markdown.length) {
+  return { markdown, html, cursor };
 }
 
 describe("createMentionComposerHistory", () => {
   it("commit → undo → redo restaura snapshots", () => {
     const history = createMentionComposerHistory();
-    const v1 = snap("ola");
-    const v2 = snap("**ola**");
+    const v1 = snap("ola", "ola");
+    const v2 = snap("**ola**", "<strong>ola</strong>");
     expect(history.commit(v1, v2)).toBe(true);
     expect(history.canUndo()).toBe(true);
     expect(history.canRedo()).toBe(false);
@@ -52,7 +52,6 @@ describe("createMentionComposerHistory", () => {
     history.commit(snap("2"), snap("3"));
     history.commit(snap("3"), snap("4"));
     expect(history.pastLength()).toBe(3);
-    // O mais antigo (0) caiu; undo três vezes chega em 1.
     expect(history.undo(snap("4"))).toEqual(snap("3"));
     expect(history.undo(snap("3"))).toEqual(snap("2"));
     expect(history.undo(snap("2"))).toEqual(snap("1"));
@@ -76,8 +75,11 @@ describe("createMentionComposerHistory", () => {
   });
 
   it("snapshotsEqual ignora referência", () => {
-    expect(snapshotsEqual(snap("a", 1), { markdown: "a", cursor: 1 })).toBe(true);
-    expect(snapshotsEqual(snap("a", 1), snap("a", 2))).toBe(false);
+    expect(snapshotsEqual(snap("a", "a", 1), { markdown: "a", html: "a", cursor: 1 })).toBe(
+      true,
+    );
+    expect(snapshotsEqual(snap("a", "a", 1), snap("a", "a", 2))).toBe(false);
+    expect(snapshotsEqual(snap("a", "<b>a</b>", 1), snap("a", "a", 1))).toBe(false);
   });
 
   it("limite default é 50", () => {

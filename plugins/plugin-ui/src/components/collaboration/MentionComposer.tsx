@@ -232,7 +232,11 @@ export function MentionComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const historyRef = useRef(createMentionComposerHistory());
-  const lastStableRef = useRef<MentionComposerHistorySnapshot>({ markdown: value, cursor: 0 });
+  const lastStableRef = useRef<MentionComposerHistorySnapshot>({
+    markdown: value,
+    html: value.trim() ? markdownToRichTextHtml(value) : "",
+    cursor: 0,
+  });
   const typingBeforeRef = useRef<MentionComposerHistorySnapshot | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
@@ -253,10 +257,16 @@ export function MentionComposer({
 
   const readSnapshot = (): MentionComposerHistorySnapshot => {
     const el = surfaceRef.current;
-    if (!el) return { markdown: value, cursor: value.length };
+    if (!el) {
+      return {
+        markdown: value,
+        html: value.trim() ? markdownToRichTextHtml(value) : "",
+        cursor: value.length,
+      };
+    }
     const markdown = richTextHtmlToMarkdown(el.innerHTML);
     const plain = snapshotEditablePlaintext(el);
-    return { markdown, cursor: plain.cursor };
+    return { markdown, html: el.innerHTML, cursor: plain.cursor };
   };
 
   const flushTypingCoalesce = () => {
@@ -319,13 +329,21 @@ export function MentionComposer({
     if (!el) return;
     const current = richTextHtmlToMarkdown(el.innerHTML);
     if (current === value) {
-      lastStableRef.current = { markdown: value, cursor: lastStableRef.current.cursor };
+      lastStableRef.current = {
+        markdown: value,
+        html: el.innerHTML,
+        cursor: lastStableRef.current.cursor,
+      };
       return;
     }
     // Preserva a pilha nativa / custom enquanto o editor está focado.
     if (document.activeElement === el) return;
     el.innerHTML = value.trim() ? markdownToRichTextHtml(value) : "";
-    lastStableRef.current = { markdown: value, cursor: value.length };
+    lastStableRef.current = {
+      markdown: value,
+      html: el.innerHTML,
+      cursor: value.length,
+    };
     historyRef.current.clear();
   }, [value]);
 
@@ -444,9 +462,7 @@ export function MentionComposer({
     const el = surfaceRef.current;
     if (!el) return;
     el.focus();
-    el.innerHTML = snapshot.markdown.trim()
-      ? markdownToRichTextHtml(snapshot.markdown)
-      : "";
+    el.innerHTML = snapshot.html;
     setEditablePlainCursor(el, snapshot.cursor);
     savedRangeRef.current = getRichTextSelectionRange(el);
     lastStableRef.current = snapshot;

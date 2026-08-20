@@ -1,22 +1,23 @@
-/** Pilha undo/redo do MentionComposer — snapshots de markdown (semântica TV commitWithHistory). */
+/** Pilha undo/redo do MentionComposer — snapshots markdown+html (semântica TV commitWithHistory). */
 
 export const MENTION_COMPOSER_HISTORY_LIMIT = 50;
 
 export type MentionComposerHistorySnapshot = {
   markdown: string;
+  /** HTML do contenteditable — restauração fiel (markdown **texto.** pode falhar no marked). */
+  html: string;
   cursor: number;
 };
 
 export type MentionComposerHistory = {
   commit: (before: MentionComposerHistorySnapshot, after: MentionComposerHistorySnapshot) => boolean;
-  /** Empilha `before` se diferente do topo / estado implícito; limpa future. */
+  /** Empilha `before` se diferente do topo; limpa future. */
   pushBefore: (before: MentionComposerHistorySnapshot) => boolean;
   undo: (current: MentionComposerHistorySnapshot) => MentionComposerHistorySnapshot | null;
   redo: (current: MentionComposerHistorySnapshot) => MentionComposerHistorySnapshot | null;
   clear: () => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
-  /** Só para testes / debug. */
   pastLength: () => number;
   futureLength: () => number;
 };
@@ -24,7 +25,7 @@ export type MentionComposerHistory = {
 export function fingerprintMentionComposerSnapshot(
   snapshot: MentionComposerHistorySnapshot,
 ): string {
-  return `${snapshot.markdown}\0${snapshot.cursor}`;
+  return `${snapshot.markdown}\0${snapshot.html}\0${snapshot.cursor}`;
 }
 
 export function snapshotsEqual(
@@ -43,6 +44,7 @@ export function createMentionComposerHistory(
 
   const clone = (s: MentionComposerHistorySnapshot): MentionComposerHistorySnapshot => ({
     markdown: s.markdown,
+    html: s.html,
     cursor: s.cursor,
   });
 

@@ -310,6 +310,7 @@ describe("MentionComposer", () => {
     expect(source).not.toMatch(/<EditorHistoryActions/);
     expect(source).not.toMatch(/runRichTextCommand\(el, command\)/);
     expect(source).not.toMatch(/queryRichTextCommandEnabled/);
+    expect(source).not.toMatch(/runRichTextCommand\([^)]*["']undo["']/);
     expect(source).toMatch(/createMentionComposerHistory/);
     expect(source).toMatch(/appendShortcutHint/);
     expect(source).toMatch(/runHistory\("undo"\)/);
@@ -344,11 +345,83 @@ describe("MentionComposer", () => {
     expect(Boolean(undoBtn.disabled)).toEqual(true);
     fireEvent.click(screen.getByLabelText("Bold"));
     expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
-    expect(Boolean(undoBtn.disabled)).toEqual(false);
+    expect(Boolean((screen.getByLabelText("Undo") as HTMLButtonElement).disabled)).toEqual(
+      false,
+    );
 
-    fireEvent.click(undoBtn);
+    fireEvent.click(screen.getByLabelText("Undo"));
     expect(surface.innerHTML.toLowerCase()).not.toMatch(/<(strong|b)\b/);
     expect(surface.textContent?.replace(/\u200b/g, "")).toContain("abc");
+    expect(document.execCommand).not.toHaveBeenCalledWith("undo", false, undefined);
+  });
+
+  it("Desfazer após negrito restaura texto pré-formato; Refazer reaplica", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const formatLabels = {
+      ...labels,
+      formatToggleAriaLabel: "Format",
+      formatBoldAriaLabel: "Bold",
+      formatUndoAriaLabel: "Undo",
+      formatRedoAriaLabel: "Redo",
+    };
+    render(
+      <MentionComposer
+        value="gravida enim."
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={formatLabels}
+        classNames={classNames}
+      />,
+    );
+    const surface = screen.getByLabelText("Write a message");
+    const all = document.createRange();
+    all.selectNodeContents(surface);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(all);
+    fireEvent.click(screen.getByLabelText("Format"));
+    fireEvent.click(screen.getByLabelText("Bold"));
+    expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
+
+    fireEvent.click(screen.getByLabelText("Undo"));
+    const plain = surface.textContent?.replace(/\u200b/g, "") ?? "";
+    expect(plain).toContain("gravida enim.");
+    expect(surface.innerHTML.toLowerCase()).not.toMatch(/<(strong|b)\b/);
+
+    fireEvent.click(screen.getByLabelText("Redo"));
+    expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
+    expect(document.execCommand).not.toHaveBeenCalledWith("undo", false, undefined);
+    expect(document.execCommand).not.toHaveBeenCalledWith("redo", false, undefined);
+  });
+
+  it("Mod+Z desfaz formato sem chamar execCommand undo", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+    const formatLabels = {
+      ...labels,
+      formatToggleAriaLabel: "Format",
+      formatBoldAriaLabel: "Bold",
+      formatUndoAriaLabel: "Undo",
+      formatRedoAriaLabel: "Redo",
+    };
+    render(
+      <MentionComposer
+        value="xyz"
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={formatLabels}
+        classNames={classNames}
+      />,
+    );
+    const surface = screen.getByLabelText("Write a message");
+    const all = document.createRange();
+    all.selectNodeContents(surface);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(all);
+    fireEvent.click(screen.getByLabelText("Format"));
+    fireEvent.click(screen.getByLabelText("Bold"));
+    expect(surface.innerHTML.toLowerCase()).toMatch(/<(strong|b)\b/);
+
+    fireEvent.keyDown(surface, { key: "z", ctrlKey: true });
+    expect(surface.innerHTML.toLowerCase()).not.toMatch(/<(strong|b)\b/);
     expect(document.execCommand).not.toHaveBeenCalledWith("undo", false, undefined);
   });
 });
