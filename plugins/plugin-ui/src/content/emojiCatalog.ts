@@ -8,6 +8,7 @@ export type EmojiCatalogItem = {
 
 type EmojiCatalogFile = {
   emojis: EmojiCatalogItem[];
+  quickReactionIds?: string[];
 };
 
 const data = catalog as EmojiCatalogFile;
@@ -23,6 +24,27 @@ export const EMOJI_CATALOG: readonly EmojiCatalogItem[] = Object.freeze(
   ),
 );
 
+const byId = new Map(EMOJI_CATALOG.map((item) => [item.id, item] as const));
+
+const DEFAULT_QUICK_IDS = [
+  "thumbs_up",
+  "red_heart",
+  "joy",
+  "eyes",
+  "fire",
+] as const;
+
+/** Cinco reações rápidas da toolbar (hover) — ids do catálogo. */
+export const QUICK_REACTION_CATALOG: readonly EmojiCatalogItem[] = Object.freeze(
+  (data.quickReactionIds?.length ? data.quickReactionIds : DEFAULT_QUICK_IDS)
+    .map((id) => byId.get(String(id).trim()))
+    .filter((item): item is EmojiCatalogItem => Boolean(item)),
+);
+
 export function getEmojiCatalog(): readonly EmojiCatalogItem[] {
   return EMOJI_CATALOG;
+}
+
+export function getQuickReactionCatalog(): readonly EmojiCatalogItem[] {
+  return QUICK_REACTION_CATALOG;
 }

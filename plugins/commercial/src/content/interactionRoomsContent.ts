@@ -41,7 +41,8 @@ export const INTERACTION_ROOMS_CONTENT = {
   editCancelLabel: "Cancelar",
   editBannerLabel: "Editando mensagem",
   editBannerFallbackPreview: "Mensagem",
-  messageEditedSuffix: "editado",
+  /** Placeholder `{time}` = horário formatado de `edited_at`. */
+  messageEditedAtTemplate: "editado às {time}",
   replyActionLabel: "Responder",
   replyCancelAriaLabel: "Cancelar resposta",
   replyToAuthorLabel: "Respondendo a {author}",

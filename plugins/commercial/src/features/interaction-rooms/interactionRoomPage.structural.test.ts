@@ -13,6 +13,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/interactionRoomParticipantAvatar/);
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/resolveActions/);
+    expect(source).toMatch(/resolveActionExtras/);
+    expect(source).toMatch(/InteractionRoomMessageReactionQuickBar/);
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).not.toMatch(/cm-message-thread__actions/);
     expect(source).toMatch(/createTaskFromInteractionMessage/);
@@ -50,7 +52,8 @@ describe("InteractionRoomPage", () => {
     expect(source).not.toMatch(/editingId=\{editingMessageId\}/);
     expect(source).not.toMatch(/renderEditSlot=/);
     expect(source).not.toMatch(/disabled=\{Boolean\(editingMessageId\)\}/);
-    expect(source).toMatch(/messageEditedSuffix/);
+    expect(source).toMatch(/messageEditedAtTemplate/);
+    expect(source).toMatch(/formatInteractionMessageCreatedAtLabel/);
     expect(source).toMatch(/onEditMessage:/);
     expect(source).toMatch(/onDeleteMessage:/);
     expect(source).toMatch(/useCommercialConfirm/);

@@ -1323,12 +1323,13 @@ Primitivos neutros para threads estilo Teams/Slack (Portal Comercial). **Sem HTT
 | `MessageThread` | Bolhas, `system`, replies; ações via `resolveActions` **fora** do `<article>`; edição in-place com `editingId` + `renderEditSlot`. |
 | `EntityUnfurlCard` | Preview genérico (ok / `accessible: false`) — sem `if` de entidade. |
 | `ReactionBar` | Chips de reação; `emojiAdd` abre `EmojiInsertMenu` no «+» (código = emoji `id` por default). |
+| `ReactionQuickBar` | Toolbar compacta: 5 quick (`quickReactionIds`) + «+» → `EmojiInsertMenu`; pensada para `MessageThread.resolveActionExtras`. |
 | `EmojiInsertMenu` | Picker leve reutilizado pelo composer e pela barra de reações. |
 | `RoomInboxList` | Inbox de salas (não reutilizar `WorklistItem`); `preview`, `unreadCount`, slots `leading`/`subtitle`. |
 | `RoomHeader` | Título, chips e `AvatarStack` de participantes. |
 | `RoomSidePanel` / `RoomContextPanel` | Painel «Neste chat» (host controla open). |
 
-Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`.
+Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardReactionQuickBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`.
 
 Helpers: `markdownToPlainPreview`, `richTextHtmlToMarkdown` / família `richTextMarkdown.ts` (submit do composer).
 

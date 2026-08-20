@@ -1,4 +1,11 @@
 {
+  "quickReactionIds": [
+    "thumbs_up",
+    "red_heart",
+    "joy",
+    "eyes",
+    "fire"
+  ],
   "emojis": [
     { "id": "grinning", "glyph": "😀", "label": "Sorrindo" },
     { "id": "smiley", "glyph": "😃", "label": "Sorriso aberto" },

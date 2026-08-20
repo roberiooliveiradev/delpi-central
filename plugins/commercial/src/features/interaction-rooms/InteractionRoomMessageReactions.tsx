@@ -8,6 +8,7 @@ import {
 import {
   CM_PORTAL_SCOPE,
   CommercialReactionBar,
+  CommercialReactionQuickBar,
 } from "../../app/commercialUi";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import {
@@ -15,7 +16,7 @@ import {
   applyLocalReactionToggle,
 } from "./interactionRoomReactions";
 
-type Props = {
+type ReactionHostProps = {
   roomId: string;
   messageId: string;
   reactions: readonly InteractionReactionDto[];
@@ -28,10 +29,7 @@ type Props = {
   onError: (message: string) => void;
 };
 
-/**
- * Chips de reação + «+» (EmojiInsertMenu no kit). Toggle chama PUT/DELETE na commercial-api.
- */
-export function InteractionRoomMessageReactions({
+function useInteractionRoomReactionToggle({
   roomId,
   messageId,
   reactions,
@@ -39,12 +37,19 @@ export function InteractionRoomMessageReactions({
   disabled = false,
   onReactionsChange,
   onError,
-}: Props) {
+}: ReactionHostProps) {
   const content = INTERACTION_ROOMS_CONTENT;
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const items = useMemo(
     () => aggregateMessageReactions(reactions, sessionUserId),
     [reactions, sessionUserId],
+  );
+  const activeCodes = useMemo(
+    () =>
+      new Set(
+        items.filter((item) => item.reactedByMe).map((item) => item.code),
+      ),
+    [items],
   );
 
   const toggle = useCallback(
@@ -96,25 +101,56 @@ export function InteractionRoomMessageReactions({
     ],
   );
 
-  if (disabled) return null;
+  return {
+    content,
+    items,
+    activeCodes,
+    busy: Boolean(busyCode) || disabled,
+    toggle,
+  };
+}
+
+/**
+ * Chips agregados abaixo do body (sem «+» — picker fica na barra de opções).
+ */
+export function InteractionRoomMessageReactions(props: ReactionHostProps) {
+  const { content, items, busy, toggle } = useInteractionRoomReactionToggle(props);
+  if (props.disabled || items.length === 0) return null;
 
   return (
     <div className="cm-room-thread__message-reactions">
       <CommercialReactionBar
         listAriaLabel={content.reactionsAriaLabel}
-        addAriaLabel={content.reactionAddAriaLabel}
         items={items}
         onToggle={(code) => {
           void toggle(code);
         }}
-        onAdd={(code) => {
-          void toggle(code);
-        }}
-        emojiAdd={{
-          listAriaLabel: content.reactionEmojiMenuAriaLabel,
-          portalScopeClassName: CM_PORTAL_SCOPE,
-        }}
+        /* Sem emojiAdd: adição só na ReactionQuickBar da toolbar. */
       />
     </div>
+  );
+}
+
+/**
+ * 5 emojis rápidos + «+» (catálogo) na barra de opções do MessageThread.
+ */
+export function InteractionRoomMessageReactionQuickBar(props: ReactionHostProps) {
+  const { content, activeCodes, busy, toggle } = useInteractionRoomReactionToggle(
+    props,
+  );
+  if (props.disabled) return null;
+
+  return (
+    <CommercialReactionQuickBar
+      listAriaLabel={content.reactionsAriaLabel}
+      addAriaLabel={content.reactionAddAriaLabel}
+      emojiMenuAriaLabel={content.reactionEmojiMenuAriaLabel}
+      activeCodes={activeCodes}
+      disabled={busy}
+      portalScopeClassName={CM_PORTAL_SCOPE}
+      onPick={(code) => {
+        void toggle(code);
+      }}
+    />
   );
 }

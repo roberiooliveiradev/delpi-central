@@ -49,3 +49,73 @@
   cursor: not-allowed;
   opacity: 0.4;
 }
+
+/* Toolbar compacta (hover options) — 5 quick + «+». */
+.delpi-ui-reaction-quick-bar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.05rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.delpi-ui-reaction-quick-bar__quick,
+.delpi-ui-reaction-quick-bar__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+  background: transparent;
+  cursor: pointer;
+}
+
+.delpi-ui-reaction-quick-bar__quick:hover:not(:disabled),
+.delpi-ui-reaction-quick-bar__add:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 8%,
+    transparent
+  );
+}
+
+.delpi-ui-reaction-quick-bar__quick--active {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    transparent
+  );
+}
+
+.delpi-ui-reaction-quick-bar__add {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
+}
+
+.delpi-ui-reaction-quick-bar__quick:disabled,
+.delpi-ui-reaction-quick-bar__add:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.delpi-ui-message-thread__actions-divider {
+  flex: 0 0 1px;
+  align-self: stretch;
+  width: 1px;
+  margin: 0.15rem 0.2rem;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #d1d5db)) 90%,
+    transparent
+  );
+}

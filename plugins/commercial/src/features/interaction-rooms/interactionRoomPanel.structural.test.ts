@@ -15,6 +15,8 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/interactionRoomParticipantAvatar/);
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/resolveActions/);
+    expect(source).toMatch(/resolveActionExtras/);
+    expect(source).toMatch(/InteractionRoomMessageReactionQuickBar/);
     expect(source).toMatch(/createTaskFromInteractionMessage/);
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/nameFor/);
@@ -34,7 +36,8 @@ describe("InteractionRoomPanel", () => {
     expect(source).not.toMatch(/editingId=\{editingMessageId\}/);
     expect(source).not.toMatch(/renderEditSlot=/);
     expect(source).not.toMatch(/disabled=\{Boolean\(editingMessageId\)\}/);
-    expect(source).toMatch(/messageEditedSuffix/);
+    expect(source).toMatch(/messageEditedAtTemplate/);
+    expect(source).toMatch(/formatInteractionMessageCreatedAtLabel/);
     expect(source).toMatch(/onEditMessage:/);
     expect(source).toMatch(/onDeleteMessage:/);
     expect(source).toMatch(/useCommercialConfirm/);

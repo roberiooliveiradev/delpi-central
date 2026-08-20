@@ -39,7 +39,10 @@ import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { scrollThreadMessageIntoView } from "./scrollThreadMessageIntoView";
-import { InteractionRoomMessageReactions } from "./InteractionRoomMessageReactions";
+import {
+  InteractionRoomMessageReactionQuickBar,
+  InteractionRoomMessageReactions,
+} from "./InteractionRoomMessageReactions";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
@@ -53,6 +56,10 @@ import {
   INTERACTION_ROOM_NARROW_QUERY,
   useMatchMedia,
 } from "./useMatchMedia";
+import {
+  formatInteractionMessageCreatedAtLabel,
+  formatInteractionMessageTime,
+} from "./interactionRoomMessageTime";
 
 const EMBED_MESSAGE_LIMIT = 30;
 
@@ -62,18 +69,6 @@ type Props = {
   entityKey: string | null;
   roomTitle: string;
 };
-
-function formatMessageTime(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /**
  * Painel embutido na ficha — resolve lazy + thread/composer do kit.
@@ -401,6 +396,25 @@ export function InteractionRoomPanel({
     ],
   );
 
+  const resolveActionExtras = useCallback(
+    (message: { id: string; deleted?: boolean }) => {
+      if (message.deleted) return null;
+      const row = messages.find((item) => item.id === message.id);
+      if (!row) return null;
+      return (
+        <InteractionRoomMessageReactionQuickBar
+          roomId={room?.id ?? ""}
+          messageId={message.id}
+          reactions={row.reactions ?? []}
+          sessionUserId={sessionUserId}
+          onReactionsChange={onMessageReactionsChange}
+          onError={(text) => setError(text)}
+        />
+      );
+    },
+    [messages, room?.id, sessionUserId, onMessageReactionsChange],
+  );
+
   const threadMessages = useMemo(
     () =>
       messages.map((message) => {
@@ -415,9 +429,11 @@ export function InteractionRoomPanel({
             message.deleted_at != null
               ? content.messageDeleted
               : message.body_text,
-          createdAtLabel: message.edited_at
-            ? `${formatMessageTime(message.created_at)} · ${content.messageEditedSuffix}`
-            : formatMessageTime(message.created_at),
+          createdAtLabel: formatInteractionMessageCreatedAtLabel(
+            message.created_at,
+            message.edited_at,
+            content.messageEditedAtTemplate,
+          ),
           authorName: message.author_user_id
             ? nameFor(message.author_user_id)
             : null,
@@ -470,7 +486,7 @@ export function InteractionRoomPanel({
       nameFor,
       sessionUserId,
       content.messageDeleted,
-      content.messageEditedSuffix,
+      content.messageEditedAtTemplate,
       basePath,
       photoByUserId,
       attachmentEpochByMessageId,
@@ -559,6 +575,7 @@ export function InteractionRoomPanel({
             emptyLabel={content.panelEmptyTitle}
             messages={threadMessages}
             resolveActions={resolveActions}
+            resolveActionExtras={resolveActionExtras}
             onParentQuoteClick={onParentQuoteClick}
           />
           </div>

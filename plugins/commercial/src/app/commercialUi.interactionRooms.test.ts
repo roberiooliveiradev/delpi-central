@@ -8,6 +8,7 @@ import {
   CommercialMentionText,
   CommercialMessageThread,
   CommercialReactionBar,
+  CommercialReactionQuickBar,
   CommercialRoomHeader,
   CommercialRoomInboxList,
   CommercialRoomSidePanel,
@@ -22,6 +23,7 @@ describe("commercialUi interaction room factories", () => {
     expect(typeof CommercialMessageThread).toBe("function");
     expect(typeof CommercialEntityUnfurlCard).toBe("function");
     expect(typeof CommercialReactionBar).toBe("function");
+    expect(typeof CommercialReactionQuickBar).toBe("function");
     expect(typeof CommercialRoomInboxList).toBe("function");
     expect(typeof CommercialRoomHeader).toBe("function");
     expect(typeof CommercialRoomSidePanel).toBe("function");

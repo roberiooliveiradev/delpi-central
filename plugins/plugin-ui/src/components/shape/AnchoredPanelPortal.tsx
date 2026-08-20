@@ -1,4 +1,5 @@
-import { createPortal } from "react-dom";
+import { createPortal as createPortalNamed } from "react-dom";
+import * as ReactDOM from "react-dom";
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 
 import type { AnchoredPanelPlacement } from "./anchoredPanelCoords";
@@ -11,6 +12,7 @@ import {
 import { useAnchoredPanelPosition } from "./useAnchoredPanelPosition";
 import { useClickOutside } from "./useClickOutside";
 import { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
+import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 
 export type AnchoredPanelPortalProps = {
   open: boolean;
@@ -160,7 +162,7 @@ export function AnchoredPanelPortal({
     </div>
   );
 
-  return createPortal(
+  return (tryResolveCreatePortal(ReactDOM) ?? createPortalNamed)(
     <div className={scopeClass} style={theme.style} data-theme={theme.dataTheme}>
       {panel}
     </div>,

@@ -1,4 +1,7 @@
-/* Message thread: bubbles, system lines, quoted reply. */
+/* Message thread: bubbles, system lines, quoted reply.
+ * Overflow visible no thread — popovers (EmojiInsertMenu via portal) e a
+ * toolbar abspos não podem ser clipados. O padding-top da lista reserva a
+ * altura da toolbar da 1ª mensagem para ela não inflar o scroll do host. */
 .delpi-ui-message-thread {
   min-width: 0;
   flex: 1;
@@ -11,7 +14,8 @@
   flex-direction: column;
   gap: 0;
   margin: 0;
-  padding: 0;
+  /* Reserva a altura da toolbar (quick reactions + actions) da 1ª mensagem. */
+  padding: 2.75rem 0 0;
   list-style: none;
 }
 
@@ -253,18 +257,18 @@ button.delpi-ui-message-thread__quote:focus-visible {
 
 .delpi-ui-message-thread__actions {
   position: absolute;
-  top: 0;
+  top: auto;
+  bottom: 100%;
   left: auto;
   right: 0;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   flex-wrap: nowrap;
   gap: 0.15rem;
-  margin: 0;
+  margin: 0 0 0.2rem;
   padding: 0.15rem;
   border-radius: 0.5rem;
-  /* Acima da bolha — não sobrepõe a primeira linha do texto. */
-  transform: translateY(calc(-100% - 0.2rem));
+  /* Sem transform — evita containing block que prende position:fixed / clip de popover. */
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
   box-shadow: 0 4px 14px color-mix(in srgb, var(--delpi-ui-text, #0f172a) 12%, transparent);
 }

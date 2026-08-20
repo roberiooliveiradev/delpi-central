@@ -5,6 +5,7 @@ import {
   EMOJI_CATALOG,
   type EmojiCatalogItem,
 } from "../../content/emojiCatalog";
+import type { AnchoredPanelPlacement } from "../shape/anchoredPanelCoords";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 
 export type EmojiInsertMenuClassNames = {
@@ -23,6 +24,8 @@ export type EmojiInsertMenuProps = {
   listAriaLabel: string;
   items?: readonly EmojiCatalogItem[];
   portalScopeClassName?: string;
+  /** Default `top` (composer). Toolbar de mensagem: `bottom`. */
+  preferredPlacement?: AnchoredPanelPlacement;
 };
 
 export function emojiInsertMenuBemClasses(prefix: string): EmojiInsertMenuClassNames {
@@ -30,7 +33,7 @@ export function emojiInsertMenuBemClasses(prefix: string): EmojiInsertMenuClassN
   const ui = "delpi-ui-emoji-insert-menu";
   const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    panel: pair(base, ui),
+    panel: `${pair(base, ui)} delpi-ui-popover-surface`,
     grid: pair(`${base}__grid`, `${ui}__grid`),
     option: pair(`${base}__option`, `${ui}__option`),
   };
@@ -49,6 +52,7 @@ export function EmojiInsertMenu({
   listAriaLabel,
   items = EMOJI_CATALOG,
   portalScopeClassName,
+  preferredPlacement = "top",
 }: EmojiInsertMenuProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -63,7 +67,7 @@ export function EmojiInsertMenu({
       panelRef={panelRef}
       variant="bare"
       density="compact"
-      preferredPlacement="top"
+      preferredPlacement={preferredPlacement}
       portalScopeClassName={portalScopeClassName}
       className={classNames.panel}
       role="dialog"

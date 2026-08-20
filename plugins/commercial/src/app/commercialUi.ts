@@ -72,6 +72,7 @@ import {
   createDashboardMessageThread,
   createDashboardEntityUnfurlCard,
   createDashboardReactionBar,
+  createDashboardReactionQuickBar,
   createDashboardRoomInboxList,
   createDashboardRoomHeader,
   createDashboardRoomContextPanel,
@@ -547,6 +548,7 @@ export const CommercialEmojiInsertMenu = createDashboardEmojiInsertMenu(UI_PREFI
 export const CommercialMessageThread = createDashboardMessageThread(UI_PREFIX);
 export const CommercialEntityUnfurlCard = createDashboardEntityUnfurlCard(UI_PREFIX);
 export const CommercialReactionBar = createDashboardReactionBar(UI_PREFIX);
+export const CommercialReactionQuickBar = createDashboardReactionQuickBar(UI_PREFIX);
 export const CommercialRoomInboxList = createDashboardRoomInboxList(UI_PREFIX);
 export const CommercialRoomHeader = createDashboardRoomHeader(UI_PREFIX);
 export const CommercialRoomContextPanel = createDashboardRoomContextPanel(UI_PREFIX);

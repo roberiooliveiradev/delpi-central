@@ -243,6 +243,7 @@
 .dashboard-commercial .cm-room-thread__msgs {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 

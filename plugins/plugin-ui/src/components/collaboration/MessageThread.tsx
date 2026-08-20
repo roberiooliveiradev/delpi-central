@@ -73,6 +73,7 @@ export type MessageThreadClassNames = {
   actions: string;
   action: string;
   actionDanger: string;
+  actionsDivider: string;
   empty: string;
   mention: MentionTextClassNames;
   quote: string;
@@ -98,6 +99,8 @@ export type MessageThreadProps = {
   onMentionActivate?: MentionTextPropsOnActivate;
   /** Click na citação da resposta → host rola até a mensagem pai (como pin). */
   onParentQuoteClick?: (parentId: string) => void;
+  /** Conteúdo à esquerda das actions (ex.: reações rápidas). */
+  resolveActionExtras?: (message: MessageThreadItem) => ReactNode;
   className?: string;
 };
 
@@ -153,6 +156,10 @@ export function messageThreadBemClasses(prefix: string): MessageThreadClassNames
     actionDanger: pair(
       `${base}__action ${base}__action--danger`,
       `${ui}__action ${ui}__action--danger`,
+    ),
+    actionsDivider: pair(
+      `${base}__actions-divider`,
+      `${ui}__actions-divider`,
     ),
     empty: pair(`${base}__empty`, `${ui}__empty`),
     mention: mentionTextBemClasses(prefix),
@@ -257,6 +264,7 @@ export function MessageThread({
   renderBody,
   onMentionActivate,
   onParentQuoteClick,
+  resolveActionExtras,
   className,
 }: MessageThreadProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
@@ -299,6 +307,11 @@ export function MessageThread({
           }
 
           const actions = isEditing ? [] : resolveActions?.(message) ?? [];
+          const actionExtras =
+            isEditing || message.deleted
+              ? null
+              : resolveActionExtras?.(message) ?? null;
+          const showActionsBar = actions.length > 0 || Boolean(actionExtras);
           const quoted = parentQuote(messages, message);
           const body = isEditing
             ? (
@@ -363,8 +376,15 @@ export function MessageThread({
                     </header>
                   ) : null}
                   <div className={classNames.stack}>
-                    {actions.length > 0 ? (
+                    {showActionsBar ? (
                       <div className={classNames.actions}>
+                        {actionExtras}
+                        {actionExtras && actions.length > 0 ? (
+                          <span
+                            className={classNames.actionsDivider}
+                            aria-hidden
+                          />
+                        ) : null}
                         {actions.map((action) => (
                           <button
                             key={action.id}

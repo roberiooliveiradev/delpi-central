@@ -43,7 +43,9 @@ export {
 } from "./EmojiInsertMenu";
 export {
   EMOJI_CATALOG,
+  QUICK_REACTION_CATALOG,
   getEmojiCatalog,
+  getQuickReactionCatalog,
   type EmojiCatalogItem,
 } from "../../content/emojiCatalog";
 export {
@@ -75,6 +77,14 @@ export {
   type ReactionBarItem,
   type ReactionBarProps,
 } from "./ReactionBar";
+export {
+  ReactionQuickBar,
+  createDashboardReactionQuickBar,
+  reactionQuickBarBemClasses,
+  type DashboardReactionQuickBarProps,
+  type ReactionQuickBarClassNames,
+  type ReactionQuickBarProps,
+} from "./ReactionQuickBar";
 export {
   RoomInboxList,
   createDashboardRoomInboxList,

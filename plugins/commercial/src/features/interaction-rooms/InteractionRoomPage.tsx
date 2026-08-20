@@ -39,7 +39,10 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
-import { InteractionRoomMessageReactions } from "./InteractionRoomMessageReactions";
+import {
+  InteractionRoomMessageReactionQuickBar,
+  InteractionRoomMessageReactions,
+} from "./InteractionRoomMessageReactions";
 import { InteractionRoomMentionUnfurls } from "./InteractionRoomMentionUnfurls";
 import { shouldUnfurlMentionKind } from "./entityUnfurlAdapter";
 import { isOwnInteractionAuthor } from "./interactionRoomAuthor";
@@ -55,6 +58,10 @@ import {
   scrollThreadMessageIntoView,
 } from "./scrollThreadMessageIntoView";
 import { shouldStickThreadToBottom } from "./threadStickToBottom";
+import {
+  formatInteractionMessageCreatedAtLabel,
+  formatInteractionMessageTime,
+} from "./interactionRoomMessageTime";
 
 type Props = {
   basePath: string;
@@ -69,18 +76,6 @@ type RoomAlert = {
   title: string;
   tone: "info" | "danger";
 };
-
-function formatMessageTime(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /** Página da sala — só kit (header + thread + composer). */
 export function InteractionRoomPage({
@@ -389,6 +384,25 @@ export function InteractionRoomPage({
     ],
   );
 
+  const resolveActionExtras = useCallback(
+    (message: { id: string; deleted?: boolean }) => {
+      if (message.deleted) return null;
+      const row = messages.find((item) => item.id === message.id);
+      if (!row) return null;
+      return (
+        <InteractionRoomMessageReactionQuickBar
+          roomId={roomId}
+          messageId={message.id}
+          reactions={row.reactions ?? []}
+          sessionUserId={sessionUserId}
+          onReactionsChange={onMessageReactionsChange}
+          onError={(text) => pushRoomAlert(text, "danger")}
+        />
+      );
+    },
+    [messages, roomId, sessionUserId, onMessageReactionsChange, pushRoomAlert],
+  );
+
   const threadMessages = useMemo(
     () =>
       messages.map((message) => {
@@ -403,9 +417,11 @@ export function InteractionRoomPage({
             message.deleted_at != null
               ? content.messageDeleted
               : message.body_text,
-          createdAtLabel: message.edited_at
-            ? `${formatMessageTime(message.created_at)} · ${content.messageEditedSuffix}`
-            : formatMessageTime(message.created_at),
+          createdAtLabel: formatInteractionMessageCreatedAtLabel(
+            message.created_at,
+            message.edited_at,
+            content.messageEditedAtTemplate,
+          ),
           authorName: message.author_user_id
             ? nameFor(message.author_user_id)
             : null,
@@ -458,7 +474,7 @@ export function InteractionRoomPage({
       nameFor,
       sessionUserId,
       content.messageDeleted,
-      content.messageEditedSuffix,
+      content.messageEditedAtTemplate,
       basePath,
       photoByUserId,
       attachmentEpochByMessageId,
@@ -525,7 +541,7 @@ export function InteractionRoomPage({
           id: messageId,
           messageId,
           title: pinTitleFromMessageBody(body, content.roomFallbackTitle),
-          dateLabel: formatMessageTime(message?.created_at),
+          dateLabel: formatInteractionMessageTime(message?.created_at),
         };
       }),
     [
@@ -625,6 +641,7 @@ export function InteractionRoomPage({
                     emptyLabel={content.roomEmptyTitle}
                     messages={threadMessages}
                     resolveActions={resolveActions}
+                    resolveActionExtras={resolveActionExtras}
                     onParentQuoteClick={onParentQuoteClick}
                   />
                 )}

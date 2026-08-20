@@ -119,12 +119,51 @@ describe("MessageThread", () => {
           },
         ]}
         resolveActions={() => [
-          { id: "delete", label: "Delete", onClick: onDelete, danger: true },
+          {
+            id: "delete",
+            label: "Delete",
+            danger: true,
+            onClick: onDelete,
+          },
         ]}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders resolveActionExtras before action buttons", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "1",
+            kind: "text",
+            bodyText: "Hi",
+            authorName: "Bruno",
+            createdAtLabel: "10:00",
+          },
+        ]}
+        resolveActionExtras={() => (
+          <span data-testid="reaction-extras">👍</span>
+        )}
+        resolveActions={() => [
+          {
+            id: "reply",
+            label: "Reply",
+            onClick: () => undefined,
+          },
+        ]}
+      />,
+    );
+    const actions = container.querySelector(".delpi-ui-message-thread__actions");
+    expect(actions).not.toBeNull();
+    expect(screen.getByTestId("reaction-extras")).toBeTruthy();
+    expect(actions?.querySelector(".delpi-ui-message-thread__actions-divider")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Reply" })).toBeTruthy();
   });
 
   it("swaps body for edit slot when editingId matches", () => {
@@ -386,14 +425,17 @@ describe("MessageThread", () => {
 });
 
 describe("message-thread.css host scroll", () => {
-  it("rola no host: lista overflow visible e teto na bolha", () => {
+  it("rola no host: overflow visible + padding para toolbar; actions sem transform", () => {
     const css = readFileSync(join(stylesDir, "message-thread.css"), "utf8");
     const root = css.match(/\.delpi-ui-message-thread \{[^}]+\}/)?.[0] ?? "";
+    const list = css.match(/\.delpi-ui-message-thread__list \{[^}]+\}/)?.[0] ?? "";
     const row = css.match(/\.delpi-ui-message-thread__row \{[^}]+\}/)?.[0] ?? "";
     const bubble = css.match(/\.delpi-ui-message-thread__bubble \{[^}]+\}/)?.[0] ?? "";
     const cluster = css.match(/\.delpi-ui-message-thread__cluster \{[^}]+\}/)?.[0] ?? "";
     expect(root).toMatch(/overflow:\s*visible;/);
     expect(root).not.toMatch(/overflow-y:\s*auto;/);
+    expect(root).not.toMatch(/overflow-x:\s*clip;/);
+    expect(list).toMatch(/padding:\s*2\.75rem 0 0;/);
     expect(row).toMatch(/width:\s*max-content;/);
     expect(row).toMatch(/max-width:\s*min\(92%,\s*56rem\)/);
     expect(row).toMatch(/align-items:\s*flex-start;/);
@@ -410,7 +452,8 @@ describe("message-thread.css host scroll", () => {
     expect(mine).toMatch(/22%/);
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
     expect(actions).toMatch(/position:\s*absolute;/);
-    expect(actions).toMatch(/translateY\(calc\(-100% - 0\.2rem\)\)/);
+    expect(actions).toMatch(/bottom:\s*100%;/);
+    expect(actions).not.toMatch(/translateY/);
     expect(actions).toMatch(/right:\s*0;/);
     expect(actions).toMatch(/left:\s*auto;/);
     const mineActions =
