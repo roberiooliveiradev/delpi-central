@@ -4,6 +4,8 @@ import pytest
 
 from app.domain.services.kaizen.kaizen_savings_calculator import (
     ANNUAL_BUSINESS_DAYS,
+    CALENDAR_DAYS_PER_YEAR,
+    amount_for_active_calendar_days,
     calculate_annual_savings,
     calculate_daily_savings,
     enrich_savings_fields,
@@ -11,6 +13,14 @@ from app.domain.services.kaizen.kaizen_savings_calculator import (
     resolve_realized_annual_savings,
     resolve_realized_daily_savings,
 )
+
+
+def test_period_over_full_calendar_year_matches_annual_business_days():
+    """Ganho no período (365 corridos) deve alinhar à economia/ano (×253)."""
+    daily = 0.6917  # ≈ R$ 175 / 253
+    assert amount_for_active_calendar_days(daily, CALENDAR_DAYS_PER_YEAR) == calculate_annual_savings(
+        daily
+    )
 
 
 def test_infer_savings_type_tempo():

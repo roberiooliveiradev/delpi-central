@@ -96,7 +96,8 @@ export const KAIZEN_HELP_TOOLTIPS = {
     launch:
       "Cria uma cópia da versão ativa como rascunho (Recebido) e a seleciona. Edite as seções ali mesmo e, ao final, clique em “Salvar e tornar ativa”. A versão ativa segue contabilizando até lá.",
     periodGain:
-      "Soma diária × dias ativos no intervalo, dentro da validade de 1 ano corrido de cada versão. " +
+      "Soma diária × dias úteis equivalentes no intervalo (dias corridos × 253/365), " +
+      "dentro da validade de 1 ano corrido de cada versão — o mesmo critério da economia/ano. " +
       "Na ficha, o intervalo pode incluir dias futuros até o fim da validade (projeção). " +
       "No dashboard, competência futura não projeta ganho ainda não realizado. Rascunhos não contam.",
     currentSavings:

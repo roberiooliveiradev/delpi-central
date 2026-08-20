@@ -1,6 +1,13 @@
 from datetime import date
 
+import pytest
+
 from app.domain.services.kaizen import kaizen_savings_timeline as timeline
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    ANNUAL_BUSINESS_DAYS,
+    amount_for_active_calendar_days,
+    calculate_annual_savings,
+)
 
 
 def _rev(number, effective_from, effective_until, daily, annual=None, version_status=None):
@@ -28,7 +35,7 @@ def test_single_improvement_capped_at_one_year():
 
 
 def test_single_improvement_within_validity():
-    # 100 dias ativos dentro do primeiro ano.
+    # 101 dias corridos → dias úteis equivalentes × diária.
     revisions = [_rev(1, "2024-01-01", None, 10.0)]
     total = timeline.period_savings(
         revisions,
@@ -36,7 +43,7 @@ def test_single_improvement_within_validity():
         date(2024, 4, 10),  # 101 dias inclusivos
         today=date(2024, 12, 31),
     )
-    assert total == 1010.0
+    assert total == amount_for_active_calendar_days(10.0, 101)
 
 
 def test_new_improvement_renews_anniversary():
@@ -52,9 +59,12 @@ def test_new_improvement_renews_anniversary():
         date(2024, 12, 31),
         today=date(2024, 12, 31),
     )
-    # v1: 2024-01-01 a 2024-06-30 = 182 dias × 10 = 1820
-    # v2: 2024-07-01 a 2024-12-31 = 184 dias × 20 = 3680
-    assert total == 1820.0 + 3680.0
+    # v1: 2024-01-01 a 2024-06-30 = 182 dias corridos
+    # v2: 2024-07-01 a 2024-12-31 = 184 dias corridos
+    expected = amount_for_active_calendar_days(10.0, 182) + amount_for_active_calendar_days(
+        20.0, 184
+    )
+    assert total == pytest.approx(expected)
 
 
 def test_current_active_savings_picks_latest_within_validity():
@@ -84,10 +94,10 @@ def test_draft_version_never_counts_in_period():
     total = timeline.period_savings(
         revisions,
         date(2024, 1, 1),
-        date(2024, 1, 10),  # 10 dias
+        date(2024, 1, 10),  # 10 dias corridos
         today=date(2024, 6, 30),
     )
-    assert total == 100.0  # só a v1 implantada
+    assert total == amount_for_active_calendar_days(10.0, 10)
 
 
 def test_current_active_ignores_draft_even_if_recent():
@@ -113,7 +123,7 @@ def test_superseded_version_counts_in_past_window():
         date(2024, 6, 30),  # janela só da v1
         today=date(2024, 12, 31),
     )
-    assert total == 182 * 10.0
+    assert total == amount_for_active_calendar_days(10.0, 182)
 
 
 def test_period_savings_zero_for_future_range():
@@ -128,7 +138,7 @@ def test_period_savings_zero_for_future_range():
 
 
 def test_period_savings_projects_future_when_requested():
-    """Ficha do kaizen: intervalo futuro dentro da validade projeta diária × dias."""
+    """Ficha do kaizen: intervalo futuro dentro da validade projeta diária × dias úteis."""
     revisions = [_rev(1, "2026-01-10", None, 10.0, version_status="implantado")]
     total = timeline.period_savings(
         revisions,
@@ -137,7 +147,7 @@ def test_period_savings_projects_future_when_requested():
         today=date(2026, 7, 8),
         project_future=True,
     )
-    assert total == 31 * 10.0
+    assert total == amount_for_active_calendar_days(10.0, 31)
 
 
 def test_period_savings_projection_still_capped_by_validity():
@@ -150,5 +160,30 @@ def test_period_savings_projection_still_capped_by_validity():
         today=date(2026, 7, 8),
         project_future=True,
     )
-    # 2026-12-01 .. 2027-01-09 = 40 dias
-    assert total == 40 * 10.0
+    # 2026-12-01 .. 2027-01-09 = 40 dias corridos
+    assert total == amount_for_active_calendar_days(10.0, 40)
+
+
+def test_full_validity_year_matches_annual_savings():
+    """365 dias corridos de validade ≡ diária × 253 (economia/ano)."""
+    assert ANNUAL_BUSINESS_DAYS == 253
+    daily = 0.69
+    revisions = [
+        _rev(
+            1,
+            "2026-08-12",
+            None,
+            daily,
+            calculate_annual_savings(daily),
+            version_status="implantado",
+        )
+    ]
+    # Válido até 2027-08-11 → 365 dias corridos.
+    total = timeline.period_savings(
+        revisions,
+        date(2026, 8, 12),
+        date(2027, 8, 11),
+        today=date(2026, 8, 12),
+        project_future=True,
+    )
+    assert total == calculate_annual_savings(daily)

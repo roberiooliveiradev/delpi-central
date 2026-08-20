@@ -6,6 +6,9 @@ from uuid import UUID
 import pytest
 
 from app.application.dto.kaizen.kaizen_summary_request import KaizenSummaryRequest
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    amount_for_active_calendar_days,
+)
 from app.infrastructure.persistence.plugins.repositories.kaizen.postgres_kaizen_query_repository import (
     PostgresKaizenQueryRepository,
 )
@@ -50,11 +53,13 @@ def test_postgres_kaizen_summary_counts_implanted_in_range() -> None:
 
     assert summary.total_kaizens == 1
     assert summary.list_kaizen[0].daily_savings == 7.54
-    assert summary.total_savings == round(7.54 * 3, 2)
-    # 1015.96s × 0.21 ocorr./dia ≈ 0,0593 h/dia × 3 dias
-    assert summary.total_hours_saved == pytest.approx(0.18, rel=1e-2)
+    expected_period = amount_for_active_calendar_days(7.54, 3)
+    assert summary.total_savings == expected_period
+    # 1015.96s × 0.21 ocorr./dia ≈ 0,0593 h/dia × dias úteis equivalentes (3 corridos)
+    hours_day = (1015.96 * 0.21) / 3600.0
+    assert summary.total_hours_saved == amount_for_active_calendar_days(hours_day, 3)
     assert len(summary.list_savings_kaizen) == 1
-    assert summary.list_savings_kaizen[0].period_savings == round(7.54 * 3, 2)
+    assert summary.list_savings_kaizen[0].period_savings == expected_period
     assert summary.list_savings_kaizen[0].period_hours_saved == pytest.approx(
         summary.total_hours_saved
     )

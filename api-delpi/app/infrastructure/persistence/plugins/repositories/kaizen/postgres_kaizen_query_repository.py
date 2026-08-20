@@ -21,7 +21,10 @@ from app.domain.services.kaizen.kaizen_query_mapper import (
     row_to_kaizen,
     row_to_kaizen_detail,
 )
-from app.domain.services.kaizen.kaizen_savings_calculator import hours_saved_per_day
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    amount_for_active_calendar_days,
+    hours_saved_per_day,
+)
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
 
@@ -116,7 +119,7 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
             range_start,
             range_end,
         )
-        return round(daily * active_days, 2)
+        return amount_for_active_calendar_days(daily, active_days)
 
     @staticmethod
     def _calculate_row_total_hours(
@@ -136,7 +139,7 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
             range_start,
             range_end,
         )
-        return round(hours_day * active_days, 2)
+        return amount_for_active_calendar_days(hours_day, active_days)
 
     def get_kaizen_summary(self, request: KaizenSummaryRequest) -> KaizenSummaryResponse:
         range_start, range_end = self._parse_request_dates(request)

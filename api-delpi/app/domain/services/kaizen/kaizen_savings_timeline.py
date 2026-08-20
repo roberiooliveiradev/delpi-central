@@ -3,10 +3,13 @@
 Cada melhoria (revisão) tem vigência própria (`effective_from`/`effective_until`)
 e contabiliza sua economia por **1 ano a partir de `effective_from`** (regra de
 aniversário — ver `kaizen_savings_validity`). O ganho de um período é a soma, por
-melhoria, de `daily_savings × dias ativos` dentro do período, respeitando:
+melhoria, de `daily_savings × dias úteis equivalentes` dentro do período
+(`calendar_days × 253/365`), respeitando:
 
   * o fim da vigência (`effective_until` — quando outra melhoria assumiu), e
   * o teto de 1 ano da própria melhoria (`savings_valid_until`).
+
+Assim um ano de validade completo alinha com `annual_savings` (diária × 253).
 
 Dashboard / competência: por padrão **não projeta** dias após hoje
 (`project_future=False`). A ficha (`savings-timeline`) usa `project_future=True`
@@ -23,6 +26,9 @@ from datetime import date, timedelta
 from typing import Any, Iterable, Optional
 
 from app.domain.services.kaizen import kaizen_savings_validity
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    amount_for_active_calendar_days,
+)
 
 
 def _as_date(value: Any) -> Optional[date]:
@@ -138,7 +144,7 @@ def period_savings(
             today=today,
             project_future=project_future,
         )
-        total += daily * active_days
+        total += amount_for_active_calendar_days(daily, active_days)
     return round(total, 2)
 
 

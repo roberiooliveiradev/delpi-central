@@ -18,6 +18,7 @@ from app.domain.services.kaizen.kaizen_indicator_eligibility import (
     quantity_anchor_from_row,
 )
 from app.domain.services.kaizen.kaizen_savings_calculator import (
+    amount_for_active_calendar_days,
     enrich_savings_fields,
     hours_saved_per_day,
     resolve_realized_annual_savings,
@@ -289,13 +290,13 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 continue
             daily = self._as_float(row.get("daily_savings"))
             if daily:
-                period_savings += daily * days
+                period_savings += amount_for_active_calendar_days(daily, days)
             hours_day = hours_saved_per_day(
                 self._as_float(row.get("seconds_per_occurrence")),
                 self._as_float(row.get("occurrences_per_day")),
             )
             if hours_day:
-                period_hours_saved += hours_day * days
+                period_hours_saved += amount_for_active_calendar_days(hours_day, days)
 
         # Indicador 2 — quantidade no período (aprovado + implantado, âncora coalesce).
         implanted_period = [

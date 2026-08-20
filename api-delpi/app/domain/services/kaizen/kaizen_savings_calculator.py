@@ -7,6 +7,24 @@ SAVINGS_TYPES = frozenset({"tempo", "material", "financeiro", "qualitativo", "mi
 # Projeção anual = diária × dias úteis (constante Delpi).
 # Distinto da validade do kaizen (1 ano corrido desde a implantação).
 ANNUAL_BUSINESS_DAYS = 253
+# Base de conversão: dias corridos ativos → dias úteis equivalentes.
+CALENDAR_DAYS_PER_YEAR = 365
+
+
+def business_days_equivalent(calendar_days: int) -> float:
+    """Converte dias corridos ativos em dias úteis equivalentes (constante Delpi).
+
+    Assim um ano de validade (365 dias corridos) rende exatamente
+    ``ANNUAL_BUSINESS_DAYS`` no ganho do período — alinhado a ``annual_savings``.
+    """
+    if calendar_days <= 0:
+        return 0.0
+    return calendar_days * ANNUAL_BUSINESS_DAYS / CALENDAR_DAYS_PER_YEAR
+
+
+def amount_for_active_calendar_days(daily: float, calendar_days: int) -> float:
+    """``daily × dias úteis equivalentes`` arredondado em 2 casas."""
+    return round(daily * business_days_equivalent(calendar_days), 2)
 
 
 def _to_float(value: Any) -> Optional[float]:

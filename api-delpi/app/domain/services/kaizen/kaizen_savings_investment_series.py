@@ -21,6 +21,9 @@ from app.domain.services.kaizen.kaizen_indicator_eligibility import (
     quantity_anchor_from_row,
 )
 from app.domain.services.kaizen import kaizen_savings_validity
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    amount_for_active_calendar_days,
+)
 
 Granularity = Literal["day", "month"]
 
@@ -138,7 +141,7 @@ def build_savings_investment_series(
                     today=reference,
                 )
                 if days:
-                    savings_by_key[key] += daily * days
+                    savings_by_key[key] += amount_for_active_calendar_days(daily, days)
 
         anchor = quantity_anchor_from_row(row) or implemented
         if anchor is None:

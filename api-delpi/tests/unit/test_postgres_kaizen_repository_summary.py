@@ -5,6 +5,9 @@ from uuid import UUID
 
 import pytest
 
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    amount_for_active_calendar_days,
+)
 from app.infrastructure.persistence.plugins.repositories.kaizen.postgres_kaizen_repository import (
     PostgresKaizenRepository,
 )
@@ -27,7 +30,7 @@ def _implanted_row(**overrides) -> dict:
         "unit_material_cost": None,
         "fixed_daily_savings": None,
         "daily_savings": Decimal("8.33"),
-        "annual_savings": Decimal("3040.45"),
+        "annual_savings": Decimal("2107.49"),  # 8.33 × 253 dias úteis
         "realized_daily_savings": None,
         "realized_annual_savings": None,
         "status": "implantado",
@@ -92,12 +95,13 @@ def test_summary_keeps_period_savings_and_active_when_no_new_implants_in_period(
     assert result["total"] == 0
     assert result["period_implanted_count"] == 0
     assert result["period_savings"] > 0
-    # 60s × 10 ocorr./dia = 0,1667 h/dia × 3 dias no intervalo
-    assert result["period_hours_saved"] == pytest.approx(0.5, rel=1e-2)
+    # 60s × 10 ocorr./dia = 0,1667 h/dia × dias úteis equivalentes (3 corridos)
+    hours_day = (60.0 * 10.0) / 3600.0
+    assert result["period_hours_saved"] == amount_for_active_calendar_days(hours_day, 3)
     assert result["active_hours_saved_per_day"] == pytest.approx(0.1667, rel=1e-2)
     assert result["active_count"] == 1
     assert result["active_annual_savings"] > 0
-    assert result["realized_annual_savings"] == pytest.approx(3040.45, rel=1e-2)
+    assert result["realized_annual_savings"] == pytest.approx(2107.49, rel=1e-2)
 
 
 def test_summary_period_savings_zero_for_future_competence(
