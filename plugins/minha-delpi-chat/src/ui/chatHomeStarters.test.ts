@@ -25,6 +25,9 @@ describe("chatHomeStarters", () => {
     expect(isOperationalHomeStarter({ query: "corrija o texto abaixo" })).toBe(false);
     expect(isOperationalHomeStarter({ query: "listar LMPs desse mês" })).toBe(true);
     expect(isOperationalHomeStarter({ query: "crie uma carta formal" })).toBe(false);
+    expect(
+      isOperationalHomeStarter({ query: "qual o estoque 10080047" }),
+    ).toBe(true);
   });
 
   it("operacionais usam placeholders em vez de código fixo", () => {

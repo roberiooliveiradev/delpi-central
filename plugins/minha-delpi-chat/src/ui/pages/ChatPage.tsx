@@ -2091,6 +2091,9 @@ export function ChatPage({
 
     if (!starterRequiresShortcutModal(normalized, {})) {
       clearError();
+      // CTA do guidance comum (pendingOperationalQuery) e chips operacionais:
+      // sendMessageWithOperationalAgent auto-ativa o agente preferido quando a query
+      // parece pedido de dados (isOperationalHomeStarter).
       void sendMessageWithOperationalAgent({ content: normalized });
       return;
     }

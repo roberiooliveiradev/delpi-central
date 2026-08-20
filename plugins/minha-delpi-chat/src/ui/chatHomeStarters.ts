@@ -36,6 +36,12 @@ const OPERATIONAL_QUERY_VERBS = [
   "exibir",
   "consulte",
   "consultar",
+  "qual",
+  "quais",
+  "quanto",
+  "quantos",
+  "me fale",
+  "fale do",
 ];
 
 /** Tópicos de dados operacionais (subset de operationalDataTopics da API). */
@@ -51,6 +57,7 @@ const OPERATIONAL_QUERY_TOPICS = [
   "compra",
   "preco",
   "preço",
+  "produto",
   "lmp",
   "ov ",
   "cpv",
@@ -58,6 +65,8 @@ const OPERATIONAL_QUERY_TOPICS = [
   "giro",
   "idd",
 ];
+
+const PRODUCT_CODE_RE = /\b\d{5,}\b/;
 
 function looksLikeOperationalDataQuery(query: string): boolean {
   const normalized = query.toLowerCase();
@@ -68,8 +77,14 @@ function looksLikeOperationalDataQuery(query: string): boolean {
 
   const hasVerb = OPERATIONAL_QUERY_VERBS.some((verb) => normalized.includes(verb));
   const hasTopic = OPERATIONAL_QUERY_TOPICS.some((topic) => normalized.includes(topic));
+  const hasProductCode = PRODUCT_CODE_RE.test(normalized);
 
-  return hasVerb && hasTopic;
+  if (hasVerb && hasTopic) {
+    return true;
+  }
+
+  // «qual o estoque 10080047» / «estoque do 10080047»
+  return hasTopic && hasProductCode;
 }
 
 export function isOperationalHomeStarter(context: {

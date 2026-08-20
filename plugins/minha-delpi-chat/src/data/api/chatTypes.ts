@@ -405,6 +405,8 @@ export type ChatFollowUpSuggestion = {
   disabledReason?: string;
   /** Ação no cliente sem novo turno (ex.: explain_chart). */
   inlineAction?: string;
+  /** Ação estruturada do chat base (ex.: activate_agent_and_resend). */
+  action?: string;
 };
 
 export type ChatGuidedFlowStep = {
@@ -610,6 +612,8 @@ export type ChatMessageMetadata = {
   routingDisambiguationSuggestions?: ChatFollowUpSuggestion[];
   webSearchResearch?: ChatWebSearchResearch | null;
   followUpSuggestions?: ChatFollowUpSuggestion[];
+  /** Consulta operacional pendente quando o chat comum pediu ativação de agente. */
+  pendingOperationalQuery?: string;
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpSelfHelp?: {
