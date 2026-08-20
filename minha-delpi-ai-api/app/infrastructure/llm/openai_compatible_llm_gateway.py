@@ -20,6 +20,29 @@ from app.infrastructure.llm.llm_request_context import get_active_config
 logger = logging.getLogger("minha-delpi-ai-api.openai-compatible-llm")
 
 
+def _visible_assistant_text(message: dict, *, finish_reason: object = None) -> str:
+    """Texto visível da mensagem OpenAI-compatible.
+
+    Modelos reasoning (ex. Kimi K3 / OpenRouter) às vezes devolvem só ``reasoning``
+    com ``content`` nulo — sem fallback o chat vira 503 ``llm.unavailable``.
+    """
+    content = message.get("content")
+
+    if content:
+        return str(content).strip()
+
+    reasoning = message.get("reasoning")
+
+    if reasoning:
+        logger.warning(
+            "openai_compatible_empty_content_using_reasoning finish=%s",
+            finish_reason,
+        )
+        return str(reasoning).strip()
+
+    return ""
+
+
 class OpenAiCompatibleLlmGateway(LlmGatewayPort):
     def __init__(self):
         config = resolve_llm_text_config()
@@ -136,12 +159,13 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
         if not choices:
             raise LlmProviderUnavailableError("Empty OpenAI-compatible response")
 
-        content = (choices[0].get("message") or {}).get("content")
+        message = choices[0].get("message") or {}
+        content = _visible_assistant_text(message, finish_reason=choices[0].get("finish_reason"))
 
         if not content:
             raise LlmProviderUnavailableError("Empty OpenAI-compatible message")
 
-        return repair_utf8_mojibake(str(content).strip())
+        return repair_utf8_mojibake(content)
 
     def stream(self, messages: list[dict]) -> Iterator[str]:
         active = self._active()
@@ -187,6 +211,9 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
 
                     delta = choices[0].get("delta") or {}
                     content = delta.get("content")
+
+                    if not content:
+                        content = delta.get("reasoning")
 
                     if content:
                         yield repair_utf8_mojibake(str(content))

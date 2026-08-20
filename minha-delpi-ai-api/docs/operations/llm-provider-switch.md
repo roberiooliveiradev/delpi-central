@@ -47,6 +47,9 @@ LLM_TEXT_TIMEOUT_SECONDS=120
 # KIMI_BASE_URL=https://openrouter.ai/api/v1
 # KIMI_MODEL=moonshotai/kimi-k3
 # LLM_PROVIDER=openai_compatible
+# Caps (obrigatório com reasoning models — ver docker-compose.minimal.yml):
+# CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS=2048
+# CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS=4096
 
 # Aliases legados (ainda suportados)
 # LLM_PROVIDER=vllm

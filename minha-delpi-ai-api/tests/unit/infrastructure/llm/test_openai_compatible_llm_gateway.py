@@ -48,6 +48,31 @@ def test_generate_returns_content(gateway):
     assert response.encoding == "utf-8"
 
 
+def test_generate_falls_back_to_reasoning_when_content_empty(gateway):
+    """Kimi K3 / OpenRouter: content null, texto só em reasoning."""
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {
+        "choices": [
+            {
+                "finish_reason": "stop",
+                "message": {
+                    "content": None,
+                    "reasoning": " Relatório do desenho 90261842: conforme. ",
+                },
+            }
+        ],
+    }
+
+    with patch(
+        "app.infrastructure.llm.openai_compatible_llm_gateway.requests.post",
+        return_value=response,
+    ):
+        content = gateway.generate([{"role": "user", "content": "analise"}])
+
+    assert content == "Relatório do desenho 90261842: conforme."
+
+
 def test_generate_with_tools_parses_tool_calls(gateway):
     response = MagicMock()
     response.raise_for_status.return_value = None
@@ -83,7 +108,25 @@ def test_generate_with_tools_parses_tool_calls(gateway):
     assert result.tool_calls[0].arguments["action_id"] == "get_product"
 
 
-def test_stream_yields_utf8_chunks_from_bytes(gateway):
+def test_stream_yields_reasoning_when_content_delta_absent(gateway):
+    lines = [
+        b'data: {"choices":[{"delta":{"reasoning":"OK"}}]}',
+        b"data: [DONE]",
+    ]
+
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.iter_lines.return_value = iter(lines)
+    response.__enter__ = MagicMock(return_value=response)
+    response.__exit__ = MagicMock(return_value=False)
+
+    with patch(
+        "app.infrastructure.llm.openai_compatible_llm_gateway.requests.post",
+        return_value=response,
+    ):
+        chunks = list(gateway.stream([{"role": "user", "content": "oi"}]))
+
+    assert chunks == ["OK"]
     lines = [
         b'data: {"choices":[{"delta":{"content":"Ol"}}]}',
         'data: {"choices":[{"delta":{"content":"\u00e1"}}]}'.encode("utf-8"),
