@@ -221,20 +221,31 @@ export function toggleComposerFormat(editor: HTMLElement, kind: ComposerFormatKi
     return;
   }
   if (kind === "quote") {
-    if (active) unwrapClosest(editor, "blockquote");
+    if (active) unwrapFormatInSelection(editor, "blockquote");
     else execRichTextCommand("formatBlock", "blockquote");
     return;
   }
   if (kind === "link") {
     const anchor = findRichTextLinkAtSelection(editor);
-    if (anchor) unwrapRichTextLink(anchor);
-    else insertRichTextLink(editor, "https://");
+    if (anchor) {
+      const selection = window.getSelection();
+      const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+      if (range && !range.collapsed && range.toString() !== (anchor.textContent ?? "")) {
+        const before = editor.innerHTML;
+        runRichTextCommand(editor, "unlink");
+        if (editor.innerHTML !== before) return;
+        unwrapFormatInSelection(editor, "a");
+      } else {
+        unwrapRichTextLink(anchor);
+      }
+    } else {
+      insertRichTextLink(editor, "https://");
+    }
     return;
   }
 
-  const selector = SELECTOR[kind];
-  const tag = WRAP_TAG[kind];
-  if (!selector || !tag) return;
-  if (active) unwrapClosest(editor, selector);
-  else wrapSelectionWithTag(editor, tag);
+  if (kind === "code") {
+    if (active) unwrapFormatInSelection(editor, "code");
+    else wrapSelectionWithTag(editor, "code");
+  }
 }
