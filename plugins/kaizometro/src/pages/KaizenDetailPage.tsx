@@ -828,23 +828,35 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
       />
 
       {/* Evidências da versão selecionada */}
-      <SectionCard
+      <EditableSectionCard
         title={`Evidências da versão${selectedRevision != null ? ` v${selectedRevision}` : ""}`}
         hint={KAIZEN_HELP_TOOLTIPS.sections.evidences}
-        subtitle={
+        description={
           mode === "readonly"
             ? "Evidências desta versão histórica (somente leitura)."
             : `Registro visual Antes / Depois e anexos ${
                 mode === "draft" ? "deste rascunho" : "da versão ativa"
               }. Cada versão tem suas próprias evidências.`
         }
-      >
-        <KaizenEvidencePanel
-          kaizenId={record.id}
-          readOnly={mode === "readonly"}
-          revisionId={evidenceRevisionId}
-        />
-      </SectionCard>
+        isEditing={isEditing("evidencias")}
+        onEdit={() => startEdit("evidencias")}
+        onCancel={() => stopEdit("evidencias")}
+        editable={editable}
+        readContent={
+          <KaizenEvidencePanel
+            kaizenId={record.id}
+            presentation="view"
+            revisionId={evidenceRevisionId}
+          />
+        }
+        editContent={
+          <KaizenEvidencePanel
+            kaizenId={record.id}
+            presentation="edit"
+            revisionId={evidenceRevisionId}
+          />
+        }
+      />
 
       {/* Ganhos e validade */}
       <SectionCard

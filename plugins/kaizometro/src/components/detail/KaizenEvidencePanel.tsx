@@ -42,7 +42,11 @@ import {
 
 type KaizenEvidencePanelProps = {
   kaizenId: string;
-  readOnly: boolean;
+  /**
+   * `view` = layout Antes/Depois + Geral (somente leitura visual).
+   * `edit` = gestão (upload, editar, excluir) no layout operacional.
+   */
+  presentation: "view" | "edit";
   /**
    * Quando definido, o painel exibe apenas evidências desta melhoria (revisão) e marca
    * novos uploads com ela. Quando `null`, exibe apenas evidências gerais (sem revisão).
@@ -142,7 +146,6 @@ async function downloadEvidence(kaizenId: string, evidence: KaizenEvidence) {
 function EvidenceCard({
   kaizenId,
   evidence,
-  readOnly,
   presentation,
   onPreview,
   onEdit,
@@ -150,7 +153,6 @@ function EvidenceCard({
 }: {
   kaizenId: string;
   evidence: KaizenEvidence;
-  readOnly: boolean;
   presentation: "view" | "edit";
   onPreview: (evidence: KaizenEvidence) => void;
   onEdit: (evidence: KaizenEvidence) => void;
@@ -158,7 +160,7 @@ function EvidenceCard({
 }) {
   const previewable = canPreviewEvidence(evidence);
   const caption = evidence.description || evidence.file_name || "Evidência";
-  const canManage = !readOnly && presentation === "edit";
+  const canManage = presentation === "edit";
   return (
     <figure className={`kz-evidence${presentation === "view" ? " kz-evidence--view" : ""}`}>
       {previewable ? (
@@ -224,7 +226,7 @@ function EvidenceCard({
 
 export function KaizenEvidencePanel({
   kaizenId,
-  readOnly,
+  presentation,
   revisionId,
   compact = false,
 }: KaizenEvidencePanelProps) {
@@ -233,9 +235,6 @@ export function KaizenEvidencePanel({
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [presentation, setPresentation] = useState<"view" | "edit">(
-    readOnly ? "view" : "view",
-  );
 
   const [pending, setPending] = useState<KaizenPendingUpload[]>([]);
   const [defaultStage, setDefaultStage] = useState<KaizenEvidenceStage>("antes");
@@ -248,12 +247,7 @@ export function KaizenEvidencePanel({
   const [previewSource, setPreviewSource] = useState<EvidencePreviewSource | null>(null);
   const [editTarget, setEditTarget] = useState<KaizenEvidence | null>(null);
 
-  useEffect(() => {
-    if (readOnly) setPresentation("view");
-  }, [readOnly]);
-
-  const effectivePresentation: "view" | "edit" = readOnly ? "view" : presentation;
-  const isEditMode = effectivePresentation === "edit";
+  const isEditMode = presentation === "edit";
 
   const openPreview = useCallback(
     (evidence: KaizenEvidence) => setPreviewSource({ kind: "saved", kaizenId, evidence }),
@@ -407,8 +401,7 @@ export function KaizenEvidencePanel({
 
   const cardProps = {
     kaizenId,
-    readOnly,
-    presentation: effectivePresentation,
+    presentation,
     onPreview: openPreview,
     onEdit: setEditTarget,
     onDelete: (item: KaizenEvidence) => void handleDelete(item),
@@ -419,39 +412,16 @@ export function KaizenEvidencePanel({
       className={[
         "kz-evidence-panel",
         compact ? "kz-evidence-panel--compact" : "",
-        effectivePresentation === "view" ? "kz-evidence-panel--view" : "kz-evidence-panel--edit",
+        presentation === "view" ? "kz-evidence-panel--view" : "kz-evidence-panel--edit",
       ]
         .filter(Boolean)
         .join(" ")}
     >
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
 
-      {!readOnly ? (
-        <div className="kz-evidence-mode" role="group" aria-label="Modo das evidências">
-          <button
-            type="button"
-            className={`${KZ_GHOST_BTN}${effectivePresentation === "view" ? " kz-evidence-mode__btn--active" : ""}`}
-            aria-pressed={effectivePresentation === "view"}
-            onClick={() => setPresentation("view")}
-          >
-            Visualizar
-          </button>
-          <button
-            type="button"
-            className={`${KZ_GHOST_BTN}${isEditMode ? " kz-evidence-mode__btn--active" : ""}`}
-            aria-pressed={isEditMode}
-            onClick={() => setPresentation("edit")}
-          >
-            Editar
-          </button>
-        </div>
-      ) : null}
-
       <section
         className={
-          effectivePresentation === "view"
-            ? "kz-evidence-view__compare"
-            : "kz-evidence-gallery"
+          presentation === "view" ? "kz-evidence-view__compare" : "kz-evidence-gallery"
         }
         aria-label="Antes e depois"
       >
@@ -471,19 +441,17 @@ export function KaizenEvidencePanel({
         ))}
       </section>
 
-      {grouped.geral.length > 0 || effectivePresentation === "view" ? (
+      {grouped.geral.length > 0 || presentation === "view" ? (
         <section
           className={
-            effectivePresentation === "view"
-              ? "kz-evidence-view__general"
-              : "kz-evidence-general"
+            presentation === "view" ? "kz-evidence-view__general" : "kz-evidence-general"
           }
           aria-label="Evidências gerais"
         >
           <h3 className="kz-evidence-column__title">{EVIDENCE_STAGE_GALLERY_LABELS.geral}</h3>
           <div className="kz-evidence-column__items kz-evidence-column__items--row">
             {grouped.geral.length === 0 ? (
-              effectivePresentation === "view" ? (
+              presentation === "view" ? (
                 <EmptyHint>Sem evidências gerais.</EmptyHint>
               ) : null
             ) : (

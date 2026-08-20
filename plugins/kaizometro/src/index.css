@@ -467,18 +467,6 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-}.dashboard-kaizometro .kz-evidence-mode{
-  display: inline-flex;
-  gap: 6px;
-  align-self: flex-start;
-  padding: 4px;
-  border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-card-border);
-  background: color-mix(in srgb, var(--kz-text-muted) 6%, var(--kz-card-bg));
-}.dashboard-kaizometro .kz-evidence-mode__btn--active{
-  color: var(--kz-accent);
-  border-color: color-mix(in srgb, var(--kz-accent) 45%, var(--kz-card-border));
-  background: color-mix(in srgb, var(--kz-accent) 12%, var(--kz-card-bg));
 }.dashboard-kaizometro .kz-evidence-gallery,
 .dashboard-kaizometro .kz-evidence-view__compare{
   display: grid;
