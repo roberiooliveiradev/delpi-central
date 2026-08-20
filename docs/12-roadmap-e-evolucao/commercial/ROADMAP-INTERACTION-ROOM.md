@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** **E7 entregue**; **E8.S1–S2** docs (UX + contrato API/DATA-MODEL). Próximo: E8.S3 catálogo kit. Smoke Docker adiados.  
+> **Status:** **E7 + E8.S1–S3 entregues** (código + docs UX/API/DATA-MODEL/catálogo). Resta **E8.S4 verify** (smoke quando Docker voltar).  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -519,7 +519,7 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 - **Backend (commercial-api):** docs [`API-ROUTES.md`](./API-ROUTES.md) § 3.21 (`body_text` markdown, 422 HTML, PATCH mentions, 10/20 MB, `parent_id`); [`DATA-MODEL.md`](./DATA-MODEL.md) § 8.1; [`commercial-api/docs/README.md`](../../../commercial-api/docs/README.md). Sem migration.
 - **Testes:** `test_interaction_rooms_api_routes_doc.py` + `test_interaction_rooms_data_model_doc.py`.
 
-### E8.S3 — Catálogo kit — custo P
+### E8.S3 — Catálogo kit — custo P ✅
 
 - **Front (plugin-ui / kit):** docs [`component-catalog.md`](../../../plugins/plugin-ui/docs/component-catalog.md) família collaboration (`MentionComposer` contenteditable + markdown; `EmojiInsertMenu`; `formatToggle`; `__document-tray`; ações fora do `<article>`; `submitOnEnter`).
 - **Front (MFE commercial):** nenhum.

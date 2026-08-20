@@ -1319,14 +1319,18 @@ Primitivos neutros para threads estilo Teams/Slack (Portal Comercial). **Sem HTT
 |--------|-----------|
 | `MentionText` | Corpo com chips `@`; `parseMentionText` + slots de click/href. |
 | `MentionMenu` | Listbox agrupada via `AnchoredPanelPortal` (teclado ↑↓ Enter). |
-| `MentionComposer` | Textarea **dentro** do kit + menu `@` + anexar/enviar. |
-| `MessageThread` | Bolhas, `system`, replies e ações via `resolveActions`. |
+| `MentionComposer` | **Contenteditable** markdown (não textarea cru): `value`/`onChange` em markdown; `formatToggle` (B/I/S/lista/código/quote/link); `EmojiInsertMenu`; `submitOnEnter` (Shift+Enter = quebra); faixa `replyTo` + `onCancelReply`; thumbs na pílula + `__document-tray` para não-imagem; anexar/enviar. |
+| `MessageThread` | Bolhas, `system`, replies; ações via `resolveActions` **fora** do `<article>`; edição in-place com `editingId` + `renderEditSlot`. |
 | `EntityUnfurlCard` | Preview genérico (ok / `accessible: false`) — sem `if` de entidade. |
-| `ReactionBar` | Chips de reação; códigos do host. |
-| `RoomInboxList` | Inbox de salas (não reutilizar `WorklistItem`). |
+| `ReactionBar` | Chips de reação; `emojiAdd` abre `EmojiInsertMenu` no «+» (código = emoji `id` por default). |
+| `EmojiInsertMenu` | Picker leve reutilizado pelo composer e pela barra de reações. |
+| `RoomInboxList` | Inbox de salas (não reutilizar `WorklistItem`); `preview`, `unreadCount`, slots `leading`/`subtitle`. |
 | `RoomHeader` | Título, chips e `AvatarStack` de participantes. |
+| `RoomSidePanel` / `RoomContextPanel` | Painel «Neste chat» (host controla open). |
 
 Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`.
+
+Helpers: `markdownToPlainPreview`, `richTextHtmlToMarkdown` / família `richTextMarkdown.ts` (submit do composer).
 
 ```tsx
 import {
@@ -1341,6 +1345,9 @@ const classNames = mentionComposerBemClasses("cm");
   onChange={setText}
   onSubmit={send}
   mentionHits={hits}
+  replyTo={reply ? { label: reply.author, preview: reply.preview } : undefined}
+  onCancelReply={clearReply}
+  submitOnEnter
   labels={{
     placeholder: "Escreva uma mensagem",
     sendAriaLabel: "Enviar",
