@@ -10,13 +10,13 @@ Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-
 
 Além de `generationLimits`, o bundle declara `contextBudget` por modo (`historyMaxMessages`, RAG, tool clip, `messageSearch*`). Serviço canônico: `ChatResponseModeContextBudgetService`. Em `openai_compatible`, o prompt é truncado no cliente pelo budget (`num_ctx` continua só informativo no metadata).
 
-| Modo | history | ragMaxChars | maxTokens (JSON) |
-|------|---------|-------------|------------------|
-| fast | 4 | 4000 | 256 |
-| normal | 12 | 9000 | 1024 |
-| thinker | 20 | 12000 | 2048 |
+| Modo | history | ragMaxChars | maxTokens (JSON) | maxMultiActionsPerTurn |
+|------|---------|-------------|------------------|------------------------|
+| fast | 4 | 4000 | 256 | 1 |
+| normal | 12 | 9000 | 1024 | 4 |
+| thinker | 20 | 12000 | 2048 | 6 |
 
-Overrides ENV de geração (`CHAT_RESPONSE_MODE_*`) continuam válidos.
+No modo Rápida, pedidos multi-escopo executam a 1ª action e oferecem chips «Também consultar …» (`ChatMultiIntentContinuationService`). Ambiguidade operacional continua em clarificação (`clarifyInsteadOfGuess` no adminDebug), sem chute do LLM.
 
 ---
 

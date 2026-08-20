@@ -22,6 +22,7 @@ class ChatContextBudget:
     message_search_max_hits: int
     message_search_max_chars: int
     message_search_lookback_messages: int
+    max_multi_actions_per_turn: int
 
     def as_admin_debug(self) -> dict[str, Any]:
         return {
@@ -34,6 +35,7 @@ class ChatContextBudget:
             "messageSearchMaxHits": self.message_search_max_hits,
             "messageSearchMaxChars": self.message_search_max_chars,
             "messageSearchLookbackMessages": self.message_search_lookback_messages,
+            "maxMultiActionsPerTurn": self.max_multi_actions_per_turn,
         }
 
     def as_dict(self) -> dict[str, Any]:
@@ -53,6 +55,7 @@ class ChatResponseModeContextBudgetService:
             "messageSearchMaxHits": 3,
             "messageSearchMaxChars": 1500,
             "messageSearchLookbackMessages": 40,
+            "maxMultiActionsPerTurn": 1,
         },
         "normal": {
             "historyMaxMessages": 12,
@@ -63,6 +66,7 @@ class ChatResponseModeContextBudgetService:
             "messageSearchMaxHits": 6,
             "messageSearchMaxChars": 3500,
             "messageSearchLookbackMessages": 80,
+            "maxMultiActionsPerTurn": 4,
         },
         "thinker": {
             "historyMaxMessages": 20,
@@ -73,6 +77,7 @@ class ChatResponseModeContextBudgetService:
             "messageSearchMaxHits": 10,
             "messageSearchMaxChars": 6000,
             "messageSearchLookbackMessages": 120,
+            "maxMultiActionsPerTurn": 6,
         },
     }
 
@@ -104,8 +109,13 @@ class ChatResponseModeContextBudgetService:
                 "messageSearchLookbackMessages",
                 minimum=10,
             ),
+            max_multi_actions_per_turn=_int("maxMultiActionsPerTurn"),
         )
 
     @classmethod
     def history_keep(cls, response_mode: str | None) -> int:
         return cls.resolve(response_mode).history_max_messages
+
+    @classmethod
+    def max_multi_actions_per_turn(cls, response_mode: str | None) -> int:
+        return cls.resolve(response_mode).max_multi_actions_per_turn

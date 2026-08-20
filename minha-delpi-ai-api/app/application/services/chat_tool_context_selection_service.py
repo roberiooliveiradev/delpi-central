@@ -287,13 +287,26 @@ class ChatToolContextSelectionService:
                     for tool_call in planned_external_actions
                 ]
 
+            multi_continuation: dict | None = None
+
             if planned_external_actions:
-                first_planned = planned_external_actions[0]
+                from app.application.services.chat_multi_intent_continuation_service import (
+                    ChatMultiIntentContinuationService,
+                )
+
+                planned_external_actions, multi_continuation = (
+                    ChatMultiIntentContinuationService.strip_from_planned(
+                        planned_external_actions
+                    )
+                )
+                first_planned = (
+                    planned_external_actions[0] if planned_external_actions else None
+                )
                 from app.application.services.external_actions.external_action_score_gap_clarification_service import (
                     ExternalActionScoreGapClarificationService,
                 )
 
-                if ExternalActionScoreGapClarificationService.is_clarification_tool_call(
+                if first_planned and ExternalActionScoreGapClarificationService.is_clarification_tool_call(
                     first_planned
                 ):
                     args = first_planned.get("arguments") or {}
@@ -319,6 +332,7 @@ class ChatToolContextSelectionService:
                         "skipRag": True,
                         "currentMessage": raw_message,
                         "routeSelectionClarification": route_clarification,
+                        "clarifyInsteadOfGuess": True,
                     }
                     if selection_pending:
                         early_payload["selectionPending"] = selection_pending
@@ -330,47 +344,52 @@ class ChatToolContextSelectionService:
                         ),
                     )
 
-                selected_tools = [
-                    item
-                    for item in selected_tools
-                    if str(item.get("name") or "") != "execute_external_action"
-                ]
-                selected_tools.extend(planned_external_actions)
-                first = first_planned
-                arguments = first.get("arguments") or {}
-                selected_external_action = first
-                selected_external_action_meta = {
-                    "actionId": arguments.get("actionId") or arguments.get("action_id"),
-                    "reason": first.get("reason"),
-                    "plannedCount": len(planned_external_actions),
-                }
-                from app.application.services.external_actions.external_action_selection_diagnostics_service import (
-                    ExternalActionSelectionDiagnosticsService,
-                )
-
-                diagnostics = ExternalActionSelectionDiagnosticsService.from_tool_call(
-                    first
-                )
-                if diagnostics:
-                    selected_external_action_meta["matchSource"] = diagnostics.get(
-                        "matchSource"
-                    )
-                    selected_external_action_meta["rivalIds"] = diagnostics.get(
-                        "rivalIds"
-                    )
-                    selected_external_action_meta["scoreGap"] = diagnostics.get(
-                        "scoreGap"
-                    )
-                    selected_external_action_meta["reasonKey"] = diagnostics.get(
-                        "reasonKey"
+                if planned_external_actions:
+                    selected_tools = [
+                        item
+                        for item in selected_tools
+                        if str(item.get("name") or "") != "execute_external_action"
+                    ]
+                    selected_tools.extend(planned_external_actions)
+                    first = planned_external_actions[0]
+                    arguments = first.get("arguments") or {}
+                    selected_external_action = first
+                    selected_external_action_meta = {
+                        "actionId": arguments.get("actionId") or arguments.get("action_id"),
+                        "reason": first.get("reason"),
+                        "plannedCount": len(planned_external_actions),
+                    }
+                    if multi_continuation:
+                        selected_external_action_meta["multiActionContinuation"] = (
+                            multi_continuation
+                        )
+                    from app.application.services.external_actions.external_action_selection_diagnostics_service import (
+                        ExternalActionSelectionDiagnosticsService,
                     )
 
-                if drawing_action_required:
-                    selected_external_action_meta["forcedBy"] = "drawing_analysis_pdf"
-                    selected_external_action_meta["productCode"] = drawing_product_code
-                    selected_external_action_meta[
-                        "productCodeSource"
-                    ] = drawing_product_code_source
+                    diagnostics = ExternalActionSelectionDiagnosticsService.from_tool_call(
+                        first
+                    )
+                    if diagnostics:
+                        selected_external_action_meta["matchSource"] = diagnostics.get(
+                            "matchSource"
+                        )
+                        selected_external_action_meta["rivalIds"] = diagnostics.get(
+                            "rivalIds"
+                        )
+                        selected_external_action_meta["scoreGap"] = diagnostics.get(
+                            "scoreGap"
+                        )
+                        selected_external_action_meta["reasonKey"] = diagnostics.get(
+                            "reasonKey"
+                        )
+
+                    if drawing_action_required:
+                        selected_external_action_meta["forcedBy"] = "drawing_analysis_pdf"
+                        selected_external_action_meta["productCode"] = drawing_product_code
+                        selected_external_action_meta[
+                            "productCodeSource"
+                        ] = drawing_product_code_source
 
             if not planned_external_actions and host.external_action_repository:
                 from app.application.services.chat_playbook_product_action_readiness_service import (

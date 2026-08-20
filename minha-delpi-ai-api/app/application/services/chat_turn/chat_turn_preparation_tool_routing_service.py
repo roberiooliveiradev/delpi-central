@@ -516,6 +516,14 @@ class ChatTurnPreparationToolRoutingService:
                 "nativeToolCalling": {},
             }
 
+            if (
+                routing_disambiguation_answer
+                or operational_guards.missing_product_code_answer
+                or operational_guards.ambiguous_period_answer
+                or operational_guards.missing_date_answer
+            ):
+                tool_context["clarifyInsteadOfGuess"] = True
+
             if skip_flags.skip_tools_for_attachment_document:
                 from app.application.services.chat_document_vision_service import (
                     ChatDocumentVisionService,

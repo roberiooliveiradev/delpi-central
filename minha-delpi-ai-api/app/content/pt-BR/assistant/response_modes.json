@@ -89,7 +89,8 @@
       "toolContextMaxChars": 4000,
       "messageSearchMaxHits": 3,
       "messageSearchMaxChars": 1500,
-      "messageSearchLookbackMessages": 40
+      "messageSearchLookbackMessages": 40,
+      "maxMultiActionsPerTurn": 1
     },
     "normal": {
       "historyMaxMessages": 12,
@@ -99,7 +100,8 @@
       "toolContextMaxChars": 9000,
       "messageSearchMaxHits": 6,
       "messageSearchMaxChars": 3500,
-      "messageSearchLookbackMessages": 80
+      "messageSearchLookbackMessages": 80,
+      "maxMultiActionsPerTurn": 4
     },
     "thinker": {
       "historyMaxMessages": 20,
@@ -109,7 +111,8 @@
       "toolContextMaxChars": 12000,
       "messageSearchMaxHits": 10,
       "messageSearchMaxChars": 6000,
-      "messageSearchLookbackMessages": 120
+      "messageSearchLookbackMessages": 120,
+      "maxMultiActionsPerTurn": 6
     }
   },
   "latencyTargetsSec": {

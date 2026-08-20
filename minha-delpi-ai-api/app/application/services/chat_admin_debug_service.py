@@ -402,12 +402,19 @@ class ChatAdminDebugService:
                 "degradedStages": list(tool_context.get("degradedStages") or [])
                 if isinstance(tool_context.get("degradedStages"), list)
                 else [],
+                "clarifyInsteadOfGuess": bool(
+                    tool_context.get("clarifyInsteadOfGuess")
+                    or tool_context.get("routeSelectionClarification")
+                ),
             },
             "intentRoute": intent_route if isinstance(intent_route, dict) else None,
             "tooling": {
                 "toolCalls": tool_context.get("toolCalls") or [],
                 "selectedExternalAction": tool_context.get("selectedExternalAction"),
                 "toolContextText": tool_context_text,
+                "multiActionContinuation": tool_context.get("multiActionContinuation")
+                if isinstance(tool_context.get("multiActionContinuation"), dict)
+                else None,
             },
             "rag": rag_debug,
             "llm": cls._build_llm_debug_block(messages=compact_llm_messages),

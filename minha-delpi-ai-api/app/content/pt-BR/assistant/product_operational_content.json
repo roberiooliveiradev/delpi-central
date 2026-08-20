@@ -34,7 +34,9 @@
     "many": "{head}, {last}"
   },
   "multiScope": {
-    "reasonTemplate": "A pergunta pede {scope} do produto {code} (consulta combinada com outras rotas na mesma mensagem)."
+    "reasonTemplate": "A pergunta pede {scope} do produto {code} (consulta combinada com outras rotas na mesma mensagem).",
+    "continueChipLabel": "Também consultar {scope}",
+    "continueQueryTemplate": "{scope} do produto {code}"
   },
   "composite": {
     "informedProductFallback": "informado"

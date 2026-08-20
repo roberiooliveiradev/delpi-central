@@ -284,6 +284,12 @@ class ChatToolContextResultAssemblyService:
             ),
         }
 
+        if isinstance(selected_external_action_meta, dict):
+            continuation = selected_external_action_meta.get("multiActionContinuation")
+
+            if isinstance(continuation, dict):
+                result_payload["multiActionContinuation"] = continuation
+
         if drawing_analysis_payload:
             result_payload["drawingAnalysisMode"] = True
 

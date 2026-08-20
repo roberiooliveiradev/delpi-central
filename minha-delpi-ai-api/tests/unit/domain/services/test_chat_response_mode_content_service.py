@@ -42,3 +42,14 @@ def test_context_budget_node_present_for_modes():
         node = ChatResponseModeContentService.context_budget_node(mode)
         assert isinstance(node, dict)
         assert int(node.get("historyMaxMessages") or 0) >= 1
+        assert int(node.get("maxMultiActionsPerTurn") or 0) >= 1
+
+
+def test_max_multi_actions_per_turn_by_mode():
+    from app.domain.services.chat_response_mode_context_budget_service import (
+        ChatResponseModeContextBudgetService,
+    )
+
+    assert ChatResponseModeContextBudgetService.max_multi_actions_per_turn("fast") == 1
+    assert ChatResponseModeContextBudgetService.max_multi_actions_per_turn("normal") == 4
+    assert ChatResponseModeContextBudgetService.max_multi_actions_per_turn("thinker") == 6

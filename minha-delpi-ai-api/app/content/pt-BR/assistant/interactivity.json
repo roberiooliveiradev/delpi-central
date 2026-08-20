@@ -16,7 +16,8 @@
     "recuperar": "Recuperar",
     "anexo": "Anexo",
     "apresentacao": "Apresentação",
-    "refinar": "Refinar"
+    "refinar": "Refinar",
+    "continuar": "Continuar"
   },
   "labelGroups": {
     "Ver estoque": "consultar",
@@ -273,6 +274,7 @@
     { "key": "helpFollowUpSuggestions", "group": "ajuda", "priority": 40 },
     { "key": "helpErrorFollowUpSuggestions", "group": "ajuda", "priority": 6 },
     { "key": "routingDisambiguationSuggestions", "group": "consultar", "priority": 12 },
+    { "key": "multiIntentContinuationSuggestions", "group": "continuar", "priority": 15 },
     { "key": "selectionFollowUpSuggestions", "group": "consultar", "priority": 4 },
     { "key": "onboardingFollowUpSuggestions", "group": "ajuda", "priority": 50 },
     { "key": "guidedFlowSuggestions", "group": "ajuda", "priority": 45 },

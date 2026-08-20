@@ -425,8 +425,9 @@ class ChatExternalActionOrchestrationService:
 
         if multi_product:
             planned: list[dict] = []
+            candidate_cap = max(limit, 12)
 
-            for code in codes[:limit]:
+            for code in codes[:candidate_cap]:
                 selected = selection_service.select_action_for_product(
                     selection_message,
                     product_code=code,
@@ -440,7 +441,16 @@ class ChatExternalActionOrchestrationService:
                     planned.append(selected)
 
             if planned:
-                return _return_planned(planned)
+                from app.application.services.chat_multi_intent_continuation_service import (
+                    ChatMultiIntentContinuationService,
+                )
+
+                executed, _ = ChatMultiIntentContinuationService.apply_limit(
+                    planned,
+                    max_calls=limit,
+                )
+
+                return _return_planned(executed)
 
         from app.domain.services.chat_product_multi_scope_planning_service import (
             ChatProductMultiScopePlanningService,
@@ -460,14 +470,20 @@ class ChatExternalActionOrchestrationService:
                 product_code=product_code,
                 allowed_action_ids=allowed_action_ids,
                 previous_messages=previous_messages,
-                max_calls=limit,
+                max_calls=12,
             )
 
-            if len(scope_planned) >= 2:
-                return _return_planned(scope_planned)
+            if scope_planned:
+                from app.application.services.chat_multi_intent_continuation_service import (
+                    ChatMultiIntentContinuationService,
+                )
 
-            if len(scope_planned) == 1:
-                return _return_planned(scope_planned)
+                executed, _ = ChatMultiIntentContinuationService.apply_limit(
+                    scope_planned,
+                    max_calls=limit,
+                )
+
+                return _return_planned(executed)
 
         from app.domain.services.chat_department_meta_composition_planning_service import (
             ChatDepartmentMetaCompositionPlanningService,
@@ -531,13 +547,29 @@ class ChatExternalActionOrchestrationService:
         )
 
     @classmethod
+    def _mode_multi_action_cap(cls) -> int:
+        try:
+            from app.domain.services.chat_response_mode_context_budget_service import (
+                ChatResponseModeContextBudgetService,
+            )
+            from app.infrastructure.llm.llm_request_context import get_active_config
+
+            return ChatResponseModeContextBudgetService.max_multi_actions_per_turn(
+                get_active_config().response_mode
+            )
+        except Exception:
+            return 4
+
+    @classmethod
     def _resolve_max_calls(cls, max_calls: int | None) -> int:
         cap = max(1, min(int(getattr(Settings, "CHAT_MULTI_ACTION_MAX_CALLS", 50)), 50))
+        mode_cap = max(1, cls._mode_multi_action_cap())
+        effective_cap = min(cap, mode_cap)
 
         if max_calls is not None:
-            return max(1, min(int(max_calls), cap))
+            return max(1, min(int(max_calls), effective_cap))
 
-        return cap
+        return effective_cap
 
     @classmethod
     def _resolve_product_intent(cls, message: str, normalized: str) -> str:

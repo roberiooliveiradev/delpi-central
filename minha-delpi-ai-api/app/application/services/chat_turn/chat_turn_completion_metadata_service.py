@@ -283,6 +283,15 @@ class ChatTurnCompletionMetadataService:
             intent_route=intent_routing if isinstance(intent_routing, dict) else None,
         )
 
+        from app.application.services.chat_multi_intent_continuation_service import (
+            ChatMultiIntentContinuationService,
+        )
+
+        ChatMultiIntentContinuationService.attach_to_assistant_metadata(
+            assistant_metadata,
+            tool_context=turn.tool_context if isinstance(turn.tool_context, dict) else None,
+        )
+
         from app.application.services.chat_error_handling_telemetry_service import (
             ChatErrorHandlingTelemetryService,
         )
