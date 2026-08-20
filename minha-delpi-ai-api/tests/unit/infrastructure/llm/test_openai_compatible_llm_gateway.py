@@ -2,6 +2,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from app.infrastructure.llm.http_stream_utf8 import (
+    decode_stream_line,
+    repair_utf8_mojibake,
+)
 from app.infrastructure.llm.openai_compatible_llm_gateway import OpenAiCompatibleLlmGateway
 
 
@@ -12,6 +16,17 @@ def gateway(monkeypatch):
     monkeypatch.setenv("LLM_TEXT_MODEL", "gpt-test")
     monkeypatch.setenv("LLM_TEXT_API_KEY", "token")
     return OpenAiCompatibleLlmGateway()
+
+
+def test_repair_utf8_mojibake_from_latin1_misread():
+    broken = "atÃ© vocÃª"
+    assert repair_utf8_mojibake(broken) == "até você"
+    assert repair_utf8_mojibake("até você") == "até você"
+
+
+def test_decode_stream_line_bytes_utf8():
+    raw = 'data: {"choices":[{"delta":{"content":"até"}}]}'.encode("utf-8")
+    assert "até" in (decode_stream_line(raw) or "")
 
 
 def test_generate_returns_content(gateway):
@@ -30,6 +45,7 @@ def test_generate_returns_content(gateway):
     assert content == "resposta"
     post.assert_called_once()
     assert post.call_args.kwargs["headers"]["Authorization"] == "Bearer token"
+    assert response.encoding == "utf-8"
 
 
 def test_generate_with_tools_parses_tool_calls(gateway):
@@ -67,11 +83,11 @@ def test_generate_with_tools_parses_tool_calls(gateway):
     assert result.tool_calls[0].arguments["action_id"] == "get_product"
 
 
-def test_stream_yields_chunks(gateway):
+def test_stream_yields_utf8_chunks_from_bytes(gateway):
     lines = [
-        'data: {"choices":[{"delta":{"content":"Ol"}}]}',
-        'data: {"choices":[{"delta":{"content":"á"}}]}',
-        "data: [DONE]",
+        b'data: {"choices":[{"delta":{"content":"Ol"}}]}',
+        'data: {"choices":[{"delta":{"content":"\u00e1"}}]}'.encode("utf-8"),
+        b"data: [DONE]",
     ]
 
     response = MagicMock()
@@ -87,3 +103,26 @@ def test_stream_yields_chunks(gateway):
         chunks = list(gateway.stream([{"role": "user", "content": "oi"}]))
 
     assert chunks == ["Ol", "á"]
+    response.iter_lines.assert_called_with(decode_unicode=False)
+    assert response.encoding == "utf-8"
+
+
+def test_stream_repairs_mojibake_delta(gateway):
+    lines = [
+        'data: {"choices":[{"delta":{"content":"atÃ©"}}]}'.encode("utf-8"),
+        b"data: [DONE]",
+    ]
+
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.iter_lines.return_value = iter(lines)
+    response.__enter__ = MagicMock(return_value=response)
+    response.__exit__ = MagicMock(return_value=False)
+
+    with patch(
+        "app.infrastructure.llm.openai_compatible_llm_gateway.requests.post",
+        return_value=response,
+    ):
+        chunks = list(gateway.stream([{"role": "user", "content": "oi"}]))
+
+    assert chunks == ["até"]

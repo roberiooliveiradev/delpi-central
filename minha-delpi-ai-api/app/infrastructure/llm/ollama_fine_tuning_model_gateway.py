@@ -7,6 +7,7 @@ import requests
 
 from app.domain.ports.fine_tuning_model_gateway_port import FineTuningModelGatewayPort
 from app.infrastructure.config.llm_text_config import resolve_llm_text_config
+from app.infrastructure.llm.http_stream_utf8 import iter_utf8_lines
 
 
 logger = logging.getLogger("minha-delpi-ai-api.fine-tuning.ollama")
@@ -38,10 +39,7 @@ class OllamaFineTuningModelGateway(FineTuningModelGatewayPort):
                 response.raise_for_status()
                 last_status = None
 
-                for raw_line in response.iter_lines(decode_unicode=True):
-                    if not raw_line:
-                        continue
-
+                for raw_line in iter_utf8_lines(response):
                     try:
                         data = json.loads(raw_line)
                     except json.JSONDecodeError:

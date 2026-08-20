@@ -9,6 +9,11 @@ from app.domain.exceptions.llm_exceptions import LlmProviderUnavailableError
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.llm_tool_argument_parser import parse_llm_tool_arguments
 from app.infrastructure.config.llm_text_config import resolve_llm_text_config
+from app.infrastructure.llm.http_stream_utf8 import (
+    force_response_utf8,
+    iter_utf8_lines,
+    repair_utf8_mojibake,
+)
 from app.infrastructure.llm.llm_request_context import get_active_config
 
 
@@ -56,6 +61,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
                 timeout=self.timeout,
             )
             response.raise_for_status()
+            force_response_utf8(response)
             data = response.json()
         except requests.RequestException as exc:
             logger.exception("openai_compatible_tools_request_failed")
@@ -74,7 +80,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
             raise LlmProviderUnavailableError("Empty OpenAI-compatible tools response")
 
         message = choices[0].get("message") or {}
-        content = str(message.get("content") or "").strip()
+        content = repair_utf8_mojibake(str(message.get("content") or "").strip())
         tool_calls: list[LlmToolCall] = []
 
         for item in message.get("tool_calls") or []:
@@ -112,6 +118,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
                 timeout=self.timeout,
             )
             response.raise_for_status()
+            force_response_utf8(response)
             data = response.json()
         except requests.RequestException as exc:
             logger.exception("openai_compatible_request_failed")
@@ -134,7 +141,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
         if not content:
             raise LlmProviderUnavailableError("Empty OpenAI-compatible message")
 
-        return str(content).strip()
+        return repair_utf8_mojibake(str(content).strip())
 
     def stream(self, messages: list[dict]) -> Iterator[str]:
         active = self._active()
@@ -156,11 +163,8 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
             ) as response:
                 response.raise_for_status()
 
-                for raw_line in response.iter_lines(decode_unicode=True):
-                    if not raw_line:
-                        continue
-
-                    line = raw_line.strip()
+                for line in iter_utf8_lines(response):
+                    line = line.strip()
 
                     if not line.startswith("data:"):
                         continue
@@ -185,7 +189,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
                     content = delta.get("content")
 
                     if content:
-                        yield str(content)
+                        yield repair_utf8_mojibake(str(content))
 
         except requests.RequestException as exc:
             logger.exception("openai_compatible_stream_failed")
