@@ -25,6 +25,20 @@ describe("interactionRoomInlineAttachments", () => {
     ).toBe("x ![s](attachment:11111111-2222-3333-4444-555555555555) y");
   });
 
+  it("não mistura title align no pending id (parser do kit)", () => {
+    expect(
+      listInlinePendingIdsFromMarkdown(
+        '![a](attachment:pending:x "align=center")',
+      ),
+    ).toEqual(["x"]);
+    expect(
+      rewriteInlinePendingInMarkdown(
+        '![a](attachment:pending:x "align=center")',
+        { x: "11111111-2222-3333-4444-555555555555" },
+      ),
+    ).toBe("![a](attachment:11111111-2222-3333-4444-555555555555)");
+  });
+
   it("soma teto anexo+inline", () => {
     expect(countFilesTowardAttachmentCap(3, 2)).toBe(5);
   });

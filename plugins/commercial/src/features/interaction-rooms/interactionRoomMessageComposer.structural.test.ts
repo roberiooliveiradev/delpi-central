@@ -21,6 +21,8 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/onInlineImagesInserted=/);
     expect(source).toMatch(/rewriteInlinePendingInMarkdown/);
     expect(source).toMatch(/uploadInlineAndRewrite/);
+    expect(source).toMatch(/bodyInlineImageRewriteFailed/);
+    expect(source).toMatch(/listInlinePendingIdsFromMarkdown\(rewritten\)/);
     expect(source).not.toMatch(/hasAttachments=/);
     expect(source).not.toMatch(/body_html/);
     expect(source).toMatch(/body_text:/);

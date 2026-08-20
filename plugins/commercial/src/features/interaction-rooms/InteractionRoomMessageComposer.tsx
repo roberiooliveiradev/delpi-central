@@ -423,9 +423,17 @@ export function InteractionRoomMessageComposer({
         const uploaded = await uploadRoomMessageAttachment(messageId, file);
         pendingToUuid[pendingId] = uploaded.id;
       }
-      return rewriteInlinePendingInMarkdown(bodyText, pendingToUuid);
+      const rewritten = rewriteInlinePendingInMarkdown(bodyText, pendingToUuid);
+      if (listInlinePendingIdsFromMarkdown(rewritten).length > 0) {
+        throw new Error(content.bodyInlineImageRewriteFailed);
+      }
+      return rewritten;
     },
-    [inlineFiles, content.bodyInlineImageMissing],
+    [
+      inlineFiles,
+      content.bodyInlineImageMissing,
+      content.bodyInlineImageRewriteFailed,
+    ],
   );
 
   const onSubmit = useCallback(async (bodyMarkdown?: string) => {

@@ -134,6 +134,8 @@ export const INTERACTION_ROOMS_CONTENT = {
     "Imagens no texto só podem usar anexos da mensagem; remova links externos.",
   bodyInlineImageMissing:
     "Não foi possível enviar uma imagem colada. Cole de novo ou anexe pelo clipe.",
+  bodyInlineImageRewriteFailed:
+    "A imagem colada foi enviada, mas o texto da mensagem não foi atualizado. Tente enviar de novo.",
   mentionKindGroupFallback: "Outros",
   mentionKindGroupLabels: {
     user: "Pessoas",
