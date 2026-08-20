@@ -8,7 +8,9 @@ Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-
 
 ## Orçamento de contexto por modo (ago/2026)
 
-Além de `generationLimits`, o bundle declara `contextBudget` por modo (`historyMaxMessages`, RAG, tool clip, `messageSearch*`). Serviço canônico: `ChatResponseModeContextBudgetService`. Em `openai_compatible`, o prompt é truncado no cliente pelo budget (`num_ctx` continua só informativo no metadata).
+Além de `generationLimits`, o bundle declara `contextBudget` por modo (`historyMaxMessages`, RAG, tool clip, `messageSearch*`, `maxMultiActionsPerTurn`). Serviço canônico: `ChatResponseModeContextBudgetService`. Em `openai_compatible`, o prompt é truncado no cliente pelo budget (`num_ctx` continua só informativo no metadata).
+
+Multi-intent no mesmo turno: Rápida costuma executar 1 action e oferecer chip «também consultar»; Normal/Pensador sobem o teto. Leituras OpenAPI independentes no mesmo plano podem rodar em paralelo (`ChatToolContextParallelReadService` — ver `chat-intelligence-base.md` § Parallel reads).
 
 | Modo | history | ragMaxChars | maxTokens (JSON) | maxMultiActionsPerTurn |
 |------|---------|-------------|------------------|------------------------|

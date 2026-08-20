@@ -114,22 +114,82 @@ class ChatToolContextExecutionService:
             workspace_context,
         )
 
-        for selected_tool in selected_tools:
+        from app.application.services.chat_tool_context_parallel_read_service import (
+            ChatToolContextParallelReadService,
+        )
+
+        def _prepare_external_arguments(selected: dict) -> dict:
+            arguments = dict(selected.get("arguments") or {})
+            if session_response_format:
+                parameters = dict(arguments.get("parameters") or {})
+                parameters["sessionResponseFormat"] = session_response_format
+                parameters.setdefault("userMessage", raw_message)
+                arguments["parameters"] = parameters
+            return arguments
+
+        parallel_eligibility = [
+            ChatToolContextParallelReadService.is_parallel_candidate(
+                host=host,
+                selected_tool=item,
+                raw_message=raw_message,
+            )
+            for item in selected_tools
+        ]
+        parallel_outcomes: dict[int, Any] = {}
+        for batch_indices in ChatToolContextParallelReadService.plan_batches(
+            parallel_eligibility
+        ):
+            if on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                for tool_index in batch_indices:
+                    selected = selected_tools[tool_index]
+                    args = dict(selected.get("arguments") or {})
+                    on_stream_activity(
+                        ChatStreamActivityService.tool_started(
+                            index=sum(
+                                1
+                                for prev in selected_tools[: tool_index + 1]
+                                if str(prev.get("name") or "")
+                                == "execute_external_action"
+                            ),
+                            total=external_total,
+                            path=str(args.get("path") or "") or None,
+                            action_id=str(
+                                args.get("actionId") or args.get("action_id") or ""
+                            )
+                            or None,
+                            reason=selected.get("reason"),
+                        )
+                    )
+
+            parallel_outcomes.update(
+                ChatToolContextParallelReadService.execute_batch(
+                    host=host,
+                    user_id=user_id,
+                    access_token=access_token,
+                    selected_tools=selected_tools,
+                    indices=batch_indices,
+                    prepare_arguments=_prepare_external_arguments,
+                )
+            )
+
+        for tool_index, selected_tool in enumerate(selected_tools):
             tool_name = str(selected_tool.get("name") or "")
             arguments = dict(selected_tool.get("arguments") or {})
             action_id = str(arguments.get("actionId") or arguments.get("action_id") or "")
             path_hint = str(arguments.get("path") or "")
 
             if tool_name == "execute_external_action" and session_response_format:
-                parameters = dict(arguments.get("parameters") or {})
-                parameters["sessionResponseFormat"] = session_response_format
-                parameters.setdefault("userMessage", raw_message)
-                arguments["parameters"] = parameters
+                arguments = _prepare_external_arguments(selected_tool)
+                selected_tool = {**selected_tool, "arguments": arguments}
 
             if tool_name == "execute_external_action":
                 external_index += 1
 
-                if on_stream_activity:
+                if on_stream_activity and tool_index not in parallel_outcomes:
                     from app.application.services.chat_stream_activity_service import (
                         ChatStreamActivityService,
                     )
@@ -261,15 +321,23 @@ class ChatToolContextExecutionService:
                     )
                     continue
 
+            parallel_hit = parallel_outcomes.get(tool_index)
             try:
-                result = host.execute_tool_use_case.execute(
-                    ExecuteToolRequest(
-                        user_id=user_id,
-                        access_token=access_token,
-                        tool_name=selected_tool["name"],
-                        arguments=selected_tool.get("arguments") or {},
+                if parallel_hit is not None:
+                    if parallel_hit.error is not None:
+                        raise parallel_hit.error
+                    result = parallel_hit.result
+                    if result is None:
+                        raise RuntimeError("parallel_read_empty_result")
+                else:
+                    result = host.execute_tool_use_case.execute(
+                        ExecuteToolRequest(
+                            user_id=user_id,
+                            access_token=access_token,
+                            tool_name=selected_tool["name"],
+                            arguments=selected_tool.get("arguments") or {},
+                        )
                     )
-                )
             except Exception as exc:
                 tool_name = selected_tool.get("name") or "unknown_tool"
                 error_metadata = {

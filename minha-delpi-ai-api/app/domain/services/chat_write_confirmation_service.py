@@ -11,6 +11,8 @@ from app.domain.services.external_actions.external_action_response_content_servi
 
 _SENSITIVE_SENSITIVITY = frozenset({"write", "destructive", "admin"})
 _SENSITIVE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_PARALLEL_SAFE_SENSITIVITY = frozenset({"read", "sql", "export"})
+_SAFE_READ_METHODS = frozenset({"GET", "HEAD"})
 
 
 class ChatWriteConfirmationService:
@@ -41,6 +43,27 @@ class ChatWriteConfirmationService:
             return True
 
         return False
+
+    @classmethod
+    def is_parallel_safe_read(cls, action: dict | None) -> bool:
+        """True when the action can run concurrently with other independent reads.
+
+        Writes/destructive stay serial. GET/HEAD and read/sql/export (incl. POST SQL)
+        are eligible — aligned to OpenAPI import sensitivity, not agent flags.
+        """
+        if not isinstance(action, dict):
+            return False
+
+        sensitivity = str(action.get("sensitivity") or "").lower()
+        method = str(action.get("method") or "").upper()
+
+        if sensitivity in _SENSITIVE_SENSITIVITY:
+            return False
+
+        if method in _SAFE_READ_METHODS:
+            return True
+
+        return sensitivity in _PARALLEL_SAFE_SENSITIVITY
 
     @classmethod
     def message_requests_write(cls, message: str | None) -> bool:

@@ -65,7 +65,10 @@
   },
   "execution": {
     "externalActionsTarget": "{count} consulta(s) DELPI",
-    "externalActionsMessage": "Executando {count} consulta(s) à API DELPI..."
+    "externalActionsMessage": "Executando {count} consulta(s) à API DELPI...",
+    "parallelReadsEnabled": true,
+    "parallelReadMaxWorkers": 4,
+    "parallelReadMinBatch": 2
   },
   "sqlRecovery": {
     "schemaPrefetchReason": "Schema da tabela {table_name} consultado para corrigir colunas inválidas no SQL."

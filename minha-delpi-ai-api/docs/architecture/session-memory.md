@@ -69,10 +69,21 @@ Ver [`chat-intelligence-base.md`](./chat-intelligence-base.md) § Data obrigató
 | `ChatSessionMemoryDirectAnswerService` | Ack preferência + ambiguidade |
 | `ChatBehaviorInstructionService` | Preferências curtas (tabela, tom, resposta curta) |
 
+## Message search / session review (ago/2026)
+
+| Serviço | Papel |
+|---------|--------|
+| `ChatConversationMessageSearchService` | Triggers (`explicitTriggers`, `sessionReviewTriggers`) + bloco `conversationEvidence` no prompt |
+| Intent `session_review` | Meta-conversa («o que me diz sobre a conversa?») — **skip tools**; não herda `operational_query` só por `operationalFocus` |
+
+Orçamento: `contextBudget.messageSearch*` por modo (`ChatResponseModeContextBudgetService`). Latency pode reduzir lookback (`degradedStages`).
+
 ## Validação
 
 ```bash
 cd minha-delpi-ai-api && ./scripts/run_session_memory_validation.sh
+# Matriz de fluxos (E5):
+PYTHONPATH=. .venv/bin/python scripts/check_flow_family_matrix_harness.py
 ```
 
 ## API de contexto manual

@@ -76,12 +76,15 @@ Todos os fluxos passam pelo mesmo `ChatTurnPreparationService` + `contextBudget`
 | **Operacional / API** | estoque, KPI, OpenAPI, SQL | `execute_external_action` (com agente) | skip se tool ok; sem tapa-buraco em miss | `toolContextMaxChars` + `maxMultiActionsPerTurn` |
 | **Skills** | `companyKnowledge`, desenho, SQL authoring | só **habilitam** caminhos | `preserves_rag_on_fast_path` **não** mascara miss de tool | RAG skill usa budget do modo |
 | **Message search / session review** | «o que eu pedi», «o que me diz sobre a conversa?» | skip tools (`session_review`); evidência via `ChatConversationMessageSearchService` | skip doc | `messageSearch*` do modo |
-| **Clarify / multi-intent** | ambíguo; estrutura+roteiro | chips / 1ª action no fast | skip | modo limita multi-actions |
+| **Clarify / multi-intent** | ambíguo; estrutura+roteiro | chips / 1ª action no fast; **reads paralelas** (E4.S3) no Pensador/Normal | skip | modo limita multi-actions |
 
-Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (≥1 caso web, text, API, skill, message_search).
+Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (≥1 caso web, text, API, skill, message_search). Harness CLI: `scripts/check_flow_family_matrix_harness.py`.
 
 **Follow-up operacional ≠ memória sozinha:** `operationalFocus` / entidades na memória **não** transformam qualquer mensagem em `operational_query`. Só follow-up operacional explícito, keywords operacionais ou reply curto de parâmetro (`shortContextReplyPatterns`). Meta-conversa → `session_review` + skip tools.
----
+
+### Parallel reads (E4.S3)
+
+`ChatToolContextParallelReadService` + `ChatToolContextExecutionService`: lotes consecutivos de `execute_external_action` **read-safe** (`ChatWriteConfirmationService.is_parallel_safe_read` — GET/HEAD ou sensitivity `read`/`sql`/`export`) rodam em `ThreadPoolExecutor`; writes e tools não-external ficam seriais; pós-processo (stream finished, SQL recovery, paginação) preserva a **ordem do plano**. Caps em `tool_context.json` → `execution.parallelRead*`.---
 
 ## Pipeline base
 
