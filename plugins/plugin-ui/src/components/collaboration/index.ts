@@ -28,6 +28,19 @@ export {
   type MentionComposerProps,
 } from "./MentionComposer";
 export {
+  EmojiInsertMenu,
+  createDashboardEmojiInsertMenu,
+  emojiInsertMenuBemClasses,
+  type DashboardEmojiInsertMenuProps,
+  type EmojiInsertMenuClassNames,
+  type EmojiInsertMenuProps,
+} from "./EmojiInsertMenu";
+export {
+  EMOJI_CATALOG,
+  getEmojiCatalog,
+  type EmojiCatalogItem,
+} from "../../content/emojiCatalog";
+export {
   MessageThread,
   createDashboardMessageThread,
   messageThreadBemClasses,

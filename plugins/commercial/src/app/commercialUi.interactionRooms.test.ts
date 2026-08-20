@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CommercialEmojiInsertMenu,
   CommercialEntityUnfurlCard,
   CommercialMentionComposer,
   CommercialMentionMenu,
@@ -13,10 +14,11 @@ import {
 } from "./commercialUi";
 
 describe("commercialUi interaction room factories", () => {
-  it("exports the eight collaboration dashboard components", () => {
+  it("exports collaboration dashboard components including emoji menu", () => {
     expect(typeof CommercialMentionText).toBe("function");
     expect(typeof CommercialMentionMenu).toBe("function");
     expect(typeof CommercialMentionComposer).toBe("function");
+    expect(typeof CommercialEmojiInsertMenu).toBe("function");
     expect(typeof CommercialMessageThread).toBe("function");
     expect(typeof CommercialEntityUnfurlCard).toBe("function");
     expect(typeof CommercialReactionBar).toBe("function");

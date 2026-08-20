@@ -26,6 +26,8 @@ describe("InteractionRoomMessageComposer", () => {
     expect(source).toMatch(/formatUndoAriaLabel:/);
     expect(source).toMatch(/formatRedoAriaLabel:/);
     expect(source).toMatch(/formatUnderlineAriaLabel:/);
+    expect(source).toMatch(/formatEmojiAriaLabel:/);
+    expect(source).toMatch(/emojiMenuAriaLabel:/);
     expect(source).toMatch(/readComposerDraftText/);
     expect(source).toMatch(/writeComposerDraftFiles/);
     expect(source).toMatch(/clearComposerDraft/);

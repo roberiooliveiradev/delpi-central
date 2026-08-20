@@ -9,6 +9,7 @@ import {
   Quote,
   Redo2,
   SendHorizontal,
+  Smile,
   Strikethrough,
   Type,
   Underline,
@@ -45,6 +46,12 @@ import {
   richTextHtmlToMarkdown,
 } from "../rich-text/richTextMarkdown";
 import { stripDangerousRichTextTags } from "../rich-text/richTextHtmlFormat";
+import {
+  EmojiInsertMenu,
+  emojiInsertMenuBemClasses,
+  type EmojiInsertMenuClassNames,
+} from "./EmojiInsertMenu";
+import type { EmojiCatalogItem } from "../../content/emojiCatalog";
 import {
   MentionMenu,
   mentionMenuBemClasses,
@@ -99,6 +106,7 @@ export type MentionComposerClassNames = {
   footer: string;
   fileInput: string;
   menu: MentionMenuClassNames;
+  emojiMenu: EmojiInsertMenuClassNames;
 };
 
 export type MentionComposerLabels = {
@@ -122,6 +130,8 @@ export type MentionComposerLabels = {
   formatFontSizeIncreaseAriaLabel?: string;
   formatUndoAriaLabel?: string;
   formatRedoAriaLabel?: string;
+  formatEmojiAriaLabel?: string;
+  emojiMenuAriaLabel?: string;
 };
 
 export type MentionComposerProps = {
@@ -174,6 +184,7 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     footer: pair(`${base}__footer`, `${ui}__footer`),
     fileInput: pair(`${base}__file`, `${ui}__file`),
     menu: mentionMenuBemClasses(prefix),
+    emojiMenu: emojiInsertMenuBemClasses(prefix),
   };
 }
 
@@ -232,6 +243,7 @@ export function MentionComposer({
   const surfaceId = useId();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiAnchorRef = useRef<HTMLButtonElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const historyRef = useRef(createMentionComposerHistory());
   const lastStableRef = useRef<MentionComposerHistorySnapshot>({
@@ -243,6 +255,7 @@ export function MentionComposer({
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeMention, setActiveMention] = useState<ActiveMentionQuery | null>(null);
   const [formatOpen, setFormatOpen] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const [fontSize, setFontSize] = useState(COMPOSER_FONT_SIZE_DEFAULT);
   const [formatFlags, setFormatFlags] = useState(emptyComposerFormatFlags());
   const [historyTick, setHistoryTick] = useState(0);
@@ -252,6 +265,10 @@ export function MentionComposer({
   const canUndo = historyRef.current.canUndo();
   const canRedo = historyRef.current.canRedo();
   void historyTick;
+
+  useEffect(() => {
+    if (!formatOpen) setEmojiOpen(false);
+  }, [formatOpen]);
 
   const refreshHistoryFlags = () => {
     setHistoryTick((tick) => tick + 1);
@@ -520,6 +537,18 @@ export function MentionComposer({
     emitMarkdownAndMention();
   };
 
+  const insertEmoji = (item: EmojiCatalogItem) => {
+    const el = surfaceRef.current;
+    if (!el || !item.glyph) return;
+    restoreSelectionForMutation();
+    commitBeforeMutation();
+    insertRichTextHtmlFragment(el, item.glyph);
+    lastStableRef.current = readSnapshot();
+    refreshHistoryFlags();
+    emitMarkdownAndMention();
+    rememberSelection();
+  };
+
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
     event.preventDefault();
     const el = surfaceRef.current;
@@ -714,6 +743,21 @@ export function MentionComposer({
                 </button>
               </ComposerHint>
             ))}
+            <ComposerHint hint={labels.formatEmojiAriaLabel ?? "Emoji"}>
+              <button
+                ref={emojiAnchorRef}
+                type="button"
+                className={classNames.format}
+                aria-label={labels.formatEmojiAriaLabel ?? "Emoji"}
+                aria-expanded={emojiOpen}
+                aria-haspopup="dialog"
+                disabled={disabled || submitting}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setEmojiOpen((open) => !open)}
+              >
+                <Smile size={16} aria-hidden />
+              </button>
+            </ComposerHint>
           </div>
         ) : null}
         <div className={classNames.toolbar}>
@@ -801,6 +845,15 @@ export function MentionComposer({
         portalScopeClassName={portalScopeClassName}
         onSelect={applyHit}
         onDismiss={() => setActiveMention(null)}
+      />
+      <EmojiInsertMenu
+        open={emojiOpen && formatOpen && showFormat}
+        onOpenChange={setEmojiOpen}
+        anchorRef={emojiAnchorRef}
+        classNames={classNames.emojiMenu}
+        listAriaLabel={labels.emojiMenuAriaLabel ?? labels.formatEmojiAriaLabel ?? "Emoji"}
+        portalScopeClassName={portalScopeClassName}
+        onSelect={insertEmoji}
       />
     </div>
   );

@@ -78,6 +78,8 @@ export const INTERACTION_ROOMS_CONTENT = {
   formatFontSizeIncreaseAriaLabel: "Aumentar fonte",
   formatUndoAriaLabel: "Desfazer",
   formatRedoAriaLabel: "Refazer",
+  formatEmojiAriaLabel: "Emoji",
+  emojiMenuAriaLabel: "Inserir emoji",
   composerMentionListAriaLabel: "Sugestões de menção",
   composerMentionEmptyLabel: "Nenhuma sugestão",
   panelTitle: "Sala de interação",

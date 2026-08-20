@@ -10,6 +10,8 @@ describe("INTERACTION_ROOMS_CONTENT", () => {
     expect(INTERACTION_ROOMS_CONTENT.formatUndoAriaLabel).toBe("Desfazer");
     expect(INTERACTION_ROOMS_CONTENT.formatRedoAriaLabel).toBe("Refazer");
     expect(INTERACTION_ROOMS_CONTENT.formatUnderlineAriaLabel).toBe("Sublinhado");
+    expect(INTERACTION_ROOMS_CONTENT.formatEmojiAriaLabel).toBe("Emoji");
+    expect(INTERACTION_ROOMS_CONTENT.emojiMenuAriaLabel).toBe("Inserir emoji");
   });
 });
 

@@ -68,6 +68,7 @@ import {
   createDashboardMentionText,
   createDashboardMentionMenu,
   createDashboardMentionComposer,
+  createDashboardEmojiInsertMenu,
   createDashboardMessageThread,
   createDashboardEntityUnfurlCard,
   createDashboardReactionBar,
@@ -542,6 +543,7 @@ export function CommercialHorizontalValueBars(
 export const CommercialMentionText = createDashboardMentionText(UI_PREFIX);
 export const CommercialMentionMenu = createDashboardMentionMenu(UI_PREFIX);
 export const CommercialMentionComposer = createDashboardMentionComposer(UI_PREFIX);
+export const CommercialEmojiInsertMenu = createDashboardEmojiInsertMenu(UI_PREFIX);
 export const CommercialMessageThread = createDashboardMessageThread(UI_PREFIX);
 export const CommercialEntityUnfurlCard = createDashboardEntityUnfurlCard(UI_PREFIX);
 export const CommercialReactionBar = createDashboardReactionBar(UI_PREFIX);

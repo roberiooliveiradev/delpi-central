@@ -268,6 +268,44 @@ describe("MentionComposer", () => {
     expect(surface.innerHTML.toLowerCase()).toContain("ok");
   });
 
+  it("abre menu de emoji na faixa Formatar e insere o glifo", () => {
+    document.execCommand = vi.fn().mockImplementation((cmd: string, _show?: boolean, value?: string) => {
+      if (cmd === "insertHTML" && typeof value === "string") {
+        const selection = window.getSelection();
+        const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        if (range) {
+          range.deleteContents();
+          range.insertNode(document.createTextNode(value));
+          selection?.collapseToEnd();
+        }
+        return true;
+      }
+      return true;
+    });
+    const onChange = vi.fn();
+    render(
+      <MentionComposer
+        value=""
+        onChange={onChange}
+        onSubmit={vi.fn()}
+        labels={{
+          ...labels,
+          formatToggleAriaLabel: "Format",
+          formatEmojiAriaLabel: "Emoji",
+          emojiMenuAriaLabel: "Insert emoji",
+        }}
+        classNames={classNames}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Format"));
+    fireEvent.click(screen.getByLabelText("Emoji"));
+    expect(screen.getByRole("dialog", { name: "Insert emoji" })).toBeTruthy();
+    fireEvent.mouseDown(screen.getByRole("option", { name: "Sorrindo" }));
+    expect(onChange).toHaveBeenCalled();
+    const last = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(last).toContain("😀");
+  });
+
   it("fonte com caret colapsado não seleciona a mensagem inteira", () => {
     const formatLabels = {
       ...labels,
@@ -458,5 +496,12 @@ describe("mention-composer.css", () => {
     expect(css).toMatch(/blockquote::before/);
     expect(css).toMatch(/border-left:\s*3px/);
     expect(css).toMatch(/content:\s*"“"/);
+  });
+
+  it("emoji-insert-menu.css usa grade sem borda full de caixa", () => {
+    const css = readFileSync(join(stylesDir, "emoji-insert-menu.css"), "utf8");
+    expect(css).toMatch(/\.delpi-ui-emoji-insert-menu \{/);
+    expect(css).toMatch(/grid-template-columns:\s*repeat\(8/);
+    expect(css).toMatch(/__option/);
   });
 });

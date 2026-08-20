@@ -1,0 +1,45 @@
+/* Emoji grid for MentionComposer Formatar (AnchoredPanelPortal). */
+.delpi-ui-emoji-insert-menu {
+  max-width: min(17.5rem, 92vw);
+  padding: 0.45rem;
+  border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
+  border-radius: 0.65rem;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-shadow: 0 8px 24px rgb(15 23 42 / 14%);
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
+.delpi-ui-emoji-insert-menu__grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+}
+
+.delpi-ui-emoji-insert-menu__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0.4rem;
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+}
+
+.delpi-ui-emoji-insert-menu__option:hover,
+.delpi-ui-emoji-insert-menu__option:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    transparent
+  );
+  outline: none;
+}
