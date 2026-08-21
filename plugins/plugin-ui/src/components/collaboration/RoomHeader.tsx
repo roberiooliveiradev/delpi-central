@@ -18,6 +18,7 @@ export type RoomHeaderClassNames = {
   title: string;
   subtitle: string;
   chips: string;
+  chip: string;
   people: string;
   actions: string;
   avatars: AvatarStackClassNames;
@@ -45,6 +46,7 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
     title: pair(`${base}__title`, `${ui}__title`),
     subtitle: pair(`${base}__subtitle`, `${ui}__subtitle`),
     chips: pair(`${base}__chips`, `${ui}__chips`),
+    chip: pair(`${base}__chip`, `${ui}__chip`),
     people: pair(`${base}__people`, `${ui}__people`),
     actions: pair(`${base}__actions`, `${ui}__actions`),
     avatars: avatarStackBemClasses(prefix),

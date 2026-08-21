@@ -4,6 +4,7 @@ import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type RoomSidePanelClassNames = {
   root: string;
+  collapsed: string;
   title: string;
   body: string;
 };
@@ -12,7 +13,7 @@ export type RoomSidePanelProps = {
   classNames: RoomSidePanelClassNames;
   title: string;
   children: ReactNode;
-  /** Quando false, o painel não monta (toggle só no header da thread). */
+  /** When false, panel stays mounted but collapsed (soft width/opacity transition). */
   open?: boolean;
   className?: string;
 };
@@ -23,6 +24,7 @@ export function roomSidePanelBemClasses(prefix: string): RoomSidePanelClassNames
   const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
     root: pair(base, ui),
+    collapsed: pair(`${base}--collapsed`, `${ui}--collapsed`),
     title: pair(`${base}__title`, `${ui}__title`),
     body: pair(`${base}__body`, `${ui}__body`),
   };
@@ -38,14 +40,22 @@ export function RoomSidePanel({
   open = true,
   className,
 }: RoomSidePanelProps) {
-  if (!open) return null;
-
-  const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const rootClass = [
+    classNames.root,
+    open ? null : classNames.collapsed,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <aside className={rootClass} aria-label={title}>
-      <h2 className={classNames.title}>{title}</h2>
-      <div className={classNames.body}>{children}</div>
+    <aside className={rootClass} aria-label={title} aria-hidden={!open}>
+      {open ? (
+        <>
+          <h2 className={classNames.title}>{title}</h2>
+          <div className={classNames.body}>{children}</div>
+        </>
+      ) : null}
     </aside>
   );
 }

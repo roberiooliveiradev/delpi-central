@@ -107,6 +107,7 @@ export {
   createDashboardRoomContextPanel,
   roomContextPanelBemClasses,
   type DashboardRoomContextPanelProps,
+  type RoomContextEntityField,
   type RoomContextPanelClassNames,
   type RoomContextPanelLabels,
   type RoomContextPanelPin,

@@ -14,13 +14,15 @@ afterEach(() => {
 });
 
 describe("RoomSidePanel", () => {
-  it("não monta quando fechado", () => {
+  it("mantém aside colapsado quando fechado (transição suave)", () => {
     const { container } = render(
       <RoomSidePanel classNames={classNames} title="Neste chat" open={false}>
         <p>Sobre</p>
       </RoomSidePanel>,
     );
-    expect(container.firstChild).toBeNull();
+    const aside = container.querySelector("aside");
+    expect(aside?.className).toMatch(/delpi-ui-room-side-panel--collapsed/);
+    expect(aside?.getAttribute("aria-hidden")).toBe("true");
     expect(screen.queryByText("Neste chat")).toBeNull();
   });
 
@@ -45,6 +47,8 @@ describe("room-side-panel.css", () => {
     expect(css).not.toMatch(/position:\s*fixed/);
     expect(css).not.toMatch(/inset:\s*0/);
     expect(css).toMatch(/flex:\s*0 0 min\(20rem, 36%\)/);
+    expect(css).toMatch(/--collapsed/);
+    expect(css).toMatch(/prefers-reduced-motion/);
     expect(css).toMatch(/\.delpi-ui-room-side-panel__title \{[\s\S]*?border:\s*none;/);
   });
 });

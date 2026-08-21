@@ -42,5 +42,7 @@ describe("RoomHeader", () => {
     expect(root).toMatch(/flex-wrap:\s*nowrap;/);
     expect(root).toMatch(/align-items:\s*center;/);
     expect(title).toMatch(/text-overflow:\s*ellipsis;/);
+    expect(css).toMatch(/\.delpi-ui-room-header__chip \{/);
+    expect(css).toMatch(/\[aria-pressed="true"\]/);
   });
 });
