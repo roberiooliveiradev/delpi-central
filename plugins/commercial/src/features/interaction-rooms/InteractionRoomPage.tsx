@@ -31,7 +31,6 @@ import {
   CM_PORTAL_SCOPE,
   CommercialActionButton,
   CommercialAlertQueue,
-  CommercialConversationFileDropLayer,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialMessageThread,
@@ -46,6 +45,10 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildInteractionRoomsPath } from "../../app/pluginRoutes";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
+import {
+  InteractionRoomConversationChatColumn,
+  InteractionRoomConversationShell,
+} from "./InteractionRoomConversationShell";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMoreMenu } from "./InteractionRoomMoreMenu";
 import { InteractionRoomRenameDialog } from "./InteractionRoomRenameDialog";
@@ -871,12 +874,13 @@ export function InteractionRoomPage({
         <CommercialLoadingCard title={content.roomLoadingLabel} variant="panel" />
       ) : null}
       {!loading && room ? (
-        <CommercialConversationFileDropLayer
-          overlayLabel={content.dropOverlayLabel}
+        <>
+        <InteractionRoomConversationShell
+          wrapRoot={false}
+          dropOverlayLabel={content.dropOverlayLabel}
           accept={ROOM_ATTACH_ACCEPT}
           onFiles={(files) => addFilesRef.current(files)}
-        >
-          <div className="cm-room-thread__header">
+          header={
             <CommercialRoomHeader
               title={room.title}
               onTitleClick={
@@ -973,85 +977,34 @@ export function InteractionRoomPage({
                 </>
               }
             />
-          </div>
-          <InteractionRoomRenameDialog
-            open={renameDialogOpen}
-            busy={renamingRoom}
-            initialTitle={room.title}
-            onClose={() => {
-              if (!renamingRoom) setRenameDialogOpen(false);
-            }}
-            onSave={(title) => {
-              void onRenameRoomSave(title);
-            }}
-          />
-          <div className="cm-room-thread__body">
-            <div className="cm-room-thread__main">
-              <CommercialViewTransition transitionKey={roomView} tone="panel">
-                {roomView === "shared" ? (
-                  <div
-                    id="cm-room-view-shared"
-                    role="tabpanel"
-                    aria-labelledby="cm-room-tab-shared"
-                  >
-                    <InteractionRoomSharedView
-                      roomId={room.id}
-                      onError={(message) => pushRoomAlert(message, "danger")}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    id="cm-room-view-chat"
-                    role="tabpanel"
-                    aria-labelledby="cm-room-tab-chat"
-                  >
-                    <div className="cm-room-thread__stage">
-                      <div
-                        className="cm-room-thread__msgs"
-                        ref={msgsRef}
-                        onScroll={(event) => {
-                          stickToBottomRef.current = shouldStickThreadToBottom(
-                            event.currentTarget,
-                          );
-                        }}
-                      >
-                        {threadMessages.length === 0 ? (
-                          <CommercialEmptyState
-                            title={content.roomEmptyTitle}
-                            message={content.roomEmptyDescription}
-                          />
-                        ) : (
-                          <CommercialMessageThread
-                            listAriaLabel={content.roomMessagesAriaLabel}
-                            emptyLabel={content.roomEmptyTitle}
-                            messages={threadMessages}
-                            resolveActions={resolveActions}
-                            resolveActionExtras={resolveActionExtras}
-                            onParentQuoteClick={onParentQuoteClick}
-                            portalScopeClassName={CM_PORTAL_SCOPE}
-                            actionsToolbarAriaLabel={
-                              content.messageActionsToolbarAriaLabel
-                            }
-                            resolveAttachmentImageSrc={(attachmentId) =>
-                              attachmentThumbUrls[attachmentId] ?? null
-                            }
-                            onAttachmentImageClick={(attachmentId) => {
-                              const row =
-                                attachmentMetaRef.current[attachmentId];
-                              if (!row) return;
-                              setInlinePreview({
-                                kind: "remote",
-                                id: row.id,
-                                fileName: row.file_name,
-                                contentType: row.content_type,
-                                byteSize: row.byte_size,
-                              });
-                            }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    <div className="cm-room-thread__dock">
+          }
+          main={
+            <CommercialViewTransition transitionKey={roomView} tone="panel">
+              {roomView === "shared" ? (
+                <div
+                  id="cm-room-view-shared"
+                  role="tabpanel"
+                  aria-labelledby="cm-room-tab-shared"
+                >
+                  <InteractionRoomSharedView
+                    roomId={room.id}
+                    onError={(message) => pushRoomAlert(message, "danger")}
+                  />
+                </div>
+              ) : (
+                <div
+                  id="cm-room-view-chat"
+                  role="tabpanel"
+                  aria-labelledby="cm-room-tab-chat"
+                >
+                  <InteractionRoomConversationChatColumn
+                    msgsRef={msgsRef}
+                    onMsgsScroll={(event) => {
+                      stickToBottomRef.current = shouldStickThreadToBottom(
+                        event.currentTarget,
+                      );
+                    }}
+                    dock={
                       <InteractionRoomMessageComposer
                         roomId={room.id}
                         mode={editingMessageId ? "edit" : "compose"}
@@ -1081,11 +1034,48 @@ export function InteractionRoomPage({
                           addFilesRef.current = addFiles;
                         }}
                       />
-                    </div>
-                  </div>
-                )}
-              </CommercialViewTransition>
-            </div>
+                    }
+                  >
+                    {threadMessages.length === 0 ? (
+                      <CommercialEmptyState
+                        title={content.roomEmptyTitle}
+                        message={content.roomEmptyDescription}
+                      />
+                    ) : (
+                      <CommercialMessageThread
+                        listAriaLabel={content.roomMessagesAriaLabel}
+                        emptyLabel={content.roomEmptyTitle}
+                        messages={threadMessages}
+                        resolveActions={resolveActions}
+                        resolveActionExtras={resolveActionExtras}
+                        onParentQuoteClick={onParentQuoteClick}
+                        portalScopeClassName={CM_PORTAL_SCOPE}
+                        actionsToolbarAriaLabel={
+                          content.messageActionsToolbarAriaLabel
+                        }
+                        resolveAttachmentImageSrc={(attachmentId) =>
+                          attachmentThumbUrls[attachmentId] ?? null
+                        }
+                        onAttachmentImageClick={(attachmentId) => {
+                          const row =
+                            attachmentMetaRef.current[attachmentId];
+                          if (!row) return;
+                          setInlinePreview({
+                            kind: "remote",
+                            id: row.id,
+                            fileName: row.file_name,
+                            contentType: row.content_type,
+                            byteSize: row.byte_size,
+                          });
+                        }}
+                      />
+                    )}
+                  </InteractionRoomConversationChatColumn>
+                </div>
+              )}
+            </CommercialViewTransition>
+          }
+          sidePanel={
             <CommercialRoomSidePanel
               open={sidePanelMode != null}
               showTitle={sidePanelMode !== "find"}
@@ -1150,8 +1140,20 @@ export function InteractionRoomPage({
                 )}
               </CommercialViewTransition>
             </CommercialRoomSidePanel>
-          </div>
-        </CommercialConversationFileDropLayer>
+          }
+        />
+        <InteractionRoomRenameDialog
+          open={renameDialogOpen}
+          busy={renamingRoom}
+          initialTitle={room.title}
+          onClose={() => {
+            if (!renamingRoom) setRenameDialogOpen(false);
+          }}
+          onSave={(title) => {
+            void onRenameRoomSave(title);
+          }}
+        />
+        </>
       ) : null}
       {!loading && !room ? (
         <CommercialEmptyState

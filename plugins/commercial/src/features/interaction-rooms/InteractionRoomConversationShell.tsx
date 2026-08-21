@@ -45,6 +45,11 @@ export type InteractionRoomConversationShellProps = {
   rootClassName?: string;
   /** Page uses `section`; embed defaults to `div`. */
   as?: "div" | "section";
+  /**
+   * When false, render only the drop + header/body (parent already has
+   * `cm-room-thread` for alerts/loading chrome).
+   */
+  wrapRoot?: boolean;
   dropOverlayLabel: string;
   accept: string;
   onFiles: (files: File[]) => void;
@@ -65,6 +70,7 @@ export type InteractionRoomConversationShellProps = {
 export function InteractionRoomConversationShell({
   rootClassName,
   as: Root = "div",
+  wrapRoot = true,
   dropOverlayLabel,
   accept,
   onFiles,
@@ -73,21 +79,21 @@ export function InteractionRoomConversationShell({
   sidePanel,
   afterHeader,
 }: InteractionRoomConversationShellProps) {
-  const className = ["cm-room-thread", rootClassName].filter(Boolean).join(" ");
-  return (
-    <Root className={className}>
-      <CommercialConversationFileDropLayer
-        overlayLabel={dropOverlayLabel}
-        accept={accept}
-        onFiles={onFiles}
-      >
-        <div className="cm-room-thread__header">{header}</div>
-        {afterHeader}
-        <div className="cm-room-thread__body">
-          <div className="cm-room-thread__main">{main}</div>
-          {sidePanel}
-        </div>
-      </CommercialConversationFileDropLayer>
-    </Root>
+  const drop = (
+    <CommercialConversationFileDropLayer
+      overlayLabel={dropOverlayLabel}
+      accept={accept}
+      onFiles={onFiles}
+    >
+      <div className="cm-room-thread__header">{header}</div>
+      {afterHeader}
+      <div className="cm-room-thread__body">
+        <div className="cm-room-thread__main">{main}</div>
+        {sidePanel}
+      </div>
+    </CommercialConversationFileDropLayer>
   );
+  if (!wrapRoot) return drop;
+  const className = ["cm-room-thread", rootClassName].filter(Boolean).join(" ");
+  return <Root className={className}>{drop}</Root>;
 }
