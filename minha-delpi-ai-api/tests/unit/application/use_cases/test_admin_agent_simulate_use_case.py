@@ -23,6 +23,7 @@ def _make_use_case(**kwargs) -> AdminAgentSimulateUseCase:
             Mock(spec=ChatSessionRepositoryPort),
         ),
         chat_tool_context_service=kwargs.get("chat_tool_context_service"),
+        llm_gateway=kwargs.get("llm_gateway"),
     )
 
 

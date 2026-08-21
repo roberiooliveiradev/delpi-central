@@ -53,6 +53,7 @@ class ChatTurnPreparationTurnAnalysisService:
         has_direct_answer: bool,
         llm_gateway=None,
         external_action_repository=None,
+        allow_compose_gateway: bool = True,
     ) -> ChatTurnPreparationTurnAnalysisOutcome:
         cls.reset_ran()
 
@@ -99,6 +100,12 @@ class ChatTurnPreparationTurnAnalysisService:
             )
 
         if llm_gateway is None:
+            if not allow_compose_gateway:
+                return ChatTurnPreparationTurnAnalysisOutcome(
+                    result=None,
+                    direct_answer=None,
+                    skip_tools=False,
+                )
             from app.composition.llm_composer import make_llm_gateway
 
             llm_gateway = make_llm_gateway()

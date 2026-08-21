@@ -117,6 +117,7 @@ class AdminAgentSimulateUseCase:
             pipeline_stages=[],
             has_direct_answer=False,
             llm_gateway=self.llm_gateway,
+            allow_compose_gateway=False,
         )
         turn_analysis_meta = (
             turn_analysis_outcome.result.to_metadata()
