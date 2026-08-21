@@ -195,8 +195,9 @@ Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) sã
 | `ChatAssistantIdentityService` | «Quem é você?» — resposta direta dinâmica (sem RAG/LLM no default) |
 | `ChatMetaDirectAnswerService` | Perguntas compostas meta («quem sou eu, o que consigo fazer, quem é você?») em seções |
 | `ExternalActionColumnLabelService` | Rótulos PT-BR de colunas (`column_labels.json` + OpenAPI `title`) no presenter |
-| `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
+| `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise; **pós-wave-1** aplica `ChatOperationalSufficiencyCriticService` (follow-up `routeId` / chips) |
 | `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
+| `ChatOperationalSufficiencyCriticService` | Critic declarativo pós-retrieve (`operational_sufficiency_critic.json`): evidência insuficiente → follow-up registry ou HITL — sem LLM escolher `operationId` |
 | `ChatProductMultiScopePlanningService` | Pergunta com 2+ escopos no mesmo produto (estrutura + roteiro, etc.): várias rotas `/products/{code}/…` ou analyser quando integrada/completa |
 | `ChatAssistantContentService` | Loader genérico de `app/content/pt-BR/assistant/*.json` — ver [catálogo de conteúdo](./assistant-content-catalog.md) |
 | `ChatProductOperationalContentService` | Wrapper de `product_operational_content.json` — escopos, plural, presenter estoque, presentation |
