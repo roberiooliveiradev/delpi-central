@@ -305,6 +305,7 @@ class ChatTurnPreparationService:
             if unclear_suggestions:
                 routing_disambiguation_suggestions = unclear_suggestions
 
+        pipeline_timings.mark("pre_tool_done")
         tool_phase = ChatTurnPreparationToolRoutingService.run_tool_phase(
             message=message,
             request=request,
@@ -442,6 +443,7 @@ class ChatTurnPreparationService:
         direct_answer = post_tool.direct_answer
         skip_rag = post_tool.skip_rag
         tool_context = post_tool.tool_context
+        pipeline_timings.mark("post_tool_done")
 
         rag_phase = ChatTurnPreparationRagService.build(
             message=message,
