@@ -788,7 +788,7 @@ export function InteractionRoomPage({
               }
               nav={
                 <div
-                  className={roomHeaderClasses.actions}
+                  className={roomHeaderClasses.nav}
                   role="group"
                   aria-label={content.roomViewNavAriaLabel}
                 >

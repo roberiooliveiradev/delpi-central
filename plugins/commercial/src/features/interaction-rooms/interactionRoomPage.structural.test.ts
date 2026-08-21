@@ -22,6 +22,7 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/listInteractionMessages/);
     expect(source).toMatch(/roomView/);
     expect(source).toMatch(/nav=\{/);
+    expect(source).toMatch(/className=\{roomHeaderClasses\.nav\}/);
     expect(source).not.toMatch(/cm-room-thread__view-nav/);
     expect(source).toMatch(/interactionRoomAuthorAvatarFields/);
     expect(source).toMatch(/interactionRoomParticipantAvatar/);
