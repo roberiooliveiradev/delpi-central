@@ -148,7 +148,7 @@ def test_should_not_skip_template_prose_when_profile_uses_template_even_if_llm_e
     )
 
 
-def test_resolve_mode_structure_exclusivity_uses_template_even_with_llm_everywhere(
+def test_resolve_mode_structure_exclusivity_uses_llm_with_preserve_verdict(
     monkeypatch,
 ):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
@@ -180,7 +180,7 @@ def test_resolve_mode_structure_exclusivity_uses_template_even_with_llm_everywhe
         tool_calls,
     )
 
-    assert mode == MODE_TEMPLATE
+    assert mode == MODE_LLM
 
 
 def test_should_skip_template_prose_when_modes_disabled_but_require_flag_false(monkeypatch):

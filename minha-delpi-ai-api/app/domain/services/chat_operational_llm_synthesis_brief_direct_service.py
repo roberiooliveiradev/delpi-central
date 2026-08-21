@@ -173,41 +173,122 @@ class ChatOperationalLlmSynthesisBriefDirectService:
             if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
                 continue
 
-            if ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata):
-                return True
+            if cls._is_empty_result_metadata(metadata):
+                continue
 
             if cls._has_actionable_commentary(metadata):
+                return True
+
+            if ChatPresentationProseDeliveryService.is_llm_decoupled_metadata(metadata):
+                # Decoupled only when commentary is rich enough for brief-direct.
+                if cls._has_brief_direct_signal(metadata):
+                    return True
+
+        return False
+
+    @classmethod
+    def _is_empty_result_metadata(cls, metadata: dict) -> bool:
+        if metadata.get("emptyResult"):
+            return True
+
+        commentary = metadata.get("dataCommentary")
+
+        if isinstance(commentary, dict) and commentary.get("emptyResult"):
+            return True
+
+        data_answer = metadata.get("dataAnswer")
+
+        if isinstance(data_answer, dict) and data_answer.get("emptyResult"):
+            return True
+
+        return False
+
+    @classmethod
+    def _has_brief_direct_signal(cls, metadata: dict) -> bool:
+        commentary = metadata.get("dataCommentary")
+        data_answer = metadata.get("dataAnswer")
+        profile = ""
+
+        if isinstance(commentary, dict):
+            profile = str(commentary.get("profileKey") or "").strip()
+
+        if not profile and isinstance(data_answer, dict):
+            profile = str(data_answer.get("profileKey") or "").strip()
+
+        if not profile:
+            from app.domain.services.chat_operational_data_commentary_service import (
+                ChatOperationalDataCommentaryService,
+            )
+
+            profile = str(
+                ChatOperationalDataCommentaryService.resolve_profile_key(
+                    path=str(metadata.get("path") or ""),
+                    metadata=metadata,
+                )
+                or ""
+            ).strip()
+
+        blocked = profile == "structure_exclusivity"
+
+        if isinstance(commentary, dict):
+            highlights = commentary.get("highlights")
+            has_highlights = isinstance(highlights, list) and any(
+                str(item.get("text") if isinstance(item, dict) else item or "").strip()
+                for item in highlights
+            )
+
+            # generic_list só com summary raso não é brief-direct (vai para LLM).
+            if profile == "generic_list" and not has_highlights:
+                blocked = True
+
+            if not blocked and has_highlights:
+                return True
+
+            if not blocked and str(commentary.get("narrativeInsight") or "").strip():
+                return True
+
+            if profile and cls._profile_brief_direct_eligible(profile):
+                if str(commentary.get("summary") or "").strip():
+                    return True
+
+        if not isinstance(data_answer, dict):
+            return False
+
+        if data_answer.get("emptyResult"):
+            return False
+
+        facts = data_answer.get("facts")
+        has_facts = isinstance(facts, list) and any(
+            isinstance(item, dict) and str(item.get("text") or "").strip() for item in facts
+        )
+
+        if profile == "generic_list" and not has_facts:
+            blocked = True
+
+        if not blocked and has_facts:
+            return True
+
+        if profile and cls._profile_brief_direct_eligible(profile):
+            summary = data_answer.get("summary")
+
+            if isinstance(summary, str) and summary.strip():
+                return True
+
+            if isinstance(summary, dict) and str(summary.get("answer") or "").strip():
                 return True
 
         return False
 
     @classmethod
+    def _profile_brief_direct_eligible(cls, profile_key: str) -> bool:
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        profiles = ChatHumanizedDataResponseContentService.list("briefDirectEligibleProfiles")
+
+        return profile_key in {str(item).strip() for item in profiles if str(item).strip()}
+
+    @classmethod
     def _has_actionable_commentary(cls, metadata: dict) -> bool:
-        commentary = metadata.get("dataCommentary")
-
-        if isinstance(commentary, dict):
-            highlights = commentary.get("highlights")
-
-            if isinstance(highlights, list) and highlights:
-                return True
-
-            if str(commentary.get("summary") or "").strip():
-                return True
-
-            if str(commentary.get("narrativeInsight") or "").strip():
-                return True
-
-        data_answer = metadata.get("dataAnswer")
-
-        if not isinstance(data_answer, dict):
-            return False
-
-        summary = data_answer.get("summary")
-
-        if isinstance(summary, str) and summary.strip():
-            return True
-
-        if isinstance(summary, dict) and str(summary.get("answer") or "").strip():
-            return True
-
-        return False
+        return cls._has_brief_direct_signal(metadata)

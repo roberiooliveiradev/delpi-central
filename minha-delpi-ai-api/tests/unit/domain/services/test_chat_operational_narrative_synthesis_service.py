@@ -90,7 +90,7 @@ def test_factual_narrow_stock_forces_llm_when_everywhere():
     )
 
 
-def test_structure_exclusivity_skips_llm_synthesis_when_profile_is_template():
+def test_structure_exclusivity_forces_llm_synthesis_when_profile_is_llm():
     metadata = {
         "ok": True,
         "path": "/products/90260882/structure/exclusivity",
@@ -108,7 +108,7 @@ def test_structure_exclusivity_skips_llm_synthesis_when_profile_is_template():
         },
     }
 
-    assert not ChatOperationalNarrativeSynthesisService.should_force_llm_synthesis(
+    assert ChatOperationalNarrativeSynthesisService.should_force_llm_synthesis(
         "quais MPs exclusivas tem o produto 90260882?",
         tool_calls=[
             {

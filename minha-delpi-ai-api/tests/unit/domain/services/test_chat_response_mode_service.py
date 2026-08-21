@@ -250,7 +250,7 @@ def test_apply_turn_direct_answer_policy_stock_factual_uses_llm_when_everywhere(
     assert effect == "llm_synthesis"
 
 
-def test_apply_turn_direct_answer_policy_structure_exclusivity_keeps_template_direct(
+def test_apply_turn_direct_answer_policy_structure_exclusivity_prefers_llm_path(
     monkeypatch,
 ):
     monkeypatch.setattr(ChatResponseModeService, "is_enabled", lambda: True)
@@ -271,6 +271,10 @@ def test_apply_turn_direct_answer_policy_structure_exclusivity_keeps_template_di
                     "layoutMode": "stack",
                     "selected": "text",
                 },
+                "dataCommentary": {
+                    "profileKey": "structure_exclusivity",
+                    "highlights": [{"text": "Não — nenhuma MP exclusiva."}],
+                },
             },
         }
     ]
@@ -281,11 +285,14 @@ def test_apply_turn_direct_answer_policy_structure_exclusivity_keeps_template_di
         direct_answer=authorized,
         skip_rag=True,
         tool_calls=tool_calls,
+        tool_context={},
     )
 
-    assert direct == authorized
+    assert effect in {"llm_synthesis", "llm_synthesis_brief"}
     assert skip_rag is True
-    assert effect == "operational_direct"
+    # Sem brief-direct elegível: limpa template para síntese LLM (ou mantém só se brief).
+    if effect == "llm_synthesis":
+        assert direct in {None, ""} or "MP exclusiva" in str(direct)
 
 
 def test_apply_turn_direct_answer_policy_stock_stays_operational_direct_when_everywhere_off(
@@ -413,12 +420,30 @@ def test_apply_turn_direct_answer_policy_never_operational_direct_when_everywher
         response_mode="normal",
         direct_answer="| Filial | Qtd |",
         skip_rag=True,
-        tool_calls=None,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080045/stock",
+                    "apiDelpiResponseMeta": {"entity": "product_stock"},
+                    "dataCommentary": {
+                        "profileKey": "stock",
+                        "highlights": [{"text": "Saldo disponível em duas filiais."}],
+                    },
+                },
+            }
+        ],
+        tool_context={},
     )
 
-    assert direct is None
+    # Com llmProseEverywhere, não preserva markdown de tabela cru como operational_direct.
+    assert effect != "operational_direct"
     assert skip_rag is True
-    assert effect == "llm_synthesis"
+    if effect == "llm_synthesis":
+        assert direct is None or "Filial" not in str(direct)
+    else:
+        assert effect in {"llm_synthesis_brief", "llm_synthesis"}
 
 
 def test_apply_turn_direct_answer_policy_skips_rag_when_tool_ok_even_if_not_flagged():

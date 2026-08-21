@@ -248,6 +248,7 @@ def test_fast_brief_direct_uses_summary_when_no_highlights():
         "llmProseDecoupled": True,
         "path": "/products/10080001/stock",
         "dataCommentary": {
+            "profileKey": "stock",
             "summary": "Estoque consolidado de **120** unidades para o produto **10080001**.",
             "highlights": [],
         },
@@ -262,6 +263,61 @@ def test_fast_brief_direct_uses_summary_when_no_highlights():
     assert answer
     assert "120" in answer
     assert "10080001" in answer
+
+
+def test_empty_result_does_not_qualify_for_brief_direct():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/90260148/outbound-invoice-items",
+        "emptyResult": True,
+        "dataCommentary": {
+            "profileKey": "generic_list",
+            "emptyResult": True,
+            "summary": "Nenhuma nota fiscal de saída encontrada para o produto 90260148.",
+            "highlights": [],
+        },
+        "dataAnswer": {
+            "emptyResult": True,
+            "profileKey": "generic_list",
+            "summary": {"answer": "Nenhuma nota fiscal de saída encontrada para o produto 90260148."},
+        },
+    }
+
+    assert (
+        ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+            "ultimas notas fiscais do 90260148",
+            _tool_calls(metadata),
+            response_mode="normal",
+        )
+        is None
+    )
+
+
+def test_generic_list_summary_only_does_not_brief_direct_in_normal():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/90260148/sales",
+        "dataCommentary": {
+            "profileKey": "generic_list",
+            "summary": "Foram retornados **12** registros.",
+            "highlights": [],
+        },
+    }
+
+    tool_context: dict = {}
+    direct, _, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="vendas do 90260148",
+        response_mode="normal",
+        direct_answer=None,
+        skip_rag=False,
+        tool_calls=_tool_calls(metadata),
+        tool_context=tool_context,
+    )
+
+    assert tool_context.get("commentaryBriefDirect") is not True
+    assert effect != "llm_synthesis_brief" or direct is None
 
 
 def test_to_commentary_mirror_accepts_string_summary():

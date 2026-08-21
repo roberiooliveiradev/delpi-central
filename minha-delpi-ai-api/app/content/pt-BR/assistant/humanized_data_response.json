@@ -401,6 +401,21 @@
     "presentationDecision": "presentationDecision",
     "humanizedSummary": "humanizedSummary"
   },
+  "briefDirectEligibleProfiles": [
+    "stock",
+    "factory_status",
+    "production_status",
+    "shipping_status",
+    "directives",
+    "analyser",
+    "sale_pricing",
+    "raw_material_price_intelligence",
+    "last_purchase",
+    "purchase_price_history",
+    "purchase_budget_history",
+    "kpi_summary",
+    "generic_kpi_series"
+  ],
   "commentaryProfiles": {
     "structure_exclusivity": {
       "contentSection": "structureExclusivity",
