@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import sys
 
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.application.services.chat_error_handling_service import ChatErrorHandlingService
 from tests.fixtures.error_empty_states_cases import ERROR_EMPTY_STATES_CASES
 
 
 def main() -> int:
+    configure_domain_infrastructure_ports()
     failed = 0
 
     for case in ERROR_EMPTY_STATES_CASES:

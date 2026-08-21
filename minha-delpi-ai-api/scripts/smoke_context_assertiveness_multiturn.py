@@ -18,6 +18,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_context_assertiveness_service import (
     ChatContextAssertivenessService,
 )
@@ -190,7 +191,114 @@ def _latest_assistant_assertiveness(messages: list[dict]) -> dict | None:
     return None
 
 
+def _validate_unit_drawing_context() -> list[str]:
+    """Regressão E7 — grounding + taxonomia missing_required_parameter."""
+    from app.domain.services.chat_error_handling_classifier import (
+        ChatErrorHandlingClassifier,
+    )
+    from app.domain.services.chat_tool_parameter_grounding_service import (
+        ChatToolParameterGroundingService,
+    )
+    from app.domain.services.chat_turn_mode_service import ChatTurnModeService
+
+    errors: list[str] = []
+    action = {
+        "parametersSchema": [{"name": "code", "required": True, "in": "path"}],
+    }
+    grounded = ChatToolParameterGroundingService.ground_parameters(
+        action,
+        {},
+        message="buscar desenho",
+        memory_snapshot={"operationalFocus": {"productCode": "90261899"}},
+    )
+
+    if grounded.get("code") != "90261899":
+        errors.append(f"grounding: esperado code=90261899, obteve {grounded}")
+
+    classification = ChatErrorHandlingClassifier.classify(
+        message="buscar desenho",
+        answer="erro",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": False,
+                    "error": "Missing required parameter: code",
+                    "errorKind": "missing_required_parameter",
+                },
+            }
+        ],
+    )
+
+    if not classification or classification.error_type != "missing_required_parameter":
+        errors.append(f"classifier: esperado missing_required_parameter, obteve {classification}")
+
+    if classification and classification.api_failed:
+        errors.append("classifier: api_failed deveria ser False")
+
+    mode = ChatTurnModeService.resolve(
+        tool_context={"drawingAnalysisMode": True, "directAnswer": "ok"},
+        direct_answer="ok",
+        pipeline_stages=["drawing_analysis"],
+    )
+
+    if mode != ChatTurnModeService.CONSUME_PRIOR:
+        errors.append(f"turnMode: esperado consume_prior, obteve {mode}")
+
+    return errors
+
+
+def _latest_assistant_message(messages: list[dict]) -> dict | None:
+    for message in reversed(messages):
+        if message.get("role") == "assistant":
+            return message
+
+    return None
+
+
+def _summarize_assistant_turn(message: dict | None) -> dict:
+    if not isinstance(message, dict):
+        return {}
+
+    metadata = message.get("metadata") or {}
+    tool_calls = metadata.get("toolCalls") or []
+    error_handling = metadata.get("errorHandling") or {}
+    llm = metadata.get("llm") or {}
+    drawing_empty = False
+
+    for call in tool_calls:
+        if not isinstance(call, dict):
+            continue
+
+        if str(call.get("name") or "") != "execute_external_action":
+            continue
+
+        args = call.get("arguments") or {}
+        parameters = args.get("parameters") if isinstance(args, dict) else {}
+        meta = call.get("metadata") or {}
+        path = str(meta.get("path") or "").lower()
+        action_id = str(meta.get("actionId") or "").lower()
+
+        if "drawing" in path or "drawing" in action_id:
+            code = (parameters or {}).get("code") if isinstance(parameters, dict) else None
+
+            if code in (None, ""):
+                drawing_empty = True
+
+    return {
+        "errorKind": error_handling.get("type"),
+        "toolCount": len(tool_calls),
+        "drawingEmptyParams": drawing_empty,
+        "llmSkipped": bool(llm.get("skipped")),
+        "turnMode": (metadata.get("toolContext") or {}).get("turnMode")
+        if isinstance(metadata.get("toolContext"), dict)
+        else metadata.get("turnMode"),
+        "answerPreview": str(message.get("content") or "")[:160],
+    }
+
+
 def main() -> int:
+    configure_domain_infrastructure_ports()
     failed = 0
 
     unit_errors = _validate_unit_multiturn()
@@ -201,11 +309,19 @@ def main() -> int:
     else:
         print("OK unit multiturn assertividade")
 
+    drawing_errors = _validate_unit_drawing_context()
+    if drawing_errors:
+        failed += len(drawing_errors)
+        for error in drawing_errors:
+            print(f"FAIL unit drawing-context: {error}", file=sys.stderr)
+    else:
+        print("OK unit drawing-context (grounding + missing_required + turnMode)")
+
     try:
         token = _fetch_token()
     except Exception as exc:
         print(f"SKIP API (sem token): {exc}", file=sys.stderr)
-        return 1 if unit_errors else 0
+        return 1 if failed else 0
 
     agent_id = _first_official_agent(token)
     session_id = _create_session(token, agent_id)
@@ -228,6 +344,46 @@ def main() -> int:
         flags = assertiveness.get("flags") or []
         print(f"OK API multiturn: score={assertiveness.get('score')} flags={flags}")
 
+    # E7 — grounding / herança de código (não-regressão leve)
+    grounding_session = _create_session(token, agent_id)
+    _send_message(
+        token,
+        grounding_session,
+        "qual o estoque do produto 90261899?",
+        agent_id,
+    )
+    follow = _send_message(
+        token,
+        grounding_session,
+        "e o desenho técnico desse produto?",
+        agent_id,
+    )
+    grounding_messages = _list_messages(token, grounding_session)
+    latest = _latest_assistant_message(grounding_messages)
+    summary = _summarize_assistant_turn(latest)
+    print(
+        "E7 grounding turn:",
+        json.dumps(summary, ensure_ascii=False),
+    )
+
+    if summary.get("drawingEmptyParams"):
+        print(
+            "FAIL API: get_product_drawing (ou path drawing) com parameters.code vazio",
+            file=sys.stderr,
+        )
+        failed += 1
+    elif summary.get("errorKind") == "api_unavailable":
+        print(
+            "FAIL API: errorHandling api_unavailable no follow-up de desenho",
+            file=sys.stderr,
+        )
+        failed += 1
+    else:
+        print(
+            "OK API grounding/desenho: sem code vazio e sem api_unavailable "
+            f"(errorKind={summary.get('errorKind')}, tools={summary.get('toolCount')})"
+        )
+
     admin_debug = (_send_message(token, session_id, "qual o estoque?", agent_id) or {}).get(
         "adminDebug"
     )
@@ -240,6 +396,10 @@ def main() -> int:
             "WARN API: adminDebug sem contextAssertiveness (ver resolve_client_admin_debug)",
             file=sys.stderr,
         )
+
+    # Silencia variável não usada se send_message payload não retornar follow
+    if follow is None:
+        pass
 
     return 1 if failed else 0
 

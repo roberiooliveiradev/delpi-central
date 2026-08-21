@@ -80,6 +80,27 @@ ERROR_EMPTY_STATES_CASES: list[dict] = [
         "expect_non_existence_flag": False,
     },
     {
+        "id": "E16",
+        "message": "buscar desenho do produto",
+        "answer": "Não consegui executar a consulta porque falta um parâmetro obrigatório.",
+        "tool_calls": [
+            {
+                "name": "execute_external_action",
+                "arguments": {"parameters": {}},
+                "metadata": {
+                    "ok": False,
+                    "statusCode": 0,
+                    "path": "/products/{code}/drawing",
+                    "actionId": "api_delpi.products.get_product_drawing",
+                    "errorKind": "missing_required_parameter",
+                    "missingParameter": "code",
+                    "error": "Missing required parameter: code",
+                },
+            }
+        ],
+        "expect_type": "missing_required_parameter",
+    },
+    {
         "id": "E14",
         "message": "estoque",
         "answer": "Não encontrei.",
