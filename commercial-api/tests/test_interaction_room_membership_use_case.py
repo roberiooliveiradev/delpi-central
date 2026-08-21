@@ -103,6 +103,25 @@ class InMemoryInteractionRoomRepo(InteractionRoomRepositoryPort):
         self.rooms[room.id] = updated
         return updated
 
+    def soft_delete(self, *, room_id: UUID) -> InteractionRoom | None:
+        room = self.get_by_id(room_id)
+        if room is None:
+            return None
+        deleted = InteractionRoom(
+            id=room.id,
+            kind=room.kind,
+            title=room.title,
+            created_by_user_id=room.created_by_user_id,
+            created_at=room.created_at,
+            updated_at=datetime.now(timezone.utc),
+            entity_type=room.entity_type,
+            entity_key=room.entity_key,
+            group_id=room.group_id,
+            deleted_at=datetime.now(timezone.utc),
+        )
+        self.rooms[room.id] = deleted
+        return deleted
+
     def list_for_user(
         self,
         *,
@@ -113,7 +132,9 @@ class InMemoryInteractionRoomRepo(InteractionRoomRepositoryPort):
         items = [
             self.rooms[room_id]
             for (room_id, uid), member in self.members.items()
-            if uid == user_id and room_id in self.rooms
+            if uid == user_id
+            and room_id in self.rooms
+            and self.rooms[room_id].deleted_at is None
         ]
         return items[offset : offset + limit]
 

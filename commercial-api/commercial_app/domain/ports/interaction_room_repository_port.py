@@ -47,6 +47,11 @@ class InteractionRoomRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def soft_delete(self, *, room_id: UUID) -> InteractionRoom | None:
+        """Marca a sala como excluída (deleted_at); autorização no use case/HTTP."""
+        raise NotImplementedError
+
+    @abstractmethod
     def list_for_user(
         self,
         *,

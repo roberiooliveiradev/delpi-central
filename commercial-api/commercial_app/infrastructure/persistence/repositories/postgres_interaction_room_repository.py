@@ -159,6 +159,20 @@ class PostgresInteractionRoomRepository(
         )
         return _row_room(row)
 
+    def soft_delete(self, *, room_id: UUID) -> InteractionRoom | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.interaction_rooms
+               SET deleted_at = NOW(),
+                   updated_at = NOW()
+             WHERE id = %s
+               AND deleted_at IS NULL
+         RETURNING {_ROOM_COLUMNS}
+            """,
+            (str(room_id),),
+        )
+        return _row_room(row)
+
     def list_for_user(
         self,
         *,
