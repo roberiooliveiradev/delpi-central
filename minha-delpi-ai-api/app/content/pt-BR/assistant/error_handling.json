@@ -15,7 +15,34 @@
     "produto nao existe",
     "cadastro inexistente"
   ],
+  "validationFailureMarkers": [
+    "missing required parameter",
+    "missing path parameter",
+    "unknown parameter"
+  ],
+  "validationFailureErrorKinds": [
+    "missing_required_parameter",
+    "missing_path_parameter",
+    "unknown_parameter"
+  ],
   "types": {
+    "missing_required_parameter": {
+      "severity": "info",
+      "recoverable": true,
+      "title": "Falta um parâmetro obrigatório",
+      "userMessage": "Não consegui executar a consulta porque falta um parâmetro obrigatório (por exemplo o código do produto).",
+      "reasons": [
+        "a ação exige um campo que não veio preenchido",
+        "o código, filial ou período pode estar só no contexto e não foi aplicado"
+      ],
+      "alternativesIntro": "Você pode:",
+      "chips": [
+        "Informar código",
+        "Ver exemplo",
+        "Tentar novamente",
+        "Ver diagnóstico"
+      ]
+    },
     "empty_product_parents": {
       "severity": "info",
       "recoverable": true,

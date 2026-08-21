@@ -135,6 +135,15 @@ class ChatErrorHandlingClassifier:
                 api_failed=False,
             )
 
+        if tool_summary.get("missing_required_parameter"):
+            return cls._stub_classification(
+                "missing_required_parameter",
+                action=tool_summary.get("action"),
+                params=tool_summary.get("params") or {},
+                attempted=tool_summary.get("attempted"),
+                api_failed=False,
+            )
+
         if tool_summary.get("api_unavailable"):
             return cls._stub_classification(
                 "api_unavailable",
@@ -182,6 +191,9 @@ class ChatErrorHandlingClassifier:
 
         if "api_unavailable" in signals:
             return cls._stub_classification("api_unavailable", api_failed=True)
+
+        if "missing_required_parameter" in signals:
+            return cls._stub_classification("missing_required_parameter", api_failed=False)
 
         outcome = ChatFollowUpSuggestionService.classify_outcome(
             answer=answer,
@@ -451,6 +463,29 @@ class ChatErrorHandlingClassifier:
         )
 
     @classmethod
+    def _looks_like_missing_required_parameter(
+        cls,
+        error_text: str,
+        metadata: dict,
+    ) -> bool:
+        error_kind = str(
+            metadata.get("errorKind") or metadata.get("error_kind") or ""
+        ).strip().lower()
+        kinds = {
+            str(item).strip().lower()
+            for item in (_error_handling_content().get("validationFailureErrorKinds") or [])
+            if str(item).strip()
+        }
+
+        if error_kind and error_kind in kinds:
+            return True
+
+        lowered = str(error_text or "").lower()
+        markers = _error_handling_content().get("validationFailureMarkers") or []
+
+        return any(str(marker).strip().lower() in lowered for marker in markers if str(marker).strip())
+
+    @classmethod
     def _looks_like_sql_syntax_error(cls, error_text: str, metadata: dict) -> bool:
         path = str(metadata.get("path") or "").lower()
         action_id = str(metadata.get("actionId") or metadata.get("action_id") or "").lower()
@@ -606,7 +641,9 @@ class ChatErrorHandlingClassifier:
                 if status_code in (401, 403):
                     summary["permission_denied"] = True
 
-                if cls._looks_like_sql_invalid_object(error_text, metadata):
+                if cls._looks_like_missing_required_parameter(error_text, metadata):
+                    summary["missing_required_parameter"] = True
+                elif cls._looks_like_sql_invalid_object(error_text, metadata):
                     summary["sql_invalid_object"] = True
                 elif cls._looks_like_sql_syntax_error(error_text, metadata):
                     summary["sql_syntax_error"] = True
@@ -646,6 +683,9 @@ class ChatErrorHandlingClassifier:
                 return summary
 
             if summary.get("timeout"):
+                return summary
+
+            if summary.get("missing_required_parameter"):
                 return summary
 
             if summary.get("sql_syntax_error"):

@@ -82,7 +82,10 @@ class ChatTrustSignalsService:
                 add("permission_limited")
 
             if any_failed and not any_ok:
-                add("api_unavailable")
+                if cls._all_failures_are_validation(calls):
+                    add("missing_required_parameter")
+                else:
+                    add("api_unavailable")
 
             if any(
                 (call.get("metadata") or {}).get("blockReason") == "confirmation_required"
@@ -115,6 +118,34 @@ class ChatTrustSignalsService:
                 "nao e documento oficial",
             )
         )
+
+    @classmethod
+    def _all_failures_are_validation(cls, tool_calls: list[dict]) -> bool:
+        from app.domain.services.chat_error_handling_classifier import (
+            ChatErrorHandlingClassifier,
+        )
+
+        saw_failure = False
+
+        for call in tool_calls:
+            if call.get("name") != "execute_external_action":
+                continue
+
+            meta = call.get("metadata") or {}
+
+            if meta.get("ok"):
+                continue
+
+            saw_failure = True
+            error_text = ChatErrorHandlingClassifier._resolve_tool_error_text(meta)
+
+            if not ChatErrorHandlingClassifier._looks_like_missing_required_parameter(
+                error_text,
+                meta if isinstance(meta, dict) else {},
+            ):
+                return False
+
+        return saw_failure
 
     @classmethod
     def _looks_partial(cls, tool_calls: list[dict]) -> bool:

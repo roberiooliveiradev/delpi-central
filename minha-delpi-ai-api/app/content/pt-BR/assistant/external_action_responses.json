@@ -1485,7 +1485,8 @@
       "no_source": "Sem fonte",
       "permission_limited": "Permissão limitada",
       "partial_result": "Resultado parcial",
-      "api_unavailable": "Consulta indisponível"
+      "api_unavailable": "Consulta indisponível",
+      "missing_required_parameter": "Parâmetro obrigatório ausente"
     }
   }
 }
