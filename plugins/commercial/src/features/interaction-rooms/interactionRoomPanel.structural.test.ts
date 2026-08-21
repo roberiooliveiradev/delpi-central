@@ -7,9 +7,16 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const featuresRoot = join(dir, "..");
 
 describe("InteractionRoomPanel", () => {
-  it("compõe SectionCard + kit e resolve lazy", () => {
+  it("compõe SectionCard colapsável + Shell e resolve lazy", () => {
     const source = readFileSync(join(dir, "InteractionRoomPanel.tsx"), "utf8");
     expect(source).toMatch(/CommercialSectionCard/);
+    expect(source).toMatch(/collapsible:\s*true/);
+    expect(source).toMatch(/defaultOpen:\s*true/);
+    expect(source).toMatch(/CM_HELP\.interactionRooms\.panel/);
+    expect(source).toMatch(/hint:\s*CM_HELP\.interactionRooms\.panel/);
+    expect(source).toMatch(/InteractionRoomConversationShell/);
+    expect(source).toMatch(/InteractionRoomConversationChatColumn/);
+    expect(source).toMatch(/cm-room-panel/);
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).toMatch(/interactionRoomAuthorAvatarFields/);
     expect(source).toMatch(/interactionRoomParticipantAvatar/);
@@ -26,7 +33,7 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/photoByUserId/);
     expect(source).toMatch(/usePortfolioScope/);
     expect(source).toMatch(/mine:/);
-    expect(source).toMatch(/CommercialConversationFileDropLayer/);
+    expect(source).not.toMatch(/CommercialConversationFileDropLayer/);
     expect(source).toMatch(/resolveInteractionRoom/);
     expect(source).toMatch(/useInteractionRoomSync/);
     expect(source).toMatch(/applyInteractionRoomRealtime/);
