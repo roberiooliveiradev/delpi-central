@@ -60,15 +60,68 @@ def test_build_generic_empty_list_detects_empty_anomaly():
 
     assert isinstance(data_answer, dict)
     assert data_answer.get("profileKey") == "generic_list"
+    assert data_answer.get("emptyResult") is True
 
     summary = data_answer.get("summary")
 
     assert summary.get("answer")
+    assert not summary.get("nextAction")
+    assert summary.get("attention") == []
+    assert data_answer.get("recommendations") == []
+    assert "filtrar" not in str(summary.get("nextAction") or "").casefold()
+    assert "pontos de atenção" not in str(summary.get("answer") or "").casefold()
     assert any(
         anomaly.get("type") == "empty_list"
         for anomaly in (data_answer.get("anomalies") or [])
         if isinstance(anomaly, dict)
     )
+
+
+def test_build_empty_outbound_invoice_domain_aware_message():
+    from app.domain.services.chat_operational_commentary_lead_service import (
+        ChatOperationalCommentaryLeadService,
+    )
+    from app.domain.services.chat_humanized_data_response_service import (
+        ChatHumanizedDataResponseService,
+    )
+
+    metadata = {
+        "path": "/products/90260148/outbound-invoice-items",
+        "productCode": "90260148",
+        "apiDelpiResponseMeta": {
+            "entity": "product_outbound_invoice_items",
+            "shape": "paged_list",
+        },
+        "tablePresentation": {"type": "table", "rows": []},
+    }
+    data = {"items": []}
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+    mirror = ChatHumanizedDataResponseService.to_commentary_mirror(data_answer)
+    lead = ChatOperationalCommentaryLeadService.format_lead(mirror, depth="standard")
+
+    assert data_answer.get("emptyResult") is True
+    answer = str((data_answer.get("summary") or {}).get("answer") or "")
+    assert "nota fiscal de saída" in answer.casefold() or "nota fiscal de saida" in answer.casefold()
+    assert "90260148" in answer
+    assert "pontos de atenção" not in lead.casefold()
+    assert "próximos passos" not in lead.casefold()
+    assert "filtrar" not in lead.casefold()
+
+
+def test_build_empty_internal_movements_domain_aware_message():
+    metadata = {
+        "path": "/products/90260148/internal-movements",
+        "productCode": "90260148",
+        "apiDelpiResponseMeta": {"entity": "product_internal_movements"},
+        "tablePresentation": {"rows": []},
+    }
+    data_answer = ChatDataInsightService.build(metadata, {"items": []})
+    answer = str((data_answer.get("summary") or {}).get("answer") or "").casefold()
+
+    assert data_answer.get("emptyResult") is True
+    assert "moviment" in answer
+    assert "90260148" in answer
 
 
 def test_build_document_export_never_reports_empty_result():
