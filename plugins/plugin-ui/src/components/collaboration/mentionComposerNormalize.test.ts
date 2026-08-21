@@ -119,6 +119,27 @@ describe("ensureComposerParagraphFlow", () => {
     editor.remove();
   });
 
+  it("preserva <p>a[IMG]b</p> sem criar parágrafo novo", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML =
+      "<p>a" +
+      '<span class="delpi-ui-mention-composer__inline-image" contenteditable="false">' +
+      '<img alt="x" />' +
+      "</span>" +
+      "b</p>";
+    document.body.appendChild(editor);
+    ensureComposerParagraphFlow(editor);
+    expect(editor.querySelectorAll(":scope > p")).toHaveLength(1);
+    const p = editor.querySelector("p")!;
+    expect(p.querySelector(".delpi-ui-mention-composer__inline-image")).not.toBeNull();
+    const textOnly = Array.from(p.childNodes)
+      .filter((n) => n.nodeType === Node.TEXT_NODE)
+      .map((n) => (n.textContent ?? "").replace(/\u200b/g, ""))
+      .join("");
+    expect(textOnly).toBe("ab");
+    editor.remove();
+  });
+
   it("promove <div> filho do editor a <p>", () => {
     const editor = document.createElement("div");
     editor.innerHTML = "<div>bloco</div>";
