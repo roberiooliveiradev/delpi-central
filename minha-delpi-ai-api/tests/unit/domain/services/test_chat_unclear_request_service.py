@@ -37,3 +37,24 @@ def test_build_direct_answer_with_options():
     )
     assert answer is not None
     assert "corrigir" in answer.lower()
+
+
+def test_classifies_ambiguous_domain_terms():
+    assert ChatUnclearRequestService.classify("programação") == "ambiguous_domain"
+    assert ChatUnclearRequestService.classify("programacao") == "ambiguous_domain"
+    assert ChatUnclearRequestService.classify("qualidade") == "ambiguous_domain"
+    assert ChatUnclearRequestService.classify("custo") == "ambiguous_domain"
+
+
+def test_ambiguous_domain_does_not_match_specific_schedule_phrase():
+    assert ChatUnclearRequestService.classify("programação de produção") is None
+    assert ChatUnclearRequestService.classify("programacao de producao hoje") is None
+
+
+def test_ambiguous_domain_direct_answer_and_suggestions():
+    answer = ChatUnclearRequestService.build_direct_answer(message="programação")
+    assert answer is not None
+    assert "não ficou claro" in answer.lower() or "programação" in answer.lower()
+
+    suggestions = ChatUnclearRequestService.build_suggestions(message="programação")
+    assert any("produção" in item["label"].lower() for item in suggestions)

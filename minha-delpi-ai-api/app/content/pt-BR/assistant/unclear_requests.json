@@ -42,7 +42,7 @@
     "pesquisar",
     "pesquise"
   ],
-  "categoryPriority": ["fix", "reference", "action"],
+  "categoryPriority": ["fix", "reference", "action", "ambiguous_domain"],
   "patterns": {
     "action": [
       "faz isso",
@@ -84,6 +84,15 @@
       "remove",
       "esse ai",
       "essa ai"
+    ],
+    "ambiguous_domain": [
+      "programacao",
+      "programação",
+      "qualidade",
+      "custo",
+      "custos",
+      "eficiencia",
+      "eficiência"
     ]
   },
   "responses": {
@@ -91,6 +100,19 @@
     "action": "Não entendi exatamente o que você quer que eu faça. Você quer corrigir um texto, fazer uma consulta, analisar um arquivo ou colocar algo na lousa?",
     "fix": "Não entendi o que devo arrumar. Envie o texto, o arquivo ou explique o ajuste desejado.",
     "reference": "Não consegui identificar a que isso se refere. Você quer usar a última resposta, uma tabela, um arquivo ou outro item?",
+    "ambiguous_domain": "Não ficou claro o que você quer com esse termo. Pode ser, por exemplo:\n• Programação de produção (hoje / período)\n• Outro sentido — descreva em uma frase\n\nComo prefere seguir?",
     "withOptions": "Não entendi exatamente o seu pedido. Posso ajudar com:\n- responder uma dúvida simples;\n- corrigir ou escrever um texto;\n- fazer uma consulta;\n- analisar um arquivo;\n- gerar tabela, gráfico ou lousa.\n\nComo você quer seguir?"
+  },
+  "suggestionsByCategory": {
+    "ambiguous_domain": [
+      {
+        "label": "Programação de produção hoje",
+        "query": "programação de produção hoje"
+      },
+      {
+        "label": "Reformular pergunta",
+        "query": "quero reformular: "
+      }
+    ]
   }
 }

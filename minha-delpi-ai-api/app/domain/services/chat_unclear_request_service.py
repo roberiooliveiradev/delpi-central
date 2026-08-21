@@ -94,6 +94,38 @@ class ChatUnclearRequestService:
         return str(responses.get("default") or "").strip() or None
 
     @classmethod
+    def build_suggestions(
+        cls,
+        *,
+        message: str,
+        previous_messages: list | None = None,
+    ) -> list[dict[str, str]]:
+        category = cls.classify(message, previous_messages=previous_messages)
+
+        if not category:
+            return []
+
+        by_category = _content().get("suggestionsByCategory") or {}
+        raw = by_category.get(category)
+
+        if not isinstance(raw, list):
+            return []
+
+        suggestions: list[dict[str, str]] = []
+
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+
+            label = str(item.get("label") or "").strip()
+            query = str(item.get("query") or "").strip()
+
+            if label and query:
+                suggestions.append({"label": label, "query": query})
+
+        return suggestions
+
+    @classmethod
     def _matches(cls, normalized: str, pattern: str) -> bool:
         candidate = ChatMessageNormalizationService.normalize_for_matching(pattern) or pattern
         candidate = " ".join(candidate.split())
