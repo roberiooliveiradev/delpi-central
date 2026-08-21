@@ -28,6 +28,9 @@ from commercial_app.application.services.post_system_message_realtime import (
 from commercial_app.application.use_cases.manage_interaction_messages import (
     ManageInteractionMessagesUseCase,
 )
+from commercial_app.application.use_cases.list_interaction_room_shared_items import (
+    ListInteractionRoomSharedItemsUseCase,
+)
 from commercial_app.application.use_cases.manage_interaction_rooms import (
     ManageInteractionRoomsUseCase,
 )
@@ -119,6 +122,7 @@ _interaction_room_repository: InteractionRoomRepositoryPort | None = None
 _interaction_message_repository: InteractionMessageRepositoryPort | None = None
 _interaction_rooms_use_case: ManageInteractionRoomsUseCase | None = None
 _interaction_messages_use_case: ManageInteractionMessagesUseCase | None = None
+_list_interaction_room_shared_items_use_case: ListInteractionRoomSharedItemsUseCase | None = None
 _list_interaction_inbox_use_case: ListInteractionInboxUseCase | None = None
 _suggest_interaction_mentions_use_case: SuggestInteractionMentionsUseCase | None = None
 _preview_interaction_entity_use_case: PreviewInteractionEntityUseCase | None = None
@@ -309,6 +313,21 @@ def build_manage_interaction_messages_use_case() -> ManageInteractionMessagesUse
             messages=build_interaction_message_repository(),
         )
     return _interaction_messages_use_case
+
+
+def build_list_interaction_room_shared_items_use_case() -> (
+    ListInteractionRoomSharedItemsUseCase
+):
+    global _list_interaction_room_shared_items_use_case
+    if _list_interaction_room_shared_items_use_case is None:
+        _list_interaction_room_shared_items_use_case = (
+            ListInteractionRoomSharedItemsUseCase(
+                rooms=build_interaction_room_repository(),
+                messages=build_interaction_message_repository(),
+                attachments=build_attachment_repository(),
+            )
+        )
+    return _list_interaction_room_shared_items_use_case
 
 
 def build_list_interaction_inbox_use_case() -> ListInteractionInboxUseCase:

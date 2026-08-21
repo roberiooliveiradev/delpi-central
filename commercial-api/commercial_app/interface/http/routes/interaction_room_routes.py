@@ -33,6 +33,7 @@ from commercial_app.composition.commercial_composer import (
     build_create_task_from_interaction_message_use_case,
     build_enqueue_task_portal_notifications_service,
     build_list_interaction_inbox_use_case,
+    build_list_interaction_room_shared_items_use_case,
     build_manage_interaction_messages_use_case,
     build_manage_interaction_rooms_use_case,
     build_preview_interaction_entity_use_case,
@@ -687,6 +688,48 @@ def clear_interaction_message_reaction(
     except Exception:
         logger.exception("clear_interaction_message_reaction_failed")
         return fail("Erro interno ao remover reação.", 500, operation_id=operation_id)
+
+
+@router.get(
+    "/{room_id}/shared-items",
+    operation_id="list_interaction_room_shared_items",
+)
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def list_interaction_room_shared_items(
+    request: Request,
+    room_id: UUID = Path(...),
+    kind: str = Query(default="all"),
+    q: str | None = Query(default=None),
+):
+    operation_id = "list_interaction_room_shared_items"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        items = build_list_interaction_room_shared_items_use_case().execute(
+            room_id=room_id,
+            actor_user_id=actor,
+            kind=kind if isinstance(kind, str) else "all",
+            query=q if isinstance(q, str) else None,
+        )
+        return ok(
+            {"items": items},
+            message=InteractionRoomContentService.message("listSharedItemsOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("list_interaction_room_shared_items_failed")
+        return fail(
+            "Erro interno ao listar itens compartilhados.",
+            500,
+            operation_id=operation_id,
+        )
 
 
 @router.get("/{room_id}/pins", operation_id="list_interaction_room_pins")

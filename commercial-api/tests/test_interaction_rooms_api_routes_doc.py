@@ -22,6 +22,7 @@ _OPERATION_IDS = (
     "delete_interaction_message",
     "set_interaction_message_reaction",
     "clear_interaction_message_reaction",
+    "list_interaction_room_shared_items",
     "list_interaction_room_pins",
     "pin_interaction_message",
     "unpin_interaction_message",

@@ -378,6 +378,7 @@ Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — q
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}` | `delete_interaction_message` | access | `interaction_message` | `scalar` | soft |
 | PUT | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `set_interaction_message_reaction` | access | `interaction_reaction` | `scalar` | |
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `clear_interaction_message_reaction` | access | `interaction_reaction` | `scalar` | |
+| GET | `/interaction-rooms/{room_id}/shared-items` | `list_interaction_room_shared_items` | access | `interaction_shared_item` | `list` | `kind=all\|file\|link`, `q` |
 | GET | `/interaction-rooms/{room_id}/pins` | `list_interaction_room_pins` | access | `interaction_pin` | `list` | |
 | POST | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `pin_interaction_message` | access | `interaction_pin` | `scalar` | |
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `unpin_interaction_message` | access | `interaction_pin` | `scalar` | |
