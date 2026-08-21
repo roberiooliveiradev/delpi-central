@@ -58,6 +58,9 @@ describe("RoomConversationShell", () => {
     );
     expect(css).toMatch(/\.delpi-ui-room-thread \{/);
     expect(css).toMatch(/\.delpi-ui-room-thread__stage \{/);
+    expect(css).toMatch(
+      /\.delpi-ui-room-thread__main > \[class\*="-view-transition"\] > \[role="tabpanel"\]/,
+    );
     expect(css).toMatch(/\.delpi-ui-room-thread__msgs \{[\s\S]*?overflow-y:\s*auto;/);
     expect(css).toMatch(/\.delpi-ui-room-thread__dock \{/);
     expect(css).toMatch(

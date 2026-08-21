@@ -12,7 +12,9 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  align-self: stretch;
   min-height: 0;
+  overflow: hidden;
 }
 
 .delpi-ui-room-thread__header {
@@ -22,32 +24,46 @@
 
 .delpi-ui-room-thread__body {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: stretch;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .delpi-ui-room-thread__main {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
+  align-self: stretch;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
   --delpi-ui-panel-stack-gap: 0;
 }
 
-.delpi-ui-room-thread__main > [class*="-view-transition"],
-.delpi-ui-room-thread__main [role="tabpanel"] {
+/* ViewTransition + tabpanel must fill main so stage can pin the dock. */
+.delpi-ui-room-thread__main > [class*="-view-transition"] {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  align-self: stretch;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
+  margin-top: 0;
 }
 
-.delpi-ui-room-thread__main > [class*="-view-transition"][class*="--panel"] {
-  margin-top: 0;
+.delpi-ui-room-thread__main > [class*="-view-transition"] > [role="tabpanel"],
+.delpi-ui-room-thread__main > [role="tabpanel"] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .delpi-ui-room-thread__stage {
@@ -55,10 +71,10 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  align-self: stretch;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  height: 100%;
 }
 
 .delpi-ui-room-thread__msgs {

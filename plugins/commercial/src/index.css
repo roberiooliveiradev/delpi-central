@@ -192,6 +192,14 @@
 .dashboard-commercial .cm-room-workspace .cm-room-thread {
   flex: 1 1 auto;
   min-height: 0;
+  align-self: stretch;
+}
+
+.dashboard-commercial .cm-resizable-columns__right > .cm-room-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
 }
 
 .dashboard-commercial .cm-room-workspace__grid > .cm-room-inbox-pane {

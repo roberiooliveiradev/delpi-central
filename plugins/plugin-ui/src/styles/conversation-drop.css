@@ -2,8 +2,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  align-self: stretch;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .delpi-ui-conversation-drop__overlay {

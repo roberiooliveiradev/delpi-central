@@ -59,6 +59,9 @@ describe("interaction room fill CSS", () => {
       /\.cm-resizable-columns__left > \.cm-room-inbox-pane \{[\s\S]*?min-height:\s*0;/,
     );
     expect(css).toMatch(
+      /\.cm-resizable-columns__right > \.cm-room-thread \{[\s\S]*?min-height:\s*0;/,
+    );
+    expect(css).toMatch(
       /\.cm-room-inbox-pane__body > \.cm-room-inbox-panel \{[\s\S]*?min-height:\s*0;/,
     );
     expect(css).toMatch(
