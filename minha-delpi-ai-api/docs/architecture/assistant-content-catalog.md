@@ -61,10 +61,11 @@ Wrappers especializados (mantêm API estável):
 | `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
 | `structure_comparison.json` | Comparação BOM/ficha | `ChatStructureComparisonService` |
 | `memory_ux.json` | Memória de sessão (barra + introspecção) | `ChatMemoryUxService` |
-| `memory_intent.json` | Patterns de durabilidade, semântica, episódica e UX de memória | `ChatMemoryIntentContentService` |
+| `memory_intent.json` | Durabilidade/semântica/episódica/UX + `contextSafety`, `preference` (revoke/labels), `sessionClear`, `entityTracker` | `ChatMemoryIntentContentService` |
 | `user_context_items.json` | Limits, marker e patterns de contexto livre do usuário | `ChatUserContextItemsContentService` |
-| `email_intent.json` | Markers, subtypes, tom, audiência e subject de e-mail | `ChatEmailIntentContentService` |
-| `web_search.json` | Resposta direta e follow-up pós-pesquisa; **`llmSynthesis.leakMarkers`** da guarda extractiva | `ChatWebSearchDirectAnswerService`, `ChatWebSearchSourceFollowUpService`, `ChatWebSearchSynthesisService` |
+| `email_intent.json` | Markers/subtypes/tom/audiência/subject + `quality` (frases artificiais, assinatura) | `ChatEmailIntentContentService` |
+| `text_quality.json` | Patterns de assinatura/compromisso inventados e compare de anexos | `ChatTextQualityContentService` |
+| `web_search.json` | Resposta direta e follow-up; `querySecurity` (redação); **`llmSynthesis.leakMarkers`** | `ChatWebSearch*`, `ChatWebSearchQuerySecurityService` |
 | `platform_tools.json` | Resposta direta de tools internas (`get_allowed_routes`, `get_allowed_apps`, `get_current_user`) | `ChatPlatformToolsContentService`, `ChatPlatformToolDirectAnswerService` |
 | `drawing_validation.json` | Relatório, checklist, rótulos de status (`statusPresentation`), campos do markdown (`reportFields`, seção `dimensions`), export CSV/PDF/XLSX (`export`), regras de consolidação (`presentation`), gate assertivo (`validationLayers.pdfDependentTemplateKeys` inclui `total_length`), padrão `patterns.productDescriptionLengthMm`, **rótulos UX de tabelas Protheus** (`protheusTableLabels` — espelho curto de `api-delpi/.../allowed_tables.json`) | `ChatDrawingValidationContentService`, `ChatDrawingValidationPresentationService`, `ChatDrawingValidationOrchestrationService`, `ChatDrawingReportExportService`, `ChatDrawingBomQuantityAssertivenessService` |
 | `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
@@ -97,7 +98,7 @@ Wrappers especializados (mantêm API estável):
 | `tv_dashboard_copilot_intent.json` | Surface/confirmação do Copiloto TV (`surfaceTokens`, frases leves, `hostPrompt`, `selectionReason` / `applySelectionReason`, `catalogUnavailable`, `directAnswer`) — **sem** catálogo de ops (vem do BFF) | `ChatTvDashboardCopilotIntentService`, `ChatHostSurfaceContextService`, `ChatTvDashboardPlatformToolSelectionService`, `ChatPlatformToolDirectAnswerService` |
 | `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
 | `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
-| `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |
+| `term_extraction_vocabulary.json` | Stopwords + `definitionPatterns` de pergunta de definição | `ChatTermExtractionVocabularyService` |
 | `technical_description_vocabulary.json` | Normas MP (1001–1025) + intermediários 50xx: grupos, campos, cores MP/4 letras, isolação CA–CV, marcadores de intent; consumíveis 1013/1050 para classificação no desenho | `ChatTechnicalDescriptionVocabularyService`, `ChatTechnicalDescriptionIntentService`, `ChatDrawingProductFamilyClassificationService` |
 | `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
