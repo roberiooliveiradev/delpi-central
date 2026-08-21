@@ -29,6 +29,7 @@ from tests.fixtures.production_operational_regression_cases import (
 from tests.fixtures.chat_intelligence_regression_cases import (
     AGENTIC_SKIP_REFINEMENT_CASES,
     ANALYSIS_INTENT_CASES,
+    DRAWING_CONTEXT_INTELLIGENCE_CASES,
     DRAWING_INTENT_CASES,
     DATA_INTERPRETATION_CASES,
     DATA_INTERPRETATION_NO_ACTION_CASES,
@@ -88,6 +89,55 @@ def test_drawing_intent_regression(message, expected):
         )
         is expected
     )
+
+
+@pytest.mark.parametrize("case", DRAWING_CONTEXT_INTELLIGENCE_CASES, ids=lambda c: c["id"])
+def test_drawing_context_intelligence_regression(case):
+    from app.domain.services.chat_agentic_catalog_service import ChatAgenticCatalogService
+    from app.domain.services.chat_intent_router.chat_intent_router_classify_service import (
+        ChatIntentRouterClassifyService,
+    )
+    from app.domain.services.chat_tool_parameter_grounding_service import (
+        ChatToolParameterGroundingService,
+    )
+
+    if "expect_intent" in case:
+        route = ChatIntentRouterClassifyService.classify(case["message"])
+        assert route.intent == case["expect_intent"]
+        assert route.requires_llm is case["expect_requires_llm"]
+        return
+
+    action = {
+        "actionId": "api_delpi.products.get_product_drawing",
+        "path": "/products/{code}/drawing",
+        "method": "GET",
+        "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+    }
+    grounded = ChatToolParameterGroundingService.ground_parameters(
+        action,
+        {},
+        message=case["message"],
+        memory_snapshot=case.get("memory_snapshot"),
+    )
+    expected_code = case.get("expect_grounded_code")
+
+    if expected_code:
+        assert grounded.get("code") == expected_code
+    else:
+        assert not grounded.get("code")
+
+    if case.get("expect_catalog_empty"):
+        class _Repo:
+            def find_candidate_actions(self, message, limit=12, allowed_action_ids=None):
+                return [action]
+
+        slim = ChatAgenticCatalogService.build_slim_catalog(
+            case["message"],
+            [action["actionId"]],
+            _Repo(),
+            memory_snapshot=case.get("memory_snapshot"),
+        )
+        assert slim == []
 
 
 @pytest.mark.parametrize("case", PRODUCT_CODE_CASES)

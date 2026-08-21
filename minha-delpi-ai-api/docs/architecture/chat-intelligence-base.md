@@ -752,6 +752,10 @@ Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem
 
 **Catálogo agentic (11.3.1):** com `CHAT_AGENTIC_LOOP_ENABLED=true`, `ChatAgenticCatalogService` monta no máximo `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` (default 12) a partir de `find_candidate_actions`, reordenando por intent (`/stock`, `/structure`, …). O planner LLM **só** pode escolher actions desse catálogo; metadados em `toolCalls[].metadata.agentic` / `intelligence.agentic` (`catalogSize`, `catalogMaxActions`).
 
+**Grounding + slots (ago/2026):** antes de `policy.validate`, `ChatToolParameterGroundingService` preenche `code` a partir de `operationalFocus` / `userContextItems` (contexto via `ChatToolGroundingContextService`). Actions cujo required não é groundable **neste** turno são omitidas do catálogo agentic. Falhas `missing_required_parameter` entram em `invalid_action_ids` e **não** são reexecutadas no passo seguinte. Textos do planejador: `agentic_planner.json`.
+
+**Plano de controle do turno:** `ChatTurnModeService` resolve `consume_prior` | `ask_slot` | `execute_tools` | `llm_narrate`. Em `consume_prior` / `ask_slot`, `ChatResponseModeService` preserva `directAnswer` (sem síntese LLM externa) e o loop agentic é pulado. Follow-up de desenho (`drawing_analysis` / `drawing_report_adjustment`) está em `preserveDirectAnswerStages`.
+
 **Schemas enxutos (11.3.2):** cada action do catálogo é serializada por `ChatAgenticActionSchemaService` (método, path, descrição curta, parâmetros com `example` e `exampleArguments`) antes do prompt do planner — evita mandar o OpenAPI completo e orienta argumentos (`code`, `branch`, datas, paginação). Limite: `CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS` (default 10).
 
 **Native tool calling piloto (11.3.3):** `ChatNativeToolCallingService` só ativa quando (1) `CHAT_NATIVE_TOOL_CALLING_ENABLED=true`, (2) admin `nativeToolCallingEnabled=true` e (3) agente com `metadata.intelligence.nativeToolCallingEnabled=true`. Rotas api-delpi permanecem heurísticas.

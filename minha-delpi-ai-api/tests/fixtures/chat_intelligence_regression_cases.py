@@ -19,6 +19,29 @@ DRAWING_INTENT_CASES = [
     ("qual a descricao do produto 10080047", False),
 ]
 
+# Inteligência de contexto — follow-up desenho / grounding de code (ago/2026).
+DRAWING_CONTEXT_INTELLIGENCE_CASES = [
+    {
+        "id": "drawing_confirm_manual_review_intent",
+        "message": "confirmar revisão manual do item pendente no relatório do desenho 90261899",
+        "expect_intent": "drawing_report_adjustment",
+        "expect_requires_llm": False,
+    },
+    {
+        "id": "drawing_ground_code_from_focus",
+        "message": "buscar desenho do produto",
+        "memory_snapshot": {"operationalFocus": {"productCode": "90261899"}},
+        "expect_grounded_code": "90261899",
+    },
+    {
+        "id": "drawing_no_code_without_focus",
+        "message": "buscar desenho do produto",
+        "memory_snapshot": {},
+        "expect_grounded_code": None,
+        "expect_catalog_empty": True,
+    },
+]
+
 INTENT_CASES = [
     ("analise o desenho 90260140", ChatProductQueryIntent.ANALYSER),
     ("validar pdf do desenho tecnico 90264130", ChatProductQueryIntent.ANALYSER),
