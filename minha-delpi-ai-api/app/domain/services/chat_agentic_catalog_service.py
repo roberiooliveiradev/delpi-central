@@ -109,14 +109,115 @@ class ChatAgenticCatalogService:
         message: str,
         allowed_action_ids: list[str] | None,
         repository: ExternalActionCatalogRepositoryPort | None,
+        *,
+        memory_snapshot: dict | None = None,
+        exclude_action_ids: set[str] | None = None,
     ) -> list[dict[str, Any]]:
         ranked = cls.build_ranked_candidates(message, allowed_action_ids, repository)
+        excluded = {
+            str(item).strip() for item in (exclude_action_ids or set()) if str(item).strip()
+        }
+        product_code = cls._resolve_focus_product_code(message, memory_snapshot)
+        slim_entries: list[dict[str, Any]] = []
 
-        return [
-            slim
-            for action in ranked
-            if (slim := ChatAgenticActionSchemaService.build_slim_action(action))
-        ]
+        for action in ranked:
+            action_id = str(action.get("actionId") or "").strip()
+
+            if not action_id or action_id in excluded:
+                continue
+
+            slim = ChatAgenticActionSchemaService.build_slim_action(action)
+
+            if not slim:
+                continue
+
+            if product_code:
+                slim = cls._inject_product_code_examples(slim, product_code)
+            elif cls._requires_product_code(slim) and not (
+                ChatProductQueryIntentService.extract_product_code(message or "")
+            ):
+                # Sem código groundable neste turno — não oferecer a action ao planner.
+                continue
+
+            slim_entries.append(slim)
+
+        return slim_entries
+
+    @classmethod
+    def _resolve_focus_product_code(
+        cls,
+        message: str | None,
+        memory_snapshot: dict | None,
+    ) -> str | None:
+        from app.domain.services.chat_snapshot_operational_focus import (
+            ChatSnapshotOperationalFocus,
+        )
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        code = ChatProductQueryIntentService.extract_product_code(message or "")
+
+        if code:
+            return code
+
+        if not isinstance(memory_snapshot, dict):
+            return None
+
+        from_items = ChatUserContextItemService.resolve_product_code_from_items(
+            memory_snapshot.get("userContextItems"),
+        )
+
+        if from_items:
+            return from_items
+
+        focus = ChatSnapshotOperationalFocus.get(memory_snapshot)
+
+        if isinstance(focus, dict):
+            token = str(focus.get("productCode") or "").strip()
+
+            if token and ChatProductQueryIntentService.is_plausible_product_code(token):
+                return token
+
+        return None
+
+    @classmethod
+    def _requires_product_code(cls, slim: dict[str, Any]) -> bool:
+        for parameter in slim.get("parameters") or []:
+            if not isinstance(parameter, dict):
+                continue
+
+            name = str(parameter.get("name") or "").strip()
+
+            if name in {"code", "productCode", "product_code"} and (
+                parameter.get("required") or parameter.get("in") == "path"
+            ):
+                return True
+
+        return False
+
+    @classmethod
+    def _inject_product_code_examples(
+        cls,
+        slim: dict[str, Any],
+        product_code: str,
+    ) -> dict[str, Any]:
+        enriched = dict(slim)
+        example = dict(enriched.get("exampleArguments") or {})
+
+        for name in ("code", "productCode", "product_code"):
+            for parameter in enriched.get("parameters") or []:
+                if not isinstance(parameter, dict):
+                    continue
+
+                if str(parameter.get("name") or "").strip() == name:
+                    example[name] = product_code
+
+        if example:
+            enriched["exampleArguments"] = example
+            enriched["operationalFocusProductCode"] = product_code
+
+        return enriched
 
     @classmethod
     def describe_catalog(

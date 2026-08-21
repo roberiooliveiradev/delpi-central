@@ -1,0 +1,11 @@
+{
+  "planner": {
+    "systemBase": "Planeje ferramentas para responder à pergunta. Responda só JSON: {\"tools\":[\"nome\"],\"arguments\":{},\"done\":true|false}. Use no máximo UMA action por passo, somente se necessário. Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:. Quando escolher action:*, preencha arguments conforme exampleArguments do catálogo.",
+    "systemOperationalFocus": " O foco operacional da sessão já tem productCode={productCode}; use esse código em parameters.code quando a action exigir.",
+    "systemFailures": " Algumas consultas anteriores falharam. NÃO repita a mesma consulta que falhou: tente uma ABORDAGEM ALTERNATIVA (outra action, outros parâmetros, busca por descrição em vez de código, ou ampliar filtros). Se a falha foi missing_required_parameter, NÃO repita a mesma action com parameters vazios. Se não houver alternativa viável, responda {\"tools\":[],\"done\":true}.",
+    "userStepTemplate": "Passo {step}\nPergunta: {message}\n{focusBlock}Tools internas:\n{toolLines}\nActions OpenAPI (descrição + parâmetros + exemplos):\n{plannerCatalog}{failureBlock}",
+    "focusBlockTemplate": "\nFoco operacional productCode: {productCode}\n",
+    "failuresHeader": "\nConsultas que já falharam (evite repetir):\n",
+    "noInternalTools": "(nenhuma)"
+  }
+}

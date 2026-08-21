@@ -58,10 +58,18 @@ class ChatAgenticToolLoopService:
             return tool_context
 
         max_steps = settings["max_steps"]
+        from app.domain.services.chat_tool_grounding_context_service import (
+            ChatToolGroundingContextService,
+        )
+
+        memory_snapshot = ChatToolGroundingContextService.current_memory_snapshot()
+        invalid_action_ids: set[str] = set()
         catalog_keys, catalog_schemas = self._build_catalog(
             message,
             allowed_tool_names,
             allowed_action_ids,
+            memory_snapshot=memory_snapshot,
+            exclude_action_ids=invalid_action_ids,
         )
 
         if not catalog_keys:
@@ -108,6 +116,7 @@ class ChatAgenticToolLoopService:
                 catalog_schemas,
                 step=step,
                 failures=failures,
+                memory_snapshot=memory_snapshot,
             )
 
             if not plan.get("tools"):
@@ -159,7 +168,7 @@ class ChatAgenticToolLoopService:
                     action_id = tool_name.split(":", 1)[1].strip()
                     resolved_action_id = action_id
 
-                    if action_id in executed_action_ids:
+                    if action_id in executed_action_ids or action_id in invalid_action_ids:
                         continue
 
                     resolved_tool_name = "execute_external_action"
@@ -167,6 +176,20 @@ class ChatAgenticToolLoopService:
                         "actionId": action_id,
                         **tool_arguments,
                     }
+
+                    from app.domain.services.chat_agentic_catalog_service import (
+                        ChatAgenticCatalogService,
+                    )
+
+                    focus_code = ChatAgenticCatalogService._resolve_focus_product_code(
+                        message,
+                        memory_snapshot,
+                    )
+                    parameters = dict(tool_arguments.get("parameters") or {})
+
+                    if focus_code and not parameters.get("code"):
+                        parameters["code"] = focus_code
+                        tool_arguments["parameters"] = parameters
 
                 try:
                     result = self.execute_tool_use_case.execute(
@@ -224,6 +247,20 @@ class ChatAgenticToolLoopService:
                             resolved_action_id or resolved_tool_name,
                         )
                     )
+                    if self._is_validation_slot_failure(failure_metadata) and resolved_action_id:
+                        invalid_action_ids.add(resolved_action_id)
+                        catalog_keys, catalog_schemas = self._build_catalog(
+                            message,
+                            allowed_tool_names,
+                            allowed_action_ids,
+                            memory_snapshot=memory_snapshot,
+                            exclude_action_ids=invalid_action_ids,
+                        )
+                        catalog_action_ids = [
+                            item.split(":", 1)[1]
+                            for item in catalog_keys
+                            if item.startswith("action:")
+                        ]
                     continue
 
                 result_metadata = {
@@ -260,6 +297,20 @@ class ChatAgenticToolLoopService:
                             resolved_action_id or result.name,
                         )
                     )
+                    if self._is_validation_slot_failure(result_metadata) and resolved_action_id:
+                        invalid_action_ids.add(resolved_action_id)
+                        catalog_keys, catalog_schemas = self._build_catalog(
+                            message,
+                            allowed_tool_names,
+                            allowed_action_ids,
+                            memory_snapshot=memory_snapshot,
+                            exclude_action_ids=invalid_action_ids,
+                        )
+                        catalog_action_ids = [
+                            item.split(":", 1)[1]
+                            for item in catalog_keys
+                            if item.startswith("action:")
+                        ]
                     continue
 
                 context_blocks.append(
@@ -312,6 +363,16 @@ class ChatAgenticToolLoopService:
         }
 
         return merged
+
+    @staticmethod
+    def _is_validation_slot_failure(metadata: dict) -> bool:
+        kind = str((metadata or {}).get("errorKind") or "").strip()
+
+        return kind in {
+            "missing_required_parameter",
+            "missing_path_parameter",
+            "unknown_parameter",
+        }
 
     @staticmethod
     def _looks_like_failure(metadata: dict) -> bool:
@@ -405,6 +466,9 @@ class ChatAgenticToolLoopService:
         message: str,
         allowed_tool_names: list[str] | None,
         allowed_action_ids: list[str] | None,
+        *,
+        memory_snapshot: dict | None = None,
+        exclude_action_ids: set[str] | None = None,
     ) -> tuple[list[str], list[dict]]:
         from app.domain.services.chat_agentic_catalog_service import (
             ChatAgenticCatalogService,
@@ -422,6 +486,8 @@ class ChatAgenticToolLoopService:
             message,
             allowed_action_ids,
             self.external_action_repository,
+            memory_snapshot=memory_snapshot,
+            exclude_action_ids=exclude_action_ids,
         )
 
         for action in slim_actions:
@@ -440,9 +506,16 @@ class ChatAgenticToolLoopService:
         *,
         step: int,
         failures: list[str] | None = None,
+        memory_snapshot: dict | None = None,
     ) -> dict:
         from app.domain.services.chat_agentic_action_schema_service import (
             ChatAgenticActionSchemaService,
+        )
+        from app.domain.services.chat_agentic_catalog_service import (
+            ChatAgenticCatalogService,
+        )
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
         )
 
         planner_catalog = ChatAgenticActionSchemaService.format_planner_catalog(
@@ -453,28 +526,53 @@ class ChatAgenticToolLoopService:
             for item in catalog
             if item.startswith("tool:")
         ]
-
-        system_content = (
-            "Planeje ferramentas para responder à pergunta. "
-            'Responda só JSON: {"tools":["nome"],"arguments":{},"done":true|false}. '
-            "Use no máximo UMA action por passo, somente se necessário. "
-            "Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:. "
-            "Quando escolher action:*, preencha arguments conforme exampleArguments do catálogo."
+        no_tools = ChatAssistantContentService.get(
+            "agentic_planner",
+            "planner",
+            "noInternalTools",
+            default="(nenhuma)",
         )
+        system_content = ChatAssistantContentService.get(
+            "agentic_planner",
+            "planner",
+            "systemBase",
+        )
+
+        focus_code = ChatAgenticCatalogService._resolve_focus_product_code(
+            message,
+            memory_snapshot,
+        )
+        focus_block = ""
+
+        if focus_code:
+            system_content += ChatAssistantContentService.format(
+                "agentic_planner",
+                "planner",
+                "systemOperationalFocus",
+                productCode=focus_code,
+            )
+            focus_block = ChatAssistantContentService.format(
+                "agentic_planner",
+                "planner",
+                "focusBlockTemplate",
+                productCode=focus_code,
+            )
 
         failure_block = ""
 
         if failures:
             recent = failures[-5:]
-            system_content += (
-                " Algumas consultas anteriores falharam. NÃO repita a mesma consulta "
-                "que falhou: tente uma ABORDAGEM ALTERNATIVA (outra action, outros "
-                "parâmetros, busca por descrição em vez de código, ou ampliar filtros). "
-                'Se não houver alternativa viável, responda {"tools":[],"done":true}.'
+            system_content += ChatAssistantContentService.get(
+                "agentic_planner",
+                "planner",
+                "systemFailures",
             )
-            failure_block = "\nConsultas que já falharam (evite repetir):\n" + "\n".join(
-                f"- {item}" for item in recent
+            failure_header = ChatAssistantContentService.get(
+                "agentic_planner",
+                "planner",
+                "failuresHeader",
             )
+            failure_block = failure_header + "\n".join(f"- {item}" for item in recent)
 
         try:
             raw = self.llm_gateway.generate(
@@ -485,11 +583,16 @@ class ChatAgenticToolLoopService:
                     },
                     {
                         "role": "user",
-                        "content": (
-                            f"Passo {step + 1}\nPergunta: {message[:1200]}\n"
-                            f"Tools internas:\n" + "\n".join(tool_lines or ["(nenhuma)"]) + "\n"
-                            f"Actions OpenAPI (descrição + parâmetros + exemplos):\n{planner_catalog}"
-                            f"{failure_block}"
+                        "content": ChatAssistantContentService.format(
+                            "agentic_planner",
+                            "planner",
+                            "userStepTemplate",
+                            step=step + 1,
+                            message=message[:1200],
+                            focusBlock=focus_block,
+                            toolLines="\n".join(tool_lines or [no_tools]),
+                            plannerCatalog=planner_catalog,
+                            failureBlock=failure_block,
                         ),
                     },
                 ]
