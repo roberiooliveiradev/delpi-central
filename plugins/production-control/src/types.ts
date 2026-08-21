@@ -476,10 +476,13 @@ export type MachineLoadWithdrawPayload = MachineLoadPayload & {
   withdrawal: MachineLoadWithdrawal;
 };
 
-/** Resultado de mover uma operação para outro centro de trabalho. */
+/** Resultado de mover uma operação (ou conjunto no CT) para outro centro. */
 export type MachineLoadTransfer = {
   production_order: string;
-  operation_code: string;
+  operation_code: string | null;
+  order_number?: string;
+  operation_count?: number;
+  scope?: "operation" | "conjunto_at_center";
   source_work_center: string;
   target_work_center: string;
   target_work_center_name: string | null;

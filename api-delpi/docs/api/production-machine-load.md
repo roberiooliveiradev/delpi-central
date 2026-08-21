@@ -46,11 +46,13 @@ Constantes canônicas em `app/domain/totvs/protheus_operation_appointments.py`.
 
 | `production_status` | Regra |
 |---|---|
-| `in_progress` | Apontamento com `HZA_STATUS = '1'` (em execução), `HZA_DTINI` preenchida e início dentro da janela de recência (`ACTIVE_APPOINTMENT_LOOKBACK_DAYS`) |
-| `started` | A operação já teve apontamento no histórico, mas nenhum ativo agora |
-| `not_started` | Sem apontamento na `HZA010` |
+| `in_progress` | Apontamento com `HZA_STATUS = '1'` (em execução), `HZA_DTINI` preenchida, início dentro da janela de recência (`ACTIVE_APPOINTMENT_LOOKBACK_DAYS`) **e OP não encerrada** (`SC2.C2_DATRF` vazia) |
+| `started` | A operação já teve apontamento no histórico, ou a OP está encerrada no SC2 |
+| `not_started` | Sem apontamento na `HZA010` e OP em aberto |
 
-A janela de recência existe porque a base tem milhares de apontamentos abertos desde 2023 — `HZA_STATUS = '1'` sozinho marcaria como “rodando” operações esquecidas.
+A janela de recência existe porque a base tem milhares de apontamentos abertos desde 2023 — `HZA_STATUS = '1'` sozinho marcaria como “rodando” operações esquecidas. O histórico para «Já apontada» também é limitado (`APPOINTMENT_HISTORY_LOOKBACK_DAYS`); por isso o enrich do snapshot consulta também `SC2.C2_DATRF`.
+
+**O encerramento da OP manda sobre a HZA.** Com `C2_DATRF` preenchida a operação nunca é `in_progress`, mesmo com apontamento aberto e recente: o operador que não encerra no coletor deixaria a fila mostrando «Em produção» para sempre. Nesse caso o operador e a hora do último apontamento continuam visíveis, só que sob o status `started`. A regra vale nos dois caminhos — coluna `order_is_finished` na listagem (`build_operations_query`) e flags do enrich (`build_order_finish_flags_query`) — e mora num único ponto: `_production_status` em `machine_load_operation_mapper.py`. O predicado SQL canônico é `order_finished_predicate_sql` (`protheus_production_orders.py`), usado também no `in_production_count` das abas e na ordenação.
 
 **Operações em produção sempre aparecem**, mesmo com `H8_DTINI` anterior à janela pedida: o filtro de data é aplicado com `OR` contra o predicado de apontamento ativo, porque quem está na máquina agora costuma ter sido programado ontem. A ordenação também sobe essas linhas para o topo da fila.
 

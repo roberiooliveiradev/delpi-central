@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  filterActiveMachineLoadOperations,
+  isMachineLoadFinishedOperation,
   isMachineLoadStarted,
   machineLoadRowModifierClass,
   machineLoadStatusBadge,
@@ -44,5 +46,21 @@ describe("machineLoadStatus", () => {
         is_in_production: true,
       }),
     ).toBe("ppc-load__row--running");
+  });
+
+  it("filtra operações finalizadas mantendo as em produção", () => {
+    const rows = [
+      { production_status: "started" as const, is_in_production: false },
+      { production_status: "in_progress" as const, is_in_production: true },
+      { production_status: "not_started" as const, is_in_production: false },
+      { production_status: "started" as const, is_in_production: true },
+    ];
+    expect(filterActiveMachineLoadOperations(rows)).toEqual([
+      { production_status: "in_progress", is_in_production: true },
+      { production_status: "not_started", is_in_production: false },
+      { production_status: "started", is_in_production: true },
+    ]);
+    expect(isMachineLoadFinishedOperation(rows[0]!)).toBe(true);
+    expect(isMachineLoadFinishedOperation(rows[3]!)).toBe(false);
   });
 });

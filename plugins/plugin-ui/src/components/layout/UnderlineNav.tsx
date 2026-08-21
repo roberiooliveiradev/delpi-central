@@ -1,4 +1,9 @@
-import type { KeyboardEvent, ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 
@@ -26,10 +31,20 @@ export type UnderlineNavClassNames = {
   count: string;
 };
 
+export type UnderlineNavLayout = "row" | "wrap";
+export type UnderlineNavDensity = "default" | "compact";
+
 export type UnderlineNavProps = {
   items: UnderlineNavItem[];
   activeId: string;
   mode?: "navigation" | "tabs";
+  /**
+   * `row` — faixa horizontal com scroll (padrão).
+   * `wrap` — quebra em linhas para expor todos os itens sem esconder no overflow.
+   */
+  layout?: UnderlineNavLayout;
+  /** `compact` reduz padding/fonte — útil com muitos itens curtos (ex.: CTs). */
+  density?: UnderlineNavDensity;
   classNames: UnderlineNavClassNames;
   className?: string;
   "aria-label"?: string;
@@ -50,13 +65,34 @@ export function UnderlineNav({
   items,
   activeId,
   mode = "navigation",
+  layout = "row",
+  density = "default",
   classNames,
   className,
   "aria-label": ariaLabel = "Navegação",
 }: UnderlineNavProps) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (layout !== "row") return;
+    const root = scrollerRef.current;
+    if (!root) return;
+    const active = root.querySelector<HTMLElement>(
+      'button[data-underline-nav-item][aria-selected="true"], button[data-underline-nav-item][aria-current="page"]',
+    );
+    if (active && typeof active.scrollIntoView === "function") {
+      active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    }
+  }, [activeId, layout, items.length]);
+
   if (!items.length) return null;
 
-  const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const rootClass = [
+    classNames.root,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "Home" && event.key !== "End") {
@@ -115,19 +151,28 @@ export function UnderlineNav({
     </>
   );
 
+  const scroller = (
+    <div
+      ref={scrollerRef}
+      className={classNames.scroller}
+      role={mode === "tabs" ? "tablist" : undefined}
+      aria-label={mode === "tabs" ? ariaLabel : undefined}
+    >
+      {itemsContent}
+    </div>
+  );
+
   if (mode === "tabs") {
     return (
-      <div className={rootClass}>
-        <div className={classNames.scroller} role="tablist" aria-label={ariaLabel}>
-          {itemsContent}
-        </div>
+      <div className={rootClass} data-layout={layout} data-density={density}>
+        {scroller}
       </div>
     );
   }
 
   return (
-    <nav className={rootClass} aria-label={ariaLabel}>
-      <div className={classNames.scroller}>{itemsContent}</div>
+    <nav className={rootClass} aria-label={ariaLabel} data-layout={layout} data-density={density}>
+      {scroller}
     </nav>
   );
 }

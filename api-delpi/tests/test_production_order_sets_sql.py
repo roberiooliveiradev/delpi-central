@@ -16,6 +16,14 @@ def test_summary_query_filters_by_branch_and_caps_recursion() -> None:
     assert params == ("01", MAX_BOM_DEPTH)
 
 
+def test_open_universe_excludes_orders_with_finish_date() -> None:
+    """Encerrada (C2_DATRF) com saldo residual não puxa o conjunto para o detector."""
+    query, _ = sql.build_incomplete_sets_summary_query(branch="01")
+
+    assert "C2_DATRF IS NULL OR LTRIM(RTRIM(C2_DATRF)) = ''" in query
+    assert "OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = ''" in query
+
+
 def test_consolidated_summary_spans_valid_branches() -> None:
     query, params = sql.build_incomplete_sets_summary_query(branch=None)
 

@@ -270,7 +270,42 @@ def test_second_visit_reads_snapshot_without_operations_pull() -> None:
     assert payload["snapshot"]["seeded"] is False
     assert "operations" not in {name for name, _ in gateway.calls}
     assert "work_centers" not in {name for name, _ in gateway.calls}
-    assert "appointment_status" in {name for name, _ in gateway.calls}
+    # Status HZA fica em cache curto — troca/releitura de CT não reconsulta api-delpi.
+    assert "appointment_status" not in {name for name, _ in gateway.calls}
+
+
+def test_switching_work_center_reuses_live_status_cache() -> None:
+    from production_control_app.application.services.machine_load_live_status_cache import (
+        clear_live_status_cache,
+    )
+
+    clear_live_status_cache()
+    gateway = FakeGateway()
+    snapshots = FakeSnapshotRepo()
+    service = _service(gateway, snapshots)
+    service.build(_user(*FULL_PERMS), branch="01", work_center="CT-01A")
+    first_status_calls = sum(1 for name, _ in gateway.calls if name == "appointment_status")
+    assert first_status_calls == 1
+    gateway.calls.clear()
+
+    payload = service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
+    assert payload["selected"]["work_center"] == "CT-02"
+    assert "appointment_status" not in {name for name, _ in gateway.calls}
+
+
+def test_refresh_invalidates_live_status_cache() -> None:
+    from production_control_app.application.services.machine_load_live_status_cache import (
+        clear_live_status_cache,
+    )
+
+    clear_live_status_cache()
+    gateway = FakeGateway()
+    snapshots = FakeSnapshotRepo()
+    service = _service(gateway, snapshots)
+    service.build(_user(*FULL_PERMS), branch="01")
+    gateway.calls.clear()
+    service.refresh(_user(*FULL_PERMS), branch="01", work_center="CT-01A")
+    assert sum(1 for name, _ in gateway.calls if name == "appointment_status") == 1
 
 
 def test_refresh_upserts_again_and_replaces_queue() -> None:
@@ -1496,6 +1531,41 @@ def test_transfer_operation_moves_it_to_the_end_of_the_target_queue() -> None:
     assert transfer["target_work_center"] == "CT-02"
     assert transfer["returned_to_origin"] is False
     assert "CT-02" in transfer["message"]
+
+
+def test_transfer_conjunto_moves_only_ops_in_source_center() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    start, end = _seed_priority_snapshot(snapshots)
+
+    # Antes: 10840401003 em CT-01A e 10840402001 em CT-02 (mesmo conjunto).
+    payload = service.transfer_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="10840401003",
+        source_work_center="CT-01A",
+        target_work_center="CT-02",
+        work_center="CT-02",
+    )
+
+    assert _queue(snapshots, start, end, "CT-01A") == ["99900001001:01", "88800001001:02"]
+    assert _queue(snapshots, start, end, "CT-02") == [
+        "77700001001:01",
+        "10840402001:05",
+        "10840401003:03",
+    ]
+    transfer = payload["transfer"]
+    assert transfer["order_number"] == "108404"
+    assert transfer["operation_count"] == 1
+    assert transfer["scope"] == "conjunto_at_center"
+    assert "CT-01A" in transfer["message"]
+    # A OP do conjunto que já estava no CT-02 permanece sem marca de transferência.
+    kept = next(
+        item
+        for item in payload["selected"]["items"]
+        if item["production_order"] == "10840402001"
+    )
+    assert "transferred_from" not in kept
 
 
 def test_transfer_operation_updates_center_name_and_counts() -> None:

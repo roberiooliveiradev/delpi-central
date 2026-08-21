@@ -21,7 +21,6 @@ from app.domain.services.production.machine_load_appointment_status_mapper impor
 from app.domain.totvs.protheus_operation_appointments import (
     ACTIVE_APPOINTMENT_LOOKBACK_DAYS,
     APPOINTMENT_HISTORY_LOOKBACK_DAYS,
-    PRODUCTION_STATUS_NOT_STARTED,
 )
 
 
@@ -78,10 +77,6 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             appointment_active_since=active_since,
             appointment_history_since=history_since,
         )
-        mapped = MachineLoadAppointmentStatusMapper.map_rows(rows)
-        by_key = {
-            (item["production_order"], item["operation_code"]): item for item in mapped
-        }
 
         wanted: list[tuple[str, str]] = []
         for raw in items:
@@ -91,29 +86,45 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
                 wanted.append((order, operation))
 
         # Sem lista explícita: devolve o agregado da filial (útil em testes).
-        keys = wanted or list(by_key.keys())
+        keys = wanted or [
+            (
+                str(row.get("production_order") or "").strip(),
+                str(row.get("operation_code") or "").strip(),
+            )
+            for row in rows
+        ]
+        order_codes = sorted({order for order, _operation in keys if order})
+        # O encerramento entra antes do mapeamento: é ele que derruba o
+        # apontamento aberto que o operador esqueceu no coletor.
+        finished_by_order = self._finished_orders_by_code(
+            branch=branch, production_orders=order_codes
+        )
+
+        mapped = MachineLoadAppointmentStatusMapper.map_rows(
+            rows, finished_by_order=finished_by_order
+        )
+        by_key = {
+            (item["production_order"], item["operation_code"]): item for item in mapped
+        }
+
         result_items: list[dict] = []
         for order, operation in keys:
             hit = by_key.get((order, operation))
             if hit is not None:
-                result_items.append(hit)
-            else:
-                result_items.append(
+                result_items.append(dict(hit))
+                continue
+            finish = finished_by_order.get(order)
+            result_items.append(
+                MachineLoadAppointmentStatusMapper.map_row(
                     {
                         "branch": branch,
                         "production_order": order,
                         "operation_code": operation,
-                        "production_status": PRODUCTION_STATUS_NOT_STARTED,
-                        "is_in_production": False,
-                        "production_started_date": None,
-                        "production_started_time": None,
-                        "active_operator_code": None,
-                        "active_operator_name": None,
-                        "active_operator_count": 0,
-                        "appointment_count": 0,
-                        "last_appointment_date": None,
-                    }
+                    },
+                    order_is_finished=finish is not None,
+                    order_finish_date=(finish or {}).get("finish_date"),
                 )
+            )
 
         return {
             "branch": branch,
@@ -125,3 +136,32 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
                 ),
             },
         }
+
+    def _finished_orders_by_code(
+        self, *, branch: str, production_orders: list[str]
+    ) -> dict[str, dict[str, Any]]:
+        if not production_orders or not hasattr(
+            self._repository, "get_order_finish_flags"
+        ):
+            return {}
+        rows = self._repository.get_order_finish_flags(
+            branch=branch, production_orders=production_orders
+        )
+        out: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            order = str(row.get("production_order") or "").strip()
+            if not order:
+                continue
+            is_finished = int(float(row.get("is_finished") or 0)) > 0
+            if not is_finished:
+                continue
+            finish_raw = row.get("finish_date")
+            finish_date = None
+            if finish_raw is not None and str(finish_raw).strip():
+                text = str(finish_raw).strip()
+                if text.isdigit() and len(text) == 8:
+                    finish_date = f"{text[0:4]}-{text[4:6]}-{text[6:8]}"
+                else:
+                    finish_date = text[:10]
+            out[order] = {"finish_date": finish_date}
+        return out

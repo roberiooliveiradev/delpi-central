@@ -54,6 +54,28 @@ describe("UnderlineNav", () => {
     );
   });
 
+  it("expõe layout wrap e densidade compacta via data-attrs", () => {
+    const cn = underlineNavBemClasses("ppc");
+    const { container } = render(
+      <UnderlineNav
+        mode="tabs"
+        layout="wrap"
+        density="compact"
+        classNames={cn}
+        activeId="ct-01"
+        aria-label="Centros de trabalho"
+        items={[
+          { id: "ct-01", label: "CT-01", controlId: "panel" },
+          { id: "ct-02", label: "CT-02", controlId: "panel" },
+        ]}
+      />,
+    );
+
+    const root = container.querySelector(".delpi-ui-underline-nav");
+    expect(root?.getAttribute("data-layout")).toBe("wrap");
+    expect(root?.getAttribute("data-density")).toBe("compact");
+  });
+
   it("oferece tabs com roving tabindex e teclado", () => {
     const first = vi.fn();
     const second = vi.fn();

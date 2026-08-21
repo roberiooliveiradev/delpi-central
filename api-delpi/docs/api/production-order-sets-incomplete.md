@@ -12,7 +12,7 @@ Um conjunto deve nascer completo: a OP mãe do produto raiz e uma OP filha para 
 
 ```mermaid
 flowchart TD
-  Open["SC2: OPs com saldo aberto"] --> Sets["Conjuntos: filial + C2_NUM + C2_ITEM"]
+  Open["SC2: OPs abertas (saldo + C2_DATRF vazio)"] --> Sets["Conjuntos: filial + C2_NUM + C2_ITEM"]
   Sets --> Orders["Todas as OPs do conjunto, inclusive encerradas"]
   Orders --> Root["Produto raiz: sequência 001"]
   Root --> Bom["SG1 recursivo, vigente na emissão da mãe"]
@@ -27,7 +27,7 @@ flowchart TD
 | Decisão | Valor |
 |---|---|
 | Chave do conjunto | `C2_FILIAL + C2_NUM + C2_ITEM` — ver [ordem-producao-chave.md](./padroes-totvs/ordem-producao-chave.md) |
-| Universo | Conjuntos com ao menos uma OP em aberto (`C2_QUANT > C2_QUJE`) |
+| Universo | Conjuntos com ao menos uma OP em aberto (`C2_QUANT > C2_QUJE` **e** `C2_DATRF` vazio) |
 | Conferência | **Todas** as OPs do conjunto, inclusive encerradas |
 | Estrutura | Explodida multinível a partir do raiz, comparação por código distinto |
 | Componentes que devem ter OP | `B1_TIPO IN ('PI','PA')`, excluindo o próprio raiz; `MP` nunca entra |
@@ -110,7 +110,7 @@ A conferência é um **batch com tabelas temporárias** (`#SET_ROOT`, `#BOM`, `#
 | ⚠ Versão anterior em CTE única | **20,4 s** |
 | ⚠ Versão com `RTRIM` no join da SG1 | timeout |
 
-Cache: namespace `production-order-sets-incomplete-v1`, TTL `QUERY_CACHE_TTL_SECONDS`.
+Cache: namespace `production-order-sets-incomplete-v2`, TTL `QUERY_CACHE_TTL_SECONDS`.
 
 ## Código
 

@@ -39,19 +39,25 @@ Estados derivados canônicos:
 
 | Estado | Regra |
 |---|---|
-| `in_progress` | Apontamento aberto **e** iniciado dentro da janela de recência |
-| `started` | Já teve apontamento no histórico, nenhum ativo agora |
+| `in_progress` | Apontamento aberto, iniciado dentro da janela de recência **e** OP em aberto no SC2 |
+| `started` | Já teve apontamento no histórico, nenhum ativo agora — ou a OP está encerrada |
 | `not_started` | Sem registro na `HZA010` |
+
+## Encerramento da OP manda sobre a HZA
+
+O apontamento fica aberto quando o operador não encerra no coletor. Se a OP já foi encerrada (`SC2.C2_DATRF` preenchida), esse registro é resíduo: a operação **não** está rodando. Combine sempre o predicado de apontamento ativo com `order_finished_predicate_sql` (`protheus_production_orders.py`) — no estado da linha, no contador «em produção» e na ordenação.
 
 ## O que fazer
 
 - Usar `active_appointment_predicate_sql` e `active_marker_sql`; o `MAX` do marcador elege o apontamento mais recente numa única agregação.
+- Cruzar com `C2_DATRF` antes de afirmar "rodando agora".
 - Agregar por operação e trazer contagens (`active_appointment_count`, `appointment_count`) em vez de duplicar linhas da `SH8`.
 - Combinar o filtro de data programada com **`OR` apontamento ativo**: quem está na máquina agora costuma ter sido programado ontem e sumiria da janela.
 
 ## O que não fazer
 
 - Tratar `HZA_STATUS = '1'` como "rodando" sem janela de recência.
+- Manter como "rodando" operação de OP encerrada (`C2_DATRF` preenchida).
 - Buscar o operador em `SRA010`/`RD0010`.
 - Fazer `JOIN` de `SYS_USR` fora do agregado de apontamentos.
 - Assumir um apontamento por operação: há vários (turnos, operadores, retomadas).

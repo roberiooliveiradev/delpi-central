@@ -13,6 +13,7 @@ from app.infrastructure.persistence.totvs.production.machine_load_sql import (
     build_appointment_status_query,
     build_operations_count_query,
     build_operations_query,
+    build_order_finish_flags_query,
     build_work_centers_query,
 )
 
@@ -85,5 +86,20 @@ class MachineLoadRepository(BaseRepository, MachineLoadRepositoryPort):
             appointment_history_since=appointment_history_since,
         )
         # Status vivo: sem cache — o PCP precisa refletir o chão de fábrica.
+        with self:
+            return self.execute_query(query, params) or []
+
+    def get_order_finish_flags(
+        self,
+        *,
+        branch: str,
+        production_orders: list[str],
+    ) -> list[dict[str, Any]]:
+        built = build_order_finish_flags_query(
+            branch=branch, production_orders=production_orders
+        )
+        if built is None:
+            return []
+        query, params = built
         with self:
             return self.execute_query(query, params) or []

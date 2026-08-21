@@ -13,10 +13,23 @@ class MachineLoadAppointmentStatusMapper:
     """Converte linhas agregadas da HZA no mesmo contrato de status da carga máquina."""
 
     @classmethod
-    def map_row(cls, row: dict[str, Any]) -> dict[str, Any]:
+    def map_row(
+        cls,
+        row: dict[str, Any],
+        *,
+        order_is_finished: bool = False,
+        order_finish_date: str | None = None,
+    ) -> dict[str, Any]:
+        """Converte a linha da HZA; o encerramento da OP entra como fato do SC2.
+
+        A regra de estado é única (``MachineLoadOperationMapper``): OP encerrada
+        nunca fica ``in_progress``, mesmo com apontamento aberto no coletor.
+        """
         mapped = MachineLoadOperationMapper.map_operation(
             {
                 "branch": row.get("branch"),
+                "order_is_finished": 1 if order_is_finished else 0,
+                "order_finish_date": order_finish_date,
                 "work_center": "",
                 "work_center_name": "",
                 "scheduled_date": None,
@@ -54,5 +67,22 @@ class MachineLoadAppointmentStatusMapper:
         }
 
     @classmethod
-    def map_rows(cls, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return [cls.map_row(row) for row in rows]
+    def map_rows(
+        cls,
+        rows: list[dict[str, Any]],
+        *,
+        finished_by_order: dict[str, dict[str, Any]] | None = None,
+    ) -> list[dict[str, Any]]:
+        finished = finished_by_order or {}
+        mapped: list[dict[str, Any]] = []
+        for row in rows:
+            order = str(row.get("production_order") or "").strip()
+            finish = finished.get(order)
+            mapped.append(
+                cls.map_row(
+                    row,
+                    order_is_finished=finish is not None,
+                    order_finish_date=(finish or {}).get("finish_date"),
+                )
+            )
+        return mapped

@@ -242,6 +242,12 @@ No modo padrão `navigation`, preserva `nav`, botões e `aria-current="page"`. E
 `mode="tabs"`, expõe `tablist`/`tab`, `aria-selected`, `aria-controls` (via
 `item.controlId`), roving `tabIndex` e teclado Setas/Home/End.
 
+Props de densidade/overflow: `layout` (`row` | `wrap`, default `row`) e
+`density` (`default` | `compact`). Use `layout="wrap"` + `density="compact"`
+quando há muitos itens curtos (ex.: centros de trabalho na Carga máquina) para
+mostrar todos sem esconder no scroll horizontal. Em `layout="row"`, a faixa
+mantém scroll fino e traz a aba ativa para a vista.
+
 ---
 
 ## `DataRecordCard`

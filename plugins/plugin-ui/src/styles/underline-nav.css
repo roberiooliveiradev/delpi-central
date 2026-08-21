@@ -16,12 +16,36 @@
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  /* Barra fina: overflow oculto fazia dezenas de abas “sumirem” sem pista de scroll. */
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--delpi-ui-border, var(--border, #c8c8c8)) 80%, transparent) transparent;
   margin: 0;
-  padding: 0;
+  padding: 0 0 2px;
 }
 
 .delpi-ui-underline-nav__scroller::-webkit-scrollbar {
+  height: 4px;
+}
+
+.delpi-ui-underline-nav__scroller::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--delpi-ui-border, var(--border, #c8c8c8)) 85%, transparent);
+}
+
+.delpi-ui-underline-nav__scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.delpi-ui-underline-nav[data-layout="wrap"] .delpi-ui-underline-nav__scroller {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  overflow-y: visible;
+  row-gap: 0;
+  padding-bottom: 0;
+  scrollbar-width: none;
+}
+
+.delpi-ui-underline-nav[data-layout="wrap"] .delpi-ui-underline-nav__scroller::-webkit-scrollbar {
   display: none;
 }
 
@@ -51,6 +75,13 @@
     box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 180ms ease,
     transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.delpi-ui-underline-nav[data-density="compact"] .delpi-ui-underline-nav__item {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 12px;
+  gap: 4px;
 }
 
 .delpi-ui-underline-nav__item:hover {
@@ -109,6 +140,13 @@
     background 220ms ease,
     color 220ms ease,
     transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.delpi-ui-underline-nav[data-density="compact"] .delpi-ui-underline-nav__count {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 4px;
+  font-size: 0.7rem;
 }
 
 .delpi-ui-underline-nav__item--active .delpi-ui-underline-nav__count {
