@@ -18,6 +18,9 @@ describe("INTERACTION_ROOMS_CONTENT", () => {
     expect(INTERACTION_ROOMS_CONTENT.renameRoomActionLabel).toBe("Renomear conversa");
     expect(INTERACTION_ROOMS_CONTENT.deleteRoomActionLabel).toBe("Excluir conversa");
     expect(INTERACTION_ROOMS_CONTENT.deleteRoomOk).toBe("Conversa excluída.");
+    expect(INTERACTION_ROOMS_CONTENT.panelEmptyTitle).toBe("Nenhuma mensagem ainda");
+    expect(INTERACTION_ROOMS_CONTENT.panelEmptyDescription.length).toBeGreaterThan(40);
+    expect(INTERACTION_ROOMS_CONTENT.panelEmptyDescription).toMatch(/primeira mensagem/i);
   });
 });
 

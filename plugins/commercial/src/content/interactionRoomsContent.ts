@@ -163,7 +163,8 @@ export const INTERACTION_ROOMS_CONTENT = {
   panelLoadingLabel: "Abrindo a sala…",
   panelResolveError: "Não foi possível abrir a sala nesta ficha.",
   panelEmptyTitle: "Nenhuma mensagem ainda",
-  panelEmptyDescription: "A conversa deste registro fica registrada aqui.",
+  panelEmptyDescription:
+    "A conversa deste registro fica registrada aqui — mensagens, menções e anexos. Escreva a primeira mensagem abaixo (use @ para mencionar).",
   panelMissingKey: "Registro incompleto para abrir a sala.",
   dropOverlayLabel: "Solte o arquivo para anexar",
   dropzoneHint: "PDF, imagem, TXT, Word ou Excel · máx. 20 MB · até 10 arquivos",

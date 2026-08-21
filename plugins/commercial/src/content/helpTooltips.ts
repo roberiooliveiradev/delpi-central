@@ -19,6 +19,10 @@ export const CM_HELP = {
       "Clientes das carteiras que você atende, com pedidos em aberto e indicadores comerciais.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",
   },
+  interactionRooms: {
+    panel:
+      "Registra a conversa deste pedido, OP ou conta — mensagens, menções (@) e anexos ficam ligados ao registro. Use Abrir sala para o canvas completo (compartilhados, busca e contexto).",
+  },
   home: {
     overview:
       "Saudação personalizada, escopo da carteira e KPIs operacionais (follow-ups, valor aberto, atrasos) — sem BI do período. CTA contextual quando há atrasos ou tarefas urgentes.",
