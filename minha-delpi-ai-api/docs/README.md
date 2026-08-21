@@ -13,10 +13,11 @@
 | Ordem | Documento | Para quem |
 |------:|-----------|-----------|
 | 1 | [api/00-visao-geral.md](./api/00-visao-geral.md) | Auth, erros, SSE, permissões |
-| 2 | [architecture/presentation-delivered-pure-jun2026.md](./architecture/presentation-delivered-pure-jun2026.md) | Apresentação schema-first (obrigatório para rotas operacionais) |
-| 3 | [architecture/chat-intelligence-base.md](./architecture/chat-intelligence-base.md) | Pipeline de inteligência (backend) |
-| 4 | [development/guia-desenvolvimento.md](./development/guia-desenvolvimento.md) | Onde colocar código, testes, PR |
-| 5 | [api/README.md](./api/README.md) | Referência HTTP completa |
+| 2 | [**flows/README.md**](./flows/README.md) | **Mapas de todos os fluxos** (HTTP → turno → inteligência) |
+| 3 | [architecture/presentation-delivered-pure-jun2026.md](./architecture/presentation-delivered-pure-jun2026.md) | Apresentação schema-first (obrigatório para rotas operacionais) |
+| 4 | [architecture/chat-intelligence-base.md](./architecture/chat-intelligence-base.md) | Pipeline de inteligência (backend) |
+| 5 | [development/guia-desenvolvimento.md](./development/guia-desenvolvimento.md) | Onde colocar código, testes, PR |
+| 6 | [api/README.md](./api/README.md) | Referência HTTP completa |
 
 ---
 
@@ -27,6 +28,7 @@ docs/
   README.md              ← você está aqui
   api/                   # Contratos HTTP (endpoints, payloads, SSE)
   architecture/          # Pipeline, apresentação, memória, ADRs
+  flows/                 # Mapas operacionais de todos os fluxos (vigente)
   development/           # Guia do desenvolvedor, estrutura de código
   knowledge/             # Documentos RAG para agentes (não é código)
   roadmap/               # Evolução, playbooks, ondas de inteligência
@@ -56,6 +58,23 @@ Referência baseada nas rotas reais do Flask e nos tipos do plugin `minha-delpi-
 | [10-referencia-rapida-endpoints.md](./api/10-referencia-rapida-endpoints.md) | Tabela consolidada |
 | [11-skills.md](./api/11-skills.md) | Catálogo de skills |
 | [12-modelo-conceitual.md](./api/12-modelo-conceitual.md) | Entidades e relações |
+
+---
+
+## Fluxos (`docs/flows/`)
+
+Mapas operacionais vigentes (não substituem playbooks).
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [**README.md**](./flows/README.md) | Hub — matriz Fluxo × superfície × caminho |
+| [00-superficie-http.md](./flows/00-superficie-http.md) | Prefixos e inventário por domínio |
+| [01-turno-canonico-send-stream.md](./flows/01-turno-canonico-send-stream.md) | Prepare → assemble → complete; SSE |
+| [02-inteligencia-pre-llm.md](./flows/02-inteligencia-pre-llm.md) | Direct, clarify, turn analysis, modos |
+| [03-tools-rag-agentic.md](./flows/03-tools-rag-agentic.md) | Tools, parallel, agentic, RAG, web |
+| [04-operacional-e-apresentacao.md](./flows/04-operacional-e-apresentacao.md) | api-delpi → schema-first → MFE |
+| [05-dominios-especializados.md](./flows/05-dominios-especializados.md) | Anexos, desenho, SQL, texto, canvas, learning |
+| [06-workspace-agente-admin.md](./flows/06-workspace-agente-admin.md) | Agente/projeto, simulate, S2S |
 
 ---
 

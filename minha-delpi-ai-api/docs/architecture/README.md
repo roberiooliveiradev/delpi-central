@@ -11,6 +11,8 @@
 
 Contém o mapa completo de serviços (~200 entradas), roteamento api-delpi, streaming, apresentação rica, memória, web search e checklist para novas features.
 
+**Mapas de fluxo (operacional):** [`../flows/README.md`](../flows/README.md) — HTTP, turno send/stream, inteligência, tools/RAG, operacional, domínios e workspace/admin.
+
 ---
 
 ## Índice por domínio
@@ -19,6 +21,7 @@ Contém o mapa completo de serviços (~200 entradas), roteamento api-delpi, stre
 
 | Documento | Assunto |
 |-----------|---------|
+| [../flows/README.md](../flows/README.md) | **Hub de fluxos** — matriz completa + índice |
 | [chat-intelligence-base.md](./chat-intelligence-base.md) | Pipeline send/stream, serviços centrais, roteamento |
 | [chat-pre-llm-layers.md](./chat-pre-llm-layers.md) | Fases ingresso → resolução → montagem LLM |
 | [intent-routing.md](./intent-routing.md) | `ChatIntentRouterService`, intents, metadata |
