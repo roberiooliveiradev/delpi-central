@@ -310,11 +310,13 @@ class ChatStreamTurnExecutionService:
         assistant_placeholder = None
 
         if direct_answer:
-            status_key = (
-                "statusAssemblingDirectAnswer"
-                if tool_calls
-                else "statusDirectAnswer"
-            )
+            stages = list(getattr(prepared, "pipeline_stages", None) or [])
+            if "capabilities" in stages and not tool_calls:
+                status_key = "statusCapabilitiesCatalog"
+            elif tool_calls:
+                status_key = "statusAssemblingDirectAnswer"
+            else:
+                status_key = "statusDirectAnswer"
             yield {
                 "type": "status",
                 "message": ChatAssistantContentService.get("stream", status_key),

@@ -1,6 +1,7 @@
 {
   "statusConnected": "Conectado. Organizando o contexto da conversa...",
   "statusDirectAnswer": "Resposta pronta.",
+  "statusCapabilitiesCatalog": "Listando o que posso fazer nesta sessão...",
   "statusLoadingHistory": "Carregando histórico da conversa...",
   "statusSearchingKnowledge": "Consultando base de conhecimento autorizada...",
   "statusRunningTools": "Consultando sistemas e dados autorizados...",
@@ -119,10 +120,10 @@
         "detail": "Consultando a base de conhecimento autorizada."
       },
       "skipped": {
-        "verb": "Ignorado",
+        "verb": "Dispensado",
         "target": "base de conhecimento",
-        "message": "Não precisei de documentos extras desta vez.",
-        "detail": "Base de conhecimento não necessária neste turno."
+        "message": "Não precisei buscar documentos extras nesta resposta.",
+        "detail": "RAG omitido: fatos do catálogo ou das tools já bastam."
       },
       "foundSources": {
         "verb": "Encontrado",
