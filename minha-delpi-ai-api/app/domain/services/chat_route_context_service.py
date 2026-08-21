@@ -122,7 +122,6 @@ class ChatRouteContextService:
                 "nf de saida",
                 "nfe de saída",
                 "nfe de saida",
-                "notas fiscais",
                 "outbound",
             ),
         ),

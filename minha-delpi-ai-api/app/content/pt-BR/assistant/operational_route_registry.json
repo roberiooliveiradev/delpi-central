@@ -959,6 +959,7 @@
       "id": "productInvoicesGeneric",
       "domain": "product",
       "priority": 111,
+      "onMultipleMatches": "clarify",
       "match": {
         "customPredicate": "genericInvoiceRoute",
         "requiresProductIdentifier": true,

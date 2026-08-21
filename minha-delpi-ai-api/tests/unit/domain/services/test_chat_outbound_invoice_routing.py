@@ -15,6 +15,11 @@ def test_segment_from_message_notas_fiscais_de_saida():
     )
 
 
+def test_segment_from_message_generic_notas_fiscais_has_no_outbound_bias():
+    assert ChatRouteContextService.segment_from_message("ultimas notas fiscais do 90260148") is None
+    assert ChatRouteContextService.segment_from_message("notas fiscais do 90260148") is None
+
+
 def test_follow_up_notas_fiscais_de_saida():
     assert ChatFollowUpIntentService.is_operational_follow_up("notas fiscais de saída")
 

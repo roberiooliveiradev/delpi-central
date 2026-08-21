@@ -99,6 +99,7 @@ class OperationalRouteActionResolverService:
         expected_method = str(route_spec.get("method") or "GET").upper()
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")
+        matching: list[tuple[dict, dict, str]] = []
 
         for action in candidates:
             if str(action.get("method") or "GET").upper() != expected_method:
@@ -195,21 +196,117 @@ class OperationalRouteActionResolverService:
             if not reason:
                 continue
 
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action["actionId"],
-                    "parameters": parameters,
-                },
-                "reason": reason,
-                "routePresentation": (
-                    dict(route.get("presentation"))
-                    if isinstance(route.get("presentation"), dict)
-                    else {}
-                ),
-            }
+            matching.append((action, parameters, reason))
 
-        return None
+        if not matching:
+            return None
+
+        if (
+            str(route.get("onMultipleMatches") or "").strip().lower() == "clarify"
+            and len(matching) >= 2
+        ):
+            clarification = self._build_multiple_match_clarification(matching)
+
+            if clarification is not None:
+                return clarification
+
+        action, parameters, reason = matching[0]
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action["actionId"],
+                "parameters": parameters,
+            },
+            "reason": reason,
+            "routePresentation": (
+                dict(route.get("presentation"))
+                if isinstance(route.get("presentation"), dict)
+                else {}
+            ),
+        }
+
+    def _build_multiple_match_clarification(
+        self,
+        matching: list[tuple[dict, dict, str]],
+    ) -> dict | None:
+        from app.application.services.external_actions.external_action_score_gap_clarification_service import (
+            ExternalActionScoreGapClarificationService,
+        )
+
+        top = matching[0][0]
+        rival = matching[1][0]
+        label_a = ExternalActionScoreGapClarificationService._label(top)
+        label_b = ExternalActionScoreGapClarificationService._label(rival)
+        operation_a = str(top.get("operationId") or top.get("actionId") or "").strip()
+        operation_b = str(rival.get("operationId") or rival.get("actionId") or "").strip()
+
+        inbound_label = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "routeClarification",
+            "invoiceInboundLabel",
+            default="Notas fiscais de entrada",
+        )
+        outbound_label = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "routeClarification",
+            "invoiceOutboundLabel",
+            default="Notas fiscais de saída",
+        )
+
+        path_a = str(top.get("path") or "").lower()
+        path_b = str(rival.get("path") or "").lower()
+
+        if "inbound" in path_a:
+            label_a = inbound_label
+        elif "outbound" in path_a:
+            label_a = outbound_label
+
+        if "inbound" in path_b:
+            label_b = inbound_label
+        elif "outbound" in path_b:
+            label_b = outbound_label
+
+        direct_answer = ExternalActionResponseContentService.format(
+            "actionSelection",
+            "routeClarification",
+            "invoiceDirectionDirectAnswer",
+            labelA=label_a,
+            labelB=label_b,
+            default=(
+                f"Quer consultar **{label_a}** ou **{label_b}**?\n\n"
+                "Responda indicando a opção ou reformule com «entrada» ou «saída»."
+            ),
+        )
+
+        return {
+            "name": ExternalActionScoreGapClarificationService.clarification_tool_name(),
+            "arguments": {
+                "directAnswer": direct_answer,
+                "rivalIds": [
+                    str(top.get("actionId") or ""),
+                    str(rival.get("actionId") or ""),
+                ],
+                "operationIds": [operation_a, operation_b],
+                "suggestions": [
+                    {
+                        "label": label_a,
+                        "query": label_a,
+                        "operationId": operation_a,
+                    },
+                    {
+                        "label": label_b,
+                        "query": label_b,
+                        "operationId": operation_b,
+                    },
+                ],
+            },
+            "reason": ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "invoiceDirectionClarification",
+                default="Notas fiscais sem direção — clarificação entrada/saída.",
+            ),
+        }
 
     @staticmethod
     def _action_fits_route_affinity(route: dict, action: dict, *, path: str) -> bool:

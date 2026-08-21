@@ -567,7 +567,7 @@ def test_operational_route_selection_picks_inbound_invoice() -> None:
     assert selected["arguments"]["actionId"] == "inbound-invoice"
 
 
-def test_operational_route_selection_picks_generic_invoice() -> None:
+def test_operational_route_selection_generic_invoice_clarifies_direction() -> None:
     repository = _FakeRepository(
         [
             {
@@ -590,16 +590,19 @@ def test_operational_route_selection_picks_generic_invoice() -> None:
     service = ExternalActionOperationalRouteSelectionService(catalog)
 
     selected = service.select(
-        "notas fiscais do produto 90260142",
-        "notas fiscais do produto 90260142",
+        "ultimas notas fiscais do 90260142",
+        "ultimas notas fiscais do 90260142",
         allowed_action_ids=["inbound-invoice", "outbound-invoice"],
     )
 
     assert selected is not None
-    assert selected["arguments"]["actionId"] in {
-        "inbound-invoice",
-        "outbound-invoice",
-    }
+    assert selected["name"] == "clarify_route_selection"
+    assert "entrada" in str(selected["arguments"].get("directAnswer") or "").casefold()
+    assert "saída" in str(selected["arguments"].get("directAnswer") or "").casefold() or "saida" in str(
+        selected["arguments"].get("directAnswer") or ""
+    ).casefold()
+    rivals = selected["arguments"].get("rivalIds") or []
+    assert set(rivals) == {"inbound-invoice", "outbound-invoice"}
 
 
 def test_operational_route_selection_lmp_detail_by_sale() -> None:
