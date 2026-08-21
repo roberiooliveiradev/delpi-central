@@ -9,6 +9,9 @@ from app.domain.services.chat_llm_generation_context_service import (
     llm_provider_scope,
     reset_active_config,
     set_active_config,
+    mark_reasoning_fallback,
+    consume_reasoning_fallback,
+    peek_reasoning_fallback,
 )
 
 __all__ = [
@@ -18,4 +21,7 @@ __all__ = [
     "llm_provider_scope",
     "reset_active_config",
     "set_active_config",
+    "mark_reasoning_fallback",
+    "consume_reasoning_fallback",
+    "peek_reasoning_fallback",
 ]

@@ -14,6 +14,26 @@ _generation_config: ContextVar[LlmGenerationConfig | None] = ContextVar(
     default=None,
 )
 _llm_provider: ContextVar[str | None] = ContextVar("llm_provider", default=None)
+_reasoning_fallback: ContextVar[bool] = ContextVar(
+    "llm_reasoning_fallback",
+    default=False,
+)
+
+
+def mark_reasoning_fallback(used: bool = True) -> None:
+    """Marca que o texto visível veio do campo ``reasoning`` (não de ``content``)."""
+    _reasoning_fallback.set(bool(used))
+
+
+def consume_reasoning_fallback() -> bool:
+    """Lê e zera o flag — um turno consome no máximo uma vez no finalize."""
+    used = bool(_reasoning_fallback.get())
+    _reasoning_fallback.set(False)
+    return used
+
+
+def peek_reasoning_fallback() -> bool:
+    return bool(_reasoning_fallback.get())
 
 
 def get_active_config() -> LlmGenerationConfig:

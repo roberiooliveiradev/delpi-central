@@ -201,7 +201,12 @@ class ChatTurnCompletionFinalizeService:
         effect = str(context.get("responseModeEffect") or "").strip()
         has_tools = bool(tool_calls)
         is_synthesis = ChatOperationalNarrativeSynthesisService.is_llm_synthesis_effect(effect)
-        reasoning_fallback = bool(context.get("reasoningFallback"))
+
+        from app.domain.services.chat_llm_generation_context_service import (
+            consume_reasoning_fallback,
+        )
+
+        reasoning_fallback = bool(context.get("reasoningFallback")) or consume_reasoning_fallback()
 
         if has_tools and is_synthesis and not reasoning_fallback:
             # Operacional com tools já guarda em ChatOperationalLlmSynthesisTurnFinalizationService.

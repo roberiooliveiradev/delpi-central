@@ -25,7 +25,18 @@ def _visible_assistant_text(message: dict, *, finish_reason: object = None) -> s
 
     Modelos reasoning (ex. Kimi K3 / OpenRouter) às vezes devolvem só ``reasoning``
     com ``content`` nulo — sem fallback o chat vira 503 ``llm.unavailable``.
+    Se o ``reasoning`` parecer CoT/meta-instrução, não promove: usa safeFallback.
     """
+    from app.domain.services.chat_llm_generation_context_service import (
+        mark_reasoning_fallback,
+    )
+    from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+        ChatLlmSynthesisDeliveryContentService,
+    )
+    from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+        ChatLlmSynthesisLeakGuardService,
+    )
+
     content = message.get("content")
 
     if content:
@@ -33,14 +44,46 @@ def _visible_assistant_text(message: dict, *, finish_reason: object = None) -> s
 
     reasoning = message.get("reasoning")
 
-    if reasoning:
-        logger.warning(
-            "openai_compatible_empty_content_using_reasoning finish=%s",
-            finish_reason,
-        )
-        return str(reasoning).strip()
+    if not reasoning:
+        return ""
 
-    return ""
+    text = str(reasoning).strip()
+    mark_reasoning_fallback(True)
+    logger.warning(
+        "openai_compatible_empty_content_using_reasoning finish=%s",
+        finish_reason,
+    )
+
+    if ChatLlmSynthesisLeakGuardService.needs_fallback(answer=text):
+        safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+        logger.warning(
+            "openai_compatible_reasoning_looks_like_cot_using_safe_fallback"
+        )
+        return safe or ""
+
+    return text
+
+
+def _reasoning_delta_for_stream(reasoning: object) -> str | None:
+    """Promove delta.reasoning só se não parecer CoT/instrução vazada."""
+    from app.domain.services.chat_llm_generation_context_service import (
+        mark_reasoning_fallback,
+    )
+    from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+        ChatLlmSynthesisLeakGuardService,
+    )
+
+    text = str(reasoning or "").strip()
+    if not text:
+        return None
+
+    mark_reasoning_fallback(True)
+
+    if ChatLlmSynthesisLeakGuardService.needs_fallback(answer=text):
+        logger.warning("openai_compatible_stream_skip_reasoning_cot_delta")
+        return None
+
+    return text
 
 
 class OpenAiCompatibleLlmGateway(LlmGatewayPort):
@@ -212,11 +255,13 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
                     delta = choices[0].get("delta") or {}
                     content = delta.get("content")
 
-                    if not content:
-                        content = delta.get("reasoning")
-
                     if content:
                         yield repair_utf8_mojibake(str(content))
+                        continue
+
+                    reasoning_visible = _reasoning_delta_for_stream(delta.get("reasoning"))
+                    if reasoning_visible:
+                        yield repair_utf8_mojibake(reasoning_visible)
 
         except requests.RequestException as exc:
             logger.exception("openai_compatible_stream_failed")
