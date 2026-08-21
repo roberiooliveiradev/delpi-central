@@ -92,8 +92,10 @@ class ChatAgenticToolLoopService:
             if str(item.get("name") or "").strip()
         }
         executed_action_ids = self._collect_executed_action_ids(safe_tool_calls)
+        steps_run = 0
 
         for step in range(max_steps):
+            steps_run = step + 1
             if on_stream_activity:
                 from app.application.services.chat_stream_activity_service import (
                     ChatStreamActivityService,
@@ -338,7 +340,7 @@ class ChatAgenticToolLoopService:
 
             if catalog_action_ids:
                 base["agentic"] = {
-                    "stepsRun": max_steps,
+                    "stepsRun": steps_run,
                     "toolsAdded": 0,
                     "catalogSize": len(catalog_action_ids),
                     "catalogMaxActions": Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS,
@@ -355,7 +357,7 @@ class ChatAgenticToolLoopService:
             "context": merged_context[: Settings.MAX_CONTEXT_CHARS],
             "toolCalls": safe_tool_calls,
             "agentic": {
-                "stepsRun": max_steps,
+                "stepsRun": steps_run,
                 "toolsAdded": len(context_blocks),
                 "catalogSize": len(catalog_action_ids),
                 "catalogMaxActions": Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS,

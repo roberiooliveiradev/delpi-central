@@ -83,10 +83,28 @@ class ChatOperationalParameterToolSkipService:
                 tool_context=tool_context,
                 direct_answer=tool_context.get("directAnswer"),
                 tool_calls=tool_context.get("toolCalls"),
+                pipeline_stages=list(tool_context.get("pipelineStages") or []),
             )
 
             if ChatTurnModeService.should_skip_agentic(turn_mode):
                 return True
+
+            analysis = tool_context.get("turnAnalysis")
+            if isinstance(analysis, dict):
+                decision = str(analysis.get("decision") or "").strip().lower()
+                if decision in {"clarify", "narrate"}:
+                    return True
+
+                planned_ids = {
+                    str(item).strip()
+                    for item in (tool_context.get("turnAnalysisActionIds") or [])
+                    if str(item).strip()
+                }
+                if planned_ids and cls._tool_calls_cover_action_ids(
+                    tool_context.get("toolCalls") or [],
+                    planned_ids,
+                ):
+                    return True
 
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
@@ -170,6 +188,31 @@ class ChatOperationalParameterToolSkipService:
                 return True
 
         return False
+
+    @classmethod
+    def _tool_calls_cover_action_ids(
+        cls,
+        tool_calls: list,
+        planned_ids: set[str],
+    ) -> bool:
+        if not planned_ids:
+            return False
+
+        executed: set[str] = set()
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+            meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
+            action_id = str(
+                meta.get("actionId")
+                or (call.get("arguments") or {}).get("actionId")
+                or (call.get("arguments") or {}).get("action_id")
+                or ""
+            ).strip()
+            if action_id and meta.get("ok") is not False:
+                executed.add(action_id)
+
+        return planned_ids.issubset(executed)
 
     @classmethod
     def should_block_semantic_action_fallback(
