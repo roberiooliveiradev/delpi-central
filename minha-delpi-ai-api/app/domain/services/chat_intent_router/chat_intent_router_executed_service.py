@@ -54,8 +54,9 @@ class ChatIntentRouterExecutedService:
                 continue
 
             if stage == "tools" and not tool_calls:
-                if predicted.intent in {"attachment_document", "attachment_task"}:
-                    continue
+                # Sem tool executada, não promover a operational_query (ex.: llm_general /
+                # no_clear_intent com stage tools vazio no adminDebug).
+                continue
 
             mapping = ChatIntentRouterSupportService.STAGE_INTENT.get(stage)
 

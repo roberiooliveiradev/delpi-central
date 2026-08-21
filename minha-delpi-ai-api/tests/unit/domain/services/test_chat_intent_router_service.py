@@ -167,6 +167,20 @@ def test_resolve_executed_from_pipeline_stages():
     assert "stage:small_talk" in route.flags
 
 
+def test_resolve_executed_does_not_promote_no_clear_intent_without_tools():
+    route = ChatIntentRouterService.resolve_executed(
+        message="xyzzy-nonsense-token",
+        pipeline_stages=["ingress", "tools", "post_tool", "skip_rag"],
+        tool_calls=[],
+        skip_rag=True,
+    )
+
+    assert route.intent == "llm_general"
+    assert route.reason == "no_clear_intent"
+    assert route.decision == "llm_fallback"
+    assert "stage:tools" not in (route.flags or ())
+
+
 def test_resolve_executed_tv_copilot_claims_oee_turn():
     route = ChatIntentRouterService.resolve_executed(
         message="adicione o modelo de dados oee",
