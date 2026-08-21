@@ -167,6 +167,7 @@ class OperationalRouteActionResolverService:
                 production_kind=production_kind,
                 conversation_context=conversation_context,
                 description_override=description_override,
+                memory_snapshot=memory_snapshot,
             )
 
             if parameters is None:
@@ -351,6 +352,7 @@ class OperationalRouteActionResolverService:
         production_kind: ProductionOperationalIntentKind | None = None,
         conversation_context: str | None = None,
         description_override: str | None = None,
+        memory_snapshot: dict | None = None,
     ) -> dict | None:
         parameters_spec = route.get("parameters") or {}
         strategy = str(parameters_spec.get("strategy") or "").strip()
