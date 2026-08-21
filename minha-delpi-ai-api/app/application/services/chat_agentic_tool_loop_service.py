@@ -183,6 +183,24 @@ class ChatAgenticToolLoopService:
                         "error": str(exc),
                         "agenticStep": step + 1,
                     }
+                    from app.domain.exceptions.external_action_exceptions import (
+                        ExternalActionValidationError,
+                    )
+
+                    validation_error = (
+                        exc if isinstance(exc, ExternalActionValidationError) else None
+                    )
+
+                    if validation_error is None and isinstance(
+                        getattr(exc, "__cause__", None),
+                        ExternalActionValidationError,
+                    ):
+                        validation_error = exc.__cause__
+
+                    if isinstance(validation_error, ExternalActionValidationError):
+                        failure_metadata.update(validation_error.to_metadata())
+                        failure_metadata["agenticStep"] = step + 1
+
                     safe_tool_calls.append(
                         {
                             "name": resolved_tool_name,

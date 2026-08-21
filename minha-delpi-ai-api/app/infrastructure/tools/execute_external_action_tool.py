@@ -11,6 +11,7 @@ from app.application.use_cases.execute_external_action_use_case import (
     ExecuteExternalActionUseCase,
 )
 from app.domain.entities.tool_result import ToolResult
+from app.domain.exceptions.external_action_exceptions import ExternalActionValidationError
 from app.domain.exceptions.tool_exceptions import InvalidToolInputError
 from app.domain.ports.internal_tool_port import InternalToolPort
 
@@ -45,6 +46,15 @@ class ExecuteExternalActionTool(InternalToolPort):
                 access_token=access_token,
                 action_id=action_id,
                 arguments=action_arguments,
+            )
+        except ExternalActionValidationError as exc:
+            return ToolResult(
+                name=self.name,
+                data=None,
+                metadata={
+                    "actionId": action_id,
+                    **exc.to_metadata(),
+                },
             )
         except ValueError as exc:
             raise InvalidToolInputError(str(exc)) from exc

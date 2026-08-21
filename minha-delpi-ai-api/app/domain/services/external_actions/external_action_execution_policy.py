@@ -1,3 +1,6 @@
+from app.domain.exceptions.external_action_exceptions import ExternalActionValidationError
+
+
 class ExternalActionExecutionPolicy:
     """Sanitiza respostas de actions sem cortar listas de dados operacionais."""
 
@@ -43,11 +46,19 @@ class ExternalActionExecutionPolicy:
 
         for name in parameters:
             if name not in allowed_parameters:
-                raise ValueError(f"Unknown parameter: {name}")
+                raise ExternalActionValidationError(
+                    f"Unknown parameter: {name}",
+                    error_kind="unknown_parameter",
+                    parameter_name=str(name),
+                )
 
         for name, parameter in allowed_parameters.items():
             if parameter.get("required") and name not in parameters:
-                raise ValueError(f"Missing required parameter: {name}")
+                raise ExternalActionValidationError(
+                    f"Missing required parameter: {name}",
+                    error_kind="missing_required_parameter",
+                    missing_parameter=str(name),
+                )
 
         for parameter in action.get("parametersSchema") or []:
             if parameter.get("in") != "path":
@@ -56,7 +67,11 @@ class ExternalActionExecutionPolicy:
             name = parameter.get("name")
 
             if name and "{" + name + "}" in action["path"] and name not in parameters:
-                raise ValueError(f"Missing path parameter: {name}")
+                raise ExternalActionValidationError(
+                    f"Missing path parameter: {name}",
+                    error_kind="missing_path_parameter",
+                    missing_parameter=str(name),
+                )
 
     def _validate_body(self, action: dict, body) -> None:
         method = str(action.get("method") or "").upper()

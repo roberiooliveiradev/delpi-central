@@ -345,6 +345,17 @@ class ChatToolContextExecutionService:
                     "error": str(exc),
                     "errorType": exc.__class__.__name__,
                 }
+                from app.domain.exceptions.external_action_exceptions import (
+                    ExternalActionValidationError,
+                )
+
+                validation_error = exc if isinstance(exc, ExternalActionValidationError) else None
+
+                if validation_error is None and isinstance(getattr(exc, "__cause__", None), ExternalActionValidationError):
+                    validation_error = exc.__cause__
+
+                if isinstance(validation_error, ExternalActionValidationError):
+                    error_metadata.update(validation_error.to_metadata())
 
                 if tool_name == "execute_external_action" and on_stream_activity:
                     from app.application.services.chat_stream_activity_service import (
