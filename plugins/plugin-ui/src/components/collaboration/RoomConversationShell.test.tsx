@@ -59,13 +59,13 @@ describe("RoomConversationShell", () => {
     expect(css).toMatch(/\.delpi-ui-room-thread \{/);
     expect(css).toMatch(/\.delpi-ui-room-thread__stage \{/);
     expect(css).toMatch(
+      /\.delpi-ui-room-thread__stage \{[\s\S]*?grid-template-rows:\s*minmax\(0,\s*1fr\)\s+auto;/,
+    );
+    expect(css).toMatch(
       /\.delpi-ui-room-thread__main > \[class\*="-view-transition"\] > \[role="tabpanel"\]/,
     );
     expect(css).toMatch(/\.delpi-ui-room-thread__msgs \{[\s\S]*?overflow-y:\s*auto;/);
     expect(css).toMatch(/\.delpi-ui-room-thread__dock \{/);
-    expect(css).toMatch(
-      /\.delpi-ui-room-thread__dock \{[\s\S]*?margin-top:\s*auto;/,
-    );
     expect(css).toMatch(
       /\.delpi-ui-room-thread__dock \{[\s\S]*?background:\s*transparent;/,
     );

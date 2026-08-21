@@ -10,6 +10,7 @@ describe("InteractionRoomPage", () => {
     const source = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(source).toMatch(/CommercialRoomConversationShell/);
     expect(source).toMatch(/CommercialRoomConversationChatColumn/);
+    expect(source).toMatch(/commercialRoomConversationClassNames\.root/);
     expect(source).toMatch(/wrapRoot=\{false\}/);
     expect(source).not.toMatch(/InteractionRoomConversationShell/);
     expect(source).toMatch(/CommercialRoomHeader/);

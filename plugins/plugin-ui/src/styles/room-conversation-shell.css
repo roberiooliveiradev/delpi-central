@@ -68,9 +68,9 @@
 
 .delpi-ui-room-thread__stage {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   flex: 1 1 auto;
-  flex-direction: column;
   align-self: stretch;
   min-height: 0;
   min-width: 0;
@@ -78,9 +78,6 @@
 }
 
 .delpi-ui-room-thread__msgs {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -88,13 +85,11 @@
 }
 
 .delpi-ui-room-thread__msgs > .delpi-ui-soft-empty {
-  flex: 1 1 auto;
   min-height: 100%;
 }
 
 .delpi-ui-room-thread__dock {
-  flex: 0 0 auto;
-  margin-top: auto;
+  min-width: 0;
   padding: var(
     --delpi-ui-room-thread-dock-padding,
     0.65rem 0.85rem 0.85rem

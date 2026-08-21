@@ -569,3 +569,5 @@ const roomConversationKit = createDashboardRoomConversationShell(UI_PREFIX);
 export const CommercialRoomConversationShell = roomConversationKit.Shell;
 export const CommercialRoomConversationChatColumn = roomConversationKit.ChatColumn;
 export const CommercialRoomPanel = roomConversationKit.Panel;
+/** Dual-class root (`cm-room-thread delpi-ui-room-thread`) for the page/pane section. */
+export const commercialRoomConversationClassNames = roomConversationKit.classNames;

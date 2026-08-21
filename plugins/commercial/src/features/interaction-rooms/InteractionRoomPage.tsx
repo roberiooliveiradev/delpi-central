@@ -38,6 +38,7 @@ import {
   CommercialRoomContextPanel,
   CommercialRoomConversationChatColumn,
   CommercialRoomConversationShell,
+  commercialRoomConversationClassNames,
   CommercialRoomHeader,
   CommercialSegmentToggle,
   CommercialRoomMessageFindPanel,
@@ -860,7 +861,13 @@ export function InteractionRoomPage({
   }, [threadMessages.length, loading]);
 
   return (
-    <section className={variant === "page" ? "cm-page-stack cm-room-thread" : "cm-room-thread"}>
+    <section
+      className={
+        variant === "page"
+          ? `cm-page-stack ${commercialRoomConversationClassNames.root}`
+          : commercialRoomConversationClassNames.root
+      }
+    >
       {alerts.length > 0 ? (
         <div className="cm-room-alert-host">
           <CommercialAlertQueue
