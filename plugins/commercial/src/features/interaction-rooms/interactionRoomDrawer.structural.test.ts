@@ -14,7 +14,7 @@ describe("CommercialHostDrawer", () => {
     expect(source).toMatch(/portalScopeClassName: CM_PORTAL_SCOPE/);
     const panel = readFileSync(join(dir, "InteractionRoomPanel.tsx"), "utf8");
     expect(panel).toMatch(/CommercialHostDrawer/);
-    expect(panel).toMatch(/InteractionRoomConversationShell/);
+    expect(panel).toMatch(/InteractionRoomWorkspace/);
     const page = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(page).not.toMatch(/CommercialHostDrawer/);
     expect(page).toMatch(/InteractionRoomConversationShell/);

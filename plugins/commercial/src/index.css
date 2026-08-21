@@ -206,11 +206,23 @@
   overflow: hidden;
 }
 
-/* Embed on object detail: SectionCard has no fill height — give the thread a usable stage. */
-.dashboard-commercial .cm-room-thread.cm-room-panel {
-  height: auto;
-  min-height: 18rem;
-  max-height: min(28rem, 70vh);
+/* Embed on object detail: SectionCard has no fill height — give workspace/thread room. */
+.dashboard-commercial .cm-room-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 22rem;
+  height: min(32rem, 70vh);
+  max-height: min(32rem, 70vh);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dashboard-commercial .cm-room-panel .cm-room-workspace,
+.dashboard-commercial .cm-room-panel .cm-room-workspace__grid,
+.dashboard-commercial .cm-room-panel .cm-room-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
 .dashboard-commercial .cm-room-thread.cm-room-panel .cm-conversation-drop {
