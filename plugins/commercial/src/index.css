@@ -206,6 +206,20 @@
   overflow: hidden;
 }
 
+/* Embed on object detail: SectionCard has no fill height — give the thread a usable stage. */
+.dashboard-commercial .cm-room-panel .cm-room-thread {
+  height: auto;
+  min-height: 18rem;
+  max-height: min(28rem, 70vh);
+}
+
+.dashboard-commercial .cm-room-panel .cm-room-thread .cm-conversation-drop {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 .dashboard-commercial .cm-room-thread .cm-conversation-drop {
   flex: 1 1 auto;
   min-height: 0;
