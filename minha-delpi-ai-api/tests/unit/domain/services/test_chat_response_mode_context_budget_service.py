@@ -16,6 +16,9 @@ def test_context_budget_ladder_by_mode():
     assert fast.rag_max_chars < normal.rag_max_chars
     assert normal.rag_max_chars <= thinker.rag_max_chars
     assert fast.message_search_max_hits < thinker.message_search_max_hits
+    assert fast.max_multi_actions_per_turn == 1
+    assert normal.max_multi_actions_per_turn >= 2
+    assert thinker.max_multi_actions_per_turn >= normal.max_multi_actions_per_turn
 
 
 def test_history_keep_alias():
