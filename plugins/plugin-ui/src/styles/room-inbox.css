@@ -211,14 +211,11 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--delpi-ui-border, #e6e6e6);
-  border-radius: var(--delpi-ui-room-inbox-panel-radius, 0.75rem);
-  background: var(
-    --delpi-ui-surface-elevated,
-    var(--delpi-ui-surface-muted, var(--delpi-ui-surface, #f6f8fa))
-  );
   box-sizing: border-box;
-  padding: var(--delpi-ui-room-inbox-panel-padding, 0.5rem);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .delpi-ui-room-inbox-panel > .delpi-ui-room-inbox {

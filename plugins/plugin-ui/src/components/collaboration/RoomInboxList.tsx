@@ -192,7 +192,7 @@ export type RoomInboxPanelProps = {
   "aria-label"?: string;
 };
 
-/** Framed surface for the conversation list (below search/filters). */
+/** Scroll container for the conversation list (below search/filters). */
 export function RoomInboxPanel({
   classNames,
   children,

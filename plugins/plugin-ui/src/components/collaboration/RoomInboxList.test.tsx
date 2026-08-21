@@ -187,11 +187,14 @@ describe("room-inbox.css", () => {
     expect(css).toMatch(/\.delpi-ui-room-inbox__list > li \{[\s\S]*?max-width:\s*100%/);
   });
 
-  it("painel framed envolve a listagem", () => {
+  it("painel contém o scroll da listagem sem chrome visual", () => {
     const css = readFileSync(join(stylesDir, "room-inbox.css"), "utf8");
     const panel = css.match(/\.delpi-ui-room-inbox-panel \{[^}]+\}/)?.[0] ?? "";
-    expect(panel).toMatch(/border:\s*1px solid/);
-    expect(panel).toMatch(/border-radius:/);
+    expect(panel).toMatch(/overflow:\s*hidden/);
+    expect(panel).toMatch(/min-height:\s*0/);
+    expect(panel).toMatch(/background:\s*transparent/);
+    expect(panel).toMatch(/padding:\s*0/);
+    expect(panel).toMatch(/border:\s*none/);
     expect(classNames.panel).toMatch(/delpi-ui-room-inbox-panel/);
     const { container } = render(
       <RoomInboxPanel classNames={classNames} aria-label="Salas">
