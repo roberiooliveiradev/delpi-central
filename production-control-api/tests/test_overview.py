@@ -123,6 +123,82 @@ class FakeGateway:
             },
         }
 
+    def fetch_production_appointments_series(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        granularity: str,
+    ) -> dict[str, Any]:
+        self.calls.append(
+            (
+                "appointments_series",
+                {
+                    "branch": branch,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "granularity": granularity,
+                },
+            )
+        )
+        if granularity == "month":
+            year = int(start_date[:4])
+            # Ano corrente: jan–ago com volumes; ano anterior: volumes menores.
+            scale = 1.0 if year >= 2026 else 0.8
+            points = []
+            for month in range(1, 9):
+                points.append(
+                    {
+                        "periodo": f"{year}-{month:02d}",
+                        "start_date": f"{year}-{month:02d}-01",
+                        "end_date": f"{year}-{month:02d}-28",
+                        "qty_produced": round(100.0 * month * scale, 1),
+                        "qty_lost": 0.0,
+                    }
+                )
+            return {"success": True, "data": {"points": points}}
+
+        return {
+            "success": True,
+            "data": {
+                "points": [
+                    {
+                        "periodo": "2026-08-01",
+                        "appointment_date": "2026-08-01",
+                        "start_date": "2026-08-01",
+                        "end_date": "2026-08-01",
+                        "qty_produced": 50.0,
+                        "qty_lost": 3.0,
+                    },
+                    {
+                        "periodo": "2026-08-02",
+                        "appointment_date": "2026-08-02",
+                        "start_date": "2026-08-02",
+                        "end_date": "2026-08-02",
+                        "qty_produced": 40.0,
+                        "qty_lost": 1.5,
+                    },
+                    {
+                        "periodo": "2026-08-03",
+                        "appointment_date": "2026-08-03",
+                        "start_date": "2026-08-03",
+                        "end_date": "2026-08-03",
+                        "qty_produced": 100.0,
+                        "qty_lost": 0.0,
+                    },
+                    {
+                        "periodo": "2026-08-04",
+                        "appointment_date": "2026-08-04",
+                        "start_date": "2026-08-04",
+                        "end_date": "2026-08-04",
+                        "qty_produced": 120.0,
+                        "qty_lost": 0.0,
+                    },
+                ]
+            },
+        }
+
 
 def _user(*permissions: str):
     return SimpleNamespace(is_superadmin=False, permissions=list(permissions))
@@ -165,10 +241,97 @@ def test_overview_composes_otd_and_delayed_ops() -> None:
     assert payload["delayed_ops"]["items"][0]["metrics"]["pending_qty"] == 6.0
 
     kinds = {name for name, _ in gateway.calls}
-    assert kinds == {"otd", "otd_series", "items"}
+    assert kinds == {"otd", "otd_series", "appointments_series", "items"}
     series_call = next(params for name, params in gateway.calls if name == "otd_series")
     assert series_call["granularity"] == "day"
     assert series_call["branch"] == "01"
+    assert payload["production_volume"]["total"] == 310.0
+    assert payload["production_volume"]["view"] == "day"
+    assert payload["production_volume"]["series"][0]["value"] == 50.0
+    assert payload["production_volume"]["series"][0]["label"] == "01/08"
+    # Perdida do apontamento não entra no volume do PCP.
+    assert all("qty_lost" not in row for row in payload["production_volume"]["series"])
+    # 01/08 e 02/08 são sábado/domingo — média só com 03 e 04 (100+120)/2.
+    assert payload["production_volume"]["weekday_average"] == 110.0
+    assert payload["production_volume"]["weekday_day_count"] == 2
+
+
+def test_weekday_daily_average_ignores_weekend_points() -> None:
+    from production_control_app.domain.services.weekday_daily_average import (
+        is_weekend,
+        weekday_daily_average,
+    )
+
+    assert is_weekend(date(2026, 8, 1)) is True
+    assert is_weekend(date(2026, 8, 3)) is False
+    result = weekday_daily_average(
+        [
+            {"start_date": "2026-08-01", "value": 999},
+            {"start_date": "2026-08-03", "value": 10},
+            {"start_date": "2026-08-04", "value": 30},
+            {"start_date": None, "value": 50},
+        ]
+    )
+    assert result["weekday_day_count"] == 2
+    assert result["weekday_total"] == 40.0
+    assert result["average"] == 20.0
+
+
+def test_volume_view_month_yoy_merges_prior_year_by_month() -> None:
+    from production_control_app.domain.services.volume_view import (
+        build_month_yoy_series,
+        parse_volume_view,
+        shift_bounds_by_years,
+        year_to_date_bounds,
+    )
+
+    assert parse_volume_view("month_yoy") == "month_yoy"
+    assert parse_volume_view("nope") == "day"
+    start, end = year_to_date_bounds(today=date(2026, 8, 21))
+    assert start.isoformat() == "2026-01-01"
+    assert end.isoformat() == "2026-08-21"
+    prior_start, prior_end = shift_bounds_by_years(start, end, -1)
+    assert prior_start.isoformat() == "2025-01-01"
+    assert prior_end.isoformat() == "2025-08-21"
+
+    rows = build_month_yoy_series(
+        current_points=[
+            {"start_date": "2026-01-01", "qty_produced": 10},
+            {"start_date": "2026-03-01", "qty_produced": 30},
+        ],
+        prior_points=[
+            {"periodo": "2025-01", "qty_produced": 8},
+            {"periodo": "2025-03", "qty_produced": 20},
+        ],
+        year=2026,
+        through_month=3,
+    )
+    assert [row["label"] for row in rows] == ["jan", "fev", "mar"]
+    assert rows[0]["value"] == 10
+    assert rows[0]["prior_value"] == 8
+    assert rows[1]["value"] == 0
+    assert rows[2]["prior_value"] == 20
+
+
+def test_overview_month_yoy_fetches_two_month_series() -> None:
+    gateway = FakeGateway()
+    service = OverviewService(gateway, branch_access=BranchAccessService())
+    payload = service.build(_user(*FULL_PERMS), branch="01", volume_view="month_yoy")
+    volume = payload["production_volume"]
+    assert volume["view"] == "month_yoy"
+    assert volume["prior_year"] == volume["current_year"] - 1
+    assert volume["series"][0]["label"] == "jan"
+    assert "prior_value" in volume["series"][0]
+    assert volume["prior_total"] is not None
+    assert volume["weekday_average"] is None
+    month_calls = [
+        params
+        for name, params in gateway.calls
+        if name == "appointments_series" and params["granularity"] == "month"
+    ]
+    assert len(month_calls) == 2
+    assert month_calls[0]["start_date"].endswith("-01-01")
+    assert month_calls[1]["start_date"].startswith("202")  # ano anterior
 
 
 def test_overview_picks_filial_02_series() -> None:

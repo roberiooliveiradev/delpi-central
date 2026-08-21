@@ -18,14 +18,15 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | POST | `/machine-load/withdraw?branch=01\|02&orderNumber=&workCenter=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/restore?branch=01\|02&orderNumber=&workCenter=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/transfer?branch=01\|02&productionOrder=&operationCode=&targetWorkCenter=&workCenter=` | JWT + `machine-load.view` + filial |
-| GET | `/problem-analysis?branch=01\|02&issueId=` | JWT + análise + filial |
+| GET | `/problem-analysis?branch=01\|02` | JWT + análise + filial |
+| GET | `/problem-analysis/{detectorId}?branch=01\|02&page=&pageSize=` | JWT + análise + filial |
 | GET | `/public/machine-load/{token}?branch=01\|02&workCenter=` | público (token do cockpit) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=01\|02` | público (PDF do PA na fila) |
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |
 
 Envelope `{ success, message, data }`.
 
-`GET /overview` agrega OTD do mês corrente (`/production/otd` + `/otd/series`) e OPs atrasadas (`/production/pcp-orders/items?delayed_only=true`). A fila e o card de atraso consideram só produtos cujo código começa com `8` ou `9` (`delayedProductCodePrefixes` em `content/overview.json`).
+`GET /overview` agrega OTD do mês corrente (`/production/otd` + `/otd/series`), volume diário de PAs (`/production/appointments/series` — só `qty_produced`, com `weekday_average` excluindo sáb/dom) e OPs atrasadas (`/production/pcp-orders/items?delayed_only=true`). A fila e o card de atraso consideram só produtos cujo código começa com `8` ou `9` (`delayedProductCodePrefixes` em `content/overview.json`).
 
 `GET /machine-load` lê o snapshot congelado em `production_control.machine_load_snapshots` (seed automático na 1ª visita). `GET /machine-load/locate?q=` rastreia **conjunto** (`C2_NUM` = 6 primeiros dígitos de `production_order` / H8_OP) — todas as OPs com esse prefixo — ou lista os conjuntos de um **produto** (PA) em **todos** os CTs do mesmo snapshot (com posição na fila e enrich HZA), sem embutir a lista completa em cada GET de aba. `POST /machine-load/refresh` regenera a partir de `/production/machine-load/work-centers` + `/operations` (paginado) e **apaga** a ordem manual do período. `PATCH /machine-load/sequence` reordena só o segmento do `workCenter` no `payload_json` (`ordered_keys` = permutação exata das ops daquele CT), grava `sequence_updated_at` / `sequence_updated_by` e **não** altera `refreshed_at`. Em toda leitura, o status HZA é reaplicado via `/production/machine-load/appointment-status` — a fila SH8 não é remontada. Sem `workCenter`, usa o primeiro CT da lista; se o CT pedido não existir na janela, cai no primeiro e devolve `selected.requested_work_center` para a UI sinalizar.
 
@@ -74,7 +75,19 @@ Convenção de nome resolvida pelo storage: `{codigo}.pdf` → `{base}.pdf` → 
 
 `WS /public/machine-load/{token}/ws?branch=` entra na sala da filial (`MachineLoadRealtimeHub`). Após `PATCH /machine-load/sequence` e `POST /machine-load/refresh`, o serviço publica `{"type": "machine_load_updated", "reason": "sequence|refresh"}` e o cockpit refaz a leitura HTTP — o socket carrega só o aviso, mantendo uma fonte de verdade única. A notificação é best-effort: falha no hub não derruba a escrita já persistida. O gateway precisa dos headers `Upgrade`/`Connection` na location `/apps/production-control-api/` (já configurado em `gateway/nginx.conf` e `nginx.dev.conf`).
 
-`GET /problem-analysis` devolve `summary` (critical/attention/ok), `issues[]` e `selected`. Fonte: `GET /production/pcp-orders/items?delayed_only=true` e `…/summary`.
+## Análise de problemas — detectores
+
+A área é uma **grade de cards**, um por detector. `GET /problem-analysis` devolve `detectors[]` (`id`, `title`, `description`, `icon`, `severity`, `count`, `metrics`) e `GET /problem-analysis/{detectorId}` devolve os registros paginados daquele detector.
+
+Título, descrição, ícone, ordem, severidade, tamanho de página e exclusões de negócio vivem em `content/problem_analysis.json`; o serviço só casa cada entrada do catálogo com a implementação registrada em `build_problem_detectors` — não há `if detector_id ==` em rota nem em serviço. Detector desconhecido responde **404**.
+
+| Detector | Fonte api-delpi | Regra do BFF |
+|---|---|---|
+| `incomplete-order-sets` | `GET /production/production-order-sets/incomplete` | `critical` quando falta componente, `attention` quando só sobra; recorte de emissão (`issuedFromDays`, 730 por padrão) e exclusões por prefixo do raiz ou por código de componente |
+
+O recorte de emissão existe porque a Delpi arrasta conjuntos abertos desde os anos 2000: sem ele o conjunto furado da semana fica soterrado. A api-delpi devolve o diff bruto (estrutura × OPs criadas) e nada da regra do consumidor.
+
+A OP atrasada deixou de ser exceção desta área — continua na gestão à vista (`GET /overview`), agora com `map_delayed_order` em `domain/services/delayed_order_mapper.py`.
 
 Gateway: `X-Delpi-Caller-App: production-control-api` + `API_DELPI_INTERNAL_SERVICE_TOKEN` para a api-delpi (RBAC do produto fica neste BFF).
 

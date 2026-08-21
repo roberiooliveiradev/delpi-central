@@ -180,6 +180,46 @@ class DelpiProductionGateway:
             json_body={"branch": branch, "items": items},
         )
 
+    def fetch_production_order_sets_incomplete(
+        self,
+        *,
+        branch: str,
+        issued_from: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/production-order-sets/incomplete",
+            params={
+                "branch": branch,
+                "issued_from": issued_from,
+                "page": page,
+                "page_size": page_size,
+            },
+        )
+
+    def fetch_production_appointments_series(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        granularity: str,
+    ) -> dict[str, Any]:
+        """Série diária/mensal do apontamento — ``qty_produced`` = última op. do PA."""
+        return self._request(
+            "GET",
+            "/production/appointments/series",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "granularity": granularity,
+                "group_by": "day",
+            },
+        )
+
     def _request(
         self,
         method: str,

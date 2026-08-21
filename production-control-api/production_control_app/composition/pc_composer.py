@@ -3,9 +3,14 @@ from __future__ import annotations
 from production_control_app.application.services.machine_load_change_notifier import (
     notify_machine_load_changed,
 )
+from production_control_app.application.services.detectors.incomplete_order_sets_detector import (
+    DETECTOR_ID as DETECTOR_INCOMPLETE_ORDER_SETS,
+    IncompleteOrderSetsDetector,
+)
 from production_control_app.application.services.machine_load_service import MachineLoadService
 from production_control_app.application.services.overview_service import OverviewService
 from production_control_app.application.services.problem_analysis_service import ProblemAnalysisService
+from production_control_app.application.services.problem_analysis_settings import detector_entry
 from production_control_app.application.services.public_cockpit_access_service import (
     PublicCockpitAccessService,
 )
@@ -14,6 +19,7 @@ from production_control_app.application.services.public_machine_load_drawing_ser
 )
 from production_control_app.application.services.subplugin_catalog_service import SubpluginCatalogService
 from production_control_app.domain.ports.drawing_library import DrawingLibraryPort
+from production_control_app.domain.ports.problem_detector import ProblemDetector
 from production_control_app.domain.ports.machine_load_snapshot_repository import (
     MachineLoadSnapshotRepositoryPort,
 )
@@ -43,11 +49,24 @@ def build_machine_load_snapshot_repository() -> MachineLoadSnapshotRepositoryPor
     return PostgresMachineLoadSnapshotRepository()
 
 
+def build_problem_detectors(
+    gateway: DelpiProductionGateway | None = None,
+) -> dict[str, ProblemDetector]:
+    """Registro de detectores. A ordem e os textos vêm do catálogo JSON."""
+    resolved = gateway or DelpiProductionGateway()
+    return {
+        DETECTOR_INCOMPLETE_ORDER_SETS: IncompleteOrderSetsDetector(
+            resolved,
+            settings=detector_entry(DETECTOR_INCOMPLETE_ORDER_SETS) or {},
+        ),
+    }
+
+
 def build_problem_analysis_service(
     gateway: DelpiProductionGateway | None = None,
 ) -> ProblemAnalysisService:
     return ProblemAnalysisService(
-        gateway or DelpiProductionGateway(),
+        build_problem_detectors(gateway),
         branch_access=build_branch_access_service(),
     )
 

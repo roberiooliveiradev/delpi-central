@@ -17,6 +17,10 @@ class DelpiGatewayError(ProductionControlError):
     """Falha ao consultar a api-delpi."""
 
 
+class DetectorNotFound(ProductionControlError):
+    """Detector fora do catálogo da Análise de problemas."""
+
+
 class SnapshotNotFound(ProductionControlError):
     """Snapshot da carga máquina ausente para o escopo pedido."""
 
