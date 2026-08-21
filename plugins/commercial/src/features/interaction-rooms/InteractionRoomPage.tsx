@@ -970,55 +970,60 @@ export function InteractionRoomPage({
                   : content.contextToggle
               }
             >
-              {sidePanelMode === "find" ? (
-                <CommercialRoomMessageFindPanel
-                  labels={{
-                    title: content.findInChatTitle,
-                    closeAriaLabel: content.findInChatCloseAriaLabel,
-                    placeholder: content.findInChatPlaceholder,
-                    clear: content.findInChatClear,
-                    empty: content.findInChatEmpty,
-                    loading: content.findInChatLoading,
-                  }}
-                  query={findQuery}
-                  onQueryChange={setFindQuery}
-                  onClear={() => {
-                    setFindQuery("");
-                    setFindResults([]);
-                  }}
-                  onClose={() => setSidePanelMode(null)}
-                  results={findPanelResults}
-                  loading={findLoading}
-                  onSelectResult={onSelectFindResult}
-                />
-              ) : (
-                <CommercialRoomContextPanel
-                  embedded
-                  flush
-                  labels={{
-                    about: content.contextAbout,
-                    participants: content.contextParticipants,
-                    pins: content.contextPins,
-                    pinsEmpty: content.contextPinsEmpty,
-                    membersEmpty: content.contextMembersEmpty,
-                    openEntity: content.contextOpenEntity,
-                  }}
-                  entityPrimary={entityPresentation.primaryNumber}
-                  entityFields={entityPresentation.aboutFields}
-                  entityHref={entityHref}
-                  onOpenEntity={
-                    entityHref
-                      ? () => {
-                          navigatePluginPath(entityHref);
-                        }
-                      : undefined
-                  }
-                  participants={participants}
-                  participantsAriaLabel={content.roomMembersAriaLabel}
-                  pins={contextPins}
-                  onPinSelect={onSelectPin}
-                />
-              )}
+              <CommercialViewTransition
+                transitionKey={sidePanelMode ?? "closed"}
+                tone="panel"
+              >
+                {sidePanelMode === "find" ? (
+                  <CommercialRoomMessageFindPanel
+                    labels={{
+                      title: content.findInChatTitle,
+                      closeAriaLabel: content.findInChatCloseAriaLabel,
+                      placeholder: content.findInChatPlaceholder,
+                      clear: content.findInChatClear,
+                      empty: content.findInChatEmpty,
+                      loading: content.findInChatLoading,
+                    }}
+                    query={findQuery}
+                    onQueryChange={setFindQuery}
+                    onClear={() => {
+                      setFindQuery("");
+                      setFindResults([]);
+                    }}
+                    onClose={() => setSidePanelMode(null)}
+                    results={findPanelResults}
+                    loading={findLoading}
+                    onSelectResult={onSelectFindResult}
+                  />
+                ) : (
+                  <CommercialRoomContextPanel
+                    embedded
+                    flush
+                    labels={{
+                      about: content.contextAbout,
+                      participants: content.contextParticipants,
+                      pins: content.contextPins,
+                      pinsEmpty: content.contextPinsEmpty,
+                      membersEmpty: content.contextMembersEmpty,
+                      openEntity: content.contextOpenEntity,
+                    }}
+                    entityPrimary={entityPresentation.primaryNumber}
+                    entityFields={entityPresentation.aboutFields}
+                    entityHref={entityHref}
+                    onOpenEntity={
+                      entityHref
+                        ? () => {
+                            navigatePluginPath(entityHref);
+                          }
+                        : undefined
+                    }
+                    participants={participants}
+                    participantsAriaLabel={content.roomMembersAriaLabel}
+                    pins={contextPins}
+                    onPinSelect={onSelectPin}
+                  />
+                )}
+              </CommercialViewTransition>
             </CommercialRoomSidePanel>
           </div>
         </CommercialConversationFileDropLayer>

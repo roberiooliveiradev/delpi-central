@@ -349,6 +349,11 @@
   --delpi-ui-panel-stack-gap: 0;
 }
 
+.dashboard-commercial .cm-room-side-panel,
+.dashboard-commercial .delpi-ui-room-side-panel {
+  --delpi-ui-panel-stack-gap: 0;
+}
+
 .dashboard-commercial .cm-room-thread__main > .cm-view-transition,
 .dashboard-commercial .cm-room-thread__main > .delpi-ui-view-transition {
   display: flex;
