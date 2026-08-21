@@ -1,5 +1,6 @@
 import { httpGet, httpPatch, httpPost, ppcApiUrl, unwrapEnvelope } from "./httpClient";
 import type {
+  DemandPayload,
   MachineLoadLocatePayload,
   MachineLoadOptimizePayload,
   MachineLoadPayload,
@@ -34,6 +35,37 @@ export async function fetchOverview(params: {
     data: OverviewPayload;
   }>(ppcApiUrl(`/overview?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar a gestão à vista.");
+}
+
+export async function fetchDemand(params: {
+  branch: string;
+  search?: string;
+  status?: string;
+  dueFrom?: string | null;
+  dueTo?: string | null;
+  sort?: string | null;
+  direction?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+  refresh?: boolean;
+  signal?: AbortSignal;
+}): Promise<DemandPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.search) search.set("search", params.search);
+  if (params.status) search.set("status", params.status);
+  if (params.dueFrom) search.set("dueFrom", params.dueFrom);
+  if (params.dueTo) search.set("dueTo", params.dueTo);
+  if (params.sort) search.set("sort", params.sort);
+  if (params.direction) search.set("direction", params.direction);
+  if (params.page) search.set("page", String(params.page));
+  if (params.pageSize) search.set("pageSize", String(params.pageSize));
+  if (params.refresh) search.set("refresh", "true");
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: DemandPayload;
+  }>(ppcApiUrl(`/demand?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar a demanda.");
 }
 
 export async function fetchMachineLoad(params: {

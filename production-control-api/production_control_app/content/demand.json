@@ -1,0 +1,11 @@
+{
+  "cacheTtlSeconds": 120,
+  "defaultPageSize": 50,
+  "maxPageSize": 200,
+  "atRiskLeadDays": 0,
+  "statuses": ["late", "at_risk", "covered_by_order", "covered_by_stock"],
+  "sortFields": ["due_date", "customer_name", "product_code", "open_quantity", "status"],
+  "defaultSort": "due_date",
+  "horizonBuckets": 8,
+  "horizonGranularity": "week"
+}

@@ -7,6 +7,7 @@ import { copy } from "./content/copy";
 import { DEFAULT_SUBPLUGIN } from "./constants/routes";
 import { usePpcRouterPath } from "./hooks/usePpcRouterPath";
 import { useSubplugins } from "./hooks/useSubplugins";
+import { DemandPage } from "./pages/DemandPage";
 import { MachineLoadPage } from "./pages/MachineLoadPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProblemAnalysisPage } from "./pages/ProblemAnalysisPage";
@@ -19,7 +20,7 @@ import {
 } from "./utils/routeParser";
 
 /** Subplugins com página própria — os demais caem no fallback de «em breve». */
-const WORKSPACES = new Set([DEFAULT_SUBPLUGIN, "problem-analysis", "machine-load"]);
+const WORKSPACES = new Set([DEFAULT_SUBPLUGIN, "demand", "problem-analysis", "machine-load"]);
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -46,7 +47,15 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   }, [items, route.branch, route.subpluginId]);
 
   let workspace = <OverviewPage branch={route.branch} />;
-  if (route.subpluginId === "problem-analysis") {
+  if (route.subpluginId === "demand") {
+    workspace = (
+      <DemandPage
+        branch={route.branch}
+        search={route.demandSearch}
+        status={route.demandStatus}
+      />
+    );
+  } else if (route.subpluginId === "problem-analysis") {
     workspace = <ProblemAnalysisPage branch={route.branch} detectorId={route.detectorId} />;
   } else if (route.subpluginId === "machine-load") {
     workspace = (

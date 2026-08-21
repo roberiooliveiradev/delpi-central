@@ -11,6 +11,9 @@ from production_control_app.application.services.problem_analysis_settings impor
 from production_control_app.core.security import PC_ACCESS, can
 from production_control_app.domain.errors import DelpiGatewayError
 from production_control_app.domain.ports.production_orders_gateway import ProductionOrdersGateway
+from production_control_app.domain.services.billing_due_today_service import (
+    BillingDueTodayService,
+)
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.domain.services.current_month_period import (
     current_month_bounds,
@@ -26,6 +29,13 @@ from production_control_app.domain.services.volume_view import (
     year_to_date_bounds,
 )
 from production_control_app.domain.services.weekday_daily_average import weekday_daily_average
+
+
+def _unwrap_items(payload: dict[str, Any], key: str = "items") -> list[Any]:
+    data = payload.get("data") if isinstance(payload, dict) else None
+    source = data if isinstance(data, dict) else payload
+    items = source.get(key) if isinstance(source, dict) else None
+    return items if isinstance(items, list) else []
 
 _CONTENT_PATH = Path(__file__).resolve().parents[2] / "content" / "overview.json"
 
@@ -170,10 +180,24 @@ class OverviewService:
                     page_size=delayed_page,
                 )
             )
+            closed_lookback = max(
+                1,
+                min(_as_int(cfg.get("billingDueTodayClosedLookbackDays"), 1), 90),
+            )
+            open_sales_payload = self._gateway.fetch_open_sales_orders()
+            closed_sales_payload = self._gateway.fetch_recently_closed_orders(
+                days=closed_lookback
+            )
         except DelpiGatewayError:
             raise
         except Exception as exc:  # noqa: BLE001
             raise DelpiGatewayError("Não foi possível montar a gestão à vista do PCP.") from exc
+
+        billing_due_today = BillingDueTodayService(today=today).build(
+            open_sales_orders=_unwrap_items(open_sales_payload),
+            recently_closed_orders=_unwrap_items(closed_sales_payload),
+            branch=branch,
+        )
 
         otd_summary = otd_payload.get("summary") if isinstance(otd_payload.get("summary"), dict) else {}
 
@@ -223,6 +247,7 @@ class OverviewService:
                 "series": series,
             },
             "production_volume": production_volume,
+            "billing_due_today": billing_due_today,
             "delayed_ops": {
                 "count": delayed_count,
                 "late_percentage": _as_float(otd_summary.get("late_percentage")),

@@ -3,5 +3,6 @@
   "seriesGranularity": "day",
   "delayedListPageSize": 100,
   "otdOrdersPageSize": 1,
-  "delayedProductCodePrefixes": ["8", "9"]
+  "delayedProductCodePrefixes": ["8", "9"],
+  "billingDueTodayClosedLookbackDays": 1
 }

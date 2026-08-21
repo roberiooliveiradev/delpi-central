@@ -107,7 +107,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 
 **Painéis TV:** gestão em `/apps/tv-dashboard`; apresentação pública em `/p/tv-dashboard/present/{token}` (sem login). API dedicada: `/apps/tv-dashboard-api/*`. Playbook: [../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md](../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md).
 **Experiência do Cliente:** admin `/apps/customer-experience`; público `/p/customer-experience/thanks/{token}` e `/form/{token}`. API: `/apps/customer-experience-api/*`. [README do plugin](../../plugins/customer-experience/README.md) · [roadmap](../12-roadmap-e-volucao/customer-experience/).
-**Portal PCP:** `/apps/production-control` (gestão à vista + carga máquina + análise de problemas). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
+**Portal PCP:** `/apps/production-control` (gestão à vista + demanda + carga máquina + análise de problemas). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
 **CIPA SIPAT:** admin `/apps/cipa/filial-{01|02}/sipat`; público `/p/cipa/sipat/{token}`. API: `/apps/cipa-api/public/sipat/*`.
 
 
@@ -137,7 +137,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
 | Despesas por Centro de Custo | `/apps/api-delpi/financeiro/despesas-centro-custo/*` |
 | Experiência do Cliente | `/apps/customer-experience-api/*` (participantes + formulários; público por token) |
-| Portal PCP | `/apps/production-control-api/*` (subplugins + carga máquina + análise de problemas; TOTVS via api-delpi) |
+| Portal PCP | `/apps/production-control-api/*` (subplugins + demanda + carga máquina + análise de problemas; TOTVS via api-delpi) |
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |

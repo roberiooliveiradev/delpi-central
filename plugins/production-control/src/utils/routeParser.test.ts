@@ -34,6 +34,22 @@ describe("parsePpcPath", () => {
     expect(route.locateQuery).toBe("90262910");
   });
 
+  it("reads the demand search and status from the deep link", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/demand",
+      "?branch=01&q=90262910&status=late",
+      "01",
+    );
+    expect(route.subpluginId).toBe("demand");
+    expect(route.demandSearch).toBe("90262910");
+    expect(route.demandStatus).toBe("late");
+  });
+
+  it("drops a demand status outside the API contract", () => {
+    const route = parsePpcPath("/apps/production-control/demand", "?status=urgente", "01");
+    expect(route.demandStatus).toBeNull();
+  });
+
   it("ignores malformed dates instead of forwarding them to the API", () => {
     const route = parsePpcPath(
       "/apps/production-control/machine-load",
@@ -60,6 +76,17 @@ describe("buildPpcHref", () => {
         detectorId: "incomplete-order-sets",
       }),
     ).toBe("/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets");
+  });
+
+  it("serializes the demand filters", () => {
+    expect(
+      buildPpcHref({
+        subpluginId: "demand",
+        branch: "01",
+        demandSearch: "90262910",
+        demandStatus: "at_risk",
+      }),
+    ).toBe("/apps/production-control/demand?branch=01&q=90262910&status=at_risk");
   });
 
   it("keeps the work center tab, period and locate query in the deep link", () => {

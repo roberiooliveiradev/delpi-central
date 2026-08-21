@@ -106,6 +106,82 @@ export type ProblemDetectorItemsPayload = {
   };
 };
 
+export type DemandStatus = "late" | "at_risk" | "covered_by_order" | "covered_by_stock";
+
+/** OP aberta que cobre parte do saldo de uma linha de pedido. */
+export type DemandCoveringOrder = {
+  production_order: string;
+  quantity: number;
+  expected_date: string | null;
+};
+
+export type DemandLine = {
+  id: string;
+  branch: string;
+  sales_order: string;
+  line_item: string;
+  customer_name: string;
+  customer_code: string;
+  customer_store: string;
+  customer_order: string;
+  order_type: string;
+  product_code: string;
+  ordered_quantity: number;
+  delivered_quantity: number;
+  open_quantity: number;
+  due_date: string | null;
+  dispatch_date: string | null;
+  product_stock: number;
+  allocated_stock: number;
+  covered_by_orders: number;
+  uncovered_quantity: number;
+  covering_orders: DemandCoveringOrder[];
+  coverage_date: string | null;
+  status: DemandStatus;
+  days_late: number;
+};
+
+export type DemandHorizonBucket = {
+  key: string;
+  label: string;
+  start_date: string | null;
+  open_quantity: number;
+  line_count: number;
+  late: boolean;
+};
+
+export type DemandPayload = {
+  branch: string;
+  items: DemandLine[];
+  summary: {
+    line_count: number;
+    open_quantity: number;
+    late_line_count: number;
+    at_risk_line_count: number;
+    uncovered_quantity: number;
+    customer_count: number;
+    product_count: number;
+    next_due_date: string | null;
+  };
+  horizon: DemandHorizonBucket[];
+  filters: {
+    search: string;
+    status: string;
+    due_from: string | null;
+    due_to: string | null;
+    sort: string;
+    direction: "asc" | "desc";
+    statuses: DemandStatus[];
+  };
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+    is_complete: boolean;
+  };
+};
+
 export type VolumeView = "day" | "month_yoy";
 
 export type OverviewSeriesPoint = {
@@ -151,6 +227,54 @@ export type OverviewPayload = {
     late_percentage: number | null;
     items: ProblemIssue[];
   };
+  /** Pedidos com entrega até hoje — check estoque (amarelo) / faturado (verde). */
+  billing_due_today: BillingDueTodayPayload;
+};
+
+export type BillingDueTodayCheck = "pending" | "stock" | "invoiced";
+
+export type BillingDueTodayLine = {
+  id: string;
+  branch: string;
+  sales_order: string;
+  line_item: string;
+  customer_code: string;
+  customer_store: string;
+  customer_name: string;
+  customer_order?: string;
+  order_type?: string;
+  product_code: string;
+  ordered_quantity?: number;
+  delivered_quantity?: number;
+  open_quantity: number;
+  product_stock?: number;
+  allocated_stock?: number;
+  uncovered_quantity?: number;
+  due_date: string | null;
+  dispatch_date?: string | null;
+  invoice_date: string | null;
+  check: BillingDueTodayCheck;
+  days_late: number;
+};
+
+export type BillingDueTodayCustomer = {
+  customer_code: string;
+  customer_store: string;
+  customer_name: string;
+  line_count: number;
+  pending_count: number;
+  stock_count: number;
+  invoiced_count: number;
+  lines: BillingDueTodayLine[];
+};
+
+export type BillingDueTodayPayload = {
+  as_of: string;
+  line_count: number;
+  pending_count: number;
+  stock_count: number;
+  invoiced_count: number;
+  customers: BillingDueTodayCustomer[];
 };
 
 export type ProductionStatus = "in_progress" | "started" | "not_started";

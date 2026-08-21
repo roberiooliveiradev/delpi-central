@@ -1,5 +1,5 @@
 export const helpTooltips = {
-  home: "Painel inicial do PCP: OTD da filial no mês corrente, volume diário de PAs produzidos, atraso e fila de OPs para ação.",
+  home: "Painel inicial do PCP: OTD da filial no mês, pedidos a faturar até hoje (estoque/faturado), volume de PAs e fila de OPs atrasadas.",
   productionVolume:
     "Agregação da quantidade produzida de PAs (última operação do roteiro SG2 — entrada em estoque). No modo Dia: mês corrente com média só em dias úteis. No modo Mês × ano ant.: jan→hoje em buckets mensais comparado ao mesmo período do ano anterior.",
   problemAnalysis:

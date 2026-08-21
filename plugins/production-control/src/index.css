@@ -165,6 +165,31 @@
   min-height: 100%;
 }
 
+.dashboard-production-control .ppc-page-stack--demand {
+  gap: 16px;
+  padding: 8px 20px 24px;
+  box-sizing: border-box;
+}
+
+.dashboard-production-control .ppc-demand-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  min-width: 0;
+  margin-top: 4px;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-production-control .ppc-demand-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dashboard-production-control .ppc-demand-kpi-grid > .ppc-board-card {
+  min-width: 0;
+}
+
 .dashboard-production-control .ppc-board {
   display: flex;
   flex-direction: column;
@@ -319,6 +344,169 @@
   gap: 10px;
   font-size: var(--ppc-font-xs);
   color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-board-billing {
+  min-height: 280px;
+}
+
+.dashboard-production-control .ppc-board-billing__title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-board-billing__pct {
+  flex: 0 0 auto;
+  color: #2b8a3e;
+  font-size: var(--ppc-font-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-board-billing__progress {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ppc-border) 70%, transparent);
+}
+
+.dashboard-production-control .ppc-board-billing__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #40c057 75%, #2f9e44),
+    #2f9e44
+  );
+  transition: width 280ms ease;
+}
+
+.dashboard-production-control .ppc-billing-customer {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.dashboard-production-control .ppc-billing-customer__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 4px;
+}
+
+.dashboard-production-control .ppc-billing-customer__head strong {
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-billing-customer__head span {
+  font-size: var(--ppc-font-xs);
+  color: var(--ppc-text-muted);
+  white-space: nowrap;
+}
+
+.dashboard-production-control .ppc-billing-customer__lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-production-control .ppc-billing-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 2px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-billing-line:hover {
+  background: color-mix(in srgb, var(--ppc-accent) 8%, transparent);
+}
+
+.dashboard-production-control .ppc-billing-line__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-billing-line__body strong {
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-billing-line__body span {
+  font-size: var(--ppc-font-xs);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-billing-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--ppc-border) 90%, transparent);
+  background: transparent;
+  color: transparent;
+}
+
+.dashboard-production-control .ppc-billing-check--pending {
+  opacity: 0.85;
+}
+
+.dashboard-production-control .ppc-billing-check--stock {
+  border-color: #d4a017;
+  background: color-mix(in srgb, #f5c542 35%, transparent);
+  color: #a67c00;
+}
+
+.dashboard-production-control .ppc-billing-check--invoiced {
+  border-color: #2f9e44;
+  background: color-mix(in srgb, #40c057 28%, transparent);
+  color: #2b8a3e;
+}
+
+.dashboard-production-control .ppc-billing-status {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--ppc-font-xs);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.dashboard-production-control .ppc-billing-status--pending {
+  color: var(--ppc-text-muted);
+  background: color-mix(in srgb, var(--ppc-border) 55%, transparent);
+}
+
+.dashboard-production-control .ppc-billing-status--stock {
+  color: #8a6a00;
+  background: color-mix(in srgb, #f5c542 32%, transparent);
+}
+
+.dashboard-production-control .ppc-billing-status--invoiced {
+  color: #2b8a3e;
+  background: color-mix(in srgb, #40c057 28%, transparent);
 }
 
 .dashboard-production-control .ppc-header {
@@ -1618,6 +1806,307 @@
   box-shadow: inset 0 2px 0 var(--ppc-accent);
 }
 
+/* Demanda — layout local; chrome de card, tabela e badge vem do kit. */
+.dashboard-production-control .ppc-demand-chart__canvas {
+  height: 240px;
+  min-height: 240px;
+}
+
+.dashboard-production-control .ppc-demand-chart__empty {
+  margin: 0;
+  padding: 24px 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+  text-align: center;
+}
+
+.dashboard-production-control .ppc-demand-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ppc-font-xs);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-demand-filter input {
+  padding: 6px 8px;
+  border: 1px solid var(--ppc-border);
+  border-radius: 8px;
+  background: var(--ppc-surface);
+  color: var(--ppc-text);
+  font: inherit;
+}
+
+.dashboard-production-control .ppc-demand__due,
+.dashboard-production-control .ppc-demand__customer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-production-control .ppc-demand__due span,
+.dashboard-production-control .ppc-demand__customer span {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-demand-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dashboard-production-control .ppc-demand-detail__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ppc-border) 85%, transparent);
+}
+
+.dashboard-production-control .ppc-demand-detail__identity {
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-demand-detail__product {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-demand-detail__customer {
+  margin: 4px 0 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-demand-detail__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: min(360px, 100%);
+  text-align: right;
+}
+
+.dashboard-production-control .ppc-demand-detail__badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-demand-detail__reason {
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+  line-height: 1.4;
+}
+
+.dashboard-production-control .ppc-demand-detail__late {
+  color: var(--ppc-critical);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-demand-detail__block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-production-control .ppc-demand-detail__block-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-demand-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.dashboard-production-control .ppc-demand-detail__field dt {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-demand-detail__field dd {
+  margin: 3px 0 0;
+  font-weight: 600;
+  color: var(--ppc-title);
+  word-break: break-word;
+}
+
+.dashboard-production-control .ppc-demand-detail__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-demand-detail__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--ppc-border) 90%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ppc-surface) 92%, var(--ppc-title));
+}
+
+.dashboard-production-control .ppc-demand-detail__metric--ok {
+  border-color: color-mix(in srgb, #2f9e44 28%, var(--ppc-border));
+}
+
+.dashboard-production-control .ppc-demand-detail__metric--warn {
+  border-color: color-mix(in srgb, #e67700 35%, var(--ppc-border));
+  background: color-mix(in srgb, #fff4e6 55%, var(--ppc-surface));
+}
+
+.dashboard-production-control .ppc-demand-detail__metric-label {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-demand-detail__metric-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ppc-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-demand-detail__ops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dashboard-production-control .ppc-demand-detail__ops-head,
+.dashboard-production-control .ppc-demand-detail__ops-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.2fr) minmax(64px, 0.5fr) minmax(140px, 1.2fr);
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+}
+
+.dashboard-production-control .ppc-demand-detail__ops-head {
+  color: var(--ppc-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-bottom: 1px solid color-mix(in srgb, var(--ppc-border) 80%, transparent);
+}
+
+.dashboard-production-control .ppc-demand-detail__ops-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-production-control .ppc-demand-detail__ops-row {
+  border-radius: 8px;
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-demand-detail__ops-row:nth-child(odd) {
+  background: color-mix(in srgb, var(--ppc-border) 18%, transparent);
+}
+
+.dashboard-production-control .ppc-demand-detail__ops-row--late {
+  color: #a65c00;
+}
+
+.dashboard-production-control .ppc-demand-detail__coverage-order {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-demand-detail__coverage-date,
+.dashboard-production-control .ppc-demand-detail__empty {
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-demand-detail__empty {
+  margin: 0;
+  padding: 10px;
+}
+
+.dashboard-production-control .ppc-demand-detail__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--ppc-border) 85%, transparent);
+}
+
+.dashboard-production-control .ppc-demand-detail__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.dashboard-production-control .ppc-demand-detail__link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ppc-text-muted);
+  font: inherit;
+  font-size: var(--ppc-font-xs);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-demand-detail__link:hover {
+  color: var(--ppc-title);
+}
+
+.dashboard-production-control .ppc-demand-detail__close {
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--ppc-border) 90%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ppc-text);
+  font: inherit;
+  font-size: var(--ppc-font-sm);
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-demand-detail__close:hover {
+  background: color-mix(in srgb, var(--ppc-border) 22%, transparent);
+}
+
+@media (max-width: 720px) {
+  .dashboard-production-control .ppc-demand-detail__grid,
+  .dashboard-production-control .ppc-demand-detail__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-production-control .ppc-demand-detail__status {
+    align-items: flex-start;
+    text-align: left;
+    max-width: none;
+  }
+}
+
 .dashboard-production-control .ppc-state {
   padding: 24px 16px;
   color: var(--ppc-text-muted);
@@ -1680,6 +2169,14 @@
 
   .dashboard-production-control .ppc-board-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-production-control .ppc-demand-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-production-control .ppc-page-stack--demand {
+    padding: 8px 14px 20px;
   }
 
   .dashboard-production-control .ppc-board-list {

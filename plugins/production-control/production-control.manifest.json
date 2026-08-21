@@ -23,6 +23,12 @@
       "module": "production-control"
     },
     {
+      "code": "production-control.demand.view",
+      "name": "Demanda",
+      "description": "Ver a carteira a entregar com saldo em aberto e cobertura por estoque e OP.",
+      "module": "production-control"
+    },
+    {
       "code": "production-control.machine-load.view",
       "name": "Carga máquina",
       "description": "Ver o sequenciamento de operações alocadas por centro de trabalho.",
@@ -60,11 +66,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/production-control/demand",
+      "label": "Demanda",
+      "permission": "production-control.demand.view",
+      "icon": "clipboard-list",
+      "order": 36,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/production-control/machine-load",
       "label": "Carga máquina",
       "permission": "production-control.machine-load.view",
       "icon": "layout-grid",
-      "order": 36,
+      "order": 37,
       "showInMenu": false
     },
     {
@@ -72,7 +86,7 @@
       "label": "Análise de problemas",
       "permission": "production-control.problem-analysis.view",
       "icon": "triangle-alert",
-      "order": 37,
+      "order": 38,
       "showInMenu": false
     }
   ],
