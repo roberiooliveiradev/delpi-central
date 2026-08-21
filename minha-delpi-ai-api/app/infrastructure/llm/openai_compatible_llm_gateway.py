@@ -40,7 +40,13 @@ def _visible_assistant_text(message: dict, *, finish_reason: object = None) -> s
     content = message.get("content")
 
     if content:
-        return str(content).strip()
+        text = str(content).strip()
+        if text and ChatLlmSynthesisLeakGuardService.needs_fallback(answer=text):
+            safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+            logger.warning("openai_compatible_content_looks_like_cot_using_safe_fallback")
+            mark_reasoning_fallback(True)
+            return safe or ""
+        return text
 
     reasoning = message.get("reasoning")
 

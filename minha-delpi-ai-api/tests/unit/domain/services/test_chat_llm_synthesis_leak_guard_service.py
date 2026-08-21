@@ -96,6 +96,22 @@ def test_needs_fallback_on_english_cot_marker():
     )
 
 
+def test_needs_fallback_on_capabilities_cot_leak():
+    """Regressão: Kimi/OpenRouter devolve CoT EN como resposta de capacidades."""
+    leaked = (
+        "This is a capabilities question. I should respond based on the session's "
+        "capability facts: list what the agent can do, organized by theme, in natural "
+        "Brazilian Portuguese. Don't dump the entire catalog (373+ actions) — group "
+        "into: produtos, estoque, produção. Keep it natural, professional, direct. "
+        'Start with a short conclusion: "Você tem acesso bem amplo nesta sessão…"'
+    )
+    assert ChatLlmSynthesisLeakGuardService.needs_fallback(answer=leaked)
+    guarded = ChatLlmSynthesisLeakGuardService.guard_answer(answer=leaked, fallback=None)
+    assert guarded != leaked
+    assert "capabilities question" not in guarded.lower()
+    assert "don't dump" not in guarded.lower()
+
+
 def test_guard_replaces_english_cot_with_safe_fallback():
     leaked = (
         "According to my instructions, the user's message is «programação». "
