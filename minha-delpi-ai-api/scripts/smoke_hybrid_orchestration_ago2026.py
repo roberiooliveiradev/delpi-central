@@ -113,7 +113,7 @@ def _http_checks() -> list[str]:
         "POST",
         f"{base}{prefix}/sessions/{session_id}/messages",
         token=token,
-        body={"content": "programação", "responseMode": "normal"},
+        body={"message": "programação", "responseMode": "normal"},
     )
     answer = str(vague.get("content") or vague.get("answer") or "").lower()
     if "according to my instructions" in answer or "<think" in answer:
@@ -133,7 +133,7 @@ def _http_checks() -> list[str]:
         "POST",
         f"{base}{prefix}/sessions/{session_id}/messages",
         token=token,
-        body={"content": "programação de produção hoje", "responseMode": "normal"},
+        body={"message": "programação de produção hoje", "responseMode": "normal"},
     )
     tools = schedule.get("toolCalls") or schedule.get("tools") or []
     meta = schedule.get("metadata") or {}
@@ -152,7 +152,7 @@ def _http_checks() -> list[str]:
         f"{base}{prefix}/sessions/{session_id}/messages",
         token=token,
         body={
-            "content": "estoque e fornecedores do produto 10080022",
+            "message": "estoque e fornecedores do produto 10080022",
             "responseMode": "normal",
         },
     )
