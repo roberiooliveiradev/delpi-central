@@ -46,6 +46,19 @@
   align-items: center;
 }
 
+.delpi-ui-room-header__nav {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: min(100%, 18rem);
+}
+
+.delpi-ui-room-header__nav .delpi-ui-underline-nav,
+.delpi-ui-room-header__nav [class*="-underline-nav"] {
+  min-width: 0;
+}
+
 .delpi-ui-room-header__chip {
   display: inline-flex;
   align-items: center;

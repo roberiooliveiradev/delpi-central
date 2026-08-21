@@ -35,6 +35,18 @@ describe("RoomHeader", () => {
     expect(screen.getByRole("button", { name: "Invite" })).toBeTruthy();
   });
 
+  it("renderiza slot nav entre títulos e pessoas", () => {
+    const { container } = render(
+      <RoomHeader
+        classNames={classNames}
+        title="Pedido 1"
+        nav={<nav aria-label="Vista">Chat</nav>}
+      />,
+    );
+    expect(screen.getByRole("navigation", { name: "Vista" })).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-room-header__nav")).toBeTruthy();
+  });
+
   it("header CSS fica em uma linha com ellipsis no título", () => {
     const css = readFileSync(join(stylesDir, "room-header.css"), "utf8");
     const root = css.match(/\.delpi-ui-room-header \{[^}]+\}/)?.[0] ?? "";
@@ -43,6 +55,7 @@ describe("RoomHeader", () => {
     expect(root).toMatch(/align-items:\s*center;/);
     expect(title).toMatch(/text-overflow:\s*ellipsis;/);
     expect(css).toMatch(/\.delpi-ui-room-header__chip \{/);
+    expect(css).toMatch(/\.delpi-ui-room-header__nav \{/);
     expect(css).toMatch(/\[aria-pressed="true"\]/);
   });
 });

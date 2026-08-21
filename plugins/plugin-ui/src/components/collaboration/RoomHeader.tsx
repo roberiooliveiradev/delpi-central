@@ -19,6 +19,7 @@ export type RoomHeaderClassNames = {
   subtitle: string;
   chips: string;
   chip: string;
+  nav: string;
   people: string;
   actions: string;
   avatars: AvatarStackClassNames;
@@ -30,6 +31,8 @@ export type RoomHeaderProps = {
   classNames: RoomHeaderClassNames;
   subtitle?: ReactNode;
   chips?: ReactNode;
+  /** Inline view switcher (e.g. Chat | Shared) after title/chips. */
+  nav?: ReactNode;
   participants?: AvatarStackItem[];
   participantsAriaLabel?: string;
   actions?: ReactNode;
@@ -47,6 +50,7 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
     subtitle: pair(`${base}__subtitle`, `${ui}__subtitle`),
     chips: pair(`${base}__chips`, `${ui}__chips`),
     chip: pair(`${base}__chip`, `${ui}__chip`),
+    nav: pair(`${base}__nav`, `${ui}__nav`),
     people: pair(`${base}__people`, `${ui}__people`),
     actions: pair(`${base}__actions`, `${ui}__actions`),
     avatars: avatarStackBemClasses(prefix),
@@ -55,13 +59,14 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
 }
 
 /**
- * Room header: title, chip slot, AvatarStack participants, actions slot.
+ * Room header: title, chip slot, optional nav, AvatarStack participants, actions slot.
  */
 export function RoomHeader({
   title,
   classNames,
   subtitle,
   chips,
+  nav,
   participants = [],
   participantsAriaLabel,
   actions,
@@ -76,6 +81,7 @@ export function RoomHeader({
         {subtitle ? <span className={classNames.subtitle}>{subtitle}</span> : null}
         {chips ? <div className={classNames.chips}>{chips}</div> : null}
       </div>
+      {nav ? <div className={classNames.nav}>{nav}</div> : null}
       <div className={classNames.people}>
         {participants.length > 0 ? (
           <AvatarStack
