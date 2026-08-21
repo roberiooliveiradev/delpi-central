@@ -1123,6 +1123,48 @@ Barras horizontais leves para rankings / top N. Preferir `ConfigurableSeriesChar
 
 Barras interativas do pacote de séries; use `colorScale: { mode: "by_value", polarity: "high_is_bad" }` + `categoryColors` verde→âmbar→vermelho para alertas.
 
+### `AreaSeriesChart` — tendência dentro de card
+
+Área derivada do `SeriesChartPrimitive` (mesmo motor SVG de `LineSeriesChart`). Combinação canônica para o rodapé de um KPI, onde o card já dá título e valor:
+
+```tsx
+<AreaSeriesChart
+  points={points}
+  options={{
+    showTitle: false,
+    showLegend: false,
+    smoothLines: true,
+    areaFillGradient: true,
+    markerMode: "last",
+    backgroundColor: "transparent",
+  }}
+/>
+```
+
+| Opção | Default | Efeito |
+|---|---|---|
+| `areaFillGradient` | `false` | Preenche a área em degradê vertical até transparente, no lugar da opacidade chapada. Só vale para `area`. |
+| `markerMode` | `"all"` | `"last"` deixa marcador só no ponto mais recente (ignora buraco no fim da série). Não liga marcador com `showMarkers: false`. |
+
+Ambas são opt-in: quem não passa nada continua com o visual anterior. Tema do gráfico vem dos tokens `--delpi-ui-series-chart-*` definidos pelo host (bg, grid, muted, tick-font-size), então o MFE acerta claro/escuro sem CSS de componente do kit.
+
+### `MultiTypeSeriesChart` — colunas com valor acima da barra
+
+Recharts via kit (`column` / `bar` / `horizontal_bar`). Para exibir a quantidade acima de cada coluna:
+
+```tsx
+<MultiTypeSeriesChart
+  chartType="column"
+  showValueLabels
+  formatY={(n) => n.toLocaleString("pt-BR")}
+  /* … */
+/>
+```
+
+`showValueLabels` é opt-in (default `false`). Em `stacked_bar`, o rótulo sai só no topo da pilha.
+
+A ordem das colunas agrupadas segue o array `series` (esquerda → direita). O chart remonta quando os `dataKey` mudam — necessário no Recharts 3 para não herdar offset de uma série anterior (ex.: Dia → Mês YoY). A legenda usa `itemSorter={null}` para acompanhar a mesma ordem (o default do Recharts ordena por label).
+
 ### `ImpactEffortMatrix`
 
 | Prop | Tipo | Default | Descrição |

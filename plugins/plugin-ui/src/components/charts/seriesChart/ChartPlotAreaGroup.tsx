@@ -73,6 +73,8 @@ export function ChartPlotAreaGroup({
   pieInnerRadiusRatio = 0,
 }: ChartPlotAreaGroupProps) {
   const smoothLines = Boolean(config.smoothLines);
+  const markerMode = config.markerMode ?? "all";
+  const areaFillGradient = Boolean(config.areaFillGradient);
   const skipCartesian = NON_CARTESIAN.has(chartType);
   const cartesianAxes = showAxes && !skipCartesian;
   const cartesianGrid = showGrid && !skipCartesian;
@@ -224,6 +226,7 @@ export function ChartPlotAreaGroup({
           seriesColor={seriesColor}
           strokeWidth={strokeWidth}
           smooth={smoothLines}
+          gradient={areaFillGradient}
           interaction={interaction}
           chartParts={chartParts}
         />
@@ -300,6 +303,7 @@ export function ChartPlotAreaGroup({
                     points={series.points}
                     seriesColor={color}
                     visible={showMarkers}
+                    mode={markerMode}
                     interaction={interaction}
                     chartParts={chartParts}
                     seriesIndex={index}
@@ -325,6 +329,7 @@ export function ChartPlotAreaGroup({
               points={points}
               seriesColor={seriesColor}
               visible={showMarkers}
+              mode={markerMode}
               interaction={interaction}
               chartParts={chartParts}
             />
@@ -345,6 +350,7 @@ export function ChartPlotAreaGroup({
                   seriesColor={color}
                   strokeWidth={strokeWidth}
                   smooth={smoothLines}
+                  gradient={areaFillGradient}
                   interaction={interaction}
                   chartParts={chartParts}
                   seriesIndex={index}
@@ -355,6 +361,7 @@ export function ChartPlotAreaGroup({
                     points={series.points}
                     seriesColor={color}
                     visible={showMarkers}
+                    mode={markerMode}
                     interaction={interaction}
                     chartParts={chartParts}
                     seriesIndex={index}
@@ -372,6 +379,7 @@ export function ChartPlotAreaGroup({
           points={points}
           seriesColor={seriesColor}
           visible={showMarkers}
+          mode={markerMode}
           interaction={interaction}
           chartParts={chartParts}
         />

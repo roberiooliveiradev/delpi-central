@@ -6,6 +6,7 @@ import {
   CartesianGrid,
   Cell,
   ComposedChart,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -39,6 +40,11 @@ export type MultiTypeSeriesChartProps = {
   formatY?: (value: number) => string;
   formatTooltipValue?: (value: number) => string;
   showLegend?: boolean;
+  /**
+   * Rótulo de valor nas barras/colunas (acima da coluna, à direita da barra).
+   * Default false — não altera dashboards existentes.
+   */
+  showValueLabels?: boolean;
   onCategoryClick?: (category: string) => void;
   margin?: { top?: number; right?: number; left?: number; bottom?: number };
   /**
@@ -67,6 +73,30 @@ function resolveCategoryFill(
   return typeof raw === "string" && raw.trim() ? raw : fallback;
 }
 
+const VALUE_LABEL_STYLE = {
+  fill: "var(--delpi-ui-text, #0f172a)",
+  fontSize: 11,
+  fontWeight: 600,
+} as const;
+
+/** Rótulo de valor nas barras — posição depende da orientação. */
+function barValueLabels(
+  show: boolean,
+  format: (value: number) => string,
+  position: "top" | "right",
+) {
+  if (!show) return null;
+  return (
+    <LabelList
+      position={position}
+      formatter={(value: unknown) =>
+        value == null || Number.isNaN(Number(value)) ? "" : format(Number(value))
+      }
+      style={VALUE_LABEL_STYLE}
+    />
+  );
+}
+
 /**
  * Recharts multi-type series plot (column / line / area / pie / bar / horizontal / stacked).
  */
@@ -81,12 +111,23 @@ export function MultiTypeSeriesChart({
   formatY = defaultFormatY,
   formatTooltipValue,
   showLegend = true,
+  showValueLabels = false,
   onCategoryClick,
   margin = { top: 12, right: 16, left: 4, bottom: 4 },
   categoryFillKey,
 }: MultiTypeSeriesChartProps) {
   const trendSources = useMemo(
     () => series.filter((entry) => entry.trendSource),
+    [series],
+  );
+
+  /**
+   * Recharts 3 guarda Bar no store na ordem de 1ª inscrição. Trocar a ordem
+   * do array `series` sem remontar deixa as colunas no offset antigo (ex.:
+   * Dia→Mês YoY: `produced` fica à esquerda e o ano anterior à direita).
+   */
+  const seriesOrderKey = useMemo(
+    () => series.map((entry) => entry.dataKey).join("|"),
     [series],
   );
 
@@ -150,7 +191,7 @@ export function MultiTypeSeriesChart({
       fill: resolveCategoryFill(row, categoryFillKey, primary.fill),
     }));
     return (
-      <StableResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
         <PieChart>
           <Tooltip
             formatter={(value) =>
@@ -159,7 +200,8 @@ export function MultiTypeSeriesChart({
                 : tooltipValue(Number(value))
             }
           />
-          {showLegend ? <Legend /> : null}
+          {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
+          {showLegend ? <Legend itemSorter={null} /> : null}
           <Pie
             data={pieData}
             dataKey="value"
@@ -190,7 +232,7 @@ export function MultiTypeSeriesChart({
 
   if (chartType === "horizontal_bar") {
     return (
-      <StableResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
         <BarChart data={chartData} layout="vertical" margin={margin}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} />
           <XAxis
@@ -208,7 +250,8 @@ export function MultiTypeSeriesChart({
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
           />
-          {showLegend ? <Legend /> : null}
+          {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
+          {showLegend ? <Legend itemSorter={null} /> : null}
           {series.map((entry) => (
             <Bar
               key={entry.dataKey}
@@ -227,6 +270,7 @@ export function MultiTypeSeriesChart({
                     />
                   ))
                 : null}
+              {barValueLabels(showValueLabels, formatY, "right")}
             </Bar>
           ))}
         </BarChart>
@@ -236,7 +280,7 @@ export function MultiTypeSeriesChart({
 
   if (chartType === "line") {
     return (
-      <StableResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
         <LineChart data={chartData} margin={margin}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -253,7 +297,8 @@ export function MultiTypeSeriesChart({
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
           />
-          {showLegend ? <Legend /> : null}
+          {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
+          {showLegend ? <Legend itemSorter={null} /> : null}
           {series.map((entry) => (
             <Line
               key={entry.dataKey}
@@ -274,7 +319,7 @@ export function MultiTypeSeriesChart({
 
   if (chartType === "area") {
     return (
-      <StableResponsiveContainer width="100%" height={height}>
+      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
         <ComposedChart data={chartData} margin={margin}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
@@ -294,7 +339,8 @@ export function MultiTypeSeriesChart({
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
           />
-          {showLegend ? <Legend /> : null}
+          {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
+          {showLegend ? <Legend itemSorter={null} /> : null}
           {series.map((entry) => (
             <Area
               key={entry.dataKey}
@@ -315,9 +361,14 @@ export function MultiTypeSeriesChart({
 
   // column | bar | stacked_bar
   const stackId = chartType === "stacked_bar" ? "stack" : undefined;
+  const plotMargin =
+    showValueLabels && !stackId
+      ? { ...margin, top: Math.max(margin.top ?? 0, 28) }
+      : margin;
+
   return (
-    <StableResponsiveContainer width="100%" height={height}>
-      <ComposedChart data={chartData} margin={margin}>
+    <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
+      <ComposedChart data={chartData} margin={plotMargin}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey={categoryKey}
@@ -336,29 +387,35 @@ export function MultiTypeSeriesChart({
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
           />
-        {showLegend ? <Legend /> : null}
-        {series.map((entry) => (
-          <Bar
-            key={entry.dataKey}
-            dataKey={entry.dataKey}
-            name={entry.name}
-            fill={entry.fill}
-            stackId={stackId}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={48}
-            cursor={onCategoryClick ? "pointer" : undefined}
-            onClick={handleBarCategoryClick}
-          >
-            {categoryFillKey && !stackId
-              ? chartData.map((row, index) => (
-                  <Cell
-                    key={`${entry.dataKey}-${index}`}
-                    fill={resolveCategoryFill(row, categoryFillKey, entry.fill)}
-                  />
-                ))
-              : null}
-          </Bar>
-        ))}
+        {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
+          {showLegend ? <Legend itemSorter={null} /> : null}
+        {series.map((entry, index) => {
+          const labelThisBar =
+            showValueLabels && (!stackId || index === series.length - 1);
+          return (
+            <Bar
+              key={entry.dataKey}
+              dataKey={entry.dataKey}
+              name={entry.name}
+              fill={entry.fill}
+              stackId={stackId}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={48}
+              cursor={onCategoryClick ? "pointer" : undefined}
+              onClick={handleBarCategoryClick}
+            >
+              {categoryFillKey && !stackId
+                ? chartData.map((row, cellIndex) => (
+                    <Cell
+                      key={`${entry.dataKey}-${cellIndex}`}
+                      fill={resolveCategoryFill(row, categoryFillKey, entry.fill)}
+                    />
+                  ))
+                : null}
+              {barValueLabels(labelThisBar, formatY, "top")}
+            </Bar>
+          );
+        })}
         {trendLines}
       </ComposedChart>
     </StableResponsiveContainer>

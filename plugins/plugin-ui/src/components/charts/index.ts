@@ -46,6 +46,7 @@ export {
 export { ConfigurableSeriesChart, type ConfigurableSeriesChartProps } from "./ConfigurableSeriesChart";
 export { SeriesChartPrimitive, type SeriesChartPrimitiveProps, type SeriesPlotRenderProps } from "./SeriesChartPrimitive";
 export { LineSeriesChart, type LineSeriesChartProps } from "./LineSeriesChart";
+export { AreaSeriesChart, type AreaSeriesChartProps } from "./AreaSeriesChart";
 export { BarSeriesChart, type BarSeriesChartProps } from "./BarSeriesChart";
 export {
   ComparativeAreaChart,
@@ -145,6 +146,7 @@ export {
   type SeriesChartOptions,
   type SeriesChartPoint,
   type SeriesChartSeriesSpec,
+  type SeriesChartMarkerMode,
   type SeriesChartResolvedMeta,
   type SeriesChartTheme,
   type SeriesChartValueFormat,

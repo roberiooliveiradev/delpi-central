@@ -25,4 +25,16 @@ describe("MultiTypeSeriesChart (fonte)", () => {
     assert.match(src, /categoryFillKey\?:/);
     assert.match(src, /resolveCategoryFill/);
   });
+
+  it("expõe showValueLabels opt-in com LabelList nas barras", () => {
+    assert.match(src, /showValueLabels\?:/);
+    assert.match(src, /LabelList/);
+    assert.match(src, /barValueLabels/);
+  });
+
+  it("remonta o plot quando a ordem das séries muda (Recharts 3 bar store)", () => {
+    assert.match(src, /seriesOrderKey/);
+    assert.match(src, /key=\{seriesOrderKey\}/);
+    assert.match(src, /itemSorter=\{null\}/);
+  });
 });
