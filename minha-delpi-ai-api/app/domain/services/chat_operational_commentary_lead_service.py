@@ -22,6 +22,11 @@ class ChatOperationalCommentaryLeadService:
         if not isinstance(commentary, dict):
             return ""
 
+        if commentary.get("emptyResult"):
+            summary = cls._resolve_summary(commentary, line_limit=4)
+
+            return summary.strip()
+
         resolved_depth = cls._resolve_depth(depth=depth, compact=compact)
         profile = ChatOperationalCommentaryLeadContentService.profile(resolved_depth)
         parts: list[str] = []

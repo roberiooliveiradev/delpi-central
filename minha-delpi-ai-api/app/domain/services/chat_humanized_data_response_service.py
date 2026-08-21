@@ -40,19 +40,38 @@ class ChatHumanizedDataResponseService:
             highlights=highlights,
             narrative=narrative,
         )
-        next_action = cls._resolve_next_action(commentary, profile_key=profile, alert_level=alert_level)
+        empty_result = bool(commentary.get("emptyResult"))
 
-        if not limitations:
-            limitations = cls._default_limitations(commentary)
+        if empty_result:
+            next_action = ""
+            recommendations: list[dict[str, str]] = []
+            attention = []
+            limitations = []
+        else:
+            next_action = cls._resolve_next_action(
+                commentary,
+                profile_key=profile,
+                alert_level=alert_level,
+            )
+            recommendations = cls._build_recommendations(commentary, profile_key=profile)
+
+            if not limitations:
+                limitations = cls._default_limitations(commentary)
 
         normalized["alertLevel"] = alert_level
         normalized["summary"] = summary
         normalized["interpretation"] = interpretation
         normalized["nextAction"] = next_action
         normalized["facts"] = cls._build_facts(highlights)
-        normalized["analysis"] = cls._build_analysis(commentary, highlights=highlights, attention=attention)
-        normalized["recommendations"] = cls._build_recommendations(commentary, profile_key=profile)
+        normalized["analysis"] = (
+            []
+            if empty_result
+            else cls._build_analysis(commentary, highlights=highlights, attention=attention)
+        )
+        normalized["recommendations"] = recommendations
         normalized["limitations"] = limitations
+        normalized["attention"] = attention
+        normalized["emptyResult"] = empty_result
         normalized["readingLayer"] = ChatHumanizedDataResponseContentService.get_node("readingLayers") or {}
 
         if profile:
@@ -147,26 +166,33 @@ class ChatHumanizedDataResponseService:
         if risk_level not in _RISK_LEVELS:
             risk_level = "undefined"
 
+        empty_result = bool(normalized.get("emptyResult") or commentary.get("emptyResult"))
+
         return {
             "summary": {
                 "answer": str(normalized.get("summary") or "").strip(),
                 "meaning": str(normalized.get("interpretation") or "").strip(),
                 "riskLevel": risk_level,
-                "nextAction": str(normalized.get("nextAction") or "").strip(),
-                "attention": cls._clean_lines(normalized.get("attention")),
+                "nextAction": "" if empty_result else str(normalized.get("nextAction") or "").strip(),
+                "attention": [] if empty_result else cls._clean_lines(normalized.get("attention")),
             },
             "facts": normalized.get("facts") or [],
-            "analysis": normalized.get("analysis") or [],
+            "analysis": [] if empty_result else (normalized.get("analysis") or []),
             "hypotheses": cls._clean_hypotheses(commentary.get("hypotheses")),
-            "recommendations": cls._build_structured_recommendations(
-                normalized,
-                profile_key=profile,
+            "recommendations": (
+                []
+                if empty_result
+                else cls._build_structured_recommendations(
+                    normalized,
+                    profile_key=profile,
+                )
             ),
-            "limitations": normalized.get("limitations") or [],
+            "limitations": [] if empty_result else (normalized.get("limitations") or []),
             "derivedMetrics": cls._clean_derived_metrics(commentary.get("derivedMetrics")),
             "visualHints": cls._clean_string_list(commentary.get("visualHints")),
             "anomalies": cls._clean_anomalies(commentary.get("anomalies")),
             "profileKey": profile,
+            "emptyResult": empty_result,
         }
 
     @classmethod
@@ -210,21 +236,24 @@ class ChatHumanizedDataResponseService:
         answer = str(summary.get("answer") or "").strip()
         meaning = str(summary.get("meaning") or "").strip()
 
+        empty_result = bool(data_answer.get("emptyResult"))
+
         return {
             "profileKey": str(data_answer.get("profileKey") or "").strip(),
             "summary": answer,
             "interpretation": meaning,
             "alertLevel": alert_level,
-            "nextAction": str(summary.get("nextAction") or "").strip(),
-            "attention": cls._clean_lines(summary.get("attention")),
+            "nextAction": "" if empty_result else str(summary.get("nextAction") or "").strip(),
+            "attention": [] if empty_result else cls._clean_lines(summary.get("attention")),
             "highlights": highlights,
             "summaryLines": [answer] if answer else highlights[:4],
             "facts": data_answer.get("facts") or [],
-            "analysis": data_answer.get("analysis") or [],
-            "recommendations": recommendations,
-            "limitations": data_answer.get("limitations") or [],
+            "analysis": [] if empty_result else (data_answer.get("analysis") or []),
+            "recommendations": [] if empty_result else recommendations,
+            "limitations": [] if empty_result else (data_answer.get("limitations") or []),
             "anomalies": data_answer.get("anomalies") or [],
             "visualHints": data_answer.get("visualHints") or [],
+            "emptyResult": empty_result,
             "readingLayer": ChatHumanizedDataResponseContentService.get_node("readingLayers") or {},
         }
 
@@ -566,3 +595,203 @@ class ChatHumanizedDataResponseService:
                 anomalies.append(dict(item))
 
         return anomalies
+
+    @classmethod
+    def apply_empty_result_contract(
+        cls,
+        commentary: dict[str, Any] | None,
+        *,
+        rows: list | None,
+        metadata: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Mark empty list results and strip spurious attention / next steps."""
+        if not isinstance(commentary, dict):
+            return commentary
+
+        anomalies = commentary.get("anomalies") if isinstance(commentary.get("anomalies"), list) else []
+        has_empty_anomaly = any(
+            isinstance(item, dict) and str(item.get("type") or "").strip() == "empty_list"
+            for item in anomalies
+        )
+        is_empty_rows = isinstance(rows, list) and len(rows) == 0
+
+        if not has_empty_anomaly and not is_empty_rows:
+            return commentary
+
+        profile = str(commentary.get("profileKey") or "").strip()
+
+        # Perfis ricos (factory_status, stock, …) já montam commentary próprio —
+        # não substituir por emptyResult genérico quando há highlights/summary reais.
+        if profile and profile not in {"generic_list", "kpi_summary"}:
+            return cls._strip_redundant_empty_list_attention(commentary)
+
+        updated = dict(commentary)
+        entity = cls._resolve_empty_entity(metadata, data)
+        code = cls._resolve_product_code(metadata, data)
+        message = cls._empty_result_message(profile_key=profile, entity=entity, code=code)
+
+        updated["emptyResult"] = True
+        updated["summary"] = message
+        updated["highlights"] = [message]
+        updated["summaryLines"] = [message]
+        updated["interpretation"] = ""
+        updated["narrativeInsight"] = ""
+        updated["nextAction"] = ""
+        updated["attention"] = []
+        updated["recommendations"] = []
+        updated["limitations"] = []
+        updated["analysis"] = []
+        updated["facts"] = [{"text": message}]
+
+        return cls.normalize(updated, profile_key=profile) or updated
+
+    @classmethod
+    def _strip_redundant_empty_list_attention(
+        cls,
+        commentary: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Remove attention lines that only restate empty_list when profile already spoke."""
+        anomalies = commentary.get("anomalies") if isinstance(commentary.get("anomalies"), list) else []
+        has_empty = any(
+            isinstance(item, dict) and str(item.get("type") or "").strip() == "empty_list"
+            for item in anomalies
+        )
+
+        if not has_empty:
+            return commentary
+
+        highlights = cls._clean_lines(commentary.get("highlights"))
+        summary = str(commentary.get("summary") or "").strip()
+
+        if not highlights and not summary:
+            return commentary
+
+        empty_phrase = ChatHumanizedDataResponseContentService.get(
+            "anomalies",
+            "empty_list",
+            default="",
+        ).split("{")[0].strip().casefold()
+        attention = [
+            line
+            for line in cls._clean_lines(commentary.get("attention"))
+            if empty_phrase not in line.casefold()
+            and "não há registros" not in line.casefold()
+            and "nao ha registros" not in line.casefold()
+        ]
+        updated = dict(commentary)
+        updated["attention"] = attention
+        return updated
+
+    @classmethod
+    def _empty_result_message(
+        cls,
+        *,
+        profile_key: str,
+        entity: str,
+        code: str,
+    ) -> str:
+        for_product = ""
+
+        if code:
+            for_product = ChatHumanizedDataResponseContentService.format(
+                "emptyResult",
+                "forProductSuffix",
+                code=code,
+                default=f" para o produto {code}",
+            )
+
+        by_entity = ChatHumanizedDataResponseContentService.get_mapping("emptyResult", "byEntity")
+        template = str(by_entity.get(entity) or "").strip() if entity else ""
+
+        if not template:
+            by_profile = ChatHumanizedDataResponseContentService.get_mapping(
+                "emptyResult",
+                "byProfile",
+            )
+            template = str(by_profile.get(profile_key) or "").strip()
+
+        if not template:
+            template = ChatHumanizedDataResponseContentService.get(
+                "emptyResult",
+                "generic",
+                default="Nenhum registro encontrado{forProduct}.",
+            )
+
+        return template.replace("{forProduct}", for_product)
+
+    @classmethod
+    def _resolve_empty_entity(
+        cls,
+        metadata: dict[str, Any] | None,
+        data: dict[str, Any] | None,
+    ) -> str:
+        meta = metadata if isinstance(metadata, dict) else {}
+        response_meta = meta.get("apiDelpiResponseMeta")
+
+        if isinstance(response_meta, dict):
+            entity = str(response_meta.get("entity") or "").strip()
+
+            if entity:
+                return entity
+
+        path = str(meta.get("path") or "").strip().lower()
+
+        if "/outbound-invoice" in path:
+            return "product_outbound_invoice_items"
+
+        if "/inbound-invoice" in path:
+            return "product_inbound_invoice_items"
+
+        if "/internal-movement" in path:
+            return "product_internal_movements"
+
+        if path.rstrip("/").endswith("/sales") or "/sales/" in path:
+            return "product_sales"
+
+        if path.rstrip("/").endswith("/purchases") or "/purchases/" in path:
+            return "product_purchases"
+
+        _ = data
+        return ""
+
+    @classmethod
+    def _resolve_product_code(
+        cls,
+        metadata: dict[str, Any] | None,
+        data: dict[str, Any] | None,
+    ) -> str:
+        meta = metadata if isinstance(metadata, dict) else {}
+        payload = data if isinstance(data, dict) else {}
+
+        for key in ("productCode", "code"):
+            value = str(meta.get(key) or "").strip()
+
+            if value:
+                return value
+
+        product = payload.get("product")
+
+        if isinstance(product, dict):
+            for key in ("product_code", "code", "B1_COD"):
+                value = str(product.get(key) or "").strip()
+
+                if value:
+                    return value
+
+        for key in ("product_code", "code", "B1_COD"):
+            value = str(payload.get(key) or "").strip()
+
+            if value:
+                return value
+
+        path = str(meta.get("path") or "")
+        parts = [part for part in path.split("/") if part]
+
+        if len(parts) >= 2 and parts[0] == "products":
+            candidate = parts[1]
+
+            if candidate not in {"directives", "analyser"} and candidate.isalnum():
+                return candidate
+
+        return ""

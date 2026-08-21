@@ -297,6 +297,23 @@
     "largeList": "A lista é extensa; considere filtros ou paginação para focar o que importa.",
     "numericTotal": "Total de **{field}**: **{total}**."
   },
+  "emptyResult": {
+    "forProductSuffix": " para o produto {code}",
+    "generic": "Nenhum registro encontrado{forProduct}.",
+    "byProfile": {
+      "generic_list": "A consulta não retornou registros{forProduct}.",
+      "kpi_summary": "Nenhum indicador retornado{forProduct}."
+    },
+    "byEntity": {
+      "product_outbound_invoice_items": "Nenhuma nota fiscal de saída encontrada{forProduct}.",
+      "product_inbound_invoice_items": "Nenhuma nota fiscal de entrada encontrada{forProduct}.",
+      "product_internal_movements": "Nenhuma movimentação interna encontrada{forProduct}.",
+      "product_sales": "Nenhuma venda encontrada{forProduct}.",
+      "product_purchases": "Nenhuma compra encontrada{forProduct}.",
+      "product_customers": "Nenhum cliente encontrado{forProduct}.",
+      "product_suppliers": "Nenhum fornecedor encontrado{forProduct}."
+    }
+  },
   "summaryFirstCommentary": {
     "minPreferredKeys": 1,
     "preferredKeys": [

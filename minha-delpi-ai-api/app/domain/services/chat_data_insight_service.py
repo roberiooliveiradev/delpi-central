@@ -141,6 +141,13 @@ class ChatDataInsightService:
             data=data,
         )
 
+        commentary = ChatHumanizedDataResponseService.apply_empty_result_contract(
+            commentary,
+            rows=rows,
+            metadata=metadata,
+            data=data,
+        ) or commentary
+
         from app.domain.services.chat_presentation_prose_delivery_service import (
             ChatPresentationProseDeliveryService,
         )
