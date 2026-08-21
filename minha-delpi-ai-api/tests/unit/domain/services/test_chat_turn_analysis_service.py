@@ -64,3 +64,35 @@ def test_safe_clarify_fallback():
     assert result.decision == "clarify"
     assert result.source == "fallback"
     assert result.direct_answer()
+
+
+def test_gate_skips_fast_mode_and_unclear_stage():
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="fast",
+        heuristic_intent="llm_general",
+        heuristic_decision="llm_fallback",
+        heuristic_reason="no_clear_intent",
+    )
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="llm_general",
+        heuristic_decision="llm_fallback",
+        heuristic_reason="no_clear_intent",
+        pipeline_stages=["unclear_request"],
+    )
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="small_talk",
+        heuristic_decision="small_talk",
+        heuristic_reason="greeting_or_thanks",
+    )
+
+
+def test_gate_opens_on_no_clear_intent_normal():
+    assert ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="llm_general",
+        heuristic_decision="llm_fallback",
+        heuristic_reason="no_clear_intent",
+        heuristic_confidence=0.5,
+    )
