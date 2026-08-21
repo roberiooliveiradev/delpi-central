@@ -35,6 +35,7 @@ import {
   CommercialRoomContextPanel,
   CommercialRoomHeader,
   CommercialRoomSidePanel,
+  CommercialUnderlineNav,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
@@ -125,6 +126,7 @@ export function InteractionRoomPage({
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
   const [contextOpen, setContextOpen] = useState(false);
+  const [roomView, setRoomView] = useState<"chat" | "shared">("chat");
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
@@ -696,8 +698,49 @@ export function InteractionRoomPage({
               }
             />
           </div>
+          <div className="cm-room-thread__view-nav">
+            <CommercialUnderlineNav
+              mode="tabs"
+              aria-label={content.roomViewNavAriaLabel}
+              activeId={roomView}
+              items={[
+                {
+                  id: "chat",
+                  label: content.roomViewChat,
+                  controlId: "cm-room-view-chat",
+                  tabId: "cm-room-tab-chat",
+                  onSelect: () => setRoomView("chat"),
+                },
+                {
+                  id: "shared",
+                  label: content.roomViewShared,
+                  controlId: "cm-room-view-shared",
+                  tabId: "cm-room-tab-shared",
+                  onSelect: () => setRoomView("shared"),
+                },
+              ]}
+            />
+          </div>
           <div className="cm-room-thread__body">
-            <div className="cm-room-thread__main">
+            {roomView === "shared" ? (
+              <div
+                id="cm-room-view-shared"
+                role="tabpanel"
+                aria-labelledby="cm-room-tab-shared"
+                className="cm-room-thread__main"
+              >
+                <CommercialEmptyState
+                  title={content.sharedEmptyTitle}
+                  message={content.sharedEmptyDescription}
+                />
+              </div>
+            ) : (
+            <div
+              id="cm-room-view-chat"
+              role="tabpanel"
+              aria-labelledby="cm-room-tab-chat"
+              className="cm-room-thread__main"
+            >
               <div className="cm-room-thread__stage">
                 <div
                   className="cm-room-thread__msgs"
@@ -767,6 +810,7 @@ export function InteractionRoomPage({
                 />
               </div>
             </div>
+            )}
             <CommercialRoomSidePanel open={contextOpen} title={content.contextToggle}>
               <CommercialRoomContextPanel
                 embedded

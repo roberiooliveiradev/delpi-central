@@ -211,6 +211,11 @@
   flex: 0 0 auto;
 }
 
+.dashboard-commercial .cm-room-thread__view-nav {
+  flex: 0 0 auto;
+  padding: 0 var(--cm-gap-sm, 0.75rem);
+}
+
 .dashboard-commercial .cm-room-thread__body {
   display: flex;
   flex: 1;
