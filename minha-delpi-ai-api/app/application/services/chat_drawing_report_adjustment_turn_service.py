@@ -86,7 +86,15 @@ class ChatDrawingReportAdjustmentTurnService:
                     overrides=existing_overrides,
                 )
 
-            return None
+            return cls._build_direct_result(
+                message=message,
+                direct_answer=ChatDrawingQueryIntentContentService.get(
+                    "directAnswers",
+                    "alreadyReviewed",
+                ),
+                analysis=analysis,
+                overrides=existing_overrides,
+            )
 
         critical_keys = [
             key

@@ -214,6 +214,32 @@ def test_adjustment_without_prior_report_returns_direct_answer_not_none():
     assert "relatório de análise de desenho anterior" in str(result["directAnswer"]).lower()
 
 
+def test_adjustment_with_no_pending_items_returns_already_reviewed():
+    analysis = _analysis_90261877()
+    analysis["items"] = [
+        {
+            "section": "Produto",
+            "item": "Produto encontrado",
+            "status": "ok",
+            "templateKey": "product_found",
+        }
+    ]
+    analysis["status"] = "approved"
+    analysis["warnings"] = 0
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261877"
+    )
+    result = ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+        message,
+        previous_messages=_history_with_analysis(analysis),
+    )
+
+    assert result is not None
+    assert result["toolCalls"] == []
+    assert result.get("drawingAnalysisMode") is True
+    assert "não há itens pendentes" in str(result["directAnswer"]).casefold()
+
+
 def test_intent_matches_90261877_adjustment_message():
     message = (
         "foi revisado e o problema não é verdadeiro, gere um novo relatório"

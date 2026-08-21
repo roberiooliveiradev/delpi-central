@@ -32,6 +32,10 @@ def test_report_adjustment_triggers_loaded_from_json():
         "directAnswers",
         "ambiguousAdjustment",
     )
+    assert ChatDrawingQueryIntentContentService.get(
+        "directAnswers",
+        "alreadyReviewed",
+    )
 
 
 def test_conformidade_delpi_trigger_from_json_bundle():
