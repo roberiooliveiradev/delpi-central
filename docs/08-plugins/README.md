@@ -107,7 +107,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 
 **Painéis TV:** gestão em `/apps/tv-dashboard`; apresentação pública em `/p/tv-dashboard/present/{token}` (sem login). API dedicada: `/apps/tv-dashboard-api/*`. Playbook: [../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md](../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md).
 **Experiência do Cliente:** admin `/apps/customer-experience`; público `/p/customer-experience/thanks/{token}` e `/form/{token}`. API: `/apps/customer-experience-api/*`. [README do plugin](../../plugins/customer-experience/README.md) · [roadmap](../12-roadmap-e-volucao/customer-experience/).
-**Portal PCP:** `/apps/production-control` (gestão à vista + carga máquina + análise de problemas). API: `/apps/production-control-api/*`. [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md) · [roadmap](../12-roadmap-e-evolucao/production-control/).
+**Portal PCP:** `/apps/production-control` (gestão à vista + carga máquina + análise de problemas). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
 **CIPA SIPAT:** admin `/apps/cipa/filial-{01|02}/sipat`; público `/p/cipa/sipat/{token}`. API: `/apps/cipa-api/public/sipat/*`.
 
 

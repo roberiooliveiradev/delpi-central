@@ -2,6 +2,8 @@
 
 Microfrontend federado da plataforma **Portal PCP** (`id`: `production-control`): shell estilo command-center com **gestão à vista** na home e subplugins (Carga máquina, Análise de problemas).
 
+**Recado para quem implementa:** o destino do módulo é o **Portal de Produção**, com o PCP como primeira área — não absorver dashboard/eficiência/apontamentos neste BFF. Detalhe: [docs/12-roadmap-e-evolucao/production-control/README.md](../../docs/12-roadmap-e-evolucao/production-control/README.md) § Recado.
+
 ## Fluxo técnico
 
 ```text

@@ -2,6 +2,8 @@
 
 BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**, da **carga máquina** e da composição de **análise de problemas**. SQL TOTVS permanece na api-delpi.
 
+**Recado para quem implementa:** o destino do módulo é o **Portal de Produção**, com o PCP como primeira área. Este BFF **não** vira umbrella de OEE, apontamento ou retrabalho — irmãos entram por `routes[].target`, não fundindo API. Detalhe: [docs/12-roadmap-e-evolucao/production-control/README.md](../docs/12-roadmap-e-evolucao/production-control/README.md) § Recado.
+
 ## Endpoints
 
 | Método | Path | Auth |

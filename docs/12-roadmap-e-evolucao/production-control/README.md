@@ -2,6 +2,22 @@
 
 Plataforma de planejamento e controle da produção na Minha Delpi.
 
+## Recado para quem implementa
+
+O **módulo** que faz sentido a médio prazo é o **Portal de Produção**. O **PCP** é a primeira área dentro dele — não o nome da casa.
+
+Hoje o tile e o copy dizem **Portal PCP** porque as telas ativas (gestão à vista, carga máquina, análise de problemas) são trabalho de PCP. O `id` técnico já é mais largo (`production-control`), o manifesto já está no grupo **Produção**, e o papel alvo já é **módulo** (shell), igual `maintenance` e `strategic-indicators`.
+
+**Não** tratar este app como guarda-chuva de tudo que é fábrica. Dashboard Produção, eficiência fabril, apontamentos, retrabalho, scrap, inspeção de processo e TV continuam plugins irmãos, cada um com permissão e contrato próprios. O BFF `production-control-api` dona a regra de sequenciamento (fila congelada, priorizar, retirar, transferir); **não** absorve OEE, apontamento HZA/SH6 nem retrabalho. SQL TOTVS permanece na `api-delpi`.
+
+Quando a rail tiver mais de um público de verdade:
+
+1. O tile vira **Portal de Produção**; PCP vira o primeiro grupo da rail (junto com Capacidade, já *em breve*).
+2. Irmãos entram por `routes[].target` (plugin-vs-módulo) — **não** copiando tela nem fundindo API.
+3. **Não** rebatizar `production-control-api` / schema `production_control` como umbrella genérico de produção. Planos futuros do PCP usam tabelas irmãs no mesmo schema.
+
+Até lá: não renomear o launcher só para “prometer” um portal que ainda não existe. Analogia: Portal Comercial × Dashboard Comercial — dois nomes, dois trabalhos.
+
 ## Ownership
 
 | Camada | Pacote |
