@@ -1,0 +1,88 @@
+{
+  "terms": {
+    "filter": [
+      "filtre",
+      "filtro",
+      "filtrar",
+      "filtra ",
+      "mostre só",
+      "mostre so",
+      "só a filial",
+      "so a filial",
+      "apenas filial",
+      "somente filial",
+      "somente a filial",
+      "restrinja",
+      "restringe",
+      "limitar a filial",
+      "limita a filial"
+    ],
+    "nextPage": [
+      "proxima pagina",
+      "proxima pag",
+      "seguinte pagina",
+      "pagina seguinte",
+      "next page"
+    ],
+    "prevPage": [
+      "pagina anterior",
+      "pagina previa",
+      "pagina prev",
+      "previous page",
+      "voltar pagina",
+      "pagina de tras"
+    ],
+    "depthIncrease": [
+      "mais niveis",
+      "aprofundar",
+      "ampliar niveis",
+      "aumentar profundidade",
+      "aumente a profundidade",
+      "todos os niveis",
+      "ver mais niveis",
+      "expandir niveis",
+      "max depth",
+      "max_depth"
+    ],
+    "moreResults": [
+      "mais registros",
+      "mais linhas",
+      "mais resultados",
+      "mais itens",
+      "ver mais",
+      "mostrar mais",
+      "traga mais",
+      "exiba mais"
+    ],
+    "stockReset": [
+      "completo de novo",
+      "estoque completo",
+      "completo novamente",
+      "tudo de novo",
+      "todas as filiais",
+      "todas filiais",
+      "todas as filial",
+      "sem filtro",
+      "sem filial",
+      "remova o filtro",
+      "remover filtro",
+      "tire o filtro",
+      "mostre completo",
+      "mostra completo",
+      "visao completa",
+      "visão completa"
+    ]
+  },
+  "patterns": {
+    "branch": "\\b(?:filial|fil\\.?)\\s*[_-]?\\s*(\\d{1,2})\\b",
+    "warehouse": "\\b(?:armaz[eé]m|arm\\.?|deposito|depósito)\\s*[_-]?\\s*(\\d{1,3})\\b",
+    "maxDepth": "\\b(?:max[_-]?depth|profundidade|niveis)\\s*(?:para\\s+)?(\\d{1,3})\\b",
+    "pageNumber": "\\bp[aá]gina\\s*(\\d+)\\b",
+    "pageSize": [
+      "\\b(?:aumente|aumenta|mostre|traga|exiba|liste|coloque|mude|altere|passar?|colocar?)\\s+(?:para\\s+)?(\\d{1,4})\\s*(?:linhas?|registros?|itens?|resultados?)\\b",
+      "\\b(?:aumente|aumenta)\\s+(?:o\\s+)?(?:page[_-]?size|tamanho\\s+da\\s+pagina|tamanho\\s+da\\s+página)\\s+(?:para\\s+)?(\\d{1,4})\\b",
+      "\\bpage[_-]?size\\s*[=:]?\\s*(\\d{1,4})\\b",
+      "\\b(\\d{1,4})\\s*(?:linhas?|registros?|itens?|resultados?)\\b"
+    ]
+  }
+}
