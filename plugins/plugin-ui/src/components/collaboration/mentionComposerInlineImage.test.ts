@@ -7,6 +7,7 @@ import {
   extractClipboardHtmlImageFiles,
   INLINE_IMAGE_ALIGN_ATTR,
   inlineImageInlineHtml,
+  insertComposerInlineImageAtCaret,
   isComposerInlineImageFile,
   normalizeInlineImageAlign,
   parseAlignFromImageTitle,
@@ -143,6 +144,36 @@ describe("mentionComposerInlineImage", () => {
     ensureInlineImageCaretAnchors(root);
     expect(root.children.length).toBe(1);
     expect(root.children[0]?.tagName).toBe("SPAN");
+  });
+
+  it("insertComposerInlineImageAtCaret mantém imagem no mesmo <p> entre textos", () => {
+    const file = new File(["x"], "mid.png", { type: "image/png" });
+    const [insert] = buildInlineImageInserts([file]);
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>antesdepois</p>";
+    document.body.appendChild(editor);
+    const text = editor.querySelector("p")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, "antes".length);
+    range.collapse(true);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    const span = insertComposerInlineImageAtCaret(editor, insert!);
+    expect(span).not.toBeNull();
+    expect(editor.querySelectorAll(":scope > p")).toHaveLength(1);
+    const p = editor.querySelector("p")!;
+    expect(p.querySelector(".delpi-ui-mention-composer__inline-image")).toBe(span);
+    const textOnly = Array.from(p.childNodes)
+      .filter((n) => n.nodeType === Node.TEXT_NODE)
+      .map((n) => (n.textContent ?? "").replace(/\u200b/g, ""))
+      .join("");
+    expect(textOnly).toBe("antesdepois");
+    expect(span?.previousSibling?.textContent).toBe("\u200b");
+    expect(span?.nextSibling?.textContent).toBe("\u200b");
+    editor.remove();
   });
 
   it("set/read data-align legado na figure", () => {
