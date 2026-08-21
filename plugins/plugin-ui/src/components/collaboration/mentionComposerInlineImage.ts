@@ -139,6 +139,106 @@ export function extractClipboardHtmlImageFiles(html: string | null | undefined):
   }
 }
 
+/**
+ * True when clipboard HTML has real prose after removing images
+ * (Word text+image). Lone screenshot HTML (`<img file://…>`) is false.
+ */
+export function clipboardHtmlHasProse(html: string | null | undefined): boolean {
+  const source = (html ?? "").trim();
+  if (!source || typeof DOMParser === "undefined") return false;
+  try {
+    const doc = new DOMParser().parseFromString(source, "text/html");
+    for (const img of Array.from(doc.querySelectorAll("img"))) img.remove();
+    const text = (doc.body?.textContent ?? "")
+      .replace(/\u200b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Drop `<img>` so File-based inline insert owns images (avoids file:// / cid duplicates).
+ * Keeps text and formatting tags.
+ */
+export function stripImagesFromClipboardHtml(html: string | null | undefined): string {
+  const source = (html ?? "").trim();
+  if (!source || typeof DOMParser === "undefined") return source;
+  try {
+    const doc = new DOMParser().parseFromString(source, "text/html");
+    for (const img of Array.from(doc.querySelectorAll("img"))) img.remove();
+    return doc.body?.innerHTML ?? source;
+  } catch {
+    return source.replace(/<img\b[^>]*>/gi, "");
+  }
+}
+
+export type MaterializeClipboardHtmlImagesResult = {
+  html: string;
+  inserts: MentionComposerInlineImageInsert[];
+  /** Clipboard files not consumed by an `<img>` (append at caret after paste). */
+  remainingFiles: File[];
+};
+
+/**
+ * Replace each `<img>` in clipboard HTML with a pending inline span, in document order.
+ * Prefer clipboard `File`s; fall back to `data:` URLs. Drops broken `file://` / http imgs.
+ * Preserves text + formatting around images (Word mixed paste).
+ */
+export function materializeClipboardHtmlInlineImages(
+  html: string | null | undefined,
+  clipboardFiles: readonly File[] = [],
+  options?: { removeAriaLabel?: (fileName: string) => string },
+): MaterializeClipboardHtmlImagesResult {
+  const source = (html ?? "").trim();
+  const queue = clipboardFiles.filter(isComposerInlineImageFile);
+  if (!source || typeof DOMParser === "undefined") {
+    return { html: source, inserts: [], remainingFiles: [...queue] };
+  }
+  try {
+    const doc = new DOMParser().parseFromString(source, "text/html");
+    const inserts: MentionComposerInlineImageInsert[] = [];
+    const removeLabel =
+      options?.removeAriaLabel ?? ((name: string) => `Remove ${name}`);
+    for (const img of Array.from(doc.querySelectorAll("img"))) {
+      let file: File | null = queue.shift() ?? null;
+      if (!file) {
+        const src = (img.getAttribute("src") || "").trim();
+        if (src.startsWith("data:")) {
+          file = dataUrlToImageFile(src, img.getAttribute("alt") || "image");
+        }
+      }
+      if (!file) {
+        img.remove();
+        continue;
+      }
+      const built = buildInlineImageInserts([file]);
+      const insert = built[0];
+      if (!insert) {
+        img.remove();
+        continue;
+      }
+      inserts.push(insert);
+      const holder = doc.createElement("div");
+      holder.innerHTML = inlineImageInlineHtml(insert, {
+        removeAriaLabel: removeLabel(insert.file.name || "image"),
+      });
+      const frag = doc.createDocumentFragment();
+      while (holder.firstChild) frag.appendChild(holder.firstChild);
+      img.replaceWith(frag);
+    }
+    return {
+      html: doc.body?.innerHTML ?? source,
+      inserts,
+      remainingFiles: [...queue],
+    };
+  } catch {
+    return { html: source, inserts: [], remainingFiles: [...queue] };
+  }
+}
+
 export function buildInlineImageInserts(files: readonly File[]): MentionComposerInlineImageInsert[] {
   return files.filter(isComposerInlineImageFile).map((file) => {
     const pendingId = newInlineImagePendingId();

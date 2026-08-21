@@ -123,10 +123,11 @@ import {
 } from "./mentionComposerNormalize";
 import {
   buildInlineImageInserts,
+  clipboardHtmlHasProse,
   INLINE_IMAGE_FIGURE_SELECTOR,
   insertComposerInlineImageAtCaret,
   isComposerInlineImageFile,
-  extractClipboardHtmlImageFiles,
+  materializeClipboardHtmlInlineImages,
   uniqueClipboardImageFiles,
   type MentionComposerInlineImageInsert,
 } from "./mentionComposerInlineImage";
@@ -712,13 +713,18 @@ export function MentionComposer({
     rememberSelection();
   };
 
-  const insertInlineImages = (files: readonly File[]) => {
+  const insertInlineImages = (
+    files: readonly File[],
+    options?: { skipCommit?: boolean },
+  ) => {
     const el = surfaceRef.current;
     if (!el || files.length === 0) return false;
     const inserts = buildInlineImageInserts(files);
     if (inserts.length === 0) return false;
-    commitBeforeMutation();
-    restoreSelectionForMutation();
+    if (!options?.skipCommit) {
+      commitBeforeMutation();
+      restoreSelectionForMutation();
+    }
     const removeLabel =
       labels.pendingRemoveAriaLabel ?? ((fileName: string) => `Remove ${fileName}`);
     for (const item of inserts) {
@@ -756,20 +762,83 @@ export function MentionComposer({
     event.preventDefault();
     const el = surfaceRef.current;
     if (!el) return;
+    const html = event.clipboardData?.getData("text/html") ?? "";
+    const text = event.clipboardData?.getData("text/plain") ?? "";
     const imageFiles = uniqueClipboardImageFiles(event.clipboardData);
+    const hasProse =
+      clipboardHtmlHasProse(html) || Boolean(text.replace(/\s+/g, " ").trim());
+    const richHtml = clipboardHasUsefulHtml(html);
+    const removeLabel =
+      labels.pendingRemoveAriaLabel ?? ((fileName: string) => `Remove ${fileName}`);
+
+    // Word / mixed: keep text + formatting; replace <img> with pending spans in order.
+    // Screenshot-only (files, no prose): images only.
+    if (hasProse && richHtml) {
+      commitBeforeMutation();
+      restoreSelectionForMutation();
+      const materialized = materializeClipboardHtmlInlineImages(html, imageFiles, {
+        removeAriaLabel: removeLabel,
+      });
+      insertRichTextHtmlFragment(
+        el,
+        stripDangerousRichTextTags(materialized.html),
+      );
+      normalizeComposerContent(el);
+      lastStableRef.current = readSnapshot();
+      refreshHistoryFlags();
+      emitMarkdownAndMention();
+      if (materialized.inserts.length > 0) {
+        onInlineImagesInserted?.(materialized.inserts);
+      }
+      if (materialized.remainingFiles.length > 0) {
+        insertInlineImages(materialized.remainingFiles, { skipCommit: true });
+      } else {
+        rememberSelection();
+      }
+      return;
+    }
+
+    if (hasProse && text.trim()) {
+      commitBeforeMutation();
+      restoreSelectionForMutation();
+      insertRichTextHtmlFragment(
+        el,
+        stripDangerousRichTextTags(escapePlainText(text)),
+      );
+      normalizeComposerContent(el);
+      lastStableRef.current = readSnapshot();
+      emitMarkdownAndMention();
+      if (imageFiles.length > 0) {
+        insertInlineImages(imageFiles, { skipCommit: true });
+      } else {
+        rememberSelection();
+      }
+      return;
+    }
+
     if (imageFiles.length > 0) {
       insertInlineImages(imageFiles);
       return;
     }
-    const html = event.clipboardData?.getData("text/html") ?? "";
-    const fromHtml = extractClipboardHtmlImageFiles(html);
-    if (fromHtml.length > 0) {
-      insertInlineImages(fromHtml);
+
+    const fromHtml = materializeClipboardHtmlInlineImages(html, [], {
+      removeAriaLabel: removeLabel,
+    });
+    if (fromHtml.inserts.length > 0) {
+      commitBeforeMutation();
+      restoreSelectionForMutation();
+      insertRichTextHtmlFragment(el, stripDangerousRichTextTags(fromHtml.html));
+      normalizeComposerContent(el);
+      lastStableRef.current = readSnapshot();
+      refreshHistoryFlags();
+      emitMarkdownAndMention();
+      onInlineImagesInserted?.(fromHtml.inserts);
+      rememberSelection();
       return;
     }
+
     commitBeforeMutation();
-    const text = event.clipboardData?.getData("text/plain") ?? "";
-    if (clipboardHasUsefulHtml(html)) {
+    if (richHtml) {
       insertRichTextHtmlFragment(el, stripDangerousRichTextTags(html));
     } else if (text) {
       insertRichTextHtmlFragment(el, stripDangerousRichTextTags(escapePlainText(text)));

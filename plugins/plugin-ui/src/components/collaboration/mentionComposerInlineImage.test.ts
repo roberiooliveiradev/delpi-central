@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildInlineImageInserts,
+  clipboardHtmlHasProse,
   collectClipboardImageFiles,
   ensureInlineImageCaretAnchors,
   extractClipboardHtmlImageFiles,
@@ -9,10 +10,12 @@ import {
   inlineImageInlineHtml,
   insertComposerInlineImageAtCaret,
   isComposerInlineImageFile,
+  materializeClipboardHtmlInlineImages,
   normalizeInlineImageAlign,
   parseAlignFromImageTitle,
   readInlineImageFigureAlign,
   setInlineImageFigureAlign,
+  stripImagesFromClipboardHtml,
   uniqueClipboardImageFiles,
 } from "./mentionComposerInlineImage";
 import { richTextHtmlToMarkdown } from "../rich-text/richTextMarkdown";
@@ -105,6 +108,36 @@ describe("mentionComposerInlineImage", () => {
     const files = extractClipboardHtmlImageFiles(html);
     expect(files).toHaveLength(1);
     expect(files[0]?.type).toBe("image/png");
+  });
+
+  it("detecta prosa no HTML misto Word e ignora HTML só de screenshot", () => {
+    expect(
+      clipboardHtmlHasProse(
+        "<p><b>antes</b></p><p><img src=\"file:///tmp/x.png\" /></p><p>depois</p>",
+      ),
+    ).toBe(true);
+    expect(
+      clipboardHtmlHasProse(
+        "<!--StartFragment--><img src=\"file:///clip.png\" /><!--EndFragment-->",
+      ),
+    ).toBe(false);
+  });
+
+  it("materializa texto+imagem na ordem e consome File do clipboard", () => {
+    const file = new File(["bytes"], "word-img.png", { type: "image/png" });
+    const html =
+      "<p><strong>Agsvdghagsdvgavs</strong></p>" +
+      "<p><img src=\"file:///C:/Users/x/AppData/Temp/msohtmlclip1/01/clip_image001.png\" /></p>" +
+      "<p>asdjhashdas</p>";
+    const result = materializeClipboardHtmlInlineImages(html, [file]);
+    expect(result.inserts).toHaveLength(1);
+    expect(result.inserts[0]?.file.name).toBe("word-img.png");
+    expect(result.remainingFiles).toHaveLength(0);
+    expect(result.html).toMatch(/Agsvdghagsdvgavs/);
+    expect(result.html).toMatch(/asdjhashdas/);
+    expect(result.html).toContain("data-attachment-pending=");
+    expect(result.html).not.toMatch(/file:\/\//);
+    expect(stripImagesFromClipboardHtml(html)).not.toMatch(/<img\b/i);
   });
 
   it("monta span inline sem âncoras p/br e turndown vira attachment:pending", () => {
