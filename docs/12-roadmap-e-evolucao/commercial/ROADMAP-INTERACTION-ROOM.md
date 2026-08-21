@@ -1,6 +1,6 @@
 # Portal Comercial — roadmap da Sala de interação
 
-> **Status:** **roadmap sala concluído** (E1–E8). **Extensão:** imagens coladas no caret (`attachment:`) + anexos clip (ago/2026).  
+> **Status:** **roadmap sala concluído** (E1–E8). **Extensões:** imagens `attachment:` (ago/2026); identidade Unidade + vista Shared + Find-in-chat (ago/2026).  
 > **Relacionados:** [WIREFRAMES.md](./WIREFRAMES.md) WF-SALA · [API-ROUTES.md](./API-ROUTES.md) § 3.21 · [DATA-MODEL.md](./DATA-MODEL.md) § 8.1 · [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) · [plugins/commercial/README.md](../../../plugins/commercial/README.md) · [commercial-api/docs/README.md](../../../commercial-api/docs/README.md)
 
 Documento canônico do **backlog de implementação** da sala (MFE `plugins/commercial` + `commercial-api`). Cada subetapa lista **Front (plugin-ui / kit)**, **Front (MFE commercial)** e **Backend (commercial-api)**. Se a camada não muda, o texto é **nenhum** e o motivo. Sem api-delpi e sem `minha-delpi-ai-api` em qualquer S*. Persistência de mensagem = markdown em `body_text` (coluna TEXT já existe).
@@ -570,9 +570,15 @@ Dois caminhos: **clip/drop-thread** → thumbs + `belowBody`; **colar/drop na su
 
 **Alinhamento (Word-like, imagem no parágrafo):** toolbar Formatar Align L/C/R/J aplica **só** `text-align` no bloco (`<p>`); texto e imagem andam juntos. CSS: wrapper `inline-block` + `img { display: inline; vertical-align: baseline }`. Sem `data-align` na imagem e sem title `"align=…"` no markdown (legado `align=` no title migra para `text-align` no enhance). Persistência: `![alt](attachment:{uuid})` **inline** na linha + HTML island `<p style="text-align:…">` quando ≠ left. Parser canônico no kit (`parseMarkdownImages`) separa href do title. Edit: `resolveAttachmentImageSrc` hidrata `src` no span; strip só com anexos **fora** do body. **Supersede:** plano figure-bloco + `data-align` (ago/2026). Sem float mid-palavra.
 
+## Apêndice — identidade, Shared e Find (ago/2026)
+
+- **Identidade:** `formatRoomEntityPresentation` + `formatOperationalUnitCode` — chip/campo **Unidade** = Santa Catarina / Espírito Santo; nunca `filial|pedido` nem «Filial 02» na UI. Header: chip + ícone Abrir pedido; ABOUT estruturado (`entityPrimary` / `entityFields`).
+- **Vista Shared:** `roomView` Chat|Compartilhado (`UnderlineNav` **só** no chrome da thread — proibido no workspace/inbox). `GET /interaction-rooms/{id}/shared-items?kind=&q=` na **commercial-api**; UI Recentes/Arquivos/Links + filtro + Carregar → attach existente.
+- **Find:** `sidePanelMode` `context` \| `find` \| `null` (exclusivo); `RoomMessageFindPanel` no kit; lupa + Ctrl/Cmd+F; `messages?q=` debounce; jump via `scrollThreadMessageIntoView` (força vista chat); Esc fecha.
+
 ## Fora do escopo
 
-Virtualização, typing, presence, emoji-mart/GIF, paginação de mensagens antigas, date separators, api-delpi, patch MF, rebuild de todos os MFEs, mudar TopBar/`PageHero` globais, restyle profundo de `EntityUnfurlCard`, mover `CustomerAvatar` para o kit, headings/tabelas/cor no chat, Loop do Teams, aba Preview estilo GitHub, coluna HTML no banco, prévia tela cheia estilo WhatsApp, bandeja única estilo Slack para imagem+pdf, `![](https://…)`, float mid-palavra.
+Virtualização, typing, presence, emoji-mart/GIF, paginação de mensagens antigas, date separators, api-delpi, patch MF, rebuild de todos os MFEs, mudar TopBar/`PageHero` globais, restyle profundo de `EntityUnfurlCard`, mover `CustomerAvatar` para o kit, headings/tabelas/cor no chat, Loop do Teams, aba Preview estilo GitHub, coluna HTML no banco, prévia tela cheia estilo WhatsApp, bandeja única estilo Slack para imagem+pdf, `![](https://…)`, float mid-palavra, filtros avançados Find (data/autor/tipo), menu `…` / lote Shared, Shared/Find full no painel embutido da ficha.
 
 ## Impacto
 
