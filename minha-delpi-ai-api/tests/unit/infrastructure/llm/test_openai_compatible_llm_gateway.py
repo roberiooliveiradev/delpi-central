@@ -6,7 +6,10 @@ from app.infrastructure.llm.http_stream_utf8 import (
     decode_stream_line,
     repair_utf8_mojibake,
 )
-from app.infrastructure.llm.openai_compatible_llm_gateway import OpenAiCompatibleLlmGateway
+from app.infrastructure.llm.openai_compatible_llm_gateway import (
+    OpenAiCompatibleLlmGateway,
+    apply_prompt_prefix_cache,
+)
 
 
 @pytest.fixture
@@ -15,6 +18,7 @@ def gateway(monkeypatch):
     monkeypatch.setenv("LLM_TEXT_BASE_URL", "https://api.test/v1")
     monkeypatch.setenv("LLM_TEXT_MODEL", "gpt-test")
     monkeypatch.setenv("LLM_TEXT_API_KEY", "token")
+    monkeypatch.setenv("LLM_PROMPT_CACHE_ENABLED", "true")
     return OpenAiCompatibleLlmGateway()
 
 
@@ -40,12 +44,32 @@ def test_generate_returns_content(gateway):
         "app.infrastructure.llm.openai_compatible_llm_gateway.requests.post",
         return_value=response,
     ) as post:
-        content = gateway.generate([{"role": "user", "content": "oi"}])
+        content = gateway.generate(
+            [
+                {"role": "system", "content": "Você é o assistente Minha DELPI."},
+                {"role": "user", "content": "oi"},
+            ]
+        )
 
     assert content == "resposta"
     post.assert_called_once()
     assert post.call_args.kwargs["headers"]["Authorization"] == "Bearer token"
     assert response.encoding == "utf-8"
+    sent = post.call_args.kwargs["json"]["messages"]
+    assert isinstance(sent[0]["content"], list)
+    assert sent[0]["content"][0]["cache_control"] == {"type": "ephemeral"}
+
+
+def test_apply_prompt_prefix_cache_marks_first_system_only():
+    messages = [
+        {"role": "system", "content": "prefixo estável"},
+        {"role": "system", "content": "segundo system"},
+        {"role": "user", "content": "pergunta"},
+    ]
+    prepared = apply_prompt_prefix_cache(messages)
+    assert prepared[0]["content"][0]["cache_control"]["type"] == "ephemeral"
+    assert prepared[1]["content"] == "segundo system"
+    assert prepared[2]["content"] == "pergunta"
 
 
 def test_generate_falls_back_to_reasoning_when_content_empty(gateway):

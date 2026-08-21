@@ -20,6 +20,54 @@ from app.infrastructure.llm.llm_request_context import get_active_config
 logger = logging.getLogger("minha-delpi-ai-api.openai-compatible-llm")
 
 
+def _prompt_cache_enabled() -> bool:
+    from app.infrastructure.config.settings import Settings
+
+    raw = str(getattr(Settings, "LLM_PROMPT_CACHE_ENABLED", "true") or "true").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def apply_prompt_prefix_cache(messages: list[dict]) -> list[dict]:
+    """Marca o primeiro system estável com cache_control (OpenRouter/Anthropic-compatible).
+
+    Mantém o prefixo de system como string estável no início do prompt para hit de cache
+    entre turnos; não altera contrato de mensagens para o chamador.
+    """
+    if not _prompt_cache_enabled() or not messages:
+        return messages
+
+    prepared: list[dict] = []
+    marked = False
+
+    for message in messages:
+        if not isinstance(message, dict):
+            prepared.append(message)
+            continue
+
+        role = str(message.get("role") or "").strip().lower()
+        content = message.get("content")
+
+        if marked or role != "system" or not isinstance(content, str) or not content.strip():
+            prepared.append(message)
+            continue
+
+        prepared.append(
+            {
+                **message,
+                "content": [
+                    {
+                        "type": "text",
+                        "text": content,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+            }
+        )
+        marked = True
+
+    return prepared
+
+
 def _visible_assistant_text(message: dict, *, finish_reason: object = None) -> str:
     """Texto visível da mensagem OpenAI-compatible.
 
@@ -117,7 +165,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
         active = self._active()
         payload = {
             "model": self._resolve_model(),
-            "messages": messages,
+            "messages": apply_prompt_prefix_cache(messages),
             "tools": tools,
             "tool_choice": "auto",
             "temperature": active.temperature,
@@ -176,7 +224,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
         active = self._active()
         payload = {
             "model": self._resolve_model(),
-            "messages": messages,
+            "messages": apply_prompt_prefix_cache(messages),
             "temperature": active.temperature,
             "max_tokens": active.max_tokens,
             "stream": False,
@@ -220,7 +268,7 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
         active = self._active()
         payload = {
             "model": self._resolve_model(),
-            "messages": messages,
+            "messages": apply_prompt_prefix_cache(messages),
             "temperature": active.temperature,
             "max_tokens": active.max_tokens,
             "stream": True,

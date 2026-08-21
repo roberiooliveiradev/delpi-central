@@ -34,6 +34,9 @@ class Settings:
     LLM_TEXT_MODEL = os.getenv("LLM_TEXT_MODEL", "").strip()
     LLM_TEXT_API_KEY = os.getenv("LLM_TEXT_API_KEY", "").strip()
     LLM_TEXT_TIMEOUT_SECONDS = float(os.getenv("LLM_TEXT_TIMEOUT_SECONDS", "0") or "0")
+    LLM_PROMPT_CACHE_ENABLED = (
+        os.getenv("LLM_PROMPT_CACHE_ENABLED", "true").lower() == "true"
+    )
     EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "ollama").lower().strip()
     VISION_LLM_PROVIDER = os.getenv("VISION_LLM_PROVIDER", "ollama").lower().strip()
     LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.4"))
