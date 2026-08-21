@@ -235,6 +235,8 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
                 stream=True,
             ) as response:
                 response.raise_for_status()
+                reasoning_parts: list[str] = []
+                content_seen = False
 
                 for line in iter_utf8_lines(response):
                     line = line.strip()
@@ -262,12 +264,40 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
                     content = delta.get("content")
 
                     if content:
+                        content_seen = True
                         yield repair_utf8_mojibake(str(content))
                         continue
 
-                    reasoning_visible = _reasoning_delta_for_stream(delta.get("reasoning"))
-                    if reasoning_visible:
-                        yield repair_utf8_mojibake(reasoning_visible)
+                    # Não faz stream de reasoning: Kimi costuma emitir CoT sem espaços
+                    # e vaza no UI. Acumula só como fallback se content vier vazio.
+                    reasoning = delta.get("reasoning")
+                    if reasoning:
+                        reasoning_parts.append(str(reasoning))
+
+                if not content_seen and reasoning_parts:
+                    from app.domain.services.chat_llm_generation_context_service import (
+                        mark_reasoning_fallback,
+                    )
+                    from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+                        ChatLlmSynthesisDeliveryContentService,
+                    )
+                    from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+                        ChatLlmSynthesisLeakGuardService,
+                    )
+
+                    mark_reasoning_fallback(True)
+                    joined = repair_utf8_mojibake("".join(reasoning_parts)).strip()
+                    if not joined:
+                        return
+                    if ChatLlmSynthesisLeakGuardService.needs_fallback(answer=joined):
+                        safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+                        logger.warning(
+                            "openai_compatible_stream_reasoning_only_cot_using_safe_fallback"
+                        )
+                        if safe:
+                            yield safe
+                        return
+                    yield joined
 
         except requests.RequestException as exc:
             logger.exception("openai_compatible_stream_failed")

@@ -135,7 +135,10 @@ def test_stream_skips_cot_reasoning_delta(gateway):
     ):
         chunks = list(gateway.stream([{"role": "user", "content": "oi"}]))
 
-    assert chunks == []
+    assert chunks
+    joined = "".join(chunks).lower()
+    assert "according to my instructions" not in joined
+    assert "reformular" in joined or "clara" in joined
 
 
 def test_generate_with_tools_parses_tool_calls(gateway):
@@ -174,6 +177,9 @@ def test_generate_with_tools_parses_tool_calls(gateway):
 
 
 def test_stream_yields_reasoning_when_content_delta_absent(gateway):
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
     lines = [
         b'data: {"choices":[{"delta":{"reasoning":"OK"}}]}',
         b"data: [DONE]",

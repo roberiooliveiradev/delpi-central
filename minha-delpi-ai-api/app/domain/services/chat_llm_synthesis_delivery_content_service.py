@@ -31,6 +31,16 @@ class ChatLlmSynthesisDeliveryContentService:
         )
 
     @classmethod
+    def portuguese_body_start_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item)
+            for item in ChatAssistantContentService.list(
+                _BUNDLE, "portugueseBodyStartMarkers"
+            )
+            if str(item).strip()
+        )
+
+    @classmethod
     def safe_fallback_answer(cls) -> str:
         return str(
             ChatAssistantContentService.get(

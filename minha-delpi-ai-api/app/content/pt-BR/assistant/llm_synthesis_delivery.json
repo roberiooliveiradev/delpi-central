@@ -36,6 +36,24 @@
     "as an ai language model",
     "i need to follow the system",
     "the system prompt",
-    "based on my instructions"
+    "based on my instructions",
+    "the user asks in portuguese",
+    "the instructions say",
+    "i shouldn't dump",
+    "i shouldnt dump",
+    "let me write a response",
+    "without copying the instruction",
+    "list only what's in the facts",
+    "listesóo queestá nosfatos"
+  ],
+  "portugueseBodyStartMarkers": [
+    "Com este agente",
+    "Com o agente",
+    "Você tem",
+    "Você tem acesso",
+    "Pelo que está habilitado",
+    "Pelo que está disponível",
+    "Nesta sessão",
+    "Nesta conversa"
   ]
 }

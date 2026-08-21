@@ -112,6 +112,22 @@ def test_needs_fallback_on_capabilities_cot_leak():
     assert "don't dump" not in guarded.lower()
 
 
+def test_needs_fallback_on_space_collapsed_cot():
+    """Kimi às vezes colapsa espaços no CoT — markers literais falhariam."""
+    leaked = (
+        'TheuserasksinPortuguese: "oque vc pensa" — "whatdo youthink"\n\n'
+        "This isa capabilitiesquestion.The instructionssay:when the userasks "
+        "aboutcapabilities.I should respondin naturallanguage.\n\n"
+        "Com este agente, você tem um leque bem amplo de consultas operacionais "
+        "na plataforma Minha DELPI nesta sessão."
+    )
+    assert ChatLlmSynthesisLeakGuardService.needs_fallback(answer=leaked)
+    guarded = ChatLlmSynthesisLeakGuardService.guard_answer(answer=leaked, fallback=None)
+    assert guarded.startswith("Com este agente")
+    assert "capabilitiesquestion" not in guarded.lower()
+    assert "Theuserasks" not in guarded
+
+
 def test_guard_replaces_english_cot_with_safe_fallback():
     leaked = (
         "According to my instructions, the user's message is «programação». "
