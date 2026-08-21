@@ -349,6 +349,9 @@ class Settings:
     CHAT_AGENTIC_LOOP_ENABLED = (
         os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "true").lower() == "true"
     )
+    CHAT_TURN_ANALYSIS_ENABLED = (
+        os.getenv("CHAT_TURN_ANALYSIS_ENABLED", "true").lower() == "true"
+    )
     CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))
     CHAT_AGENTIC_CATALOG_MAX_ACTIONS = int(
         os.getenv("CHAT_AGENTIC_CATALOG_MAX_ACTIONS", "12")

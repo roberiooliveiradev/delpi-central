@@ -196,11 +196,18 @@ class ChatToolContextSelectionService:
                     allowed_action_ids=allowed_action_ids,
                 )
 
-            router_suggestion = host.tool_router_service.suggest(
-                message=message,
-                allowed_tool_names=allowed_tool_names,
-                allowed_actions=catalog_actions,
+            from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
+                ChatTurnPreparationTurnAnalysisService,
             )
+
+            if ChatTurnPreparationTurnAnalysisService.ran_this_turn():
+                router_suggestion = {"tools": [], "actionId": None}
+            else:
+                router_suggestion = host.tool_router_service.suggest(
+                    message=message,
+                    allowed_tool_names=allowed_tool_names,
+                    allowed_actions=catalog_actions,
+                )
 
             for tool_name in router_suggestion.get("tools") or []:
                 if any(str(item.get("name")) == tool_name for item in selected_tools):

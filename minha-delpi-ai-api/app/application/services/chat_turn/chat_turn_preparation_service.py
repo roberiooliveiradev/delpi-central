@@ -236,6 +236,55 @@ class ChatTurnPreparationService:
             skip_tool_flags.skip_tools_for_data_interpretation
         )
 
+        from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
+            ChatTurnPreparationTurnAnalysisService,
+        )
+
+        has_early_direct = bool(
+            pre_capability_answer
+            or small_talk_direct
+            or utility_direct
+            or unclear_direct
+            or web_save_sources_direct
+            or project_sources_direct
+            or web_post_search_direct
+            or attachment_welcome_direct
+            or routing_disambiguation_answer
+            or learning_term_confirmation_answer
+            or session_memory_direct
+            or interpretation_without_data_answer
+            or missing_product_code_answer
+            or ambiguous_period_answer
+            or missing_date_answer
+            or common_chat_operational_answer
+            or canvas_action
+        )
+        turn_analysis_outcome = ChatTurnPreparationTurnAnalysisService.maybe_analyze(
+            message=message,
+            request=request,
+            workspace_context=workspace_context,
+            history_source=history_source,
+            pipeline_stages=pipeline_stages,
+            has_direct_answer=has_early_direct,
+        )
+        if turn_analysis_outcome.result is not None:
+            workspace_context = dict(workspace_context)
+            workspace_context["turnAnalysis"] = turn_analysis_outcome.result.to_metadata()
+            if turn_analysis_outcome.result.action_ids:
+                workspace_context["turnAnalysisActionIds"] = list(
+                    turn_analysis_outcome.result.action_ids
+                )
+            if turn_analysis_outcome.result.skills_to_load:
+                workspace_context["turnAnalysisSkillsToLoad"] = list(
+                    turn_analysis_outcome.result.skills_to_load
+                )
+            if "turn_analysis" not in pipeline_stages:
+                pipeline_stages.append("turn_analysis")
+            if turn_analysis_outcome.direct_answer and not unclear_direct:
+                unclear_direct = turn_analysis_outcome.direct_answer
+                if "unclear_request" not in pipeline_stages:
+                    pipeline_stages.append("unclear_request")
+
         tool_phase = ChatTurnPreparationToolRoutingService.run_tool_phase(
             message=message,
             request=request,
@@ -273,6 +322,21 @@ class ChatTurnPreparationService:
         tool_calls = tool_phase.tool_calls
         analysis_mode = tool_phase.analysis_mode
         operational_optimize = tool_phase.operational_optimize
+
+        if isinstance(tool_context, dict) and isinstance(
+            workspace_context.get("turnAnalysis"),
+            dict,
+        ):
+            tool_context = dict(tool_context)
+            tool_context["turnAnalysis"] = workspace_context.get("turnAnalysis")
+            if workspace_context.get("turnAnalysisActionIds"):
+                tool_context["turnAnalysisActionIds"] = workspace_context.get(
+                    "turnAnalysisActionIds"
+                )
+            if workspace_context.get("turnAnalysisSkillsToLoad"):
+                tool_context["turnAnalysisSkillsToLoad"] = workspace_context.get(
+                    "turnAnalysisSkillsToLoad"
+                )
 
         if canvas_operational_update and not canvas_action:
             canvas_action = ChatCanvasContentService.build_update_from_tools(

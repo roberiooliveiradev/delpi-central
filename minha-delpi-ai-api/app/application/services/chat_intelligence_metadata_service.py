@@ -72,6 +72,7 @@ class ChatIntelligenceMetadataService:
             "toolCount": len(tool_context.get("toolCalls") or []),
             "agentic": tool_context.get("agentic"),
             "nativeToolCalling": tool_context.get("nativeToolCalling"),
+            "turnAnalysis": tool_context.get("turnAnalysis"),
             "embeddingCacheBackend": Settings.EMBEDDING_CACHE_BACKEND,
         }
 
