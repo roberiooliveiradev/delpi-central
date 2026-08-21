@@ -67,7 +67,7 @@
   },
   "anomalyFollowUpPlans": {
     "stock_low": {
-      "anomalyTypes": ["negative_available", "zero_available", "empty_list"],
+      "anomalyTypes": ["negative_value", "zero_value", "empty_list"],
       "profileKeys": ["stock"],
       "followUpRouteIds": ["productSales"],
       "maxFollowUps": 1
