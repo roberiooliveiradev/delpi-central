@@ -110,6 +110,25 @@ class ChatIntentRouterClassifyService:
             )
 
         from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+        from app.domain.services.chat_drawing_report_adjustment_intent_service import (
+            ChatDrawingReportAdjustmentIntentService,
+        )
+
+        if ChatDrawingReportAdjustmentIntentService.has_adjustment_signal(normalized):
+            return ChatIntentRouterSupportService.with_decision(
+                IntentRouteResult(
+                    intent="drawing_report_adjustment",
+                    sub_intent="manual_review",
+                    confidence=0.95,
+                    requires_tool=False,
+                    requires_rag=False,
+                    requires_llm=False,
+                    priority_applied=4,
+                    flags=("drawing_report_adjustment",),
+                ),
+                decision="drawing_report_adjustment",
+                reason="drawing_manual_review",
+            )
 
         if ChatDrawingIntentService.is_drawing_analysis_request(
             normalized,

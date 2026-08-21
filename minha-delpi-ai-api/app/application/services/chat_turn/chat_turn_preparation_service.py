@@ -293,6 +293,17 @@ class ChatTurnPreparationService:
             if "drawing_analysis" not in pipeline_stages:
                 pipeline_stages.append("drawing_analysis")
 
+            from app.domain.services.chat_drawing_report_adjustment_intent_service import (
+                ChatDrawingReportAdjustmentIntentService,
+            )
+
+            if tool_context.get("drawingAnalysisOverrides") is not None or (
+                tool_context.get("directAnswer")
+                and ChatDrawingReportAdjustmentIntentService.has_adjustment_signal(message)
+            ):
+                if "drawing_report_adjustment" not in pipeline_stages:
+                    pipeline_stages.append("drawing_report_adjustment")
+
         pipeline_stages.append("post_tool")
 
         post_tool = ChatTurnPreparationPostToolResolutionService.resolve(

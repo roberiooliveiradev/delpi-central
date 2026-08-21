@@ -129,6 +129,11 @@ class ChatOperationalParameterToolSkipService:
         ).strip():
             return True
 
+        if tool_context.get("drawingAnalysisMode") and str(
+            tool_context.get("directAnswer") or ""
+        ).strip():
+            return True
+
         if ChatToolContextPresentationService.should_answer_with_presentation_only(tool_calls):
             return True
 
