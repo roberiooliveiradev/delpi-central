@@ -199,9 +199,18 @@
   border-right: none;
 }
 
+/* Inbox dentro do split (coluna esquerda) também precisa encher a altura. */
+.dashboard-commercial .cm-resizable-columns__left > .cm-room-inbox-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-self: stretch;
+  width: 100%;
+}
+
 .dashboard-commercial .cm-room-inbox-pane {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: var(--cm-gap-sm);
   min-width: 0;
   min-height: 0;
