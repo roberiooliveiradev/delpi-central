@@ -339,8 +339,9 @@ export function PluginShell({
     [basePath, paletteSections],
   );
 
-  /** Fill só com thread aberta — a lista Conversas usa o mesmo fluxo de altura do Início. */
-  const fillViewport = view === "interaction_room_detail";
+  /** Fill na lista e na thread — o scroll da inbox fica no painel, não na página. */
+  const fillViewport =
+    view === "interaction_rooms" || view === "interaction_room_detail";
 
   return (
     <div

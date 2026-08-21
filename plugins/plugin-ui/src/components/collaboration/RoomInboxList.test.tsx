@@ -179,8 +179,10 @@ describe("room-inbox.css", () => {
     const root = css.match(/\.delpi-ui-room-inbox \{[^}]+\}/)?.[0] ?? "";
     const list = css.match(/\.delpi-ui-room-inbox__list \{[^}]+\}/)?.[0] ?? "";
     const item = css.match(/\.delpi-ui-room-inbox__item \{[^}]+\}/)?.[0] ?? "";
-    expect(root).toMatch(/height:\s*100%/);
+    expect(root).toMatch(/overflow:\s*hidden/);
+    expect(root).not.toMatch(/height:\s*100%/);
     expect(list).toMatch(/overflow-y:\s*auto/);
+    expect(list).toMatch(/overscroll-behavior:\s*contain/);
     expect(list).not.toMatch(/overflow-x:\s*hidden/);
     expect(list).toMatch(/scrollbar-gutter:\s*stable/);
     expect(item).toMatch(/max-width:\s*100%/);
