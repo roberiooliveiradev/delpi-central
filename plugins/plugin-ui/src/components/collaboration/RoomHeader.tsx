@@ -16,6 +16,7 @@ export type RoomHeaderClassNames = {
   root: string;
   titles: string;
   title: string;
+  titleButton: string;
   subtitle: string;
   chips: string;
   chip: string;
@@ -33,6 +34,10 @@ export type RoomHeaderProps = {
   chips?: ReactNode;
   /** Inline view switcher (e.g. Chat | Shared) after title/chips. */
   nav?: ReactNode;
+  /** Makes the title a control that opens the linked entity (order, etc.). */
+  onTitleClick?: () => void;
+  /** Accessible name when title is clickable (e.g. «Abrir pedido»). */
+  titleActionLabel?: string;
   participants?: AvatarStackItem[];
   participantsAriaLabel?: string;
   actions?: ReactNode;
@@ -47,6 +52,7 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
     root: pair(base, ui),
     titles: pair(`${base}__titles`, `${ui}__titles`),
     title: pair(`${base}__title`, `${ui}__title`),
+    titleButton: pair(`${base}__title-button`, `${ui}__title-button`),
     subtitle: pair(`${base}__subtitle`, `${ui}__subtitle`),
     chips: pair(`${base}__chips`, `${ui}__chips`),
     chip: pair(`${base}__chip`, `${ui}__chip`),
@@ -59,7 +65,7 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
 }
 
 /**
- * Room header: title, chip slot, optional nav, AvatarStack participants, actions slot.
+ * Room header: title (optional entity link), chip slot, optional nav, AvatarStack, actions.
  */
 export function RoomHeader({
   title,
@@ -67,6 +73,8 @@ export function RoomHeader({
   subtitle,
   chips,
   nav,
+  onTitleClick,
+  titleActionLabel,
   participants = [],
   participantsAriaLabel,
   actions,
@@ -77,7 +85,21 @@ export function RoomHeader({
   return (
     <header className={rootClass}>
       <div className={classNames.titles}>
-        <h2 className={classNames.title}>{title}</h2>
+        <h2 className={classNames.title}>
+          {onTitleClick ? (
+            <button
+              type="button"
+              className={classNames.titleButton}
+              onClick={onTitleClick}
+              aria-label={titleActionLabel || title}
+              title={titleActionLabel || title}
+            >
+              {title}
+            </button>
+          ) : (
+            title
+          )}
+        </h2>
         {subtitle ? <span className={classNames.subtitle}>{subtitle}</span> : null}
         {chips ? <div className={classNames.chips}>{chips}</div> : null}
       </div>

@@ -28,6 +28,36 @@
   color: var(--delpi-ui-text, var(--text, #0f172a));
 }
 
+.delpi-ui-room-header__title-button {
+  display: inline;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease;
+}
+
+.delpi-ui-room-header__title-button:hover {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.delpi-ui-room-header__title-button:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
 .delpi-ui-room-header__subtitle {
   margin: 0;
   flex: 0 1 auto;

@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RoomHeader, roomHeaderBemClasses } from "./RoomHeader";
 
@@ -47,6 +47,22 @@ describe("RoomHeader", () => {
     expect(container.querySelector(".delpi-ui-room-header__nav")).toBeTruthy();
   });
 
+  it("título clicável abre entidade via onTitleClick", () => {
+    const onTitleClick = vi.fn();
+    render(
+      <RoomHeader
+        classNames={classNames}
+        title="Pedido 002573"
+        onTitleClick={onTitleClick}
+        titleActionLabel="Abrir pedido"
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Abrir pedido" });
+    expect(button.textContent).toBe("Pedido 002573");
+    button.click();
+    expect(onTitleClick).toHaveBeenCalledTimes(1);
+  });
+
   it("header CSS fica em uma linha com ellipsis no título", () => {
     const css = readFileSync(join(stylesDir, "room-header.css"), "utf8");
     const root = css.match(/\.delpi-ui-room-header \{[^}]+\}/)?.[0] ?? "";
@@ -56,6 +72,7 @@ describe("RoomHeader", () => {
     expect(title).toMatch(/text-overflow:\s*ellipsis;/);
     expect(css).toMatch(/\.delpi-ui-room-header__chip \{/);
     expect(css).toMatch(/\.delpi-ui-room-header__nav \{/);
+    expect(css).toMatch(/\.delpi-ui-room-header__title-button \{/);
     expect(css).toMatch(/\[aria-pressed="true"\]/);
   });
 });

@@ -9,7 +9,12 @@ describe("InteractionRoomPage", () => {
   it("compõe RoomHeader + MessageThread + composer com anexos", () => {
     const source = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(source).toMatch(/CommercialRoomHeader/);
-    expect(source).toMatch(/CommercialUnderlineNav/);
+    expect(source).not.toMatch(/CommercialUnderlineNav/);
+    expect(source).toMatch(/onTitleClick/);
+    expect(source).toMatch(/titleActionLabel/);
+    expect(source).not.toMatch(/ExternalLink/);
+    expect(source).toMatch(/MessageSquare/);
+    expect(source).toMatch(/Files/);
     expect(source).toMatch(/InteractionRoomSharedView/);
     expect(source).toMatch(/CommercialRoomMessageFindPanel/);
     expect(source).toMatch(/authorAvatar/);

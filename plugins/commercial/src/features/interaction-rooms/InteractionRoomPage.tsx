@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, PanelRight, Search } from "lucide-react";
+import { Files, MessageSquare, PanelRight, Search } from "lucide-react";
 import { roomHeaderBemClasses } from "@delpi/plugin-ui/index";
 
 import {
@@ -36,7 +36,6 @@ import {
   CommercialRoomHeader,
   CommercialRoomMessageFindPanel,
   CommercialRoomSidePanel,
-  CommercialUnderlineNav,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
@@ -767,6 +766,16 @@ export function InteractionRoomPage({
           <div className="cm-room-thread__header">
             <CommercialRoomHeader
               title={room.title}
+              onTitleClick={
+                entityHref
+                  ? () => {
+                      navigatePluginPath(entityHref);
+                    }
+                  : undefined
+              }
+              titleActionLabel={
+                entityHref ? content.roomOpenEntityAriaLabel : undefined
+              }
               chips={
                 entityPresentation.chipLabel ? (
                   <span
@@ -778,42 +787,39 @@ export function InteractionRoomPage({
                 ) : undefined
               }
               nav={
-                <CommercialUnderlineNav
-                  mode="tabs"
+                <div
+                  className={roomHeaderClasses.actions}
+                  role="group"
                   aria-label={content.roomViewNavAriaLabel}
-                  activeId={roomView}
-                  items={[
-                    {
-                      id: "chat",
-                      label: content.roomViewChat,
-                      controlId: "cm-room-view-chat",
-                      tabId: "cm-room-tab-chat",
-                      onSelect: () => setRoomView("chat"),
-                    },
-                    {
-                      id: "shared",
-                      label: content.roomViewShared,
-                      controlId: "cm-room-view-shared",
-                      tabId: "cm-room-tab-shared",
-                      onSelect: () => setRoomView("shared"),
-                    },
-                  ]}
-                />
+                >
+                  <CommercialActionButton
+                    variant="ghost"
+                    id="cm-room-tab-chat"
+                    aria-label={content.roomViewChat}
+                    title={content.roomViewChat}
+                    aria-pressed={roomView === "chat"}
+                    aria-controls="cm-room-view-chat"
+                    onClick={() => setRoomView("chat")}
+                  >
+                    <MessageSquare size={16} aria-hidden />
+                  </CommercialActionButton>
+                  <CommercialActionButton
+                    variant="ghost"
+                    id="cm-room-tab-shared"
+                    aria-label={content.roomViewShared}
+                    title={content.roomViewShared}
+                    aria-pressed={roomView === "shared"}
+                    aria-controls="cm-room-view-shared"
+                    onClick={() => setRoomView("shared")}
+                  >
+                    <Files size={16} aria-hidden />
+                  </CommercialActionButton>
+                </div>
               }
               participants={participants}
               participantsAriaLabel={content.roomMembersAriaLabel}
               actions={
                 <>
-                  {entityHref ? (
-                    <CommercialActionButton
-                      variant="ghost"
-                      aria-label={content.roomOpenEntityAriaLabel}
-                      title={content.roomOpenEntityAriaLabel}
-                      onClick={() => navigatePluginPath(entityHref)}
-                    >
-                      <ExternalLink size={16} aria-hidden />
-                    </CommercialActionButton>
-                  ) : null}
                   <CommercialActionButton
                     variant="ghost"
                     aria-label={content.findInChatAriaLabel}
