@@ -10,6 +10,7 @@ import type {
 
 import presentationVocabulary from "../../../content/presentation_vocabulary.json";
 import { isNativeSingleViewSelection } from "../message/assistantContentLayout";
+import { isLlmProseDecoupledFromToolCalls } from "./presentationMarkdownNormalization";
 
 const INTERNAL_INSIGHT_REASONS = new Set(
   (
@@ -179,6 +180,11 @@ export function getPresentationInsightFromToolCalls(
   const presentationMode = String(decision?.presentationMode ?? "").trim();
 
   if (presentationMode === "summary_then_evidence") {
+    return "";
+  }
+
+  // Prosa canônica está no assistantMessage (lead do renderPlan) — não repetir insight genérico.
+  if (isLlmProseDecoupledFromToolCalls(toolCalls)) {
     return "";
   }
 

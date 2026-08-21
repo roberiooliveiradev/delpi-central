@@ -221,6 +221,11 @@ class ChatPresentationDecisionEnrichmentService:
             "hasNarrative": bool(narrative_markdown),
         }
 
+        if metadata.get("llmProseDecoupled") or metadata.get("dataOnlyPresentation"):
+            decision["insight"] = ""
+            decision["proseSource"] = "llm"
+            return
+
         decision["insight"] = ChatPresentationInsightService.build_with_metadata(
             selected=str(decision.get("selected") or ""),
             rows=table_rows,

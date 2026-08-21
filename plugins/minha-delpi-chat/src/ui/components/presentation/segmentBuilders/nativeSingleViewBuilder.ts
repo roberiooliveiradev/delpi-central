@@ -5,6 +5,7 @@ import {
   getTextMarkdownFromToolCalls,
 } from "../../chatPresentation";
 import {
+  buildSegmentsFromRenderPlan,
   resolveRenderPlanForExecution,
   resolveVisualSegmentsForRenderSpec,
 } from "./renderPlanSegmentBuilder";
@@ -14,8 +15,27 @@ import {
   segmentVisualKind,
 } from "../../message/assistantContentLayout";
 import { parseMarkdownAndCodeSegments } from "./sqlMarkdownNormalizer";
+import { appendVisualSegment } from "./segmentDedupe";
 
 export type NativeSingleViewSelection = ReturnType<typeof isNativeSingleViewSelection>;
+
+function renderPlanHasMarkdownLead(
+  renderPlan: { segments?: Array<{ kind?: string; slot?: string }> } | null,
+): boolean {
+  if (!renderPlan?.segments?.length) {
+    return false;
+  }
+
+  return renderPlan.segments.some(
+    (segment) =>
+      String(segment.kind || "")
+        .trim()
+        .toLowerCase() === "markdown" &&
+      String(segment.slot || "")
+        .trim()
+        .toLowerCase() === "lead",
+  );
+}
 
 export function buildNativeSingleViewSegments(
   rawMarkdown: string,
@@ -36,6 +56,23 @@ export function buildNativeSingleViewSegments(
     Array.isArray(renderPlan.segments) &&
     renderPlan.segments.length
   ) {
+    // Lead markdown (assistantMessage) deve aparecer mesmo com selected=table/kpi/chart.
+    // O executor canônico honra o renderPlan; o atalho só-visual ignorava kind=markdown.
+    if (renderPlanHasMarkdownLead(renderPlan)) {
+      const commentary = String(rawMarkdown || caption || "").trim();
+      const fromPlan = buildSegmentsFromRenderPlan(
+        commentary,
+        visuals,
+        parseMarkdownAndCodeSegments,
+        appendVisualSegment,
+        toolCalls,
+      );
+
+      if (fromPlan?.length) {
+        return fromPlan;
+      }
+    }
+
     const segments: AssistantContentSegment[] = [];
 
     if (caption && useFullText) {

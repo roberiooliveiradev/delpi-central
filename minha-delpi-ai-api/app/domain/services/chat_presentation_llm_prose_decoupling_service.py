@@ -112,6 +112,14 @@ class ChatPresentationLlmProseDecouplingService:
         )
 
         ChatPresentationRenderPipelineService.finalize(metadata)
+
+        # finalize recompõe insight genérico — limpar de novo quando prosa é do assistente.
+        decision_after = metadata.get("presentationDecision")
+
+        if isinstance(decision_after, dict):
+            decision_after["insight"] = ""
+            decision_after["proseSource"] = "llm"
+
         return True
 
     @classmethod
