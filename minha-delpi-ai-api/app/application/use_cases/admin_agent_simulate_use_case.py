@@ -91,6 +91,61 @@ class AdminAgentSimulateUseCase:
         if previous_messages is not None:
             history = previous_messages
 
+        from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
+            ChatTurnPreparationTurnAnalysisService,
+        )
+        from types import SimpleNamespace
+
+        allowed_action_ids = list((specialization or {}).get("allowedActionIds") or [])
+        if not allowed_action_ids and isinstance(agent_meta, dict):
+            allowed_action_ids = list(agent_meta.get("allowedActionIds") or [])
+
+        turn_analysis_outcome = ChatTurnPreparationTurnAnalysisService.maybe_analyze(
+            message=normalized_question,
+            request=SimpleNamespace(
+                response_mode=response_mode or "normal",
+                attachment_ids=[],
+            ),
+            workspace_context={
+                "allowedActionIds": allowed_action_ids,
+                "agent": agent_meta if isinstance(agent_meta, dict) else None,
+                "agentMetadata": agent_metadata_override
+                if isinstance(agent_metadata_override, dict)
+                else None,
+            },
+            history_source=history if isinstance(history, list) else [],
+            pipeline_stages=[],
+            has_direct_answer=False,
+            llm_gateway=self.llm_gateway,
+        )
+        turn_analysis_meta = (
+            turn_analysis_outcome.result.to_metadata()
+            if turn_analysis_outcome.result is not None
+            else None
+        )
+
+        if turn_analysis_outcome.skip_tools and turn_analysis_outcome.direct_answer:
+            return {
+                "question": normalized_question,
+                "agent": agent_meta,
+                "specialization": specialization,
+                "score": None,
+                "answerPreview": turn_analysis_outcome.direct_answer,
+                "appliedGuidelines": [],
+                "matchedDocuments": [],
+                "chunks": [],
+                "plannedToolCalls": [],
+                "turnAnalysis": turn_analysis_meta,
+                "finalPrompt": {
+                    "systemPrompt": "",
+                    "messages": [],
+                    "preview": "",
+                },
+                "comparison": {},
+                "skippedTools": True,
+                "clarifyInsteadOfGuess": True,
+            }
+
         tool_context_payload, planned_tool_calls = self._build_tool_context(
             question=normalized_question,
             user_id=user_id,
@@ -158,6 +213,7 @@ class AdminAgentSimulateUseCase:
             "matchedDocuments": self._matched_documents(rag.get("sources") or []),
             "chunks": chunks,
             "plannedToolCalls": planned_tool_calls,
+            "turnAnalysis": turn_analysis_meta,
             "finalPrompt": {
                 "systemPrompt": system_prompt,
                 "messages": full_messages,

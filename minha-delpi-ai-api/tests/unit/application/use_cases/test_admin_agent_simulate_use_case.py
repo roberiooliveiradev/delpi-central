@@ -162,3 +162,42 @@ def test_admin_agent_simulate_rejects_empty_question():
         assert False, "expected ValueError"
     except ValueError as exc:
         assert "question" in str(exc)
+
+
+def test_admin_agent_simulate_clarify_from_turn_analysis(monkeypatch):
+    from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
+        ChatTurnPreparationTurnAnalysisOutcome,
+        ChatTurnPreparationTurnAnalysisService,
+    )
+    from app.domain.services.chat_turn_analysis_service import ChatTurnAnalysisResult
+
+    monkeypatch.setattr(
+        ChatTurnPreparationTurnAnalysisService,
+        "maybe_analyze",
+        classmethod(
+            lambda cls, **kwargs: ChatTurnPreparationTurnAnalysisOutcome(
+                result=ChatTurnAnalysisResult(
+                    decision="clarify",
+                    clarify_key="default",
+                    reason="vague_term",
+                    source="test",
+                ),
+                direct_answer="Não ficou claro. Reformule em uma frase.",
+                skip_tools=True,
+            )
+        ),
+    )
+
+    use_case = _make_use_case(
+        chat_tool_context_service=FakeChatToolContextService(),
+    )
+    result = use_case.execute(
+        question="xyzzy-nonsense",
+        user_id="00000000-0000-0000-0000-000000000001",
+        response_mode="normal",
+    )
+
+    assert result["skippedTools"] is True
+    assert result["plannedToolCalls"] == []
+    assert "claro" in result["answerPreview"].lower()
+    assert result["turnAnalysis"]["decision"] == "clarify"
