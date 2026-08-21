@@ -75,6 +75,19 @@ class ChatOperationalParameterToolSkipService:
         if ChatFollowUpChipQueryService.is_explicit_chip_query(message):
             return True
 
+        from app.domain.services.chat_turn_mode_service import ChatTurnModeService
+
+        if isinstance(tool_context, dict):
+            turn_mode = ChatTurnModeService.resolve(
+                message=message,
+                tool_context=tool_context,
+                direct_answer=tool_context.get("directAnswer"),
+                tool_calls=tool_context.get("toolCalls"),
+            )
+
+            if ChatTurnModeService.should_skip_agentic(turn_mode):
+                return True
+
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
         )

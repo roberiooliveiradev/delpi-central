@@ -120,6 +120,22 @@ class ChatResponseModeService:
 
             return None, resolved_skip, effect
 
+        from app.domain.services.chat_turn_mode_service import ChatTurnModeService
+
+        turn_mode = ChatTurnModeService.resolve(
+            message=message,
+            tool_context=tool_context,
+            direct_answer=direct_answer,
+            pipeline_stages=pipeline_stages,
+            tool_calls=tool_calls,
+        )
+
+        if isinstance(tool_context, dict):
+            tool_context["turnMode"] = turn_mode
+
+        if ChatTurnModeService.should_skip_llm(turn_mode) and direct_answer:
+            return direct_answer, skip_rag, "simple_direct"
+
         mode = ChatPresentationProseDeliveryService.resolve_mode(
             message,
             tool_calls,
