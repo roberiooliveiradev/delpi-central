@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_interactivity_content_service import (
+    ChatInteractivityContentService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -24,14 +26,6 @@ class PresentationDetailPlan:
 
 
 class ChatPresentationDetailActionService:
-    _SUPPLIER_DETAIL_RE = re.compile(
-        r"detalhe\s+fornecedor\s+(\d{3,})\s+loja\s+(\d{1,3})\s+do\s+produto\s+(\d{4,})",
-        re.IGNORECASE,
-    )
-    _PURCHASE_RECORD_DETAIL_RE = re.compile(
-        r"detalhe\s+documento\s+(\S+)\s+origem\s+(\S+)\s+do\s+produto\s+(\d{4,})",
-        re.IGNORECASE,
-    )
 
     @classmethod
     def build_supplier_detail_query(
@@ -129,7 +123,9 @@ class ChatPresentationDetailActionService:
         if not normalized:
             return None
 
-        supplier_match = cls._SUPPLIER_DETAIL_RE.search(normalized)
+        supplier_match = ChatInteractivityContentService.compile_presentation_detail_pattern(
+            "supplierDetail"
+        ).search(normalized)
 
         if supplier_match:
             product_code = supplier_match.group(3).strip()
@@ -148,7 +144,9 @@ class ChatPresentationDetailActionService:
                 },
             )
 
-        record_match = cls._PURCHASE_RECORD_DETAIL_RE.search(normalized)
+        record_match = ChatInteractivityContentService.compile_presentation_detail_pattern(
+            "purchaseRecordDetail"
+        ).search(normalized)
 
         if record_match:
             product_code = record_match.group(3).strip()

@@ -91,8 +91,8 @@ def test_paginated_path_fragments_from_registry():
     assert "/stock" in vocab_fragments
 
 
-def test_factory_status_builds_visual_bundle_via_stack_layout_not_hardcoded_profile():
-    assert ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
+def test_factory_status_builds_views_via_stack_layout_not_hardcoded_profile():
+    assert ChatPresentationTextFirstPolicyService.should_build_views(
         path="/products/10080001/factory-status",
         entity="product_factory_status",
     )

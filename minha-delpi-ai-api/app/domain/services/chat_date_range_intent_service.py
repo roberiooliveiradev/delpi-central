@@ -48,22 +48,6 @@ class AmbiguousNamedMonth:
 
 
 class ChatDateRangeIntentService:
-    _DATE_RANGE_RE = re.compile(
-        r"\bde\s+(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\s+a\s+"
-        r"(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b",
-        re.IGNORECASE,
-    )
-    _COMPETENCE_RE = re.compile(r"\bcompetencia\s+(\d{4})-(\d{1,2})\b", re.IGNORECASE)
-    _YEAR_MONTH_RE = re.compile(r"\b(\d{4})-(\d{1,2})\b")
-    _LAST_N_DAYS_RE = re.compile(
-        r"\bultim[ao]s?\s+(\d{1,3})\s+dias?\b",
-        re.IGNORECASE,
-    )
-    _LAST_N_WEEKS_RE = re.compile(
-        r"\bultim[ao]s?\s+(\d{1,2})\s+semanas?\b",
-        re.IGNORECASE,
-    )
-    _YEAR_ONLY_RE = re.compile(r"^\s*(\d{4})\s*$")
     @classmethod
     def _month_order(cls) -> tuple[str, ...]:
         return tuple(
@@ -136,7 +120,7 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("pointAsRange", label=point.label),
             )
 
-        competence = cls._COMPETENCE_RE.search(normalized)
+        competence = ChatDateRangeVocabularyService.compile_pattern("competence").search(normalized)
 
         if competence:
             return cls._month_range(
@@ -145,7 +129,7 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("competence"),
             )
 
-        last_weeks = cls._LAST_N_WEEKS_RE.search(normalized)
+        last_weeks = ChatDateRangeVocabularyService.compile_pattern("lastNWeeks").search(normalized)
 
         if last_weeks:
             weeks = max(1, min(int(last_weeks.group(1)), 52))
@@ -157,7 +141,7 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("lastNWeeks", weeks=weeks),
             )
 
-        last_days = cls._LAST_N_DAYS_RE.search(normalized)
+        last_days = ChatDateRangeVocabularyService.compile_pattern("lastNDays").search(normalized)
 
         if last_days:
             days = max(1, min(int(last_days.group(1)), 366))
@@ -214,7 +198,7 @@ class ChatDateRangeIntentService:
         if month_match:
             return month_match
 
-        year_month = cls._YEAR_MONTH_RE.search(normalized)
+        year_month = ChatDateRangeVocabularyService.compile_pattern("yearMonth").search(normalized)
 
         if year_month and any(term in normalized for term in ChatDateRangeVocabularyService.terms("periodMetricTerms")):
             return cls._month_range(
@@ -391,7 +375,7 @@ class ChatDateRangeIntentService:
         if any(term in normalized for term in ("ano passado", "ultimo ano", "último ano")):
             return reference.year - 1
 
-        year_match = cls._YEAR_ONLY_RE.match(normalized)
+        year_match = ChatDateRangeVocabularyService.compile_pattern("yearOnly").match(normalized)
 
         if year_match:
             return int(year_match.group(1))
@@ -438,7 +422,7 @@ class ChatDateRangeIntentService:
 
     @classmethod
     def _parse_explicit_range(cls, normalized: str) -> ResolvedDateRange | None:
-        match = cls._DATE_RANGE_RE.search(normalized)
+        match = ChatDateRangeVocabularyService.compile_pattern("dateRange").search(normalized)
 
         if not match:
             return None

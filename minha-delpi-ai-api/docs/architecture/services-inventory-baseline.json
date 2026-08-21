@@ -382,14 +382,14 @@
       {
         "module": "app.domain.services.chat_assistant_content_service",
         "file": "app/domain/services/chat_assistant_content_service.py",
-        "lines": 223,
+        "lines": 250,
         "category": "content_loader",
         "refs": {
-          "app": 175,
+          "app": 177,
           "scripts": 0,
           "tests": 19
         },
-        "refsTotal": 194,
+        "refsTotal": 196,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -844,7 +844,7 @@
       {
         "module": "app.domain.services.chat_date_range_intent_service",
         "file": "app/domain/services/chat_date_range_intent_service.py",
-        "lines": 793,
+        "lines": 777,
         "category": "intent",
         "refs": {
           "app": 11,
@@ -858,14 +858,14 @@
       {
         "module": "app.domain.services.chat_date_range_vocabulary_service",
         "file": "app/domain/services/chat_date_range_vocabulary_service.py",
-        "lines": 95,
+        "lines": 123,
         "category": "other",
         "refs": {
-          "app": 2,
+          "app": 3,
           "scripts": 0,
           "tests": 1
         },
-        "refsTotal": 3,
+        "refsTotal": 4,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -2468,14 +2468,14 @@
       {
         "module": "app.domain.services.chat_interactivity_content_service",
         "file": "app/domain/services/chat_interactivity_content_service.py",
-        "lines": 79,
+        "lines": 98,
         "category": "content_loader",
         "refs": {
-          "app": 2,
+          "app": 4,
           "scripts": 0,
           "tests": 1
         },
-        "refsTotal": 3,
+        "refsTotal": 5,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -4190,7 +4190,7 @@
       {
         "module": "app.domain.services.chat_presentation_detail_action_service",
         "file": "app/domain/services/chat_presentation_detail_action_service.py",
-        "lines": 237,
+        "lines": 235,
         "category": "presentation",
         "refs": {
           "app": 1,
@@ -4904,7 +4904,7 @@
       {
         "module": "app.domain.services.chat_presentation_text_first_policy_service",
         "file": "app/domain/services/chat_presentation_text_first_policy_service.py",
-        "lines": 353,
+        "lines": 390,
         "category": "presentation",
         "refs": {
           "app": 4,
@@ -5476,9 +5476,23 @@
         "largeFile": false
       },
       {
+        "module": "app.domain.services.chat_reference_resolution_content_service",
+        "file": "app/domain/services/chat_reference_resolution_content_service.py",
+        "lines": 38,
+        "category": "content_loader",
+        "refs": {
+          "app": 2,
+          "scripts": 0,
+          "tests": 1
+        },
+        "refsTotal": 3,
+        "unreferencedStatically": false,
+        "largeFile": false
+      },
+      {
         "module": "app.domain.services.chat_reference_resolution_service",
         "file": "app/domain/services/chat_reference_resolution_service.py",
-        "lines": 379,
+        "lines": 341,
         "category": "other",
         "refs": {
           "app": 4,
@@ -7508,7 +7522,7 @@
       {
         "module": "app.domain.services.openapi_presentation_profile_deriver_service",
         "file": "app/domain/services/openapi_presentation_profile_deriver_service.py",
-        "lines": 155,
+        "lines": 158,
         "category": "presentation",
         "refs": {
           "app": 10,
@@ -11179,13 +11193,13 @@
   },
   "summary": {
     "domain": {
-      "moduleCount": 555,
+      "moduleCount": 556,
       "categories": {
         "other": 133,
         "presentation": 86,
         "operational": 81,
         "drawing": 58,
-        "content_loader": 35,
+        "content_loader": 36,
         "sql": 34,
         "memory_context": 32,
         "intent": 29,

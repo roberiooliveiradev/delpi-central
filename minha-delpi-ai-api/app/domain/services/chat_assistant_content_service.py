@@ -50,6 +50,33 @@ def invalidate_assistant_content_cache(bundle: str | None = None) -> None:
         except Exception:
             pass
 
+        try:
+            from app.domain.services.chat_reference_resolution_content_service import (
+                ChatReferenceResolutionContentService,
+            )
+
+            ChatReferenceResolutionContentService.invalidate_cache()
+        except Exception:
+            pass
+
+        try:
+            from app.domain.services.chat_date_range_vocabulary_service import (
+                ChatDateRangeVocabularyService,
+            )
+
+            ChatDateRangeVocabularyService.invalidate_cache()
+        except Exception:
+            pass
+
+        try:
+            from app.domain.services.chat_interactivity_content_service import (
+                ChatInteractivityContentService,
+            )
+
+            ChatInteractivityContentService.invalidate_cache()
+        except Exception:
+            pass
+
 
 @lru_cache(maxsize=32)
 def _bundle_content(bundle: str) -> dict[str, Any]:

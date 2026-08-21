@@ -99,7 +99,8 @@ Wrappers especializados (mantêm API estável):
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
 | `operational_group_by_refinement.json` | Rotas, dimensões e estratégia session/refetch para agrupamento de follow-up | `ChatOperationalGroupByRefinementService`, `ChatOperationalSessionDataRefinementService` |
 | `presentation_vocabulary.json` | Dedup estrutura/BOM, **`decisionReasons`**, insights, Playbook 12 (`tableRoles`, `tierAPipelineCases`), **`automaticScoreMarkers`** (listagem vs ranking no Automático) | `ChatPresentationVocabularyService` |
-| `date_range_vocabulary.json` | Meses, frases de período e métricas temporais | `ChatDateRangeVocabularyService` |
+| `date_range_vocabulary.json` | Meses, frases de período, métricas temporais e `patterns` | `ChatDateRangeVocabularyService` |
+| `reference_resolution.json` | Regex de referência vaga (esse produto, isso, anexo…) | `ChatReferenceResolutionContentService` |
 | `department_meta_composition.json` | Triggers + `byDepartment` (primary/compose routeIds) para multi-rota de meta/indicadores departamentais (Playbook 25) | `ChatDepartmentMetaCompositionPlanningService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
 | `presentation_profiles.json` | `entityProfiles`, **`entitySetProfileContracts`**, `entitySets`, `pathRules`, `chartPolicy`, `commentaryProfileKey` — **não** adicionar `visualBuilders` / `tableAssembly` (removidos do runtime) | `ChatPresentationProfileService`, `ChatPresentationCoverageService` |

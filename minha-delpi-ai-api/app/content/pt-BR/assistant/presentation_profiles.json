@@ -17,7 +17,7 @@
     "stackPlan": "default",
     "flags": [],
     "chartPolicy": "auto",
-    "visualBundlePolicy": "on_demand",
+    "viewBuildPolicy": "on_demand",
     "stackLayoutPolicy": "on_demand",
     "humanizedNarrative": "enrich"
   },
@@ -833,7 +833,7 @@
   "profiles": {
     "analyser": {
       "defaultViewPolicy": "tree_when_available",
-      "visualBundlePolicy": "eager",
+      "viewBuildPolicy": "eager",
       "stackLayoutPolicy": "always",
       "viewOrder": [
         "text",
@@ -952,7 +952,7 @@
     },
     "generic_kpi_series": {
       "defaultViewPolicy": "kpi_when_available",
-      "visualBundlePolicy": "eager",
+      "viewBuildPolicy": "eager",
       "viewOrder": [
         "text",
         "kpi",
@@ -1236,7 +1236,7 @@
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary",
       "humanizedNarrative": "enrich",
-      "visualBundlePolicy": "eager"
+      "viewBuildPolicy": "eager"
     },
     "sql": {
       "defaultViewPolicy": "generic",
@@ -1262,7 +1262,7 @@
     },
     "kpi_series": {
       "defaultViewPolicy": "kpi_when_available",
-      "visualBundlePolicy": "eager",
+      "viewBuildPolicy": "eager",
       "viewOrder": [
         "text",
         "kpi",
@@ -1296,7 +1296,7 @@
     },
     "kpi_dashboard": {
       "defaultViewPolicy": "generic",
-      "visualBundlePolicy": "eager",
+      "viewBuildPolicy": "eager",
       "viewOrder": [
         "kpi",
         "table",

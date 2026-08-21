@@ -2,58 +2,21 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.domain.services.chat_follow_up_intent_service import ChatFollowUpIntentService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_reference_resolution_content_service import (
+    ChatReferenceResolutionContentService,
+)
 
 
 class ChatReferenceResolutionService:
-    _PRODUCT_REF_RE = re.compile(
-        r"\b(?:esse|esta|esse\s+mesmo)\s+(?:produto|item|c[oó]digo)\b",
-        re.IGNORECASE,
-    )
-    _PERIOD_REF_RE = re.compile(
-        r"\bmesmo\s+per[ií]odo\b|\bmesmo\s+intervalo\b",
-        re.IGNORECASE,
-    )
-    _TABLE_REF_RE = re.compile(
-        r"\b(?:essa|esta)\s+tabela\b|\btabela\s+anterior\b",
-        re.IGNORECASE,
-    )
-    _CHART_REF_RE = re.compile(
-        r"\b(?:esse|esta)\s+gr[aá]fico\b|\bgr[aá]fico\s+anterior\b",
-        re.IGNORECASE,
-    )
-    _SAME_ACTION_RE = re.compile(
-        r"\bfa[cç]a\s+o\s+mesmo\b|\brepete?\b.*\bconsulta\b",
-        re.IGNORECASE,
-    )
-    _THIS_RE = re.compile(r"\b(?:isso|essa\s+resposta)\b", re.IGNORECASE)
-    _THAT_RE = re.compile(r"\b(?:esse|essa|aquele|aquela)\b", re.IGNORECASE)
-    _PREVIOUS_RE = re.compile(
-        r"\b(?:o\s+)?anterior\b|\bresposta\s+anterior\b|\búltima\s+resposta\b",
-        re.IGNORECASE,
-    )
-    _CANVAS_RE = re.compile(r"\b(?:a\s+)?lousa\b|\bno\s+canvas\b", re.IGNORECASE)
-    _ATTACHMENT_RE = re.compile(
-        r"\b(?:esse|este|o)\s+arquivo\b|\b(?:o\s+)?anexo\b|\bdo\s+anexo\b",
-        re.IGNORECASE,
-    )
-    _SQL_EDIT_RE = re.compile(
-        r"\b(?:adicione|inclua|acrescente)\s+(?:uma\s+)?coluna\b|"
-        r"\b(?:essa|esta)\s+consulta\b|\bquery\s+anterior\b|\b(?:na|à)\s+consulta\b",
-        re.IGNORECASE,
-    )
-    _CODE_REF_RE = re.compile(r"\b(?:esse|este)\s+c[oó]digo\b", re.IGNORECASE)
-    _LAST_QUERY_RE = re.compile(r"\búltima\s+consulta\b", re.IGNORECASE)
-    _COMPARE_PREVIOUS_RE = re.compile(
-        r"\bcompare?\s+com\s+o\s+anterior\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _pattern(cls, key: str):
+        return ChatReferenceResolutionContentService.compile_pattern(key)
 
     @classmethod
     def resolve(
@@ -102,11 +65,11 @@ class ChatReferenceResolutionService:
         operational_follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
 
         if product_code and not explicit_code and (
-            operational_follow_up or cls._PRODUCT_REF_RE.search(normalized)
+            operational_follow_up or cls._pattern("productRef").search(normalized)
         ):
             resolved.append(
                 cls._entry(
-                    text="esse produto" if cls._PRODUCT_REF_RE.search(normalized) else "follow-up operacional",
+                    text="esse produto" if cls._pattern("productRef").search(normalized) else "follow-up operacional",
                     resolved_to="productCode",
                     value=product_code,
                     source="operationalFocus.productCode",
@@ -116,7 +79,7 @@ class ChatReferenceResolutionService:
             used_keys.append("productCode")
 
         if branch and "filial" not in normalized.lower():
-            if operational_follow_up or re.search(r"\bmesma\s+filial\b", normalized, re.I):
+            if operational_follow_up or cls._pattern("sameBranch").search(normalized):
                 resolved.append(
                     cls._entry(
                         text="filial em contexto",
@@ -128,7 +91,7 @@ class ChatReferenceResolutionService:
                 )
                 used_keys.append("branch")
 
-        if period and cls._PERIOD_REF_RE.search(normalized):
+        if period and cls._pattern("periodRef").search(normalized):
             resolved.append(
                 cls._entry(
                     text="mesmo período",
@@ -140,7 +103,7 @@ class ChatReferenceResolutionService:
             )
             used_keys.append("period")
 
-        if cls._TABLE_REF_RE.search(normalized) and last_presentation.get("type") == "table":
+        if cls._pattern("tableRef").search(normalized) and last_presentation.get("type") == "table":
             resolved.append(
                 cls._entry(
                     text="essa tabela",
@@ -152,7 +115,7 @@ class ChatReferenceResolutionService:
             )
             used_keys.append("lastPresentation")
 
-        if cls._CHART_REF_RE.search(normalized) and last_presentation.get("type") in {
+        if cls._pattern("chartRef").search(normalized) and last_presentation.get("type") in {
             "chart",
             "line",
             "bar",
@@ -169,7 +132,7 @@ class ChatReferenceResolutionService:
             )
             used_keys.append("lastPresentation")
 
-        if cls._SAME_ACTION_RE.search(normalized) and isinstance(last_action, dict):
+        if cls._pattern("sameAction").search(normalized) and isinstance(last_action, dict):
             action_name = str(last_action.get("name") or "").strip()
 
             if action_name:
@@ -189,7 +152,7 @@ class ChatReferenceResolutionService:
         last_sql = str(active_entities.get("lastSqlSnippet") or "").strip()
         last_useful_id = str(snapshot.get("lastUsefulMessageId") or "").strip()
 
-        if cls._CANVAS_RE.search(normalized) and isinstance(canvas, dict) and canvas.get("active"):
+        if cls._pattern("canvasRef").search(normalized) and isinstance(canvas, dict) and canvas.get("active"):
             resolved.append(
                 cls._entry(
                     text="lousa",
@@ -203,7 +166,7 @@ class ChatReferenceResolutionService:
 
         last_attachment = snapshot.get("lastAttachment")
 
-        if cls._ATTACHMENT_RE.search(normalized) and isinstance(last_attachment, dict):
+        if cls._pattern("attachmentRef").search(normalized) and isinstance(last_attachment, dict):
             filename = str(last_attachment.get("filename") or "").strip()
 
             if filename:
@@ -218,7 +181,7 @@ class ChatReferenceResolutionService:
                 )
                 used_keys.append("lastAttachment")
 
-        if cls._SQL_EDIT_RE.search(normalized) and last_sql:
+        if cls._pattern("sqlEdit").search(normalized) and last_sql:
             resolved.append(
                 cls._entry(
                     text="consulta SQL",
@@ -230,7 +193,7 @@ class ChatReferenceResolutionService:
             )
             used_keys.append("lastSqlSnippet")
 
-        if cls._CODE_REF_RE.search(normalized) and product_code:
+        if cls._pattern("codeRef").search(normalized) and product_code:
             resolved.append(
                 cls._entry(
                     text="esse código",
@@ -244,7 +207,7 @@ class ChatReferenceResolutionService:
             if "productCode" not in used_keys:
                 used_keys.append("productCode")
 
-        if cls._PREVIOUS_RE.search(normalized) or cls._LAST_QUERY_RE.search(normalized):
+        if cls._pattern("previousRef").search(normalized) or cls._pattern("lastQuery").search(normalized):
             if last_useful_id:
                 resolved.append(
                     cls._entry(
@@ -269,7 +232,7 @@ class ChatReferenceResolutionService:
                 )
                 used_keys.append("lastAction")
 
-        if cls._THIS_RE.search(normalized):
+        if cls._pattern("thisRef").search(normalized):
             candidates: list[dict[str, Any]] = []
 
             if last_presentation.get("messageId"):
@@ -314,8 +277,8 @@ class ChatReferenceResolutionService:
                 cls._set_this_ambiguity(snapshot)
 
         elif (
-            cls._THAT_RE.search(normalized)
-            and not cls._PRODUCT_REF_RE.search(normalized)
+            cls._pattern("thatRef").search(normalized)
+            and not cls._pattern("productRef").search(normalized)
             and not resolved
             and not operational_follow_up
         ):
@@ -327,15 +290,14 @@ class ChatReferenceResolutionService:
     def _set_this_ambiguity(cls, snapshot: dict) -> None:
         snapshot["memoryAmbiguity"] = {
             "reason": "this_reference",
-            "promptHint": (
-                "Quando você diz «isso» ou «esse», você quer a última resposta, "
-                "a tabela/gráfico, a lousa ou o arquivo anexado?"
+            "promptHint": ChatReferenceResolutionContentService.ambiguity_text(
+                "thisReferencePromptHint"
             ),
         }
 
     @classmethod
     def detect_ambiguity(cls, message: str, snapshot: dict | None) -> dict[str, Any] | None:
-        if not cls._COMPARE_PREVIOUS_RE.search(message or ""):
+        if not cls._pattern("comparePrevious").search(message or ""):
             return None
 
         entities = (snapshot or {}).get("operationalFocus") or {}
@@ -358,7 +320,7 @@ class ChatReferenceResolutionService:
         return {
             "reason": "compare_previous",
             "candidates": [product_code, *previous_codes[:2]],
-            "promptHint": "Pergunte qual produto o usuário quer comparar antes de consultar.",
+            "promptHint": ChatReferenceResolutionContentService.ambiguity_text("comparePreviousPromptHint"),
         }
 
     @staticmethod

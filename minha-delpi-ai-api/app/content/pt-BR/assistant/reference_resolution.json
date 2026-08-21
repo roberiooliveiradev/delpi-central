@@ -1,0 +1,23 @@
+{
+  "patterns": {
+    "productRef": "\\b(?:esse|esta|esse\\s+mesmo)\\s+(?:produto|item|c[oó]digo)\\b",
+    "periodRef": "\\bmesmo\\s+per[ií]odo\\b|\\bmesmo\\s+intervalo\\b",
+    "tableRef": "\\b(?:essa|esta)\\s+tabela\\b|\\btabela\\s+anterior\\b",
+    "chartRef": "\\b(?:esse|esta)\\s+gr[aá]fico\\b|\\bgr[aá]fico\\s+anterior\\b",
+    "sameAction": "\\bfa[cç]a\\s+o\\s+mesmo\\b|\\brepete?\\b.*\\bconsulta\\b",
+    "thisRef": "\\b(?:isso|essa\\s+resposta)\\b",
+    "thatRef": "\\b(?:esse|essa|aquele|aquela)\\b",
+    "previousRef": "\\b(?:o\\s+)?anterior\\b|\\bresposta\\s+anterior\\b|\\búltima\\s+resposta\\b",
+    "canvasRef": "\\b(?:a\\s+)?lousa\\b|\\bno\\s+canvas\\b",
+    "attachmentRef": "\\b(?:esse|este|o)\\s+arquivo\\b|\\b(?:o\\s+)?anexo\\b|\\bdo\\s+anexo\\b",
+    "sqlEdit": "\\b(?:adicione|inclua|acrescente)\\s+(?:uma\\s+)?coluna\\b|\\b(?:essa|esta)\\s+consulta\\b|\\bquery\\s+anterior\\b|\\b(?:na|à)\\s+consulta\\b",
+    "codeRef": "\\b(?:esse|este)\\s+c[oó]digo\\b",
+    "lastQuery": "\\búltima\\s+consulta\\b",
+    "comparePrevious": "\\bcompare?\\s+com\\s+o\\s+anterior\\b",
+    "sameBranch": "\\bmesma\\s+filial\\b"
+  },
+  "ambiguity": {
+    "thisReferencePromptHint": "Quando você diz «isso» ou «esse», você quer a última resposta, a tabela/gráfico, a lousa ou o arquivo anexado?",
+    "comparePreviousPromptHint": "Pergunte qual produto o usuário quer comparar antes de consultar."
+  }
+}

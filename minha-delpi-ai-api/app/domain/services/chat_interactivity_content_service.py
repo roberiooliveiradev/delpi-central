@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from typing import Any
 
@@ -15,6 +16,24 @@ class ChatInteractivityContentService:
         node = ChatAssistantContentService.load_bundle("interactivity")
 
         return node if isinstance(node, dict) else {}
+
+    @classmethod
+    @lru_cache(maxsize=8)
+    def compile_presentation_detail_pattern(cls, key: str) -> re.Pattern[str]:
+        source = ChatAssistantContentService.get(
+            "interactivity",
+            "presentationDetailPatterns",
+            key,
+            default="",
+        )
+        if not source.strip():
+            raise KeyError(f"interactivity.presentationDetailPatterns.{key} ausente")
+        return re.compile(source, re.IGNORECASE)
+
+    @classmethod
+    def invalidate_cache(cls) -> None:
+        cls.bundle.cache_clear()
+        cls.compile_presentation_detail_pattern.cache_clear()
 
     @classmethod
     def settings_bool(cls, key: str, *, default: bool = False) -> bool:

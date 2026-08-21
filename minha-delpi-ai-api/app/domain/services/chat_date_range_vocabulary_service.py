@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_assistant_vocabulary_service import (
     ChatAssistantVocabularyService,
 )
@@ -11,6 +13,32 @@ from app.domain.services.chat_assistant_vocabulary_service import (
 
 class ChatDateRangeVocabularyService(ChatAssistantVocabularyService):
     BUNDLE = "date_range_vocabulary"
+
+    @classmethod
+    @lru_cache(maxsize=16)
+    def compile_pattern(cls, key: str) -> re.Pattern[str]:
+        source = str(
+            ChatAssistantContentService.get(
+                cls.BUNDLE,
+                "patterns",
+                key,
+                default="",
+            )
+            or ""
+        )
+        if not source.strip():
+            raise KeyError(f"{cls.BUNDLE}.patterns.{key} ausente")
+        flags = 0 if key in {"yearMonth", "yearOnly"} else re.IGNORECASE
+        return re.compile(source, flags)
+
+    @classmethod
+    def invalidate_cache(cls) -> None:
+        cls.compile_pattern.cache_clear()
+        cls.months_pt.cache_clear()
+        cls.month_labels_pt.cache_clear()
+        cls.week_offset_phrases.cache_clear()
+        cls.weekdays_pt.cache_clear()
+        cls.fixed_semester_phrases.cache_clear()
 
     @classmethod
     @lru_cache(maxsize=1)

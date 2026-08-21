@@ -34,6 +34,8 @@ Testes dedicados dos módulos acima também removidos. Inventário: `docs/archit
 | PT + `re.compile` em `ChatPresentationStackMarkdownService` | `presenter_content.stackMarkdownMarkers` + `ChatPresentationStackMarkdownContentService` |
 | Stack framing OpenAPI (`generic` vs `kpi_series`) | `resolve_effective_profile_key` em section availability / stack markdown |
 | `chatCritical` × `profilePresent` (4 entidades) | Incluídas em `profilePresent` (`production_order_detail`, pedidos abertos, proposta) |
+| Naming `viewBuildPolicy` + `should_build_views` | Substitui `visualBundlePolicy` / `should_build_visual_bundle` (aliases mantidos) |
+| `re.compile` lote referência / date range / detail | `reference_resolution.json`, `date_range_vocabulary.patterns`, `interactivity.presentationDetailPatterns` |
 
 ---
 
@@ -73,11 +75,11 @@ ExecuteExternalAction
 | Item | Status | Direção |
 |------|--------|---------|
 | `stackPlan` / `ChatPresentationStackOrderService` | Wired só se `layoutMode==stack`; `richStackProfiles: []` | Manter sob demanda; não reexpandir stack rico |
-| Nome `visualBundlePolicy` / `should_build_visual_bundle` | Política text-first viva | Renomear em PR de naming (sem mudar semântica) |
-| `re.compile` em outros `chat_*_service.py` | Viola `assistant-content-json` | Migração incremental para loaders |
+| `re.compile` remanescente em outros `chat_*_service.py` | Parcial (lote referência/date/detail feito) | Continuar migração incremental |
 | `if "/stock"` / `"/analyser"` espalhados | Refinement / coverage | Preferir `profileKey` + JSON |
 | `kpi_chart_specialized_service` ramos por entidade | Acoplamento residual no host KPI | Absorver em schema-driven quando couber |
 | `ChatPresentationRefactorBaselineService` | Gate Playbook 12 histórico | Manter enquanto CI/scripts dependem |
+| Aliases `visual_bundle_*` | Compat | Remover em PR futuro após grep zero |
 
 ---
 

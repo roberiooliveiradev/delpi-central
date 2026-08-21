@@ -3,13 +3,13 @@ from app.domain.services.chat_presentation_text_first_policy_service import (
 )
 
 
-def test_stock_simple_question_keeps_table_primary_without_visual_bundle():
+def test_stock_simple_question_keeps_table_primary_without_views():
     assert not ChatPresentationTextFirstPolicyService.should_default_to_text_only(
         path="/products/10080001/stock",
         entity="product_stock",
         user_message="estoque do produto 10080001",
     )
-    assert not ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
+    assert not ChatPresentationTextFirstPolicyService.should_build_views(
         path="/products/10080001/stock",
         entity="product_stock",
         user_message="estoque do produto 10080001",
@@ -25,22 +25,41 @@ def test_openapi_list_entity_does_not_force_text_only_without_metadata():
     )
 
 
-def test_explicit_chart_request_builds_visual_bundle():
-    assert ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
+def test_explicit_chart_request_builds_views():
+    assert ChatPresentationTextFirstPolicyService.should_build_views(
         path="/products/10080001/stock",
         entity="product_stock",
         explicit_format="chart",
     )
 
 
-def test_integrated_stack_request_builds_visual_bundle():
-    assert ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
+def test_integrated_stack_request_builds_views():
+    assert ChatPresentationTextFirstPolicyService.should_build_views(
         path="/products/10080001/stock",
         entity="product_stock",
         user_message="estoque completo do produto 10080001",
     )
     assert ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
         "mostre a visão integrada do estoque",
+    )
+
+
+def test_legacy_aliases_delegate_to_view_build_api():
+    assert (
+        ChatPresentationTextFirstPolicyService.should_build_visual_bundle
+        is not ChatPresentationTextFirstPolicyService.should_build_views
+    )
+    assert ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
+        path="/products/10080001/stock",
+        entity="product_stock",
+        explicit_format="chart",
+    )
+    assert ChatPresentationTextFirstPolicyService.view_build_policy(
+        "/products/10080001/stock",
+        "product_stock",
+    ) == ChatPresentationTextFirstPolicyService.visual_bundle_policy(
+        "/products/10080001/stock",
+        "product_stock",
     )
 
 

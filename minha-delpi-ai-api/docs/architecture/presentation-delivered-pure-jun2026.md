@@ -129,7 +129,7 @@ Chaves **removidas** dos perfis `as_delivered` (sem efeito no runtime desde Fase
 Ainda presentes (runtime parcial ou histórico):
 
 - `richStackProfiles` — **vazio**; reservado para perfis `presentationStrategy: legacy` (Fase 3b)
-- `visualBundlePolicy`, `humanizedNarrative` — texto-first / prosa no turn completion
+- `viewBuildPolicy` (legado: `visualBundlePolicy`), `humanizedNarrative` — texto-first / prosa no turn completion
 - `stackPlans`, `sectionRules` — comentário e markdown embed
 - `stackLayoutPolicy: always` em alguns perfis — **ignorado** para auto-stack quando `as_delivered`; stack só com pedido «visão integrada»
 
@@ -262,7 +262,7 @@ Família de payloads com **summary + lista aninhada** (ex.: `orders.items`, `app
 | Camada | Onde |
 |--------|------|
 | Extração tabular | `presenter_content.json` → `schemaDriven.payloadEnvelopeKeys` / `nestedSectionKeysPrefer` + `ChatSchemaDrivenPresentationService.extract_tabular_rows` |
-| Automático KPI | perfil `kpi_dashboard`: `visualBundlePolicy: eager`, `viewOrder` com kpi/table antes de text |
+| Automático KPI | perfil `kpi_dashboard`: `viewBuildPolicy: eager`, `viewOrder` com kpi/table antes de text |
 | Commentary | `summaryFirstCommentary` em `humanized_data_response.json` — facts do `summary`, não soma de `days_diff` |
 | Slot `status` | `api_route_domains.json` (`status_term_map`) + `OperationalApiParameterBuilderService` na estratégia `date_branch` |
 
