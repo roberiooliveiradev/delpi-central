@@ -2633,11 +2633,15 @@ SIMPLE_TURN_GATE_CASES = [
     ("oq vc faz", "capabilities"),
     ("faz isso", "unclear_request"),
     ("arruma", "unclear_request"),
+    ("programação", "unclear_request"),
+    ("qualidade", "unclear_request"),
     # Não simples: consulta operacional / ferramenta / texto com dados.
     ("qual o estoque do produto 10080001?", None),
     ("liste os fornecedores do produto 10080001", None),
     ("pesquise na web sobre normas iso", None),
     ("coloque isso na lousa", None),
+    ("programação de produção", None),
+    ("programacao de producao hoje", None),
 ]
 
 
@@ -2650,10 +2654,54 @@ UNCLEAR_REQUEST_CASES = [
     ("isso", "reference"),
     ("aquilo", "reference"),
     ("tira isso", "reference"),
+    ("programação", "ambiguous_domain"),
+    ("programacao", "ambiguous_domain"),
+    ("qualidade", "ambiguous_domain"),
+    ("custo", "ambiguous_domain"),
     # Não deve acionar fallback (intenção clara ou contexto suficiente).
     ("estoque do produto 10080001", None),
     ("coloque isso na lousa", None),
     ("corrija o texto do e-mail", None),
+    ("programação de produção", None),
+    ("programacao de producao hoje", None),
+]
+
+# Orquestração híbrida (ago/2026) — clarify vs schedule vs leak.
+HYBRID_ORCHESTRATION_CASES = [
+    {
+        "id": "vague_programacao_unclear",
+        "message": "programação",
+        "expect_unclear_category": "ambiguous_domain",
+        "expect_classify_not_schedule": True,
+    },
+    {
+        "id": "schedule_production_tool",
+        "message": "programação de produção",
+        "expect_intent": "operational_query",
+        "expect_sub_intent": "schedule_today_lookup",
+        "expect_requires_tool": True,
+    },
+    {
+        "id": "schedule_production_today_tool",
+        "message": "programacao de producao hoje",
+        "expect_intent": "operational_query",
+        "expect_sub_intent": "schedule_today_lookup",
+        "expect_requires_tool": True,
+    },
+    {
+        "id": "stock_direct_no_analysis_gate",
+        "message": "estoque do produto 10080022",
+        "expect_analysis_gate": False,
+        "response_mode": "normal",
+    },
+    {
+        "id": "leak_en_cot_needs_fallback",
+        "leaked_answer": (
+            "According to my instructions, the user's message is vague. "
+            "I should ask for clarification."
+        ),
+        "expect_leak_fallback": True,
+    },
 ]
 
 # Inventário / escopo de fontes do projeto (jun/2026).

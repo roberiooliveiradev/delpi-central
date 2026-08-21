@@ -51,6 +51,7 @@ from tests.fixtures.chat_intelligence_regression_cases import (
     SIMPLE_TURN_GATE_CASES,
     STOCK_REFINEMENT_SELECTION_CASES,
     UNCLEAR_REQUEST_CASES,
+    HYBRID_ORCHESTRATION_CASES,
 )
 from app.domain.services.chat_simple_turn_gate_service import (
     ChatSimpleTurnGateService,
@@ -377,6 +378,47 @@ def test_simple_turn_gate_regression(message, expected_intent):
 @pytest.mark.parametrize("message,expected_category", UNCLEAR_REQUEST_CASES)
 def test_unclear_request_regression(message, expected_category):
     assert ChatUnclearRequestService.classify(message) == expected_category
+
+
+@pytest.mark.parametrize("case", HYBRID_ORCHESTRATION_CASES, ids=lambda c: c["id"])
+def test_hybrid_orchestration_regression(case):
+    from app.domain.services.chat_intent_router_service import ChatIntentRouterService
+    from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+        ChatLlmSynthesisLeakGuardService,
+    )
+    from app.domain.services.chat_turn_analysis_service import ChatTurnAnalysisService
+
+    if case.get("expect_unclear_category"):
+        assert (
+            ChatUnclearRequestService.classify(case["message"])
+            == case["expect_unclear_category"]
+        )
+
+    if case.get("expect_classify_not_schedule"):
+        route = ChatIntentRouterService.classify(case["message"])
+        assert route.sub_intent != "schedule_today_lookup"
+
+    if case.get("expect_intent"):
+        route = ChatIntentRouterService.classify(case["message"])
+        assert route.intent == case["expect_intent"]
+        assert route.sub_intent == case.get("expect_sub_intent")
+        assert route.requires_tool is case.get("expect_requires_tool", True)
+
+    if "expect_analysis_gate" in case:
+        route = ChatIntentRouterService.classify(case["message"])
+        opened = ChatTurnAnalysisService.should_analyze(
+            response_mode=case.get("response_mode") or "normal",
+            heuristic_intent=route.intent,
+            heuristic_decision=route.decision,
+            heuristic_reason=route.reason,
+            heuristic_confidence=route.confidence,
+        )
+        assert opened is case["expect_analysis_gate"]
+
+    if case.get("expect_leak_fallback"):
+        assert ChatLlmSynthesisLeakGuardService.needs_fallback(
+            answer=case["leaked_answer"],
+        )
 
 
 @pytest.mark.parametrize("case", PRESENTER_HUMANIZED_CASES)
