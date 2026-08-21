@@ -87,7 +87,7 @@ def test_orchestration_inspection_ok_with_measurable_tests_contract():
     ]
 
     assert any(
-        item.get("item") == "QP6 / QP7 / QP8"
+        item.get("item") == "Plano de inspeção de processo"
         and item.get("status") == "ok"
         for item in inspection_items
     )

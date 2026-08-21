@@ -129,8 +129,8 @@ def test_build_export_tables_include_operational_sections():
     csv = payload.get("csv") or ""
     assert csv.startswith("sep=;")
     assert "Dados identificados no PDF" in csv
-    assert "Estrutura (SG1010)" in csv
-    assert "Inspeção" in csv or "Inspe" in csv
+    assert "Estrutura de produtos" in csv
+    assert "Roteiro" in csv or "Inspeções" in csv or "Plano de inspeção" in csv
     assert payload.get("xlsxFilename", "").endswith(".xlsx")
 
     structure_table = next(

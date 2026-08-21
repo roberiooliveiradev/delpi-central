@@ -72,7 +72,7 @@ def test_assertion_demotes_total_length_when_low_confidence():
             "item": "Comprimento total",
             "status": "critical_error",
             "pdfEvidence": "1.0 mm (PDF)",
-            "apiEvidence": "660.0 mm (SG1010)",
+            "apiEvidence": "660.0 mm (estrutura)",
             "rule": "total",
             "recommendation": "Corrigir",
         }

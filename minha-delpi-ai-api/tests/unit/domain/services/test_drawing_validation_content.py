@@ -51,7 +51,7 @@ def test_intermediate_length_item_uses_code_placeholder():
         "intermediate_length",
         status="critical_error",
         pdf_evidence="36 mm (descrição)",
-        api_evidence="36 MT (SG1010)",
+        api_evidence="36 MT (estrutura)",
         item_values={"code": "50215425"},
     )
 
@@ -65,10 +65,33 @@ def test_length_from_structure_evidence_includes_unit():
         unit="MT",
     )
 
-    assert text == "240 MT (SG1010)"
+    assert text == "240 MT (estrutura)"
 
 
-def test_drawing_validation_rules_section_exists():
-    from app.domain.services.chat_drawing_patterns_service import ChatDrawingPatternsService
+def test_drawing_validation_user_facing_labels_avoid_protheus_table_codes():
+    labels = ChatDrawingValidationContentService.get_node("protheusTableLabels") or {}
+    assert labels.get("SG1010") == "Estrutura de produtos"
+    assert labels.get("inspectionBundle") == "Plano de inspeção de processo"
 
-    assert ChatDrawingPatternsService.length_tolerance_ratio() == 0.05
+    inspection = ChatDrawingValidationContentService.item_from_template(
+        "inspection_qp",
+        status="ok",
+        pdf_evidence="—",
+        api_evidence="—",
+    )
+    assert inspection["item"] == "Plano de inspeção de processo"
+    assert "QP6" not in inspection["item"]
+    assert "SG1010" not in str(inspection.get("rule") or "")
+
+    guide = ChatDrawingValidationContentService.item_from_template(
+        "guide",
+        status="ok",
+        pdf_evidence="—",
+        api_evidence="—",
+    )
+    assert guide["item"] == "Roteiro de produção"
+    assert "SG2010" not in guide["item"]
+
+    structure_title = ChatDrawingValidationContentService.get("report", "sections", "structure")
+    assert structure_title == "### Estrutura de produtos"
+    assert "SG1010" not in str(structure_title)

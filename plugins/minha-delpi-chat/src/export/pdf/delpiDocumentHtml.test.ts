@@ -58,7 +58,7 @@ describe("delpiDocumentHtml", () => {
         documentTitle: "Relatório de Análise de Desenho DELPI",
         tables: [
           {
-            title: "Estrutura (SG1010)",
+            title: "Estrutura de produtos",
             layoutKey: "structure",
             columns: [
               { key: "code", label: "Código" },
@@ -98,7 +98,7 @@ describe("delpiDocumentHtml", () => {
         documentTitle: "Relatório de Análise de Desenho DELPI",
         tables: [
           {
-            title: "Estrutura (SG1010)",
+            title: "Estrutura de produtos",
             layoutKey: "structure",
             presentation: "outline",
             outline: "90262008 PA 1 MI — CHICOTE\n└── 50225424 PI 1 — CABO",

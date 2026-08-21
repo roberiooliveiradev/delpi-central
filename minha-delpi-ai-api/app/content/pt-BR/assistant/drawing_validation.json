@@ -6,10 +6,10 @@
       "overall": "## 1. Status geral",
       "pdfData": "## 2. Dados identificados no PDF",
       "apiData": "## 3. Dados retornados pela API",
-      "structure": "### Estrutura (SG1010)",
-      "guide": "### Roteiro (SG2010)",
-      "inspection": "### Inspeções (QP6 / QP7 / QP8)",
-      "dimensions": "### Cotas × estrutura (PDF × SG1010)",
+      "structure": "### Estrutura de produtos",
+      "guide": "### Roteiro de produção",
+      "inspection": "### Plano de inspeção de processo",
+      "dimensions": "### Cotas × estrutura",
       "critical": "## 4. Divergências (críticas e erros)",
       "checklist": "## 5. Checklist completo",
       "conclusion": "## 6. Conclusão"
@@ -18,7 +18,7 @@
     "noCriticalRow": "| — | Nenhuma divergência automática nesta seção | — | — | — |",
     "criticalRow": "| {section} | {item} | {status} | {pdf} | {api} | {rec} |",
     "checklistRow": "| {section} | {item} | {status} | {rec} |",
-    "dimensionsTableHeader": "| Referência | PDF | SG1010 | Status |",
+    "dimensionsTableHeader": "| Referência | PDF | Estrutura | Status |",
     "dimensionsTableSeparator": "|---|---|---|---|",
     "dimensionsTableRow": "| {label} | {pdf} | {api} | {status} |",
     "dimensionsIntermediateRow": "| Intermediário `{code}` | — | {length} mm | — |",
@@ -60,12 +60,12 @@
   "evidenceFormats": {
     "revisionClientOnly": "REV.{revision} (cliente no PDF — revisão Delpi só no TOTVS)",
     "revisionClientPair": "REV.{client} (cliente no PDF); Delpi no TOTVS: REV.{internal}",
-    "revisionInternalTable": "REV.{revision} (OCR carimbo — não é B1_REVATU)",
+    "revisionInternalTable": "REV.{revision} (OCR carimbo — não é a revisão Delpi do cadastro)",
     "revisionTitle": "REV.{revision} (cliente)",
-    "revisionApiCurrent": "REV.{revision} (TOTVS / B1_REVATU)",
+    "revisionApiCurrent": "REV.{revision} (cadastro TOTVS — revisão Delpi)",
     "codeCount": "{count} código(s)",
     "lengthFromDescription": "{length} mm (descrição)",
-    "lengthFromStructure": "{length} {unit} (SG1010)",
+    "lengthFromStructure": "{length} {unit} (estrutura)",
     "decapePdf": "{value} mm",
     "decapeFromIntermediate": "{value} mm (código 50xx)",
     "segmentLength": "{value} mm",
@@ -76,12 +76,12 @@
     "guideBomLevel": "nível {level}",
     "guideBomLevelExpected": "esperado nível {level}",
     "multipageCoverageRatio": "{ratio} ({pdfCount}/{apiCount} códigos, {pageCount} pág.)",
-    "multipageMatchedCodes": "{matched}/{apiCount} códigos SG1010 no PDF",
+    "multipageMatchedCodes": "{matched}/{apiCount} códigos da estrutura no PDF",
     "bomQuantityPdf": "qtd {quantity} (PDF)",
     "bomQuantityPdfMilheiro": "qtd {quantity} × {scale} = {normalized} (PDF/peça → MI)",
     "extractionConfidenceScore": "{score}% (limiar {threshold}%)",
     "bomQuantityPdfCableLength": "qtd {quantity} × {lengthMm} mm = {normalized} MT (PDF → MI)",
-    "bomQuantityApi": "qtd {quantity} (SG1010)",
+    "bomQuantityApi": "qtd {quantity} (estrutura)",
     "guideComponentPair": "PI {product} × MP {component}",
     "structureItemCount": "{count} item(ns) na estrutura",
     "structureBomValidityFilter": "Vigente ({columns}) na data do servidor",
@@ -106,7 +106,7 @@
     "product_not_found": {
       "section": "API DELPI",
       "item": "Cadastro do produto",
-      "rule": "Produto deve existir em SB1010",
+      "rule": "Produto deve existir no cadastro",
       "recommendation": "Verificar código ou cadastro no Protheus"
     },
     "product_found": {
@@ -118,56 +118,56 @@
     "revision_api": {
       "section": "Cabeçalho",
       "item": "Revisão Delpi (cadastro TOTVS)",
-      "rule": "B1_REVATU / data de revisão no Protheus — não aparece no PDF do desenho",
+      "rule": "Revisão Delpi e data no cadastro — não aparecem no PDF do desenho",
       "recommendationWithPdf": "A REV. do PDF é do cliente; a revisão Delpi só no cadastro TOTVS",
       "recommendationNoPdf": "Anexe o PDF"
     },
     "guide": {
       "section": "Roteiro",
-      "item": "Roteiro de produção (SG2010)",
-      "rule": "Roteiro obrigatório e alinhado à estrutura (SG1010)",
+      "item": "Roteiro de produção",
+      "rule": "Roteiro obrigatório e alinhado à estrutura de produtos",
       "recommendationMissing": "Cadastrar roteiro",
       "recommendationOk": "—"
     },
     "guide_structure_extra": {
       "section": "Roteiro",
       "item": "Produto no roteiro fora da estrutura",
-      "rule": "Todo produto do SG2010 deve existir na SG1010 (PA ou intermediário 50xx/PI)",
+      "rule": "Todo produto do roteiro deve existir na estrutura (PA ou intermediário 50xx/PI)",
       "recommendation": "Remover produto do roteiro ou cadastrar na estrutura"
     },
     "guide_structure_extra_item": {
       "section": "Roteiro",
       "item": "Produto {code} no roteiro fora da estrutura",
-      "rule": "Todo produto do SG2010 deve existir na SG1010 (PA ou intermediário 50xx/PI)",
+      "rule": "Todo produto do roteiro deve existir na estrutura (PA ou intermediário 50xx/PI)",
       "recommendation": "Remover produto do roteiro ou cadastrar na estrutura"
     },
     "guide_structure_missing": {
       "section": "Roteiro",
       "item": "Produto da estrutura sem roteiro",
-      "rule": "PA e intermediários 50xx/PI da SG1010 devem ter roteiro no SG2010",
+      "rule": "PA e intermediários 50xx/PI da estrutura devem ter roteiro de produção",
       "recommendation": "Cadastrar roteiro para o produto na estrutura"
     },
     "guide_structure_missing_item": {
       "section": "Roteiro",
       "item": "Produto {code} da estrutura sem roteiro",
-      "rule": "PA e intermediários 50xx/PI da SG1010 devem ter roteiro no SG2010",
+      "rule": "PA e intermediários 50xx/PI da estrutura devem ter roteiro de produção",
       "recommendation": "Cadastrar roteiro para o produto na estrutura"
     },
     "guide_structure_level": {
       "section": "Roteiro",
       "item": "Nível BOM do produto {code}",
-      "rule": "PA no nível 0; PI/PA e 50xx nos demais níveis conforme profundidade na SG1010",
-      "recommendation": "Corrigir nível BOM no roteiro (SG2010)"
+      "rule": "PA no nível 0; PI/PA e 50xx nos demais níveis conforme profundidade na estrutura",
+      "recommendation": "Corrigir nível BOM no roteiro de produção"
     },
     "guide_structure_ok": {
       "section": "Roteiro",
       "item": "Roteiro × estrutura",
-      "rule": "Produtos e níveis do SG2010 condizentes com a SG1010",
+      "rule": "Produtos e níveis do roteiro condizentes com a estrutura",
       "recommendation": "—"
     },
     "inspection_qp": {
       "section": "Inspeção",
-      "item": "QP6 / QP7 / QP8",
+      "item": "Plano de inspeção de processo",
       "rule": "Inspeção obrigatória quando aplicável",
       "recommendationMissing": "Cadastrar plano de inspeção",
       "recommendationOk": "—"
@@ -180,8 +180,8 @@
     },
     "bom_pending": {
       "section": "BOM",
-      "item": "Tabela de materiais (PDF × SG1010)",
-      "rule": "Comparar PDF com SG1010",
+      "item": "Tabela de materiais (PDF × estrutura)",
+      "rule": "Comparar PDF com a estrutura de produtos",
       "recommendation": "Anexe o PDF para conferência completa"
     },
     "pdf_attached": {
@@ -196,7 +196,7 @@
     "product_code_mismatch": {
       "section": "Cabeçalho",
       "item": "Código DELPI",
-      "rule": "Código do PDF deve bater com SB1010",
+      "rule": "Código do PDF deve bater com o cadastro",
       "recommendation": "Corrigir código no desenho ou no cadastro"
     },
     "product_code_ok": {
@@ -232,7 +232,7 @@
     "extraction_confidence": {
       "section": "PDF",
       "item": "Confiança da leitura do PDF",
-      "rule": "Divergências PDF × SG1010 só são críticas com confiança ≥ 95%",
+      "rule": "Divergências PDF × estrutura só são críticas com confiança ≥ 95%",
       "recommendationOk": "Leitura apta para cruzamento automático",
       "recommendationPending": "Conferir manualmente BOM/cotas antes de reprovar por leitura OCR",
       "recommendationPendingAfterLlm": "OCR e o modelo de visão não estabilizaram a leitura. Confira o PDF ou reenvie com melhor qualidade."
@@ -252,7 +252,7 @@
     "revision_client_not_comparable": {
       "section": "Cabeçalho",
       "item": "Revisão do cliente (PDF)",
-      "rule": "REV. no desenho é do cliente; revisão Delpi (B1_REVATU) existe só no TOTVS — não comparar",
+      "rule": "REV. no desenho é do cliente; revisão Delpi existe só no cadastro TOTVS — não comparar",
       "recommendation": "—"
     },
     "revision_manual_pending": {
@@ -264,12 +264,12 @@
     "revision_critical": {
       "section": "Cabeçalho",
       "item": "Revisão Delpi",
-      "rule": "Legado — não usar; PDF × B1_REVATU nunca é crítico",
+      "rule": "Legado — não usar; PDF × revisão Delpi do cadastro nunca é crítico",
       "recommendation": "—"
     },
     "structure_bom_validity_ok": {
       "section": "Estrutura",
-      "item": "Vigência BOM (SG1010)",
+      "item": "Vigência da estrutura (BOM)",
       "rule": "Estrutura filtrada por G1_INI/G1_FIM na data do servidor",
       "recommendation": "—"
     },
@@ -282,13 +282,13 @@
     "bom_missing": {
       "section": "BOM",
       "item": "Componente ausente no PDF",
-      "rule": "Todo item de 1º nível da SG1010 deve constar na BOM do desenho",
+      "rule": "Todo item de 1º nível da estrutura deve constar na BOM do desenho",
       "recommendation": "Incluir componente na tabela de materiais"
     },
     "bom_missing_item": {
       "section": "BOM",
       "item": "Componente {code} ausente no PDF",
-      "rule": "Todo item de 1º nível da SG1010 deve constar na BOM do desenho",
+      "rule": "Todo item de 1º nível da estrutura deve constar na BOM do desenho",
       "recommendation": "Incluir componente na tabela de materiais"
     },
     "bom_extra": {
@@ -306,7 +306,7 @@
     "bom_match_ok": {
       "section": "BOM",
       "item": "Conjunto de componentes",
-      "rule": "PDF × SG1010 (1º nível)",
+      "rule": "PDF × estrutura (1º nível)",
       "recommendation": "—"
     },
     "bom_scope_unavailable": {
@@ -324,38 +324,38 @@
     "intermediate_missing": {
       "section": "Código 50xx",
       "item": "Intermediário ausente no PDF",
-      "rule": "Intermediários cadastrados na SG1010",
+      "rule": "Intermediários cadastrados na estrutura",
       "recommendation": "Incluir códigos 50xx na BOM do desenho"
     },
     "intermediate_missing_item": {
       "section": "Código 50xx",
       "item": "Intermediário {code} ausente no PDF",
-      "rule": "Intermediários cadastrados na SG1010",
+      "rule": "Intermediários cadastrados na estrutura",
       "recommendation": "Incluir códigos 50xx na BOM do desenho"
     },
     "intermediate_extra": {
       "section": "Código 50xx",
       "item": "Intermediário extra no PDF",
-      "rule": "Intermediário do PDF deve existir na SG1010",
+      "rule": "Intermediário do PDF deve existir na estrutura",
       "recommendation": "Remover intermediário obsoleto ou atualizar estrutura"
     },
     "intermediate_extra_item": {
       "section": "Código 50xx",
       "item": "Intermediário {code} extra no PDF",
-      "rule": "Intermediário do PDF deve existir na SG1010",
+      "rule": "Intermediário do PDF deve existir na estrutura",
       "recommendation": "Remover intermediário obsoleto ou atualizar estrutura"
     },
     "intermediate_match_ok": {
       "section": "Código 50xx",
       "item": "Intermediários",
-      "rule": "PDF × SG1010",
+      "rule": "PDF × estrutura",
       "recommendation": "—"
     },
     "intermediate_length": {
       "section": "Código 50xx",
       "item": "Comprimento {code}",
       "rule": "Comprimento do intermediário × quantidade do cabo filho",
-      "recommendation": "Alinhar descrição 50xx com estrutura SG1010"
+      "recommendation": "Alinhar descrição 50xx com a estrutura de produtos"
     },
     "decape_mismatch": {
       "section": "Cotas",
@@ -393,7 +393,7 @@
     "multipage_low_coverage": {
       "section": "PDF",
       "item": "Cobertura BOM multipágina",
-      "rule": "PDF com várias páginas deve expor boa parte dos códigos da SG1010",
+      "rule": "PDF com várias páginas deve expor boa parte dos códigos da estrutura",
       "recommendation": "Conferir se todas as páginas da BOM foram lidas ou anexar PDF completo"
     },
     "multipage_bom_partial": {
@@ -410,32 +410,32 @@
     },
     "bom_quantity_mismatch": {
       "section": "BOM",
-      "item": "Quantidade {code} (PDF × SG1010)",
-      "rule": "Quantidade na BOM do PDF deve estar dentro da tolerância da SG1010",
+      "item": "Quantidade {code} (PDF × estrutura)",
+      "rule": "Quantidade na BOM do PDF deve estar dentro da tolerância da estrutura",
       "recommendation": "Corrigir quantidade no desenho ou na estrutura Protheus"
     },
     "bom_quantity_ok": {
       "section": "BOM",
-      "item": "Quantidades (PDF × SG1010)",
+      "item": "Quantidades (PDF × estrutura)",
       "rule": "Quantidades comparáveis dentro da tolerância",
       "recommendation": "—"
     },
     "bom_quantity_pending": {
       "section": "BOM",
-      "item": "Quantidade {code} (PDF × SG1010)",
+      "item": "Quantidade {code} (PDF × estrutura)",
       "rule": "Comprimento do cabo ou unidade insuficientes para comparar qtd MT",
-      "recommendation": "Conferir cotas do PDF ou unidade na SG1010"
+      "recommendation": "Conferir cotas do PDF ou unidade na estrutura"
     },
     "guide_component_mismatch": {
       "section": "Roteiro",
       "item": "Componente do roteiro fora da estrutura do PI",
-      "rule": "component_code do SG2010 deve existir como filho do PI na SG1010",
+      "rule": "Componente do roteiro deve existir como filho do PI na estrutura",
       "recommendation": "Corrigir roteiro ou estrutura do produto intermediário"
     },
     "guide_component_ok": {
       "section": "Roteiro",
       "item": "Componentes do roteiro × estrutura",
-      "rule": "component_code do SG2010 alinhado à SG1010",
+      "rule": "Componentes do roteiro alinhados à estrutura",
       "recommendation": "—"
     },
     "balloon_coverage_unavailable": {
@@ -472,27 +472,67 @@
     "decapeGlobalMismatchRatio": 2.5,
     "maxRootStructureQuantityMm": 1000,
     "maxSegmentLengthChecks": 6,
-    "unitSuffixes": ["mm", "mi", "m"],
-    "cableLengthUnits": ["MT", "MI", "MM", "M"],
-    "pieceCountUnits": ["PC", "UN", "PE", "PÇ", "PCT"],
+    "unitSuffixes": [
+      "mm",
+      "mi",
+      "m"
+    ],
+    "cableLengthUnits": [
+      "MT",
+      "MI",
+      "MM",
+      "M"
+    ],
+    "pieceCountUnits": [
+      "PC",
+      "UN",
+      "PE",
+      "PÇ",
+      "PCT"
+    ],
     "maxPieceCountQuantity": 10,
     "structureIndex": {
       "rootProductBomLevel": 0,
       "defaultBomLevelWhenUnknown": 1,
       "structureRootDepth": 1,
-      "guideProductTypes": ["PI", "PA"],
-      "nestedBomLineTypes": ["PI", "PA"]
+      "guideProductTypes": [
+        "PI",
+        "PA"
+      ],
+      "nestedBomLineTypes": [
+        "PI",
+        "PA"
+      ]
     },
     "intermediateColorOcrMarkers": {
-      "AZUL": ["CB20AZUL", "20AWGAL"],
-      "BRAN": ["CB20BRAN", "20AWGBN"],
-      "AMAR": ["CB20AMAR", "20AWGAR"],
-      "LARA": ["CB20LARA", "20AWGLA"]
+      "AZUL": [
+        "CB20AZUL",
+        "20AWGAL"
+      ],
+      "BRAN": [
+        "CB20BRAN",
+        "20AWGBN"
+      ],
+      "AMAR": [
+        "CB20AMAR",
+        "20AWGAR"
+      ],
+      "LARA": [
+        "CB20LARA",
+        "20AWGLA"
+      ]
     },
     "intermediateColorFallbackMarker": "CB20{color}",
     "inspectionContract": {
-      "legacyPlanKeys": ["QP6", "QP7", "QP8"],
-      "planListKeys": ["measurable_tests", "textual_tests"]
+      "legacyPlanKeys": [
+        "QP6",
+        "QP7",
+        "QP8"
+      ],
+      "planListKeys": [
+        "measurable_tests",
+        "textual_tests"
+      ]
     },
     "pdfHaystackSourceMetadataKeys": [
       "stampText",
@@ -500,13 +540,21 @@
       "annotationText",
       "dimensionsText"
     ],
-    "pdfHaystackBomRowKeys": ["description", "desc", "text", "quantity"],
+    "pdfHaystackBomRowKeys": [
+      "description",
+      "desc",
+      "text",
+      "quantity"
+    ],
     "multipageCoverage": {
       "minPageCount": 2,
       "minApiCodesToEvaluate": 3,
       "warningRatioBelow": 0.7,
       "pendingRatioBelow": 0.4,
-      "pageCountKeys": ["pageCount", "pagesProcessed"],
+      "pageCountKeys": [
+        "pageCount",
+        "pagesProcessed"
+      ],
       "statusWarning": "error",
       "statusPending": "pending",
       "templateLowCoverage": "multipage_low_coverage",
@@ -520,7 +568,9 @@
     },
     "quantityToleranceRatio": 0.1,
     "bomQuantitySemantics": {
-      "milheiroBatchUnits": ["MI"],
+      "milheiroBatchUnits": [
+        "MI"
+      ],
       "piecesPerMilheiro": 1000,
       "pendingStatus": "pending",
       "maxTrustedPieceQuantity": 99,
@@ -533,7 +583,12 @@
       "mismatchStatusWhenUncertain": "pending",
       "maxAlternateCrosscheckQuantity": 20,
       "rejectSegmentMatchingStructurePieceQuantity": true,
-      "lengthToleranceDecapeValuesMm": [1, 2, 3, 5],
+      "lengthToleranceDecapeValuesMm": [
+        1,
+        2,
+        3,
+        5
+      ],
       "refinementTriggers": [
         "missing_quantity",
         "untrusted_column_quantity",
@@ -550,9 +605,22 @@
         "intermediate_quantity_implausible"
       ],
       "refinementExhaustedPending": true,
-      "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"],
-      "lengthConsumableCodePrefixes": ["101", "105"],
-      "lengthConsumableDescriptionMarkers": ["TUBO", "TERMOENCOLHIVEL", "ABRACADEIRA", "ABRAÇADEIRA"]
+      "criticalRequiresQuantitySource": [
+        "column",
+        "column_inferred",
+        "refined_column",
+        "annotation"
+      ],
+      "lengthConsumableCodePrefixes": [
+        "101",
+        "105"
+      ],
+      "lengthConsumableDescriptionMarkers": [
+        "TUBO",
+        "TERMOENCOLHIVEL",
+        "ABRACADEIRA",
+        "ABRAÇADEIRA"
+      ]
     },
     "revisionCrossCheck": {
       "pendingWhenTitleBlockMissing": true,
@@ -597,20 +665,29 @@
     "policies": {
       "conflicting_notes": {
         "createPending": true,
-        "withholdAssertions": ["per_intermediate_decape", "global_decape_ok"],
-        "suppressTemplateKeysWhenOk": ["decapes_ed"],
+        "withholdAssertions": [
+          "per_intermediate_decape",
+          "global_decape_ok"
+        ],
+        "suppressTemplateKeysWhenOk": [
+          "decapes_ed"
+        ],
         "suppressStatus": "not_applicable"
       },
       "low_confidence": {
         "createPending": false,
-        "enrichTemplateKeys": ["extraction_confidence"],
+        "enrichTemplateKeys": [
+          "extraction_confidence"
+        ],
         "withholdAssertions": [],
         "suppressTemplateKeysWhenOk": []
       },
       "self_contradiction": {
         "createPending": false,
         "withholdAssertions": [],
-        "suppressTemplateKeysWhenOk": ["decapes_ed"],
+        "suppressTemplateKeysWhenOk": [
+          "decapes_ed"
+        ],
         "suppressStatus": "not_applicable"
       }
     },
@@ -636,7 +713,9 @@
       "asserted_ok_under_ambiguity": {
         "kind": "self_contradiction",
         "scope": "dimensions",
-        "parentDetectorIds": ["conflicting_dimension_notes"],
+        "parentDetectorIds": [
+          "conflicting_dimension_notes"
+        ],
         "whyEscalated": "havia um OK automático no mesmo escopo em que a leitura dimensional está ambígua",
         "systemDidNot": "validação automática de Decapes E/D a partir do OCR global",
         "askUser": "Confirme o pending de nota dimensional; não confie no OK de Decapes E/D até revisar."
@@ -646,7 +725,10 @@
   "validationLayers": {
     "minConfidenceForPdfCritical": 0.95,
     "demotedStatus": "pending",
-    "demotableStatuses": ["error", "critical_error"],
+    "demotableStatuses": [
+      "error",
+      "critical_error"
+    ],
     "demotedRecommendation": "Conferir manualmente no PDF — confiança da leitura ({score}%) abaixo de {threshold}%",
     "pdfDependentTemplateKeys": [
       "bom_extra",
@@ -715,12 +797,30 @@
     ]
   },
   "statusPresentation": {
-    "ok": { "label": "OK", "symbol": "✅" },
-    "pending": { "label": "Pendente", "symbol": "⚠️" },
-    "error": { "label": "Erro", "symbol": "❌" },
-    "critical_error": { "label": "Erro crítico", "symbol": "❌" },
-    "not_applicable": { "label": "Não aplicável", "symbol": "—" },
-    "incomplete": { "label": "Incompleto", "symbol": "⚠️" }
+    "ok": {
+      "label": "OK",
+      "symbol": "✅"
+    },
+    "pending": {
+      "label": "Pendente",
+      "symbol": "⚠️"
+    },
+    "error": {
+      "label": "Erro",
+      "symbol": "❌"
+    },
+    "critical_error": {
+      "label": "Erro crítico",
+      "symbol": "❌"
+    },
+    "not_applicable": {
+      "label": "Não aplicável",
+      "symbol": "—"
+    },
+    "incomplete": {
+      "label": "Incompleto",
+      "symbol": "⚠️"
+    }
   },
   "reportFields": {
     "tableHeader": "| Campo | Valor |",
@@ -749,7 +849,14 @@
       "Evidência API",
       "Recomendação"
     ],
-    "spreadsheetShortHeaders": ["Seção", "Item", "Status", "PDF", "API", "Ação"],
+    "spreadsheetShortHeaders": [
+      "Seção",
+      "Item",
+      "Status",
+      "PDF",
+      "API",
+      "Ação"
+    ],
     "pdfTitle": "Relatório de Análise de Desenho DELPI",
     "nonconformitiesTitle": "Não conformidades",
     "checklistTitle": "Checklist completo",
@@ -757,9 +864,9 @@
     "tableTitles": {
       "pdfData": "Dados identificados no PDF",
       "apiData": "Dados retornados pela API",
-      "structure": "Estrutura (SG1010)",
-      "guide": "Roteiro (SG2010)",
-      "inspection": "Inspeções (QP6 / QP7 / QP8)",
+      "structure": "Estrutura de produtos",
+      "guide": "Roteiro de produção",
+      "inspection": "Plano de inspeção de processo",
       "nonconformities": "Divergências (críticas e erros)",
       "checklist": "Checklist completo"
     },
@@ -773,9 +880,25 @@
       "checklist": "Checklist"
     },
     "columnLabels": {
-      "keyValue": ["Campo", "Valor"],
-      "structure": ["Código", "Descrição", "Qtd", "Unid.", "Tipo", "Nível"],
-      "guide": ["Produto", "Nível", "Operação", "Centro", "Descrição"],
+      "keyValue": [
+        "Campo",
+        "Valor"
+      ],
+      "structure": [
+        "Código",
+        "Descrição",
+        "Qtd",
+        "Unid.",
+        "Tipo",
+        "Nível"
+      ],
+      "guide": [
+        "Produto",
+        "Nível",
+        "Operação",
+        "Centro",
+        "Descrição"
+      ],
       "inspection": [
         "Produto",
         "Nível",
@@ -823,8 +946,13 @@
     "pdfFooterNote": "Relatório gerado eletronicamente pelo Minha DELPI com base nos dados do Protheus e no PDF anexado."
   },
   "presentation": {
-    "divergenceStatuses": ["critical_error", "error"],
-    "consolidateTemplateKeys": ["segment_length_pending"],
+    "divergenceStatuses": [
+      "critical_error",
+      "error"
+    ],
+    "consolidateTemplateKeys": [
+      "segment_length_pending"
+    ],
     "consolidatedTemplateKey": "segment_lengths_consolidated",
     "expandTemplateKeys": [
       "bom_extra",
@@ -835,7 +963,10 @@
       "guide_structure_missing"
     ],
     "expandItemTemplateSuffix": "_item",
-    "expandPdfEvidenceKeys": ["bom_extra", "intermediate_extra"],
+    "expandPdfEvidenceKeys": [
+      "bom_extra",
+      "intermediate_extra"
+    ],
     "expandApiEvidenceKeys": [
       "bom_missing",
       "intermediate_missing",
@@ -850,7 +981,30 @@
     "executiveSummaryWithPending": "**Resumo:** produto `{code}` — **{overall}**. {pendingSummary}",
     "executiveSummaryPendingLine": "• **{section}** — {item}: {detail}",
     "nonconformityDetailFallback": "conferir manualmente no PDF",
-    "omitStatusesFromDimensionsTable": ["not_applicable"],
-    "omitStatusesFromExecutiveSummary": ["not_applicable", "ok"]
+    "omitStatusesFromDimensionsTable": [
+      "not_applicable"
+    ],
+    "omitStatusesFromExecutiveSummary": [
+      "not_applicable",
+      "ok"
+    ]
+  },
+  "protheusTableLabels": {
+    "source": "api-delpi/app/config/allowed_tables.json → _notes (rótulo curto para UX)",
+    "SB1010": "Cadastro de produtos",
+    "SG1010": "Estrutura de produtos",
+    "SG2010": "Roteiro de produção",
+    "QP6010": "Plano de inspeção",
+    "QP7010": "Características de inspeção",
+    "QP8010": "Itens de inspeção",
+    "inspectionBundle": "Plano de inspeção de processo",
+    "structureShort": "Estrutura",
+    "guideShort": "Roteiro",
+    "cadastroShort": "Cadastro",
+    "aliases": {
+      "QP6": "QP6010",
+      "QP7": "QP7010",
+      "QP8": "QP8010"
+    }
   }
 }

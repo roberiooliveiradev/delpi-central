@@ -135,4 +135,4 @@ def test_90260027_report_includes_dimensions_comparison_section():
     assert "Cotas × estrutura" in report
     assert "Comprimento total" in report
     assert "660" in report
-    assert "Estrutura (SG1010)" in report
+    assert "Estrutura de produtos" in report

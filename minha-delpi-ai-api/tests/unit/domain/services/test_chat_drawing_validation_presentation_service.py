@@ -295,7 +295,7 @@ def test_format_inspection_section_shows_test_details():
     lines = ChatDrawingValidationPresentationService._format_inspection_section(root)
     body = "\n".join(lines)
 
-    assert "Inspeções (QP6" in body
+    assert "Plano de inspeção" in body
     assert "90261647" in body
     assert "Ensaios dimensionais" in body
     assert "Ensaios textuais" in body
@@ -309,7 +309,7 @@ def test_format_analyser_detail_sections_uses_structure_tree_outline():
     lines = ChatDrawingValidationPresentationService.format_analyser_detail_sections(root)
     body = "\n".join(lines)
 
-    assert "### Estrutura (SG1010)" in body
+    assert "### Estrutura de produtos" in body
     assert "```text" in body
     assert "└──" in body or "├──" in body
     assert "90262008" in body

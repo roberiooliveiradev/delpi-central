@@ -138,9 +138,9 @@ def test_adjustment_splices_operational_sections_from_prior_export_markdown():
     markdown = result["drawingAnalysisExport"]["markdown"]
 
     assert result["drawingAnalysis"]["status"] == "approved"
-    assert "### Estrutura (SG1010)" in markdown
-    assert "### Roteiro (SG2010)" in markdown
-    assert "### Inspeções (QP6 / QP7 / QP8)" in markdown
+    assert "### Estrutura de produtos" in markdown
+    assert "### Roteiro de produção" in markdown
+    assert "### Plano de inspeção de processo" in markdown
     assert "## 5. Checklist completo" in markdown
     assert "Aprovado" in markdown
 
@@ -156,8 +156,8 @@ def test_adjustment_uses_persisted_validation_package_for_full_report():
 
     markdown = result["drawingAnalysisExport"]["markdown"]
 
-    assert "### Estrutura (SG1010)" in markdown
-    assert "### Roteiro (SG2010)" in markdown
+    assert "### Estrutura de produtos" in markdown
+    assert "### Roteiro de produção" in markdown
     assert result["drawingValidationPackage"]["analyserRoot"]
 
 

@@ -46,7 +46,9 @@ def test_attention_points_cover_empty_guide_and_inspection_gap():
 
     assert any("roteiro" in point.lower() for point in points)
     assert any("10080034" in point for point in points)
-    assert any("QP6" in point or "qp" in point.lower() for point in points)
+    assert any(
+        "inspeção" in point.lower() or "plano" in point.lower() for point in points
+    )
 
 
 def test_attention_points_when_inspection_not_registered():

@@ -108,11 +108,11 @@ def test_format_report_lists_structure_guide_and_inspection():
 
     report = ChatDrawingValidationOrchestrationService.format_report_markdown(package)
 
-    assert "Estrutura (SG1010)" in report
+    assert "Estrutura de produtos" in report
     assert "50212194" in report
-    assert "Roteiro (SG2010)" in report
+    assert "Roteiro de produção" in report
     assert "CORTAR TUBO MAIOR E MENOR" in report
-    assert "Inspeções (QP6" in report
+    assert "Plano de inspeção" in report
 
 
 def test_format_report_pdf_section_uses_pdf_product_code():

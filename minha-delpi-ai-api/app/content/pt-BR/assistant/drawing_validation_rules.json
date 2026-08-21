@@ -16,20 +16,28 @@
   ],
   "families": {
     "default": {
-      "enabledRules": ["*"]
+      "enabledRules": [
+        "*"
+      ]
     },
     "9026": {
-      "enabledRules": ["*"]
+      "enabledRules": [
+        "*"
+      ]
     },
     "7026": {
-      "enabledRules": ["*"],
-      "disabledRules": ["balloon_presence"]
+      "enabledRules": [
+        "*"
+      ],
+      "disabledRules": [
+        "balloon_presence"
+      ]
     }
   },
   "rules": {
     "product_code_cross_check": {
       "section": "Cabeçalho",
-      "description": "Código DELPI do PDF × cadastro SB1010",
+      "description": "Código DELPI do PDF × cadastro de produtos",
       "defaultEnabled": true,
       "templateKeys": [
         "product_code_mismatch",
@@ -38,7 +46,7 @@
     },
     "customer_reference_cross_check": {
       "section": "Cabeçalho",
-      "description": "REF./COD. CLIENTE no PDF × customer_reference (B1_REFEREN)",
+      "description": "REF./COD. CLIENTE no PDF × referência do cliente no cadastro",
       "defaultEnabled": true,
       "templateKeys": [
         "customer_reference_ok",
@@ -57,7 +65,7 @@
     },
     "structure_bom_validity": {
       "section": "Estrutura",
-      "description": "Vigência SG1010 (G1_INI/G1_FIM) na data do servidor — sem cruzar revisão do PDF",
+      "description": "Vigência da estrutura (BOM) na data do servidor — sem cruzar revisão do PDF",
       "defaultEnabled": true,
       "templateKeys": [
         "structure_bom_validity_ok"
@@ -65,7 +73,7 @@
     },
     "guide_structure": {
       "section": "Roteiro",
-      "description": "Produtos e níveis SG2010 × SG1010",
+      "description": "Produtos e níveis do roteiro × estrutura",
       "defaultEnabled": true,
       "templateKeys": [
         "guide_structure_extra",
@@ -78,7 +86,7 @@
     },
     "guide_component": {
       "section": "Roteiro",
-      "description": "component_code SG2010 × filhos do PI na SG1010",
+      "description": "Componentes do roteiro × filhos do PI na estrutura",
       "defaultEnabled": true,
       "templateKeys": [
         "guide_component_mismatch",
@@ -87,7 +95,7 @@
     },
     "bom_comparison": {
       "section": "BOM",
-      "description": "Conjunto de componentes PDF × SG1010 (1º nível)",
+      "description": "Conjunto de componentes PDF × estrutura (1º nível)",
       "defaultEnabled": true,
       "templateKeys": [
         "bom_missing",
@@ -100,7 +108,7 @@
     },
     "bom_quantity": {
       "section": "BOM",
-      "description": "Quantidade PDF × SG1010 (nível 1)",
+      "description": "Quantidade PDF × estrutura (nível 1)",
       "defaultEnabled": true,
       "templateKeys": [
         "bom_quantity_mismatch",
@@ -144,13 +152,17 @@
       "section": "Código 50xx",
       "description": "Comprimento do intermediário × quantidade do cabo filho",
       "defaultEnabled": true,
-      "templateKeys": ["intermediate_length"]
+      "templateKeys": [
+        "intermediate_length"
+      ]
     },
     "decape_per_intermediate": {
       "section": "Cotas",
       "description": "Decape por intermediário 50xx (±1 mm)",
       "defaultEnabled": true,
-      "templateKeys": ["decape_mismatch"]
+      "templateKeys": [
+        "decape_mismatch"
+      ]
     },
     "segment_length": {
       "section": "Cotas",
@@ -165,19 +177,25 @@
       "section": "Cotas",
       "description": "Comprimento total PDF × referência da estrutura",
       "defaultEnabled": true,
-      "templateKeys": ["total_length"]
+      "templateKeys": [
+        "total_length"
+      ]
     },
     "decapes_ed": {
       "section": "Cotas",
       "description": "Decapes E/D globais no PDF",
       "defaultEnabled": true,
-      "templateKeys": ["decapes_ed"]
+      "templateKeys": [
+        "decapes_ed"
+      ]
     },
     "dimension_note": {
       "section": "Cotas",
       "description": "Notas dimensionais ambíguas (termo vs decape)",
       "defaultEnabled": true,
-      "templateKeys": ["dimension_note_ambiguous"]
+      "templateKeys": [
+        "dimension_note_ambiguous"
+      ]
     }
   }
 }
