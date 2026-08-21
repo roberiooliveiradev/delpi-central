@@ -122,6 +122,21 @@ export {
   type RoomSidePanelProps,
 } from "./RoomSidePanel";
 export {
+  RoomMessageFindPanel,
+  createDashboardRoomMessageFindPanel,
+  roomMessageFindPanelBemClasses,
+  type DashboardRoomMessageFindPanelProps,
+  type RoomMessageFindPanelClassNames,
+  type RoomMessageFindPanelLabels,
+  type RoomMessageFindPanelProps,
+  type RoomMessageFindResult,
+} from "./RoomMessageFindPanel";
+export {
+  buildFindSnippet,
+  splitFindHighlightSegments,
+  type FindHighlightSegment,
+} from "./roomMessageFindHighlight";
+export {
   ConversationFileDropLayer,
   createDashboardConversationFileDropLayer,
   conversationFileDropLayerBemClasses,

@@ -77,6 +77,7 @@ import {
   createDashboardRoomHeader,
   createDashboardRoomContextPanel,
   createDashboardRoomSidePanel,
+  createDashboardRoomMessageFindPanel,
   createDashboardResizableColumns,
   createDashboardConversationFileDropLayer,
   useChartGranularitySelection,
