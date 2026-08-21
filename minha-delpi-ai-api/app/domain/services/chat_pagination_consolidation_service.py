@@ -61,23 +61,13 @@ class ChatPaginationConsolidationService:
     def _yes_only_terms(cls) -> tuple[str, ...]:
         return ChatToolContextContentService.list("pagination", "yesOnlyTerms")
 
-    _FULL_FETCH_PATTERNS = (
-        re.compile(
-            r"\b(tabela|lista|listagem|registros?|resultados?|itens?)"
-            r"\s+(completo|completa|total|inteira?)\b",
-            re.IGNORECASE,
-        ),
-        re.compile(
-            r"\b(completo|completa|total|inteira?)\s+(em\s+)?"
-            r"(tabela|lista|listagem|arvore|árvore)\b",
-            re.IGNORECASE,
-        ),
-        re.compile(
-            r"\b(traga|mostre|exiba|liste|busque|traga|trazer)\s+"
-            r"(tudo|todos?|completo|completa)\b",
-            re.IGNORECASE,
-        ),
-    )
+    @classmethod
+    def _full_fetch_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return ChatToolContextContentService.compile_pattern_list(
+            "pagination",
+            "fullFetchPatterns",
+        )
+
     @classmethod
     def _yes_only_re(cls) -> re.Pattern[str]:
         joined = "|".join(re.escape(term) for term in cls._yes_only_terms())
@@ -105,7 +95,7 @@ class ChatPaginationConsolidationService:
         ):
             return True
 
-        return any(pattern.search(normalized) for pattern in cls._FULL_FETCH_PATTERNS)
+        return any(pattern.search(normalized) for pattern in cls._full_fetch_patterns())
 
     @classmethod
     def looks_like_continue_fetch_request(cls, message: str | None) -> bool:

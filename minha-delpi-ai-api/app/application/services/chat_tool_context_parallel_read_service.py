@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from app.application.dto.execute_tool_request import ExecuteToolRequest
-from app.application.services.chat_tool_context_content_service import (
+from app.domain.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 from app.domain.entities.tool_result import ToolResult

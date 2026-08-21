@@ -49,6 +49,10 @@ Testes dedicados dos módulos acima também removidos. Inventário: `docs/archit
 | `re.compile` conversation_state + fast_path | `conversation_state.patterns` / `fast_path.json` |
 | `re.compile` memória/contexto/email | `memory_intent.json`, `user_context_items.json`, `email_intent.json` |
 | `re.compile` resíduos pontuais (safety/quality/web/term/entity) | `memory_intent` (+safety/preference/sessionClear/entityTracker), `web_search.querySecurity`, `email_intent.quality`, `text_quality.json`, `term_extraction_vocabulary.definitionPatterns` |
+| Send use case gordo + Postgres em interfaces | `ChatSendTurnExecutionService`; sync OpenAPI via `make_external_action_repository` |
+| Notas síntese web + activity SSE PT | `web_search.synthesisNotes`; `stream.activity.structureComparison` / `paginationConsolidationPage` |
+| Paginação full-fetch + `corrija:` | `tool_context.pagination.fullFetchPatterns`; `message_composer.typingCorrection.corrijaPrefixPattern` |
+| Alias `application…chat_tool_context_content` | Removido; callers usam domain |
 
 ---
 
@@ -139,10 +143,10 @@ Critério: **P0** = quebra regra Cursor / risco de regressão; **P1** = dívida 
 
 ### Ordem sugerida do próximo lote
 
-1. `reason=` → JSON (`selectionReasons` / turn prep) + testes de content.  
-2. Vocabulário `chat_operational_refinement_vocabulary` + pagination stock → flag/registry.  
-3. Um domínio de intent/memória (`conversation_state` ou `fast_path`) → JSON.  
-4. Sync docs (`viewBuildPolicy`).
+1. ~~Send ≤115 + Postgres fora de interfaces + PT scanner~~ (**feito**).  
+2. ~~synthesis notes / activity SSE / pagination+typing vocabulary~~ (**feito**).  
+3. Residual opcional: termos de marca/anexo em `ChatWebSearchIntegrationService` → JSON; god files schema-driven/drawing.  
+4. Won’t: parsers SQL/BOM; playbooks históricos 09/12.
 
 ---
 

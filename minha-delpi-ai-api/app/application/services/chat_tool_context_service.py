@@ -6,7 +6,7 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 from app.application.services.chat_tool_context_auxiliary_service import (
     ChatToolContextAuxiliaryService,
 )
-from app.application.services.chat_tool_context_content_service import (
+from app.domain.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 from app.application.services.chat_tool_context_execution_service import (

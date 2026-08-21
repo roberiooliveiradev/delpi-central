@@ -193,15 +193,23 @@ class ChatExternalActionOrchestrationService:
                     from app.application.services.chat_stream_activity_service import (
                         ChatStreamActivityService,
                     )
+                    from app.domain.services.chat_assistant_content_service import (
+                        ChatAssistantContentService,
+                    )
 
+                    comparison = ChatAssistantContentService.get_mapping(
+                        "stream",
+                        "activity",
+                        "structureComparison",
+                    )
                     on_stream_activity(
                         ChatStreamActivityService.plan_step(
                             step=1,
                             total=1,
-                            target="estruturas para comparação",
-                            verb="Planejando",
-                            message="Reunindo as informações para comparar...",
-                            detail="Buscando fichas/estruturas dos produtos citados.",
+                            target=str(comparison.get("target") or ""),
+                            verb=str(comparison.get("verb") or ""),
+                            message=str(comparison.get("message") or ""),
+                            detail=str(comparison.get("detail") or ""),
                         )
                     )
 

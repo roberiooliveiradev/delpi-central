@@ -65,7 +65,7 @@ Wrappers especializados (mantêm API estável):
 | `user_context_items.json` | Limits, marker e patterns de contexto livre do usuário | `ChatUserContextItemsContentService` |
 | `email_intent.json` | Markers/subtypes/tom/audiência/subject + `quality` (frases artificiais, assinatura) | `ChatEmailIntentContentService` |
 | `text_quality.json` | Patterns de assinatura/compromisso inventados e compare de anexos | `ChatTextQualityContentService` |
-| `web_search.json` | Resposta direta e follow-up; `querySecurity` (redação); **`llmSynthesis.leakMarkers`** | `ChatWebSearch*`, `ChatWebSearchQuerySecurityService` |
+| `web_search.json` | Resposta direta e follow-up; `querySecurity` (redação); **`llmSynthesis.leakMarkers`**; **`synthesisNotes`** (anexo/produto/compare/tabela) | `ChatWebSearch*`, `ChatWebSearchQuerySecurityService`, `ChatWebSearchIntegrationService` |
 | `platform_tools.json` | Resposta direta de tools internas (`get_allowed_routes`, `get_allowed_apps`, `get_current_user`) | `ChatPlatformToolsContentService`, `ChatPlatformToolDirectAnswerService` |
 | `drawing_validation.json` | Relatório, checklist, rótulos de status (`statusPresentation`), campos do markdown (`reportFields`, seção `dimensions`), export CSV/PDF/XLSX (`export`), regras de consolidação (`presentation`), gate assertivo (`validationLayers.pdfDependentTemplateKeys` inclui `total_length`), padrão `patterns.productDescriptionLengthMm`, **rótulos UX de tabelas Protheus** (`protheusTableLabels` — espelho curto de `api-delpi/.../allowed_tables.json`) | `ChatDrawingValidationContentService`, `ChatDrawingValidationPresentationService`, `ChatDrawingValidationOrchestrationService`, `ChatDrawingReportExportService`, `ChatDrawingBomQuantityAssertivenessService` |
 | `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
@@ -76,8 +76,8 @@ Wrappers especializados (mantêm API estável):
 | `identity.json` | Identidade do assistente; `llmSynthesis` (`leakMarkers`, lead) para prosa LLM | `ChatAssistantIdentityService`, `ChatAssistantIdentityContentService` |
 | `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
 | `humanized_data_response.json` | Templates de resumo, alertLevel, limitações, próximas ações, camadas de leitura e `commentaryProfiles` (Playbook 13 / W1b) | `ChatHumanizedDataResponseContentService`, `ChatHumanizedDataResponseService`, `ChatOperationalCommentaryProfileService` |
-| `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
-| `tool_context.json` | Roteador, paginação, drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
+| `stream.json` | Status SSE + fases de atividade + desenho + `activity.structureComparison` / `paginationConsolidationPage` | `ContentService.stream`, `ChatStreamActivityService` |
+| `tool_context.json` | Roteador, paginação (`fullFetchPatterns`), drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
 | `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados; **`directAnswers.projectSources`** — inventário de fontes do projeto; **`historySummary`** — prompt e fatos preservados na compactação) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService`, `ChatProjectSourcesIntentService`, `ChatHistorySummaryContentService`, `ChatHistorySummaryService` |
 | `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
 | `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
@@ -87,7 +87,7 @@ Wrappers especializados (mantêm API estável):
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
 | `onboarding.json` | Onboarding | `ChatOnboardingService` |
 | `attachments.json` | Welcome/chips pós-upload (PB05), preview de leitura, **`ingestUi`**, **`fileExtraction`** (limites CSV/XLSX, timeout antiword, hints legado) — ver [chat-workspace-file-extraction-limits.md](./chat-workspace-file-extraction-limits.md) | API `ChatAttachmentContentService`; MFE `workspaceFileIngestContent.ts` + `sync:attachments-content` |
-| `message_composer.json` | Composer (corretor de digitação P14) | MFE `messageComposerContent.ts` + `POST /chat/typing-suggestions` |
+| `message_composer.json` | Composer (corretor de digitação P14; `corrijaPrefixPattern`) | MFE `messageComposerContent.ts` + `POST /chat/typing-suggestions` |
 | `typing_correction_rules.json` | Typos operacionais estáticos (normalização + sugestões P14) | `ChatMessageNormalizationService.configure_static_rules` |
 | `typing_correction_lexicon.json` | Vocabulário operacional para fuzzy P14-5 | `ChatTypingCorrectionFuzzyLexiconService.configure` |
 | `text_correction_spell_check.json` | Preflight LanguageTool na skill de correção textual | `ChatTextCorrectionSpellContentService` |

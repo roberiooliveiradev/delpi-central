@@ -6,7 +6,7 @@ from app.application.services.chat_intelligence_settings_service import (
 from app.application.services.chat_native_tool_schema_service import (
     ChatNativeToolSchemaService,
 )
-from app.application.services.chat_tool_context_content_service import (
+from app.domain.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 from app.domain.ports.internal_tool_port import InternalToolPort

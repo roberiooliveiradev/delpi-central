@@ -143,6 +143,13 @@
         "detail": "Base de conhecimento consultada; nenhum trecho adicional aplicável."
       }
     },
-    "sqlSchemaRecoveryReason": "Recuperação automática de SQL com schema Protheus."
+    "sqlSchemaRecoveryReason": "Recuperação automática de SQL com schema Protheus.",
+    "structureComparison": {
+      "target": "estruturas para comparação",
+      "verb": "Planejando",
+      "message": "Reunindo as informações para comparar...",
+      "detail": "Buscando fichas/estruturas dos produtos citados."
+    },
+    "paginationConsolidationPage": "Consolidando página {page}."
   }
 }

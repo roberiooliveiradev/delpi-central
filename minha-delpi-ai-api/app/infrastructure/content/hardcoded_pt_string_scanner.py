@@ -16,7 +16,6 @@ PROTECTED_RELATIVE_PATHS: tuple[str, ...] = (
     "app/domain/services/external_actions/external_action_result_presenter.py",
     "app/application/services/external_actions",
     "app/application/services/chat_turn/chat_turn_preparation_content_service.py",
-    "app/application/services/chat_tool_context_content_service.py",
     "app/domain/services/chat_tool_context_content_service.py",
     "app/application/services/chat_canvas_content_service.py",
 )

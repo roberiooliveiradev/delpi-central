@@ -58,7 +58,21 @@
       "pode prosseguir",
       "continuar"
     ],
-    "yesOnlyTerms": ["sim", "ok", "pode", "confirmo", "confirmar", "isso", "exato", "certo"]
+    "yesOnlyTerms": [
+      "sim",
+      "ok",
+      "pode",
+      "confirmo",
+      "confirmar",
+      "isso",
+      "exato",
+      "certo"
+    ],
+    "fullFetchPatterns": [
+      "\\b(tabela|lista|listagem|registros?|resultados?|itens?)\\s+(completo|completa|total|inteira?)\\b",
+      "\\b(completo|completa|total|inteira?)\\s+(em\\s+)?(tabela|lista|listagem|arvore|árvore)\\b",
+      "\\b(traga|mostre|exiba|liste|busque|traga|trazer)\\s+(tudo|todos?|completo|completa)\\b"
+    ]
   },
   "presentation": {
     "queryCompleted": "Consulta concluída."

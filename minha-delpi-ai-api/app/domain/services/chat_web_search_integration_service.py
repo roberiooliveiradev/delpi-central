@@ -11,6 +11,7 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 
 
@@ -270,16 +271,23 @@ class ChatWebSearchIntegrationService:
 
     @classmethod
     def _attachment_label(cls, attachment_text: str) -> str:
+        fallback = ChatAssistantContentService.get(
+            "web_search",
+            "synthesisNotes",
+            "attachmentLabelFallback",
+            default="anexo",
+        )
+
         if not attachment_text:
-            return "anexo"
+            return fallback
 
         for line in attachment_text.splitlines():
             cleaned = line.strip()
 
             if cleaned.startswith("### "):
-                return cleaned.removeprefix("### ").strip() or "anexo"
+                return cleaned.removeprefix("### ").strip() or fallback
 
-        return "anexo"
+        return fallback
 
     @classmethod
     def _extract_brands(cls, text: str) -> list[str]:
@@ -295,30 +303,34 @@ class ChatWebSearchIntegrationService:
 
     @staticmethod
     def _attachment_synthesis_note(label: str) -> str:
-        return (
-            f"Há um anexo ({label}) no contexto da conversa. "
-            "Cruze trechos da web com o anexo; destaque divergências e não trate o anexo "
-            "como substituto de fonte oficial."
+        return ChatAssistantContentService.format(
+            "web_search",
+            "synthesisNotes",
+            "attachment",
+            label=label,
         )
 
     @staticmethod
     def _internal_product_synthesis_note(product_code: str) -> str:
-        return (
-            f"A pergunta combina dado interno (produto {product_code}) com busca pública. "
-            "Nunca substitua dado interno por informação da web sem avisar; "
-            "use a web para datasheet ou referência externa complementar."
+        return ChatAssistantContentService.format(
+            "web_search",
+            "synthesisNotes",
+            "internalProduct",
+            product_code=product_code,
         )
 
     @staticmethod
     def _source_compare_synthesis_note() -> str:
-        return (
-            "Compare fontes distintas; se divergirem, explique o conflito e indique qual "
-            "tipo de fonte é mais confiável (oficial > distribuidor > fórum)."
+        return ChatAssistantContentService.get(
+            "web_search",
+            "synthesisNotes",
+            "sourceCompare",
         )
 
     @staticmethod
     def _technical_table_synthesis_note() -> str:
-        return (
-            "Quando houver especificações nos trechos, inclua tabela markdown comparativa "
-            "com colunas claras (ex.: Parâmetro | Valor | Fonte)."
+        return ChatAssistantContentService.get(
+            "web_search",
+            "synthesisNotes",
+            "technicalTable",
         )

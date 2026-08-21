@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from app.application.services.chat_tool_context_content_service import (
+from app.domain.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 from app.domain.services.chat_message_normalization_service import (

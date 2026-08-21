@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from app.application.dto.execute_tool_request import ExecuteToolRequest
-from app.application.services.chat_tool_context_content_service import (
+from app.domain.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 from app.application.services.chat_tool_context_format_service import (

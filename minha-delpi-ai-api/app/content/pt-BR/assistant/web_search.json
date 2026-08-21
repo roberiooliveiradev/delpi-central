@@ -460,5 +460,12 @@
       }
     ],
     "entityPublicSuffix": "informacoes publicas"
+  },
+  "synthesisNotes": {
+    "attachment": "Há um anexo ({label}) no contexto da conversa. Cruze trechos da web com o anexo; destaque divergências e não trate o anexo como substituto de fonte oficial.",
+    "internalProduct": "A pergunta combina dado interno (produto {product_code}) com busca pública. Nunca substitua dado interno por informação da web sem avisar; use a web para datasheet ou referência externa complementar.",
+    "sourceCompare": "Compare fontes distintas; se divergirem, explique o conflito e indique qual tipo de fonte é mais confiável (oficial > distribuidor > fórum).",
+    "technicalTable": "Quando houver especificações nos trechos, inclua tabela markdown comparativa com colunas claras (ex.: Parâmetro | Valor | Fonte).",
+    "attachmentLabelFallback": "anexo"
   }
 }

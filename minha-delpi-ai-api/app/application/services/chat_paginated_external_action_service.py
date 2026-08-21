@@ -499,6 +499,9 @@ class ChatPaginatedExternalActionService:
                 from app.application.services.chat_stream_activity_service import (
                     ChatStreamActivityService,
                 )
+                from app.domain.services.chat_assistant_content_service import (
+                    ChatAssistantContentService,
+                )
 
                 on_stream_activity(
                     ChatStreamActivityService.tool_started(
@@ -506,7 +509,12 @@ class ChatPaginatedExternalActionService:
                         total=len(plan.pages_to_fetch),
                         path=plan.path or None,
                         action_id=action_id,
-                        reason=f"Consolidando página {page}.",
+                        reason=ChatAssistantContentService.format(
+                            "stream",
+                            "activity",
+                            "paginationConsolidationPage",
+                            page=str(page),
+                        ),
                     )
                 )
 

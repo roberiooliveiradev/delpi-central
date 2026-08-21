@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 _RUNTIME_PATCH_TARGETS = (
     "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
     "app.application.services.chat_turn.chat_stream_turn_prepare_service.resolve_chat_intelligence_runtime",
+    "app.application.services.chat_turn.chat_send_turn_execution_service.resolve_chat_intelligence_runtime",
     "app.application.use_cases.send_chat_message_use_case.resolve_chat_intelligence_runtime",
 )
 

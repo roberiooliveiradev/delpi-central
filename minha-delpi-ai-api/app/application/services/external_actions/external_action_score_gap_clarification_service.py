@@ -140,7 +140,6 @@ class ExternalActionScoreGapClarificationService:
             "reason": ExternalActionResponseContentService.get(
                 "selectionReasons",
                 "scoreGapClarification",
-                default="Empate no ranking de rotas OpenAPI — clarificação ao usuário.",
             ),
         }
 

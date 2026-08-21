@@ -40,15 +40,13 @@ def sync_api_delpi_openapi_internal():
     from app.application.services.external_action_import_job_service import (
         ExternalActionImportJobService,
     )
+    from app.composition.repository_composer import make_external_action_repository
     from app.domain.services.api_delpi_openapi_catalog_service import (
         build_openapi_catalog_markdown,
         collect_openapi_operations,
     )
     from app.domain.services.openapi_delpi_extension_service import (
         OpenApiDelpiExtensionService,
-    )
-    from app.infrastructure.persistence.postgres_external_action_repository import (
-        PostgresExternalActionRepository,
     )
 
     provider_key = (request.args.get("providerKey") or "api-delpi").strip() or "api-delpi"
@@ -94,12 +92,11 @@ def sync_api_delpi_openapi_internal():
             provider_key=provider_key,
             skip_embeddings=skip_embeddings,
         )
-        repository = PostgresExternalActionRepository()
-        provider = repository.get_provider_by_key(provider_key)
+        repository = make_external_action_repository()
+        provider_details = repository.get_provider_details(provider_key)
         schema = None
-        if provider:
-            provider_dict = repository._provider_to_dict(provider)
-            latest = provider_dict.get("latestSchema")
+        if isinstance(provider_details, dict):
+            latest = provider_details.get("latestSchema")
             schema = latest if isinstance(latest, dict) else None
 
         result = job.get("result") if isinstance(job.get("result"), dict) else {}

@@ -3,7 +3,8 @@
     "hint": "Você quis dizer:",
     "acceptLabel": "Enviar corrigido",
     "dismissLabel": "Manter original",
-    "previewPrefix": "Enviar:"
+    "previewPrefix": "Enviar:",
+    "corrijaPrefixPattern": "corrija\\s*:"
   },
   "routeQuestions": {
     "hint": "Perguntas sugeridas:",

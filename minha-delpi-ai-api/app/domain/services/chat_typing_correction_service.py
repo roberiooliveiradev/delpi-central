@@ -25,7 +25,26 @@ _PROTECTED_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     ),
 )
 
-_CORRIJA_PATTERN = re.compile(r"corrija\s*:", re.IGNORECASE)
+_CORRIJA_PATTERN_CACHE: re.Pattern[str] | None = None
+
+
+def _corrija_pattern() -> re.Pattern[str]:
+    global _CORRIJA_PATTERN_CACHE
+
+    if _CORRIJA_PATTERN_CACHE is None:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+# Keep technical fallback without PT user copy (pattern only).
+        raw = ChatAssistantContentService.get(
+            "message_composer",
+            "typingCorrection",
+            "corrijaPrefixPattern",
+        ) or r"corrija\s*:"
+        _CORRIJA_PATTERN_CACHE = re.compile(str(raw), re.IGNORECASE)
+
+    return _CORRIJA_PATTERN_CACHE
 
 
 class ChatTypingCorrectionService:
@@ -171,7 +190,7 @@ class ChatTypingCorrectionService:
 
     @staticmethod
     def _corrija_zone_end(text: str) -> int | None:
-        match = _CORRIJA_PATTERN.search(text)
+        match = _corrija_pattern().search(text)
         return match.end() if match else None
 
     @staticmethod
