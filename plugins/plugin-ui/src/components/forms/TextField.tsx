@@ -24,6 +24,8 @@ export type TextFieldProps = {
   required?: boolean;
   className?: string;
   fullWidth?: boolean;
+  /** Keep label for a11y; hide visually (placeholder carries the cue). */
+  hideLabel?: boolean;
   classNames: TextFieldClassNames;
 };
 
@@ -52,6 +54,7 @@ export function TextField({
   required = false,
   className,
   fullWidth = false,
+  hideLabel = false,
   classNames,
 }: TextFieldProps) {
   const generatedId = useId();
@@ -63,12 +66,20 @@ export function TextField({
   ]
     .filter(Boolean)
     .join(" ");
+  const labelClass = [
+    classNames.labelWrapper,
+    hideLabel ? "delpi-ui-field__label--sr-only" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={rootClass}>
-      <label htmlFor={fieldId} className={classNames.labelWrapper}>
-        <FieldLabel className={classNames.fieldLabel || undefined} label={label} hint={hint} />
-        {required ? <span className={classNames.required}> *</span> : null}
+      <label htmlFor={fieldId} className={labelClass}>
+        <FieldLabel className={classNames.fieldLabel || undefined} label={label} hint={hideLabel ? undefined : hint} />
+        {required && !hideLabel ? (
+          <span className={classNames.required}> *</span>
+        ) : null}
       </label>
       <input
         id={fieldId}
@@ -78,6 +89,7 @@ export function TextField({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
+        aria-label={hideLabel ? label : undefined}
         onChange={(event) => onChange(event.target.value)}
       />
     </div>

@@ -58,4 +58,20 @@ describe("TextField", () => {
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "foo" } });
     expect(onChange).toHaveBeenCalledWith("foo");
   });
+
+  it("esconde label visualmente com hideLabel e mantém acessível", () => {
+    render(
+      <TextField
+        label="Filtrar por palavra-chave"
+        value=""
+        hideLabel
+        placeholder="Filtrar por palavra-chave"
+        onChange={() => undefined}
+        classNames={textFieldPacClasses("pac")}
+      />,
+    );
+    const label = document.querySelector(".delpi-ui-field__label--sr-only");
+    expect(label).toBeTruthy();
+    expect(screen.getByPlaceholderText("Filtrar por palavra-chave")).toBeTruthy();
+  });
 });
