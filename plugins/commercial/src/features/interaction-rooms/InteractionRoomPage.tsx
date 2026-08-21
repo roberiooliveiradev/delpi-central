@@ -777,6 +777,29 @@ export function InteractionRoomPage({
                   </span>
                 ) : undefined
               }
+              nav={
+                <CommercialUnderlineNav
+                  mode="tabs"
+                  aria-label={content.roomViewNavAriaLabel}
+                  activeId={roomView}
+                  items={[
+                    {
+                      id: "chat",
+                      label: content.roomViewChat,
+                      controlId: "cm-room-view-chat",
+                      tabId: "cm-room-tab-chat",
+                      onSelect: () => setRoomView("chat"),
+                    },
+                    {
+                      id: "shared",
+                      label: content.roomViewShared,
+                      controlId: "cm-room-view-shared",
+                      tabId: "cm-room-tab-shared",
+                      onSelect: () => setRoomView("shared"),
+                    },
+                  ]}
+                />
+              }
               participants={participants}
               participantsAriaLabel={content.roomMembersAriaLabel}
               actions={
@@ -828,29 +851,6 @@ export function InteractionRoomPage({
                   </CommercialActionButton>
                 </>
               }
-            />
-          </div>
-          <div className="cm-room-thread__view-nav">
-            <CommercialUnderlineNav
-              mode="tabs"
-              aria-label={content.roomViewNavAriaLabel}
-              activeId={roomView}
-              items={[
-                {
-                  id: "chat",
-                  label: content.roomViewChat,
-                  controlId: "cm-room-view-chat",
-                  tabId: "cm-room-tab-chat",
-                  onSelect: () => setRoomView("chat"),
-                },
-                {
-                  id: "shared",
-                  label: content.roomViewShared,
-                  controlId: "cm-room-view-shared",
-                  tabId: "cm-room-tab-shared",
-                  onSelect: () => setRoomView("shared"),
-                },
-              ]}
             />
           </div>
           <div className="cm-room-thread__body">
