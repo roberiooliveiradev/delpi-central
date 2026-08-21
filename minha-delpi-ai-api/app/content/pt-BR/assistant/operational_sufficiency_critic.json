@@ -70,6 +70,24 @@
     "deferredScopes": {
       "labelTemplate": "Consultar {scope}",
       "queryTemplate": "{scope} do produto {code}"
+    },
+    "routeFollowUps": {
+      "productSales": {
+        "label": "Ver vendas",
+        "queryTemplate": "vendas do produto {code}"
+      },
+      "productStock": {
+        "label": "Ver estoque",
+        "queryTemplate": "estoque do produto {code}"
+      },
+      "productSummary": {
+        "label": "Ver resumo",
+        "queryTemplate": "resumo do produto {code}"
+      },
+      "productPurchases": {
+        "label": "Ver compras",
+        "queryTemplate": "compras do produto {code}"
+      }
     }
   },
   "reasons": {
