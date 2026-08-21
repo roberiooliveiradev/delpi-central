@@ -1,44 +1,38 @@
-import { FileUp, FileText, Link2 } from "lucide-react";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { FileText, Link2 } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 
 import {
   downloadRoomMessageAttachmentBlob,
   listRoomSharedItems,
-  postInteractionMessage,
-  uploadRoomMessageAttachment,
   type InteractionRoomSharedItemDto,
 } from "../../api/interactionRoomsApi";
 import {
-  CommercialActionButton,
+  CommercialAvatar,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialTextField,
   CommercialUnderlineNav,
 } from "../../app/commercialUi";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
+import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { formatInteractionMessageTime } from "./interactionRoomMessageTime";
-import { ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 
 type SharedKindTab = "all" | "file" | "link";
 
 type Props = {
   roomId: string;
   onError?: (message: string) => void;
-  onUploaded?: () => void;
 };
 
-export function InteractionRoomSharedView({ roomId, onError, onUploaded }: Props) {
+export function InteractionRoomSharedView({ roomId, onError }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
   const filterId = useId();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [kind, setKind] = useState<SharedKindTab>("all");
   const [filter, setFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
   const [items, setItems] = useState<InteractionRoomSharedItemDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedFilter(filter.trim()), 250);
@@ -70,7 +64,7 @@ export function InteractionRoomSharedView({ roomId, onError, onUploaded }: Props
       }
     })();
     return () => controller.abort();
-  }, [roomId, kind, debouncedFilter, reloadToken, content.sharedLoadError, onError]);
+  }, [roomId, kind, debouncedFilter, content.sharedLoadError, onError]);
 
   const authorIds = useMemo(
     () =>
@@ -84,6 +78,7 @@ export function InteractionRoomSharedView({ roomId, onError, onUploaded }: Props
     [items],
   );
   const { nameFor } = useDirectoryUserLabels(authorIds);
+  const photoByUserId = useUserProfilePhotoUrls(authorIds);
 
   const openItem = useCallback(
     async (item: InteractionRoomSharedItemDto) => {
@@ -107,34 +102,6 @@ export function InteractionRoomSharedView({ roomId, onError, onUploaded }: Props
       }
     },
     [content.sharedLoadError, onError],
-  );
-
-  const onUploadFiles = useCallback(
-    async (fileList: FileList | null) => {
-      const files = fileList ? Array.from(fileList) : [];
-      if (files.length === 0) return;
-      const id = roomId.trim();
-      if (!id) return;
-      setUploading(true);
-      try {
-        for (const file of files) {
-          const message = await postInteractionMessage(id, {
-            body_text: file.name || "attachment",
-          });
-          await uploadRoomMessageAttachment(message.id, file);
-        }
-        setReloadToken((token) => token + 1);
-        onUploaded?.();
-      } catch (err: unknown) {
-        onError?.(
-          err instanceof Error ? err.message : content.attachUploadError,
-        );
-      } finally {
-        setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
-    },
-    [content.attachUploadError, onError, onUploaded, roomId],
   );
 
   return (
@@ -166,49 +133,32 @@ export function InteractionRoomSharedView({ roomId, onError, onUploaded }: Props
           <CommercialTextField
             id={filterId}
             label={content.sharedFilterPlaceholder}
+            hideLabel
             value={filter}
             onChange={setFilter}
             placeholder={content.sharedFilterPlaceholder}
             fullWidth
           />
-          <CommercialActionButton
-            variant="secondary"
-            aria-label={content.sharedUploadAriaLabel}
-            disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <FileUp size={16} aria-hidden />
-            {content.sharedUploadLabel}
-          </CommercialActionButton>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ROOM_ATTACH_ACCEPT}
-            multiple
-            hidden
-            onChange={(event) => void onUploadFiles(event.target.files)}
-          />
         </div>
       </div>
-      {loading || uploading ? (
+      {loading ? (
         <CommercialLoadingCard
-          title={uploading ? content.dropzoneBusyTitle : content.sharedLoadingLabel}
+          title={content.sharedLoadingLabel}
           variant="panel"
         />
       ) : null}
-      {!loading && !uploading && items.length === 0 ? (
+      {!loading && items.length === 0 ? (
         <CommercialEmptyState
           title={content.sharedEmptyTitle}
           message={content.sharedEmptyDescription}
         />
       ) : null}
-      {!loading && !uploading && items.length > 0 ? (
+      {!loading && items.length > 0 ? (
         <ul className="cm-room-shared__list">
           {items.map((item) => {
             const Icon = item.kind === "link" ? Link2 : FileText;
-            const sharedBy = item.shared_by
-              ? nameFor(item.shared_by)
-              : "—";
+            const sharedById = (item.shared_by || "").trim();
+            const sharedBy = sharedById ? nameFor(sharedById) : "—";
             const aria =
               item.kind === "link"
                 ? content.sharedOpenLinkAriaLabel
@@ -236,7 +186,17 @@ export function InteractionRoomSharedView({ roomId, onError, onUploaded }: Props
                   <span className="cm-room-shared__when">
                     {formatInteractionMessageTime(item.shared_at)}
                   </span>
-                  <span className="cm-room-shared__who">{sharedBy}</span>
+                  <span className="cm-room-shared__who">
+                    {sharedById ? (
+                      <CommercialAvatar
+                        name={sharedBy}
+                        src={photoByUserId.get(sharedById) ?? null}
+                        size="sm"
+                        previewable={false}
+                      />
+                    ) : null}
+                    <span className="cm-room-shared__who-name">{sharedBy}</span>
+                  </span>
                 </button>
               </li>
             );

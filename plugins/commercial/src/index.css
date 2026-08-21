@@ -300,6 +300,19 @@
   white-space: nowrap;
 }
 
+.dashboard-commercial .cm-room-shared__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-room-shared__who-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 8rem;
+}
+
 .dashboard-commercial .cm-room-thread__body {
   display: flex;
   flex: 1;

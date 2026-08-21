@@ -6,12 +6,15 @@ import { fileURLToPath } from "node:url";
 const dir = dirname(fileURLToPath(import.meta.url));
 
 describe("InteractionRoomSharedView", () => {
-  it("usa listRoomSharedItems e Carregar via attach da sala", () => {
+  it("lista shared-items em modo consulta sem Carregar", () => {
     const source = readFileSync(join(dir, "InteractionRoomSharedView.tsx"), "utf8");
     expect(source).toMatch(/listRoomSharedItems/);
-    expect(source).toMatch(/uploadRoomMessageAttachment/);
-    expect(source).toMatch(/postInteractionMessage/);
+    expect(source).toMatch(/hideLabel/);
+    expect(source).toMatch(/CommercialAvatar/);
     expect(source).toMatch(/CommercialUnderlineNav/);
+    expect(source).not.toMatch(/uploadRoomMessageAttachment/);
+    expect(source).not.toMatch(/postInteractionMessage/);
+    expect(source).not.toMatch(/sharedUploadLabel/);
     expect(source).not.toMatch(/api-delpi/);
   });
 });

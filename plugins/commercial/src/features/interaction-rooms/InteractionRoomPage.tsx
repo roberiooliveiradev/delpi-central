@@ -864,9 +864,6 @@ export function InteractionRoomPage({
                 <InteractionRoomSharedView
                   roomId={room.id}
                   onError={(message) => pushRoomAlert(message, "danger")}
-                  onUploaded={() => {
-                    /* list reloads internally; keep chat messages in sync via realtime */
-                  }}
                 />
               </div>
             ) : (
