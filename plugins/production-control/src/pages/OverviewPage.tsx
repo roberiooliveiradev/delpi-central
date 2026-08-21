@@ -3,7 +3,6 @@ import {
   createDashboardKpiCard,
   createDashboardLoadingActivityCard,
   createDashboardSegmentToggle,
-  DelpiLogoMark,
   MultiTypeSeriesChart,
 } from "@delpi/plugin-ui/index";
 import { ClockAlert, Timer } from "lucide-react";
@@ -175,7 +174,8 @@ export function OverviewPage({ branch }: OverviewPageProps) {
     <div className="ppc-page-stack ppc-page-stack--home">
       <PpcWorkspaceHeader
         title={copy.home.title}
-        subtitle={copy.home.subtitle}
+        subtitle={copy.home.heroLead}
+        period={data ? formatPeriod(data.period) : undefined}
         titleHint={helpTooltips.home}
         branch={branch}
         subpluginId="home"
@@ -194,17 +194,6 @@ export function OverviewPage({ branch }: OverviewPageProps) {
 
       {data ? (
         <div className="ppc-board">
-          <section className="ppc-hero" aria-label={copy.productName}>
-            <div className="ppc-hero__brand">
-              <DelpiLogoMark className="ppc-hero__logo" title="DELPI" />
-            </div>
-            <div className="ppc-hero__copy">
-              <p className="ppc-hero__kicker">{copy.home.kicker}</p>
-              <p className="ppc-hero__lead">{copy.home.heroLead}</p>
-              <p className="ppc-hero__period">{formatPeriod(data.period)}</p>
-            </div>
-          </section>
-
           <div className="ppc-board-grid">
             <KpiCard
               className="ppc-board-card ppc-board-card--otd"

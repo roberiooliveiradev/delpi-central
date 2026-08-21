@@ -5,8 +5,10 @@ import {
   NavigationCard,
   navigationCardBemClasses,
 } from "@delpi/plugin-ui/index";
-import { Layers } from "lucide-react";
+import { Layers, Search, X } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from "react";
 
+import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useProblemAnalysis } from "../hooks/useProblemAnalysis";
@@ -16,9 +18,9 @@ import type {
   PpcBranch,
   ProblemDetector,
 } from "../types";
+import { filterIncompleteSetsByRootProduct } from "../utils/filterIncompleteSetsByRootProduct";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
-import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 
 const tableClassNames = dataTableBemClasses("ppc");
 const navCardClassNames = navigationCardBemClasses("ppc");
@@ -68,7 +70,9 @@ function componentLine(component: OrderSetComponent): string {
     : component.bom_level
       ? sets.componentLevel(component.bom_level)
       : null;
-  const name = component.description ? `${component.product_code} — ${component.description}` : component.product_code;
+  const name = component.description
+    ? `${component.product_code} — ${component.description}`
+    : component.product_code;
   return detail ? `${name} (${detail})` : name;
 }
 
@@ -82,15 +86,24 @@ export function ProblemAnalysisPage({ branch, detectorId }: ProblemAnalysisPageP
     branch,
     detectorId,
   );
+  const [rootQuery, setRootQuery] = useState("");
+  const rootFilterId = useId();
 
   const cards = detectors?.detectors ?? [];
-  const rows = items?.items ?? [];
   const sets = copy.problemAnalysis.incompleteSets;
+  const allRows = (items?.items ?? []) as IncompleteOrderSetItem[];
+  const rows = useMemo(
+    () => filterIncompleteSetsByRootProduct(allRows, rootQuery),
+    [allRows, rootQuery],
+  );
+  const rootFilterActive = rootQuery.trim().length > 0;
+
+  useEffect(() => {
+    setRootQuery("");
+  }, [activeId, branch]);
 
   const openDetector = (id: string) => {
-    navigatePpc(
-      buildPpcHref({ subpluginId: "problem-analysis", branch, detectorId: id }),
-    );
+    navigatePpc(buildPpcHref({ subpluginId: "problem-analysis", branch, detectorId: id }));
   };
 
   return (
@@ -156,6 +169,46 @@ export function ProblemAnalysisPage({ branch, detectorId }: ProblemAnalysisPageP
             {items?.detector.action_hint ? (
               <p className="ppc-detector-items__hint">{items.detector.action_hint}</p>
             ) : null}
+
+            <form
+              className="ppc-detector-filter"
+              role="search"
+              aria-label={sets.rootFilterAria}
+              onSubmit={(event) => event.preventDefault()}
+            >
+              <label className="ppc-detector-filter__label" htmlFor={rootFilterId}>
+                {sets.rootFilterLabel}
+              </label>
+              <div className="ppc-detector-filter__field">
+                <Search
+                  size={16}
+                  strokeWidth={1.75}
+                  aria-hidden
+                  className="ppc-detector-filter__icon"
+                />
+                <input
+                  id={rootFilterId}
+                  type="search"
+                  value={rootQuery}
+                  onChange={(event) => setRootQuery(event.target.value)}
+                  placeholder={sets.rootFilterPlaceholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {rootFilterActive ? (
+                  <button
+                    type="button"
+                    className="ppc-detector-filter__clear"
+                    onClick={() => setRootQuery("")}
+                    title={sets.rootFilterClear}
+                  >
+                    <X size={16} strokeWidth={1.75} aria-hidden />
+                    <span className="ppc-sr-only">{sets.rootFilterClear}</span>
+                  </button>
+                ) : null}
+              </div>
+            </form>
+
             <DataTable<IncompleteOrderSetItem>
               columns={[
                 {
@@ -219,12 +272,19 @@ export function ProblemAnalysisPage({ branch, detectorId }: ProblemAnalysisPageP
               labels={{
                 ...tableLabels,
                 loadingMessage: copy.problemAnalysis.itemsLoading,
+                emptyMessage: rootFilterActive
+                  ? sets.emptyFilter(rootQuery.trim())
+                  : sets.empty,
               }}
               loading={itemsLoading}
               layout="embedded"
             />
             {!itemsLoading && rows.length === 0 ? (
-              <p className="ppc-detector-items__empty">{sets.emptyHint}</p>
+              <p className="ppc-detector-items__empty">
+                {rootFilterActive
+                  ? sets.emptyFilter(rootQuery.trim())
+                  : sets.emptyHint}
+              </p>
             ) : null}
           </section>
         </div>

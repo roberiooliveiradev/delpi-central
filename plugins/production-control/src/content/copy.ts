@@ -228,6 +228,12 @@ export const copy = {
       empty: "Nenhum conjunto furado neste recorte.",
       emptyHint:
         "Todo conjunto aberto tem uma OP para cada intermediário da estrutura do produto raiz.",
+      emptyFilter: (query: string) =>
+        `Nenhum produto raiz correspondente a «${query}».`,
+      rootFilterLabel: "Produto raiz",
+      rootFilterPlaceholder: "Código ou descrição do PA…",
+      rootFilterAria: "Filtrar conjuntos pelo produto raiz",
+      rootFilterClear: "Limpar filtro",
       checked: (n: number) => `${n} conjunto${n === 1 ? "" : "s"} conferido${n === 1 ? "" : "s"}`,
       breakdown: (missing: number, extra: number) =>
         `${missing} com falta · ${extra} com sobra`,

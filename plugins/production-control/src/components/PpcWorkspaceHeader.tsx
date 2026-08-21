@@ -10,6 +10,8 @@ import { buildPpcHref, navigatePpc, storeBranch } from "../utils/routeParser";
 type PpcWorkspaceHeaderProps = {
   title: string;
   subtitle?: string;
+  /** Período operacional (ex.: datas do overview) — uma linha só no header. */
+  period?: string | null;
   titleHint?: string;
   /** Código em destaque antes do título (ex.: CT selecionado). */
   badge?: string | null;
@@ -28,6 +30,7 @@ type PpcWorkspaceHeaderProps = {
 export function PpcWorkspaceHeader({
   title,
   subtitle,
+  period,
   titleHint,
   badge,
   stats,
@@ -64,6 +67,7 @@ export function PpcWorkspaceHeader({
               </h1>
             </div>
             {subtitle ? <p className="ppc-header__subtitle">{subtitle}</p> : null}
+            {period ? <p className="ppc-header__period">{period}</p> : null}
             {stats ? <div className="ppc-header__stats">{stats}</div> : null}
           </div>
         </div>
