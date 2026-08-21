@@ -41,6 +41,7 @@ class ChatUserProfileTurnPreparationService:
         workspace_context: dict | None = None,
         resolve_capabilities_facts: Callable[[str], str | None] | None = None,
         resolve_assistant_identity_facts: Callable[[str], str | None] | None = None,
+        response_mode: str | None = None,
     ) -> ChatUserProfileTurnPreparationResult:
         meta_result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
             message=message,
@@ -53,6 +54,7 @@ class ChatUserProfileTurnPreparationService:
             resolve_assistant_identity_facts=resolve_assistant_identity_facts
             or (lambda _message: None),
             meta_intents=meta_intents,
+            response_mode=response_mode,
         )
 
         return ChatUserProfileTurnPreparationResult(

@@ -24,6 +24,16 @@ def test_capabilities_llm_synthesis_content_loaded():
     assert "use somente o que está no bloco" in ChatAssistantIdentityContentService.leak_markers()
     assert "não copie" in ChatCapabilitiesContentService.llm_synthesis_user_message_lead().lower()
     assert "não copie" in ChatAssistantIdentityContentService.llm_synthesis_user_message_lead().lower()
+    assert ChatCapabilitiesContentService.facts_max_chars_for_mode("fast") == 380
+    assert ChatCapabilitiesContentService.facts_max_chars_for_mode("normal") == 520
+    assert ChatCapabilitiesContentService.facts_max_chars_for_mode("thinker") == 1200
+
+
+def test_capabilities_clip_facts_for_mode_respects_max_chars():
+    long_facts = "\n".join([f"- linha {i} com conteúdo de capacidades" for i in range(80)])
+    clipped = ChatCapabilitiesContentService.clip_facts_for_mode(long_facts, "fast")
+    assert len(clipped) <= 380
+    assert clipped.startswith("- linha 0")
 
 
 def test_compose_compound_user_message():

@@ -96,6 +96,7 @@ class ChatTurnPreparationPostToolResolutionService:
                     workspace_context=workspace_context,
                 )
             ),
+            response_mode=response_mode,
         )
         tool_context = profile_prep.tool_context
         pipeline_stages = profile_prep.pipeline_stages

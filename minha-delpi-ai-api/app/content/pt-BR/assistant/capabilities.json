@@ -1261,6 +1261,11 @@
       "que não apareçam nos fatos",
       "não copie este bloco",
       "não reproduza frases de instrução"
-    ]
+    ],
+    "factsMaxCharsByMode": {
+      "fast": 380,
+      "normal": 520,
+      "thinker": 1200
+    }
   }
 }

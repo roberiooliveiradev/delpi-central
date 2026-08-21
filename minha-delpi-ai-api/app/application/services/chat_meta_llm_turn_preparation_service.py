@@ -54,7 +54,12 @@ class ChatMetaLlmTurnPreparationService:
         resolve_capabilities_facts: Callable[[str], str | None],
         resolve_assistant_identity_facts: Callable[[str], str | None],
         meta_intents: MetaDirectAnswerIntents | None = None,
+        response_mode: str | None = None,
     ) -> ChatMetaLlmTurnPreparationResult:
+        from app.domain.services.chat_capabilities_content_service import (
+            ChatCapabilitiesContentService,
+        )
+
         stages = list(pipeline_stages)
         context = dict(tool_context)
         intents = meta_intents or cls.detect_meta_intents(message)
@@ -84,7 +89,10 @@ class ChatMetaLlmTurnPreparationService:
                 )
 
         if intents.capabilities and ChatCapabilitiesService.is_capabilities_question(message):
-            capabilities_facts = str(resolve_capabilities_facts(message) or "").strip()
+            capabilities_facts = ChatCapabilitiesContentService.clip_facts_for_mode(
+                str(resolve_capabilities_facts(message) or "").strip(),
+                response_mode,
+            )
 
             if capabilities_facts:
                 sections.append(
