@@ -7,7 +7,8 @@ import type {
   MachineLoadTransferPayload,
   MachineLoadWithdrawPayload,
   OverviewPayload,
-  ProblemAnalysisPayload,
+  ProblemDetectorItemsPayload,
+  ProblemDetectorsPayload,
   Subplugin,
 } from "../types";
 
@@ -22,9 +23,11 @@ export async function fetchSubplugins(signal?: AbortSignal): Promise<Subplugin[]
 
 export async function fetchOverview(params: {
   branch: string;
+  volumeView?: "day" | "month_yoy";
   signal?: AbortSignal;
 }): Promise<OverviewPayload> {
   const search = new URLSearchParams({ branch: params.branch });
+  if (params.volumeView) search.set("volumeView", params.volumeView);
   const envelope = await httpGet<{
     success: boolean;
     message?: string;
@@ -213,17 +216,39 @@ export async function fetchMachineLoadLocate(params: {
   return unwrapEnvelope(envelope, "Não foi possível rastrear a OP ou o conjunto.");
 }
 
-export async function fetchProblemAnalysis(params: {
+/** Cards da Análise de problemas — um por detector do catálogo. */
+export async function fetchProblemDetectors(params: {
   branch: string;
-  issueId?: string | null;
   signal?: AbortSignal;
-}): Promise<ProblemAnalysisPayload> {
+}): Promise<ProblemDetectorsPayload> {
   const search = new URLSearchParams({ branch: params.branch });
-  if (params.issueId) search.set("issueId", params.issueId);
   const envelope = await httpGet<{
     success: boolean;
     message?: string;
-    data: ProblemAnalysisPayload;
+    data: ProblemDetectorsPayload;
   }>(ppcApiUrl(`/problem-analysis?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar a análise de problemas.");
+}
+
+export async function fetchProblemDetectorItems(params: {
+  branch: string;
+  detectorId: string;
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+}): Promise<ProblemDetectorItemsPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.page) search.set("page", String(params.page));
+  if (params.pageSize) search.set("pageSize", String(params.pageSize));
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: ProblemDetectorItemsPayload;
+  }>(
+    ppcApiUrl(
+      `/problem-analysis/${encodeURIComponent(params.detectorId)}?${search.toString()}`,
+    ),
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível carregar os registros do detector.");
 }

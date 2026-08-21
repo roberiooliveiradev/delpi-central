@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchOverview } from "../api/ppcApi";
-import type { OverviewPayload, PpcBranch } from "../types";
+import type { OverviewPayload, PpcBranch, VolumeView } from "../types";
 
-export function useOverview(branch: PpcBranch) {
+export function useOverview(branch: PpcBranch, volumeView: VolumeView = "day") {
   const [data, setData] = useState<OverviewPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export function useOverview(branch: PpcBranch) {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    fetchOverview({ branch, signal: controller.signal })
+    fetchOverview({ branch, volumeView, signal: controller.signal })
       .then((payload) => {
         setData(payload);
         setError(null);
@@ -28,7 +28,7 @@ export function useOverview(branch: PpcBranch) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [branch, reloadToken]);
+  }, [branch, reloadToken, volumeView]);
 
   return { data, loading, error, reload };
 }

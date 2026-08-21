@@ -15,7 +15,6 @@
   --ppc-attention: #f5a524;
   --ppc-ok: #12a150;
   --ppc-rail-width: 64px;
-  --ppc-inbox-width: min(340px, 38vw);
   --ppc-font-xs: 11px;
   --ppc-font-sm: 12px;
   --ppc-font-md: 13px;
@@ -237,16 +236,59 @@
 .dashboard-production-control .ppc-board-card--otd {
   display: flex;
   flex-direction: column;
+  /* Véu do accent no topo: destaca o KPI sem competir com a série logo abaixo. */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ppc-accent) 7%, var(--ppc-surface)) 0%,
+      var(--ppc-surface) 52%
+    );
 }
 
+/* Host do MultiTypeSeriesChart (Recharts) — só layout; visual vem do kit. */
 .dashboard-production-control .ppc-otd-chart {
-  height: 196px;
-  min-height: 196px;
-  margin-top: 8px;
+  height: 208px;
+  min-height: 208px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--ppc-border) 75%, transparent);
 }
 
-.dashboard-production-control .ppc-otd-chart > * {
+.dashboard-production-control .ppc-otd-chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 100%;
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
+}
+
+/* Volume diário de PAs — card full-width abaixo do grid de KPIs. */
+.dashboard-production-control .ppc-volume-section {
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-volume-card {
+  background: var(--ppc-surface);
+  border: 1px solid var(--ppc-border);
+  border-radius: 14px;
+  padding: 14px 16px 12px;
+}
+
+.dashboard-production-control .ppc-volume-chart {
+  width: 100%;
+  min-height: 280px;
+}
+
+.dashboard-production-control .ppc-volume-card__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  margin: 0;
+  color: var(--ppc-text-muted);
+  font-size: var(--ppc-font-sm);
 }
 
 .dashboard-production-control .ppc-board-list {
@@ -555,25 +597,86 @@
   outline-offset: 2px;
 }
 
-.dashboard-production-control .ppc-analysis {
-  display: grid;
-  grid-template-columns: var(--ppc-inbox-width) minmax(0, 1fr);
-  min-height: 0;
+.dashboard-production-control .ppc-detectors {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px 24px;
+  min-width: 0;
   flex: 1;
 }
 
-.dashboard-production-control .ppc-inbox {
-  border-right: 1px solid var(--ppc-border);
-  display: flex;
-  flex-direction: column;
-  min-height: 420px;
+.dashboard-production-control .ppc-detectors__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
 }
 
-.dashboard-production-control .ppc-inbox__counts {
+/* Só o realce de severidade e de cartão ativo — o chrome vem do kit. */
+.dashboard-production-control .ppc-detector-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.dashboard-production-control .ppc-detector-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 99px;
+  background: var(--ppc-ok);
+  z-index: 1;
+}
+
+.dashboard-production-control .ppc-detector-card[data-severity="critical"]::before {
+  background: var(--ppc-critical);
+}
+
+.dashboard-production-control .ppc-detector-card[data-severity="attention"]::before {
+  background: var(--ppc-attention);
+}
+
+.dashboard-production-control .ppc-detector-card[data-active="true"] {
+  outline: 2px solid color-mix(in srgb, var(--ppc-accent) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.dashboard-production-control .ppc-detector-items {
   display: flex;
-  gap: 6px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--ppc-border);
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-detector-items__hint {
+  margin: 0;
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-detector-items__empty {
+  margin: 0;
+  font-size: var(--ppc-font-xs);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-detector-items__set,
+.dashboard-production-control .ppc-detector-items__root {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-detector-items__set span,
+.dashboard-production-control .ppc-detector-items__root span {
+  font-size: var(--ppc-font-xs);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-detector-items__diff {
+  white-space: normal;
 }
 
 .dashboard-production-control .ppc-pill {
@@ -596,126 +699,6 @@
 .dashboard-production-control .ppc-pill--ok {
   color: var(--ppc-ok);
   background: color-mix(in srgb, var(--ppc-ok) 14%, transparent);
-}
-
-.dashboard-production-control .ppc-inbox__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-}
-
-.dashboard-production-control .ppc-issue {
-  display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  border: 0;
-  border-bottom: 1px solid var(--ppc-border);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.dashboard-production-control .ppc-issue:hover {
-  background: color-mix(in srgb, var(--ppc-accent) 6%, transparent);
-}
-
-.dashboard-production-control .ppc-issue--active {
-  background: color-mix(in srgb, var(--ppc-accent) 11%, transparent);
-}
-
-.dashboard-production-control .ppc-issue__dot {
-  width: 8px;
-  height: 8px;
-  margin-top: 5px;
-  border-radius: 99px;
-  background: var(--ppc-attention);
-}
-
-.dashboard-production-control .ppc-issue--critical .ppc-issue__dot {
-  background: var(--ppc-critical);
-}
-
-.dashboard-production-control .ppc-issue__title {
-  display: block;
-  font-size: var(--ppc-font-md);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.dashboard-production-control .ppc-issue__meta {
-  display: block;
-  margin-top: 2px;
-  font-size: var(--ppc-font-xs);
-  color: var(--ppc-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dashboard-production-control .ppc-issue__delay {
-  font-size: var(--ppc-font-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--ppc-text-muted);
-  align-self: center;
-}
-
-.dashboard-production-control .ppc-detail {
-  padding: 16px 20px 24px;
-  min-width: 0;
-}
-
-.dashboard-production-control .ppc-severity {
-  height: 4px;
-  width: 72px;
-  border-radius: 99px;
-  margin-bottom: 12px;
-  background: var(--ppc-attention);
-}
-
-.dashboard-production-control .ppc-severity--critical {
-  background: var(--ppc-critical);
-}
-
-.dashboard-production-control .ppc-detail__title {
-  margin: 0;
-  font-size: clamp(18px, 2vw, 24px);
-  letter-spacing: -0.03em;
-}
-
-.dashboard-production-control .ppc-detail__kind {
-  margin: 4px 0 16px;
-  font-size: var(--ppc-font-sm);
-  color: var(--ppc-text-muted);
-}
-
-.dashboard-production-control .ppc-facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0 0 20px;
-}
-
-.dashboard-production-control .ppc-facts dt {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ppc-text-muted);
-}
-
-.dashboard-production-control .ppc-facts dd {
-  margin: 4px 0 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.dashboard-production-control .ppc-detail__table-title {
-  margin: 0 0 8px;
-  font-size: var(--ppc-font-sm);
-  font-weight: 650;
 }
 
 .dashboard-production-control .ppc-period {
@@ -1625,12 +1608,8 @@
 }
 
 @media (max-width: 1100px) {
-  .dashboard-production-control {
-    --ppc-inbox-width: min(280px, 42vw);
-  }
-
-  .dashboard-production-control .ppc-facts {
-    grid-template-columns: 1fr;
+  .dashboard-production-control .ppc-detectors__grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
 
@@ -1666,7 +1645,7 @@
     width: 100%;
   }
 
-  .dashboard-production-control .ppc-analysis {
+  .dashboard-production-control .ppc-detectors__grid {
     grid-template-columns: 1fr;
   }
 
@@ -1681,12 +1660,5 @@
 
   .dashboard-production-control .ppc-board-list {
     max-height: 48vh;
-  }
-
-  .dashboard-production-control .ppc-inbox {
-    min-height: 220px;
-    max-height: 40vh;
-    border-right: 0;
-    border-bottom: 1px solid var(--ppc-border);
   }
 }

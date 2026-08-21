@@ -1,7 +1,11 @@
 export const helpTooltips = {
-  home: "Painel inicial do PCP: OTD da filial no mês corrente, volume de atraso e fila de OPs para ação.",
+  home: "Painel inicial do PCP: OTD da filial no mês corrente, volume diário de PAs produzidos, atraso e fila de OPs para ação.",
+  productionVolume:
+    "Agregação da quantidade produzida de PAs (última operação do roteiro SG2 — entrada em estoque). No modo Dia: mês corrente com média só em dias úteis. No modo Mês × ano ant.: jan→hoje em buckets mensais comparado ao mesmo período do ano anterior.",
   problemAnalysis:
-    "Fila de exceções montada a partir das ordens PCP atrasadas. Crítico: 7 dias ou mais de atraso.",
+    "Grade de detectores de exceção da fábrica. Cada cartão roda uma regra sobre os dados do TOTVS; abra o cartão para ver os registros que precisam de ação.",
+  incompleteOrderSets:
+    "Compara a estrutura do produto raiz (SG1, vigente na emissão da OP mãe) com as OPs criadas no mesmo conjunto. Falta = intermediário da estrutura sem OP. Sobra = OP de produto fora da estrutura. Matéria-prima não entra.",
   machineLoad:
     "Fila de operações alocadas (SH8) congelada por filial e período. O status «em produção» vem ao vivo da HZA. Use Atualizar para regenerar a programação a partir do TOTVS. O rastreio localiza o conjunto (C2_NUM) ou o produto (PA) em todos os CTs.",
   machineLoadLocate:
