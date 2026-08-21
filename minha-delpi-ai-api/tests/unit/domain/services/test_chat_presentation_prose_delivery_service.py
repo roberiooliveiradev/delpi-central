@@ -53,7 +53,7 @@ def _stack_tool_calls(*, markdown: str = "### Status\n\nTemplate.") -> list[dict
         (
             "como esta o status fabril do produto 90269001?",
             _stack_tool_calls(),
-            MODE_TEMPLATE,
+            MODE_LLM,
         ),
     ],
 )
@@ -103,7 +103,7 @@ def test_resolve_mode_llm_when_response_modes_disabled_and_no_template_fallback(
         _stack_tool_calls(),
     )
 
-    assert mode == MODE_TEMPLATE
+    assert mode == MODE_LLM
 
 
 def test_template_prose_allowed_false_when_everywhere(monkeypatch):
@@ -129,7 +129,7 @@ def test_resolve_mode_llm_when_response_modes_disabled_but_require_flag_false(mo
         _stack_tool_calls(),
     )
 
-    assert mode == MODE_TEMPLATE
+    assert mode == MODE_LLM
 
 
 def test_should_not_skip_template_prose_when_profile_uses_template_even_if_llm_everywhere(
@@ -195,11 +195,9 @@ def test_should_skip_template_prose_when_modes_disabled_but_require_flag_false(m
         lambda: False,
     )
 
-    assert (
-        not ChatPresentationProseDeliveryService.should_skip_template_prose_in_pipeline(
-            "qual o status do produto 90269002 na fabrica hoje?",
-            path="/products/90269002/factory-status",
-        )
+    assert ChatPresentationProseDeliveryService.should_skip_template_prose_in_pipeline(
+        "qual o status do produto 90269002 na fabrica hoje?",
+        path="/products/90269002/factory-status",
     )
 
 
@@ -305,9 +303,9 @@ def test_apply_to_tool_context_result_decouples_executed_tools(monkeypatch):
         "qual o status do produto 90269002 na fabrica hoje?",
     )
 
-    assert mode == MODE_TEMPLATE
+    assert mode == MODE_LLM
     metadata = tool_context["toolCalls"][0]["metadata"]
-    assert metadata.get("llmProseDecoupled") is not True
+    assert metadata.get("llmProseDecoupled") is True
 
 
 def test_apply_turn_decouples_and_stamps_delivery_mode(monkeypatch):
@@ -321,10 +319,9 @@ def test_apply_turn_decouples_and_stamps_delivery_mode(monkeypatch):
 
     metadata = tool_calls[0]["metadata"]
 
-    assert mode == MODE_TEMPLATE
-    assert metadata.get("proseDeliveryMode") == MODE_TEMPLATE
-    assert metadata["textPresentation"]["markdown"]
-    assert metadata["humanizedSummary"]["linhas"]
+    assert mode == MODE_LLM
+    assert metadata.get("proseDeliveryMode") == MODE_LLM
+    assert metadata.get("llmProseDecoupled") is True
 
 
 def test_is_llm_decoupled_metadata_reads_prose_source():
