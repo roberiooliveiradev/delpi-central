@@ -138,6 +138,7 @@ class ChatPromptBuilderService:
         host_surface_prompt: str | None = None,
         skills_to_load: list[str] | tuple[str, ...] | None = None,
         analysis_ran: bool = False,
+        attachment_ids: list | None = None,
     ) -> list[dict]:
         from app.domain.services.chat_meta_llm_synthesis_service import (
             ChatMetaLlmSynthesisService,
@@ -162,6 +163,8 @@ class ChatPromptBuilderService:
             skip_skill_policy_sections=meta_synthesis_active,
             skills_to_load=skills_to_load,
             analysis_ran=analysis_ran,
+            message=current_message,
+            attachment_ids=attachment_ids,
         )
         base_prompt += self._user_profile_policy_addon(current_message)
         base_prompt += self._assistant_identity_policy_addon(current_message)

@@ -415,6 +415,15 @@ def test_hybrid_orchestration_regression(case):
         )
         assert opened is case["expect_analysis_gate"]
 
+    if case.get("expect_heuristic_skills"):
+        from app.domain.services.chat_skill_composition_service import (
+            ChatSkillCompositionService,
+        )
+
+        keys = ChatSkillCompositionService.infer_heuristic_skill_keys(case["message"])
+        for skill in case["expect_heuristic_skills"]:
+            assert skill in keys
+
     if case.get("expect_leak_fallback"):
         assert ChatLlmSynthesisLeakGuardService.needs_fallback(
             answer=case["leaked_answer"],

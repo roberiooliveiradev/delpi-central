@@ -33,6 +33,7 @@ _PAYLOAD_BOOL_KEYS = (
     "assistantIdentityDirectEnabled",
     "webSearchDirectResponseEnabled",
     "webSearchAutoAugmentEnabled",
+    "turnAnalysisEnabled",
 )
 
 _PAYLOAD_FLOAT_KEYS = (
@@ -68,6 +69,7 @@ class ChatIntelligenceSettings:
     assistant_identity_direct_enabled: bool
     web_search_direct_response_enabled: bool
     web_search_auto_augment_enabled: bool
+    turn_analysis_enabled: bool
 
 
 class ChatIntelligenceSettingsService:
@@ -193,6 +195,7 @@ class ChatIntelligenceSettingsService:
             assistant_identity_direct_enabled=snapshot.assistant_identity_direct_enabled,
             web_search_direct_response_enabled=snapshot.web_search_direct_response_enabled,
             web_search_auto_augment_enabled=snapshot.web_search_auto_augment_enabled,
+            turn_analysis_enabled=snapshot.turn_analysis_enabled,
         )
 
     @staticmethod
@@ -224,6 +227,7 @@ class ChatIntelligenceSettingsService:
             assistant_identity_direct_enabled=settings.assistant_identity_direct_enabled,
             web_search_direct_response_enabled=settings.web_search_direct_response_enabled,
             web_search_auto_augment_enabled=settings.web_search_auto_augment_enabled,
+            turn_analysis_enabled=settings.turn_analysis_enabled,
         )
 
     def _score(self, value, default: float) -> float:

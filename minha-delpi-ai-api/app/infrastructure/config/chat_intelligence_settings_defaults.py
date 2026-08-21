@@ -47,4 +47,7 @@ def build_chat_intelligence_defaults_from_settings() -> ChatIntelligenceSettings
         web_search_auto_augment_enabled=bool(
             Settings.CHAT_WEB_SEARCH_AUTO_AUGMENT_ENABLED
         ),
+        turn_analysis_enabled=bool(
+            getattr(Settings, "CHAT_TURN_ANALYSIS_ENABLED", True)
+        ),
     )

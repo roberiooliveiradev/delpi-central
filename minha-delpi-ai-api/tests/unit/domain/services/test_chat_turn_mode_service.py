@@ -48,6 +48,36 @@ def test_response_mode_honors_turn_mode_consume_prior():
     assert skip_rag is True
 
 
+def test_turn_mode_analyze_before_tools():
+    mode = ChatTurnModeService.resolve(
+        message="programação e qualidade",
+        tool_context={
+            "turnAnalysis": {"decision": "execute"},
+            "turnAnalysisActionIds": ["schedule", "quality"],
+        },
+        tool_calls=[],
+    )
+
+    assert mode == ChatTurnModeService.ANALYZE
+    assert ChatTurnModeService.should_skip_llm(mode)
+    assert ChatTurnModeService.should_skip_agentic(mode)
+
+
+def test_turn_mode_compose_after_tools():
+    mode = ChatTurnModeService.resolve(
+        message="estoque e fornecedores 10080022",
+        tool_context={
+            "turnAnalysis": {"decision": "execute"},
+            "turnAnalysisSkillsToLoad": ["company-knowledge"],
+            "turnAnalysisActionIds": ["stock", "suppliers"],
+        },
+        tool_calls=[{"name": "execute_external_action", "metadata": {"ok": True}}],
+    )
+
+    assert mode == ChatTurnModeService.COMPOSE
+    assert not ChatTurnModeService.should_skip_llm(mode)
+
+
 def test_turn_mode_consume_prior_for_unclear_request():
     mode = ChatTurnModeService.resolve(
         message="programação",

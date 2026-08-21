@@ -92,6 +92,14 @@ class ChatExternalActionOrchestrationService:
                 memory_snapshot=memory_snapshot,
                 max_calls=max_calls,
             )
+            from app.application.services.chat_multi_intent_continuation_service import (
+                ChatMultiIntentContinuationService,
+            )
+
+            planned, _ = ChatMultiIntentContinuationService.apply_limit(
+                planned,
+                max_calls=cls._resolve_max_calls(max_calls),
+            )
 
             if on_stream_activity and planned:
                 from app.application.services.chat_stream_activity_service import (
@@ -625,9 +633,9 @@ class ChatExternalActionOrchestrationService:
         )
 
         multi_enabled = bool(resolve_chat_intelligence_runtime().multi_action_enabled)
-        limit = cls._resolve_max_calls(max_calls)
+        merge_cap = max(cls._resolve_max_calls(max_calls), cls._mode_multi_action_cap(), 6)
         if not multi_enabled:
-            limit = 1
+            merge_cap = max(merge_cap, 6)
         allowed = {
             str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()
         }
@@ -643,7 +651,7 @@ class ChatExternalActionOrchestrationService:
             return merged
 
         for action_id in analysis_ids:
-            if len(merged) >= limit:
+            if len(merged) >= merge_cap:
                 break
             if action_id in existing:
                 continue
@@ -669,7 +677,7 @@ class ChatExternalActionOrchestrationService:
             merged.append(selected)
             existing.add(selected_id)
 
-        return merged[:limit]
+        return merged[:merge_cap]
 
     @classmethod
     def _resolve_product_intent(cls, message: str, normalized: str) -> str:

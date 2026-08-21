@@ -58,3 +58,4 @@ def test_ambiguous_domain_direct_answer_and_suggestions():
 
     suggestions = ChatUnclearRequestService.build_suggestions(message="programação")
     assert any("produção" in item["label"].lower() for item in suggestions)
+    assert all(item.get("label") and item.get("query") for item in suggestions)

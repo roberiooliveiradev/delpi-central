@@ -285,6 +285,26 @@ class ChatTurnPreparationService:
                 if "unclear_request" not in pipeline_stages:
                     pipeline_stages.append("unclear_request")
 
+        if unclear_direct and not routing_disambiguation_suggestions:
+            from app.domain.services.chat_unclear_request_service import (
+                ChatUnclearRequestService,
+            )
+
+            unclear_suggestions = ChatUnclearRequestService.build_suggestions(
+                message=message,
+                previous_messages=history_source,
+            )
+            if not unclear_suggestions:
+                clarify_key = None
+                if turn_analysis_outcome.result is not None:
+                    clarify_key = turn_analysis_outcome.result.clarify_key
+                if clarify_key:
+                    unclear_suggestions = ChatUnclearRequestService.build_suggestions(
+                        message=message,
+                    )
+            if unclear_suggestions:
+                routing_disambiguation_suggestions = unclear_suggestions
+
         tool_phase = ChatTurnPreparationToolRoutingService.run_tool_phase(
             message=message,
             request=request,
@@ -337,6 +357,21 @@ class ChatTurnPreparationService:
                 tool_context["turnAnalysisSkillsToLoad"] = workspace_context.get(
                     "turnAnalysisSkillsToLoad"
                 )
+            from app.domain.services.chat_skill_composition_service import (
+                ChatSkillCompositionService,
+            )
+
+            loaded_flags = ChatSkillCompositionService.resolve_loaded_skills(
+                enabled_skills=workspace_context.get("skills")
+                if isinstance(workspace_context.get("skills"), dict)
+                else None,
+                skills_to_load=workspace_context.get("turnAnalysisSkillsToLoad"),
+                analysis_ran=True,
+                message=message,
+            )
+            tool_context["skillsLoaded"] = ChatSkillCompositionService.loaded_skill_keys(
+                loaded_flags
+            )
 
         if canvas_operational_update and not canvas_action:
             canvas_action = ChatCanvasContentService.build_update_from_tools(

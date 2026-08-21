@@ -353,6 +353,7 @@ class ChatTurnLlmAssemblyService:
                 analysis_ran=bool(
                     isinstance(tool_context, dict) and tool_context.get("turnAnalysis")
                 ),
+                attachment_ids=list(getattr(request, "attachment_ids", None) or []),
             )
 
         admin_debug_payload = ChatAdminDebugService.build_for_turn(

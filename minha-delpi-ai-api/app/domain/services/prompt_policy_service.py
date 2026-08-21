@@ -122,6 +122,8 @@ class PromptPolicyService:
         *,
         skills_to_load: list[str] | tuple[str, ...] | None = None,
         analysis_ran: bool = False,
+        message: str | None = None,
+        attachment_ids: list | None = None,
     ) -> list[str]:
         """Políticas de skills carregadas no turno (subset opcional via turn analysis)."""
         from app.domain.services.chat_skill_composition_service import (
@@ -132,6 +134,8 @@ class PromptPolicyService:
             enabled_skills=skills,
             skills_to_load=skills_to_load,
             analysis_ran=analysis_ran,
+            message=message,
+            attachment_ids=attachment_ids,
         )
         sections: list[str] = []
 
@@ -234,6 +238,8 @@ class PromptPolicyService:
         skip_skill_policy_sections: bool = False,
         skills_to_load: list[str] | tuple[str, ...] | None = None,
         analysis_ran: bool = False,
+        message: str | None = None,
+        attachment_ids: list | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
         resolved_skills = skills or {}
@@ -281,6 +287,8 @@ class PromptPolicyService:
                     resolved_skills,
                     skills_to_load=skills_to_load,
                     analysis_ran=analysis_ran,
+                    message=message,
+                    attachment_ids=attachment_ids,
                 )
             )
 

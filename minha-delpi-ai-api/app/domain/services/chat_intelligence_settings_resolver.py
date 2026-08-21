@@ -30,6 +30,7 @@ class ChatIntelligenceSettingsSnapshot:
     assistant_identity_direct_enabled: bool
     web_search_direct_response_enabled: bool
     web_search_auto_augment_enabled: bool
+    turn_analysis_enabled: bool
 
 
 def chat_intelligence_settings_to_payload(
@@ -60,6 +61,7 @@ def chat_intelligence_settings_to_payload(
         "assistantIdentityDirectEnabled": settings.assistant_identity_direct_enabled,
         "webSearchDirectResponseEnabled": settings.web_search_direct_response_enabled,
         "webSearchAutoAugmentEnabled": settings.web_search_auto_augment_enabled,
+        "turnAnalysisEnabled": settings.turn_analysis_enabled,
     }
 
 
@@ -167,6 +169,10 @@ def resolve_chat_intelligence_settings(
         web_search_auto_augment_enabled=_bool(
             stored.get("webSearchAutoAugmentEnabled"),
             defaults.web_search_auto_augment_enabled,
+        ),
+        turn_analysis_enabled=_bool(
+            stored.get("turnAnalysisEnabled"),
+            defaults.turn_analysis_enabled,
         ),
     )
 

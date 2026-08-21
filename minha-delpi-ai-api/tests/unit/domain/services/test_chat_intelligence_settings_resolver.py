@@ -30,6 +30,7 @@ def _defaults() -> ChatIntelligenceSettingsSnapshot:
         assistant_identity_direct_enabled=True,
         web_search_direct_response_enabled=True,
         web_search_auto_augment_enabled=True,
+        turn_analysis_enabled=True,
     )
 
 
@@ -55,3 +56,12 @@ def test_resolve_overrides_admin_fields():
     assert resolved.external_action_embedding_on_import is False
     assert resolved.rag_context_min_score == 0.5
     assert resolved.multi_action_enabled is True
+
+
+def test_resolve_overrides_turn_analysis_enabled():
+    resolved = resolve_chat_intelligence_settings(
+        defaults=_defaults(),
+        stored={"turnAnalysisEnabled": False},
+    )
+
+    assert resolved.turn_analysis_enabled is False

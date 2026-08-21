@@ -76,6 +76,27 @@ class ChatIntelligenceMetadataService:
             "embeddingCacheBackend": Settings.EMBEDDING_CACHE_BACKEND,
         }
 
+        loaded_skills = tool_context.get("skillsLoaded")
+        if not isinstance(loaded_skills, list):
+            from app.domain.services.chat_skill_composition_service import (
+                ChatSkillCompositionService,
+            )
+
+            flags = ChatSkillCompositionService.resolve_loaded_skills(
+                enabled_skills=(
+                    tool_context.get("skills")
+                    if isinstance(tool_context.get("skills"), dict)
+                    else None
+                ),
+                skills_to_load=tool_context.get("turnAnalysisSkillsToLoad"),
+                analysis_ran=bool(tool_context.get("turnAnalysis")),
+                message=str(tool_context.get("userMessage") or ""),
+            )
+            loaded_skills = ChatSkillCompositionService.loaded_skill_keys(flags)
+
+        if loaded_skills:
+            metadata["skillsLoaded"] = list(loaded_skills)
+
         if embedding_cache_stats:
             metadata["embeddingCache"] = embedding_cache_stats
 

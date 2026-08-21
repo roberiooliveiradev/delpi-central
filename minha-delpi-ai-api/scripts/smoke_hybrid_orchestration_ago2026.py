@@ -31,6 +31,10 @@ def _offline_checks() -> list[str]:
     if ChatUnclearRequestService.classify("programação") != "ambiguous_domain":
         failures.append("programação deveria ser ambiguous_domain")
 
+    chips = ChatUnclearRequestService.build_suggestions(message="programação")
+    if not chips:
+        failures.append("programação deveria ter chips de clarify")
+
     answer = ChatUnclearRequestService.build_direct_answer(message="programação") or ""
     if not answer or "according to my instructions" in answer.lower():
         failures.append("clarify de programação inválido")
@@ -116,6 +120,14 @@ def _http_checks() -> list[str]:
         failures.append("HTTP programação vazou CoT EN")
     if not answer.strip():
         failures.append("HTTP programação sem resposta")
+    vague_meta = vague.get("metadata") or {}
+    chips = (
+        vague_meta.get("routingDisambiguationSuggestions")
+        or vague.get("routingDisambiguationSuggestions")
+        or []
+    )
+    if not chips:
+        failures.append("HTTP programação sem chips de clarify")
 
     schedule = request(
         "POST",
@@ -134,6 +146,27 @@ def _http_checks() -> list[str]:
         failures.append(
             f"HTTP schedule sem tools (toolCount={tool_count})"
         )
+
+    composed = request(
+        "POST",
+        f"{base}{prefix}/sessions/{session_id}/messages",
+        token=token,
+        body={
+            "content": "estoque e fornecedores do produto 10080022",
+            "responseMode": "normal",
+        },
+    )
+    composed_tools = composed.get("toolCalls") or composed.get("tools") or []
+    composed_meta = composed.get("metadata") or {}
+    composed_admin = composed_meta.get("adminDebug") or {}
+    composed_intel = (
+        composed_admin.get("intelligence") or composed_meta.get("intelligence") or {}
+    )
+    composed_count = len(composed_tools) if isinstance(composed_tools, list) else int(
+        composed_intel.get("toolCount") or 0
+    )
+    if composed_count < 1:
+        failures.append(f"HTTP composto sem tools (toolCount={composed_count})")
 
     return failures
 

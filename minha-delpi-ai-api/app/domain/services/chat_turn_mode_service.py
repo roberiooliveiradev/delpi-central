@@ -8,6 +8,8 @@ from typing import Any
 class ChatTurnModeService:
     CONSUME_PRIOR = "consume_prior"
     ASK_SLOT = "ask_slot"
+    ANALYZE = "analyze"
+    COMPOSE = "compose"
     EXECUTE_TOOLS = "execute_tools"
     LLM_NARRATE = "llm_narrate"
 
@@ -36,6 +38,20 @@ class ChatTurnModeService:
         if cls._looks_like_ask_slot(answer=answer, tool_calls=tool_calls, stages=stages):
             return cls.ASK_SLOT
 
+        analysis = context.get("turnAnalysis")
+        analysis_decision = ""
+        if isinstance(analysis, dict):
+            analysis_decision = str(analysis.get("decision") or "").strip().lower()
+
+        if analysis_decision == "execute":
+            has_compose = bool(
+                context.get("turnAnalysisSkillsToLoad")
+                or context.get("turnAnalysisActionIds")
+            )
+            if cls._has_pending_or_successful_tools(tool_calls):
+                return cls.COMPOSE if has_compose else cls.EXECUTE_TOOLS
+            return cls.ANALYZE
+
         if cls._has_pending_or_successful_tools(tool_calls) or "tools" in stages:
             if answer and cls._all_tool_calls_failed_validation(tool_calls):
                 return cls.ASK_SLOT
@@ -61,11 +77,11 @@ class ChatTurnModeService:
 
     @classmethod
     def should_skip_llm(cls, mode: str) -> bool:
-        return mode in {cls.CONSUME_PRIOR, cls.ASK_SLOT}
+        return mode in {cls.CONSUME_PRIOR, cls.ASK_SLOT, cls.ANALYZE}
 
     @classmethod
     def should_skip_agentic(cls, mode: str) -> bool:
-        return mode in {cls.CONSUME_PRIOR, cls.ASK_SLOT}
+        return mode in {cls.CONSUME_PRIOR, cls.ASK_SLOT, cls.ANALYZE}
 
     @classmethod
     def _looks_like_ask_slot(

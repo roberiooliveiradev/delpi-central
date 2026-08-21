@@ -82,6 +82,16 @@ class ChatTurnPreparationTurnAnalysisService:
         )
 
         enabled = bool(getattr(Settings, "CHAT_TURN_ANALYSIS_ENABLED", True))
+        try:
+            from app.application.services.chat_intelligence_runtime_access import (
+                resolve_chat_intelligence_runtime,
+            )
+
+            runtime = resolve_chat_intelligence_runtime()
+            if hasattr(runtime, "turn_analysis_enabled"):
+                enabled = bool(runtime.turn_analysis_enabled)
+        except Exception:
+            pass
 
         if not ChatTurnAnalysisService.should_analyze(
             response_mode=response_mode,

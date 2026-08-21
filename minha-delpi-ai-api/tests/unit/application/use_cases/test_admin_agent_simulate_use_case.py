@@ -202,3 +202,43 @@ def test_admin_agent_simulate_clarify_from_turn_analysis(monkeypatch):
     assert result["plannedToolCalls"] == []
     assert "claro" in result["answerPreview"].lower()
     assert result["turnAnalysis"]["decision"] == "clarify"
+    assert isinstance(result.get("routingDisambiguationSuggestions"), list)
+
+
+def test_admin_agent_simulate_schedule_execute_from_turn_analysis(monkeypatch):
+    from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
+        ChatTurnPreparationTurnAnalysisOutcome,
+        ChatTurnPreparationTurnAnalysisService,
+    )
+    from app.domain.services.chat_turn_analysis_service import ChatTurnAnalysisResult
+
+    monkeypatch.setattr(
+        ChatTurnPreparationTurnAnalysisService,
+        "maybe_analyze",
+        classmethod(
+            lambda cls, **kwargs: ChatTurnPreparationTurnAnalysisOutcome(
+                result=ChatTurnAnalysisResult(
+                    decision="execute",
+                    action_ids=["production_schedule_today"],
+                    reason="schedule",
+                    source="test",
+                ),
+                direct_answer=None,
+                skip_tools=False,
+            )
+        ),
+    )
+
+    use_case = _make_use_case()
+    result = use_case.execute(
+        question="programação de produção hoje",
+        user_id="00000000-0000-0000-0000-000000000001",
+        response_mode="normal",
+    )
+
+    assert result.get("skippedTools") is not True
+    assert result["plannedToolCalls"]
+    assert result["plannedToolCalls"][0]["arguments"]["actionId"] == (
+        "production_schedule_today"
+    )
+    assert result["turnAnalysis"]["decision"] == "execute"

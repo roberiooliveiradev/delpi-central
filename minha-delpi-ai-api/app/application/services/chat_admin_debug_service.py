@@ -408,6 +408,17 @@ class ChatAdminDebugService:
                 ),
             },
             "intentRoute": intent_route if isinstance(intent_route, dict) else None,
+            "intelligence": {
+                "turnAnalysis": tool_context.get("turnAnalysis")
+                if isinstance(tool_context.get("turnAnalysis"), dict)
+                else None,
+                "skillsLoaded": list(tool_context.get("skillsLoaded") or [])
+                if isinstance(tool_context.get("skillsLoaded"), list)
+                else [],
+                "agentic": tool_context.get("agentic")
+                if isinstance(tool_context.get("agentic"), dict)
+                else None,
+            },
             "tooling": {
                 "toolCalls": tool_context.get("toolCalls") or [],
                 "selectedExternalAction": tool_context.get("selectedExternalAction"),

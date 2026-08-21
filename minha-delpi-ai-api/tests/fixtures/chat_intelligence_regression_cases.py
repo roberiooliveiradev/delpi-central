@@ -2695,6 +2695,11 @@ HYBRID_ORCHESTRATION_CASES = [
         "response_mode": "normal",
     },
     {
+        "id": "drawing_and_norma_skills",
+        "message": "analise o desenho e confira na norma",
+        "expect_heuristic_skills": ["drawing-analysis", "company-knowledge"],
+    },
+    {
         "id": "leak_en_cot_needs_fallback",
         "leaked_answer": (
             "According to my instructions, the user's message is vague. "

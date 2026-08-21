@@ -126,6 +126,10 @@ class AdminAgentSimulateUseCase:
         )
 
         if turn_analysis_outcome.skip_tools and turn_analysis_outcome.direct_answer:
+            from app.domain.services.chat_unclear_request_service import (
+                ChatUnclearRequestService,
+            )
+
             return {
                 "question": normalized_question,
                 "agent": agent_meta,
@@ -137,6 +141,11 @@ class AdminAgentSimulateUseCase:
                 "chunks": [],
                 "plannedToolCalls": [],
                 "turnAnalysis": turn_analysis_meta,
+                "routingDisambiguationSuggestions": (
+                    ChatUnclearRequestService.build_suggestions(
+                        message=normalized_question
+                    )
+                ),
                 "finalPrompt": {
                     "systemPrompt": "",
                     "messages": [],
@@ -155,6 +164,7 @@ class AdminAgentSimulateUseCase:
             execute_tools_in_sandbox=execute_tools_in_sandbox,
             previous_messages=history,
             response_mode=response_mode,
+            turn_analysis=turn_analysis_outcome.result,
         )
         tool_context = str(tool_context_payload.get("context") or "")
         analysis_mode = ChatIntelligencePipelineService.analysis_mode_from_tool_context(
@@ -325,6 +335,7 @@ class AdminAgentSimulateUseCase:
         execute_tools_in_sandbox: bool = False,
         previous_messages: list | None = None,
         response_mode: str | None = None,
+        turn_analysis=None,
     ) -> tuple[dict, list[dict]]:
         if (
             execute_tools_in_sandbox
@@ -366,6 +377,21 @@ class AdminAgentSimulateUseCase:
             ]
 
             return result, tool_calls
+
+        if turn_analysis is not None and getattr(turn_analysis, "decision", "") == "execute":
+            analysis_calls = [
+                {
+                    "name": "execute_external_action",
+                    "arguments": {"actionId": action_id},
+                    "reason": "turn_analysis_action",
+                    "status": "planned",
+                    "fromTurnAnalysis": True,
+                }
+                for action_id in (turn_analysis.action_ids or ())
+                if str(action_id).strip()
+            ]
+            if analysis_calls:
+                return {"context": "", "turnAnalysis": turn_analysis.to_metadata()}, analysis_calls
 
         return {"context": ""}, self._planned_tool_calls(question)
 

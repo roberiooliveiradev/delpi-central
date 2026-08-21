@@ -38,6 +38,37 @@ def test_analysis_intersects_enabled_and_caps():
     assert "companyKnowledge" in loaded
 
 
+def test_drawing_and_norma_loads_drawing_and_company_knowledge():
+    loaded = ChatSkillCompositionService.resolve_loaded_skills(
+        enabled_skills={
+            "sqlAuthoring": True,
+            "companyKnowledge": True,
+            "drawingAnalysis": True,
+        },
+        skills_to_load=[],
+        analysis_ran=False,
+        message="analise o desenho e confira na norma",
+    )
+    assert loaded.get("drawingAnalysis") is True
+    assert loaded.get("companyKnowledge") is True
+    assert "sqlAuthoring" not in loaded
+
+
+def test_stock_message_does_not_load_specialized_skills():
+    loaded = ChatSkillCompositionService.resolve_loaded_skills(
+        enabled_skills={
+            "sqlAuthoring": True,
+            "companyKnowledge": True,
+            "drawingAnalysis": True,
+        },
+        skills_to_load=[],
+        analysis_ran=False,
+        message="estoque do produto 10080022",
+    )
+    assert "sqlAuthoring" not in loaded
+    assert "drawingAnalysis" not in loaded
+
+
 def test_analysis_ignores_disabled_skill():
     loaded = ChatSkillCompositionService.resolve_loaded_skills(
         enabled_skills={"sqlAuthoring": False, "companyKnowledge": True},
