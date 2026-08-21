@@ -114,12 +114,13 @@
 }
 
 .delpi-ui-message-thread__inline-image img {
-  display: block;
+  display: inline;
   width: auto;
   max-width: 100%;
   height: auto;
   max-height: 8rem;
   object-fit: contain;
+  vertical-align: baseline;
   cursor: zoom-in;
 }
 

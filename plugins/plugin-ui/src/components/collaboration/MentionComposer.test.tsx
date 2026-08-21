@@ -520,8 +520,20 @@ describe("mention-composer.css", () => {
     expect(css).toMatch(/max-height:\s*8rem/);
     expect(css).not.toMatch(/\.delpi-ui-mention-composer__inline-image \{[^}]*display:\s*block;/);
     expect(css).toMatch(/\.delpi-ui-mention-composer__inline-image \{[^}]*vertical-align:\s*baseline/);
+    expect(css).toMatch(
+      /\.delpi-ui-mention-composer__inline-image img \{[^}]*display:\s*inline/,
+    );
+    expect(css).not.toMatch(
+      /\.delpi-ui-mention-composer__inline-image img \{[^}]*display:\s*block/,
+    );
     expect(prose).toMatch(/\.delpi-ui-message-thread__inline-image \{[^}]*display:\s*inline-block/);
     expect(prose).toMatch(/\.delpi-ui-message-thread__inline-image \{[^}]*vertical-align:\s*baseline/);
+    expect(prose).toMatch(
+      /\.delpi-ui-message-thread__inline-image img \{[^}]*display:\s*inline/,
+    );
+    expect(prose).not.toMatch(
+      /\.delpi-ui-message-thread__inline-image img \{[^}]*display:\s*block/,
+    );
     expect(prose).toMatch(/max-height:\s*8rem/);
     expect(css).toMatch(/\.delpi-ui-mention-composer__body :is\(:focus, :focus-visible\)/);
     expect(css).toMatch(/position:\s*absolute/);

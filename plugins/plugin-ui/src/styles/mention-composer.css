@@ -382,7 +382,7 @@
 }
 
 .delpi-ui-mention-composer__inline-image img {
-  display: block;
+  display: inline;
   width: auto;
   max-width: 100%;
   height: auto;
