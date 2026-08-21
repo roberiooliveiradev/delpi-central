@@ -562,9 +562,13 @@ Repetir na última S* de E1, E2, E3, E5, E6, E7. **Não** após cada S* interna.
 
 ## Apêndice — imagens anexo + coladas no caret (ago/2026)
 
-Dois caminhos: **clip/drop-thread** → thumbs + `belowBody`; **colar/drop na superfície** → **span inline no parágrafo** (modelo Word) → `attachment:pending:` → upload → PATCH `attachment:{uuid}`. Policy rejeita `http(s)|data|blob` em `![]()`. Dedup: id no body não aparece de novo na strip. Rascunho: Files inline no IndexedDB (sobrevivem F5).
+Dois caminhos: **clip/drop-thread** → thumbs + `belowBody`; **colar/drop na superfície** → **span inline no parágrafo** (modelo Word «Alinhado com o texto») → `attachment:pending:` → upload → PATCH `attachment:{uuid}`. Policy rejeita `http(s)|data|blob` em `![]()`. Dedup: id no body não aparece de novo na strip. Rascunho: Files inline no IndexedDB (sobrevivem F5) — `pendingId` no markdown = File `role:inline` no IDB.
 
-**Alinhamento (Word-like, imagem no parágrafo):** toolbar Formatar Align L/C/R/J aplica **só** `text-align` no bloco (`<p>`); texto e imagem andam juntos. Sem `data-align` na imagem e sem title `"align=…"` no markdown (legado `align=` no title migra para `text-align` no enhance). Persistência: `![alt](attachment:{uuid})` **inline** na linha + HTML island `<p style="text-align:…">` quando ≠ left. Parser canônico no kit (`parseMarkdownImages`) separa href do title. Edit: `resolveAttachmentImageSrc` hidrata `src` no span; strip só com anexos **fora** do body. **Supersede:** plano figure-bloco + `data-align` (ago/2026). Sem float mid-palavra.
+**Cola uma vez:** `uniqueClipboardImageFiles` — se `files` tem imagem, **não** lê `items` (Chromium duplicava a captura); HTML-only só extrai `data:` uma vez. Insert: **`Range.insertNode`** (`insertComposerInlineImageAtCaret`) — **proibido** `execCommand("insertHTML")` para imagem (liftava o span para fora do `<p>`).
+
+**Fluxos no mesmo motor:** compose dock · edit dock (`mode=edit`, sem `editingId` in-place) · bolha (`messageBodyHtmlFromMarkdown`) · F5 draft · reply (herda compose). Clip (paperclip) continua fora do parágrafo.
+
+**Alinhamento (Word-like, imagem no parágrafo):** toolbar Formatar Align L/C/R/J aplica **só** `text-align` no bloco (`<p>`); texto e imagem andam juntos. CSS: wrapper `inline-block` + `img { display: inline; vertical-align: baseline }`. Sem `data-align` na imagem e sem title `"align=…"` no markdown (legado `align=` no title migra para `text-align` no enhance). Persistência: `![alt](attachment:{uuid})` **inline** na linha + HTML island `<p style="text-align:…">` quando ≠ left. Parser canônico no kit (`parseMarkdownImages`) separa href do title. Edit: `resolveAttachmentImageSrc` hidrata `src` no span; strip só com anexos **fora** do body. **Supersede:** plano figure-bloco + `data-align` (ago/2026). Sem float mid-palavra.
 
 ## Fora do escopo
 
