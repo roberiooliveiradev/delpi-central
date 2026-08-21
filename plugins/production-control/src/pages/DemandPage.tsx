@@ -17,12 +17,12 @@ import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { DEMAND_DEFAULT_FILTERS, useDemand, type DemandFilters } from "../hooks/useDemand";
 import type { DemandLine, PpcBranch } from "../types";
-import { downloadDemandCsv } from "../utils/demandCsv";
+import { downloadDemandExcel } from "../utils/demandExcel";
 import { demandStatusBadge, demandStatusOptions } from "../utils/demandStatus";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 
-const DEMAND_CHART_HEIGHT = 240;
+const DEMAND_CHART_HEIGHT = 260;
 
 const KpiCard = createDashboardKpiCard({ prefix: "ppc", labels: copy.kpi });
 const StatusBadge = createDashboardStatusBadge({ prefix: "ppc" });
@@ -221,9 +221,10 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
                   chartType="column"
                   height={DEMAND_CHART_HEIGHT}
                   showLegend={false}
+                  showValueLabels
                   formatY={formatOpQuantity}
                   formatTooltipValue={formatOpQuantity}
-                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  margin={{ top: 28, right: 8, left: 0, bottom: 0 }}
                 />
               </div>
             )}
@@ -304,7 +305,9 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
               <button
                 type="button"
                 className="ppc-ghost-btn"
-                onClick={() => downloadDemandCsv(rows, demand.exportFileName(branch))}
+                onClick={() => {
+                  void downloadDemandExcel(rows, demand.exportFileName(branch));
+                }}
                 disabled={rows.length === 0}
               >
                 <Download size={16} strokeWidth={1.75} aria-hidden />

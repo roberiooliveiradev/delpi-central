@@ -128,6 +128,41 @@ def test_closed_appointment_means_started_but_not_running() -> None:
     assert item["last_appointment_date"] == "2026-08-18"
 
 
+def test_finished_order_without_hza_history_is_started() -> None:
+    item = MachineLoadOperationMapper.map_operation(
+        {
+            **_ROW,
+            "active_appointment_count": 0,
+            "appointment_count": 0,
+            "order_is_finished": 1,
+            "order_finish_date": "20260815",
+        }
+    )
+    assert item["production_status"] == PRODUCTION_STATUS_STARTED
+    assert item["is_in_production"] is False
+    assert item["production_started_date"] == "2026-08-15"
+
+
+def test_finished_order_overrides_open_appointment() -> None:
+    """Coletor esquecido aberto: OP encerrada volta a «Já apontada»."""
+    item = MachineLoadOperationMapper.map_operation(
+        {
+            **_ROW,
+            "active_appointment_count": 1,
+            "active_operator_count": 1,
+            "appointment_count": 3,
+            "active_marker": _ACTIVE_MARKER,
+            "last_marker": _ACTIVE_MARKER,
+            "order_is_finished": 1,
+            "order_finish_date": "20260819",
+        }
+    )
+    assert item["production_status"] == PRODUCTION_STATUS_STARTED
+    assert item["is_in_production"] is False
+    assert item["active_operator_count"] == 0
+    assert item["active_operator_name"] == "SILVANA ANDRADE DOS SANTOS"
+
+
 def test_two_operators_on_the_same_operation_are_counted() -> None:
     item = MachineLoadOperationMapper.map_operation(
         {

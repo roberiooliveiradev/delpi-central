@@ -32,6 +32,7 @@ from production_control_app.domain.services.machine_load_transfer import (
     TRANSFERRED_OPERATIONS_KEY,
     apply_transfers,
     find_operation,
+    move_conjunto_at_work_center,
     move_operation,
     normalize_work_center,
     original_work_center,
@@ -55,6 +56,11 @@ from production_control_app.domain.services.production_order_key import (
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.domain.services.current_month_period import today_in_timezone
+from production_control_app.application.services.machine_load_live_status_cache import (
+    clear_live_status_cache,
+    get_live_status_cache,
+    put_live_status_cache,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +82,21 @@ _WITHDRAWAL_FALLBACK_MESSAGES = {
 
 _TRANSFER_FALLBACK_MESSAGES = {
     "operationRequired": "Informe a OP e a operação que serão transferidas.",
+    "orderNumberRequired": "Informe o número do conjunto (C2_NUM) com ao menos 6 dígitos.",
+    "sourceRequired": "Informe o centro de trabalho de origem.",
     "targetRequired": "Escolha o centro de trabalho de destino.",
     "unknownTarget": "Centro de trabalho «{center}» não existe neste período.",
     "sameCenter": "A operação já está no centro {center}.",
     "notInQueue": "Operação {order}/{operation} não está na fila deste período.",
+    "conjuntoNotInCenter": (
+        "Nenhuma operação do conjunto «{conjunto}» está na fila do centro {source}."
+    ),
     "withdrawn": "O conjunto da OP {order} está fora da programação. Devolva-o à fila antes de transferir.",
     "applied": "OP {order} operação {operation} movida de {source} para {target}.",
+    "conjuntoApplied": (
+        "Conjunto {conjunto}: {operations} operação(ões) movida(s) de {source} para {target} "
+        "(só as que estavam neste centro)."
+    ),
 }
 
 _STATUS_FIELDS = (
@@ -769,6 +784,128 @@ class MachineLoadService:
         self._notify_change(branch=branch, reason="transfer", work_center=target)
         return presented
 
+    def transfer_conjunto(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        order_number: str,
+        source_work_center: str,
+        target_work_center: str,
+        work_center: str | None = None,
+    ) -> dict[str, Any]:
+        """Move as OPs do conjunto que estão no centro de origem para o destino.
+
+        OPs do mesmo C2_NUM em outros centros **não** saem da fila deles.
+        """
+        self._assert_can_view(user, branch)
+        messages = self._transfer_messages()
+        conjunto_key = self._require_conjunto_key(order_number, messages)
+        source = normalize_work_center(source_work_center)
+        target = normalize_work_center(target_work_center)
+        if not source:
+            raise ValueError(self._format_transfer_message(messages, "sourceRequired"))
+        if not target:
+            raise ValueError(self._format_transfer_message(messages, "targetRequired"))
+        if source == target:
+            raise ValueError(
+                self._format_transfer_message(messages, "sameCenter", center=target)
+            )
+
+        row, payload = self._load_snapshot_payload(branch=branch)
+        operations = self._payload_operations(payload)
+        withdrawn_keys = withdrawn_order_numbers(payload)
+        if conjunto_key in withdrawn_keys:
+            raise ValueError(
+                self._format_transfer_message(
+                    messages, "withdrawn", order=conjunto_key
+                )
+            )
+
+        centers = {
+            str(item.get("work_center") or "").strip(): str(item.get("work_center_name") or "").strip()
+            for item in _dict_items(payload.get("work_centers"))
+            if str(item.get("work_center") or "").strip()
+        }
+        if target not in centers:
+            raise ValueError(
+                self._format_transfer_message(messages, "unknownTarget", center=target)
+            )
+
+        entries = transfer_entries(payload)
+        moved = move_conjunto_at_work_center(
+            operations,
+            conjunto_key=conjunto_key,
+            source_work_center=source,
+            target_work_center=target,
+            target_work_center_name=centers.get(target) or None,
+            transfer_log=entries,
+        )
+        if moved is None:
+            raise ValueError(
+                self._format_transfer_message(
+                    messages,
+                    "conjuntoNotInCenter",
+                    conjunto=conjunto_key,
+                    source=source,
+                )
+            )
+
+        now = datetime.now(timezone.utc).isoformat()
+        next_entries = entries
+        for item in moved.moved:
+            order = normalize_order_code(item.get("production_order"))
+            operation = normalize_order_code(item.get("operation_code"))
+            origin = original_work_center(
+                next_entries,
+                production_order=order,
+                operation_code=operation,
+                fallback=source,
+            )
+            next_entries = register_transfer(
+                next_entries,
+                production_order=order,
+                operation_code=operation,
+                origin_work_center=origin,
+                target_work_center=target,
+                transferred_at=now,
+                transferred_by=_user_label(user),
+            )
+
+        payload["operations"] = moved.operations
+        payload[TRANSFERRED_OPERATIONS_KEY] = next_entries
+        payload["sequence_updated_at"] = now
+        payload["sequence_updated_by"] = _user_label(user)
+        updated = self._snapshots.update_payload(branch=branch, payload=payload)
+
+        presented = self._present(
+            updated,
+            work_center=work_center or target,
+            seeded=False,
+            branch=branch,
+        )
+        presented["transfer"] = {
+            "order_number": conjunto_key,
+            "production_order": conjunto_key,
+            "operation_code": None,
+            "operation_count": len(moved.moved),
+            "source_work_center": source,
+            "target_work_center": target,
+            "target_work_center_name": centers.get(target) or None,
+            "returned_to_origin": False,
+            "scope": "conjunto_at_center",
+            "message": self._format_transfer_message(
+                messages,
+                "conjuntoApplied",
+                conjunto=conjunto_key,
+                operations=len(moved.moved),
+                source=source,
+                target=target,
+            ),
+        }
+        self._notify_change(branch=branch, reason="transfer", work_center=target)
+        return presented
+
     @staticmethod
     def _transfer_messages() -> dict[str, Any]:
         cfg = _machine_load_settings()
@@ -1274,6 +1411,8 @@ class MachineLoadService:
         # tela mostra no campo «De» e o que descreve a janela puxada.
         oldest_due, _newest = delivery_bounds(_dict_items(frozen.get("operations")))
         effective_start = start or _parse_iso_date(oldest_due) or end
+        # Fila nova do TOTVS: status HZA em cache não vale mais.
+        clear_live_status_cache(branch)
         return self._snapshots.upsert(
             branch=branch,
             start_date=effective_start,
@@ -1512,6 +1651,10 @@ class MachineLoadService:
         if not operations:
             return operations
 
+        cached = get_live_status_cache(branch)
+        if cached is not None:
+            return self._apply_status_map(operations, cached)
+
         keys = [
             {
                 "production_order": order,
@@ -1539,6 +1682,14 @@ class MachineLoadService:
         status_by_key = {
             _operation_key(item): item for item in _dict_items(status_payload)
         }
+        put_live_status_cache(branch, status_by_key)
+        return self._apply_status_map(operations, status_by_key)
+
+    @staticmethod
+    def _apply_status_map(
+        operations: list[dict[str, Any]],
+        status_by_key: dict[tuple[str, str], dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         enriched: list[dict[str, Any]] = []
         for item in operations:
             status = status_by_key.get(_operation_key(item))

@@ -231,6 +231,35 @@ export async function transferMachineLoadOperation(params: {
   return unwrapEnvelope(envelope, "Não foi possível transferir a operação de centro de trabalho.");
 }
 
+/** Move as OPs do conjunto que estão no centro de origem para o destino. */
+export async function transferMachineLoadConjunto(params: {
+  branch: string;
+  orderNumber: string;
+  sourceWorkCenter: string;
+  targetWorkCenter: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadTransferPayload> {
+  const search = new URLSearchParams({
+    branch: params.branch,
+    orderNumber: params.orderNumber,
+    sourceWorkCenter: params.sourceWorkCenter,
+    targetWorkCenter: params.targetWorkCenter,
+  });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadTransferPayload;
+  }>(ppcApiUrl(`/machine-load/transfer-set?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível transferir o conjunto para outro centro de trabalho.",
+  );
+}
+
 export async function fetchMachineLoadLocate(params: {
   branch: string;
   query: string;

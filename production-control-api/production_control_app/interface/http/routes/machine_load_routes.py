@@ -307,6 +307,53 @@ def transfer_machine_load_operation(
     return ok(data, message=data.get("transfer", {}).get("message"))
 
 
+@router.post("/machine-load/transfer-set")
+def transfer_machine_load_set(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    order_number: str = Query(
+        ...,
+        alias="orderNumber",
+        min_length=6,
+        max_length=30,
+        description="C2_NUM do conjunto ou OP completa (usa o prefixo de 6 dígitos)",
+    ),
+    source_work_center: str = Query(
+        ...,
+        alias="sourceWorkCenter",
+        min_length=1,
+        max_length=20,
+        description="Centro de trabalho de origem (só as OPs do conjunto neste CT saem)",
+    ),
+    target_work_center: str = Query(
+        ...,
+        alias="targetWorkCenter",
+        min_length=1,
+        max_length=20,
+        description="Centro de trabalho de destino",
+    ),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta; vazio usa o destino",
+    ),
+):
+    """Move as OPs do conjunto que estão no centro de origem para o destino."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().transfer_conjunto(
+            user,
+            branch=branch,
+            order_number=order_number,
+            source_work_center=source_work_center,
+            target_work_center=target_work_center,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data, message=data.get("transfer", {}).get("message"))
+
+
 @router.get("/machine-load/locate")
 def locate_machine_load(
     request: Request,

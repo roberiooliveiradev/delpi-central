@@ -28,12 +28,16 @@
   },
   "transfer": {
     "operationRequired": "Informe a OP e a operação que serão transferidas.",
+    "orderNumberRequired": "Informe o número do conjunto (C2_NUM) com ao menos 6 dígitos.",
+    "sourceRequired": "Informe o centro de trabalho de origem.",
     "targetRequired": "Escolha o centro de trabalho de destino.",
     "unknownTarget": "Centro de trabalho «{center}» não existe neste período.",
     "sameCenter": "A operação já está no centro {center}.",
     "notInQueue": "Operação {order}/{operation} não está na fila deste período.",
+    "conjuntoNotInCenter": "Nenhuma operação do conjunto «{conjunto}» está na fila do centro {source}.",
     "withdrawn": "O conjunto da OP {order} está fora da programação. Devolva-o à fila antes de transferir.",
-    "applied": "OP {order} operação {operation} movida de {source} para {target} (entrou no fim da fila)."
+    "applied": "OP {order} operação {operation} movida de {source} para {target} (entrou no fim da fila).",
+    "conjuntoApplied": "Conjunto {conjunto}: {operations} operação(ões) movida(s) de {source} para {target} (só as que estavam neste centro)."
   },
   "publicCockpit": {
     "token": "aberto",

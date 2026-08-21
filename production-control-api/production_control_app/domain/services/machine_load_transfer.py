@@ -1,7 +1,8 @@
-"""Transferência de uma operação para outro centro de trabalho.
+"""Transferência de operação(ões) para outro centro de trabalho.
 
-Regra de negócio: o PCP pode mover **uma** operação (OP + operação) para a fila de
-outro centro. A operação entra no fim da fila do destino — de lá o analista
+Regra de negócio: o PCP pode mover **uma** operação (OP + operação) ou **todas
+as operações do conjunto que estão no centro atual** para a fila de outro
+centro. As operações entram no fim da fila do destino — de lá o analista
 reordena ou prioriza como qualquer outra.
 
 A decisão é local do Portal PCP: o snapshot é reescrito, e a lista
@@ -14,7 +15,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from production_control_app.domain.services.production_order_key import normalize_order_code
+from production_control_app.domain.services.production_order_key import (
+    normalize_order_code,
+    order_belongs_to_conjunto,
+)
 
 TRANSFERRED_OPERATIONS_KEY = "transferred_operations"
 
@@ -34,6 +38,16 @@ def normalize_work_center(value: Any) -> str:
 class OperationTransfer:
     operations: list[dict[str, Any]]
     operation: dict[str, Any]
+    source_work_center: str
+    target_work_center: str
+
+
+@dataclass(frozen=True)
+class ConjuntoCenterTransfer:
+    """Resultado de mover o conjunto **só** no centro de origem informado."""
+
+    operations: list[dict[str, Any]]
+    moved: list[dict[str, Any]]
     source_work_center: str
     target_work_center: str
 
@@ -82,6 +96,44 @@ def original_work_center(
     return normalize_work_center(fallback)
 
 
+def _apply_center_move(
+    item: dict[str, Any],
+    *,
+    target: str,
+    target_work_center_name: str | None,
+    origin: str,
+) -> dict[str, Any]:
+    moved = dict(item)
+    moved["work_center"] = target
+    if target_work_center_name is not None:
+        moved["work_center_name"] = target_work_center_name
+    if origin and origin != target:
+        moved["transferred_from"] = origin
+    else:
+        moved.pop("transferred_from", None)
+    return moved
+
+
+def _insert_at_end_of_center(
+    operations: list[dict[str, Any]],
+    *,
+    target: str,
+    batch: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not batch:
+        return list(operations)
+    last_target = next(
+        (
+            pos
+            for pos in range(len(operations) - 1, -1, -1)
+            if normalize_work_center(operations[pos].get("work_center")) == target
+        ),
+        None,
+    )
+    insert_at = len(operations) if last_target is None else last_target + 1
+    return [*operations[:insert_at], *batch, *operations[insert_at:]]
+
+
 def move_operation(
     operations: list[dict[str, Any]],
     *,
@@ -108,30 +160,79 @@ def move_operation(
     current = operations[index]
     source = normalize_work_center(current.get("work_center"))
     origin = normalize_work_center(origin_work_center) or source
-    moved = dict(current)
-    moved["work_center"] = target
-    if target_work_center_name is not None:
-        moved["work_center_name"] = target_work_center_name
-    # Voltar ao centro de origem tira a marca: a operação não está mais transferida.
-    if origin and origin != target:
-        moved["transferred_from"] = origin
-    else:
-        moved.pop("transferred_from", None)
+    moved = _apply_center_move(
+        current,
+        target=target,
+        target_work_center_name=target_work_center_name,
+        origin=origin,
+    )
 
     remaining = [item for pos, item in enumerate(operations) if pos != index]
-    last_target = next(
-        (
-            pos
-            for pos in range(len(remaining) - 1, -1, -1)
-            if normalize_work_center(remaining[pos].get("work_center")) == target
-        ),
-        None,
-    )
-    insert_at = len(remaining) if last_target is None else last_target + 1
-    next_operations = [*remaining[:insert_at], moved, *remaining[insert_at:]]
+    next_operations = _insert_at_end_of_center(remaining, target=target, batch=[moved])
     return OperationTransfer(
         operations=next_operations,
         operation=moved,
+        source_work_center=source,
+        target_work_center=target,
+    )
+
+
+def move_conjunto_at_work_center(
+    operations: list[dict[str, Any]],
+    *,
+    conjunto_key: str,
+    source_work_center: str,
+    target_work_center: str,
+    target_work_center_name: str | None = None,
+    transfer_log: list[dict[str, Any]] | None = None,
+) -> ConjuntoCenterTransfer | None:
+    """Move só as OPs do conjunto que estão no centro de origem.
+
+    OPs do mesmo C2_NUM em **outros** centros ficam onde estão. A ordem relativa
+    entre as movidas é preservada; elas entram no fim da fila do destino.
+    """
+    key = normalize_order_code(conjunto_key)
+    source = normalize_work_center(source_work_center)
+    target = normalize_work_center(target_work_center)
+    if not key or not source or not target or source == target:
+        return None
+
+    entries = transfer_log or []
+    selected_indexes: list[int] = []
+    for pos, item in enumerate(operations):
+        if normalize_work_center(item.get("work_center")) != source:
+            continue
+        if not order_belongs_to_conjunto(item.get("production_order"), key):
+            continue
+        selected_indexes.append(pos)
+
+    if not selected_indexes:
+        return None
+
+    selected_set = set(selected_indexes)
+    batch: list[dict[str, Any]] = []
+    for pos in selected_indexes:
+        current = operations[pos]
+        origin = original_work_center(
+            entries,
+            production_order=str(current.get("production_order") or ""),
+            operation_code=str(current.get("operation_code") or ""),
+            fallback=source,
+        )
+        batch.append(
+            _apply_center_move(
+                current,
+                target=target,
+                target_work_center_name=target_work_center_name,
+                origin=origin,
+            )
+        )
+
+    remaining = [item for pos, item in enumerate(operations) if pos not in selected_set]
+    next_operations = _insert_at_end_of_center(remaining, target=target, batch=batch)
+    return ConjuntoCenterTransfer(
+        operations=next_operations,
+        moved=batch,
         source_work_center=source,
         target_work_center=target,
     )

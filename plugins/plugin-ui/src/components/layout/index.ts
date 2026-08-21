@@ -288,7 +288,9 @@ export {
   underlineNavBemClasses,
   type DashboardUnderlineNavProps,
   type UnderlineNavClassNames,
+  type UnderlineNavDensity,
   type UnderlineNavItem,
+  type UnderlineNavLayout,
   type UnderlineNavProps,
 } from "./UnderlineNav";
 export {

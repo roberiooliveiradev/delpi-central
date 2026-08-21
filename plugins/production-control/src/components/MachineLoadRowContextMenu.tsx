@@ -3,7 +3,7 @@ import {
   ContextMenuItem,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowUpToLine, CalendarOff, MoveRight, Route } from "lucide-react";
+import { ArrowUpToLine, CalendarOff, Folders, MoveRight, Route } from "lucide-react";
 
 import { copy } from "../content/copy";
 import type { MachineLoadOperation } from "../types";
@@ -20,7 +20,9 @@ type Props = {
   onPrioritizeConjunto: (conjuntoKey: string) => void;
   /** Tira o conjunto da fila de todos os centros e do cockpit do operador. */
   onWithdrawConjunto: (conjuntoKey: string) => void;
-  /** Abre a escolha do centro de trabalho de destino desta operação. */
+  /** Move só as OPs do conjunto que estão no centro atual. */
+  onTransferConjunto: (operation: MachineLoadOperation) => void;
+  /** Abre a escolha do centro de trabalho de destino desta operação (item). */
   onTransferOperation: (operation: MachineLoadOperation) => void;
   prioritizeDisabled?: boolean;
   withdrawDisabled?: boolean;
@@ -36,6 +38,7 @@ export function MachineLoadRowContextMenu({
   onTraceConjunto,
   onPrioritizeConjunto,
   onWithdrawConjunto,
+  onTransferConjunto,
   onTransferOperation,
   prioritizeDisabled = false,
   withdrawDisabled = false,
@@ -92,6 +95,20 @@ export function MachineLoadRowContextMenu({
         onSelect={() => {
           if (!conjuntoKey) return;
           onWithdrawConjunto(conjuntoKey);
+          onClose();
+        }}
+      />
+      <ContextMenuItem
+        label={
+          hasConjunto
+            ? copy.machineLoad.rowActions.transferConjunto
+            : copy.machineLoad.rowActions.transferConjuntoDisabled
+        }
+        icon={Folders}
+        disabled={!hasConjunto || transferDisabled}
+        onSelect={() => {
+          if (!operation) return;
+          onTransferConjunto(operation);
           onClose();
         }}
       />

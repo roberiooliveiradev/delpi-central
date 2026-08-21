@@ -4,11 +4,15 @@ import { NativeSelectField, formFieldShellBemClasses } from "@delpi/plugin-ui/in
 import { HostContainedDialog } from "./PpcConfirmModal";
 import { copy } from "../content/copy";
 import type { MachineLoadOperation, MachineLoadWorkCenter } from "../types";
+import { conjuntoKeyFromOrder } from "../utils/machineLoadLocate";
 
 const fieldClasses = formFieldShellBemClasses("ppc");
 
+export type MachineLoadTransferMode = "operation" | "conjunto";
+
 type Props = {
   open: boolean;
+  mode?: MachineLoadTransferMode;
   operation: MachineLoadOperation | null;
   workCenters: MachineLoadWorkCenter[];
   busy?: boolean;
@@ -16,19 +20,25 @@ type Props = {
   onConfirm: (targetWorkCenter: string) => void;
 };
 
-/** Escolha do centro de trabalho de destino para a operação selecionada. */
+/** Escolha do centro de trabalho de destino (item ou conjunto no CT atual). */
 export function MachineLoadTransferModal({
   open,
+  mode = "operation",
   operation,
   workCenters,
   busy = false,
   onClose,
   onConfirm,
 }: Props) {
+  const title =
+    mode === "conjunto"
+      ? copy.machineLoad.transfer.modalTitleConjunto
+      : copy.machineLoad.transfer.modalTitle;
   return (
-    <HostContainedDialog open={open} title={copy.machineLoad.transfer.modalTitle} onClose={onClose}>
+    <HostContainedDialog open={open} title={title} onClose={onClose}>
       <TransferForm
-        key={`${operation?.production_order ?? ""}:${operation?.operation_code ?? ""}`}
+        key={`${mode}:${operation?.production_order ?? ""}:${operation?.operation_code ?? ""}`}
+        mode={mode}
         operation={operation}
         workCenters={workCenters}
         busy={busy}
@@ -41,6 +51,7 @@ export function MachineLoadTransferModal({
 
 /** Remontado por `key` a cada operação: o destino escolhido nunca vaza para a próxima. */
 function TransferForm({
+  mode,
   operation,
   workCenters,
   busy,
@@ -49,6 +60,7 @@ function TransferForm({
 }: Omit<Props, "open">) {
   const [target, setTarget] = useState("");
   const currentCenter = operation?.work_center ?? "";
+  const conjuntoKey = conjuntoKeyFromOrder(operation?.production_order);
 
   const options = workCenters
     .filter((center) => center.work_center !== currentCenter)
@@ -61,16 +73,24 @@ function TransferForm({
 
   return (
     <div className="ppc-transfer">
-      <p className="ppc-transfer__lead">{copy.machineLoad.transfer.lead}</p>
+      <p className="ppc-transfer__lead">
+        {mode === "conjunto"
+          ? copy.machineLoad.transfer.leadConjunto
+          : copy.machineLoad.transfer.lead}
+      </p>
       {operation ? (
         <p className="ppc-transfer__operation">
           <strong>
-            {copy.machineLoad.transfer.operationSummary(
-              operation.production_order,
-              operation.operation_code,
-            )}
+            {mode === "conjunto" && conjuntoKey
+              ? copy.machineLoad.transfer.conjuntoSummary(conjuntoKey, currentCenter || "—")
+              : copy.machineLoad.transfer.operationSummary(
+                  operation.production_order,
+                  operation.operation_code,
+                )}
           </strong>
-          <span>{operation.operation_description || operation.product_description || "—"}</span>
+          {mode === "operation" ? (
+            <span>{operation.operation_description || operation.product_description || "—"}</span>
+          ) : null}
           <span>{copy.machineLoad.transfer.currentCenter(currentCenter || "—")}</span>
         </p>
       ) : null}

@@ -35,3 +35,12 @@ class MachineLoadRepositoryPort(ABC):
         appointment_history_since: str,
     ) -> list[dict[str, Any]]:
         ...
+
+    @abstractmethod
+    def get_order_finish_flags(
+        self,
+        *,
+        branch: str,
+        production_orders: list[str],
+    ) -> list[dict[str, Any]]:
+        ...

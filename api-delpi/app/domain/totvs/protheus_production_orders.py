@@ -27,6 +27,15 @@ def order_due_date_sql(column: str) -> str:
     return f"TRY_CONVERT(DATE, NULLIF(LTRIM(RTRIM({column})), ''), 112)"
 
 
+def order_finished_predicate_sql(column: str = "C2_DATRF") -> str:
+    """OP encerrada: data real de fim (``C2_DATRF``) preenchida.
+
+    Encerramento é o fato do SC2; apontamento aberto na HZA de OP encerrada é
+    coletor não fechado pelo operador, não produção em curso.
+    """
+    return f"({column} IS NOT NULL AND LTRIM(RTRIM({column})) <> '')"
+
+
 def effective_due_date_sql(*, mother_due_date: str, order_due_date: str) -> str:
     """Entrega efetiva de uma OP.
 

@@ -7,13 +7,13 @@ import {
   underlineNavBemClasses,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowDownNarrowWide, CalendarOff, GripVertical } from "lucide-react";
+import { ArrowDownNarrowWide, CalendarOff, Eye, EyeOff, GripVertical } from "lucide-react";
 
 import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
 import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
 import { MachineLoadRowContextMenu } from "../components/MachineLoadRowContextMenu";
 import { MachineLoadStatusCell } from "../components/MachineLoadStatusCell";
-import { MachineLoadTransferModal } from "../components/MachineLoadTransferModal";
+import { MachineLoadTransferModal, type MachineLoadTransferMode } from "../components/MachineLoadTransferModal";
 import { MachineLoadWithdrawnModal } from "../components/MachineLoadWithdrawnModal";
 import { OperatorCockpitLinkButton } from "../components/OperatorCockpitLinkButton";
 import { usePpcConfirm } from "../components/PpcConfirmDialogProvider";
@@ -24,6 +24,7 @@ import {
   patchMachineLoadSequence,
   prioritizeMachineLoadConjunto,
   restoreMachineLoadConjunto,
+  transferMachineLoadConjunto,
   transferMachineLoadOperation,
   withdrawMachineLoadConjunto,
 } from "../api/ppcApi";
@@ -47,7 +48,11 @@ import { formatIsoDate, formatIsoDayMonth } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import { machineLoadLocateRowKey } from "../utils/machineLoadLocate";
-import { machineLoadRowModifierClass } from "../utils/machineLoadStatus";
+import {
+  filterActiveMachineLoadOperations,
+  isMachineLoadFinishedOperation,
+  machineLoadRowModifierClass,
+} from "../utils/machineLoadStatus";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
 const tableClassNames = dataTableBemClasses("ppc");
@@ -79,6 +84,16 @@ type MachineLoadPageProps = {
 
 const HIGHLIGHT_MS = 3200;
 
+const HIDE_FINISHED_STORAGE_KEY = "ppc-machine-load-hide-finished";
+
+function readHideFinishedPreference(): boolean {
+  try {
+    return sessionStorage.getItem(HIDE_FINISHED_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function MachineLoadPage({
   branch,
   workCenter,
@@ -87,12 +102,13 @@ export function MachineLoadPage({
   locateQuery = null,
 }: MachineLoadPageProps) {
   const confirm = usePpcConfirm();
-  const { data, loading, refreshing, error, refreshFromTotvs, applyPayload } = useMachineLoad({
-    branch,
-    workCenter,
-    startDate,
-    endDate,
-  });
+  const { data, loading, switchingCenter, refreshing, error, refreshFromTotvs, applyPayload } =
+    useMachineLoad({
+      branch,
+      workCenter,
+      startDate,
+      endDate,
+    });
 
   const period = data?.period;
   const [draftStart, setDraftStart] = useState(startDate ?? "");
@@ -118,6 +134,8 @@ export function MachineLoadPage({
   const [conjuntoModalResult, setConjuntoModalResult] = useState<MachineLoadLocatePayload | null>(null);
   const [withdrawnModalOpen, setWithdrawnModalOpen] = useState(false);
   const [transferOperation, setTransferOperation] = useState<MachineLoadOperation | null>(null);
+  const [transferMode, setTransferMode] = useState<MachineLoadTransferMode>("operation");
+  const [hideFinished, setHideFinished] = useState(readHideFinishedPreference);
 
   // Sem recorte na URL, «De» mostra a entrega mais antiga que sobrou na fila.
   useEffect(() => {
@@ -142,6 +160,27 @@ export function MachineLoadPage({
   useEffect(() => {
     setRows(data?.selected.items ?? []);
   }, [data]);
+
+  const finishedCount = useMemo(
+    () => rows.filter((item) => isMachineLoadFinishedOperation(item)).length,
+    [rows],
+  );
+  const displayRows = useMemo(
+    () => (hideFinished ? filterActiveMachineLoadOperations(rows) : rows),
+    [hideFinished, rows],
+  );
+
+  const toggleHideFinished = useCallback(() => {
+    setHideFinished((prev) => {
+      const next = !prev;
+      try {
+        sessionStorage.setItem(HIDE_FINISHED_STORAGE_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore quota / private mode */
+      }
+      return next;
+    });
+  }, []);
 
   const runLocate = useCallback(
     async (rawQuery: string) => {
@@ -463,18 +502,48 @@ export function MachineLoadPage({
     [applyPayload, branch, history, selectedCenter, sequenceBusy],
   );
 
+  const sendConjuntoToWorkCenter = useCallback(
+    async (operation: MachineLoadOperation, targetWorkCenter: string) => {
+      const target = targetWorkCenter.trim();
+      const source = (operation.work_center || selectedCenter || "").trim();
+      if (!target || !source || sequenceBusy) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      try {
+        const payload = await transferMachineLoadConjunto({
+          branch,
+          orderNumber: operation.production_order,
+          sourceWorkCenter: source,
+          targetWorkCenter: target,
+          workCenter: selectedCenter,
+        });
+        applyPayload(payload);
+        history.reset();
+        setSequenceNotice(payload.transfer.message);
+        setTransferOperation(null);
+      } catch (err: unknown) {
+        setSequenceNotice(
+          err instanceof Error ? err.message : copy.machineLoad.rowActions.transferError,
+        );
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [applyPayload, branch, history, selectedCenter, sequenceBusy],
+  );
+
   const onReorder = useCallback(
     (nextRows: MachineLoadOperation[]) => {
-      if (sequenceBusy) return;
+      if (sequenceBusy || hideFinished) return;
       void persistOrder(nextRows, {
         previousKeys: keysFromOperations(rows),
         pushUndo: true,
       });
     },
-    [persistOrder, rows, sequenceBusy],
+    [hideFinished, persistOrder, rows, sequenceBusy],
   );
 
-  const reorder = useMachineLoadRowReorder(rows, onReorder);
+  const reorder = useMachineLoadRowReorder(displayRows, onReorder);
 
   const applyRemoteKeys = useCallback(
     async (
@@ -532,7 +601,7 @@ export function MachineLoadPage({
         header: "",
         interactive: true,
         render: (row: MachineLoadOperation) => {
-          const rowIndex = rows.findIndex(
+          const rowIndex = displayRows.findIndex(
             (item) =>
               item.production_order === row.production_order &&
               item.operation_code === row.operation_code,
@@ -542,8 +611,13 @@ export function MachineLoadPage({
               type="button"
               className="ppc-load__drag-handle"
               aria-label={copy.machineLoad.dragHandle}
-              title={copy.machineLoad.dragHandle}
-              {...reorder.handleProps(Math.max(0, rowIndex))}
+              title={
+                hideFinished
+                  ? copy.machineLoad.hideFinished.reorderDisabled
+                  : copy.machineLoad.dragHandle
+              }
+              disabled={hideFinished || sequenceBusy}
+              {...(hideFinished ? {} : reorder.handleProps(Math.max(0, rowIndex)))}
             >
               <GripVertical size={16} strokeWidth={1.75} aria-hidden />
             </button>
@@ -620,7 +694,7 @@ export function MachineLoadPage({
         render: (row: MachineLoadOperation) => formatIsoDate(row.pa_due_date),
       },
     ],
-    [reorder, rows],
+    [displayRows, hideFinished, reorder, sequenceBusy],
   );
 
   const goTo = (next: {
@@ -677,7 +751,6 @@ export function MachineLoadPage({
     ) : (
       center.work_center
     ),
-    count: center.operation_count,
     title: center.work_center_name
       ? `${center.work_center} — ${center.work_center_name}`
       : center.work_center,
@@ -798,6 +871,32 @@ export function MachineLoadPage({
             {copy.machineLoad.withdrawn.openButton(withdrawnEntries.length)}
           </button>
         ) : null}
+        {finishedCount > 0 || hideFinished ? (
+          <button
+            type="button"
+            className={
+              hideFinished
+                ? "ppc-period__hide-finished ppc-period__hide-finished--active"
+                : "ppc-period__hide-finished"
+            }
+            onClick={toggleHideFinished}
+            title={
+              hideFinished
+                ? copy.machineLoad.hideFinished.hintHide
+                : copy.machineLoad.hideFinished.hintShow
+            }
+            aria-pressed={hideFinished}
+          >
+            {hideFinished ? (
+              <Eye size={15} strokeWidth={1.75} aria-hidden />
+            ) : (
+              <EyeOff size={15} strokeWidth={1.75} aria-hidden />
+            )}
+            {hideFinished
+              ? copy.machineLoad.hideFinished.showingHidden(finishedCount)
+              : copy.machineLoad.hideFinished.withCount(finishedCount)}
+          </button>
+        ) : null}
         {data ? (
           <span className="ppc-period__summary">
             {copy.machineLoad.summary(
@@ -867,6 +966,8 @@ export function MachineLoadPage({
             items={tabs}
             activeId={selectedCenter ?? ""}
             mode="tabs"
+            layout="wrap"
+            density="compact"
             classNames={navClassNames}
             aria-label={copy.machineLoad.tabsAria}
           />
@@ -874,17 +975,21 @@ export function MachineLoadPage({
             className="ppc-load__panel"
             id="ppc-load-panel"
             role="tabpanel"
+            aria-busy={switchingCenter || undefined}
             aria-labelledby={selectedCenter ? `ppc-load-tab-${selectedCenter}` : undefined}
           >
             {activeCenter?.work_center_name ? (
               <p className="ppc-load__center-name">{activeCenter.work_center_name}</p>
             ) : null}
-            {rows.length > 1 ? (
+            {displayRows.length > 1 && !hideFinished ? (
               <p className="ppc-load__sequence-hint">{copy.machineLoad.sequenceHint}</p>
+            ) : null}
+            {hideFinished ? (
+              <p className="ppc-load__sequence-hint">{copy.machineLoad.hideFinished.reorderDisabled}</p>
             ) : null}
             <DataTable
               columns={columns}
-              rows={rows}
+              rows={displayRows}
               rowKey={(row) => `${row.production_order}-${row.operation_code}`}
               getRowClassName={(row, index) =>
                 [
@@ -898,7 +1003,7 @@ export function MachineLoadPage({
                   .join(" ") || undefined
               }
               getRowProps={(row, index) => ({
-                ...reorder.rowDropProps(index),
+                ...(hideFinished ? {} : reorder.rowDropProps(index)),
                 "data-ppc-locate-key": machineLoadLocateRowKey(row),
                 onContextMenu: (event: MouseEvent) => {
                   event.preventDefault();
@@ -908,7 +1013,11 @@ export function MachineLoadPage({
                   });
                 },
               })}
-              emptyMessage={copy.machineLoad.emptyOperations}
+              emptyMessage={
+                hideFinished && rows.length > 0
+                  ? copy.machineLoad.hideFinished.empty
+                  : copy.machineLoad.emptyOperations
+              }
               loading={loading}
               classNames={tableClassNames}
               labels={tableLabels}
@@ -929,7 +1038,14 @@ export function MachineLoadPage({
         }}
         onPrioritizeConjunto={(conjuntoKey) => void prioritizeConjunto(conjuntoKey)}
         onWithdrawConjunto={(conjuntoKey) => void withdrawConjunto(conjuntoKey)}
-        onTransferOperation={(operation) => setTransferOperation(operation)}
+        onTransferConjunto={(operation) => {
+          setTransferMode("conjunto");
+          setTransferOperation(operation);
+        }}
+        onTransferOperation={(operation) => {
+          setTransferMode("operation");
+          setTransferOperation(operation);
+        }}
         prioritizeDisabled={sequenceBusy}
         withdrawDisabled={sequenceBusy}
         transferDisabled={sequenceBusy}
@@ -937,12 +1053,17 @@ export function MachineLoadPage({
 
       <MachineLoadTransferModal
         open={Boolean(transferOperation)}
+        mode={transferMode}
         operation={transferOperation}
         workCenters={workCenters}
         busy={sequenceBusy}
         onClose={() => setTransferOperation(null)}
         onConfirm={(target) => {
           if (!transferOperation) return;
+          if (transferMode === "conjunto") {
+            void sendConjuntoToWorkCenter(transferOperation, target);
+            return;
+          }
           void sendOperationToWorkCenter(transferOperation, target);
         }}
       />

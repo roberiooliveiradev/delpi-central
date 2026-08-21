@@ -1,9 +1,11 @@
 """SQL builders — conjuntos de ordens de produção incompletos (SC2010 x SG1010).
 
-O diff compara, para cada conjunto com saldo em aberto, os componentes que a
-estrutura do produto raiz **exigia** na emissão da OP mãe com os produtos que
-**ganharam** OP filha. Falta = componente sem OP; sobra = OP de produto fora da
-estrutura. Ver ``production_order_sets_scope`` para a sonda que fixou as regras.
+O diff compara, para cada conjunto com OP realmente em aberto (saldo e
+``C2_DATRF`` vazio), os componentes que a estrutura do produto raiz **exigia**
+na emissão da OP mãe com os produtos que **ganharam** OP filha. Falta =
+componente sem OP; sobra = OP de produto fora da estrutura. Encerrada com
+saldo residual (``C2_DATRF`` preenchida) não entra no universo. Ver
+``production_order_sets_scope`` para a sonda que fixou as regras.
 
 As consultas são batches com tabelas temporárias, não uma CTE monolítica: o SQL
 Server expande CTE inline e reavaliava a recursão da estrutura a cada
@@ -30,6 +32,9 @@ from app.domain.totvs.protheus_product_types import (
 from app.domain.totvs.protheus_production_orders import (
     MOTHER_ORDER_SEQUENCE,
     effective_due_date_sql,
+)
+from app.infrastructure.persistence.totvs.production_repositories.production_otd_sql_filters import (
+    sc2_finish_date_empty_sql,
 )
 
 # Só produto fabricado ganha OP própria; matéria-prima é consumida na operação.
@@ -106,7 +111,9 @@ def build_diff_preamble(
             MIN(CASE WHEN OP.C2_SEQUEN = '{MOTHER_ORDER_SEQUENCE}'
                      THEN OP.C2_DATPRF END) AS root_due_date,
             COUNT(*) AS order_count,
-            SUM(CASE WHEN OP.C2_QUANT > OP.C2_QUJE THEN 1 ELSE 0 END) AS open_order_count
+            SUM(CASE WHEN OP.C2_QUANT > OP.C2_QUJE
+                          AND {sc2_finish_date_empty_sql("OP")}
+                     THEN 1 ELSE 0 END) AS open_order_count
         INTO #SET_ROOT
         FROM {PRODUCTION_ORDER_TABLE} OP WITH (NOLOCK)
         JOIN (
@@ -114,6 +121,7 @@ def build_diff_preamble(
             FROM {PRODUCTION_ORDER_TABLE} WITH (NOLOCK)
             WHERE D_E_L_E_T_ = ''
               AND C2_QUANT > C2_QUJE
+              AND {sc2_finish_date_empty_sql("")}
               AND {branch_sql}
             GROUP BY C2_FILIAL, C2_NUM, C2_ITEM
         ) S

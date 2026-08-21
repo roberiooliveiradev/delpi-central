@@ -16,7 +16,7 @@ from app.infrastructure.persistence.totvs.production.production_order_sets_sql i
 
 # A recursão da estrutura sobre todos os PAs abertos da filial custa ~1 s; o PCP
 # abre a análise em ciclos curtos, então o cache é o que segura o banco.
-_CACHE_NS = "production-order-sets-incomplete-v1"
+_CACHE_NS = "production-order-sets-incomplete-v2"
 
 
 def _cache_key(scope: str, params: tuple) -> str:

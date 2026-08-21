@@ -6,6 +6,7 @@ import pytest
 
 from app.domain.production.machine_load_scope import (
     MACHINE_LOAD_ALLOCATION_TABLE,
+    MACHINE_LOAD_ORDER_TABLE,
     MACHINE_LOAD_ORDERS_VIEW,
     MACHINE_LOAD_ROUTING_TABLE,
     MACHINE_LOAD_WORK_CENTER_TABLE,
@@ -75,7 +76,7 @@ def test_window_filter_uses_h8_dtini() -> None:
 def test_running_operations_survive_the_scheduled_window() -> None:
     """A alocação atrasa, mas a máquina rodando precisa aparecer na fila."""
     query, _ = sql.build_operations_count_query(**_filters())
-    assert "OR CASE WHEN ISNULL(AP.active_count, 0) > 0 THEN 1 ELSE 0 END = 1" in query
+    assert f"OR {sql._IN_PRODUCTION_EXPR} = 1" in query
 
 
 def test_pa_due_date_comes_from_mother_order() -> None:
@@ -106,7 +107,7 @@ def test_delivery_window_accepts_an_open_start() -> None:
 
 def test_running_operations_survive_the_delivery_window() -> None:
     query, _ = sql.build_operations_count_query(**_filters(delivery_end="2026-09-03"))
-    assert "OR CASE WHEN ISNULL(AP.active_count, 0) > 0 THEN 1 ELSE 0 END = 1" in query
+    assert f"OR {sql._IN_PRODUCTION_EXPR} = 1" in query
 
 
 def test_effective_due_date_falls_back_to_the_order_forecast() -> None:
@@ -230,8 +231,23 @@ def test_every_sort_value_builds_order_by(sort: str) -> None:
 
 def test_default_sort_puts_running_operations_first() -> None:
     query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
-    assert "ORDER BY CASE WHEN ISNULL(AP.active_count, 0) > 0 THEN 1 ELSE 0 END DESC" in query
+    assert "ORDER BY CASE WHEN ISNULL(AP.active_count, 0) > 0" in query
     assert "OA.H8_DTINI ASC, OA.H8_HRINI ASC" in query
+
+
+def test_in_production_expression_ignores_finished_orders() -> None:
+    """Apontamento aberto de OP encerrada não pode contar como rodando."""
+    query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
+    assert (
+        "CASE WHEN ISNULL(AP.active_count, 0) > 0 AND NOT (OP.C2_DATRF IS NOT NULL"
+        " AND LTRIM(RTRIM(OP.C2_DATRF)) <> '') THEN 1 ELSE 0 END" in query
+    )
+
+
+def test_operations_query_exposes_order_finish_columns() -> None:
+    query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
+    assert "AS order_is_finished" in query
+    assert "AS order_finish_date" in query
 
 
 def test_invalid_sort_is_rejected() -> None:
@@ -239,14 +255,12 @@ def test_invalid_sort_is_rejected() -> None:
         sql.build_operations_query(**_filters(), sort="bogus", offset=0, page_size=10)
 
 
-def test_appointment_status_query_skips_sh8() -> None:
-    query, params = sql.build_appointment_status_query(
-        branch="02",
-        appointment_active_since=_ACTIVE_SINCE,
-        appointment_history_since=_HISTORY_SINCE,
+def test_order_finish_flags_query_uses_c2_datrf() -> None:
+    built = sql.build_order_finish_flags_query(
+        branch="01", production_orders=["10846301001", "10846301001", ""]
     )
-    assert OPERATION_APPOINTMENT_TABLE in query
-    assert MACHINE_LOAD_ALLOCATION_TABLE not in query
-    assert PROTHEUS_USER_TABLE in query
-    assert params == (_ACTIVE_SINCE, "02", _HISTORY_SINCE)
-    assert "GROUP BY A.ap_branch, A.ap_order, A.ap_operation" in query
+    assert built is not None
+    query, params = built
+    assert "C2_DATRF" in query
+    assert MACHINE_LOAD_ORDER_TABLE in query
+    assert params == ("01", "10846301001")

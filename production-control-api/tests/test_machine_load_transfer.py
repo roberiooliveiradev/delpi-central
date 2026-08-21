@@ -60,6 +60,41 @@ def test_move_operation_puts_it_at_the_end_of_the_target_queue() -> None:
     assert _OPERATIONS[0]["work_center"] == "CT-01A"
 
 
+def test_move_conjunto_at_work_center_only_moves_ops_in_that_center() -> None:
+    """Mesmo C2_NUM em outro CT não sai da fila dele."""
+    from production_control_app.domain.services.machine_load_transfer import (
+        move_conjunto_at_work_center,
+    )
+
+    queue = [
+        _op("10840401003", "01", "CT-01A"),
+        _op("10840401003", "02", "CT-01A"),
+        _op("99900001001", "01", "CT-01A"),
+        _op("10840402001", "05", "CT-02"),
+        _op("77700001001", "01", "CT-02"),
+    ]
+    moved = move_conjunto_at_work_center(
+        queue,
+        conjunto_key="108404",
+        source_work_center="CT-01A",
+        target_work_center="CT-02",
+        target_work_center_name="DESTINO",
+    )
+
+    assert moved is not None
+    assert len(moved.moved) == 2
+    assert _queue(moved.operations) == [
+        "CT-01A:99900001001:01",
+        "CT-02:10840402001:05",
+        "CT-02:77700001001:01",
+        "CT-02:10840401003:01",
+        "CT-02:10840401003:02",
+    ]
+    assert all(item["transferred_from"] == "CT-01A" for item in moved.moved)
+    assert moved.operations[1]["production_order"] == "10840402001"
+    assert "transferred_from" not in moved.operations[1]
+
+
 def test_move_operation_to_empty_center_appends_at_the_end() -> None:
     moved = move_operation(
         _OPERATIONS,

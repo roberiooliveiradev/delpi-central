@@ -1588,6 +1588,32 @@
   background: color-mix(in srgb, var(--ppc-attention) 18%, transparent);
 }
 
+.dashboard-production-control .ppc-period__hide-finished {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--ppc-text-muted) 35%, var(--ppc-border));
+  background: color-mix(in srgb, var(--ppc-surface-raised, #fff) 88%, transparent);
+  color: var(--ppc-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-period__hide-finished:hover {
+  border-color: var(--ppc-accent);
+  color: var(--ppc-accent);
+}
+
+.dashboard-production-control .ppc-period__hide-finished--active {
+  border-color: color-mix(in srgb, var(--ppc-accent) 45%, var(--ppc-border));
+  background: color-mix(in srgb, var(--ppc-accent) 10%, transparent);
+  color: var(--ppc-accent);
+}
+
 .dashboard-production-control .ppc-period__optimize {
   display: inline-flex;
   align-items: center;

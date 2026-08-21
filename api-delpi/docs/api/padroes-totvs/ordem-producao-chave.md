@@ -72,7 +72,7 @@ Descrição da operação: junção completa `G2_FILIAL`, `G2_PRODUTO = C2_PRODU
 
 - Quantidade da operação → `SC2010.C2_QUANT`; saldo → `C2_QUANT - C2_QUJE`.
 - Ferramenta → `H8_FERRAM` direto da alocação (não deduzir do roteiro).
-- OP em aberto → `C2_QUANT > C2_QUJE`.
+- OP em aberto → `C2_QUANT > C2_QUJE` **e** `C2_DATRF` vazio (encerrada parcial com saldo residual não conta como aberta).
 - Dado consolidado do PA a partir de OP filha → `mother_order_key_sql(...)`.
 
 ## O que NÃO fazer

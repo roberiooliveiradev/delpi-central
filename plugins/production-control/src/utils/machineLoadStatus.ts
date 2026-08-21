@@ -27,6 +27,24 @@ export function isMachineLoadStarted(status: string | null | undefined): boolean
   return status === "started";
 }
 
+/**
+ * Operação «finalizada» na fila do PCP: já apontada e não rodando agora.
+ * Em produção continua visível mesmo com status legado inconsistente.
+ */
+export function isMachineLoadFinishedOperation(
+  operation: Pick<MachineLoadOperation, "production_status" | "is_in_production">,
+): boolean {
+  if (operation.is_in_production) return false;
+  return isMachineLoadStarted(operation.production_status);
+}
+
+/** Vista da fila sem operações já apontadas (filtro local do MFE). */
+export function filterActiveMachineLoadOperations<
+  T extends Pick<MachineLoadOperation, "production_status" | "is_in_production">,
+>(operations: T[]): T[] {
+  return operations.filter((item) => !isMachineLoadFinishedOperation(item));
+}
+
 /** Classe de linha da fila — em produção vs já apontada (tachada). */
 export function machineLoadRowModifierClass(
   operation: Pick<MachineLoadOperation, "production_status" | "is_in_production">,

@@ -28,12 +28,20 @@ from app.domain.totvs.protheus_production_orders import (
     effective_due_date_sql,
     mother_order_key_sql,
     order_due_date_sql,
+    order_finished_predicate_sql,
 )
 from app.domain.totvs.protheus_users import operator_name_expr, operator_name_join_sql
 
 _SCHEDULE_KEYS = "OA.H8_DTINI {0}, OA.H8_HRINI {0}, OA.H8_OP {0}, OA.H8_OPER {0}"
 
-_IN_PRODUCTION_EXPR = "CASE WHEN ISNULL(AP.active_count, 0) > 0 THEN 1 ELSE 0 END"
+_ORDER_FINISHED_EXPR = order_finished_predicate_sql("OP.C2_DATRF")
+
+# OP encerrada sai de "rodando" mesmo com apontamento aberto na HZA: o coletor
+# fica pendurado quando o operador não encerra, e a fila mentiria na tela.
+_IN_PRODUCTION_EXPR = (
+    f"CASE WHEN ISNULL(AP.active_count, 0) > 0 AND NOT {_ORDER_FINISHED_EXPR}"
+    " THEN 1 ELSE 0 END"
+)
 
 # Entrega da própria OP (SC2, YYYYMMDD) — só entra quando a OP mãe não está na view PCP.
 _ORDER_DUE_DATE_EXPR = order_due_date_sql("OP.C2_DATPRF")
@@ -305,7 +313,9 @@ def build_operations_query(
             ISNULL(AP.appointment_count, 0) AS appointment_count,
             ISNULL(AP.last_appointment_date, '') AS last_appointment_date,
             ISNULL(AP.active_marker, '') AS active_marker,
-            ISNULL(AP.last_marker, '') AS last_marker
+            ISNULL(AP.last_marker, '') AS last_marker,
+            CASE WHEN {_ORDER_FINISHED_EXPR} THEN 1 ELSE 0 END AS order_is_finished,
+            NULLIF(LTRIM(RTRIM(OP.C2_DATRF)), '') AS order_finish_date
         {_from_clause()}
         WHERE {where_sql}
         ORDER BY {SORT_SQL[sort]}
@@ -357,3 +367,30 @@ def build_appointment_status_query(
         GROUP BY A.ap_branch, A.ap_order, A.ap_operation
     """
     return query, (appointment_active_since, branch, appointment_history_since)
+
+
+def build_order_finish_flags_query(
+    *,
+    branch: str,
+    production_orders: list[str],
+) -> tuple[str, tuple] | None:
+    """Flags de encerramento (C2_DATRF) para OPs do snapshot — sem varrer a HZA antiga.
+
+    A janela de histórico do apontamento é curta (performance). OP já encerrada
+    no SC2 precisa aparecer como «Já apontada» mesmo sem HZA recente.
+    """
+    orders = sorted({str(item or "").strip() for item in production_orders if str(item or "").strip()})
+    if not orders:
+        return None
+    placeholders = ", ".join("?" for _ in orders)
+    query = f"""
+        SELECT
+            LTRIM(RTRIM(OP.C2_OP)) AS production_order,
+            CASE WHEN {_ORDER_FINISHED_EXPR} THEN 1 ELSE 0 END AS is_finished,
+            NULLIF(LTRIM(RTRIM(OP.C2_DATRF)), '') AS finish_date
+        FROM {MACHINE_LOAD_ORDER_TABLE} OP WITH (NOLOCK)
+        WHERE OP.D_E_L_E_T_ = ''
+          AND OP.C2_FILIAL = ?
+          AND LTRIM(RTRIM(OP.C2_OP)) IN ({placeholders})
+    """
+    return query, (branch, *orders)

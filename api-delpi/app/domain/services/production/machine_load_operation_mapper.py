@@ -65,20 +65,27 @@ def _production_status(row: dict[str, Any]) -> dict[str, Any]:
     ``in_progress`` exige apontamento aberto e recente; ``started`` marca a
     operação que já passou pela máquina mas não está rodando agora. Em ambos
     os casos o operador vem do marcador HZA (ativo ou último do histórico).
+
+    OP encerrada no SC2 (``C2_DATRF``) sempre é ``started``, nunca ``in_progress``:
+    o histórico HZA é recortado por performance e o apontamento que fica aberto
+    porque o operador não encerrou no coletor mostraria a operação rodando para
+    sempre. Encerramento da OP manda sobre a HZA.
     """
     active_count = _as_int(row.get("active_appointment_count"))
     appointment_count = _as_int(row.get("appointment_count"))
+    order_finished = bool(_as_int(row.get("order_is_finished")))
+    finish_date = _iso_date(row.get("order_finish_date") or row.get("finish_date"))
     started_date, started_time, operator_code, operator_name = split_active_marker(
         _clean(row.get("active_marker"))
     )
     last_date, last_time, last_operator_code, last_operator_name = split_active_marker(
         _clean(row.get("last_marker"))
     )
-    in_production = active_count > 0 and bool(started_date)
+    in_production = active_count > 0 and bool(started_date) and not order_finished
 
     if in_production:
         status = PRODUCTION_STATUS_IN_PROGRESS
-    elif appointment_count > 0:
+    elif appointment_count > 0 or order_finished:
         status = PRODUCTION_STATUS_STARTED
     else:
         status = PRODUCTION_STATUS_NOT_STARTED
@@ -86,9 +93,12 @@ def _production_status(row: dict[str, Any]) -> dict[str, Any]:
     if in_production:
         display_date, display_time = started_date, started_time
         display_code, display_name = operator_code, operator_name
-    elif status == PRODUCTION_STATUS_STARTED:
+    elif status == PRODUCTION_STATUS_STARTED and last_date:
         display_date, display_time = last_date, last_time
         display_code, display_name = last_operator_code, last_operator_name
+    elif status == PRODUCTION_STATUS_STARTED and finish_date:
+        display_date, display_time = finish_date, ""
+        display_code = display_name = ""
     else:
         display_date = display_time = display_code = display_name = ""
 
@@ -99,7 +109,9 @@ def _production_status(row: dict[str, Any]) -> dict[str, Any]:
         "production_started_time": (display_time or None) if display_time else None,
         "active_operator_code": (display_code or None) if display_code else None,
         "active_operator_name": (display_name or None) if display_name else None,
-        "active_operator_count": _as_int(row.get("active_operator_count")),
+        "active_operator_count": (
+            _as_int(row.get("active_operator_count")) if in_production else 0
+        ),
         "appointment_count": appointment_count,
         "last_appointment_date": _iso_date(row.get("last_appointment_date")),
     }
