@@ -12,6 +12,7 @@ _OPERATION_IDS = (
     "list_interaction_rooms",
     "resolve_interaction_room",
     "get_interaction_room",
+    "delete_interaction_room",
     "list_interaction_room_members",
     "add_interaction_room_member",
     "remove_interaction_room_member",

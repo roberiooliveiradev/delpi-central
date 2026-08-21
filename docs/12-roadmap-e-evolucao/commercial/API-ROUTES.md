@@ -361,13 +361,14 @@ Presença online: evento WS `presence.updated` na sala `team` (só manage).
 
 ### 3.21 Interaction rooms (P2-SALA — V019–V021)
 
-Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — qualquer usuário com acesso ao Portal vê e participa de **todas** as salas; inbox lista todas (`list_all`). **Sem** code RBAC novo. `interaction_room_members` guarda `last_read_at` e participantes, **não** ACL. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` — handshake `user:` + `interaction` (inbox `room.inbox.changed`); `subscribe` em `room:{uuid}` para a thread (`room.message.*`, `room.reaction`, `room.pin`); **sem** segundo endpoint.
+Prefixo `/interaction-rooms`. Permissão: **`commercial.access` (global)** — qualquer usuário com acesso ao Portal vê e participa de **todas** as salas; inbox lista todas (`list_all`). **Sem** code RBAC novo (exceto soft delete da sala: **`commercial.manage`** / `delete_interaction_room`). `interaction_room_members` guarda `last_read_at` e participantes, **não** ACL. Envelope `{ success, message, data, meta }`. Paginação de mensagens/inbox: **cursor**, não `page`. WS existente `/commercial/realtime/ws` — handshake `user:` + `interaction` (inbox `room.inbox.changed`); `subscribe` em `room:{uuid}` para a thread (`room.message.*`, `room.reaction`, `room.pin`, `room.deleted`); **sem** segundo endpoint.
 
 | Method | Path | operationId | Permissão | entity | shape | WF |
 |--------|------|-------------|-----------|--------|-------|-----|
 | GET | `/interaction-rooms` | `list_interaction_rooms` | access | `interaction_room` | `paged_list` | WF-SALA-01 |
 | POST | `/interaction-rooms/resolve` | `resolve_interaction_room` | access | `interaction_room` | `scalar` | lazy create; body `{ kind, entity_type?, entity_key?, group_id?, title? }` · `wall` sem `group_id` = mural global |
 | GET | `/interaction-rooms/{room_id}` | `get_interaction_room` | access | `interaction_room` | `scalar` | 404 sem acesso |
+| DELETE | `/interaction-rooms/{room_id}` | `delete_interaction_room` | **manage** | `interaction_room` | `scalar` | soft delete (`deleted_at`); WS `room.deleted` + inbox; resolve da mesma entidade cria sala nova |
 | GET | `/interaction-rooms/{room_id}/members` | `list_interaction_room_members` | access | `interaction_room_member` | `list` | |
 | POST | `/interaction-rooms/{room_id}/members` | `add_interaction_room_member` | access | `interaction_room_member` | `scalar` | body `{ user_id }` |
 | DELETE | `/interaction-rooms/{room_id}/members/{user_id}` | `remove_interaction_room_member` | access | `interaction_room_member` | `scalar` | |

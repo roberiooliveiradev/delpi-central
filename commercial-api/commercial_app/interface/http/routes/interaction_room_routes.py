@@ -10,6 +10,7 @@ from fastapi import APIRouter, Body, Path, Query, Request
 from commercial_app.application.security.auth_dependencies import require_any_permission
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_ACCESS_PERMISSIONS,
+    COMMERCIAL_MANAGE_PERMISSIONS,
     can_manage_portfolios,
     can_use_team_scope,
 )
@@ -25,6 +26,7 @@ from commercial_app.application.use_cases.manage_interaction_rooms import (
 from commercial_app.application.services.commercial_realtime_notify import (
     notify_interaction_mention,
     notify_interaction_room_activity,
+    notify_interaction_room_deleted,
     notify_room_pin_changed,
     notify_room_reaction_changed,
     notify_worklist_changed,
@@ -243,6 +245,46 @@ def get_interaction_room(
     except Exception:
         logger.exception("get_interaction_room_failed")
         return fail("Erro interno ao carregar a sala.", 500, operation_id=operation_id)
+
+
+@router.delete("/{room_id}", operation_id="delete_interaction_room")
+@require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
+def delete_interaction_room(
+    request: Request,
+    room_id: UUID = Path(...),
+):
+    operation_id = "delete_interaction_room"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        room = build_manage_interaction_rooms_use_case().soft_delete(
+            room_id=room_id,
+            actor_user_id=actor,
+        )
+        try:
+            notify_interaction_room_deleted(
+                room_id=str(room.id),
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_room_delete_notify_failed")
+        return ok(
+            room.to_dict(),
+            message=InteractionRoomContentService.message("deleteRoomOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("delete_interaction_room_failed")
+        return fail("Erro interno ao excluir a sala.", 500, operation_id=operation_id)
 
 
 @router.get("/{room_id}/members", operation_id="list_interaction_room_members")
