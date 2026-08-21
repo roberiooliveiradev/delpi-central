@@ -514,6 +514,52 @@ class ChatExternalActionOrchestrationService:
 
                 return _return_planned(executed)
 
+        from app.domain.services.chat_product_enrichment_composition_planning_service import (
+            ChatProductEnrichmentCompositionPlanningService,
+        )
+
+        if product_code and ChatProductEnrichmentCompositionPlanningService.looks_like_product_overview(
+            planning_message
+        ):
+            enrichment_planned = ChatProductEnrichmentCompositionPlanningService.plan(
+                selection_service,
+                message=planning_message,
+                product_code=product_code,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                max_calls=limit,
+            )
+
+            if enrichment_planned:
+                from app.application.services.chat_multi_intent_continuation_service import (
+                    ChatMultiIntentContinuationService,
+                )
+
+                executed, deferred = ChatMultiIntentContinuationService.apply_limit(
+                    enrichment_planned,
+                    max_calls=limit,
+                )
+                enrichment_audit = {
+                    "kind": "product_enrichment_composition",
+                    "plannedScopes": [
+                        str(item.get("enrichmentScope") or "").strip()
+                        for item in enrichment_planned
+                        if str(item.get("enrichmentScope") or "").strip()
+                    ],
+                    "executedCount": len(executed),
+                    "skippedByCap": int((deferred or {}).get("deferredCount") or 0)
+                    if isinstance(deferred, dict)
+                    else 0,
+                    "productCode": product_code,
+                }
+
+                if executed:
+                    first = dict(executed[0])
+                    first["enrichmentPlan"] = enrichment_audit
+                    executed = [first, *executed[1:]]
+
+                return _return_planned(executed)
+
         from app.domain.services.chat_department_meta_composition_planning_service import (
             ChatDepartmentMetaCompositionPlanningService,
         )

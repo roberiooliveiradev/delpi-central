@@ -1,0 +1,84 @@
+{
+  "version": "2026.08.1",
+  "triggerTerms": [
+    "me fale",
+    "fale do produto",
+    "fale sobre o produto",
+    "me fala",
+    "situacao do",
+    "situação do",
+    "situacao da",
+    "situação da",
+    "o que e o produto",
+    "o que é o produto",
+    "o que e esse produto",
+    "o que é esse produto",
+    "consultar produto",
+    "consulte o produto",
+    "resumo do produto",
+    "visao do produto",
+    "visão do produto",
+    "overview do produto",
+    "sobre o produto"
+  ],
+  "narrowExcludeTerms": [
+    "so estoque",
+    "só estoque",
+    "apenas estoque",
+    "somente estoque",
+    "so vendas",
+    "só vendas",
+    "apenas vendas",
+    "somente vendas",
+    "so compras",
+    "só compras"
+  ],
+  "analyserOnlyTerms": [
+    "ficha completa",
+    "analise completa",
+    "análise completa",
+    "analise integrada",
+    "análise integrada",
+    "visao integrada",
+    "visão integrada",
+    "analisador completo",
+    "analisador do produto",
+    "informacoes completas",
+    "informações completas",
+    "tudo sobre o produto"
+  ],
+  "analyserRouteId": "productAnalyser",
+  "composeRouteIds": [
+    "productSummary",
+    "productStock",
+    "productSales"
+  ],
+  "optionalRouteIds": [
+    "productPurchases"
+  ],
+  "minComposeRoutes": 2,
+  "selectionReasons": {
+    "primary": "Consulta o cadastro/resumo do produto no dossier operacional.",
+    "stock": "Consulta o estoque do produto no dossier operacional.",
+    "sales": "Consulta as vendas recentes do produto no dossier operacional.",
+    "purchases": "Consulta as compras do produto no dossier operacional.",
+    "analyser": "Consulta a análise integrada do produto.",
+    "compose": "Complementa o dossier operacional do produto."
+  },
+  "anomalyFollowUpPlans": {
+    "stock_low": {
+      "anomalyTypes": ["negative_available", "zero_available", "empty_list"],
+      "profileKeys": ["stock"],
+      "followUpRouteIds": ["productSales"],
+      "maxFollowUps": 1
+    },
+    "sales_empty": {
+      "anomalyTypes": ["empty_list"],
+      "profileKeys": ["generic_list"],
+      "pathMarkers": ["/sales"],
+      "followUpRouteIds": [],
+      "clarifyInvoiceDirection": true,
+      "maxFollowUps": 0
+    }
+  }
+}
