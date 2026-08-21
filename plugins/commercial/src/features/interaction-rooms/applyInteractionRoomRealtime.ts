@@ -92,6 +92,7 @@ export function applyInteractionRoomRealtime(
 ): InteractionRoomThreadState {
   const ignore = options?.ignoreActorClientId;
   if (event.type === "room.inbox.changed") return state;
+  if (event.type === "room.deleted") return state;
   if (event.type === "room.mention") return state;
   if (event.type === "room.attachment") return state;
 

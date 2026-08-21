@@ -160,6 +160,17 @@ export function InteractionRoomPanel({
   }, []);
 
   const onRoomRealtimeEvent = useCallback((event: CommercialInteractionRoomEvent) => {
+    if (event.type === "room.deleted") {
+      const self = (getCommercialClientId() || "").trim();
+      const actor = (event.actorClientId || "").trim();
+      if (self && actor && self === actor) return;
+      setRoom(null);
+      setMembers([]);
+      setMessages([]);
+      setPinnedMessageIds(new Set());
+      setError(content.deleteRoomDeletedElsewhere);
+      return;
+    }
     if (event.type === "room.attachment") {
       const messageId = (event.messageId || "").trim();
       if (messageId) bumpMessageAttachments(messageId);
@@ -171,7 +182,7 @@ export function InteractionRoomPanel({
     threadRef.current = next;
     setMessages(next.messages);
     setPinnedMessageIds(next.pinnedMessageIds);
-  }, [bumpMessageAttachments]);
+  }, [bumpMessageAttachments, content.deleteRoomDeletedElsewhere]);
 
   useInteractionRoomSync(room?.id, onRoomRealtimeEvent, Boolean(room?.id));
 

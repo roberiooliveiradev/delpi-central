@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Files, MessageSquare, PanelRight, Search } from "lucide-react";
+import { Files, MessageSquare, PanelRight, Search, Trash2 } from "lucide-react";
 import { roomHeaderBemClasses } from "@delpi/plugin-ui/index";
 
 import {
   createTaskFromInteractionMessage,
   deleteInteractionMessage,
+  deleteInteractionRoom,
   getInteractionRoom,
   listInteractionMessages,
   listInteractionRoomMembers,
@@ -18,6 +19,7 @@ import {
 } from "../../api/interactionRoomsApi";
 import { getCommercialClientId } from "../../app/commercialClientId";
 import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
+import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { useInteractionRoomSync } from "../../app/CommercialRealtimeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
@@ -39,6 +41,7 @@ import {
   CommercialViewTransition,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
+import { buildInteractionRoomsPath } from "../../app/pluginRoutes";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
@@ -113,6 +116,7 @@ export function InteractionRoomPage({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyMessageId, setReplyMessageId] = useState<string | null>(null);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const [attachmentEpochByMessageId, setAttachmentEpochByMessageId] = useState<
     Record<string, number>
   >({});
@@ -121,9 +125,10 @@ export function InteractionRoomPage({
   );
   const [inlinePreview, setInlinePreview] = useState<TaskAttachmentPreviewTarget>(null);
   const attachmentMetaRef = useRef<Record<string, CommercialAttachmentDto>>({});
-  const { currentUserId, myPortfolio } = usePortfolioScope();
+  const { currentUserId, myPortfolio, canManagePortfolios } = usePortfolioScope();
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const confirm = useCommercialConfirm();
+  const { notifySuccess, notifyError } = useCommercialFloatingNotice();
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
@@ -170,6 +175,20 @@ export function InteractionRoomPage({
   }, []);
 
   const onRoomRealtimeEvent = useCallback((event: CommercialInteractionRoomEvent) => {
+    if (event.type === "room.deleted") {
+      const self = (getCommercialClientId() || "").trim();
+      const actor = (event.actorClientId || "").trim();
+      if (self && actor && self === actor) return;
+      setRoom(null);
+      onRoomTitle?.(null);
+      setMembers([]);
+      setMessages([]);
+      setPinnedMessageIds(new Set());
+      notifyError(content.deleteRoomDeletedElsewhere);
+      const href = buildInteractionRoomsPath(basePath);
+      if (href) navigatePluginPath(href);
+      return;
+    }
     if (event.type === "room.attachment") {
       const messageId = (event.messageId || "").trim();
       if (messageId) bumpMessageAttachments(messageId);
@@ -181,7 +200,13 @@ export function InteractionRoomPage({
     threadRef.current = next;
     setMessages(next.messages);
     setPinnedMessageIds(next.pinnedMessageIds);
-  }, [bumpMessageAttachments]);
+  }, [
+    bumpMessageAttachments,
+    basePath,
+    onRoomTitle,
+    notifyError,
+    content.deleteRoomDeletedElsewhere,
+  ]);
 
   useInteractionRoomSync(room?.id, onRoomRealtimeEvent, Boolean(room?.id));
 
@@ -381,6 +406,47 @@ export function InteractionRoomPage({
       pushRoomAlert,
     ],
   );
+
+  const onDeleteRoom = useCallback(async () => {
+    const id = roomId.trim();
+    if (!canManagePortfolios || !id || deletingRoomId) return;
+    const ok = await confirm({
+      title: content.deleteRoomConfirmTitle,
+      message: content.deleteRoomConfirmMessage,
+      confirmLabel: content.deleteRoomConfirmLabel,
+      cancelLabel: content.deleteRoomCancelLabel,
+      variant: "danger",
+    });
+    if (!ok) return;
+    setDeletingRoomId(id);
+    try {
+      await deleteInteractionRoom(id);
+      notifySuccess(content.deleteRoomOk);
+      setRoom(null);
+      onRoomTitle?.(null);
+      const href = buildInteractionRoomsPath(basePath);
+      if (href) navigatePluginPath(href);
+    } catch (err: unknown) {
+      notifyError(err instanceof Error ? err.message : content.deleteRoomError);
+    } finally {
+      setDeletingRoomId(null);
+    }
+  }, [
+    roomId,
+    canManagePortfolios,
+    deletingRoomId,
+    confirm,
+    content.deleteRoomConfirmTitle,
+    content.deleteRoomConfirmMessage,
+    content.deleteRoomConfirmLabel,
+    content.deleteRoomCancelLabel,
+    content.deleteRoomOk,
+    content.deleteRoomError,
+    notifySuccess,
+    notifyError,
+    onRoomTitle,
+    basePath,
+  ]);
 
   const resolveActions = useCallback(
     (message: {
@@ -818,6 +884,19 @@ export function InteractionRoomPage({
               participantsAriaLabel={content.roomMembersAriaLabel}
               actions={
                 <>
+                  {canManagePortfolios ? (
+                    <CommercialActionButton
+                      variant="ghost"
+                      aria-label={content.deleteRoomActionLabel}
+                      title={content.deleteRoomActionLabel}
+                      disabled={deletingRoomId === roomId.trim()}
+                      onClick={() => {
+                        void onDeleteRoom();
+                      }}
+                    >
+                      <Trash2 size={16} aria-hidden />
+                    </CommercialActionButton>
+                  ) : null}
                   <CommercialActionButton
                     variant="ghost"
                     aria-label={content.findInChatAriaLabel}

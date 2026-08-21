@@ -111,3 +111,12 @@ describe("applyInteractionRoomRealtime", () => {
     expect(inbox).toBe(cleared);
   });
 });
+
+  it("ignora room.deleted (navegação fica no host)", () => {
+    const next = applyInteractionRoomRealtime(
+      { messages: [base], pinnedMessageIds: new Set(["m1"]) },
+      { type: "room.deleted", roomId: "r1" },
+    );
+    expect(next.messages).toHaveLength(1);
+    expect(next.pinnedMessageIds.has("m1")).toBe(true);
+  });

@@ -24,6 +24,7 @@ describe("interactionRoomRealtime protocol", () => {
 
   it("classifica tipos room.* de fan-out e user:", () => {
     expect(isInteractionRoomFanoutType("room.message.created")).toBe(true);
+    expect(isInteractionRoomFanoutType("room.deleted")).toBe(true);
     expect(isInteractionRoomFanoutType("room.reaction")).toBe(true);
     expect(isInteractionRoomFanoutType("room.mention")).toBe(false);
     expect(isInteractionRoomUserType("room.mention")).toBe(true);

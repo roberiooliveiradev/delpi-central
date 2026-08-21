@@ -79,6 +79,11 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/onDeleteMessage:/);
     expect(source).toMatch(/useCommercialConfirm/);
     expect(source).toMatch(/deleteInteractionMessage/);
+    expect(source).toMatch(/deleteInteractionRoom/);
+    expect(source).toMatch(/deleteRoomActionLabel/);
+    expect(source).toMatch(/room\.deleted/);
+    expect(source).toMatch(/canManagePortfolios/);
+    expect(source).toMatch(/Trash2/);
     expect(source).not.toMatch(/window\.confirm/);
     expect(source).toMatch(/onReplyMessage:/);
     expect(source).toMatch(/replyToMessageId=/);
