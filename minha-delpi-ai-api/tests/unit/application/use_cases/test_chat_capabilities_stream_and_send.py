@@ -185,7 +185,7 @@ def mock_action_catalog(monkeypatch):
 
 @pytest.mark.parametrize("message", _CAPABILITY_PHRASES)
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_send_capabilities_uses_llm_with_catalog_facts(
+def test_send_capabilities_uses_direct_catalog_without_llm(
     message: str, common: bool, mock_action_catalog
 ):
     session, send_use_case, _, llm_gateway = _build_use_cases(common=common)
@@ -194,22 +194,19 @@ def test_send_capabilities_uses_llm_with_catalog_facts(
         session_id=str(session.id),
         message=message,
         access_token=None,
+        response_mode="normal",
     )
 
     response = send_use_case.execute(request)
 
-    llm_gateway.generate.assert_called_once()
-    _assert_catalog_facts_in_llm(
-        llm_gateway.generate.call_args[0][0],
-        question=message,
-        common=common,
-    )
-    assert response.answer == _LLM_ANSWER
+    llm_gateway.generate.assert_not_called()
+    assert "Posso ajudar você nestes formatos:" in (response.answer or "")
+    assert "Robério" not in (response.answer or "")
 
 
 @pytest.mark.parametrize("message", _CAPABILITY_PHRASES)
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_stream_capabilities_uses_llm_with_catalog_facts(
+def test_stream_capabilities_uses_direct_catalog_without_llm(
     message: str, common: bool, mock_action_catalog
 ):
     session, _, stream_use_case, llm_gateway = _build_use_cases(common=common)
@@ -218,18 +215,36 @@ def test_stream_capabilities_uses_llm_with_catalog_facts(
         session_id=str(session.id),
         message=message,
         access_token=None,
+        response_mode="normal",
     )
 
     events = list(stream_use_case.stream(request))
     answer = _collect_stream_answer(events)
 
-    llm_gateway.stream.assert_called_once()
-    _assert_catalog_facts_in_llm(
-        llm_gateway.stream.call_args[0][0],
-        question=message,
-        common=common,
+    llm_gateway.stream.assert_not_called()
+    assert "Posso ajudar você nestes formatos:" in answer
+    assert "Robério" not in answer
+
+
+def test_send_capabilities_thinker_uses_llm_with_catalog_facts(mock_action_catalog):
+    session, send_use_case, _, llm_gateway = _build_use_cases(common=True)
+    request = SendChatMessageRequest(
+        user_id=str(session.user_id),
+        session_id=str(session.id),
+        message="o que você pode fazer?",
+        access_token=None,
+        response_mode="thinker",
     )
-    assert answer == _LLM_ANSWER
+
+    response = send_use_case.execute(request)
+
+    llm_gateway.generate.assert_called_once()
+    _assert_catalog_facts_in_llm(
+        llm_gateway.generate.call_args[0][0],
+        question="o que você pode fazer?",
+        common=True,
+    )
+    assert response.answer == _LLM_ANSWER
 
 
 def test_stream_group_capability_inquiry_sends_catalog_facts_to_llm(
