@@ -65,11 +65,37 @@
 .delpi-ui-room-message-find__input {
   flex: 1;
   min-width: 0;
+  margin: 0;
+  padding: 0;
   border: none;
+  border-radius: 0;
   background: transparent;
   font: inherit;
   color: inherit;
   outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.delpi-ui-room-message-find__input::-webkit-search-decoration,
+.delpi-ui-room-message-find__input::-webkit-search-cancel-button,
+.delpi-ui-room-message-find__input::-webkit-search-results-button,
+.delpi-ui-room-message-find__input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Especificidade > host MFE (ex.: `.dashboard-* input:focus-visible`). */
+.delpi-ui-room-message-find .delpi-ui-room-message-find__input:focus,
+.delpi-ui-room-message-find .delpi-ui-room-message-find__input:focus-visible,
+.delpi-ui-room-message-find__input:focus,
+.delpi-ui-room-message-find__input:focus-visible {
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+  border: none;
 }
 
 .delpi-ui-room-message-find__clear {
