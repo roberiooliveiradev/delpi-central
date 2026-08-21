@@ -224,6 +224,16 @@ def test_stream_capabilities_uses_direct_catalog_without_llm(
     llm_gateway.stream.assert_not_called()
     assert "Posso ajudar você nestes formatos:" in answer
     assert "Robério" not in answer
+    lowered = answer.lower()
+    assert "capabilities question" not in lowered
+    assert "this is a" not in lowered
+    assert "don't dump" not in lowered
+    assert "chain of thought" not in lowered
+    assert not any(
+        event.get("type") == "token"
+        and "reasoning" in str(event.get("content") or "").lower()
+        for event in events
+    )
 
 
 def test_send_capabilities_thinker_uses_llm_with_catalog_facts(mock_action_catalog):
