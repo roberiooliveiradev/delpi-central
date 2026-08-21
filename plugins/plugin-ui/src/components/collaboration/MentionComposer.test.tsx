@@ -218,6 +218,8 @@ describe("MentionComposer", () => {
     expect(source).toMatch(/ensureComposerParagraphFlow\(el\)/);
     expect(source).toMatch(/applyRichTextAlign\(el,/);
     expect(source).toMatch(/insertComposerParagraph\(surface\)/);
+    expect(source).toMatch(/insertComposerInlineImageAtCaret/);
+    expect(source).not.toMatch(/inlineImageBlockHtml/);
     expect(source).toMatch(/HintAction/);
 
     document.execCommand = vi.fn().mockReturnValue(true);
@@ -562,14 +564,6 @@ describe("mention-composer.css", () => {
       type: "image/png",
       lastModified: 42,
     });
-    document.execCommand = vi.fn().mockImplementation((cmd: string, _show?: boolean, value?: string) => {
-      if (cmd === "insertHTML" && typeof value === "string") {
-        const surface = screen.getByLabelText("Write a message");
-        surface.innerHTML = value;
-        return true;
-      }
-      return true;
-    });
     render(
       <MentionComposer
         value=""
@@ -581,6 +575,14 @@ describe("mention-composer.css", () => {
       />,
     );
     const surface = screen.getByLabelText("Write a message");
+    surface.innerHTML = "<p><br></p>";
+    const p = surface.querySelector("p")!;
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    range.collapse(true);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
     const dt = {
       files: {
         length: 1,
@@ -603,6 +605,7 @@ describe("mention-composer.css", () => {
     expect(surface.querySelectorAll("span.delpi-ui-mention-composer__inline-image")).toHaveLength(
       1,
     );
+    expect(surface.querySelector("p .delpi-ui-mention-composer__inline-image")).not.toBeNull();
     expect(onInserted).toHaveBeenCalledTimes(1);
     expect(onInserted.mock.calls[0]?.[0]).toHaveLength(1);
   });

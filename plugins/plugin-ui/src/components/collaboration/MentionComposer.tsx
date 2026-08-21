@@ -124,7 +124,7 @@ import {
 import {
   buildInlineImageInserts,
   INLINE_IMAGE_FIGURE_SELECTOR,
-  inlineImageBlockHtml,
+  insertComposerInlineImageAtCaret,
   isComposerInlineImageFile,
   extractClipboardHtmlImageFiles,
   uniqueClipboardImageFiles,
@@ -718,18 +718,14 @@ export function MentionComposer({
     const inserts = buildInlineImageInserts(files);
     if (inserts.length === 0) return false;
     commitBeforeMutation();
+    restoreSelectionForMutation();
     const removeLabel =
       labels.pendingRemoveAriaLabel ?? ((fileName: string) => `Remove ${fileName}`);
-    insertRichTextHtmlFragment(
-      el,
-      inserts
-        .map((item) =>
-          inlineImageBlockHtml(item, {
-            removeAriaLabel: removeLabel(item.file.name || "image"),
-          }),
-        )
-        .join(""),
-    );
+    for (const item of inserts) {
+      insertComposerInlineImageAtCaret(el, item, {
+        removeAriaLabel: removeLabel(item.file.name || "image"),
+      });
+    }
     normalizeComposerContent(el);
     lastStableRef.current = readSnapshot();
     refreshHistoryFlags();
