@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ChatContextAssertivenessService:
@@ -125,7 +128,7 @@ class ChatContextAssertivenessService:
         if not paths:
             return None
 
-        if any("/analyser" in path for path in paths) and not any(
+        if any(ChatPresentationProfileService.has_flag(path, "analyser") for path in paths) and not any(
             "supplier" in path.lower() or "fornec" in path.lower()
             for path in paths
         ):

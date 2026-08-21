@@ -38,6 +38,12 @@ Testes dedicados dos módulos acima também removidos. Inventário: `docs/archit
 | `re.compile` lote referência / date range / detail | `reference_resolution.json`, `date_range_vocabulary.patterns`, `interactivity.presentationDetailPatterns` |
 | Código de produto duplicado (follow-up/chip/composer) | Usa `ChatProductQueryIntentService.extract_product_code` |
 | Path `/stock` em security/summary/follow-up | `ChatPresentationProfileService.has_flag(..., "stock")` |
+| `product_query_intent.patterns` + `/analyser` coverage/drawing/turn | JSON + `has_flag(..., "analyser")` |
+| Refinement interactivity/stock + direct answers | `has_flag(stock|analyser)` (structure/parents literal OK) |
+| Structure comparison, product catalog, drawing metrics/debug | `has_flag(..., "analyser")` |
+| Tool context aux/formatter, error classifier, assertiveness | `has_flag(..., "analyser")` |
+| HTTP composite timeout | markers JSON **ou** `has_flag(analyser)` |
+| `_COMPARE_PREVIOUS_RE` órfão pós-JSON | `ChatReferenceResolutionService.matches_compare_previous` |
 
 ---
 
@@ -78,7 +84,7 @@ ExecuteExternalAction
 |------|--------|---------|
 | `stackPlan` / `ChatPresentationStackOrderService` | Wired só se `layoutMode==stack`; `richStackProfiles: []` | Manter sob demanda; não reexpandir stack rico |
 | `re.compile` remanescente em outros `chat_*_service.py` | Parcial | Continuar migração incremental |
-| `if "/stock"` / `"/analyser"` remanescentes | Parcial (security/summary/follow-up migrados) | Preferir `has_flag` / `profileKey` |
+| `if "/stock"` / `"/analyser"` remanescentes | Quase fechado em app/ (restam tokens de catálogo/skill/JSON pathRules) | Manter literais só em markers/registry/capabilities |
 | `kpi_chart_specialized_service` ramos por shape de dado | Acoplamento residual (shape, não path) | Absorver em schema-driven quando couber |
 | `ChatPresentationRefactorBaselineService` | Gate Playbook 12 histórico | Manter enquanto CI/scripts dependem |
 

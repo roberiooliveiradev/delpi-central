@@ -6,6 +6,9 @@ from functools import lru_cache
 from typing import Any
 
 from app.infrastructure.content.content_service import ContentService
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 @lru_cache(maxsize=1)
@@ -92,14 +95,17 @@ class ChatOperationalRefinementInteractivityService:
             if "pagination" not in keys:
                 keys.append("pagination")
 
-        if "/stock" in path:
+        if ChatPresentationProfileService.has_flag(path, "stock"):
             if "stock" not in keys:
                 keys.append("stock")
 
         if any(token in path for token in ("/sales", "/purchases", "/invoice")):
             keys.append("period")
 
-        if any(token in path for token in ("/structure", "/parents", "/analyser")):
+        if (
+            any(token in path for token in ("/structure", "/parents"))
+            or ChatPresentationProfileService.has_flag(path, "analyser")
+        ):
             if "depth" not in keys:
                 keys.append("depth")
 

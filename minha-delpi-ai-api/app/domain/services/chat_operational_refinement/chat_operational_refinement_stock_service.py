@@ -16,6 +16,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_route_context_service import (
     ChatRouteContextService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 from app.domain.services.chat_operational_refinement.chat_operational_refinement_facade_access import (
     refinement_service,
@@ -102,7 +105,10 @@ class ChatOperationalRefinementStockService:
         if conversation_context:
             lowered = conversation_context.lower()
 
-            if "/stock" in lowered or "estoque do produto" in lowered:
+            if (
+                "estoque do produto" in lowered
+                or ChatPresentationProfileService.has_flag(lowered, "stock")
+            ):
                 return True
 
         for item in reversed((previous_messages or [])[-10:]):
@@ -123,7 +129,11 @@ class ChatOperationalRefinementStockService:
                 path = str(tool_meta.get("path") or "").lower()
                 action_id = str(tool_meta.get("actionId") or "").lower()
 
-                if "/stock" in path or "product_stock" in action_id or "get_product_stock" in action_id:
+                if (
+                    ChatPresentationProfileService.has_flag(path, "stock")
+                    or "product_stock" in action_id
+                    or "get_product_stock" in action_id
+                ):
                     return True
 
             content = refinement_service()._message_content(item).lower()
@@ -159,7 +169,10 @@ class ChatOperationalRefinementStockService:
                 path = str(tool_meta.get("path") or "").lower()
                 action_id = str(tool_meta.get("actionId") or "").lower()
 
-                if "/stock" not in path and "product_stock" not in action_id:
+                if (
+                    not ChatPresentationProfileService.has_flag(path, "stock")
+                    and "product_stock" not in action_id
+                ):
                     continue
 
                 code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)

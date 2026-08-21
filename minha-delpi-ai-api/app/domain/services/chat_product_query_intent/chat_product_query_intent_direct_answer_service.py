@@ -24,6 +24,9 @@ from app.domain.services.chat_product_query_intent.chat_product_query_intent_mod
 from app.domain.services.chat_product_query_intent.chat_product_query_intent_vocabulary import (
     ChatProductQueryIntentVocabulary as VOCAB,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 _INTENT_CONTENT_BUNDLE = "product_query_intent"
 
@@ -101,10 +104,12 @@ class ChatProductQueryIntentDirectAnswerService:
 
     @classmethod
     def _is_product_operational_path(cls, path: str) -> bool:
+        if ChatPresentationProfileService.has_flag(path, "stock"):
+            return True
+
         return any(
             segment in path
             for segment in (
-                "/stock",
                 "/parents",
                 "/guide",
                 "/inspection",
@@ -132,7 +137,9 @@ class ChatProductQueryIntentDirectAnswerService:
         header = title or ChatProductQueryIntentContentService._header("default", default="Consulta do produto")
         body = "\n\n".join(lines[:3])
 
-        if intent == ChatProductQueryIntent.STOCK or "/stock" in path:
+        if intent == ChatProductQueryIntent.STOCK or ChatPresentationProfileService.has_flag(
+            path, "stock"
+        ):
             header = title or ChatProductQueryIntentContentService._header("stock", default="Estoque do produto")
 
         if intent == ChatProductQueryIntent.PARENTS or "/parents" in path:

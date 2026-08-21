@@ -14,6 +14,9 @@ from app.domain.services.chat_operational_refinement_service import (
 from app.domain.services.chat_product_operational_content_service import (
     ChatProductOperationalContentService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -168,7 +171,7 @@ class ExternalActionProductRouteCatalogService:
         attachment_ids: list | None = None,
         drawing_analysis_mode: bool = False,
     ) -> bool:
-        if "/analyser" not in str(path or "").lower():
+        if not ChatPresentationProfileService.has_flag(path, "analyser"):
             return False
 
         from app.domain.services.chat_drawing_analyser_parameter_service import (
@@ -303,7 +306,7 @@ class ExternalActionProductRouteCatalogService:
             } and warehouse_code:
                 parameters[name] = warehouse_code
 
-            elif lowered == "view" and "/analyser" in path:
+            elif lowered == "view" and ChatPresentationProfileService.has_flag(path, "analyser"):
                 from app.domain.services.chat_product_query_intent_service import (
                     ChatProductQueryIntentService,
                 )

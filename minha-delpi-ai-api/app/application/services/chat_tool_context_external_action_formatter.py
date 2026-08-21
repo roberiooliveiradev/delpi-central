@@ -8,6 +8,9 @@ from app.domain.services.external_actions.external_action_result_presenter impor
     ExternalActionResultPresenter,
 )
 from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ChatToolContextExternalActionFormatter:
@@ -61,7 +64,7 @@ class ChatToolContextExternalActionFormatter:
                     preview = self._build_response_preview(attached_data)
                     safe_metadata["responsePreview"] = preview
 
-                    if "/analyser" in path.lower() and preview.endswith("\n…"):
+                    if ChatPresentationProfileService.has_flag(path, "analyser") and preview.endswith("\n…"):
                         safe_metadata["authorizedResult"] = attached_data
                     operational_root = self._presenter._unwrap_data(attached_data)
 

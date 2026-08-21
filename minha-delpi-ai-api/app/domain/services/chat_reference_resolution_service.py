@@ -19,6 +19,10 @@ class ChatReferenceResolutionService:
         return ChatReferenceResolutionContentService.compile_pattern(key)
 
     @classmethod
+    def matches_compare_previous(cls, message: str) -> bool:
+        return bool(cls._pattern("comparePrevious").search(message or ""))
+
+    @classmethod
     def resolve(
         cls,
         message: str,

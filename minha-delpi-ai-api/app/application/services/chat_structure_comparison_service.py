@@ -14,6 +14,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_reference_resolution_service import (
     ChatReferenceResolutionService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_product_structure_presentation_service import (
     ChatProductStructurePresentationService,
     ProductStructureModel,
@@ -109,7 +112,7 @@ class ChatStructureComparisonService:
     def _is_conversational_previous_compare(cls, message: str) -> bool:
         normalized = (message or "").strip()
 
-        if not ChatReferenceResolutionService._COMPARE_PREVIOUS_RE.search(normalized):
+        if not ChatReferenceResolutionService.matches_compare_previous(normalized):
             return False
 
         explicit_codes = ChatAnalysisIntentService.extract_all_product_codes(normalized)
@@ -217,7 +220,9 @@ class ChatStructureComparisonService:
 
             path = str(tool_meta.get("path") or "").lower()
 
-            if "/structure" not in path and "/analyser" not in path:
+            if "/structure" not in path and not ChatPresentationProfileService.has_flag(
+                path, "analyser"
+            ):
                 continue
 
             product_code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
@@ -229,7 +234,7 @@ class ChatStructureComparisonService:
             lines = cls._lines_from_tool_metadata(tool_meta) if "/structure" in path else []
             profile_lines = (
                 cls._profile_lines_from_tool_metadata(tool_meta)
-                if "/analyser" in path
+                if ChatPresentationProfileService.has_flag(path, "analyser")
                 else []
             )
 
@@ -290,7 +295,9 @@ class ChatStructureComparisonService:
                 path_lower = path.lower()
 
                 if not product_code or (
-                    "/structure" not in path_lower and "/analyser" not in path_lower
+                    "/structure" not in path_lower and not ChatPresentationProfileService.has_flag(
+                        path_lower, "analyser"
+                    )
                 ):
                     continue
 
@@ -298,7 +305,7 @@ class ChatStructureComparisonService:
                 lines = cls._lines_from_tool_metadata(tool_meta) if "/structure" in path_lower else []
                 profile_lines = (
                     cls._profile_lines_from_tool_metadata(tool_meta)
-                    if "/analyser" in path_lower
+                    if ChatPresentationProfileService.has_flag(path_lower, "analyser")
                     else []
                 )
 

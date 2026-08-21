@@ -10,6 +10,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_operational_llm_synthesis_context_content_service import (
     ChatOperationalLlmSynthesisContextContentService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ChatOperationalLlmSynthesisContextService:
@@ -372,9 +375,9 @@ class ChatOperationalLlmSynthesisContextService:
         if ChatOperationalLlmSynthesisContextContentService.skip_summary_answer_when_decoupled():
             return True
 
-        path = str(metadata.get("path") or "").lower()
+        path = str(metadata.get("path") or "")
 
-        if "/analyser" in path or "/profile" in path:
+        if ChatPresentationProfileService.has_flag(path, "analyser") or "/profile" in path.lower():
             return True
 
         for table in cls._iter_table_presentations(metadata):

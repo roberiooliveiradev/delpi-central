@@ -14,6 +14,9 @@ from app.domain.services.chat_external_action_direct_answer_service import (
 from app.domain.services.chat_tool_context_presentation_service import (
     ChatToolContextPresentationService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
@@ -88,7 +91,7 @@ class ChatToolContextAuxiliaryService:
                 metadata = tool_call.get("metadata") or {}
                 path = str(metadata.get("path") or "")
 
-                if "/analyser" not in path.lower():
+                if not ChatPresentationProfileService.has_flag(path, "analyser"):
                     continue
 
                 if not code:
@@ -103,7 +106,7 @@ class ChatToolContextAuxiliaryService:
                     tool_call,
                     external_action_data=(
                         external_action_data
-                        if "/analyser" in path.lower()
+                        if ChatPresentationProfileService.has_flag(path, "analyser")
                         else None
                     ),
                 )

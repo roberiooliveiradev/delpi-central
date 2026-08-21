@@ -5,6 +5,9 @@ from __future__ import annotations
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ExternalActionHttpExecutionService:
@@ -79,7 +82,10 @@ class ExternalActionHttpExecutionService:
 
         lowered = str(action_path or "").strip().lower()
 
-        if lowered and any(marker in lowered for marker in cls.composite_path_markers()):
+        if lowered and (
+            any(marker in lowered for marker in cls.composite_path_markers())
+            or ChatPresentationProfileService.has_flag(lowered, "analyser")
+        ):
             return cls.composite_analysis_timeout_seconds()
 
         return cls.default_timeout_seconds()

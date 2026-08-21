@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from collections import Counter
 from typing import Any
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ChatDrawingMetricsService:
@@ -84,7 +87,7 @@ class ChatDrawingMetricsService:
             metadata = call.get("metadata") or {}
             path = str(metadata.get("path") or "").lower()
 
-            if "/analyser" not in path and (call.get("arguments") or {}).get(
+            if not ChatPresentationProfileService.has_flag(path, "analyser") and (call.get("arguments") or {}).get(
                 "actionId"
             ) != "get_product_analyser":
                 continue

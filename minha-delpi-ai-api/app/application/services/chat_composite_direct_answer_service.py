@@ -14,6 +14,9 @@ from app.domain.services.external_actions.external_action_sql_capability_service
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -211,7 +214,9 @@ class ChatCompositeDirectAnswerService:
                 if isinstance(items, list) and len(items) == 0:
                     return True
 
-                if "/structure" in lowered_path and "/analyser" not in lowered_path:
+                if "/structure" in lowered_path and not ChatPresentationProfileService.has_flag(
+                    lowered_path, "analyser"
+                ):
                     structure = root.get("structure")
 
                     if isinstance(structure, dict):

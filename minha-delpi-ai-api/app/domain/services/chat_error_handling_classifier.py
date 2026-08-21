@@ -21,6 +21,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_follow_up_suggestion_service import (
     ChatFollowUpSuggestionService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_web_search_follow_up_service import (
     ChatWebSearchFollowUpService,
 )
@@ -747,7 +750,7 @@ class ChatErrorHandlingClassifier:
 
             path = str(metadata.get("path") or "").lower()
 
-            if "/analyser" in path:
+            if ChatPresentationProfileService.has_flag(path, "analyser"):
                 return True
 
         return False

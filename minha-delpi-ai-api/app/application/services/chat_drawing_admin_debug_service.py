@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from typing import Any
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ChatDrawingAdminDebugService:
@@ -302,7 +305,7 @@ class ChatDrawingAdminDebugService:
 
             path = str(metadata.get("path") or "").lower()
 
-            if "/analyser" in path:
+            if ChatPresentationProfileService.has_flag(path, "analyser"):
                 return tool_call
 
         return None
