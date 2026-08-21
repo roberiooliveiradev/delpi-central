@@ -11,6 +11,7 @@ import {
   parseAlignFromImageTitle,
   readInlineImageFigureAlign,
   setInlineImageFigureAlign,
+  uniqueClipboardImageFiles,
 } from "./mentionComposerInlineImage";
 import { richTextHtmlToMarkdown } from "../rich-text/richTextMarkdown";
 
@@ -41,6 +42,56 @@ describe("mentionComposerInlineImage", () => {
       items: undefined,
     } as unknown as DataTransfer;
     expect(collectClipboardImageFiles(dt).map((f) => f.name)).toEqual(["shot.png"]);
+  });
+
+  it("files XOR items: mesma captura com File distintos vira uma só", () => {
+    const fromFiles = new File(["same-bytes"], "image.png", {
+      type: "image/png",
+      lastModified: 1_700_000_000_000,
+    });
+    const fromItems = new File(["same-bytes"], "image.png", {
+      type: "image/png",
+      lastModified: 1_700_000_000_000,
+    });
+    expect(fromFiles).not.toBe(fromItems);
+    const dt = {
+      files: {
+        length: 1,
+        0: fromFiles,
+        item: () => fromFiles,
+        [Symbol.iterator]: function* () {
+          yield fromFiles;
+        },
+      } as unknown as FileList,
+      items: [
+        {
+          kind: "file",
+          type: "image/png",
+          getAsFile: () => fromItems,
+        },
+      ],
+    } as unknown as DataTransfer;
+    expect(uniqueClipboardImageFiles(dt)).toHaveLength(1);
+    expect(uniqueClipboardImageFiles(dt)[0]).toBe(fromFiles);
+  });
+
+  it("só items quando files não tem imagem", () => {
+    const png = new File(["x"], "clip.png", { type: "image/png" });
+    const dt = {
+      files: {
+        length: 0,
+        item: () => null,
+        [Symbol.iterator]: function* () {},
+      } as unknown as FileList,
+      items: [
+        {
+          kind: "file",
+          type: "image/png",
+          getAsFile: () => png,
+        },
+      ],
+    } as unknown as DataTransfer;
+    expect(uniqueClipboardImageFiles(dt).map((f) => f.name)).toEqual(["clip.png"]);
   });
 
   it("monta span inline sem âncoras p/br e turndown vira attachment:pending", () => {

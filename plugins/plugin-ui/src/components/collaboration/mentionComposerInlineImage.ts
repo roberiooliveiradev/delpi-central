@@ -35,28 +35,58 @@ export function newInlineImagePendingId(): string {
   return `img${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Image files from clipboard (FileList + items), de-duplicated by reference. */
-export function collectClipboardImageFiles(data: DataTransfer | null | undefined): File[] {
-  if (!data) return [];
+function clipboardImageFingerprint(file: File): string {
+  return `${file.name}|${file.size}|${file.type}|${file.lastModified}`;
+}
+
+function pushUniqueImages(out: File[], seen: Set<string>, file: File): void {
+  if (!isComposerInlineImageFile(file)) return;
+  const key = clipboardImageFingerprint(file);
+  if (seen.has(key)) return;
+  seen.add(key);
+  out.push(file);
+}
+
+function collectImagesFromFileList(list: FileList | null | undefined): File[] {
+  if (!list?.length) return [];
   const out: File[] = [];
-  const seen = new Set<File>();
-  if (data.files?.length) {
-    for (const file of Array.from(data.files)) {
-      if (!isComposerInlineImageFile(file) || seen.has(file)) continue;
-      seen.add(file);
-      out.push(file);
-    }
-  }
-  if (data.items?.length) {
-    for (const item of Array.from(data.items)) {
-      if (item.kind !== "file") continue;
-      const file = item.getAsFile();
-      if (!file || !isComposerInlineImageFile(file) || seen.has(file)) continue;
-      seen.add(file);
-      out.push(file);
-    }
+  const seen = new Set<string>();
+  for (const file of Array.from(list)) pushUniqueImages(out, seen, file);
+  return out;
+}
+
+function collectImagesFromItems(items: DataTransferItemList | null | undefined): File[] {
+  if (!items?.length) return [];
+  const out: File[] = [];
+  const seen = new Set<string>();
+  for (const item of Array.from(items)) {
+    if (item.kind !== "file") continue;
+    const file = item.getAsFile();
+    if (file) pushUniqueImages(out, seen, file);
   }
   return out;
+}
+
+/**
+ * Clipboard images once per capture.
+ * Prefer `files`; only fall back to `items` when `files` has no images.
+ * Dedup by fingerprint (name|size|type|lastModified) — Chromium often exposes
+ * the same screenshot as two distinct `File` objects in files + items.
+ */
+export function uniqueClipboardImageFiles(
+  data: DataTransfer | null | undefined,
+): File[] {
+  if (!data) return [];
+  const fromFiles = collectImagesFromFileList(data.files);
+  if (fromFiles.length > 0) return fromFiles;
+  return collectImagesFromItems(data.items);
+}
+
+/** @deprecated Prefer `uniqueClipboardImageFiles` (same behavior). */
+export function collectClipboardImageFiles(
+  data: DataTransfer | null | undefined,
+): File[] {
+  return uniqueClipboardImageFiles(data);
 }
 
 export function buildInlineImageInserts(files: readonly File[]): MentionComposerInlineImageInsert[] {
