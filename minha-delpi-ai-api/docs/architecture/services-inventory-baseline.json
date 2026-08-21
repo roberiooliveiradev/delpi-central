@@ -380,30 +380,16 @@
         "largeFile": false
       },
       {
-        "module": "app.domain.services.chat_api_delpi_response_profile_service",
-        "file": "app/domain/services/chat_api_delpi_response_profile_service.py",
-        "lines": 61,
-        "category": "other",
-        "refs": {
-          "app": 0,
-          "scripts": 0,
-          "tests": 1
-        },
-        "refsTotal": 1,
-        "unreferencedStatically": false,
-        "largeFile": false
-      },
-      {
         "module": "app.domain.services.chat_assistant_content_service",
         "file": "app/domain/services/chat_assistant_content_service.py",
-        "lines": 214,
+        "lines": 223,
         "category": "content_loader",
         "refs": {
-          "app": 174,
+          "app": 175,
           "scripts": 0,
           "tests": 19
         },
-        "refsTotal": 193,
+        "refsTotal": 194,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -3605,11 +3591,11 @@
         "lines": 293,
         "category": "operational",
         "refs": {
-          "app": 25,
+          "app": 24,
           "scripts": 0,
-          "tests": 2
+          "tests": 1
         },
-        "refsTotal": 27,
+        "refsTotal": 25,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -4613,11 +4599,11 @@
         "lines": 466,
         "category": "presentation",
         "refs": {
-          "app": 63,
+          "app": 61,
           "scripts": 2,
           "tests": 10
         },
-        "refsTotal": 75,
+        "refsTotal": 73,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -4792,7 +4778,7 @@
       {
         "module": "app.domain.services.chat_presentation_section_availability_service",
         "file": "app/domain/services/chat_presentation_section_availability_service.py",
-        "lines": 96,
+        "lines": 103,
         "category": "presentation",
         "refs": {
           "app": 1,
@@ -4818,9 +4804,23 @@
         "largeFile": false
       },
       {
+        "module": "app.domain.services.chat_presentation_stack_markdown_content_service",
+        "file": "app/domain/services/chat_presentation_stack_markdown_content_service.py",
+        "lines": 46,
+        "category": "content_loader",
+        "refs": {
+          "app": 2,
+          "scripts": 0,
+          "tests": 1
+        },
+        "refsTotal": 3,
+        "unreferencedStatically": false,
+        "largeFile": false
+      },
+      {
         "module": "app.domain.services.chat_presentation_stack_markdown_service",
         "file": "app/domain/services/chat_presentation_stack_markdown_service.py",
-        "lines": 359,
+        "lines": 397,
         "category": "presentation",
         "refs": {
           "app": 2,
@@ -8269,11 +8269,11 @@
         "lines": 945,
         "category": "other",
         "refs": {
-          "app": 18,
+          "app": 16,
           "scripts": 5,
           "tests": 15
         },
-        "refsTotal": 38,
+        "refsTotal": 36,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -10114,7 +10114,7 @@
       {
         "module": "app.application.services.chat_turn.chat_stream_turn_prepare_service",
         "file": "app/application/services/chat_turn/chat_stream_turn_prepare_service.py",
-        "lines": 358,
+        "lines": 351,
         "category": "other",
         "refs": {
           "app": 2,
@@ -10436,7 +10436,7 @@
       {
         "module": "app.application.services.chat_turn.chat_turn_use_case_support_service",
         "file": "app/application/services/chat_turn/chat_turn_use_case_support_service.py",
-        "lines": 536,
+        "lines": 560,
         "category": "other",
         "refs": {
           "app": 5,
@@ -10481,11 +10481,11 @@
         "lines": 701,
         "category": "memory_context",
         "refs": {
-          "app": 4,
+          "app": 2,
           "scripts": 0,
           "tests": 2
         },
-        "refsTotal": 6,
+        "refsTotal": 4,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -11181,12 +11181,12 @@
     "domain": {
       "moduleCount": 555,
       "categories": {
-        "other": 134,
+        "other": 133,
         "presentation": 86,
         "operational": 81,
         "drawing": 58,
+        "content_loader": 35,
         "sql": 34,
-        "content_loader": 34,
         "memory_context": 32,
         "intent": 29,
         "pdf_vision": 15,

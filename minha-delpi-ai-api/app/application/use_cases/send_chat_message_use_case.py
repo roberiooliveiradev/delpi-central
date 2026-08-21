@@ -8,8 +8,6 @@ from app.application.services.chat_message_security_service import ChatMessageSe
 from app.application.services.chat_llm_metadata_service import ChatLlmMetadataService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
-from app.application.services.chat_capabilities_service import ChatCapabilitiesService
-from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.rag_context_service import RagContextService
 from app.application.services.chat_turn.chat_turn_completion_service import (
@@ -278,15 +276,11 @@ class SendChatMessageUseCase:
             ),
             fast_path_enabled=resolve_chat_intelligence_runtime().fast_path_enabled,
             fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
-            resolve_user_identity_answer=lambda msg: (
-                self.turn_support.resolve_user_identity_answer(request.access_token, msg)
-                if request.access_token and ChatUserContextService.is_user_identity_question(msg)
-                else None
+            resolve_user_identity_answer=self.turn_support.bind_user_identity_answer_resolver(
+                request.access_token
             ),
-            resolve_capabilities_answer=lambda msg: (
-                self.turn_support.resolve_capabilities_answer(workspace_context, msg)
-                if ChatCapabilitiesService.is_capability_inquiry(msg)
-                else None
+            resolve_capabilities_answer=self.turn_support.bind_capabilities_answer_resolver(
+                workspace_context
             ),
             max_external_action_calls=max_tool_calls,
             run_post_rag_web_fallback=lambda: self.turn_support.run_post_rag_web_fallback(

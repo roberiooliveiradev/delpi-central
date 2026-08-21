@@ -48,6 +48,13 @@ class ChatPresentationSectionAvailabilityService:
             )
         else:
             profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
+            effective = ChatPresentationProfileService.resolve_effective_profile_key(
+                path,
+                entity,
+            )
+            # OpenAPI-backed sem entityProfiles: preferir equivalente por shape para framing.
+            if (not profile_key or profile_key == "generic") and effective and effective != "generic":
+                profile_key = effective
             plan["presentationProfile"] = profile_key
             plan["presentationProfileKey"] = profile_key
 

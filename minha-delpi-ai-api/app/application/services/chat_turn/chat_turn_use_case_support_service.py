@@ -358,6 +358,30 @@ class ChatTurnUseCaseSupportService:
             action_catalog=catalog,
         )
 
+    @classmethod
+    def bind_user_identity_answer_resolver(cls, access_token: str | None):
+        """Callback único para send/stream — identity só com token + pergunta de perfil."""
+
+        def _resolve(message: str):
+            if not access_token or not ChatUserContextService.is_user_identity_question(
+                message
+            ):
+                return None
+            return cls.resolve_user_identity_answer(access_token, message)
+
+        return _resolve
+
+    @classmethod
+    def bind_capabilities_answer_resolver(cls, workspace_context: dict):
+        """Callback único para send/stream — capacidades só em inquiry."""
+
+        def _resolve(message: str):
+            if not ChatCapabilitiesService.is_capability_inquiry(message):
+                return None
+            return cls.resolve_capabilities_answer(workspace_context, message)
+
+        return _resolve
+
     def maybe_extend_tool_context(
         self,
         *,

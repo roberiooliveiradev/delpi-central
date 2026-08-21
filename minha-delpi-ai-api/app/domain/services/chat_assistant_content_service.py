@@ -41,6 +41,15 @@ def invalidate_assistant_content_cache(bundle: str | None = None) -> None:
         except Exception:
             pass
 
+        try:
+            from app.domain.services.chat_presentation_stack_markdown_content_service import (
+                ChatPresentationStackMarkdownContentService,
+            )
+
+            ChatPresentationStackMarkdownContentService.invalidate_cache()
+        except Exception:
+            pass
+
 
 @lru_cache(maxsize=32)
 def _bundle_content(bundle: str) -> dict[str, Any]:

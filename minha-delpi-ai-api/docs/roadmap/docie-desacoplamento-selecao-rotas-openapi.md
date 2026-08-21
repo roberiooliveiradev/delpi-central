@@ -247,7 +247,7 @@ if action_id.startswith("api_externa."): return +95
 
 | Serviço | Acoplamento | Severidade |
 |---------|-------------|------------|
-| `ChatOperationalResponseProfileService` | Perfil operacional OpenAPI por `meta.entity` | ✅ canônico · alias `ChatApiDelpiResponseProfileService` |
+| `ChatOperationalResponseProfileService` | Perfil operacional OpenAPI por `meta.entity` | ✅ canônico |
 | Presenters em `domain/services/external_actions/presenters/` | Paths específicos | 🟡 | OK se driven por `meta.entity`, não por path string |
 
 ---

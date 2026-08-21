@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
+from app.domain.services.chat_presentation_stack_markdown_content_service import (
+    ChatPresentationStackMarkdownContentService,
+)
 
-_SECTION_MARKER_RE = re.compile(r"<!--\s*section:([a-z_]+)\s*-->")
 _NARRATIVE_SLOT_SECTIONS: tuple[tuple[str, str], ...] = (
     ("lead", "scope"),
     ("profileTables", "profile"),
@@ -19,9 +20,6 @@ _NARRATIVE_SLOT_SECTIONS: tuple[tuple[str, str], ...] = (
     ("tailVisuals", "structure"),
     ("attention", "attention"),
 )
-
-_DESTAQUES_HEADER_RE = re.compile(r"(?m)^\s*\*\*Destaques\*\*\s*$")
-_ATTENTION_HEADER_RE = re.compile(r"(?m)^\*\*Pontos de atenção")
 
 
 class ChatPresentationStackMarkdownService:
@@ -43,6 +41,15 @@ class ChatPresentationStackMarkdownService:
 
     @classmethod
     def enrich_stack_plan(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
+        path = str(metadata.get("path") or "")
+        entity = None
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            raw_entity = api_meta.get("entity")
+            if isinstance(raw_entity, str) and raw_entity.strip():
+                entity = raw_entity.strip()
+
         profile_key = str(
             plan.get("presentationProfileKey")
             or plan.get("presentationProfile")
@@ -50,8 +57,27 @@ class ChatPresentationStackMarkdownService:
             or ""
         ).strip()
 
+        # OpenAPI-backed: framing/vocabulário usam o equivalente por shape (ex.: scalar → kpi_series),
+        # não o token genérico de resolve_profile_key.
+        effective = str(
+            ChatPresentationProfileService.resolve_effective_profile_key(path, entity) or ""
+        ).strip()
+        if effective and effective != "generic":
+            profile_key = effective
+
         if not plan.get("humanizedSections"):
             plan = cls._enrich_profile_stack_plan(metadata, plan, profile_key=profile_key)
+        elif profile_key and profile_key != "generic":
+            current = str(plan.get("presentationProfile") or "").strip()
+            # Só promove generic → equivalente OpenAPI; preserva perfis especiais (analyser/stock).
+            if not current or current == "generic":
+                plan["presentationProfile"] = profile_key
+                visibility = plan.get("sectionVisibility")
+                if isinstance(visibility, dict):
+                    plan["sectionFraming"] = cls._build_generic_section_framing(
+                        visibility,
+                        profile_key,
+                    )
 
         cls.apply_section_markers(metadata, plan)
         return plan
@@ -192,18 +218,24 @@ class ChatPresentationStackMarkdownService:
     def _inject_section_markers(cls, markdown: str, plan: dict[str, Any]) -> str:
         visibility = plan.get("sectionVisibility") if isinstance(plan.get("sectionVisibility"), dict) else {}
         updated = markdown
+        highlights_header = ChatPresentationStackMarkdownContentService.highlights_header()
+        attention_prefix = ChatPresentationStackMarkdownContentService.attention_header_prefix()
 
-        if visibility.get("highlights") and "**Destaques**" in updated:
+        if visibility.get("highlights") and highlights_header in updated:
             if "<!-- section:highlights -->" not in updated:
-                updated = _DESTAQUES_HEADER_RE.sub(
-                    "<!-- section:highlights -->\n\n**Destaques**",
+                updated = ChatPresentationStackMarkdownContentService.compile_pattern(
+                    "highlightsHeaderLine"
+                ).sub(
+                    f"<!-- section:highlights -->\n\n{highlights_header}",
                     updated,
                     count=1,
                 )
 
-        if visibility.get("attention") and "**Pontos de atenção" in updated:
+        if visibility.get("attention") and attention_prefix in updated:
             if "<!-- section:attention -->" not in updated:
-                updated = _ATTENTION_HEADER_RE.sub(
+                updated = ChatPresentationStackMarkdownContentService.compile_pattern(
+                    "attentionHeaderLine"
+                ).sub(
                     lambda match: f"<!-- section:attention -->\n\n{match.group(0)}",
                     updated,
                     count=1,
@@ -242,10 +274,11 @@ class ChatPresentationStackMarkdownService:
 
     @classmethod
     def _has_highlights(cls, markdown: str) -> bool:
-        if "**Destaques**" not in markdown:
+        highlights_header = ChatPresentationStackMarkdownContentService.highlights_header()
+        if highlights_header not in markdown:
             return False
 
-        block = markdown.split("**Destaques**", 1)[-1]
+        block = markdown.split(highlights_header, 1)[-1]
         bullets = [
             line.strip()
             for line in block.splitlines()
@@ -256,11 +289,16 @@ class ChatPresentationStackMarkdownService:
 
     @classmethod
     def _has_attention(cls, markdown: str) -> bool:
-        if "**Pontos de atenção" not in markdown:
+        attention_prefix = ChatPresentationStackMarkdownContentService.attention_header_prefix()
+        if attention_prefix not in markdown:
             return False
 
-        block = markdown.split("**Pontos de atenção", 1)[-1]
-        return bool(re.search(r"^\s*\d+\.\s+\S", block, flags=re.MULTILINE))
+        block = markdown.split(attention_prefix, 1)[-1]
+        return bool(
+            ChatPresentationStackMarkdownContentService.compile_pattern(
+                "attentionNumberedItem"
+            ).search(block)
+        )
 
     @classmethod
     def _has_profile_table(cls, metadata: dict[str, Any]) -> bool:

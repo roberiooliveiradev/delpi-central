@@ -103,11 +103,11 @@ Wrappers especializados (mantêm API estável):
 | `department_meta_composition.json` | Triggers + `byDepartment` (primary/compose routeIds) para multi-rota de meta/indicadores departamentais (Playbook 25) | `ChatDepartmentMetaCompositionPlanningService` |
 | `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
 | `presentation_profiles.json` | `entityProfiles`, **`entitySetProfileContracts`**, `entitySets`, `pathRules`, `chartPolicy`, `commentaryProfileKey` — **não** adicionar `visualBuilders` / `tableAssembly` (removidos do runtime) | `ChatPresentationProfileService`, `ChatPresentationCoverageService` |
-| `ChatOperationalResponseProfileService` | Roteamento `meta.entity` → perfil/presenter OpenAPI (alias legado: `ChatApiDelpiResponseProfileService`) | path hardcoded em presenters |
+| `ChatOperationalResponseProfileService` | Roteamento `meta.entity` → perfil/presenter OpenAPI | path hardcoded em presenters |
 | `presenter_content.json` → `schemaDriven` | Narrativa mínima para rotas tier C/B sem builder dedicado | `ChatSchemaDrivenPresentationService` |
 | `presenter_content.json` → `humanizedNarrative` | Panorama, leitura rápida, destaques, prefixos de atenção e conclusão do enriquecimento genérico | `ChatPresentationHumanizedNarrativeService`, `ChatPresentationStackOrderService` |
 | `presentation_profiles.json` → `humanizedNarrative` | `skip` ou `enrich` por perfil — **legado**; comentário ativo via `ChatDataInsightEnrichmentService` | `ChatPresentationProfileService` |
-| `presenter_content.json` → `stackSectionFraming` | Frases de framing por seção — **legado** (MFE pode ainda consumir se presente) | `ChatPresentationStackMarkdownService` (legado) |
+| `presenter_content.json` → `stackMarkdownMarkers` + `stackSectionFraming` | Headers/regex de seção + framing | `ChatPresentationStackMarkdownContentService` / `ChatPresentationStackMarkdownService` |
 | `presenter_content.json` → `routes.salePricing` | Narrativa de precificação: panorama, leitura, atenção, conclusão, KPI | `ExternalActionProductPricingPresenter` |
 | `presenter_content.json` → `generic.treeOutlineHeader` / `treeOutlineTruncated` | Cabeçalho e truncamento do outline ASCII em modo Texto (estrutura/BOM) | `ChatPresentationTreeMarkdownService` |
 | `presenter_content.json` → `compositeVisualSpecs` | Spec declarativa do quartet KPI/árvore/gráfico/dashboard por perfil (Playbook 12 R6) | `ChatPresentationCompositeVisualBuilder`, `ChatPresentationProfileCompositeVisualService` |

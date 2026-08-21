@@ -399,6 +399,16 @@
       { "key": "adjustment_percent", "label": "Reajuste simulado", "unit": "%" }
     ]
   },
+  "stackMarkdownMarkers": {
+    "highlightsHeader": "**Destaques**",
+    "attentionHeaderPrefix": "**Pontos de atenção",
+    "patterns": {
+      "sectionMarker": "<!--\\s*section:([a-z_]+)\\s*-->",
+      "highlightsHeaderLine": "(?m)^\\s*\\*\\*Destaques\\*\\*\\s*$",
+      "attentionHeaderLine": "(?m)^\\*\\*Pontos de atenção",
+      "attentionNumberedItem": "(?m)^\\s*\\d+\\.\\s+\\S"
+    }
+  },
   "stackSectionFraming": {
     "default": {
       "scope": "Contexto interpretativo desta resposta antes dos detalhes.",

@@ -11,7 +11,6 @@ from typing import Any
 from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
-from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_intelligence_runtime_access import (
     resolve_chat_intelligence_runtime,
 )
@@ -24,7 +23,6 @@ from app.application.services.chat_turn.chat_turn_preparation_service import (
 from app.application.services.chat_turn.chat_turn_use_case_support_service import (
     ChatTurnUseCaseSupportService,
 )
-from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.exceptions.chat_exceptions import (
     ChatMessageNotFoundError,
     ChatSessionAccessDeniedError,
@@ -218,16 +216,11 @@ class ChatStreamTurnPrepareService:
                 ),
                 fast_path_enabled=resolve_chat_intelligence_runtime().fast_path_enabled,
                 fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
-                resolve_user_identity_answer=lambda msg: (
-                    self.turn_support.resolve_user_identity_answer(request.access_token, msg)
-                    if request.access_token
-                    and ChatUserContextService.is_user_identity_question(msg)
-                    else None
+                resolve_user_identity_answer=self.turn_support.bind_user_identity_answer_resolver(
+                    request.access_token
                 ),
-                resolve_capabilities_answer=lambda msg: (
-                    self.turn_support.resolve_capabilities_answer(workspace_context, msg)
-                    if ChatCapabilitiesService.is_capability_inquiry(msg)
-                    else None
+                resolve_capabilities_answer=self.turn_support.bind_capabilities_answer_resolver(
+                    workspace_context
                 ),
                 max_external_action_calls=max_tool_calls,
                 on_stream_activity=_on_stream_activity,
