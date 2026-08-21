@@ -79,7 +79,19 @@ class ChatExternalActionOrchestrationService:
         ):
             return []
 
-        def _return_planned(planned: list[dict]) -> list[dict]:
+        memory_snapshot = None
+
+        if isinstance(workspace_context, dict):
+            working = workspace_context.get("workingMemory")
+
+            if isinstance(working, dict):
+                memory_snapshot = working
+
+        def _return_planned(
+            planned: list[dict],
+            *,
+            memory_snapshot: dict | None = None,
+        ) -> list[dict]:
             planned = cls._merge_turn_analysis_action_ids(
                 selection_service,
                 planned=list(planned or []),
@@ -113,14 +125,6 @@ class ChatExternalActionOrchestrationService:
 
             return planned
 
-        memory_snapshot = None
-
-        if isinstance(workspace_context, dict):
-            working = workspace_context.get("workingMemory")
-
-            if isinstance(working, dict):
-                memory_snapshot = working
-
         if forced_product_code and forced_intent:
             selected = selection_service.select_action_for_product(
                 message,
@@ -142,7 +146,7 @@ class ChatExternalActionOrchestrationService:
                     message=message,
                 )
 
-            return _return_planned([selected] if selected else [])
+            return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_sql_authoring_guidance_service import (
             ChatSqlAuthoringGuidanceService,
@@ -165,7 +169,7 @@ class ChatExternalActionOrchestrationService:
             )
 
             if prefetch:
-                return _return_planned(prefetch)
+                return _return_planned(prefetch, memory_snapshot=memory_snapshot)
 
         from app.application.services.chat_intelligence_runtime_access import (
             resolve_chat_intelligence_runtime,
@@ -181,7 +185,7 @@ class ChatExternalActionOrchestrationService:
                 memory_snapshot=memory_snapshot,
             )
 
-            return _return_planned([selected] if selected else [])
+            return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_production_operational_intent_service import (
             ChatProductionOperationalIntentService,
@@ -227,7 +231,7 @@ class ChatExternalActionOrchestrationService:
                 )
 
                 if planned:
-                    return _return_planned(planned)
+                    return _return_planned(planned, memory_snapshot=memory_snapshot)
 
         if ChatCanvasIntentService.blocks_external_action_selection(message):
             return []
@@ -249,7 +253,7 @@ class ChatExternalActionOrchestrationService:
             )
 
             if selected:
-                return _return_planned([selected])
+                return _return_planned([selected], memory_snapshot=memory_snapshot)
 
             return []
 
@@ -269,7 +273,7 @@ class ChatExternalActionOrchestrationService:
                 memory_snapshot=memory_snapshot,
             )
 
-            return _return_planned([selected] if selected else [])
+            return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_operational_refinement_service import (
             ChatOperationalRefinementService,
@@ -392,9 +396,9 @@ class ChatExternalActionOrchestrationService:
                     planned.append(selected)
 
             if planned:
-                return _return_planned(planned)
+                return _return_planned(planned, memory_snapshot=memory_snapshot)
 
-            return _return_planned([])
+            return _return_planned([], memory_snapshot=memory_snapshot)
 
         limit = cls._resolve_max_calls(max_calls)
         planning_message = selection_message
@@ -479,7 +483,7 @@ class ChatExternalActionOrchestrationService:
                     max_calls=limit,
                 )
 
-                return _return_planned(executed)
+                return _return_planned(executed, memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_product_multi_scope_planning_service import (
             ChatProductMultiScopePlanningService,
@@ -512,7 +516,7 @@ class ChatExternalActionOrchestrationService:
                     max_calls=limit,
                 )
 
-                return _return_planned(executed)
+                return _return_planned(executed, memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_product_enrichment_composition_planning_service import (
             ChatProductEnrichmentCompositionPlanningService,
@@ -558,7 +562,7 @@ class ChatExternalActionOrchestrationService:
                     first["enrichmentPlan"] = enrichment_audit
                     executed = [first, *executed[1:]]
 
-                return _return_planned(executed)
+                return _return_planned(executed, memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_department_meta_composition_planning_service import (
             ChatDepartmentMetaCompositionPlanningService,
@@ -576,7 +580,7 @@ class ChatExternalActionOrchestrationService:
             )
 
             if meta_planned:
-                return _return_planned(meta_planned)
+                return _return_planned(meta_planned, memory_snapshot=memory_snapshot)
 
         selected = selection_service.select_action(
             selection_message,
@@ -587,7 +591,7 @@ class ChatExternalActionOrchestrationService:
             memory_snapshot=memory_snapshot,
         )
 
-        return _return_planned([selected] if selected else [])
+        return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
 
     @classmethod
     def _apply_drawing_analyser_full_view(
