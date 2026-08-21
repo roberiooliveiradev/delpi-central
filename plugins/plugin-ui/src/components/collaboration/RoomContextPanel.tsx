@@ -20,6 +20,11 @@ export type RoomContextPanelPin = {
   dateLabel?: string | null;
 };
 
+export type RoomContextEntityField = {
+  label: string;
+  value: string;
+};
+
 export type RoomContextPanelClassNames = {
   root: string;
   embedded: string;
@@ -28,6 +33,10 @@ export type RoomContextPanelClassNames = {
   heading: string;
   body: string;
   aboutRow: string;
+  aboutPrimary: string;
+  aboutField: string;
+  aboutFieldLabel: string;
+  aboutFieldValue: string;
   openLink: string;
   empty: string;
   pinList: string;
@@ -49,8 +58,14 @@ export type RoomContextPanelLabels = {
 export type RoomContextPanelProps = {
   classNames: RoomContextPanelClassNames;
   labels: RoomContextPanelLabels;
+  /** @deprecated Prefer entityPrimary + entityFields (avoids raw entity_key dump). */
   entityTitle?: string | null;
+  /** @deprecated Prefer entityFields; not rendered when structured props are set. */
   entityKey?: string | null;
+  /** Primary value in ABOUT (e.g. order number). */
+  entityPrimary?: string | null;
+  /** Labeled rows (Unidade / Pedido). When set with entityPrimary, legacy title+key are skipped. */
+  entityFields?: readonly RoomContextEntityField[] | null;
   entityHref?: string | null;
   onOpenEntity?: () => void;
   participants?: AvatarStackItem[];
@@ -77,6 +92,10 @@ export function roomContextPanelBemClasses(prefix: string): RoomContextPanelClas
     heading: pair(`${base}__heading`, `${ui}__heading`),
     body: pair(`${base}__body`, `${ui}__body`),
     aboutRow: pair(`${base}__about-row`, `${ui}__about-row`),
+    aboutPrimary: pair(`${base}__about-primary`, `${ui}__about-primary`),
+    aboutField: pair(`${base}__about-field`, `${ui}__about-field`),
+    aboutFieldLabel: pair(`${base}__about-field-label`, `${ui}__about-field-label`),
+    aboutFieldValue: pair(`${base}__about-field-value`, `${ui}__about-field-value`),
     openLink: pair(`${base}__open`, `${ui}__open`),
     empty: pair(`${base}__empty`, `${ui}__empty`),
     pinList: pair(`${base}__pins`, `${ui}__pins`),
@@ -92,6 +111,8 @@ export function RoomContextPanel({
   labels,
   entityTitle,
   entityKey,
+  entityPrimary,
+  entityFields,
   entityHref,
   onOpenEntity,
   participants = [],
@@ -111,8 +132,13 @@ export function RoomContextPanel({
   ]
     .filter(Boolean)
     .join(" ");
-  const title = (entityTitle ?? "").trim();
-  const key = (entityKey ?? "").trim();
+  const primary = (entityPrimary ?? "").trim();
+  const fields = (entityFields ?? []).filter(
+    (field) => field.label.trim() && field.value.trim(),
+  );
+  const structured = Boolean(primary || fields.length > 0);
+  const legacyTitle = structured ? "" : (entityTitle ?? "").trim();
+  const legacyKey = structured ? "" : (entityKey ?? "").trim();
 
   return (
     <aside className={rootClass}>
@@ -120,8 +146,24 @@ export function RoomContextPanel({
         <h3 className={classNames.heading}>{labels.about}</h3>
         <div className={classNames.aboutRow}>
           <div className={classNames.body}>
-            {title ? <div>{title}</div> : null}
-            {key ? <div>{key}</div> : null}
+            {structured ? (
+              <>
+                {primary ? (
+                  <div className={classNames.aboutPrimary}>{primary}</div>
+                ) : null}
+                {fields.map((field) => (
+                  <div key={`${field.label}:${field.value}`} className={classNames.aboutField}>
+                    <span className={classNames.aboutFieldLabel}>{field.label}</span>
+                    <span className={classNames.aboutFieldValue}>{field.value}</span>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <>
+                {legacyTitle ? <div>{legacyTitle}</div> : null}
+                {legacyKey ? <div>{legacyKey}</div> : null}
+              </>
+            )}
           </div>
           {entityHref ? (
             <a

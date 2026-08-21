@@ -33,6 +33,26 @@ describe("RoomContextPanel", () => {
     expect(screen.queryByRole("link", { name: /Open/ })).toBeNull();
   });
 
+  it("renders structured ABOUT without raw entity_key", () => {
+    render(
+      <RoomContextPanel
+        classNames={classNames}
+        labels={labels}
+        entityPrimary="002573"
+        entityFields={[
+          { label: "Pedido", value: "002573" },
+          { label: "Unidade", value: "Espírito Santo" },
+        ]}
+        entityTitle="Pedido 002573"
+        entityKey="02|002573"
+        entityHref="/orders/1"
+      />,
+    );
+    expect(screen.getByText("Espírito Santo")).toBeTruthy();
+    expect(screen.queryByText("02|002573")).toBeNull();
+    expect(screen.getByRole("link", { name: /Open/ })).toBeTruthy();
+  });
+
   it("opens entity link and selects a pin", () => {
     const onOpenEntity = vi.fn();
     const onPinSelect = vi.fn();
