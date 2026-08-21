@@ -43,6 +43,7 @@
 @import "./styles/editor-chrome.css";
 @import "./styles/element-toggle-popover.css";
 @import "./styles/state-box.css";
+@import "./styles/soft-empty.css";
 @import "./styles/dashboard-filters.css";
 @import "./styles/export-actions.css";
 @import "./styles/data-table.css";

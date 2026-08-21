@@ -43,6 +43,11 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  height: 100%;
+}
+
+.delpi-ui-room-thread__main > [class*="-view-transition"][class*="--panel"] {
+  margin-top: 0;
 }
 
 .delpi-ui-room-thread__stage {
@@ -53,14 +58,22 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+  height: 100%;
 }
 
 .delpi-ui-room-thread__msgs {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   padding-inline: var(--delpi-ui-room-thread-msgs-padding-inline, 0);
+}
+
+.delpi-ui-room-thread__msgs > .delpi-ui-soft-empty {
+  flex: 1 1 auto;
+  min-height: 100%;
 }
 
 .delpi-ui-room-thread__dock {

@@ -31,6 +31,8 @@ export type RoomInboxListClassNames = {
   actions: string;
   badge: string;
   empty: string;
+  /** Framed surface wrapping the list on the inbox page. */
+  panel: string;
 };
 
 export type RoomInboxListProps = {
@@ -75,6 +77,7 @@ export function roomInboxListBemClasses(prefix: string): RoomInboxListClassNames
     actions: pair(`${base}__actions`, `${ui}__actions`),
     badge: pair(`${base}__badge`, `${ui}__badge`),
     empty: pair(`${base}__empty`, `${ui}__empty`),
+    panel: pair(`${base}-panel`, `${ui}-panel`),
   };
 }
 
@@ -183,9 +186,37 @@ export function RoomInboxList({
 
 export type DashboardRoomInboxListProps = Omit<RoomInboxListProps, "classNames">;
 
+export type RoomInboxPanelProps = {
+  classNames: Pick<RoomInboxListClassNames, "panel">;
+  children: ReactNode;
+  "aria-label"?: string;
+};
+
+/** Framed surface for the conversation list (below search/filters). */
+export function RoomInboxPanel({
+  classNames,
+  children,
+  "aria-label": ariaLabel,
+}: RoomInboxPanelProps) {
+  return (
+    <div className={classNames.panel} role="region" aria-label={ariaLabel}>
+      {children}
+    </div>
+  );
+}
+
+export type DashboardRoomInboxPanelProps = Omit<RoomInboxPanelProps, "classNames">;
+
 export function createDashboardRoomInboxList(prefix: string) {
   const classNames = roomInboxListBemClasses(prefix);
   return function DashboardRoomInboxList(props: DashboardRoomInboxListProps) {
     return <RoomInboxList classNames={classNames} {...props} />;
+  };
+}
+
+export function createDashboardRoomInboxPanel(prefix: string) {
+  const classNames = roomInboxListBemClasses(prefix);
+  return function DashboardRoomInboxPanel(props: DashboardRoomInboxPanelProps) {
+    return <RoomInboxPanel classNames={classNames} {...props} />;
   };
 }

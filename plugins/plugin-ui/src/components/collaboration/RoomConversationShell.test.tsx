@@ -35,6 +35,22 @@ describe("RoomConversationShell", () => {
     expect(classNames.root).toMatch(/delpi-ui-room-thread/);
   });
 
+  it("ChatColumn coloca o dock dentro do stage (composer no rodapé)", () => {
+    const source = readFileSync(join(dir, "RoomConversationShell.tsx"), "utf8");
+    const start = source.indexOf("export function RoomConversationChatColumn");
+    const end = source.indexOf(
+      "export type RoomConversationShellProps",
+      start,
+    );
+    const column = source.slice(start, end > start ? end : undefined);
+    expect(column).toMatch(/className=\{classNames\.stage\}/);
+    expect(column).toMatch(/className=\{classNames\.dock\}/);
+    expect(column).not.toMatch(/<>/);
+    expect(column.indexOf("classNames.dock")).toBeGreaterThan(
+      column.indexOf("classNames.msgs"),
+    );
+  });
+
   it("CSS canônico cobre thread e painel embutido", () => {
     const css = readFileSync(
       join(stylesDir, "room-conversation-shell.css"),
@@ -45,5 +61,8 @@ describe("RoomConversationShell", () => {
     expect(css).toMatch(/\.delpi-ui-room-thread__msgs \{[\s\S]*?overflow-y:\s*auto;/);
     expect(css).toMatch(/\.delpi-ui-room-thread__dock \{/);
     expect(css).toMatch(/\.delpi-ui-room-panel \{/);
+    expect(css).toMatch(
+      /\.delpi-ui-room-thread__msgs > \.delpi-ui-soft-empty/,
+    );
   });
 });

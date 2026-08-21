@@ -5,6 +5,7 @@ import {
   createDashboardAttachmentPreviewStrip,
   createDashboardDetailCard,
   createDashboardEmptyState,
+  createDashboardSoftEmptyState,
   createDashboardDetailFieldGrid,
   createDashboardSectionCard,
   createDashboardStatusBadge,
@@ -74,6 +75,7 @@ import {
   createDashboardReactionBar,
   createDashboardReactionQuickBar,
   createDashboardRoomInboxList,
+  createDashboardRoomInboxPanel,
   createDashboardRoomHeader,
   createDashboardRoomContextPanel,
   createDashboardRoomSidePanel,
@@ -253,6 +255,7 @@ export const CommercialEmptyState = createDashboardEmptyState({
   },
   defaultMessage: "",
 });
+export const CommercialSoftEmptyState = createDashboardSoftEmptyState(UI_PREFIX);
 const CommercialMetricKpiBase = createMetricKpiCard(UI_PREFIX);
 type CommercialMetricCardProps = {
   label: string;
@@ -552,6 +555,7 @@ export const CommercialEntityUnfurlCard = createDashboardEntityUnfurlCard(UI_PRE
 export const CommercialReactionBar = createDashboardReactionBar(UI_PREFIX);
 export const CommercialReactionQuickBar = createDashboardReactionQuickBar(UI_PREFIX);
 export const CommercialRoomInboxList = createDashboardRoomInboxList(UI_PREFIX);
+export const CommercialRoomInboxPanel = createDashboardRoomInboxPanel(UI_PREFIX);
 export const CommercialRoomHeader = createDashboardRoomHeader(UI_PREFIX);
 export const CommercialRoomContextPanel = createDashboardRoomContextPanel(UI_PREFIX);
 export const CommercialRoomSidePanel = createDashboardRoomSidePanel(UI_PREFIX);

@@ -87,12 +87,16 @@ export {
 } from "./ReactionQuickBar";
 export {
   RoomInboxList,
+  RoomInboxPanel,
   createDashboardRoomInboxList,
+  createDashboardRoomInboxPanel,
   roomInboxListBemClasses,
   type DashboardRoomInboxListProps,
+  type DashboardRoomInboxPanelProps,
   type RoomInboxListClassNames,
   type RoomInboxListItem,
   type RoomInboxListProps,
+  type RoomInboxPanelProps,
 } from "./RoomInboxList";
 export {
   RoomHeader,

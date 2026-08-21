@@ -9,6 +9,7 @@ describe("InteractionRoomsInboxPage", () => {
   it("compõe RoomInboxList do kit sem bubble/textarea local", () => {
     const source = readFileSync(join(dir, "InteractionRoomsInboxPage.tsx"), "utf8");
     expect(source).toMatch(/CommercialRoomInboxList/);
+    expect(source).toMatch(/CommercialRoomInboxPanel/);
     expect(source).toMatch(/CommercialCatalogSearchBar/);
     expect(source).toMatch(/CommercialScopeChipBar/);
     expect(source).not.toMatch(/CommercialUnderlineNav/);

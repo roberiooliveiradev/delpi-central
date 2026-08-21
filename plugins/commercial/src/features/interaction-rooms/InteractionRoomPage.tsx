@@ -32,6 +32,7 @@ import {
   CommercialActionButton,
   CommercialAlertQueue,
   CommercialEmptyState,
+  CommercialSoftEmptyState,
   CommercialLoadingCard,
   CommercialMessageThread,
   CommercialRoomContextPanel,
@@ -1035,9 +1036,10 @@ export function InteractionRoomPage({
                     }
                   >
                     {threadMessages.length === 0 ? (
-                      <CommercialEmptyState
+                      <CommercialSoftEmptyState
                         title={content.roomEmptyTitle}
                         message={content.roomEmptyDescription}
+                        icon={<MessageSquare aria-hidden />}
                       />
                     ) : (
                       <CommercialMessageThread

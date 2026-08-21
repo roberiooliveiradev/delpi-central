@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { RoomInboxList, roomInboxListBemClasses } from "./RoomInboxList";
+import { RoomInboxList, RoomInboxPanel, roomInboxListBemClasses } from "./RoomInboxList";
 
 const classNames = roomInboxListBemClasses("test");
 const stylesDir = join(dirname(fileURLToPath(import.meta.url)), "../../styles");
@@ -185,6 +185,22 @@ describe("room-inbox.css", () => {
     expect(list).toMatch(/scrollbar-gutter:\s*stable/);
     expect(item).toMatch(/max-width:\s*100%/);
     expect(css).toMatch(/\.delpi-ui-room-inbox__list > li \{[\s\S]*?max-width:\s*100%/);
+  });
+
+  it("painel framed envolve a listagem", () => {
+    const css = readFileSync(join(stylesDir, "room-inbox.css"), "utf8");
+    const panel = css.match(/\.delpi-ui-room-inbox-panel \{[^}]+\}/)?.[0] ?? "";
+    expect(panel).toMatch(/border:\s*1px solid/);
+    expect(panel).toMatch(/border-radius:/);
+    expect(classNames.panel).toMatch(/delpi-ui-room-inbox-panel/);
+    const { container } = render(
+      <RoomInboxPanel classNames={classNames} aria-label="Salas">
+        <span>lista</span>
+      </RoomInboxPanel>,
+    );
+    const el = container.querySelector(".delpi-ui-room-inbox-panel");
+    expect(el?.getAttribute("role")).toBe("region");
+    expect(el?.getAttribute("aria-label")).toBe("Salas");
   });
 });
 

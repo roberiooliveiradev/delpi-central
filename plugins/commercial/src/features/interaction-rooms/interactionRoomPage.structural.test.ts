@@ -34,6 +34,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/interactionRoomAuthorAvatarFields/);
     expect(source).toMatch(/interactionRoomParticipantAvatar/);
     expect(source).toMatch(/CommercialMessageThread/);
+    expect(source).toMatch(/CommercialSoftEmptyState/);
+    expect(source).toMatch(/roomEmptyTitle/);
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/resolveActionExtras/);
     expect(source).toMatch(/portalScopeClassName=\{CM_PORTAL_SCOPE\}/);

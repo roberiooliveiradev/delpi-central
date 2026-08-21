@@ -53,6 +53,8 @@ export type RoomConversationChatColumnProps = {
 
 /**
  * Stage + msgs + dock — chat column shared by room page and embed cards.
+ * Dock lives inside stage so flex pins the composer to the bottom even when
+ * an intermediate parent (tabpanel / view-transition) is not a flex column.
  */
 export function RoomConversationChatColumn({
   classNames,
@@ -62,18 +64,16 @@ export function RoomConversationChatColumn({
   dock,
 }: RoomConversationChatColumnProps) {
   return (
-    <>
-      <div className={classNames.stage}>
-        <div
-          className={classNames.msgs}
-          ref={msgsRef}
-          onScroll={onMsgsScroll}
-        >
-          {children}
-        </div>
+    <div className={classNames.stage}>
+      <div
+        className={classNames.msgs}
+        ref={msgsRef}
+        onScroll={onMsgsScroll}
+      >
+        {children}
       </div>
       <div className={classNames.dock}>{dock}</div>
-    </>
+    </div>
   );
 }
 

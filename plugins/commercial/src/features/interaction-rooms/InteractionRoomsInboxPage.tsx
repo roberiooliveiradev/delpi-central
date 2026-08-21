@@ -12,6 +12,7 @@ import {
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialRoomInboxList,
+  CommercialRoomInboxPanel,
   CommercialScopeChipBar,
   CommercialSectionCard,
   CommercialStateBanner,
@@ -222,6 +223,7 @@ export function InteractionRoomsInboxPage({
         </CommercialStateBanner>
       ) : null}
       <div className="cm-room-inbox-pane__body">
+      <CommercialRoomInboxPanel aria-label={content.inboxListAriaLabel}>
       {loading ? (
         <CommercialLoadingCard title={content.loadingLabel} variant="panel" />
       ) : null}
@@ -307,6 +309,7 @@ export function InteractionRoomsInboxPage({
           }))}
         />
       ) : null}
+      </CommercialRoomInboxPanel>
       </div>
     </section>
   );

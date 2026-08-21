@@ -203,3 +203,26 @@
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
   text-align: center;
 }
+
+.delpi-ui-room-inbox-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--delpi-ui-border, #e6e6e6);
+  border-radius: var(--delpi-ui-room-inbox-panel-radius, 0.75rem);
+  background: var(
+    --delpi-ui-surface-elevated,
+    var(--delpi-ui-surface-muted, var(--delpi-ui-surface, #f6f8fa))
+  );
+  box-sizing: border-box;
+  padding: var(--delpi-ui-room-inbox-panel-padding, 0.5rem);
+}
+
+.delpi-ui-room-inbox-panel > .delpi-ui-room-inbox {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}

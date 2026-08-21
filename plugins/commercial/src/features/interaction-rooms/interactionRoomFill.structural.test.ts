@@ -55,7 +55,7 @@ describe("interaction room fill CSS", () => {
     expect(fillRoot).toMatch(/min-height:\s*0/);
     expect(fillRoot).not.toMatch(/100vh/);
     expect(css).toMatch(
-      /\.cm-room-inbox-pane__body > \.cm-room-inbox \{[\s\S]*?min-height:\s*0;/,
+      /\.cm-room-inbox-pane__body > \.cm-room-inbox-panel \{[\s\S]*?min-height:\s*0;/,
     );
     expect(css).toMatch(
       /\.cm-room-inbox-pane \{[\s\S]*?padding-inline:\s*var\(--cm-gap\);/,

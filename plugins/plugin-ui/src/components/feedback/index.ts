@@ -61,6 +61,14 @@ export {
   type LoadingStateProps,
 } from "./EmptyState";
 export {
+  SoftEmptyState,
+  createDashboardSoftEmptyState,
+  softEmptyStateBemClasses,
+  type DashboardSoftEmptyStateProps,
+  type SoftEmptyStateClassNames,
+  type SoftEmptyStateProps,
+} from "./SoftEmptyState";
+export {
   useConfirmDialogController,
   unsavedChangesDialogOptions,
   type ConfirmDialogOptions,

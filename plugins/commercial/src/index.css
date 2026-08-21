@@ -158,6 +158,11 @@
   align-items: stretch;
 }
 
+.dashboard-commercial .cm-room-workspace .cm-room-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .dashboard-commercial .cm-room-workspace__grid > .cm-room-inbox-pane {
   flex: 1 1 auto;
   border-right: none;
@@ -193,10 +198,16 @@
   padding-block-end: var(--cm-gap-sm);
 }
 
-.dashboard-commercial .cm-room-inbox-pane__body > .cm-room-inbox {
+.dashboard-commercial .cm-room-inbox-pane__body > .cm-room-inbox,
+.dashboard-commercial .cm-room-inbox-pane__body > .cm-room-inbox-panel {
   flex: 1 1 auto;
   min-height: 0;
   align-self: stretch;
+}
+
+.dashboard-commercial .cm-room-inbox-pane__body > .cm-room-inbox-panel > .cm-room-inbox {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .dashboard-commercial .cm-room-alert-host {
