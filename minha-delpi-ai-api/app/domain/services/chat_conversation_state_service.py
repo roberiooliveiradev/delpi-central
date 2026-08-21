@@ -4,7 +4,31 @@ from __future__ import annotations
 
 import re
 import uuid
+from functools import lru_cache
 from typing import Any
+
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+
+
+@lru_cache(maxsize=1)
+def _task_patterns() -> tuple[tuple[re.Pattern[str], str, str], ...]:
+    rows = ChatAssistantContentService.get_node("conversation_state", "taskPatterns") or []
+    compiled: list[tuple[re.Pattern[str], str, str]] = []
+
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+
+        pattern = str(row.get("pattern") or "").strip()
+        task_type = str(row.get("type") or "").strip()
+        label = str(row.get("label") or task_type).strip()
+
+        if not pattern or not task_type:
+            continue
+
+        compiled.append((re.compile(pattern, re.IGNORECASE), task_type, label))
+
+    return tuple(compiled)
 
 
 class ChatConversationStateService:
@@ -24,14 +48,6 @@ class ChatConversationStateService:
     _CORRECTION_RE = re.compile(
         r"\b(?:n[aã]o\s+[eé]|nao\s+eh)\s+(.+?)\s*,\s*[eé]\s+(.+)$",
         re.IGNORECASE,
-    )
-    _TASK_PATTERNS: tuple[tuple[str, str, str], ...] = (
-        (r"\bplaybook\b", "playbook_creation", "playbook"),
-        (r"\b(?:escreva|crie|monte)\s+.*\be-?mail\b", "email_writing", "e-mail"),
-        (r"\b(?:ata|reuni[aã]o)\b", "minutes_writing", "ata"),
-        (r"\b(?:consulta\s+)?sql\b|\bsql\s+avan", "sql_task", "SQL"),
-        (r"\b(?:corrij|revise).*\blousa\b", "canvas_edit", "lousa"),
-        (r"\b(?:documenta|manual|procedimento)\b", "documentation", "documentação"),
     )
     _SENSITIVE_RE = re.compile(
         r"\b(?:senha|password|token|api[_-]?key|cpf|cart[aã]o|chave\s+privada)\b",
@@ -291,8 +307,8 @@ class ChatConversationStateService:
     def _detect_task(cls, message: str) -> dict[str, Any] | None:
         normalized = (message or "").strip()
 
-        for pattern, task_type, label in cls._TASK_PATTERNS:
-            if re.search(pattern, normalized, re.IGNORECASE):
+        for pattern, task_type, label in _task_patterns():
+            if pattern.search(normalized):
                 return {
                     "taskId": str(uuid.uuid4()),
                     "type": task_type,

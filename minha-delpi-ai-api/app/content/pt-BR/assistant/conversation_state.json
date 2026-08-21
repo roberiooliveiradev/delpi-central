@@ -1,0 +1,39 @@
+{
+  "taskPatterns": [
+    {
+      "pattern": "\\b(?:analis[ea]\\s+o\\s+desenho|validar\\s+desenho|relat[oó]rio\\s+do\\s+desenho|revis[aã]o\\s+manual|confirmar\\s+revis[aã]o\\s+manual|desenho\\s+t[eé]cnico)\\b",
+      "type": "drawing_analysis",
+      "label": "análise de desenho"
+    },
+    {
+      "pattern": "\\bplaybook\\b",
+      "type": "playbook_creation",
+      "label": "playbook"
+    },
+    {
+      "pattern": "\\b(?:escreva|crie|monte)\\s+.*\\be-?mail\\b",
+      "type": "email_writing",
+      "label": "e-mail"
+    },
+    {
+      "pattern": "\\b(?:ata|reuni[aã]o)\\b",
+      "type": "minutes_writing",
+      "label": "ata"
+    },
+    {
+      "pattern": "\\b(?:consulta\\s+)?sql\\b|\\bsql\\s+avan",
+      "type": "sql_task",
+      "label": "SQL"
+    },
+    {
+      "pattern": "\\b(?:corrij|revise).*\\blousa\\b",
+      "type": "canvas_edit",
+      "label": "lousa"
+    },
+    {
+      "pattern": "\\b(?:documenta(?:ção|cao)?|manual\\s+de|procedimento(?:s)?)\\b",
+      "type": "documentation",
+      "label": "documentação"
+    }
+  ]
+}
