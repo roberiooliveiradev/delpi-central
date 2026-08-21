@@ -7,6 +7,9 @@ import type {
   ProblemDetectorsPayload,
 } from "../types";
 
+/** Teto do BFF — cobre o universo típico do detector sem paginar na UI. */
+const DETECTOR_ITEMS_PAGE_SIZE = 200;
+
 /**
  * Cards do catálogo e registros do detector ativo.
  *
@@ -57,7 +60,13 @@ export function useProblemAnalysis(branch: PpcBranch, detectorId: string | null)
     }
     const controller = new AbortController();
     setItemsLoading(true);
-    fetchProblemDetectorItems({ branch, detectorId: activeId, signal: controller.signal })
+    fetchProblemDetectorItems({
+      branch,
+      detectorId: activeId,
+      page: 1,
+      pageSize: DETECTOR_ITEMS_PAGE_SIZE,
+      signal: controller.signal,
+    })
       .then((payload) => {
         setItems(payload);
         setError(null);
