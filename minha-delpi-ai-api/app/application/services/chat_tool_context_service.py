@@ -248,6 +248,8 @@ class ChatToolContextService:
             paginated_service=paginated_service,
         )
 
+        # Critic pós-wave-1 ANTES do assembly: follow-ups entram em safe_tool_calls
+        # e entram em evidenceRefs / multiSourceCrossRule na síntese.
         execution = self._maybe_apply_sufficiency_critic(
             execution,
             user_id=user_id,
