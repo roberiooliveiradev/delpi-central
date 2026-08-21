@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Files, MessageSquare, PanelRight, Search, Trash2 } from "lucide-react";
+import { Files, MessageSquare, PanelRight, Search } from "lucide-react";
 import { roomHeaderBemClasses } from "@delpi/plugin-ui/index";
 
 import {
@@ -45,6 +45,7 @@ import { buildInteractionRoomsPath } from "../../app/pluginRoutes";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
+import { InteractionRoomMoreMenu } from "./InteractionRoomMoreMenu";
 import { InteractionRoomSharedView } from "./InteractionRoomSharedView";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { listInlineAttachmentIdsFromMarkdown } from "./interactionRoomInlineAttachments";
@@ -884,19 +885,13 @@ export function InteractionRoomPage({
               participantsAriaLabel={content.roomMembersAriaLabel}
               actions={
                 <>
-                  {canManagePortfolios ? (
-                    <CommercialActionButton
-                      variant="ghost"
-                      aria-label={content.deleteRoomActionLabel}
-                      title={content.deleteRoomActionLabel}
-                      disabled={deletingRoomId === roomId.trim()}
-                      onClick={() => {
-                        void onDeleteRoom();
-                      }}
-                    >
-                      <Trash2 size={16} aria-hidden />
-                    </CommercialActionButton>
-                  ) : null}
+                  <InteractionRoomMoreMenu
+                    canDelete={canManagePortfolios}
+                    deleteDisabled={deletingRoomId === roomId.trim()}
+                    onDelete={() => {
+                      void onDeleteRoom();
+                    }}
+                  />
                   <CommercialActionButton
                     variant="ghost"
                     aria-label={content.findInChatAriaLabel}

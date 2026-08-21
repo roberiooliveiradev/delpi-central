@@ -24,12 +24,9 @@ describe("InteractionRoomsInboxPage", () => {
     expect(readFileSync(join(dir, "../../content/interactionRoomsContent.ts"), "utf8")).toMatch(
       /reloadLabel:\s*"Tentar de novo"/,
     );
-    expect(source).toMatch(/canManagePortfolios/);
-    expect(source).toMatch(/deleteInteractionRoom/);
-    expect(source).toMatch(/deleteRoomActionLabel/);
-    expect(source).toMatch(/useCommercialConfirm/);
-    expect(source).toMatch(/actions=\{/);
-    expect(source).toMatch(/Trash2/);
+    expect(source).not.toMatch(/deleteInteractionRoom/);
+    expect(source).not.toMatch(/actions=\{/);
+    expect(source).not.toMatch(/Trash2/);
     expect(source).toMatch(/CustomerAvatar/);
     expect(source).toMatch(/selectedRoomId/);
     expect(source).toMatch(/inboxCustomerAvatarName/);

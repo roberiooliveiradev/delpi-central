@@ -55,6 +55,8 @@ export const INTERACTION_ROOMS_CONTENT = {
   deleteCancelLabel: "Cancelar",
   deleteOk: "Mensagem excluída.",
   deleteError: "Não foi possível excluir a mensagem.",
+  roomMoreOptionsAriaLabel: "Mais opções da conversa",
+  roomMoreOptionsMenuAriaLabel: "Opções da conversa",
   deleteRoomActionLabel: "Excluir conversa",
   deleteRoomConfirmTitle: "Excluir conversa",
   deleteRoomConfirmMessage:
