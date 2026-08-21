@@ -99,11 +99,24 @@ def _http_checks() -> list[str]:
     if not token:
         return ["token ausente"]
 
+    agent_id = os.environ.get("SMOKE_AGENT_ID", "").strip()
+    if not agent_id:
+        agents_payload = request("GET", f"{base}{prefix}/agents", token=token)
+        agents = (
+            agents_payload
+            if isinstance(agents_payload, list)
+            else (agents_payload.get("items") or agents_payload.get("agents") or [])
+        )
+        for item in agents:
+            if isinstance(item, dict) and item.get("id") and item.get("enabled", True):
+                agent_id = str(item["id"])
+                break
+
     session = request(
         "POST",
         f"{base}{prefix}/sessions",
         token=token,
-        body={"title": "smoke-hybrid-orchestration"},
+        body={"title": "smoke-hybrid-orchestration", "agentId": agent_id or None},
     )
     session_id = str(session.get("id") or "")
     if not session_id:
@@ -146,7 +159,11 @@ def _http_checks() -> list[str]:
         "POST",
         f"{base}{prefix}/sessions/{session_id}/messages",
         token=token,
-        body={"message": "programação de produção hoje", "responseMode": "normal"},
+        body={
+            "message": "programação de produção hoje",
+            "responseMode": "normal",
+            "agentId": agent_id or None,
+        },
     )
     tools = schedule.get("toolCalls") or schedule.get("tools") or []
     meta = schedule.get("metadata") or {}
@@ -167,6 +184,7 @@ def _http_checks() -> list[str]:
         body={
             "message": "estoque e fornecedores do produto 10080022",
             "responseMode": "normal",
+            "agentId": agent_id or None,
         },
     )
     composed_tools = composed.get("toolCalls") or composed.get("tools") or []
