@@ -46,3 +46,16 @@ def test_response_mode_honors_turn_mode_consume_prior():
     assert direct == "Relatório revisado."
     assert effect == "simple_direct"
     assert skip_rag is True
+
+
+def test_turn_mode_consume_prior_for_unclear_request():
+    mode = ChatTurnModeService.resolve(
+        message="programação",
+        direct_answer="Não ficou claro o que você quer com esse termo.",
+        pipeline_stages=["unclear_request"],
+        tool_calls=[],
+    )
+
+    assert mode == ChatTurnModeService.CONSUME_PRIOR
+    assert ChatTurnModeService.should_skip_llm(mode)
+    assert ChatTurnModeService.should_skip_agentic(mode)

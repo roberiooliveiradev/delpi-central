@@ -50,3 +50,4 @@ def test_preserve_direct_answer_stages_exclude_capabilities():
     assert "capabilities" not in stages
     assert "small_talk" in stages
     assert "utility_direct" in stages
+    assert "unclear_request" in stages

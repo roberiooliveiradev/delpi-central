@@ -49,6 +49,7 @@ class ChatTurnModeService:
                 "meta_direct_answer",
                 "platform_direct_answer",
                 "common_chat_operational_guidance",
+                "unclear_request",
             }
         ):
             return cls.CONSUME_PRIOR

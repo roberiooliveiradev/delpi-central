@@ -25,7 +25,8 @@
       "platform_direct_answer",
       "api_action_routes",
       "drawing_analysis",
-      "drawing_report_adjustment"
+      "drawing_report_adjustment",
+      "unclear_request"
     ],
     "deprecateHumanizedLinhasAsProse": true,
     "allowTemplateProseFallback": false,
