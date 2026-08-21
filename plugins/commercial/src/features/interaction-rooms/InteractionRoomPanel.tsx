@@ -19,7 +19,6 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   CM_PORTAL_SCOPE,
   CommercialActionButton,
-  CommercialConversationFileDropLayer,
   CommercialEmptyState,
   CommercialHostDrawer,
   CommercialLoadingCard,
@@ -37,8 +36,13 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
+import { CM_HELP } from "../../content/helpTooltips";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
+import {
+  InteractionRoomConversationChatColumn,
+  InteractionRoomConversationShell,
+} from "./InteractionRoomConversationShell";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { listInlineAttachmentIdsFromMarkdown } from "./interactionRoomInlineAttachments";
@@ -618,83 +622,91 @@ export function InteractionRoomPanel({
 
   const roomBody =
     !loading && room ? (
-      <CommercialConversationFileDropLayer
-        overlayLabel={content.dropOverlayLabel}
+      <InteractionRoomConversationShell
+        rootClassName="cm-room-panel"
+        dropOverlayLabel={content.dropOverlayLabel}
         accept={ROOM_ATTACH_ACCEPT}
         onFiles={(files) => addFilesRef.current(files)}
-      >
-        <CommercialRoomHeader
-          title={room.title || roomTitle}
-          chips={
-            entityChipLabel ? (
-              <span
-                className={panelHeaderClasses.chip}
-                title={`${content.roomUnitChipTitle}: ${entityChipLabel}`}
-              >
-                {entityChipLabel}
-              </span>
-            ) : undefined
-          }
-          participants={participants}
-          participantsAriaLabel={content.roomMembersAriaLabel}
-        />
-        {threadMessages.length === 0 ? (
-          <CommercialEmptyState
-            title={content.panelEmptyTitle}
-            message={content.panelEmptyDescription}
-          />
-        ) : (
-          <div className="cm-room-thread__msgs" ref={msgsRef}>
-          <CommercialMessageThread
-            listAriaLabel={content.roomMessagesAriaLabel}
-            emptyLabel={content.panelEmptyTitle}
-            messages={threadMessages}
-            resolveActions={resolveActions}
-            resolveActionExtras={resolveActionExtras}
-            onParentQuoteClick={onParentQuoteClick}
-            portalScopeClassName={CM_PORTAL_SCOPE}
-            actionsToolbarAriaLabel={content.messageActionsToolbarAriaLabel}
-            resolveAttachmentImageSrc={(attachmentId) =>
-              attachmentThumbUrls[attachmentId] ?? null
+        header={
+          <CommercialRoomHeader
+            title={room.title || roomTitle}
+            chips={
+              entityChipLabel ? (
+                <span
+                  className={panelHeaderClasses.chip}
+                  title={`${content.roomUnitChipTitle}: ${entityChipLabel}`}
+                >
+                  {entityChipLabel}
+                </span>
+              ) : undefined
             }
-            onAttachmentImageClick={(attachmentId) => {
-              const row = attachmentMetaRef.current[attachmentId];
-              if (!row) return;
-              setInlinePreview({
-                kind: "remote",
-                id: row.id,
-                fileName: row.file_name,
-                contentType: row.content_type,
-                byteSize: row.byte_size,
-              });
-            }}
+            participants={participants}
+            participantsAriaLabel={content.roomMembersAriaLabel}
           />
-          </div>
-        )}
-        <InteractionRoomMessageComposer
-          roomId={room.id}
-          mode={editingMessageId ? "edit" : "compose"}
-          editMessageId={editingMessageId}
-          initialMarkdown={editTarget?.body_text ?? ""}
-          initialMentions={(editTarget?.mentions ?? []).map((mention) => ({
-            kind: mention.mention_kind,
-            ref: { ...mention.ref },
-            label: mention.label,
-          }))}
-          editBanner={editBanner}
-          onCancelEdit={() => setEditingMessageId(null)}
-          onMessageUpdated={onMessageUpdated}
-          replyToMessageId={editingMessageId ? null : replyMessageId}
-          replyBanner={editingMessageId ? null : replyBanner}
-          onCancelReply={() => setReplyMessageId(null)}
-          onMessageCreated={onMessageCreated}
-          onMessageAttachmentsSettled={bumpMessageAttachments}
-          onError={(message) => setError(message)}
-          onAddFilesReady={(addFiles) => {
-            addFilesRef.current = addFiles;
-          }}
-        />
-      </CommercialConversationFileDropLayer>
+        }
+        main={
+          <InteractionRoomConversationChatColumn
+            msgsRef={msgsRef}
+            dock={
+              <InteractionRoomMessageComposer
+                roomId={room.id}
+                mode={editingMessageId ? "edit" : "compose"}
+                editMessageId={editingMessageId}
+                initialMarkdown={editTarget?.body_text ?? ""}
+                initialMentions={(editTarget?.mentions ?? []).map((mention) => ({
+                  kind: mention.mention_kind,
+                  ref: { ...mention.ref },
+                  label: mention.label,
+                }))}
+                editBanner={editBanner}
+                onCancelEdit={() => setEditingMessageId(null)}
+                onMessageUpdated={onMessageUpdated}
+                replyToMessageId={editingMessageId ? null : replyMessageId}
+                replyBanner={editingMessageId ? null : replyBanner}
+                onCancelReply={() => setReplyMessageId(null)}
+                onMessageCreated={onMessageCreated}
+                onMessageAttachmentsSettled={bumpMessageAttachments}
+                onError={(message) => setError(message)}
+                onAddFilesReady={(addFiles) => {
+                  addFilesRef.current = addFiles;
+                }}
+              />
+            }
+          >
+            {threadMessages.length === 0 ? (
+              <CommercialEmptyState
+                title={content.panelEmptyTitle}
+                message={content.panelEmptyDescription}
+              />
+            ) : (
+              <CommercialMessageThread
+                listAriaLabel={content.roomMessagesAriaLabel}
+                emptyLabel={content.panelEmptyTitle}
+                messages={threadMessages}
+                resolveActions={resolveActions}
+                resolveActionExtras={resolveActionExtras}
+                onParentQuoteClick={onParentQuoteClick}
+                portalScopeClassName={CM_PORTAL_SCOPE}
+                actionsToolbarAriaLabel={content.messageActionsToolbarAriaLabel}
+                resolveAttachmentImageSrc={(attachmentId) =>
+                  attachmentThumbUrls[attachmentId] ?? null
+                }
+                onAttachmentImageClick={(attachmentId) => {
+                  const row = attachmentMetaRef.current[attachmentId];
+                  if (!row) return;
+                  setInlinePreview({
+                    kind: "remote",
+                    id: row.id,
+                    fileName: row.file_name,
+                    contentType: row.content_type,
+                    byteSize: row.byte_size,
+                  });
+                }}
+              />
+            )}
+          </InteractionRoomConversationChatColumn>
+        }
+      />
     ) : null;
 
   const statusBlock = (
@@ -711,9 +723,16 @@ export function InteractionRoomPanel({
     </>
   );
 
+  const sectionCardProps = {
+    title: content.panelTitle,
+    hint: CM_HELP.interactionRooms.panel,
+    collapsible: true as const,
+    defaultOpen: true as const,
+  };
+
   if (!entityKey?.trim()) {
     return (
-      <CommercialSectionCard title={content.panelTitle}>
+      <CommercialSectionCard {...sectionCardProps}>
         <CommercialStateBanner variant="warning">
           {content.panelMissingKey}
         </CommercialStateBanner>
@@ -724,7 +743,7 @@ export function InteractionRoomPanel({
   if (narrow) {
     return (
       <>
-        <CommercialSectionCard title={content.panelTitle} actions={openRoomAction}>
+        <CommercialSectionCard {...sectionCardProps} actions={openRoomAction}>
           <p>{content.panelNarrowHint}</p>
           <CommercialActionButton
             variant="primary"
@@ -747,7 +766,7 @@ export function InteractionRoomPanel({
   }
 
   return (
-    <CommercialSectionCard title={content.panelTitle} actions={openRoomAction}>
+    <CommercialSectionCard {...sectionCardProps} actions={openRoomAction}>
       {statusBlock}
       {roomBody}
       <TaskAttachmentPreviewModal
