@@ -259,6 +259,14 @@ class ChatTurnPreparationService:
             or common_chat_operational_answer
             or canvas_action
         )
+        tools_already_skipped = bool(
+            skip_tool_flags.skip_tools_for_user_identity
+            or skip_tool_flags.skip_tools_for_assistant_identity
+            or skip_tool_flags.skip_tools_for_data_interpretation
+            or skip_tool_flags.skip_tools_for_inactive_agent
+            or skip_tool_flags.skip_tools_for_project_sources_content
+            or skip_tool_flags.skip_tools_for_session_review
+        )
         turn_analysis_outcome = ChatTurnPreparationTurnAnalysisService.maybe_analyze(
             message=message,
             request=request,
@@ -266,6 +274,7 @@ class ChatTurnPreparationService:
             history_source=history_source,
             pipeline_stages=pipeline_stages,
             has_direct_answer=has_early_direct,
+            tools_already_skipped=tools_already_skipped,
         )
         if turn_analysis_outcome.result is not None:
             workspace_context = dict(workspace_context)

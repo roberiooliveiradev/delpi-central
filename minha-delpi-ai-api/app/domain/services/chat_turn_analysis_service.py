@@ -61,11 +61,15 @@ class ChatTurnAnalysisService:
         pipeline_stages: list[str] | None = None,
         has_direct_answer: bool = False,
         turn_analysis_enabled: bool = True,
+        tools_already_skipped: bool = False,
     ) -> bool:
         if not turn_analysis_enabled:
             return False
 
         if has_direct_answer:
+            return False
+
+        if tools_already_skipped:
             return False
 
         mode = str(response_mode or "normal").strip().lower() or "normal"

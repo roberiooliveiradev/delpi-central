@@ -54,6 +54,7 @@ class ChatTurnPreparationTurnAnalysisService:
         llm_gateway=None,
         external_action_repository=None,
         allow_compose_gateway: bool = True,
+        tools_already_skipped: bool = False,
     ) -> ChatTurnPreparationTurnAnalysisOutcome:
         cls.reset_ran()
 
@@ -102,6 +103,7 @@ class ChatTurnPreparationTurnAnalysisService:
             pipeline_stages=pipeline_stages,
             has_direct_answer=False,
             turn_analysis_enabled=enabled,
+            tools_already_skipped=tools_already_skipped,
         ):
             return ChatTurnPreparationTurnAnalysisOutcome(
                 result=None,

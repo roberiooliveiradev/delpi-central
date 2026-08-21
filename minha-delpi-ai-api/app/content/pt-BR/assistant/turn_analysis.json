@@ -20,7 +20,9 @@
       "clarification",
       "drawing_report_adjustment",
       "drawing_analysis",
-      "security"
+      "security",
+      "self_help",
+      "capabilities"
     ],
     "skipStages": [
       "small_talk",

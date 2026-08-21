@@ -80,6 +80,22 @@ def test_gate_skips_fast_mode_and_unclear_stage():
         heuristic_reason="no_clear_intent",
         pipeline_stages=["unclear_request"],
     )
+
+
+def test_gate_skips_self_help_and_tools_already_skipped():
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="self_help",
+        heuristic_decision="direct",
+        heuristic_reason="capabilities_catalog",
+    )
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="llm_general",
+        heuristic_decision="llm_fallback",
+        heuristic_reason="no_clear_intent",
+        tools_already_skipped=True,
+    )
     assert not ChatTurnAnalysisService.should_analyze(
         response_mode="normal",
         heuristic_intent="small_talk",
