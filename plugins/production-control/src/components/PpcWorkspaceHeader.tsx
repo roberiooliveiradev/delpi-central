@@ -17,7 +17,7 @@ type PpcWorkspaceHeaderProps = {
   stats?: ReactNode;
   branch: PpcBranch;
   subpluginId: string;
-  issueId?: string | null;
+  detectorId?: string | null;
   workCenter?: string | null;
   startDate?: string | null;
   endDate?: string | null;
@@ -33,7 +33,7 @@ export function PpcWorkspaceHeader({
   stats,
   branch,
   subpluginId,
-  issueId,
+  detectorId,
   workCenter,
   startDate,
   endDate,
@@ -43,7 +43,7 @@ export function PpcWorkspaceHeader({
   const setBranch = (next: PpcBranch) => {
     storeBranch(next);
     navigatePpc(
-      buildPpcHref({ subpluginId, branch: next, issueId, workCenter, startDate, endDate }),
+      buildPpcHref({ subpluginId, branch: next, detectorId, workCenter, startDate, endDate }),
     );
   };
 

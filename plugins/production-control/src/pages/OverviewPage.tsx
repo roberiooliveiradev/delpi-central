@@ -1,18 +1,22 @@
 import {
+  CHART_COLORS_DEPARTMENTAL,
   createDashboardKpiCard,
   createDashboardLoadingActivityCard,
+  createDashboardSegmentToggle,
   DelpiLogoMark,
-  LineSeriesChart,
+  MultiTypeSeriesChart,
 } from "@delpi/plugin-ui/index";
 import { ClockAlert, Timer } from "lucide-react";
+import { useMemo, useState } from "react";
 
-import { copy } from "../content/copy";
-import { useOverview } from "../hooks/useOverview";
-import type { OverviewPayload, PpcBranch, ProblemIssue } from "../types";
-import { buildPpcHref, navigatePpc } from "../utils/routeParser";
+import { ChartCard } from "../components/ChartCard";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
+import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
+import { useOverview } from "../hooks/useOverview";
+import type { OverviewPayload, PpcBranch, ProblemIssue, VolumeView } from "../types";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
+import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
 const KpiCard = createDashboardKpiCard({
   prefix: "ppc",
@@ -27,6 +31,44 @@ const LoadingCard = createDashboardLoadingActivityCard({
     progressAriaIndeterminate: copy.home.loading,
   },
 });
+
+const VolumeViewToggle = createDashboardSegmentToggle("ppc");
+
+/** Mesmo motor Recharts do dashboard de produção (`OtdEvolutionChart` → kit). */
+const OTD_CHART_HEIGHT = 196;
+/** Altura do card featured de volume — alinhada ao «Produção no tempo» do apontamento. */
+const VOLUME_CHART_HEIGHT = 280;
+
+/** Cores das séries OTD no dashboard de produção: SC = [4], ES = [5]. */
+function otdSeriesColor(branch: PpcBranch): string {
+  return branch === "02"
+    ? (CHART_COLORS_DEPARTMENTAL[5] ?? CHART_COLORS_DEPARTMENTAL[1]!)
+    : CHART_COLORS_DEPARTMENTAL[4]!;
+}
+
+/** Azul secundário Delpi — colunas do volume (referência visual do plano de produção). */
+const VOLUME_COLUMN_COLOR = "var(--ppc-title, #003866)";
+/** Ano anterior — tom mais claro da mesma família. */
+const VOLUME_PRIOR_COLUMN_COLOR = "color-mix(in srgb, var(--ppc-title, #003866) 42%, white)";
+
+const VOLUME_VIEW_OPTIONS = [
+  { value: "day" as const, label: copy.home.volumeViewDay },
+  { value: "month_yoy" as const, label: copy.home.volumeViewMonthYoy },
+];
+
+function formatChartPercent(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  return `${new Intl.NumberFormat("pt-BR", {
+    maximumFractionDigits: 0,
+  }).format(value)}%`;
+}
+
+function formatChartQty(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat("pt-BR", {
+    maximumFractionDigits: value >= 100 ? 0 : 1,
+  }).format(value);
+}
 
 function formatPct(value: number | null): string {
   if (value == null || Number.isNaN(value)) return "—";
@@ -47,21 +89,87 @@ type OverviewPageProps = {
 };
 
 export function OverviewPage({ branch }: OverviewPageProps) {
-  const { data, loading, error, reload } = useOverview(branch);
+  const [volumeView, setVolumeView] = useState<VolumeView>("day");
+  const { data, loading, error, reload } = useOverview(branch, volumeView);
 
+  /** A fila de atraso leva ao rastreio na Carga máquina, onde a OP pode ser reprogramada. */
   const openIssue = (issue: ProblemIssue) => {
+    const query = issue.production_order ?? issue.product_code;
+    if (!query) return;
     navigatePpc(
       buildPpcHref({
-        subpluginId: "problem-analysis",
+        subpluginId: "machine-load",
         branch,
-        issueId: issue.id,
+        locateQuery: query,
       }),
     );
   };
 
-  const seriesPoints = (data?.otd.series ?? [])
+  const otdRows = (data?.otd.series ?? [])
     .filter((point) => point.value != null)
-    .map((point) => ({ label: point.label, value: point.value }));
+    .map((point) => ({ periodo: point.label, otd: point.value }));
+
+  const isMonthYoy = (data?.production_volume?.view ?? volumeView) === "month_yoy";
+
+  const volumeRows = useMemo(
+    () =>
+      (data?.production_volume?.series ?? [])
+        .filter((point) => point.value != null)
+        .map((point) =>
+          isMonthYoy
+            ? {
+                periodo: point.label,
+                prior: point.prior_value ?? null,
+                produced: point.value,
+              }
+            : {
+                periodo: point.label,
+                produced: point.value,
+              },
+        ),
+    [data?.production_volume?.series, isMonthYoy],
+  );
+
+  const volumeHint = useMemo(() => {
+    const volume = data?.production_volume;
+    if (!volume) return "";
+    const parts = [copy.home.volumeTotal(formatChartQty(volume.total ?? 0))];
+    if (volume.view === "month_yoy" && volume.prior_total != null) {
+      parts.push(copy.home.volumePriorTotal(formatChartQty(volume.prior_total)));
+    } else if (volume.weekday_average != null) {
+      parts.push(
+        copy.home.volumeWeekdayAverage(
+          formatChartQty(volume.weekday_average),
+          volume.weekday_day_count ?? 0,
+        ),
+      );
+    }
+    return parts.join(" · ");
+  }, [data?.production_volume]);
+
+  const volumeSeries = useMemo(() => {
+    const current = {
+      dataKey: "produced",
+      name:
+        isMonthYoy && data?.production_volume?.current_year != null
+          ? String(data.production_volume.current_year)
+          : copy.home.volumeSeries,
+      fill: VOLUME_COLUMN_COLOR,
+    };
+    if (!isMonthYoy) return [current];
+    // Ano mais antigo à esquerda do par de colunas (Recharts segue a ordem do array).
+    return [
+      {
+        dataKey: "prior",
+        name:
+          data?.production_volume?.prior_year != null
+            ? String(data.production_volume.prior_year)
+            : copy.home.volumeSeriesPrior,
+        fill: VOLUME_PRIOR_COLUMN_COLOR,
+      },
+      current,
+    ];
+  }, [data?.production_volume?.current_year, data?.production_volume?.prior_year, isMonthYoy]);
 
   return (
     <div className="ppc-page-stack ppc-page-stack--home">
@@ -107,19 +215,27 @@ export function OverviewPage({ branch }: OverviewPageProps) {
               icon={<Timer size={22} strokeWidth={1.75} />}
               footer={
                 <div className="ppc-otd-chart" aria-label={copy.home.otdChart}>
-                  <LineSeriesChart
-                    points={seriesPoints}
-                    emptyMessage={copy.home.otdEmptyChart}
-                    options={{
-                      title: copy.home.otdChart,
-                      showLegend: false,
-                      showXAxisTitle: false,
-                      showYAxisTitle: false,
-                      valueFormat: "number",
-                      decimalPlaces: 1,
-                      categoryLabelFormat: "raw",
-                    }}
-                  />
+                  {otdRows.length === 0 ? (
+                    <p className="ppc-otd-chart__empty">{copy.home.otdEmptyChart}</p>
+                  ) : (
+                    <MultiTypeSeriesChart
+                      data={otdRows}
+                      categoryKey="periodo"
+                      series={[
+                        {
+                          dataKey: "otd",
+                          name: copy.home.otdChart,
+                          fill: otdSeriesColor(branch),
+                        },
+                      ]}
+                      chartType="line"
+                      height={OTD_CHART_HEIGHT}
+                      showLegend={false}
+                      formatY={formatChartPercent}
+                      formatTooltipValue={formatChartPercent}
+                      margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                    />
+                  )}
                 </div>
               }
             />
@@ -175,6 +291,44 @@ export function OverviewPage({ branch }: OverviewPageProps) {
               )}
             </article>
           </div>
+
+          <section className="ppc-volume-section" aria-label={copy.home.volumeTitle}>
+            <ChartCard
+              title={copy.home.volumeTitle}
+              titleHint={helpTooltips.productionVolume}
+              hint={volumeHint}
+              className="ppc-volume-card"
+              headerActions={
+                <VolumeViewToggle
+                  ariaLabel={copy.home.volumeViewAria}
+                  idPrefix="ppc-volume-view"
+                  size="sm"
+                  value={volumeView}
+                  onChange={setVolumeView}
+                  options={VOLUME_VIEW_OPTIONS}
+                />
+              }
+            >
+              {volumeRows.length === 0 ? (
+                <p className="ppc-volume-card__empty">{copy.home.volumeEmpty}</p>
+              ) : (
+                <div className="ppc-volume-chart">
+                  <MultiTypeSeriesChart
+                    data={volumeRows}
+                    categoryKey="periodo"
+                    series={volumeSeries}
+                    chartType="column"
+                    height={VOLUME_CHART_HEIGHT}
+                    showLegend={isMonthYoy}
+                    showValueLabels
+                    formatY={formatChartQty}
+                    formatTooltipValue={formatChartQty}
+                    margin={{ top: 28, right: 12, left: 4, bottom: 4 }}
+                  />
+                </div>
+              )}
+            </ChartCard>
+          </section>
         </div>
       ) : null}
     </div>

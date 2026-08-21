@@ -6,5 +6,24 @@
   },
   "kinds": {
     "delayed_order": "Ordem atrasada"
-  }
+  },
+  "detectors": [
+    {
+      "id": "incomplete-order-sets",
+      "title": "Conjuntos incompletos",
+      "description": "Conjuntos de OP cujas ordens filhas não cobrem a estrutura do produto raiz.",
+      "actionHint": "Confira a estrutura no Protheus e crie a OP que falta antes de a fábrica parar.",
+      "icon": "layers",
+      "order": 1,
+      "pageSize": 50,
+      "severity": {
+        "missing": "critical",
+        "extra": "attention",
+        "clear": "ok"
+      },
+      "issuedFromDays": 730,
+      "excludedRootPrefixes": [],
+      "excludedComponentCodes": []
+    }
+  ]
 }

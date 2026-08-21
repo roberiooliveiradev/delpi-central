@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-19",
-  "baselineOperationCount": 678,
-  "operationCount": 678,
-  "coveredCount": 606,
+  "generatedAt": "2026-08-20",
+  "baselineOperationCount": 680,
+  "operationCount": 680,
+  "coveredCount": 608,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -128,8 +128,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 46,
-      "covered": 46,
+      "total": 47,
+      "covered": 47,
       "gap": 0,
       "exempt": 0
     },
@@ -158,8 +158,8 @@
       "exempt": 0
     },
     "quality": {
-      "total": 144,
-      "covered": 144,
+      "total": 145,
+      "covered": 145,
       "gap": 0,
       "exempt": 0
     },
@@ -2787,7 +2787,7 @@
       "method": "POST",
       "path": "/planejamento-orcamentario/admin/org/cost-centers/from-erp",
       "module": "planejamento-orcamentario",
-      "entity": "planejamento_orcamentario_admin_cost_center_from_erp",
+      "entity": "budget_org_cost_center",
       "shape": "scalar",
       "status": "gap"
     },
@@ -2796,7 +2796,7 @@
       "method": "PATCH",
       "path": "/planejamento-orcamentario/admin/org/cost-centers/icon",
       "module": "planejamento-orcamentario",
-      "entity": "planejamento_orcamentario_admin_cost_center_icon",
+      "entity": "budget_org_cost_center",
       "shape": "scalar",
       "status": "covered"
     },
@@ -3201,8 +3201,8 @@
       "method": "GET",
       "path": "/planejamento-orcamentario/org/erp-cost-centers",
       "module": "planejamento-orcamentario",
-      "entity": "planejamento_orcamentario_org_erp_cost_centers",
-      "shape": "scalar",
+      "entity": "budget_org_cost_center",
+      "shape": "paged_list",
       "status": "gap"
     },
     {
@@ -3716,6 +3716,15 @@
       "module": "production",
       "entity": "production_planned_vs_real_time",
       "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_order_sets_incomplete",
+      "method": "GET",
+      "path": "/production/production-order-sets/incomplete",
+      "module": "production",
+      "entity": "production_order_sets_incomplete",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -5119,6 +5128,15 @@
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
       "module": "quality",
       "entity": "download_kaizen_evidence",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "replace_kaizen_evidence_file",
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
+      "module": "quality",
+      "entity": "kaizen_evidence",
       "shape": "scalar",
       "status": "covered"
     },

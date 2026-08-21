@@ -64,3 +64,23 @@ class ProductionOrdersGateway(Protocol):
         items: list[dict[str, str]],
     ) -> dict[str, Any]:
         ...
+
+    def fetch_production_order_sets_incomplete(
+        self,
+        *,
+        branch: str,
+        issued_from: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        ...
+
+    def fetch_production_appointments_series(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        granularity: str,
+    ) -> dict[str, Any]:
+        ...

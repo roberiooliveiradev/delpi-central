@@ -311,6 +311,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_machine_load_appointment_status": RouteContract(
         "production_machine_load_appointment_status", "list"
     ),
+    "get_production_order_sets_incomplete": RouteContract(
+        "production_order_sets_incomplete", "paged_list"
+    ),
     "get_production_oee": RouteContract("production_oee_detail", "paged_list"),
     "get_production_oee_appointment_by_id": RouteContract(
         "production_oee_appointment",

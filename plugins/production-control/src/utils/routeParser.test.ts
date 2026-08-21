@@ -7,18 +7,18 @@ describe("parsePpcPath", () => {
     const route = parsePpcPath("/apps/production-control", "", "01");
     expect(route.subpluginId).toBe("home");
     expect(route.branch).toBe("01");
-    expect(route.issueId).toBeNull();
+    expect(route.detectorId).toBeNull();
   });
 
-  it("reads issue and branch from query", () => {
+  it("reads detector and branch from query", () => {
     const route = parsePpcPath(
       "/apps/production-control/problem-analysis",
-      "?branch=02&issue=delayed-order:01%7CA",
+      "?branch=02&detector=incomplete-order-sets",
       "01",
     );
     expect(route.subpluginId).toBe("problem-analysis");
     expect(route.branch).toBe("02");
-    expect(route.issueId).toBe("delayed-order:01|A");
+    expect(route.detectorId).toBe("incomplete-order-sets");
   });
 
   it("reads work center, period and locate query from the deep link", () => {
@@ -52,14 +52,14 @@ describe("buildPpcHref", () => {
     );
   });
 
-  it("serializes deep link", () => {
+  it("serializes the detector deep link", () => {
     expect(
       buildPpcHref({
         subpluginId: "problem-analysis",
         branch: "01",
-        issueId: "delayed-order:01|A",
+        detectorId: "incomplete-order-sets",
       }),
-    ).toBe("/apps/production-control/problem-analysis?branch=01&issue=delayed-order%3A01%7CA");
+    ).toBe("/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets");
   });
 
   it("keeps the work center tab, period and locate query in the deep link", () => {

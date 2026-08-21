@@ -62,6 +62,9 @@ export type SeriesChartLegendSort =
 
 export type SeriesChartTheme = "light" | "dark";
 
+/** Quais marcadores pintar: todos os pontos ou só o último. */
+export type SeriesChartMarkerMode = "all" | "last";
+
 /**
  * Escala semântica por valor (Excel/Power BI color scales).
  * `off` = cor por índice de categoria/série (padrão).
@@ -129,6 +132,17 @@ export type SeriesChartOptions = {
   /** Valor constante da linha de meta no eixo de valores. */
   goalLineValue?: number | null;
   showMarkers?: boolean;
+  /**
+   * Quais marcadores pintar quando `showMarkers` está ligado.
+   * `last` mantém só o ponto mais recente — leitura de tendência sem poluir a
+   * série. Default `all` (comportamento histórico).
+   */
+  markerMode?: SeriesChartMarkerMode;
+  /**
+   * Preenchimento da área em degradê vertical (cor → transparente) em vez de
+   * opacidade chapada. Default false; só aplica a `area`.
+   */
+  areaFillGradient?: boolean;
   /**
    * Linha/área com curva suave (Catmull-Rom). Default false = segmentos retos.
    * Só aplica a `line`, `area` e traço de `combo`.
@@ -244,6 +258,8 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showGoalLine: false,
   goalLineValue: null,
   showMarkers: true,
+  markerMode: "all",
+  areaFillGradient: false,
   smoothLines: false,
   valueFormat: "auto",
   decimalPlaces: null,

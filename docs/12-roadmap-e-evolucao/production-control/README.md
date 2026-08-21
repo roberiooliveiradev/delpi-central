@@ -14,11 +14,11 @@ MFE não chama api-delpi. Subplugins são views internas do mesmo remote (não m
 
 ## Visual
 
-Shell híbrido Linear (rail compacta) + MES (inbox de exceções, semáforo). Home = gestão à vista (logo Delpi, OTD do mês, OPs atrasadas, fila com scroll).
+Shell híbrido Linear (rail compacta) + MES (cards de exceção, semáforo). Home = gestão à vista (logo Delpi, OTD do mês, OPs atrasadas, fila com scroll).
 
 ## Wireframe v1
 
-Home: `/apps/production-control?branch=01`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&issue=delayed-order:{op_key}`.
+Home: `/apps/production-control?branch=01`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`.
 
 ## Subplugins
 
@@ -26,10 +26,12 @@ Home: `/apps/production-control?branch=01`. Carga máquina: `/apps/production-co
 |-----------|--------|--------|
 | `home` | ativo | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
 | `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação |
-| `problem-analysis` | ativo | Inbox de exceções + detalhe da OP |
+| `problem-analysis` | ativo | Grade de detectores de exceção (primeiro: conjuntos incompletos) |
 | `capacity` | em breve | Capacidade e ocupação percentual por CT |
 
-Contrato TOTVS da carga máquina: [production-machine-load.md](../../../api-delpi/docs/api/production-machine-load.md); convenção de chave de OP: [ordem-producao-chave.md](../../../api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md); apontamento de operação: [apontamento-operacao-hza.md](../../../api-delpi/docs/api/padroes-totvs/apontamento-operacao-hza.md).
+Contrato TOTVS da carga máquina: [production-machine-load.md](../../../api-delpi/docs/api/production-machine-load.md); conjuntos incompletos: [production-order-sets-incomplete.md](../../../api-delpi/docs/api/production-order-sets-incomplete.md); convenção de chave de OP: [ordem-producao-chave.md](../../../api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md); apontamento de operação: [apontamento-operacao-hza.md](../../../api-delpi/docs/api/padroes-totvs/apontamento-operacao-hza.md).
+
+A Análise de problemas é **grade de detectores**: cada card é uma regra registrada no BFF e descrita em `production-control-api/production_control_app/content/problem_analysis.json`. A OP atrasada saiu da área e continua na gestão à vista, com a fila da home abrindo a Carga máquina no rastreio (`?locate=`).
 
 ## Fora desta versão
 

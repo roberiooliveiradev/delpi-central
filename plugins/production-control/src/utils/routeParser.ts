@@ -3,7 +3,7 @@ import type { PpcBranch } from "../types";
 
 export type PpcRoute = {
   subpluginId: string;
-  issueId: string | null;
+  detectorId: string | null;
   workCenter: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -35,7 +35,7 @@ function isoDateOrNull(value: string | null): string | null {
 }
 
 function parseSearch(search: string): {
-  issueId: string | null;
+  detectorId: string | null;
   workCenter: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -45,7 +45,7 @@ function parseSearch(search: string): {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const branchRaw = params.get("branch");
   return {
-    issueId: params.get("issue")?.trim() || null,
+    detectorId: params.get("detector")?.trim() || null,
     workCenter: params.get("ct")?.trim() || null,
     startDate: isoDateOrNull(params.get("startDate")),
     endDate: isoDateOrNull(params.get("endDate")),
@@ -64,7 +64,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
   const subpluginId = segment === "" ? DEFAULT_SUBPLUGIN : segment;
   return {
     subpluginId,
-    issueId: query.issueId,
+    detectorId: query.detectorId,
     workCenter: query.workCenter,
     startDate: query.startDate,
     endDate: query.endDate,
@@ -77,7 +77,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
 export function buildPpcHref(input: {
   subpluginId: string;
   branch: PpcBranch;
-  issueId?: string | null;
+  detectorId?: string | null;
   workCenter?: string | null;
   startDate?: string | null;
   endDate?: string | null;
@@ -89,7 +89,7 @@ export function buildPpcHref(input: {
       : `${PPC_BASE_PATH}/${input.subpluginId}`;
   const params = new URLSearchParams();
   params.set("branch", input.branch);
-  if (input.issueId) params.set("issue", input.issueId);
+  if (input.detectorId) params.set("detector", input.detectorId);
   if (input.workCenter) params.set("ct", input.workCenter);
   if (input.startDate) params.set("startDate", input.startDate);
   if (input.endDate) params.set("endDate", input.endDate);

@@ -197,14 +197,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "sales_conversion_rate_pct",
         "value"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_sales_conversion_rate_series",
@@ -1154,16 +1154,6 @@
         "end_date"
       ],
       "openEndedDateRange": true,
-      "tvConstraints": {
-        "maxRows": 200
-      },
-      "tableFields": "lines",
-      "valueFields": [
-        "sales_order_otd_pct",
-        "late_percentage",
-        "late_lines",
-        "total_lines"
-      ],
       "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
       "valueFieldTypes": {
         "sales_order_otd_pct": "number",
@@ -1172,7 +1162,17 @@
         "total_lines": "number",
         "promised_date": "date",
         "invoice_date": "date"
-      }
+      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "late_percentage",
+        "late_lines",
+        "total_lines"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "tableFields": "lines"
     },
     {
       "operationId": "get_sales_order_otd_series",
@@ -1375,14 +1375,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFields": [
         "score",
         "value",
         "idd"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      }
     },
     {
       "operationId": "get_dashboard_department_indicators",
@@ -1451,14 +1451,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
-      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 20
+      },
+      "tableFields": "indicators"
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1527,14 +1527,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
-      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 20
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -1587,14 +1587,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -1648,14 +1648,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -1709,14 +1709,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -1770,14 +1770,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -1831,14 +1831,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -1892,14 +1892,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -1953,14 +1953,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2014,14 +2014,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2075,14 +2075,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2136,14 +2136,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2197,14 +2197,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2258,14 +2258,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2319,14 +2319,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2380,14 +2380,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2441,14 +2441,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2502,14 +2502,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2563,14 +2563,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2624,14 +2624,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2685,14 +2685,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2746,14 +2746,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2807,14 +2807,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2868,14 +2868,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2929,14 +2929,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -2990,14 +2990,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3051,14 +3051,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3112,14 +3112,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3173,14 +3173,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3234,14 +3234,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3295,14 +3295,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3356,14 +3356,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3417,14 +3417,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3478,14 +3478,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3539,14 +3539,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3600,14 +3600,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3661,14 +3661,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3722,14 +3722,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3783,14 +3783,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3844,14 +3844,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3905,14 +3905,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -3966,14 +3966,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4027,14 +4027,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4088,14 +4088,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4149,14 +4149,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4210,14 +4210,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4271,14 +4271,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4332,14 +4332,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4393,18 +4393,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Externo Componentes — meta",
         "PPM chicotes 9026 — meta"
       ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4458,18 +4458,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Externo Componentes — realizado",
         "PPM chicotes 9026 — realizado"
       ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4523,14 +4523,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4584,14 +4584,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4645,14 +4645,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4706,14 +4706,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4767,18 +4767,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Interno Componentes — meta",
         "PPM chicotes 9026 — meta"
       ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4832,18 +4832,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Interno Componentes — realizado",
         "PPM chicotes 9026 — realizado"
       ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4897,14 +4897,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4958,14 +4958,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5019,14 +5019,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5080,14 +5080,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5144,11 +5144,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5205,11 +5205,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5266,11 +5266,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5327,11 +5327,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5385,14 +5385,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5446,14 +5446,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5507,14 +5507,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5568,14 +5568,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5629,14 +5629,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5690,14 +5690,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5751,14 +5751,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5812,14 +5812,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5873,14 +5873,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5934,14 +5934,14 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -6345,13 +6345,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items",
-        "comparable_goal"
-      ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
@@ -6360,7 +6353,14 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items",
+        "comparable_goal"
+      ]
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -6481,8 +6481,6 @@
         "start_date",
         "end_date"
       ],
-      "openEndedDateRange": true,
-      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
         "sale_number": "Número da OV",
@@ -6491,7 +6489,9 @@
         "customer_name": "Cliente",
         "product_code": "Código do produto",
         "status": "Status"
-      }
+      },
+      "openEndedDateRange": true,
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar."
     },
     {
       "operationId": "export_lmp_nonconformities",
@@ -7144,28 +7144,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "total_investment_in_period",
-        "total_gross_savings_in_period",
-        "total_hours_saved_until_now",
-        "implemented_solutions_count",
-        "solutions_started_in_period_count"
-      ],
-      "valueFieldTypes": {
-        "total_investment_in_period": "number",
-        "total_gross_savings_in_period": "number",
-        "total_hours_saved_until_now": "number",
-        "implemented_solutions_count": "number",
-        "solutions_started_in_period_count": "number",
-        "month": "string",
-        "gross_savings_month": "number",
-        "gross_costs_month": "number",
-        "gross_investment_month": "number",
-        "gross_recurring_investment_month": "number",
-        "shared_resource_cost_month": "number",
-        "investment_total_month": "number",
-        "net_savings_month": "number"
-      },
       "valueFieldLabels": {
         "total_investment_in_period": "Investimento total",
         "total_gross_costs_until_now": "Investimento total",
@@ -7186,7 +7164,29 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFieldTypes": {
+        "total_investment_in_period": "number",
+        "total_gross_savings_in_period": "number",
+        "total_hours_saved_until_now": "number",
+        "implemented_solutions_count": "number",
+        "solutions_started_in_period_count": "number",
+        "month": "string",
+        "gross_savings_month": "number",
+        "gross_costs_month": "number",
+        "gross_investment_month": "number",
+        "gross_recurring_investment_month": "number",
+        "shared_resource_cost_month": "number",
+        "investment_total_month": "number",
+        "net_savings_month": "number"
+      },
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count",
+        "solutions_started_in_period_count"
+      ]
     },
     {
       "operationId": "get_transformometro_savings_investment_series",
@@ -7262,12 +7262,12 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
       "openEndedDateRange": true,
-      "tableFields": "points",
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
       "valueFieldTypes": {
         "periodo": "date",
         "economia_bruta": "number",
@@ -7275,6 +7275,10 @@
         "economia_liquida": "number",
         "horas_economizadas": "number"
       },
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -7290,11 +7294,7 @@
           "direction": "asc"
         }
       ],
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      }
+      "tableFields": "points"
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -12215,10 +12215,10 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "list_production_appointments",
@@ -13221,9 +13221,12 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 10000,
-        "bulkList": true
+      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
+      "valueFieldTypes": {
+        "eficiencia_percentual": "number",
+        "resultado_mod": "number",
+        "tempo_real_horas": "number",
+        "tempo_previsto_horas": "number"
       },
       "valueFields": [
         "eficiencia_percentual",
@@ -13231,12 +13234,9 @@
         "tempo_real_horas",
         "tempo_previsto_horas"
       ],
-      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
-      "valueFieldTypes": {
-        "eficiencia_percentual": "number",
-        "resultado_mod": "number",
-        "tempo_real_horas": "number",
-        "tempo_previsto_horas": "number"
+      "tvConstraints": {
+        "maxRows": 10000,
+        "bulkList": true
       }
     },
     {
@@ -13396,22 +13396,22 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 200
+      "valueFieldLabels": {
+        "efficiency_pct": "Eficiência %",
+        "appointment_count": "Apontamentos",
+        "work_center": "Centro de trabalho"
       },
-      "valueFields": [
-        "efficiency_pct",
-        "appointment_count"
-      ],
       "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
       "valueFieldTypes": {
         "efficiency_pct": "number",
         "appointment_count": "number"
       },
-      "valueFieldLabels": {
-        "efficiency_pct": "Eficiência %",
-        "appointment_count": "Apontamentos",
-        "work_center": "Centro de trabalho"
+      "valueFields": [
+        "efficiency_pct",
+        "appointment_count"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
       }
     },
     {
@@ -14017,14 +14017,7 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "seriesField": "points",
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -14033,6 +14026,10 @@
         "oee_filial_01": "number",
         "oee_filial_02": "number"
       },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -14047,7 +14044,10 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -14105,14 +14105,14 @@
         "value",
         "otdPct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -14464,9 +14464,6 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "string",
@@ -14475,6 +14472,9 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       }
     },
     {
@@ -14533,14 +14533,14 @@
         "value",
         "oeePct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -14902,6 +14902,54 @@
           "optional": true,
           "label": "Limite",
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_production_order_sets_incomplete",
+      "httpMethod": "GET",
+      "label": "Conjuntos de OP incompletos",
+      "category": "production",
+      "path": "/production/production-order-sets/incomplete",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz vigente na emissão da OP mãe, com os componentes faltando e sobrando.",
+      "whenToUse": "Usar para pegar conjunto criado sem OP de intermediário antes de a fábrica parar esperando por ele.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "issued_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Emitida de",
+          "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
         }
       },
       "paramStrategy": "direct"
@@ -15696,15 +15744,15 @@
         }
       },
       "paramStrategy": "direct",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       },
-      "tableFields": "items",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      }
+      "tableFields": "items"
     },
     {
       "operationId": "get_product_detail",
@@ -18836,17 +18884,17 @@
       "labelAliases": [
         "Auditoria 5S — resumo"
       ],
-      "valueFields": [
-        "value",
-        "average_score"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "value",
+        "average_score"
+      ]
     },
     {
       "operationId": "get_audit_5s_summary_series",
@@ -19450,11 +19498,6 @@
         "Kaizens — resumo e listagem (PostgreSQL)",
         "Kaizens — resumo e listagem (Google Sheets)"
       ],
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
@@ -19463,7 +19506,12 @@
         "ideas_goal": "Ideias / meta",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ]
     },
     {
       "operationId": "get_kaizen_summary_series",
@@ -20070,20 +20118,18 @@
         }
       },
       "paramStrategy": "direct",
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
+      "defaultParams": {
+        "type": "customer"
       },
       "labelAliases": [
         "Qualidade — dias sem NC no cliente",
         "Dias sem defeitos no cliente"
       ],
-      "valueFields": [
-        "value",
-        "current_days_without_nc"
-      ],
-      "defaultParams": {
-        "type": "customer"
+      "valueFieldLabels": {
+        "value": "Dias sem NC",
+        "current_days_without_nc": "Dias atuais sem NC",
+        "record_days_without_nc": "Recorde de dias sem NC",
+        "last_nc_date": "Data da última NC"
       },
       "valueFieldTypes": {
         "value": "number",
@@ -20091,11 +20137,13 @@
         "record_days_without_nc": "number",
         "nc_count": "number"
       },
-      "valueFieldLabels": {
-        "value": "Dias sem NC",
-        "current_days_without_nc": "Dias atuais sem NC",
-        "record_days_without_nc": "Recorde de dias sem NC",
-        "last_nc_date": "Data da última NC"
+      "valueFields": [
+        "value",
+        "current_days_without_nc"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -20276,17 +20324,8 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "labelAliases": [
         "Qualidade — PPM externo"
-      ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -20299,6 +20338,15 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -20479,18 +20527,9 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "labelAliases": [
         "Qualidade — PPM interno",
         "PPM Interno — realizado"
-      ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -20503,6 +20542,15 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -21076,14 +21124,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
-      "valueFields": [
-        "value",
-        "sharePct",
-        "percentual",
-        "quantity",
-        "occurrenceCount"
-      ],
       "valueFieldLabels": {
         "value": "Valor (R$)",
         "sharePct": "Participação (%)",
@@ -21092,7 +21132,15 @@
         "occurrenceCount": "Ocorrências",
         "code": "Código",
         "label": "Descrição"
-      }
+      },
+      "valueFields": [
+        "value",
+        "sharePct",
+        "percentual",
+        "quantity",
+        "occurrenceCount"
+      ],
+      "tableFields": "items"
     },
     {
       "operationId": "get_refugos_registros",
@@ -22755,15 +22803,6 @@
         "end_date"
       ],
       "openEndedDateRange": true,
-      "tvConstraints": {
-        "maxRows": 200
-      },
-      "tableFields": "lines",
-      "valueFields": [
-        "purchase_order_otd_pct",
-        "late_lines",
-        "total_lines"
-      ],
       "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
       "valueFieldTypes": {
         "purchase_order_otd_pct": "number",
@@ -22773,7 +22812,16 @@
         "receipt_entry_date": "date",
         "invoice_issue_date": "date",
         "purchase_order_issue_date": "date"
-      }
+      },
+      "valueFields": [
+        "purchase_order_otd_pct",
+        "late_lines",
+        "total_lines"
+      ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "tableFields": "lines"
     },
     {
       "operationId": "get_supplies_purchase_order_otd_series",
@@ -23414,15 +23462,6 @@
         }
       },
       "paramStrategy": "direct",
-      "tvConstraints": {
-        "maxRows": 50,
-        "requiresBranchPermission": true
-      },
-      "tableFields": "items",
-      "valueFields": [
-        "stock_value",
-        "quantity"
-      ],
       "defaultParams": {
         "page": 1,
         "page_size": 50,
@@ -23432,7 +23471,16 @@
       "valueFieldLabels": {
         "stock_value": "Valor (R$)",
         "quantity": "Quantidade"
-      }
+      },
+      "valueFields": [
+        "stock_value",
+        "quantity"
+      ],
+      "tvConstraints": {
+        "maxRows": 50,
+        "requiresBranchPermission": true
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_supplies_stock_balances_summary",
@@ -23475,21 +23523,21 @@
         }
       },
       "paramStrategy": "direct",
-      "tvConstraints": {
-        "maxRows": 12,
-        "requiresBranchPermission": true
+      "valueFieldLabels": {
+        "product_count": "Qtd. de produtos",
+        "total_stock_value": "Valor do estoque (R$)",
+        "total_quantity": "Quantidade total"
       },
-      "tableFields": "by_warehouse",
       "valueFields": [
         "product_count",
         "total_stock_value",
         "total_quantity"
       ],
-      "valueFieldLabels": {
-        "product_count": "Qtd. de produtos",
-        "total_stock_value": "Valor do estoque (R$)",
-        "total_quantity": "Quantidade total"
-      }
+      "tvConstraints": {
+        "maxRows": 12,
+        "requiresBranchPermission": true
+      },
+      "tableFields": "by_warehouse"
     },
     {
       "operationId": "get_supplies_stock_value",
@@ -23570,16 +23618,16 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
-      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
+      "tableFields": "top_products"
     },
     {
       "operationId": "export_supplies_third_party_materials_returns",

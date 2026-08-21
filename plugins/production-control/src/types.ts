@@ -36,21 +36,82 @@ export type ProblemIssue = {
   };
 };
 
-export type ProblemAnalysisPayload = {
+/** Card da Análise de problemas: título e ícone do catálogo, números do detector. */
+export type ProblemDetector = {
+  id: string;
+  title: string;
+  description: string;
+  action_hint: string | null;
+  icon: string | null;
+  order: number;
+  severity: IssueSeverity;
+  count: number;
+  metrics: Record<string, number | string | null>;
+};
+
+export type ProblemDetectorsPayload = {
   branch: string;
+  detectors: ProblemDetector[];
   summary: {
+    detector_count: number;
+    issue_count: number;
     critical: number;
     attention: number;
-    ok: number;
-    issue_count: number;
   };
-  issues: ProblemIssue[];
-  selected: ProblemIssue | null;
 };
+
+export type OrderSetComponent = {
+  product_code: string;
+  description?: string | null;
+  product_type?: string | null;
+  bom_level?: number | null;
+  production_order?: string | null;
+};
+
+/** Conjunto (C2_NUM + C2_ITEM) cujas OPs não batem com a estrutura do produto raiz. */
+export type IncompleteOrderSetItem = {
+  id: string;
+  kind: string;
+  severity: IssueSeverity;
+  branch: string | null;
+  set_key: string | null;
+  set_number: string | null;
+  set_item: string | null;
+  root_code: string | null;
+  root_description: string | null;
+  root_order: string | null;
+  due_date: string | null;
+  issued_at: string | null;
+  order_count: number;
+  open_order_count: number;
+  expected_component_count: number;
+  created_component_count: number;
+  missing_count: number;
+  extra_count: number;
+  missing_components: OrderSetComponent[];
+  extra_components: OrderSetComponent[];
+};
+
+export type ProblemDetectorItemsPayload = {
+  branch: string;
+  detector: ProblemDetector;
+  summary: Record<string, number | string | null>;
+  items: IncompleteOrderSetItem[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+    is_complete: boolean;
+  };
+};
+
+export type VolumeView = "day" | "month_yoy";
 
 export type OverviewSeriesPoint = {
   label: string;
   value: number | null;
+  prior_value?: number | null;
   start_date?: string | null;
   end_date?: string | null;
 };
@@ -68,6 +129,21 @@ export type OverviewPayload = {
     on_time_ops: number;
     total_ops_finished: number;
     late_percentage: number | null;
+    series: OverviewSeriesPoint[];
+  };
+  /** Volume diário/mensal de PAs (última operação do roteiro) — mesma fonte do apontamento. */
+  production_volume: {
+    view: VolumeView;
+    period: { start_date: string; end_date: string };
+    prior_period?: { start_date: string; end_date: string } | null;
+    total: number;
+    prior_total?: number | null;
+    unit: string;
+    /** Média só em dias úteis (seg–sex); nula no modo mensal. */
+    weekday_average: number | null;
+    weekday_day_count: number;
+    current_year?: number;
+    prior_year?: number;
     series: OverviewSeriesPoint[];
   };
   delayed_ops: {

@@ -47,7 +47,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
 
   let workspace = <OverviewPage branch={route.branch} />;
   if (route.subpluginId === "problem-analysis") {
-    workspace = <ProblemAnalysisPage branch={route.branch} issueId={route.issueId} />;
+    workspace = <ProblemAnalysisPage branch={route.branch} detectorId={route.detectorId} />;
   } else if (route.subpluginId === "machine-load") {
     workspace = (
       <MachineLoadPage

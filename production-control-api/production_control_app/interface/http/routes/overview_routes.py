@@ -14,10 +14,18 @@ router = APIRouter(tags=["Overview"])
 def get_overview(
     request: Request,
     branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    volumeView: str = Query(
+        "day",
+        description="Visualização do volume: day (mês corrente) ou month_yoy (mês × ano anterior)",
+    ),
 ):
     user = resolve_user(request)
     try:
-        data = build_overview_service().build(user, branch=branch)
+        data = build_overview_service().build(
+            user,
+            branch=branch,
+            volume_view=volumeView,
+        )
     except InvalidBranch as exc:
         return fail(str(exc), 422)
     except BranchAccessDenied as exc:

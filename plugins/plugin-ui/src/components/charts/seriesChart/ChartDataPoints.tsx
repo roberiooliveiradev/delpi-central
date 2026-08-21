@@ -6,6 +6,7 @@ import {
   type SeriesChartInteraction,
   resolveMarkerStyle,
 } from "../seriesChartParts";
+import type { SeriesChartMarkerMode } from "../seriesChartOptions";
 import type { SeriesChartSharedProps } from "./types";
 
 export type ChartDataPointsProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor"> & {
@@ -14,7 +15,17 @@ export type ChartDataPointsProps = Pick<SeriesChartSharedProps, "layout" | "poin
   chartParts?: ChartPartsMap | null;
   seriesIndex?: number;
   plotOn?: "primary" | "secondary";
+  /** `last` pinta só o ponto mais recente com valor; default pinta todos. */
+  mode?: SeriesChartMarkerMode;
 };
+
+/** Índice do último ponto com valor numérico — o «hoje» da série. */
+function lastValuedIndex(points: ChartDataPointsProps["points"]): number {
+  for (let index = points.length - 1; index >= 0; index -= 1) {
+    if (Number.isFinite(Number(points[index]?.value))) return index;
+  }
+  return -1;
+}
 
 export function ChartDataPoints({
   layout,
@@ -25,16 +36,19 @@ export function ChartDataPoints({
   chartParts,
   seriesIndex = 0,
   plotOn = "primary",
+  mode = "all",
 }: ChartDataPointsProps) {
   const cn = useSeriesChartClasses();
   if (!visible) return null;
 
   const { toX, toY, toYSecondary } = layout;
   const mapY = plotOn === "secondary" && toYSecondary ? toYSecondary : toY;
+  const onlyIndex = mode === "last" ? lastValuedIndex(points) : -1;
 
   return (
     <>
       {points.map((point, index) => {
+        if (mode === "last" && index !== onlyIndex) return null;
         const marker = resolveMarkerStyle(chartParts, seriesIndex, index, seriesColor);
         if (!marker.visible) return null;
         const ref = { kind: "marker" as const, seriesIndex, pointIndex: index };

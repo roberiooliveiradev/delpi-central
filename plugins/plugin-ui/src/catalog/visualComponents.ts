@@ -330,6 +330,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   // charts
   vc("charts", "ConfigurableSeriesChart"),
   vc("charts", "LineSeriesChart"),
+  vc("charts", "AreaSeriesChart", {
+    addedAt: "2026-08-20",
+    description:
+      "Gráfico de área do primitivo de série. Com areaFillGradient, smoothLines e markerMode last vira tendência de card (KPI + série).",
+  }),
   vc("charts", "BarSeriesChart"),
   vc("charts", "SeriesChartPrimitive"),
   vc("charts", "ImpactEffortMatrix"),
