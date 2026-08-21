@@ -396,6 +396,17 @@ export async function updateInteractionMessage(
   return unwrapEnvelope(response, "Erro ao atualizar mensagem.");
 }
 
+export async function deleteInteractionRoom(
+  roomId: string,
+  signal?: AbortSignal,
+): Promise<InteractionRoomDto> {
+  const response = await httpDelete<ApiSuccessResponse<InteractionRoomDto>>(
+    interactionRoomsUrl(interactionRoomPath(roomId)),
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao excluir a conversa.");
+}
+
 export async function deleteInteractionMessage(
   roomId: string,
   messageId: string,

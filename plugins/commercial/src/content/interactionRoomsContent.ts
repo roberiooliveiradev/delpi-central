@@ -55,6 +55,16 @@ export const INTERACTION_ROOMS_CONTENT = {
   deleteCancelLabel: "Cancelar",
   deleteOk: "Mensagem excluída.",
   deleteError: "Não foi possível excluir a mensagem.",
+  deleteRoomActionLabel: "Excluir conversa",
+  deleteRoomConfirmTitle: "Excluir conversa",
+  deleteRoomConfirmMessage:
+    "Excluir esta conversa? Ela some da lista; uma nova sala pode ser aberta no mesmo pedido ou conta.",
+  deleteRoomConfirmLabel: "Excluir",
+  deleteRoomCancelLabel: "Cancelar",
+  deleteRoomOk: "Conversa excluída.",
+  deleteRoomError: "Não foi possível excluir a conversa.",
+  deleteRoomDeletedElsewhere:
+    "Esta conversa foi excluída e não está mais disponível.",
   reactionsAriaLabel: "Reações da mensagem",
   reactionAddAriaLabel: "Adicionar reação",
   reactionEmojiMenuAriaLabel: "Escolher emoji de reação",
