@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
+
 
 @dataclass(frozen=True)
 class OperationalApiRouteSpec:
@@ -31,7 +35,10 @@ class OperationalApiRouteSpec:
         return cls(
             domain="department_kpi",
             reason=str(getattr(match, "reason", "") or "").strip()
-            or "A pergunta solicita um indicador departamental.",
+            or ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "departmentKpiDefault",
+            ),
             path_tokens=(path_token,) if path_token else (),
             path_prefixes=(domain_prefix,) if domain_prefix else (),
             operation_tokens=(operation_token,) if operation_token else (),
@@ -52,7 +59,10 @@ class OperationalApiRouteSpec:
         return cls(
             domain="supplies_kpi",
             reason=str(reason or "").strip()
-            or "A pergunta solicita um indicador de suprimentos.",
+            or ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "suppliesKpiDefault",
+            ),
             path_tokens=(token,) if token else (),
             operation_tokens=(operation,) if operation else (),
             parameter_strategy="date_branch",
@@ -72,7 +82,10 @@ class OperationalApiRouteSpec:
         return cls(
             domain="product",
             reason=str(reason or "").strip()
-            or "A pergunta solicita informações operacionais de produto via OpenAPI.",
+            or ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "productOperational",
+            ),
             path_prefixes=("/products/",),
             path_tokens=(f"/{route_segment}",) if route_segment else (),
             parameter_strategy="product_code",

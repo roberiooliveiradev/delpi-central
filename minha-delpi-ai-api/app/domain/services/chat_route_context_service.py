@@ -12,6 +12,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 @dataclass(frozen=True)
@@ -483,7 +486,10 @@ class ChatRouteContextService:
                             domain_prefix="/supplies/",
                             path_token=token,
                             path=path,
-                            reason="Refino da consulta de suprimentos já feita nesta conversa.",
+                            reason=ExternalActionResponseContentService.get(
+                            "selectionReasons",
+                            "kpiMetricRefinementDefault",
+                        ),
                         )
 
                 if any(marker in path for marker in cls._DEPARTMENT_DOMAIN_MARKERS):
@@ -500,7 +506,10 @@ class ChatRouteContextService:
                             domain_prefix=domain,
                             path_token=token,
                             path=path,
-                            reason="Refino do KPI departamental já consultado nesta conversa.",
+                            reason=ExternalActionResponseContentService.get(
+                            "selectionReasons",
+                            "departmentKpiRefinement",
+                        ),
                         )
 
         return None

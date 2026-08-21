@@ -19,6 +19,9 @@ from app.domain.services.chat_route_context_service import (
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 from app.domain.services.chat_operational_refinement.chat_operational_refinement_facade_access import (
     refinement_service,
@@ -91,7 +94,10 @@ class ChatOperationalRefinementStockService:
                 product_code=code,
                 branch=branch,
                 warehouse=warehouse,
-                reason="A mensagem refina a consulta de estoque já feita nesta conversa.",
+                reason=ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "stockRefinementDefault",
+                ),
             )
             for code in product_codes
         ]

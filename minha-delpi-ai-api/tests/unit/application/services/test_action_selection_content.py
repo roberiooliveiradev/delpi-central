@@ -127,12 +127,56 @@ def test_selection_reasons_keys_exist():
         "routeSuggestionRegistry",
         "routeSuggestionLexical",
         "routeSuggestionEmpty",
+        "stockRefinementDefault",
+        "departmentKpiDefault",
+        "suppliesKpiDefault",
+        "departmentKpiLabeled",
+        "sqlSchemaRecovery",
+        "kpiMetricRefinementDefault",
+        "departmentKpiRefinement",
+        "productOperational",
     )
 
     for key in keys:
         value = ExternalActionResponseContentService.get("selectionReasons", key)
         assert value, f"missing selectionReasons.{key}"
 
+
+def test_platform_tool_selection_reasons_exist():
+    from app.domain.services.chat_platform_tools_content_service import (
+        ChatPlatformToolsContentService,
+    )
+
+    assert ChatPlatformToolsContentService.get("toolSelection", "currentUserReason")
+    assert ChatPlatformToolsContentService.get("toolSelection", "allowedAppsReason")
+    assert ChatPlatformToolsContentService.get("toolSelection", "portalRoutesReason")
+
+
+def test_web_search_selection_reasons_exist():
+    from app.domain.services.chat_assistant_content_service import (
+        ChatAssistantContentService,
+    )
+
+    for key in (
+        "preferOfficial",
+        "publicInternet",
+        "deepModeSuffix",
+        "publicFactsFallback",
+        "postRagFallback",
+    ):
+        assert ChatAssistantContentService.get(
+            "web_search", "selectionReasons", key
+        ), f"missing web_search.selectionReasons.{key}"
+
+
+def test_stream_sql_recovery_reason_exists():
+    from app.domain.services.chat_assistant_content_service import (
+        ChatAssistantContentService,
+    )
+
+    assert ChatAssistantContentService.get(
+        "stream", "activity", "sqlSchemaRecoveryReason"
+    )
 
 def test_rag_activity_stream_keys_exist():
     assert ChatAssistantContentService.get(
