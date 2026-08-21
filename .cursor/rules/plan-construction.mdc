@@ -12,7 +12,16 @@ Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e
 1. **Diretrizes Cursor** — consultar `development-standards-index.mdc` (se existir) e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `plugins-reusable-components`, `plugins-overlay-positioning`, `centralized-rules-first`, etc.).
 2. **Inventário do existente** — mapear o que já há (kit `plugin-ui`, rotas, permissões, CSS, clones); preferir **estender** o módulo canônico a reinventar.
 3. **Pesquisa de mercado** — padrões/libs/UX de referência; travar P0 vs fora na tabela de decisões.
-4. **Fluxos** — diagramas mermaid (estados, happy path, erros) no corpo do plano.
+4. **Fluxos + matriz transversal (obrigatório)** — não basta o happy path do sintoma.
+   Antes de travar etapas, **estudar e nomear** todos os consumidores do mesmo contrato
+   (compose, edit, leitura/bolha, rascunho F5, reply, clip vs inline, undo, upload/rewrite,
+   dedup de strip, gates, realtime, preview inbox, etc. — o que existir no domínio).
+   No corpo do plano incluir:
+   - tabela **Fluxo × superfície × caminho × P0|herança|fora**;
+   - satélites **explícitos** (não «fica implícito»);
+   - diagrama mermaid dos caminhos que compartilham o módulo canônico.
+   Caso de referência: imagem inline na Sala (compose/edit dock/bolha/F5/clip) —
+   inventário incompleto gera regressão no fluxo omitido.
 5. **Wireframes de UI** — esboço textual, ASCII, seções de tela ou referência a `docs/**/WIREFRAMES.md` (layout, ações, vazios); UI branded respeita design system / `plugin-ui`.
 6. **Impacto transversal** — consumidores, aliases, RBAC, MFEs, APIs, docs, regressões; etapa explícita se a mudança espalha.
 7. **Estrutura do plano** — ver abaixo.
@@ -25,6 +34,7 @@ Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e
 |-------|----------|
 | Overview | 1–2 frases do resultado |
 | Decisões travadas | Tabela sem Option A/B / TBD |
+| Matriz de fluxos transversais | Tabela Fluxo × superfície × P0/herança/fora (+ satélites) |
 | Etapas `E1…En` | Agrupamento lógico |
 | Subetapas `E*.S*` | Trabalho atomicamente entregável |
 | Critérios de pronto | Verificável |
@@ -50,5 +60,6 @@ No fluxo cotidiano (sem esse protocolo no plano): commit **somente** se o usuár
 
 - Plano com alternativas abertas («A ou B», «opcional se…») — decidir e travar.
 - Pular inventário / regras Cursor / impacto e ir direto a código.
+- Plano só do sintoma reportado sem inventariar fluxos irmãos (edit, bolha, rascunho, clip, …).
 - Commit sem testes do escopo.
 - Patch local que ignora módulo canônico já mapeado no inventário.
