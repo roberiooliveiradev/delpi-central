@@ -26,6 +26,25 @@ class ChatExternalActionDirectResponseService:
         return cls._require_config().chat_external_action_direct_response_enabled()
 
     @classmethod
+    def has_successful_external_action(cls, tool_calls: list | None) -> bool:
+        if not isinstance(tool_calls, list):
+            return False
+
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if isinstance(metadata, dict) and metadata.get("ok"):
+                return True
+
+        return False
+
+    @classmethod
     def should_skip_rag(cls, tool_context: dict | None) -> bool:
         if not tool_context:
             return False
@@ -33,7 +52,10 @@ class ChatExternalActionDirectResponseService:
         if tool_context.get("skipRag"):
             return True
 
-        return bool(tool_context.get("directAnswer"))
+        if tool_context.get("directAnswer"):
+            return True
+
+        return cls.has_successful_external_action(tool_context.get("toolCalls"))
 
     @classmethod
     def resolve_answer(cls, tool_context: dict | None) -> str | None:

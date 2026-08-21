@@ -335,19 +335,13 @@ class ChatResponseModeService:
         if skip_rag:
             return True
 
-        if not isinstance(tool_calls, list):
-            return False
+        from app.domain.services.chat_external_action_direct_response_service import (
+            ChatExternalActionDirectResponseService,
+        )
 
-        for tool_call in tool_calls:
-            if str(tool_call.get("name") or "") != "execute_external_action":
-                continue
-
-            metadata = tool_call.get("metadata")
-
-            if isinstance(metadata, dict) and metadata.get("ok"):
-                return True
-
-        return False
+        return ChatExternalActionDirectResponseService.has_successful_external_action(
+            tool_calls
+        )
 
     @classmethod
     def _fast_config(cls) -> LlmGenerationConfig:

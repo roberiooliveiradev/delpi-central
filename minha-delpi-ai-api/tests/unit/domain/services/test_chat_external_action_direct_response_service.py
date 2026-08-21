@@ -13,6 +13,34 @@ def test_should_skip_rag_when_external_action_ran():
     )
 
 
+def test_should_skip_rag_when_execute_external_action_ok():
+    ChatExternalActionDirectResponseService.configure(InfrastructureAppConfigAdapter())
+
+    assert ChatExternalActionDirectResponseService.should_skip_rag(
+        {
+            "skipRag": False,
+            "directAnswer": None,
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {"ok": True, "path": "/products/10080001/stock"},
+                }
+            ],
+        }
+    )
+    assert not ChatExternalActionDirectResponseService.should_skip_rag(
+        {
+            "skipRag": False,
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {"ok": False},
+                }
+            ],
+        }
+    )
+
+
 def test_resolve_answer_returns_trimmed_text():
     ChatExternalActionDirectResponseService.configure(InfrastructureAppConfigAdapter())
 
