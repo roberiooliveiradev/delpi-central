@@ -2,21 +2,32 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 
+from app.domain.services.chat_memory_intent_content_service import (
+    ChatMemoryIntentContentService,
+)
+
+
 class ChatContextSafetyFilterService:
-    _SENSITIVE_RE = re.compile(
-        r"\b(?:senha|password|token|api[_-]?key|cpf|cart[aã]o|chave\s+privada|"
-        r"secret|bearer\s+)\b",
-        re.IGNORECASE,
-    )
-    _CPF_RE = re.compile(r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b")
-    _WRITE_BLOCK_RE = re.compile(
-        r"\b(?:n[aã]o\s+salve|n[aã]o\s+grave|sem\s+mem[oó]ria|modo\s+an[oô]nimo)\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _sensitive_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "contextSafety", "patterns", "sensitive"
+        )
+
+    @classmethod
+    def _cpf_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "contextSafety", "patterns", "cpf"
+        )
+
+    @classmethod
+    def _write_block_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "contextSafety", "patterns", "writeBlock"
+        )
 
     @classmethod
     def apply_to_snapshot(cls, snapshot: dict, *, message: str | None) -> dict:
@@ -29,11 +40,11 @@ class ChatContextSafetyFilterService:
         if state.get("skipMemoryWrite"):
             reasons.append("sensitive_turn_flag")
 
-        if cls._SENSITIVE_RE.search(normalized) or cls._CPF_RE.search(normalized):
+        if cls._sensitive_re().search(normalized) or cls._cpf_re().search(normalized):
             state["skipMemoryWrite"] = True
             reasons.append("sensitive_content_detected")
 
-        if cls._WRITE_BLOCK_RE.search(normalized):
+        if cls._write_block_re().search(normalized):
             state["skipMemoryWrite"] = True
             reasons.append("user_requested_no_write")
 
@@ -50,7 +61,7 @@ class ChatContextSafetyFilterService:
         for key in list(behavior.keys()):
             value = str(behavior.get(key) or "")
 
-            if cls._SENSITIVE_RE.search(value) or cls._CPF_RE.search(value):
+            if cls._sensitive_re().search(value) or cls._cpf_re().search(value):
                 behavior.pop(key, None)
                 reasons.append(f"stripped_behavior:{key}")
 

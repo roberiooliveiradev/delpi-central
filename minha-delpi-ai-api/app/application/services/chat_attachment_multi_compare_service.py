@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 
+from app.domain.services.chat_text_quality_content_service import (
+    ChatTextQualityContentService,
+)
+
+
 class ChatAttachmentMultiCompareService:
-    _COMPARE_RE = re.compile(
-        r"\b(compar|versus|confront|cruzar|diferen[cç]a|vs\.?|entre\s+(?:os\s+)?(?:dois\s+)?arquivos?|planilhas?)\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _compare_re(cls):
+        return ChatTextQualityContentService.compile_pattern("attachmentCompare")
+
 
     @classmethod
     def wants_compare(cls, message: str) -> bool:
@@ -19,7 +23,7 @@ class ChatAttachmentMultiCompareService:
         if not normalized:
             return False
 
-        return bool(cls._COMPARE_RE.search(normalized))
+        return bool(cls._compare_re().search(normalized))
 
     @classmethod
     def indexed_spreadsheet_summaries(

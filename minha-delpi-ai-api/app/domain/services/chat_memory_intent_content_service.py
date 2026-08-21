@@ -22,6 +22,9 @@ class ChatMemoryIntentContentService:
 
         flags = re.IGNORECASE
 
+        if path == ("sessionClear", "pattern"):
+            flags |= re.DOTALL
+
         return re.compile(str(source), flags)
 
     @classmethod

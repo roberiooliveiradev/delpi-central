@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import re
+
+from app.domain.services.chat_text_quality_content_service import (
+    ChatTextQualityContentService,
+)
 from typing import Any
 
 from app.domain.services.chat_text_correction_intent_service import (
@@ -11,10 +15,9 @@ from app.domain.services.chat_text_correction_intent_service import (
 
 
 class ChatTextCorrectionQualityValidator:
-    _INVENTED_COMMITMENT = re.compile(
-        r"\b(garantimos|confirmamos\s+que|prazo\s+de\s+\d+\s+dias)\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _invented_commitment(cls):
+        return ChatTextQualityContentService.compile_pattern("inventedCommitment")
 
     @classmethod
     def validate(
@@ -53,7 +56,7 @@ class ChatTextCorrectionQualityValidator:
                     }
                 )
 
-        if cls._INVENTED_COMMITMENT.search(text):
+        if cls._invented_commitment().search(text):
             checks.append(
                 {
                     "code": "invented_commitment",

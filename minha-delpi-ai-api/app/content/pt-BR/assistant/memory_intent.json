@@ -51,5 +51,56 @@
       "introspect": "\\b(?:quais\\s+informa[cç][oõ]es|qual\\s+contexto|o\\s+que\\s+voc[eê]\\s+est[aá]\\s+usando|mem[oó]ria\\s+usada|contexto\\s+ativo|o\\s+que\\s+lembra)\\b",
       "editPreference": "\\b(?:editar|alterar|mudar)\\b.{0,20}\\bprefer"
     }
+  },
+  "contextSafety": {
+    "patterns": {
+      "sensitive": "\\b(?:senha|password|token|api[_-]?key|cpf|cart[aã]o|chave\\s+privada|secret|bearer\\s+)\\b",
+      "cpf": "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b",
+      "writeBlock": "\\b(?:n[aã]o\\s+salve|n[aã]o\\s+grave|sem\\s+mem[oó]ria|modo\\s+an[oô]nimo)\\b"
+    }
+  },
+  "preference": {
+    "patterns": {
+      "revoke": "\\b(?:n[aã]o\\s+use\\s+mais\\b.*\\bprefer|remov(?:a|e)\\b.*\\bprefer|limpe?\\s+as\\s+prefer|esque[cç]a\\s+(?:as|essa|a)\\s+prefer|volte?\\s+ao\\s+normal|volte?\\s+ao\\s+padr[aã]o|comportamento\\s+padr[aã]o)\\w*\\b"
+    },
+    "labels": {
+      "responseFormat:table": "Respostas em tabela",
+      "responseFormat:topics": "Respostas em tópicos",
+      "responseFormat:text": "Respostas em texto puro",
+      "responseFormat:tree": "Respostas em árvore",
+      "responseFormat:chart": "Respostas em gráfico",
+      "toolsPolicy:on_request": "Não usar ferramentas sem pedir",
+      "tone:formal": "Tom formal",
+      "tone:direct": "Tom direto",
+      "tone:simple": "Linguagem simples",
+      "answerLength:short": "Respostas curtas",
+      "finalVersionOnly:true": "Só versão final (correção)",
+      "email:alwaysSubject": "E-mail sempre com assunto",
+      "email:blankSignature": "Assinatura em branco",
+      "email:direct": "E-mails mais diretos",
+      "text:deliver_final_only": "Texto: só versão final",
+      "text:tone_formal": "Texto: tom formal",
+      "text:email_direct": "E-mails textuais diretos",
+      "correction:deliverFinalOnly": "Correção: só versão final",
+      "correction:preserveStyle": "Correção: preservar estilo"
+    }
+  },
+  "sessionClear": {
+    "pattern": "(?:desconsidere|ignore|esqueça|esqueca|limpe|limpar|resete|reinicie).{0,80}(?:produto|filial|prefer[eê]ncias?|contexto|mem[oó]ria|conversa|lousa|assunto)",
+    "fullPhrases": [
+      "começar do zero",
+      "comecar do zero",
+      "trocar de assunto",
+      "limpe o contexto",
+      "limpar o contexto",
+      "limpe a lousa",
+      "limpar a lousa"
+    ]
+  },
+  "entityTracker": {
+    "patterns": {
+      "order": "\\bpedido\\s+(\\d{4,})\\b",
+      "branchInMessage": "\\bfilial\\s+(\\d{1,4})\\b|\\bbranch\\s+(\\d{1,4})\\b"
+    }
   }
 }

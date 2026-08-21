@@ -14,12 +14,23 @@ from app.domain.services.chat_sql_memory_workspace_service import (
 )
 
 
+from app.domain.services.chat_memory_intent_content_service import (
+    ChatMemoryIntentContentService,
+)
+
+
 class ChatEntityTrackerService:
-    _ORDER_RE = re.compile(r"\bpedido\s+(\d{4,})\b", re.IGNORECASE)
-    _BRANCH_IN_MSG_RE = re.compile(
-        r"\bfilial\s+(\d{1,4})\b|\bbranch\s+(\d{1,4})\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _order_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "entityTracker", "patterns", "order"
+        )
+
+    @classmethod
+    def _branch_in_msg_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "entityTracker", "patterns", "branchInMessage"
+        )
 
     @classmethod
     def apply_to_snapshot(
@@ -141,7 +152,7 @@ class ChatEntityTrackerService:
 
                     entities["productCode"] = code
 
-        branch_match = cls._BRANCH_IN_MSG_RE.search(normalized)
+        branch_match = cls._branch_in_msg_re().search(normalized)
 
         if branch_match:
             branch = branch_match.group(1) or branch_match.group(2)
@@ -149,7 +160,7 @@ class ChatEntityTrackerService:
             if branch:
                 entities["branch"] = branch.strip()
 
-        order_match = cls._ORDER_RE.search(normalized)
+        order_match = cls._order_re().search(normalized)
 
         if order_match:
             entities["orderId"] = order_match.group(1)

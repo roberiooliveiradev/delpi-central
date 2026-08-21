@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -23,35 +25,44 @@ class WebSearchQuerySecurityResult:
 class ChatWebSearchQuerySecurityService:
     """Remove dados internos/sensíveis antes de enviar texto a buscadores externos."""
 
-    _SENSITIVE_SUBSTRINGS = (
-        "preco interno",
-        "preço interno",
-        "margem interna",
-        "custo interno",
-        "pedido interno",
-        "historico de vendas",
-        "histórico de vendas",
-        "dados comerciais confidenciais",
-        "informacao confidencial",
-        "informação confidencial",
-        "nosso preco",
-        "nosso preço",
-        "preco de venda interno",
-        "preço de venda interno",
-        "codigo interno estrategico",
-        "código interno estratégico",
-    )
+    @classmethod
+    @lru_cache(maxsize=1)
+    def _sensitive_substrings(cls) -> tuple[str, ...]:
+        node = ChatAssistantContentService.get_node(
+            "web_search", "querySecurity", "sensitiveSubstrings"
+        )
+        if not isinstance(node, list):
+            return ()
+        return tuple(str(item) for item in node if str(item or "").strip())
 
-    _REDACT_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-        (re.compile(r"pre[cç]o\s+interno\s*(?:de\s*)?r?\$?\s*[\d.,]+", re.I), ""),
-        (re.compile(r"r\$\s*[\d.,]+(?:\s*(?:interno|margem|custo))?", re.I), ""),
-        (re.compile(r"\bmargem\s+(?:interna|de\s+lucro)\s*[\d.,%]*", re.I), ""),
-        (re.compile(r"\bpedido\s+interno\s*(?:n[ºo°.]?\s*)?[\w-]+", re.I), ""),
-        (re.compile(r"\bcomprou\s+nosso\s+produto\s+\d+", re.I), "produto"),
-        (re.compile(r"\bpelo\s+pre[cç]o\s+interno\b", re.I), ""),
-    )
+    @classmethod
+    @lru_cache(maxsize=1)
+    def _redact_patterns(cls) -> tuple[tuple[re.Pattern[str], str], ...]:
+        node = ChatAssistantContentService.get_node(
+            "web_search", "querySecurity", "redactPatterns"
+        )
+        if not isinstance(node, list):
+            return ()
+        compiled: list[tuple[re.Pattern[str], str]] = []
+        for item in node:
+            if not isinstance(item, dict):
+                continue
+            source = str(item.get("pattern") or "").strip()
+            if not source:
+                continue
+            compiled.append(
+                (re.compile(source, re.IGNORECASE), str(item.get("replacement") or ""))
+            )
+        return tuple(compiled)
 
-    _ENTITY_PUBLIC_SUFFIX = "informacoes publicas"
+    @classmethod
+    def _entity_public_suffix(cls) -> str:
+        return ChatAssistantContentService.get(
+            "web_search",
+            "querySecurity",
+            "entityPublicSuffix",
+            default="informacoes publicas",
+        )
 
     @classmethod
     def sanitize(cls, message: str, *, extracted_query: str | None = None) -> WebSearchQuerySecurityResult:
@@ -61,14 +72,14 @@ class ChatWebSearchQuerySecurityService:
         warnings: list[str] = []
         redacted = False
 
-        for substring in cls._SENSITIVE_SUBSTRINGS:
+        for substring in cls._sensitive_substrings():
             if substring in normalized:
                 redacted = True
                 removed.append(substring)
 
         value = raw
 
-        for pattern, replacement in cls._REDACT_PATTERNS:
+        for pattern, replacement in cls._redact_patterns():
             new_value, count = pattern.subn(replacement, value)
 
             if count:
@@ -130,7 +141,7 @@ class ChatWebSearchQuerySecurityService:
 
         if client_match:
             name = client_match.group(1).strip()
-            return f"cliente {name} {cls._ENTITY_PUBLIC_SUFFIX}"
+            return f"cliente {name} {cls._entity_public_suffix()}"
 
         company_match = re.search(
             r"(?:empresa|companhia)\s+([a-z0-9][\w-]{1,40})",
@@ -140,6 +151,6 @@ class ChatWebSearchQuerySecurityService:
 
         if company_match:
             name = company_match.group(1).strip()
-            return f"{name} empresa {cls._ENTITY_PUBLIC_SUFFIX}"
+            return f"{name} empresa {cls._entity_public_suffix()}"
 
         return ""

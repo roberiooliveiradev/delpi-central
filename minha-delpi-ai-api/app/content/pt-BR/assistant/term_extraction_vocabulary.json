@@ -25,5 +25,9 @@
     "que e",
     "que é",
     "que significa"
+  ],
+  "definitionPatterns": [
+    "\\b(?:o que (?:e|é|significa|quer dizer)|que (?:e|é|significa))\\s+(?:um|uma|o|a)?\\s*(?P<term>[\\wÀ-ÿ][\\wÀ-ÿ\\- ]{1,48}?)\\s*\\??$",
+    "\\b(?:defina|definir|significado de|sentido de)\\s+(?P<term>[\\wÀ-ÿ][\\wÀ-ÿ\\- ]{1,48}?)\\s*\\??$"
   ]
 }

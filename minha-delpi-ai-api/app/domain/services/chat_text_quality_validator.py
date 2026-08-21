@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import re
+
+from app.domain.services.chat_text_quality_content_service import (
+    ChatTextQualityContentService,
+)
 from typing import Any
 
 from app.domain.services.chat_text_correction_intent_service import (
@@ -12,10 +16,9 @@ from app.domain.services.chat_text_task_service import ChatTextTaskService
 
 
 class ChatTextQualityValidator:
-    _INVENTED_SIGNATURE = re.compile(
-        r"\b(diretor|gerente\s+de|ceo|cfo|coordenador\s+de)\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _invented_signature(cls):
+        return ChatTextQualityContentService.compile_pattern("inventedSignature")
 
     @classmethod
     def validate(
@@ -96,7 +99,7 @@ class ChatTextQualityValidator:
                 }
             )
 
-        if cls._INVENTED_SIGNATURE.search(text) and not ChatTextCorrectionIntentService.extract_context(
+        if cls._invented_signature().search(text) and not ChatTextCorrectionIntentService.extract_context(
             message
         ).get("senderSignature"):
             checks.append(

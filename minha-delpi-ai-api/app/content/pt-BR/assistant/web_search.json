@@ -413,5 +413,52 @@
     "deepModeSuffix": " Modo de pesquisa profunda ({count} consulta(s) planejada(s)).",
     "publicFactsFallback": "A pergunta pede informação pública atual na internet.",
     "postRagFallback": "A base interna não trouxe trechos — busco na internet."
+  },
+  "querySecurity": {
+    "sensitiveSubstrings": [
+      "preco interno",
+      "preço interno",
+      "margem interna",
+      "custo interno",
+      "pedido interno",
+      "historico de vendas",
+      "histórico de vendas",
+      "dados comerciais confidenciais",
+      "informacao confidencial",
+      "informação confidencial",
+      "nosso preco",
+      "nosso preço",
+      "preco de venda interno",
+      "preço de venda interno",
+      "codigo interno estrategico",
+      "código interno estratégico"
+    ],
+    "redactPatterns": [
+      {
+        "pattern": "pre[cç]o\\s+interno\\s*(?:de\\s*)?r?\\$?\\s*[\\d.,]+",
+        "replacement": ""
+      },
+      {
+        "pattern": "r\\$\\s*[\\d.,]+(?:\\s*(?:interno|margem|custo))?",
+        "replacement": ""
+      },
+      {
+        "pattern": "\\bmargem\\s+(?:interna|de\\s+lucro)\\s*[\\d.,%]*",
+        "replacement": ""
+      },
+      {
+        "pattern": "\\bpedido\\s+interno\\s*(?:n[ºo°.]?\\s*)?[\\w-]+",
+        "replacement": ""
+      },
+      {
+        "pattern": "\\bcomprou\\s+nosso\\s+produto\\s+\\d+",
+        "replacement": "produto"
+      },
+      {
+        "pattern": "\\bpelo\\s+pre[cç]o\\s+interno\\b",
+        "replacement": ""
+      }
+    ],
+    "entityPublicSuffix": "informacoes publicas"
   }
 }

@@ -13,19 +13,9 @@ class ChatTermExtractionService:
     termo para decidir a ação (glossário interno, docs, web pública, etc.).
     """
 
-    # Perguntas explícitas de definição → captura do termo perguntado.
-    _DEFINITION_QUESTION_PATTERNS = (
-        re.compile(
-            r"\b(?:o que (?:e|é|significa|quer dizer)|que (?:e|é|significa))\s+"
-            r"(?:um|uma|o|a)?\s*(?P<term>[\wÀ-ÿ][\wÀ-ÿ\- ]{1,48}?)\s*\??$",
-            re.IGNORECASE,
-        ),
-        re.compile(
-            r"\b(?:defina|definir|significado de|sentido de)\s+"
-            r"(?P<term>[\wÀ-ÿ][\wÀ-ÿ\- ]{1,48}?)\s*\??$",
-            re.IGNORECASE,
-        ),
-    )
+    @classmethod
+    def _definition_question_patterns(cls):
+        return ChatTermExtractionVocabularyService.definition_patterns()
 
     _STOPWORDS = frozenset(ChatTermExtractionVocabularyService.terms("stopwords"))
 
@@ -44,7 +34,7 @@ class ChatTermExtractionService:
         if len(text) < 4 or len(text) > 160:
             return None
 
-        for pattern in cls._DEFINITION_QUESTION_PATTERNS:
+        for pattern in cls._definition_question_patterns():
             match = pattern.search(text)
             if match:
                 term = (match.group("term") or "").strip(" ?.!,;")

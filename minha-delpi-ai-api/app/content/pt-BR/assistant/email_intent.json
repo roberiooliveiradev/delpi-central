@@ -116,5 +116,26 @@
     "recipientFor": "(?:para|ao|à|a)\\s+(?:o\\s+|a\\s+)?([A-ZÁÉÍÓÚÂÊÔÃÇ][\\wáéíóúâêôãç\\s]{2,40}?)(?:\\s+sobre|\\s+referente|,|\\.|$)",
     "subjectHint": "(?:assunto|sobre|referente\\s+a)\\s*[:\\-]?\\s*(.+?)(?:\\.|$)",
     "subjectFromAnswer": "(?im)^\\s*assunto\\s*:\\s*(.+?)\\s*$"
+  },
+  "quality": {
+    "artificialPhrases": [
+      "estou em consideração",
+      "venho por meio deste, venho por meio deste",
+      "venho por meio deste",
+      "sua participação é vital",
+      "a ia pode revolucionar",
+      "garantirá eficiência",
+      "revolucionar o mercado"
+    ],
+    "weakSubjectPatterns": [
+      "solicitação\\s+de\\s+criação",
+      "solicitação\\s+de\\s+avaliação\\s+sobre\\s+criação"
+    ],
+    "inventedSignatureMarkers": [
+      "roberto\\s+silva",
+      "superadministrador",
+      "minha\\s+delpi\\s+chat\\s*$"
+    ],
+    "placeholderSignature": "\\[(?:seu\\s+nome|nome)(?:\\s*,\\s*cargo[^\\]]*)?\\]"
   }
 }

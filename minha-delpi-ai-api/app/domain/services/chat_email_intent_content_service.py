@@ -79,9 +79,54 @@ class ChatEmailIntentContentService:
         return resolved
 
     @classmethod
+    @lru_cache(maxsize=8)
+    def compile_quality_pattern_list(cls, key: str) -> tuple[re.Pattern[str], ...]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "quality", key)
+
+        if not isinstance(node, list) or not node:
+            raise KeyError(f"{_BUNDLE}.quality.{key} ausente ou vazio")
+
+        flags = re.IGNORECASE
+
+        if key == "inventedSignatureMarkers":
+            flags |= re.MULTILINE
+
+        return tuple(
+            re.compile(str(item), flags)
+            for item in node
+            if str(item or "").strip()
+        )
+
+    @classmethod
+    def quality_phrases(cls) -> tuple[str, ...]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "quality", "artificialPhrases")
+
+        if not isinstance(node, list):
+            return ()
+
+        return tuple(str(item) for item in node if str(item or "").strip())
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def quality_placeholder_signature(cls) -> re.Pattern[str]:
+        source = ChatAssistantContentService.get(
+            _BUNDLE,
+            "quality",
+            "placeholderSignature",
+            default="",
+        )
+
+        if not str(source or "").strip():
+            raise KeyError(f"{_BUNDLE}.quality.placeholderSignature ausente")
+
+        return re.compile(str(source), re.IGNORECASE)
+
+    @classmethod
     def invalidate_cache(cls) -> None:
         cls.markers.cache_clear()
         cls.subtypes.cache_clear()
         cls.tones.cache_clear()
         cls.audiences.cache_clear()
         cls.compile_pattern.cache_clear()
+        cls.compile_quality_pattern_list.cache_clear()
+        cls.quality_placeholder_signature.cache_clear()

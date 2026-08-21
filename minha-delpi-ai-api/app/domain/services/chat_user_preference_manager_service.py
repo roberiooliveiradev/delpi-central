@@ -2,40 +2,25 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 
-class ChatUserPreferenceManagerService:
-    _REVOKE_RE = re.compile(
-        r"\b(?:n[aã]o\s+use\s+mais\b.*\bprefer|remov(?:a|e)\b.*\bprefer|"
-        r"limpe?\s+as\s+prefer|esque[cç]a\s+(?:as|essa|a)\s+prefer|"
-        r"volte?\s+ao\s+normal|volte?\s+ao\s+padr[aã]o|"
-        r"comportamento\s+padr[aã]o)\w*\b",
-        re.IGNORECASE,
-    )
+from app.domain.services.chat_memory_intent_content_service import (
+    ChatMemoryIntentContentService,
+)
 
-    _LABELS: dict[str, str] = {
-        "responseFormat:table": "Respostas em tabela",
-        "responseFormat:topics": "Respostas em tópicos",
-        "responseFormat:text": "Respostas em texto puro",
-        "responseFormat:tree": "Respostas em árvore",
-        "responseFormat:chart": "Respostas em gráfico",
-        "toolsPolicy:on_request": "Não usar ferramentas sem pedir",
-        "tone:formal": "Tom formal",
-        "tone:direct": "Tom direto",
-        "tone:simple": "Linguagem simples",
-        "answerLength:short": "Respostas curtas",
-        "finalVersionOnly:true": "Só versão final (correção)",
-        "email:alwaysSubject": "E-mail sempre com assunto",
-        "email:blankSignature": "Assinatura em branco",
-        "email:direct": "E-mails mais diretos",
-        "text:deliver_final_only": "Texto: só versão final",
-        "text:tone_formal": "Texto: tom formal",
-        "text:email_direct": "E-mails textuais diretos",
-        "correction:deliverFinalOnly": "Correção: só versão final",
-        "correction:preserveStyle": "Correção: preservar estilo",
-    }
+
+class ChatUserPreferenceManagerService:
+    @classmethod
+    def _revoke_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "preference", "patterns", "revoke"
+        )
+
+    @classmethod
+    def _labels(cls) -> dict[str, str]:
+        return ChatMemoryIntentContentService.string_map("preference", "labels")
+
 
     @classmethod
     def apply_to_snapshot(
@@ -293,37 +278,37 @@ class ChatUserPreferenceManagerService:
 
         if isinstance(behavior, dict):
             if behavior.get("responseFormat") == "table":
-                labels.append(cls._LABELS["responseFormat:table"])
+                labels.append(cls._labels()["responseFormat:table"])
 
             if behavior.get("responseFormat") == "topics":
-                labels.append(cls._LABELS["responseFormat:topics"])
+                labels.append(cls._labels()["responseFormat:topics"])
 
             if behavior.get("responseFormat") == "text":
-                labels.append(cls._LABELS["responseFormat:text"])
+                labels.append(cls._labels()["responseFormat:text"])
 
             if behavior.get("responseFormat") == "tree":
-                labels.append(cls._LABELS["responseFormat:tree"])
+                labels.append(cls._labels()["responseFormat:tree"])
 
             if behavior.get("responseFormat") == "chart":
-                labels.append(cls._LABELS["responseFormat:chart"])
+                labels.append(cls._labels()["responseFormat:chart"])
 
             if behavior.get("toolsPolicy") == "on_request":
-                labels.append(cls._LABELS["toolsPolicy:on_request"])
+                labels.append(cls._labels()["toolsPolicy:on_request"])
 
             tone = behavior.get("tone")
 
             if tone == "formal":
-                labels.append(cls._LABELS["tone:formal"])
+                labels.append(cls._labels()["tone:formal"])
             elif tone == "direct":
-                labels.append(cls._LABELS["tone:direct"])
+                labels.append(cls._labels()["tone:direct"])
             elif tone == "simple":
-                labels.append(cls._LABELS["tone:simple"])
+                labels.append(cls._labels()["tone:simple"])
 
             if behavior.get("answerLength") == "short":
-                labels.append(cls._LABELS["answerLength:short"])
+                labels.append(cls._labels()["answerLength:short"])
 
             if behavior.get("finalVersionOnly") == "true":
-                labels.append(cls._LABELS["finalVersionOnly:true"])
+                labels.append(cls._labels()["finalVersionOnly:true"])
 
         email = prefs.get("email") or {}
 
@@ -332,34 +317,34 @@ class ChatUserPreferenceManagerService:
                 labels.append("E-mail: sugerir assuntos")
 
             if email.get("blankSignature"):
-                labels.append(cls._LABELS["email:blankSignature"])
+                labels.append(cls._labels()["email:blankSignature"])
 
             if email.get("shortEmails"):
                 labels.append("E-mails curtos")
 
             if email.get("formalTone"):
-                labels.append(cls._LABELS["tone:formal"])
+                labels.append(cls._labels()["tone:formal"])
 
         text = prefs.get("textTask") or {}
 
         if isinstance(text, dict):
             if text.get("deliver_final_only"):
-                labels.append(cls._LABELS["text:deliver_final_only"])
+                labels.append(cls._labels()["text:deliver_final_only"])
 
             if text.get("tone_formal"):
-                labels.append(cls._LABELS["text:tone_formal"])
+                labels.append(cls._labels()["text:tone_formal"])
 
             if text.get("email_direct"):
-                labels.append(cls._LABELS["text:email_direct"])
+                labels.append(cls._labels()["text:email_direct"])
 
         correction = prefs.get("textCorrection") or {}
 
         if isinstance(correction, dict):
             if correction.get("deliverFinalOnly"):
-                labels.append(cls._LABELS["correction:deliverFinalOnly"])
+                labels.append(cls._labels()["correction:deliverFinalOnly"])
 
             if correction.get("preserveStyle"):
-                labels.append(cls._LABELS["correction:preserveStyle"])
+                labels.append(cls._labels()["correction:preserveStyle"])
 
         return labels
 
@@ -409,7 +394,7 @@ class ChatUserPreferenceManagerService:
 
     @classmethod
     def _should_revoke(cls, normalized: str) -> bool:
-        return bool(cls._REVOKE_RE.search(normalized))
+        return bool(cls._revoke_re().search(normalized))
 
     @staticmethod
     def _message_metadata(item: Any) -> dict:

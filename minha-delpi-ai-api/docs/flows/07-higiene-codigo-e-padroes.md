@@ -48,6 +48,7 @@ Testes dedicados dos módulos acima também removidos. Inventário: `docs/archit
 | `re.compile` refinement vocabulary | `operational_refinement.json` + `ChatOperationalRefinementContentService` |
 | `re.compile` conversation_state + fast_path | `conversation_state.patterns` / `fast_path.json` |
 | `re.compile` memória/contexto/email | `memory_intent.json`, `user_context_items.json`, `email_intent.json` |
+| `re.compile` resíduos pontuais (safety/quality/web/term/entity) | `memory_intent` (+safety/preference/sessionClear/entityTracker), `web_search.querySecurity`, `email_intent.quality`, `text_quality.json`, `term_extraction_vocabulary.definitionPatterns` |
 
 ---
 
@@ -108,7 +109,8 @@ Critério: **P0** = quebra regra Cursor / risco de regressão; **P1** = dívida 
 | Gap | Evidência | Direção canônica |
 |-----|-----------|------------------|
 | `reason=` PT hardcoded em seleção/refinement | **Lote 1 fechado** (stock/route/spec/tools/KPI/web/sql recovery) | Restam notas de síntese web (`_internal_product_synthesis_note` etc.) e outros `reason=` técnicos (códigos EN) |
-| `re.compile` em serviços de **regra de negócio** (não loader) | **Parcial:** refinement + state/fast_path + memória/contexto/email | Restam parsers BOM/SQL (algoritmo) e resíduos pontuais |
+| `re.compile` em serviços de **regra de negócio** (não loader) | **Fechado** o vocabulário migrável | **Won’t (algoritmo):** parsers BOM/SQL advisors/safety/review/recovery, PDF table, tokenizers, `{{}}` placeholder, whitespace/JSON extract, dates ISO/DMY, lint de registry |
+| Docs: classificação algoritmo vs vocabulário | Esta seção | Não reabrir migração de parsers SQL/BOM |
 | Inferência de segmento com `"/stock"` em texto livre | **Fechado** em pagination (`registry marker` + `has_flag`) | Restam fallbacks `or "/stock"` em selection (P2) |
 | Doc architecture desatualizada | **Fechado** `viewBuildPolicy` em `chat-assistant-content-presentation.md` | — |
 

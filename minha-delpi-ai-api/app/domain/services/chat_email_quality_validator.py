@@ -6,32 +6,30 @@ import re
 from typing import Any
 
 
+from app.domain.services.chat_email_intent_content_service import (
+    ChatEmailIntentContentService,
+)
+
+
 class ChatEmailQualityValidator:
-    _ARTIFICIAL_PHRASES = (
-        "estou em consideração",
-        "venho por meio deste, venho por meio deste",
-        "venho por meio deste",
-        "sua participação é vital",
-        "a ia pode revolucionar",
-        "garantirá eficiência",
-        "revolucionar o mercado",
-    )
+    @classmethod
+    def _artificial_phrases(cls) -> tuple[str, ...]:
+        return ChatEmailIntentContentService.quality_phrases()
 
-    _WEAK_SUBJECT_PATTERNS = (
-        re.compile(r"solicitação\s+de\s+criação", re.I),
-        re.compile(r"solicitação\s+de\s+avaliação\s+sobre\s+criação", re.I),
-    )
+    @classmethod
+    def _weak_subject_patterns(cls):
+        return ChatEmailIntentContentService.compile_quality_pattern_list("weakSubjectPatterns")
 
-    _INVENTED_SIGNATURE_MARKERS = (
-        re.compile(r"roberto\s+silva", re.I),
-        re.compile(r"superadministrador", re.I),
-        re.compile(r"minha\s+delpi\s+chat\s*$", re.I | re.M),
-    )
+    @classmethod
+    def _invented_signature_markers(cls):
+        return ChatEmailIntentContentService.compile_quality_pattern_list(
+            "inventedSignatureMarkers"
+        )
 
-    _PLACEHOLDER_SIGNATURE = re.compile(
-        r"\[(?:seu\s+nome|nome)(?:\s*,\s*cargo[^\]]*)?\]",
-        re.I,
-    )
+    @classmethod
+    def _placeholder_signature(cls):
+        return ChatEmailIntentContentService.quality_placeholder_signature()
+
 
     @classmethod
     def validate(
@@ -138,7 +136,7 @@ class ChatEmailQualityValidator:
             text = cls._replace_invented_signature_tail(text)
             fixes.append("signature_placeholder")
 
-        for phrase in cls._ARTIFICIAL_PHRASES[:3]:
+        for phrase in cls._artificial_phrases()[:3]:
             if phrase in text.lower():
                 replacement = {
                     "estou em consideração": "Gostaria de solicitar sua avaliação",
@@ -176,7 +174,7 @@ class ChatEmailQualityValidator:
     def _has_artificial_phrase(cls, text: str) -> bool:
         lowered = text.lower()
 
-        return any(phrase in lowered for phrase in cls._ARTIFICIAL_PHRASES)
+        return any(phrase in lowered for phrase in cls._artificial_phrases())
 
     @classmethod
     def _invented_signature(
@@ -189,7 +187,7 @@ class ChatEmailQualityValidator:
 
         tail = text[-400:] if len(text) > 400 else text
 
-        return any(pattern.search(tail) for pattern in cls._INVENTED_SIGNATURE_MARKERS)
+        return any(pattern.search(tail) for pattern in cls._invented_signature_markers())
 
     @classmethod
     def _safe_signature(
@@ -200,7 +198,7 @@ class ChatEmailQualityValidator:
         if user_provided_signature and user_provided_signature.lower() in text.lower():
             return True
 
-        if cls._PLACEHOLDER_SIGNATURE.search(text):
+        if cls._placeholder_signature().search(text):
             return True
 
         if "atenciosamente" in text.lower() and not cls._invented_signature(text, None):
@@ -262,7 +260,7 @@ class ChatEmailQualityValidator:
 
         subject = (match.group(1) or "").strip()
 
-        return any(pattern.search(subject) for pattern in cls._WEAK_SUBJECT_PATTERNS)
+        return any(pattern.search(subject) for pattern in cls._weak_subject_patterns())
 
     @classmethod
     def _replace_invented_signature_tail(cls, text: str) -> str:

@@ -9,22 +9,19 @@ from app.domain.ports.chat_session_memory_repository_port import ChatSessionMemo
 from app.domain.services.chat_user_context_item_service import ChatUserContextItemService
 
 
+from app.domain.services.chat_memory_intent_content_service import (
+    ChatMemoryIntentContentService,
+)
+
+
 class ChatSessionMemoryService:
-    _CLEAR_CONTEXT_RE = re.compile(
-        r"(?:desconsidere|ignore|esqueça|esqueca|limpe|limpar|resete|reinicie)"
-        r".{0,80}"
-        r"(?:produto|filial|prefer[eê]ncias?|contexto|mem[oó]ria|conversa|lousa|assunto)",
-        re.IGNORECASE | re.DOTALL,
-    )
-    _CLEAR_FULL_PHRASES = (
-        "começar do zero",
-        "comecar do zero",
-        "trocar de assunto",
-        "limpe o contexto",
-        "limpar o contexto",
-        "limpe a lousa",
-        "limpar a lousa",
-    )
+    @classmethod
+    def _clear_context_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern("sessionClear", "pattern")
+
+    @classmethod
+    def _clear_full_phrases(cls) -> tuple[str, ...]:
+        return ChatMemoryIntentContentService.string_list("sessionClear", "fullPhrases")
 
     def __init__(self, repository: ChatSessionMemoryRepositoryPort | None = None):
         self.repository = repository
@@ -117,10 +114,10 @@ class ChatSessionMemoryService:
         if re.search(r"esque.{0,40}produto", lowered) and "contexto" not in lowered and "memoria" not in lowered and "memória" not in lowered:
             return False
 
-        if cls._CLEAR_CONTEXT_RE.search(text):
+        if cls._clear_context_re().search(text):
             return True
 
-        if any(phrase in lowered for phrase in cls._CLEAR_FULL_PHRASES):
+        if any(phrase in lowered for phrase in cls._clear_full_phrases()):
             return True
 
         return (

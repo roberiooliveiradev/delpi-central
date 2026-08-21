@@ -1,0 +1,7 @@
+{
+  "patterns": {
+    "inventedSignature": "\\b(diretor|gerente\\s+de|ceo|cfo|coordenador\\s+de)\\b",
+    "inventedCommitment": "\\b(garantimos|confirmamos\\s+que|prazo\\s+de\\s+\\d+\\s+dias)\\b",
+    "attachmentCompare": "\\b(compar|versus|confront|cruzar|diferen[cç]a|vs\\.?|entre\\s+(?:os\\s+)?(?:dois\\s+)?arquivos?|planilhas?)\\b"
+  }
+}
