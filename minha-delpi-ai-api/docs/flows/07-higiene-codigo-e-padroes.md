@@ -106,8 +106,8 @@ Critério: **P0** = quebra regra Cursor / risco de regressão; **P1** = dívida 
 |-----|-----------|------------------|
 | `reason=` PT hardcoded em seleção/refinement | **Lote 1 fechado** (stock/route/spec/tools/KPI/web/sql recovery) | Restam notas de síntese web (`_internal_product_synthesis_note` etc.) e outros `reason=` técnicos (códigos EN) |
 | `re.compile` em serviços de **regra de negócio** (não loader) | Lotes: `chat_conversation_state_service`, `chat_fast_path_service`, `chat_user_memory_durability_service`, `chat_semantic_memory_intent_service`, `chat_email_*`, `chat_user_context_item_service`, `chat_operational_refinement_vocabulary`, `chat_structure_comparison_service` (parsers de BOM), SQL advisors | Mover **padrões/limites** para `assistant/*.json` + loader; **algoritmo** SQL/OCR pode ficar em Python |
-| Inferência de segmento com `"/stock"` em texto livre | `chat_operational_refinement_pagination_service._infer_paginated_route_segment` | Preferir `has_flag(path)` nos toolCalls; no `conversation_context` usar registry marker / flag quando o blob for path-like |
-| Doc architecture desatualizada | `chat-assistant-content-presentation.md` ainda cita `visualBundlePolicy` | Alinhar a `viewBuildPolicy` |
+| Inferência de segmento com `"/stock"` em texto livre | **Fechado** em pagination (`registry marker` + `has_flag`) | Restam fallbacks `or "/stock"` em selection (P2) |
+| Doc architecture desatualizada | **Fechado** `viewBuildPolicy` em `chat-assistant-content-presentation.md` | — |
 
 ### P2 — aceitável (não é bug)
 
