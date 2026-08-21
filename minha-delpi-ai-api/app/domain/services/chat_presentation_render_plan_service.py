@@ -249,7 +249,12 @@ class ChatPresentationRenderPlanService:
             segments.append(cls._lead_markdown_segment(metadata))
             return segments
 
-        if cls._should_include_lead_segment(metadata) and selected in {"", "text"}:
+        # LLM-decoupled / data-only: template foi arquivado — a prosa mora em
+        # assistantMessage e precisa do lead mesmo com tabela/KPI/chart selected.
+        # Sem isso a UI fica só com insight genérico («A tabela lista…») + visual.
+        if cls._should_include_lead_segment(metadata) and (
+            cls._is_llm_prose_decoupled(metadata) or selected in {"", "text"}
+        ):
             segments.append(cls._lead_markdown_segment(metadata))
 
         if selected in _VISUAL_TOKEN_TO_KEY:
