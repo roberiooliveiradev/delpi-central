@@ -71,7 +71,6 @@ import {
 } from "./useMatchMedia";
 import {
   formatInteractionMessageCreatedAtLabel,
-  formatInteractionMessageTime,
 } from "./interactionRoomMessageTime";
 
 const EMBED_MESSAGE_LIMIT = 30;
