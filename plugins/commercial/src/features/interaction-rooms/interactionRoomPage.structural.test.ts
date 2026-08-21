@@ -11,6 +11,9 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/InteractionRoomSharedView/);
+    expect(source).toMatch(/CommercialRoomMessageFindPanel/);
+    expect(source).toMatch(/sidePanelMode/);
+    expect(source).toMatch(/listInteractionMessages/);
     expect(source).toMatch(/roomView/);
     expect(source).toMatch(/cm-room-thread__view-nav/);
     expect(source).toMatch(/interactionRoomAuthorAvatarFields/);

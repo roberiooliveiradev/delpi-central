@@ -78,15 +78,65 @@ ExecuteExternalAction
 
 ---
 
-## Em uso, fora do padrão ideal (dívida restante)
+## Gaps — revisão (ago/2026, pós-`has_flag`)
 
-| Item | Status | Direção |
-|------|--------|---------|
-| `stackPlan` / `ChatPresentationStackOrderService` | Wired só se `layoutMode==stack`; `richStackProfiles: []` | Manter sob demanda; não reexpandir stack rico |
-| `re.compile` remanescente em outros `chat_*_service.py` | Parcial | Continuar migração incremental |
-| `if "/stock"` / `"/analyser"` remanescentes | Quase fechado em app/ (restam tokens de catálogo/skill/JSON pathRules) | Manter literais só em markers/registry/capabilities |
-| `kpi_chart_specialized_service` ramos por shape de dado | Acoplamento residual (shape, não path) | Absorver em schema-driven quando couber |
-| `ChatPresentationRefactorBaselineService` | Gate Playbook 12 histórico | Manter enquanto CI/scripts dependem |
+Critério: **P0** = quebra regra Cursor / risco de regressão; **P1** = dívida acionável no chat base; **P2** = aceitável / documentado; **Won’t** = não atacar.
+
+### Saúde atual (gates)
+
+| Gate | Resultado |
+|------|-----------|
+| `audit_openapi_profile_pruning.py --check` | OK |
+| `audit_service_inventory.py --summary` | **0** módulos domain/application sem ref estática |
+| `visualBuilders` / `tableAssembly` em `presentation_profiles.json` | **Ausentes** (runtime limpo) |
+| `visualBundlePolicy` em `app/` | **Ausente** (só `viewBuildPolicy`) |
+| Pipeline presentation delivered | Único caminho schema-first (ver § acima) |
+
+### Fechado (não reabrir)
+
+- Órfãos stubs/aliases/helpers só-teste (tabela «Removido»).
+- `entityProfiles` PAC substituíveis; callbacks send×stream; naming `viewBuildPolicy`.
+- Couche principal `"/stock"` / `"/analyser"` → `has_flag` (refinement, drawing, comparison, tool context, coverage, etc.).
+- `matches_compare_previous` após migração JSON.
+
+### P1 — próximo ataque (chat base)
+
+| Gap | Evidência | Direção canônica |
+|-----|-----------|------------------|
+| `reason=` PT hardcoded em seleção/refinement | `chat_operational_refinement_stock_service`, `chat_route_context_service`, `tool_selection_service`, `operational_api_route_spec` defaults, web search intents | `external_action_responses.selectionReasons` / bundles + `*ContentService` (`assistant-content-json`) |
+| `re.compile` em serviços de **regra de negócio** (não loader) | Lotes: `chat_conversation_state_service`, `chat_fast_path_service`, `chat_user_memory_durability_service`, `chat_semantic_memory_intent_service`, `chat_email_*`, `chat_user_context_item_service`, `chat_operational_refinement_vocabulary`, `chat_structure_comparison_service` (parsers de BOM), SQL advisors | Mover **padrões/limites** para `assistant/*.json` + loader; **algoritmo** SQL/OCR pode ficar em Python |
+| Inferência de segmento com `"/stock"` em texto livre | `chat_operational_refinement_pagination_service._infer_paginated_route_segment` | Preferir `has_flag(path)` nos toolCalls; no `conversation_context` usar registry marker / flag quando o blob for path-like |
+| Doc architecture desatualizada | `chat-assistant-content-presentation.md` ainda cita `visualBundlePolicy` | Alinhar a `viewBuildPolicy` |
+
+### P2 — aceitável (não é bug)
+
+| Item | Por quê manter |
+|------|----------------|
+| Literais `/stock` `/analyser` em **catálogo / skill / capabilities / memory path→tipo** | Vocabulário de path/OpenAPI e markers de intent — fonte de verdade do contrato HTTP, não ramo de apresentação |
+| Fallback `or "/stock"` após `OperationalRouteRegistryService.route_path_marker_for_segment("stock")` | Selection/session refinement: marker do registry primeiro; literal só se registry falhar |
+| `pathRules` / `contains: "/analyser"` em `presentation_profiles.json` | Declarativo canônico do perfil |
+| `compositePathMarkers` JSON (+ fallback Python) | Timeout HTTP declarativo; `has_flag(analyser)` já complementa |
+| `DRAWING_ANALYSER_PATH_TOKEN` | Constante de skill; path TOTVS real |
+| `stackPlan` / `ChatPresentationStackOrderService` | Só com `layoutMode==stack`; `richStackProfiles: []` — não reexpandir |
+| `ChatPresentationRefactorBaselineService` + avisos `visualBuilders` no coverage | Gate histórico Playbook 12; não reintroduzir builders no runtime |
+| `kpi_chart_specialized_service` | Ramos por **shape** de dado (exceção legítima com SQL presenter) |
+| `re.compile` em `*_content_service` / `*_patterns_service` / vocabulary loaders | Exceção explícita da regra |
+| `re.compile` em parsers SQL/PDF/tokenização | Algoritmo, não vocabulário de produto |
+
+### Won’t / fora de escopo desta higiene
+
+| Item | Nota |
+|------|------|
+| Reescrever playbooks históricos (12/09) que citam `visualBuilders` | Doc de roadmap; runtime já delivered-puro |
+| Apagar módulos «large files» do inventário sem análise de fluxo | Inventário lista tamanho, não órfão |
+| Migrar **todo** `re.compile` de uma vez | Incremental por domínio (memória → intent → SQL UI hints) |
+
+### Ordem sugerida do próximo lote
+
+1. `reason=` → JSON (`selectionReasons` / turn prep) + testes de content.  
+2. Vocabulário `chat_operational_refinement_vocabulary` + pagination stock → flag/registry.  
+3. Um domínio de intent/memória (`conversation_state` ou `fast_path`) → JSON.  
+4. Sync docs (`viewBuildPolicy`).
 
 ---
 

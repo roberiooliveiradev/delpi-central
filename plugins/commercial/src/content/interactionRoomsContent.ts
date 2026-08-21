@@ -107,6 +107,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   findInChatEmpty: "Nenhuma mensagem encontrada.",
   findInChatLoading: "Buscando…",
   findInChatError: "Não foi possível buscar mensagens.",
+  findInChatThisMonth: "Este mês",
   contextSubtitleParticipantOne: "1 participante",
   contextSubtitleParticipants: "{count} participantes",
   contextSubtitlePinOne: "1 fixada",
