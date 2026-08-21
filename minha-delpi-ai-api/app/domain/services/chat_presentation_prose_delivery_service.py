@@ -612,12 +612,12 @@ class ChatPresentationProseDeliveryService:
             if not isinstance(metadata, dict) or not metadata.get("ok"):
                 continue
 
-            if not cls.is_llm_decoupled_metadata(metadata):
-                continue
-
             commentary = ChatHumanizedDataResponseService.resolve_commentary_from_metadata(
                 metadata,
             )
+            if not commentary and not cls.is_llm_decoupled_metadata(metadata):
+                continue
+
             fallback = cls._format_data_commentary_lead(
                 commentary,
                 compact=compact,

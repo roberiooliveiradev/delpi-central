@@ -176,6 +176,9 @@ class ChatHumanizedDataResponseService:
 
         summary = data_answer.get("summary")
 
+        if isinstance(summary, str) and summary.strip():
+            summary = {"answer": summary.strip()}
+
         if not isinstance(summary, dict):
             return None
 

@@ -240,3 +240,38 @@ def test_apply_turn_direct_answer_policy_prefers_commentary_over_stale_tool_cont
     assert "assistente corporativo" not in direct.lower()
     assert effect == "llm_synthesis"
     assert tool_context.get("commentaryBriefDirect") is True
+
+
+def test_fast_brief_direct_uses_summary_when_no_highlights():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/10080001/stock",
+        "dataCommentary": {
+            "summary": "Estoque consolidado de **120** unidades para o produto **10080001**.",
+            "highlights": [],
+        },
+    }
+
+    answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "estoque do produto 10080001",
+        _tool_calls(metadata),
+        response_mode="fast",
+    )
+
+    assert answer
+    assert "120" in answer
+    assert "10080001" in answer
+
+
+def test_to_commentary_mirror_accepts_string_summary():
+    from app.domain.services.chat_humanized_data_response_service import (
+        ChatHumanizedDataResponseService,
+    )
+
+    mirror = ChatHumanizedDataResponseService.to_commentary_mirror(
+        {"summary": "Saldo disponível em duas filiais.", "facts": []}
+    )
+
+    assert mirror is not None
+    assert mirror.get("summary") == "Saldo disponível em duas filiais."
