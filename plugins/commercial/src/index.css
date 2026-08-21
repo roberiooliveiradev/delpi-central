@@ -171,11 +171,22 @@
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-inbox-pane {
-  padding: var(--cm-gap-sm);
+  /* Mais folga lateral no modo lista (sem thread) — evita card colado/cortado. */
+  padding-block: var(--cm-gap-sm);
+  padding-inline: var(--cm-gap);
+}
+
+/*
+ * Inset horizontal no wrapper (não no __list com overflow): padding em flex
+ * scrollável é ignorado e o overflow corta o border-radius dos cards.
+ */
+.dashboard-commercial.dashboard-page--fill .cm-room-inbox-pane .cm-room-inbox {
+  padding-inline: 0;
+  min-width: 0;
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-inbox-pane .cm-room-inbox__list {
-  padding-inline: var(--cm-gap-xs);
+  padding-inline: 0;
   padding-block-end: var(--cm-gap-sm);
 }
 

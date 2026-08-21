@@ -181,7 +181,8 @@ describe("room-inbox.css", () => {
     const item = css.match(/\.delpi-ui-room-inbox__item \{[^}]+\}/)?.[0] ?? "";
     expect(root).toMatch(/height:\s*100%/);
     expect(list).toMatch(/overflow-y:\s*auto/);
-    expect(list).toMatch(/overflow-x:\s*hidden/);
+    expect(list).not.toMatch(/overflow-x:\s*hidden/);
+    expect(list).toMatch(/scrollbar-gutter:\s*stable/);
     expect(item).toMatch(/max-width:\s*100%/);
     expect(css).toMatch(/\.delpi-ui-room-inbox__list > li \{[\s\S]*?max-width:\s*100%/);
   });
