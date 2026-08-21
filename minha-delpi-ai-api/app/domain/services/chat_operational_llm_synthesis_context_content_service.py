@@ -37,6 +37,13 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def multi_source_cross_rule(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "multiSourceCrossRule", default="")
+            or ""
+        ).strip()
+
+    @classmethod
     def max_chars(cls) -> int:
         raw = ChatAssistantContentService.get(_BUNDLE, "maxChars", default="1200")
 

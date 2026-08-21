@@ -59,6 +59,20 @@ class ChatOperationalLlmSynthesisContextService:
                 tool_calls,
             )
 
+        ok_count = sum(
+            1
+            for tool_call in (tool_calls or [])
+            if str(tool_call.get("name") or "") == "execute_external_action"
+            and isinstance(tool_call.get("metadata"), dict)
+            and tool_call["metadata"].get("ok")
+        )
+
+        if ok_count >= 2:
+            cross_rule = ChatOperationalLlmSynthesisContextContentService.multi_source_cross_rule()
+
+            if cross_rule:
+                result = f"{result}\n\n{cross_rule}" if result else f"\n\n{cross_rule}"
+
         return result
 
     @classmethod
@@ -171,6 +185,15 @@ class ChatOperationalLlmSynthesisContextService:
 
         if path:
             facts.append(f"Rota consultada: {path}")
+
+        operation_id = str(
+            metadata.get("operationId")
+            or (metadata.get("apiDelpiResponseMeta") or {}).get("operationId")
+            or ""
+        ).strip()
+
+        if operation_id:
+            facts.append(f"operationId: {operation_id}")
 
         cls._append_unique_lines(facts, cls._facts_from_profile_verdict(metadata))
 

@@ -264,3 +264,40 @@ def test_collect_fact_lines_includes_api_section_counts_and_attention():
     assert any("10080045" in line for line in lines)
     assert any("Roteiro: nenhum registro" in line for line in lines)
     assert any("roteiro sem operações" in line.lower() for line in lines)
+
+
+def test_build_facts_addon_multi_source_includes_cross_rule_and_operation_ids():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260148/stock",
+                "operationId": "get_product_stock",
+                "dataCommentary": {
+                    "profileKey": "stock",
+                    "highlights": [{"text": "Saldo **10**."}],
+                },
+            },
+        },
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260148/sales",
+                "apiDelpiResponseMeta": {"operationId": "get_product_sales"},
+                "dataCommentary": {
+                    "profileKey": "generic_list",
+                    "emptyResult": True,
+                    "summary": "Nenhuma venda encontrada.",
+                },
+            },
+        },
+    ]
+
+    addon = ChatOperationalLlmSynthesisContextService.build_facts_addon(tool_calls)
+
+    assert "get_product_stock" in addon or "operationId" in addon
+    assert "/products/90260148/stock" in addon
+    assert "/products/90260148/sales" in addon
+    assert "várias rotas" in addon.casefold() or "varias rotas" in addon.casefold()
