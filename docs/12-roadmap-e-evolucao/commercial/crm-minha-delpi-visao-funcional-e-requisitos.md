@@ -7,7 +7,8 @@
 > **Integração operacional:** `api-delpi` → TOTVS/Protheus e demais fontes corporativas  
 > **Governança:** Core API + Keycloak + RBAC da Minha DELPI  
 > **Status deste documento:** visão funcional alvo e catálogo mestre de requisitos  
-> **Data-base da análise:** 19 de agosto de 2026
+> **Data-base da análise:** 21 de agosto de 2026  
+> **Atualização:** gaps de rituais e produtividade comercial (benchmark Agendor)
 
 ---
 
@@ -84,6 +85,12 @@ A definição foi construída a partir de quatro grupos de fontes:
    - produtividade, agenda, mensagens, inteligência e integração ao ERP;
    - continuidade do relacionamento durante férias, afastamentos e trocas de carteira;
    - leitura controlada de comunicações corporativas, inclusive Microsoft Teams e Outlook.
+
+5. **Benchmark de CRM B2B (Agendor)** — [rituais de vendas](https://www.agendor.com.br/blog/rituais-de-vendas/) e [soluções](https://www.agendor.com.br/solucoes)
+   - rituais diários do vendedor (preparação do dia seguinte, lista, script, histórico pré-contato, atualização pós-abordagem);
+   - rituais de gestão (sumário semanal, forecast, 1-on-1, alinhamento marketing–vendas);
+   - mapa de vendas / saúde do funil, fluxo inteligente de atividades, sumário semanal/mensal;
+   - múltiplos funis com handoff, congelamento de negócios, mapa de visitas e rotas.
 
 ### 2.1 Legenda de maturidade
 
@@ -656,6 +663,9 @@ Público segmentado
 | CRM-PIP-010 | **N** | Permitir templates de pipeline e clonagem administrada. |
 | CRM-PIP-011 | **N** | Impedir exclusão física de etapa usada; usar inativação e migração assistida. |
 | CRM-PIP-012 | **N** | Exibir funil por quantidade, valor, margem, probabilidade, produto e responsável. |
+| CRM-PIP-013 | **N** | Oferecer visão **mapa de vendas** (saúde do funil): negócios destacados por aging, valor e risco, além de kanban e lista. |
+| CRM-PIP-014 | **N** | Permitir handoff controlado entre funis (pré-venda → venda → pós-venda / reativação), com cópia ou vínculo e histórico preservado. |
+| CRM-PIP-015 | **N** | Exibir coluna ou fila lateral de negócios elegíveis a entrar no funil atual (ex.: ganhos do funil anterior pendentes de pós-venda). |
 
 ### 10.12 Oportunidades e negociações
 
@@ -673,6 +683,7 @@ Público segmentado
 | CRM-OPP-008 | **N** | Exibir timeline própria com mensagens, reuniões, tarefas, arquivos, decisões e mudanças. |
 | CRM-OPP-009 | **N** | Registrar riscos, objeções, dependências, critérios de decisão e concorrência. |
 | CRM-OPP-010 | **N** | Permitir pausar com motivo, data de revisão e automação de retomada. |
+| CRM-OPP-019 | **N** | Permitir **congelar** negócio (fora do funil ativo, sem contar no forecast operacional) com motivo, data de descongelamento e filtro para ocultar/exibir congelados. |
 | CRM-OPP-011 | **N** | Fechar como ganha somente com dados mínimos e vínculo ao pedido ou justificativa de exceção. |
 | CRM-OPP-012 | **N** | Fechar como perdida com catálogo de motivo, concorrente, valor e observação. |
 | CRM-OPP-013 | **N** | Permitir reabrir somente com permissão e auditoria. |
@@ -727,6 +738,12 @@ Público segmentado
 | CRM-TSK-014 | **N** | Exibir produtividade por tipo, prazo, origem, conta e resultado, sem estimular apenas volume. |
 | CRM-TSK-015 | **N** | Permitir visualização lista, calendário e agenda semanal. |
 | CRM-TSK-016 | **N** | Criar resumo diário com atrasos, compromissos e prioridades. |
+| CRM-TSK-017 | **N** | Oferecer ritual **fim de expediente**: revisar compromissos do dia seguinte, gaps sem próximo passo e itens atrasados em até 10 minutos. |
+| CRM-TSK-018 | **N** | Oferecer lista diária com check visual de conclusão e progresso do dia (foco e satisfação de fechamento). |
+| CRM-TSK-019 | **N** | Após concluir atividade, sugerir **fluxo inteligente** de próximo passo (ligação, e-mail, reunião, proposta) conforme etapa, tipo e playbook, com confirmação humana. |
+| CRM-TSK-020 | **N** | Exigir resultado/outcome da abordagem antes de liberar a conclusão quando a política do processo exigir atualização do CRM. |
+| CRM-TSK-021 | **N** | Disponibilizar **script/roteiro de vendas** contextual (qualificação, objeções, perguntas) ao lado da tarefa/ligação, sem bloquear o diálogo. |
+| CRM-TSK-022 | **N** | Permitir nota rápida por áudio em tarefa/visita (mobile), com transcrição opcional e vínculo ao registro. |
 
 ### 10.15 Sequências e cadências comerciais
 
@@ -764,7 +781,9 @@ Público segmentado
 | CRM-CAL-009 | **N** | Converter próximos passos da reunião em tarefas com confirmação. |
 | CRM-CAL-010 | **B** | Integrar solicitação de veículo para visita quando o módulo corporativo estiver disponível. |
 | CRM-CAL-011 | **N** | Registrar endereço, rota, check-in opcional e duração real da visita. |
+| CRM-CAL-015 | **N** | Oferecer **mapa de clientes/visitas** com otimização assistida de rota do dia (sem tracking contínuo). |
 | CRM-CAL-012 | **N** | Evitar captura de localização contínua; usar somente finalidade e consentimento aprovados. |
+| CRM-CAL-016 | **N** | Antes de cada contato/reunião, oferecer **briefing pré-contato** (histórico, última interação, pendências, produtos e riscos) em um clique. |
 | CRM-CAL-013 | **N** | Exibir reuniões sem registro comercial e sugerir associação, sem vincular automaticamente em caso incerto. |
 | CRM-CAL-014 | **N** | Preservar privacidade de eventos particulares e sensíveis. |
 
@@ -1102,6 +1121,9 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | CRM-BI-016 | **N** | Exportar dados permitidos com auditoria e marcação de contexto. |
 | CRM-BI-017 | **N** | Comparar MTD, YTD, período anterior e ano anterior onde fizer sentido. |
 | CRM-BI-018 | **N** | Impedir soma conceitualmente inválida de métricas sem ficha de indicador aprovada. |
+| CRM-BI-019 | **N** | Gerar **sumário semanal e mensal de vendas** (atividades planejadas vs. executadas, pipeline, forecast e próximos passos) para ritual de gestão. |
+| CRM-BI-020 | **N** | Medir aderência a rituais e disciplina de CRM (atualização pós-contato, próximo passo preenchido, briefing aberto antes de reunião) sem ranqueamento tóxico. |
+| CRM-BI-021 | **N** | Incluir visão **mapa de vendas** nos dashboards de gestão à vista (aging × valor × etapa). |
 
 ### 10.31 CAC, atribuição e retorno de marketing
 
@@ -1203,7 +1225,8 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | CRM-ADM-002 | **B** | Implementar administração de pipelines, etapas, motivos, SLAs, segmentos e famílias. |
 | CRM-ADM-003 | **N** | Administrar campos personalizados por entidade com tipo, validação e visibilidade. |
 | CRM-ADM-004 | **N** | Administrar tags, fontes, campanhas, canais, concorrentes e classificações. |
-| CRM-ADM-005 | **N** | Administrar templates de e-mail, mensagem, proposta, sequência e automação. |
+| CRM-ADM-005 | **N** | Administrar templates de e-mail, mensagem, proposta, sequência, automação e **scripts/roteiros de vendas**. |
+| CRM-ADM-015 | **N** | Administrar playbooks e rituais (fim de dia, sumário semanal, 1-on-1, role-play) com checklist e versão publicada. |
 | CRM-ADM-006 | **N** | Administrar regras de roteamento, score, saúde, deduplicação e retenção. |
 | CRM-ADM-007 | **N** | Administrar conectores, consentimentos, scopes, subscriptions e checkpoints. |
 | CRM-ADM-008 | **N** | Exibir saúde das integrações, filas, jobs, outbox e dead-letter. |
@@ -1281,6 +1304,25 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | CRM-MOB-011 | **N** | Suportar modo claro e escuro pelos tokens da Minha DELPI. |
 | CRM-MOB-012 | **N** | Usar `@delpi/plugin-ui` antes de criar componentes próprios. |
 
+### 10.39 Rituais comerciais, disciplina e coaching
+
+**Objetivo:** transformar hábitos de alta performance (benchmark [Agendor — rituais de vendas](https://www.agendor.com.br/blog/rituais-de-vendas/)) em capacidades do produto, sem virar “relógio de ponto” nem app de bem-estar.
+
+| ID | Status | Requisito funcional |
+|---|---:|---|
+| CRM-RIT-001 | **N** | Ritual **preparar o dia seguinte**: ao fim do expediente, lista do amanhã com compromissos, oportunidades sem próximo passo e lembretes. |
+| CRM-RIT-002 | **N** | Ritual **lista do dia** com checks, priorização e fechamento do dia (itens feitos vs. remanescentes). |
+| CRM-RIT-003 | **N** | Ritual **segmentar antes de prospectar**: fila de ligações/cadência agrupada por perfil, setor, origem, ticket ou necessidade. |
+| CRM-RIT-004 | **N** | Ritual **script por perto**: abrir roteiro de qualificação/objeção na mesma tela da atividade. |
+| CRM-RIT-005 | **N** | Ritual **histórico antes do contato**: briefing obrigatório ou recomendado conforme política da equipe. |
+| CRM-RIT-006 | **N** | Ritual **atualizar CRM após abordagem**: outcome, próximo passo e campos mínimos antes de concluir a atividade. |
+| CRM-RIT-007 | **N** | Ritual opcional **propósito × meta**: vincular meta comercial a objetivo pessoal declarado pelo vendedor (motivação), sem exposição pública forçada. |
+| CRM-RIT-008 | **N** | Ritual de gestão **reunião semanal**: agenda gerada a partir do sumário (resultados, forecast, riscos e gaps). |
+| CRM-RIT-009 | **N** | Ritual de gestão **1-on-1**: pauta, feedback mútuo, acordos e tarefas de coaching com histórico. |
+| CRM-RIT-010 | **N** | Ritual de gestão **role-play**: cenários, script, gravação opcional autorizada e feedback estruturado. |
+| CRM-RIT-011 | **N** | Ritual **SLA marketing–vendas**: reunião/artefato recorrente com handoff, critérios de MQL/SQL e métricas de qualidade. |
+| CRM-RIT-012 | **N** | Configurar quais rituais são recomendados vs. obrigatórios por equipe, sem hardcode de cargo. |
+| CRM-RIT-013 | **N** | Fora de escopo de produto: técnica Pomodoro, pausas de bem-estar e qualquer controle de “tempo de tela” — o CRM não deve cronometrar foco pessoal. |
 
 ---
 
@@ -1292,10 +1334,10 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | Conta 360 | Dados ERP + contatos + atividades | Timeline omnicanal e plano de conta | Histórico ainda fragmentado | P1 |
 | Contatos | CRUD local e contato ERP | Comitê de compra, consentimento e identidade | Papéis e qualidade de contato | P1 |
 | Prospects/leads | Modelo planejado | Gestão completa pré-cliente | Não há lifecycle nativo confirmado | P1 |
-| Pipeline | OV de ERP e visão analítica | CRUD nativo com múltiplos funis | Falta governança de etapas e histórico | P1 |
-| Oportunidades | Consulta parcial | Negociação completa e health | Falta owner, next step e workflow nativos | P1 |
-| Tarefas | Forte base entregue | Checklist, recorrência e automação | P3 de produtividade | P2 |
-| Calendário | Sem conector | Agenda, reuniões, free/busy e visitas | Integração Microsoft 365 | P2 |
+| Pipeline | OV de ERP e visão analítica | CRUD nativo, mapa de vendas e handoff entre funis | Falta governança de etapas, saúde visual e congelamento | P1 |
+| Oportunidades | Consulta parcial | Negociação completa, health e congelamento | Falta owner, next step e workflow nativos | P1 |
+| Tarefas | Forte base entregue | Checklist, recorrência, fluxo inteligente e rituais diários | Disciplina pós-abordagem e próximo passo | P2 |
+| Calendário | Sem conector | Agenda, reuniões, free/busy, visitas e mapa de rotas | Integração Microsoft 365 + rotas | P2 |
 | Sala de interação | Entregue | Integrada a todas as entidades e decisões | Visibilidade sensível e templates | P2 |
 | Teams | Backlog | Conversas e transcrições seletivas | Consentimento, ingestão e associação | P2 |
 | Outlook/e-mail | Backlog | Histórico, envio e inbox compartilhada | Conector e governança | P2 |
@@ -1313,7 +1355,8 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | Confirmação de pedido | Backlog | SLA ponta a ponta | Workflow entre áreas | P2 |
 | Produção/entrega | Boa leitura operacional | Exceção e comunicação estruturada | Dados de transporte e ownership | P3 |
 | Amostras | Backlog | Processo técnico ligado à receita | Etapas e integração entre áreas | P3 |
-| BI | Forte base | CRM + marketing + forecast + CAC | Fichas de KPI e drill completo | P2 |
+| BI | Forte base | CRM + marketing + forecast + CAC + sumário semanal | Fichas de KPI, mapa de vendas e rituais de gestão | P2 |
+| Rituais / coaching | Ausente | Rituais do vendedor e do gestor no produto | Disciplina de uso sem vigilância indevida | P2 |
 | IA | Ausente | Copiloto explicável e supervisionado | Plataforma, governança e avaliação | P4 |
 | Qualidade de dados | Parcial | Importação, dedupe e data stewardship | Identidade canônica | P1 |
 | Auditoria/LGPD | Base existente | Governança de conteúdo omnicanal | Retenção e acessos sensíveis | P1 transversal |
@@ -1344,12 +1387,12 @@ Administração†
 | Área | Conteúdo |
 |---|---|
 | **Início** | Eventos, prioridades, favoritos, busca, recentes e atalhos contextuais |
-| **Meu Dia** | Tarefas, agenda, mensagens pendentes, leads novos, follow-ups e aprovações |
-| **CRM** | Leads, prospects, pipeline, oportunidades, propostas, forecast, cadências e campanhas |
+| **Meu Dia** | Tarefas, agenda, mensagens pendentes, leads novos, follow-ups, rituais diários e aprovações |
+| **CRM** | Leads, prospects, pipeline, mapa de vendas, oportunidades, propostas, forecast, cadências e campanhas |
 | **Contas** | Carteiras, lista de clientes, Conta 360, planos, contatos e territórios |
 | **Conversas** | Sala interna, e-mail compartilhado, Teams, mensageria e chamadas autorizadas |
-| **Visão geral** | Gestão à vista, funil, forecast, marketing, produtividade, SLA, OTD e receita |
-| **Administração** | Carteiras, membros, grupos, pipelines, catálogos, automações, integrações e auditoria |
+| **Visão geral** | Gestão à vista, funil, mapa de vendas, forecast, marketing, produtividade, SLA, OTD, receita e sumários |
+| **Administração** | Carteiras, membros, grupos, pipelines, scripts, rituais, catálogos, automações, integrações e auditoria |
 
 ### 12.3 Regras de experiência
 
@@ -1407,6 +1450,7 @@ Administração†
 | Conta | `account_profiles`, `account_relationships`, `account_plans`, `account_plan_actions`, `account_health_snapshots` |
 | Visita | `visits`, `visit_attendees`, `visit_outcomes`, `vehicle_requests` |
 | Forecast | `forecast_cycles`, `forecast_submissions`, `forecast_items`, `forecast_adjustments`, `forecast_approvals`, `forecast_snapshots` |
+| Rituais e coaching | `sales_scripts`, `sales_rituals`, `ritual_completions`, `coaching_one_on_ones`, `deal_freezes` |
 
 > A migration simplificada de declaração de forecast removida não deve ser reativada. O forecast completo precisa de modelo próprio e nova sequência de migrations.
 
@@ -2171,7 +2215,9 @@ O CRM não deve:
 - excluir fisicamente histórico relevante de negócio;
 - usar mensagem textual como único identificador de erro;
 - misturar regra do Portal Comercial com plugin legado;
-- apresentar backlog como funcionalidade entregue.
+- apresentar backlog como funcionalidade entregue;
+- cronometrar foco pessoal (Pomodoro) ou transformar o CRM em app de bem-estar;
+- expor metas pessoais motivacionais (“propósito”) a terceiros sem consentimento do titular.
 
 ---
 
@@ -2245,6 +2291,18 @@ O CRM não deve:
 - Microsoft Graph — notificações de Outlook para mensagens, eventos e contatos;
 - Microsoft Graph — disponibilidade livre/ocupado e criação de eventos.
 
+### 24.5 Benchmark de mercado — Agendor CRM
+
+Fontes usadas para preencher gaps de rituais, produtividade e saúde do funil (ago/2026):
+
+- [8 rituais de vendas (+ 5 de gestão)](https://www.agendor.com.br/blog/rituais-de-vendas/);
+- [Soluções Agendor](https://www.agendor.com.br/solucoes) — funis, follow-up, mapa de vendas, sumário, WhatsApp, visitas;
+- [Funil de vendas / mapa de vendas](https://www.agendor.com.br/beneficios/funil-de-vendas);
+- [Gestão de CRM](https://www.agendor.com.br/blog/gestao-crm/) — tarefas por etapa, lembretes, sumário semanal como ritual;
+- Central de ajuda Agendor — fluxo inteligente de atividades e sumário semanal.
+
+**Adaptação DELPI:** manter disciplina e rituais no produto; rejeitar vigilância de pausas/Pomodoro; alinhar handoff e forecast aos rituais de gestão sem ranqueamento tóxico.
+
 ---
 
 ## 25. Conclusão
@@ -2258,17 +2316,17 @@ prospects e leads
 +
 marketing e jornada
 +
-pipeline nativo
+pipeline nativo e mapa de vendas
 +
 oportunidades e propostas
 +
-agenda e cadências
+agenda, cadências e rituais de execução
 +
 histórico omnicanal
 +
 Microsoft 365 e mensageria
 +
-forecast e processos industriais
+forecast, sumários e coaching de gestão
 +
 inteligência artificial supervisionada
 ```

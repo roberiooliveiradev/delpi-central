@@ -4,10 +4,11 @@
 > **Módulo:** Portal Comercial / CRM Minha DELPI  
 > **Frontend:** `plugins/commercial`  
 > **Backend de domínio e BFF:** `commercial-api`  
-> **Versão deste documento:** 1.0  
-> **Data de referência:** 19 de agosto de 2026  
+> **Versão deste documento:** 1.1  
+> **Data de referência:** 21 de agosto de 2026  
 > **Status:** visão funcional alvo e catálogo mestre de capacidades  
-> **Base analisada:** documentação oficial da Minha DELPI, código e documentação do `commercial-api`, código e documentação do `plugins/commercial`, manifesto vigente do plugin comercial e requisitos levantados com as áreas de negócio.
+> **Atualização 1.1:** gaps de rituais, mapa de vendas, fluxo inteligente e coaching (benchmark Agendor)  
+> **Base analisada:** documentação oficial da Minha DELPI, código e documentação do `commercial-api`, código e documentação do `plugins/commercial`, manifesto vigente do plugin comercial, requisitos levantados com as áreas de negócio e benchmark de CRM B2B (Agendor).
 
 ---
 
@@ -90,8 +91,9 @@ O CRM não deverá:
 
 - Entregar uma experiência única dentro do Portal Comercial.
 - Manter uma linha do tempo completa e permissionada por conta, contato, lead e oportunidade.
-- Oferecer uma área “Meu Dia” que priorize ações, mensagens, tarefas, reuniões e riscos.
+- Oferecer uma área “Meu Dia” que priorize ações, mensagens, tarefas, reuniões, rituais diários e riscos.
 - Suportar múltiplos funis, processos e equipes sem hardcode por cargo.
+- Embutir disciplina de execução (scripts, briefing, atualização pós-contato, fluxo inteligente) sem vigilância de bem-estar.
 - Permitir automações configuráveis e versionadas.
 - Integrar canais externos por conectores desacoplados.
 - Oferecer APIs e webhooks estáveis para expansão do ecossistema.
@@ -213,7 +215,12 @@ O CRM não deverá:
 22. recursos de produtividade e assistência por IA;
 23. observabilidade e operação dos conectores;
 24. políticas de retenção, anonimização e atendimento a direitos do titular;
-25. modelo explícito para vendas industriais, amostras, viabilidade técnica e homologação.
+25. modelo explícito para vendas industriais, amostras, viabilidade técnica e homologação;
+26. rituais de execução do vendedor (fim de dia, lista, script, briefing pré-contato, atualização pós-abordagem);
+27. rituais de gestão (sumário semanal/mensal, forecast em reunião, 1-on-1, role-play, SLA marketing–vendas);
+28. mapa de vendas (saúde visual do funil), fluxo inteligente pós-atividade e handoff entre funis;
+29. congelamento de negócios e mapa/rota de visitas sem tracking contínuo;
+30. scripts/roteiros de vendas e playbooks versionados na mesma experiência da atividade.
 
 ---
 
@@ -360,12 +367,16 @@ Regras:
 - **CRM-HOME-010 — Widgets configuráveis:** reordenar, ocultar e salvar preferências dentro dos limites do perfil.
 - **CRM-HOME-011 — Digest:** resumo diário ou semanal por canal escolhido.
 - **CRM-HOME-012 — Continuidade:** seção “recentemente acessados” e rascunhos em andamento.
+- **CRM-HOME-013 — Ritual fim de dia:** revisar amanhã, gaps sem próximo passo e atrasos em fluxo guiado curto.
+- **CRM-HOME-014 — Lista do dia:** checks visuais, progresso e fechamento do dia.
+- **CRM-HOME-015 — Sumário de vendas:** atalho para o sumário semanal/mensal do usuário ou da equipe autorizada.
 
 #### Regras críticas
 
 - A home não deverá somar indicadores incompatíveis.
 - Todo card deverá declarar fonte, atualização e escopo.
 - Recomendações não poderão executar automaticamente envio, fechamento ou alteração financeira.
+- Rituais não poderão cronometrar foco pessoal nem expor metas motivacionais privadas a terceiros.
 
 ---
 
@@ -744,6 +755,10 @@ Regras:
 - **CRM-PIPE-028 — Visibilidade:** respeitar carteira, equipe, participação, filial e sensibilidade.
 - **CRM-PIPE-029 — Forecast category:** pipeline, best case, commit, closed e categorias configuráveis.
 - **CRM-PIPE-030 — Métricas:** conversão, velocidade, ciclo, valor, win rate, perda e cobertura.
+- **CRM-PIPE-031 — Mapa de vendas:** visão de saúde do funil destacando aging, valor e risco além de kanban/lista.
+- **CRM-PIPE-032 — Congelamento:** ocultar do funil ativo e do forecast operacional, com motivo, data de retorno e filtro congelados.
+- **CRM-PIPE-033 — Handoff entre funis:** pré-venda → venda → pós-venda/reativação com vínculo, fila lateral de elegíveis e histórico preservado.
+- **CRM-PIPE-034 — Ordenação operacional:** maior valor, data prevista, ranking, aging e prioridade configurável.
 
 
 ### 8.16 Produtos, aplicações e contexto industrial
@@ -832,6 +847,11 @@ Regras:
 - **CRM-TASK-018 — Offline/mobile:** registrar visita ou conclusão com sincronização posterior controlada.
 - **CRM-TASK-019 — Anexos e comentários:** preservar a base atual e aplicar segurança.
 - **CRM-TASK-020 — Notificações:** não notificar o ator da própria ação e respeitar preferências.
+- **CRM-TASK-021 — Fluxo inteligente:** ao concluir, sugerir próximo passo conforme etapa, tipo, playbook e política, com confirmação humana.
+- **CRM-TASK-022 — Outcome obrigatório:** resultado da abordagem, próximo passo e campos mínimos antes de concluir, quando o processo exigir.
+- **CRM-TASK-023 — Script embutido:** roteiro de vendas/qualificação na mesma tela da atividade.
+- **CRM-TASK-024 — Nota por áudio:** captura mobile com transcrição opcional e vínculo ao registro.
+- **CRM-TASK-025 — Fila segmentada:** agrupar ligações/tarefas do dia por segmento (perfil, setor, origem, ticket).
 
 ---
 
@@ -861,6 +881,9 @@ Regras:
 - **CRM-MEET-016 — Métricas:** reuniões realizadas, no-show, tempo até reunião, resultado e conversão.
 - **CRM-MEET-017 — Handoff:** encaminhar decisões a tarefas, aprovações ou áreas responsáveis.
 - **CRM-MEET-018 — Privacidade:** conteúdo e participantes obedecerão às políticas de origem e retenção.
+- **CRM-MEET-019 — Mapa de visitas:** clientes/contatos no mapa e otimização assistida de rota do dia.
+- **CRM-MEET-020 — Briefing pré-contato:** abrir histórico, últimas interações, pendências e riscos antes de ligação ou visita.
+- **CRM-MEET-021 — Sem tracking contínuo:** localização somente com finalidade e consentimento; nunca geofencing permanente.
 
 ---
 
@@ -1320,6 +1343,9 @@ Todo indicador deverá declarar:
 - **CRM-AN-028 — Catálogo de métricas:** glossário contextual e versão da metodologia.
 - **CRM-AN-029 — Freshness:** indicar atraso e indisponibilidade, nunca apresentar dado velho como atual.
 - **CRM-AN-030 — Anti-invenção:** métricas ainda não homologadas não poderão ser exibidas como definitivas.
+- **CRM-AN-031 — Sumário semanal/mensal:** atividades planejadas vs. executadas, pipeline, forecast e próximos passos para ritual de gestão.
+- **CRM-AN-032 — Aderência a rituais:** atualização pós-contato, próximo passo preenchido, briefing pré-reunião — sem ranqueamento tóxico.
+- **CRM-AN-033 — Mapa de vendas analítico:** aging × valor × etapa na gestão à vista.
 
 ---
 
@@ -1650,11 +1676,43 @@ Todo indicador deverá declarar:
 - **CRM-HELP-005 — Metodologia de KPI:** link direto no indicador.
 - **CRM-HELP-006 — Central de ajuda:** busca por tarefa e área.
 - **CRM-HELP-007 — Playbooks:** prospecção, reunião, proposta, reativação e handoff.
+- **CRM-HELP-007A — Scripts de vendas:** roteiros versionados por etapa, segmento e canal, consumíveis na atividade.
 - **CRM-HELP-008 — Novidades:** changelog por versão e impacto.
 - **CRM-HELP-009 — Feedback:** reportar dúvida, erro e sugestão com contexto técnico.
 - **CRM-HELP-010 — Telemetria de adoção:** uso de funcionalidades, abandonos e barreiras, sem vigilância indevida.
 - **CRM-HELP-011 — Conteúdo administrável:** versão, owner, aprovação e validade.
 - **CRM-HELP-012 — Ambiente de treinamento:** dados fictícios ou sandbox quando necessário.
+- **CRM-HELP-013 — Role-play:** cenários de treinamento com script, feedback e registro opcional autorizado.
+
+---
+
+### 8.45 Rituais comerciais e coaching de gestão
+
+**Situação atual:** Novo — gap preenchido a partir do benchmark Agendor ([rituais de vendas](https://www.agendor.com.br/blog/rituais-de-vendas/), [soluções](https://www.agendor.com.br/solucoes)).
+
+**Objetivo:** embutir disciplina e rituais de alta performance no fluxo diário, sem transformar o CRM em controle de bem-estar ou ranking tóxico.
+
+#### Funcionalidades obrigatórias
+
+- **CRM-RIT-001 — Preparar o dia seguinte:** fluxo guiado no fim do expediente.
+- **CRM-RIT-002 — Lista do dia:** checks, priorização e fechamento.
+- **CRM-RIT-003 — Segmentar antes de prospectar:** fila agrupada por critérios comerciais.
+- **CRM-RIT-004 — Script por perto:** roteiro na mesma tela da abordagem.
+- **CRM-RIT-005 — Histórico antes do contato:** briefing recomendado ou obrigatório por política.
+- **CRM-RIT-006 — Atualizar após abordagem:** outcome + próximo passo como gate de conclusão.
+- **CRM-RIT-007 — Propósito × meta (opcional):** meta comercial ligada a objetivo pessoal privado do vendedor.
+- **CRM-RIT-008 — Reunião semanal de gestão:** agenda gerada do sumário + forecast.
+- **CRM-RIT-009 — 1-on-1:** pauta, feedback mútuo, acordos e histórico.
+- **CRM-RIT-010 — Role-play:** cenários e feedback estruturado.
+- **CRM-RIT-011 — SLA marketing–vendas:** artefato/reunião recorrente com critérios MQL/SQL e qualidade de handoff.
+- **CRM-RIT-012 — Configuração por equipe:** rituais recomendados vs. obrigatórios, versionados.
+- **CRM-RIT-013 — Fora de escopo:** Pomodoro, pausas de bem-estar e cronometragem de foco pessoal.
+
+#### Regras críticas
+
+- Aderência a rituais alimenta coaching e qualidade de dados, não “score de pessoa” opaco.
+- Metas pessoais motivacionais são privadas por padrão.
+- Fluxo inteligente e scripts sugerem; não enviam nem fecham negócio sem política/confirmação.
 
 ---
 
@@ -1801,6 +1859,11 @@ O modelo deverá evoluir de forma compatível com as tabelas atuais. Os nomes fi
 | `sequence` | Cadência de prospecção. |
 | `sequence_version` | Versão publicada. |
 | `sequence_enrollment` | Execução por contato/lead. |
+| `sales_script` | Roteiro de vendas/qualificação versionado. |
+| `sales_ritual` | Definição de ritual (fim de dia, sumário, 1-on-1, etc.). |
+| `ritual_completion` | Execução/check de ritual por usuário/período. |
+| `coaching_one_on_one` | Registro de 1-on-1 e acordos. |
+| `deal_freeze` | Congelamento de oportunidade com motivo e retorno. |
 
 ### 10.7 Governança, analytics e IA
 
@@ -2283,6 +2346,17 @@ Metas iniciais a serem homologadas por ambiente:
 5. Ao final, sistema compara previsto e realizado.
 6. Dashboard mostra acurácia e causas de variação.
 
+### 16.7 Ritual diário do vendedor e sumário semanal
+
+1. Vendedor abre Meu Dia e executa a lista do dia com checks.
+2. Antes de cada contato, abre briefing e script da etapa.
+3. Ao concluir a abordagem, registra outcome e próximo passo (gate).
+4. O sistema sugere fluxo inteligente de próxima atividade; o usuário confirma.
+5. No fim do expediente, ritual “preparar amanhã” fecha gaps sem próximo passo.
+6. Na segunda-feira, gestor e time recebem sumário semanal (atividades, pipeline, forecast).
+7. Reunião semanal e 1-on-1 usam o sumário como pauta; acordos viram tarefas.
+8. Aderência a rituais aparece no dashboard de coaching sem ranking público tóxico.
+
 ---
 
 ## 17. Fases recomendadas de entrega
@@ -2303,8 +2377,9 @@ As fases abaixo organizam dependências. Elas não reduzem o escopo funcional fi
 - `account` interno para prospect/cliente;
 - contatos evoluídos e consentimentos;
 - leads, qualificação, distribuição e conversão;
-- pipelines, etapas, oportunidades e produtos;
-- tarefas recorrentes, checklists, reuniões e agenda local;
+- pipelines, etapas, oportunidades, mapa de vendas e congelamento;
+- tarefas recorrentes, checklists, fluxo inteligente, scripts e rituais diários;
+- reuniões, agenda local e briefing pré-contato;
 - timeline unificada;
 - busca, views e administração básica.
 
@@ -2315,6 +2390,8 @@ As fases abaixo organizam dependências. Elas não reduzem o escopo funcional fi
 - Teams chats/canais vinculados;
 - reuniões e transcrições autorizadas;
 - cadências;
+- mapa/rota de visitas (sem tracking contínuo);
+- sumário semanal/mensal e rituais de gestão (1-on-1, reunião semanal);
 - resumo/briefing assistidos;
 - central de integrações e subscriptions.
 
@@ -2583,12 +2660,24 @@ Para as integrações Microsoft 365, foram verificadas documentações oficiais 
 
 As capacidades externas deverão ser novamente validadas no início da implementação, pois APIs, permissões, licenciamento e políticas de tenant podem evoluir.
 
+### 21.4 Benchmark de mercado — Agendor CRM
+
+Para preencher gaps de rituais, produtividade e saúde do funil (ago/2026), foram consultados:
+
+- [8 rituais de vendas (+ 5 de gestão)](https://www.agendor.com.br/blog/rituais-de-vendas/);
+- [Soluções Agendor](https://www.agendor.com.br/solucoes);
+- [Funil / mapa de vendas](https://www.agendor.com.br/beneficios/funil-de-vendas);
+- [Gestão de CRM](https://www.agendor.com.br/blog/gestao-crm/);
+- Central de ajuda — fluxo inteligente de atividades e sumário semanal.
+
+**Adaptação DELPI:** incorporar disciplina, sumários, mapa de vendas, handoff entre funis, scripts e coaching; **não** incorporar Pomodoro/controle de pausas; aderência a rituais serve a qualidade de dados e coaching, não ranking tóxico.
+
 ---
 
 ## 22. Conclusão
 
 O CRM Minha DELPI deverá transformar o Portal Comercial atual em uma plataforma completa de relacionamento e execução comercial, sem descartar a base já construída e sem romper as fronteiras arquiteturais da Minha DELPI.
 
-A evolução parte de uma fundação real — Conta 360, carteiras, tarefas, pedidos, propostas, analytics, anexos, auditoria e colaboração interna — e adiciona os domínios hoje ausentes: leads, prospects, scoring, segmentos, campanhas, automações, pipelines nativos, propostas governadas, comunicações omnicanal, Microsoft 365, forecast, planos de conta, IA e governança de dados.
+A evolução parte de uma fundação real — Conta 360, carteiras, tarefas, pedidos, propostas, analytics, anexos, auditoria e colaboração interna — e adiciona os domínios hoje ausentes: leads, prospects, scoring, segmentos, campanhas, automações, pipelines nativos com mapa de vendas, propostas governadas, comunicações omnicanal, Microsoft 365, forecast, rituais de execução e gestão, planos de conta, IA e governança de dados.
 
-O resultado esperado é uma única visão operacional e histórica da relação com cada empresa, conectando aquisição, prospecção, negociação, pedido, entrega, recompra e expansão. O CRM deverá preservar a origem de cada fato, respeitar o sistema de registro adequado, explicar seus indicadores, controlar seus efeitos e permitir que a DELPI evolua o processo comercial com dados próprios, auditáveis e integrados.
+O resultado esperado é uma única visão operacional e histórica da relação com cada empresa, conectando aquisição, prospecção, negociação, pedido, entrega, recompra e expansão. O CRM deverá preservar a origem de cada fato, respeitar o sistema de registro adequado, explicar seus indicadores, controlar seus efeitos e permitir que a DELPI evolua o processo comercial com dados próprios, auditáveis e integrados — inclusive a disciplina diária que transforma o CRM em hábito (rituais), e não apenas em repositório.
