@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PanelRight } from "lucide-react";
+import { ExternalLink, PanelRight } from "lucide-react";
+import { roomHeaderBemClasses } from "@delpi/plugin-ui/index";
 
 import {
   createTaskFromInteractionMessage,
@@ -23,7 +24,6 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
-import { CommercialEntityLink } from "../../components/CommercialEntityLink";
 import {
   CM_PORTAL_SCOPE,
   CommercialActionButton,
@@ -38,6 +38,7 @@ import {
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { listInlineAttachmentIdsFromMarkdown } from "./interactionRoomInlineAttachments";
@@ -92,6 +93,7 @@ export function InteractionRoomPage({
   onRoomTitle,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
+  const roomHeaderClasses = useMemo(() => roomHeaderBemClasses("cm"), []);
 
   const [room, setRoom] = useState<InteractionRoomDto | null>(null);
   const [members, setMembers] = useState<InteractionRoomMemberDto[]>([]);
@@ -570,6 +572,23 @@ export function InteractionRoomPage({
     ? resolveRoomEntityHref(basePath, room.entity_type, room.entity_key)
     : null;
 
+  const entityPresentation = useMemo(
+    () =>
+      formatRoomEntityPresentation(room?.entity_type, room?.entity_key, room?.title),
+    [room?.entity_key, room?.entity_type, room?.title],
+  );
+
+  useEffect(() => {
+    if (!contextOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setContextOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [contextOpen]);
+
   const contextPins = useMemo(
     () =>
       [...pinnedMessageIds].map((messageId) => {
@@ -631,31 +650,49 @@ export function InteractionRoomPage({
           <div className="cm-room-thread__header">
             <CommercialRoomHeader
               title={room.title}
-              subtitle={
-                room.entity_key ? (
-                  entityHref ? (
-                    <CommercialEntityLink
-                      href={entityHref}
-                      title={content.contextOpenEntity}
-                    >
-                      {room.entity_key}
-                    </CommercialEntityLink>
-                  ) : (
-                    room.entity_key
-                  )
+              chips={
+                entityPresentation.chipLabel ? (
+                  <span
+                    className={roomHeaderClasses.chip}
+                    title={`${content.roomUnitChipTitle}: ${entityPresentation.chipLabel}`}
+                  >
+                    {entityPresentation.chipLabel}
+                  </span>
                 ) : undefined
               }
               participants={participants}
               participantsAriaLabel={content.roomMembersAriaLabel}
               actions={
-                <CommercialActionButton
-                  variant="ghost"
-                  aria-label={content.contextToggle}
-                  aria-expanded={contextOpen}
-                  onClick={() => setContextOpen((open) => !open)}
-                >
-                  <PanelRight size={16} aria-hidden />
-                </CommercialActionButton>
+                <>
+                  {entityHref ? (
+                    <CommercialActionButton
+                      variant="ghost"
+                      aria-label={content.roomOpenEntityAriaLabel}
+                      title={content.roomOpenEntityAriaLabel}
+                      onClick={() => navigatePluginPath(entityHref)}
+                    >
+                      <ExternalLink size={16} aria-hidden />
+                    </CommercialActionButton>
+                  ) : null}
+                  <CommercialActionButton
+                    variant="ghost"
+                    aria-label={
+                      contextOpen
+                        ? content.contextToggleCloseAriaLabel
+                        : content.contextToggle
+                    }
+                    title={
+                      contextOpen
+                        ? content.contextToggleCloseAriaLabel
+                        : content.contextToggle
+                    }
+                    aria-expanded={contextOpen}
+                    aria-pressed={contextOpen}
+                    onClick={() => setContextOpen((open) => !open)}
+                  >
+                    <PanelRight size={16} aria-hidden />
+                  </CommercialActionButton>
+                </>
               }
             />
           </div>
@@ -742,8 +779,8 @@ export function InteractionRoomPage({
                   membersEmpty: content.contextMembersEmpty,
                   openEntity: content.contextOpenEntity,
                 }}
-                entityTitle={room.title}
-                entityKey={room.entity_key}
+                entityPrimary={entityPresentation.primaryNumber}
+                entityFields={entityPresentation.aboutFields}
                 entityHref={entityHref}
                 onOpenEntity={
                   entityHref

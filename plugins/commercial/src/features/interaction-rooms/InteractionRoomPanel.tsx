@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { roomHeaderBemClasses } from "@delpi/plugin-ui/index";
 
 import {
   createTaskFromInteractionMessage,
@@ -37,6 +38,7 @@ import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
+import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { listInlineAttachmentIdsFromMarkdown } from "./interactionRoomInlineAttachments";
@@ -577,6 +579,17 @@ export function InteractionRoomPanel({
     [members, nameFor, basePath, photoByUserId],
   );
 
+  const panelHeaderClasses = useMemo(() => roomHeaderBemClasses("cm"), []);
+  const entityChipLabel = useMemo(
+    () =>
+      formatRoomEntityPresentation(
+        room?.entity_type,
+        room?.entity_key,
+        room?.title || roomTitle,
+      ).chipLabel,
+    [room?.entity_key, room?.entity_type, room?.title, roomTitle],
+  );
+
   const openHref =
     room?.id != null
       ? buildInteractionRoomPath(basePath, room.id)
@@ -601,6 +614,16 @@ export function InteractionRoomPanel({
       >
         <CommercialRoomHeader
           title={room.title || roomTitle}
+          chips={
+            entityChipLabel ? (
+              <span
+                className={panelHeaderClasses.chip}
+                title={`${content.roomUnitChipTitle}: ${entityChipLabel}`}
+              >
+                {entityChipLabel}
+              </span>
+            ) : undefined
+          }
           participants={participants}
           participantsAriaLabel={content.roomMembersAriaLabel}
         />
