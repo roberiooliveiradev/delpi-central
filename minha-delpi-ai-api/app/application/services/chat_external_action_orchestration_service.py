@@ -80,6 +80,19 @@ class ChatExternalActionOrchestrationService:
             return []
 
         def _return_planned(planned: list[dict]) -> list[dict]:
+            planned = cls._merge_turn_analysis_action_ids(
+                selection_service,
+                planned=list(planned or []),
+                workspace_context=workspace_context,
+                allowed_action_ids=allowed_action_ids,
+                message=selection_message,
+                raw_message=raw_message,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                memory_snapshot=memory_snapshot,
+                max_calls=max_calls,
+            )
+
             if on_stream_activity and planned:
                 from app.application.services.chat_stream_activity_service import (
                     ChatStreamActivityService,
@@ -570,6 +583,93 @@ class ChatExternalActionOrchestrationService:
             return max(1, min(int(max_calls), effective_cap))
 
         return effective_cap
+
+    @classmethod
+    def _turn_analysis_action_ids(cls, workspace_context: dict | None) -> list[str]:
+        if not isinstance(workspace_context, dict):
+            return []
+        raw = workspace_context.get("turnAnalysisActionIds") or []
+        if not isinstance(raw, list):
+            return []
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for item in raw:
+            action_id = str(item or "").strip()
+            if not action_id or action_id in seen:
+                continue
+            seen.add(action_id)
+            ordered.append(action_id)
+        return ordered
+
+    @classmethod
+    def _merge_turn_analysis_action_ids(
+        cls,
+        selection_service,
+        *,
+        planned: list[dict],
+        workspace_context: dict | None,
+        allowed_action_ids: list[str],
+        message: str,
+        raw_message: str | None,
+        conversation_context: str | None,
+        previous_messages: list | None,
+        memory_snapshot: dict | None,
+        max_calls: int | None,
+    ) -> list[dict]:
+        analysis_ids = cls._turn_analysis_action_ids(workspace_context)
+        if not analysis_ids:
+            return planned
+
+        from app.application.services.chat_intelligence_runtime_access import (
+            resolve_chat_intelligence_runtime,
+        )
+
+        multi_enabled = bool(resolve_chat_intelligence_runtime().multi_action_enabled)
+        limit = cls._resolve_max_calls(max_calls)
+        if not multi_enabled:
+            limit = 1
+        allowed = {
+            str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()
+        }
+        merged = list(planned or [])
+        existing = {
+            str(item.get("actionId") or "").strip()
+            for item in merged
+            if isinstance(item, dict) and str(item.get("actionId") or "").strip()
+        }
+
+        # Heurística já fechou 1 rota com alta confiança e analysis só confirma a mesma.
+        if len(merged) == 1 and analysis_ids == list(existing):
+            return merged
+
+        for action_id in analysis_ids:
+            if len(merged) >= limit:
+                break
+            if action_id in existing:
+                continue
+            if allowed and action_id not in allowed:
+                continue
+
+            selected = selection_service.select_action(
+                message,
+                allowed_action_ids=[action_id],
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                raw_message=raw_message,
+                memory_snapshot=memory_snapshot,
+            )
+            if not selected:
+                continue
+            selected_id = str(selected.get("actionId") or "").strip()
+            if not selected_id or selected_id in existing:
+                continue
+            selected = dict(selected)
+            selected["reason"] = selected.get("reason") or "turn_analysis_action"
+            selected["fromTurnAnalysis"] = True
+            merged.append(selected)
+            existing.add(selected_id)
+
+        return merged[:limit]
 
     @classmethod
     def _resolve_product_intent(cls, message: str, normalized: str) -> str:
