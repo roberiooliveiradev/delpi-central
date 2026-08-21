@@ -123,10 +123,11 @@ import {
 } from "./mentionComposerNormalize";
 import {
   buildInlineImageInserts,
-  collectClipboardImageFiles,
   INLINE_IMAGE_FIGURE_SELECTOR,
   inlineImageBlockHtml,
   isComposerInlineImageFile,
+  extractClipboardHtmlImageFiles,
+  uniqueClipboardImageFiles,
   type MentionComposerInlineImageInsert,
 } from "./mentionComposerInlineImage";
 
@@ -759,13 +760,18 @@ export function MentionComposer({
     event.preventDefault();
     const el = surfaceRef.current;
     if (!el) return;
-    const imageFiles = collectClipboardImageFiles(event.clipboardData);
+    const imageFiles = uniqueClipboardImageFiles(event.clipboardData);
     if (imageFiles.length > 0) {
       insertInlineImages(imageFiles);
       return;
     }
-    commitBeforeMutation();
     const html = event.clipboardData?.getData("text/html") ?? "";
+    const fromHtml = extractClipboardHtmlImageFiles(html);
+    if (fromHtml.length > 0) {
+      insertInlineImages(fromHtml);
+      return;
+    }
+    commitBeforeMutation();
     const text = event.clipboardData?.getData("text/plain") ?? "";
     if (clipboardHasUsefulHtml(html)) {
       insertRichTextHtmlFragment(el, stripDangerousRichTextTags(html));

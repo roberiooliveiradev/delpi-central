@@ -552,6 +552,61 @@ describe("mention-composer.css", () => {
     expect(surface.innerHTML).toBe("");
   });
 
+  it("paste com files+items da mesma captura insere um span e um callback", () => {
+    const onInserted = vi.fn();
+    const fromFiles = new File(["bytes"], "shot.png", {
+      type: "image/png",
+      lastModified: 42,
+    });
+    const fromItems = new File(["bytes"], "shot.png", {
+      type: "image/png",
+      lastModified: 42,
+    });
+    document.execCommand = vi.fn().mockImplementation((cmd: string, _show?: boolean, value?: string) => {
+      if (cmd === "insertHTML" && typeof value === "string") {
+        const surface = screen.getByLabelText("Write a message");
+        surface.innerHTML = value;
+        return true;
+      }
+      return true;
+    });
+    render(
+      <MentionComposer
+        value=""
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        labels={labels}
+        classNames={classNames}
+        onInlineImagesInserted={onInserted}
+      />,
+    );
+    const surface = screen.getByLabelText("Write a message");
+    const dt = {
+      files: {
+        length: 1,
+        0: fromFiles,
+        item: () => fromFiles,
+        [Symbol.iterator]: function* () {
+          yield fromFiles;
+        },
+      } as unknown as FileList,
+      items: [
+        {
+          kind: "file",
+          type: "image/png",
+          getAsFile: () => fromItems,
+        },
+      ],
+      getData: () => "",
+    } as unknown as DataTransfer;
+    fireEvent.paste(surface, { clipboardData: dt });
+    expect(surface.querySelectorAll("span.delpi-ui-mention-composer__inline-image")).toHaveLength(
+      1,
+    );
+    expect(onInserted).toHaveBeenCalledTimes(1);
+    expect(onInserted.mock.calls[0]?.[0]).toHaveLength(1);
+  });
+
   it("remove figure inline pelo botão X e notifica pendingId", () => {
     const onRemoved = vi.fn();
     const file = new File(["x"], "shot.png", { type: "image/png" });

@@ -89,6 +89,56 @@ export function collectClipboardImageFiles(
   return uniqueClipboardImageFiles(data);
 }
 
+function dataUrlToImageFile(dataUrl: string, fileName: string): File | null {
+  const match = /^data:([^;,]+)?(;base64)?,(.*)$/i.exec(dataUrl.trim());
+  if (!match) return null;
+  const mime = (match[1] || "image/png").trim() || "image/png";
+  if (!mime.startsWith("image/")) return null;
+  const isBase64 = Boolean(match[2]);
+  const payload = match[3] ?? "";
+  try {
+    let bytes: Uint8Array;
+    if (isBase64) {
+      const binary = atob(payload);
+      bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    } else {
+      bytes = new TextEncoder().encode(decodeURIComponent(payload));
+    }
+    const ext = mime.split("/")[1]?.split("+")[0] || "png";
+    const name = fileName.includes(".") ? fileName : `${fileName || "image"}.${ext}`;
+    return new File([bytes], name, { type: mime });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * HTML-only paste (no clipboard files): at most one File per unique data: image src.
+ * Ignores http(s) (policy) and blob: (async; screenshots usually arrive via files).
+ */
+export function extractClipboardHtmlImageFiles(html: string | null | undefined): File[] {
+  const source = (html ?? "").trim();
+  if (!source || typeof DOMParser === "undefined") return [];
+  if (!/<img\b/i.test(source)) return [];
+  try {
+    const doc = new DOMParser().parseFromString(source, "text/html");
+    const out: File[] = [];
+    const seen = new Set<string>();
+    for (const img of Array.from(doc.querySelectorAll("img"))) {
+      const src = (img.getAttribute("src") || "").trim();
+      if (!src.startsWith("data:")) continue;
+      if (seen.has(src)) continue;
+      seen.add(src);
+      const file = dataUrlToImageFile(src, img.getAttribute("alt") || "image");
+      if (file) out.push(file);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 export function buildInlineImageInserts(files: readonly File[]): MentionComposerInlineImageInsert[] {
   return files.filter(isComposerInlineImageFile).map((file) => {
     const pendingId = newInlineImagePendingId();

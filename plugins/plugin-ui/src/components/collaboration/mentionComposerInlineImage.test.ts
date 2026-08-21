@@ -4,6 +4,7 @@ import {
   buildInlineImageInserts,
   collectClipboardImageFiles,
   ensureInlineImageCaretAnchors,
+  extractClipboardHtmlImageFiles,
   INLINE_IMAGE_ALIGN_ATTR,
   inlineImageInlineHtml,
   isComposerInlineImageFile,
@@ -92,6 +93,17 @@ describe("mentionComposerInlineImage", () => {
       ],
     } as unknown as DataTransfer;
     expect(uniqueClipboardImageFiles(dt).map((f) => f.name)).toEqual(["clip.png"]);
+  });
+
+  it("extrai data: do HTML uma vez e ignora http(s)", () => {
+    const tiny =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const html =
+      `<p><img src="${tiny}" alt="a" /><img src="${tiny}" alt="dup" />` +
+      `<img src="https://evil.example/x.png" /></p>`;
+    const files = extractClipboardHtmlImageFiles(html);
+    expect(files).toHaveLength(1);
+    expect(files[0]?.type).toBe("image/png");
   });
 
   it("monta span inline sem âncoras p/br e turndown vira attachment:pending", () => {
