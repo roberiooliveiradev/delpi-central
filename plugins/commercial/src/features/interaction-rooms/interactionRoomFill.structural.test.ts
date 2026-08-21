@@ -43,4 +43,17 @@ describe("interaction room fill CSS", () => {
     expect(portalCss).toMatch(/\.content:has\(\.dashboard-page--fill\)/);
     expect(portalCss).toMatch(/scrollbar-gutter:\s*stable/);
   });
+
+  it("fill #root não usa 100vh (evita corte no mount do Portal)", () => {
+    const fillRoot =
+      css.match(
+        /#root:has\(> \.dashboard-commercial\.dashboard-page--fill\) \{[^}]+\}/,
+      )?.[0] ?? "";
+    expect(fillRoot).toMatch(/height:\s*100%/);
+    expect(fillRoot).toMatch(/min-height:\s*0/);
+    expect(fillRoot).not.toMatch(/100vh/);
+    expect(css).toMatch(
+      /\.cm-room-inbox-pane__body > \.cm-room-inbox \{[\s\S]*?min-height:\s*0;/,
+    );
+  });
 });

@@ -176,6 +176,13 @@
 
 .dashboard-commercial.dashboard-page--fill .cm-room-inbox-pane .cm-room-inbox__list {
   padding-inline: var(--cm-gap-xs);
+  padding-block-end: var(--cm-gap-sm);
+}
+
+.dashboard-commercial .cm-room-inbox-pane__body > .cm-room-inbox {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-self: stretch;
 }
 
 .dashboard-commercial .cm-room-thread {
@@ -2409,12 +2416,14 @@
 
 #root:has(> .dashboard-commercial) {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100%;
 }
 
+/* Fill: altura do mount do Portal (não 100vh — corta cards sob o chrome). */
 #root:has(> .dashboard-commercial.dashboard-page--fill) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 100vh;
+  min-height: 0;
+  max-height: 100%;
 }

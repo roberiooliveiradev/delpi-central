@@ -164,7 +164,6 @@ describe("room-inbox.css", () => {
     );
     expect(container.querySelector(".delpi-ui-room-inbox__meta")).toBeNull();
   });
-});
 
   it("actions slot is clickable above hit and appears on hover", () => {
     const css = readFileSync(join(stylesDir, "room-inbox.css"), "utf8");
@@ -174,4 +173,17 @@ describe("room-inbox.css", () => {
     expect(css).toMatch(/\.delpi-ui-room-inbox__item:hover \.delpi-ui-room-inbox__actions/);
     expect(css).toMatch(/\.delpi-ui-room-inbox__item:focus-within \.delpi-ui-room-inbox__actions/);
   });
+
+  it("lista scrollável sem estourar largura do card", () => {
+    const css = readFileSync(join(stylesDir, "room-inbox.css"), "utf8");
+    const root = css.match(/\.delpi-ui-room-inbox \{[^}]+\}/)?.[0] ?? "";
+    const list = css.match(/\.delpi-ui-room-inbox__list \{[^}]+\}/)?.[0] ?? "";
+    const item = css.match(/\.delpi-ui-room-inbox__item \{[^}]+\}/)?.[0] ?? "";
+    expect(root).toMatch(/height:\s*100%/);
+    expect(list).toMatch(/overflow-y:\s*auto/);
+    expect(list).toMatch(/overflow-x:\s*hidden/);
+    expect(item).toMatch(/max-width:\s*100%/);
+    expect(css).toMatch(/\.delpi-ui-room-inbox__list > li \{[\s\S]*?max-width:\s*100%/);
+  });
+});
 
