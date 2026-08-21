@@ -79,3 +79,32 @@ def test_finalize_guards_capabilities_meta_synthesis_without_profile_flag():
 
     assert result.answer == catalog
     assert "não invente rotas" not in result.answer.lower()
+
+
+def test_finalize_guards_english_cot_on_free_path_llm_synthesis():
+    leaked = (
+        "According to my instructions, the user's message is vague. "
+        "I should ask for clarification."
+    )
+    result = ChatTurnCompletionFinalizeService.finalize(
+        _turn(
+            answer=leaked,
+            tool_context={"responseModeEffect": "llm_synthesis", "toolCalls": []},
+        )
+    )
+
+    assert result.answer != leaked
+    assert "according to my instructions" not in result.answer.lower()
+    assert result.answer.strip()
+
+
+def test_finalize_keeps_clean_free_path_answer():
+    clean = "Posso ajudar com consultas de estoque, estrutura e documentação."
+    result = ChatTurnCompletionFinalizeService.finalize(
+        _turn(
+            answer=clean,
+            tool_context={"responseModeEffect": "llm_synthesis", "toolCalls": []},
+        )
+    )
+
+    assert result.answer == clean

@@ -121,6 +121,12 @@ class ChatTurnCompletionFinalizeService:
                 tool_context=turn.tool_context,
             )
 
+        answer = cls._guard_free_path_llm_synthesis_leak(
+            answer=answer,
+            tool_context=turn.tool_context if isinstance(turn.tool_context, dict) else None,
+            tool_calls=tool_calls,
+        )
+
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
                 message=turn.message,
@@ -170,4 +176,41 @@ class ChatTurnCompletionFinalizeService:
             correction_guard_meta=correction_guard_meta,
             correction_canvas_updated=correction_canvas_updated,
             text_canvas_updated=text_canvas_updated,
+        )
+
+    @classmethod
+    def _guard_free_path_llm_synthesis_leak(
+        cls,
+        *,
+        answer: str,
+        tool_context: dict | None,
+        tool_calls: list,
+    ) -> str:
+        """Aplica a guarda CoT/EN no caminho livre (sem tools) e em llm_synthesis*."""
+        from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+            ChatLlmSynthesisDeliveryContentService,
+        )
+        from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+            ChatLlmSynthesisLeakGuardService,
+        )
+        from app.domain.services.chat_operational_narrative_synthesis_service import (
+            ChatOperationalNarrativeSynthesisService,
+        )
+
+        context = tool_context if isinstance(tool_context, dict) else {}
+        effect = str(context.get("responseModeEffect") or "").strip()
+        has_tools = bool(tool_calls)
+        is_synthesis = ChatOperationalNarrativeSynthesisService.is_llm_synthesis_effect(effect)
+        reasoning_fallback = bool(context.get("reasoningFallback"))
+
+        if has_tools and is_synthesis and not reasoning_fallback:
+            # Operacional com tools já guarda em ChatOperationalLlmSynthesisTurnFinalizationService.
+            return answer
+
+        if not is_synthesis and has_tools and not reasoning_fallback:
+            return answer
+
+        return ChatLlmSynthesisLeakGuardService.guard_answer(
+            answer=answer,
+            fallback=ChatLlmSynthesisDeliveryContentService.safe_fallback_answer(),
         )
