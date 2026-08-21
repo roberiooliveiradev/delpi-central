@@ -49,6 +49,25 @@ def test_extract_scopes_structure_and_guide():
     assert scopes == ("guide", "structure")
 
 
+def test_extract_scopes_stock_and_outbound_invoice():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "estoque e notas fiscais de saída do produto 90260148",
+    )
+
+    assert "stock" in scopes
+    assert "outbound_invoice" in scopes
+
+
+def test_generic_notas_fiscais_alone_not_in_multi_scope():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "notas fiscais e estoque do produto 90260148",
+    )
+
+    assert "stock" in scopes
+    assert "inbound_invoice" not in scopes
+    assert "outbound_invoice" not in scopes
+
+
 def test_should_use_single_analyser_for_explicit_completa():
     scopes = ("guide", "structure")
 

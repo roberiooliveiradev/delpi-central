@@ -640,6 +640,14 @@ class ChatToolContextService:
         )
 
         if not follow_ups:
+            suggestions = ChatAnomalyFollowUpPlanningService.build_clarification_suggestions(
+                execution.safe_tool_calls,
+                message=raw_message or message,
+            )
+
+            if suggestions and isinstance(selected_external_action_meta, dict):
+                selected_external_action_meta["anomalyClarificationSuggestions"] = suggestions
+
             return execution
 
         follow_state = self._execution_service.execute_selected_tools(
@@ -667,6 +675,14 @@ class ChatToolContextService:
                 audit["executedCount"] = int(audit.get("executedCount") or used) + len(
                     follow_state.safe_tool_calls
                 )
+
+        clarify = ChatAnomalyFollowUpPlanningService.build_clarification_suggestions(
+            [*execution.safe_tool_calls, *follow_state.safe_tool_calls],
+            message=raw_message or message,
+        )
+
+        if clarify and isinstance(selected_external_action_meta, dict):
+            selected_external_action_meta["anomalyClarificationSuggestions"] = clarify
 
         merged_context = execution.context
         if follow_state.context:

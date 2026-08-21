@@ -132,6 +132,60 @@ class ChatAnomalyFollowUpPlanningService:
         return follow_ups
 
     @classmethod
+    def build_clarification_suggestions(
+        cls,
+        tool_calls: list[dict] | None,
+        *,
+        message: str = "",
+    ) -> list[dict[str, str]]:
+        """Chips HITL quando o plano pede clarify (ex.: vendas vazias → NF entrada/saída)."""
+        if not isinstance(tool_calls, list):
+            return []
+
+        plans = ChatProductEnrichmentCompositionPlanningService.anomaly_follow_up_plans()
+        suggestions: list[dict[str, str]] = []
+        code = cls._product_code_from_tool_calls(tool_calls, message) or "{code}"
+
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        for plan_id, plan in plans.items():
+            if not isinstance(plan, dict):
+                continue
+
+            if not plan.get("clarifyInvoiceDirection"):
+                continue
+
+            if not cls._plan_matches_tool_calls(plan, tool_calls):
+                continue
+
+            for side in ("inbound", "outbound"):
+                label = ChatAssistantContentService.get(
+                    "product_enrichment_composition",
+                    "invoiceDirectionClarify",
+                    side,
+                    "label",
+                    default="",
+                )
+                query = ChatAssistantContentService.format(
+                    "product_enrichment_composition",
+                    "invoiceDirectionClarify",
+                    side,
+                    "queryTemplate",
+                    code=code,
+                    default="",
+                )
+
+                if label and query:
+                    suggestions.append({"label": label, "query": query})
+
+            _ = plan_id
+            break
+
+        return suggestions
+
+    @classmethod
     def _plan_matches_tool_calls(
         cls,
         plan: dict[str, Any],

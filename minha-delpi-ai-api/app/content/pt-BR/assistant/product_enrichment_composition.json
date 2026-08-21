@@ -80,5 +80,15 @@
       "clarifyInvoiceDirection": true,
       "maxFollowUps": 0
     }
+  },
+  "invoiceDirectionClarify": {
+    "inbound": {
+      "label": "Ver NF de entrada",
+      "queryTemplate": "notas fiscais de entrada do produto {code}"
+    },
+    "outbound": {
+      "label": "Ver NF de saída",
+      "queryTemplate": "notas fiscais de saída do produto {code}"
+    }
   }
 }

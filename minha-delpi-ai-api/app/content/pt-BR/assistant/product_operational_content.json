@@ -10,7 +10,9 @@
       "sales": "vendas",
       "purchases": "compras",
       "suppliers": "fornecedores",
-      "pricing": "preços"
+      "pricing": "preços",
+      "inbound_invoice": "notas fiscais de entrada",
+      "outbound_invoice": "notas fiscais de saída"
     },
     "byPathFragment": {
       "/parents": "onde o item é usado",
@@ -19,14 +21,18 @@
       "/guide": "roteiro de produção",
       "/inspection": "plano de inspeção",
       "/sales": "vendas",
-      "/profile": "cadastro"
+      "/profile": "cadastro",
+      "/inbound-invoice": "notas fiscais de entrada",
+      "/outbound-invoice": "notas fiscais de saída"
     },
     "compositeShort": {
       "/stock": "estoque",
       "/parents": "onde o item é usado",
       "/structure": "estrutura (BOM)",
       "/guide": "roteiro",
-      "/inspection": "inspeção"
+      "/inspection": "inspeção",
+      "/inbound-invoice": "NF entrada",
+      "/outbound-invoice": "NF saída"
     }
   },
   "listJoin": {

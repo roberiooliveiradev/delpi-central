@@ -295,6 +295,16 @@ class ChatToolContextResultAssemblyService:
             if isinstance(enrichment_plan, dict):
                 result_payload["enrichmentPlan"] = enrichment_plan
 
+            clarify = selected_external_action_meta.get("anomalyClarificationSuggestions")
+
+            if isinstance(clarify, list) and clarify:
+                existing = result_payload.get("followUpSuggestions")
+                merged = list(existing) if isinstance(existing, list) else []
+                for item in clarify:
+                    if isinstance(item, dict) and item not in merged:
+                        merged.append(item)
+                result_payload["followUpSuggestions"] = merged
+
         evidence_refs = [
             {
                 "path": str((item.get("metadata") or {}).get("path") or "").strip(),

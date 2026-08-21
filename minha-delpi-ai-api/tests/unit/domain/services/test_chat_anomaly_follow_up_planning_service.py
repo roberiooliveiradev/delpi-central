@@ -77,3 +77,32 @@ def test_no_follow_up_when_cap_exhausted():
     )
 
     assert planned == []
+
+
+def test_sales_empty_builds_invoice_direction_chips():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260148/sales",
+                "emptyResult": True,
+                "dataCommentary": {
+                    "profileKey": "generic_list",
+                    "emptyResult": True,
+                    "anomalies": [{"type": "empty_list"}],
+                },
+            },
+        }
+    ]
+
+    chips = ChatAnomalyFollowUpPlanningService.build_clarification_suggestions(
+        tool_calls,
+        message="vendas do 90260148",
+    )
+
+    assert len(chips) == 2
+    labels = " ".join(item["label"].casefold() for item in chips)
+    assert "entrada" in labels
+    assert "saída" in labels or "saida" in labels
+    assert "90260148" in chips[0]["query"]

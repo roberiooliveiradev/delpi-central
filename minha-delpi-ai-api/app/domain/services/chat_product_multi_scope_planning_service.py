@@ -29,6 +29,8 @@ _SCOPE_FETCH_ORDER: tuple[str, ...] = (
     "purchases",
     "suppliers",
     "pricing",
+    "inbound_invoice",
+    "outbound_invoice",
 )
 
 _SCOPE_TO_ROUTE: dict[str, tuple[str, str | None]] = {
@@ -42,6 +44,8 @@ _SCOPE_TO_ROUTE: dict[str, tuple[str, str | None]] = {
     "purchases": (ChatProductQueryIntent.FULL, "purchases"),
     "suppliers": (ChatProductQueryIntent.FULL, "suppliers"),
     "pricing": (ChatProductQueryIntent.FULL, "pricing"),
+    "inbound_invoice": (ChatProductQueryIntent.FULL, "inbound-invoice"),
+    "outbound_invoice": (ChatProductQueryIntent.FULL, "outbound-invoice"),
 }
 
 _EXPLICIT_ANALYSER_TERMS: tuple[str, ...] = (
@@ -147,6 +151,35 @@ class ChatProductMultiScopePlanningService:
             for term in ("preço", "preco", "pricing", "quanto custa", "tabela de preço", "tabela de preco")
         ):
             add("pricing")
+
+        # NF só entra no multi-scope com direção explícita (entrada/saída).
+        if any(
+            term in normalized
+            for term in (
+                "nota de entrada",
+                "notas de entrada",
+                "notas fiscais de entrada",
+                "nf de entrada",
+                "inbound",
+            )
+        ):
+            add("inbound_invoice")
+
+        if any(
+            term in normalized
+            for term in (
+                "nota de saída",
+                "nota de saida",
+                "notas de saída",
+                "notas de saida",
+                "notas fiscais de saída",
+                "notas fiscais de saida",
+                "nf de saída",
+                "nf de saida",
+                "outbound",
+            )
+        ):
+            add("outbound_invoice")
 
         ordered = [scope for scope in _SCOPE_FETCH_ORDER if scope in found]
 
