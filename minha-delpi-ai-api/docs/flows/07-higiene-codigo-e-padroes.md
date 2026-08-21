@@ -34,8 +34,10 @@ Testes dedicados dos módulos acima também removidos. Inventário: `docs/archit
 | PT + `re.compile` em `ChatPresentationStackMarkdownService` | `presenter_content.stackMarkdownMarkers` + `ChatPresentationStackMarkdownContentService` |
 | Stack framing OpenAPI (`generic` vs `kpi_series`) | `resolve_effective_profile_key` em section availability / stack markdown |
 | `chatCritical` × `profilePresent` (4 entidades) | Incluídas em `profilePresent` (`production_order_detail`, pedidos abertos, proposta) |
-| Naming `viewBuildPolicy` + `should_build_views` | Substitui `visualBundlePolicy` / `should_build_visual_bundle` (aliases mantidos) |
+| Naming `viewBuildPolicy` + `should_build_views` | Substitui e remove aliases `visualBundle*` |
 | `re.compile` lote referência / date range / detail | `reference_resolution.json`, `date_range_vocabulary.patterns`, `interactivity.presentationDetailPatterns` |
+| Código de produto duplicado (follow-up/chip/composer) | Usa `ChatProductQueryIntentService.extract_product_code` |
+| Path `/stock` em security/summary/follow-up | `ChatPresentationProfileService.has_flag(..., "stock")` |
 
 ---
 
@@ -75,11 +77,10 @@ ExecuteExternalAction
 | Item | Status | Direção |
 |------|--------|---------|
 | `stackPlan` / `ChatPresentationStackOrderService` | Wired só se `layoutMode==stack`; `richStackProfiles: []` | Manter sob demanda; não reexpandir stack rico |
-| `re.compile` remanescente em outros `chat_*_service.py` | Parcial (lote referência/date/detail feito) | Continuar migração incremental |
-| `if "/stock"` / `"/analyser"` espalhados | Refinement / coverage | Preferir `profileKey` + JSON |
-| `kpi_chart_specialized_service` ramos por entidade | Acoplamento residual no host KPI | Absorver em schema-driven quando couber |
+| `re.compile` remanescente em outros `chat_*_service.py` | Parcial | Continuar migração incremental |
+| `if "/stock"` / `"/analyser"` remanescentes | Parcial (security/summary/follow-up migrados) | Preferir `has_flag` / `profileKey` |
+| `kpi_chart_specialized_service` ramos por shape de dado | Acoplamento residual (shape, não path) | Absorver em schema-driven quando couber |
 | `ChatPresentationRefactorBaselineService` | Gate Playbook 12 histórico | Manter enquanto CI/scripts dependem |
-| Aliases `visual_bundle_*` | Compat | Remover em PR futuro após grep zero |
 
 ---
 

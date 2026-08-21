@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from functools import lru_cache
 from typing import Any
 
@@ -10,13 +9,15 @@ from app.domain.services.chat_agent_personality_service import ChatAgentPersonal
 from app.domain.services.chat_agent_profile_service import ChatAgentProfileService
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntentService
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_user_profile_intent_service import ChatUserProfileIntentService
 from app.domain.services.chat_web_search_follow_up_service import ChatWebSearchFollowUpService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 
-_PRODUCT_CODE_RE = re.compile(r"\b(\d{5,9})\b")
 _PRODUCT_PLACEHOLDER = "{product_code}"
 _MFE_PRODUCT_PLACEHOLDER = "{{productCode}}"
 _MFE_SEARCH_PLACEHOLDER = "{{searchQuery}}"
@@ -155,11 +156,12 @@ class ChatFollowUpSuggestionService:
         if cls._looks_like_warning(lowered):
             return "warning"
 
-        paths = " ".join(
+        path_list = [
             str((call or {}).get("path") or (call or {}).get("metadata", {}).get("path") or "")
             for call in tool_calls
             if isinstance(call, dict)
-        ).lower()
+        ]
+        paths = " ".join(path_list).lower()
 
         if any(
             token in paths
@@ -171,7 +173,9 @@ class ChatFollowUpSuggestionService:
         ):
             return "sql"
 
-        if any(token in paths for token in ("/stock", "estoque", "supplies/stock")):
+        if any(
+            ChatPresentationProfileService.has_flag(path, "stock") for path in path_list
+        ) or "estoque" in paths:
             return "stock"
 
         if any(token in paths for token in ("/sales", "/billing", "vendas", "faturamento")):
@@ -352,13 +356,10 @@ class ChatFollowUpSuggestionService:
                         return normalized
 
         for source in (message, answer):
-            match = _PRODUCT_CODE_RE.search(str(source or ""))
+            extracted = ChatProductQueryIntentService.extract_product_code(str(source or ""))
 
-            if match:
-                normalized = ChatProductQueryIntentService.normalize_product_code(match.group(1))
-
-                if ChatProductQueryIntentService.is_plausible_product_code(normalized):
-                    return normalized
+            if extracted:
+                return extracted
 
         return None
 

@@ -634,7 +634,7 @@
       {
         "module": "app.domain.services.chat_composer_route_question_suggestion_service",
         "file": "app/domain/services/chat_composer_route_question_suggestion_service.py",
-        "lines": 212,
+        "lines": 209,
         "category": "other",
         "refs": {
           "app": 1,
@@ -2174,7 +2174,7 @@
       {
         "module": "app.domain.services.chat_follow_up_chip_query_service",
         "file": "app/domain/services/chat_follow_up_chip_query_service.py",
-        "lines": 81,
+        "lines": 79,
         "category": "interactivity",
         "refs": {
           "app": 1,
@@ -2202,7 +2202,7 @@
       {
         "module": "app.domain.services.chat_follow_up_suggestion_service",
         "file": "app/domain/services/chat_follow_up_suggestion_service.py",
-        "lines": 392,
+        "lines": 393,
         "category": "interactivity",
         "refs": {
           "app": 2,
@@ -3672,7 +3672,7 @@
       {
         "module": "app.domain.services.chat_operational_tool_summary_resolution_service",
         "file": "app/domain/services/chat_operational_tool_summary_resolution_service.py",
-        "lines": 265,
+        "lines": 268,
         "category": "operational",
         "refs": {
           "app": 2,
@@ -4599,11 +4599,11 @@
         "lines": 466,
         "category": "presentation",
         "refs": {
-          "app": 61,
+          "app": 64,
           "scripts": 2,
           "tests": 10
         },
-        "refsTotal": 73,
+        "refsTotal": 76,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -4904,7 +4904,7 @@
       {
         "module": "app.domain.services.chat_presentation_text_first_policy_service",
         "file": "app/domain/services/chat_presentation_text_first_policy_service.py",
-        "lines": 390,
+        "lines": 355,
         "category": "presentation",
         "refs": {
           "app": 4,
@@ -5285,11 +5285,11 @@
         "lines": 438,
         "category": "intent",
         "refs": {
-          "app": 119,
+          "app": 120,
           "scripts": 3,
           "tests": 22
         },
-        "refsTotal": 144,
+        "refsTotal": 145,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -5660,7 +5660,7 @@
       {
         "module": "app.domain.services.chat_security_messaging_service",
         "file": "app/domain/services/chat_security_messaging_service.py",
-        "lines": 184,
+        "lines": 190,
         "category": "other",
         "refs": {
           "app": 3,
@@ -7522,7 +7522,7 @@
       {
         "module": "app.domain.services.openapi_presentation_profile_deriver_service",
         "file": "app/domain/services/openapi_presentation_profile_deriver_service.py",
-        "lines": 158,
+        "lines": 155,
         "category": "presentation",
         "refs": {
           "app": 10,

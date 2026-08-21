@@ -10,8 +10,6 @@ from app.domain.services.chat_product_query_intent_service import (
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
-_PRODUCT_CODE_RE = re.compile(r"\b\d{5,9}\b")
-
 
 @lru_cache(maxsize=1)
 def _query_templates() -> tuple[str, ...]:
@@ -66,7 +64,7 @@ class ChatFollowUpChipQueryService:
 
     @classmethod
     def _matches_operational_shortcuts(cls, normalized: str) -> bool:
-        if not _PRODUCT_CODE_RE.search(normalized):
+        if not ChatProductQueryIntentService.extract_product_code(normalized):
             return False
 
         markers = (

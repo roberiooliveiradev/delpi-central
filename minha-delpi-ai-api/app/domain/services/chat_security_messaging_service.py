@@ -5,6 +5,9 @@ from __future__ import annotations
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ChatSecurityMessagingService:
@@ -29,7 +32,7 @@ class ChatSecurityMessagingService:
 
         lowered_error = error.lower()
 
-        if "/stock" in lowered_path or "estoque" in lowered_error:
+        if ChatPresentationProfileService.has_flag(lowered_path, "stock") or "estoque" in lowered_error:
             return ExternalActionResponseContentService.get(
                 "security",
                 "stockQueryFailed",
@@ -172,7 +175,10 @@ class ChatSecurityMessagingService:
 
     @classmethod
     def _resolve_internal_error_message(cls, lowered_path: str) -> str:
-        if "/structure" in lowered_path and "/analyser" not in lowered_path:
+        if (
+            "/structure" in lowered_path
+            and not ChatPresentationProfileService.has_flag(lowered_path, "analyser")
+        ):
             return ExternalActionResponseContentService.get(
                 "security",
                 "structurePresentationFailed",

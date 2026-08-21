@@ -10,6 +10,9 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 from app.domain.services.chat_humanized_data_response_service import (
     ChatHumanizedDataResponseService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_presentation_prose_delivery_service import (
     ChatPresentationProseDeliveryService,
 )
@@ -139,7 +142,7 @@ class ChatOperationalToolSummaryResolutionService:
 
         lowered_path = str(path or "").lower()
 
-        if "/stock" in lowered_path:
+        if ChatPresentationProfileService.has_flag(path, "stock"):
             from app.domain.services.chat_product_operational_content_service import (
                 ChatProductOperationalContentService,
             )
@@ -253,7 +256,7 @@ class ChatOperationalToolSummaryResolutionService:
         if "/guide" in lowered:
             return str(titles.get("guide") or "Consulta operacional")
 
-        if "/stock" in lowered:
+        if ChatPresentationProfileService.has_flag(path, "stock"):
             return str(titles.get("stock") or "Consulta operacional")
 
         if "/structure" in lowered:

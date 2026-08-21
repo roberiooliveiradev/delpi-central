@@ -44,22 +44,13 @@ def test_integrated_stack_request_builds_views():
     )
 
 
-def test_legacy_aliases_delegate_to_view_build_api():
+def test_view_build_policy_defaults_to_on_demand_for_stock():
     assert (
-        ChatPresentationTextFirstPolicyService.should_build_visual_bundle
-        is not ChatPresentationTextFirstPolicyService.should_build_views
-    )
-    assert ChatPresentationTextFirstPolicyService.should_build_visual_bundle(
-        path="/products/10080001/stock",
-        entity="product_stock",
-        explicit_format="chart",
-    )
-    assert ChatPresentationTextFirstPolicyService.view_build_policy(
-        "/products/10080001/stock",
-        "product_stock",
-    ) == ChatPresentationTextFirstPolicyService.visual_bundle_policy(
-        "/products/10080001/stock",
-        "product_stock",
+        ChatPresentationTextFirstPolicyService.view_build_policy(
+            "/products/10080001/stock",
+            "product_stock",
+        )
+        == "on_demand"
     )
 
 

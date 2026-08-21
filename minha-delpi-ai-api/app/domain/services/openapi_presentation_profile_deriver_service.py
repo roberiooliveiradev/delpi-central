@@ -77,12 +77,9 @@ class OpenApiPresentationProfileDeriverService(ChatAssistantVocabularyService):
                     "stackTailPolicy",
                     "stackLayoutPolicy",
                     "viewBuildPolicy",
-                    "visualBundlePolicy",
                 ):
                     if field not in shape_profile and equivalent.get(field) is not None:
                         merged[field] = equivalent[field]
-                        if field == "visualBundlePolicy" and "viewBuildPolicy" not in merged:
-                            merged["viewBuildPolicy"] = equivalent[field]
 
         merged.update(shape_profile)
         merged["presentationStrategy"] = "as_delivered"

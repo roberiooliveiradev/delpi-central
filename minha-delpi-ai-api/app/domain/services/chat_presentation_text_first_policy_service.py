@@ -58,26 +58,10 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         metadata: dict[str, Any] | None = None,
     ) -> str:
         profile = cls._resolve_profile(path, entity, metadata=metadata)
-        # viewBuildPolicy canônico; visualBundlePolicy = legado (leitura apenas).
-        token = str(
-            profile.get("viewBuildPolicy")
-            or profile.get("visualBundlePolicy")
-            or "on_demand"
-        ).strip().lower()
+        token = str(profile.get("viewBuildPolicy") or "on_demand").strip().lower()
 
         return token if token in {"eager", "on_demand"} else "on_demand"
 
-    @classmethod
-    def visual_bundle_policy(
-        cls,
-        path: str | None,
-        entity: str | None = None,
-        *,
-        metadata: dict[str, Any] | None = None,
-    ) -> str:
-        """Alias legado → ``view_build_policy``."""
-
-        return cls.view_build_policy(path, entity, metadata=metadata)
 
     @classmethod
     def stack_layout_policy(
@@ -145,25 +129,6 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
 
         return False
 
-    @classmethod
-    def should_build_visual_bundle(
-        cls,
-        *,
-        path: str | None,
-        entity: str | None = None,
-        explicit_format: str | None = None,
-        user_message: str | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> bool:
-        """Alias legado → ``should_build_views``."""
-
-        return cls.should_build_views(
-            path=path,
-            entity=entity,
-            explicit_format=explicit_format,
-            user_message=user_message,
-            metadata=metadata,
-        )
 
     @classmethod
     def should_default_to_text_only(

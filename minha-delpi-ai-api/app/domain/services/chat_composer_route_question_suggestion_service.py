@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_message_normalization_service import ChatMessageNormalizationService
+from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntentService
 
 _BUNDLE = "composer_route_questions"
-_PRODUCT_CODE_PATTERN = re.compile(r"\b\d{5,}\b")
 _PRODUCT_PLACEHOLDER = "{productCode}"
 
 
@@ -177,9 +176,7 @@ class ChatComposerRouteQuestionSuggestionService:
 
     @classmethod
     def _extract_product_code(cls, text: str) -> str | None:
-        match = _PRODUCT_CODE_PATTERN.search(text)
-
-        return match.group(0) if match else None
+        return ChatProductQueryIntentService.extract_product_code(text)
 
     @classmethod
     def _finalize_candidates(
