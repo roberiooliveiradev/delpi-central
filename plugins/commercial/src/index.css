@@ -346,6 +346,24 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  --delpi-ui-panel-stack-gap: 0;
+}
+
+.dashboard-commercial .cm-room-thread__main > .cm-view-transition,
+.dashboard-commercial .cm-room-thread__main > .delpi-ui-view-transition {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dashboard-commercial .cm-room-thread__main [role="tabpanel"] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-thread__header {

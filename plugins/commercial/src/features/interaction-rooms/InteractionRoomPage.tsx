@@ -36,6 +36,7 @@ import {
   CommercialRoomHeader,
   CommercialRoomMessageFindPanel,
   CommercialRoomSidePanel,
+  CommercialViewTransition,
 } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
@@ -860,95 +861,106 @@ export function InteractionRoomPage({
             />
           </div>
           <div className="cm-room-thread__body">
-            {roomView === "shared" ? (
-              <div
-                id="cm-room-view-shared"
-                role="tabpanel"
-                aria-labelledby="cm-room-tab-shared"
-                className="cm-room-thread__main"
-              >
-                <InteractionRoomSharedView
-                  roomId={room.id}
-                  onError={(message) => pushRoomAlert(message, "danger")}
-                />
-              </div>
-            ) : (
-            <div
-              id="cm-room-view-chat"
-              role="tabpanel"
-              aria-labelledby="cm-room-tab-chat"
-              className="cm-room-thread__main"
-            >
-              <div className="cm-room-thread__stage">
-                <div
-                  className="cm-room-thread__msgs"
-                  ref={msgsRef}
-                  onScroll={(event) => {
-                    stickToBottomRef.current = shouldStickThreadToBottom(
-                      event.currentTarget,
-                    );
-                  }}
-                >
-                {threadMessages.length === 0 ? (
-                  <CommercialEmptyState
-                    title={content.roomEmptyTitle}
-                    message={content.roomEmptyDescription}
-                  />
+            <div className="cm-room-thread__main">
+              <CommercialViewTransition transitionKey={roomView} tone="panel">
+                {roomView === "shared" ? (
+                  <div
+                    id="cm-room-view-shared"
+                    role="tabpanel"
+                    aria-labelledby="cm-room-tab-shared"
+                  >
+                    <InteractionRoomSharedView
+                      roomId={room.id}
+                      onError={(message) => pushRoomAlert(message, "danger")}
+                    />
+                  </div>
                 ) : (
-                  <CommercialMessageThread
-                    listAriaLabel={content.roomMessagesAriaLabel}
-                    emptyLabel={content.roomEmptyTitle}
-                    messages={threadMessages}
-                    resolveActions={resolveActions}
-                    resolveActionExtras={resolveActionExtras}
-                    onParentQuoteClick={onParentQuoteClick}
-                    portalScopeClassName={CM_PORTAL_SCOPE}
-                    actionsToolbarAriaLabel={content.messageActionsToolbarAriaLabel}
-                    resolveAttachmentImageSrc={(attachmentId) =>
-                      attachmentThumbUrls[attachmentId] ?? null
-                    }
-                    onAttachmentImageClick={(attachmentId) => {
-                      const row = attachmentMetaRef.current[attachmentId];
-                      if (!row) return;
-                      setInlinePreview({
-                        kind: "remote",
-                        id: row.id,
-                        fileName: row.file_name,
-                        contentType: row.content_type,
-                        byteSize: row.byte_size,
-                      });
-                    }}
-                  />
+                  <div
+                    id="cm-room-view-chat"
+                    role="tabpanel"
+                    aria-labelledby="cm-room-tab-chat"
+                  >
+                    <div className="cm-room-thread__stage">
+                      <div
+                        className="cm-room-thread__msgs"
+                        ref={msgsRef}
+                        onScroll={(event) => {
+                          stickToBottomRef.current = shouldStickThreadToBottom(
+                            event.currentTarget,
+                          );
+                        }}
+                      >
+                        {threadMessages.length === 0 ? (
+                          <CommercialEmptyState
+                            title={content.roomEmptyTitle}
+                            message={content.roomEmptyDescription}
+                          />
+                        ) : (
+                          <CommercialMessageThread
+                            listAriaLabel={content.roomMessagesAriaLabel}
+                            emptyLabel={content.roomEmptyTitle}
+                            messages={threadMessages}
+                            resolveActions={resolveActions}
+                            resolveActionExtras={resolveActionExtras}
+                            onParentQuoteClick={onParentQuoteClick}
+                            portalScopeClassName={CM_PORTAL_SCOPE}
+                            actionsToolbarAriaLabel={
+                              content.messageActionsToolbarAriaLabel
+                            }
+                            resolveAttachmentImageSrc={(attachmentId) =>
+                              attachmentThumbUrls[attachmentId] ?? null
+                            }
+                            onAttachmentImageClick={(attachmentId) => {
+                              const row =
+                                attachmentMetaRef.current[attachmentId];
+                              if (!row) return;
+                              setInlinePreview({
+                                kind: "remote",
+                                id: row.id,
+                                fileName: row.file_name,
+                                contentType: row.content_type,
+                                byteSize: row.byte_size,
+                              });
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <div className="cm-room-thread__dock">
+                      <InteractionRoomMessageComposer
+                        roomId={room.id}
+                        mode={editingMessageId ? "edit" : "compose"}
+                        editMessageId={editingMessageId}
+                        initialMarkdown={editTarget?.body_text ?? ""}
+                        initialMentions={(editTarget?.mentions ?? []).map(
+                          (mention) => ({
+                            kind: mention.mention_kind,
+                            ref: { ...mention.ref },
+                            label: mention.label,
+                          }),
+                        )}
+                        editBanner={editBanner}
+                        onCancelEdit={() => setEditingMessageId(null)}
+                        onMessageUpdated={onMessageUpdated}
+                        replyToMessageId={
+                          editingMessageId ? null : replyMessageId
+                        }
+                        replyBanner={editingMessageId ? null : replyBanner}
+                        onCancelReply={() => setReplyMessageId(null)}
+                        onMessageCreated={onMessageCreated}
+                        onMessageAttachmentsSettled={bumpMessageAttachments}
+                        onError={(message) =>
+                          pushRoomAlert(message, "danger")
+                        }
+                        onAddFilesReady={(addFiles) => {
+                          addFilesRef.current = addFiles;
+                        }}
+                      />
+                    </div>
+                  </div>
                 )}
-                </div>
-              </div>
-              <div className="cm-room-thread__dock">
-                <InteractionRoomMessageComposer
-                  roomId={room.id}
-                  mode={editingMessageId ? "edit" : "compose"}
-                  editMessageId={editingMessageId}
-                  initialMarkdown={editTarget?.body_text ?? ""}
-                  initialMentions={(editTarget?.mentions ?? []).map((mention) => ({
-                    kind: mention.mention_kind,
-                    ref: { ...mention.ref },
-                    label: mention.label,
-                  }))}
-                  editBanner={editBanner}
-                  onCancelEdit={() => setEditingMessageId(null)}
-                  onMessageUpdated={onMessageUpdated}
-                  replyToMessageId={editingMessageId ? null : replyMessageId}
-                  replyBanner={editingMessageId ? null : replyBanner}
-                  onCancelReply={() => setReplyMessageId(null)}
-                  onMessageCreated={onMessageCreated}
-                  onMessageAttachmentsSettled={bumpMessageAttachments}
-                  onError={(message) => pushRoomAlert(message, "danger")}
-                  onAddFilesReady={(addFiles) => {
-                    addFilesRef.current = addFiles;
-                  }}
-                />
-              </div>
+              </CommercialViewTransition>
             </div>
-            )}
             <CommercialRoomSidePanel
               open={sidePanelMode != null}
               showTitle={sidePanelMode !== "find"}
