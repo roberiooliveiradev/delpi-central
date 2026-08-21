@@ -156,6 +156,24 @@ Ordem fixa no **chat base**; agentes só alteram *dados* (skills, actions), não
 
 Estágios 5–9 são os que mais evitam chamadas erradas à api-delpi **antes** do modelo “inventar” rota.
 
+### 3.1 Ordem real do prep (send/stream) e I/O
+
+Ordem canônica no `ChatTurnPreparationService` (não inverter):
+
+```text
+preTool (fast/direct/heurística/turn analysis gate)
+  → tools (HTTP api-delpi; lotes read-safe em paralelo)
+  → postTool (meta/capacidades/commentary-direct → pode setar skip_rag)
+  → rag (só se não skip_rag)
+  → assembly / LLM
+```
+
+**Timings** (`ChatPipelineTimings.to_dict`): `preToolMs` → `toolsMs` → `postToolMs` → `ragMs` → `llmMs` → `totalMs`.
+
+**Skip RAG pós-tool:** quando há `execute_external_action` com `metadata.ok` ou `directAnswer` / `skipRag` no tool context (`ChatExternalActionDirectResponseService.should_skip_rag`) — não pagar embedding/busca.
+
+**Parallel reads seguros:** `ChatToolContextParallelReadService` + `ChatWriteConfirmationService.is_parallel_safe_read` — apenas lotes consecutivos GET/HEAD (ou sensitivity `read`/`sql`/`export`); writes permanecem seriais. Caps em `tool_context.json` → `execution.parallelRead*`. Não paralelizar RAG com tools (RAG depende de `skip_rag` pós-tool).
+
 ### 4. Onde colocar regras novas
 
 | Tipo de regra | Onde implementar | Exemplo |
