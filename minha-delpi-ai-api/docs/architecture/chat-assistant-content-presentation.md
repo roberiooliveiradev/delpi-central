@@ -137,7 +137,7 @@ Pergunta: «me fale do produto 90260149». Ordem: **ficha no início**, **alerta
 | `layoutMode` | `"single"` — default texto-first e **formatos nativos explícitos** (table/tree/chart/dashboard); `"stack"` — rotas integradas (analyser, fabril auto, modo Texto com ≥2 visões) |
 | `visualOrder` | Ordem de empilhamento: texto → tabela → árvore → gráfico → kpi → dashboard |
 | `selected` | Formato sugerido (texto, tabela, árvore, tipos de chart) |
-| `availableViews` | Formatos oferecidos na toolbar/chips — inclui views **latentes** do perfil mesmo sem slot montado (`visualBundlePolicy: on_demand`) |
+| `availableViews` | Formatos oferecidos na toolbar/chips — inclui views **latentes** do perfil mesmo sem slot montado (`viewBuildPolicy: on_demand`) |
 
 **Deduplicação estrutura × tabela:** quando há árvore da mesma hierarquia (BOM, parents, analyser), tabelas planas equivalentes (`Componentes da estrutura`, lista de pais) são removidas do metadata (`ChatPresentationStructureDedupService`). O formato **Tabela** no analyser mantém roteiro, inspeção e ficha — não a lista plana de componentes. Com `preferredFormat: table` na rota de estrutura, a árvore é suprimida e permanece só a tabela plana.
 
