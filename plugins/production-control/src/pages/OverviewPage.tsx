@@ -5,16 +5,25 @@ import {
   createDashboardSegmentToggle,
   MultiTypeSeriesChart,
 } from "@delpi/plugin-ui/index";
-import { ClockAlert, Timer } from "lucide-react";
+import { Check, Timer } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ChartCard } from "../components/ChartCard";
+import { BillingDueDetailModal } from "../components/BillingDueDetailModal";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useOverview } from "../hooks/useOverview";
-import type { OverviewPayload, PpcBranch, ProblemIssue, VolumeView } from "../types";
+import type {
+  BillingDueTodayCheck,
+  BillingDueTodayLine,
+  OverviewPayload,
+  PpcBranch,
+  ProblemIssue,
+  VolumeView,
+} from "../types";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
+import { billingDueInvoicedPercent } from "../utils/billingDueProgress";
 import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
 const KpiCard = createDashboardKpiCard({
@@ -83,12 +92,47 @@ function formatPeriod(period: OverviewPayload["period"]): string {
   return `${start} — ${end}`;
 }
 
+function formatDueDate(value: string | null | undefined): string {
+  if (!value || value.length < 10) return "—";
+  return `${value.slice(8, 10)}/${value.slice(5, 7)}`;
+}
+
+function billingCheckLabel(check: BillingDueTodayCheck): string {
+  if (check === "stock") return copy.home.billingDueCheckStock;
+  if (check === "invoiced") return copy.home.billingDueCheckInvoiced;
+  return copy.home.billingDueCheckPending;
+}
+
+function BillingCheckMark({ check }: { check: BillingDueTodayCheck }) {
+  if (check === "pending") {
+    return (
+      <span
+        className="ppc-billing-check ppc-billing-check--pending"
+        title={billingCheckLabel(check)}
+        aria-label={billingCheckLabel(check)}
+      />
+    );
+  }
+  return (
+    <span
+      className={`ppc-billing-check ppc-billing-check--${check}`}
+      title={billingCheckLabel(check)}
+      aria-label={billingCheckLabel(check)}
+    >
+      <Check size={14} strokeWidth={2.5} aria-hidden />
+    </span>
+  );
+}
+
 type OverviewPageProps = {
   branch: PpcBranch;
 };
 
 export function OverviewPage({ branch }: OverviewPageProps) {
   const [volumeView, setVolumeView] = useState<VolumeView>("day");
+  const [selectedBillingLine, setSelectedBillingLine] = useState<BillingDueTodayLine | null>(
+    null,
+  );
   const { data, loading, error, reload } = useOverview(branch, volumeView);
 
   /** A fila de atraso leva ao rastreio na Carga máquina, onde a OP pode ser reprogramada. */
@@ -170,6 +214,11 @@ export function OverviewPage({ branch }: OverviewPageProps) {
     ];
   }, [data?.production_volume?.current_year, data?.production_volume?.prior_year, isMonthYoy]);
 
+  const billing = data?.billing_due_today;
+  const billingTotal = billing?.line_count ?? 0;
+  const billingInvoiced = billing?.invoiced_count ?? 0;
+  const billingProgressPct = billingDueInvoicedPercent(billingInvoiced, billingTotal);
+
   return (
     <div className="ppc-page-stack ppc-page-stack--home">
       <PpcWorkspaceHeader
@@ -229,18 +278,92 @@ export function OverviewPage({ branch }: OverviewPageProps) {
               }
             />
 
-            <KpiCard
-              className="ppc-board-card"
-              title={copy.home.delayedTitle}
-              titleHint={copy.home.delayedHint}
-              value={String(data.delayed_ops.count)}
-              subtitle={
-                data.delayed_ops.late_percentage != null
-                  ? `${formatPct(data.delayed_ops.late_percentage)} · ${copy.home.otdLateOps(data.otd.late_ops)}`
-                  : copy.home.otdLateOps(data.otd.late_ops)
-              }
-              icon={<ClockAlert size={22} strokeWidth={1.75} />}
-            />
+            <article className="ppc-board-list ppc-board-billing" aria-label={copy.home.billingDueTitle}>
+              <header className="ppc-board-list__head">
+                <div className="ppc-board-billing__title-row">
+                  <h2 className="ppc-board-list__title">{copy.home.billingDueTitle}</h2>
+                  {billingTotal > 0 ? (
+                    <span className="ppc-board-billing__pct">
+                      {copy.home.billingDueProgressLabel(billingProgressPct)}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="ppc-board-list__hint">
+                  {copy.home.billingDueSummary(
+                    billing?.pending_count ?? 0,
+                    billing?.stock_count ?? 0,
+                    billingInvoiced,
+                  )}
+                </p>
+                {billingTotal > 0 ? (
+                  <div
+                    className="ppc-board-billing__progress"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={billingProgressPct}
+                    aria-label={copy.home.billingDueProgressAria(
+                      billingProgressPct,
+                      billingInvoiced,
+                      billingTotal,
+                    )}
+                  >
+                    <span
+                      className="ppc-board-billing__progress-fill"
+                      style={{ width: `${billingProgressPct}%` }}
+                    />
+                  </div>
+                ) : null}
+              </header>
+              {(data.billing_due_today?.customers.length ?? 0) === 0 ? (
+                <p className="ppc-board-list__empty">{copy.home.billingDueEmpty}</p>
+              ) : (
+                <ul className="ppc-board-list__scroll">
+                  {(data.billing_due_today?.customers ?? []).map((customer) => (
+                    <li
+                      key={`${customer.customer_code}|${customer.customer_store}|${customer.customer_name}`}
+                      className="ppc-billing-customer"
+                    >
+                      <div className="ppc-billing-customer__head">
+                        <strong>{customer.customer_name || "—"}</strong>
+                        <span>
+                          {customer.line_count} ite{customer.line_count === 1 ? "m" : "ns"}
+                        </span>
+                      </div>
+                      <ul className="ppc-billing-customer__lines">
+                        {customer.lines.map((line) => (
+                          <li key={line.id}>
+                            <button
+                              type="button"
+                              className="ppc-billing-line"
+                              onClick={() => setSelectedBillingLine(line)}
+                            >
+                              <BillingCheckMark check={line.check} />
+                              <span className="ppc-billing-line__body">
+                                <strong>{line.product_code || "—"}</strong>
+                                <span>
+                                  {copy.home.billingDueOrder} {line.sales_order || "—"}
+                                  {line.line_item ? `/${line.line_item}` : ""}
+                                  {" · "}
+                                  {formatDueDate(line.due_date)}
+                                  {line.check !== "invoiced" ? (
+                                    <>
+                                      {" · "}
+                                      {copy.home.billingDueQty}{" "}
+                                      {formatOpQuantity(line.open_quantity)}
+                                    </>
+                                  ) : null}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
 
             <article className="ppc-board-list" aria-label={copy.home.delayedListTitle}>
               <header className="ppc-board-list__head">
@@ -320,6 +443,12 @@ export function OverviewPage({ branch }: OverviewPageProps) {
           </section>
         </div>
       ) : null}
+
+      <BillingDueDetailModal
+        line={selectedBillingLine}
+        branch={branch}
+        onClose={() => setSelectedBillingLine(null)}
+      />
     </div>
   );
 }

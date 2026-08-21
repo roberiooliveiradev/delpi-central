@@ -1,5 +1,6 @@
 import {
   CalendarClock,
+  ClipboardList,
   Gauge,
   House,
   LayoutGrid,
@@ -15,6 +16,7 @@ const ICONS: Record<string, LucideIcon> = {
   house: House,
   "triangle-alert": TriangleAlert,
   "layout-grid": LayoutGrid,
+  "clipboard-list": ClipboardList,
   "calendar-clock": CalendarClock,
   gauge: Gauge,
 };

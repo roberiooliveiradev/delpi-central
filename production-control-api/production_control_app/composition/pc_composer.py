@@ -7,6 +7,7 @@ from production_control_app.application.services.detectors.incomplete_order_sets
     DETECTOR_ID as DETECTOR_INCOMPLETE_ORDER_SETS,
     IncompleteOrderSetsDetector,
 )
+from production_control_app.application.services.demand_service import DemandService
 from production_control_app.application.services.machine_load_service import MachineLoadService
 from production_control_app.application.services.overview_service import OverviewService
 from production_control_app.application.services.problem_analysis_service import ProblemAnalysisService
@@ -75,6 +76,15 @@ def build_overview_service(
     gateway: DelpiProductionGateway | None = None,
 ) -> OverviewService:
     return OverviewService(
+        gateway or DelpiProductionGateway(),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_demand_service(
+    gateway: DelpiProductionGateway | None = None,
+) -> DemandService:
+    return DemandService(
         gateway or DelpiProductionGateway(),
         branch_access=build_branch_access_service(),
     )

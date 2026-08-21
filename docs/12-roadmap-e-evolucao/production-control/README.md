@@ -24,7 +24,7 @@ Até lá: não renomear o launcher só para “prometer” um portal que ainda n
 |--------|--------|
 | UI | `plugins/production-control` |
 | BFF / regra PCP | `production-control-api` |
-| SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`) |
+| SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`, `/pedidos-venda-abertos/totvs-open-orders`, `/pedidos-venda-abertos/ops-abertas`) |
 
 MFE não chama api-delpi. Subplugins são views internas do mesmo remote (não manifests aninhados).
 
@@ -34,13 +34,14 @@ Shell híbrido Linear (rail compacta) + MES (cards de exceção, semáforo). Hom
 
 ## Wireframe v1
 
-Home: `/apps/production-control?branch=01`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`.
+Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/demand?branch=01&status=at_risk`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`.
 
 ## Subplugins
 
 | Subplugin | Estado | Escopo |
 |-----------|--------|--------|
 | `home` | ativo | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
+| `demand` | ativo | Carteira a entregar: saldo por cliente/produto/data com cobertura por estoque e OP |
 | `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação |
 | `problem-analysis` | ativo | Grade de detectores de exceção (primeiro: conjuntos incompletos) |
 | `capacity` | em breve | Capacidade e ocupação percentual por CT |

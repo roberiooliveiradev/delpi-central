@@ -10,6 +10,15 @@
       "permission": "production-control.access"
     },
     {
+      "id": "demand",
+      "label": "Demanda",
+      "description": "Carteira a entregar: saldo em aberto por cliente, produto e data, com a cobertura de estoque e OP.",
+      "icon": "clipboard-list",
+      "route": "/demand",
+      "status": "active",
+      "permission": "production-control.demand.view"
+    },
+    {
       "id": "problem-analysis",
       "label": "Análise de problemas",
       "description": "Inbox de exceções operacionais (OPs atrasadas e saldos em aberto).",

@@ -15,6 +15,7 @@ from production_control_app.application.services.machine_load_realtime_hub impor
 )
 from production_control_app.config import settings
 from production_control_app.core.responses import fail
+from production_control_app.interface.http.routes.demand_routes import router as demand_router
 from production_control_app.interface.http.routes.machine_load_routes import (
     router as machine_load_router,
 )
@@ -109,3 +110,4 @@ app.include_router(overview_router)
 app.include_router(machine_load_router)
 app.include_router(public_machine_load_router)
 app.include_router(problem_analysis_router)
+app.include_router(demand_router)

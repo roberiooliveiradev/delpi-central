@@ -220,6 +220,26 @@ class DelpiProductionGateway:
             },
         )
 
+    def fetch_open_sales_orders(self) -> dict[str, Any]:
+        """Linhas de pedido de venda com saldo a entregar (TOTVS puro, todas as filiais).
+
+        A rota não pagina nem filtra: o recorte por filial e a regra de demanda
+        do PCP ficam neste BFF.
+        """
+        return self._request("GET", "/pedidos-venda-abertos/totvs-open-orders")
+
+    def fetch_open_production_orders(self) -> dict[str, Any]:
+        """OPs abertas por produto — cobre o saldo que o estoque não atende."""
+        return self._request("GET", "/pedidos-venda-abertos/ops-abertas")
+
+    def fetch_recently_closed_orders(self, *, days: int) -> dict[str, Any]:
+        """Linhas SC6 encerradas no lookback (``C6_DATFAT``) — TOTVS puro."""
+        return self._request(
+            "GET",
+            "/pedidos-venda-abertos/totvs-recently-closed-orders",
+            params={"days": days},
+        )
+
     def _request(
         self,
         method: str,

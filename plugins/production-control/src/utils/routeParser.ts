@@ -8,9 +8,14 @@ export type PpcRoute = {
   startDate: string | null;
   endDate: string | null;
   locateQuery: string | null;
+  demandSearch: string | null;
+  demandStatus: string | null;
   branch: PpcBranch;
   pathname: string;
 };
+
+/** Status da linha de demanda aceitos na URL — espelham o contrato do BFF. */
+const DEMAND_STATUSES = new Set(["late", "at_risk", "covered_by_order", "covered_by_stock"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -40,16 +45,21 @@ function parseSearch(search: string): {
   startDate: string | null;
   endDate: string | null;
   locateQuery: string | null;
+  demandSearch: string | null;
+  demandStatus: string | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const branchRaw = params.get("branch");
+  const statusRaw = params.get("status")?.trim() || "";
   return {
     detectorId: params.get("detector")?.trim() || null,
     workCenter: params.get("ct")?.trim() || null,
     startDate: isoDateOrNull(params.get("startDate")),
     endDate: isoDateOrNull(params.get("endDate")),
     locateQuery: params.get("locate")?.trim() || null,
+    demandSearch: params.get("q")?.trim() || null,
+    demandStatus: DEMAND_STATUSES.has(statusRaw) ? statusRaw : null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
@@ -69,6 +79,8 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     startDate: query.startDate,
     endDate: query.endDate,
     locateQuery: query.locateQuery,
+    demandSearch: query.demandSearch,
+    demandStatus: query.demandStatus,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
   };
@@ -82,6 +94,8 @@ export function buildPpcHref(input: {
   startDate?: string | null;
   endDate?: string | null;
   locateQuery?: string | null;
+  demandSearch?: string | null;
+  demandStatus?: string | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -94,6 +108,8 @@ export function buildPpcHref(input: {
   if (input.startDate) params.set("startDate", input.startDate);
   if (input.endDate) params.set("endDate", input.endDate);
   if (input.locateQuery) params.set("locate", input.locateQuery);
+  if (input.demandSearch) params.set("q", input.demandSearch);
+  if (input.demandStatus) params.set("status", input.demandStatus);
   return `${path}?${params.toString()}`;
 }
 

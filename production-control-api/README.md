@@ -11,6 +11,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/health` | público |
 | GET | `/subplugins` | JWT + `production-control.access` |
 | GET | `/overview?branch=01\|02` | JWT + acesso + filial |
+| GET | `/demand?branch=01\|02&search=&status=&dueFrom=&dueTo=&sort=&direction=&page=&pageSize=&refresh=` | JWT + `demand.view` + filial |
 | GET | `/machine-load?branch=01\|02&workCenter=&startDate=&endDate=` | JWT + `machine-load.view` + filial |
 | GET | `/machine-load/locate?branch=01\|02&q=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/refresh?branch=01\|02&workCenter=&startDate=&endDate=` | JWT + `machine-load.view` + filial |
@@ -28,7 +29,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 
 Envelope `{ success, message, data }`.
 
-`GET /overview` agrega OTD do mês corrente (`/production/otd` + `/otd/series`), volume diário de PAs (`/production/appointments/series` — só `qty_produced`, com `weekday_average` excluindo sáb/dom) e OPs atrasadas (`/production/pcp-orders/items?delayed_only=true`). A fila e o card de atraso consideram só produtos cujo código começa com `8` ou `9` (`delayedProductCodePrefixes` em `content/overview.json`).
+`GET /overview` agrega OTD do mês corrente (`/production/otd` + `/otd/series`), volume diário de PAs (`/production/appointments/series` — só `qty_produced`, com `weekday_average` excluindo sáb/dom), o checklist **a faturar até hoje** (`billing_due_today`: pedidos com `data_entrega` ≤ hoje + recently-closed com `C6_DATFAT` = hoje; check amarelo = estoque FIFO, verde = faturado) e a fila de OPs atrasadas (`/production/pcp-orders/items?delayed_only=true`). A fila de atraso considera só produtos cujo código começa com `8` ou `9` (`delayedProductCodePrefixes` em `content/overview.json`).
 
 `GET /machine-load` lê o snapshot congelado em `production_control.machine_load_snapshots` (seed automático na 1ª visita). `GET /machine-load/locate?q=` rastreia **conjunto** (`C2_NUM` = 6 primeiros dígitos de `production_order` / H8_OP) — todas as OPs com esse prefixo — ou lista os conjuntos de um **produto** (PA) em **todos** os CTs do mesmo snapshot (com posição na fila e enrich HZA), sem embutir a lista completa em cada GET de aba. `POST /machine-load/refresh` regenera a partir de `/production/machine-load/work-centers` + `/operations` (paginado) e **apaga** a ordem manual do período. `PATCH /machine-load/sequence` reordena só o segmento do `workCenter` no `payload_json` (`ordered_keys` = permutação exata das ops daquele CT), grava `sequence_updated_at` / `sequence_updated_by` e **não** altera `refreshed_at`. Em toda leitura, o status HZA é reaplicado via `/production/machine-load/appointment-status` — a fila SH8 não é remontada. Sem `workCenter`, usa o primeiro CT da lista; se o CT pedido não existir na janela, cai no primeiro e devolve `selected.requested_work_center` para a UI sinalizar.
 
@@ -76,6 +77,20 @@ A pasta do FILESERVER é montada read-only no container:
 Convenção de nome resolvida pelo storage: `{codigo}.pdf` → `{base}.pdf` → `{base}_R{NN}.pdf` (maior revisão) → `{base}-{N}.pdf`. Pasta ausente ou vazia gera mensagem própria (`publicCockpit.messages` em `content/machine_load.json`), diferente de "desenho não encontrado".
 
 `WS /public/machine-load/{token}/ws?branch=` entra na sala da filial (`MachineLoadRealtimeHub`). Após `PATCH /machine-load/sequence` e `POST /machine-load/refresh`, o serviço publica `{"type": "machine_load_updated", "reason": "sequence|refresh"}` e o cockpit refaz a leitura HTTP — o socket carrega só o aviso, mantendo uma fonte de verdade única. A notificação é best-effort: falha no hub não derruba a escrita já persistida. O gateway precisa dos headers `Upgrade`/`Connection` na location `/apps/production-control-api/` (já configurado em `gateway/nginx.conf` e `nginx.dev.conf`).
+
+## Demanda — carteira a entregar
+
+`GET /demand` responde o que a fábrica precisa cobrir: linhas de pedido de venda com saldo, já cruzadas com estoque e OPs abertas. Duas leituras TOTVS puras alimentam a área — `GET /pedidos-venda-abertos/totvs-open-orders` (linhas com saldo) e `GET /pedidos-venda-abertos/ops-abertas` (OPs por produto). Nenhuma regra de carteira comercial atravessa: **preço e valor não entram na resposta**, e a api-delpi não conhece o PCP. Linhas com `tipo_entidade = FORNECEDOR` (venda/remessa para fornecedor) são descartadas em `demand_entity_scope` — o PCP só vê demanda de **cliente**.
+
+A cobertura é montada em `domain/services/demand_coverage_service.py`, por `(filial, produto)` e sempre na ordem de entrega — quem vence antes consome primeiro:
+
+1. O saldo disponível em estoque é distribuído entre as linhas.
+2. O que o estoque não cobriu é distribuído entre as OPs abertas, da que termina antes para a que termina depois.
+3. O resto é demanda descoberta — o sinal que o PCP quer ver.
+
+Daí sai o status da linha: `late` (entrega vencida), `at_risk` (sobrou saldo sem cobertura, ou a OP só termina depois da entrega), `covered_by_order` e `covered_by_stock`.
+
+Como a api-delpi devolve o dump inteiro sem filtro nem paginação, o recorte (filial, busca, status, janela de entrega), a ordenação, a página, o `summary` e o `horizon` por semana de entrega ficam em `application/services/demand_service.py`, sobre um cache por filial com TTL de `cacheTtlSeconds` (`content/demand.json`, 120 s). Trocar de página ou de filtro não repete a consulta pesada; `refresh=true` ignora o cache.
 
 ## Análise de problemas — detectores
 

@@ -1,6 +1,6 @@
 # Portal PCP (MFE)
 
-Microfrontend federado da plataforma **Portal PCP** (`id`: `production-control`): shell estilo command-center com **gestão à vista** na home e subplugins (Carga máquina, Análise de problemas).
+Microfrontend federado da plataforma **Portal PCP** (`id`: `production-control`): shell estilo command-center com **gestão à vista** na home e subplugins (Demanda, Carga máquina, Análise de problemas).
 
 **Recado para quem implementa:** o destino do módulo é o **Portal de Produção**, com o PCP como primeira área — não absorver dashboard/eficiência/apontamentos neste BFF. Detalhe: [docs/12-roadmap-e-evolucao/production-control/README.md](../../docs/12-roadmap-e-evolucao/production-control/README.md) § Recado.
 
@@ -10,7 +10,8 @@ Microfrontend federado da plataforma **Portal PCP** (`id`: `production-control`)
 Portal → production-control (remoteEntry.js)
       → /apps/production-control-api/*
       → api-delpi /production/otd, /production/otd/series, /production/pcp-orders/*,
-                  /production/machine-load/*, /production/production-order-sets/incomplete
+                  /production/machine-load/*, /production/production-order-sets/incomplete,
+                  /pedidos-venda-abertos/totvs-open-orders, /pedidos-venda-abertos/ops-abertas
       → @delpi/plugin-ui (Module Federation)
 ```
 
@@ -21,12 +22,15 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: production-
 | Rota | Tela |
 |------|------|
 | `/apps/production-control?branch=` | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
+| `…/demand?branch=01\|02&q=&status=` | Demanda (carteira a entregar com cobertura) |
 | `…/machine-load?branch=01\|02&ct=&startDate=&endDate=&locate=` | Carga máquina (abas por centro de trabalho) |
 | `…/problem-analysis?branch=01\|02&detector=` | Análise de problemas (grade de detectores + registros) |
 
 Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
 **Gestão à vista:** card de OTD do mês com tendência diária via `MultiTypeSeriesChart` (`chartType: "line"`) e, abaixo, card **Volume de produção** em colunas (`chartType: "column"`) com a quantidade diária de PAs — mesma fonte do apontamento (`GET /production/appointments/series`, só `qty_produced` / última operação do roteiro). A média diária exibida no card considera **somente dias úteis** (seg–sex). OTD e fila de atraso permanecem no grid superior.
+
+**Demanda:** carteira a entregar da filial (`GET /demand`) — quatro KPIs (saldo a entregar, linhas atrasadas, saldo sem cobertura e próxima entrega), gráfico de colunas do saldo por **semana de entrega** (o primeiro grupo é o que já venceu) e a tabela das linhas em aberto. A coluna *Cobertura* resume quanto vem do estoque, quanto está em OP e quanto ficou descoberto; a *Situação* traduz o status decidido pelo BFF (`late`, `at_risk`, `covered_by_order`, `covered_by_stock`) — o MFE é render-only. Busca, status e janela de entrega vão ao BFF (que pagina e ordena); `?q=` e `?status=` abrem a tela já filtrada. Clicar na linha abre o detalhe com as OPs que cobrem o saldo e o atalho **Ver na Carga máquina** (`?locate=` no produto). O botão **Exportar CSV** baixa a página visível no formato do Excel pt-BR. Nenhum campo financeiro trafega: o PCP olha quantidade, não preço.
 
 **Carga máquina:** uma aba por centro de trabalho (`UnderlineNav` `mode="tabs"`) com a fila de operações alocadas — situação, OP completa, produto da operação, quantidade (3 casas), ferramenta, operação, código do PA e entrega do PA. O deep link (`?ct=`, `?startDate=`, `?endDate=`, `?locate=`) reabre a mesma aba, recorte de entrega e rastreio; trocar de filial ou de CT preserva o recorte.
 
@@ -65,6 +69,7 @@ Base: `/apps/production-control-api`
 | GET | `/health` | Liveness |
 | GET | `/subplugins` | Catálogo filtrado por permissão |
 | GET | `/overview?branch=` | Gestão à vista (OTD + atrasos) |
+| GET | `/demand?branch=&search=&status=&dueFrom=&dueTo=&sort=&direction=&page=&pageSize=&refresh=` | Carteira a entregar com cobertura por estoque e OP |
 | GET | `/machine-load?branch=&workCenter=&startDate=&endDate=` | Centros de trabalho + fila do CT ativo (snapshot) |
 | GET | `/machine-load/locate?branch=&q=` | Rastreio de conjunto (C2_NUM, 6 dígitos) ou produto (PA) |
 | POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS (janela por entrega do PA) |
@@ -84,7 +89,7 @@ Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi
 
 ## Permissões
 
-`production-control.access`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.view.filial-01`, `production-control.view.filial-02`.
+`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.view.filial-01`, `production-control.view.filial-02`.
 
 ## Desenvolvimento
 

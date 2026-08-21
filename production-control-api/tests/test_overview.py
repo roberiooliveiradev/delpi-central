@@ -199,6 +199,14 @@ class FakeGateway:
             },
         }
 
+    def fetch_open_sales_orders(self) -> dict[str, Any]:
+        self.calls.append(("open_sales", {}))
+        return {"success": True, "data": {"items": []}}
+
+    def fetch_recently_closed_orders(self, *, days: int) -> dict[str, Any]:
+        self.calls.append(("recently_closed", {"days": days}))
+        return {"success": True, "data": {"items": []}}
+
 
 def _user(*permissions: str):
     return SimpleNamespace(is_superadmin=False, permissions=list(permissions))
@@ -239,12 +247,23 @@ def test_overview_composes_otd_and_delayed_ops() -> None:
     assert payload["delayed_ops"]["count"] == 1
     assert payload["delayed_ops"]["items"][0]["product_code"] == "9001234"
     assert payload["delayed_ops"]["items"][0]["metrics"]["pending_qty"] == 6.0
+    assert payload["billing_due_today"]["line_count"] == 0
+    assert payload["billing_due_today"]["customers"] == []
 
     kinds = {name for name, _ in gateway.calls}
-    assert kinds == {"otd", "otd_series", "appointments_series", "items"}
+    assert kinds == {
+        "otd",
+        "otd_series",
+        "appointments_series",
+        "items",
+        "open_sales",
+        "recently_closed",
+    }
     series_call = next(params for name, params in gateway.calls if name == "otd_series")
     assert series_call["granularity"] == "day"
     assert series_call["branch"] == "01"
+    closed_call = next(params for name, params in gateway.calls if name == "recently_closed")
+    assert closed_call["days"] == 1
     assert payload["production_volume"]["total"] == 310.0
     assert payload["production_volume"]["view"] == "day"
     assert payload["production_volume"]["series"][0]["value"] == 50.0
