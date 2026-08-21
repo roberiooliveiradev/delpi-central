@@ -91,7 +91,6 @@ Rotas api-delpi: [14-desenhos-pdf.md](../../../api-delpi/docs/api/14-desenhos-pd
 | `ChatPdfRegionOcrEngineService` | OCR regional plugável (`tesseract`, `easyocr`, `paddleocr`) |
 | `ChatPdfRegionOcrFusionService` | Fusão de linhas entre motores por região |
 | `ChatDrawingBomRowSanitizationService` | Fantasmas de produto na BOM + códigos aninhados em descrição |
-| `ChatDrawingPdfEmbeddedTextService` | Alias de compatibilidade → delega para `ChatPdfEmbeddedTextService` |
 
 ### Perfis de layout (`layoutProfile`)
 

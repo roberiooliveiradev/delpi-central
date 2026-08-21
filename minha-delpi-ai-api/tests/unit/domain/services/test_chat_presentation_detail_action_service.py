@@ -5,21 +5,6 @@ configure_domain_infrastructure_ports()
 from app.domain.services.chat_presentation_detail_action_service import (
     ChatPresentationDetailActionService,
 )
-from app.domain.services.chat_presentation_supplier_display_service import (
-    ChatPresentationSupplierDisplayService,
-)
-
-
-def test_supplier_display_formats_name_and_store():
-    label = ChatPresentationSupplierDisplayService.format_supplier_label(
-        supplier_code="000002",
-        supplier_name="TE CONNECTIVITY BRASIL IND DE ELET LTDA",
-        supplier_store="01",
-    )
-
-    assert "000002" in label
-    assert "TE CONNECTIVITY" in label
-    assert "loja 01" in label
 
 
 def test_detect_supplier_detail_plan():

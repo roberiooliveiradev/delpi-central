@@ -184,7 +184,7 @@ Perfil dedicado para hints de rótulo/ordem em resumos, ex.: `costImpactOverview
 | `ChatPresentationFieldNormalizationService` | gráficos `fieldLabels` | ✅ | `path` em `_normalize_chart` |
 | `ChatPresentationChartExplainService` | explain de eixo | ✅ | `label_for` com `path` |
 | `ChatSqlDynamicColumnRefinementService` | colunas SQL | ⚠ | vocabulário JSON (sem display label) |
-| `ChatPresentationTreeMetaCaptionService` | legenda árvore | ✅ | `label_for` com `path` |
+| ~~`ChatPresentationTreeMetaCaptionService`~~ | legenda árvore | **Removido** (só testes; schema-driven) | `label_for` / meta no schema-driven |
 
 ##### Comportamento quando `path` / `profile_name` faltam
 

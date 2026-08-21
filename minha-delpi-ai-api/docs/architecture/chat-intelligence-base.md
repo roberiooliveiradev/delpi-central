@@ -273,7 +273,7 @@ Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) sã
 | `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |
 | `ChatGuidedFlowService` | Fluxos guiados e cards interativos (`guidedFlow`, `guidedFlowCards`) — interatividade Fase 5 |
 | `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; estoque com `linhas` (resumo) + `linhas_detalhe` (modo Texto); `chartPresentation` com tipos ampliados |
-| `ChatPresentationHumanizedNarrativeService` | Enriquece `textPresentation` fino antes do stack (panorama, leitura, atenção, conclusão) — ver [`humanized-narrative-stack-jun2026.md`](./humanized-narrative-stack-jun2026.md) |
+| ~~`ChatPresentationHumanizedNarrativeService`~~ | **Removido** (Playbook 22). Flag de perfil `humanizedNarrative` + `ChatOperationalDataCommentaryService` / `dataAnswer` substituem; histórico: [`humanized-narrative-stack-jun2026.md`](./humanized-narrative-stack-jun2026.md) |
 | `ChatOperationalDataCommentaryService` | Análise/comentário de dados operacionais por perfil (`factory_status`, `stock`, `production_status`, `shipping_status`) — textos em `presenter_content.json` → `compositeAnalysisInsights`; **não** duplicar em presenters nem agentes. Roadmap: [`playbook-13-respostas-humanizadas-dados.md`](../roadmap/playbook-13-respostas-humanizadas-dados.md) |
 | `ChatHumanizedDataResponseService` | Normaliza interpretação (`dataCommentary` → evolui para `dataAnswer`) — Playbook 13 P1 |
 | `ChatHumanizedDataResponseContentService` | Bundle `humanized_data_response.json` (templates, alertas, próximas ações) |

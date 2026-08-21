@@ -75,6 +75,7 @@ Mapas operacionais vigentes (não substituem playbooks).
 | [04-operacional-e-apresentacao.md](./flows/04-operacional-e-apresentacao.md) | api-delpi → schema-first → MFE |
 | [05-dominios-especializados.md](./flows/05-dominios-especializados.md) | Anexos, desenho, SQL, texto, canvas, learning |
 | [06-workspace-agente-admin.md](./flows/06-workspace-agente-admin.md) | Agente/projeto, simulate, S2S |
+| [07-higiene-codigo-e-padroes.md](./flows/07-higiene-codigo-e-padroes.md) | Código morto removido + dívida fora do padrão |
 
 ---
 

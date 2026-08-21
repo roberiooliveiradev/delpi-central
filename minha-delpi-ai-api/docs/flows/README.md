@@ -20,6 +20,7 @@ Blueprint chat: `/chat` → URL pública `/apps/minha-delpi-ai/api/chat`
 | api-delpi + apresentação schema-first | [04-operacional-e-apresentacao.md](./04-operacional-e-apresentacao.md) |
 | Anexos, desenho, SQL, texto, canvas, learning | [05-dominios-especializados.md](./05-dominios-especializados.md) |
 | Agente/projeto, simulate, settings, S2S | [06-workspace-agente-admin.md](./06-workspace-agente-admin.md) |
+| Código morto removido + dívida de padrão | [07-higiene-codigo-e-padroes.md](./07-higiene-codigo-e-padroes.md) |
 | Pipeline e serviços (~200) | [../architecture/chat-intelligence-base.md](../architecture/chat-intelligence-base.md) |
 | Contrato HTTP detalhado | [../api/README.md](../api/README.md) |
 
@@ -81,6 +82,7 @@ flowchart TB
 | Canvas / lousa | canvas metadata | canvas services | P0 | [05](./05-dominios-especializados.md) |
 | Learning confirmation | learning stages | learning services | herança | [05](./05-dominios-especializados.md) |
 | Admin simulate / settings | `/admin/agent/simulate`, intelligence-settings | simulate UC | P0 | [06](./06-workspace-agente-admin.md) |
+| Higiene / dívida de padrão | (mapa, não fluxo HTTP) | inventário + remoções conscientes | herança | [07](./07-higiene-codigo-e-padroes.md) |
 | S2S OpenAPI / suggest | `/chat/internal/*` | import job + suggest UC | P0 | [06](./06-workspace-agente-admin.md) |
 | CRUD agentes/projetos/skills | `/chat/agents*`, projects | use cases CRUD | P0 inventário | [00](./00-superficie-http.md) + [api](../api/) |
 | Admin RBAC / métricas | `/admin/*` (demais) | inventário + link API | herança | [00](./00-superficie-http.md) → [08-admin](../api/08-admin.md) |
@@ -97,6 +99,7 @@ flowchart TB
 5. [04 — Operacional e apresentação](./04-operacional-e-apresentacao.md)
 6. [05 — Domínios especializados](./05-dominios-especializados.md)
 7. [06 — Workspace, agente e admin](./06-workspace-agente-admin.md)
+8. [07 — Higiene de código e padrões](./07-higiene-codigo-e-padroes.md)
 
 ---
 
@@ -107,3 +110,4 @@ flowchart TB
 - `schema-first-presentation-delivered.mdc`
 - `operational-api-routing.mdc`
 - `assistant-content-json.mdc`
+- `centralized-rules-first.mdc`

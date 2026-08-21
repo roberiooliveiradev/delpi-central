@@ -11,7 +11,7 @@
 
 Contém o mapa completo de serviços (~200 entradas), roteamento api-delpi, streaming, apresentação rica, memória, web search e checklist para novas features.
 
-**Mapas de fluxo (operacional):** [`../flows/README.md`](../flows/README.md) — HTTP, turno send/stream, inteligência, tools/RAG, operacional, domínios e workspace/admin.
+**Mapas de fluxo (operacional):** [`../flows/README.md`](../flows/README.md) — HTTP, turno send/stream, inteligência, tools/RAG, operacional, domínios, workspace/admin e higiene de código.
 
 ---
 
