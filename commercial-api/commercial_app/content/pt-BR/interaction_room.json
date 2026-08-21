@@ -35,6 +35,7 @@
     "postOk": "Mensagem enviada.",
     "updateOk": "Mensagem atualizada.",
     "deleteOk": "Mensagem excluída.",
+    "deleteRoomOk": "Conversa excluída.",
     "reactionSetOk": "Reação registrada.",
     "reactionClearedOk": "Reação removida.",
     "listPinsOk": "Mensagens fixadas carregadas.",

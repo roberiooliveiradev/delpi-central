@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Sequence
+from typing import Any, Sequence
 from uuid import UUID
 
 from commercial_app.domain.entities.interaction_room import (
     ROOM_KINDS,
     InteractionRoom,
     InteractionRoomMember,
+)
+from commercial_app.domain.ports.customer_avatar_repository_port import (
+    AuditLogRepositoryPort,
 )
 from commercial_app.domain.ports.interaction_room_repository_port import (
     InteractionRoomRepositoryPort,
@@ -22,6 +25,9 @@ from commercial_app.domain.services.interaction_room_access_service import (
 from commercial_app.domain.services.interaction_room_content_service import (
     InteractionRoomContentService,
 )
+
+_ACTION_ROOM_DELETED = "interaction_room.deleted"
+_ENTITY_INTERACTION_ROOM = "interaction_room"
 
 
 @dataclass(frozen=True)
@@ -37,9 +43,14 @@ class ResolveInteractionRoomInput:
 class ManageInteractionRoomsUseCase:
     """Resolve lazy, get, participantes e last_read da sala."""
 
-    def __init__(self, repository: InteractionRoomRepositoryPort) -> None:
+    def __init__(
+        self,
+        repository: InteractionRoomRepositoryPort,
+        audit_repository: AuditLogRepositoryPort | None = None,
+    ) -> None:
         self._rooms = repository
         self._access = InteractionRoomAccessService(repository)
+        self._audit = audit_repository
 
     def resolve(self, request: ResolveInteractionRoomInput) -> InteractionRoom:
         actor = (request.actor_user_id or "").strip()
@@ -172,3 +183,37 @@ class ManageInteractionRoomsUseCase:
         if member is None:
             raise RuntimeError("Falha ao marcar sala como lida.")
         return member
+
+    def soft_delete(
+        self,
+        *,
+        room_id: UUID,
+        actor_user_id: str,
+    ) -> InteractionRoom:
+        actor = (actor_user_id or "").strip()
+        if not actor:
+            raise ValueError(InteractionRoomContentService.error("userIdRequired"))
+        room = self._access.require_room_exists(room_id)
+        deleted = self._rooms.soft_delete(room_id=room.id)
+        if deleted is None:
+            raise LookupError(InteractionRoomContentService.error("roomNotFound"))
+        self._append_audit(actor_user_id=actor, room=deleted)
+        return deleted
+
+    def _append_audit(self, *, actor_user_id: str, room: InteractionRoom) -> None:
+        if self._audit is None:
+            return
+        payload: dict[str, Any] = {
+            "title": room.title,
+            "kind": room.kind,
+            "entity_type": room.entity_type,
+            "entity_key": room.entity_key,
+            "group_id": str(room.group_id) if room.group_id else None,
+        }
+        self._audit.append(
+            actor_user_id=actor_user_id,
+            action=_ACTION_ROOM_DELETED,
+            entity_type=_ENTITY_INTERACTION_ROOM,
+            entity_id=str(room.id),
+            payload=payload,
+        )

@@ -301,6 +301,7 @@ def build_manage_interaction_rooms_use_case() -> ManageInteractionRoomsUseCase:
     if _interaction_rooms_use_case is None:
         _interaction_rooms_use_case = ManageInteractionRoomsUseCase(
             repository=build_interaction_room_repository(),
+            audit_repository=build_audit_log_repository(),
         )
     return _interaction_rooms_use_case
 
