@@ -147,6 +147,15 @@
   display: contents;
 }
 
+/*
+ * action-controls aplica margin-inline-start: 12px em ActionButton irmãos.
+ * Com display:contents isso só cai entre pares DOM (Chat|Shared, Search|Panel)
+ * e deixa Shared|Search apertado — o gap do people é a única fonte de ritmo.
+ */
+.delpi-ui-room-header__people .delpi-ui-action-btn + .delpi-ui-action-btn {
+  margin-inline-start: 0;
+}
+
 .delpi-ui-room-header__people [aria-pressed="true"] {
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(

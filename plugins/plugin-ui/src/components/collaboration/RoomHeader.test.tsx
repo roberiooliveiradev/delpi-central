@@ -96,5 +96,11 @@ describe("RoomHeader", () => {
       /\.delpi-ui-room-header__people > \.delpi-ui-room-header__nav/,
     );
     expect(css).toMatch(/display:\s*contents/);
+    expect(css).toMatch(
+      /\.delpi-ui-room-header__people \.delpi-ui-action-btn \+ \.delpi-ui-action-btn/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-room-header__people \.delpi-ui-action-btn \+ \.delpi-ui-action-btn \{[^}]*margin-inline-start:\s*0/,
+    );
   });
 });
