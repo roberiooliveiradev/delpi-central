@@ -201,8 +201,11 @@ export function InteractionRoomPage({
     for (const message of messages) {
       if (message.author_user_id) ids.add(message.author_user_id);
     }
+    for (const message of findResults) {
+      if (message.author_user_id) ids.add(message.author_user_id);
+    }
     return [...ids];
-  }, [members, messages]);
+  }, [members, messages, findResults]);
 
   const { nameFor } = useDirectoryUserLabels(authorIds);
   const photoByUserId = useUserProfilePhotoUrls(authorIds);
@@ -666,10 +669,12 @@ export function InteractionRoomPage({
         !Number.isNaN(created.getTime()) &&
         created.getMonth() === now.getMonth() &&
         created.getFullYear() === now.getFullYear();
+      const authorLabel =
+        nameFor(message.author_user_id) || message.author_user_id;
       return {
         id: message.id,
         messageId: message.id,
-        authorLabel: nameFor(message.author_user_id) || message.author_user_id,
+        authorLabel,
         dateLabel: formatInteractionMessageTime(message.created_at),
         bodyText: message.body_text || "",
         groupLabel: sameMonth
@@ -680,9 +685,15 @@ export function InteractionRoomPage({
                 year: "numeric",
               })
             : null,
+        authorAvatar: {
+          name: authorLabel,
+          imageUrl: message.author_user_id
+            ? photoByUserId.get(message.author_user_id) ?? null
+            : null,
+        },
       };
     });
-  }, [findResults, nameFor, content.findInChatThisMonth]);
+  }, [findResults, nameFor, photoByUserId, content.findInChatThisMonth]);
 
   const onSelectFindResult = useCallback(
     (messageId: string) => {

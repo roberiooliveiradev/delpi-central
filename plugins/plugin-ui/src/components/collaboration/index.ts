@@ -130,6 +130,7 @@ export {
   type RoomMessageFindPanelLabels,
   type RoomMessageFindPanelProps,
   type RoomMessageFindResult,
+  type RoomMessageFindAuthorAvatar,
 } from "./RoomMessageFindPanel";
 export {
   buildFindSnippet,
