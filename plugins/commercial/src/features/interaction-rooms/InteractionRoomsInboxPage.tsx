@@ -1,7 +1,8 @@
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
 
 import {
+  deleteInteractionRoom,
   listInteractionRooms,
   type InteractionInboxFilter,
   type InteractionRoomInboxItemDto,
@@ -21,7 +22,10 @@ import {
   buildCustomerDetailHref,
   navigatePluginPath,
 } from "../../app/pluginNavigation";
-import { buildInteractionRoomPath } from "../../app/pluginRoutes";
+import { buildInteractionRoomPath, buildInteractionRoomsPath } from "../../app/pluginRoutes";
+import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
+import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
+import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { useInteractionInboxSync } from "../../app/CommercialRealtimeProvider";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { accountLinkTitle } from "../../content/entityLinkHints";
@@ -94,6 +98,10 @@ export function InteractionRoomsInboxPage({
   preserveSearch = "",
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
+  const { canManagePortfolios } = usePortfolioScope();
+  const confirm = useCommercialConfirm();
+  const { notifySuccess, notifyError } = useCommercialFloatingNotice();
+  const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const [filterState, setFilterState] = useState<InteractionInboxFilter>("all");
   const [queryState, setQueryState] = useState("");
   const filter = filterProp ?? filterState;
@@ -172,6 +180,50 @@ export function InteractionRoomsInboxPage({
   );
   const avatarByKey = useCustomerAvatarPresence(avatarPairs);
 
+  const onDeleteRoom = useCallback(
+    async (roomId: string) => {
+      if (!canManagePortfolios || !roomId.trim() || deletingRoomId) return;
+      const ok = await confirm({
+        title: content.deleteRoomConfirmTitle,
+        message: content.deleteRoomConfirmMessage,
+        confirmLabel: content.deleteRoomConfirmLabel,
+        cancelLabel: content.deleteRoomCancelLabel,
+        variant: "danger",
+      });
+      if (!ok) return;
+      setDeletingRoomId(roomId);
+      try {
+        await deleteInteractionRoom(roomId);
+        setItems((prev) => prev.filter((item) => item.id !== roomId));
+        notifySuccess(content.deleteRoomOk);
+        if (selectedRoomId && selectedRoomId === roomId) {
+          const href = buildInteractionRoomsPath(basePath);
+          if (href) navigatePluginPath(`${href}${preserveSearch}`);
+        }
+      } catch (err: unknown) {
+        notifyError(err instanceof Error ? err.message : content.deleteRoomError);
+      } finally {
+        setDeletingRoomId(null);
+      }
+    },
+    [
+      canManagePortfolios,
+      deletingRoomId,
+      confirm,
+      content.deleteRoomConfirmTitle,
+      content.deleteRoomConfirmMessage,
+      content.deleteRoomConfirmLabel,
+      content.deleteRoomCancelLabel,
+      content.deleteRoomOk,
+      content.deleteRoomError,
+      notifySuccess,
+      notifyError,
+      selectedRoomId,
+      basePath,
+      preserveSearch,
+    ],
+  );
+
   const onSelect = useCallback(
     (roomId: string) => {
       const href = buildInteractionRoomPath(basePath, roomId);
@@ -238,8 +290,26 @@ export function InteractionRoomsInboxPage({
           unreadBadgeLabel={(count) =>
             content.unreadBadge.replace("{count}", String(count))
           }
-          onSelect={onSelect}
+                    onSelect={onSelect}
+          actions={
+            canManagePortfolios
+              ? (row) => (
+                  <CommercialActionButton
+                    variant="ghost"
+                    aria-label={content.deleteRoomActionLabel}
+                    title={content.deleteRoomActionLabel}
+                    disabled={deletingRoomId === row.id}
+                    onClick={() => {
+                      void onDeleteRoom(row.id);
+                    }}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                  </CommercialActionButton>
+                )
+              : undefined
+          }
           leading={(row) => {
+
             const dto = itemsById.get(row.id);
             if (!dto) return null;
             const identity = customerIdentity(dto);
