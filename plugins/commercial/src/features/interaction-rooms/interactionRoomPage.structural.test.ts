@@ -37,6 +37,7 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/CommercialConversationFileDropLayer/);
     expect(source).toMatch(/CommercialRoomContextPanel/);
     expect(source).toMatch(/CommercialRoomSidePanel/);
+    expect(source).toMatch(/showTitle=\{sidePanelMode !== "find"\}/);
     expect(source).not.toMatch(/CommercialSectionCard/);
     expect(source).toMatch(/embedded/);
     expect(source).toMatch(/flush/);

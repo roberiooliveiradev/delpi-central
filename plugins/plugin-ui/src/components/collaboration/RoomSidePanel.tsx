@@ -15,6 +15,8 @@ export type RoomSidePanelProps = {
   children: ReactNode;
   /** When false, panel stays mounted but collapsed (soft width/opacity transition). */
   open?: boolean;
+  /** When false, keep aria-label but do not render the visual h2 (child owns the title). */
+  showTitle?: boolean;
   className?: string;
 };
 
@@ -38,6 +40,7 @@ export function RoomSidePanel({
   title,
   children,
   open = true,
+  showTitle = true,
   className,
 }: RoomSidePanelProps) {
   const rootClass = [
@@ -52,7 +55,7 @@ export function RoomSidePanel({
     <aside className={rootClass} aria-label={title} aria-hidden={!open}>
       {open ? (
         <>
-          <h2 className={classNames.title}>{title}</h2>
+          {showTitle ? <h2 className={classNames.title}>{title}</h2> : null}
           <div className={classNames.body}>{children}</div>
         </>
       ) : null}

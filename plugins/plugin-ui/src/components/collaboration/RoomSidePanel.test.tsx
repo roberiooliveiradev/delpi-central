@@ -39,6 +39,24 @@ describe("RoomSidePanel", () => {
     expect(screen.getByText("Participantes")).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
   });
+
+  it("esconde h2 quando showTitle=false e mantém aria-label", () => {
+    render(
+      <RoomSidePanel
+        classNames={classNames}
+        title="Localizar no chat"
+        open
+        showTitle={false}
+      >
+        <p>Busca</p>
+      </RoomSidePanel>,
+    );
+    expect(
+      screen.getByRole("complementary", { name: "Localizar no chat" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Localizar no chat" })).toBeNull();
+    expect(screen.getByText("Busca")).toBeTruthy();
+  });
 });
 
 describe("room-side-panel.css", () => {

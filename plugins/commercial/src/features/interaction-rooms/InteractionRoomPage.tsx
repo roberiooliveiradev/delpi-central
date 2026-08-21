@@ -937,6 +937,7 @@ export function InteractionRoomPage({
             )}
             <CommercialRoomSidePanel
               open={sidePanelMode != null}
+              showTitle={sidePanelMode !== "find"}
               title={
                 sidePanelMode === "find"
                   ? content.findInChatTitle
