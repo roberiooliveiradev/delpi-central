@@ -21,5 +21,6 @@ describe("InteractionRoomConversationShell", () => {
     expect(source).toMatch(/cm-room-thread__dock/);
     expect(source).toMatch(/InteractionRoomConversationChatColumn/);
     expect(source).toMatch(/export function InteractionRoomConversationShell/);
+    expect(source).toMatch(/wrapRoot/);
   });
 });

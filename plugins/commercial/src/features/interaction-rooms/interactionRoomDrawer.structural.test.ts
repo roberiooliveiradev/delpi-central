@@ -17,11 +17,17 @@ describe("CommercialHostDrawer", () => {
     expect(panel).toMatch(/InteractionRoomConversationShell/);
     const page = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(page).not.toMatch(/CommercialHostDrawer/);
-    expect(page).toMatch(/cm-room-thread__stage/);
-    expect(page).toMatch(/cm-room-thread__msgs/);
-    expect(page).toMatch(/cm-room-thread__body/);
-    expect(page).toMatch(/cm-room-thread__main/);
-    expect(page).not.toMatch(/cm-room-thread__context/);
+    expect(page).toMatch(/InteractionRoomConversationShell/);
+    expect(page).toMatch(/InteractionRoomConversationChatColumn/);
+    const shell = readFileSync(
+      join(dir, "InteractionRoomConversationShell.tsx"),
+      "utf8",
+    );
+    expect(shell).toMatch(/cm-room-thread__stage/);
+    expect(shell).toMatch(/cm-room-thread__msgs/);
+    expect(shell).toMatch(/cm-room-thread__body/);
+    expect(shell).toMatch(/cm-room-thread__main/);
+    expect(shell).not.toMatch(/cm-room-thread__context/);
     expect(page).toMatch(/CommercialRoomSidePanel/);
   });
 });

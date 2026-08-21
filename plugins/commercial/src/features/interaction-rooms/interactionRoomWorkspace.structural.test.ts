@@ -23,10 +23,16 @@ describe("InteractionRoomWorkspace", () => {
     expect(workspace).toMatch(/roomId \? \(/);
     expect(app).toMatch(/InteractionRoomWorkspace/);
     expect(app).toMatch(/interaction_room_detail/);
-    expect(thread).toMatch(/cm-room-thread__header/);
-    expect(thread).toMatch(/cm-room-thread__body/);
-    expect(thread).toMatch(/cm-room-thread__main/);
-    expect(thread).toMatch(/cm-room-thread__msgs/);
-    expect(thread).toMatch(/cm-room-thread__dock/);
+    expect(thread).toMatch(/InteractionRoomConversationShell/);
+    expect(thread).toMatch(/InteractionRoomConversationChatColumn/);
+    const shell = readFileSync(
+      join(dir, "InteractionRoomConversationShell.tsx"),
+      "utf8",
+    );
+    expect(shell).toMatch(/cm-room-thread__header/);
+    expect(shell).toMatch(/cm-room-thread__body/);
+    expect(shell).toMatch(/cm-room-thread__main/);
+    expect(shell).toMatch(/cm-room-thread__msgs/);
+    expect(shell).toMatch(/cm-room-thread__dock/);
   });
 });

@@ -6,8 +6,11 @@ import { fileURLToPath } from "node:url";
 const dir = dirname(fileURLToPath(import.meta.url));
 
 describe("InteractionRoomPage", () => {
-  it("compõe RoomHeader + MessageThread + composer com anexos", () => {
+  it("compõe Shell + RoomHeader + MessageThread + composer com anexos", () => {
     const source = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
+    expect(source).toMatch(/InteractionRoomConversationShell/);
+    expect(source).toMatch(/InteractionRoomConversationChatColumn/);
+    expect(source).toMatch(/wrapRoot=\{false\}/);
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).not.toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/onTitleClick/);
@@ -45,7 +48,7 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/nameFor/);
     expect(source).toMatch(/usePortfolioScope/);
     expect(source).toMatch(/mine:/);
-    expect(source).toMatch(/CommercialConversationFileDropLayer/);
+    expect(source).not.toMatch(/CommercialConversationFileDropLayer/);
     expect(source).toMatch(/CommercialRoomContextPanel/);
     expect(source).toMatch(/CommercialRoomSidePanel/);
     expect(source).toMatch(/showTitle=\{sidePanelMode !== "find"\}/);
@@ -54,7 +57,6 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/flush/);
     expect(source).not.toMatch(/CommercialHostDrawer/);
     expect(source).not.toMatch(/portalTarget/);
-    expect(source).toMatch(/cm-room-thread__stage/);
     expect(source).toMatch(/CommercialAlertQueue/);
     expect(source).toMatch(/cm-room-alert-host/);
     expect(source).toMatch(/onRoomTitle/);
