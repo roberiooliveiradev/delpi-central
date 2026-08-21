@@ -254,16 +254,36 @@
   margin: 0;
   padding: 0.65rem 0.35rem;
   border: none;
+  border-radius: 0.4rem;
   border-bottom: 1px solid var(--cm-border, var(--border, #e6e6e6));
   background: transparent;
   text-align: left;
   font: inherit;
   color: inherit;
   cursor: pointer;
+  outline: none;
+  box-shadow: none;
+  transition: background 0.15s ease;
 }
 
 .dashboard-commercial .cm-room-shared__row:hover {
-  background: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 6%, transparent);
+  background: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 8%, transparent);
+  border-color: transparent;
+  border-bottom-color: var(--cm-border, var(--border, #e6e6e6));
+  box-shadow: none;
+}
+
+.dashboard-commercial .cm-room-shared__row:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+  border-bottom-color: var(--cm-border, var(--border, #e6e6e6));
+}
+
+.dashboard-commercial .cm-room-shared__row:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--cm-accent, var(--primary, #089bdb));
 }
 
 .dashboard-commercial .cm-room-shared__icon {
