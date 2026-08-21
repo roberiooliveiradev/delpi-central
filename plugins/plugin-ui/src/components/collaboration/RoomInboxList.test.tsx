@@ -74,6 +74,29 @@ describe("RoomInboxList", () => {
     expect(screen.getByRole("button").getAttribute("aria-current")).toBe("true");
   });
 
+
+  it("actions click does not select the room", () => {
+    const onSelect = vi.fn();
+    const onDelete = vi.fn();
+    render(
+      <RoomInboxList
+        classNames={classNames}
+        listAriaLabel="Inbox"
+        emptyLabel="No rooms"
+        onSelect={onSelect}
+        actions={() => (
+          <button type="button" aria-label="Delete room" onClick={onDelete}>
+            Del
+          </button>
+        )}
+        items={[{ id: "r1", title: "Pedido 102942" }]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete room" }));
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it("o hit da linha cobre o card e o avatar permanece fora do botão", () => {
     const { container } = render(
       <RoomInboxList
@@ -142,3 +165,13 @@ describe("room-inbox.css", () => {
     expect(container.querySelector(".delpi-ui-room-inbox__meta")).toBeNull();
   });
 });
+
+  it("actions slot is clickable above hit and appears on hover", () => {
+    const css = readFileSync(join(stylesDir, "room-inbox.css"), "utf8");
+    const actions = css.match(/\.delpi-ui-room-inbox__actions \{[^}]+\}/)?.[0] ?? "";
+    expect(actions).toMatch(/pointer-events:\s*auto;/);
+    expect(actions).toMatch(/opacity:\s*0;/);
+    expect(css).toMatch(/\.delpi-ui-room-inbox__item:hover \.delpi-ui-room-inbox__actions/);
+    expect(css).toMatch(/\.delpi-ui-room-inbox__item:focus-within \.delpi-ui-room-inbox__actions/);
+  });
+

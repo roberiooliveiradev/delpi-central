@@ -28,6 +28,7 @@ export type RoomInboxListClassNames = {
   subtitle: string;
   preview: string;
   meta: string;
+  actions: string;
   badge: string;
   empty: string;
 };
@@ -42,6 +43,7 @@ export type RoomInboxListProps = {
   leading?: (item: RoomInboxListItem) => ReactNode;
   subtitle?: (item: RoomInboxListItem) => ReactNode;
   trailing?: (item: RoomInboxListItem) => ReactNode;
+  actions?: (item: RoomInboxListItem) => ReactNode;
   className?: string;
 };
 
@@ -70,6 +72,7 @@ export function roomInboxListBemClasses(prefix: string): RoomInboxListClassNames
     subtitle: pair(`${base}__subtitle`, `${ui}__subtitle`),
     preview: pair(`${base}__preview`, `${ui}__preview`),
     meta: pair(`${base}__meta`, `${ui}__meta`),
+    actions: pair(`${base}__actions`, `${ui}__actions`),
     badge: pair(`${base}__badge`, `${ui}__badge`),
     empty: pair(`${base}__empty`, `${ui}__empty`),
   };
@@ -101,6 +104,7 @@ export function RoomInboxList({
   leading,
   subtitle,
   trailing,
+  actions,
   className,
 }: RoomInboxListProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
@@ -123,6 +127,7 @@ export function RoomInboxList({
           const leadingNode = leading?.(item);
           const subtitleNode = subtitle?.(item);
           const trailingNode = trailing?.(item);
+          const actionsNode = actions?.(item);
           const hasMeta =
             unread > 0 || Boolean(item.metaLabel) || trailingNode != null;
           return (
@@ -152,6 +157,9 @@ export function RoomInboxList({
                           {item.metaLabel ? <span>{item.metaLabel}</span> : null}
                           {trailingNode}
                         </div>
+                      ) : null}
+                      {actionsNode ? (
+                        <div className={classNames.actions}>{actionsNode}</div>
                       ) : null}
                     </div>
                     {subtitleNode ? (

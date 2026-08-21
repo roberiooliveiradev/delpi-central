@@ -154,6 +154,23 @@
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted, #64748b)));
 }
 
+.delpi-ui-room-inbox__actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.15rem;
+  margin-inline-start: 0.15rem;
+  pointer-events: auto;
+  opacity: 0;
+}
+
+.delpi-ui-room-inbox__item:hover .delpi-ui-room-inbox__actions,
+.delpi-ui-room-inbox__item:focus-within .delpi-ui-room-inbox__actions {
+  opacity: 1;
+}
+
 .delpi-ui-room-inbox__badge {
   display: inline-flex;
   align-items: center;
