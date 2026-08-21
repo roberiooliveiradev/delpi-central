@@ -116,9 +116,23 @@ class PromptPolicyService:
             tool_context="",
         )
 
-    def build_active_skill_policy_sections(self, skills: dict | None) -> list[str]:
-        """Políticas de skills ativas no runtime (chat comum ou agente), sem ação do usuário."""
-        resolved_skills = skills or {}
+    def build_active_skill_policy_sections(
+        self,
+        skills: dict | None,
+        *,
+        skills_to_load: list[str] | tuple[str, ...] | None = None,
+        analysis_ran: bool = False,
+    ) -> list[str]:
+        """Políticas de skills carregadas no turno (subset opcional via turn analysis)."""
+        from app.domain.services.chat_skill_composition_service import (
+            ChatSkillCompositionService,
+        )
+
+        resolved_skills = ChatSkillCompositionService.resolve_loaded_skills(
+            enabled_skills=skills,
+            skills_to_load=skills_to_load,
+            analysis_ran=analysis_ran,
+        )
         sections: list[str] = []
 
         if resolved_skills.get("sqlAuthoring"):
@@ -218,6 +232,8 @@ class PromptPolicyService:
         text_correction_mode: bool = False,
         skills: dict | None = None,
         skip_skill_policy_sections: bool = False,
+        skills_to_load: list[str] | tuple[str, ...] | None = None,
+        analysis_ran: bool = False,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
         resolved_skills = skills or {}
@@ -260,7 +276,13 @@ class PromptPolicyService:
         )
 
         if not skip_skill_policy_sections:
-            sections.extend(self.build_active_skill_policy_sections(resolved_skills))
+            sections.extend(
+                self.build_active_skill_policy_sections(
+                    resolved_skills,
+                    skills_to_load=skills_to_load,
+                    analysis_ran=analysis_ran,
+                )
+            )
 
         if operational_mode:
             sections.append(self._load_policy("operational-agent.md"))

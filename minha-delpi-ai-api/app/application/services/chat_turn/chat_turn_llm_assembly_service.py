@@ -345,6 +345,14 @@ class ChatTurnLlmAssemblyService:
                 response_mode=active_mode,
                 tool_calls=tool_calls,
                 host_surface_prompt=host_surface_prompt,
+                skills_to_load=(
+                    tool_context.get("turnAnalysisSkillsToLoad")
+                    if isinstance(tool_context, dict)
+                    else None
+                ),
+                analysis_ran=bool(
+                    isinstance(tool_context, dict) and tool_context.get("turnAnalysis")
+                ),
             )
 
         admin_debug_payload = ChatAdminDebugService.build_for_turn(
