@@ -501,12 +501,20 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
   it("overview usa pontos factuais e mantém próxima ação somente no hero", () => {
     const overview = readSrc("features/customers/components/CustomerOverviewSection.tsx");
     const points = readSrc("features/customers/components/CustomerConversationPoints.tsx");
+    const checklist = readSrc(
+      "features/customers/components/CustomerPreMeetingChecklist.tsx",
+    );
     const header = readSrc("features/customers/components/CustomerDetailHeader.tsx");
     assert.match(overview, /CustomerConversationPoints/);
+    assert.match(overview, /CustomerPreMeetingChecklist/);
     assert.doesNotMatch(overview, /CustomerAttentionBanner|CustomerNextActionCard|CustomerOverviewKpis/);
     assert.match(points, /Pontos para conversa/);
     assert.match(points, /CommercialStatusBadge/);
     assert.match(points, /Nenhum ponto objetivo identificado/);
+    assert.match(checklist, /cm-customer-overview__checklist/);
+    assert.match(checklist, /cm-customer-overview__checklist-row--action/);
+    assert.match(checklist, /checklist-item--blocked/);
+    assert.doesNotMatch(checklist, /CommercialActionButton|variant=\"ghost\"/);
     assert.match(header, /Próxima ação:/);
     assert.match(header, /buildCustomerHeroHighlights/);
   });

@@ -1001,6 +1001,81 @@
   flex-wrap: wrap;
 }
 
+.dashboard-commercial .cm-customer-overview__checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-item {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.375rem;
+  border: 0;
+  border-radius: var(--cm-radius-sm, 0.375rem);
+  background: transparent;
+  color: var(--cm-text, inherit);
+  font: inherit;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-row--action {
+  cursor: pointer;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-row--action:hover {
+  background: var(--cm-surface-muted, color-mix(in srgb, var(--cm-text, #fff) 6%, transparent));
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-row--action:focus-visible {
+  outline: 2px solid var(--cm-accent, #3b82f6);
+  outline-offset: 1px;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-marker {
+  flex: 0 0 auto;
+  color: var(--cm-text-muted, color-mix(in srgb, var(--cm-text, #fff) 55%, transparent));
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-chevron {
+  flex: 0 0 auto;
+  opacity: 0.55;
+  color: var(--cm-text-muted, inherit);
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-row--action:hover .cm-customer-overview__checklist-chevron {
+  opacity: 0.9;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-item--blocked .cm-customer-overview__checklist-row {
+  opacity: 0.62;
+  cursor: default;
+}
+
+.dashboard-commercial .cm-customer-overview__checklist-item--blocked .cm-customer-overview__checklist-label {
+  color: var(--cm-text-muted, inherit);
+}
+
 .dashboard-commercial .cm-customer-header img {
   width: 72px;
   height: 72px;

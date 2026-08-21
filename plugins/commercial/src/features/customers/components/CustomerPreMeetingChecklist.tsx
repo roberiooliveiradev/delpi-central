@@ -1,6 +1,11 @@
-import { CommercialActionButton, CommercialSectionCard } from "../../../app/commercialUi";
+import { ChevronRight, Circle, Lock } from "lucide-react";
+
+import { CommercialSectionCard } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
-import { buildCustomerDetailSearch, type CustomerDetailSection } from "../utils/customerDetailSection";
+import {
+  buildCustomerDetailSearch,
+  type CustomerDetailSection,
+} from "../utils/customerDetailSection";
 
 type CustomerPreMeetingChecklistProps = {
   onGoToSection: (section: CustomerDetailSection) => void;
@@ -27,20 +32,58 @@ export function CustomerPreMeetingChecklist({
       title="Checklist pré-reunião"
       hint={CM_HELP.customerDetail.preMeetingChecklist}
     >
-      <ul className="cm-customer-overview__checklist">
+      <ul className="cm-customer-overview__checklist" aria-label="Checklist pré-reunião">
         {ITEMS.map((item) => (
-          <li key={item.id}>
+          <li
+            key={item.id}
+            className={
+              item.blocked
+                ? "cm-customer-overview__checklist-item cm-customer-overview__checklist-item--blocked"
+                : "cm-customer-overview__checklist-item"
+            }
+          >
             {item.blocked ? (
-              <span>{item.label}</span>
+              <span className="cm-customer-overview__checklist-row">
+                <Lock
+                  className="cm-customer-overview__checklist-marker"
+                  size={14}
+                  aria-hidden
+                />
+                <span className="cm-customer-overview__checklist-label">
+                  {item.label}
+                </span>
+              </span>
             ) : item.section ? (
-              <CommercialActionButton
-                variant="ghost"
+              <button
+                type="button"
+                className="cm-customer-overview__checklist-row cm-customer-overview__checklist-row--action"
                 onClick={() => onGoToSection(item.section!)}
               >
-                {item.label}
-              </CommercialActionButton>
+                <Circle
+                  className="cm-customer-overview__checklist-marker"
+                  size={14}
+                  aria-hidden
+                />
+                <span className="cm-customer-overview__checklist-label">
+                  {item.label}
+                </span>
+                <ChevronRight
+                  className="cm-customer-overview__checklist-chevron"
+                  size={16}
+                  aria-hidden
+                />
+              </button>
             ) : (
-              item.label
+              <span className="cm-customer-overview__checklist-row">
+                <Circle
+                  className="cm-customer-overview__checklist-marker"
+                  size={14}
+                  aria-hidden
+                />
+                <span className="cm-customer-overview__checklist-label">
+                  {item.label}
+                </span>
+              </span>
             )}
           </li>
         ))}
