@@ -1225,6 +1225,7 @@
   },
   "selectionReasons": {
     "inventorySqlFastPath": "Consulta SQL de estoque abaixo do mínimo reconhecida — execução direta via POST /data/sql.",
+    "missingRequiredParameter": "Não executei a consulta porque falta o parâmetro obrigatório '{parameter}'. Informe o valor ou confirme o código no contexto da conversa.",
     "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",
     "sqlRefinement": "Refinamento da consulta SQL anterior — reexecução via POST /data/sql.",
     "genericSql": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente.",

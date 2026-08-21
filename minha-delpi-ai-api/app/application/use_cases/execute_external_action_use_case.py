@@ -2,6 +2,7 @@ from typing import Any
 from urllib.parse import quote
 from uuid import UUID
 
+from app.domain.exceptions.external_action_exceptions import ExternalActionValidationError
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.services.external_actions.external_action_execution_policy import (
     ExternalActionExecutionPolicy,
@@ -58,7 +59,15 @@ class ExecuteExternalActionUseCase:
         arguments = self._drop_internal_unknown_parameters(action, arguments)
         arguments = self._ground_parameters(action, arguments, pipeline_parameters)
 
-        self.policy.validate(provider, action, arguments)
+        try:
+            self.policy.validate(provider, action, arguments)
+        except ExternalActionValidationError as exc:
+            return self._validation_failure_result(
+                provider=provider,
+                action=action,
+                arguments=arguments,
+                error=exc,
+            )
 
         gateway_parameters = self._clamp_hierarchical_query_parameters(
             action.get("path") or "",
@@ -251,6 +260,55 @@ class ExecuteExternalActionUseCase:
             presenter=self.presenter,
             extract_response_meta=self._extract_api_delpi_response_meta,
         )
+
+    def _validation_failure_result(
+        self,
+        *,
+        provider: dict,
+        action: dict,
+        arguments: dict,
+        error: ExternalActionValidationError,
+    ) -> dict:
+        from app.domain.services.chat_operational_api_domain_service import (
+            ChatOperationalApiDomainService,
+        )
+        from app.domain.services.external_actions.external_action_response_content_service import (
+            ExternalActionResponseContentService,
+        )
+
+        parameters = dict((arguments or {}).get("parameters") or {})
+        action_path = action.get("path") or ""
+        resolved_path = self._resolve_action_path(action_path, parameters)
+        reason = ExternalActionResponseContentService.get(
+            "selectionReasons",
+            "missingRequiredParameter",
+            default=str(error),
+        )
+
+        if error.missing_parameter:
+            reason = reason.replace("{parameter}", str(error.missing_parameter))
+
+        metadata = {
+            **error.to_metadata(),
+            "provider": provider.get("providerKey"),
+            "actionId": action.get("actionId"),
+            "method": action.get("method"),
+            "path": resolved_path,
+            "apiRouteDomain": ChatOperationalApiDomainService.classify_path(resolved_path),
+            "selectionReason": reason,
+            "skippedHttp": True,
+        }
+
+        return {
+            "provider": provider.get("providerKey"),
+            "actionId": action.get("actionId"),
+            "method": action.get("method"),
+            "path": resolved_path,
+            "statusCode": 0,
+            "ok": False,
+            "data": None,
+            "metadata": metadata,
+        }
 
     def _ground_parameters(
         self,
