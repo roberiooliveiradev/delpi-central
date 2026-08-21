@@ -19,7 +19,8 @@
     "account.contact.deleted": "Contato removido",
     "account.avatar.uploaded": "Logo atualizado",
     "account.avatar.deleted": "Logo removido",
-    "interaction_room.deleted": "Conversa excluída"
+    "interaction_room.deleted": "Conversa excluída",
+    "interaction_room.renamed": "Conversa renomeada"
   },
   "messages": {
     "seller_portfolio.create": "Carteira «{display_name}» criada com {member_count} usuário(s).",
@@ -41,7 +42,8 @@
     "account.contact.deleted": "Contato «{full_name}» removido da conta.",
     "account.avatar.uploaded": "Logo da conta atualizado ({file_name}).",
     "account.avatar.deleted": "Logo da conta removido.",
-    "interaction_room.deleted": "Sala «{title}» ({kind}) excluída pelo gestor."
+    "interaction_room.deleted": "Sala «{title}» ({kind}) excluída pelo gestor.",
+    "interaction_room.renamed": "Sala renomeada de «{previous_title}» para «{title}»."
   },
   "roleLabels": {
     "owner": "responsável",
@@ -67,7 +69,8 @@
     "account.contact.deleted": "warning",
     "account.avatar.uploaded": "success",
     "account.avatar.deleted": "warning",
-    "interaction_room.deleted": "warning"
+    "interaction_room.deleted": "warning",
+    "interaction_room.renamed": "info"
   },
   "fallback": {
     "title": "Evento de auditoria",

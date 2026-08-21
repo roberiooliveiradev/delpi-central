@@ -27,6 +27,7 @@ from commercial_app.application.services.commercial_realtime_notify import (
     notify_interaction_mention,
     notify_interaction_room_activity,
     notify_interaction_room_deleted,
+    notify_room_inbox_changed,
     notify_room_pin_changed,
     notify_room_reaction_changed,
     notify_worklist_changed,
@@ -56,6 +57,7 @@ from commercial_app.interface.http.schemas.interaction_room_schemas import (
     CreateTaskFromInteractionMessageBody,
     PostInteractionMessageBody,
     ResolveInteractionRoomBody,
+    RenameInteractionRoomBody,
     UpdateInteractionMessageBody,
 )
 
@@ -245,6 +247,44 @@ def get_interaction_room(
     except Exception:
         logger.exception("get_interaction_room_failed")
         return fail("Erro interno ao carregar a sala.", 500, operation_id=operation_id)
+
+
+
+@router.patch("/{room_id}", operation_id="rename_interaction_room")
+@require_any_permission(*COMMERCIAL_ACCESS_PERMISSIONS)
+def rename_interaction_room(
+    request: Request,
+    room_id: UUID = Path(...),
+    body: RenameInteractionRoomBody = Body(...),
+):
+    operation_id = "rename_interaction_room"
+    actor, early = _actor_or_401(request, operation_id=operation_id)
+    if early is not None:
+        return early
+    try:
+        room = build_manage_interaction_rooms_use_case().rename(
+            room_id=room_id,
+            actor_user_id=actor,
+            title=body.title,
+        )
+        try:
+            notify_room_inbox_changed(room_id=str(room.id))
+        except Exception:  # noqa: BLE001
+            logger.exception("interaction_room_rename_notify_failed")
+        return ok(
+            room.to_dict(),
+            message=InteractionRoomContentService.message("renameRoomOk"),
+            operation_id=operation_id,
+        )
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id=operation_id)
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id=operation_id)
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id=operation_id)
+    except Exception:
+        logger.exception("rename_interaction_room_failed")
+        return fail("Erro interno ao renomear a sala.", 500, operation_id=operation_id)
 
 
 @router.delete("/{room_id}", operation_id="delete_interaction_room")

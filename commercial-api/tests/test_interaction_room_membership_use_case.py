@@ -122,6 +122,25 @@ class InMemoryInteractionRoomRepo(InteractionRoomRepositoryPort):
         self.rooms[room.id] = deleted
         return deleted
 
+    def update_title(self, *, room_id: UUID, title: str) -> InteractionRoom | None:
+        room = self.get_by_id(room_id)
+        if room is None:
+            return None
+        updated = InteractionRoom(
+            id=room.id,
+            kind=room.kind,
+            title=title.strip(),
+            created_by_user_id=room.created_by_user_id,
+            created_at=room.created_at,
+            updated_at=datetime.now(timezone.utc),
+            entity_type=room.entity_type,
+            entity_key=room.entity_key,
+            group_id=room.group_id,
+            deleted_at=room.deleted_at,
+        )
+        self.rooms[room.id] = updated
+        return updated
+
     def list_for_user(
         self,
         *,

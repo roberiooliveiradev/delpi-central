@@ -6,6 +6,7 @@ import {
   createTaskFromInteractionMessage,
   deleteInteractionMessage,
   deleteInteractionRoom,
+  renameInteractionRoom,
   getInteractionRoom,
   listInteractionMessages,
   listInteractionRoomMembers,
@@ -36,6 +37,7 @@ import {
   CommercialMessageThread,
   CommercialRoomContextPanel,
   CommercialRoomHeader,
+  CommercialSegmentToggle,
   CommercialRoomMessageFindPanel,
   CommercialRoomSidePanel,
   CommercialViewTransition,
@@ -46,6 +48,7 @@ import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent
 import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMoreMenu } from "./InteractionRoomMoreMenu";
+import { InteractionRoomRenameDialog } from "./InteractionRoomRenameDialog";
 import { InteractionRoomSharedView } from "./InteractionRoomSharedView";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { listInlineAttachmentIdsFromMarkdown } from "./interactionRoomInlineAttachments";
@@ -141,6 +144,8 @@ export function InteractionRoomPage({
   const [findResults, setFindResults] = useState<InteractionMessageDto[]>([]);
   const [findLoading, setFindLoading] = useState(false);
   const [roomView, setRoomView] = useState<"chat" | "shared">("chat");
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renamingRoom, setRenamingRoom] = useState(false);
   const threadRef = useRef({
     messages,
     pinnedMessageIds,
@@ -448,6 +453,46 @@ export function InteractionRoomPage({
     onRoomTitle,
     basePath,
   ]);
+
+  const onRenameRoomSave = useCallback(
+    async (nextTitle: string) => {
+      const id = roomId.trim();
+      const title = nextTitle.trim();
+      if (!id || !title || renamingRoom) return;
+      if (title === (room?.title ?? "").trim()) {
+        setRenameDialogOpen(false);
+        return;
+      }
+      setRenamingRoom(true);
+      try {
+        const updated = await renameInteractionRoom(id, title);
+        setRoom((prev) =>
+          prev && prev.id === updated.id
+            ? { ...prev, title: updated.title, updated_at: updated.updated_at }
+            : prev,
+        );
+        onRoomTitle?.(updated.title);
+        notifySuccess(content.renameRoomOk);
+        setRenameDialogOpen(false);
+      } catch (err: unknown) {
+        notifyError(
+          err instanceof Error ? err.message : content.renameRoomError,
+        );
+      } finally {
+        setRenamingRoom(false);
+      }
+    },
+    [
+      roomId,
+      room?.title,
+      renamingRoom,
+      notifySuccess,
+      notifyError,
+      onRoomTitle,
+      content.renameRoomOk,
+      content.renameRoomError,
+    ],
+  );
 
   const resolveActions = useCallback(
     (message: {
@@ -855,30 +900,25 @@ export function InteractionRoomPage({
                 ) : undefined
               }
               nav={
-                <>
-                  <CommercialActionButton
-                    variant="ghost"
-                    id="cm-room-tab-chat"
-                    aria-label={content.roomViewChat}
-                    title={content.roomViewChat}
-                    aria-pressed={roomView === "chat"}
-                    aria-controls="cm-room-view-chat"
-                    onClick={() => setRoomView("chat")}
-                  >
-                    <MessageSquare size={16} aria-hidden />
-                  </CommercialActionButton>
-                  <CommercialActionButton
-                    variant="ghost"
-                    id="cm-room-tab-shared"
-                    aria-label={content.roomViewShared}
-                    title={content.roomViewShared}
-                    aria-pressed={roomView === "shared"}
-                    aria-controls="cm-room-view-shared"
-                    onClick={() => setRoomView("shared")}
-                  >
-                    <Files size={16} aria-hidden />
-                  </CommercialActionButton>
-                </>
+                <CommercialSegmentToggle
+                  size="sm"
+                  idPrefix="cm-room-tab"
+                  ariaLabel={content.roomViewNavAriaLabel}
+                  value={roomView}
+                  onChange={setRoomView}
+                  options={[
+                    {
+                      value: "chat",
+                      label: <MessageSquare size={16} aria-hidden />,
+                      ariaLabel: content.roomViewChat,
+                    },
+                    {
+                      value: "shared",
+                      label: <Files size={16} aria-hidden />,
+                      ariaLabel: content.roomViewShared,
+                    },
+                  ]}
+                />
               }
               navAriaLabel={content.roomViewNavAriaLabel}
               participants={participants}
@@ -886,8 +926,11 @@ export function InteractionRoomPage({
               actions={
                 <>
                   <InteractionRoomMoreMenu
+                    canRename
                     canDelete={canManagePortfolios}
+                    renameDisabled={renamingRoom}
                     deleteDisabled={deletingRoomId === roomId.trim()}
+                    onRename={() => setRenameDialogOpen(true)}
                     onDelete={() => {
                       void onDeleteRoom();
                     }}
@@ -931,6 +974,17 @@ export function InteractionRoomPage({
               }
             />
           </div>
+          <InteractionRoomRenameDialog
+            open={renameDialogOpen}
+            busy={renamingRoom}
+            initialTitle={room.title}
+            onClose={() => {
+              if (!renamingRoom) setRenameDialogOpen(false);
+            }}
+            onSave={(title) => {
+              void onRenameRoomSave(title);
+            }}
+          />
           <div className="cm-room-thread__body">
             <div className="cm-room-thread__main">
               <CommercialViewTransition transitionKey={roomView} tone="panel">

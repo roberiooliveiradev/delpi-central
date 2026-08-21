@@ -376,6 +376,24 @@
   min-height: 0;
 }
 
+.dashboard-commercial .cm-room-more-menu {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.dashboard-commercial .cm-room-more-menu__panel {
+  min-width: 12.5rem;
+  width: max-content;
+}
+
+.dashboard-commercial .cm-room-rename-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .dashboard-commercial.dashboard-page--fill .cm-room-thread__header {
   padding: var(--cm-gap-sm);
 }

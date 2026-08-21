@@ -15,6 +15,7 @@ describe("INTERACTION_ROOMS_CONTENT", () => {
     expect(INTERACTION_ROOMS_CONTENT.attachMaxCount).toBe(10);
     expect(INTERACTION_ROOMS_CONTENT.attachMaxBytes).toBe(20 * 1024 * 1024);
     expect(INTERACTION_ROOMS_CONTENT.roomMoreOptionsAriaLabel).toBe("Mais opções da conversa");
+    expect(INTERACTION_ROOMS_CONTENT.renameRoomActionLabel).toBe("Renomear conversa");
     expect(INTERACTION_ROOMS_CONTENT.deleteRoomActionLabel).toBe("Excluir conversa");
     expect(INTERACTION_ROOMS_CONTENT.deleteRoomOk).toBe("Conversa excluída.");
   });

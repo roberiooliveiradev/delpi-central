@@ -35,3 +35,7 @@ class CreateTaskFromInteractionMessageBody(BaseModel):
     """Título vem do body_text da mensagem; assignee default = actor."""
 
     description: str | None = None
+
+
+class RenameInteractionRoomBody(BaseModel):
+    title: str = Field(..., min_length=1)

@@ -27,6 +27,7 @@ from commercial_app.domain.services.interaction_room_content_service import (
 )
 
 _ACTION_ROOM_DELETED = "interaction_room.deleted"
+_ACTION_ROOM_RENAMED = "interaction_room.renamed"
 _ENTITY_INTERACTION_ROOM = "interaction_room"
 
 
@@ -197,10 +198,49 @@ class ManageInteractionRoomsUseCase:
         deleted = self._rooms.soft_delete(room_id=room.id)
         if deleted is None:
             raise LookupError(InteractionRoomContentService.error("roomNotFound"))
-        self._append_audit(actor_user_id=actor, room=deleted)
+        self._append_audit(
+            actor_user_id=actor,
+            action=_ACTION_ROOM_DELETED,
+            room=deleted,
+        )
         return deleted
 
-    def _append_audit(self, *, actor_user_id: str, room: InteractionRoom) -> None:
+    def rename(
+        self,
+        *,
+        room_id: UUID,
+        actor_user_id: str,
+        title: str,
+    ) -> InteractionRoom:
+        actor = (actor_user_id or "").strip()
+        if not actor:
+            raise ValueError(InteractionRoomContentService.error("userIdRequired"))
+        cleaned = " ".join((title or "").split())
+        if not cleaned:
+            raise ValueError(InteractionRoomContentService.error("titleRequired"))
+        room = self._access.require_room_exists(room_id)
+        previous_title = room.title
+        if cleaned == previous_title:
+            return room
+        updated = self._rooms.update_title(room_id=room.id, title=cleaned)
+        if updated is None:
+            raise LookupError(InteractionRoomContentService.error("roomNotFound"))
+        self._append_audit(
+            actor_user_id=actor,
+            action=_ACTION_ROOM_RENAMED,
+            room=updated,
+            extra={"previous_title": previous_title},
+        )
+        return updated
+
+    def _append_audit(
+        self,
+        *,
+        actor_user_id: str,
+        action: str,
+        room: InteractionRoom,
+        extra: dict[str, Any] | None = None,
+    ) -> None:
         if self._audit is None:
             return
         payload: dict[str, Any] = {
@@ -210,9 +250,11 @@ class ManageInteractionRoomsUseCase:
             "entity_key": room.entity_key,
             "group_id": str(room.group_id) if room.group_id else None,
         }
+        if extra:
+            payload.update(extra)
         self._audit.append(
             actor_user_id=actor_user_id,
-            action=_ACTION_ROOM_DELETED,
+            action=action,
             entity_type=_ENTITY_INTERACTION_ROOM,
             entity_id=str(room.id),
             payload=payload,

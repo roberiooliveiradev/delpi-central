@@ -81,6 +81,9 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/deleteInteractionMessage/);
     expect(source).toMatch(/deleteInteractionRoom/);
     expect(source).toMatch(/InteractionRoomMoreMenu/);
+    expect(source).toMatch(/CommercialSegmentToggle/);
+    expect(source).toMatch(/InteractionRoomRenameDialog/);
+    expect(source).toMatch(/renameInteractionRoom/);
     expect(source).toMatch(/room\.deleted/);
     expect(source).toMatch(/canManagePortfolios/);
     expect(source).not.toMatch(/Trash2/);

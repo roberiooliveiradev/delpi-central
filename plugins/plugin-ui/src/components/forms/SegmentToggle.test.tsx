@@ -74,6 +74,30 @@ describe("SegmentToggle", () => {
     expect(screen.getAllByRole("button")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Departamento" })).toBeTruthy();
   });
+
+  it("usa ariaLabel quando o label é ícone", () => {
+    render(
+      <SegmentToggle
+        ariaLabel="Vista"
+        idPrefix="room-tab"
+        size="sm"
+        options={[
+          { value: "chat", label: <span data-testid="chat-icon" />, ariaLabel: "Chat" },
+          {
+            value: "shared",
+            label: <span data-testid="shared-icon" />,
+            ariaLabel: "Compartilhados",
+          },
+        ]}
+        value="chat"
+        onChange={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Chat" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Compartilhados" })).toBeTruthy();
+  });
 });
 
 describe("createDashboardSegmentToggle", () => {

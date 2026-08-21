@@ -173,6 +173,20 @@ class PostgresInteractionRoomRepository(
         )
         return _row_room(row)
 
+    def update_title(self, *, room_id: UUID, title: str) -> InteractionRoom | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.interaction_rooms
+               SET title = %s,
+                   updated_at = NOW()
+             WHERE id = %s
+               AND deleted_at IS NULL
+         RETURNING {_ROOM_COLUMNS}
+            """,
+            (title.strip(), str(room_id)),
+        )
+        return _row_room(row)
+
     def list_for_user(
         self,
         *,

@@ -6,14 +6,14 @@ import { fileURLToPath } from "node:url";
 const dir = dirname(fileURLToPath(import.meta.url));
 
 describe("InteractionRoomMoreMenu", () => {
-  it("usa AnchoredPanelPortal + ContextMenuItem destructive para excluir", () => {
+  it("ancora o popover com gap e opções renomear/excluir", () => {
     const source = readFileSync(join(dir, "InteractionRoomMoreMenu.tsx"), "utf8");
     expect(source).toMatch(/AnchoredPanelPortal/);
-    expect(source).toMatch(/ContextMenuItem/);
-    expect(source).toMatch(/destructive/);
-    expect(source).toMatch(/MoreHorizontal/);
+    expect(source).toMatch(/horizontalAlign="end"/);
+    expect(source).toMatch(/gap=\{10\}/);
+    expect(source).toMatch(/renameRoomActionLabel/);
     expect(source).toMatch(/deleteRoomActionLabel/);
-    expect(source).toMatch(/CM_PORTAL_SCOPE/);
-    expect(source).not.toMatch(/window\.confirm/);
+    expect(source).toMatch(/ContextMenuDivider/);
+    expect(source).toMatch(/cm-room-more-menu/);
   });
 });

@@ -407,6 +407,19 @@ export async function deleteInteractionRoom(
   return unwrapEnvelope(response, "Erro ao excluir a conversa.");
 }
 
+export async function renameInteractionRoom(
+  roomId: string,
+  title: string,
+  signal?: AbortSignal,
+): Promise<InteractionRoomDto> {
+  const response = await httpPatch<ApiSuccessResponse<InteractionRoomDto>>(
+    interactionRoomsUrl(interactionRoomPath(roomId)),
+    { title },
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao renomear a conversa.");
+}
+
 export async function deleteInteractionMessage(
   roomId: string,
   messageId: string,

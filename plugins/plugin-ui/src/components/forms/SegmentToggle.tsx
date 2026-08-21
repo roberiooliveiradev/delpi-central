@@ -1,8 +1,12 @@
+import type { ReactNode } from "react";
+
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 
 export type SegmentToggleOption<T extends string = string> = {
   value: T;
-  label: string;
+  label: ReactNode;
+  /** Nome acessível quando `label` é só ícone / não textual. */
+  ariaLabel?: string;
   disabled?: boolean;
 };
 
@@ -104,6 +108,14 @@ export function SegmentToggle<T extends string>({
               if (!isDisabled && !isActive) onChange(option.value);
             }}
             aria-pressed={isActive}
+            aria-label={
+              option.ariaLabel ??
+              (typeof option.label === "string" ? option.label : undefined)
+            }
+            title={
+              option.ariaLabel ??
+              (typeof option.label === "string" ? option.label : undefined)
+            }
             disabled={isDisabled}
           >
             {option.label}

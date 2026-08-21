@@ -51,6 +51,10 @@ class InteractionRoomRepositoryPort(ABC):
         """Marca a sala como excluída (deleted_at); autorização no use case/HTTP."""
         raise NotImplementedError
 
+    def update_title(self, *, room_id: UUID, title: str) -> InteractionRoom | None:
+        """Atualiza o título da sala; autorização no use case/HTTP."""
+        raise NotImplementedError
+
     @abstractmethod
     def list_for_user(
         self,

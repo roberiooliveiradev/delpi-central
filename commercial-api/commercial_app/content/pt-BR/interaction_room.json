@@ -21,7 +21,8 @@
     "bodyHtmlNotAllowed": "Envie o texto em markdown; HTML cru não é aceito.",
     "bodyInlineImageUrlNotAllowed": "Imagens no texto só podem usar anexos da mensagem (attachment:), não links externos.",
     "attachmentTooLarge": "Cada arquivo pode ter no máximo {maxMb} MB.",
-    "attachmentLimitExceeded": "No máximo {max} arquivos por mensagem."
+    "attachmentLimitExceeded": "No máximo {max} arquivos por mensagem.",
+    "titleRequired": "Informe o nome da conversa."
   },
   "messages": {
     "listRoomsOk": "Salas carregadas.",
@@ -48,7 +49,8 @@
     "taskFromMessageOk": "Tarefa criada a partir da mensagem.",
     "taskFromMessageDefaultTitle": "Tarefa da sala",
     "taskRefBody": "Tarefa criada: {title}",
-    "wallGlobalTitle": "Mural comercial"
+    "wallGlobalTitle": "Mural comercial",
+    "renameRoomOk": "Conversa renomeada."
   },
   "empty": {
     "title": "Nenhuma mensagem.",
@@ -93,8 +95,15 @@
     "taskMentionKind": "task",
     "taskRefMessageKind": "task_ref",
     "systemMessageKind": "system",
-    "systemEventKinds": ["otd_event", "process_stage"],
-    "reservedMessageKinds": ["otd_event", "confirmation_event", "wall_post"],
+    "systemEventKinds": [
+      "otd_event",
+      "process_stage"
+    ],
+    "reservedMessageKinds": [
+      "otd_event",
+      "confirmation_event",
+      "wall_post"
+    ],
     "messageAttachmentMaxCount": 10,
     "messageAttachmentMaxBytes": 20971520,
     "markdownImagePattern": "!\\[([^\\]]*)]\\(([^)]+)\\)",

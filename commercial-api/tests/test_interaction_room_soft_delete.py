@@ -220,3 +220,70 @@ def test_delete_route_404_when_already_deleted(monkeypatch: pytest.MonkeyPatch) 
         room_id=uuid4(),
     )
     assert response.status_code == 404
+
+
+def test_rename_updates_title_and_audits() -> None:
+    repo = InMemoryInteractionRoomRepo()
+    room = _open_entity_room(repo, title="Pedido 1")
+    audit = MagicMock()
+    use_case = ManageInteractionRoomsUseCase(repository=repo, audit_repository=audit)
+    updated = use_case.rename(
+        room_id=room.id,
+        actor_user_id="u-1",
+        title="  Pedido Alfa  ",
+    )
+    assert updated.title == "Pedido Alfa"
+    audit.append.assert_called_once()
+    assert audit.append.call_args.kwargs["action"] == "interaction_room.renamed"
+    assert audit.append.call_args.kwargs["payload"]["previous_title"] == "Pedido 1"
+
+
+def test_rename_rejects_blank_title() -> None:
+    repo = InMemoryInteractionRoomRepo()
+    room = _open_entity_room(repo, title="Pedido 1")
+    use_case = ManageInteractionRoomsUseCase(repository=repo)
+    with pytest.raises(ValueError, match="Informe o nome"):
+        use_case.rename(room_id=room.id, actor_user_id="u-1", title="   ")
+
+
+def test_rename_route_200(monkeypatch: pytest.MonkeyPatch) -> None:
+    from commercial_app.interface.http.schemas.interaction_room_schemas import (
+        RenameInteractionRoomBody,
+    )
+
+    request = _request(
+        "/interaction-rooms/00000000-0000-0000-0000-000000000222",
+        method="PATCH",
+    )
+    request.state.user = _User(["commercial.access"], sub="u-1")
+    now = datetime.now(timezone.utc)
+    room = InteractionRoom(
+        id=UUID("00000000-0000-0000-0000-000000000222"),
+        kind="entity",
+        title="Novo nome",
+        created_by_user_id="u-1",
+        created_at=now,
+        updated_at=now,
+        entity_type="order",
+        entity_key="01|1",
+    )
+    fake_uc = MagicMock()
+    fake_uc.rename.return_value = room
+    monkeypatch.setattr(
+        interaction_room_routes,
+        "build_manage_interaction_rooms_use_case",
+        lambda: fake_uc,
+    )
+    monkeypatch.setattr(
+        interaction_room_routes,
+        "notify_room_inbox_changed",
+        MagicMock(),
+    )
+    response = interaction_room_routes.rename_interaction_room(
+        request,
+        room_id=room.id,
+        body=RenameInteractionRoomBody(title="Novo nome"),
+    )
+    assert response.status_code == 200
+    assert b"rename_interaction_room" in response.body
+    fake_uc.rename.assert_called_once()

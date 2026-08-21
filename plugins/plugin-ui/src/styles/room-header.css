@@ -156,11 +156,30 @@
   margin-inline-start: 0;
 }
 
-.delpi-ui-room-header__people [aria-pressed="true"] {
+/* Só ActionButton — não sobrescrever SegmentToggle ativo (texto branco). */
+.delpi-ui-room-header__people .delpi-ui-action-btn[aria-pressed="true"] {
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
     transparent
   );
+}
+
+/* Toggle Chat | Compartilhados compacto com ícones na topbar. */
+.delpi-ui-room-header__nav .delpi-ui-segment-toggle--sm {
+  flex-wrap: nowrap;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 0.5rem;
+}
+
+.delpi-ui-room-header__nav .delpi-ui-segment-toggle--sm .delpi-ui-segment-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.375rem;
 }
