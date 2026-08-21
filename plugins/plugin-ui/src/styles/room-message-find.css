@@ -140,12 +140,23 @@
 .delpi-ui-room-message-find__item-meta {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
   font-size: 0.8125rem;
 }
 
+.delpi-ui-room-message-find__item-author-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
 .delpi-ui-room-message-find__item-author {
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .delpi-ui-room-message-find__item-date {

@@ -3,9 +3,19 @@ import type { ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
+  InitialsAvatar,
+  initialsAvatarBemClasses,
+  type InitialsAvatarClassNames,
+} from "../layout/InitialsAvatar";
+import {
   buildFindSnippet,
   splitFindHighlightSegments,
 } from "./roomMessageFindHighlight";
+
+export type RoomMessageFindAuthorAvatar = {
+  name: string;
+  imageUrl?: string | null;
+};
 
 export type RoomMessageFindResult = {
   id: string;
@@ -14,6 +24,7 @@ export type RoomMessageFindResult = {
   dateLabel?: string | null;
   bodyText: string;
   groupLabel?: string | null;
+  authorAvatar?: RoomMessageFindAuthorAvatar | null;
 };
 
 export type RoomMessageFindPanelLabels = {
@@ -37,12 +48,14 @@ export type RoomMessageFindPanelClassNames = {
   group: string;
   item: string;
   itemMeta: string;
+  itemAuthorRow: string;
   itemAuthor: string;
   itemDate: string;
   snippet: string;
   mark: string;
   empty: string;
   loading: string;
+  avatar: InitialsAvatarClassNames;
 };
 
 export type RoomMessageFindPanelProps = {
@@ -77,12 +90,14 @@ export function roomMessageFindPanelBemClasses(
     group: pair(`${base}__group`, `${ui}__group`),
     item: pair(`${base}__item`, `${ui}__item`),
     itemMeta: pair(`${base}__item-meta`, `${ui}__item-meta`),
+    itemAuthorRow: pair(`${base}__item-author-row`, `${ui}__item-author-row`),
     itemAuthor: pair(`${base}__item-author`, `${ui}__item-author`),
     itemDate: pair(`${base}__item-date`, `${ui}__item-date`),
     snippet: pair(`${base}__snippet`, `${ui}__snippet`),
     mark: pair(`${base}__mark`, `${ui}__mark`),
     empty: pair(`${base}__empty`, `${ui}__empty`),
     loading: pair(`${base}__loading`, `${ui}__loading`),
+    avatar: initialsAvatarBemClasses(prefix),
   };
 }
 
@@ -162,6 +177,8 @@ export function RoomMessageFindPanel({
                 {rows.map((row) => {
                   const snippet = buildFindSnippet(row.bodyText, q);
                   const segments = splitFindHighlightSegments(snippet, q);
+                  const avatarName =
+                    row.authorAvatar?.name?.trim() || row.authorLabel;
                   return (
                     <li key={row.id}>
                       <button
@@ -170,8 +187,17 @@ export function RoomMessageFindPanel({
                         onClick={() => onSelectResult?.(row.messageId)}
                       >
                         <div className={classNames.itemMeta}>
-                          <span className={classNames.itemAuthor}>
-                            {row.authorLabel}
+                          <span className={classNames.itemAuthorRow}>
+                            <InitialsAvatar
+                              classNames={classNames.avatar}
+                              name={avatarName}
+                              src={row.authorAvatar?.imageUrl}
+                              size="sm"
+                              previewable={false}
+                            />
+                            <span className={classNames.itemAuthor}>
+                              {row.authorLabel}
+                            </span>
                           </span>
                           {row.dateLabel ? (
                             <span className={classNames.itemDate}>
