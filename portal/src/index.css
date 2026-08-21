@@ -418,6 +418,8 @@ body:has(.app-shell) {
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  /* Evita salto de largura ao entrar em MFEs fill (scrollbar some/aparece). */
+  scrollbar-gutter: stable;
 }
 
 /*

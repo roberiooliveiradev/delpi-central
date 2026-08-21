@@ -73,15 +73,11 @@
   );
 }
 
-/* Sala: fill viewport + ritmo 16/12/8 — não aplica Meu Dia / carteira */
+/* Sala: fill viewport — mesmo padding/gap das outras telas; densifica só o stack interno. */
 .dashboard-commercial.dashboard-page--fill {
-  --cm-page-padding: 16px;
-  --cm-section-gap: var(--cm-gap-sm);
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  gap: 0;
-  padding: var(--cm-page-padding);
 }
 
 .dashboard-commercial.dashboard-page--fill > .cm-page-stack {
