@@ -36,12 +36,22 @@ Mensagem → normalização → segurança → classificação (classify)
 3. Tarefa textual / e-mail  
 4. Lousa  
 5. Follow-up / apresentação / **session review (meta-conversa)** / **format refinement** (`follow_up` + `format_refinement`)  
-6. Consulta operacional (só com sinal operacional ou reply curto ancorado — **não** só por memória)  
+6. Consulta operacional (só com sinal operacional, **sub-intent resolvido** — ex. `schedule_today_lookup` em «programação de produção» — ou reply curto ancorado — **não** só por memória)  
 7. Web explícita  
 8. RAG documental  
 9. SQL (gerar/revisar/explicar/executar)  
 10. Autoajuda / identidade / small talk  
 11. LLM geral  
+
+## Clarify vs tool (ago/2026)
+
+| Mensagem | Resultado esperado |
+|----------|-------------------|
+| `programação` (só) | `ChatUnclearRequestService` → `ambiguous_domain` (não schedule) |
+| `programação de produção` / `… hoje` | `operational_query` + `schedule_today_lookup` + `requires_tool` |
+| Stage `tools` vazio + `no_clear_intent` | `resolve_executed` **não** promove a `operational_query` |
+
+Análise estruturada (`ChatTurnAnalysisService`) só abre no gate (baixa confiança / `llm_fallback`); não substitui heurística de rota clara.
 
 ## Metadata
 

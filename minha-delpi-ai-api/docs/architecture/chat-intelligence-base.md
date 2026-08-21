@@ -754,7 +754,20 @@ Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem
 
 **Grounding + slots (ago/2026):** antes de `policy.validate`, `ChatToolParameterGroundingService` preenche `code` a partir de `operationalFocus` / `userContextItems` (contexto via `ChatToolGroundingContextService`). Actions cujo required não é groundable **neste** turno são omitidas do catálogo agentic. Falhas `missing_required_parameter` entram em `invalid_action_ids` e **não** são reexecutadas no passo seguinte. Textos do planejador: `agentic_planner.json`.
 
-**Plano de controle do turno:** `ChatTurnModeService` resolve `consume_prior` | `ask_slot` | `execute_tools` | `llm_narrate`. Em `consume_prior` / `ask_slot`, `ChatResponseModeService` preserva `directAnswer` (sem síntese LLM externa) e o loop agentic é pulado. Follow-up de desenho (`drawing_analysis` / `drawing_report_adjustment`) está em `preserveDirectAnswerStages`.
+**Plano de controle do turno:** `ChatTurnModeService` resolve `consume_prior` | `ask_slot` | `execute_tools` | `llm_narrate`. Em `consume_prior` / `ask_slot`, `ChatResponseModeService` preserva `directAnswer` (sem síntese LLM externa) e o loop agentic é pulado. Follow-up de desenho (`drawing_analysis` / `drawing_report_adjustment`) e `unclear_request` estão em `preserveDirectAnswerStages`.
+
+**Orquestração híbrida (ago/2026):**
+
+| Camada | Papel |
+|--------|--------|
+| Heurística rápida | Unclear (`ambiguous_domain`), schedule via `operational_sub_intent`, estoque+código — **sem** LLM de análise |
+| `ChatTurnAnalysisService` | JSON `clarify` \| `execute` \| `narrate` + `skillsToLoad` + `actionIds` (gate Normal/Pensador; `CHAT_TURN_ANALYSIS_ENABLED`) |
+| `ChatSkillCompositionService` | Skills **enabled** no agente ≠ **carregadas** no prompt do turno |
+| Merge multi-rota | `ChatExternalActionOrchestrationService` mescla `turnAnalysisActionIds` sem descartar por `matches_rest_route` single |
+| Leak CoT | `ChatLlmSynthesisLeakGuardService` + `safeFallbackAnswer`; gateway não promove `reasoning` CoT |
+| Agentic | Pula em clarify/narrate ou plano já coberto; `stepsRun` = tentativas reais |
+
+No mesmo turno: se a análise rodou, `ChatToolRouterService.suggest` **não** empilha outra LLM. Preview/simulate reutilizam o mesmo serviço. Smoke: `scripts/smoke_hybrid_orchestration_ago2026.py`.
 
 **Schemas enxutos (11.3.2):** cada action do catálogo é serializada por `ChatAgenticActionSchemaService` (método, path, descrição curta, parâmetros com `example` e `exampleArguments`) antes do prompt do planner — evita mandar o OpenAPI completo e orienta argumentos (`code`, `branch`, datas, paginação). Limite: `CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS` (default 10).
 
