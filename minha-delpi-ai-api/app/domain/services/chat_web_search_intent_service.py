@@ -311,30 +311,47 @@ class ChatWebSearchIntentService:
         if trigger_mode == "post_rag_fallback" and not cls.is_explicit_request(raw):
             reason = str(
                 _post_rag_fallback_content().get("searchReason")
-                or "A base interna não trouxe trechos — busco na internet."
+                or ChatAssistantContentService.get(
+                    "web_search",
+                    "selectionReasons",
+                    "postRagFallback",
+                )
             )
         elif cls.should_use_web_for_public_facts(raw) and not cls.is_explicit_request(raw):
             reason = str(
                 _public_facts_content().get("searchReason")
-                or "A pergunta pede informação pública atual na internet."
+                or ChatAssistantContentService.get(
+                    "web_search",
+                    "selectionReasons",
+                    "publicFactsFallback",
+                )
             )
         elif cls.should_augment_with_web(raw) and not cls.is_explicit_request(raw):
             reason = str(
                 _augmentation_content().get("augmentReason")
-                or (
-                    "A pergunta pede contexto público atual — combino conhecimento interno "
-                    "com pesquisa na web para maior assertividade."
+                or ChatAssistantContentService.get(
+                    "web_search",
+                    "augmentation",
+                    "augmentReason",
                 )
             )
         elif plan.prefer_official:
-            reason = "A pergunta solicita informação pública com preferência por fontes oficiais."
+            reason = ChatAssistantContentService.get(
+                "web_search",
+                "selectionReasons",
+                "preferOfficial",
+            )
         else:
-            reason = "A pergunta solicita informação pública na internet."
+            reason = ChatAssistantContentService.get(
+                "web_search",
+                "selectionReasons",
+                "publicInternet",
+            )
 
         if plan.mode == "deep":
             reason = (
-                f"{reason} Modo de pesquisa profunda "
-                f"({len(plan.queries)} consulta(s) planejada(s))."
+                f"{reason}"
+                f"{ChatAssistantContentService.format('web_search', 'selectionReasons', 'deepModeSuffix', count=len(plan.queries))}"
             )
 
         if integration:

@@ -13,7 +13,9 @@
       "paginas autorizadas",
       "páginas autorizadas"
     ],
-    "portalRoutesReason": "A pergunta solicita menus ou páginas autorizadas no portal DELPI."
+    "portalRoutesReason": "A pergunta solicita menus ou páginas autorizadas no portal DELPI.",
+    "currentUserReason": "A pergunta solicita dados do usuário autenticado.",
+    "allowedAppsReason": "A pergunta solicita aplicativos disponíveis ao usuário."
   },
   "directAnswer": {
     "routes": {

@@ -10,6 +10,9 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 @dataclass(frozen=True)
@@ -100,7 +103,11 @@ class ChatDepartmentKpiIntentService:
                 best = DepartmentKpiMatch(
                     path_token=path_token,
                     domain_prefix=domain_prefix,
-                    reason=f"A pergunta solicita {label}.",
+                    reason=ExternalActionResponseContentService.format(
+                        "selectionReasons",
+                        "departmentKpiLabeled",
+                        label=label,
+                    ),
                     operation_hint=label,
                 )
 

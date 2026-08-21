@@ -17,7 +17,7 @@
     "emptyMessage": "Nenhum produto com estoque abaixo do mínimo cadastrado.",
     "summaryWithCount": "**{count}** produto(s) com estoque abaixo do mínimo."
   },
-    "productionSchedule": {
+  "productionSchedule": {
     "title": "Produtos programados para produção {label}",
     "titleTodayFallback": "Produtos programados para produção hoje",
     "titleByBranchBreakdown": "Produtos programados para produção {label} — por filial",
@@ -95,15 +95,21 @@
         "mode": "domainPathChains",
         "chains": [
           {
-            "anyOfTermKeys": ["suppliesOtdSuppliesDomainTerms"],
+            "anyOfTermKeys": [
+              "suppliesOtdSuppliesDomainTerms"
+            ],
             "pathContainsFromKey": "suppliesOtdPathPrefix"
           },
           {
-            "anyOfTermKeys": ["candidatePathPrioritization.productionTerms"],
+            "anyOfTermKeys": [
+              "candidatePathPrioritization.productionTerms"
+            ],
             "pathContains": "/production/"
           },
           {
-            "anyOfTermKeys": ["candidatePathPrioritization.commercialTerms"],
+            "anyOfTermKeys": [
+              "candidatePathPrioritization.commercialTerms"
+            ],
             "pathContains": "/commercial/"
           }
         ]
@@ -111,7 +117,9 @@
       {
         "id": "productionPcpOrders",
         "mode": "filterPreferredSort",
-        "anyOfTermKeys": ["productionPcpOrdersTriggerTerms"],
+        "anyOfTermKeys": [
+          "productionPcpOrdersTriggerTerms"
+        ],
         "pathMarkersKey": "productionPcpOrdersPathMarkers",
         "preferredOperationIdsKey": "productionPcpOrdersPreferredOperationIds"
       },
@@ -129,7 +137,9 @@
       {
         "id": "productionOeeAppointment",
         "mode": "preferMatch",
-        "anyOfTermKeys": ["productionOeeAppointmentTerms"],
+        "anyOfTermKeys": [
+          "productionOeeAppointmentTerms"
+        ],
         "alsoAnyOfTermKeys": [
           "productionOeeContextTerms",
           "productionOeeAppointmentShortcutTerms"
@@ -158,7 +168,9 @@
         ],
         "branches": [
           {
-            "anyOfTermKeys": ["productionEficienciaFabrilAppointmentsTerms"],
+            "anyOfTermKeys": [
+              "productionEficienciaFabrilAppointmentsTerms"
+            ],
             "pathEqualsFromKey": "productionEficienciaFabrilAppointmentsPath",
             "operationIdContainsFromKey": "productionEficienciaFabrilAppointmentsOperationId",
             "pathMatch": "equals"
@@ -173,7 +185,9 @@
       {
         "id": "productionOeeDetail",
         "mode": "preferMatch",
-        "blockAnyOfTermKeys": ["productionOeeFabrilBlockTerms"],
+        "blockAnyOfTermKeys": [
+          "productionOeeFabrilBlockTerms"
+        ],
         "allOfAnyTermKeys": [
           "productionOeeDetailTerms",
           "productionOeeContextTerms"
@@ -241,9 +255,15 @@
     "emptyRivalRecommendations": [
       {
         "id": "productionOtd",
-        "operationIds": ["get_production_otd"],
-        "pathMarkers": ["/production/otd"],
-        "profileKeys": ["production_otd"],
+        "operationIds": [
+          "get_production_otd"
+        ],
+        "pathMarkers": [
+          "/production/otd"
+        ],
+        "profileKeys": [
+          "production_otd"
+        ],
         "suggestions": [
           {
             "label": "Ampliar status (todas as OPs)",
@@ -261,8 +281,12 @@
       },
       {
         "id": "productionSchedule",
-        "pathMarkers": ["/production/schedule"],
-        "profileKeys": ["production_schedule"],
+        "pathMarkers": [
+          "/production/schedule"
+        ],
+        "profileKeys": [
+          "production_schedule"
+        ],
         "suggestions": [
           {
             "label": "Programação de hoje",
@@ -287,10 +311,22 @@
             "idd"
           ],
           "orIlike": [
-            {"column": "path", "pattern": "%supplies%"},
-            {"column": "summary", "pattern": "%supri%"},
-            {"column": "operation_id", "pattern": "%supplies%"},
-            {"column": "operation_id", "pattern": "%inventory%"}
+            {
+              "column": "path",
+              "pattern": "%supplies%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%supri%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%supplies%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%inventory%"
+            }
           ]
         },
         {
@@ -345,12 +381,30 @@
             "directives"
           ],
           "orIlike": [
-            {"column": "path", "pattern": "%products%"},
-            {"column": "path", "pattern": "%produto%"},
-            {"column": "summary", "pattern": "%product%"},
-            {"column": "summary", "pattern": "%produto%"},
-            {"column": "description", "pattern": "%product%"},
-            {"column": "description", "pattern": "%produto%"}
+            {
+              "column": "path",
+              "pattern": "%products%"
+            },
+            {
+              "column": "path",
+              "pattern": "%produto%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%product%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%produto%"
+            },
+            {
+              "column": "description",
+              "pattern": "%product%"
+            },
+            {
+              "column": "description",
+              "pattern": "%produto%"
+            }
           ]
         },
         {
@@ -364,12 +418,30 @@
             "pedidos de venda"
           ],
           "orIlike": [
-            {"column": "path", "pattern": "%lmp%"},
-            {"column": "summary", "pattern": "%lmp%"},
-            {"column": "description", "pattern": "%lmp%"},
-            {"column": "path", "pattern": "%sales%"},
-            {"column": "summary", "pattern": "%venda%"},
-            {"column": "operation_id", "pattern": "%sale_order%"}
+            {
+              "column": "path",
+              "pattern": "%lmp%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%lmp%"
+            },
+            {
+              "column": "description",
+              "pattern": "%lmp%"
+            },
+            {
+              "column": "path",
+              "pattern": "%sales%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%venda%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%sale_order%"
+            }
           ]
         },
         {
@@ -385,10 +457,22 @@
             "inventory"
           ],
           "orIlike": [
-            {"column": "path", "pattern": "%supplies%"},
-            {"column": "summary", "pattern": "%supri%"},
-            {"column": "operation_id", "pattern": "%supplies%"},
-            {"column": "operation_id", "pattern": "%inventory%"}
+            {
+              "column": "path",
+              "pattern": "%supplies%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%supri%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%supplies%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%inventory%"
+            }
           ]
         },
         {
@@ -400,22 +484,58 @@
             "vendas do período"
           ],
           "orIlike": [
-            {"column": "path", "pattern": "%/sales%"},
-            {"column": "operation_id", "pattern": "%sale_orders%"}
+            {
+              "column": "path",
+              "pattern": "%/sales%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%sale_orders%"
+            }
           ]
         },
         {
           "id": "sqlOrData",
-          "anyOfTerms": ["sql", "data", "dados", "query", "select "],
+          "anyOfTerms": [
+            "sql",
+            "data",
+            "dados",
+            "query",
+            "select "
+          ],
           "orIlike": [
-            {"column": "path", "pattern": "%sql%"},
-            {"column": "path", "pattern": "%data%"},
-            {"column": "summary", "pattern": "%sql%"},
-            {"column": "summary", "pattern": "%data%"},
-            {"column": "description", "pattern": "%sql%"},
-            {"column": "description", "pattern": "%data%"},
-            {"column": "operation_id", "pattern": "%sql%"},
-            {"column": "operation_id", "pattern": "%data%"}
+            {
+              "column": "path",
+              "pattern": "%sql%"
+            },
+            {
+              "column": "path",
+              "pattern": "%data%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%sql%"
+            },
+            {
+              "column": "summary",
+              "pattern": "%data%"
+            },
+            {
+              "column": "description",
+              "pattern": "%sql%"
+            },
+            {
+              "column": "description",
+              "pattern": "%data%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%sql%"
+            },
+            {
+              "column": "operation_id",
+              "pattern": "%data%"
+            }
           ]
         }
       ],
@@ -431,7 +551,9 @@
         },
         {
           "id": "productionDomain",
-          "anyOfTermKeys": ["candidatePathPrioritization.productionTerms"],
+          "anyOfTermKeys": [
+            "candidatePathPrioritization.productionTerms"
+          ],
           "pathMarkersKey": "routeSuggestionPoolPathMarkers.production"
         }
       ]
@@ -452,8 +574,19 @@
     ],
     "suppliesOtdPathPrefix": "/supplies/",
     "candidatePathPrioritization": {
-      "productionTerms": ["producao", "produção", "fabril", "manufatura", "ops", "op "],
-      "commercialTerms": ["comercial", "venda", "pedido de venda"]
+      "productionTerms": [
+        "producao",
+        "produção",
+        "fabril",
+        "manufatura",
+        "ops",
+        "op "
+      ],
+      "commercialTerms": [
+        "comercial",
+        "venda",
+        "pedido de venda"
+      ]
     },
     "productionOtdDetailTerms": [
       "listar",
@@ -540,8 +673,13 @@
       "get_production_pcp_orders_summary"
     ],
     "routeSuggestionPoolPathMarkers": {
-      "production": ["/production/"],
-      "productionOrdersCatalog": ["/production/pcp-orders", "/production/otd"]
+      "production": [
+        "/production/"
+      ],
+      "productionOrdersCatalog": [
+        "/production/pcp-orders",
+        "/production/otd"
+      ]
     },
     "productionOeeContextTerms": [
       "oee",
@@ -748,7 +886,11 @@
       ]
     },
     "saleOrdersList": {
-      "excludeTerms": ["lmp", "lmps", "amostra"],
+      "excludeTerms": [
+        "lmp",
+        "lmps",
+        "amostra"
+      ],
       "terms": [
         "ordens de venda",
         "pedidos de venda",
@@ -760,7 +902,12 @@
       ]
     },
     "transformaSummary": {
-      "terms": ["resumo", "summary", "indicadores", "kpis"]
+      "terms": [
+        "resumo",
+        "summary",
+        "indicadores",
+        "kpis"
+      ]
     },
     "transformaQuestionTerms": [
       "transforma"
@@ -1053,16 +1200,26 @@
       "allOf": [
         {
           "anyOf": [
-            { "termsFrom": "external_action_responses.actionSelection.suppliesOtdOtdTerms" },
-            { "regexPatterns": ["^otd"] }
+            {
+              "termsFrom": "external_action_responses.actionSelection.suppliesOtdOtdTerms"
+            },
+            {
+              "regexPatterns": [
+                "^otd"
+              ]
+            }
           ]
         },
-        { "termsFrom": "external_action_responses.actionSelection.suppliesOtdSuppliesDomainTerms" }
+        {
+          "termsFrom": "external_action_responses.actionSelection.suppliesOtdSuppliesDomainTerms"
+        }
       ]
     },
     "productionOtdDetailRoute": {
       "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.productionOtdDetailTerms" },
+        {
+          "termsFrom": "external_action_responses.actionSelection.productionOtdDetailTerms"
+        },
         {
           "termsFrom": "external_action_responses.actionSelection.productionOtdDetailProductionContextTerms"
         }
@@ -1075,10 +1232,14 @@
     },
     "productionOeeDetailRoute": {
       "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.productionOeeDetailTerms" },
+        {
+          "termsFrom": "external_action_responses.actionSelection.productionOeeDetailTerms"
+        },
         {
           "anyOf": [
-            { "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms" },
+            {
+              "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms"
+            },
             {
               "termsFrom": "external_action_responses.actionSelection.productionOtdDetailProductionContextTerms"
             }
@@ -1086,26 +1247,38 @@
         }
       ],
       "noneOf": [
-        { "termsFrom": "external_action_responses.actionSelection.productionOeeFabrilBlockTerms" }
+        {
+          "termsFrom": "external_action_responses.actionSelection.productionOeeFabrilBlockTerms"
+        }
       ]
     },
     "productionPcpOrdersRoute": {
       "anyOf": [
-        { "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersTriggerTerms" },
+        {
+          "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersTriggerTerms"
+        },
         {
           "allOf": [
-            { "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersOpsTerms" },
-            { "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersLateTerms" }
+            {
+              "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersOpsTerms"
+            },
+            {
+              "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersLateTerms"
+            }
           ]
         }
       ]
     },
     "productionOeeAppointmentRoute": {
       "allOf": [
-        { "termsFrom": "external_action_responses.actionSelection.productionOeeAppointmentTerms" },
+        {
+          "termsFrom": "external_action_responses.actionSelection.productionOeeAppointmentTerms"
+        },
         {
           "anyOf": [
-            { "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms" },
+            {
+              "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms"
+            },
             {
               "termsFrom": "external_action_responses.actionSelection.productionOeeAppointmentShortcutTerms"
             }
@@ -1117,16 +1290,28 @@
       "termsFrom": "external_action_responses.actionSelection.productionEficienciaFabrilTerms"
     },
     "lmpQuestion": {
-      "noneOf": [{ "customPredicate": "transformaQuestion" }],
+      "noneOf": [
+        {
+          "customPredicate": "transformaQuestion"
+        }
+      ],
       "anyOf": [
-        { "termsFrom": "external_action_responses.actionSelection.lmpQuestion.terms" },
+        {
+          "termsFrom": "external_action_responses.actionSelection.lmpQuestion.terms"
+        },
         {
           "allOf": [
-            { "termsFrom": "external_action_responses.actionSelection.lmpQuestion.saleOrderPhrases" },
+            {
+              "termsFrom": "external_action_responses.actionSelection.lmpQuestion.saleOrderPhrases"
+            },
             {
               "anyOf": [
-                { "termsFrom": "external_action_responses.actionSelection.lmpQuestion.saleOrderMarkers" },
-                { "hasLmpSaleNumber": true }
+                {
+                  "termsFrom": "external_action_responses.actionSelection.lmpQuestion.saleOrderMarkers"
+                },
+                {
+                  "hasLmpSaleNumber": true
+                }
               ]
             }
           ]
@@ -1138,21 +1323,35 @@
     },
     "lmpCatchAll": {
       "allOf": [
-        { "customPredicate": "lmpQuestion" },
-        { "lacksLmpSaleNumber": true }
+        {
+          "customPredicate": "lmpQuestion"
+        },
+        {
+          "lacksLmpSaleNumber": true
+        }
       ],
       "noneOf": [
-        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardSummaryTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardItemsTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.chartTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardTerms" }
+        {
+          "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardSummaryTerms"
+        },
+        {
+          "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardItemsTerms"
+        },
+        {
+          "termsFrom": "external_action_responses.actionSelection.lmpRanking.chartTerms"
+        },
+        {
+          "termsFrom": "external_action_responses.actionSelection.lmpRanking.dashboardTerms"
+        }
       ]
     }
   },
   "systemPredicates": {
     "systemMetadataQuestion": {
       "noneOf": [
-        { "excludeIfSqlAuthoring": true }
+        {
+          "excludeIfSqlAuthoring": true
+        }
       ],
       "termsFrom": "external_action_responses.actionSelection.systemMetadata.terms"
     },
@@ -1164,13 +1363,19 @@
     },
     "systemWantsTableSearch": {
       "noneOf": [
-        { "excludeIfSqlAuthoring": true }
+        {
+          "excludeIfSqlAuthoring": true
+        }
       ],
       "anyOf": [
         {
           "termsFrom": "external_action_responses.actionSelection.systemMetadataTableSearchPhrases"
         },
-        { "regexPatterns": ["\\bqual\\s+(?:a\\s+)?tabela\\b"] }
+        {
+          "regexPatterns": [
+            "\\bqual\\s+(?:a\\s+)?tabela\\b"
+          ]
+        }
       ]
     },
     "systemHasTableName": {
@@ -1180,12 +1385,24 @@
   "productSearchPredicates": {
     "productSearchQuestion": {
       "noneOf": [
-        { "excludeIfSqlConversation": true },
-        { "excludeIfWebSearch": true },
-        { "technicalNormasDescriptionBlock": true },
-        { "excludeIfSqlOperational": true },
-        { "excludeIfProductionRestRoute": true },
-        { "hasProductOperationalRouteSegment": true },
+        {
+          "excludeIfSqlConversation": true
+        },
+        {
+          "excludeIfWebSearch": true
+        },
+        {
+          "technicalNormasDescriptionBlock": true
+        },
+        {
+          "excludeIfSqlOperational": true
+        },
+        {
+          "excludeIfProductionRestRoute": true
+        },
+        {
+          "hasProductOperationalRouteSegment": true
+        },
         {
           "termsFrom": "external_action_responses.actionSelection.productSearch.audit5sExcludeTerms"
         }
@@ -1206,7 +1423,9 @@
             {
               "termsFrom": "external_action_responses.actionSelection.productSearch.searchTriggers"
             },
-            { "minWordCount": 3 }
+            {
+              "minWordCount": 3
+            }
           ],
           "noneOf": [
             {
@@ -1218,8 +1437,12 @@
     },
     "productSearchWithGroupCode": {
       "allOf": [
-        { "customPredicate": "productSearchQuestion" },
-        { "hasProductSearchGroupCode": true }
+        {
+          "customPredicate": "productSearchQuestion"
+        },
+        {
+          "hasProductSearchGroupCode": true
+        }
       ]
     }
   },
@@ -1302,8 +1525,13 @@
     "safetyStockItemDetails": "A pergunta solicita detalhe de estoque de segurança do produto com cobertura por pedidos de compra em aberto.",
     "safetyStockConsumptionAnalysisItems": "A pergunta solicita a análise de consumo dos últimos 12 meses versus estoque de segurança sugerido (lead time BZ_PE).",
     "safetyStockConsumptionAnalysisItemDetails": "A pergunta solicita o detalhe da análise de consumo do produto com série mensal e memória de cálculo do ESTSEG sugerido.",
-    "kpiMetricRefinementDefault": "Refino de indicador de suprimentos.",
-    "departmentKpiRefinement": "Refino de KPI departamental."
+    "kpiMetricRefinementDefault": "Refino da consulta de suprimentos já feita nesta conversa.",
+    "departmentKpiRefinement": "Refino do KPI departamental já consultado nesta conversa.",
+    "stockRefinementDefault": "A mensagem refina a consulta de estoque já feita nesta conversa.",
+    "departmentKpiDefault": "A pergunta solicita um indicador departamental.",
+    "suppliesKpiDefault": "A pergunta solicita um indicador de suprimentos.",
+    "departmentKpiLabeled": "A pergunta solicita {label}.",
+    "sqlSchemaRecovery": "Recuperação automática de SQL com schema Protheus."
   },
   "composite": {
     "multiExecutionSummary": "Boa! Realizei **{count}** consulta(s) nos dados autorizados para montar a resposta.",
@@ -1320,17 +1548,20 @@
     "notFound404": "Não encontrei esse recurso (HTTP 404). Verifique o código ou número informado.",
     "forbidden": "Não consegui acessar com as permissões atuais (HTTP {code}). Confira o agente ativo ou solicite acesso.",
     "serverError": "A API teve uma falha temporária (HTTP {code}). Tente novamente em instantes.",
-    "timeout": "A consulta demorou mais que o esperado e foi interrompida. Tente novamente em instantes ou refine o filtro (produto, filial ou período).",
+    "timeout": "a consulta demorou além do esperado. Tente novamente ou refine o filtro.",
     "httpStatus": "a API retornou status HTTP {code}.",
     "notSuccessful": "a consulta não foi concluída com sucesso.",
-    "timeout": "a consulta demorou além do esperado. Tente novamente ou refine o filtro.",
     "partialSuccess": "parte das consultas retornou dados; veja os avisos abaixo."
   },
   "httpExecution": {
     "defaultTimeoutSeconds": 30,
     "compositeAnalysisTimeoutSeconds": 60,
     "retryOnceOnTimeout": true,
-    "retryOnceOnStatusCodes": [502, 503, 504],
+    "retryOnceOnStatusCodes": [
+      502,
+      503,
+      504
+    ],
     "compositePathMarkers": [
       "/factory-status",
       "/raw-material-price-intelligence",

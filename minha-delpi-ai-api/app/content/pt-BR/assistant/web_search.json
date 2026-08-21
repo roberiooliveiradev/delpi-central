@@ -406,5 +406,12 @@
       "responda só markdown",
       "instrução de integração"
     ]
+  },
+  "selectionReasons": {
+    "preferOfficial": "A pergunta solicita informação pública com preferência por fontes oficiais.",
+    "publicInternet": "A pergunta solicita informação pública na internet.",
+    "deepModeSuffix": " Modo de pesquisa profunda ({count} consulta(s) planejada(s)).",
+    "publicFactsFallback": "A pergunta pede informação pública atual na internet.",
+    "postRagFallback": "A base interna não trouxe trechos — busco na internet."
   }
 }

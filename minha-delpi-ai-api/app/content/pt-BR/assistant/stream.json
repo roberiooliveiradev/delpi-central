@@ -142,6 +142,7 @@
         "message": "Vou responder com o que já sei sobre isso.",
         "detail": "Base de conhecimento consultada; nenhum trecho adicional aplicável."
       }
-    }
+    },
+    "sqlSchemaRecoveryReason": "Recuperação automática de SQL com schema Protheus."
   }
 }

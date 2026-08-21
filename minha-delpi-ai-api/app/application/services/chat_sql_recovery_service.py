@@ -11,6 +11,9 @@ from app.domain.services.chat_sql_error_recovery_service import (
     ChatSqlErrorRecoveryService,
     SqlRecoveryPlan,
 )
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
@@ -146,7 +149,11 @@ class ChatSqlRecoveryService:
                     total=1,
                     path=path_hint or None,
                     action_id=action_id,
-                    reason="Recuperação automática de SQL com schema Protheus.",
+                    reason=ChatAssistantContentService.get(
+                        "stream",
+                        "activity",
+                        "sqlSchemaRecoveryReason",
+                    ),
                 )
             )
 

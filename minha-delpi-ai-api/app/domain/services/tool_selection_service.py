@@ -7,6 +7,9 @@ from app.domain.services.chat_capabilities_detection_service import (
 from app.domain.services.chat_platform_tool_selection_service import (
     ChatPlatformToolSelectionService,
 )
+from app.domain.services.chat_platform_tools_content_service import (
+    ChatPlatformToolsContentService,
+)
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 
 
@@ -27,7 +30,10 @@ class ToolSelectionService:
                 {
                     "name": "get_current_user",
                     "arguments": {},
-                    "reason": "A pergunta solicita dados do usuário autenticado.",
+                    "reason": ChatPlatformToolsContentService.get(
+                        "toolSelection",
+                        "currentUserReason",
+                    ),
                 }
             )
 
@@ -36,7 +42,10 @@ class ToolSelectionService:
                 {
                     "name": "get_allowed_apps",
                     "arguments": {},
-                    "reason": "A pergunta solicita aplicativos disponíveis ao usuário.",
+                    "reason": ChatPlatformToolsContentService.get(
+                        "toolSelection",
+                        "allowedAppsReason",
+                    ),
                 }
             )
 

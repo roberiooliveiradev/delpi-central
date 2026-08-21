@@ -16,6 +16,12 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_route_context_service import (
     ChatRouteContextService,
 )
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
+from app.domain.services.operational_route_registry_service import (
+    OperationalRouteRegistryService,
+)
 
 from app.domain.services.chat_operational_refinement.chat_operational_refinement_facade_access import (
     refinement_service,
@@ -427,14 +433,22 @@ class ChatOperationalRefinementPaginationService:
     ) -> str | None:
         context = str(conversation_context or "").lower()
 
+        stock_marker = (
+            OperationalRouteRegistryService.route_path_marker_for_segment("stock")
+            or "/stock"
+        )
+
         for fragment, segment in (
             ("/parents", "parents"),
             ("/structure", "structure"),
-            ("/stock", "stock"),
+            (stock_marker, "stock"),
             ("/search", "search"),
         ):
-            if fragment in context:
+            if fragment and fragment in context:
                 return segment
+
+        if ChatPresentationProfileService.has_flag(context, "stock"):
+            return "stock"
 
         for item in reversed((previous_messages or [])[-14:]):
             for tool_call in reversed(refinement_service()._message_metadata(item).get("toolCalls") or []):
@@ -485,9 +499,11 @@ class ChatOperationalRefinementPaginationService:
     def _route_segment_from_path(cls, path: str) -> str | None:
         lowered = str(path or "").lower()
 
-        for segment in ("parents", "structure", "stock", "search"):
+        if ChatPresentationProfileService.has_flag(path, "stock"):
+            return "stock"
+
+        for segment in ("parents", "structure", "search"):
             if f"/{segment}" in lowered:
                 return segment
 
         return None
-

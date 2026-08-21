@@ -20,7 +20,7 @@ class ChatPlatformToolSelectionService:
         return ChatPlatformToolsContentService.get(
             "toolSelection",
             "portalRoutesReason",
-            default="A pergunta solicita menus ou páginas autorizadas no portal DELPI.",
+            default="",
         )
 
     @classmethod
