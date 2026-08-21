@@ -121,13 +121,26 @@ def _http_checks() -> list[str]:
     if not answer.strip():
         failures.append("HTTP programação sem resposta")
     vague_meta = vague.get("metadata") or {}
+    interactivity = vague_meta.get("interactivity") or {}
     chips = (
         vague_meta.get("routingDisambiguationSuggestions")
         or vague.get("routingDisambiguationSuggestions")
+        or interactivity.get("suggestions")
         or []
     )
+    chip_sources = {
+        str(item.get("sourceKey") or "")
+        for item in chips
+        if isinstance(item, dict)
+    }
     if not chips:
         failures.append("HTTP programação sem chips de clarify")
+    elif "routingDisambiguationSuggestions" not in chip_sources and not any(
+        "produ" in str(item.get("label") or "").lower()
+        for item in chips
+        if isinstance(item, dict)
+    ):
+        failures.append("HTTP programação sem chip de programação de produção")
 
     schedule = request(
         "POST",

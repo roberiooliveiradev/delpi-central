@@ -129,21 +129,30 @@ class ChatToolContextParallelReadService:
 
         workers = min(cls.max_workers(), len(indices))
         outcomes: dict[int, ParallelReadOutcome] = {}
+        flask_app = cls._capture_flask_app()
 
         def _run(index: int) -> ParallelReadOutcome:
             selected = selected_tools[index]
             arguments = dict(selected.get("arguments") or {})
             if prepare_arguments is not None:
                 arguments = prepare_arguments(selected)
+            tool_name = str(selected.get("name") or "execute_external_action")
             try:
-                result = host.execute_tool_use_case.execute(
-                    ExecuteToolRequest(
-                        user_id=user_id,
-                        access_token=access_token,
-                        tool_name=str(selected.get("name") or "execute_external_action"),
-                        arguments=arguments,
+                def _call() -> Any:
+                    return host.execute_tool_use_case.execute(
+                        ExecuteToolRequest(
+                            user_id=user_id,
+                            access_token=access_token,
+                            tool_name=tool_name,
+                            arguments=arguments,
+                        )
                     )
-                )
+
+                if flask_app is not None:
+                    with flask_app.app_context():
+                        result = _call()
+                else:
+                    result = _call()
                 return ParallelReadOutcome(index=index, result=result)
             except BaseException as exc:  # noqa: BLE001 — propaga ao pós-processo
                 return ParallelReadOutcome(index=index, error=exc)
@@ -155,3 +164,14 @@ class ChatToolContextParallelReadService:
                 outcomes[outcome.index] = outcome
 
         return outcomes
+
+    @classmethod
+    def _capture_flask_app(cls):
+        try:
+            from flask import current_app, has_app_context
+
+            if has_app_context():
+                return current_app._get_current_object()
+        except Exception:
+            return None
+        return None
