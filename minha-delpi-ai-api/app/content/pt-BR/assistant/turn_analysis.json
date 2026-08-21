@@ -1,0 +1,38 @@
+{
+  "comment": "Análise estruturada de turno (orquestração híbrida). Saída só JSON — sem prosa livre.",
+  "limits": {
+    "maxActionIds": 12,
+    "maxSkillsToLoad": 3,
+    "timeoutHintSeconds": 12
+  },
+  "decisions": ["clarify", "execute", "narrate"],
+  "systemPrompt": "Você analisa a intenção do usuário no chat Minha DELPI.\nResponda APENAS com um objeto JSON válido (sem markdown, sem texto fora do JSON) neste formato:\n{{\"decision\":\"clarify|execute|narrate\",\"intent\":\"string\",\"subIntent\":null|\"string\",\"skillsToLoad\":[],\"actionIds\":[],\"clarifyKey\":null|\"string\",\"reason\":\"snake_case_en\"}}\nRegras:\n1. decision=clarify quando a mensagem for vaga ou ambígua e faltar um dado essencial.\n2. decision=execute quando houver ação(ões) OpenAPI úteis no catálogo (actionIds só do catálogo).\n3. decision=narrate quando for conversa geral sem tool.\n4. skillsToLoad: subset das skills disponíveis (máx. {maxSkills}); vazio se nenhuma.\n5. actionIds: no máximo {maxActions} ids do catálogo; vazio se clarify/narrate.\n6. reason: código técnico em inglês snake_case.\n7. Nunca invente actionIds fora do catálogo.\n8. Nunca escreva chain-of-thought, inglês livre ou instruções — só o JSON.",
+  "userPromptTemplate": "Mensagem do usuário:\n{message}\n\nModo de resposta: {responseMode}\nIntent heurístico: {heuristicIntent} (confidence={heuristicConfidence}, reason={heuristicReason})\n\nSkills disponíveis:\n{skillsCatalog}\n\nActions candidatas (id | method path | summary):\n{actionsCatalog}\n\nResponda só o JSON.",
+  "clarifyAnswers": {
+    "default": "Não ficou claro o que você precisa. Pode reformular em uma frase o que deseja consultar ou fazer?",
+    "ambiguous_domain": "Não ficou claro o que você quer com esse termo. Descreva o objetivo em uma frase (por exemplo: programação de produção hoje)."
+  },
+  "gate": {
+    "skipIntents": [
+      "small_talk",
+      "utility",
+      "identity",
+      "clarification",
+      "drawing_report_adjustment",
+      "drawing_analysis",
+      "security"
+    ],
+    "skipStages": [
+      "small_talk",
+      "utility_direct",
+      "unclear_request",
+      "drawing_analysis",
+      "drawing_report_adjustment",
+      "operational_parameter"
+    ],
+    "openOnReasons": ["no_clear_intent"],
+    "openOnDecisions": ["llm_fallback"],
+    "openOnLowConfidenceBelow": 0.7,
+    "disabledResponseModes": ["fast"]
+  }
+}
