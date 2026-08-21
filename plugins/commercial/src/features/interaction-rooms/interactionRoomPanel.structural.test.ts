@@ -17,6 +17,8 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/InteractionRoomPage/);
     expect(source).toMatch(/variant=\"pane\"/);
     expect(source).toMatch(/cm-room-panel/);
+    expect(source).toMatch(/role=\"region\"/);
+    expect(source).toMatch(/aria-label=\{content\.panelTitle\}/);
     expect(source).toMatch(/resolveInteractionRoom/);
     expect(source).toMatch(/CommercialHostDrawer/);
     expect(source).toMatch(/INTERACTION_ROOM_NARROW_QUERY|max-width: 768px/);

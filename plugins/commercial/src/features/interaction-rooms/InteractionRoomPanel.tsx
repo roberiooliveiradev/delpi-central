@@ -104,7 +104,11 @@ export function InteractionRoomPanel({
 
   const roomBody =
     !loading && room?.id ? (
-      <div className="cm-room-panel">
+      <div
+        className="cm-room-panel"
+        role="region"
+        aria-label={content.panelTitle}
+      >
         <InteractionRoomPage
           basePath={basePath}
           roomId={room.id}
