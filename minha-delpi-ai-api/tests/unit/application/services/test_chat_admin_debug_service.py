@@ -79,6 +79,41 @@ def test_build_includes_degraded_stages_from_tool_context():
     assert payload["pipeline"]["degradedStages"] == ["rag", "message_search"]
 
 
+def test_build_includes_enrichment_plan_sufficiency_and_evidence_refs():
+    payload = ChatAdminDebugService.build(
+        workspace_context={"agentId": None, "skills": {}},
+        tool_context={
+            "context": "",
+            "toolCalls": [],
+            "enrichmentPlan": {
+                "kind": "product_enrichment_composition",
+                "sufficiency": {
+                    "verdict": "execute",
+                    "planId": "stock_low_needs_sales",
+                    "reasonKey": "stockLowNeedsSales",
+                },
+            },
+            "evidenceRefs": [
+                {"path": "/products/x/stock", "operationId": "get_product_stock", "ok": True},
+                {"path": "/products/x/sales", "operationId": "get_product_sales", "ok": True},
+            ],
+        },
+        rag={"context": "", "sources": []},
+        llm_messages=[],
+        history_summary="",
+        operational_optimize=False,
+        analysis_mode=False,
+        fast_path=False,
+        skip_rag=True,
+    )
+
+    assert payload["tooling"]["enrichmentPlan"]["sufficiency"]["planId"] == (
+        "stock_low_needs_sales"
+    )
+    assert payload["intelligence"]["enrichmentPlan"]["sufficiency"]["verdict"] == "execute"
+    assert len(payload["tooling"]["evidenceRefs"]) == 2
+
+
 def test_attach_includes_intelligence_timings():
     admin_debug = {"pipeline": {"skipRag": True}}
     intelligence = {

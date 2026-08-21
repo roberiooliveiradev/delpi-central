@@ -306,6 +306,8 @@ class ChatAdminDebugService:
             "ragRetrievedCount",
             "ragRetrievedChunkCount",
             "topRagScore",
+            "enrichmentPlan",
+            "evidenceRefs",
         ):
             value = intelligence_metadata.get(key)
 
@@ -418,6 +420,13 @@ class ChatAdminDebugService:
                 "agentic": tool_context.get("agentic")
                 if isinstance(tool_context.get("agentic"), dict)
                 else None,
+                "enrichmentPlan": tool_context.get("enrichmentPlan")
+                if isinstance(tool_context.get("enrichmentPlan"), dict)
+                else (
+                    (tool_context.get("selectedExternalAction") or {}).get("enrichmentPlan")
+                    if isinstance(tool_context.get("selectedExternalAction"), dict)
+                    else None
+                ),
             },
             "tooling": {
                 "toolCalls": tool_context.get("toolCalls") or [],
@@ -425,6 +434,16 @@ class ChatAdminDebugService:
                 "toolContextText": tool_context_text,
                 "multiActionContinuation": tool_context.get("multiActionContinuation")
                 if isinstance(tool_context.get("multiActionContinuation"), dict)
+                else None,
+                "enrichmentPlan": tool_context.get("enrichmentPlan")
+                if isinstance(tool_context.get("enrichmentPlan"), dict)
+                else (
+                    (tool_context.get("selectedExternalAction") or {}).get("enrichmentPlan")
+                    if isinstance(tool_context.get("selectedExternalAction"), dict)
+                    else None
+                ),
+                "evidenceRefs": tool_context.get("evidenceRefs")
+                if isinstance(tool_context.get("evidenceRefs"), list)
                 else None,
             },
             "rag": rag_debug,
