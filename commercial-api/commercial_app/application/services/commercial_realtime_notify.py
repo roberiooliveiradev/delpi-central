@@ -751,3 +751,30 @@ def notify_room_reaction_changed(
         "actorClientId": (actor_client_id or "").strip() or None,
     }
     commercial_realtime_hub.schedule_broadcast(interaction_room_key(rid), payload)
+
+
+def notify_interaction_room_deleted(
+    *,
+    room_id: str,
+    actor_user_id: str | None = None,
+    actor_display_name: str | None = None,
+    actor_client_id: str | None = None,
+) -> None:
+    """Fan-out `room.deleted` na thread + sinal de inbox."""
+    rid = str(room_id or "").strip()
+    if not rid:
+        return
+    actor_label = (
+        _safe_label(actor_display_name) or resolve_user_display_name(actor_user_id)
+    )
+    commercial_realtime_hub.schedule_broadcast(
+        interaction_room_key(rid),
+        {
+            "type": "room.deleted",
+            "roomId": rid,
+            "actorUserId": (actor_user_id or "").strip() or None,
+            "actorDisplayName": actor_label,
+            "actorClientId": (actor_client_id or "").strip() or None,
+        },
+    )
+    notify_room_inbox_changed(room_id=rid)
