@@ -7961,6 +7961,23 @@
         }
       }
     },
+    "get_production_order_sets_incomplete": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Incomplete production order sets",
+          "description": "Production order sets whose child orders do not match the root product bill of materials in force when the mother order was issued, listing missing and extra components.",
+          "whenToUse": "Use to catch a set created without an order for an intermediate part, before the shop floor stops waiting for it.",
+          "label": "Incomplete production order sets"
+        },
+        "pt-BR": {
+          "summary": "Conjuntos de OP incompletos",
+          "description": "Conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz vigente na emissão da OP mãe, com os componentes faltando e sobrando.",
+          "whenToUse": "Usar para pegar conjunto criado sem OP de intermediário antes de a fábrica parar esperando por ele.",
+          "label": "Conjuntos de OP incompletos"
+        }
+      }
+    },
     "get_production_pcp_orders_ranking": {
       "category": "production",
       "locale": {

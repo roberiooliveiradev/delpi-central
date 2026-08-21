@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 678,
+  "operation_count": 680,
   "operations": [
     {
       "method": "POST",
@@ -54762,6 +54762,171 @@
     },
     {
       "method": "GET",
+      "path": "/production/production-order-sets/incomplete",
+      "operationId": "get_production_order_sets_incomplete",
+      "summary": "Incomplete production order sets",
+      "tags": [
+        "Produção — Conjuntos de OP"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "issued_from",
+          "in": "query",
+          "required": false,
+          "description": "Earliest mother order issue date (C2_EMISSAO, YYYY-MM-DD). Without it the check spans every open set, including decades-old ones.",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (1-based).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Page size.",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_order_sets_incomplete",
+        "shape": "paged_list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Incomplete production order sets",
+            "description": "Production order sets whose child orders do not match the root product bill of materials in force when the mother order was issued, listing missing and extra components.",
+            "whenToUse": "Use to catch a set created without an order for an intermediate part, before the shop floor stops waiting for it.",
+            "label": "Incomplete production order sets"
+          },
+          "pt-BR": {
+            "summary": "Conjuntos de OP incompletos",
+            "description": "Conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz vigente na emissão da OP mãe, com os componentes faltando e sobrando.",
+            "whenToUse": "Usar para pegar conjunto criado sem OP de intermediário antes de a fábrica parar esperando por ele.",
+            "label": "Conjuntos de OP incompletos"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "issued_from": {
+            "locale": {
+              "en": {
+                "description": "Issue date from (inclusive, YYYY-MM-DD).",
+                "label": "Issued from"
+              },
+              "pt-BR": {
+                "description": "Data de emissão inicial (inclusiva, AAAA-MM-DD).",
+                "label": "Emitida de"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar para pegar conjunto criado sem OP de intermediário antes de a fábrica parar esperando por ele.",
+          "description": "Conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz vigente na emissão da OP mãe, com os componentes faltando e sobrando.",
+          "label": "Conjuntos de OP incompletos"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Production order sets whose child orders do not match the root product bill of materials in force when the mother order was issued, listing missing and extra components."
+    },
+    {
+      "method": "GET",
       "path": "/production/production_cost_pct",
       "operationId": "get_production_cost_pct",
       "summary": "Production cost pct",
@@ -73479,6 +73644,57 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Download kaizen evidence."
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
+      "operationId": "replace_kaizen_evidence_file",
+      "summary": "Replace kaizen evidence file",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "record_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "evidence_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "kaizen_evidence",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Replace kaizen evidence file",
+            "description": "Replace the binary file of an existing kaizen evidence while keeping the same evidence id.",
+            "whenToUse": "Use to swap the photo or attachment of a kaizen evidence without recreating the record.",
+            "label": "Replace Kaizen Evidence File"
+          },
+          "pt-BR": {
+            "summary": "Substituir arquivo da evidência de kaizen",
+            "description": "Substitui o arquivo/foto de uma evidência existente mantendo o mesmo id.",
+            "whenToUse": "Use para trocar a foto ou anexo de uma evidência sem recriar o registro.",
+            "label": "Substituir arquivo da evidência"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para trocar a foto ou anexo de uma evidência sem recriar o registro.",
+          "description": "Substitui o arquivo/foto de uma evidência existente mantendo o mesmo id.",
+          "label": "Substituir arquivo da evidência"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Replace the binary file of an existing kaizen evidence while keeping the same evidence id."
     },
     {
       "method": "GET",

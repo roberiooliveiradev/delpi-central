@@ -27,6 +27,34 @@ Use isso sempre que precisar de um dado **consolidado do PA** a partir de uma OP
 
 Filtro equivalente quando a consulta já está em SC2: `RTRIM(LTRIM(C2_SEQUEN)) = '001'` (`SC2_MOTHER_OP_SEQUENCE_SQL`, usado no OTD).
 
+## Conjunto de OPs (mãe + filhas)
+
+O Protheus cria as OPs de um produto **em pacote**: a mãe e uma filha por intermediário da estrutura. Esse pacote é o **conjunto**, e sua chave é `C2_FILIAL + C2_NUM + C2_ITEM` — **não** `C2_NUM` sozinho.
+
+Sonda na filial 01 (ago/2026), conjuntos com saldo em aberto:
+
+| Fato medido | Número | Consequência |
+|---|---|---|
+| Conjuntos (número + item) com exatamente uma linha `001` | 2 365 | A mãe identifica o conjunto |
+| Conjuntos abertos **sem** linha `001` viva | 11 | Sem produto raiz não há estrutura esperada — ficam fora de qualquer conferência |
+| `C2_NUM` distintos com mais de um `C2_ITEM` | 33 (até **96** itens no mesmo número) | Agrupar só por `C2_NUM` mistura pacotes e inventa falta/sobra |
+| Produto da mãe com `B1_TIPO = 'PA'` / `'PI'` | 2 320 / 556 | O raiz **nem sempre** é produto acabado |
+| OPs filhas apontando para `MP` | 0 | Só `PI` e `PA` ganham OP própria |
+
+### Estrutura esperada de um conjunto
+
+Para saber quais filhas o conjunto **deveria** ter, explodir a estrutura do produto raiz e ficar com os componentes `B1_TIPO IN ('PI','PA')`, excluindo o próprio raiz.
+
+A vigência da estrutura tem de ser lida na **emissão da OP mãe** (`C2_EMISSAO`), nunca em `GETDATE()`: o conjunto nasce com a estrutura da época e continua correto depois de uma troca de engenharia. Medindo a filial 01, a data de hoje acusava 147 conjuntos com falta **e** sobra ao mesmo tempo — assinatura clássica de troca de versão; pela emissão sobram 3.
+
+### O que NÃO fazer
+
+- Tratar `C2_NUM` como conjunto.
+- Assumir que o produto da `001` é `PA`.
+- Esperar OP para matéria-prima.
+- Ler a vigência da estrutura em `GETDATE()` ao conferir um conjunto já emitido.
+- Recortar coluna indexada no join (`RTRIM(G1_COD) = RTRIM(...)`): a conferência da filial passa de ~1 s para timeout.
+
 ## Alocação de operação (SH8010)
 
 | Coluna | Significado |
@@ -57,5 +85,6 @@ Descrição da operação: junção completa `G2_FILIAL`, `G2_PRODUTO = C2_PRODU
 ## Onde é usado
 
 - [production-machine-load.md](../production-machine-load.md) — carga máquina (`/production/machine-load/*`).
+- [production-order-sets-incomplete.md](../production-order-sets-incomplete.md) — conjuntos incompletos (`/production/production-order-sets/incomplete`).
 - OTD e detalhe de OP — `production_pa_sql_filters.py`.
 - Apontamentos de produção — `production_appointments_scope.MOTHER_OP_SUFFIX`.

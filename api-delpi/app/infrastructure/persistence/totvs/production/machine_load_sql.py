@@ -24,7 +24,11 @@ from app.domain.totvs.protheus_operation_appointments import (
     active_appointment_predicate_sql,
     active_marker_sql,
 )
-from app.domain.totvs.protheus_production_orders import mother_order_key_sql
+from app.domain.totvs.protheus_production_orders import (
+    effective_due_date_sql,
+    mother_order_key_sql,
+    order_due_date_sql,
+)
 from app.domain.totvs.protheus_users import operator_name_expr, operator_name_join_sql
 
 _SCHEDULE_KEYS = "OA.H8_DTINI {0}, OA.H8_HRINI {0}, OA.H8_OP {0}, OA.H8_OPER {0}"
@@ -32,11 +36,11 @@ _SCHEDULE_KEYS = "OA.H8_DTINI {0}, OA.H8_HRINI {0}, OA.H8_OP {0}, OA.H8_OPER {0}
 _IN_PRODUCTION_EXPR = "CASE WHEN ISNULL(AP.active_count, 0) > 0 THEN 1 ELSE 0 END"
 
 # Entrega da própria OP (SC2, YYYYMMDD) — só entra quando a OP mãe não está na view PCP.
-_ORDER_DUE_DATE_EXPR = "TRY_CONVERT(DATE, NULLIF(LTRIM(RTRIM(OP.C2_DATPRF)), ''), 112)"
+_ORDER_DUE_DATE_EXPR = order_due_date_sql("OP.C2_DATPRF")
 
-# Entrega efetiva: a data da OP mãe manda; sem mãe, a previsão da própria OP evita
-# operação sem data (o PCP planeja por entrega, então ninguém pode ficar sem ela).
-DUE_DATE_EXPR = f"COALESCE(PA.DT_ENTREGA, {_ORDER_DUE_DATE_EXPR})"
+DUE_DATE_EXPR = effective_due_date_sql(
+    mother_due_date="PA.DT_ENTREGA", order_due_date="OP.C2_DATPRF"
+)
 DUE_DATE_SOURCE_EXPR = (
     "CASE WHEN PA.DT_ENTREGA IS NOT NULL THEN 'mother_order'"
     f" WHEN {_ORDER_DUE_DATE_EXPR} IS NOT NULL THEN 'order'"
