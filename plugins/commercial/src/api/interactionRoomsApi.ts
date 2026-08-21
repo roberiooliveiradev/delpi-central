@@ -87,6 +87,20 @@ export type InteractionPinDto = {
   created_at?: string | null;
 };
 
+export type InteractionRoomSharedItemKind = "file" | "link" | string;
+
+export type InteractionRoomSharedItemDto = {
+  id: string;
+  kind: InteractionRoomSharedItemKind;
+  title: string;
+  subtitle?: string | null;
+  shared_at?: string | null;
+  shared_by?: string | null;
+  message_id: string;
+  attachment_id?: string | null;
+  href?: string | null;
+};
+
 export type InteractionMessageDto = {
   id: string;
   room_id: string;
@@ -196,6 +210,10 @@ export function interactionRoomMessageTasksPath(
 
 export function interactionRoomPinsPath(roomId: string): string {
   return `${interactionRoomPath(roomId)}/pins`;
+}
+
+export function interactionRoomSharedItemsPath(roomId: string): string {
+  return `${interactionRoomPath(roomId)}/shared-items`;
 }
 
 export function interactionRoomMessagePinPath(
@@ -431,6 +449,30 @@ export async function listInteractionRoomPins(
     ApiSuccessResponse<{ items?: InteractionPinDto[] }>
   >(interactionRoomsUrl(interactionRoomPinsPath(roomId)), { signal });
   const data = unwrapEnvelope(response, "Erro ao listar pins.");
+  return data.items ?? [];
+}
+
+export async function listRoomSharedItems(
+  roomId: string,
+  options?: {
+    kind?: "all" | "file" | "link" | string;
+    q?: string | null;
+    signal?: AbortSignal;
+  },
+): Promise<InteractionRoomSharedItemDto[]> {
+  const params = new URLSearchParams();
+  if (options?.kind) params.set("kind", options.kind);
+  if (options?.q) params.set("q", options.q);
+  const query = params.toString();
+  const response = await httpGet<
+    ApiSuccessResponse<{ items?: InteractionRoomSharedItemDto[] }>
+  >(
+    `${interactionRoomsUrl(interactionRoomSharedItemsPath(roomId))}${
+      query ? `?${query}` : ""
+    }`,
+    { signal: options?.signal },
+  );
+  const data = unwrapEnvelope(response, "Erro ao listar itens compartilhados.");
   return data.items ?? [];
 }
 
