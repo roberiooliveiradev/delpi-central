@@ -216,6 +216,95 @@
   padding: 0 var(--cm-gap-sm, 0.75rem);
 }
 
+.dashboard-commercial .cm-room-shared {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--cm-gap-sm, 0.75rem);
+  min-height: 0;
+  min-width: 0;
+  padding: var(--cm-gap-sm, 0.75rem);
+}
+
+.dashboard-commercial .cm-room-shared__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--cm-gap-sm, 0.75rem);
+}
+
+.dashboard-commercial .cm-room-shared__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  min-width: min(100%, 20rem);
+}
+
+.dashboard-commercial .cm-room-shared__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.dashboard-commercial .cm-room-shared__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.65rem 0.85rem;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.35rem;
+  border: none;
+  border-bottom: 1px solid var(--cm-border, var(--border, #e6e6e6));
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.dashboard-commercial .cm-room-shared__row:hover {
+  background: color-mix(in srgb, var(--cm-accent, var(--primary, #089bdb)) 6%, transparent);
+}
+
+.dashboard-commercial .cm-room-shared__icon {
+  display: inline-flex;
+  color: var(--cm-text-muted, var(--text-muted, #64748b));
+}
+
+.dashboard-commercial .cm-room-shared__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-room-shared__title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-commercial .cm-room-shared__subtitle {
+  font-size: 0.8125rem;
+  color: var(--cm-text-muted, var(--text-muted, #64748b));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-commercial .cm-room-shared__when,
+.dashboard-commercial .cm-room-shared__who {
+  font-size: 0.8125rem;
+  color: var(--cm-text-muted, var(--text-muted, #64748b));
+  white-space: nowrap;
+}
+
 .dashboard-commercial .cm-room-thread__body {
   display: flex;
   flex: 1;

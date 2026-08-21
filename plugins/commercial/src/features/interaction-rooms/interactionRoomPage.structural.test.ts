@@ -10,6 +10,7 @@ describe("InteractionRoomPage", () => {
     const source = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).toMatch(/CommercialUnderlineNav/);
+    expect(source).toMatch(/InteractionRoomSharedView/);
     expect(source).toMatch(/roomView/);
     expect(source).toMatch(/cm-room-thread__view-nav/);
     expect(source).toMatch(/interactionRoomAuthorAvatarFields/);

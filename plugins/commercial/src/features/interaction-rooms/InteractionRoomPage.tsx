@@ -41,6 +41,7 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
+import { InteractionRoomSharedView } from "./InteractionRoomSharedView";
 import { InteractionRoomMessageAttachments } from "./InteractionRoomMessageAttachments";
 import { listInlineAttachmentIdsFromMarkdown } from "./interactionRoomInlineAttachments";
 import {
@@ -729,9 +730,12 @@ export function InteractionRoomPage({
                 aria-labelledby="cm-room-tab-shared"
                 className="cm-room-thread__main"
               >
-                <CommercialEmptyState
-                  title={content.sharedEmptyTitle}
-                  message={content.sharedEmptyDescription}
+                <InteractionRoomSharedView
+                  roomId={room.id}
+                  onError={(message) => pushRoomAlert(message, "danger")}
+                  onUploaded={() => {
+                    /* list reloads internally; keep chat messages in sync via realtime */
+                  }}
                 />
               </div>
             ) : (
