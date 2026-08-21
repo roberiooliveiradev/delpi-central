@@ -1742,5 +1742,13 @@
       "sales_lookup",
       "purchase_lookup"
     ]
+  },
+  "patterns": {
+    "zeroRecords": ":\\s*0 registro\\(s\\)\\.?$",
+    "productCode": "\\b(?:\\d[\\d.\\-/]{2,}\\d|\\d{4,})\\b",
+    "specificationToken": "^\\d+[,.]\\d+[-xX]\\d+[,.]\\d+|\\d+[,.]\\d+\\s*[-xX]\\s*\\d+[,.]\\d+",
+    "dateToken": "^\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4}$",
+    "calendarYear": "^(19|20)\\d{2}$",
+    "exampleCodePrefix": "(?:\\bex\\.?\\s*:?|\\bexemplo\\s*:?|\\binforme\\s+(?:o\\s+)?(?:c[óo]digo|codigo)|\\bpor\\s+exemplo)\\s*$"
   }
 }

@@ -3,6 +3,9 @@ from __future__ import annotations
 from math import ceil
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 _BUNDLE = "data_coverage"
 
@@ -95,7 +98,9 @@ class ChatDataCoverageNoticeService:
 
         depth_root = root if isinstance(root, dict) else None
 
-        if isinstance(depth_root, dict) and "/analyser" in str(path or "").lower():
+        if isinstance(depth_root, dict) and ChatPresentationProfileService.has_flag(
+            path, "analyser"
+        ):
             structure = depth_root.get("structure")
 
             if isinstance(structure, dict):
@@ -425,7 +430,7 @@ class ChatDataCoverageNoticeService:
         if context == "structure" or "/structure" in lowered:
             return labels.get("structure", "Estrutura")
 
-        if context == "stock" or "/stock" in lowered:
+        if context == "stock" or ChatPresentationProfileService.has_flag(path, "stock"):
             return labels.get("stock", "Estoque")
 
         if "/parents" in lowered:

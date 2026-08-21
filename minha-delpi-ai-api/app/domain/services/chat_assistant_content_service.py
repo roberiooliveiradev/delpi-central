@@ -77,6 +77,15 @@ def invalidate_assistant_content_cache(bundle: str | None = None) -> None:
         except Exception:
             pass
 
+        try:
+            from app.domain.services.chat_product_query_intent.chat_product_query_intent_content_service import (
+                ChatProductQueryIntentContentService,
+            )
+
+            ChatProductQueryIntentContentService.invalidate_cache()
+        except Exception:
+            pass
+
 
 @lru_cache(maxsize=32)
 def _bundle_content(bundle: str) -> dict[str, Any]:

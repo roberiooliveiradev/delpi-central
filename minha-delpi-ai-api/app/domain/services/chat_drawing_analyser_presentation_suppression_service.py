@@ -5,9 +5,12 @@ from __future__ import annotations
 from typing import Any
 
 
-class ChatDrawingAnalyserPresentationSuppressionService:
-    _ANALYSER_PATH_MARKER = "/analyser"
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
+
+class ChatDrawingAnalyserPresentationSuppressionService:
     _CLIENT_PRESENTATION_KEYS = (
         "presentation",
         "tablePresentation",
@@ -73,9 +76,9 @@ class ChatDrawingAnalyserPresentationSuppressionService:
 
             item = dict(tool_call)
             metadata = dict(item.get("metadata") or {})
-            path = str(metadata.get("path") or "").lower()
+            path = str(metadata.get("path") or "")
 
-            if cls._ANALYSER_PATH_MARKER not in path:
+            if not ChatPresentationProfileService.has_flag(path, "analyser"):
                 stripped_calls.append(item)
                 continue
 

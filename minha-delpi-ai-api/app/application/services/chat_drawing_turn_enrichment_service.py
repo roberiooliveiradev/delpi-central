@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -43,9 +46,9 @@ class ChatDrawingTurnEnrichmentService:
         for tool_call in ChatToolContextPresentationService._successful_external_action_tool_calls(
             tool_calls
         ):
-            path = str((tool_call.get("metadata") or {}).get("path") or "").lower()
+            path = str((tool_call.get("metadata") or {}).get("path") or "")
 
-            if "/analyser" in path:
+            if ChatPresentationProfileService.has_flag(path, "analyser"):
                 return True
 
         return False

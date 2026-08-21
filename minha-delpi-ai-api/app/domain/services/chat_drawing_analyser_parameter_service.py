@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+from app.domain.services.chat_presentation_profile_service import (
+    ChatPresentationProfileService,
+)
 
 
 class ChatDrawingAnalyserParameterService:
@@ -46,7 +49,7 @@ class ChatDrawingAnalyserParameterService:
         ):
             return merged
 
-        if "/analyser" not in path.lower():
+        if not ChatPresentationProfileService.has_flag(path, "analyser"):
             return merged
 
         schema_names = {

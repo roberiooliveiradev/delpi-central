@@ -2,15 +2,41 @@
 
 from __future__ import annotations
 
+import re
+from functools import lru_cache
+
 from app.domain.services.chat_assistant_content_service import (
     ChatAssistantContentService,
 )
 
 _INTENT_CONTENT_BUNDLE = "product_query_intent"
 
+_PATTERN_FLAGS = {
+    "zeroRecords": re.IGNORECASE,
+    "specificationToken": re.IGNORECASE,
+    "dateToken": re.IGNORECASE,
+    "exampleCodePrefix": re.IGNORECASE,
+}
 
 
 class ChatProductQueryIntentContentService:
+    @classmethod
+    @lru_cache(maxsize=16)
+    def compile_pattern(cls, key: str) -> re.Pattern[str]:
+        source = ChatAssistantContentService.get(
+            _INTENT_CONTENT_BUNDLE,
+            "patterns",
+            key,
+            default="",
+        )
+        if not str(source or "").strip():
+            raise KeyError(f"{_INTENT_CONTENT_BUNDLE}.patterns.{key} ausente")
+        return re.compile(str(source), _PATTERN_FLAGS.get(key, 0))
+
+    @classmethod
+    def invalidate_cache(cls) -> None:
+        cls.compile_pattern.cache_clear()
+
     @classmethod
     def _terms(cls, *path: str) -> tuple[str, ...]:
         return tuple(

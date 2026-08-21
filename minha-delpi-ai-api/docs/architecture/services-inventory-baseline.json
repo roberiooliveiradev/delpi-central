@@ -382,7 +382,7 @@
       {
         "module": "app.domain.services.chat_assistant_content_service",
         "file": "app/domain/services/chat_assistant_content_service.py",
-        "lines": 250,
+        "lines": 259,
         "category": "content_loader",
         "refs": {
           "app": 177,
@@ -816,7 +816,7 @@
       {
         "module": "app.domain.services.chat_data_coverage_notice_service",
         "file": "app/domain/services/chat_data_coverage_notice_service.py",
-        "lines": 462,
+        "lines": 467,
         "category": "other",
         "refs": {
           "app": 1,
@@ -1054,7 +1054,7 @@
       {
         "module": "app.domain.services.chat_drawing_analyser_parameter_service",
         "file": "app/domain/services/chat_drawing_analyser_parameter_service.py",
-        "lines": 98,
+        "lines": 101,
         "category": "drawing",
         "refs": {
           "app": 5,
@@ -1082,7 +1082,7 @@
       {
         "module": "app.domain.services.chat_drawing_analyser_presentation_suppression_service",
         "file": "app/domain/services/chat_drawing_analyser_presentation_suppression_service.py",
-        "lines": 87,
+        "lines": 90,
         "category": "drawing",
         "refs": {
           "app": 1,
@@ -4599,11 +4599,11 @@
         "lines": 466,
         "category": "presentation",
         "refs": {
-          "app": 64,
+          "app": 68,
           "scripts": 2,
           "tests": 10
         },
-        "refsTotal": 76,
+        "refsTotal": 80,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -5142,14 +5142,14 @@
       {
         "module": "app.domain.services.chat_product_query_intent.chat_product_query_intent_content_service",
         "file": "app/domain/services/chat_product_query_intent/chat_product_query_intent_content_service.py",
-        "lines": 54,
+        "lines": 80,
         "category": "content_loader",
         "refs": {
-          "app": 7,
+          "app": 9,
           "scripts": 0,
           "tests": 0
         },
-        "refsTotal": 7,
+        "refsTotal": 9,
         "unreferencedStatically": false,
         "largeFile": false
       },
@@ -5254,7 +5254,7 @@
       {
         "module": "app.domain.services.chat_product_query_intent.chat_product_query_intent_vocabulary",
         "file": "app/domain/services/chat_product_query_intent/chat_product_query_intent_vocabulary.py",
-        "lines": 24,
+        "lines": 27,
         "category": "other",
         "refs": {
           "app": 7,
@@ -8672,7 +8672,7 @@
       {
         "module": "app.application.services.chat_drawing_turn_enrichment_service",
         "file": "app/application/services/chat_drawing_turn_enrichment_service.py",
-        "lines": 200,
+        "lines": 203,
         "category": "drawing",
         "refs": {
           "app": 4,
