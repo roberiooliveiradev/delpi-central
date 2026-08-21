@@ -271,6 +271,7 @@ Contrato HTTP completo: [API-ROUTES.md § 3.21](../../docs/12-roadmap-e-evolucao
 | GET | `/interaction-rooms` | `list_interaction_rooms` |
 | POST | `/interaction-rooms/resolve` | `resolve_interaction_room` |
 | GET | `/interaction-rooms/{room_id}` | `get_interaction_room` |
+| DELETE | `/interaction-rooms/{room_id}` | `delete_interaction_room` (manage; soft delete) |
 | GET | `/interaction-rooms/{room_id}/members` | `list_interaction_room_members` |
 | POST | `/interaction-rooms/{room_id}/members` | `add_interaction_room_member` |
 | DELETE | `/interaction-rooms/{room_id}/members/{user_id}` | `remove_interaction_room_member` |
