@@ -181,6 +181,25 @@ def test_resolve_executed_does_not_promote_no_clear_intent_without_tools():
     assert "stage:tools" not in (route.flags or ())
 
 
+def test_classify_schedule_production_promotes_operational_query():
+    for message in (
+        "programação de produção",
+        "programacao de producao hoje",
+    ):
+        route = ChatIntentRouterService.classify(message)
+        assert route.intent == "operational_query", message
+        assert route.sub_intent == "schedule_today_lookup", message
+        assert route.requires_tool is True, message
+        assert route.decision != "llm_fallback", message
+        assert route.reason in {"operational_sub_intent", "operational_keywords"}, message
+
+
+def test_classify_bare_programacao_stays_unclear_or_fallback():
+    # Termo isolado não é schedule — fica para unclear/analysis, não force tool.
+    route = ChatIntentRouterService.classify("programação")
+    assert route.intent != "operational_query" or route.sub_intent != "schedule_today_lookup"
+
+
 def test_resolve_executed_tv_copilot_claims_oee_turn():
     route = ChatIntentRouterService.resolve_executed(
         message="adicione o modelo de dados oee",

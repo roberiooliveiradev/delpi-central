@@ -506,6 +506,7 @@ class ChatIntentRouterClassifyService:
             or department_kpi
             or operational_follow_up
             or memory_anchored_operational
+            or ChatIntentRouterHeuristicsService.operational_sub_intent(normalized)
         ):
             sub = ChatIntentRouterHeuristicsService.operational_sub_intent(normalized)
 
@@ -522,7 +523,7 @@ class ChatIntentRouterClassifyService:
                     sub_intent=sub,
                     is_follow_up=is_follow_up,
                     confidence=0.63 if ambiguous else 0.82,
-                    requires_tool=bool(allowed_action_ids),
+                    requires_tool=bool(sub) or bool(allowed_action_ids),
                     requires_rag=False,
                     requires_llm=False,
                     priority_applied=6,
@@ -534,6 +535,8 @@ class ChatIntentRouterClassifyService:
                 reason=(
                     "department_kpi_keywords"
                     if department_kpi and not ambiguous
+                    else "operational_sub_intent"
+                    if sub and not ambiguous
                     else "operational_keywords"
                     if not ambiguous
                     else "ambiguous_operational_scope"
