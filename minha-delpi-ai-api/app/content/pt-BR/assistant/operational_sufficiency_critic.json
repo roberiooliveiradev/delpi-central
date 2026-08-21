@@ -1,0 +1,88 @@
+{
+  "version": "2026.08.1",
+  "settings": {
+    "llmAssistEnabled": false,
+    "maxAutoFollowUpsDefault": 1
+  },
+  "plans": [
+    {
+      "id": "stock_low_needs_sales",
+      "when": {
+        "anomalyTypes": ["negative_value", "zero_value", "empty_list"],
+        "profileKeys": ["stock"]
+      },
+      "then": {
+        "followUpRouteIds": ["productSales"],
+        "maxAutoFollowUps": 1
+      },
+      "reasonKey": "stockLowNeedsSales"
+    },
+    {
+      "id": "sales_empty_clarify_invoice",
+      "when": {
+        "anomalyTypes": ["empty_list"],
+        "profileKeys": ["generic_list"],
+        "pathMarkers": ["/sales"]
+      },
+      "then": {
+        "clarifyKey": "clarifyInvoiceDirection",
+        "maxAutoFollowUps": 0
+      },
+      "reasonKey": "salesEmptyClarifyInvoice"
+    },
+    {
+      "id": "dossier_cut_by_cap",
+      "when": {
+        "enrichmentSkippedByCap": true
+      },
+      "then": {
+        "clarifyKey": "deferredScopes",
+        "maxAutoFollowUps": 0
+      },
+      "reasonKey": "dossierCutByCap"
+    },
+    {
+      "id": "single_source_needs_cross",
+      "when": {
+        "enrichmentKind": "product_enrichment_composition",
+        "okCountMax": 1,
+        "enrichmentPlannedMin": 2
+      },
+      "then": {
+        "followUpRouteIds": ["productSales", "productStock", "productSummary"],
+        "skipAlreadyExecutedPaths": true,
+        "maxAutoFollowUps": 1
+      },
+      "reasonKey": "singleSourceNeedsCross"
+    }
+  ],
+  "clarifyCatalog": {
+    "clarifyInvoiceDirection": {
+      "inbound": {
+        "label": "Ver NF de entrada",
+        "queryTemplate": "notas fiscais de entrada do produto {code}"
+      },
+      "outbound": {
+        "label": "Ver NF de saída",
+        "queryTemplate": "notas fiscais de saída do produto {code}"
+      }
+    },
+    "deferredScopes": {
+      "labelTemplate": "Consultar {scope}",
+      "queryTemplate": "{scope} do produto {code}"
+    }
+  },
+  "reasons": {
+    "sufficient": "Evidência suficiente para responder com as consultas já executadas.",
+    "stockLowNeedsSales": "Estoque com anomalia; complementa com vendas do produto.",
+    "salesEmptyClarifyInvoice": "Vendas vazias; pede direção de notas fiscais (entrada/saída).",
+    "dossierCutByCap": "Dossier cortado pelo limite do modo; sugere escopos adiados.",
+    "singleSourceNeedsCross": "Overview pediu várias fontes e só uma respondeu; busca cruzamento.",
+    "deferredToChips": "Sem slot restante no turno; follow-up via chips.",
+    "invalidLlmPlan": "Classificador LLM retornou planId inválido; usou fallback heurístico."
+  },
+  "llmAssist": {
+    "allowedVerdicts": ["sufficient", "need_follow_up", "need_clarify", "uncertain"],
+    "systemTemplate": "Você classifica se a evidência operacional basta. Responda só JSON com verdict, followUpPlanId (ou null) e clarifyKey (ou null). IDs permitidos de plano: {planIds}. Clarify keys: {clarifyKeys}."
+  }
+}
