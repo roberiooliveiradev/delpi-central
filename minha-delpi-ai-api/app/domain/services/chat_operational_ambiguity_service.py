@@ -87,6 +87,22 @@ class ChatOperationalAmbiguityService:
             ):
                 return True
 
+        # Registry actionable predicates (invoices, internal movements, …) clear
+        # ambiguity without listing each route in operationalAmbiguityExclusionPredicates.
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+        )
+
+        if any(
+            OperationalRouteMatcherService.matches_custom_predicate(predicate, normalized)
+            for predicate in OperationalRouteRegistryService.actionable_product_predicates()
+            if predicate != "productSubIntentRoute"
+        ):
+            return True
+
         for probe in cls._exclusion_probes():
             if probe == "fullAnalyserQuestion":
                 if ChatProductQueryIntentDetectionService.looks_like_full_analyser_question(

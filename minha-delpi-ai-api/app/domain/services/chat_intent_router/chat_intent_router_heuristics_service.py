@@ -200,12 +200,27 @@ class ChatIntentRouterHeuristicsService:
 
     @staticmethod
     def looks_operational(message: str) -> bool:
+        """Operational when keywords hit OR product route predicates already resolve a scope.
+
+        Keywords alone miss routes declared only in ``routePredicates`` / registry
+        (e.g. notas fiscais, movimentação interna). Prefer the actionable product
+        intent gate over growing ``operationalKeywords`` per symptom.
+        """
         lowered = message.lower()
 
-        return any(
+        if any(
             term in lowered
-            for term in ChatIntentRouterHeuristicsService.product_router_terms("operationalKeywords")
+            for term in ChatIntentRouterHeuristicsService.product_router_terms(
+                "operationalKeywords"
+            )
+        ):
+            return True
+
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
         )
+
+        return ChatProductQueryIntentService.has_actionable_product_route_intent(message)
 
     @staticmethod
     def operational_sub_intent(message: str) -> str | None:
