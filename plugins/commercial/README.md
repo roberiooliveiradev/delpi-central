@@ -258,9 +258,9 @@ Paths **relativos** ao gateway. `commercial-api` com `redirect_slashes=False`.
 
 ## Sala de interação
 
-Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%. Sem sala selecionada, a inbox ocupa 100% (sem coluna vazia). Na thread, o painel **Neste chat** (`RoomSidePanel`) abre à direita e encolhe msgs+composer; fechado, some. Não é terceira coluna da inbox. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomSidePanel`, `RoomContextPanel`, `ReactionQuickBar`, `ReactionBar`, `EmojiInsertMenu`).
+Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | conversa ~80%. Sem sala selecionada, a inbox ocupa 100% (sem coluna vazia). Na thread, o painel **Neste chat** / **Localizar** (`RoomSidePanel`, modos exclusivos) abre à direita e encolhe msgs+composer; fechado, some. Não é terceira coluna da inbox. Painel embutido na ficha do pedido/conta/OV/OP resolve a sala sob demanda (`POST …/resolve`). Chrome só via `@delpi/plugin-ui` (`ResizableColumns`, `RoomInboxList`, `MessageThread`, `MentionComposer`, `RoomSidePanel`, `RoomContextPanel`, `RoomMessageFindPanel`, `ReactionQuickBar`, `ReactionBar`, `EmojiInsertMenu`).
 
-**Entregue (E1–E8 + imagens inline):** fill viewport, lista 100% sem sala, chips no hero, Contexto à direita, composer markdown + mentions, **dois caminhos de imagem** (clip → anexo/`belowBody`; colar no caret → `![…](attachment:{uuid})` no body), anexos na bolha com dedup, reply (`parent_id`), editar in-place, excluir com confirm host-contained, reações, inbox empty/loading/preview. Roadmap: [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md). Rebuild `plugin-ui` antes do MFE `commercial`.
+**Entregue (E1–E8 + imagens inline + identidade/Shared/Find):** fill viewport, lista 100% sem sala, chips no hero, Contexto à direita, composer markdown + mentions, **dois caminhos de imagem** (clip → anexo/`belowBody`; colar no caret → `![…](attachment:{uuid})` no body), anexos na bolha com dedup, reply (`parent_id`), editar in-place, excluir com confirm host-contained, reações, inbox empty/loading/preview; **Unidade** = estado (SC/ES) sem `entity_key` cru; abas Chat|Compartilhado; Shared (`shared-items`); Find (lupa / Ctrl+F + `messages?q=`). Roadmap: [ROADMAP-INTERACTION-ROOM.md](../../docs/12-roadmap-e-evolucao/commercial/ROADMAP-INTERACTION-ROOM.md). Rebuild `plugin-ui` antes do MFE `commercial`.
 
 Rebuild: remote `plugin-ui` **antes** do MFE `dashboard-commercial` (`./infra/scripts/up-dev-sequential.sh`).
 
@@ -281,6 +281,7 @@ Contrato HTTP completo: [API-ROUTES.md § 3.21](../../docs/12-roadmap-e-evolucao
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}` | `delete_interaction_message` |
 | PUT | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `set_interaction_message_reaction` |
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/reactions/{code}` | `clear_interaction_message_reaction` |
+| GET | `/interaction-rooms/{room_id}/shared-items` | `list_interaction_room_shared_items` |
 | GET | `/interaction-rooms/{room_id}/pins` | `list_interaction_room_pins` |
 | POST | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `pin_interaction_message` |
 | DELETE | `/interaction-rooms/{room_id}/messages/{message_id}/pin` | `unpin_interaction_message` |
