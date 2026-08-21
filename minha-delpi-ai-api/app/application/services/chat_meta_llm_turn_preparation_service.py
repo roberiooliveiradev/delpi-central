@@ -59,6 +59,7 @@ class ChatMetaLlmTurnPreparationService:
         from app.domain.services.chat_capabilities_content_service import (
             ChatCapabilitiesContentService,
         )
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
 
         stages = list(pipeline_stages)
         context = dict(tool_context)
@@ -66,6 +67,16 @@ class ChatMetaLlmTurnPreparationService:
         sections: list[MetaLlmSynthesisSection] = []
         compound = intents.count >= 2
         profile_template: str | None = None
+        normalized_mode = ChatResponseModeService.normalize(response_mode)
+        capabilities_only = bool(
+            intents.capabilities
+            and not intents.user_profile
+            and not intents.assistant_identity
+        )
+        prefer_capabilities_direct = capabilities_only and normalized_mode in {
+            "fast",
+            "normal",
+        }
 
         if intents.user_profile and ChatUserProfileLlmSynthesisService.should_route_to_llm(
             message
@@ -89,22 +100,26 @@ class ChatMetaLlmTurnPreparationService:
                 )
 
         if intents.capabilities and ChatCapabilitiesService.is_capabilities_question(message):
-            capabilities_facts = ChatCapabilitiesContentService.clip_facts_for_mode(
-                str(resolve_capabilities_facts(message) or "").strip(),
-                response_mode,
-            )
-
-            if capabilities_facts:
-                sections.append(
-                    MetaLlmSynthesisSection(
-                        section_id=SECTION_CAPABILITIES,
-                        title=ChatMetaLlmSynthesisService.section_title(
-                            SECTION_CAPABILITIES,
-                            compound=compound,
-                        ),
-                        facts=capabilities_facts,
-                    )
+            if prefer_capabilities_direct:
+                if "capabilities" not in stages:
+                    stages.append("capabilities")
+            else:
+                capabilities_facts = ChatCapabilitiesContentService.clip_facts_for_mode(
+                    str(resolve_capabilities_facts(message) or "").strip(),
+                    response_mode,
                 )
+
+                if capabilities_facts:
+                    sections.append(
+                        MetaLlmSynthesisSection(
+                            section_id=SECTION_CAPABILITIES,
+                            title=ChatMetaLlmSynthesisService.section_title(
+                                SECTION_CAPABILITIES,
+                                compound=compound,
+                            ),
+                            facts=capabilities_facts,
+                        )
+                    )
 
         if intents.assistant_identity and ChatAssistantIdentityService.is_assistant_identity_question(
             message

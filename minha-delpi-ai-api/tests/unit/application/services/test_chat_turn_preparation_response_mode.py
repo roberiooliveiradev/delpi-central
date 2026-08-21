@@ -107,7 +107,7 @@ def test_post_tool_user_identity_routes_to_llm_not_direct_answer():
     assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
 
 
-def test_post_tool_capabilities_question_routes_to_llm_not_direct_answer():
+def test_post_tool_capabilities_question_fast_normal_uses_direct_answer():
     caps = (
         "Posso ajudar você nestes formatos:\n\n"
         "**Sempre disponíveis (chat comum e agentes)**\n"
@@ -123,16 +123,16 @@ def test_post_tool_capabilities_question_routes_to_llm_not_direct_answer():
         response_mode="normal",
     )
 
-    assert result.direct_answer is None
+    assert result.direct_answer is not None
+    assert caps in result.direct_answer
     assert result.skip_rag is True
-    assert caps in result.tool_context.get(
-        ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS,
-        "",
+    assert not result.tool_context.get(
+        ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_LLM_SYNTHESIS
     )
-    assert result.tool_context.get("responseModeEffect") == "llm_synthesis"
+    assert result.tool_context.get("responseModeEffect") == "simple_direct"
 
 
-def test_post_tool_capabilities_with_pre_capability_answer_still_routes_to_llm():
+def test_post_tool_capabilities_with_pre_capability_answer_uses_direct_in_normal():
     caps = (
         "Posso ajudar você nestes formatos:\n\n"
         "**Sempre disponíveis (chat comum e agentes)**\n"
@@ -147,6 +147,31 @@ def test_post_tool_capabilities_with_pre_capability_answer_still_routes_to_llm()
         pre_capability_answer=caps,
         resolve_capabilities_answer=lambda _message: caps,
         response_mode="normal",
+    )
+
+    assert result.direct_answer is not None
+    assert caps in result.direct_answer
+    assert result.skip_rag is True
+    assert not result.tool_context.get(
+        ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_LLM_SYNTHESIS
+    )
+    assert result.tool_context.get("responseModeEffect") == "simple_direct"
+
+
+def test_post_tool_capabilities_thinker_still_routes_to_llm():
+    caps = (
+        "Posso ajudar você nestes formatos:\n\n"
+        "**Sempre disponíveis (chat comum e agentes)**\n"
+        "- Respostas com base na documentação autorizada (RAG)."
+    )
+    result = _resolve_post_tool(
+        message="o que você pode fazer?",
+        workspace_context={"userActivatedAgent": True, "actionsEnabled": True},
+        pipeline_stages=[],
+        tool_context={},
+        tool_calls=[],
+        resolve_capabilities_answer=lambda _message: caps,
+        response_mode="thinker",
     )
 
     assert result.direct_answer is None

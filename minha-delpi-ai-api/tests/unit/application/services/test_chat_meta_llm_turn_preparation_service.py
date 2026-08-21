@@ -6,7 +6,29 @@ from app.domain.services.chat_meta_llm_synthesis_service import (
 )
 
 
-def test_capabilities_question_routes_to_llm_synthesis_with_operational_agent():
+def test_capabilities_question_fast_normal_skips_meta_llm():
+    caps = "Posso ajudar você nestes formatos:\n\n- RAG"
+    for mode in ("fast", "normal"):
+        result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
+            message="o que você pode fazer?",
+            workspace_context={"userActivatedAgent": True, "actionsEnabled": True},
+            tool_context={},
+            pipeline_stages=[],
+            resolve_profile_facts=lambda _message: None,
+            resolve_capabilities_facts=lambda _message: caps,
+            resolve_assistant_identity_facts=lambda _message: None,
+            response_mode=mode,
+        )
+
+        assert result.active is False
+        assert result.skip_meta_direct_answer is False
+        assert "capabilities" in result.pipeline_stages
+        assert not result.tool_context.get(
+            ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_LLM_SYNTHESIS
+        )
+
+
+def test_capabilities_question_thinker_routes_to_llm_synthesis():
     caps = "Posso ajudar você nestes formatos:\n\n- RAG"
     result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
         message="o que você pode fazer?",
@@ -16,30 +38,16 @@ def test_capabilities_question_routes_to_llm_synthesis_with_operational_agent():
         resolve_profile_facts=lambda _message: None,
         resolve_capabilities_facts=lambda _message: caps,
         resolve_assistant_identity_facts=lambda _message: None,
+        response_mode="thinker",
     )
 
     assert result.active is True
     assert result.skip_rag is True
     assert result.skip_meta_direct_answer is True
     assert result.skip_isolated_meta_direct_answers is True
-    assert caps in result.tool_context[ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS]
-
-
-def test_capabilities_question_routes_to_llm_synthesis_in_common_chat():
-    caps = "Posso ajudar você nestes formatos:\n\n- RAG"
-    result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
-        message="o que você pode fazer?",
-        workspace_context={"userActivatedAgent": False, "actionsEnabled": False},
-        tool_context={},
-        pipeline_stages=[],
-        resolve_profile_facts=lambda _message: None,
-        resolve_capabilities_facts=lambda _message: caps,
-        resolve_assistant_identity_facts=lambda _message: None,
-    )
-
-    assert result.active is True
-    assert result.skip_meta_direct_answer is True
-    assert caps in result.tool_context[ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS]
+    assert caps in result.tool_context[
+        ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS
+    ]
 
 
 def test_assistant_identity_question_routes_to_llm_synthesis():
@@ -55,4 +63,6 @@ def test_assistant_identity_question_routes_to_llm_synthesis():
     )
 
     assert result.active is True
-    assert identity in result.tool_context[ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS]
+    assert identity in result.tool_context[
+        ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_SYNTHESIS_FACTS
+    ]
