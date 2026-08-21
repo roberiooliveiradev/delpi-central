@@ -36,11 +36,226 @@ class ChatOperationalSufficiencyCriticService:
         enrichment_plan: dict | None = None,
         remaining_slots: int = 0,
         user_message: str | None = None,
+        llm_classify: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None,
     ) -> SufficiencyVerdict:
         _ = user_message
         calls = tool_calls if isinstance(tool_calls, list) else []
         enrichment = enrichment_plan if isinstance(enrichment_plan, dict) else {}
 
+        heuristic = cls._evaluate_heuristic(
+            calls=calls,
+            enrichment=enrichment,
+            remaining_slots=remaining_slots,
+        )
+
+        return cls.apply_llm_assist(
+            heuristic,
+            tool_calls=calls,
+            enrichment_plan=enrichment,
+            remaining_slots=remaining_slots,
+            llm_classify=llm_classify,
+        )
+
+    @classmethod
+    def apply_llm_assist(
+        cls,
+        heuristic: SufficiencyVerdict,
+        *,
+        tool_calls: list[dict],
+        enrichment_plan: dict,
+        remaining_slots: int,
+        llm_classify: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None,
+    ) -> SufficiencyVerdict:
+        if not ChatOperationalSufficiencyCriticContentService.llm_assist_enabled():
+            return heuristic
+
+        if not callable(llm_classify):
+            return heuristic
+
+        if heuristic.action != "sufficient":
+            return heuristic
+
+        if not cls._looks_uncertain(tool_calls, enrichment_plan):
+            return heuristic
+
+        try:
+            raw = llm_classify(
+                {
+                    "planIds": ChatOperationalSufficiencyCriticContentService.plan_ids(),
+                    "clarifyKeys": ChatOperationalSufficiencyCriticContentService.clarify_keys(),
+                    "systemPrompt": ChatOperationalSufficiencyCriticContentService.llm_system_prompt(),
+                }
+            )
+        except Exception:
+            return heuristic
+
+        resolved = cls.resolve_from_llm_classification(
+            raw if isinstance(raw, dict) else {},
+            remaining_slots=remaining_slots,
+            fallback=heuristic,
+        )
+        return resolved
+
+    @classmethod
+    def resolve_from_llm_classification(
+        cls,
+        raw: dict[str, Any],
+        *,
+        remaining_slots: int,
+        fallback: SufficiencyVerdict,
+    ) -> SufficiencyVerdict:
+        plan_id = str(raw.get("followUpPlanId") or "").strip() or None
+        clarify_key = str(raw.get("clarifyKey") or "").strip() or None
+        verdict = str(raw.get("verdict") or "").strip()
+        allowed = {
+            str(item).strip()
+            for item in (
+                ChatOperationalSufficiencyCriticContentService.llm_assist_node().get(
+                    "allowedVerdicts"
+                )
+                or []
+            )
+            if str(item).strip()
+        }
+
+        if verdict and allowed and verdict not in allowed:
+            return fallback
+
+        if plan_id and plan_id not in ChatOperationalSufficiencyCriticContentService.plan_ids():
+            return SufficiencyVerdict(
+                action=fallback.action,
+                plan_id=fallback.plan_id,
+                reason_key="invalidLlmPlan",
+                reason=ChatOperationalSufficiencyCriticContentService.reason("invalidLlmPlan"),
+                follow_up_route_ids=list(fallback.follow_up_route_ids),
+                clarify_key=fallback.clarify_key,
+                deferred_to_chips=fallback.deferred_to_chips,
+            )
+
+        if clarify_key and clarify_key not in ChatOperationalSufficiencyCriticContentService.clarify_keys():
+            return SufficiencyVerdict(
+                action=fallback.action,
+                plan_id=fallback.plan_id,
+                reason_key="invalidLlmPlan",
+                reason=ChatOperationalSufficiencyCriticContentService.reason("invalidLlmPlan"),
+                follow_up_route_ids=list(fallback.follow_up_route_ids),
+                clarify_key=fallback.clarify_key,
+                deferred_to_chips=fallback.deferred_to_chips,
+            )
+
+        if plan_id:
+            plan = ChatOperationalSufficiencyCriticContentService.plan_by_id(plan_id)
+            return cls._verdict_from_plan(plan, remaining_slots=remaining_slots) or fallback
+
+        if clarify_key:
+            return SufficiencyVerdict(
+                action="chips",
+                plan_id=None,
+                reason_key="deferredToChips",
+                reason=ChatOperationalSufficiencyCriticContentService.reason("deferredToChips"),
+                clarify_key=clarify_key,
+                deferred_to_chips=True,
+            )
+
+        if verdict == "sufficient":
+            return fallback
+
+        return fallback
+
+    @classmethod
+    def _looks_uncertain(
+        cls,
+        tool_calls: list[dict],
+        enrichment: dict,
+    ) -> bool:
+        if int(enrichment.get("skippedByCap") or 0) > 0:
+            return True
+
+        for item in tool_calls:
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("name") or "") != "execute_external_action":
+                continue
+            meta = item.get("metadata")
+            if not isinstance(meta, dict) or not meta.get("ok"):
+                continue
+            if meta.get("emptyResult"):
+                return True
+            anomalies = meta.get("anomalies")
+            if isinstance(anomalies, list) and anomalies:
+                return True
+
+        return False
+
+    @classmethod
+    def _verdict_from_plan(
+        cls,
+        plan: dict[str, Any],
+        *,
+        remaining_slots: int,
+    ) -> SufficiencyVerdict | None:
+        if not plan:
+            return None
+
+        plan_id = str(plan.get("id") or "").strip()
+        then = plan.get("then") if isinstance(plan.get("then"), dict) else {}
+        reason_key = str(plan.get("reasonKey") or "sufficient").strip() or "sufficient"
+        reason = ChatOperationalSufficiencyCriticContentService.reason(reason_key)
+        clarify_key = str(then.get("clarifyKey") or "").strip() or None
+        route_ids = [
+            str(item).strip()
+            for item in (then.get("followUpRouteIds") or [])
+            if str(item).strip()
+        ]
+
+        try:
+            max_follow = max(0, int(then.get("maxAutoFollowUps")))
+        except (TypeError, ValueError):
+            max_follow = (
+                ChatOperationalSufficiencyCriticContentService.max_auto_follow_ups_default()
+            )
+
+        if clarify_key and not route_ids:
+            return SufficiencyVerdict(
+                action="chips",
+                plan_id=plan_id,
+                reason_key=reason_key,
+                reason=reason,
+                clarify_key=clarify_key,
+                deferred_to_chips=True,
+            )
+
+        if route_ids and max_follow > 0:
+            capped = route_ids[:max_follow]
+            if remaining_slots > 0:
+                return SufficiencyVerdict(
+                    action="execute",
+                    plan_id=plan_id,
+                    reason_key=reason_key,
+                    reason=reason,
+                    follow_up_route_ids=capped[:remaining_slots],
+                    clarify_key=clarify_key,
+                )
+            return SufficiencyVerdict(
+                action="chips",
+                plan_id=plan_id,
+                reason_key="deferredToChips",
+                reason=ChatOperationalSufficiencyCriticContentService.reason("deferredToChips"),
+                follow_up_route_ids=capped,
+                clarify_key=clarify_key,
+                deferred_to_chips=True,
+            )
+
+        return None
+
+    @classmethod
+    def _evaluate_heuristic(
+        cls,
+        *,
+        calls: list[dict],
+        enrichment: dict,
+        remaining_slots: int,
+    ) -> SufficiencyVerdict:
         for plan in ChatOperationalSufficiencyCriticContentService.plans():
             if not cls._plan_matches(plan, calls, enrichment):
                 continue
