@@ -788,11 +788,7 @@ export function InteractionRoomPage({
                 ) : undefined
               }
               nav={
-                <div
-                  className={roomHeaderClasses.nav}
-                  role="group"
-                  aria-label={content.roomViewNavAriaLabel}
-                >
+                <>
                   <CommercialActionButton
                     variant="ghost"
                     id="cm-room-tab-chat"
@@ -815,8 +811,9 @@ export function InteractionRoomPage({
                   >
                     <Files size={16} aria-hidden />
                   </CommercialActionButton>
-                </div>
+                </>
               }
+              navAriaLabel={content.roomViewNavAriaLabel}
               participants={participants}
               participantsAriaLabel={content.roomMembersAriaLabel}
               actions={

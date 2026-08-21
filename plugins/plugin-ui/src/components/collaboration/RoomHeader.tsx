@@ -34,6 +34,8 @@ export type RoomHeaderProps = {
   chips?: ReactNode;
   /** Inline view switcher (e.g. Chat | Shared) after avatars, before actions. */
   nav?: ReactNode;
+  /** Accessible name for the nav group (view switcher). */
+  navAriaLabel?: string;
   /** Makes the title a control that opens the linked entity (order, etc.). */
   onTitleClick?: () => void;
   /** Accessible name when title is clickable (e.g. «Abrir pedido»). */
@@ -74,6 +76,7 @@ export function RoomHeader({
   subtitle,
   chips,
   nav,
+  navAriaLabel,
   onTitleClick,
   titleActionLabel,
   participants = [],
@@ -115,7 +118,15 @@ export function RoomHeader({
             size="sm"
           />
         ) : null}
-        {nav ? <div className={classNames.nav}>{nav}</div> : null}
+        {nav ? (
+          <div
+            className={classNames.nav}
+            role={navAriaLabel ? "group" : undefined}
+            aria-label={navAriaLabel}
+          >
+            {nav}
+          </div>
+        ) : null}
         {actions ? <div className={classNames.actions}>{actions}</div> : null}
       </div>
     </header>

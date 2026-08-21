@@ -91,5 +91,10 @@ describe("RoomHeader", () => {
     expect(css).toMatch(
       /\.delpi-ui-room-header__people \[aria-pressed="true"\]/,
     );
+    expect(css).toMatch(/--delpi-ui-room-header-control-gap/);
+    expect(css).toMatch(
+      /\.delpi-ui-room-header__people > \.delpi-ui-room-header__nav/,
+    );
+    expect(css).toMatch(/display:\s*contents/);
   });
 });
