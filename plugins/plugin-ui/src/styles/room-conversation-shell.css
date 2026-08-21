@@ -78,8 +78,12 @@
 
 .delpi-ui-room-thread__dock {
   flex: 0 0 auto;
-  padding: var(--delpi-ui-room-thread-dock-padding, var(--delpi-ui-gap-sm, 0.75rem) 0 0);
-  background: var(--delpi-ui-surface-muted, var(--delpi-ui-surface, #f8fafc));
+  margin-top: auto;
+  padding: var(
+    --delpi-ui-room-thread-dock-padding,
+    0.65rem 0.85rem 0.85rem
+  );
+  background: transparent;
 }
 
 /* Framed embed surface (card on object detail). */
@@ -87,18 +91,28 @@
   display: flex;
   flex-direction: column;
   min-height: var(--delpi-ui-room-panel-min-height, 22rem);
-  height: var(--delpi-ui-room-panel-height, min(32rem, 70vh));
-  max-height: var(--delpi-ui-room-panel-max-height, min(32rem, 70vh));
+  height: var(--delpi-ui-room-panel-height, min(34rem, 70vh));
+  max-height: var(--delpi-ui-room-panel-max-height, min(34rem, 70vh));
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--delpi-ui-border, #e6e6e6);
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-border, #e6e6e6) 70%, transparent);
   border-radius: var(--delpi-ui-room-panel-radius, 0.75rem);
-  background: var(--delpi-ui-surface-muted, var(--delpi-ui-surface, #f6f8fa));
+  background: var(
+    --delpi-ui-room-panel-bg,
+    var(--delpi-ui-surface-muted, var(--delpi-ui-surface, #f6f8fa))
+  );
   box-sizing: border-box;
+  --delpi-ui-room-thread-dock-padding: 0.75rem 0.85rem 0.85rem;
+  --delpi-ui-room-thread-msgs-padding-inline: 0.35rem;
 }
 
 .delpi-ui-room-panel .delpi-ui-room-thread {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
+}
+
+.delpi-ui-room-panel .delpi-ui-room-thread__dock {
+  background: transparent;
 }

@@ -105,13 +105,15 @@ export function InteractionRoomPanel({
 
   const roomBody =
     !loading && room?.id ? (
-      <CommercialRoomPanel aria-label={content.panelTitle}>
-        <InteractionRoomPage
-          basePath={basePath}
-          roomId={room.id}
-          variant="pane"
-        />
-      </CommercialRoomPanel>
+      <div className="cm-interaction-room-embed">
+        <CommercialRoomPanel aria-label={content.panelTitle}>
+          <InteractionRoomPage
+            basePath={basePath}
+            roomId={room.id}
+            variant="pane"
+          />
+        </CommercialRoomPanel>
+      </div>
     ) : null;
 
   const statusBlock = (

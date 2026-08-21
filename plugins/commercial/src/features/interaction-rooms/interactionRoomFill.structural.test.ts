@@ -19,6 +19,7 @@ describe("interaction room fill CSS", () => {
     expect(css).not.toMatch(/\.cm-room-thread__stage \{/);
     expect(css).not.toMatch(/\.cm-room-thread__body \{/);
     expect(css).not.toMatch(/\.cm-room-panel \{/);
+    expect(css).toMatch(/\.cm-interaction-room-embed \{/);
     const fillChunk = css.split("Sala: fill viewport")[1]?.slice(0, 2500) ?? "";
     expect(fillChunk).not.toMatch(/\.delpi-ui-/);
     expect(css).not.toMatch(/max-height:\s*40vh/);

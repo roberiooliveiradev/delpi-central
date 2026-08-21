@@ -39,6 +39,6 @@ describe("SoftEmptyState", () => {
     expect(root).toMatch(/justify-content:\s*center/);
     expect(root).toMatch(/min-height:\s*100%/);
     expect(root).not.toMatch(/border:/);
-    expect(css).toMatch(/\.delpi-ui-soft-empty__icon \{[\s\S]*?opacity:\s*0\.32/);
+    expect(css).toMatch(/\.delpi-ui-soft-empty__icon \{[\s\S]*?opacity:\s*var\(--delpi-ui-soft-empty-icon-opacity/);
   });
 });

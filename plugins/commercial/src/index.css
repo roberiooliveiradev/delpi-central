@@ -79,8 +79,39 @@
   min-height: 0;
   overflow: hidden;
   --delpi-ui-room-thread-header-padding: var(--cm-gap-sm);
-  --delpi-ui-room-thread-msgs-padding-inline: var(--cm-gap-xs);
-  --delpi-ui-room-thread-dock-padding: var(--cm-gap-sm);
+  --delpi-ui-room-thread-msgs-padding-inline: var(--cm-gap-sm);
+  --delpi-ui-room-thread-dock-padding: 0.65rem var(--cm-gap-sm) var(--cm-gap-sm);
+  --delpi-ui-soft-empty-icon-opacity: 0.34;
+  --delpi-ui-mention-composer-radius: 0.85rem;
+}
+
+/* Embed na ficha: tokens do kit (sem redefinir chrome de .cm-room-panel). */
+.dashboard-commercial .cm-interaction-room-embed {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  --delpi-ui-room-panel-bg: transparent;
+  --delpi-ui-room-thread-dock-padding: 0.75rem 0.35rem 0.15rem;
+  --delpi-ui-room-thread-msgs-padding-inline: 0.15rem;
+  --delpi-ui-soft-empty-icon-size: 2.75rem;
+  --delpi-ui-soft-empty-icon-opacity: 0.34;
+  --delpi-ui-mention-composer-radius: 0.85rem;
+}
+
+.dashboard-commercial .cm-interaction-room-embed > * {
+  width: 100%;
+  min-height: 0;
+}
+
+:root[data-theme="dark"] .dashboard-commercial {
+  --delpi-ui-mention-composer-bg: color-mix(
+    in srgb,
+    var(--cm-surface) 88%,
+    #0b0e14
+  );
+  --delpi-ui-mention-composer-shadow: none;
 }
 
 .dashboard-commercial.dashboard-page--fill > .cm-page-stack {

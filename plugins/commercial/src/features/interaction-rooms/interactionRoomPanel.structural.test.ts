@@ -15,6 +15,7 @@ describe("InteractionRoomPanel", () => {
     expect(source).toMatch(/CM_HELP\.interactionRooms\.panel/);
     expect(source).toMatch(/hint:\s*CM_HELP\.interactionRooms\.panel/);
     expect(source).toMatch(/CommercialRoomPanel/);
+    expect(source).toMatch(/cm-interaction-room-embed/);
     expect(source).toMatch(/InteractionRoomPage/);
     expect(source).toMatch(/variant=\"pane\"/);
     expect(source).toMatch(/resolveInteractionRoom/);

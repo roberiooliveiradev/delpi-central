@@ -1,5 +1,6 @@
 /**
  * SoftEmptyState — centered, low-contrast empty hint (no card chrome).
+ * Cursor-like: soft icon + muted title/subtitle on the canvas.
  */
 
 .delpi-ui-soft-empty {
@@ -8,10 +9,10 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  gap: 0.65rem;
+  gap: 0.55rem;
   width: 100%;
   min-height: 100%;
-  padding: 2.5rem 1.5rem;
+  padding: 2.75rem 1.5rem;
   text-align: center;
   pointer-events: none;
   user-select: none;
@@ -21,15 +22,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.45rem;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #64748b));
-  opacity: 0.32;
+  opacity: var(--delpi-ui-soft-empty-icon-opacity, 0.36);
 }
 
 .delpi-ui-soft-empty__icon svg {
   width: var(--delpi-ui-soft-empty-icon-size, 2.75rem);
   height: var(--delpi-ui-soft-empty-icon-size, 2.75rem);
-  stroke-width: 1.2;
+  stroke-width: 1.15;
 }
 
 .delpi-ui-soft-empty__title {
@@ -38,9 +39,10 @@
   font-size: 0.9375rem;
   font-weight: 500;
   letter-spacing: 0.01em;
+  line-height: 1.35;
   color: color-mix(
     in srgb,
-    var(--delpi-ui-text, var(--text, #111111)) 48%,
+    var(--delpi-ui-text-muted, var(--delpi-ui-muted, #94a3b8)) 88%,
     transparent
   );
 }
@@ -53,7 +55,7 @@
   line-height: 1.45;
   color: color-mix(
     in srgb,
-    var(--delpi-ui-text-muted, var(--delpi-ui-muted, #94a3b8)) 72%,
+    var(--delpi-ui-text-muted, var(--delpi-ui-muted, #94a3b8)) 58%,
     transparent
   );
 }

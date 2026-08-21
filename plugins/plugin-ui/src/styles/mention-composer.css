@@ -105,9 +105,17 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--delpi-ui-border, var(--border, #d1d5db));
-  border-radius: 1.25rem;
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-border, var(--border, #d1d5db)) 85%, transparent);
+  border-radius: var(--delpi-ui-mention-composer-radius, 0.85rem);
+  background: var(
+    --delpi-ui-mention-composer-bg,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  box-shadow: var(
+    --delpi-ui-mention-composer-shadow,
+    0 1px 0 color-mix(in srgb, var(--delpi-ui-text, #0f172a) 4%, transparent)
+  );
 }
 
 /* Imagens pendentes — thumbs dentro da pílula. */
