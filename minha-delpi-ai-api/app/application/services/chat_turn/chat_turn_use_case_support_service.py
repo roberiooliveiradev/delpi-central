@@ -399,12 +399,6 @@ class ChatTurnUseCaseSupportService:
         ):
             return tool_context
 
-        specialization = workspace_context.get("specialization") or {}
-        allowed_tool_names = None
-
-        if isinstance(specialization, dict):
-            allowed_tool_names = specialization.get("allowedTools")
-
         if on_stream_activity:
             from app.application.services.chat_stream_activity_service import (
                 ChatStreamActivityService,
@@ -418,17 +412,58 @@ class ChatTurnUseCaseSupportService:
                 )
             )
 
-        return self.chat_agentic_tool_loop_service.extend_tool_context(
-            user_id=request.user_id,
-            access_token=request.access_token,
-            message=request.message,
+        return self._extend_with_grounding_scope(
+            request=request,
+            workspace_context=workspace_context,
             tool_context=tool_context,
-            allowed_tool_names=allowed_tool_names,
-            allowed_action_ids=workspace_context.get("allowedActionIds"),
             conversation_context=conversation_context,
             previous_messages=previous_messages,
             on_stream_activity=on_stream_activity,
         )
+
+    def _extend_with_grounding_scope(
+        self,
+        *,
+        request: SendChatMessageRequest,
+        workspace_context: dict,
+        tool_context: dict,
+        conversation_context: str | None,
+        previous_messages: list | None,
+        on_stream_activity: Callable | None,
+    ) -> dict:
+        from app.domain.services.chat_tool_grounding_context_service import (
+            ChatToolGroundingContextService,
+        )
+
+        memory_snapshot = workspace_context.get("workingMemory")
+        memory_snapshot = memory_snapshot if isinstance(memory_snapshot, dict) else None
+
+        with ChatToolGroundingContextService.scope(
+            message=request.message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+        ):
+            return self.chat_agentic_tool_loop_service.extend_tool_context(
+                user_id=request.user_id,
+                access_token=request.access_token,
+                message=request.message,
+                tool_context=tool_context,
+                allowed_tool_names=self._resolve_allowed_tool_names(workspace_context),
+                allowed_action_ids=workspace_context.get("allowedActionIds"),
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                on_stream_activity=on_stream_activity,
+            )
+
+    @staticmethod
+    def _resolve_allowed_tool_names(workspace_context: dict) -> list | None:
+        specialization = workspace_context.get("specialization") or {}
+
+        if isinstance(specialization, dict):
+            return specialization.get("allowedTools")
+
+        return None
 
     def build_tool_context(
         self,

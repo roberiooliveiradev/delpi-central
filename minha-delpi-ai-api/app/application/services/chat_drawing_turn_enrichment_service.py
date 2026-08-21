@@ -57,6 +57,8 @@ class ChatDrawingTurnEnrichmentService:
         *,
         message: str | None,
         attachment_ids: list[str] | None = None,
+        previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
     ) -> dict:
         if not isinstance(tool_context, dict):
             return tool_context or {}
@@ -75,7 +77,16 @@ class ChatDrawingTurnEnrichmentService:
         )
 
         if not product_code:
-            product_code = ChatProductQueryIntentService.resolve_product_code(message or "")
+            from app.domain.services.chat_tool_grounding_context_service import (
+                ChatToolGroundingContextService,
+            )
+
+            product_code = ChatProductQueryIntentService.resolve_product_code(
+                message or "",
+                previous_messages=previous_messages,
+                memory_snapshot=memory_snapshot
+                or ChatToolGroundingContextService.current_memory_snapshot(),
+            )
 
         if not product_code:
             for tool_call in tool_context.get("toolCalls") or []:

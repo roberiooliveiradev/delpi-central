@@ -56,6 +56,7 @@ class ExecuteExternalActionUseCase:
         arguments = self._normalize_arguments_for_method(action, arguments)
         pipeline_parameters = self._extract_pipeline_parameters(arguments)
         arguments = self._drop_internal_unknown_parameters(action, arguments)
+        arguments = self._ground_parameters(action, arguments, pipeline_parameters)
 
         self.policy.validate(provider, action, arguments)
 
@@ -250,6 +251,32 @@ class ExecuteExternalActionUseCase:
             presenter=self.presenter,
             extract_response_meta=self._extract_api_delpi_response_meta,
         )
+
+    def _ground_parameters(
+        self,
+        action: dict,
+        arguments: dict,
+        pipeline_parameters: dict,
+    ) -> dict:
+        from app.domain.services.chat_tool_parameter_grounding_service import (
+            ChatToolParameterGroundingService,
+        )
+
+        normalized = dict(arguments or {})
+        message = (
+            pipeline_parameters.get("userMessage")
+            or pipeline_parameters.get("message")
+            or pipeline_parameters.get("queryText")
+            or pipeline_parameters.get("question")
+        )
+        grounded = ChatToolParameterGroundingService.ground_parameters(
+            action,
+            normalized.get("parameters") or {},
+            message=str(message) if message not in (None, "") else None,
+        )
+        normalized["parameters"] = grounded
+
+        return normalized
 
     @staticmethod
     def _resolve_action_path(path: str, parameters: dict) -> str:

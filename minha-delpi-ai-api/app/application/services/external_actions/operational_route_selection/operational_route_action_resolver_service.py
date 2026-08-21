@@ -14,6 +14,9 @@ from app.domain.services.chat_production_operational_intent_service import (
     ChatProductionOperationalIntentService,
     ProductionOperationalIntentKind,
 )
+from app.domain.services.chat_tool_grounding_context_service import (
+    ChatToolGroundingContextService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -41,6 +44,7 @@ class OperationalRouteActionResolverService:
         production_kind: ProductionOperationalIntentKind | None = None,
         conversation_context: str | None = None,
         description_override: str | None = None,
+        memory_snapshot: dict | None = None,
     ) -> dict | None:
         route_spec = route.get("route")
 
@@ -355,6 +359,8 @@ class OperationalRouteActionResolverService:
                     message or "",
                     conversation_context,
                     previous_messages=previous_messages,
+                    memory_snapshot=memory_snapshot
+                    or ChatToolGroundingContextService.current_memory_snapshot(),
                 )
 
             if not identifier:

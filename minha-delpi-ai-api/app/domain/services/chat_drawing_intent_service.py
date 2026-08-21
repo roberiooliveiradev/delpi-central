@@ -89,8 +89,23 @@ class ChatDrawingIntentService:
         return bool(cls.resolve_product_code(message))
 
     @classmethod
-    def resolve_product_code(cls, message: str | None) -> str | None:
-        return ChatProductQueryIntentService.extract_product_code(message)
+    def resolve_product_code(
+        cls,
+        message: str | None,
+        *,
+        previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
+    ) -> str | None:
+        from app.domain.services.chat_tool_grounding_context_service import (
+            ChatToolGroundingContextService,
+        )
+
+        return ChatProductQueryIntentService.resolve_product_code(
+            message or "",
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot
+            or ChatToolGroundingContextService.current_memory_snapshot(),
+        )
 
     @classmethod
     def requires_pdf_for_full_analysis(

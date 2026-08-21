@@ -136,6 +136,81 @@ class ChatToolContextService:
         drawing_runtime_skills = preparation.drawing_runtime_skills
         paginated_service = preparation.paginated_service
 
+        from app.domain.services.chat_tool_grounding_context_service import (
+            ChatToolGroundingContextService,
+        )
+
+        memory_snapshot = working_memory if isinstance(working_memory, dict) else None
+
+        if memory_snapshot is None and isinstance(agent_context, dict):
+            candidate = agent_context.get("workingMemory")
+            memory_snapshot = candidate if isinstance(candidate, dict) else None
+
+        with ChatToolGroundingContextService.scope(
+            message=message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+        ):
+            return self._build_context_with_grounding_scope(
+                user_id=user_id,
+                access_token=access_token,
+                message=message,
+                raw_message=raw_message,
+                allowed_action_ids=allowed_action_ids,
+                actions_enabled=actions_enabled,
+                allowed_tool_names=allowed_tool_names,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                max_external_action_calls=max_external_action_calls,
+                on_stream_activity=on_stream_activity,
+                agent_context=agent_context,
+                working_memory=working_memory,
+                attachment_context=attachment_context,
+                attachment_ids=attachment_ids,
+                session_id=session_id,
+                web_search_exclusive=web_search_exclusive,
+                drawing_analysis_mode=drawing_analysis_mode,
+                drawing_product_code=drawing_product_code,
+                drawing_product_codes=drawing_product_codes,
+                drawing_product_code_source=drawing_product_code_source,
+                drawing_has_pdf=drawing_has_pdf,
+                drawing_pdf_extract=drawing_pdf_extract,
+                drawing_library_fetch=drawing_library_fetch,
+                drawing_runtime_skills=drawing_runtime_skills,
+                paginated_service=paginated_service,
+            )
+
+    def _build_context_with_grounding_scope(
+        self,
+        *,
+        user_id: str,
+        access_token: str,
+        message: str,
+        raw_message: str,
+        allowed_action_ids: list[str] | None,
+        actions_enabled: bool,
+        allowed_tool_names: list[str] | None,
+        conversation_context: str | None,
+        previous_messages: list | None,
+        max_external_action_calls: int | None,
+        on_stream_activity,
+        agent_context: dict | None,
+        working_memory: dict | None,
+        attachment_context: str | None,
+        attachment_ids: list[str] | None,
+        session_id: str | None,
+        web_search_exclusive: bool,
+        drawing_analysis_mode: bool,
+        drawing_product_code,
+        drawing_product_codes,
+        drawing_product_code_source,
+        drawing_has_pdf: bool,
+        drawing_pdf_extract,
+        drawing_library_fetch,
+        drawing_runtime_skills,
+        paginated_service,
+    ) -> dict:
         selection = self._selection_service.select_tools(
             self,
             message=message,
