@@ -238,6 +238,7 @@ def test_build_facts_addon_includes_prose_panel_rule_when_decoupled():
     assert "componentes visuais" in addon.lower()
     assert "painel" in addon.lower()
     assert "fidelidade" in addon.lower()
+    assert "snake_case" in addon.lower() or "rótulos" in addon.lower()
 
 
 def test_collect_fact_lines_includes_api_section_counts_and_attention():

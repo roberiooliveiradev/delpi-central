@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 680 · **Gerado em:** 2026-08-21 20:37 UTC
+**Provider:** `api-delpi` · **Rotas:** 680 · **Gerado em:** 2026-08-21 20:57 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 

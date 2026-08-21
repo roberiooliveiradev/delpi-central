@@ -17,6 +17,86 @@ def test_detect_parses_brazilian_decimal_strings():
     assert isinstance(anomalies, list)
 
 
+def test_attention_lines_humanize_field_labels_in_portuguese():
+    anomalies = [
+        {
+            "type": "zero_value",
+            "field": "current_quantity",
+            "scope": "linha 1",
+            "impact": "valor zerado pode exigir validação operacional",
+            "value": 0,
+        },
+        {
+            "type": "zero_value",
+            "field": "available_quantity",
+            "scope": "linha 1",
+            "impact": "valor zerado pode exigir validação operacional",
+            "value": 0,
+        },
+    ]
+    metadata = {
+        "path": "/products/10090016/stock",
+        "apiDelpiResponseMeta": {
+            "fields": {
+                "current_quantity": "Quantidade atual no armazém",
+                "available_quantity": "Saldo disponível (atual - empenhado - reservado)",
+            }
+        },
+        "tablePresentation": {
+            "columns": [
+                {"key": "current_quantity", "label": "Qtd. atual"},
+                {"key": "available_quantity", "label": "Qtd. disponível"},
+            ]
+        },
+    }
+
+    lines = ChatDataAnomalyDetectionService.attention_lines(
+        anomalies,
+        metadata=metadata,
+    )
+
+    assert lines
+    joined = "\n".join(lines)
+    assert "current_quantity" not in joined
+    assert "available_quantity" not in joined
+    assert "Quantidade atual no armazém" in joined or "Qtd. atual" in joined
+    assert "Saldo disponível" in joined or "Qtd. disponível" in joined
+
+
+def test_attention_lines_uses_llm_discovery_for_unknown_field(monkeypatch):
+    from app.domain.services.presentation_column_label_discovery_service import (
+        PresentationColumnLabelDiscoveryService,
+    )
+
+    def fake_resolve(keys, **kwargs):
+        return {str(key): f"Rótulo LLM {key}" for key in keys}
+
+    monkeypatch.setattr(
+        PresentationColumnLabelDiscoveryService,
+        "resolve_labels",
+        classmethod(lambda cls, keys, **kwargs: fake_resolve(keys, **kwargs)),
+    )
+
+    anomalies = [
+        {
+            "type": "zero_value",
+            "field": "weird_xyz_metric",
+            "scope": "linha 1",
+            "value": 0,
+        }
+    ]
+
+    lines = ChatDataAnomalyDetectionService.attention_lines(
+        anomalies,
+        metadata={"path": "/x"},
+    )
+
+    assert lines
+    joined = "\n".join(lines)
+    assert "Rótulo LLM weird_xyz_metric" in joined
+    assert "**weird_xyz_metric**" not in joined
+
+
 def test_build_insight_does_not_fail_with_formatted_table_rows():
     metadata = {
         "path": "/products/90262404/factory-status",

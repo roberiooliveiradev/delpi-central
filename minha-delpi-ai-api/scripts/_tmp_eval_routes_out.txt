@@ -1,0 +1,65 @@
+base=http://localhost agent=4f9c225b-0414-40d3-a462-040889719b83 code=90260148
+
+[ERRO: HTTP 503: {"errors":[{"code":"llm.unavailable","message":"LLM provider unavailable","path":"_global"}]}
+] 'ultimas notas fiscais do 90260148'
+  path=— tools=0 ok=0 41.7s
+  text=''
+
+[Aceitável] 'nfe do 90260148'
+  path=— tools=0 ok=0 85.2s
+  text='Não tenho essa informação disponível no momento — não recebi nenhum resultado de consulta sobre NF-e relacionada ao produto **90260148**, e nesta sessão não há uma consulta autoriz'
+
+[Bom] 'invoice items 90260148'
+  path=— tools=0 ok=0 15.6s
+  text='Para eu localizar corretamente, preciso de um esclarecimento: o código **90260148** refere-se a quê?  - **Número da nota fiscal (invoice)** — e você quer listar os itens dessa nota'
+
+[Bom] 'notas fiscais de entrada do 90260148'
+  path=/products/90260148/inbound-invoice-items tools=1 ok=1 8.6s
+  text='O produto **90260148** **não possui nenhuma nota fiscal de entrada registrada** na plataforma. Isso pode indicar que o item ainda não teve compras recebidas via nota fiscal, ou que'
+
+[ERRO: HTTP 503: {"errors":[{"code":"llm.unavailable","message":"LLM provider unavailable","path":"_global"}]}
+] 'notas fiscais de saída do 90260148'
+  path=— tools=0 ok=0 29.1s
+  text=''
+
+[ERRO: HTTP 503: {"errors":[{"code":"llm.unavailable","message":"LLM provider unavailable","path":"_global"}]}
+] 'movimentacao interna do 90260148'
+  path=— tools=0 ok=0 48.6s
+  text=''
+
+[Bom] 'directive list 90260148'
+  path=/products/directives/90260148 tools=1 ok=1 3.4s
+  text='O produto **90260148**  **4** MP(s) na estrutura · **5** vínculo(s) fornecedor · **3** com última compra · **0** sem NF recente. **Próximos passos**  - Ver estrutura completa do pr'
+
+[Clarify / incompleto] 'exclusividade de mp 90260148'
+  path=/products/90260148/structure/exclusivity tools=1 ok=1 109.0s
+  text='O produto **90260148**  Não consegui formular a resposta de forma clara. Pode reformular a pergunta em uma frase?'
+
+Traceback (most recent call last):
+  File "/home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/scripts/_tmp_eval_routes_text_quality.py", line 280, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/scripts/_tmp_eval_routes_text_quality.py", line 214, in main
+    session = req(
+              ^^^^
+  File "/home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/scripts/_tmp_eval_routes_text_quality.py", line 48, in req
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 521, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 630, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 559, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 639, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 401: UNAUTHORIZED

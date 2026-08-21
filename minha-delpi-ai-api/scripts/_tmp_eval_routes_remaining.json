@@ -1,0 +1,80 @@
+[
+  {
+    "msg": "ultimas notas fiscais do 90260148",
+    "path": "—",
+    "n_tools": 0,
+    "ok_tools": 0,
+    "empty_tools": 0,
+    "intent": "llm_general",
+    "quality": "Bom",
+    "sec": 12.3,
+    "preview": "Não tenho essa informação disponível no momento — a consulta sobre as notas fiscais do produto **90260148** não retornou dados nesta sessão.  Para eu localizar corretamente, me con",
+    "err": null,
+    "tool_errors": []
+  },
+  {
+    "msg": "notas fiscais de saída do 90260148",
+    "path": "/products/90260148/outbound-invoice-items",
+    "n_tools": 1,
+    "ok_tools": 1,
+    "empty_tools": 0,
+    "intent": "operational_query",
+    "quality": "Fraco no vazio",
+    "sec": 144.7,
+    "preview": "Consultei as notas fiscais de saída do produto **90260148** e **não encontrei nenhum registro** — a consulta retornou zero notas para esse item.",
+    "err": null,
+    "tool_errors": []
+  },
+  {
+    "msg": "movimentacao interna do 90260148",
+    "path": "/products/90260148/internal-movements",
+    "n_tools": 1,
+    "ok_tools": 1,
+    "empty_tools": 0,
+    "intent": "operational_query",
+    "quality": "Aceitável",
+    "sec": 44.7,
+    "preview": "O produto **90260148** não possui nenhuma movimentação interna registrada — a consulta retornou **0 registros**.",
+    "err": null,
+    "tool_errors": []
+  },
+  {
+    "msg": "estoque do produto 90260148",
+    "path": "/products/90260148/stock, /products/90260148/sales",
+    "n_tools": 2,
+    "ok_tools": 2,
+    "empty_tools": 0,
+    "intent": "operational_query",
+    "quality": "Bom",
+    "sec": 4.0,
+    "preview": "O produto **90260148**  Saldo disponível total: **0** un. em **1** posição(ões). **1** posição(ões) com disponível zerado. **Pontos de atenção**  - Valor zerado em **available_quan",
+    "err": null,
+    "tool_errors": []
+  },
+  {
+    "msg": "me fale do produto 90260148",
+    "path": "/products/90260148/summary, /products/90260148/stock, /products/90260148/sales",
+    "n_tools": 3,
+    "ok_tools": 3,
+    "empty_tools": 0,
+    "intent": "operational_query",
+    "quality": "Bom",
+    "sec": 3.6,
+    "preview": "O produto **90260148**  Foram retornados **1** registros. O formato dos dados sugere apresentação em **tabela**. **Pontos de atenção**  - Valor zerado em **media_quantity** (linha ",
+    "err": null,
+    "tool_errors": []
+  },
+  {
+    "msg": "estoque",
+    "path": "—",
+    "n_tools": 0,
+    "ok_tools": 0,
+    "empty_tools": 0,
+    "intent": "clarification",
+    "quality": "Aceitável",
+    "sec": 1.1,
+    "preview": "Claro! Para consultar o **estoque**, informe o **código do produto** (ex.: 10080099). Exemplo: *estoque do produto 10080099*.",
+    "err": null,
+    "tool_errors": []
+  }
+]

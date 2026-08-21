@@ -89,7 +89,10 @@ class ChatDataInsightService:
 
         rows = cls._resolve_rows(metadata, data)
         anomalies = ChatDataAnomalyDetectionService.detect(rows=rows, metadata=metadata)
-        anomaly_attention = ChatDataAnomalyDetectionService.attention_lines(anomalies)
+        anomaly_attention = ChatDataAnomalyDetectionService.attention_lines(
+            anomalies,
+            metadata=metadata,
+        )
 
         if anomalies:
             commentary["anomalies"] = anomalies
@@ -798,9 +801,14 @@ class ChatDataInsightService:
 
             if values:
                 total = sum(values)
+                from app.domain.services.chat_presentation_field_label_resolution_service import (
+                    ChatPresentationFieldLabelResolutionService,
+                )
+
                 metrics.append(
                     {
-                        "label": key,
+                        "label": ChatPresentationFieldLabelResolutionService.resolve_label(key)
+                        or key,
                         "value": cls._format_number(total),
                     }
                 )

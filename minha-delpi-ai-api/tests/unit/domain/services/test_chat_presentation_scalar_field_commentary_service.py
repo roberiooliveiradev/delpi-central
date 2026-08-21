@@ -267,3 +267,32 @@ def test_si_goal_triad_absent_from_skip_field_keys():
             skip.update(str(k) for k in section["skipFieldKeys"])
     for key in ("goal_value", "comparable_goal", "reference_goal"):
         assert key not in skip, f"{key} must not be in skipFieldKeys"
+
+
+def test_build_uses_column_labels_when_api_meta_fields_missing():
+    metadata = {
+        "path": "/products/10090016/sales",
+        "apiDelpiResponseMeta": {
+            "entity": "product_sales",
+            "shape": "scalar",
+        },
+    }
+    data = {
+        "product_code": "10090016",
+        "total_quantity": 11204.0,
+        "total_value": 1760.8,
+        "average_price": 0.22,
+        "documents": 3,
+    }
+
+    commentary = ChatPresentationScalarFieldCommentaryService.build(metadata, data)
+
+    assert commentary is not None
+    joined = "\n".join(commentary.get("highlights") or [])
+
+    assert "average_price" not in joined
+    assert "total_quantity" not in joined
+    assert "documents" not in joined
+    assert "Preço médio" in joined
+    assert "Qtd. total" in joined
+    assert "Documentos" in joined

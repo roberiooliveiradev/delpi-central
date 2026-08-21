@@ -50,6 +50,11 @@ class ChatOperationalLlmSynthesisContextService:
             if fidelity_rule and cls._tool_calls_use_prose_panel(tool_calls):
                 result = f"{result}\n\n{fidelity_rule}" if result else f"\n\n{fidelity_rule}"
 
+            field_rule = ChatOperationalLlmSynthesisContextContentService.field_humanization_rule()
+
+            if field_rule and cls._tool_calls_use_prose_panel(tool_calls):
+                result = f"{result}\n\n{field_rule}" if result else f"\n\n{field_rule}"
+
             from app.domain.services.chat_operational_factual_verdict_service import (
                 ChatOperationalFactualVerdictService,
             )

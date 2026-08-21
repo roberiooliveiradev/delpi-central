@@ -186,9 +186,23 @@ class ChatPresentationScalarFieldCommentaryService:
         )
         max_highlights = cls._max_highlights()
         highlights: list[str] = []
+        from app.domain.services.chat_presentation_field_label_resolution_service import (
+            ChatPresentationFieldLabelResolutionService,
+        )
+
+        schema_labels = {
+            str(token).strip(): str(value).strip()
+            for token, value in field_labels.items()
+            if str(token or "").strip() and str(value or "").strip()
+        }
 
         for key in ordered_keys[:max_highlights]:
-            label = str(field_labels.get(key) or key).strip()
+            label = ChatPresentationFieldLabelResolutionService.resolve_label(
+                key,
+                path=str(metadata.get("path") or ""),
+                schema_labels=schema_labels or None,
+                enable_discovery=True,
+            ) or str(key).strip()
             highlights.append(
                 template.format(label=label, value=fmt(key, payload.get(key)))
             )

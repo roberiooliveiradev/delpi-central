@@ -93,12 +93,19 @@ class ChatDataAnomalyDetectionService:
         return cls._dedupe(anomalies)
 
     @classmethod
-    def attention_lines(cls, anomalies: list[dict[str, Any]]) -> list[str]:
+    def attention_lines(
+        cls,
+        anomalies: list[dict[str, Any]],
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> list[str]:
         from app.domain.services.chat_humanized_data_response_content_service import (
             ChatHumanizedDataResponseContentService,
         )
 
         lines: list[str] = []
+        schema_labels = cls._schema_labels_from_metadata(metadata)
+        path = str((metadata or {}).get("path") or "").strip()
 
         for item in anomalies:
             anomaly_type = str(item.get("type") or "").strip()
@@ -107,26 +114,111 @@ class ChatDataAnomalyDetectionService:
                 anomaly_type,
                 default="",
             )
+            field_key = str(item.get("field") or "").strip()
+            field_label = cls._humanize_field_label(
+                field_key,
+                path=path,
+                schema_labels=schema_labels,
+            ) or "—"
+            scope = str(item.get("scope") or "—").strip() or "—"
 
             if template:
                 lines.append(
                     ChatHumanizedDataResponseContentService.format(
                         "anomalies",
                         anomaly_type,
-                        field=str(item.get("field") or "—"),
-                        scope=str(item.get("scope") or "—"),
+                        field=field_label,
+                        scope=scope,
                     )
                 )
                 continue
 
-            field = str(item.get("field") or "").strip()
-            scope = str(item.get("scope") or "").strip()
             impact = str(item.get("impact") or "").strip()
 
-            if field and scope:
-                lines.append(f"{field} em {scope}: {impact}".strip(": "))
+            if field_key and scope:
+                lines.append(f"{field_label} em {scope}: {impact}".strip(": "))
 
         return lines[:6]
+
+    @classmethod
+    def _schema_labels_from_metadata(
+        cls,
+        metadata: dict[str, Any] | None,
+    ) -> dict[str, str] | None:
+        if not isinstance(metadata, dict):
+            return None
+
+        labels: dict[str, str] = {}
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            fields = api_meta.get("fields")
+
+            if isinstance(fields, dict):
+                for key, value in fields.items():
+                    token = str(key or "").strip()
+                    label = str(value or "").strip()
+
+                    if token and label:
+                        labels[token] = label
+
+        chart = metadata.get("chartPresentation")
+
+        if isinstance(chart, dict):
+            config = chart.get("config")
+
+            if isinstance(config, dict):
+                field_labels = config.get("fieldLabels")
+
+                if isinstance(field_labels, dict):
+                    for key, value in field_labels.items():
+                        token = str(key or "").strip()
+                        label = str(value or "").strip()
+
+                        if token and label and token not in labels:
+                            labels[token] = label
+
+        table = metadata.get("tablePresentation")
+
+        if isinstance(table, dict):
+            columns = table.get("columns")
+
+            if isinstance(columns, list):
+                for column in columns:
+                    if not isinstance(column, dict):
+                        continue
+
+                    token = str(column.get("key") or "").strip()
+                    label = str(column.get("label") or "").strip()
+
+                    if token and label and token not in labels:
+                        labels[token] = label
+
+        return labels or None
+
+    @classmethod
+    def _humanize_field_label(
+        cls,
+        field_key: str,
+        *,
+        path: str = "",
+        schema_labels: dict[str, str] | None = None,
+    ) -> str:
+        token = str(field_key or "").strip()
+
+        if not token:
+            return ""
+
+        from app.domain.services.chat_presentation_field_label_resolution_service import (
+            ChatPresentationFieldLabelResolutionService,
+        )
+
+        return ChatPresentationFieldLabelResolutionService.resolve_label(
+            token,
+            path=path,
+            schema_labels=schema_labels,
+        ) or token
 
     @classmethod
     def _is_paginated(cls, metadata: dict[str, Any], row_count: int) -> bool:
