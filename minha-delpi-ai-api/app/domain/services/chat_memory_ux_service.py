@@ -6,29 +6,32 @@ import re
 from typing import Any
 
 from app.domain.services.chat_manual_context_pin_service import ChatManualContextPinService
+from app.domain.services.chat_memory_intent_content_service import (
+    ChatMemoryIntentContentService,
+)
 from app.domain.services.chat_user_preference_manager_service import (
     ChatUserPreferenceManagerService,
 )
 
 
 class ChatMemoryUxService:
-    _INTROSPECT_RE = re.compile(
-        r"\b(?:quais\s+informa[cç][oõ]es|qual\s+contexto|o\s+que\s+voc[eê]\s+est[aá]\s+usando|"
-        r"mem[oó]ria\s+usada|contexto\s+ativo|o\s+que\s+lembra)\b",
-        re.IGNORECASE,
-    )
-    _EDIT_PREF_RE = re.compile(
-        r"\b(?:editar|alterar|mudar)\b.{0,20}\bprefer",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _introspect_re(cls) -> re.Pattern[str]:
+        return ChatMemoryIntentContentService.compile_pattern("ux", "patterns", "introspect")
+
+    @classmethod
+    def _edit_pref_re(cls) -> re.Pattern[str]:
+        return ChatMemoryIntentContentService.compile_pattern(
+            "ux", "patterns", "editPreference"
+        )
 
     @classmethod
     def is_memory_introspection(cls, message: str | None) -> bool:
-        return bool(cls._INTROSPECT_RE.search((message or "").strip()))
+        return bool(cls._introspect_re().search((message or "").strip()))
 
     @classmethod
     def is_edit_preference_request(cls, message: str | None) -> bool:
-        return bool(cls._EDIT_PREF_RE.search((message or "").strip()))
+        return bool(cls._edit_pref_re().search((message or "").strip()))
 
     @classmethod
     def build_for_metadata(cls, snapshot: dict) -> dict[str, Any]:

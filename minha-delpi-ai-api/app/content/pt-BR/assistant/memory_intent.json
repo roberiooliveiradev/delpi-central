@@ -1,0 +1,55 @@
+{
+  "durability": {
+    "preferencePatterns": [
+      "\\b(?:de agora em diante|a partir de agora|sempre que possivel|daqui (?:pra|para) frente)\\b.{0,4}(?P<rest>.{4,160})",
+      "\\b(?:sempre|por favor sempre)\\s+(?P<rest>(?:responda|me responda|escreva|formate|use|prefira|evite|fale)\\b.{2,160})",
+      "\\b(?:eu )?(?:prefiro|gosto de|gostaria que voce)\\s+(?P<rest>.{4,160})"
+    ],
+    "profilePatterns": [
+      "\\b(?:meu nome (?:e|é)|pode me chamar de|me chame de)\\s+(?P<rest>[A-Za-zÀ-ÿ'\\- ]{2,60})",
+      "\\b(?:meu cargo (?:e|é)|minha funcao (?:e|é)|minha função (?:e|é)|eu trabalho (?:no|na|como)|sou (?:do|da|de) (?:setor|departamento|area|área))\\s+(?P<rest>.{2,80})"
+    ],
+    "limits": {
+      "minMessageChars": 6,
+      "maxMessageChars": 400,
+      "profileConfidence": 0.7,
+      "preferenceConfidence": 0.65
+    }
+  },
+  "semantic": {
+    "patterns": {
+      "docQuestion": "\\b(?:como\\s+funciona|o\\s+que\\s+[eé]|documenta[cç][aã]o|manual|pol[ií]tica|procedimento|arquitetura|rbac|autoriza[cç][aã]o|permiss[aã]o|fluxo\\s+de)\\b",
+      "playbook": "\\b(?:playbook|padr[aã]o\\s+do\\s+playbook|mesmo\\s+padr[aã]o|roteiro\\s+oficial)\\b",
+      "operationalBlock": "\\b(?:estoque|produto\\s+\\d|filial\\s+\\d|roteiro|consulta\\s+operacional)\\b"
+    },
+    "enrichTaskTypes": [
+      "playbook_creation",
+      "documentation",
+      "sql_task"
+    ],
+    "taskTypeIntentMap": {
+      "playbook_creation": "playbook",
+      "documentation": "documentation",
+      "sql_task": "technical"
+    },
+    "limits": {
+      "minMessageChars": 8
+    }
+  },
+  "episodic": {
+    "patterns": {
+      "recall": "\\b(?:como\\s+fizemos|playbook\\s+anterior|continue\\s+de\\s+onde|volte\\s+ao\\s+que|lembra\\s+quando|mesmo\\s+padr[aã]o|fa[cç]a\\s+igual|use\\s+o\\s+mesmo|retome\\s+a\\s+conversa|documento\\s+anterior)\\b",
+      "delete": "\\b(?:apague|esque[cç]a|remova|exclua)\\b.{0,40}\\b(?:epis[oó]dio|tarefa\\s+anterior|hist[oó]rico)\\b",
+      "save": "\\b(?:salve|guarde|registre)\\b.{0,30}\\b(?:epis[oó]dio|tarefa|progresso)\\b"
+    },
+    "limits": {
+      "maxEpisodes": 8
+    }
+  },
+  "ux": {
+    "patterns": {
+      "introspect": "\\b(?:quais\\s+informa[cç][oõ]es|qual\\s+contexto|o\\s+que\\s+voc[eê]\\s+est[aá]\\s+usando|mem[oó]ria\\s+usada|contexto\\s+ativo|o\\s+que\\s+lembra)\\b",
+      "editPreference": "\\b(?:editar|alterar|mudar)\\b.{0,20}\\bprefer"
+    }
+  }
+}

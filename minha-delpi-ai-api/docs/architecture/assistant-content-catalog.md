@@ -61,6 +61,9 @@ Wrappers especializados (mantêm API estável):
 | `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
 | `structure_comparison.json` | Comparação BOM/ficha | `ChatStructureComparisonService` |
 | `memory_ux.json` | Memória de sessão (barra + introspecção) | `ChatMemoryUxService` |
+| `memory_intent.json` | Patterns de durabilidade, semântica, episódica e UX de memória | `ChatMemoryIntentContentService` |
+| `user_context_items.json` | Limits, marker e patterns de contexto livre do usuário | `ChatUserContextItemsContentService` |
+| `email_intent.json` | Markers, subtypes, tom, audiência e subject de e-mail | `ChatEmailIntentContentService` |
 | `web_search.json` | Resposta direta e follow-up pós-pesquisa; **`llmSynthesis.leakMarkers`** da guarda extractiva | `ChatWebSearchDirectAnswerService`, `ChatWebSearchSourceFollowUpService`, `ChatWebSearchSynthesisService` |
 | `platform_tools.json` | Resposta direta de tools internas (`get_allowed_routes`, `get_allowed_apps`, `get_current_user`) | `ChatPlatformToolsContentService`, `ChatPlatformToolDirectAnswerService` |
 | `drawing_validation.json` | Relatório, checklist, rótulos de status (`statusPresentation`), campos do markdown (`reportFields`, seção `dimensions`), export CSV/PDF/XLSX (`export`), regras de consolidação (`presentation`), gate assertivo (`validationLayers.pdfDependentTemplateKeys` inclui `total_length`), padrão `patterns.productDescriptionLengthMm`, **rótulos UX de tabelas Protheus** (`protheusTableLabels` — espelho curto de `api-delpi/.../allowed_tables.json`) | `ChatDrawingValidationContentService`, `ChatDrawingValidationPresentationService`, `ChatDrawingValidationOrchestrationService`, `ChatDrawingReportExportService`, `ChatDrawingBomQuantityAssertivenessService` |

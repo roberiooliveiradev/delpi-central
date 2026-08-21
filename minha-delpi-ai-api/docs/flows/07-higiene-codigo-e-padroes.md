@@ -47,6 +47,7 @@ Testes dedicados dos módulos acima também removidos. Inventário: `docs/archit
 | `reason=` PT em seleção/refinement (lote 1) | `selectionReasons` + `platform_tools` + `web_search.selectionReasons` + `stream.activity` |
 | `re.compile` refinement vocabulary | `operational_refinement.json` + `ChatOperationalRefinementContentService` |
 | `re.compile` conversation_state + fast_path | `conversation_state.patterns` / `fast_path.json` |
+| `re.compile` memória/contexto/email | `memory_intent.json`, `user_context_items.json`, `email_intent.json` |
 
 ---
 
@@ -107,7 +108,7 @@ Critério: **P0** = quebra regra Cursor / risco de regressão; **P1** = dívida 
 | Gap | Evidência | Direção canônica |
 |-----|-----------|------------------|
 | `reason=` PT hardcoded em seleção/refinement | **Lote 1 fechado** (stock/route/spec/tools/KPI/web/sql recovery) | Restam notas de síntese web (`_internal_product_synthesis_note` etc.) e outros `reason=` técnicos (códigos EN) |
-| `re.compile` em serviços de **regra de negócio** (não loader) | **Parcial:** refinement + conversation_state + fast_path | Restam: memória/email/user_context, parsers BOM/SQL |
+| `re.compile` em serviços de **regra de negócio** (não loader) | **Parcial:** refinement + state/fast_path + memória/contexto/email | Restam parsers BOM/SQL (algoritmo) e resíduos pontuais |
 | Inferência de segmento com `"/stock"` em texto livre | **Fechado** em pagination (`registry marker` + `has_flag`) | Restam fallbacks `or "/stock"` em selection (P2) |
 | Doc architecture desatualizada | **Fechado** `viewBuildPolicy` em `chat-assistant-content-presentation.md` | — |
 

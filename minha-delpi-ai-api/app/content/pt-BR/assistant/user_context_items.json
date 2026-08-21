@@ -1,0 +1,14 @@
+{
+  "patterns": {
+    "branch": "\\bfilial\\s*[:\\s]?\\s*(\\d{1,4})\\b",
+    "warehouse": "\\barmaz[eé]m\\s*[:\\s]?\\s*(\\d{1,4}|[A-Z]{1,6})\\b",
+    "tableRow": "^\\s*\\|.+\\|\\s*$",
+    "sectionEnd": "^(?:Memória ativa|Preferências|Resolução de referências|Assunto:|Contexto comprimido)"
+  },
+  "promptMarker": "Contexto adicionado pelo usuário",
+  "limits": {
+    "maxContentChars": 12000,
+    "maxPromptChars": 4000,
+    "maxLabelChars": 56
+  }
+}

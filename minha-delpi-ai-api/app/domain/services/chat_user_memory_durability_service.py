@@ -1,6 +1,10 @@
 import re
 import unicodedata
 
+from app.domain.services.chat_memory_intent_content_service import (
+    ChatMemoryIntentContentService,
+)
+
 
 class ChatUserMemoryDurabilityService:
     """Decide, de forma conservadora, o que de um turno vale como memória durável.
@@ -10,37 +14,19 @@ class ChatUserMemoryDurabilityService:
     dados de perfil declarados), de alta precisão, deixando o resto de fora.
     """
 
-    # Preferências de estilo/idioma/formato declaradas de forma durável.
-    _PREFERENCE_PATTERNS = (
-        re.compile(
-            r"\b(?:de agora em diante|a partir de agora|sempre que possivel|"
-            r"daqui (?:pra|para) frente)\b.{0,4}(?P<rest>.{4,160})",
-            re.IGNORECASE,
-        ),
-        re.compile(
-            r"\b(?:sempre|por favor sempre)\s+(?P<rest>(?:responda|me responda|"
-            r"escreva|formate|use|prefira|evite|fale)\b.{2,160})",
-            re.IGNORECASE,
-        ),
-        re.compile(
-            r"\b(?:eu )?(?:prefiro|gosto de|gostaria que voce)\s+(?P<rest>.{4,160})",
-            re.IGNORECASE,
-        ),
-    )
+    @classmethod
+    def _preference_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return ChatMemoryIntentContentService.compile_pattern_list(
+            "durability",
+            "preferencePatterns",
+        )
 
-    # Dados de perfil declarados pelo usuário (não sensíveis).
-    _PROFILE_PATTERNS = (
-        re.compile(
-            r"\b(?:meu nome (?:e|é)|pode me chamar de|me chame de)\s+(?P<rest>[A-Za-zÀ-ÿ'\- ]{2,60})",
-            re.IGNORECASE,
-        ),
-        re.compile(
-            r"\b(?:meu cargo (?:e|é)|minha funcao (?:e|é)|minha função (?:e|é)|"
-            r"eu trabalho (?:no|na|como)|sou (?:do|da|de) (?:setor|departamento|area|área))\s+"
-            r"(?P<rest>.{2,80})",
-            re.IGNORECASE,
-        ),
-    )
+    @classmethod
+    def _profile_patterns(cls) -> tuple[re.Pattern[str], ...]:
+        return ChatMemoryIntentContentService.compile_pattern_list(
+            "durability",
+            "profilePatterns",
+        )
 
     @staticmethod
     def normalize(text: str) -> str:
@@ -53,23 +39,48 @@ class ChatUserMemoryDurabilityService:
     @classmethod
     def detect(cls, message: str) -> dict | None:
         text = (message or "").strip()
+        min_chars = ChatMemoryIntentContentService.limit_int(
+            "durability",
+            "limits",
+            "minMessageChars",
+            default=6,
+        )
+        max_chars = ChatMemoryIntentContentService.limit_int(
+            "durability",
+            "limits",
+            "maxMessageChars",
+            default=400,
+        )
 
-        if len(text) < 6 or len(text) > 400:
+        if len(text) < min_chars or len(text) > max_chars:
             return None
 
-        for pattern in cls._PROFILE_PATTERNS:
-            match = pattern.search(text)
-            if match:
-                content = cls._clean_capture(match.group(0))
-                if content:
-                    return cls._build("profile", content, 0.7)
+        profile_confidence = ChatMemoryIntentContentService.limit_float(
+            "durability",
+            "limits",
+            "profileConfidence",
+            default=0.7,
+        )
+        preference_confidence = ChatMemoryIntentContentService.limit_float(
+            "durability",
+            "limits",
+            "preferenceConfidence",
+            default=0.65,
+        )
 
-        for pattern in cls._PREFERENCE_PATTERNS:
+        for pattern in cls._profile_patterns():
             match = pattern.search(text)
             if match:
                 content = cls._clean_capture(match.group(0))
                 if content:
-                    return cls._build("preference", content, 0.65)
+                    return cls._build("profile", content, profile_confidence)
+
+        for pattern in cls._preference_patterns():
+            match = pattern.search(text)
+            if match:
+                content = cls._clean_capture(match.group(0))
+                if content:
+                    return cls._build("preference", content, preference_confidence)
 
         return None
 

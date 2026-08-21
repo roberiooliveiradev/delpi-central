@@ -2,27 +2,38 @@
 
 from __future__ import annotations
 
-import re
 import uuid
 from typing import Any
 
+from app.domain.services.chat_memory_intent_content_service import (
+    ChatMemoryIntentContentService,
+)
+
 
 class ChatEpisodicMemoryService:
-    MAX_EPISODES = 8
-    _RECALL_RE = re.compile(
-        r"\b(?:como\s+fizemos|playbook\s+anterior|continue\s+de\s+onde|"
-        r"volte\s+ao\s+que|lembra\s+quando|mesmo\s+padr[aã]o|fa[cç]a\s+igual|"
-        r"use\s+o\s+mesmo|retome\s+a\s+conversa|documento\s+anterior)\b",
-        re.IGNORECASE,
-    )
-    _DELETE_RE = re.compile(
-        r"\b(?:apague|esque[cç]a|remova|exclua)\b.{0,40}\b(?:epis[oó]dio|tarefa\s+anterior|hist[oó]rico)\b",
-        re.IGNORECASE,
-    )
-    _SAVE_RE = re.compile(
-        r"\b(?:salve|guarde|registre)\b.{0,30}\b(?:epis[oó]dio|tarefa|progresso)\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def max_episodes(cls) -> int:
+        return ChatMemoryIntentContentService.limit_int(
+            "episodic", "limits", "maxEpisodes", default=8
+        )
+
+    @classmethod
+    def _recall_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "episodic", "patterns", "recall"
+        )
+
+    @classmethod
+    def _delete_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "episodic", "patterns", "delete"
+        )
+
+    @classmethod
+    def _save_re(cls):
+        return ChatMemoryIntentContentService.compile_pattern(
+            "episodic", "patterns", "save"
+        )
 
     @classmethod
     def apply_pre_turn(
@@ -48,19 +59,19 @@ class ChatEpisodicMemoryService:
                 if key:
                     merged[key] = item
 
-            episodes = list(merged.values())[-cls.MAX_EPISODES :]
+            episodes = list(merged.values())[-cls.max_episodes() :]
 
         normalized = (message or "").strip()
 
-        if cls._DELETE_RE.search(normalized):
+        if cls._delete_re().search(normalized):
             result["episodicMemory"] = []
             result["episodicMemoryCleared"] = True
             result["episodicRecall"] = None
             return result
 
-        result["episodicMemory"] = episodes[-cls.MAX_EPISODES :]
+        result["episodicMemory"] = episodes[-cls.max_episodes() :]
 
-        if normalized and cls._RECALL_RE.search(normalized):
+        if normalized and cls._recall_re().search(normalized):
             recall = cls.find_relevant_episode(normalized, episodes, snapshot=result)
 
             if recall:
@@ -85,7 +96,7 @@ class ChatEpisodicMemoryService:
 
         episodes = list(result.get("episodicMemory") or [])
         normalized = (message or "").strip()
-        force_save = bool(cls._SAVE_RE.search(normalized))
+        force_save = bool(cls._save_re().search(normalized))
 
         if not cls._should_record(result, answer=answer, force=force_save):
             return result
@@ -107,7 +118,7 @@ class ChatEpisodicMemoryService:
             seen.add(key)
             deduped.append(item)
 
-        result["episodicMemory"] = deduped[: cls.MAX_EPISODES]
+        result["episodicMemory"] = deduped[: cls.max_episodes()]
         result["lastEpisodeRecorded"] = episode.get("episodeId")
         return result
 
@@ -242,7 +253,7 @@ class ChatEpisodicMemoryService:
                 episodes = [dict(entry) for entry in stored if isinstance(entry, dict)]
                 break
 
-        return episodes[-cls.MAX_EPISODES :]
+        return episodes[-cls.max_episodes() :]
 
     @classmethod
     def _should_record(

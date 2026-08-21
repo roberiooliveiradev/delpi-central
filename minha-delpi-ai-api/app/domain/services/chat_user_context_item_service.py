@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import re
 import uuid
 from typing import Any
 
@@ -14,27 +13,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_snapshot_operational_focus import (
     ChatSnapshotOperationalFocus,
 )
-
-_MAX_CONTENT_CHARS = 12_000
-_MAX_PROMPT_CHARS = 4_000
-_MAX_LABEL_CHARS = 56
-
-_BRANCH_RE = re.compile(
-    r"\bfilial\s*[:\s]?\s*(\d{1,4})\b",
-    re.IGNORECASE,
+from app.domain.services.chat_user_context_items_content_service import (
+    ChatUserContextItemsContentService,
 )
-_WAREHOUSE_RE = re.compile(
-    r"\barmaz[eé]m\s*[:\s]?\s*(\d{1,4}|[A-Z]{1,6})\b",
-    re.IGNORECASE,
-)
-_TABLE_ROW_RE = re.compile(r"^\s*\|.+\|\s*$", re.MULTILINE)
-
-_USER_CONTEXT_PROMPT_MARKER = "Contexto adicionado pelo usuário"
-_USER_CONTEXT_SECTION_END_RE = re.compile(
-    r"^(?:Memória ativa|Preferências|Resolução de referências|Assunto:|Contexto comprimido)",
-    re.IGNORECASE | re.MULTILINE,
-)
-
 
 _CONVERSATION_KINDS = frozenset({"question", "answer", "turn"})
 _CONTEXT_CHIP_KIND = "context"
@@ -49,6 +30,20 @@ _PRESERVED_ENTITY_KEYS = frozenset(
         "productCodeSource",
     }
 )
+
+
+def _max_content_chars() -> int:
+    return ChatUserContextItemsContentService.limit_int(
+        "maxContentChars", default=12_000
+    )
+
+
+def _max_prompt_chars() -> int:
+    return ChatUserContextItemsContentService.limit_int("maxPromptChars", default=4_000)
+
+
+def _max_label_chars() -> int:
+    return ChatUserContextItemsContentService.limit_int("maxLabelChars", default=56)
 
 
 class ChatUserContextItemService:
@@ -93,8 +88,8 @@ class ChatUserContextItemService:
         item: dict[str, Any] = {
             "id": item_id,
             "kind": classified["kind"],
-            "label": classified["label"][:_MAX_LABEL_CHARS],
-            "content": raw[:_MAX_CONTENT_CHARS],
+            "label": classified["label"][:_max_label_chars()],
+            "content": raw[:_max_content_chars()],
             "filename": str(filename).strip()[:240] if filename else None,
             "extractedEntities": classified.get("extractedEntities") or {},
             "source": "user",
@@ -174,12 +169,12 @@ class ChatUserContextItemService:
         snippet = " ".join(text.split())
 
         if not snippet:
-            return prefix[:_MAX_LABEL_CHARS]
+            return prefix[:_max_label_chars()]
 
         if len(snippet) <= 42:
-            return f"{prefix}: {snippet}"[:_MAX_LABEL_CHARS]
+            return f"{prefix}: {snippet}"[:_max_label_chars()]
 
-        return f"{prefix}: {snippet[:39]}…"[:_MAX_LABEL_CHARS]
+        return f"{prefix}: {snippet[:39]}…"[:_max_label_chars()]
 
     @classmethod
     def neutral_entity_label(cls, kind: str, value: str) -> str:
@@ -189,7 +184,7 @@ class ChatUserContextItemService:
         if not token:
             return "Contexto"
 
-        return token[:_MAX_LABEL_CHARS]
+        return token[:_max_label_chars()]
 
     @classmethod
     def _label_for_context_capture(cls, content: str) -> str:
@@ -199,12 +194,12 @@ class ChatUserContextItemService:
         if not text:
             return "Contexto"
 
-        if len(text) <= _MAX_LABEL_CHARS:
+        if len(text) <= _max_label_chars():
             return text
 
         snippet = cls._label_from_content(text)
 
-        return snippet or text[:_MAX_LABEL_CHARS]
+        return snippet or text[:_max_label_chars()]
 
     @classmethod
     def classify(cls, content: str, *, filename: str | None = None) -> dict[str, Any]:
@@ -239,12 +234,12 @@ class ChatUserContextItemService:
         if product_code:
             extracted["productCode"] = product_code
 
-        branch_match = _BRANCH_RE.search(text)
+        branch_match = ChatUserContextItemsContentService.compile_pattern("branch").search(text)
 
         if branch_match:
             extracted["branch"] = branch_match.group(1).strip().upper()
 
-        warehouse_match = _WAREHOUSE_RE.search(text)
+        warehouse_match = ChatUserContextItemsContentService.compile_pattern("warehouse").search(text)
 
         if warehouse_match:
             extracted["warehouse"] = warehouse_match.group(1).strip().upper()
@@ -349,7 +344,7 @@ class ChatUserContextItemService:
             value = cls.chip_value_for_item(item)
 
         chip: dict[str, str] = {
-            "label": label[:_MAX_LABEL_CHARS],
+            "label": label[:_max_label_chars()],
             "kind": cls.chip_kind_for_display(item_kind),
             "value": value,
         }
@@ -611,13 +606,13 @@ class ChatUserContextItemService:
         )
 
         raw = str(conversation_context or "")
-        marker_index = raw.find(_USER_CONTEXT_PROMPT_MARKER)
+        marker_index = raw.find(ChatUserContextItemsContentService.prompt_marker())
 
         if marker_index < 0:
             return []
 
         section = raw[marker_index:]
-        end_match = _USER_CONTEXT_SECTION_END_RE.search(section)
+        end_match = ChatUserContextItemsContentService.compile_pattern("sectionEnd").search(section)
 
         if end_match:
             section = section[: end_match.start()]
@@ -631,13 +626,13 @@ class ChatUserContextItemService:
     ) -> str | None:
         """Extrai o código do bloco de contexto do usuário no prompt (antes do histórico)."""
         raw = str(conversation_context or "")
-        marker_index = raw.find(_USER_CONTEXT_PROMPT_MARKER)
+        marker_index = raw.find(ChatUserContextItemsContentService.prompt_marker())
 
         if marker_index < 0:
             return None
 
         section = raw[marker_index:]
-        end_match = _USER_CONTEXT_SECTION_END_RE.search(section)
+        end_match = ChatUserContextItemsContentService.compile_pattern("sectionEnd").search(section)
 
         if end_match:
             section = section[: end_match.start()]
@@ -690,9 +685,9 @@ class ChatUserContextItemService:
             if not body:
                 continue
 
-            snippet = body[:_MAX_PROMPT_CHARS]
+            snippet = body[:_max_prompt_chars()]
 
-            if len(body) > _MAX_PROMPT_CHARS:
+            if len(body) > _max_prompt_chars():
                 snippet += "…"
 
             lines.append(f"- [{kind}] {label}: {snippet}")
@@ -770,7 +765,7 @@ class ChatUserContextItemService:
                 {
                     "id": f"auto:{entity_key}:{token}"[:64],
                     "kind": kind,
-                    "label": label[:_MAX_LABEL_CHARS],
+                    "label": label[:_max_label_chars()],
                     "content": focus,
                     "extractedEntities": {entity_key: token},
                     "source": "auto",
@@ -840,7 +835,7 @@ class ChatUserContextItemService:
 
     @classmethod
     def _looks_like_table(cls, text: str) -> bool:
-        rows = _TABLE_ROW_RE.findall(text)
+        rows = ChatUserContextItemsContentService.compile_pattern("tableRow").findall(text)
 
         return len(rows) >= 2
 
@@ -852,7 +847,7 @@ class ChatUserContextItemService:
             if not token or token.startswith("|"):
                 continue
 
-            return token[:_MAX_LABEL_CHARS]
+            return token[:_max_label_chars()]
 
         return None
 
@@ -863,4 +858,4 @@ class ChatUserContextItemService:
         if not name:
             return None
 
-        return name.rsplit("/", 1)[-1][: _MAX_LABEL_CHARS]
+        return name.rsplit("/", 1)[-1][: _max_label_chars()]

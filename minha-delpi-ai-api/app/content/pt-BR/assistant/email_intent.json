@@ -1,0 +1,120 @@
+{
+  "markers": [
+    "\\be-?mail\\b",
+    "\\be-?mail\\s+anterior\\b",
+    "\\bcomunicado\\s+por\\s+e-?mail\\b",
+    "\\bmensagem\\s+formal\\b",
+    "\\bresponda\\s+este\\s+e-?mail\\b",
+    "\\bmelhore\\s+este\\s+e-?mail\\b",
+    "\\brevise\\s+este\\s+e-?mail\\b"
+  ],
+  "subtypes": {
+    "email_reply": [
+      "\\brespond(a|er)\\b.*\\be-?mail",
+      "\\bresponda\\s+este\\s+e-?mail",
+      "\\bresposta\\s+.*\\be-?mail"
+    ],
+    "email_rewrite": [
+      "\\bmelhor(e|ar)\\b.*\\be-?mail",
+      "\\brevise\\b.*\\be-?mail",
+      "\\breescrev.*\\be-?mail",
+      "\\be-?mail\\s+anterior\\b",
+      "\\breescrev.*\\banterior\\b"
+    ],
+    "email_correct": [
+      "\\bcorrig.*\\be-?mail",
+      "\\bortografia\\b.*\\be-?mail"
+    ],
+    "email_shorten": [
+      "\\bdeixe\\b.*\\bmais\\s+curto",
+      "\\bmais\\s+curto\\b",
+      "\\bencurte\\b",
+      "\\bresuma\\s+o\\s+e-?mail"
+    ],
+    "email_formalize": [
+      "\\bdeixe\\b.*\\bmais\\s+formal",
+      "\\bmais\\s+formal\\b",
+      "\\bformalize\\b"
+    ],
+    "email_soften": [
+      "\\bdeixe\\b.*\\bmais\\s+cordial",
+      "\\bmais\\s+cordial\\b",
+      "\\bmais\\s+educad"
+    ],
+    "email_firm": [
+      "\\bdeixe\\b.*\\bmais\\s+firme",
+      "\\bmais\\s+firme\\b",
+      "\\btom\\s+mais\\s+firme"
+    ],
+    "email_subjects": [
+      "\\bassunto\\s+alternativ",
+      "\\bcrie\\s+assunto",
+      "\\bopções\\s+de\\s+assunto",
+      "\\bopcoes\\s+de\\s+assunto",
+      "\\b3\\s+assuntos\\b"
+    ],
+    "email_translate": [
+      "\\btraduza\\b.*\\be-?mail",
+      "\\btraduzir\\b.*\\be-?mail",
+      "\\bpasse\\s+para\\s+ingl"
+    ],
+    "email_create": [
+      "\\bescrev(a|er)\\b",
+      "\\bredij(a|ir)\\b",
+      "\\bcrie\\b",
+      "\\bmonte\\b",
+      "\\bfaça\\s+um\\s+e-?mail",
+      "\\bfaca\\s+um\\s+e-?mail",
+      "\\bcomunicado\\b",
+      "\\bcobrança\\b",
+      "\\bcobranca\\b"
+    ]
+  },
+  "tones": {
+    "formal": [
+      "\\bformal\\b",
+      "\\bprezado\\b"
+    ],
+    "executive": [
+      "\\bexecutiv",
+      "\\bdiretoria\\b",
+      "\\bliderança\\b",
+      "\\blideranca\\b"
+    ],
+    "cordial": [
+      "\\bcordial\\b",
+      "\\beducad",
+      "\\bpor\\s+gentileza\\b"
+    ],
+    "firm": [
+      "\\bfirme\\b",
+      "\\burgente\\b",
+      "\\bcobrança\\b",
+      "\\bcobranca\\b"
+    ],
+    "direct": [
+      "\\bcurto\\b",
+      "\\bdireto\\b",
+      "\\bobjetiv"
+    ]
+  },
+  "audiences": {
+    "supplier": [
+      "\\bfornecedor\\b"
+    ],
+    "customer": [
+      "\\bcliente\\b"
+    ],
+    "internal": [
+      "\\bequipe\\b",
+      "\\bcolega\\b",
+      "\\binterno\\b"
+    ]
+  },
+  "patterns": {
+    "signatureExplicit": "(?:assine\\s+como|assinatura[:\\s]+|assinar\\s+como)\\s+(.+)$",
+    "recipientFor": "(?:para|ao|à|a)\\s+(?:o\\s+|a\\s+)?([A-ZÁÉÍÓÚÂÊÔÃÇ][\\wáéíóúâêôãç\\s]{2,40}?)(?:\\s+sobre|\\s+referente|,|\\.|$)",
+    "subjectHint": "(?:assunto|sobre|referente\\s+a)\\s*[:\\-]?\\s*(.+?)(?:\\.|$)",
+    "subjectFromAnswer": "(?im)^\\s*assunto\\s*:\\s*(.+?)\\s*$"
+  }
+}
