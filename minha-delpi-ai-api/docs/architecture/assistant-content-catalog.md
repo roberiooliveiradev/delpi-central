@@ -79,7 +79,6 @@ Wrappers especializados (mantêm API estável):
 | `interactivity.json` | Chips, refinamentos, disponibilidade (`hideUnavailableSuggestions`, labels operacionais/SQL) | `ChatInteractivityContentService`, `ChatInteractivitySuggestionAvailabilityService`, `ChatInteractivitySuggestionService` |
 | `selection_pending.json` | Prompt/labels/caps do contrato `selectionPending`; kinds `catalog_route` (slide) e `score_gap_route` (rota) | `ChatCatalogSelectionPendingService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
-| `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
 | `onboarding.json` | Onboarding | `ChatOnboardingService` |
 | `attachments.json` | Welcome/chips pós-upload (PB05), preview de leitura, **`ingestUi`**, **`fileExtraction`** (limites CSV/XLSX, timeout antiword, hints legado) — ver [chat-workspace-file-extraction-limits.md](./chat-workspace-file-extraction-limits.md) | API `ChatAttachmentContentService`; MFE `workspaceFileIngestContent.ts` + `sync:attachments-content` |
