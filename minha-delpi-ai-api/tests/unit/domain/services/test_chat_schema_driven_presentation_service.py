@@ -64,6 +64,23 @@ def test_extract_tabular_rows_from_nested_last_purchase_object():
     assert rows[0]["supplier_code"] == "000002"
 
 
+def test_extract_tabular_rows_from_product_snapshot_fixture():
+    """product_snapshot (data.product) deve virar 1 row — sem falso-vazio Automático."""
+    from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture
+
+    payload = load_api_delpi_fixture("product_detail_90269001.json")
+    rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(payload)
+
+    assert len(rows) == 1
+    assert rows[0]["code"] == "90269001"
+    assert rows[0]["description"]
+
+    nested_only = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+        {"product": {"code": "10080031", "description": "TERM. FASTON"}}
+    )
+    assert nested_only == [{"code": "10080031", "description": "TERM. FASTON"}]
+
+
 def test_build_raw_payload_markdown_for_unknown_shape():
     presenter = ExternalActionResultPresenter()
     payload = ChatSchemaDrivenPresentationService.build_raw_payload_markdown(

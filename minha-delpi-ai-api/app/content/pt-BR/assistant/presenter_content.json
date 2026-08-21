@@ -325,7 +325,8 @@
     "rawPayloadLead": "{title}: dados retornados pela API (formato original). Use tabelas ou painéis auxiliares quando disponíveis.",
     "rawPayloadEmpty": "{title}: a consulta não retornou conteúdo.",
     "singleRecordObjectKeys": [
-      "last_purchase"
+      "last_purchase",
+      "product"
     ],
     "tabularListKeys": [
       "items",
