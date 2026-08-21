@@ -1,34 +1,23 @@
+"""Fast-path de turno curto — padrões via ``fast_path.json``."""
+
+from __future__ import annotations
+
 import re
 import unicodedata
+from functools import lru_cache
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_small_talk_pattern_service import ChatSmallTalkPatternService
 
-_KNOWLEDGE_HINT_PATTERN = (
-    r"\?|"
-    r"\b(como|quando|onde|qual|quais|quanto|quantos|quem|por que|porque|"
-    r"explique|detalhe|liste|mostre|busque|consulte|informa|produto|"
-    r"estoque|pedido|pedidos|nota|sql|api|relat[oó]rio|documento|"
-    r"fornecedor|fornecedores|cliente|clientes|pre[cç]o|venda|vendas|compra|compras|fatura|"
-    r"estrutura|roteiro|inspe[cç][aã]o|movimenta|"
-    r"agente|projeto|ajud[ae]|configur|permiss|acesso|"
-    r"capacidad|funcionalidad|comando|ferramenta|api|action|"
-    r"ver|listar|exib[ai]r|abrir)\b"
-)
-_KNOWLEDGE_HINT_RE = re.compile(_KNOWLEDGE_HINT_PATTERN, re.IGNORECASE)
 
-_OPERATIONAL_HINT_RE = re.compile(
-    r"\b(\d{5,}|[A-Z]{2,}\d{3,})\b"
-)
+@lru_cache(maxsize=8)
+def _fast_path_pattern(key: str) -> re.Pattern[str]:
+    source = ChatAssistantContentService.get("fast_path", "patterns", key, default="")
 
-_REFINEMENT_HINT_RE = re.compile(
-    r"\b("
-    r"proxima pagina|pagina anterior|pagina seguinte|"
-    r"filial|armazem|filtre|filtro|filtrar|"
-    r"aumente para|mais linhas|mais registros|"
-    r"completo de novo|estoque completo|mostre completo"
-    r")\b",
-    re.IGNORECASE,
-)
+    if not str(source or "").strip():
+        raise KeyError(f"fast_path.patterns.{key} ausente")
+
+    return re.compile(str(source), re.IGNORECASE)
 
 
 def _normalize_text(value: str) -> str:
@@ -119,16 +108,18 @@ class ChatFastPathService:
         if ChatFollowUpIntentService.is_retry_or_continue_request(text):
             return False
 
-        if _KNOWLEDGE_HINT_RE.search(normalized):
+        if _fast_path_pattern("knowledgeHint").search(normalized):
             return False
 
-        if _OPERATIONAL_HINT_RE.search(text):
+        if _fast_path_pattern("operationalHint").search(text):
             return False
 
-        if _REFINEMENT_HINT_RE.search(normalized):
+        if _fast_path_pattern("refinementHint").search(normalized):
             return False
 
-        if normalized in {"ajuda", "help", "comandos", "capacidades", "funcionalidades"}:
+        if normalized in set(
+            ChatAssistantContentService.list("fast_path", "blockedExactNormalized")
+        ):
             return False
 
         word_count = len(normalized.split())

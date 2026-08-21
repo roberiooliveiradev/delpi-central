@@ -31,28 +31,41 @@ def _task_patterns() -> tuple[tuple[re.Pattern[str], str, str], ...]:
     return tuple(compiled)
 
 
+@lru_cache(maxsize=8)
+def _state_pattern(key: str) -> re.Pattern[str]:
+    source = ChatAssistantContentService.get(
+        "conversation_state",
+        "patterns",
+        key,
+        default="",
+    )
+
+    if not str(source or "").strip():
+        raise KeyError(f"conversation_state.patterns.{key} ausente")
+
+    return re.compile(str(source), re.IGNORECASE)
+
+
 class ChatConversationStateService:
-    _TOPIC_CHANGE_RE = re.compile(
-        r"\b(?:agora\s+vamos|novo\s+assunto|mudando\s+de|deixe\s+isso|vamos\s+falar\s+de|"
-        r"trocar\s+de\s+assunto|outro\s+assunto|agora\s+fa[cç]a\s+um\b|agora\s+crie\s+um\b)\b",
-        re.IGNORECASE,
-    )
-    _CONTINUATION_RE = re.compile(
-        r"^\s*(?:siga|continue|prossiga|pr[oó]ximo|pr[oó]xima|seguinte)\s*[.!?]?\s*$",
-        re.IGNORECASE,
-    )
-    _RESUME_RE = re.compile(
-        r"\b(?:volte\s+ao|retome|continue\s+o|volte\s+para|siga\s+de\s+onde)\b",
-        re.IGNORECASE,
-    )
-    _CORRECTION_RE = re.compile(
-        r"\b(?:n[aã]o\s+[eé]|nao\s+eh)\s+(.+?)\s*,\s*[eé]\s+(.+)$",
-        re.IGNORECASE,
-    )
-    _SENSITIVE_RE = re.compile(
-        r"\b(?:senha|password|token|api[_-]?key|cpf|cart[aã]o|chave\s+privada)\b",
-        re.IGNORECASE,
-    )
+    @classmethod
+    def _topic_change_re(cls) -> re.Pattern[str]:
+        return _state_pattern("topicChange")
+
+    @classmethod
+    def _continuation_re(cls) -> re.Pattern[str]:
+        return _state_pattern("continuation")
+
+    @classmethod
+    def _resume_re(cls) -> re.Pattern[str]:
+        return _state_pattern("resume")
+
+    @classmethod
+    def _correction_re(cls) -> re.Pattern[str]:
+        return _state_pattern("correction")
+
+    @classmethod
+    def _sensitive_re(cls) -> re.Pattern[str]:
+        return _state_pattern("sensitive")
 
     @classmethod
     def load_from_previous_messages(cls, previous_messages: list[Any] | None) -> dict[str, Any]:
@@ -92,22 +105,22 @@ class ChatConversationStateService:
             result["continuationRequested"] = False
             return result
 
-        if cls._SENSITIVE_RE.search(normalized):
+        if cls._sensitive_re().search(normalized):
             state["skipMemoryWrite"] = True
 
-        if cls._TOPIC_CHANGE_RE.search(normalized):
+        if cls._topic_change_re().search(normalized):
             state = cls._pause_current_task(state)
             state["activeTopic"] = cls._infer_topic_from_message(normalized)
             state["activeTask"] = cls._detect_task(normalized)
             result["preferencesTopicChanged"] = True
 
-        elif cls._RESUME_RE.search(normalized):
+        elif cls._resume_re().search(normalized):
             resumed = cls._try_resume_task(state, normalized)
 
             if resumed:
                 state = resumed
 
-        elif cls._CONTINUATION_RE.match(normalized):
+        elif cls._continuation_re().match(normalized):
             result["continuationRequested"] = True
 
             if not state.get("activeTask"):
@@ -351,7 +364,7 @@ class ChatConversationStateService:
 
     @classmethod
     def _detect_correction(cls, message: str) -> dict[str, Any] | None:
-        match = cls._CORRECTION_RE.search(message.strip())
+        match = cls._correction_re().search(message.strip())
 
         if not match:
             return None
@@ -374,11 +387,9 @@ class ChatConversationStateService:
     def _is_clear_context(lowered: str) -> bool:
         return any(
             phrase in lowered
-            for phrase in (
-                "limpe o contexto",
-                "limpar o contexto",
-                "começar do zero",
-                "comecar do zero",
+            for phrase in ChatAssistantContentService.list(
+                "conversation_state",
+                "clearContextPhrases",
             )
         )
 

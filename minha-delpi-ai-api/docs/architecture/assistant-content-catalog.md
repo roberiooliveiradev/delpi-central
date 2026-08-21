@@ -53,7 +53,8 @@ Wrappers especializados (mantêm API estável):
 | `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |
 | `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |
 | `error_handling.json` | Erros recuperáveis, chips, SQL tipado; **`missing_required_parameter`** + `validationFailureMarkers` | `ChatErrorHandlingClassifier`, `ChatTrustSignalsService` |
-| `conversation_state.json` | Task types da sessão (`drawing_analysis`, `documentation` sem falso positivo em «revisão manual») | `ChatConversationStateService` |
+| `conversation_state.json` | Task types da sessão + `patterns` (tópico, continuação, correção, sensível) + `clearContextPhrases` | `ChatConversationStateService` |
+| `fast_path.json` | Hints que bloqueiam fast-path (`knowledgeHint`, operacional, refinement) | `ChatFastPathService` |
 | `agentic_planner.json` | System/user templates do planejador agentic + foco operacional | `ChatAgenticToolLoopService` |
 | `conversation_message_search.json` | Triggers de busca na sessão + `sessionReviewTriggers` (meta-conversa) + cues de correção | `ChatConversationMessageSearchService` |
 | `sql_execution_errors.json` | Ponte tipos SQL → `error_handling.types` | `ChatSqlExecutionErrorInterpretationService` |

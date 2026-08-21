@@ -1,0 +1,14 @@
+{
+  "patterns": {
+    "knowledgeHint": "\\?|\\b(como|quando|onde|qual|quais|quanto|quantos|quem|por que|porque|explique|detalhe|liste|mostre|busque|consulte|informa|produto|estoque|pedido|pedidos|nota|sql|api|relat[oó]rio|documento|fornecedor|fornecedores|cliente|clientes|pre[cç]o|venda|vendas|compra|compras|fatura|estrutura|roteiro|inspe[cç][aã]o|movimenta|agente|projeto|ajud[ae]|configur|permiss|acesso|capacidad|funcionalidad|comando|ferramenta|api|action|ver|listar|exib[ai]r|abrir)\\b",
+    "operationalHint": "\\b(\\d{5,}|[A-Z]{2,}\\d{3,})\\b",
+    "refinementHint": "\\b(proxima pagina|pagina anterior|pagina seguinte|filial|armazem|filtre|filtro|filtrar|aumente para|mais linhas|mais registros|completo de novo|estoque completo|mostre completo)\\b"
+  },
+  "blockedExactNormalized": [
+    "ajuda",
+    "help",
+    "comandos",
+    "capacidades",
+    "funcionalidades"
+  ]
+}

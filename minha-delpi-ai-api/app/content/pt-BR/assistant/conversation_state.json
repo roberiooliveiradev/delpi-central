@@ -35,5 +35,18 @@
       "type": "documentation",
       "label": "documentação"
     }
+  ],
+  "patterns": {
+    "topicChange": "\\b(?:agora\\s+vamos|novo\\s+assunto|mudando\\s+de|deixe\\s+isso|vamos\\s+falar\\s+de|trocar\\s+de\\s+assunto|outro\\s+assunto|agora\\s+fa[cç]a\\s+um\\b|agora\\s+crie\\s+um\\b)\\b",
+    "continuation": "^\\s*(?:siga|continue|prossiga|pr[oó]ximo|pr[oó]xima|seguinte)\\s*[.!?]?\\s*$",
+    "resume": "\\b(?:volte\\s+ao|retome|continue\\s+o|volte\\s+para|siga\\s+de\\s+onde)\\b",
+    "correction": "\\b(?:n[aã]o\\s+[eé]|nao\\s+eh)\\s+(.+?)\\s*,\\s*[eé]\\s+(.+)$",
+    "sensitive": "\\b(?:senha|password|token|api[_-]?key|cpf|cart[aã]o|chave\\s+privada)\\b"
+  },
+  "clearContextPhrases": [
+    "limpe o contexto",
+    "limpar o contexto",
+    "começar do zero",
+    "comecar do zero"
   ]
 }

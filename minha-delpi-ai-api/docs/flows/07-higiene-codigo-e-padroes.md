@@ -46,6 +46,7 @@ Testes dedicados dos módulos acima também removidos. Inventário: `docs/archit
 | `_COMPARE_PREVIOUS_RE` órfão pós-JSON | `ChatReferenceResolutionService.matches_compare_previous` |
 | `reason=` PT em seleção/refinement (lote 1) | `selectionReasons` + `platform_tools` + `web_search.selectionReasons` + `stream.activity` |
 | `re.compile` refinement vocabulary | `operational_refinement.json` + `ChatOperationalRefinementContentService` |
+| `re.compile` conversation_state + fast_path | `conversation_state.patterns` / `fast_path.json` |
 
 ---
 
@@ -106,7 +107,7 @@ Critério: **P0** = quebra regra Cursor / risco de regressão; **P1** = dívida 
 | Gap | Evidência | Direção canônica |
 |-----|-----------|------------------|
 | `reason=` PT hardcoded em seleção/refinement | **Lote 1 fechado** (stock/route/spec/tools/KPI/web/sql recovery) | Restam notas de síntese web (`_internal_product_synthesis_note` etc.) e outros `reason=` técnicos (códigos EN) |
-| `re.compile` em serviços de **regra de negócio** (não loader) | **Parcial:** refinement vocabulary migrado | Restam: `chat_conversation_state_service`, `chat_fast_path_service`, `chat_user_memory_durability_service`, `chat_semantic_memory_intent_service`, `chat_email_*`, `chat_user_context_item_service`, parsers BOM/SQL |
+| `re.compile` em serviços de **regra de negócio** (não loader) | **Parcial:** refinement + conversation_state + fast_path | Restam: memória/email/user_context, parsers BOM/SQL |
 | Inferência de segmento com `"/stock"` em texto livre | **Fechado** em pagination (`registry marker` + `has_flag`) | Restam fallbacks `or "/stock"` em selection (P2) |
 | Doc architecture desatualizada | **Fechado** `viewBuildPolicy` em `chat-assistant-content-presentation.md` | — |
 
