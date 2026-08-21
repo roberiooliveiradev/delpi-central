@@ -248,7 +248,7 @@ class ChatToolContextService:
             paginated_service=paginated_service,
         )
 
-        execution = self._maybe_execute_anomaly_follow_ups(
+        execution = self._maybe_apply_sufficiency_critic(
             execution,
             user_id=user_id,
             access_token=access_token,
@@ -593,7 +593,7 @@ class ChatToolContextService:
             },
         )
 
-    def _maybe_execute_anomaly_follow_ups(
+    def _maybe_apply_sufficiency_critic(
         self,
         execution,
         *,
@@ -611,8 +611,8 @@ class ChatToolContextService:
         from app.application.services.chat_tool_context_execution_service import (
             ToolExecutionState,
         )
-        from app.domain.services.chat_anomaly_follow_up_planning_service import (
-            ChatAnomalyFollowUpPlanningService,
+        from app.domain.services.chat_operational_sufficiency_critic_service import (
+            ChatOperationalSufficiencyCriticService,
         )
 
         if not isinstance(execution, ToolExecutionState):
@@ -627,26 +627,56 @@ class ChatToolContextService:
         limit = max(1, int(max_external_action_calls or used or 1))
         remaining = max(0, limit - used)
 
-        if remaining < 1:
+        enrichment_plan = None
+
+        if isinstance(selected_external_action_meta, dict):
+            candidate = selected_external_action_meta.get("enrichmentPlan")
+            enrichment_plan = candidate if isinstance(candidate, dict) else None
+
+        verdict = ChatOperationalSufficiencyCriticService.evaluate(
+            tool_calls=execution.safe_tool_calls,
+            enrichment_plan=enrichment_plan,
+            remaining_slots=remaining,
+            user_message=raw_message or message,
+        )
+
+        if isinstance(selected_external_action_meta, dict):
+            audit = selected_external_action_meta.setdefault("enrichmentPlan", {})
+
+            if isinstance(audit, dict):
+                audit["sufficiency"] = ChatOperationalSufficiencyCriticService.audit_payload(
+                    verdict
+                )
+
+        suggestions = ChatOperationalSufficiencyCriticService.build_clarification_suggestions(
+            verdict=verdict,
+            tool_calls=execution.safe_tool_calls,
+            message=raw_message or message,
+            enrichment_plan=enrichment_plan,
+        )
+
+        if verdict.action != "execute" or remaining < 1:
+            if suggestions and isinstance(selected_external_action_meta, dict):
+                selected_external_action_meta["anomalyClarificationSuggestions"] = (
+                    suggestions
+                )
+
             return execution
 
-        follow_ups = ChatAnomalyFollowUpPlanningService.plan_from_tool_calls(
+        follow_ups = ChatOperationalSufficiencyCriticService.plan_follow_up_selections(
             self.external_action_selection_service,
+            verdict=verdict,
             message=raw_message or message,
             tool_calls=execution.safe_tool_calls,
             allowed_action_ids=allowed_action_ids,
-            remaining_slots=remaining,
             previous_messages=previous_messages,
         )
 
         if not follow_ups:
-            suggestions = ChatAnomalyFollowUpPlanningService.build_clarification_suggestions(
-                execution.safe_tool_calls,
-                message=raw_message or message,
-            )
-
             if suggestions and isinstance(selected_external_action_meta, dict):
-                selected_external_action_meta["anomalyClarificationSuggestions"] = suggestions
+                selected_external_action_meta["anomalyClarificationSuggestions"] = (
+                    suggestions
+                )
 
             return execution
 
@@ -665,26 +695,39 @@ class ChatToolContextService:
 
         if isinstance(selected_external_action_meta, dict):
             audit = selected_external_action_meta.setdefault("enrichmentPlan", {})
+
             if isinstance(audit, dict):
                 follow_ids = [
-                    str((item.get("anomalyFollowUp") or {}).get("routeId") or "").strip()
+                    str((item.get("sufficiencyFollowUp") or item.get("anomalyFollowUp") or {}).get("routeId") or "").strip()
                     for item in follow_ups
                     if isinstance(item, dict)
                 ]
                 audit["anomalyFollowUps"] = [item for item in follow_ids if item]
+                sufficiency = audit.get("sufficiency")
+
+                if isinstance(sufficiency, dict):
+                    sufficiency["executedRouteIds"] = [
+                        item for item in follow_ids if item
+                    ]
+
                 audit["executedCount"] = int(audit.get("executedCount") or used) + len(
                     follow_state.safe_tool_calls
                 )
 
-        clarify = ChatAnomalyFollowUpPlanningService.build_clarification_suggestions(
-            [*execution.safe_tool_calls, *follow_state.safe_tool_calls],
+        post_suggestions = ChatOperationalSufficiencyCriticService.build_clarification_suggestions(
+            verdict=verdict,
+            tool_calls=[*execution.safe_tool_calls, *follow_state.safe_tool_calls],
             message=raw_message or message,
+            enrichment_plan=enrichment_plan,
         )
 
-        if clarify and isinstance(selected_external_action_meta, dict):
-            selected_external_action_meta["anomalyClarificationSuggestions"] = clarify
+        if post_suggestions and isinstance(selected_external_action_meta, dict):
+            selected_external_action_meta["anomalyClarificationSuggestions"] = (
+                post_suggestions
+            )
 
         merged_context = execution.context
+
         if follow_state.context:
             merged_context = (
                 f"{execution.context}\n\n{follow_state.context}".strip()
@@ -713,6 +756,36 @@ class ChatToolContextService:
                 follow_state.pagination_continue_prompt
                 or execution.pagination_continue_prompt
             ),
+        )
+
+    def _maybe_execute_anomaly_follow_ups(
+        self,
+        execution,
+        *,
+        user_id: str,
+        access_token: str,
+        message: str,
+        raw_message: str,
+        allowed_action_ids: list[str] | None,
+        previous_messages: list | None,
+        max_external_action_calls: int | None,
+        on_stream_activity,
+        paginated_service,
+        selected_external_action_meta: dict | None,
+    ):
+        """Compat: delega ao entry point único do critic de suficiência."""
+        return self._maybe_apply_sufficiency_critic(
+            execution,
+            user_id=user_id,
+            access_token=access_token,
+            message=message,
+            raw_message=raw_message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            max_external_action_calls=max_external_action_calls,
+            on_stream_activity=on_stream_activity,
+            paginated_service=paginated_service,
+            selected_external_action_meta=selected_external_action_meta,
         )
 
     def _finalize_tool_context_result(
