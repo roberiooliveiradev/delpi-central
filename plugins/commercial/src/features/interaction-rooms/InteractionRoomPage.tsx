@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, PanelRight } from "lucide-react";
+import { ExternalLink, PanelRight, Search } from "lucide-react";
 import { roomHeaderBemClasses } from "@delpi/plugin-ui/index";
 
 import {
@@ -34,6 +34,7 @@ import {
   CommercialMessageThread,
   CommercialRoomContextPanel,
   CommercialRoomHeader,
+  CommercialRoomMessageFindPanel,
   CommercialRoomSidePanel,
   CommercialUnderlineNav,
 } from "../../app/commercialUi";
@@ -126,7 +127,13 @@ export function InteractionRoomPage({
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
-  const [contextOpen, setContextOpen] = useState(false);
+  const [sidePanelMode, setSidePanelMode] = useState<"context" | "find" | null>(
+    null,
+  );
+  const [findQuery, setFindQuery] = useState("");
+  const [findDebounced, setFindDebounced] = useState("");
+  const [findResults, setFindResults] = useState<InteractionMessageDto[]>([]);
+  const [findLoading, setFindLoading] = useState(false);
   const [roomView, setRoomView] = useState<"chat" | "shared">("chat");
   const threadRef = useRef({
     messages,
@@ -582,15 +589,111 @@ export function InteractionRoomPage({
   );
 
   useEffect(() => {
-    if (!contextOpen) return;
+    if (!sidePanelMode) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      setContextOpen(false);
+      setSidePanelMode(null);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [contextOpen]);
+  }, [sidePanelMode]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setFindDebounced(findQuery.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [findQuery]);
+
+  useEffect(() => {
+    if (sidePanelMode !== "find") return;
+    const id = roomId.trim();
+    const q = findDebounced;
+    if (!id || !q) {
+      setFindResults([]);
+      setFindLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setFindLoading(true);
+    void (async () => {
+      try {
+        const rows = await listInteractionMessages(id, {
+          limit: 40,
+          q,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        setFindResults(rows);
+      } catch (err: unknown) {
+        if (controller.signal.aborted) return;
+        setFindResults([]);
+        pushRoomAlert(
+          err instanceof Error ? err.message : content.findInChatError,
+          "danger",
+        );
+      } finally {
+        if (!controller.signal.aborted) setFindLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [sidePanelMode, roomId, findDebounced, content.findInChatError]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "f") {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.("input, textarea, [contenteditable='true']")) {
+        // Allow find-in-field; still intercept when focus is the thread surface.
+        if (!target.closest(".cm-room-thread")) return;
+      }
+      if (!roomId.trim()) return;
+      event.preventDefault();
+      setSidePanelMode("find");
+      setRoomView("chat");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [roomId]);
+
+  const findPanelResults = useMemo(() => {
+    const now = new Date();
+    return findResults.map((message) => {
+      const created = message.created_at ? new Date(message.created_at) : null;
+      const sameMonth =
+        created &&
+        !Number.isNaN(created.getTime()) &&
+        created.getMonth() === now.getMonth() &&
+        created.getFullYear() === now.getFullYear();
+      return {
+        id: message.id,
+        messageId: message.id,
+        authorLabel: nameFor(message.author_user_id) || message.author_user_id,
+        dateLabel: formatInteractionMessageTime(message.created_at),
+        bodyText: message.body_text || "",
+        groupLabel: sameMonth
+          ? content.findInChatThisMonth
+          : created && !Number.isNaN(created.getTime())
+            ? created.toLocaleDateString("pt-BR", {
+                month: "long",
+                year: "numeric",
+              })
+            : null,
+      };
+    });
+  }, [findResults, nameFor, content.findInChatThisMonth]);
+
+  const onSelectFindResult = useCallback(
+    (messageId: string) => {
+      setRoomView("chat");
+      stickToBottomRef.current = false;
+      window.requestAnimationFrame(() => {
+        scrollThreadMessageIntoView(msgsRef.current, messageId);
+      });
+    },
+    [],
+  );
 
   const contextPins = useMemo(
     () =>
@@ -679,19 +782,36 @@ export function InteractionRoomPage({
                   ) : null}
                   <CommercialActionButton
                     variant="ghost"
+                    aria-label={content.findInChatAriaLabel}
+                    title={content.findInChatAriaLabel}
+                    aria-pressed={sidePanelMode === "find"}
+                    onClick={() =>
+                      setSidePanelMode((mode) =>
+                        mode === "find" ? null : "find",
+                      )
+                    }
+                  >
+                    <Search size={16} aria-hidden />
+                  </CommercialActionButton>
+                  <CommercialActionButton
+                    variant="ghost"
                     aria-label={
-                      contextOpen
+                      sidePanelMode === "context"
                         ? content.contextToggleCloseAriaLabel
                         : content.contextToggle
                     }
                     title={
-                      contextOpen
+                      sidePanelMode === "context"
                         ? content.contextToggleCloseAriaLabel
                         : content.contextToggle
                     }
-                    aria-expanded={contextOpen}
-                    aria-pressed={contextOpen}
-                    onClick={() => setContextOpen((open) => !open)}
+                    aria-expanded={sidePanelMode === "context"}
+                    aria-pressed={sidePanelMode === "context"}
+                    onClick={() =>
+                      setSidePanelMode((mode) =>
+                        mode === "context" ? null : "context",
+                      )
+                    }
                   >
                     <PanelRight size={16} aria-hidden />
                   </CommercialActionButton>
@@ -815,33 +935,63 @@ export function InteractionRoomPage({
               </div>
             </div>
             )}
-            <CommercialRoomSidePanel open={contextOpen} title={content.contextToggle}>
-              <CommercialRoomContextPanel
-                embedded
-                flush
-                labels={{
-                  about: content.contextAbout,
-                  participants: content.contextParticipants,
-                  pins: content.contextPins,
-                  pinsEmpty: content.contextPinsEmpty,
-                  membersEmpty: content.contextMembersEmpty,
-                  openEntity: content.contextOpenEntity,
-                }}
-                entityPrimary={entityPresentation.primaryNumber}
-                entityFields={entityPresentation.aboutFields}
-                entityHref={entityHref}
-                onOpenEntity={
-                  entityHref
-                    ? () => {
-                        navigatePluginPath(entityHref);
-                      }
-                    : undefined
-                }
-                participants={participants}
-                participantsAriaLabel={content.roomMembersAriaLabel}
-                pins={contextPins}
-                onPinSelect={onSelectPin}
-              />
+            <CommercialRoomSidePanel
+              open={sidePanelMode != null}
+              title={
+                sidePanelMode === "find"
+                  ? content.findInChatTitle
+                  : content.contextToggle
+              }
+            >
+              {sidePanelMode === "find" ? (
+                <CommercialRoomMessageFindPanel
+                  labels={{
+                    title: content.findInChatTitle,
+                    closeAriaLabel: content.findInChatCloseAriaLabel,
+                    placeholder: content.findInChatPlaceholder,
+                    clear: content.findInChatClear,
+                    empty: content.findInChatEmpty,
+                    loading: content.findInChatLoading,
+                  }}
+                  query={findQuery}
+                  onQueryChange={setFindQuery}
+                  onClear={() => {
+                    setFindQuery("");
+                    setFindResults([]);
+                  }}
+                  onClose={() => setSidePanelMode(null)}
+                  results={findPanelResults}
+                  loading={findLoading}
+                  onSelectResult={onSelectFindResult}
+                />
+              ) : (
+                <CommercialRoomContextPanel
+                  embedded
+                  flush
+                  labels={{
+                    about: content.contextAbout,
+                    participants: content.contextParticipants,
+                    pins: content.contextPins,
+                    pinsEmpty: content.contextPinsEmpty,
+                    membersEmpty: content.contextMembersEmpty,
+                    openEntity: content.contextOpenEntity,
+                  }}
+                  entityPrimary={entityPresentation.primaryNumber}
+                  entityFields={entityPresentation.aboutFields}
+                  entityHref={entityHref}
+                  onOpenEntity={
+                    entityHref
+                      ? () => {
+                          navigatePluginPath(entityHref);
+                        }
+                      : undefined
+                  }
+                  participants={participants}
+                  participantsAriaLabel={content.roomMembersAriaLabel}
+                  pins={contextPins}
+                  onPinSelect={onSelectPin}
+                />
+              )}
             </CommercialRoomSidePanel>
           </div>
         </CommercialConversationFileDropLayer>
