@@ -339,8 +339,8 @@ export function PluginShell({
     [basePath, paletteSections],
   );
 
-  const fillViewport =
-    view === "interaction_rooms" || view === "interaction_room_detail";
+  /** Fill só com thread aberta — a lista Conversas usa o mesmo fluxo de altura do Início. */
+  const fillViewport = view === "interaction_room_detail";
 
   return (
     <div

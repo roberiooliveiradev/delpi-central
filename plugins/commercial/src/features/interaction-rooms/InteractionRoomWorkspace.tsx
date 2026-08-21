@@ -91,7 +91,7 @@ export function InteractionRoomWorkspace({
   ) : null;
 
   return (
-    <section className="cm-page-stack cm-room-workspace">
+    <section className="cm-room-workspace">
       <div className="cm-room-workspace__grid">
         {stacked ? (
           roomId ? (

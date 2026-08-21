@@ -14,5 +14,11 @@ describe("PluginShell interaction rooms badge", () => {
     expect(source).toMatch(/interaction_rooms/);
     expect(source).toMatch(/dashboard-page--fill/);
     expect(source).toMatch(/interaction_room_detail/);
+    expect(source).toMatch(
+      /fillViewport = view === "interaction_room_detail"/,
+    );
+    expect(source).not.toMatch(
+      /fillViewport =\s*view === "interaction_rooms" \|\|/,
+    );
   });
 });

@@ -135,8 +135,11 @@
 }
 
 .dashboard-commercial .cm-room-workspace {
-  flex: 1;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-workspace {
@@ -146,8 +149,9 @@
 
 .dashboard-commercial .cm-room-workspace__grid {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   align-items: stretch;
 }
 
