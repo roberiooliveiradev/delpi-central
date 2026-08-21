@@ -15,7 +15,7 @@ import {
 import { buildInteractionRoomPath } from "../../app/pluginRoutes";
 import { CM_HELP } from "../../content/helpTooltips";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
-import { InteractionRoomWorkspace } from "./InteractionRoomWorkspace";
+import { InteractionRoomPage } from "./InteractionRoomPage";
 import {
   INTERACTION_ROOM_NARROW_QUERY,
   useMatchMedia,
@@ -29,8 +29,8 @@ type Props = {
 };
 
 /**
- * Painel embutido na ficha — resolve lazy e monta o workspace completo
- * (inbox sidebar + thread com topbar), o mesmo canvas da rota da sala.
+ * Painel embutido na ficha — resolve lazy e monta só a thread da sala
+ * (topbar + mensagens + composer), sem a listagem de conversas.
  * Viewport ≤768px: conversa no drawer host-contained.
  */
 export function InteractionRoomPanel({
@@ -105,7 +105,11 @@ export function InteractionRoomPanel({
   const roomBody =
     !loading && room?.id ? (
       <div className="cm-room-panel">
-        <InteractionRoomWorkspace basePath={basePath} roomId={room.id} />
+        <InteractionRoomPage
+          basePath={basePath}
+          roomId={room.id}
+          variant="pane"
+        />
       </div>
     ) : null;
 

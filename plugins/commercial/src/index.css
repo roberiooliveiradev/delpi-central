@@ -217,19 +217,10 @@
   overflow: hidden;
 }
 
-.dashboard-commercial .cm-room-panel .cm-room-workspace,
-.dashboard-commercial .cm-room-panel .cm-room-workspace__grid,
 .dashboard-commercial .cm-room-panel .cm-room-thread {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-}
-
-.dashboard-commercial .cm-room-thread.cm-room-panel .cm-conversation-drop {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1 1 auto;
 }
 
 .dashboard-commercial .cm-room-thread .cm-conversation-drop {
