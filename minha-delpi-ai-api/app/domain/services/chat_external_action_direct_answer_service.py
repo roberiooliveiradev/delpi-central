@@ -22,7 +22,8 @@ class ChatExternalActionKind:
 
 
 class ChatExternalActionDirectAnswerService:
-    _ZERO_RECORDS_RE = ChatProductQueryIntentService._ZERO_RECORDS_RE
+    # Descriptor lazy — não avaliar Vocabulary no import (AssistantContentPort).
+    _ZERO_RECORDS_RE = ChatProductQueryIntentService.__dict__["_ZERO_RECORDS_RE"]
 
     @classmethod
     def classify(cls, *, path: str | None, operation_id: str | None, humanized: dict) -> str:

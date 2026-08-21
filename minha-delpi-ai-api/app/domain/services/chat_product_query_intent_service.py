@@ -41,9 +41,10 @@ __all__ = ["ChatProductQueryIntent", "ChatProductQueryIntentService"]
 class ChatProductQueryIntentService:
     """API estável — detect, resolução de código/intent e predicados de rota."""
 
-    _ZERO_RECORDS_RE = ChatProductQueryIntentVocabulary.ZERO_RECORDS_RE
-    _PRODUCT_CODE_RE = ChatProductQueryIntentVocabulary.PRODUCT_CODE_RE
-    _CALENDAR_YEAR_RE = ChatProductQueryIntentVocabulary.CALENDAR_YEAR_RE
+    # Copiar descriptors sem disparar __get__ (evita load de JSON no import).
+    _ZERO_RECORDS_RE = ChatProductQueryIntentVocabulary.__dict__["ZERO_RECORDS_RE"]
+    _PRODUCT_CODE_RE = ChatProductQueryIntentVocabulary.__dict__["PRODUCT_CODE_RE"]
+    _CALENDAR_YEAR_RE = ChatProductQueryIntentVocabulary.__dict__["CALENDAR_YEAR_RE"]
 
     @classmethod
     def detect(cls, message: str) -> str:

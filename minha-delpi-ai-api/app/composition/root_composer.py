@@ -8,6 +8,14 @@ from app.infrastructure.logging.json_logging import configure_logging
 from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.request_logging import register_request_logging
+
+# Ports de conteúdo/config antes de importar rotas (vocabulário JSON no domain).
+from app.composition.content_composer import (
+    configure_domain_infrastructure_ports_with_persistence,
+)
+
+configure_domain_infrastructure_ports_with_persistence()
+
 from app.interfaces.http.routes.admin_routes import admin_bp
 from app.interfaces.http.routes.chat_routes import chat_bp
 from app.interfaces.http.routes.health_routes import health_bp
@@ -40,12 +48,6 @@ def create_application() -> Flask:
 
     db.init_app(app)
     migrate.init_app(app, db)
-
-    from app.composition.content_composer import (
-        configure_domain_infrastructure_ports_with_persistence,
-    )
-
-    configure_domain_infrastructure_ports_with_persistence()
 
     register_request_logging(app)
     register_auth_middleware(app)
