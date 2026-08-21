@@ -79,9 +79,10 @@
 .delpi-ui-room-header__nav {
   display: flex;
   flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
+  gap: 0.35rem;
   min-width: 0;
-  max-width: min(100%, 18rem);
 }
 
 .delpi-ui-room-header__nav .delpi-ui-underline-nav,
@@ -140,7 +141,7 @@
   gap: 0.35rem;
 }
 
-.delpi-ui-room-header__actions [aria-pressed="true"] {
+.delpi-ui-room-header__people [aria-pressed="true"] {
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(
     in srgb,

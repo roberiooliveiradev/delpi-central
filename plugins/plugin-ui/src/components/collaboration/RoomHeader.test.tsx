@@ -35,16 +35,31 @@ describe("RoomHeader", () => {
     expect(screen.getByRole("button", { name: "Invite" })).toBeTruthy();
   });
 
-  it("renderiza slot nav entre títulos e pessoas", () => {
+  it("renderiza slot nav após avatares e antes de actions", () => {
     const { container } = render(
       <RoomHeader
         classNames={classNames}
         title="Pedido 1"
+        participantsAriaLabel="Members"
+        participants={[{ id: "1", name: "Ana Silva" }]}
         nav={<nav aria-label="Vista">Chat</nav>}
+        actions={<button type="button">Search</button>}
       />,
     );
+    const people = container.querySelector(".delpi-ui-room-header__people");
+    expect(people).toBeTruthy();
+    const nav = people?.querySelector(".delpi-ui-room-header__nav");
+    const actions = people?.querySelector(".delpi-ui-room-header__actions");
     expect(screen.getByRole("navigation", { name: "Vista" })).toBeTruthy();
-    expect(container.querySelector(".delpi-ui-room-header__nav")).toBeTruthy();
+    expect(nav).toBeTruthy();
+    expect(actions).toBeTruthy();
+    const children = [...(people?.children ?? [])];
+    expect(children.indexOf(nav as Element)).toBeGreaterThan(
+      children.findIndex((el) => el.getAttribute("aria-label") === "Members"),
+    );
+    expect(children.indexOf(nav as Element)).toBeLessThan(
+      children.indexOf(actions as Element),
+    );
   });
 
   it("título clicável abre entidade via onTitleClick", () => {
@@ -73,6 +88,8 @@ describe("RoomHeader", () => {
     expect(css).toMatch(/\.delpi-ui-room-header__chip \{/);
     expect(css).toMatch(/\.delpi-ui-room-header__nav \{/);
     expect(css).toMatch(/\.delpi-ui-room-header__title-button \{/);
-    expect(css).toMatch(/\[aria-pressed="true"\]/);
+    expect(css).toMatch(
+      /\.delpi-ui-room-header__people \[aria-pressed="true"\]/,
+    );
   });
 });

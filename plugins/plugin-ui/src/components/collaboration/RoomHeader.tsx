@@ -32,7 +32,7 @@ export type RoomHeaderProps = {
   classNames: RoomHeaderClassNames;
   subtitle?: ReactNode;
   chips?: ReactNode;
-  /** Inline view switcher (e.g. Chat | Shared) after title/chips. */
+  /** Inline view switcher (e.g. Chat | Shared) after avatars, before actions. */
   nav?: ReactNode;
   /** Makes the title a control that opens the linked entity (order, etc.). */
   onTitleClick?: () => void;
@@ -65,7 +65,8 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
 }
 
 /**
- * Room header: title (optional entity link), chip slot, optional nav, AvatarStack, actions.
+ * Room header: title (optional entity link), chips, then people cluster
+ * (AvatarStack → optional nav → actions).
  */
 export function RoomHeader({
   title,
@@ -103,7 +104,6 @@ export function RoomHeader({
         {subtitle ? <span className={classNames.subtitle}>{subtitle}</span> : null}
         {chips ? <div className={classNames.chips}>{chips}</div> : null}
       </div>
-      {nav ? <div className={classNames.nav}>{nav}</div> : null}
       <div className={classNames.people}>
         {participants.length > 0 ? (
           <AvatarStack
@@ -115,6 +115,7 @@ export function RoomHeader({
             size="sm"
           />
         ) : null}
+        {nav ? <div className={classNames.nav}>{nav}</div> : null}
         {actions ? <div className={classNames.actions}>{actions}</div> : null}
       </div>
     </header>
