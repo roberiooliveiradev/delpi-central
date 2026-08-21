@@ -2931,6 +2931,25 @@ PROSE_COMMENTARY_DIRECT_CASES = [
         "expected_snippets": ["107,27%", "3.717.926", "3.466.000"],
         "forbidden_snippets": ["assistente corporativo", "equipe de suporte"],
     },
+    {
+        "id": "stock_summary_fast_brief_direct",
+        "message": "estoque do produto 10080001",
+        "response_mode": "fast",
+        "stale_direct_answer": None,
+        "pipeline_stages": ["ingress", "tools", "post_tool"],
+        "tool_metadata": {
+            "ok": True,
+            "llmProseDecoupled": True,
+            "path": "/products/10080001/stock",
+            "dataCommentary": {
+                "summary": "Estoque consolidado de **120** unidades para o produto **10080001**.",
+                "highlights": [],
+            },
+        },
+        "expected_snippets": ["120", "10080001"],
+        "forbidden_snippets": ["assistente corporativo"],
+        "expected_effect": "llm_synthesis_brief",
+    },
 ]
 
 # Playbook 25 — composição multi-rota de meta departamental (plan_actions).

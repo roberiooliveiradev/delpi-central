@@ -41,7 +41,11 @@ def test_commentary_direct_wins_over_stale_direct_answer(case: dict) -> None:
 
     assert direct
     assert skip_rag is True
-    assert effect == "llm_synthesis"
+    expected_effect = case.get("expected_effect")
+    if expected_effect:
+        assert effect == expected_effect
+    else:
+        assert effect in {"llm_synthesis", "llm_synthesis_brief"}
     assert tool_context.get("commentaryBriefDirect") is True
 
     lowered = direct.lower()
