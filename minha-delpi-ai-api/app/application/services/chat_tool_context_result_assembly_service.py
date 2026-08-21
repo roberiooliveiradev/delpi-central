@@ -290,6 +290,32 @@ class ChatToolContextResultAssemblyService:
             if isinstance(continuation, dict):
                 result_payload["multiActionContinuation"] = continuation
 
+            enrichment_plan = selected_external_action_meta.get("enrichmentPlan")
+
+            if isinstance(enrichment_plan, dict):
+                result_payload["enrichmentPlan"] = enrichment_plan
+
+        evidence_refs = [
+            {
+                "path": str((item.get("metadata") or {}).get("path") or "").strip(),
+                "operationId": str(
+                    (item.get("metadata") or {}).get("operationId")
+                    or ((item.get("metadata") or {}).get("apiDelpiResponseMeta") or {}).get(
+                        "operationId"
+                    )
+                    or ""
+                ).strip(),
+                "ok": bool((item.get("metadata") or {}).get("ok")),
+            }
+            for item in safe_tool_calls
+            if isinstance(item, dict)
+            and str(item.get("name") or "") == "execute_external_action"
+            and isinstance(item.get("metadata"), dict)
+        ]
+
+        if evidence_refs:
+            result_payload["evidenceRefs"] = evidence_refs
+
         if drawing_analysis_payload:
             result_payload["drawingAnalysisMode"] = True
 

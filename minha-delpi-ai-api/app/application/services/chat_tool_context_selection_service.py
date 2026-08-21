@@ -407,6 +407,11 @@ class ChatToolContextSelectionService:
                             "productCodeSource"
                         ] = drawing_product_code_source
 
+                    enrichment_plan = first.get("enrichmentPlan")
+
+                    if isinstance(enrichment_plan, dict):
+                        selected_external_action_meta["enrichmentPlan"] = enrichment_plan
+
             if not planned_external_actions and host.external_action_repository:
                 from app.application.services.chat_playbook_product_action_readiness_service import (
                     ChatPlaybookProductActionReadinessService,

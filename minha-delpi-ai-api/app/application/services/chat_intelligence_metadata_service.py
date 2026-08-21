@@ -140,4 +140,20 @@ class ChatIntelligenceMetadataService:
         if isinstance(document_vision, dict) and document_vision:
             metadata["documentVision"] = document_vision
 
+        enrichment_plan = tool_context.get("enrichmentPlan")
+
+        if not isinstance(enrichment_plan, dict):
+            selected = tool_context.get("selectedExternalAction")
+
+            if isinstance(selected, dict):
+                enrichment_plan = selected.get("enrichmentPlan")
+
+        if isinstance(enrichment_plan, dict) and enrichment_plan:
+            metadata["enrichmentPlan"] = enrichment_plan
+
+        evidence_refs = tool_context.get("evidenceRefs")
+
+        if isinstance(evidence_refs, list) and evidence_refs:
+            metadata["evidenceRefs"] = evidence_refs
+
         return metadata
