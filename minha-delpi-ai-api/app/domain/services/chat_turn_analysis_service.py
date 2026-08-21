@@ -50,6 +50,84 @@ class ChatTurnAnalysisResult:
 
 class ChatTurnAnalysisService:
     @classmethod
+    def should_analyze(
+        cls,
+        *,
+        response_mode: str | None,
+        heuristic_intent: str | None = None,
+        heuristic_decision: str | None = None,
+        heuristic_reason: str | None = None,
+        heuristic_confidence: float | None = None,
+        pipeline_stages: list[str] | None = None,
+        has_direct_answer: bool = False,
+        turn_analysis_enabled: bool = True,
+    ) -> bool:
+        if not turn_analysis_enabled:
+            return False
+
+        if has_direct_answer:
+            return False
+
+        mode = str(response_mode or "normal").strip().lower() or "normal"
+        disabled_modes = {
+            str(item).strip().lower()
+            for item in (ChatTurnAnalysisContentService.gate_setting("disabledResponseModes") or [])
+            if str(item).strip()
+        }
+        if mode in disabled_modes:
+            return False
+
+        stages = {str(stage).strip() for stage in (pipeline_stages or []) if str(stage).strip()}
+        skip_stages = {
+            str(item).strip()
+            for item in (ChatTurnAnalysisContentService.gate_setting("skipStages") or [])
+            if str(item).strip()
+        }
+        if stages.intersection(skip_stages):
+            return False
+
+        intent = str(heuristic_intent or "").strip()
+        skip_intents = {
+            str(item).strip()
+            for item in (ChatTurnAnalysisContentService.gate_setting("skipIntents") or [])
+            if str(item).strip()
+        }
+        if intent in skip_intents:
+            return False
+
+        reason = str(heuristic_reason or "").strip()
+        decision = str(heuristic_decision or "").strip()
+        open_reasons = {
+            str(item).strip()
+            for item in (ChatTurnAnalysisContentService.gate_setting("openOnReasons") or [])
+            if str(item).strip()
+        }
+        open_decisions = {
+            str(item).strip()
+            for item in (ChatTurnAnalysisContentService.gate_setting("openOnDecisions") or [])
+            if str(item).strip()
+        }
+
+        if reason in open_reasons or decision in open_decisions:
+            return True
+
+        try:
+            threshold = float(
+                ChatTurnAnalysisContentService.gate_setting(
+                    "openOnLowConfidenceBelow",
+                    0.7,
+                )
+            )
+        except (TypeError, ValueError):
+            threshold = 0.7
+
+        if heuristic_confidence is not None and float(heuristic_confidence) < threshold:
+            if intent in {"mixed_task", "llm_general", "operational_query"}:
+                return True
+
+        return False
+
+    @classmethod
     def safe_clarify(
         cls,
         *,
