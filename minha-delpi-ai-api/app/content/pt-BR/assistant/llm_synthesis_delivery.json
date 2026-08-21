@@ -1,5 +1,6 @@
 {
   "compoundUserMessageLead": "Responda à pergunta em linguagem natural com os blocos de fatos abaixo. Use somente dados reais de cada seção — não invente nem use placeholders. Não copie este bloco nem reproduza frases de instrução.",
+  "safeFallbackAnswer": "Não consegui formular a resposta de forma clara. Pode reformular a pergunta em uma frase?",
   "commonLeakMarkers": [
     "não copie este bloco",
     "não reproduza frases de instrução",
@@ -13,6 +14,20 @@
     "não invente origem",
     "valores reais —",
     "regra: quando o usuário perguntar",
-    "não invente dados além do que está abaixo"
+    "não invente dados além do que está abaixo",
+    "according to my instructions",
+    "the user's message is",
+    "i should ask for clarification",
+    "chain of thought",
+    "let me think",
+    "let's think",
+    "<think",
+    "</think>",
+    "reasoning:",
+    "my internal reasoning",
+    "as an ai language model",
+    "i need to follow the system",
+    "the system prompt",
+    "based on my instructions"
   ]
 }

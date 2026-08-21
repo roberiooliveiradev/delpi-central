@@ -29,3 +29,17 @@ class ChatLlmSynthesisDeliveryContentService:
             for item in ChatAssistantContentService.list(_BUNDLE, "commonLeakMarkers")
             if str(item).strip()
         )
+
+    @classmethod
+    def safe_fallback_answer(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "safeFallbackAnswer",
+                default=(
+                    "Não consegui formular a resposta de forma clara. "
+                    "Pode reformular a pergunta em uma frase?"
+                ),
+            )
+            or ""
+        ).strip()

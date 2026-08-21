@@ -101,4 +101,8 @@ class ChatLlmSynthesisLeakGuardService:
         if recovery:
             return recovery
 
+        safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+        if safe:
+            return safe
+
         return text

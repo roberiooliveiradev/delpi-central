@@ -72,7 +72,7 @@ def test_guard_uses_template_not_facts_dump():
     assert "auditoria-5s" not in guarded
 
 
-def test_empty_fallback_does_not_return_facts_dump():
+def test_empty_fallback_uses_safe_fallback_not_leak():
     facts = "Dados do usuário autenticado:\n- auditoria-5s.view.filial-01"
     leaked = "Resposta com vazamento: não copie este bloco."
     guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
@@ -81,5 +81,32 @@ def test_empty_fallback_does_not_return_facts_dump():
         facts=facts,
     )
 
-    assert guarded == leaked
+    assert guarded != leaked
+    assert "não copie este bloco" not in guarded.lower()
     assert "auditoria-5s" not in guarded
+    assert "reformular" in guarded.lower() or "clara" in guarded.lower()
+
+
+def test_needs_fallback_on_english_cot_marker():
+    assert ChatLlmSynthesisLeakGuardService.needs_fallback(
+        answer=(
+            "According to my instructions, the user's message is ambiguous. "
+            "I should ask for clarification."
+        ),
+    )
+
+
+def test_guard_replaces_english_cot_with_safe_fallback():
+    leaked = (
+        "According to my instructions, the user's message is «programação». "
+        "I should ask for clarification. Let me think step by step."
+    )
+    guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
+        answer=leaked,
+        fallback=None,
+    )
+
+    assert guarded != leaked
+    assert "according to my instructions" not in guarded.lower()
+    assert "let me think" not in guarded.lower()
+    assert guarded.strip()
