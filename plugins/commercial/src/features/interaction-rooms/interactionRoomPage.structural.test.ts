@@ -6,11 +6,12 @@ import { fileURLToPath } from "node:url";
 const dir = dirname(fileURLToPath(import.meta.url));
 
 describe("InteractionRoomPage", () => {
-  it("compõe Shell + RoomHeader + MessageThread + composer com anexos", () => {
+  it("compõe Shell do kit + RoomHeader + MessageThread + composer com anexos", () => {
     const source = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
-    expect(source).toMatch(/InteractionRoomConversationShell/);
-    expect(source).toMatch(/InteractionRoomConversationChatColumn/);
+    expect(source).toMatch(/CommercialRoomConversationShell/);
+    expect(source).toMatch(/CommercialRoomConversationChatColumn/);
     expect(source).toMatch(/wrapRoot=\{false\}/);
+    expect(source).not.toMatch(/InteractionRoomConversationShell/);
     expect(source).toMatch(/CommercialRoomHeader/);
     expect(source).not.toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/onTitleClick/);

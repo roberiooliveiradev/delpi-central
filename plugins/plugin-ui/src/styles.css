@@ -75,6 +75,7 @@
 @import "./styles/reaction-bar.css";
 @import "./styles/room-inbox.css";
 @import "./styles/room-header.css";
+@import "./styles/room-conversation-shell.css";
 @import "./styles/room-context-panel.css";
 @import "./styles/room-side-panel.css";
 @import "./styles/room-message-find.css";

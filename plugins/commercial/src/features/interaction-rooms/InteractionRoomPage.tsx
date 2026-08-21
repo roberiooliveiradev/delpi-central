@@ -35,6 +35,8 @@ import {
   CommercialLoadingCard,
   CommercialMessageThread,
   CommercialRoomContextPanel,
+  CommercialRoomConversationChatColumn,
+  CommercialRoomConversationShell,
   CommercialRoomHeader,
   CommercialSegmentToggle,
   CommercialRoomMessageFindPanel,
@@ -45,10 +47,6 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildInteractionRoomsPath } from "../../app/pluginRoutes";
 import { INTERACTION_ROOMS_CONTENT } from "../../content/interactionRoomsContent";
 import { formatRoomEntityPresentation } from "./interactionRoomEntityPresentation";
-import {
-  InteractionRoomConversationChatColumn,
-  InteractionRoomConversationShell,
-} from "./InteractionRoomConversationShell";
 import { InteractionRoomMessageComposer, ROOM_ATTACH_ACCEPT } from "./InteractionRoomMessageComposer";
 import { InteractionRoomMoreMenu } from "./InteractionRoomMoreMenu";
 import { InteractionRoomRenameDialog } from "./InteractionRoomRenameDialog";
@@ -875,7 +873,7 @@ export function InteractionRoomPage({
       ) : null}
       {!loading && room ? (
         <>
-        <InteractionRoomConversationShell
+        <CommercialRoomConversationShell
           wrapRoot={false}
           dropOverlayLabel={content.dropOverlayLabel}
           accept={ROOM_ATTACH_ACCEPT}
@@ -997,7 +995,7 @@ export function InteractionRoomPage({
                   role="tabpanel"
                   aria-labelledby="cm-room-tab-chat"
                 >
-                  <InteractionRoomConversationChatColumn
+                  <CommercialRoomConversationChatColumn
                     msgsRef={msgsRef}
                     onMsgsScroll={(event) => {
                       stickToBottomRef.current = shouldStickThreadToBottom(
@@ -1070,7 +1068,7 @@ export function InteractionRoomPage({
                         }}
                       />
                     )}
-                  </InteractionRoomConversationChatColumn>
+                  </CommercialRoomConversationChatColumn>
                 </div>
               )}
             </CommercialViewTransition>

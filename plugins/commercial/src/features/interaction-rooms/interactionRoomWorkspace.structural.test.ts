@@ -7,10 +7,11 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const appDir = join(dir, "../../");
 
 describe("InteractionRoomWorkspace", () => {
-  it("unifies inbox and thread with query P0 and three thread containers", () => {
+  it("unifies inbox and thread with query P0 and kit conversation shell", () => {
     const workspace = readFileSync(join(dir, "InteractionRoomWorkspace.tsx"), "utf8");
     const app = readFileSync(join(appDir, "App.tsx"), "utf8");
     const thread = readFileSync(join(dir, "InteractionRoomPage.tsx"), "utf8");
+    const commercialUi = readFileSync(join(appDir, "app/commercialUi.ts"), "utf8");
     expect(workspace).toMatch(/parseInteractionRoomSearch/);
     expect(workspace).toMatch(/buildInteractionRoomSearch/);
     expect(workspace).toMatch(/CommercialResizableColumns/);
@@ -23,16 +24,8 @@ describe("InteractionRoomWorkspace", () => {
     expect(workspace).toMatch(/roomId \? \(/);
     expect(app).toMatch(/InteractionRoomWorkspace/);
     expect(app).toMatch(/interaction_room_detail/);
-    expect(thread).toMatch(/InteractionRoomConversationShell/);
-    expect(thread).toMatch(/InteractionRoomConversationChatColumn/);
-    const shell = readFileSync(
-      join(dir, "InteractionRoomConversationShell.tsx"),
-      "utf8",
-    );
-    expect(shell).toMatch(/cm-room-thread__header/);
-    expect(shell).toMatch(/cm-room-thread__body/);
-    expect(shell).toMatch(/cm-room-thread__main/);
-    expect(shell).toMatch(/cm-room-thread__msgs/);
-    expect(shell).toMatch(/cm-room-thread__dock/);
+    expect(thread).toMatch(/CommercialRoomConversationShell/);
+    expect(thread).toMatch(/CommercialRoomConversationChatColumn/);
+    expect(commercialUi).toMatch(/createDashboardRoomConversationShell/);
   });
 });

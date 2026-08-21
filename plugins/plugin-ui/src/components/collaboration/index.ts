@@ -147,6 +147,20 @@ export {
   type DashboardConversationFileDropLayerProps,
 } from "./ConversationFileDropLayer";
 export {
+  RoomConversationShell,
+  RoomConversationChatColumn,
+  RoomPanel,
+  createDashboardRoomConversationShell,
+  roomConversationShellBemClasses,
+  type DashboardRoomConversationChatColumnProps,
+  type DashboardRoomConversationShellProps,
+  type DashboardRoomPanelProps,
+  type RoomConversationChatColumnProps,
+  type RoomConversationShellClassNames,
+  type RoomConversationShellProps,
+  type RoomPanelProps,
+} from "./RoomConversationShell";
+export {
   detectActiveMention,
   insertMentionToken,
   replaceEditablePlainRange,

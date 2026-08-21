@@ -9,6 +9,7 @@ import {
   CommercialActionButton,
   CommercialHostDrawer,
   CommercialLoadingCard,
+  CommercialRoomPanel,
   CommercialSectionCard,
   CommercialStateBanner,
 } from "../../app/commercialUi";
@@ -104,17 +105,13 @@ export function InteractionRoomPanel({
 
   const roomBody =
     !loading && room?.id ? (
-      <div
-        className="cm-room-panel"
-        role="region"
-        aria-label={content.panelTitle}
-      >
+      <CommercialRoomPanel aria-label={content.panelTitle}>
         <InteractionRoomPage
           basePath={basePath}
           roomId={room.id}
           variant="pane"
         />
-      </div>
+      </CommercialRoomPanel>
     ) : null;
 
   const statusBlock = (

@@ -7,19 +7,21 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(dir, "../../index.css"), "utf8");
 
 describe("interaction room fill CSS", () => {
-  it("preenche viewport só com --fill e um scroller em __msgs", () => {
+  it("preenche viewport só com --fill; chrome da thread no kit", () => {
     expect(css).toMatch(/\.dashboard-commercial\.dashboard-page--fill \{/);
     expect(css).not.toMatch(
       /\.dashboard-commercial\.dashboard-page--fill \{[^}]*--cm-page-padding:\s*16px/,
     );
     expect(css).toMatch(/\.dashboard-page--fill \.cm-view-transition--page/);
-    expect(css).toMatch(/\.cm-room-thread__stage \{[\s\S]*?position:\s*relative;/);
-    expect(css).toMatch(/\.cm-room-thread__msgs \{[\s\S]*?overflow-y:\s*auto;/);
+    expect(css).toMatch(/--delpi-ui-room-thread-header-padding/);
+    expect(css).toMatch(/--delpi-ui-room-thread-msgs-padding-inline/);
+    expect(css).toMatch(/--delpi-ui-room-thread-dock-padding/);
+    expect(css).not.toMatch(/\.cm-room-thread__stage \{/);
+    expect(css).not.toMatch(/\.cm-room-thread__body \{/);
+    expect(css).not.toMatch(/\.cm-room-panel \{/);
     const fillChunk = css.split("Sala: fill viewport")[1]?.slice(0, 2500) ?? "";
     expect(fillChunk).not.toMatch(/\.delpi-ui-/);
     expect(css).not.toMatch(/max-height:\s*40vh/);
-    expect(css).toMatch(/\.cm-room-thread__body \{[\s\S]*?display:\s*flex;/);
-    expect(css).toMatch(/\.cm-room-thread__main \{[\s\S]*?flex-direction:\s*column;/);
     expect(css).not.toMatch(/delpi-ui-room-side-panel/);
     expect(css).not.toMatch(/cm-room-thread__context/);
     expect(css).not.toMatch(/cm-room-context-drawer/);

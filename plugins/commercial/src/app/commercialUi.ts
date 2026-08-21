@@ -80,6 +80,7 @@ import {
   createDashboardRoomMessageFindPanel,
   createDashboardResizableColumns,
   createDashboardConversationFileDropLayer,
+  createDashboardRoomConversationShell,
   useChartGranularitySelection,
   attachmentFileListBemClasses,
   attachmentPreviewStripBemClasses,
@@ -559,3 +560,8 @@ export const CommercialRoomMessageFindPanel =
 export const CommercialResizableColumns = createDashboardResizableColumns(UI_PREFIX);
 export const CommercialConversationFileDropLayer =
   createDashboardConversationFileDropLayer(UI_PREFIX);
+
+const roomConversationKit = createDashboardRoomConversationShell(UI_PREFIX);
+export const CommercialRoomConversationShell = roomConversationKit.Shell;
+export const CommercialRoomConversationChatColumn = roomConversationKit.ChatColumn;
+export const CommercialRoomPanel = roomConversationKit.Panel;

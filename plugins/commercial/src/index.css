@@ -78,6 +78,9 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  --delpi-ui-room-thread-header-padding: var(--cm-gap-sm);
+  --delpi-ui-room-thread-msgs-padding-inline: var(--cm-gap-xs);
+  --delpi-ui-room-thread-dock-padding: var(--cm-gap-sm);
 }
 
 .dashboard-commercial.dashboard-page--fill > .cm-page-stack {
@@ -196,49 +199,6 @@
   align-self: stretch;
 }
 
-.dashboard-commercial .cm-room-thread {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Embed: thread em container próprio (borda/fundo), distinto do SectionCard. */
-.dashboard-commercial .cm-room-panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 22rem;
-  height: min(32rem, 70vh);
-  max-height: min(32rem, 70vh);
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--cm-border, var(--border, #e6e6e6));
-  border-radius: 0.75rem;
-  background: var(--cm-surface-muted, var(--surface-muted, #f6f8fa));
-  box-sizing: border-box;
-}
-
-.dashboard-commercial .cm-room-panel .cm-room-thread {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-}
-
-.dashboard-commercial .cm-room-panel .cm-room-thread .cm-conversation-drop {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.dashboard-commercial .cm-room-thread .cm-conversation-drop {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
 .dashboard-commercial .cm-room-alert-host {
   position: absolute;
   top: 0.5rem;
@@ -251,10 +211,6 @@
 
 .dashboard-commercial .cm-room-alert-host .cm-alert-queue {
   pointer-events: auto;
-}
-
-.dashboard-commercial .cm-room-thread__header {
-  flex: 0 0 auto;
 }
 
 .dashboard-commercial .cm-room-shared {
@@ -379,40 +335,8 @@
   max-width: 8rem;
 }
 
-.dashboard-commercial .cm-room-thread__body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-}
-
-.dashboard-commercial .cm-room-thread__main {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  --delpi-ui-panel-stack-gap: 0;
-}
-
 .dashboard-commercial .cm-room-side-panel {
   --delpi-ui-panel-stack-gap: 0;
-}
-
-.dashboard-commercial .cm-room-thread__main > .cm-view-transition {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-.dashboard-commercial .cm-room-thread__main [role="tabpanel"] {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
 }
 
 .dashboard-commercial .cm-room-more-menu {
@@ -433,37 +357,6 @@
   gap: 0.5rem;
 }
 
-.dashboard-commercial.dashboard-page--fill .cm-room-thread__header {
-  padding: var(--cm-gap-sm);
-}
-
-.dashboard-commercial .cm-room-thread__stage {
-  position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.dashboard-commercial .cm-room-thread__msgs {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.dashboard-commercial.dashboard-page--fill .cm-room-thread__msgs {
-  padding-inline: var(--cm-gap-xs);
-}
-
-.dashboard-commercial .cm-room-thread__dock {
-  flex: 0 0 auto;
-  padding-top: var(--cm-gap-sm);
-  background: var(--cm-surface-muted, var(--surface-muted, #f8fafc));
-}
-
 .dashboard-commercial .cm-room-thread__edit-cancel {
   display: flex;
   justify-content: flex-end;
@@ -476,10 +369,6 @@
 
 .dashboard-commercial .cm-room-thread__message-reactions {
   margin-top: var(--cm-gap-xs, 0.35rem);
-}
-
-.dashboard-commercial.dashboard-page--fill .cm-room-thread__dock {
-  padding: var(--cm-gap-sm);
 }
 
 .dashboard-commercial .cm-shell-chrome {

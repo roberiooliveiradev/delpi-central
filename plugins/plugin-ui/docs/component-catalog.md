@@ -1369,10 +1369,11 @@ Primitivos neutros para threads estilo Teams/Slack (Portal Comercial). **Sem HTT
 | `EmojiInsertMenu` | Picker leve reutilizado pelo composer e pela barra de reações. |
 | `RoomInboxList` | Inbox de salas (não reutilizar `WorklistItem`); `preview`, `unreadCount`, slots `leading`/`subtitle`. |
 | `RoomHeader` | Título, chips e `AvatarStack` de participantes. |
+| `RoomConversationShell` / `RoomConversationChatColumn` / `RoomPanel` | Chrome canônico da thread (`header`/`body`/`main`/`stage`/`msgs`/`dock` + drop) e moldura do embed; factory `createDashboardRoomConversationShell`. |
 | `RoomSidePanel` / `RoomContextPanel` | Painel «Neste chat» (host controla open). `entityPrimary` + `entityFields` no ABOUT (sem `entityKey` cru). |
 | `RoomMessageFindPanel` | Localizar no chat: input + Limpar + resultados com snippet/`mark`; host busca via API e faz jump. |
 
-Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardReactionQuickBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`, `createDashboardRoomContextPanel`, `createDashboardRoomSidePanel`, `createDashboardRoomMessageFindPanel`.
+Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardReactionQuickBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`, `createDashboardRoomConversationShell`, `createDashboardRoomContextPanel`, `createDashboardRoomSidePanel`, `createDashboardRoomMessageFindPanel`.
 
 Helpers: `markdownToPlainPreview`, `richTextHtmlToMarkdown` / família `richTextMarkdown.ts` (submit do composer); `buildFindSnippet` / `splitFindHighlightSegments` (find).
 
