@@ -57,6 +57,17 @@ def test_period_filter_rejects_inverted_or_equal_range() -> None:
         raise AssertionError("expected ValueError for equal range")
 
 
+def test_period_filter_allows_same_calendar_month_when_end_is_exclusive() -> None:
+    request = PeriodFilterRequest.from_query(
+        start_date="2026-08-01",
+        end_date="2026-08-22",
+    )
+    start, end_exclusive, rotulo = request.resolve_period()
+    assert start == date(2026, 8, 1)
+    assert end_exclusive == date(2026, 8, 22)
+    assert "personalizado" in rotulo.lower()
+
+
 def test_period_filter_rejects_range_above_maximum() -> None:
     request = PeriodFilterRequest.from_query(
         start_date="2020-01-01",

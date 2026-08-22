@@ -53,6 +53,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         end_date: str,
         branch: str | None = None,
         cost_center: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> dict:
         with self:
             filiais_query, filiais_params = build_filiais_query(
@@ -64,12 +65,14 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
                 start_date=start_date,
                 end_date=end_date,
                 branch=branch,
+                exclude_mp_products=exclude_mp_products,
             )
             fornecedores_query, fornecedores_params = build_fornecedores_query(
                 start_date=start_date,
                 end_date=end_date,
                 branch=branch,
                 cost_center=cost_center,
+                exclude_mp_products=exclude_mp_products,
             )
 
             filiais_rows = self.execute_query(filiais_query, filiais_params)
@@ -113,6 +116,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         cost_center: str | None = None,
         supplier_code: str | None = None,
         supplier_store: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> dict:
         query, params = build_resumo_query(
             start_date=start_date,
@@ -121,6 +125,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             cost_center=cost_center,
             supplier_code=supplier_code,
             supplier_store=supplier_store,
+            exclude_mp_products=exclude_mp_products,
         )
         with self:
             rows = self.execute_query(query, params)
@@ -136,6 +141,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         cost_center: str | None = None,
         supplier_code: str | None = None,
         supplier_store: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> list[dict]:
         query, params = build_serie_query(
             start_date=start_date,
@@ -144,6 +150,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             cost_center=cost_center,
             supplier_code=supplier_code,
             supplier_store=supplier_store,
+            exclude_mp_products=exclude_mp_products,
         )
         with self:
             return self.execute_query(query, params)
@@ -157,6 +164,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         supplier_code: str | None = None,
         supplier_store: str | None = None,
         limit: int = 10,
+        exclude_mp_products: bool = False,
     ) -> list[dict]:
         query, params = build_ranking_centros_query(
             start_date=start_date,
@@ -165,6 +173,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             supplier_code=supplier_code,
             supplier_store=supplier_store,
             limit=limit,
+            exclude_mp_products=exclude_mp_products,
         )
         with self:
             return self.execute_query(query, params)
@@ -177,6 +186,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         branch: str | None = None,
         cost_center: str | None = None,
         limit: int = 10,
+        exclude_mp_products: bool = False,
     ) -> list[dict]:
         query, params = build_ranking_fornecedores_query(
             start_date=start_date,
@@ -184,6 +194,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             branch=branch,
             cost_center=cost_center,
             limit=limit,
+            exclude_mp_products=exclude_mp_products,
         )
         with self:
             return self.execute_query(query, params)
@@ -198,6 +209,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         supplier_code: str | None = None,
         supplier_store: str | None = None,
         search: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> int:
         query, params = build_lancamentos_count_query(
             start_date=start_date,
@@ -207,6 +219,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             supplier_code=supplier_code,
             supplier_store=supplier_store,
             search=search,
+            exclude_mp_products=exclude_mp_products,
         )
         with self:
             row = self.execute_one(query, params)
@@ -223,6 +236,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         supplier_code: str | None = None,
         supplier_store: str | None = None,
         search: str | None = None,
+        exclude_mp_products: bool = False,
         sort_by: str,
         sort_dir: str,
         page: int,
@@ -236,6 +250,7 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             supplier_code=supplier_code,
             supplier_store=supplier_store,
             search=search,
+            exclude_mp_products=exclude_mp_products,
             sort_by=sort_by,
             sort_dir=sort_dir,
             page=page,

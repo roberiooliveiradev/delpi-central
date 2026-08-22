@@ -28,6 +28,7 @@ class GetDespesasCentroCustoFiltrosUseCase:
             end_date=end_date,
             branch=request.branch,
             cost_center=request.cost_center,
+            exclude_mp_products=request.exclude_mp_products,
         )
 
         return DespesasCentroCustoFiltrosResponse(

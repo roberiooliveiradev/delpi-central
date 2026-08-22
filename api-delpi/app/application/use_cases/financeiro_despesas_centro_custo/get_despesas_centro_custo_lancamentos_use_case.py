@@ -96,6 +96,7 @@ class GetDespesasCentroCustoLancamentosUseCase:
             supplier_code=request.supplier_code,
             supplier_store=request.supplier_store,
             search=request.search,
+            exclude_mp_products=request.exclude_mp_products,
         )
         rows = self._repository.list_lancamentos(
             start_date=start_date,
@@ -105,6 +106,7 @@ class GetDespesasCentroCustoLancamentosUseCase:
             supplier_code=request.supplier_code,
             supplier_store=request.supplier_store,
             search=request.search,
+            exclude_mp_products=request.exclude_mp_products,
             sort_by=request.sort_by,
             sort_dir=request.sort_dir,
             page=page,

@@ -99,8 +99,6 @@ class PeriodFilterRequest:
             )
 
         span_months = _months_between(start, end_exclusive)
-        if span_months <= 0:
-            raise ValueError("O período informado é inválido.")
         if span_months > MAX_PERIOD_MONTHS:
             raise ValueError(
                 f"O período máximo permitido é de {MAX_PERIOD_MONTHS} meses."

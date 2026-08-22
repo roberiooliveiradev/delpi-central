@@ -2,6 +2,9 @@ from __future__ import annotations
 
 DESPESAS_CENTRO_CUSTO_VIEW = "dbo.vw_fin_despesas_centro_custo"
 
+# tipo_produto_lancamento na view — MP = matéria-prima (suprimentos).
+RAW_MATERIAL_PRODUCT_TYPE = "MP"
+
 # Teto inicial para fornecedores distintos no /filtros — evita payload grande.
 MAX_FORNECEDORES_FILTROS = 500
 
@@ -71,6 +74,7 @@ def build_query_where(
     cost_center: str | None = None,
     supplier_code: str | None = None,
     supplier_store: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     clauses = ["data_emissao BETWEEN ? AND ?"]
     params: list[str] = [start_date, end_date]
@@ -90,6 +94,10 @@ def build_query_where(
     if supplier_store:
         clauses.append("LTRIM(RTRIM(loja)) = ?")
         params.append(supplier_store)
+
+    if exclude_mp_products:
+        clauses.append("UPPER(LTRIM(RTRIM(tipo_produto_lancamento))) <> ?")
+        params.append(RAW_MATERIAL_PRODUCT_TYPE)
 
     return " AND ".join(clauses), tuple(params)
 
@@ -116,6 +124,7 @@ def build_lancamentos_where(
     supplier_code: str | None = None,
     supplier_store: str | None = None,
     search: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_query_where(
         start_date=start_date,
@@ -124,6 +133,7 @@ def build_lancamentos_where(
         cost_center=cost_center,
         supplier_code=supplier_code,
         supplier_store=supplier_store,
+        exclude_mp_products=exclude_mp_products,
     )
     search_clause, search_params = _build_search_clause(search)
     if not search_clause:
@@ -150,6 +160,7 @@ def build_lancamentos_count_query(
     supplier_code: str | None = None,
     supplier_store: str | None = None,
     search: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_lancamentos_where(
         start_date=start_date,
@@ -159,6 +170,7 @@ def build_lancamentos_count_query(
         supplier_code=supplier_code,
         supplier_store=supplier_store,
         search=search,
+        exclude_mp_products=exclude_mp_products,
     )
     query = f"""
 SELECT COUNT(*) AS total_items
@@ -177,6 +189,7 @@ def build_lancamentos_data_query(
     supplier_code: str | None = None,
     supplier_store: str | None = None,
     search: str | None = None,
+    exclude_mp_products: bool = False,
     sort_by: str,
     sort_dir: str,
     page: int,
@@ -190,6 +203,7 @@ def build_lancamentos_data_query(
         supplier_code=supplier_code,
         supplier_store=supplier_store,
         search=search,
+        exclude_mp_products=exclude_mp_products,
     )
     order_by = resolve_lancamentos_order_by(sort_by=sort_by, sort_dir=sort_dir)
     safe_page = max(int(page), 1)
@@ -211,11 +225,13 @@ def build_period_where(
     start_date: str,
     end_date: str,
     branch: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     return build_query_where(
         start_date=start_date,
         end_date=end_date,
         branch=branch,
+        exclude_mp_products=exclude_mp_products,
     )
 
 
@@ -246,11 +262,13 @@ def build_centros_custo_query(
     start_date: str,
     end_date: str,
     branch: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_period_where(
         start_date=start_date,
         end_date=end_date,
         branch=branch,
+        exclude_mp_products=exclude_mp_products,
     )
     query = f"""
 SELECT DISTINCT
@@ -288,12 +306,14 @@ def build_fornecedores_query(
     end_date: str,
     branch: str | None = None,
     cost_center: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_query_where(
         start_date=start_date,
         end_date=end_date,
         branch=branch,
         cost_center=cost_center,
+        exclude_mp_products=exclude_mp_products,
     )
     query = f"""
 SELECT DISTINCT TOP ({MAX_FORNECEDORES_FILTROS})
@@ -316,6 +336,7 @@ def build_resumo_query(
     cost_center: str | None = None,
     supplier_code: str | None = None,
     supplier_store: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_query_where(
         start_date=start_date,
@@ -324,6 +345,7 @@ def build_resumo_query(
         cost_center=cost_center,
         supplier_code=supplier_code,
         supplier_store=supplier_store,
+        exclude_mp_products=exclude_mp_products,
     )
     query = f"""
 SELECT
@@ -354,6 +376,7 @@ def build_serie_query(
     cost_center: str | None = None,
     supplier_code: str | None = None,
     supplier_store: str | None = None,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_query_where(
         start_date=start_date,
@@ -362,6 +385,7 @@ def build_serie_query(
         cost_center=cost_center,
         supplier_code=supplier_code,
         supplier_store=supplier_store,
+        exclude_mp_products=exclude_mp_products,
     )
     query = f"""
 SELECT
@@ -384,6 +408,7 @@ def build_ranking_centros_query(
     supplier_code: str | None = None,
     supplier_store: str | None = None,
     limit: int = DEFAULT_RANKING_LIMIT,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_query_where(
         start_date=start_date,
@@ -391,6 +416,7 @@ def build_ranking_centros_query(
         branch=branch,
         supplier_code=supplier_code,
         supplier_store=supplier_store,
+        exclude_mp_products=exclude_mp_products,
     )
     safe_limit = min(max(int(limit), 1), MAX_RANKING_LIMIT)
     query = f"""
@@ -440,12 +466,14 @@ def build_ranking_fornecedores_query(
     branch: str | None = None,
     cost_center: str | None = None,
     limit: int = DEFAULT_RANKING_LIMIT,
+    exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params = build_query_where(
         start_date=start_date,
         end_date=end_date,
         branch=branch,
         cost_center=cost_center,
+        exclude_mp_products=exclude_mp_products,
     )
     safe_limit = min(max(int(limit), 1), MAX_RANKING_LIMIT)
     query = f"""

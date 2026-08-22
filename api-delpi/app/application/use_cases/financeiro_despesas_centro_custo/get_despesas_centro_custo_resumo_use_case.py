@@ -41,6 +41,7 @@ class GetDespesasCentroCustoResumoUseCase:
             cost_center=request.cost_center,
             supplier_code=request.supplier_code,
             supplier_store=request.supplier_store,
+            exclude_mp_products=request.exclude_mp_products,
         )
 
         total_periodo = _as_float(row.get("total_periodo"))

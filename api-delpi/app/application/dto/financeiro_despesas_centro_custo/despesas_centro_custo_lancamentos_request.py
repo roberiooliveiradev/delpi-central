@@ -41,6 +41,7 @@ class DespesasCentroCustoLancamentosRequest:
     page_size: int = DEFAULT_PAGE_SIZE
     sort_by: str = DEFAULT_SORT_BY
     sort_dir: str = DEFAULT_SORT_DIR
+    exclude_mp_products: bool = False
 
     @classmethod
     def from_query(
@@ -57,6 +58,7 @@ class DespesasCentroCustoLancamentosRequest:
         page_size: int = DEFAULT_PAGE_SIZE,
         sort_by: str = DEFAULT_SORT_BY,
         sort_dir: str = DEFAULT_SORT_DIR,
+        exclude_mp_products: bool = False,
     ) -> DespesasCentroCustoLancamentosRequest:
         base = DespesasCentroCustoQueryRequest.from_query(
             start_date=start_date,
@@ -65,6 +67,7 @@ class DespesasCentroCustoLancamentosRequest:
             cost_center=cost_center,
             supplier_code=supplier_code,
             supplier_store=supplier_store,
+            exclude_mp_products=exclude_mp_products,
         )
         normalized_sort_by = str(sort_by or DEFAULT_SORT_BY).strip() or DEFAULT_SORT_BY
         normalized_sort_dir = str(sort_dir or DEFAULT_SORT_DIR).strip().lower() or DEFAULT_SORT_DIR
@@ -90,6 +93,7 @@ class DespesasCentroCustoLancamentosRequest:
             page_size=page_size,
             sort_by=normalized_sort_by,
             sort_dir=normalized_sort_dir,
+            exclude_mp_products=base.exclude_mp_products,
         )
 
     @staticmethod

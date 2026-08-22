@@ -26,6 +26,7 @@ from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.financeiro.despesas_centro_custo_route_helpers import (
     BRANCH_QUERY,
     COST_CENTER_QUERY,
+    EXCLUDE_MP_PRODUCTS_QUERY,
     PAGE_QUERY,
     PAGE_SIZE_QUERY,
     PERIOD_END_QUERY,
@@ -61,6 +62,7 @@ def get_financeiro_despesas_centro_custo_filtros_route(
     end_date: str = PERIOD_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY(),
     cost_center: Optional[str] = COST_CENTER_QUERY(),
+    exclude_mp_products: bool = EXCLUDE_MP_PRODUCTS_QUERY(),
 ):
     try:
         request = build_despesas_centro_custo_query_request(
@@ -68,6 +70,7 @@ def get_financeiro_despesas_centro_custo_filtros_route(
             end_date=end_date,
             branch=branch,
             cost_center=cost_center,
+            exclude_mp_products=exclude_mp_products,
         )
         use_case = build_get_despesas_centro_custo_filtros_use_case()
         result = use_case.execute(request)
@@ -105,6 +108,7 @@ def get_financeiro_despesas_centro_custo_resumo_route(
     cost_center: Optional[str] = COST_CENTER_QUERY(),
     supplier_code: Optional[str] = SUPPLIER_CODE_QUERY(),
     supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
+    exclude_mp_products: bool = EXCLUDE_MP_PRODUCTS_QUERY(),
 ):
     request = build_despesas_centro_custo_query_request(
         start_date=start_date,
@@ -113,6 +117,7 @@ def get_financeiro_despesas_centro_custo_resumo_route(
         cost_center=cost_center,
         supplier_code=supplier_code,
         supplier_store=supplier_store,
+        exclude_mp_products=exclude_mp_products,
     )
     return execute_despesas_centro_custo_route(
         use_case_builder=build_get_despesas_centro_custo_resumo_use_case,
@@ -138,6 +143,7 @@ def get_financeiro_despesas_centro_custo_serie_route(
     cost_center: Optional[str] = COST_CENTER_QUERY(),
     supplier_code: Optional[str] = SUPPLIER_CODE_QUERY(),
     supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
+    exclude_mp_products: bool = EXCLUDE_MP_PRODUCTS_QUERY(),
 ):
     request = build_despesas_centro_custo_query_request(
         start_date=start_date,
@@ -146,6 +152,7 @@ def get_financeiro_despesas_centro_custo_serie_route(
         cost_center=cost_center,
         supplier_code=supplier_code,
         supplier_store=supplier_store,
+        exclude_mp_products=exclude_mp_products,
     )
     return execute_despesas_centro_custo_route(
         use_case_builder=build_get_despesas_centro_custo_serie_use_case,
@@ -171,6 +178,7 @@ def get_financeiro_despesas_centro_custo_ranking_centros_route(
     supplier_code: Optional[str] = SUPPLIER_CODE_QUERY(),
     supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
     limit: int = RANKING_LIMIT_QUERY(),
+    exclude_mp_products: bool = EXCLUDE_MP_PRODUCTS_QUERY(),
 ):
     request = build_despesas_centro_custo_query_request(
         start_date=start_date,
@@ -179,6 +187,7 @@ def get_financeiro_despesas_centro_custo_ranking_centros_route(
         supplier_code=supplier_code,
         supplier_store=supplier_store,
         limit=limit,
+        exclude_mp_products=exclude_mp_products,
     )
     return execute_despesas_centro_custo_route(
         use_case_builder=build_get_despesas_centro_custo_ranking_centros_use_case,
@@ -203,6 +212,7 @@ def get_financeiro_despesas_centro_custo_ranking_fornecedores_route(
     branch: Optional[str] = BRANCH_QUERY(),
     cost_center: Optional[str] = COST_CENTER_QUERY(),
     limit: int = RANKING_LIMIT_QUERY(),
+    exclude_mp_products: bool = EXCLUDE_MP_PRODUCTS_QUERY(),
 ):
     """Ranking de fornecedores — aceita branch e cost_center (sem supplier_code/store)."""
     request = build_despesas_centro_custo_query_request(
@@ -211,6 +221,7 @@ def get_financeiro_despesas_centro_custo_ranking_fornecedores_route(
         branch=branch,
         cost_center=cost_center,
         limit=limit,
+        exclude_mp_products=exclude_mp_products,
     )
     return execute_despesas_centro_custo_route(
         use_case_builder=build_get_despesas_centro_custo_ranking_fornecedores_use_case,
@@ -241,6 +252,7 @@ def get_financeiro_despesas_centro_custo_lancamentos_route(
     page_size: int = PAGE_SIZE_QUERY(),
     sort_by: str = SORT_BY_QUERY(),
     sort_dir: str = SORT_DIR_QUERY(),
+    exclude_mp_products: bool = EXCLUDE_MP_PRODUCTS_QUERY(),
 ):
     try:
         request = build_despesas_centro_custo_lancamentos_request(
@@ -255,6 +267,7 @@ def get_financeiro_despesas_centro_custo_lancamentos_route(
             page_size=page_size,
             sort_by=sort_by,
             sort_dir=sort_dir,
+            exclude_mp_products=exclude_mp_products,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar lançamentos de despesas CC: {exc}")

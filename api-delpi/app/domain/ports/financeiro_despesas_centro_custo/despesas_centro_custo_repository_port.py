@@ -11,6 +11,7 @@ class DespesasCentroCustoRepositoryPort(Protocol):
         end_date: str,
         branch: str | None = None,
         cost_center: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> dict: ...
 
     def get_resumo(
@@ -22,6 +23,7 @@ class DespesasCentroCustoRepositoryPort(Protocol):
         cost_center: str | None = None,
         supplier_code: str | None = None,
         supplier_store: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> dict: ...
 
     def get_serie(
@@ -33,6 +35,7 @@ class DespesasCentroCustoRepositoryPort(Protocol):
         cost_center: str | None = None,
         supplier_code: str | None = None,
         supplier_store: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> list[dict]: ...
 
     def get_ranking_centros(
@@ -44,6 +47,7 @@ class DespesasCentroCustoRepositoryPort(Protocol):
         supplier_code: str | None = None,
         supplier_store: str | None = None,
         limit: int = 10,
+        exclude_mp_products: bool = False,
     ) -> list[dict]: ...
 
     def get_ranking_fornecedores(
@@ -54,6 +58,7 @@ class DespesasCentroCustoRepositoryPort(Protocol):
         branch: str | None = None,
         cost_center: str | None = None,
         limit: int = 10,
+        exclude_mp_products: bool = False,
     ) -> list[dict]: ...
 
     def count_lancamentos(
@@ -66,6 +71,7 @@ class DespesasCentroCustoRepositoryPort(Protocol):
         supplier_code: str | None = None,
         supplier_store: str | None = None,
         search: str | None = None,
+        exclude_mp_products: bool = False,
     ) -> int: ...
 
     def list_lancamentos(
@@ -78,6 +84,7 @@ class DespesasCentroCustoRepositoryPort(Protocol):
         supplier_code: str | None = None,
         supplier_store: str | None = None,
         search: str | None = None,
+        exclude_mp_products: bool = False,
         sort_by: str,
         sort_dir: str,
         page: int,

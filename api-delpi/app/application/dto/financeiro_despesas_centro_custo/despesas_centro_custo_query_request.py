@@ -19,6 +19,7 @@ class DespesasCentroCustoQueryRequest:
     supplier_code: str | None = None
     supplier_store: str | None = None
     limit: int | None = None
+    exclude_mp_products: bool = False
 
     @classmethod
     def from_query(
@@ -31,6 +32,7 @@ class DespesasCentroCustoQueryRequest:
         supplier_code: str | None = None,
         supplier_store: str | None = None,
         limit: int | None = None,
+        exclude_mp_products: bool = False,
     ) -> DespesasCentroCustoQueryRequest:
         period = PeriodFilterRequest.from_query(
             start_date=start_date,
@@ -46,6 +48,7 @@ class DespesasCentroCustoQueryRequest:
             supplier_code=cls._normalize_optional_text(supplier_code),
             supplier_store=cls._normalize_optional_text(supplier_store),
             limit=limit,
+            exclude_mp_products=bool(exclude_mp_products),
         )
 
     @staticmethod

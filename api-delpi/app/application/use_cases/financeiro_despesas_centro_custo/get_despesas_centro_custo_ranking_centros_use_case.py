@@ -49,6 +49,7 @@ class GetDespesasCentroCustoRankingCentrosUseCase:
             supplier_code=request.supplier_code,
             supplier_store=request.supplier_store,
             limit=limit,
+            exclude_mp_products=request.exclude_mp_products,
         )
 
         ranking = [

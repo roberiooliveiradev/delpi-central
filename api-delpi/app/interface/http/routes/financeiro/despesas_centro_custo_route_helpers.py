@@ -36,6 +36,7 @@ def build_despesas_centro_custo_query_request(
     supplier_code: Optional[str] = None,
     supplier_store: Optional[str] = None,
     limit: Optional[int] = None,
+    exclude_mp_products: bool = False,
 ) -> DespesasCentroCustoQueryRequest:
     return DespesasCentroCustoQueryRequest.from_query(
         start_date=start_date,
@@ -45,6 +46,7 @@ def build_despesas_centro_custo_query_request(
         supplier_code=supplier_code,
         supplier_store=supplier_store,
         limit=limit,
+        exclude_mp_products=exclude_mp_products,
     )
 
 
@@ -61,6 +63,7 @@ def build_despesas_centro_custo_lancamentos_request(
     page_size: int = DEFAULT_PAGE_SIZE,
     sort_by: str = DEFAULT_SORT_BY,
     sort_dir: str = DEFAULT_SORT_DIR,
+    exclude_mp_products: bool = False,
 ) -> DespesasCentroCustoLancamentosRequest:
     return DespesasCentroCustoLancamentosRequest.from_query(
         start_date=start_date,
@@ -74,6 +77,7 @@ def build_despesas_centro_custo_lancamentos_request(
         page_size=page_size,
         sort_by=sort_by,
         sort_dir=sort_dir,
+        exclude_mp_products=exclude_mp_products,
     )
 
 
@@ -147,6 +151,11 @@ def PAGE_SIZE_QUERY():
 )
 def SEARCH_QUERY():
     return Query(None, description="Text search across document, order, product, notes and supplier.")
+def EXCLUDE_MP_PRODUCTS_QUERY():
+    return Query(
+        False,
+        description="Exclude raw material (MP) product entries from supplies.",
+    )
 def SORT_BY_QUERY():
     return Query(
     DEFAULT_SORT_BY,

@@ -30,6 +30,17 @@ def test_build_query_where_applies_optional_filters() -> None:
     assert params == ("20250601", "20250630", "01", "0101", "003287", "01")
 
 
+def test_build_query_where_excludes_mp_products() -> None:
+    where_clause, params = build_query_where(
+        start_date="20250601",
+        end_date="20250630",
+        exclude_mp_products=True,
+    )
+
+    assert "UPPER(LTRIM(RTRIM(tipo_produto_lancamento))) <> ?" in where_clause
+    assert params == ("20250601", "20250630", "MP")
+
+
 def test_build_resumo_query_uses_aggregation_without_select_star() -> None:
     query, params = build_resumo_query(
         start_date="20250601",

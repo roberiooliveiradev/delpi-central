@@ -48,6 +48,7 @@ class GetDespesasCentroCustoRankingFornecedoresUseCase:
             branch=request.branch,
             cost_center=request.cost_center,
             limit=limit,
+            exclude_mp_products=request.exclude_mp_products,
         )
 
         ranking = [
