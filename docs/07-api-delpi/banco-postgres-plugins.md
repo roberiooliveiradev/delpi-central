@@ -232,6 +232,14 @@ quality.external_nc_audit_events
 
 Essa modelagem deve ser versionada por estratégia de migration própria do contexto de plugins.
 
+Schema do **Portal Financeiro** (`financial-api`):
+
+```text
+financial
+```
+
+Criado por `financial-api/migrations/V001__schema.sql` (`CREATE SCHEMA IF NOT EXISTS financial`). No P0 não há tabelas de negócio — o catálogo de subplugins vive em JSON. Só `up`; nunca `reset` em ambiente com dados.
+
 ---
 
 ## 11. Regras de modelagem

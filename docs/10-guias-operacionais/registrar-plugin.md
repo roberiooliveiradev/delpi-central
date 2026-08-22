@@ -44,6 +44,7 @@ O nome do arquivo **varia**; o campo `id` no JSON é a chave estável.
 | Materiais de Terceiros | `plugins/materiais-terceiros/materiais-terceiros.manifest.json` |
 | Emissão de Notas Fiscais | `plugins/invoice-issuance/invoice-issuance.manifest.json` |
 | API DELPI (app admin) | `api-delpi/api-delpi.manifest.json` |
+| Portal Financeiro | `plugins/financial/financial.manifest.json` |
 
 Contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).  
 Inventário: [../08-plugins/README.md](../08-plugins/README.md).
