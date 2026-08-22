@@ -793,6 +793,15 @@ Documentação completa: [docs/06-portal-frontend/portal-deploy-cache-cloudflare
 ```
 
 
+### Despesas de Viagem (cupons / pacotes)
+
+| Path no container | Host (`DELPI_DATA_HOST_DIR`) |
+|---|---|
+| `/app/data/travel-expenses/receipts` | `…/travel-expenses/receipts` |
+| `/app/data/travel-expenses/packages` | `…/travel-expenses/packages` |
+
+Recreate de `delpi-travel-expenses-api` **não** apaga cupons (metadado no schema `travel_expenses` + arquivo no host). Variáveis em `infra/env.travel-expenses.example`.
+
 ### CIPA (atas / assinaturas / SIPAT)
 
 | Path no container | Host (`DELPI_DATA_HOST_DIR`) |

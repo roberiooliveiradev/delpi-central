@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "travel-expenses",
+  "name": "Despesas de Viagem",
+  "description": "Prestação de contas de viagem: despesas, cupons e pacote para o financeiro.",
+  "category": "financeiro",
+  "icon": "plane",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/travel-expenses",
+  "entry": "/apps/travel-expenses/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "travel-expenses.view",
+      "name": "Visualizar despesas de viagem",
+      "description": "Abrir o plugin e ver as próprias prestações.",
+      "module": "travel-expenses"
+    },
+    {
+      "code": "travel-expenses.write",
+      "name": "Lançar despesas de viagem",
+      "description": "Criar e editar rascunhos próprios, anexar cupons e baixar o pacote.",
+      "module": "travel-expenses"
+    },
+    {
+      "code": "travel-expenses.manage",
+      "name": "Gerir prestações da unidade",
+      "description": "Ver todas as prestações da filial (preparo da fila financeira).",
+      "module": "travel-expenses"
+    },
+    {
+      "code": "travel-expenses.admin",
+      "name": "Administrar despesas de viagem",
+      "description": "Acesso total em todas as unidades.",
+      "module": "travel-expenses"
+    },
+    {
+      "code": "travel-expenses.unit.filial-01",
+      "name": "Despesas de Viagem — Unidade Filial 01",
+      "description": "Escopo de dados da filial 01 (SC). Combine com view, write ou manage.",
+      "module": "travel-expenses"
+    },
+    {
+      "code": "travel-expenses.unit.filial-02",
+      "name": "Despesas de Viagem — Unidade Filial 02",
+      "description": "Escopo de dados da filial 02 (ES). Combine com view, write ou manage.",
+      "module": "travel-expenses"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/travel-expenses",
+      "label": "Despesas de Viagem",
+      "permission": "travel-expenses.view",
+      "icon": "plane",
+      "order": 44,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    },
+    {
+      "path": "/apps/travel-expenses/reports",
+      "label": "Prestações",
+      "permission": "travel-expenses.view",
+      "icon": "plane",
+      "order": 45,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/travel-expenses/reports/new",
+      "label": "Nova prestação",
+      "permission": "travel-expenses.write",
+      "icon": "plane",
+      "order": 46,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

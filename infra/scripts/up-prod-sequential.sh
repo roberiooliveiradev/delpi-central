@@ -134,6 +134,7 @@ FASE_MFE=(
   customer-experience
   production-control
   financial
+  travel-expenses
   cultura-delpi
   codigo-etica
   guias-procedimentos
@@ -160,6 +161,7 @@ FASE_API=(
   customer-experience-api
   production-control-api
   financial-api
+  travel-expenses-api
   tv-dashboard-api
 )
 

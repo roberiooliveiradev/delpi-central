@@ -58,6 +58,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/maintenance` | `maintenance` | microfrontend | **módulo** | `/apps/maintenance` | `delpi-maintenance` |
 | `plugins/production-control` | `production-control` | microfrontend | **módulo** | `/apps/production-control` | `delpi-production-control` |
 | `plugins/financial` | `financial` | microfrontend | **módulo** | `/apps/financial` | `delpi-financial` |
+| `plugins/travel-expenses` | `travel-expenses` | microfrontend | plugin | `/apps/travel-expenses` | `delpi-travel-expenses` |
 | `plugins/dashboard-commercial` | `dashboard-commercial` | microfrontend | plugin | `/apps/dashboard-commercial` | `delpi-dashboard-commercial` |
 | `plugins/dashboard-production` | `dashboard-production` | microfrontend | plugin | `/apps/dashboard-production` | `delpi-dashboard-production` |
 | `plugins/dashboard-financial` | `dashboard-financial` | microfrontend | plugin | `/apps/dashboard-financial` | `delpi-dashboard-financial` |
@@ -110,6 +111,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 **Experiência do Cliente:** admin `/apps/customer-experience`; público `/p/customer-experience/thanks/{token}` e `/form/{token}`. API: `/apps/customer-experience-api/*`. [README do plugin](../../plugins/customer-experience/README.md) · [roadmap](../12-roadmap-e-volucao/customer-experience/).
 **Portal PCP:** `/apps/production-control` (gestão à vista + demanda + carga máquina + análise de problemas). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
 **Portal Financeiro:** `/apps/financial` (gestão à vista + inadimplência + despesas por CC + IDD/IGD). API: `/apps/financial-api/*`. Plugins legados permanecem. [README do plugin](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [spec](../12-roadmap-e-evolucao/financial/README.md).
+**Despesas de Viagem:** `/apps/travel-expenses` (prestação, cupons e pacote). API: `/apps/travel-expenses-api/*`. [README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md).
 **CIPA SIPAT:** admin `/apps/cipa/filial-{01|02}/sipat`; público `/p/cipa/sipat/{token}`. API: `/apps/cipa-api/public/sipat/*`.
 
 
@@ -141,6 +143,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Experiência do Cliente | `/apps/customer-experience-api/*` (participantes + formulários; público por token) |
 | Portal PCP | `/apps/production-control-api/*` (subplugins + demanda + carga máquina + análise de problemas; TOTVS via api-delpi) |
 | Portal Financeiro | `/apps/financial-api/*` (subplugins + overview + inadimplência + centros de custo + IDD/IGD; TOTVS via api-delpi, SI direto) |
+| Despesas de Viagem | `/apps/travel-expenses-api/*` (prestações, cupons, PDF; Postgres plugins) |
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
@@ -202,6 +205,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | reports | `reports` |
 | commercial | `commercial` |
 | financial | `financial` (BFF; não chama api-delpi no browser) |
+| travel-expenses | `travel-expenses` (API própria; não chama api-delpi no browser) |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -232,6 +236,7 @@ Declaradas no manifesto e persistidas na Core API:
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
 | kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
 | financial | `financial.access`, `.delinquency.view`, `.cost-centers.view`, `.indicators.view`, `.export`, `.view.filial-01/02` |
+| travel-expenses | `travel-expenses.view`, `.write`, `.manage`, `.admin`, `.unit.filial-01/02` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
 
@@ -261,6 +266,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
 | Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 | Portal Financeiro | [Plugin README](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [Spec](../12-roadmap-e-evolucao/financial/README.md) |
+| Despesas de Viagem | [Plugin README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [Playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md) · [Wireframes](../12-roadmap-e-evolucao/travel-expenses/WIREFRAMES.md) |
 
 ---
 

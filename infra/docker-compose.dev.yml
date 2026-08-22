@@ -870,6 +870,19 @@ services:
     networks:
       - delpi-network
 
+  travel-expenses:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: travel-expenses/Dockerfile
+      target: production
+    container_name: delpi-travel-expenses
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    networks:
+      - delpi-network
+
   production-control:
     <<: *plugin-ui-federated
     build:
@@ -1729,7 +1742,62 @@ services:
     networks:
       - delpi-network
 
+  travel-expenses-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: travel-expenses-api/Dockerfile
 
+    container_name: delpi-travel-expenses-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      TRAVEL_EXPENSES_API_ROOT_PATH: /apps/travel-expenses-api
+      TRAVEL_EXPENSES_RUN_MIGRATIONS_ON_STARTUP: ${TRAVEL_EXPENSES_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      CORE_API_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+      TRAVEL_EXPENSES_RECEIPT_UPLOAD_DIR: /app/data/travel-expenses/receipts
+      TRAVEL_EXPENSES_PACKAGE_UPLOAD_DIR: /app/data/travel-expenses/packages
+      TRAVEL_EXPENSES_PIX_UPLOAD_DIR: /app/data/travel-expenses/pix
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+
+    volumes:
+      - ../travel-expenses-api:/app
+      - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/travel-expenses/receipts:/app/data/travel-expenses/receipts
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/travel-expenses/packages:/app/data/travel-expenses/packages
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/travel-expenses/pix:/app/data/travel-expenses/pix
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - core-api
+
+    networks:
+      - delpi-network
 
   comite-etica-conduta-api:
     <<: *plugin-profile

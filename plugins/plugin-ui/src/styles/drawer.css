@@ -57,8 +57,12 @@
 
 .delpi-ui-drawer__close {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
+  padding: 0;
   border: 1px solid var(--border, #e6e6e6);
   border-radius: 10px;
   background: var(--surface, #fff);
