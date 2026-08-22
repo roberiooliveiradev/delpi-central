@@ -41,7 +41,7 @@ export type MultiTypeSeriesChartProps = {
   formatTooltipValue?: (value: number) => string;
   showLegend?: boolean;
   /**
-   * Rótulo de valor nas barras/colunas (acima da coluna, à direita da barra).
+   * Rótulo de valor nas barras/colunas (acima da coluna, à direita da barra) e nos pontos de linha.
    * Default false — não altera dashboards existentes.
    */
   showValueLabels?: boolean;
@@ -279,9 +279,15 @@ export function MultiTypeSeriesChart({
   }
 
   if (chartType === "line") {
+    const lineMargin =
+      showValueLabels && series.length
+        ? { ...margin, top: Math.max(margin.top ?? 0, 28) }
+        : margin;
+    const pointLabels = (show: boolean) => barValueLabels(show, formatY, "top");
+
     return (
       <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
-        <LineChart data={chartData} margin={margin}>
+        <LineChart data={chartData} margin={lineMargin}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey={categoryKey}
@@ -309,7 +315,9 @@ export function MultiTypeSeriesChart({
               strokeWidth={2}
               dot={{ r: 3 }}
               connectNulls
-            />
+            >
+              {pointLabels(showValueLabels)}
+            </Line>
           ))}
           {trendLines}
         </LineChart>

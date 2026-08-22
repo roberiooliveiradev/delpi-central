@@ -32,6 +32,11 @@ describe("MultiTypeSeriesChart (fonte)", () => {
     assert.match(src, /barValueLabels/);
   });
 
+  it("aplica showValueLabels nos pontos do gráfico de linha", () => {
+    assert.match(src, /chartType === "line"/);
+    assert.match(src, /pointLabels\(showValueLabels\)/);
+  });
+
   it("remonta o plot quando a ordem das séries muda (Recharts 3 bar store)", () => {
     assert.match(src, /seriesOrderKey/);
     assert.match(src, /key=\{seriesOrderKey\}/);
