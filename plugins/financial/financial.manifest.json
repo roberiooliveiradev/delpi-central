@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "financial",
+  "name": "Portal Financeiro",
+  "description": "Gestão à vista financeira, inadimplência de clientes, despesas por centro de custo e indicadores IDD/IGD.",
+  "category": "financeiro",
+  "icon": "wallet",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/financial",
+  "entry": "/apps/financial/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "financial.access",
+      "name": "Acessar Portal Financeiro",
+      "description": "Abrir o Portal Financeiro no menu da Minha Delpi.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.delinquency.view",
+      "name": "Inadimplência",
+      "description": "Ver pontualidade de pagamento, faixas de atraso e títulos dos clientes.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.cost-centers.view",
+      "name": "Despesas por centro de custo",
+      "description": "Ver gasto por centro de custo, fornecedor e lançamentos.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.indicators.view",
+      "name": "Indicadores estratégicos",
+      "description": "Ver o IDD do Financeiro e o IGD da Delpi.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.export",
+      "name": "Exportar Excel",
+      "description": "Baixar recortes de clientes inadimplentes e lançamentos em Excel.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.view.filial-01",
+      "name": "Portal Financeiro — filial 01 (SC)",
+      "description": "Consultar dados TOTVS da filial 01.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.view.filial-02",
+      "name": "Portal Financeiro — filial 02 (ES)",
+      "description": "Consultar dados TOTVS da filial 02.",
+      "module": "financial"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/financial",
+      "label": "Portal Financeiro",
+      "permission": "financial.access",
+      "icon": "wallet",
+      "order": 40,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    },
+    {
+      "path": "/apps/financial/home",
+      "label": "Gestão à vista",
+      "permission": "financial.access",
+      "icon": "layout-dashboard",
+      "order": 40,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/financial/delinquency",
+      "label": "Inadimplência",
+      "permission": "financial.delinquency.view",
+      "icon": "hand-coins",
+      "order": 41,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/financial/cost-centers",
+      "label": "Despesas por centro de custo",
+      "permission": "financial.cost-centers.view",
+      "icon": "receipt",
+      "order": 42,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/financial/indicators",
+      "label": "Indicadores",
+      "permission": "financial.indicators.view",
+      "icon": "gauge",
+      "order": 43,
+      "showInMenu": false
+    }
+  ],
+  "backend": {
+    "required": true,
+    "serviceName": "financial-api",
+    "baseUrl": "/apps/financial-api",
+    "validateJwt": true,
+    "issuer": "http://localhost/auth/realms/delpi",
+    "audience": "delpi-central"
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}
