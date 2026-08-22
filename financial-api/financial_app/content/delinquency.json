@@ -1,0 +1,61 @@
+{
+  "cacheTtlSeconds": {
+    "summary": 300,
+    "monthly": 300,
+    "aging": 300,
+    "customers": 120,
+    "titles": 60
+  },
+  "pagination": {
+    "defaultPage": 1,
+    "defaultPageSize": 20,
+    "maxPageSize": 100
+  },
+  "sort": {
+    "customers": {
+      "default": "late_amount",
+      "allowed": [
+        "late_amount",
+        "late_titles",
+        "total_amount",
+        "on_time_by_quantity_percent",
+        "on_time_by_amount_percent",
+        "customer_name"
+      ]
+    },
+    "titles": {
+      "default": "amount",
+      "allowed": [
+        "amount",
+        "days_late",
+        "payment_date",
+        "issue_date",
+        "customer_name",
+        "number"
+      ]
+    },
+    "allowedDirections": ["asc", "desc"]
+  },
+  "titleStatuses": ["all", "on_time", "late"],
+  "agingRanges": [
+    "EM_DIA",
+    "ATRASO_1_A_5_DIAS",
+    "ATRASO_6_A_15_DIAS",
+    "ATRASO_16_A_30_DIAS",
+    "ATRASO_ACIMA_30_DIAS"
+  ],
+  "messages": {
+    "invalidSortBy": "Ordenação inválida. Campos permitidos: {allowed}.",
+    "invalidSortDir": "Direção de ordenação inválida. Use asc ou desc.",
+    "invalidStatus": "Situação inválida. Use all, on_time ou late.",
+    "invalidAgingRange": "Faixa de atraso inválida."
+  },
+  "scopeNotice": "A inadimplência é consolidada na origem: os valores somam as duas filiais.",
+  "customerScopeNotice": "Recorte do cliente {customer} ({code}/{store}) no período. Os valores somam as duas filiais.",
+  "topDelinquentCustomers": {
+    "limit": 8,
+    "sortBy": "on_time_by_quantity_percent",
+    "sortDir": "asc",
+    "onlyWithDelays": true
+  }
+}

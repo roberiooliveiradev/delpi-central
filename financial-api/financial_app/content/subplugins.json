@@ -1,0 +1,58 @@
+{
+  "items": [
+    {
+      "id": "home",
+      "label": "Gestão à vista",
+      "description": "Painel inicial do Financeiro: ROL, EBITDA, custo fixo, PMR, inadimplência e nota IDD.",
+      "icon": "house",
+      "route": "/",
+      "status": "active",
+      "permission": "financial.access"
+    },
+    {
+      "id": "delinquency",
+      "label": "Inadimplência",
+      "description": "Pontualidade de pagamento dos clientes: faixas de atraso, ranking e títulos.",
+      "icon": "hand-coins",
+      "route": "/delinquency",
+      "status": "active",
+      "permission": "financial.delinquency.view"
+    },
+    {
+      "id": "cost-centers",
+      "label": "Despesas por centro de custo",
+      "description": "Gasto por centro de custo e fornecedor, com série mensal e lançamentos.",
+      "icon": "receipt",
+      "route": "/cost-centers",
+      "status": "active",
+      "permission": "financial.cost-centers.view"
+    },
+    {
+      "id": "indicators",
+      "label": "Indicadores estratégicos",
+      "description": "Nota IDD do Financeiro e IGD da Delpi, com meta e realizado por indicador.",
+      "icon": "gauge",
+      "route": "/indicators",
+      "status": "active",
+      "permission": "financial.indicators.view"
+    },
+    {
+      "id": "budget",
+      "label": "Orçamento",
+      "description": "Subplugin futuro — acompanhamento do planejamento orçamentário.",
+      "icon": "target",
+      "route": "/budget",
+      "status": "coming_soon",
+      "permission": "financial.access"
+    },
+    {
+      "id": "cash-flow",
+      "label": "Fluxo de caixa",
+      "description": "Subplugin futuro — contas a pagar, a receber e projeção de caixa.",
+      "icon": "trending-up",
+      "route": "/cash-flow",
+      "status": "coming_soon",
+      "permission": "financial.access"
+    }
+  ]
+}

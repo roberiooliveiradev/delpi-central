@@ -1,0 +1,13 @@
+{
+  "departmentId": "financial",
+  "cacheTtlSeconds": {
+    "department": 120,
+    "global": 120
+  },
+  "messages": {
+    "departmentUnavailable": "Os indicadores do Financeiro estão indisponíveis no momento.",
+    "globalUnavailable": "O IGD da Delpi está indisponível no momento.",
+    "partialSuccess": "Alguns indicadores não puderam ser medidos neste período; a nota considera apenas os disponíveis.",
+    "notPublished": "Ainda não há indicadores publicados para o Financeiro neste período."
+  }
+}

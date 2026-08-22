@@ -1,0 +1,9 @@
+fastapi
+pydantic
+uvicorn[standard]
+python-dotenv
+PyJWT
+psycopg[binary]
+python-jose[cryptography]
+httpx
+pytest

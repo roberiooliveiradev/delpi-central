@@ -1,0 +1,39 @@
+{
+  "cacheTtlSeconds": {
+    "filters": 600,
+    "summary": 300,
+    "series": 300,
+    "rankingCostCenters": 300,
+    "rankingSuppliers": 300,
+    "entries": 120
+  },
+  "pagination": {
+    "defaultPageSize": 50,
+    "maxPageSize": 200
+  },
+  "ranking": {
+    "defaultLimit": 10,
+    "maxLimit": 50
+  },
+  "defaultPeriodMonths": 12,
+  "sort": {
+    "entries": {
+      "default": "data_emissao",
+      "allowed": [
+        "data_emissao",
+        "documento",
+        "razao_social",
+        "centro_custo_codigo",
+        "centro_custo_descricao",
+        "produto_codigo",
+        "produto_descricao",
+        "valor_total"
+      ]
+    },
+    "allowedDirections": ["asc", "desc"]
+  },
+  "messages": {
+    "invalidSortBy": "Ordenação inválida. Campos permitidos: {allowed}.",
+    "invalidSortDir": "Direção de ordenação inválida. Use asc ou desc."
+  }
+}

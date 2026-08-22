@@ -1,0 +1,19 @@
+{
+  "topCostCentersLimit": 5,
+  "delinquencySeriesMonths": 12,
+  "maxParallelBlocks": 6,
+  "messages": {
+    "blockFailed": "Não foi possível carregar este bloco agora.",
+    "blockForbidden": "Você não tem permissão para ver este bloco.",
+    "sheetNotConfigured": "Este indicador vem da planilha financeira, que não está configurada neste ambiente."
+  },
+  "errorMatchers": [
+    { "contains": "sheet_id is required", "messageKey": "sheetNotConfigured" }
+  ],
+  "kpis": {
+    "rol": { "label": "ROL", "unit": "BRL" },
+    "ebitda": { "label": "EBITDA / ROL", "unit": "PCT" },
+    "fixedCost": { "label": "Custo fixo / ROL", "unit": "PCT" },
+    "pmr": { "label": "PMR", "unit": "DAYS" }
+  }
+}
