@@ -8,6 +8,10 @@ export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
 }
 
+export function getAccessToken(): string | undefined {
+  return accessTokenGetter?.();
+}
+
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",

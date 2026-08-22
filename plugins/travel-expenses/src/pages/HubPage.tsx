@@ -9,6 +9,7 @@ import {
 } from "../api/travelExpensesApi";
 import { formatBrl, formatDate, STATUS_LABELS, UNIT_LABELS } from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
+import { useTravelUserDisplayName } from "../hooks/useTravelUserDisplayName";
 import { navigateTravel } from "../hooks/useTravelRouterPath";
 import { writableUnits } from "../security/travelAccess";
 import { isSameMonth } from "../utils/dates";
@@ -24,6 +25,7 @@ import {
 import { travelDataTableClassNames, travelDataTableLabels } from "../ui/travelUiContracts";
 
 export function HubPage({ access }: { access: TravelAccess }) {
+  const displayName = useTravelUserDisplayName();
   const [items, setItems] = useState<ReportListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,8 +81,8 @@ export function HubPage({ access }: { access: TravelAccess }) {
   return (
     <div className="te-page-stack">
       <TravelPageHeader
-        title="Despesas de Viagem"
-        subtitle={helpTooltips.hub}
+        title={`Olá, ${displayName}`}
+        subtitle={`Despesas de Viagem — ${helpTooltips.hub}`}
         actions={
           access.canWrite ? (
             <ActionButton variant="primary" onClick={onCreate}>

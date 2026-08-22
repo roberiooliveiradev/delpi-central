@@ -16,6 +16,7 @@ import {
   readListSearch,
   replaceTravel,
 } from "../hooks/useTravelRouterPath";
+import { useTravelUserDisplayName } from "../hooks/useTravelUserDisplayName";
 import { writableUnits } from "../security/travelAccess";
 import {
   TravelFilterInputField,
@@ -28,6 +29,7 @@ import {
 import { travelDataTableClassNames, travelDataTableLabels } from "../ui/travelUiContracts";
 
 export function ListPage({ access, search }: { access: TravelAccess; search: string }) {
+  const displayName = useTravelUserDisplayName();
   const filters = readListSearch(search);
   const [items, setItems] = useState<ReportListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,8 +136,12 @@ export function ListPage({ access, search }: { access: TravelAccess; search: str
   return (
     <div className="te-page-stack">
       <TravelPageHeader
-        title={filters.scope === "unit" ? "Prestações da unidade" : "Minhas prestações"}
-        subtitle={helpTooltips.unitScope}
+        title={`Olá, ${displayName}`}
+        subtitle={
+          filters.scope === "unit"
+            ? `Prestações da unidade. ${helpTooltips.unitScope}`
+            : "Suas prestações de viagem — rascunhos, cupons e relatórios."
+        }
         nav={<BackLink onClick={() => navigateTravel("/apps/travel-expenses")}>Início</BackLink>}
         actions={
           access.canWrite ? (
