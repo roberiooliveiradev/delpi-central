@@ -9,6 +9,7 @@ import { usePpcRouterPath } from "./hooks/usePpcRouterPath";
 import { useSubplugins } from "./hooks/useSubplugins";
 import { DemandPage } from "./pages/DemandPage";
 import { MachineLoadPage } from "./pages/MachineLoadPage";
+import { MaterialsPage } from "./pages/MaterialsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProblemAnalysisPage } from "./pages/ProblemAnalysisPage";
 import {
@@ -20,7 +21,13 @@ import {
 } from "./utils/routeParser";
 
 /** Subplugins com página própria — os demais caem no fallback de «em breve». */
-const WORKSPACES = new Set([DEFAULT_SUBPLUGIN, "demand", "problem-analysis", "machine-load"]);
+const WORKSPACES = new Set([
+  DEFAULT_SUBPLUGIN,
+  "demand",
+  "problem-analysis",
+  "machine-load",
+  "materials",
+]);
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -57,6 +64,16 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     );
   } else if (route.subpluginId === "problem-analysis") {
     workspace = <ProblemAnalysisPage branch={route.branch} detectorId={route.detectorId} />;
+  } else if (route.subpluginId === "materials") {
+    workspace = (
+      <MaterialsPage
+        branch={route.branch}
+        search={route.materialsSearch}
+        issue={route.materialsIssue}
+        requestNumber={route.requestNumber}
+        requestItem={route.requestItem}
+      />
+    );
   } else if (route.subpluginId === "machine-load") {
     workspace = (
       <MachineLoadPage

@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 680,
+  "operation_count": 681,
   "operations": [
     {
       "method": "POST",
@@ -24540,6 +24540,14 @@
           "required": false,
           "description": "Cost center.",
           "type": "string"
+        },
+        {
+          "name": "exclude_mp_products",
+          "in": "query",
+          "required": false,
+          "description": "Exclude raw material (MP) product entries from supplies.",
+          "type": "boolean",
+          "default": false
         }
       ],
       "xDelpi": {
@@ -24761,6 +24769,14 @@
             "asc",
             "desc"
           ]
+        },
+        {
+          "name": "exclude_mp_products",
+          "in": "query",
+          "required": false,
+          "description": "Exclude raw material (MP) product entries from supplies.",
+          "type": "boolean",
+          "default": false
         }
       ],
       "xDelpi": {
@@ -25151,6 +25167,14 @@
           "description": "Maximum ranking items.",
           "type": "integer",
           "default": 10
+        },
+        {
+          "name": "exclude_mp_products",
+          "in": "query",
+          "required": false,
+          "description": "Exclude raw material (MP) product entries from supplies.",
+          "type": "boolean",
+          "default": false
         }
       ],
       "xDelpi": {
@@ -25347,6 +25371,14 @@
           "description": "Maximum ranking items.",
           "type": "integer",
           "default": 10
+        },
+        {
+          "name": "exclude_mp_products",
+          "in": "query",
+          "required": false,
+          "description": "Exclude raw material (MP) product entries from supplies.",
+          "type": "boolean",
+          "default": false
         }
       ],
       "xDelpi": {
@@ -25537,6 +25569,14 @@
           "required": false,
           "description": "Supplier store.",
           "type": "string"
+        },
+        {
+          "name": "exclude_mp_products",
+          "in": "query",
+          "required": false,
+          "description": "Exclude raw material (MP) product entries from supplies.",
+          "type": "boolean",
+          "default": false
         }
       ],
       "xDelpi": {
@@ -25742,6 +25782,14 @@
           "required": false,
           "description": "Supplier store.",
           "type": "string"
+        },
+        {
+          "name": "exclude_mp_products",
+          "in": "query",
+          "required": false,
+          "description": "Exclude raw material (MP) product entries from supplies.",
+          "type": "boolean",
+          "default": false
         }
       ],
       "xDelpi": {
@@ -87761,6 +87809,110 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Time series of purchase-order OTD for raw materials by branch."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/purchase-requests/open-coverage",
+      "operationId": "get_supplies_purchase_requests_open_coverage",
+      "summary": "Open purchase requests with stock, order and commitment coverage",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_request_coverage",
+        "shape": "list",
+        "category": "supplies",
+        "locale": {
+          "en": {
+            "summary": "Open purchase requests with stock, order and commitment coverage",
+            "description": "Unpaged dump of open Protheus purchase requests (SC1) for raw materials (B1_TIPO = MP), with product coverage from available stock plus open purchase orders minus open commitments.",
+            "whenToUse": "Use when you need open raw-material purchase requests together with stock + purchase-order − commitment coverage, without safety-stock classification."
+          },
+          "pt-BR": {
+            "summary": "Lista — Solicitações de compra em aberto com cobertura de saldo, pedidos e empenhos",
+            "description": "Dump sem paginação das solicitações de compra em aberto (SC1) só de matérias-primas (B1_TIPO = MP), com cobertura do produto: saldo disponível + pedidos − empenhos.",
+            "whenToUse": "Use quando precisar das solicitações em aberto de MP cruzadas com saldo, pedidos de compra e empenhos, sem ESTSEG.",
+            "label": "Lista — Solicitações de compra em aberto com cobertura"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use quando precisar das solicitações em aberto de MP cruzadas com saldo, pedidos de compra e empenhos, sem ESTSEG.",
+          "description": "Dump sem paginação das solicitações de compra em aberto (SC1) só de matérias-primas (B1_TIPO = MP), com cobertura do produto: saldo disponível + pedidos − empenhos.",
+          "label": "Lista — Solicitações de compra em aberto com cobertura"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Unpaged dump of open Protheus purchase requests (SC1) for raw materials (B1_TIPO = MP), with product coverage from available stock plus open purchase orders minus open commitments."
     },
     {
       "method": "GET",

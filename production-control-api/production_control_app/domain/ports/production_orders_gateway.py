@@ -85,6 +85,9 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_purchase_request_open_coverage(self, *, branch: str) -> dict[str, Any]:
+        ...
+
     def fetch_open_sales_orders(self) -> dict[str, Any]:
         ...
 

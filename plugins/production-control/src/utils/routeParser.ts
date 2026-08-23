@@ -10,12 +10,17 @@ export type PpcRoute = {
   locateQuery: string | null;
   demandSearch: string | null;
   demandStatus: string | null;
+  materialsSearch: string | null;
+  materialsIssue: string | null;
+  requestNumber: string | null;
+  requestItem: string | null;
   branch: PpcBranch;
   pathname: string;
 };
 
 /** Status da linha de demanda aceitos na URL — espelham o contrato do BFF. */
 const DEMAND_STATUSES = new Set(["late", "at_risk", "covered_by_order", "covered_by_stock"]);
+const MATERIALS_ISSUES = new Set(["excess", "shortage"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -47,19 +52,29 @@ function parseSearch(search: string): {
   locateQuery: string | null;
   demandSearch: string | null;
   demandStatus: string | null;
+  materialsSearch: string | null;
+  materialsIssue: string | null;
+  requestNumber: string | null;
+  requestItem: string | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const branchRaw = params.get("branch");
   const statusRaw = params.get("status")?.trim() || "";
+  const issueRaw = params.get("issue")?.trim() || "";
+  const sharedSearch = params.get("q")?.trim() || null;
   return {
     detectorId: params.get("detector")?.trim() || null,
     workCenter: params.get("ct")?.trim() || null,
     startDate: isoDateOrNull(params.get("startDate")),
     endDate: isoDateOrNull(params.get("endDate")),
     locateQuery: params.get("locate")?.trim() || null,
-    demandSearch: params.get("q")?.trim() || null,
+    demandSearch: sharedSearch,
     demandStatus: DEMAND_STATUSES.has(statusRaw) ? statusRaw : null,
+    materialsSearch: sharedSearch,
+    materialsIssue: MATERIALS_ISSUES.has(issueRaw) ? issueRaw : null,
+    requestNumber: params.get("request")?.trim() || null,
+    requestItem: params.get("item")?.trim() || null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
@@ -81,8 +96,23 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     locateQuery: query.locateQuery,
     demandSearch: query.demandSearch,
     demandStatus: query.demandStatus,
+    materialsSearch: query.materialsSearch,
+    materialsIssue: query.materialsIssue,
+    requestNumber: query.requestNumber,
+    requestItem: query.requestItem,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
+  };
+}
+
+export function readMaterialsDetailDeepLink(search = ""): {
+  requestNumber: string | null;
+  requestItem: string | null;
+} {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  return {
+    requestNumber: params.get("request")?.trim() || null,
+    requestItem: params.get("item")?.trim() || null,
   };
 }
 
@@ -96,6 +126,10 @@ export function buildPpcHref(input: {
   locateQuery?: string | null;
   demandSearch?: string | null;
   demandStatus?: string | null;
+  materialsSearch?: string | null;
+  materialsIssue?: string | null;
+  requestNumber?: string | null;
+  requestItem?: string | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -110,6 +144,10 @@ export function buildPpcHref(input: {
   if (input.locateQuery) params.set("locate", input.locateQuery);
   if (input.demandSearch) params.set("q", input.demandSearch);
   if (input.demandStatus) params.set("status", input.demandStatus);
+  if (input.materialsSearch) params.set("q", input.materialsSearch);
+  if (input.materialsIssue) params.set("issue", input.materialsIssue);
+  if (input.requestNumber) params.set("request", input.requestNumber);
+  if (input.requestItem) params.set("item", input.requestItem);
   return `${path}?${params.toString()}`;
 }
 

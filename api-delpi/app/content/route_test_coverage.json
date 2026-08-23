@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-20",
-  "baselineOperationCount": 680,
-  "operationCount": 680,
-  "coveredCount": 608,
+  "generatedAt": "2026-08-22",
+  "baselineOperationCount": 681,
+  "operationCount": 681,
+  "coveredCount": 609,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -194,8 +194,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 23,
-      "covered": 23,
+      "total": 24,
+      "covered": 24,
       "gap": 0,
       "exempt": 0
     },
@@ -6002,6 +6002,15 @@
       "module": "supplies",
       "entity": "supplies_purchase_order_otd_series",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_requests_open_coverage",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/open-coverage",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_coverage",
+      "shape": "list",
       "status": "covered"
     },
     {

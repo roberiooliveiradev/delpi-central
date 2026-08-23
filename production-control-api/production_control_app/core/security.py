@@ -10,6 +10,7 @@ PC_ACCESS = "production-control.access"
 PC_PROBLEM_ANALYSIS_VIEW = "production-control.problem-analysis.view"
 PC_MACHINE_LOAD_VIEW = "production-control.machine-load.view"
 PC_DEMAND_VIEW = "production-control.demand.view"
+PC_MATERIALS_VIEW = "production-control.materials.view"
 PC_VIEW_FILIAL_01 = "production-control.view.filial-01"
 PC_VIEW_FILIAL_02 = "production-control.view.filial-02"
 

@@ -1,6 +1,6 @@
 # production-control-api
 
-BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**, da **carga máquina** e da composição de **análise de problemas**. SQL TOTVS permanece na api-delpi.
+BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**, da **carga máquina**, da composição de **análise de problemas** e das **solicitações em excesso** (Materiais). SQL TOTVS permanece na api-delpi.
 
 **Recado para quem implementa:** o destino do módulo é o **Portal de Produção**, com o PCP como primeira área. Este BFF **não** vira umbrella de OEE, apontamento ou retrabalho — irmãos entram por `routes[].target`, não fundindo API. Detalhe: [docs/12-roadmap-e-evolucao/production-control/README.md](../docs/12-roadmap-e-evolucao/production-control/README.md) § Recado.
 
@@ -91,6 +91,19 @@ A cobertura é montada em `domain/services/demand_coverage_service.py`, por `(fi
 Daí sai o status da linha: `late` (entrega vencida), `at_risk` (sobrou saldo sem cobertura, ou a OP só termina depois da entrega), `covered_by_order` e `covered_by_stock`.
 
 Como a api-delpi devolve o dump inteiro sem filtro nem paginação, o recorte (filial, busca, status, janela de entrega), a ordenação, a página, o `summary` e o `horizon` por semana de entrega ficam em `application/services/demand_service.py`, sobre um cache por filial com TTL de `cacheTtlSeconds` (`content/demand.json`, 120 s). Trocar de página ou de filtro não repete a consulta pesada; `refresh=true` ignora o cache.
+
+## Materiais — excesso e falta de solicitações
+
+`GET /materials?view=excess|shortage` analisa SC1 de **matéria-prima** (`B1_TIPO = MP`) contra o estoque de segurança. PA, PI e demais tipos não entram. A api-delpi entrega o dump TOTVS (`GET /supplies/purchase-requests/open-coverage`): `items` (SC1) e `products` (MP com SC1 ou ESTSEG), cada um com `product_coverage` (`available_stock` 01+98+99 + SC7 elegível − SD4 elegível + `safety_stock` do SBZ). A SC1 não entra na projeção (evita dupla conta com o pedido).
+
+O BFF aplica, por produto:
+
+1. `needed_from_sc1 = max(0, safety_stock − projected_balance)`
+2. FIFO (data de necessidade, número, item): as SC1 mais antigas cobrem essa necessidade
+3. `view=excess`: só a SC1 que sobrou **inteira**
+4. `view=shortage`: produtos cuja SC1 aberta (ou a ausência dela) ainda não chega no ESTSEG
+
+Os cards (`issues[]`) trazem título, descrição e `product_count` de `content/materials.json`. Busca, ordenação, página e cache por filial (120 s) ficam em `application/services/materials_service.py`. Sem preço. Sem escrita no TOTVS. Permissão: `production-control.materials.view` + filial. O grant no Keycloak é operação — código e manifesto já declaram a permissão.
 
 ## Análise de problemas — detectores
 

@@ -17,6 +17,10 @@ from app.domain.services.supplies.safety_stock_supplier_scope_service import (
     internal_transfer_supplier_codes_sql,
 )
 from app.domain.totvs.protheus_branches import branch_filter_sql
+from app.domain.totvs.protheus_product_types import (
+    PRODUCT_TYPE_LABELS_PT,
+    PRODUCT_TYPE_RAW_MATERIAL,
+)
 
 
 def branch_filter_and(column: str, scope: str) -> tuple[str, list]:
@@ -43,6 +47,7 @@ __all__ = [
     "last_inventory_dates_batch_sql",
     "linked_suppliers_sql",
     "materials_base_cte",
+    "available_stock_for_open_purchase_request_products_sql",
     "open_commitments_sql",
     "open_purchase_orders_sql",
     "open_purchase_requests_sql",
@@ -444,15 +449,23 @@ def open_purchase_requests_sql(
     *,
     branch: str,
     product_param: str | None = "?",
+    product_type: str | None = None,
 ) -> tuple[str, list]:
     """Solicitações de compra em aberto (SC1) por filial (+ produto opcional).
 
     Saldo aberto: ``C1_QUANT > C1_QUJE`` e residual diferente de ``S``.
     Informativo no detalhe — **não** entra na projeção (evita doble-conta com SC7).
+    ``product_type`` restringe ``SB1.B1_TIPO`` (dump PCP: só MP).
     """
     product_clause = ""
     if product_param is not None:
         product_clause = f"AND RTRIM(SC1.C1_PRODUTO) = {product_param}"
+    type_clause = ""
+    if product_type:
+        normalized_type = product_type.strip().upper()
+        if normalized_type not in PRODUCT_TYPE_LABELS_PT:
+            raise ValueError(f"unsupported product_type: {product_type}")
+        type_clause = f"AND RTRIM(SB1.B1_TIPO) = '{normalized_type}'"
     and_sql, params = branch_filter_and("RTRIM(SC1.C1_FILIAL)", branch)
     sql = f"""
     SELECT
@@ -493,6 +506,7 @@ def open_purchase_requests_sql(
       AND SC1.C1_QUANT > SC1.C1_QUJE
       {and_sql}
       {product_clause}
+      {type_clause}
     ORDER BY
         CASE WHEN RTRIM(SC1.C1_DATPRF) = '' THEN 1 ELSE 0 END,
         SC1.C1_DATPRF ASC,
@@ -500,6 +514,97 @@ def open_purchase_requests_sql(
         SC1.C1_ITEM ASC
     """
     return sql, params
+
+
+def available_stock_for_open_purchase_request_products_sql(
+    *,
+    branch: str,
+) -> tuple[str, list]:
+    """Saldo 01+98+99, ESTSEG (SBZ) e UM das MPs com SC1 aberta ou estoque de segurança."""
+    request_and_sql, request_params = branch_filter_and("RTRIM(SC1.C1_FILIAL)", branch)
+    estseg_and_sql, estseg_params = branch_filter_and("RTRIM(SZ.BZ_FILIAL)", branch)
+    stock_and_sql, stock_params = branch_filter_and("RTRIM(SB2.B2_FILIAL)", branch)
+    sbz_and_sql, sbz_params = branch_filter_and("RTRIM(S.BZ_FILIAL)", branch)
+    locals_sql = ", ".join(f"'{code}'" for code in AVAILABLE_BALANCE_WAREHOUSES)
+    sql = f"""
+    WITH open_sc1 AS (
+        SELECT DISTINCT RTRIM(SC1.C1_PRODUTO) AS product_code
+        FROM SC1010 SC1 WITH (NOLOCK)
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.B1_COD = SC1.C1_PRODUTO
+           AND SB1.D_E_L_E_T_ = ''
+           AND RTRIM(SB1.B1_TIPO) = '{PRODUCT_TYPE_RAW_MATERIAL}'
+        WHERE SC1.D_E_L_E_T_ = ''
+          AND ISNULL(SC1.C1_RESIDUO, '') <> 'S'
+          AND SC1.C1_QUANT > SC1.C1_QUJE
+          {request_and_sql}
+    ),
+    safety_targets AS (
+        SELECT RTRIM(SB1.B1_COD) AS product_code
+        FROM SB1010 SB1 WITH (NOLOCK)
+        WHERE SB1.D_E_L_E_T_ = ''
+          AND RTRIM(SB1.B1_TIPO) = '{PRODUCT_TYPE_RAW_MATERIAL}'
+          AND EXISTS (
+              SELECT 1
+              FROM SBZ010 SZ WITH (NOLOCK)
+              WHERE SZ.BZ_COD = SB1.B1_COD
+                AND SZ.D_E_L_E_T_ = ''
+                AND RTRIM(SZ.BZ_FILIAL) <> ''
+                AND CAST(ISNULL(SZ.BZ_ESTSEG, 0) AS FLOAT) > 0
+                {estseg_and_sql}
+          )
+    ),
+    coverage_products AS (
+        SELECT product_code FROM open_sc1
+        UNION
+        SELECT product_code FROM safety_targets
+    ),
+    stock_agg AS (
+        SELECT
+            RTRIM(SB2.B2_COD) AS product_code,
+            SUM(
+                CASE WHEN RTRIM(SB2.B2_LOCAL) IN ({locals_sql})
+                THEN CAST(ISNULL(SB2.B2_QATU, 0) AS FLOAT) ELSE 0 END
+            ) AS available_stock
+        FROM SB2010 SB2 WITH (NOLOCK)
+        INNER JOIN coverage_products p
+            ON p.product_code = RTRIM(SB2.B2_COD)
+        WHERE SB2.D_E_L_E_T_ = ''
+          {stock_and_sql}
+        GROUP BY SB2.B2_COD
+    ),
+    sbz_agg AS (
+        SELECT
+            RTRIM(S.BZ_COD) AS product_code,
+            SUM(CAST(ISNULL(S.BZ_ESTSEG, 0) AS FLOAT)) AS safety_stock
+        FROM SBZ010 S WITH (NOLOCK)
+        INNER JOIN coverage_products p
+            ON p.product_code = RTRIM(S.BZ_COD)
+        WHERE S.D_E_L_E_T_ = ''
+          AND RTRIM(S.BZ_FILIAL) <> ''
+          {sbz_and_sql}
+        GROUP BY S.BZ_COD
+    )
+    SELECT
+        p.product_code,
+        RTRIM(COALESCE(SB1.B1_DESC, '')) AS product_description,
+        RTRIM(ISNULL(SB1.B1_UM, '')) AS unit,
+        RTRIM(ISNULL(SB1.B1_SEGUM, '')) AS secondary_unit,
+        CAST(ISNULL(SB1.B1_CONV, 0) AS FLOAT) AS conversion_factor,
+        RTRIM(ISNULL(SB1.B1_TIPCONV, '')) AS conversion_type,
+        ISNULL(st.available_stock, 0) AS available_stock,
+        ISNULL(sz.safety_stock, 0) AS safety_stock
+    FROM coverage_products p
+    LEFT JOIN SB1010 SB1 WITH (NOLOCK)
+        ON SB1.B1_COD = p.product_code
+       AND SB1.D_E_L_E_T_ = ''
+    LEFT JOIN stock_agg st
+        ON st.product_code = p.product_code
+    LEFT JOIN sbz_agg sz
+        ON sz.product_code = p.product_code
+    ORDER BY p.product_code ASC
+    """
+    return sql, request_params + estseg_params + stock_params + sbz_params
 
 
 def open_commitments_sql(

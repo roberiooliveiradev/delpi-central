@@ -50,6 +50,9 @@ from app.infrastructure.persistence.totvs.supplies_repositories.stock_balances_q
 from app.infrastructure.persistence.google_sheets.supplies.negotiation_savings_repository import (
     NegotiationSavingsRepository,
 )
+from app.application.use_cases.supplies.get_purchase_requests_open_coverage_use_case import (
+    GetPurchaseRequestsOpenCoverageUseCase,
+)
 from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_item_details_use_case import (
     GetSafetyStockConsumptionAnalysisItemDetailsUseCase,
 )
@@ -181,6 +184,12 @@ def build_get_negotiation_savings_summary_use_case() -> GetNegotiationSavingsSum
     return GetNegotiationSavingsSummaryUseCase(
         repository=_build_negotiation_savings_repository(),
     )
+
+
+def build_get_purchase_requests_open_coverage_use_case() -> (
+    GetPurchaseRequestsOpenCoverageUseCase
+):
+    return GetPurchaseRequestsOpenCoverageUseCase(repository=SafetyStockQueryRepository())
 
 
 def build_get_safety_stock_filters_use_case() -> GetSafetyStockFiltersUseCase:

@@ -236,6 +236,7 @@ Doc conjuntos incompletos: [production-order-sets-incomplete.md](./production-or
 | GET | `/supplies/safety-stock/consumption-analysis/summary` | KPIs da análise consumo × ESTSEG sugerido (12 meses). |
 | GET | `/supplies/safety-stock/consumption-analysis/items` | Lista paginada da simulação de ESTSEG por consumo SD3 + lead time `BZ_PE`. |
 | GET | `/supplies/safety-stock/consumption-analysis/items/{code}` | Detalhe com série mensal, comparativo anual (3 anos) e memória de cálculo. |
+| GET | `/supplies/purchase-requests/open-coverage` | Dump de SC1 de MP + produtos com ESTSEG e cobertura saldo/SC7/SD4 (TOTVS puro). Ver [estoque-seguranca.md](./estoque-seguranca.md). |
 | GET | `/supplies/third-party-materials/shipments` | Remessas paginadas de materiais de terceiros (SB6). Ver [materiais-terceiros.md](./materiais-terceiros.md). |
 | GET | `/supplies/third-party-materials/shipments/{shipment_recno}` | Detalhe da remessa + retornos. |
 | GET | `/supplies/third-party-materials/summary` | KPIs de remessas únicas (abertas, parciais, saldo pendente). |

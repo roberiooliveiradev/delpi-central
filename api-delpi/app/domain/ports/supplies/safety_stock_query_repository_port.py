@@ -113,6 +113,22 @@ class SafetyStockQueryRepositoryPort(ABC):
         ...
 
     @abstractmethod
+    def fetch_open_purchase_requests_for_branch(
+        self,
+        *,
+        branch: str,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def fetch_available_stock_for_open_purchase_request_products(
+        self,
+        *,
+        branch: str,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
     def fetch_materials_for_projection_batch(
         self,
         *,

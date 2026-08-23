@@ -4293,6 +4293,22 @@
         }
       }
     },
+    "get_supplies_purchase_requests_open_coverage": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Open purchase requests with stock, order and commitment coverage",
+          "description": "Unpaged dump of open Protheus purchase requests (SC1) for raw materials (B1_TIPO = MP), with product coverage from available stock plus open purchase orders minus open commitments.",
+          "whenToUse": "Use when you need open raw-material purchase requests together with stock + purchase-order − commitment coverage, without safety-stock classification."
+        },
+        "pt-BR": {
+          "summary": "Lista — Solicitações de compra em aberto com cobertura de saldo, pedidos e empenhos",
+          "description": "Dump sem paginação das solicitações de compra em aberto (SC1) só de matérias-primas (B1_TIPO = MP), com cobertura do produto: saldo disponível + pedidos − empenhos.",
+          "whenToUse": "Use quando precisar das solicitações em aberto de MP cruzadas com saldo, pedidos de compra e empenhos, sem ESTSEG.",
+          "label": "Lista — Solicitações de compra em aberto com cobertura"
+        }
+      }
+    },
     "get_supplies_safety_stock_items": {
       "category": "supplies",
       "locale": {

@@ -10,6 +10,7 @@ from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicat
     is_protheus_product_blocked,
 )
 from app.domain.totvs.protheus_branches import is_all_branches, normalize_branch_scope
+from app.domain.totvs.protheus_product_types import PRODUCT_TYPE_RAW_MATERIAL
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
     PRIMARY_WAREHOUSE,
     WORK_IN_PROCESS_WAREHOUSES,
@@ -25,6 +26,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     last_inventory_dates_batch_sql_scoped,
     materials_base_cte,
     materials_for_projection_batch_sql,
+    available_stock_for_open_purchase_request_products_sql,
     open_commitments_sql,
     open_purchase_orders_sql,
     open_purchase_requests_sql,
@@ -330,6 +332,30 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           rows = repo.execute_query(sql, params)
       return [self._map_open_commitment(row) for row in rows]
 
+  def fetch_open_purchase_requests_for_branch(
+      self,
+      *,
+      branch: str,
+  ) -> list[dict[str, Any]]:
+      sql, params = open_purchase_requests_sql(
+          branch=branch,
+          product_param=None,
+          product_type=PRODUCT_TYPE_RAW_MATERIAL,
+      )
+      with self as repo:
+          rows = repo.execute_query(sql, params)
+      return [self._map_open_purchase_request(row) for row in rows]
+
+  def fetch_available_stock_for_open_purchase_request_products(
+      self,
+      *,
+      branch: str,
+  ) -> list[dict[str, Any]]:
+      sql, params = available_stock_for_open_purchase_request_products_sql(branch=branch)
+      with self as repo:
+          rows = repo.execute_query(sql, params)
+      return [self._map_open_purchase_request_product_stock(row) for row in rows]
+
   def fetch_materials_for_projection_batch(
       self,
       *,
@@ -551,6 +577,19 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           "open_freight_value": float(row.get("open_freight_value") or 0),
           "open_discount_value": float(row.get("open_discount_value") or 0),
           "open_value": float(row.get("open_value") or 0),
+      }
+
+  @classmethod
+  def _map_open_purchase_request_product_stock(cls, row: dict[str, Any]) -> dict[str, Any]:
+      return {
+          "product_code": str(row.get("product_code") or "").strip(),
+          "product_description": str(row.get("product_description") or "").strip(),
+          "unit": str(row.get("unit") or "").strip(),
+          "secondary_unit": str(row.get("secondary_unit") or "").strip(),
+          "conversion_factor": float(row.get("conversion_factor") or 0) or None,
+          "conversion_type": str(row.get("conversion_type") or "").strip(),
+          "available_stock": float(row.get("available_stock") or 0),
+          "safety_stock": float(row.get("safety_stock") or 0),
       }
 
   @classmethod

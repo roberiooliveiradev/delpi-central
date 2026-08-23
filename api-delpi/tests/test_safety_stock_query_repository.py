@@ -309,6 +309,49 @@ def test_fetch_open_commitments_for_branch_omits_product_param(
 
 
 @patch.object(SafetyStockQueryRepository, "execute_query")
+def test_fetch_open_purchase_requests_for_branch_omits_product_param(
+    mock_execute_query: MagicMock,
+) -> None:
+    mock_execute_query.return_value = []
+    repo = _opened_repo()
+    repo.fetch_open_purchase_requests_for_branch(branch="01")
+
+    sql, params = mock_execute_query.call_args.args
+    assert "SC1010" in sql
+    assert "C1_PRODUTO) =" not in sql
+    assert "B1_TIPO) = 'MP'" in sql
+    assert params == ["01"]
+
+
+@patch.object(SafetyStockQueryRepository, "execute_query")
+def test_fetch_available_stock_for_open_purchase_request_products_binds_branch(
+    mock_execute_query: MagicMock,
+) -> None:
+    mock_execute_query.return_value = [
+        {
+            "product_code": "10020113",
+            "product_description": "Cobre",
+            "unit": "KG",
+            "secondary_unit": "",
+            "conversion_factor": 0,
+            "conversion_type": "",
+            "available_stock": 12.0,
+        }
+    ]
+    repo = _opened_repo()
+    rows = repo.fetch_available_stock_for_open_purchase_request_products(branch="01")
+
+    sql, params = mock_execute_query.call_args.args
+    assert "open_sc1" in sql or "coverage_products" in sql
+    assert "SB2010" in sql
+    assert "B1_TIPO) = 'MP'" in sql
+    assert "safety_stock" in sql
+    assert params == ["01", "01", "01", "01"]
+    assert rows[0]["product_code"] == "10020113"
+    assert rows[0]["available_stock"] == 12.0
+
+
+@patch.object(SafetyStockQueryRepository, "execute_query")
 def test_fetch_materials_for_projection_batch_binds_branch_twice(
     mock_execute_query: MagicMock,
 ) -> None:

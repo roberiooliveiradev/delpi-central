@@ -232,6 +232,14 @@ class DelpiProductionGateway:
         """OPs abertas por produto — cobre o saldo que o estoque não atende."""
         return self._request("GET", "/pedidos-venda-abertos/ops-abertas")
 
+    def fetch_purchase_request_open_coverage(self, *, branch: str) -> dict[str, Any]:
+        """SC1 em aberto de MP + cobertura saldo/SC7/SD4 — TOTVS puro, sem regra do PCP."""
+        return self._request(
+            "GET",
+            "/supplies/purchase-requests/open-coverage",
+            params={"branch": branch},
+        )
+
     def fetch_recently_closed_orders(self, *, days: int) -> dict[str, Any]:
         """Linhas SC6 encerradas no lookback (``C6_DATFAT``) — TOTVS puro."""
         return self._request(

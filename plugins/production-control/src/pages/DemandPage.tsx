@@ -7,7 +7,7 @@ import {
   NativeSelectField,
   formFieldShellBemClasses,
 } from "@delpi/plugin-ui/index";
-import { CalendarClock, Download, PackageSearch, TriangleAlert } from "lucide-react";
+import { CalendarClock, PackageSearch, TriangleAlert } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import { ChartCard } from "../components/ChartCard";
@@ -301,19 +301,10 @@ export function DemandPage({ branch, search, status }: DemandPageProps) {
                 ) : null}
               </>
             }
-            headerActions={
-              <button
-                type="button"
-                className="ppc-ghost-btn"
-                onClick={() => {
-                  void downloadDemandExcel(rows, demand.exportFileName(branch));
-                }}
-                disabled={rows.length === 0}
-              >
-                <Download size={16} strokeWidth={1.75} aria-hidden />
-                {demand.exportLabel}
-              </button>
-            }
+            excelExport={{
+              onExport: () => downloadDemandExcel(rows, demand.exportFileName(branch)),
+              disabled: rows.length === 0,
+            }}
           />
         </>
       ) : null}

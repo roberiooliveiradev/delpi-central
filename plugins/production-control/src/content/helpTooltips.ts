@@ -11,4 +11,6 @@ export const helpTooltips = {
   machineLoadLocate:
     "Conjunto = C2_NUM (6 primeiros dígitos da OP completa). Ex.: 10840401003 inclui todas as OPs 108404…. Produto (PA) lista os conjuntos daquele acabado.",
   branch: "Filial TOTVS usada na consulta (Santa Catarina ou Espírito Santo).",
+  materials:
+    "Dois recortes de matéria-prima: excesso de SC1 (documento inteiro já coberto depois do ESTSEG) e solicitações insuficientes (cobertura + SC1 não chega no estoque de segurança). PA e PI ficam de fora. Não elimina no TOTVS.",
 } as const;

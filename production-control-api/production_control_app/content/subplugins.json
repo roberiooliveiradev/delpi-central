@@ -37,6 +37,15 @@
       "permission": "production-control.machine-load.view"
     },
     {
+      "id": "materials",
+      "label": "Materiais",
+      "description": "Excesso e falta de SC1 de MP em relação ao estoque de segurança.",
+      "icon": "package",
+      "route": "/materials",
+      "status": "active",
+      "permission": "production-control.materials.view"
+    },
+    {
       "id": "capacity",
       "label": "Capacidade",
       "description": "Subplugin futuro — carga e capacidade de centros.",

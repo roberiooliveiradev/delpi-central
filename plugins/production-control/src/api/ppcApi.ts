@@ -7,6 +7,7 @@ import type {
   MachineLoadPrioritizePayload,
   MachineLoadTransferPayload,
   MachineLoadWithdrawPayload,
+  MaterialsPayload,
   OverviewPayload,
   ProblemDetectorItemsPayload,
   ProblemDetectorsPayload,
@@ -66,6 +67,33 @@ export async function fetchDemand(params: {
     data: DemandPayload;
   }>(ppcApiUrl(`/demand?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar a demanda.");
+}
+
+export async function fetchMaterials(params: {
+  branch: string;
+  view?: string | null;
+  search?: string;
+  sort?: string | null;
+  direction?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+  refresh?: boolean;
+  signal?: AbortSignal;
+}): Promise<MaterialsPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.view) search.set("view", params.view);
+  if (params.search) search.set("search", params.search);
+  if (params.sort) search.set("sort", params.sort);
+  if (params.direction) search.set("direction", params.direction);
+  if (params.page) search.set("page", String(params.page));
+  if (params.pageSize) search.set("pageSize", String(params.pageSize));
+  if (params.refresh) search.set("refresh", "true");
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MaterialsPayload;
+  }>(ppcApiUrl(`/materials?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar os materiais.");
 }
 
 export async function fetchMachineLoad(params: {

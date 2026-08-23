@@ -1,6 +1,6 @@
 # Portal PCP (MFE)
 
-Microfrontend federado da plataforma **Portal PCP** (`id`: `production-control`): shell estilo command-center com **gestão à vista** na home e subplugins (Demanda, Carga máquina, Análise de problemas).
+Microfrontend federado da plataforma **Portal PCP** (`id`: `production-control`): shell estilo command-center com **gestão à vista** na home e subplugins (Demanda, Carga máquina, Análise de problemas, Materiais).
 
 **Recado para quem implementa:** o destino do módulo é o **Portal de Produção**, com o PCP como primeira área — não absorver dashboard/eficiência/apontamentos neste BFF. Detalhe: [docs/12-roadmap-e-evolucao/production-control/README.md](../../docs/12-roadmap-e-evolucao/production-control/README.md) § Recado.
 
@@ -11,7 +11,8 @@ Portal → production-control (remoteEntry.js)
       → /apps/production-control-api/*
       → api-delpi /production/otd, /production/otd/series, /production/pcp-orders/*,
                   /production/machine-load/*, /production/production-order-sets/incomplete,
-                  /pedidos-venda-abertos/totvs-open-orders, /pedidos-venda-abertos/ops-abertas
+                  /pedidos-venda-abertos/totvs-open-orders, /pedidos-venda-abertos/ops-abertas,
+                  /supplies/purchase-requests/open-coverage
       → @delpi/plugin-ui (Module Federation)
 ```
 
@@ -25,6 +26,7 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: production-
 | `…/demand?branch=01\|02&q=&status=` | Demanda (carteira a entregar com cobertura) |
 | `…/machine-load?branch=01\|02&ct=&startDate=&endDate=&locate=` | Carga máquina (abas por centro de trabalho) |
 | `…/problem-analysis?branch=01\|02&detector=` | Análise de problemas (grade de detectores + registros) |
+| `…/materials?branch=01\|02&issue=&q=&request=&item=` | Materiais (excesso e falta de SC1 de MP vs ESTSEG) |
 
 Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
@@ -43,6 +45,8 @@ Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 **Enviar para outro centro de trabalho (botão direito):** a quarta ação abre um modal com o resumo da operação (OP, operação, descrição, centro atual) e um **select** com os demais centros com fila no período. Ao confirmar, `POST /machine-load/transfer` move só aquela operação para o **fim** da fila do destino — de lá o PCP reordena por DnD ou prioriza o conjunto. A linha passa a exibir o selo *veio de {CT}* enquanto estiver fora do centro de origem; devolvê-la ao centro original apaga o selo. A transferência sobrevive ao **Atualizar** do TOTVS e, como muda a fila de dois CTs, zera a pilha de Ctrl+Z do CT ativo.
 
 **Otimizar por entrega (barra):** o botão ⇅ *Otimizar por entrega*, ao lado do link do operador, chama `POST /machine-load/optimize-delivery` e resequencia a fila de **todos** os centros da filial pela data de entrega do PA — o carga máquina do TOTVS às vezes deixa material de mês seguinte à frente do que está vencendo. Operações já iniciadas continuam onde estão, empate na mesma entrega preserva a ordem atual e operação sem entrega vai para o fim do seu centro. Conjuntos fora da programação não voltam à fila. Há confirmação antes de aplicar; o aviso da barra informa quantos centros mudaram e quantas operações trocaram de posição. Como a mudança atravessa vários CTs, a pilha de Ctrl+Z do CT ativo é zerada e o cockpit do operador atualiza sozinho.
+
+**Materiais:** dois cards (`GET /materials`) — **Excesso de solicitações** e **Solicitações insuficientes**. O recorte ativo vai em `?issue=excess|shortage`. Excesso lista SC1 de **matéria-prima** cujo documento inteiro já está coberto por estoque + pedidos − empenhos **e** pelo ESTSEG. Falta lista produtos cuja cobertura + SC1 aberta não chega no estoque de segurança (inclui MP com ESTSEG e sem SC1). PA e PI não entram. `?q=` filtra; `?request=` + `?item=` reabre o detalhe no excesso. **Exportar Excel** baixa a página visível. Sem preço e sem escrita no TOTVS. Quem classifica é o BFF (FIFO por produto); o MFE é render-only.
 
 **Análise de problemas:** grade de cards, um por **detector** de exceção (`GET /problem-analysis`), e abaixo a tabela dos registros do detector aberto (`GET /problem-analysis/{detectorId}`). O deep link é `?detector=`; sem ele, abre o primeiro card do catálogo. Título, descrição, ícone e severidade vêm do BFF — o MFE é render-only e não decide o que é crítico.
 
@@ -70,6 +74,7 @@ Base: `/apps/production-control-api`
 | GET | `/subplugins` | Catálogo filtrado por permissão |
 | GET | `/overview?branch=` | Gestão à vista (OTD + atrasos) |
 | GET | `/demand?branch=&search=&status=&dueFrom=&dueTo=&sort=&direction=&page=&pageSize=&refresh=` | Carteira a entregar com cobertura por estoque e OP |
+| GET | `/materials?branch=&view=&search=&sort=&direction=&page=&pageSize=&refresh=` | Excesso ou falta de SC1 de MP vs ESTSEG |
 | GET | `/machine-load?branch=&workCenter=&startDate=&endDate=` | Centros de trabalho + fila do CT ativo (snapshot) |
 | GET | `/machine-load/locate?branch=&q=` | Rastreio de conjunto (C2_NUM, 6 dígitos) ou produto (PA) |
 | POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS (janela por entrega do PA) |
@@ -89,7 +94,7 @@ Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi
 
 ## Permissões
 
-`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.view.filial-01`, `production-control.view.filial-02`.
+`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais para quem tem `production-control.materials.view` — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
 
 ## Desenvolvimento
 

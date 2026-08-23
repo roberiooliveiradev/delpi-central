@@ -24,7 +24,7 @@ Até lá: não renomear o launcher só para “prometer” um portal que ainda n
 |--------|--------|
 | UI | `plugins/production-control` |
 | BFF / regra PCP | `production-control-api` |
-| SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`, `/pedidos-venda-abertos/totvs-open-orders`, `/pedidos-venda-abertos/ops-abertas`) |
+| SQL TOTVS | `api-delpi` (`/production/otd*`, `/production/pcp-orders/*`, `/production/machine-load/*`, `/pedidos-venda-abertos/totvs-open-orders`, `/pedidos-venda-abertos/ops-abertas`, `/supplies/purchase-requests/open-coverage`) |
 
 MFE não chama api-delpi. Subplugins são views internas do mesmo remote (não manifests aninhados).
 
@@ -34,7 +34,7 @@ Shell híbrido Linear (rail compacta) + MES (cards de exceção, semáforo). Hom
 
 ## Wireframe v1
 
-Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/demand?branch=01&status=at_risk`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`.
+Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/demand?branch=01&status=at_risk`. Carga máquina: `/apps/production-control/machine-load?branch=01&ct={centro}`. Análise: `/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets`. Materiais: `/apps/production-control/materials?branch=01&issue=excess`.
 
 ## Subplugins
 
@@ -44,6 +44,7 @@ Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/d
 | `demand` | ativo | Carteira a entregar: saldo por cliente/produto/data com cobertura por estoque e OP |
 | `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação |
 | `problem-analysis` | ativo | Grade de detectores de exceção (primeiro: conjuntos incompletos) |
+| `materials` | ativo | Excesso e falta de SC1 de MP vs ESTSEG (somente leitura) |
 | `capacity` | em breve | Capacidade e ocupação percentual por CT |
 
 Contrato TOTVS da carga máquina: [production-machine-load.md](../../../api-delpi/docs/api/production-machine-load.md); conjuntos incompletos: [production-order-sets-incomplete.md](../../../api-delpi/docs/api/production-order-sets-incomplete.md); convenção de chave de OP: [ordem-producao-chave.md](../../../api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md); apontamento de operação: [apontamento-operacao-hza.md](../../../api-delpi/docs/api/padroes-totvs/apontamento-operacao-hza.md).

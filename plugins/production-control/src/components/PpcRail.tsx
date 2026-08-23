@@ -4,6 +4,7 @@ import {
   Gauge,
   House,
   LayoutGrid,
+  Package,
   TriangleAlert,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -19,6 +20,7 @@ const ICONS: Record<string, LucideIcon> = {
   "clipboard-list": ClipboardList,
   "calendar-clock": CalendarClock,
   gauge: Gauge,
+  package: Package,
 };
 
 type PpcRailProps = {

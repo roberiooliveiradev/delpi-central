@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildPpcHref, parsePpcPath } from "./routeParser";
+import { buildPpcHref, parsePpcPath, readMaterialsDetailDeepLink } from "./routeParser";
 
 describe("parsePpcPath", () => {
   it("defaults empty base path to home", () => {
@@ -87,6 +87,47 @@ describe("buildPpcHref", () => {
         demandStatus: "at_risk",
       }),
     ).toBe("/apps/production-control/demand?branch=01&q=90262910&status=at_risk");
+  });
+
+  it("reads materials detail identity from the query string", () => {
+    expect(
+      readMaterialsDetailDeepLink("?branch=01&request=SC001&item=01"),
+    ).toEqual({
+      requestNumber: "SC001",
+      requestItem: "01",
+    });
+    expect(readMaterialsDetailDeepLink("?branch=01")).toEqual({
+      requestNumber: null,
+      requestItem: null,
+    });
+  });
+
+  it("reads materials search and request identity from the deep link", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/materials",
+      "?branch=01&q=10020113&issue=shortage&request=SC001&item=01",
+      "02",
+    );
+    expect(route.subpluginId).toBe("materials");
+    expect(route.materialsSearch).toBe("10020113");
+    expect(route.materialsIssue).toBe("shortage");
+    expect(route.requestNumber).toBe("SC001");
+    expect(route.requestItem).toBe("01");
+  });
+
+  it("serializes the materials deep link", () => {
+    expect(
+      buildPpcHref({
+        subpluginId: "materials",
+        branch: "01",
+        materialsSearch: "10020113",
+        materialsIssue: "excess",
+        requestNumber: "SC001",
+        requestItem: "01",
+      }),
+    ).toBe(
+      "/apps/production-control/materials?branch=01&q=10020113&issue=excess&request=SC001&item=01",
+    );
   });
 
   it("keeps the work center tab, period and locate query in the deep link", () => {

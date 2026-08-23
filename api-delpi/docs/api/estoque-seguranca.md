@@ -32,6 +32,23 @@ Envelope padrão `{ success, message, data, meta }`. Empresa padrão nesta entre
 
 Parâmetro comum: `branch` (`all` \| `01` SC \| `02` ES). `all` ou omitido = sem filtro SQL de filial.
 
+## Solicitações em aberto com cobertura
+
+Dump TOTVS puro (sem flag de excesso) para o Portal PCP classificar SC1 elimináveis e produtos com solicitações insuficientes. Universo: matérias-primas (`SB1.B1_TIPO = MP`) com SC1 aberta **ou** com ESTSEG cadastrado (`BZ_ESTSEG > 0`).
+
+| Método | Rota | `operationId` | Shape |
+|--------|------|---------------|-------|
+| GET | `/supplies/purchase-requests/open-coverage` | `get_supplies_purchase_requests_open_coverage` | list |
+
+`branch` é obrigatório (`01` \| `02`). Cada item é uma SC1 de **MP** com saldo aberto (`C1_QUANT > C1_QUJE`, residual ≠ `S`) e o bloco `product_coverage`. `data.products` lista as MPs do universo (com ou sem SC1), cada uma com o mesmo bloco:
+
+```text
+projected_balance = available_stock (SB2 01+98+99) + SC7 elegível − SD4 elegível
+safety_stock = soma BZ_ESTSEG da filial
+```
+
+A SC1 **não** entra em `projected_balance` (evita dupla conta com o SC7). O PCP classifica excesso quando `projected_balance` já cobre o ESTSEG e ainda sobra documento inteiro; falta quando cobertura + SC1 aberta não chega no ESTSEG.
+
 ---
 
 ## Análise de consumo × ESTSEG sugerido

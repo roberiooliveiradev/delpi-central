@@ -150,6 +150,78 @@ export type DemandHorizonBucket = {
   late: boolean;
 };
 
+export type MaterialsIssueId = "excess" | "shortage";
+
+export type MaterialsIssue = {
+  id: MaterialsIssueId;
+  title: string;
+  description: string;
+  severity: string;
+  product_count: number;
+};
+
+export type MaterialsLine = {
+  id: string;
+  kind?: "excess";
+  request_number: string;
+  request_item: string;
+  product_code: string;
+  product_description: string;
+  unit: string;
+  warehouse: string;
+  supplier_name: string;
+  open_quantity: number;
+  required_date: string | null;
+  issue_date: string | null;
+  available_stock: number;
+  safety_stock: number;
+  open_purchase_order_quantity: number;
+  open_commitment_quantity: number;
+  projected_balance: number;
+  needed_from_sc1: number;
+};
+
+export type MaterialsShortageLine = {
+  id: string;
+  kind: "shortage";
+  product_code: string;
+  product_description: string;
+  unit: string;
+  available_stock: number;
+  safety_stock: number;
+  open_purchase_order_quantity: number;
+  open_commitment_quantity: number;
+  projected_balance: number;
+  open_sc1_quantity: number;
+  needed_from_sc1: number;
+  shortage_quantity: number;
+};
+
+export type MaterialsPayload = {
+  branch: string;
+  view: MaterialsIssueId;
+  issues: MaterialsIssue[];
+  items: Array<MaterialsLine | MaterialsShortageLine>;
+  summary: {
+    excess_product_count: number;
+    shortage_product_count: number;
+    row_count: number;
+  };
+  filters: {
+    search: string;
+    sort: string;
+    direction: "asc" | "desc";
+    view: MaterialsIssueId;
+  };
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+    is_complete: boolean;
+  };
+};
+
 export type DemandPayload = {
   branch: string;
   items: DemandLine[];

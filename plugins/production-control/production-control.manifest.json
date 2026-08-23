@@ -35,6 +35,12 @@
       "module": "production-control"
     },
     {
+      "code": "production-control.materials.view",
+      "name": "Materiais",
+      "description": "Ver solicitações de compra em excesso que podem ser eliminadas.",
+      "module": "production-control"
+    },
+    {
       "code": "production-control.view.filial-01",
       "name": "Portal PCP — filial 01 (SC)",
       "description": "Consultar dados TOTVS da filial 01.",
@@ -87,6 +93,14 @@
       "permission": "production-control.problem-analysis.view",
       "icon": "triangle-alert",
       "order": 38,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/production-control/materials",
+      "label": "Materiais",
+      "permission": "production-control.materials.view",
+      "icon": "package",
+      "order": 39,
       "showInMenu": false
     }
   ],

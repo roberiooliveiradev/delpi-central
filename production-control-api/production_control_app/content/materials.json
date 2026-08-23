@@ -1,0 +1,37 @@
+{
+  "cacheTtlSeconds": 120,
+  "defaultPageSize": 50,
+  "maxPageSize": 200,
+  "defaultView": "excess",
+  "views": ["excess", "shortage"],
+  "sortFields": [
+    "required_date",
+    "request_number",
+    "product_code",
+    "open_quantity",
+    "projected_balance"
+  ],
+  "shortageSortFields": [
+    "product_code",
+    "shortage_quantity",
+    "safety_stock",
+    "projected_balance",
+    "open_sc1_quantity"
+  ],
+  "defaultSort": "required_date",
+  "shortageDefaultSort": "shortage_quantity",
+  "issues": {
+    "excess": {
+      "id": "excess",
+      "title": "Excesso de solicitações",
+      "description": "Matérias-primas cuja cobertura (saldo + pedidos − empenhos) já atende o estoque de segurança e ainda deixa a SC1 inteira sobrando.",
+      "severity": "attention"
+    },
+    "shortage": {
+      "id": "shortage",
+      "title": "Solicitações insuficientes",
+      "description": "Matérias-primas que, mesmo com saldo, pedidos e SC1 em aberto, não atingem o estoque de segurança.",
+      "severity": "critical"
+    }
+  }
+}
