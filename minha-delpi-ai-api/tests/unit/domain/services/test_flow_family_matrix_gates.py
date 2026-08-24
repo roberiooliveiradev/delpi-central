@@ -19,6 +19,8 @@ from app.domain.services.chat_text_correction_intent_service import (
     ChatTextCorrectionIntentService,
 )
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
+from app.domain.services.chat_turn_grounding_service import ChatTurnGroundingService
+from app.domain.services.chat_unclear_request_service import ChatUnclearRequestService
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 from tests.fixtures.chat_intelligence_regression_cases import FLOW_FAMILY_MATRIX_CASES
 
@@ -84,6 +86,47 @@ def test_flow_family_matrix_gates(case: dict):
             is expects["session_review"]
         )
 
+    snapshot = case.get("snapshot") if isinstance(case.get("snapshot"), dict) else {}
+
+    if "grounded_status" in expects:
+        grounding = ChatTurnGroundingService.evaluate(
+            message=message,
+            snapshot=snapshot,
+        )
+        assert grounding.status.value == expects["grounded_status"]
+
+    excerpt = snapshot.get("lastResultExcerpt")
+
+    if "should_narrate_excerpt" in expects:
+        assert (
+            ChatTurnGroundingService.should_narrate_excerpt(
+                message,
+                excerpt if isinstance(excerpt, dict) else None,
+            )
+            is expects["should_narrate_excerpt"]
+        )
+
+    if "should_expand_excerpt" in expects:
+        assert (
+            ChatTurnGroundingService.should_expand_from_excerpt(
+                message,
+                excerpt if isinstance(excerpt, dict) else None,
+            )
+            is expects["should_expand_excerpt"]
+        )
+
+    if "unclear_direct" in expects:
+        grounding = ChatTurnGroundingService.evaluate(
+            message=message,
+            snapshot=snapshot,
+        )
+        direct = ChatUnclearRequestService.build_direct_answer(
+            message=message,
+            previous_messages=[],
+            grounding_status=grounding.status.value,
+        )
+        assert bool(direct) is expects["unclear_direct"]
+
 
 def test_flow_family_matrix_covers_required_families():
     families = {str(item["family"]) for item in FLOW_FAMILY_MATRIX_CASES}
@@ -93,3 +136,4 @@ def test_flow_family_matrix_covers_required_families():
     assert "operational_api" in families
     assert "skill_company_knowledge" in families
     assert "message_search" in families
+    assert "turn_grounding" in families

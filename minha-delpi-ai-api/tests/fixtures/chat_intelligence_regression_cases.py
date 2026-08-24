@@ -3122,4 +3122,50 @@ FLOW_FAMILY_MATRIX_CASES = [
             "operational_data_request": False,
         },
     },
+    {
+        "id": "FF-GROUND-01",
+        "family": "turn_grounding",
+        "message": "o que me diz sobre os itens?",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "Estrutura 90260149",
+                "rowCount": 6,
+                "topKeys": ["10380044"],
+            }
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "should_narrate_excerpt": True,
+            "session_review": False,
+            "unclear_direct": False,
+        },
+    },
+    {
+        "id": "FF-GROUND-02",
+        "family": "turn_grounding",
+        "message": "e o estoque desses itens?",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "Estrutura 90260149",
+                "rowCount": 6,
+                "topKeys": ["10380044", "10380045"],
+            }
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "should_expand_excerpt": True,
+            "should_narrate_excerpt": False,
+            "unclear_direct": False,
+        },
+    },
+    {
+        "id": "FF-GROUND-03",
+        "family": "turn_grounding",
+        "message": "faz isso",
+        "snapshot": {},
+        "expects": {
+            "grounded_status": "ungrounded",
+            "unclear_direct": True,
+        },
+    },
 ]
