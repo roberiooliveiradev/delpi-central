@@ -252,6 +252,20 @@ class ChatWorkingMemoryService:
 
         lines: list[str] = []
 
+        excerpt = snapshot.get("lastResultExcerpt")
+
+        if isinstance(excerpt, dict) and excerpt:
+            from app.domain.services.chat_turn_grounding_content_service import (
+                ChatTurnGroundingContentService,
+            )
+
+            excerpt_block = ChatTurnGroundingContentService.format_excerpt_prompt_block(
+                excerpt,
+            )
+
+            if excerpt_block:
+                lines.append(excerpt_block)
+
         last_action = snapshot.get("lastAction")
 
         if isinstance(last_action, dict) and last_action.get("name"):
