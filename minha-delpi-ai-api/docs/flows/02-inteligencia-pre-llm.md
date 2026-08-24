@@ -30,13 +30,14 @@ flowchart TD
 | Ingress | `ChatTurnPreparationIngressService` — canvas, `operational_optimize` / `analysis_mode`, text task, history summary |
 | Directs pré-tool | `ChatTurnPreparationDirectAnswerService` + `ChatTurnPreparationPreToolContextService` |
 | Memória | `ChatTurnPreparationMemoryContextService` |
+| Grounding | `ChatTurnGroundingService` — avalia referente (`grounded` / `ungrounded` / slot) **antes** de unclear e turn analysis |
 | Guards / skip | `ChatTurnPreparationToolRoutingService` |
 | Turn analysis | `ChatTurnPreparationTurnAnalysisService` → `ChatTurnAnalysisService` |
 | Pós-tools | `ChatTurnPreparationPostToolResolutionService` |
 | Flags transversais | `ChatIntelligencePipelineService` |
 | Intent executado | `ChatTurnPreparationResultService` → `ChatIntentRouterService.resolve_executed` |
 | Modo do turno | `ChatTurnModeService` (`consume_prior`, `ask_slot`, `analyze`, `compose`, `execute_tools`, `llm_narrate`) |
-| Clarify | `ChatUnclearRequestService`, `ChatIntentDisambiguationService` |
+| Clarify | `ChatClarifyPolicyService`, `ChatUnclearRequestService`, `ChatIntentDisambiguationService` |
 
 ## Branches
 

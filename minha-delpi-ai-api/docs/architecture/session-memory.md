@@ -61,10 +61,11 @@ Ver [`chat-intelligence-base.md`](./chat-intelligence-base.md) § Data obrigató
 | `ChatSnapshotOperationalFocus` | Leitura/escrita de `operationalFocus` no snapshot |
 | `ChatUserContextItemService` | Contexto do usuário + `sync_operational_focus` |
 | `ChatWorkingMemoryService` | Pré/pós-turno, behavior, prompt block |
-| `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
+| `ChatConversationMemoryExtractor` | lastAction, lastPresentation, **lastResultExcerpt**, canvas, lastAttachment |
 | `ChatActiveQuerySessionService` | `metadata.activeQuery` pós-turno — herança de tipo de consulta até mudança de assunto (jun/2026) |
 | `ChatActivePendingService` | `metadata.activePending` — parâmetro faltante (código, data, filial) |
-| `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
+| `ChatTurnGroundingService` | Referente do turno (`turnGrounding` no workspace/metadata); assumption default sobre último artefato |
+| `ChatLastResultExcerptService` | Excerpt schema-first (`topKeys`, `preview`, `profileKey`) persistido no snapshot |
 | `ChatSessionMemoryService` | Persistência ai_chat_session_memory, limpeza |
 | `ChatSessionMemoryDirectAnswerService` | Ack preferência + ambiguidade |
 | `ChatBehaviorInstructionService` | Preferências curtas (tabela, tom, resposta curta) |
