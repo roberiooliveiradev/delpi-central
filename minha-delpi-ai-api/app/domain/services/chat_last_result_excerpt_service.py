@@ -46,6 +46,7 @@ class ChatLastResultExcerptService:
         title = cls._resolve_title(metadata)
         row_count = cls._resolve_row_count(metadata)
         top_keys = cls._extract_top_keys(metadata)
+        keys_by_component_type = cls._extract_keys_by_component_type(metadata)
         preview = cls._build_preview(metadata)
 
         excerpt: dict[str, Any] = {
@@ -61,6 +62,9 @@ class ChatLastResultExcerptService:
             "preview": preview or None,
             "messageId": str(message_id).strip() if message_id else None,
         }
+
+        if keys_by_component_type:
+            excerpt["keysByComponentType"] = keys_by_component_type
 
         return {key: value for key, value in excerpt.items() if value is not None}
 
@@ -346,6 +350,102 @@ class ChatLastResultExcerptService:
             add_candidate(path_code)
 
         return keys[:max_keys]
+
+    @classmethod
+    def _extract_keys_by_component_type(cls, metadata: dict[str, Any]) -> dict[str, list[str]]:
+        buckets: dict[str, list[str]] = {"PI": [], "MP": []}
+        seen: dict[str, set[str]] = {"PI": set(), "MP": set()}
+        type_fields = ChatTurnGroundingContentService.component_type_fields()
+        code_fields = {
+            str(item).strip().lower()
+            for item in ChatTurnGroundingContentService.extract_key_fields()
+            if str(item).strip()
+        }
+
+        def add_code(component_type: str, value: Any) -> None:
+            normalized_type = str(component_type or "").strip().upper()
+
+            if normalized_type not in buckets:
+                return
+
+            code = ChatProductQueryIntentService.normalize_product_code(
+                str(value or "").strip()
+            )
+
+            if not code or code in seen[normalized_type]:
+                return
+
+            cap = ChatTurnGroundingContentService.max_top_keys_for_component_type(
+                normalized_type
+            )
+
+            if len(buckets[normalized_type]) >= cap:
+                return
+
+            seen[normalized_type].add(code)
+            buckets[normalized_type].append(code)
+
+        def resolve_type(node: dict[str, Any]) -> str:
+            for field in type_fields:
+                raw = node.get(field)
+
+                if raw not in (None, ""):
+                    return str(raw).strip().upper()
+
+            return ""
+
+        def resolve_code(node: dict[str, Any]) -> str:
+            for field in code_fields:
+                raw = node.get(field)
+
+                if raw not in (None, ""):
+                    return str(raw).strip()
+
+            label = node.get("label")
+
+            if label not in (None, ""):
+                return str(label).strip()
+
+            return ""
+
+        def walk_node(node: Any) -> None:
+            if isinstance(node, dict):
+                component_type = resolve_type(node)
+                code = resolve_code(node)
+
+                if component_type in buckets and code:
+                    add_code(component_type, code)
+
+                for child_key in ("children", "components", "items"):
+                    children = node.get(child_key)
+
+                    if isinstance(children, list):
+                        for child in children:
+                            walk_node(child)
+
+                return
+
+            if isinstance(node, list):
+                for item in node:
+                    walk_node(item)
+
+        payload = cls._load_response_preview(metadata)
+
+        if isinstance(payload, dict):
+            walk_node(payload)
+
+        tree = metadata.get("treePresentation")
+
+        if isinstance(tree, dict):
+            walk_node(tree.get("root") or tree)
+
+        result = {
+            key: values
+            for key, values in buckets.items()
+            if values
+        }
+
+        return result
 
     @classmethod
     def _collect_keys_from_object(

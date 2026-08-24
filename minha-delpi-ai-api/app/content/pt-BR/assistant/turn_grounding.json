@@ -2,8 +2,19 @@
   "version": "2026.08.1",
   "limits": {
     "maxPreviewChars": 1200,
-    "maxTopKeys": 8
+    "maxTopKeys": 8,
+    "maxTopKeysByComponentType": {
+      "PI": 12,
+      "MP": 16
+    }
   },
+  "componentTypeFields": [
+    "type",
+    "component_type",
+    "componentType",
+    "badge",
+    "item_type"
+  ],
   "extractKeyFields": [
     "code",
     "productCode",

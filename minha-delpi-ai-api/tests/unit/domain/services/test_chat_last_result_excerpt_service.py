@@ -16,17 +16,27 @@ def _structure_tool_metadata() -> dict:
             "title": "Estrutura do produto 90260149",
             "root": {
                 "id": "90260149",
+                "label": "90260149",
+                "badge": "PA",
                 "children": [
-                    {"code": "10380044"},
-                    {"code": "10380045"},
-                    {"code": "10380046"},
+                    {"label": "50231850", "badge": "PI", "children": [
+                        {"label": "10080109", "badge": "MP"},
+                        {"label": "10090014", "badge": "MP"},
+                    ]},
+                    {"label": "50231851", "badge": "PI", "children": [
+                        {"label": "10080109", "badge": "MP"},
+                    ]},
                 ],
             },
         },
         "responsePreview": (
-            '{"root":{"code":"90260149"},"items":['
-            '{"code":"10380044"},{"code":"10380045"},{"code":"10380046"}'
-            "]}"
+            '{"root":{"code":"90260149","type":"PA"},"items":['
+            '{"code":"50231850","type":"PI","components":['
+            '{"code":"10080109","type":"MP"},{"code":"10090014","type":"MP"}'
+            "]},"
+            '{"code":"50231851","type":"PI","components":['
+            '{"code":"10080109","type":"MP"}'
+            "]}]}"
         ),
     }
 
@@ -63,10 +73,13 @@ def test_build_structure_excerpt_with_top_keys():
     assert excerpt is not None
     assert excerpt.get("profileKey") is None or excerpt["entity"] == "product_structure"
     assert excerpt["presentationType"] == "tree"
-    assert excerpt["rowCount"] == 3
-    assert excerpt["topKeys"][:3] == ["10380044", "10380045", "10380046"]
+    assert excerpt["rowCount"] == 2
+    assert "50231850" in excerpt["topKeys"]
     assert excerpt["messageId"] == "msg-structure"
     assert excerpt.get("preview")
+    typed = excerpt.get("keysByComponentType") or {}
+    assert set(typed.get("PI") or []) == {"50231850", "50231851"}
+    assert set(typed.get("MP") or []) == {"10080109", "10090014"}
 
 
 def test_build_stock_excerpt_with_profile_and_preview():

@@ -29,6 +29,30 @@ class ChatTurnGroundingContentService:
         return cls.limit_int("maxTopKeys", 8)
 
     @classmethod
+    def max_top_keys_for_component_type(cls, component_type: str) -> int:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "limits",
+            "maxTopKeysByComponentType",
+        )
+
+        if not isinstance(node, dict):
+            return cls.max_top_keys()
+
+        try:
+            return int(node.get(str(component_type or "").strip().upper(), cls.max_top_keys()))
+        except (TypeError, ValueError):
+            return cls.max_top_keys()
+
+    @classmethod
+    def component_type_fields(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(_BUNDLE, "componentTypeFields")
+            if str(item).strip()
+        )
+
+    @classmethod
     def extract_key_fields(cls) -> tuple[str, ...]:
         return tuple(
             str(item).strip()
