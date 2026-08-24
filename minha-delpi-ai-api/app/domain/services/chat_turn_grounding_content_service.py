@@ -115,6 +115,15 @@ class ChatTurnGroundingContentService:
         ).strip()
 
     @classmethod
+    def narrate_instruction(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE, "prompt", "narrateInstruction", default=""
+            )
+            or ""
+        ).strip()
+
+    @classmethod
     def format_excerpt_prompt_block(cls, excerpt: dict[str, Any] | None) -> str:
         if not isinstance(excerpt, dict) or not excerpt:
             return ""

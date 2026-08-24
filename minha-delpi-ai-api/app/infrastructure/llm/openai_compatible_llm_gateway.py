@@ -90,6 +90,14 @@ def _visible_assistant_text(message: dict, *, finish_reason: object = None) -> s
     if content:
         text = str(content).strip()
         if text and ChatLlmSynthesisLeakGuardService.needs_fallback(answer=text):
+            guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
+                answer=text,
+                fallback=None,
+            )
+            if guarded and guarded != text:
+                logger.warning("openai_compatible_content_looks_like_cot_using_guard")
+                mark_reasoning_fallback(True)
+                return guarded
             safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
             logger.warning("openai_compatible_content_looks_like_cot_using_safe_fallback")
             mark_reasoning_fallback(True)

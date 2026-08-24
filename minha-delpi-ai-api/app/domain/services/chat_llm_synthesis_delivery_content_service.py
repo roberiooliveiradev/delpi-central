@@ -41,6 +41,23 @@ class ChatLlmSynthesisDeliveryContentService:
         )
 
     @classmethod
+    def english_answer_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(_BUNDLE, "englishAnswerMarkers")
+            if str(item).strip()
+        )
+
+    @classmethod
+    def english_answer_min_marker_hits(cls) -> int:
+        return int(
+            ChatAssistantContentService.get(
+                _BUNDLE, "englishAnswerMinMarkerHits", default=2
+            )
+            or 2
+        )
+
+    @classmethod
     def safe_fallback_answer(cls) -> str:
         return str(
             ChatAssistantContentService.get(

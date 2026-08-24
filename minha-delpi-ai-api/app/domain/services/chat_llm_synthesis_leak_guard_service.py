@@ -97,7 +97,37 @@ class ChatLlmSynthesisLeakGuardService:
         ):
             return True
 
+        if cls.looks_like_english_answer(text):
+            return True
+
         return False
+
+    @classmethod
+    def looks_like_english_answer(cls, answer: str) -> bool:
+        """Heurística declarativa: resposta predominantemente EN sem acentos PT."""
+        text = str(answer or "").strip()
+        if len(text) < 40:
+            return False
+
+        if re.search(r"[áàâãéêíóôõúç]", text, re.IGNORECASE):
+            return False
+
+        lowered = text.lower()
+        compact = cls.compact_for_match(text)
+        markers = ChatLlmSynthesisDeliveryContentService.english_answer_markers()
+        min_hits = ChatLlmSynthesisDeliveryContentService.english_answer_min_marker_hits()
+
+        hits = 0
+        for marker in markers:
+            token = str(marker or "").strip().lower()
+            if not token:
+                continue
+            if cls._contains_marker(
+                haystack=lowered, haystack_compact=compact, marker=token
+            ):
+                hits += 1
+
+        return hits >= max(1, min_hits)
 
     @classmethod
     def try_recover_portuguese_body(cls, answer: str) -> str | None:

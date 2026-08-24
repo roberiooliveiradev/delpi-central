@@ -211,5 +211,6 @@ def test_apply_grounded_narrate_mode_injects_excerpt_context():
     assert narrate_mode
     assert updated.get("analysisMode") is True
     assert updated.get("groundedNarrate") is True
+    assert "português brasileiro" in updated.get("context", "").lower()
     assert "50230130" in updated.get("context", "")
     assert updated.get("turnGrounding", {}).get("status") == "grounded"

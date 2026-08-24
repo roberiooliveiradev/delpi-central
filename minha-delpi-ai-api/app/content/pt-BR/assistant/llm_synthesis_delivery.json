@@ -38,6 +38,15 @@
     "the system prompt",
     "based on my instructions",
     "the user asks in portuguese",
+    "the user is asking",
+    "the user asks about",
+    "i have the data",
+    "from the tool result",
+    "in the bom",
+    "bom structure",
+    "let me analyze",
+    "the structure has",
+    "items in the",
     "the instructions say",
     "i shouldn't dump",
     "i shouldnt dump",
@@ -54,6 +63,27 @@
     "Pelo que está habilitado",
     "Pelo que está disponível",
     "Nesta sessão",
-    "Nesta conversa"
-  ]
+    "Nesta conversa",
+    "A estrutura",
+    "Os itens",
+    "O produto",
+    "Com base nos",
+    "São "
+  ],
+  "englishAnswerMarkers": [
+    "the user is asking",
+    "the user asks about",
+    "i have the data",
+    "from the tool result",
+    "in the bom",
+    "bom structure",
+    "let me analyze",
+    "the structure has",
+    "items in the",
+    "each with",
+    "i should respond",
+    "according to my instructions",
+    "let me think"
+  ],
+  "englishAnswerMinMarkerHits": 2
 }

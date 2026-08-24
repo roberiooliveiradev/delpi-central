@@ -142,3 +142,26 @@ def test_guard_replaces_english_cot_with_safe_fallback():
     assert "according to my instructions" not in guarded.lower()
     assert "let me think" not in guarded.lower()
     assert guarded.strip()
+
+
+def test_needs_fallback_on_grounded_narrate_english_cot():
+    """Regressão: Kimi narrate grounded com CoT EN sobre BOM/itens."""
+    leaked = (
+        "The user is asking about the items in the BOM structure of product 90260149. "
+        "I have the data from the tool result in context. Let me analyze it.\n\n"
+        "The structure has 6 PI items, each with 3 MP components."
+    )
+    assert ChatLlmSynthesisLeakGuardService.needs_fallback(answer=leaked)
+    guarded = ChatLlmSynthesisLeakGuardService.guard_answer(answer=leaked, fallback=None)
+    assert guarded != leaked
+    assert "the user is asking" not in guarded.lower()
+    assert "let me analyze" not in guarded.lower()
+    assert "reformular" in guarded.lower() or "clara" in guarded.lower()
+
+
+def test_looks_like_english_answer_ignores_portuguese_with_accents():
+    answer = (
+        "A estrutura do produto 90260149 é composta por 6 itens intermediários "
+        "com cabos CB16 nas cores azul, branco e laranja."
+    )
+    assert not ChatLlmSynthesisLeakGuardService.looks_like_english_answer(answer)

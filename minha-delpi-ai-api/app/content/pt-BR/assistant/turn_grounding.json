@@ -21,7 +21,8 @@
     "lastResultHeading": "Último resultado em foco",
     "titleLine": "Título: {title}",
     "rowCountLine": "Quantidade: {rowCount}",
-    "topKeysLine": "Códigos em foco: {topKeys}"
+    "topKeysLine": "Códigos em foco: {topKeys}",
+    "narrateInstruction": "Responda em português brasileiro, de forma direta ao usuário. Não use raciocínio em inglês, meta-comentários sobre instruções nem chain-of-thought — vá direto à conclusão com os dados acima."
   },
   "statuses": {
     "grounded": "grounded",

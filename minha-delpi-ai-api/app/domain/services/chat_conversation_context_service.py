@@ -344,6 +344,11 @@ class ChatConversationContextService:
         updated.pop("directAnswer", None)
 
         blocks: list[str] = []
+        narrate_instruction = ChatTurnGroundingContentService.narrate_instruction()
+
+        if narrate_instruction:
+            blocks.append(narrate_instruction)
+
         excerpt_block = ChatTurnGroundingContentService.format_excerpt_prompt_block(excerpt)
 
         if excerpt_block:

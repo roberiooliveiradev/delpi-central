@@ -26,3 +26,9 @@ def test_turn_grounding_trigger_lists_non_empty():
     assert ChatTurnGroundingContentService.expand_triggers()
     assert ChatTurnGroundingContentService.insight_triggers()
     assert ChatTurnGroundingContentService.fan_out_on_referent_items()
+
+
+def test_turn_grounding_narrate_instruction_loaded():
+    instruction = ChatTurnGroundingContentService.narrate_instruction()
+    assert "português brasileiro" in instruction.lower()
+    assert "inglês" in instruction.lower()
