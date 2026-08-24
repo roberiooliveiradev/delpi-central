@@ -36,20 +36,7 @@ class ProductStockRepository(
 
         where_clause, params = qb.build()
 
-        # ---------------------------
-        # COUNT
-        # ---------------------------
-
-        count_sql = f"""
-        SELECT COUNT(*) AS total
-        FROM SB2010 SB2
-        WHERE {where_clause}
-        """
-
-        # ---------------------------
-        # DATA
-        # ---------------------------
-
+        # Uma query com total via window — leitura analítica (NOLOCK).
         data_sql = f"""
         SELECT
             SB2.B2_COD      AS product_code,
@@ -65,11 +52,12 @@ class ProductStockRepository(
             SBZ.BZ_MPLOCAL  AS physical_location,
             SBZ.BZ_LOCPAD   AS default_warehouse,
             SBZ.BZ_CUSTO    AS cost_center,
-            SBZ.BZ_GALPAO   AS warehouse_section
+            SBZ.BZ_GALPAO   AS warehouse_section,
+            COUNT(*) OVER() AS _total_count
 
-        FROM SB2010 SB2
+        FROM SB2010 SB2 WITH (NOLOCK)
 
-        LEFT JOIN SBZ010 SBZ
+        LEFT JOIN SBZ010 SBZ WITH (NOLOCK)
             ON SBZ.BZ_COD = SB2.B2_COD
             AND SBZ.BZ_FILIAL = SB2.B2_FILIAL
 
@@ -82,24 +70,29 @@ class ProductStockRepository(
         OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 
+        count_sql = f"""
+        SELECT COUNT(*) AS total
+        FROM SB2010 SB2 WITH (NOLOCK)
+        WHERE {where_clause}
+        """
+
         with self as repo:
-
-            total_row = repo.execute_one(
-                count_sql,
-                params
-            )
-
-            total = int(total_row["total"]) if total_row else 0
-
             rows = repo.execute_query(
                 data_sql,
                 params + (paging["offset"], paging["page_size"])
             )
 
-        items = [
-            Stock(**r)
-            for r in rows
-        ]
+            if rows:
+                total = int(rows[0].get("_total_count") or 0)
+            else:
+                total_row = repo.execute_one(count_sql, params)
+                total = int(total_row["total"]) if total_row else 0
+
+        items = []
+
+        for row in rows:
+            clean = {key: value for key, value in row.items() if key != "_total_count"}
+            items.append(Stock(**clean))
 
         return Page(
             items=items,
