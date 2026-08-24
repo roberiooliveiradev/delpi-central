@@ -1403,6 +1403,84 @@
   margin-top: 4px;
 }
 
+.admin-stats__period-filter {
+  margin-bottom: 12px;
+}
+
+.admin-stats__coverage-notice {
+  margin: 0 0 12px;
+  color: var(--warning, #d97706);
+  font-size: 0.875rem;
+}
+
+.admin-stats-line-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.admin-stats-line-chart__labels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.admin-stats-line-chart__labels strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.8125rem;
+}
+
+.admin-stats-top-users-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-stats-top-users-item {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.admin-stats-top-users-item__rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+.admin-stats-top-users-item__email,
+.admin-stats-top-users-item__metrics,
+.admin-stats-top-users-item__last {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.admin-stats-top-users-item strong {
+  display: block;
+}
+
 @media (max-width: 960px) {
   .admin-stats-tour-grid {
     grid-template-columns: 1fr;

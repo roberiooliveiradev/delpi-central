@@ -86,6 +86,79 @@ export function DonutChart({
   );
 }
 
+type LineChartPoint = {
+  label: string;
+  value: number;
+};
+
+type LineChartProps = {
+  points: LineChartPoint[];
+  valueLabel?: string;
+  accent?: string;
+};
+
+export function LineChart({
+  points,
+  valueLabel = "",
+  accent = "var(--chart-1)",
+}: LineChartProps) {
+  if (points.length === 0) {
+    return <p className="admin-stats__empty">Sem dados para exibir.</p>;
+  }
+
+  const width = 640;
+  const height = 180;
+  const padding = { top: 16, right: 12, bottom: 28, left: 12 };
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+  const max = Math.max(...points.map((point) => point.value), 1);
+
+  const coords = points.map((point, index) => {
+    const x =
+      padding.left +
+      (points.length === 1 ? innerWidth / 2 : (index / (points.length - 1)) * innerWidth);
+    const y = padding.top + innerHeight - (point.value / max) * innerHeight;
+    return { ...point, x, y };
+  });
+
+  const polyline = coords.map((point) => `${point.x},${point.y}`).join(" ");
+
+  return (
+    <div className="admin-stats-line-chart">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Gráfico de linha">
+        <polyline
+          fill="none"
+          stroke={accent}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          points={polyline}
+        />
+        {coords.map((point) => (
+          <circle
+            key={point.label}
+            cx={point.x}
+            cy={point.y}
+            r="3.5"
+            fill={accent}
+          />
+        ))}
+      </svg>
+      <ul className="admin-stats-line-chart__labels">
+        {coords.map((point) => (
+          <li key={point.label}>
+            <span>{point.label.slice(5)}</span>
+            <strong>
+              {point.value.toLocaleString("pt-BR")}
+              {valueLabel ? ` ${valueLabel}` : ""}
+            </strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 type BarChartProps = {
   items: BarChartItem[];
   valueLabel?: string;

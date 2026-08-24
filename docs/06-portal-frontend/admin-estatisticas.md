@@ -11,8 +11,9 @@ Primeira aba do `/admin`, com **subpáginas** internas e tema de analytics via t
 
 | Subpágina | Conteúdo |
 |-----------|----------|
-| **Visão geral** | KPIs + donuts resumidos (usuários, apps, notificações) |
-| **Usuários** | Online, logins, ativos/inativos, **tour do portal (exploradores)** |
+| **Visão geral** | KPIs + donuts resumidos (usuários, apps, notificações) + mini-KPIs de engajamento |
+| **Engajamento** | DAU/WAU/MAU, stickiness, tempo médio, top apps/usuários, séries temporais (`GET /admin/statistics/engagement`) |
+| **Usuários** | Online, logins, ativos/inativos, **tour do portal (exploradores)**, top usuários ativos |
 | **Aplicações** | Quem usa cada app agora, top 30d, fantasmas (sem backend-only), trackable vs backend-only, tipos |
 | **Acesso RBAC** | Rankings de papéis/grupos e vínculos |
 | **Notificações** | Status dos envios de campanha |

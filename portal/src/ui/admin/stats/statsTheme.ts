@@ -18,6 +18,7 @@ export const STATS_CHART_COLORS = {
 
 export type StatsSubPage =
   | "overview"
+  | "usage"
   | "users"
   | "apps"
   | "access"
@@ -36,6 +37,11 @@ export const STATS_SUB_PAGES: {
     id: "overview",
     label: "Visão geral",
     description: "KPIs e resumo executivo da plataforma",
+  },
+  {
+    id: "usage",
+    label: "Engajamento",
+    description: "Tempo de uso, rankings e tendências de atividade",
   },
   {
     id: "users",

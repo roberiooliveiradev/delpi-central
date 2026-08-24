@@ -248,6 +248,7 @@ Arquivos: `admin_statistics_controller.py`, `presence_controller.py`.
 | Método | Path | Permissão | Descrição |
 |---|---|---|---|
 | GET | `/admin/statistics` | `rbac.manage` | Snapshot agregado: usuários, apps, papéis, grupos, permissões, vínculos RBAC, campanhas de notificação, online, uso de apps |
+| GET | `/admin/statistics/engagement` | `rbac.manage` | Engajamento: DAU/WAU/MAU, stickiness, tempo médio, rankings de apps/usuários/rotas (`periodDays=7\|30\|90`) |
 | GET | `/admin/users/presence` | Superadmin | Usuários com portal conectado (Socket.IO) |
 | GET | `/admin/apps/usage` | `rbac.manage` | Apps em uso agora, ranking 30 dias, apps fantasmas (excl. backend-only), trackableActive |
 | GET | `/admin/portal-tour/explorers` | `rbac.manage` | Usuários explorando o tour (`tourVersion`, `status`, `limit`, `offset`) |

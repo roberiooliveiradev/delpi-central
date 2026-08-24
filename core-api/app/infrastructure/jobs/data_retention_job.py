@@ -13,6 +13,7 @@ from app.extensions.db import db
 from app.infrastructure.db.models.audit_log import AuditLog
 from app.infrastructure.db.models.notification import Notification
 from app.infrastructure.db.models.app_usage_event import AppUsageEvent
+from app.infrastructure.db.models.usage_session import UsageSession
 
 from app.domain.lgpd.privacy_constants import DATA_RETENTION_DAYS
 
@@ -22,6 +23,7 @@ AUDIT_LOG_RETENTION_DAYS = DATA_RETENTION_DAYS.get("audit_logs", 730)
 NOTIFICATION_RETENTION_DAYS = DATA_RETENTION_DAYS.get("notifications", 180)
 DELETED_NOTIFICATION_RETENTION_DAYS = DATA_RETENTION_DAYS.get("deleted_notifications", 30)
 USAGE_EVENT_RETENTION_DAYS = DATA_RETENTION_DAYS.get("usage_events", 365)
+USAGE_SESSION_RETENTION_DAYS = DATA_RETENTION_DAYS.get("usage_sessions", 365)
 
 
 def run_data_retention():
@@ -53,6 +55,12 @@ def run_data_retention():
         AppUsageEvent.opened_at < usage_cutoff,
     ).delete()
     results["usage_events_purged"] = count
+
+    session_cutoff = now - timedelta(days=USAGE_SESSION_RETENTION_DAYS)
+    count = db.session.query(UsageSession).filter(
+        UsageSession.started_at < session_cutoff,
+    ).delete()
+    results["usage_sessions_purged"] = count
 
     db.session.commit()
 

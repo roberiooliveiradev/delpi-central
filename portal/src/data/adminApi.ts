@@ -136,6 +136,56 @@ export type AdminAppUsageSnapshot = {
   backendOnlyActive?: number;
 };
 
+export type AdminEngagementSeriesPoint = {
+  date: string;
+  activeUsers?: number;
+  totalSeconds?: number;
+};
+
+export type AdminEngagementTopUser = {
+  id: string;
+  name: string;
+  email: string;
+  appsUsed: number;
+  totalOpens: number;
+  totalDurationSeconds: number;
+  lastAppUsageAt?: string | null;
+};
+
+export type AdminEngagementStatistics = {
+  generatedAt: string;
+  periodDays: number;
+  activity: {
+    dau: number;
+    wau: number;
+    mau: number;
+    stickiness: number;
+    activeUsersSeries: AdminEngagementSeriesPoint[];
+    durationSeries: AdminEngagementSeriesPoint[];
+  };
+  duration: {
+    avgPortalSeconds: number;
+    avgAppSeconds: number;
+    medianPortalSeconds: number;
+    p90AppSeconds: number;
+  };
+  rankings: {
+    topAppsByOpens: AdminStatisticsRankItem[];
+    topAppsByDuration: AdminStatisticsRankItem[];
+    topAppsByUniqueUsers: AdminStatisticsRankItem[];
+    topUsers: AdminEngagementTopUser[];
+    topRoutes: AdminStatisticsRankItem[];
+  };
+  coverage: {
+    trackingEnabled: boolean;
+    consentRate: number;
+    consentedUsers: number;
+    activeUsers: number;
+    sessionsRecorded: number;
+    eventsInPeriod: number;
+  };
+};
+
 export type AdminStatistics = {
   generatedAt: string;
   users: {
@@ -563,6 +613,12 @@ export class AdminApi {
 
   getAdminStatistics() {
     return this.client.get<AdminStatistics>("/core-api/admin/statistics");
+  }
+
+  getAdminEngagementStatistics(periodDays: 7 | 30 | 90 = 30) {
+    return this.client.get<AdminEngagementStatistics>(
+      `/core-api/admin/statistics/engagement?periodDays=${periodDays}`,
+    );
   }
 
   listPortalTourExplorers(params?: {

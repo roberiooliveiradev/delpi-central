@@ -21,5 +21,6 @@ DATA_RETENTION_DAYS = {
     "notifications": 180,
     "deleted_notifications": 30,
     "usage_events": 365,
+    "usage_sessions": 365,
     "consent_records": 1825,
 }

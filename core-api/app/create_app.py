@@ -38,6 +38,9 @@ from app.infrastructure.seeds.permissions_seed import seed_base_permissions
 from app.infrastructure.schedulers.notification_dispatch_scheduler import (
     start_notification_dispatch_scheduler,
 )
+from app.infrastructure.schedulers.usage_session_flush_scheduler import (
+    start_usage_session_flush_scheduler,
+)
 
 # IMPORTANT: registra policies
 import app.interfaces.http.security.policies
@@ -110,6 +113,7 @@ def create_app(config_name: str | None = None) -> Flask:
                 logging.warning(f"Permission seed failed: {e}")
 
     start_notification_dispatch_scheduler(app)
+    start_usage_session_flush_scheduler(app)
 
     # ==========================================================
     # CLI COMMANDS

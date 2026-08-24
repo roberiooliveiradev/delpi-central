@@ -1,13 +1,15 @@
 // src/ui/admin/stats/StatsEnrichment.tsx
 
 import { useState, type ReactNode } from "react";
-import { ChevronDown, Ghost, UserX } from "lucide-react";
+import { ChevronDown, Ghost, TrendingUp, UserX } from "lucide-react";
 
 import type {
+  AdminEngagementTopUser,
   AdminStatisticsLeastEngaged,
   AdminStatisticsRankItem,
 } from "../../../data/adminApi";
 import { formatGeneratedAt } from "./StatsShared";
+import { ENGAGEMENT_LABELS, formatEngagementUserRow } from "./engagementLabels";
 import { Button } from "../../../ui-kit";
 
 export function statPercent(part: number, total: number): number {
@@ -145,6 +147,65 @@ export function GhostAppsCompact({ apps }: { apps: AdminStatisticsRankItem[] }) 
         </Button>
       ) : null}
     </aside>
+  );
+}
+
+export function MostActiveUsersPanel({
+  users,
+  periodDays = 30,
+  onOpenEngagement,
+}: {
+  users?: AdminEngagementTopUser[];
+  periodDays?: number;
+  onOpenEngagement?: () => void;
+}) {
+  const items = (users ?? []).slice(0, 5);
+
+  return (
+    <section className="admin-stats__panel admin-stats__panel--wide">
+      <div className="admin-stats-panel__title-row">
+        <h5>
+          <TrendingUp size={14} aria-hidden="true" />
+          {ENGAGEMENT_LABELS.mostActiveUsers}
+        </h5>
+        <span className="admin-stats-panel__badge">{items.length}</span>
+      </div>
+      <p className="admin-stats-panel__lede">
+        Usuários com mais aberturas e tempo no portal nos últimos {periodDays} dias.
+      </p>
+
+      {items.length === 0 ? (
+        <p className="admin-stats__empty">{ENGAGEMENT_LABELS.emptyRankings}</p>
+      ) : (
+        <ul className="admin-stats-top-users-list admin-stats-top-users-list--compact">
+          {items.map((user, index) => {
+            const row = formatEngagementUserRow(user);
+            return (
+              <li key={user.id} className="admin-stats-top-users-item">
+                <span className="admin-stats-top-users-item__rank">{index + 1}</span>
+                <div>
+                  <strong>{row.primary}</strong>
+                  <span className="admin-stats-top-users-item__metrics">
+                    {row.metrics.join(" · ")}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {onOpenEngagement ? (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="admin-stats__panel-link"
+          onClick={onOpenEngagement}
+        >
+          {ENGAGEMENT_LABELS.viewEngagement}
+        </Button>
+      ) : null}
+    </section>
   );
 }
 

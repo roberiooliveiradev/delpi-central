@@ -2,7 +2,7 @@
 
 import { ArrowRight, RefreshCw } from "lucide-react";
 import type { AdminTab } from "../AdminPage";
-import type { AdminStatistics } from "../../../data/adminApi";
+import type { AdminStatistics, AdminEngagementStatistics } from "../../../data/adminApi";
 import type { StatsSubPage } from "./statsTheme";
 import { Button } from "../../../ui-kit";
 
@@ -112,6 +112,7 @@ export function StatsRefreshBar({
 
 export type StatsPageProps = {
   stats: AdminStatistics;
+  engagement?: AdminEngagementStatistics | null;
   onNavigateTab?: (tab: AdminTab) => void;
   onNavigateStatsSubPage?: (page: StatsSubPage) => void;
 };

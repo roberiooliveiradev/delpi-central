@@ -113,6 +113,19 @@ Tabela `app_usage_events`:
 
 Migration: `m9n0o1p2q3_app_usage_caller_app.py`.
 
+Tabela `usage_sessions` (duração persistida, migration `r4s5t6u7v8`):
+
+| Coluna | Descrição |
+|--------|-----------|
+| `user_id` | UUID do titular |
+| `app_id` | App ativo (`NULL` = sessão portal/presença) |
+| `route_path` | Rota quando aplicável |
+| `started_at` / `ended_at` | Intervalo da sessão |
+| `duration_seconds` | Duração calculada (cap 8h) |
+| `source` | `socket_close` \| `socket_disconnect` \| `ttl_flush` |
+
+Gravação: eventos Socket `app_usage.close`, `disconnect` e flush TTL do store ao vivo.
+
 ---
 
 ## 7. Admin — métricas
@@ -126,6 +139,8 @@ Migration: `m9n0o1p2q3_app_usage_caller_app.py`.
 | `ghostActive` | Cadastrados + `active`, sem uso na janela — **exclui `backend-only`** |
 | `trackableActive` | Ativos rastreáveis (microfrontend, iframe, external) |
 | `backendOnlyActive` | Serviços sem UI (informativo) |
+
+`GET /admin/statistics/engagement?periodDays=7|30|90` — DAU/WAU/MAU, stickiness, tempo médio, rankings de apps/usuários/rotas e séries diárias.
 
 UI: [admin-estatisticas.md](../06-portal-frontend/admin-estatisticas.md).
 

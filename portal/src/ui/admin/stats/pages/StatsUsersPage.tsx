@@ -9,6 +9,7 @@ import {
   StatsMiniKpi,
   StatsMiniKpiRow,
   LeastEngagedUsersPanel,
+  MostActiveUsersPanel,
   formatPercent,
   statPercent,
 } from "../StatsEnrichment";
@@ -25,6 +26,7 @@ type StatsUsersPageProps = StatsPageProps & {
 export function StatsUsersPage({
   stats,
   charts,
+  engagement,
   onNavigateTab,
   onNavigateStatsSubPage,
 }: StatsUsersPageProps) {
@@ -136,6 +138,14 @@ export function StatsUsersPage({
           />
         </StatsChartCard>
       </div>
+
+      <MostActiveUsersPanel
+        users={engagement?.rankings.topUsers}
+        periodDays={engagement?.periodDays}
+        onOpenEngagement={
+          onNavigateStatsSubPage ? () => onNavigateStatsSubPage("usage") : undefined
+        }
+      />
 
       <LeastEngagedUsersPanel data={stats.users.leastEngaged} />
 

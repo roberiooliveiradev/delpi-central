@@ -8,15 +8,18 @@ import {
   Compass,
   LayoutGrid,
   LayoutDashboard,
+  LineChart,
   Shield,
   Users,
 } from "lucide-react";
 
 import type { AdminTab } from "../AdminPage";
 import { useAdminStats } from "../stats/useAdminStats";
+import { useAdminEngagementStats } from "../stats/useAdminEngagementStats";
 import { StatsRefreshBar } from "../stats/StatsShared";
 import { STATS_SUB_PAGES, type StatsSubPage } from "../stats/statsTheme";
 import { StatsOverviewPage } from "../stats/pages/StatsOverviewPage";
+import { StatsUsagePage } from "../stats/pages/StatsUsagePage";
 import { StatsUsersPage } from "../stats/pages/StatsUsersPage";
 import { StatsAppsPage } from "../stats/pages/StatsAppsPage";
 import { StatsAccessPage } from "../stats/pages/StatsAccessPage";
@@ -32,6 +35,7 @@ type StatsTabProps = {
 
 const SUB_PAGE_ICONS: Record<StatsSubPage, typeof LayoutDashboard> = {
   overview: LayoutDashboard,
+  usage: LineChart,
   users: Users,
   apps: LayoutGrid,
   access: Shield,
@@ -42,6 +46,7 @@ const SUB_PAGE_ICONS: Record<StatsSubPage, typeof LayoutDashboard> = {
 export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
   const [page, setPage] = useState<StatsSubPage>("overview");
   const { stats, loading, error, load, charts, autoRefreshSeconds } = useAdminStats();
+  const engagementResource = useAdminEngagementStats(30);
 
   const activeMeta = STATS_SUB_PAGES.find((item) => item.id === page)!;
 
@@ -70,7 +75,13 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
     return <div className="admin-stats__state">Nenhum dado disponível.</div>;
   }
 
-  const pageProps = { stats, charts, onNavigateTab, onNavigateStatsSubPage: setPage };
+  const pageProps = {
+    stats,
+    charts,
+    engagement: engagementResource.engagement,
+    onNavigateTab,
+    onNavigateStatsSubPage: setPage,
+  };
 
   return (
     <section className="admin-stats" aria-labelledby="admin-stats-title">
@@ -123,6 +134,19 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
         </div>
 
         {page === "overview" ? <StatsOverviewPage {...pageProps} /> : null}
+        {page === "usage" ? (
+          <StatsUsagePage
+            stats={stats}
+            engagement={engagementResource.engagement}
+            loading={engagementResource.loading}
+            error={engagementResource.error}
+            periodDays={engagementResource.periodDays}
+            onPeriodChange={engagementResource.changePeriod}
+            onRefresh={() => void engagementResource.load()}
+            onNavigateTab={onNavigateTab}
+            onNavigateStatsSubPage={setPage}
+          />
+        ) : null}
         {page === "users" ? <StatsUsersPage {...pageProps} /> : null}
         {page === "apps" ? <StatsAppsPage {...pageProps} /> : null}
         {page === "access" ? <StatsAccessPage stats={stats} onNavigateTab={onNavigateTab} /> : null}

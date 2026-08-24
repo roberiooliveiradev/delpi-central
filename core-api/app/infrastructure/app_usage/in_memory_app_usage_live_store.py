@@ -97,6 +97,70 @@ class InMemoryAppUsageLiveStore:
             state.app_connected_at = None
             state.last_seen_at = now
 
+    def pop_active_segment(
+        self,
+        session_id: str,
+        *,
+        app_id: str | None = None,
+        ended_at: datetime | None = None,
+    ) -> dict | None:
+        now = ended_at or datetime.utcnow()
+        with self._lock:
+            state = self._by_session.get(session_id)
+            if state is None or not state.app_id or not state.app_connected_at:
+                return None
+
+            if app_id:
+                normalized = str(app_id).strip()
+                if not normalized or state.app_id != normalized:
+                    return None
+
+            segment = {
+                "user_id": state.user_id,
+                "app_id": state.app_id,
+                "route_path": state.route_path,
+                "started_at": state.app_connected_at,
+                "ended_at": now,
+            }
+            state.app_id = None
+            state.route_path = None
+            state.app_connected_at = None
+            state.last_seen_at = now
+            return segment
+
+    def collect_stale_segments(self, *, now: datetime | None = None) -> list[dict]:
+        current = now or datetime.utcnow()
+        cutoff = current - timedelta(seconds=self._ttl_seconds)
+        segments: list[dict] = []
+
+        with self._lock:
+            stale_ids = [
+                session_id
+                for session_id, state in self._by_session.items()
+                if state.last_seen_at < cutoff
+            ]
+
+            for session_id in stale_ids:
+                state = self._by_session.get(session_id)
+                if state is None:
+                    continue
+
+                if state.app_id and state.app_connected_at:
+                    segments.append(
+                        {
+                            "user_id": state.user_id,
+                            "app_id": state.app_id,
+                            "route_path": state.route_path,
+                            "started_at": state.app_connected_at,
+                            "ended_at": state.last_seen_at,
+                            "socket_session_id": session_id,
+                        }
+                    )
+
+                self._by_session.pop(session_id, None)
+
+        return segments
+
     def touch(self, session_id: str, *, app_id: str | None = None) -> None:
         now = datetime.utcnow()
         with self._lock:

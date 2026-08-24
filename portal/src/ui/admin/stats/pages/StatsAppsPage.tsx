@@ -12,6 +12,9 @@ import {
   formatPercent,
 } from "../StatsEnrichment";
 import { formatAppType, PanelNav, StatsPageIntro, type StatsPageProps, getTrackableActiveApps } from "../StatsShared";
+import { formatDuration } from "../engagementFormatting";
+import { ENGAGEMENT_LABELS } from "../engagementLabels";
+import { Button } from "../../../../ui-kit";
 import { STATS_CHART_COLORS } from "../statsTheme";
 
 import type { StatsChartsData } from "../useAdminStats";
@@ -20,7 +23,13 @@ type StatsAppsPageProps = StatsPageProps & {
   charts: StatsChartsData;
 };
 
-export function StatsAppsPage({ stats, charts, onNavigateTab }: StatsAppsPageProps) {
+export function StatsAppsPage({
+  stats,
+  charts,
+  engagement,
+  onNavigateTab,
+  onNavigateStatsSubPage,
+}: StatsAppsPageProps) {
   const usage = stats.apps.usage;
   const ghostCount = usage?.ghostApps?.length ?? 0;
   const usedInPeriod = usage?.usedInPeriod ?? 0;
@@ -115,6 +124,44 @@ export function StatsAppsPage({ stats, charts, onNavigateTab }: StatsAppsPagePro
           Rastreamento de uso desabilitado no servidor.
         </p>
       )}
+
+      {engagement ? (
+        <div className="admin-stats__charts-row admin-stats__charts-row--duo">
+          <StatsChartCard title="Top por aberturas">
+            <BarChart
+              items={(engagement.rankings.topAppsByOpens ?? []).map((item) => ({
+                id: item.id,
+                label: item.name,
+                value: item.count,
+              }))}
+              valueLabel="aberturas"
+              accent={STATS_CHART_COLORS.c2}
+            />
+          </StatsChartCard>
+          <StatsChartCard title="Top por tempo total">
+            <BarChart
+              items={(engagement.rankings.topAppsByDuration ?? []).map((item) => ({
+                id: item.id,
+                label: item.name,
+                value: item.count,
+                sublabel: formatDuration(item.count),
+              }))}
+              accent={STATS_CHART_COLORS.c4}
+            />
+          </StatsChartCard>
+        </div>
+      ) : null}
+
+      {engagement && onNavigateStatsSubPage ? (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="admin-stats__panel-link"
+          onClick={() => onNavigateStatsSubPage("usage")}
+        >
+          {ENGAGEMENT_LABELS.viewEngagement}
+        </Button>
+      ) : null}
 
       <div className="admin-stats__charts-row admin-stats__charts-row--duo">
         <StatsChartCard

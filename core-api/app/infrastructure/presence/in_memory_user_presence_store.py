@@ -49,6 +49,51 @@ class InMemoryUserPresenceStore:
         with self._lock:
             self._by_session.pop(session_id, None)
 
+    def pop_connection(
+        self,
+        session_id: str,
+        *,
+        ended_at: datetime | None = None,
+    ) -> dict | None:
+        now = ended_at or datetime.utcnow()
+        with self._lock:
+            state = self._by_session.pop(session_id, None)
+            if state is None:
+                return None
+            return {
+                "user_id": state.user_id,
+                "started_at": state.connected_at,
+                "ended_at": now,
+                "socket_session_id": session_id,
+            }
+
+    def collect_stale_connections(self, *, now: datetime | None = None) -> list[dict]:
+        current = now or datetime.utcnow()
+        cutoff = current - timedelta(seconds=self._ttl_seconds)
+        connections: list[dict] = []
+
+        with self._lock:
+            stale_ids = [
+                session_id
+                for session_id, state in self._by_session.items()
+                if state.last_seen_at < cutoff
+            ]
+
+            for session_id in stale_ids:
+                state = self._by_session.pop(session_id, None)
+                if state is None:
+                    continue
+                connections.append(
+                    {
+                        "user_id": state.user_id,
+                        "started_at": state.connected_at,
+                        "ended_at": state.last_seen_at,
+                        "socket_session_id": session_id,
+                    }
+                )
+
+        return connections
+
     def touch(self, session_id: str) -> None:
         now = datetime.utcnow()
         with self._lock:

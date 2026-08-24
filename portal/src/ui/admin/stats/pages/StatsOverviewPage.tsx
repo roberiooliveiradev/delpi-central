@@ -1,6 +1,6 @@
 // src/ui/admin/stats/pages/StatsOverviewPage.tsx
 
-import { LayoutGrid, Shield, Users, Users2 } from "lucide-react";
+import { LayoutGrid, Shield, TrendingUp, Users, Users2 } from "lucide-react";
 
 import { DonutChart } from "../StatsCharts";
 import {
@@ -13,7 +13,14 @@ import {
   statPercent,
 } from "../StatsEnrichment";
 import { StatsConsoleHealthCard } from "../StatsConsoleHealthCard";
-import { StatsPageIntro, type StatsPageProps, getTrackableActiveApps } from "../StatsShared";
+import {
+  StatsPageIntro,
+  type StatsPageProps,
+  getTrackableActiveApps,
+} from "../StatsShared";
+import { formatDuration } from "../engagementFormatting";
+import { ENGAGEMENT_LABELS } from "../engagementLabels";
+import { Button } from "../../../../ui-kit";
 
 import type { StatsChartsData } from "../useAdminStats";
 
@@ -23,13 +30,20 @@ type StatsOverviewPageProps = StatsPageProps & {
 
 const KPI_ICON = { size: 20, strokeWidth: 2, "aria-hidden": true as const };
 
-export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
+export function StatsOverviewPage({
+  stats,
+  charts,
+  engagement,
+  onNavigateStatsSubPage,
+}: StatsOverviewPageProps) {
   const usage = stats.apps.usage;
   const trackableActive = getTrackableActiveApps(stats);
   const notifyTotal = stats.notifications?.dispatchesTotal ?? 0;
   const notifyOk = stats.notifications?.dispatchesCompleted ?? 0;
   const onlinePct = statPercent(stats.users.online, stats.users.total);
   const activeUserPct = statPercent(stats.users.active, stats.users.total);
+  const topApp = engagement?.rankings.topAppsByOpens?.[0];
+  const topUser = engagement?.rankings.topUsers?.[0];
 
   return (
     <div className="admin-stats-page">
@@ -158,6 +172,50 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
       </div>
 
       <StatsConsoleHealthCard />
+
+      {engagement ? (
+        <StatsMiniKpiRow>
+          <StatsMiniKpi
+            tone="primary"
+            label={ENGAGEMENT_LABELS.stickiness}
+            value={`${engagement.activity.stickiness}%`}
+            hint={`DAU ${engagement.activity.dau} · MAU ${engagement.activity.mau}`}
+          />
+          <StatsMiniKpi
+            label={ENGAGEMENT_LABELS.avgPortalTime}
+            value={formatDuration(engagement.duration.avgPortalSeconds)}
+            hint={`${engagement.periodDays} dias`}
+          />
+          <StatsMiniKpi
+            label="App #1 por aberturas"
+            value={topApp?.name ?? "—"}
+            hint={topApp ? `${topApp.count} aberturas` : "Sem dados"}
+          />
+          <StatsMiniKpi
+            label="Usuário #1 por atividade"
+            value={topUser?.name ?? "—"}
+            hint={
+              topUser
+                ? `${topUser.totalOpens} aberturas · ${formatDuration(topUser.totalDurationSeconds)}`
+                : "Sem dados"
+            }
+          />
+        </StatsMiniKpiRow>
+      ) : null}
+
+      {engagement && onNavigateStatsSubPage ? (
+        <div className="admin-stats-page__head-row">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="admin-stats__panel-link"
+            icon={<TrendingUp size={14} />}
+            onClick={() => onNavigateStatsSubPage("usage")}
+          >
+            {ENGAGEMENT_LABELS.viewEngagement}
+          </Button>
+        </div>
+      ) : null}
 
       <StatsMiniKpiRow>
         <StatsMiniKpi
