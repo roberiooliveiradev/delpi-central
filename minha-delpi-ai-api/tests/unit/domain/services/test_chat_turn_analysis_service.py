@@ -112,3 +112,44 @@ def test_gate_opens_on_no_clear_intent_normal():
         heuristic_reason="no_clear_intent",
         heuristic_confidence=0.5,
     )
+
+
+def test_parse_clarify_becomes_narrate_when_grounded():
+    raw = '{"decision":"clarify","clarifyKey":"default","reason":"vague"}'
+    result = ChatTurnAnalysisService.parse(raw, grounding_status="grounded")
+
+    assert result is not None
+    assert result.decision == "narrate"
+    assert result.direct_answer() is None
+
+
+def test_safe_clarify_becomes_narrate_when_grounded():
+    result = ChatTurnAnalysisService.safe_clarify(
+        reason="boom",
+        grounding_status="grounded",
+    )
+
+    assert result.decision == "narrate"
+    assert result.direct_answer() is None
+
+
+def test_user_prompt_includes_grounding_block():
+    prompt = ChatTurnAnalysisContentService.user_prompt(
+        message="o que me diz sobre os itens?",
+        response_mode="normal",
+        heuristic_intent="operational_query",
+        heuristic_confidence=0.4,
+        heuristic_reason="no_clear_intent",
+        skills_catalog="",
+        actions_catalog="",
+        grounding_status="grounded",
+        last_result_excerpt={
+            "title": "Estrutura 90260149",
+            "rowCount": 6,
+            "topKeys": ["10380044"],
+        },
+    )
+
+    assert "grounded" in prompt
+    assert "90260149" in prompt
+    assert "10380044" in prompt

@@ -12,6 +12,7 @@ from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.chat_turn_analysis_content_service import (
     ChatTurnAnalysisContentService,
 )
+from app.domain.services.chat_turn_grounding_service import ChatTurnGroundingStatus
 
 logger = logging.getLogger("minha-delpi-ai-api.chat.turn-analysis")
 
@@ -138,7 +139,15 @@ class ChatTurnAnalysisService:
         clarify_key: str | None = "default",
         reason: str = "turn_analysis_fallback",
         source: str = "fallback",
+        grounding_status: str | None = None,
     ) -> ChatTurnAnalysisResult:
+        if cls._is_grounded_status(grounding_status):
+            return ChatTurnAnalysisResult(
+                decision="narrate",
+                reason="grounded_forbid_generic_clarify",
+                source=source,
+            )
+
         return ChatTurnAnalysisResult(
             decision="clarify",
             clarify_key=clarify_key or "default",
@@ -153,6 +162,7 @@ class ChatTurnAnalysisService:
         *,
         allowed_action_ids: set[str] | None = None,
         allowed_skill_keys: set[str] | None = None,
+        grounding_status: str | None = None,
     ) -> ChatTurnAnalysisResult | None:
         payload = cls._extract_json_object(raw_text)
         if not isinstance(payload, dict):
@@ -199,11 +209,19 @@ class ChatTurnAnalysisService:
                 break
 
         if decision == "execute" and not action_ids and not skills:
+            if cls._is_grounded_status(grounding_status):
+                return ChatTurnAnalysisResult(
+                    decision="narrate",
+                    reason="grounded_execute_without_plan",
+                    source="parse",
+                )
+
             # Execute sem plano útil → clarificar em vez de narrar CoT.
             return cls.safe_clarify(
                 clarify_key=str(payload.get("clarifyKey") or "default") or "default",
                 reason="execute_without_plan",
                 source="parse",
+                grounding_status=grounding_status,
             )
 
         if decision != "execute":
@@ -212,6 +230,16 @@ class ChatTurnAnalysisService:
         clarify_key = str(payload.get("clarifyKey") or "").strip() or None
         if decision == "clarify" and not clarify_key:
             clarify_key = "default"
+
+        if decision == "clarify" and cls._is_grounded_status(grounding_status):
+            return ChatTurnAnalysisResult(
+                decision="narrate",
+                intent=str(payload.get("intent") or "").strip() or None,
+                sub_intent=str(payload.get("subIntent") or "").strip() or None,
+                reason="grounded_forbid_generic_clarify",
+                raw=payload,
+                source="parse",
+            )
 
         return ChatTurnAnalysisResult(
             decision=decision,
@@ -239,6 +267,8 @@ class ChatTurnAnalysisService:
         actions_catalog_lines: list[str],
         allowed_action_ids: set[str] | None = None,
         allowed_skill_keys: set[str] | None = None,
+        grounding_status: str | None = None,
+        last_result_excerpt: dict | None = None,
     ) -> ChatTurnAnalysisResult:
         system = ChatTurnAnalysisContentService.system_prompt()
         user = ChatTurnAnalysisContentService.user_prompt(
@@ -249,6 +279,8 @@ class ChatTurnAnalysisService:
             heuristic_reason=heuristic_reason,
             skills_catalog="\n".join(skills_catalog_lines) or "(nenhuma)",
             actions_catalog="\n".join(actions_catalog_lines) or "(nenhuma)",
+            grounding_status=str(grounding_status or "ungrounded"),
+            last_result_excerpt=last_result_excerpt,
         )
 
         try:
@@ -260,18 +292,32 @@ class ChatTurnAnalysisService:
             )
         except Exception:
             logger.exception("turn_analysis_llm_failed")
-            return cls.safe_clarify(reason="turn_analysis_llm_error")
+            return cls.safe_clarify(
+                reason="turn_analysis_llm_error",
+                grounding_status=grounding_status,
+            )
 
         parsed = cls.parse(
             str(raw or ""),
             allowed_action_ids=allowed_action_ids,
             allowed_skill_keys=allowed_skill_keys,
+            grounding_status=grounding_status,
         )
         if parsed is None:
             logger.warning("turn_analysis_parse_failed")
-            return cls.safe_clarify(reason="turn_analysis_parse_failed")
+            return cls.safe_clarify(
+                reason="turn_analysis_parse_failed",
+                grounding_status=grounding_status,
+            )
 
         return parsed
+
+    @classmethod
+    def _is_grounded_status(cls, grounding_status: str | None) -> bool:
+        return (
+            str(grounding_status or "").strip().lower()
+            == ChatTurnGroundingStatus.GROUNDED.value
+        )
 
     @classmethod
     def _extract_json_object(cls, raw_text: str) -> dict[str, Any] | None:
