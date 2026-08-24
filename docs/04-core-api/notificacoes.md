@@ -69,7 +69,17 @@ Migrations relevantes (ordem): `c9d0e1f2a3b4` (campos ricos), `e1f2a3b4c5d6` (`i
 
 ### 3.3 `notification_dispatches`
 
-Auditoria e agendamento de campanhas (payload, `scheduled_at`, status, contadores). Ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
+Auditoria e agendamento de campanhas (payload, `scheduled_at`, status, contadores). Alimenta o **Histórico** do Admin → Notificações (`GET /admin/notifications/dispatches`). Ver [roadmap](../12-roadmap-e-evolucao/notificacoes-ricas.md).
+
+| Origem | `source_app` | Como grava |
+|--------|--------------|------------|
+| Admin manual | body `sourceApp` | `CreateNotificationDispatchUseCase` |
+| Integrações / plugins | body `sourceApp` | idem |
+| RBAC (acesso automático) | `rbac-automation` | `AutomatedNotificationDispatchService.record_completed` após entrega na inbox |
+| Boas-vindas (primeiro login) | `welcome-automation` | pipeline completo via `AutomatedNotificationDispatchService.dispatch` |
+| Aniversário (cron) | `birthday-automation` | um dispatch batch por execução do cron |
+
+Serviço canônico: `app/application/services/automated_notification_dispatch_service.py`.
 
 ---
 
@@ -100,13 +110,15 @@ Destinatários adicionais no body: `roleIds` (papel direto + via grupo), `groupI
 
 | Método | Path | Descrição |
 |--------|------|-----------|
-| POST | `/integrations/notifications/automation/birthdays` | Envia `birthday_v1` para usuários ativos com `birth_date` = hoje (idempotente por dia) |
+| POST | `/integrations/notifications/automation/birthdays` | Envia `birthday_v1` para usuários ativos com `birth_date` = hoje (idempotente por dia). Gera **um** registro em `notification_dispatches` (`source_app=birthday-automation`) quando houver destinatários. |
 
-Boas-vindas: no **primeiro login** (criação do usuário local), dispara `welcome_v1` automaticamente (respeita preferências).
+Boas-vindas: no **primeiro login** (criação do usuário local), dispara `welcome_v1` automaticamente (respeita preferências). Registra campanha em `notification_dispatches` (`source_app=welcome-automation`); se a categoria estiver silenciada, não envia nem grava dispatch.
 
 ### Acesso a aplicações (automático via RBAC)
 
-Quando um usuário ganha acesso a novas aplicações — via adição de grupo, papel, ou mudança de permissões — o sistema dispara automaticamente `app_access_granted_v1`.
+Quando um usuário ganha acesso a novas aplicações — via adição de grupo, papel, ou mudança de permissões — o sistema dispara automaticamente `app_access_granted_v1` (categoria **`access`** no Histórico admin).
+
+Quando ganha permissões de administração (`system.*`), dispara `system_access_granted_v1` (categoria **`system`** no Histórico — não aparece no filtro «Acesso»).
 
 | Evento RBAC | Quem é notificado |
 |---|---|
@@ -116,7 +128,7 @@ Quando um usuário ganha acesso a novas aplicações — via adição de grupo, 
 | `permission_added_to_role` / `role_permissions_replaced` | Todos os usuários com o papel (direto + via grupos) |
 | `role_added_to_group` / `group_roles_replaced` | Todos os usuários do grupo |
 
-O handler (`RbacNotificationEventHandler`) calcula quais apps as novas permissões concedem, e a notificação lista os nomes. Se for uma única app, o CTA direciona diretamente para o `basePath` dela; caso contrário, leva à home.
+O handler (`RbacNotificationEventHandler`) calcula quais apps as novas permissões concedem, e a notificação lista os nomes. Se for uma única app, o CTA direciona diretamente para o `basePath` dela; caso contrário, leva à home. Após entregar na inbox, registra auditoria em `notification_dispatches` (`source_app=rbac-automation`, `created_by_user_id` = admin que alterou o RBAC quando disponível). A entrega RBAC **não** reutiliza o pipeline de mute do dispatch manual.
 
 Variáveis: `{userName}` (auto, primeiro nome), `{appNames}` (nomes separados por vírgula).
 
