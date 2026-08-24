@@ -33,6 +33,33 @@ class ChatTurnGrounding:
     def is_grounded(self) -> bool:
         return self.status == ChatTurnGroundingStatus.GROUNDED
 
+    def to_metadata(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "status": self.status.value,
+            "reason": self.reason,
+        }
+
+        if self.referring_label:
+            payload["referringTo"] = {"label": self.referring_label}
+
+        if isinstance(self.excerpt, dict) and self.excerpt:
+            payload["excerpt"] = {
+                key: self.excerpt.get(key)
+                for key in (
+                    "operationId",
+                    "profileKey",
+                    "entity",
+                    "presentationType",
+                    "title",
+                    "rowCount",
+                    "topKeys",
+                    "messageId",
+                )
+                if self.excerpt.get(key) is not None
+            }
+
+        return payload
+
 
 class ChatTurnGroundingService:
     @classmethod

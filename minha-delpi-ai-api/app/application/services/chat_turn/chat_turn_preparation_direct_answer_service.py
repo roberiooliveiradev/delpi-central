@@ -89,6 +89,7 @@ class ChatTurnPreparationDirectAnswerService:
         text_task_category: str | None,
         fast_path_enabled: bool,
         fast_path_max_chars: int,
+        defer_unclear: bool = False,
     ) -> ChatTurnPreparationDirectAnswerBundle:
         meta_intents = ChatMetaDirectAnswerService.detect_intents(message)
         compound_meta_question = meta_intents.count >= 2
@@ -132,7 +133,12 @@ class ChatTurnPreparationDirectAnswerService:
         )
 
         unclear_direct = None
-        if not attachment_ids and not small_talk_direct and not utility_direct:
+        if (
+            not defer_unclear
+            and not attachment_ids
+            and not small_talk_direct
+            and not utility_direct
+        ):
             unclear_direct = ChatUnclearRequestService.build_direct_answer(
                 message=message,
                 previous_messages=history_source,

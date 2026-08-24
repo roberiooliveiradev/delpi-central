@@ -11,6 +11,7 @@ from app.application.services.chat_turn.chat_turn_preparation_direct_answer_serv
 from app.application.services.chat_turn.chat_turn_preparation_memory_context_service import (
     ChatTurnPreparationMemoryContextService,
 )
+from app.domain.services.chat_unclear_request_service import ChatUnclearRequestService
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,7 @@ class ChatTurnPreparationPreToolContextResult:
     text_correction_mode: bool
     text_correction_subtype: str | None
     interpretation_without_data_answer: str | None
+    turn_grounding: dict[str, Any] | None
     pipeline_stage_additions: list[str]
 
 
@@ -79,6 +81,7 @@ class ChatTurnPreparationPreToolContextService:
             text_task_category=text_task_category,
             fast_path_enabled=fast_path_enabled,
             fast_path_max_chars=fast_path_max_chars,
+            defer_unclear=True,
         )
 
         stage_additions = list(direct_answer_bundle.pipeline_stage_additions)
@@ -112,6 +115,35 @@ class ChatTurnPreparationPreToolContextService:
             workspace_context = dict(workspace_context)
             workspace_context["workingMemory"] = working_memory_snapshot
 
+        from app.domain.services.chat_turn_grounding_service import (
+            ChatTurnGroundingService,
+        )
+
+        turn_grounding = ChatTurnGroundingService.evaluate(
+            message=message,
+            snapshot=working_memory_snapshot,
+            previous_messages=history_source,
+        )
+        turn_grounding_metadata = turn_grounding.to_metadata()
+        workspace_context = dict(workspace_context)
+        workspace_context["turnGrounding"] = turn_grounding_metadata
+        stage_additions.append("turn_grounding")
+
+        unclear_direct = None
+        if (
+            not attachment_ids
+            and not direct_answer_bundle.small_talk_direct
+            and not direct_answer_bundle.utility_direct
+            and not turn_grounding.is_grounded
+        ):
+            unclear_direct = ChatUnclearRequestService.build_direct_answer(
+                message=message,
+                previous_messages=history_source,
+                grounding_status=turn_grounding.status.value,
+            )
+            if unclear_direct:
+                stage_additions.append("unclear_request")
+
         interpretation_without_data_answer = (
             ChatTurnPreparationDirectAnswerService.resolve_interpretation_without_data(
                 message=message,
@@ -132,7 +164,7 @@ class ChatTurnPreparationPreToolContextService:
             pre_capability_answer=direct_answer_bundle.pre_capability_answer,
             small_talk_direct=direct_answer_bundle.small_talk_direct,
             utility_direct=direct_answer_bundle.utility_direct,
-            unclear_direct=direct_answer_bundle.unclear_direct,
+            unclear_direct=unclear_direct,
             web_save_sources_direct=direct_answer_bundle.web_save_sources_direct,
             project_sources_direct=direct_answer_bundle.project_sources_direct,
             web_post_search_direct=direct_answer_bundle.web_post_search_direct,
@@ -151,5 +183,6 @@ class ChatTurnPreparationPreToolContextService:
             text_correction_mode=direct_answer_bundle.text_correction_mode,
             text_correction_subtype=direct_answer_bundle.text_correction_subtype,
             interpretation_without_data_answer=interpretation_without_data_answer,
+            turn_grounding=turn_grounding_metadata,
             pipeline_stage_additions=stage_additions,
         )
