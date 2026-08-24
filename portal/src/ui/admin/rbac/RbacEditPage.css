@@ -6,6 +6,15 @@
   gap: 16px;
 }
 
+.rbac-edit-page.portal-ui-page {
+  min-height: 100%;
+}
+
+.rbac-edit-page.portal-ui-page > .portal-ui-page__body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* Estados de carregamento/erro renderizam sem o chrome, que já traz o padding. */
 .rbac-edit-page:not(.portal-ui-page) {
   padding: 10px 16px 24px;
@@ -190,6 +199,12 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.user-rbac-edit-tab > .portal-ui-alert {
+  flex: 0 0 auto;
 }
 
 .user-rbac-stat-grid {
@@ -300,6 +315,11 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.rbac-edit-card:has(.relationship-picker) .relationship-picker {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .user-rbac-info-item--field {

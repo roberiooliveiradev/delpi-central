@@ -9,7 +9,7 @@
   flex-direction: column;
   gap: 14px;
   min-height: 0;
-  height: 100%;
+  flex: 1 1 auto;
 }
 
 
@@ -91,7 +91,7 @@
   /* base 0: a altura vem do espaço livre, não do conteúdo — sem isso as listas
      empurrariam a página em vez de rolar por dentro. */
   flex: 1 1 0;
-  min-height: clamp(280px, 40vh, 460px);
+  min-height: 280px;
 
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
