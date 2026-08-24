@@ -57,7 +57,8 @@ class ChatPresentationOperationalDecisionService:
             return False
 
         config = ChatPresentationProfileService.presentation_decision_config(path, entity)
-        max_rows = int(config.get("narrativeFirstMaxRows") or 12)
+        raw_max = config.get("narrativeFirstMaxRows")
+        max_rows = int(raw_max) if raw_max is not None else 12
 
         if row_count > max_rows:
             return False
@@ -90,7 +91,8 @@ class ChatPresentationOperationalDecisionService:
                 return False
 
         config = ChatPresentationProfileService.presentation_decision_config(path, entity)
-        max_rows = int(config.get("narrativeFirstMaxRows") or 6)
+        raw_max = config.get("narrativeFirstMaxRows")
+        max_rows = int(raw_max) if raw_max is not None else 6
 
         if row_count > max_rows:
             return False

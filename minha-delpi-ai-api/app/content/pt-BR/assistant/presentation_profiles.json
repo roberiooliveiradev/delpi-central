@@ -883,7 +883,7 @@
         ]
       },
       "presentationDecision": {
-        "narrativeFirstMaxRows": 6,
+        "narrativeFirstMaxRows": 0,
         "tablePreferredMaxRows": 3
       },
       "commentaryProfileKey": "stock",

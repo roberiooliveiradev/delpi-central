@@ -283,6 +283,25 @@ Regressão de intenção: `tests/fixtures/chat_intelligence_regression_cases.py`
 
 ---
 
+## Matriz compose — formato pedido × kind (ago/2026)
+
+Precedência: `explicitSessionFormat` (toolbar) → hints na mensagem (`UserFormatPreference`) → Automático (`viewIntent` + scores + `defaultViewPolicy`).
+
+| Pedido / modo | viewIntent típico | Kind primary | Lead prosa | Notas |
+|---------------|-------------------|--------------|------------|-------|
+| Automático + stock | auditable_list | `table` | markdown (`assistantMessage` se decoupled) | `chartPolicy: skip`; `narrativeFirstMaxRows: 0` |
+| «em texto» / toolbar Texto | — | `text` / markdown full | — | Visuais on-demand via toolbar |
+| «em tabela» / toolbar Tabela | — | `table` | lead se decoupled | |
+| «em árvore» / hierarchy | hierarchy | `tree` | lead se decoupled | Estrutura / factory |
+| «em gráfico» + policy skip | — | fallback table/text | — | Sem `chartPresentation` no bundle |
+| «em gráfico» + policy auto | time_series / ranking | `chart` | lead se decoupled | |
+| KPI scalar (ex. sales) | kpi_set | `kpi` | lead | |
+| Visão integrada | — | `dashboard` / stack | lead | Só com pedido explícito de stack |
+
+Regressão: `tests/fixtures/chat_presentation_compose_matrix.py` + `test_chat_presentation_compose_matrix.py`.
+
+---
+
 ## Documentos relacionados
 
 | Documento | Papel |
