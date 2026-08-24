@@ -88,6 +88,6 @@ def resolve_nc_workflow(
     plan_started = normalized_status != "open" or plan_complete
     if not plan_complete:
         return {"plan_started": plan_started, "workflow_step": 1}
-    if not (has_before_evidence and has_after_evidence):
+    if not has_before_evidence:
         return {"plan_started": True, "workflow_step": 2}
     return {"plan_started": True, "workflow_step": 3}

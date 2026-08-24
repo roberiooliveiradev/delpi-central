@@ -75,13 +75,23 @@ def test_resolve_nc_workflow_evidence_step() -> None:
     result = resolve_nc_workflow(
         status="in_progress",
         plan_complete=True,
-        has_before_evidence=True,
+        has_before_evidence=False,
         has_after_evidence=False,
     )
     assert result == {"plan_started": True, "workflow_step": 2}
 
 
-def test_resolve_nc_workflow_ready_to_finalize() -> None:
+def test_resolve_nc_workflow_ready_to_finalize_with_before_only() -> None:
+    result = resolve_nc_workflow(
+        status="in_progress",
+        plan_complete=True,
+        has_before_evidence=True,
+        has_after_evidence=False,
+    )
+    assert result == {"plan_started": True, "workflow_step": 3}
+
+
+def test_resolve_nc_workflow_ready_to_finalize_with_both_photos() -> None:
     result = resolve_nc_workflow(
         status="in_progress",
         plan_complete=True,
@@ -128,7 +138,7 @@ def test_serialize_nc_board_item_enriches_workflow_and_sla() -> None:
     )
     assert item["audit_code"] == "A5S-001"
     assert item["plan_started"] is True
-    assert item["workflow_step"] == 2
+    assert item["workflow_step"] == 3
     assert item["due_sla_level"] == "overdue"
     assert item["has_before_evidence"] is True
     assert item["has_after_evidence"] is False

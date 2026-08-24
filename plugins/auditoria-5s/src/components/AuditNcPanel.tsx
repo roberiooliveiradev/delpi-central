@@ -298,7 +298,7 @@ export function AuditNcPanel({
       <div className="a5s-nc-panel__head">
         <h2>Não conformidades a tratar ({items.length})</h2>
         <p className="a5s-nc-panel__intro">
-          1) Registre o plano · 2) Anexe fotos do antes e depois · 3) Finalize cada ação · 4)
+          1) Registre o plano · 2) Anexe a foto do antes (depois opcional) · 3) Finalize cada ação · 4)
           Conclua o tratamento da auditoria
         </p>
       </div>
@@ -347,8 +347,8 @@ export function AuditNcPanel({
 
       {!readOnly && stats.pending > 0 ? (
         <p className="a5s-nc-panel__hint">
-          Finalize todas as ações com evidências (foto do antes e depois) para concluir o
-          tratamento da auditoria.
+          Finalize todas as ações com a foto do antes anexada para concluir o tratamento da
+          auditoria.
         </p>
       ) : null}
     </div>

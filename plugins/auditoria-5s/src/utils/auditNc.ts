@@ -113,7 +113,7 @@ export function canFinalizeNcAction(
   if (!nc || isNcFinalized(nc)) return false;
   if (!isNcPlanComplete(form)) return false;
   const evidence = hasNcEvidence(nc.id, attachmentsByNcId);
-  return evidence.before && evidence.after;
+  return evidence.before;
 }
 
 export function computeNcTreatmentStats(

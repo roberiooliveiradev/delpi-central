@@ -235,7 +235,7 @@ export function AuditNcItemEditor({
               !planComplete
                 ? "Preencha o plano de ação completo"
                 : !canFinalize
-                  ? "Anexe foto do antes e do depois"
+                  ? "Anexe foto do antes"
                   : undefined
             }
             onClick={onFinalize}

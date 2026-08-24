@@ -129,7 +129,7 @@ export function AuditNcEvidenceSection({
     <section className="a5s-nc-evidence" aria-label="Evidências fotográficas">
       <div className="a5s-nc-evidence__head">
         <h4>Evidências da ação corretiva</h4>
-        <p>Anexe a foto do antes e do depois para finalizar a ação.</p>
+        <p>Anexe a foto do antes para finalizar a ação. A foto do depois é opcional.</p>
       </div>
 
       {!ncId && !showEvaluationBefore ? (
@@ -161,7 +161,7 @@ export function AuditNcEvidenceSection({
         />
         <EvidenceSlot
           label="Foto do depois"
-          hint="Situação após a ação corretiva."
+          hint="Opcional — situação após a ação corretiva."
           type="after"
           ncId={ncId}
           attachment={after}

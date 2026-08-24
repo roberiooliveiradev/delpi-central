@@ -2028,10 +2028,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
 
         attachments = self.list_nc_attachments(nonconformity_id)
         has_before = any(item["attachment_type"] == "before" for item in attachments)
-        has_after = any(item["attachment_type"] == "after" for item in attachments)
-        if not has_before or not has_after:
+        if not has_before:
             raise PluginsRepositoryError(
-                "Anexe a foto do antes e do depois para finalizar a ação."
+                "Anexe a foto do antes para finalizar a ação."
             )
 
         with self.db():
