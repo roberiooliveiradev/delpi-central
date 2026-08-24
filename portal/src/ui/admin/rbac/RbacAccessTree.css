@@ -102,21 +102,21 @@
   font-weight: 500;
 }
 
-.rbac-access-tree-app-toggle {
+.rbac-access-tree-collapse-toggle {
   border: none;
   background: none;
   padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--text-muted);
   cursor: pointer;
 }
 
-.rbac-access-tree-app-toggle:hover {
+.rbac-access-tree-collapse-toggle:hover {
   color: var(--primary);
 }
 

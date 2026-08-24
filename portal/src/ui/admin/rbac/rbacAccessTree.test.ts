@@ -76,6 +76,15 @@ describe("groupPermissionsByApp", () => {
     assert.equal(apps[1].appName, ORPHAN_APP_NAME);
     assert.equal(apps[1].permissions[0].code, "legacy.access");
   });
+
+  it("propaga ícone do app", () => {
+    const role = {
+      ...sampleProfile.roles[0],
+      apps: [{ ...sampleProfile.roles[0].apps[0], icon: "shield" }],
+    };
+    const apps = groupPermissionsByApp(role);
+    assert.equal(apps[0].appIcon, "shield");
+  });
 });
 
 describe("buildUnifiedAccessTree", () => {

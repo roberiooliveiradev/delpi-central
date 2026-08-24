@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, LayoutGrid, Shield, UsersRound } from "lucid
 
 import type { UserAccessProfile } from "../../../data/userAccessProfileTypes";
 import { Alert, Badge, SearchInput } from "../../../ui-kit";
+import { resolveIcon } from "../../../utils/iconResolver";
 
 import {
   buildGroupCentricTree,
@@ -33,6 +34,32 @@ type Props = {
   onOpenGroup?: (groupId: string) => void;
 };
 
+function CollapseToggle({
+  collapsed,
+  onToggle,
+  label,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      className="rbac-access-tree-collapse-toggle"
+      onClick={onToggle}
+      aria-expanded={!collapsed}
+      aria-label={collapsed ? `Expandir ${label}` : `Recolher ${label}`}
+    >
+      {collapsed ? (
+        <ChevronRight size={14} aria-hidden="true" />
+      ) : (
+        <ChevronDown size={14} aria-hidden="true" />
+      )}
+    </button>
+  );
+}
+
 function PermissionBadges({ app }: { app: RbacTreeAppNode }) {
   return (
     <div className="rbac-access-tree-permissions">
@@ -53,29 +80,25 @@ function PermissionBadges({ app }: { app: RbacTreeAppNode }) {
 function AppNode({ app }: { app: RbacTreeAppNode }) {
   const [collapsed, setCollapsed] = useState(app.defaultCollapsed);
   const canCollapse = app.permissions.length > 0;
+  const AppIcon = resolveIcon(app.appIcon) || LayoutGrid;
 
   return (
     <li className="rbac-access-tree__item">
       <div className="rbac-access-tree-node">
         <span className="rbac-access-tree-node__label">
-          <LayoutGrid size={13} aria-hidden="true" />
+          <AppIcon size={13} aria-hidden="true" />
           {canCollapse ? (
-            <button
-              type="button"
-              className="rbac-access-tree-app-toggle"
-              onClick={() => setCollapsed((value) => !value)}
-              aria-expanded={!collapsed}
-            >
-              {collapsed ? (
-                <ChevronRight size={14} aria-hidden="true" />
-              ) : (
-                <ChevronDown size={14} aria-hidden="true" />
-              )}
-              {app.appName}
+            <>
+              <CollapseToggle
+                collapsed={collapsed}
+                onToggle={() => setCollapsed((value) => !value)}
+                label={app.appName}
+              />
+              <span className="rbac-access-tree-node__static">{app.appName}</span>
               <span className="rbac-access-tree-node__muted">
                 ({app.permissions.length})
               </span>
-            </button>
+            </>
           ) : (
             <span className="rbac-access-tree-node__static">{app.appName}</span>
           )}
@@ -100,11 +123,21 @@ function RoleNode({
   role: RbacTreeRoleNode;
   onOpenRole?: (roleId: string) => void;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const canCollapse = role.apps.length > 0;
+
   return (
     <li className="rbac-access-tree__item">
       <div className="rbac-access-tree-node">
         <span className="rbac-access-tree-node__label">
           <Shield size={13} aria-hidden="true" />
+          {canCollapse ? (
+            <CollapseToggle
+              collapsed={collapsed}
+              onToggle={() => setCollapsed((value) => !value)}
+              label={role.roleName}
+            />
+          ) : null}
           {onOpenRole ? (
             <button
               type="button"
@@ -116,6 +149,9 @@ function RoleNode({
           ) : (
             <span className="rbac-access-tree-node__static">{role.roleName}</span>
           )}
+          {canCollapse ? (
+            <span className="rbac-access-tree-node__muted">({role.apps.length})</span>
+          ) : null}
         </span>
         {role.sourceLabels.map((label) => (
           <Badge key={`${role.key}:${label}`} tone="info">
@@ -124,7 +160,7 @@ function RoleNode({
         ))}
       </div>
 
-      {role.apps.length > 0 ? (
+      {!collapsed && role.apps.length > 0 ? (
         <ul className="rbac-access-tree rbac-access-tree--nested">
           {role.apps.map((app) => (
             <AppNode key={app.key} app={app} />
@@ -144,11 +180,21 @@ function GroupNode({
   onOpenGroup?: (groupId: string) => void;
   onOpenRole?: (roleId: string) => void;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const canCollapse = group.roles.length > 0;
+
   return (
     <li className="rbac-access-tree__item">
       <div className="rbac-access-tree-node">
         <span className="rbac-access-tree-node__label">
           <UsersRound size={13} aria-hidden="true" />
+          {canCollapse ? (
+            <CollapseToggle
+              collapsed={collapsed}
+              onToggle={() => setCollapsed((value) => !value)}
+              label={group.groupName}
+            />
+          ) : null}
           {onOpenGroup ? (
             <button
               type="button"
@@ -160,13 +206,16 @@ function GroupNode({
           ) : (
             <span className="rbac-access-tree-node__static">{group.groupName}</span>
           )}
+          {canCollapse ? (
+            <span className="rbac-access-tree-node__muted">({group.roles.length})</span>
+          ) : null}
         </span>
         {group.description ? (
           <span className="rbac-access-tree-node__muted">{group.description}</span>
         ) : null}
       </div>
 
-      {group.roles.length > 0 ? (
+      {!collapsed && group.roles.length > 0 ? (
         <ul className="rbac-access-tree rbac-access-tree--nested">
           {group.roles.map((role) => (
             <RoleNode key={role.key} role={role} onOpenRole={onOpenRole} />

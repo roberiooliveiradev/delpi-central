@@ -23,6 +23,7 @@ export type RbacTreeAppNode = {
   key: string;
   appId: string;
   appName: string;
+  appIcon?: string | null;
   permissions: RbacTreePermissionNode[];
   defaultCollapsed: boolean;
 };
@@ -100,7 +101,7 @@ export function groupPermissionsByApp(role: UserAccessProfileRole): RbacTreeAppN
     }
 
     appPermissions.forEach((permission) => assigned.add(permission.code));
-    apps.push(buildAppNode(app.id, app.name, appPermissions));
+    apps.push(buildAppNode(app.id, app.name, appPermissions, app.icon));
   }
 
   const orphanPermissions = role.permissions.filter(
@@ -118,6 +119,7 @@ function buildAppNode(
   appId: string,
   appName: string,
   permissions: UserAccessProfilePermission[],
+  appIcon?: string | null,
 ): RbacTreeAppNode {
   const permissionNodes = permissions.map((permission) => ({
     kind: "permission" as const,
@@ -131,6 +133,7 @@ function buildAppNode(
     key: `app:${appId}`,
     appId,
     appName,
+    appIcon,
     permissions: permissionNodes,
     defaultCollapsed: permissionNodes.length > DEFAULT_APP_COLLAPSE_THRESHOLD,
   };
