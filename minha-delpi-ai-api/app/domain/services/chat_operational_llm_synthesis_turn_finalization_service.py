@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+    ChatLlmSynthesisDeliveryContentService,
+)
 from app.domain.services.chat_operational_llm_synthesis_answer_enrichment_service import (
     ChatOperationalLlmSynthesisAnswerEnrichmentService,
 )
@@ -126,13 +129,138 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
                     response_mode_effect=effect,
                 )
 
-        return cls._guard_instruction_leak(
-            body,
+        return cls._substitute_safe_generic_fallback(
+            cls._guard_instruction_leak(
+                body,
+                message=message,
+                tool_calls=tool_calls,
+                response_mode=normalized_mode,
+                response_mode_effect=effect,
+            ),
             message=message,
             tool_calls=tool_calls,
             response_mode=normalized_mode,
             response_mode_effect=effect,
         )
+
+    @classmethod
+    def _substitute_safe_generic_fallback(
+        cls,
+        body: str,
+        *,
+        message: str | None,
+        tool_calls: list | None,
+        response_mode: str,
+        response_mode_effect: str,
+    ) -> str:
+        if not cls._is_safe_generic_fallback(body) and not cls._contains_safe_generic_fallback(body):
+            return body
+
+        recovered = cls._recover_operational_prose(
+            message,
+            tool_calls,
+            response_mode=response_mode,
+            response_mode_effect=response_mode_effect,
+        )
+
+        if recovered:
+            return recovered
+
+        return body
+
+    @classmethod
+    def _recover_operational_prose(
+        cls,
+        message: str | None,
+        tool_calls: list | None,
+        *,
+        response_mode: str,
+        response_mode_effect: str,
+    ) -> str | None:
+        normalized_mode = ChatResponseModeService.normalize(response_mode)
+        lead = ChatOperationalLlmSynthesisBriefDirectService.try_build_quality_fallback(
+            message,
+            tool_calls,
+            response_mode=normalized_mode,
+        )
+
+        if lead:
+            return cls._finalize_body(
+                lead,
+                message=message,
+                tool_calls=tool_calls,
+                response_mode=normalized_mode,
+                response_mode_effect=response_mode_effect,
+            )
+
+        depth = ChatOperationalLlmSynthesisBriefDirectService._commentary_depth(normalized_mode)
+        compact = response_mode_effect == "llm_synthesis_brief"
+        commentary_lead = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+            "",
+            tool_calls,
+            compact=compact,
+            commentary_depth=depth,
+        ).strip()
+
+        if commentary_lead:
+            return cls._finalize_body(
+                commentary_lead,
+                message=message,
+                tool_calls=tool_calls,
+                response_mode=normalized_mode,
+                response_mode_effect=response_mode_effect,
+            )
+
+        humanized_lead = cls._humanized_summary_lead(tool_calls)
+
+        if humanized_lead:
+            return cls._finalize_body(
+                humanized_lead,
+                message=message,
+                tool_calls=tool_calls,
+                response_mode=normalized_mode,
+                response_mode_effect=response_mode_effect,
+            )
+
+        return None
+
+    @classmethod
+    def _humanized_summary_lead(cls, tool_calls: list | None) -> str:
+        from app.domain.services.chat_conversation_context_service import (
+            ChatConversationContextService,
+        )
+
+        if not isinstance(tool_calls, list):
+            return ""
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            summary = ChatConversationContextService._format_humanized_summary(metadata).strip()
+
+            if summary:
+                return summary
+
+        return ""
+
+    @classmethod
+    def _is_safe_generic_fallback(cls, text: str) -> bool:
+        safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+        stripped = str(text or "").strip()
+
+        return bool(safe) and stripped == safe
+
+    @classmethod
+    def _contains_safe_generic_fallback(cls, text: str) -> bool:
+        safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+
+        return bool(safe) and safe in str(text or "")
 
     @classmethod
     def _guard_instruction_leak(
@@ -151,11 +279,20 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
             ChatOperationalLlmSynthesisContextContentService,
         )
 
-        fallback = ChatOperationalLlmSynthesisBriefDirectService.try_build_quality_fallback(
+        fallback = cls._recover_operational_prose(
             message,
             tool_calls,
             response_mode=response_mode,
+            response_mode_effect=response_mode_effect,
         )
+
+        if not fallback:
+            fallback = ChatOperationalLlmSynthesisBriefDirectService.try_build_quality_fallback(
+                message,
+                tool_calls,
+                response_mode=response_mode,
+            )
+
         guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
             answer=body,
             fallback=fallback,
@@ -164,6 +301,17 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
         )
         if guarded == str(body or "").strip():
             return body
+
+        if cls._is_safe_generic_fallback(guarded) or cls._contains_safe_generic_fallback(guarded):
+            recovered = cls._recover_operational_prose(
+                message,
+                tool_calls,
+                response_mode=response_mode,
+                response_mode_effect=response_mode_effect,
+            )
+
+            if recovered:
+                return recovered
 
         if guarded == str(fallback or "").strip() and fallback:
             return cls._finalize_body(

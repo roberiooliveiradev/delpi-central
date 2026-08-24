@@ -177,3 +177,67 @@ def test_finalize_persisted_answer_falls_back_when_access_directive_leaks():
     assert "10080045" in result
     assert "não peça acesso" not in result.lower()
 
+
+def _structure_tool_calls() -> list[dict]:
+    return [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "path": "/products/90260149/structure",
+                "dataCommentary": {
+                    "profileKey": "structure",
+                    "highlights": [
+                        "Produto **90260149** — CHICOTE DE LIGACAO.",
+                        "A composição tem **2** componente(s) de nível 1.",
+                        "Na árvore: **2** intermediário(s) (PI) e **1** matéria(s)-prima(s) distinta(s).",
+                    ],
+                    "summaryLines": [
+                        "Produto **90260149** — CHICOTE DE LIGACAO.",
+                    ],
+                    "visualHints": ["tree"],
+                },
+            },
+        }
+    ]
+
+
+def test_finalize_persisted_answer_structure_uses_commentary_not_reformule():
+    safe = (
+        "Não consegui formular a resposta de forma clara. "
+        "Pode reformular a pergunta em uma frase?"
+    )
+
+    result = ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+        safe,
+        _structure_tool_calls(),
+        message="estrutura do produto 90260149",
+        response_mode="normal",
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert "reformular" not in result.lower()
+    assert "90260149" in result
+    assert "composição" in result.lower() or "PI" in result
+
+
+def test_finalize_persisted_answer_structure_replaces_english_cot_with_commentary():
+    llm_answer = (
+        "The user is asking about the BOM structure of product 90260149. "
+        "The structure has 2 items in the first level with MPs underneath."
+    )
+
+    result = ChatOperationalLlmSynthesisTurnFinalizationService.finalize_persisted_answer(
+        llm_answer,
+        _structure_tool_calls(),
+        message="estrutura do produto 90260149",
+        response_mode="thinker",
+        response_mode_effect="llm_synthesis",
+    )
+
+    assert "the user is asking" not in result.lower()
+    assert "reformular" not in result.lower()
+    assert "90260149" in result
+    assert "PI" in result or "composição" in result.lower()
+

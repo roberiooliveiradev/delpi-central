@@ -425,7 +425,8 @@
     "purchase_price_history",
     "purchase_budget_history",
     "kpi_summary",
-    "generic_kpi_series"
+    "generic_kpi_series",
+    "structure"
   ],
   "commentaryProfiles": {
     "structure_exclusivity": {
