@@ -236,6 +236,46 @@ Props principais: `back`, `items`, `current`, `maxVisibleItems`, `size` (`sm`/`m
 
 ---
 
+## `TopBar`
+
+Faixa sticky de navegação secundária do plugin (`createDashboardTopBar({ prefix })`).
+Compõe `UnderlineNav` + slots `secondary` / `actions`. CSS: `styles/top-bar.css`
+(`.delpi-ui-topbar*`). **Não** espelhar no MFE.
+
+### Collapse (dual mode)
+
+| Prop | Valores | Efeito |
+|------|---------|--------|
+| `collapsible` | boolean | Liga chrome de recolher |
+| `collapseMode` | `rail` \| `hamburger` (default `rail`) | Visual quando colapsada |
+| `storageKey` | string | Persiste collapsed como `"1"`/`"0"` via `usePersistedBoolean` |
+| `collapsed` / `onCollapsedChange` | controlado | Opcional |
+| `collapseLabel` / `expandLabel` / `menuLabel` | string | aria-labels (MFE passa PT) |
+| `portalScopeClassName` | string | Escopo CSS do menu hamburger no `body` |
+
+- **`rail` colapsado:** rótulo do item ativo + chevron Expandir; esconde nav, secondary e actions.
+- **`hamburger` colapsado:** ☰ + rótulo; **mantém** secondary/actions; ☰ abre lista de abas em `AnchoredPanelPortal`.
+
+```tsx
+const CommercialTopBar = createDashboardTopBar({ prefix: "cm" });
+
+<CommercialTopBar
+  activeId="home"
+  items={items}
+  collapsible
+  collapseMode="rail"
+  storageKey="delpi.plugin-ui.topbar.collapsed"
+  collapseLabel="Recolher navegação"
+  expandLabel="Expandir navegação"
+  menuLabel="Menu de navegação"
+  portalScopeClassName="dashboard-commercial"
+  secondary={<Favorites />}
+  actions={<UserMenu />}
+/>
+```
+
+---
+
 ## `UnderlineNav`
 
 No modo padrão `navigation`, preserva `nav`, botões e `aria-current="page"`. Em
