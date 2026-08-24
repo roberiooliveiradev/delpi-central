@@ -2,7 +2,9 @@ import { createDashboardLoadingActivityCard, ExcelExportButton } from "@delpi/pl
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { DeliveryMapDrawingPreviewModal } from "../components/DeliveryMapDrawingPreviewModal";
 import { DeliveryMapOpProgressBar } from "../components/DeliveryMapOpProgressBar";
+import { DeliveryMapProductCell } from "../components/DeliveryMapProductCell";
 import { DeliveryMapPublicLinkButton } from "../components/DeliveryMapPublicLinkButton";
 import { usePpcConfirm } from "../components/PpcConfirmDialogProvider";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
@@ -68,6 +70,7 @@ export function DeliveryMapPage({ branch, search }: DeliveryMapPageProps) {
   const progressByOrder = useDeliveryMapProgress(branch, data);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [exporting, setExporting] = useState(false);
+  const [drawingProductCode, setDrawingProductCode] = useState<string | null>(null);
 
   const dm = copy.deliveryMap;
 
@@ -259,7 +262,12 @@ export function DeliveryMapPage({ branch, search }: DeliveryMapPageProps) {
                                   />
                                 </span>
                               </td>
-                              <td>{row.product_code}</td>
+                              <td className="ppc-delivery-map__cell-product">
+                                <DeliveryMapProductCell
+                                  productCode={row.product_code}
+                                  onOpenDrawing={setDrawingProductCode}
+                                />
+                              </td>
                               <td
                                 className={
                                   row.is_delayed ? "ppc-delivery-map__cell-due--late" : undefined
@@ -308,6 +316,13 @@ export function DeliveryMapPage({ branch, search }: DeliveryMapPageProps) {
           )}
         </div>
       ) : null}
+
+      <DeliveryMapDrawingPreviewModal
+        open={drawingProductCode != null}
+        branch={branch}
+        productCode={drawingProductCode}
+        onClose={() => setDrawingProductCode(null)}
+      />
     </div>
   );
 }

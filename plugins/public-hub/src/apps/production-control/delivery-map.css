@@ -140,13 +140,43 @@
   min-width: 168px;
   max-width: 196px;
   white-space: nowrap;
-  padding-right: 16px;
+  padding-right: 20px;
 }
 
 .pcp-pub-dm__cell-product {
   min-width: 88px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  padding-left: 4px;
+}
+
+.pcp-pub-dm__product-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pcp-pub-dm__product-code {
+  font-variant-numeric: tabular-nums;
+}
+
+.pcp-pub-dm__drawing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.pcp-pub-dm__drawing-btn:hover,
+.pcp-pub-dm__drawing-btn:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .pcp-pub-dm__op-line {
@@ -170,8 +200,8 @@
 
 .pcp-pub-dm__op-progress-track {
   display: block;
-  width: 40px;
-  height: 3px;
+  width: 56px;
+  height: 4px;
   margin-inline: 2px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--pcp-border, #e4e7ec) 70%, transparent);

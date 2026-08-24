@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import {
@@ -7,6 +7,7 @@ import {
   type DeliveryMapRow,
   type PublicDeliveryMapPayload,
 } from "./api";
+import { DeliveryMapPublicDrawingViewer } from "./DeliveryMapPublicDrawingViewer";
 import { usePublicDeliveryMapProgress } from "./usePublicDeliveryMapProgress";
 import { formatOpQuantity } from "./formatOpQuantity";
 import { downloadDeliveryMapExcel } from "./deliveryMapExcel";
@@ -129,6 +130,7 @@ export function DeliveryMapPublicPage({ token, branch, initial }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [exporting, setExporting] = useState(false);
+  const [drawingPa, setDrawingPa] = useState<string | null>(null);
   const progressByOrder = usePublicDeliveryMapProgress(token, branch, payload);
 
   const activeSearch = payload.filters.search ?? "";
@@ -294,7 +296,22 @@ export function DeliveryMapPublicPage({ token, branch, initial }: Props) {
                                     <OpProgressBar progress={progress} />
                                   </span>
                                 </td>
-                                <td className="pcp-pub-dm__cell-product">{row.product_code}</td>
+                                <td className="pcp-pub-dm__cell-product">
+                                  <span className="pcp-pub-dm__product-line">
+                                    <span className="pcp-pub-dm__product-code">{row.product_code}</span>
+                                    {row.product_code?.trim() ? (
+                                      <button
+                                        type="button"
+                                        className="pcp-pub-dm__drawing-btn"
+                                        title="Ver desenho técnico"
+                                        aria-label={`Ver desenho técnico do produto ${row.product_code}`}
+                                        onClick={() => setDrawingPa(row.product_code.trim())}
+                                      >
+                                        <FileText size={16} aria-hidden />
+                                      </button>
+                                    ) : null}
+                                  </span>
+                                </td>
                                 <td
                                   className={
                                     row.is_delayed ? "pcp-pub-dm__cell-due--late" : undefined
@@ -330,6 +347,15 @@ export function DeliveryMapPublicPage({ token, branch, initial }: Props) {
           )}
         </div>
       </div>
+
+      {drawingPa ? (
+        <DeliveryMapPublicDrawingViewer
+          token={token}
+          branch={branch}
+          paCode={drawingPa}
+          onClose={() => setDrawingPa(null)}
+        />
+      ) : null}
     </section>
   );
 }

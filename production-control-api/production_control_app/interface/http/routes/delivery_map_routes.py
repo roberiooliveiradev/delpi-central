@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Body, Query, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from production_control_app.composition.pc_composer import build_delivery_map_service
+from production_control_app.composition.pc_composer import (
+    build_delivery_map_drawing_service,
+    build_delivery_map_service,
+)
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
+    DrawingNotFound,
     InvalidBranch,
     SnapshotNotFound,
 )
@@ -34,6 +39,8 @@ def _handle_errors(exc: Exception):
     if isinstance(exc, PermissionError):
         return fail(str(exc), 403)
     if isinstance(exc, SnapshotNotFound):
+        return fail(str(exc), 404)
+    if isinstance(exc, DrawingNotFound):
         return fail(str(exc), 404)
     if isinstance(exc, DelpiGatewayError):
         return fail(str(exc), 502)
@@ -113,3 +120,28 @@ def patch_delivery_map_overrides(
     except Exception as exc:
         return _handle_errors(exc)
     return ok(data)
+
+
+@router.get("/delivery-map/drawings/{pa_code}/pdf")
+def get_delivery_map_drawing_pdf(
+    request: Request,
+    pa_code: str,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """PDF do desenho do PA, somente se o código estiver no mapa congelado da filial."""
+    user = resolve_user(request)
+    try:
+        drawing = build_delivery_map_drawing_service().open_pdf_for_user(
+            user,
+            branch=branch,
+            pa_code=pa_code,
+        )
+    except Exception as exc:
+        return _handle_errors(exc)
+    return FileResponse(
+        drawing.path,
+        media_type=drawing.media_type or "application/pdf",
+        filename=drawing.filename,
+        content_disposition_type="inline",
+        headers={"Cache-Control": "no-store"},
+    )

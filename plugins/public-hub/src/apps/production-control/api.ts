@@ -205,3 +205,26 @@ export async function fetchPublicDeliveryMapProgress(
   }
   return envelope.data.items ?? {};
 }
+
+export function buildPublicDeliveryMapDrawingPdfUrl(
+  token: string,
+  branch: string,
+  paCode: string,
+): string {
+  const params = new URLSearchParams({ branch });
+  return `${API_BASE}/public/delivery-map/${encodeURIComponent(token)}/drawings/${encodeURIComponent(paCode)}/pdf?${params}`;
+}
+
+export async function fetchPublicDeliveryMapDrawingPdf(
+  token: string,
+  branch: string,
+  paCode: string,
+): Promise<Blob> {
+  const response = await fetch(buildPublicDeliveryMapDrawingPdfUrl(token, branch, paCode), {
+    headers: { Accept: "application/pdf" },
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "Desenho não encontrado para este PA."));
+  }
+  return response.blob();
+}

@@ -313,6 +313,27 @@ class DeliveryMapService:
         code = self._branch_access.assert_valid_branch(branch)
         return self._build_progress_for_branch(code, production_orders)
 
+    def snapshot_contains_product(self, *, branch: str, product_code: str) -> bool:
+        """Confere se o PA aparece no snapshot congelado da filial — sem puxar o TOTVS."""
+        code = self._branch_access.assert_valid_branch(branch)
+        wanted = str(product_code or "").strip()
+        if not wanted:
+            return False
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "O mapa de entrega desta filial ainda não foi publicado pelo PCP."
+            )
+        payload = _parse_payload_json(row)
+        wanted_key = wanted.upper()
+        for item in payload.get("orders") or []:
+            if not isinstance(item, dict):
+                continue
+            product = str(item.get("product_code") or "").strip()
+            if product.upper() == wanted_key:
+                return True
+        return False
+
     @staticmethod
     def _strip_public_identity(payload: dict[str, Any]) -> dict[str, Any]:
         public_payload = dict(payload)

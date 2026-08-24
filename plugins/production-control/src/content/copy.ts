@@ -537,6 +537,12 @@ export const copy = {
       "Copia o link público do mapa de entrega desta filial para consulta somente leitura.",
     publicLinkCopied: "Link copiado!",
     publicLinkError: "Não foi possível copiar o link.",
+    drawingOpenLabel: "Ver desenho técnico",
+    drawingOpenAria: (productCode: string) => `Ver desenho técnico do produto ${productCode}`,
+    drawingModalTitle: (productCode: string) => `Desenho ${productCode}`,
+    drawingModalTitleFallback: "Desenho técnico",
+    drawingLoading: "Carregando desenho…",
+    drawingLoadError: "Desenho não encontrado para este PA.",
   },
   branch: {
     label: "Filial",

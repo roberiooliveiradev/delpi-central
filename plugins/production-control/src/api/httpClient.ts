@@ -65,6 +65,27 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
   return response.json() as Promise<T>;
 }
 
+export async function httpGetBlob(url: string, options: RequestOptions = {}): Promise<Blob> {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...authHeaders(),
+      Accept: "application/pdf",
+    },
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      message = formatApiError(await response.json(), response.status);
+    } catch {
+      // keep default
+    }
+    throw new Error(message);
+  }
+  return response.blob();
+}
+
 export async function httpPost<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "POST",

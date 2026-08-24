@@ -32,3 +32,11 @@ def delivery_map_product_prefixes() -> list[str]:
     if not isinstance(raw, list):
         return ["8", "9"]
     return [str(item).strip() for item in raw if str(item).strip()]
+
+
+def delivery_map_message(key: str, default: str) -> str:
+    messages = delivery_map_settings().get("drawingMessages")
+    if not isinstance(messages, dict):
+        return default
+    value = str(messages.get(key) or "").strip()
+    return value or default

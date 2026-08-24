@@ -1,4 +1,4 @@
-import { httpGet, httpPatch, httpPost, ppcApiUrl, unwrapEnvelope } from "./httpClient";
+import { httpGet, httpGetBlob, httpPatch, httpPost, ppcApiUrl, unwrapEnvelope } from "./httpClient";
 import type {
   DeliveryMapPayload,
   DeliveryMapProgressPayload,
@@ -167,6 +167,20 @@ export async function patchDeliveryMapOverrides(params: {
     { signal: params.signal },
   );
   return unwrapEnvelope(envelope, "Não foi possível salvar as marcações do mapa de entrega.");
+}
+
+export async function fetchDeliveryMapDrawingPdf(params: {
+  branch: string;
+  productCode: string;
+  signal?: AbortSignal;
+}): Promise<Blob> {
+  const search = new URLSearchParams({ branch: params.branch });
+  return httpGetBlob(
+    ppcApiUrl(
+      `/delivery-map/drawings/${encodeURIComponent(params.productCode)}/pdf?${search.toString()}`,
+    ),
+    { signal: params.signal },
+  );
 }
 
 export async function fetchMachineLoad(params: {

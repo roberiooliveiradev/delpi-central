@@ -12,12 +12,18 @@
   "progressBatchSize": 40,
   "refreshConfirmTitle": "Atualizar mapa de entrega?",
   "refreshConfirmBody": "A lista será repuxada do TOTVS. As marcações MP-OK e Feedback das OPs que continuarem na lista serão preservadas.",
+  "drawingMessages": {
+    "paCodeRequired": "Informe o código do PA.",
+    "paNotInMap": "Este PA não está no mapa de entrega congelado desta filial.",
+    "drawingNotFound": "Desenho não encontrado para este PA."
+  },
   "publicDeliveryMap": {
     "token": "aberto",
     "messages": {
       "invalidToken": "Link do mapa de entrega inválido ou desativado.",
       "notPublished": "O mapa de entrega desta filial ainda não foi publicado pelo PCP.",
-      "progressBatchTooLarge": "Máximo de 40 OPs por consulta de progresso."
+      "progressBatchTooLarge": "Máximo de 40 OPs por consulta de progresso.",
+      "paNotInMap": "Este PA não está no mapa de entrega congelado desta filial."
     }
   }
 }

@@ -2327,14 +2327,15 @@
 
 .dashboard-production-control .ppc-delivery-map__cell-op {
   width: 1%;
-  max-width: 148px;
-  padding-right: 6px;
+  min-width: 168px;
+  max-width: 196px;
+  padding-right: 20px;
 }
 
 .dashboard-production-control .ppc-delivery-map__op-line {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .dashboard-production-control .ppc-delivery-map__op-code {
@@ -2347,13 +2348,13 @@
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
-  padding-inline: 4px;
+  padding-inline: 6px;
 }
 
 .dashboard-production-control .ppc-delivery-map__op-progress-track {
   display: block;
-  width: 36px;
-  height: 3px;
+  width: 56px;
+  height: 4px;
   margin-inline: 2px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ppc-border) 70%, transparent);
@@ -2406,6 +2407,44 @@
   50% {
     opacity: 0.55;
   }
+}
+
+.dashboard-production-control .ppc-delivery-map__cell-product {
+  white-space: nowrap;
+  padding-left: 4px;
+}
+
+.dashboard-production-control .ppc-delivery-map__product-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dashboard-production-control .ppc-delivery-map__product-code {
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-control .ppc-delivery-map__drawing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--delpi-ui-text-muted, #64748b);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.dashboard-production-control .ppc-delivery-map__drawing-btn:hover {
+  color: var(--delpi-ui-accent, #2563eb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 10%, transparent);
+}
+
+.dashboard-production-control .ppc-delivery-map__drawing-btn:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #2563eb);
+  outline-offset: 1px;
 }
 
 .dashboard-production-control .ppc-delivery-map__cell-num {

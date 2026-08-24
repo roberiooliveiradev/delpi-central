@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
+from production_control_app.application.services.delivery_map_drawing_service import (
+    DeliveryMapDrawingService,
+)
 from production_control_app.application.services.delivery_map_service import DeliveryMapService
 from production_control_app.application.services.public_delivery_map_access_service import (
     PublicDeliveryMapAccessService,
 )
-from production_control_app.domain.errors import SnapshotNotFound
+from production_control_app.domain.errors import DrawingNotFound, SnapshotNotFound
+from production_control_app.domain.product_drawing_pdf import DrawingFile
+from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.domain.services.conjunto_operation_progress import (
     compute_conjunto_progress,
     filter_operations_for_conjuntos,
@@ -282,3 +288,94 @@ def test_conjunto_progress_includes_intermediary_production_orders() -> None:
     assert stats["total"] == 3
     assert stats["completed"] == 1
     assert stats["percent"] == 33
+
+
+class _FakeDrawingLibrary:
+    def __init__(self, *, missing: bool = False) -> None:
+        self.calls: list[str] = []
+        self.missing = missing
+        self.file = DrawingFile(path=Path("/drawing-pdfs/90262910.pdf"), filename="90262910.pdf")
+
+    def resolve_pdf(self, code: str) -> DrawingFile:
+        self.calls.append(code)
+        if self.missing:
+            raise DrawingNotFound("missing on fileserver")
+        return self.file
+
+
+def _drawing_service(
+    snapshots: _FakeSnapshots,
+    drawings: _FakeDrawingLibrary,
+) -> DeliveryMapDrawingService:
+    return DeliveryMapDrawingService(
+        delivery_map=DeliveryMapService(_FakeGateway([]), snapshots),
+        branch_access=BranchAccessService(),
+        access=PublicDeliveryMapAccessService(),
+        drawings=drawings,
+    )
+
+
+def test_snapshot_contains_product_matches_case_insensitive() -> None:
+    snapshots = _FakeSnapshots()
+    snapshots.upsert(
+        branch="01",
+        horizon_end=date(2026, 9, 30),
+        payload={"orders": [_pcp_item()], "overrides": {}},
+        refreshed_by="pcp.user",
+    )
+    service = DeliveryMapService(_FakeGateway([]), snapshots)
+
+    assert service.snapshot_contains_product(branch="01", product_code="90262910") is True
+    assert service.snapshot_contains_product(branch="01", product_code=" 90262910 ") is True
+    assert service.snapshot_contains_product(branch="01", product_code="99999999") is False
+
+
+def test_delivery_map_drawing_returns_pdf_when_pa_is_in_snapshot() -> None:
+    snapshots = _FakeSnapshots()
+    snapshots.upsert(
+        branch="01",
+        horizon_end=date(2026, 9, 30),
+        payload={"orders": [_pcp_item()], "overrides": {}},
+        refreshed_by="pcp.user",
+    )
+    drawings = _FakeDrawingLibrary()
+    service = _drawing_service(snapshots, drawings)
+
+    drawing = service.open_pdf_for_user(_user(*FULL_PERMS), branch="01", pa_code="90262910")
+
+    assert drawing.filename == "90262910.pdf"
+    assert drawings.calls == ["90262910"]
+
+
+def test_delivery_map_drawing_rejects_pa_outside_snapshot() -> None:
+    snapshots = _FakeSnapshots()
+    snapshots.upsert(
+        branch="01",
+        horizon_end=date(2026, 9, 30),
+        payload={"orders": [_pcp_item()], "overrides": {}},
+        refreshed_by="pcp.user",
+    )
+    drawings = _FakeDrawingLibrary()
+    service = _drawing_service(snapshots, drawings)
+
+    with pytest.raises(DrawingNotFound, match="não está no mapa"):
+        service.open_pdf_for_user(_user(*FULL_PERMS), branch="01", pa_code="99999999")
+
+    assert drawings.calls == []
+
+
+def test_public_delivery_map_drawing_rejects_invalid_token() -> None:
+    snapshots = _FakeSnapshots()
+    snapshots.upsert(
+        branch="01",
+        horizon_end=date(2026, 9, 30),
+        payload={"orders": [_pcp_item()], "overrides": {}},
+        refreshed_by="pcp.user",
+    )
+    drawings = _FakeDrawingLibrary()
+    service = _drawing_service(snapshots, drawings)
+
+    with pytest.raises(DrawingNotFound, match="inválido"):
+        service.open_pdf_public(token="invalid", branch="01", pa_code="90262910")
+
+    assert drawings.calls == []

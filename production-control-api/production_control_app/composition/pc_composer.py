@@ -7,6 +7,9 @@ from production_control_app.application.services.detectors.incomplete_order_sets
     DETECTOR_ID as DETECTOR_INCOMPLETE_ORDER_SETS,
     IncompleteOrderSetsDetector,
 )
+from production_control_app.application.services.delivery_map_drawing_service import (
+    DeliveryMapDrawingService,
+)
 from production_control_app.application.services.delivery_map_service import DeliveryMapService
 from production_control_app.application.services.demand_service import DemandService
 from production_control_app.application.services.materials_service import MaterialsService
@@ -156,5 +159,19 @@ def build_public_machine_load_drawing_service(
     return PublicMachineLoadDrawingService(
         access=build_public_cockpit_access_service(),
         machine_load=build_machine_load_service(gateway, snapshots=snapshots),
+        drawings=drawings or build_drawing_library_storage(),
+    )
+
+
+def build_delivery_map_drawing_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: DeliveryMapSnapshotRepositoryPort | None = None,
+    drawings: DrawingLibraryPort | None = None,
+) -> DeliveryMapDrawingService:
+    return DeliveryMapDrawingService(
+        delivery_map=build_delivery_map_service(gateway, snapshots=snapshots),
+        branch_access=build_branch_access_service(),
+        access=build_public_delivery_map_access_service(),
         drawings=drawings or build_drawing_library_storage(),
     )
