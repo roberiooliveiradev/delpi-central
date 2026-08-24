@@ -161,6 +161,31 @@
   gap: 16px;
 }
 
+.user-rbac-view-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-rbac-view-tab__intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.user-rbac-view-tab__intro h4 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.user-rbac-view-tab__intro p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .user-rbac-stat-grid {
   display: grid;
   grid-template-columns: 1fr;

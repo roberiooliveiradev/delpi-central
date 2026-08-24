@@ -11,6 +11,8 @@ import { Alert, Button, PageChrome, Spinner } from "../../../ui-kit";
 
 import "./RbacEditPage.css";
 import { UserSummaryTab } from "./UserSummaryTab";
+import { UserGroupsViewTab } from "./UserGroupsViewTab";
+import { UserRolesViewTab } from "./UserRolesViewTab";
 import { UserUsageTab } from "./UserUsageTab";
 import { useAdminUserAccessProfile } from "./useAdminUserAccessProfile";
 import { useUserPageMode, type UserPageTab } from "./useUserPageMode";
@@ -295,12 +297,26 @@ export const UserEditPage = () => {
           />
         ) : null}
 
-        {!isEditing && (activeTab === "roles" || activeTab === "groups") ? (
-          accessProfile.loading ? (
-            <Spinner label="Carregando perfil de acesso…" />
-          ) : accessProfile.error ? (
-            <Alert tone="danger">{accessProfile.error}</Alert>
-          ) : null
+        {!isEditing && activeTab === "roles" ? (
+          <UserRolesViewTab
+            profile={accessProfile.data}
+            loading={accessProfile.loading}
+            error={accessProfile.error}
+            onEditDirectRoles={() => enterEdit("roles")}
+            onOpenRole={openRoleAdmin}
+            onOpenGroup={openGroupAdmin}
+          />
+        ) : null}
+
+        {!isEditing && activeTab === "groups" ? (
+          <UserGroupsViewTab
+            profile={accessProfile.data}
+            loading={accessProfile.loading}
+            error={accessProfile.error}
+            onEditGroups={() => enterEdit("groups")}
+            onOpenRole={openRoleAdmin}
+            onOpenGroup={openGroupAdmin}
+          />
         ) : null}
 
         {isEditing && activeTab === "roles" && !loadingEdit ? (
