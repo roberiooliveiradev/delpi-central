@@ -103,7 +103,9 @@ O BFF aplica, por produto:
 3. `view=excess`: só a SC1 que sobrou **inteira**
 4. `view=shortage`: produtos cuja SC1 aberta (ou a ausência dela) ainda não chega no ESTSEG
 
-Os cards (`issues[]`) trazem título, descrição e `product_count` de `content/materials.json`. Busca, ordenação, página e cache por filial (120 s) ficam em `application/services/materials_service.py`. Sem preço. Sem escrita no TOTVS. Permissão: `production-control.materials.view` + filial. O grant no Keycloak é operação — código e manifesto já declaram a permissão.
+Os cards (`issues[]`) trazem título, descrição e `product_count` de `content/materials.json`. O terceiro card (`pa-shortage`) é consulta — sem `product_count` inventado. Busca, ordenação, página e cache por filial (120 s) ficam em `application/services/materials_service.py`. Sem preço. Sem escrita no TOTVS. Permissão: `production-control.materials.view` + filial. O grant no Keycloak é operação — código e manifesto já declaram a permissão.
+
+`GET /materials/finished-product-shortages?branch=&product=&status=&refresh=` consulta a api-delpi (`GET /products/{code}/raw-material-set-shortages`) e devolve o estado de tela (`ok`, `not_found`, `not_finished_product`, `no_open_sets`), summary, conjuntos com semáforo e o extrato (`materials[].ledger`) para o modal. Cache 120 s por `branch+product`. A projeção **não** é refeita neste BFF.
 
 ### Mapa de entrega
 

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-22",
-  "baselineOperationCount": 681,
-  "operationCount": 681,
-  "coveredCount": 609,
+  "generatedAt": "2026-08-24",
+  "baselineOperationCount": 682,
+  "operationCount": 682,
+  "coveredCount": 610,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -134,8 +134,8 @@
       "exempt": 0
     },
     "products": {
-      "total": 35,
-      "covered": 35,
+      "total": 36,
+      "covered": 36,
       "gap": 0,
       "exempt": 0
     },
@@ -3977,6 +3977,15 @@
       "module": "products",
       "entity": "product_production_status",
       "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_product_raw_material_set_shortages",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-set-shortages",
+      "module": "products",
+      "entity": "product_raw_material_set_shortages",
+      "shape": "composite_analysis",
       "status": "covered"
     },
     {

@@ -1,5 +1,10 @@
 import { copy } from "../content/copy";
-import type { MaterialsIssueId, MaterialsLine, MaterialsShortageLine } from "../types";
+import type {
+  FinishedProductShortageSet,
+  MaterialsIssueId,
+  MaterialsLine,
+  MaterialsShortageLine,
+} from "../types";
 import { formatIsoDate } from "./formatIsoDate";
 
 export type MaterialsExcelColumn = { key: string; label: string };
@@ -89,6 +94,72 @@ export async function downloadMaterialsExcel(
   const payload = buildMaterialsExcelPayload(lines, view);
   if (!payload.columns.length || payload.rows.length === 0) {
     window.alert(copy.materials.exportEmpty);
+    return;
+  }
+
+  const XLSX = await import("xlsx");
+  const headers = payload.columns.map((column) => column.label);
+  const data = payload.rows.map((row) =>
+    payload.columns.map((column) => row[column.key] ?? ""),
+  );
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  worksheet["!cols"] = payload.columns.map((column) => {
+    const maxLen = Math.max(
+      column.label.length,
+      ...payload.rows.map((row) => String(row[column.key] ?? "").length),
+    );
+    return { wch: Math.min(maxLen + 2, 50) };
+  });
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, payload.title.slice(0, 31));
+  XLSX.writeFile(workbook, `${sanitizeFileBase(fileName)}.xlsx`);
+}
+
+export function buildFinishedProductShortageExcelPayload(
+  sets: readonly FinishedProductShortageSet[],
+): MaterialsExcelPayload {
+  const texts = copy.materials.paShortage;
+  return {
+    title: texts.exportSheetTitle,
+    columns: [
+      { key: "set", label: "OP mãe" },
+      { key: "status", label: "Situação" },
+      { key: "start", label: texts.start },
+      { key: "due", label: texts.delivery },
+      { key: "mp", label: texts.columns.material },
+      { key: "needed", label: texts.columns.needed },
+      { key: "available", label: texts.columns.available },
+      { key: "deficit", label: texts.columns.deficit },
+      { key: "when", label: texts.columns.rupture },
+      { key: "mpStatus", label: texts.columns.status },
+      { key: "consuming", label: "OP consome" },
+    ],
+    rows: sets.flatMap((set) =>
+      (set.materials.length ? set.materials : [null]).map((material) => ({
+        set: set.production_order,
+        status: set.status,
+        start: set.planned_start_date ? formatIsoDate(set.planned_start_date) : "",
+        due: set.due_date ? formatIsoDate(set.due_date) : "",
+        mp: material ? `${material.product_code} ${material.product_description || ""}`.trim() : "",
+        needed: material?.needed_quantity ?? "",
+        available: material?.available_stock ?? "",
+        deficit: material?.status === "shortage" ? (material.shortage_quantity ?? "") : "",
+        mpStatus: material?.status ?? "",
+        when: material?.shortage_date ? formatIsoDate(material.shortage_date) : "",
+        consuming: material?.consuming_production_order ?? "",
+      })),
+    ),
+  };
+}
+
+export async function downloadFinishedProductShortageExcel(
+  sets: readonly FinishedProductShortageSet[],
+  fileName: string,
+): Promise<void> {
+  if (typeof document === "undefined") return;
+  const payload = buildFinishedProductShortageExcelPayload(sets);
+  if (!payload.columns.length || payload.rows.length === 0) {
+    window.alert(copy.materials.paShortage.exportEmpty);
     return;
   }
 

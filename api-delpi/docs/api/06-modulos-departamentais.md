@@ -196,7 +196,7 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 
 Doc carga máquina: [production-machine-load.md](./production-machine-load.md). Fonte `SH8010` (alocação) — `H8_QUANT` **não** é a quantidade da OP; usar `C2_QUANT`. Entrega do PA vem da OP mãe (`LEFT(H8_OP, 8) + '001'`).
 
-Doc conjuntos incompletos: [production-order-sets-incomplete.md](./production-order-sets-incomplete.md). Cruza `SG1010` (estrutura vigente na **emissão** da OP mãe) com as OPs do mesmo conjunto — chave `C2_NUM + C2_ITEM`, nunca só `C2_NUM`.
+Doc conjuntos incompletos: [production-order-sets-incomplete.md](./production-order-sets-incomplete.md). Cruza `SG1010` (estrutura vigente na **emissão** da OP mãe) com as OPs do mesmo conjunto — chave `C2_NUM + C2_ITEM`, nunca só `C2_NUM`. Complemento (falta de **MP**, não de PI): [`GET /products/{code}/raw-material-set-shortages`](./02-produtos.md).
 
 **Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Fórmula canônica (`HY_TEMPAD`): [padroes-totvs/apontamentos-tempo-padrao.md](./padroes-totvs/apontamentos-tempo-padrao.md). Changelog jun/2026 + alinhamento ago/2026: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
 
@@ -230,7 +230,7 @@ Doc conjuntos incompletos: [production-order-sets-incomplete.md](./production-or
 | GET | `/supplies/safety-stock/filters` | Filtros do painel de estoque de segurança. |
 | GET | `/supplies/safety-stock/summary` | Resumo / KPIs de estoque de segurança. |
 | GET | `/supplies/safety-stock/items` | Lista paginada de MPs vs ESTSEG. |
-| GET | `/supplies/safety-stock/items/{code}/details` | Detalhe com SC7, SD4 e extrato projetado (`composite_analysis`). Ver [estoque-seguranca.md](./estoque-seguranca.md). |
+| GET | `/supplies/safety-stock/items/{code}/details` | Detalhe com SC7, SD4 e extrato projetado (`composite_analysis`). Ver [estoque-seguranca.md](./estoque-seguranca.md). Tela irmã (eixo PA → conjunto): [`GET /products/{code}/raw-material-set-shortages`](./02-produtos.md). |
 | GET | `/supplies/safety-stock/items/{code}/suppliers` | Fornecedores vinculados (SA5) + última compra (SD1). Ver [estoque-seguranca.md](./estoque-seguranca.md). |
 | GET | `/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history` | Histórico de preço unitário (12 meses) por fornecedor. Ver [estoque-seguranca.md](./estoque-seguranca.md). |
 | GET | `/supplies/safety-stock/consumption-analysis/summary` | KPIs da análise consumo × ESTSEG sugerido (12 meses). |

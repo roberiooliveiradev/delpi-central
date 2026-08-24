@@ -72,6 +72,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         branch={route.branch}
         search={route.materialsSearch}
         issue={route.materialsIssue}
+        status={route.materialsStatus}
         requestNumber={route.requestNumber}
         requestItem={route.requestItem}
       />

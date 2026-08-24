@@ -200,6 +200,16 @@ PRODUCT_SHIPPING_STATUS = agent_route(
     operation_id="get_product_shipping_status",
 )
 
+PRODUCT_RAW_MATERIAL_SET_SHORTAGES = agent_route(
+    summary="Raw-material shortages in the finished-product order set",
+    description=(
+        "Explodes the current BOM (MP only), projects each material with stock + open POs − commitments, "
+        "and flags mother production orders of the finished product whose set will run negative. "
+        "Use when asking which open orders of a PA will lack raw material."
+    ),
+    operation_id="get_product_raw_material_set_shortages",
+)
+
 PRODUCT_FACTORY_STATUS = agent_route(
     summary="Status fabril completo do produto",
     description=(

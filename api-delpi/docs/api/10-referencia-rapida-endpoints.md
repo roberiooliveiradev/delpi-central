@@ -43,6 +43,7 @@ Legenda de permissões:
 | GET | `/products/{code}/production-status` | A |
 | GET | `/products/{code}/shipping-status` | A |
 | GET | `/products/{code}/factory-status` | A |
+| GET | `/products/{code}/raw-material-set-shortages` | A |
 | GET | `/products/{code}/parents` | A |
 | GET | `/products/{code}/suppliers` | A |
 | GET | `/products/{code}/customers` | A |

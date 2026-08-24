@@ -5,7 +5,7 @@ import { copy } from "../content/copy";
 import type { MaterialsIssueId, MaterialsPayload, PpcBranch } from "../types";
 
 export type MaterialsFilters = {
-  view: MaterialsIssueId;
+  view: Exclude<MaterialsIssueId, "pa-shortage">;
   search: string;
   page: number;
   pageSize: number;

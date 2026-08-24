@@ -115,6 +115,32 @@ describe("buildPpcHref", () => {
     expect(route.requestItem).toBe("01");
   });
 
+  it("reads the finished-product shortage consult from the deep link", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/materials",
+      "?branch=01&issue=pa-shortage&q=90263114&status=shortage",
+      "02",
+    );
+    expect(route.subpluginId).toBe("materials");
+    expect(route.materialsIssue).toBe("pa-shortage");
+    expect(route.materialsSearch).toBe("90263114");
+    expect(route.materialsStatus).toBe("shortage");
+  });
+
+  it("serializes the finished-product shortage consult", () => {
+    expect(
+      buildPpcHref({
+        subpluginId: "materials",
+        branch: "01",
+        materialsIssue: "pa-shortage",
+        materialsSearch: "90263114",
+        materialsStatus: "no_commitment",
+      }),
+    ).toBe(
+      "/apps/production-control/materials?branch=01&q=90263114&issue=pa-shortage&status=no_commitment",
+    );
+  });
+
   it("serializes the materials deep link", () => {
     expect(
       buildPpcHref({

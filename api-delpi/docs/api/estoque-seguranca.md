@@ -49,6 +49,8 @@ safety_stock = soma BZ_ESTSEG da filial
 
 A SC1 **não** entra em `projected_balance` (evita dupla conta com o SC7). O PCP classifica excesso quando `projected_balance` já cobre o ESTSEG e ainda sobra documento inteiro; falta quando cobertura + SC1 aberta não chega no ESTSEG.
 
+Tela irmã no Portal PCP (eixo invertido — PA → conjuntos → MPs): `GET /products/{code}/raw-material-set-shortages` e o BFF `GET /materials/finished-product-shortages` (`issue=pa-shortage`). A conta de ruptura é a do **extrato** desta API (saldo + SC7 − SD4), não a do gráfico do MFE estoque-segurança.
+
 ---
 
 ## Análise de consumo × ESTSEG sugerido

@@ -12,7 +12,8 @@ Portal → production-control (remoteEntry.js)
       → api-delpi /production/otd, /production/otd/series, /production/pcp-orders/*,
                   /production/machine-load/*, /production/production-order-sets/incomplete,
                   /pedidos-venda-abertos/totvs-open-orders, /pedidos-venda-abertos/ops-abertas,
-                  /supplies/purchase-requests/open-coverage
+                  /supplies/purchase-requests/open-coverage,
+                  /products/{code}/raw-material-set-shortages
       → @delpi/plugin-ui (Module Federation)
 ```
 
@@ -26,7 +27,7 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: production-
 | `…/demand?branch=01\|02&q=&status=` | Demanda (carteira a entregar com cobertura) |
 | `…/machine-load?branch=01\|02&ct=&startDate=&endDate=&locate=` | Carga máquina (abas por centro de trabalho) |
 | `…/problem-analysis?branch=01\|02&detector=` | Análise de problemas (grade de detectores + registros) |
-| `…/materials?branch=01\|02&issue=&q=&request=&item=` | Materiais (excesso e falta de SC1 de MP vs ESTSEG) |
+| `…/materials?branch=01\|02&issue=&q=&request=&item=` | Materiais (excesso e falta de SC1; `issue=pa-shortage` consulta ruptura de MP no conjunto) |
 | `…/delivery-map?branch=01\|02&q=` | Mapa de entrega (OPs PA com saldo, agrupadas por entrega prevista) |
 
 Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
@@ -47,7 +48,9 @@ Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
 **Otimizar por entrega (barra):** o botão ⇅ *Otimizar por entrega*, ao lado do link do operador, chama `POST /machine-load/optimize-delivery` e resequencia a fila de **todos** os centros da filial pela data de entrega do PA — o carga máquina do TOTVS às vezes deixa material de mês seguinte à frente do que está vencendo. Operações já iniciadas continuam onde estão, empate na mesma entrega preserva a ordem atual e operação sem entrega vai para o fim do seu centro. Conjuntos fora da programação não voltam à fila. Há confirmação antes de aplicar; o aviso da barra informa quantos centros mudaram e quantas operações trocaram de posição. Como a mudança atravessa vários CTs, a pilha de Ctrl+Z do CT ativo é zerada e o cockpit do operador atualiza sozinho.
 
-**Materiais:** dois cards (`GET /materials`) — **Excesso de solicitações** e **Solicitações insuficientes**. O recorte ativo vai em `?issue=excess|shortage`. Excesso lista SC1 de **matéria-prima** cujo documento inteiro já está coberto por estoque + pedidos − empenhos **e** pelo ESTSEG. Falta lista produtos cuja cobertura + SC1 aberta não chega no estoque de segurança (inclui MP com ESTSEG e sem SC1). PA e PI não entram. `?q=` filtra; `?request=` + `?item=` reabre o detalhe no excesso. **Exportar Excel** baixa a página visível. Sem preço e sem escrita no TOTVS. Quem classifica é o BFF (FIFO por produto); o MFE é render-only.
+**Materiais:** três cards (`GET /materials`) — **Excesso de solicitações**, **Solicitações insuficientes** e **Ruptura no conjunto**. Os dois primeiros recortam SC1 de **matéria-prima** vs ESTSEG (`?issue=excess|shortage`). Excesso lista SC1 cujo documento inteiro já está coberto por estoque + pedidos − empenhos **e** pelo ESTSEG. Falta lista produtos cuja cobertura + SC1 aberta não chega no estoque de segurança. PA e PI não entram nesses recortes. `?q=` filtra; `?request=` + `?item=` reabre o detalhe no excesso.
+
+O terceiro card (`?issue=pa-shortage&q=90263114`) é uma **consulta**: o PCP informa o PA e o BFF (`GET /materials/finished-product-shortages`) devolve as OPs mãe do conjunto com semáforo de MP. A conta é a do extrato (saldo `01+98+99` + SC7 − SD4); ruptura quando o saldo projetado fica negativo no empenho daquele conjunto. Sem `q` a tela só conta a história — não chama o extrato. Chips `?status=shortage|no_commitment|ok|all`. Atalhos: Carga máquina (`?locate=`), Mapa de entrega (`?q=`), Estoque de segurança (link no código da MP). **Exportar Excel** baixa os conjuntos visíveis. Sem preço e sem escrita no TOTVS. O MFE é render-only e **não** chama `/apps/api-delpi`. O exemplo `90263114` tem OPs abertas na filial **02** no TOTVS atual; a filial 01 devolve o estado sem conjunto aberto.
 
 **Mapa de entrega:** grade estilo planilha (`GET /delivery-map`) com OPs **mãe** de PA (`8`/`9`) com saldo > 0. O primeiro bloco agrega **hoje + atrasadas**; os demais seguem a data prevista (`DT_ENTREGA`). Observações vêm do TOTVS (`observation` / `C2_OBS`); **MP-OK** e **Feedback** são marcações manuais do PCP no snapshot congelado. Snapshot congelado por filial — só **Atualizar** repuxa o TOTVS. Linha riscada quando o **conjunto** atinge 100% de progresso fabril (barra ao lado da OP). Barra de progresso (`GET /delivery-map/progress`, polling ~15 s): primeiro **Hoje + atrasadas**, depois demais OPs com entrega em até **5 dias**; demais datas ficam sem barra. **Exportar Excel** baixa o mapa visível (blocos por data, mesmas colunas da tela). `?q=` filtra OP/produto/observação/feedback.
 
@@ -78,6 +81,7 @@ Base: `/apps/production-control-api`
 | GET | `/overview?branch=` | Gestão à vista (OTD + atrasos) |
 | GET | `/demand?branch=&search=&status=&dueFrom=&dueTo=&sort=&direction=&page=&pageSize=&refresh=` | Carteira a entregar com cobertura por estoque e OP |
 | GET | `/materials?branch=&view=&search=&sort=&direction=&page=&pageSize=&refresh=` | Excesso ou falta de SC1 de MP vs ESTSEG |
+| GET | `/materials/finished-product-shortages?branch=&product=&status=&refresh=` | Ruptura de MP no conjunto do PA |
 | GET | `/delivery-map?branch=&search=` | Mapa de entrega (snapshot congelado) |
 | POST | `/delivery-map/refresh?branch=&search=` | Repuxa OPs PA do TOTVS |
 | PATCH | `/delivery-map/overrides?branch=&search=` | Salva MP-OK / Feedback manuais |

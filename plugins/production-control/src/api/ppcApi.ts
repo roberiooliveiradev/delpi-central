@@ -9,6 +9,7 @@ import type {
   MachineLoadPrioritizePayload,
   MachineLoadTransferPayload,
   MachineLoadWithdrawPayload,
+  FinishedProductShortagePayload,
   MaterialsPayload,
   OverviewPayload,
   ProblemDetectorItemsPayload,
@@ -96,6 +97,29 @@ export async function fetchMaterials(params: {
     data: MaterialsPayload;
   }>(ppcApiUrl(`/materials?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar os materiais.");
+}
+
+export async function fetchFinishedProductShortages(params: {
+  branch: string;
+  product: string;
+  status?: string;
+  refresh?: boolean;
+  signal?: AbortSignal;
+}): Promise<FinishedProductShortagePayload> {
+  const search = new URLSearchParams({
+    branch: params.branch,
+    product: params.product,
+  });
+  if (params.status) search.set("status", params.status);
+  if (params.refresh) search.set("refresh", "true");
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: FinishedProductShortagePayload;
+  }>(ppcApiUrl(`/materials/finished-product-shortages?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível consultar a ruptura no conjunto.");
 }
 
 export async function fetchDeliveryMap(params: {

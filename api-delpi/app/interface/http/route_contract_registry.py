@@ -70,6 +70,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_product_factory_status": RouteContract(
         "product_factory_status", "composite_analysis"
     ),
+    "get_product_raw_material_set_shortages": RouteContract(
+        "product_raw_material_set_shortages", "composite_analysis"
+    ),
     "get_product_cost_impact_simulation": RouteContract(
         "product_cost_impact_simulation", "composite_analysis"
     ),

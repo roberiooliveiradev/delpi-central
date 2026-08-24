@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { MaterialsLine } from "../types";
-import { buildMaterialsExcelPayload } from "./materialsExcel";
+import { buildFinishedProductShortageExcelPayload, buildMaterialsExcelPayload } from "./materialsExcel";
 
 const LINE: MaterialsLine = {
   id: "SC001/01",
@@ -35,5 +35,32 @@ describe("buildMaterialsExcelPayload", () => {
 
   it("keeps an empty payload honest", () => {
     expect(buildMaterialsExcelPayload([]).rows).toEqual([]);
+  });
+
+  it("exports visible sets with their raw materials", () => {
+    const payload = buildFinishedProductShortageExcelPayload([
+      {
+        production_order: "24608101001",
+        planned_start_date: "2026-09-12",
+        due_date: "2026-09-20",
+        status: "shortage",
+        materials: [
+          {
+            product_code: "10080001",
+            product_description: "Cabo",
+            unit: "KG",
+            status: "shortage",
+            shortage_date: "2026-09-12",
+            shortage_quantity: 12,
+            needed_quantity: 12,
+            consuming_production_order: "24608101003",
+          },
+        ],
+      },
+    ]);
+    expect(payload.rows).toHaveLength(1);
+    expect(payload.rows[0]?.set).toBe("24608101001");
+    expect(payload.rows[0]?.mp).toContain("10080001");
+    expect(payload.rows[0]?.deficit).toBe(12);
   });
 });

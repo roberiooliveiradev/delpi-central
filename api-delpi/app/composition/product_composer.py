@@ -68,6 +68,12 @@ from app.application.use_cases.product.get_product_raw_material_price_use_cases 
 from app.application.use_cases.product.get_product_directives_use_case import (
     GetProductDirectivesUseCase,
 )
+from app.application.use_cases.product.get_product_raw_material_set_shortages_use_case import (
+    GetProductRawMaterialSetShortagesUseCase,
+)
+from app.infrastructure.persistence.totvs.product_repositories.product_raw_material_set_shortage_repository import (
+    ProductRawMaterialSetShortageRepository,
+)
 from app.infrastructure.persistence.totvs.product_repositories.product_cost_impact_repository import (
     ProductCostImpactRepository,
 )
@@ -216,6 +222,14 @@ def build_list_exclusive_raw_materials_catalog_use_case() -> (
     ListExclusiveRawMaterialsCatalogUseCase
 ):
     return ListExclusiveRawMaterialsCatalogUseCase(ProductExclusiveRawMaterialRepository())
+
+
+def build_get_product_raw_material_set_shortages_use_case() -> (
+    GetProductRawMaterialSetShortagesUseCase
+):
+    return GetProductRawMaterialSetShortagesUseCase(
+        ProductRawMaterialSetShortageRepository()
+    )
 
 
 def build_get_product_directives_use_case() -> GetProductDirectivesUseCase:
