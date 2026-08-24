@@ -1,0 +1,66 @@
+{
+  "version": "2026.08.1",
+  "limits": {
+    "maxPreviewChars": 1200,
+    "maxTopKeys": 8
+  },
+  "referringTo": {
+    "labelTemplate": "{title} · {rowCount} itens",
+    "labelTemplateNoCount": "{title}",
+    "defaultTitle": "Último resultado"
+  },
+  "prompt": {
+    "lastResultHeading": "Último resultado em foco"
+  },
+  "statuses": {
+    "grounded": "grounded",
+    "schema_slot_missing": "schema_slot_missing",
+    "ambiguous_multi_artifact": "ambiguous_multi_artifact",
+    "ungrounded": "ungrounded"
+  },
+  "expandTriggers": [
+    "estoque",
+    "vendas",
+    "compras",
+    "fornecedor",
+    "fornecedores",
+    "cadastro",
+    "resumo",
+    "ficha",
+    "roteiro",
+    "expedicao",
+    "expedição",
+    "preco",
+    "preço",
+    "nota fiscal",
+    "nf de"
+  ],
+  "insightTriggers": [
+    "insight",
+    "insights",
+    "cruza",
+    "cruzar",
+    "cruzamento",
+    "compara",
+    "comparar",
+    "o que isso implica",
+    "o que voce tira",
+    "o que você tira",
+    "analise cruzada",
+    "análise cruzada"
+  ],
+  "fanOutOnReferentItems": [
+    "os itens",
+    "desses itens",
+    "destes itens",
+    "dos itens",
+    "dos componentes",
+    "componentes",
+    "itens citados",
+    "itens da estrutura",
+    "itens da lista"
+  ],
+  "clarify": {
+    "ambiguousWhichArtifact": "Sobre qual resultado você quer falar? Escolha uma opção abaixo ou descreva em uma frase."
+  }
+}
