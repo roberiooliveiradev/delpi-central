@@ -1,5 +1,7 @@
 import { httpGet, httpPatch, httpPost, ppcApiUrl, unwrapEnvelope } from "./httpClient";
 import type {
+  DeliveryMapPayload,
+  DeliveryMapProgressPayload,
   DemandPayload,
   MachineLoadLocatePayload,
   MachineLoadOptimizePayload,
@@ -94,6 +96,77 @@ export async function fetchMaterials(params: {
     data: MaterialsPayload;
   }>(ppcApiUrl(`/materials?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar os materiais.");
+}
+
+export async function fetchDeliveryMap(params: {
+  branch: string;
+  search?: string;
+  signal?: AbortSignal;
+}): Promise<DeliveryMapPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.search) search.set("search", params.search);
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: DeliveryMapPayload;
+  }>(ppcApiUrl(`/delivery-map?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar o mapa de entrega.");
+}
+
+export async function refreshDeliveryMap(params: {
+  branch: string;
+  search?: string;
+  signal?: AbortSignal;
+}): Promise<DeliveryMapPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.search) search.set("search", params.search);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: DeliveryMapPayload;
+  }>(ppcApiUrl(`/delivery-map/refresh?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível atualizar o mapa de entrega.");
+}
+
+export async function fetchDeliveryMapProgress(params: {
+  branch: string;
+  orders: readonly string[];
+  signal?: AbortSignal;
+}): Promise<DeliveryMapProgressPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.orders.length > 0) {
+    search.set("orders", params.orders.join(","));
+  }
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: DeliveryMapProgressPayload;
+  }>(ppcApiUrl(`/delivery-map/progress?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar o progresso das OPs.");
+}
+
+export async function patchDeliveryMapOverrides(params: {
+  branch: string;
+  search?: string;
+  updates: Array<{
+    production_order: string;
+    mp_ok?: boolean;
+    work_center?: string;
+  }>;
+  signal?: AbortSignal;
+}): Promise<DeliveryMapPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.search) search.set("search", params.search);
+  const envelope = await httpPatch<{
+    success: boolean;
+    message?: string;
+    data: DeliveryMapPayload;
+  }>(
+    ppcApiUrl(`/delivery-map/overrides?${search.toString()}`),
+    { updates: params.updates },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível salvar as marcações do mapa de entrega.");
 }
 
 export async function fetchMachineLoad(params: {

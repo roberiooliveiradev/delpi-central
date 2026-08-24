@@ -105,6 +105,10 @@ O BFF aplica, por produto:
 
 Os cards (`issues[]`) trazem título, descrição e `product_count` de `content/materials.json`. Busca, ordenação, página e cache por filial (120 s) ficam em `application/services/materials_service.py`. Sem preço. Sem escrita no TOTVS. Permissão: `production-control.materials.view` + filial. O grant no Keycloak é operação — código e manifesto já declaram a permissão.
 
+### Mapa de entrega
+
+`GET /delivery-map` lê o snapshot congelado em `production_control.delivery_map_snapshots` (seed automático na 1ª visita). A fonte TOTVS é `GET /production/pcp-orders/items` paginado (`mother_only`, `open_only`, produto PA prefixo `8`/`9`, saldo > 0). O BFF agrupa por data prevista: primeiro bloco **Hoje + atrasadas**, demais por dia. Observações vêm de `observation` (view / `C2_OBS`). **MP-OK** e **CT** são overrides manuais no `payload_json`, preservados no `POST /delivery-map/refresh`. `PATCH /delivery-map/overrides` atualiza marcações sem alterar `refreshed_at`. `GET /delivery-map/progress?branch=&orders=` devolve progresso **vivo** por conjunto (operações SH8 + enrich HZA), independente do snapshot da lista. Permissão: `production-control.delivery-map.view` + filial. Textos em `content/delivery_map.json`.
+
 ## Análise de problemas — detectores
 
 A área é uma **grade de cards**, um por detector. `GET /problem-analysis` devolve `detectors[]` (`id`, `title`, `description`, `icon`, `severity`, `count`, `metrics`) e `GET /problem-analysis/{detectorId}` devolve os registros paginados daquele detector.

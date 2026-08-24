@@ -7,6 +7,7 @@ from production_control_app.application.services.detectors.incomplete_order_sets
     DETECTOR_ID as DETECTOR_INCOMPLETE_ORDER_SETS,
     IncompleteOrderSetsDetector,
 )
+from production_control_app.application.services.delivery_map_service import DeliveryMapService
 from production_control_app.application.services.demand_service import DemandService
 from production_control_app.application.services.materials_service import MaterialsService
 from production_control_app.application.services.machine_load_service import MachineLoadService
@@ -22,11 +23,17 @@ from production_control_app.application.services.public_machine_load_drawing_ser
 from production_control_app.application.services.subplugin_catalog_service import SubpluginCatalogService
 from production_control_app.domain.ports.drawing_library import DrawingLibraryPort
 from production_control_app.domain.ports.problem_detector import ProblemDetector
+from production_control_app.domain.ports.delivery_map_snapshot_repository import (
+    DeliveryMapSnapshotRepositoryPort,
+)
 from production_control_app.domain.ports.machine_load_snapshot_repository import (
     MachineLoadSnapshotRepositoryPort,
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.infrastructure.gateways.delpi_production_gateway import DelpiProductionGateway
+from production_control_app.infrastructure.persistence.postgres_delivery_map_snapshot_repository import (
+    PostgresDeliveryMapSnapshotRepository,
+)
 from production_control_app.infrastructure.persistence.postgres_machine_load_snapshot_repository import (
     PostgresMachineLoadSnapshotRepository,
 )
@@ -49,6 +56,10 @@ def build_public_cockpit_access_service() -> PublicCockpitAccessService:
 
 def build_machine_load_snapshot_repository() -> MachineLoadSnapshotRepositoryPort:
     return PostgresMachineLoadSnapshotRepository()
+
+
+def build_delivery_map_snapshot_repository() -> DeliveryMapSnapshotRepositoryPort:
+    return PostgresDeliveryMapSnapshotRepository()
 
 
 def build_problem_detectors(
@@ -96,6 +107,18 @@ def build_materials_service(
 ) -> MaterialsService:
     return MaterialsService(
         gateway or DelpiProductionGateway(),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_delivery_map_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: DeliveryMapSnapshotRepositoryPort | None = None,
+) -> DeliveryMapService:
+    return DeliveryMapService(
+        gateway or DelpiProductionGateway(),
+        snapshots=snapshots or build_delivery_map_snapshot_repository(),
         branch_access=build_branch_access_service(),
     )
 

@@ -27,6 +27,7 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: production-
 | `…/machine-load?branch=01\|02&ct=&startDate=&endDate=&locate=` | Carga máquina (abas por centro de trabalho) |
 | `…/problem-analysis?branch=01\|02&detector=` | Análise de problemas (grade de detectores + registros) |
 | `…/materials?branch=01\|02&issue=&q=&request=&item=` | Materiais (excesso e falta de SC1 de MP vs ESTSEG) |
+| `…/delivery-map?branch=01\|02&q=` | Mapa de entrega (OPs PA com saldo, agrupadas por entrega prevista) |
 
 Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
@@ -47,6 +48,8 @@ Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 **Otimizar por entrega (barra):** o botão ⇅ *Otimizar por entrega*, ao lado do link do operador, chama `POST /machine-load/optimize-delivery` e resequencia a fila de **todos** os centros da filial pela data de entrega do PA — o carga máquina do TOTVS às vezes deixa material de mês seguinte à frente do que está vencendo. Operações já iniciadas continuam onde estão, empate na mesma entrega preserva a ordem atual e operação sem entrega vai para o fim do seu centro. Conjuntos fora da programação não voltam à fila. Há confirmação antes de aplicar; o aviso da barra informa quantos centros mudaram e quantas operações trocaram de posição. Como a mudança atravessa vários CTs, a pilha de Ctrl+Z do CT ativo é zerada e o cockpit do operador atualiza sozinho.
 
 **Materiais:** dois cards (`GET /materials`) — **Excesso de solicitações** e **Solicitações insuficientes**. O recorte ativo vai em `?issue=excess|shortage`. Excesso lista SC1 de **matéria-prima** cujo documento inteiro já está coberto por estoque + pedidos − empenhos **e** pelo ESTSEG. Falta lista produtos cuja cobertura + SC1 aberta não chega no estoque de segurança (inclui MP com ESTSEG e sem SC1). PA e PI não entram. `?q=` filtra; `?request=` + `?item=` reabre o detalhe no excesso. **Exportar Excel** baixa a página visível. Sem preço e sem escrita no TOTVS. Quem classifica é o BFF (FIFO por produto); o MFE é render-only.
+
+**Mapa de entrega:** grade estilo planilha (`GET /delivery-map`) com OPs **mãe** de PA (`8`/`9`) com saldo > 0. O primeiro bloco agrega **hoje + atrasadas**; os demais seguem a data prevista (`DT_ENTREGA`). Observações vêm do TOTVS (`observation` / `C2_OBS`). Snapshot congelado por filial — só **Atualizar** repuxa o TOTVS. Linha riscada quando já houve apontamento parcial. Barra de progresso ao lado da OP (`GET /delivery-map/progress`, polling ~15 s) com % das operações do conjunto (SH8 + status HZA vivo). **Exportar Excel** baixa o mapa visível (blocos por data, mesmas colunas da tela). `?q=` filtra OP/produto/observação.
 
 **Análise de problemas:** grade de cards, um por **detector** de exceção (`GET /problem-analysis`), e abaixo a tabela dos registros do detector aberto (`GET /problem-analysis/{detectorId}`). O deep link é `?detector=`; sem ele, abre o primeiro card do catálogo. Título, descrição, ícone e severidade vêm do BFF — o MFE é render-only e não decide o que é crítico.
 
@@ -75,6 +78,9 @@ Base: `/apps/production-control-api`
 | GET | `/overview?branch=` | Gestão à vista (OTD + atrasos) |
 | GET | `/demand?branch=&search=&status=&dueFrom=&dueTo=&sort=&direction=&page=&pageSize=&refresh=` | Carteira a entregar com cobertura por estoque e OP |
 | GET | `/materials?branch=&view=&search=&sort=&direction=&page=&pageSize=&refresh=` | Excesso ou falta de SC1 de MP vs ESTSEG |
+| GET | `/delivery-map?branch=&search=` | Mapa de entrega (snapshot congelado) |
+| POST | `/delivery-map/refresh?branch=&search=` | Repuxa OPs PA do TOTVS |
+| PATCH | `/delivery-map/overrides?branch=&search=` | Salva MP-OK / CT manuais |
 | GET | `/machine-load?branch=&workCenter=&startDate=&endDate=` | Centros de trabalho + fila do CT ativo (snapshot) |
 | GET | `/machine-load/locate?branch=&q=` | Rastreio de conjunto (C2_NUM, 6 dígitos) ou produto (PA) |
 | POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS (janela por entrega do PA) |
@@ -94,7 +100,7 @@ Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi
 
 ## Permissões
 
-`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais para quem tem `production-control.materials.view` — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
+`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.delivery-map.view`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais / Mapa de entrega para quem tem a permissão correspondente — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
 
 ## Desenvolvimento
 

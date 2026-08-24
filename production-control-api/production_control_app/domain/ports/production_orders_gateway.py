@@ -16,6 +16,20 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_pcp_orders_items_page(
+        self,
+        *,
+        branch: str,
+        delivery_start: str,
+        delivery_end: str,
+        page: int,
+        page_size: int,
+        sort: str = "delivery_asc",
+        mother_only: bool = True,
+        open_only: bool = True,
+    ) -> dict[str, Any]:
+        ...
+
     def fetch_production_otd(
         self,
         *,

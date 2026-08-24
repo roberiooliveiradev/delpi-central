@@ -130,6 +130,22 @@ describe("buildPpcHref", () => {
     );
   });
 
+  it("reads delivery map search from the deep link", () => {
+    const route = parsePpcPath("/apps/production-control/delivery-map", "?branch=01&q=90262910");
+    expect(route.subpluginId).toBe("delivery-map");
+    expect(route.deliveryMapSearch).toBe("90262910");
+  });
+
+  it("serializes the delivery map deep link", () => {
+    expect(
+      buildPpcHref({
+        subpluginId: "delivery-map",
+        branch: "01",
+        deliveryMapSearch: "107376",
+      }),
+    ).toBe("/apps/production-control/delivery-map?branch=01&q=107376");
+  });
+
   it("keeps the work center tab, period and locate query in the deep link", () => {
     expect(
       buildPpcHref({

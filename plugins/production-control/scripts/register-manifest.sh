@@ -22,4 +22,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua: production-control.access, production-control.problem-analysis.view, production-control.view.filial-01 e/ou .filial-02."
+echo "[OK] Atribua: production-control.access, production-control.delivery-map.view, production-control.problem-analysis.view, production-control.view.filial-01 e/ou .filial-02."

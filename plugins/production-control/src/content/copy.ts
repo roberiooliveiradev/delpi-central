@@ -476,6 +476,57 @@ export const copy = {
       close: "Fechar",
     },
   },
+  deliveryMap: {
+    title: "Mapa de entrega",
+    subtitle:
+      "Ordens de produção de PA com saldo a entregar, agrupadas pela data prevista de entrega.",
+    loading: "Montando o mapa de entrega…",
+    loadingHint: "Consultando OPs em aberto no TOTVS e aplicando o agrupamento por entrega.",
+    loadError: "Não foi possível carregar o mapa de entrega.",
+    empty: "Nenhuma OP de PA com saldo neste recorte.",
+    searchPlaceholder: "OP, produto ou observação…",
+    searchAria: "Buscar no mapa de entrega",
+    searchAction: "Buscar",
+    frozenAt: (when: string) => `Congelado em ${when}`,
+    orderCount: (count: number) =>
+      count === 1 ? "1 OP" : `${count} OPs`,
+    sectionCount: (count: number) =>
+      count === 1 ? "1 OP" : `${count} OPs`,
+    refreshConfirmTitle: "Atualizar mapa de entrega?",
+    refreshConfirmBody: "A lista será repuxada do TOTVS. A ordem e o agrupamento atuais serão substituídos.",
+    refreshConfirmAction: "Atualizar",
+    columns: [
+      { key: "op", label: "Número" },
+      { key: "product", label: "Produto" },
+      { key: "due", label: "Dt. prevista" },
+      { key: "planned", label: "Quant. original" },
+      { key: "pending", label: "Saldo a entregar" },
+      { key: "obs", label: "Observações" },
+    ],
+    exportLabel: "Excel",
+    exportFileName: (branch: string) => `mapa-entrega-filial-${branch}`,
+    exportSheetTitle: "Mapa de entrega",
+    exportEmpty: "Não há OPs para exportar em Excel.",
+    excelColumns: [
+      { key: "numero", label: "NUMERO" },
+      { key: "produto", label: "PRODUTO" },
+      { key: "due", label: "DT. PREVISTA" },
+      { key: "planned", label: "QUANT. ORIGINAL" },
+      { key: "pending", label: "SALDO A ENTREGAR" },
+      { key: "obs", label: "OBSERVAÇÕES" },
+    ],
+    progressAria: (progress: {
+      percent: number;
+      completed: number;
+      in_progress: number;
+      total: number;
+    }) => {
+      if (progress.in_progress > 0) {
+        return `Progresso do conjunto: ${progress.percent}% (${progress.completed} de ${progress.total} operações apontadas, ${progress.in_progress} em produção)`;
+      }
+      return `Progresso do conjunto: ${progress.percent}% (${progress.completed} de ${progress.total} operações apontadas)`;
+    },
+  },
   branch: {
     label: "Filial",
     "01": "SC · 01",

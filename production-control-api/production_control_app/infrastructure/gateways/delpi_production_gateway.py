@@ -86,6 +86,33 @@ class DelpiProductionGateway:
             },
         )
 
+    def fetch_pcp_orders_items_page(
+        self,
+        *,
+        branch: str,
+        delivery_start: str,
+        delivery_end: str,
+        page: int,
+        page_size: int,
+        sort: str = "delivery_asc",
+        mother_only: bool = True,
+        open_only: bool = True,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/pcp-orders/items",
+            params={
+                "branch": branch,
+                "delivery_start": delivery_start,
+                "delivery_end": delivery_end,
+                "open_only": open_only,
+                "mother_only": mother_only,
+                "page": page,
+                "page_size": page_size,
+                "sort": sort,
+            },
+        )
+
     def fetch_production_otd(
         self,
         *,

@@ -12,6 +12,7 @@ export type PpcRoute = {
   demandStatus: string | null;
   materialsSearch: string | null;
   materialsIssue: string | null;
+  deliveryMapSearch: string | null;
   requestNumber: string | null;
   requestItem: string | null;
   branch: PpcBranch;
@@ -54,6 +55,7 @@ function parseSearch(search: string): {
   demandStatus: string | null;
   materialsSearch: string | null;
   materialsIssue: string | null;
+  deliveryMapSearch: string | null;
   requestNumber: string | null;
   requestItem: string | null;
   branch: PpcBranch | null;
@@ -73,6 +75,7 @@ function parseSearch(search: string): {
     demandStatus: DEMAND_STATUSES.has(statusRaw) ? statusRaw : null,
     materialsSearch: sharedSearch,
     materialsIssue: MATERIALS_ISSUES.has(issueRaw) ? issueRaw : null,
+    deliveryMapSearch: sharedSearch,
     requestNumber: params.get("request")?.trim() || null,
     requestItem: params.get("item")?.trim() || null,
     branch: isBranch(branchRaw) ? branchRaw : null,
@@ -98,6 +101,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     demandStatus: query.demandStatus,
     materialsSearch: query.materialsSearch,
     materialsIssue: query.materialsIssue,
+    deliveryMapSearch: query.deliveryMapSearch,
     requestNumber: query.requestNumber,
     requestItem: query.requestItem,
     branch: query.branch ?? storedBranch,
@@ -128,6 +132,7 @@ export function buildPpcHref(input: {
   demandStatus?: string | null;
   materialsSearch?: string | null;
   materialsIssue?: string | null;
+  deliveryMapSearch?: string | null;
   requestNumber?: string | null;
   requestItem?: string | null;
 }): string {
@@ -146,6 +151,7 @@ export function buildPpcHref(input: {
   if (input.demandStatus) params.set("status", input.demandStatus);
   if (input.materialsSearch) params.set("q", input.materialsSearch);
   if (input.materialsIssue) params.set("issue", input.materialsIssue);
+  if (input.deliveryMapSearch) params.set("q", input.deliveryMapSearch);
   if (input.requestNumber) params.set("request", input.requestNumber);
   if (input.requestItem) params.set("item", input.requestItem);
   return `${path}?${params.toString()}`;

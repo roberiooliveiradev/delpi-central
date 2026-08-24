@@ -7,6 +7,7 @@ import { copy } from "./content/copy";
 import { DEFAULT_SUBPLUGIN } from "./constants/routes";
 import { usePpcRouterPath } from "./hooks/usePpcRouterPath";
 import { useSubplugins } from "./hooks/useSubplugins";
+import { DeliveryMapPage } from "./pages/DeliveryMapPage";
 import { DemandPage } from "./pages/DemandPage";
 import { MachineLoadPage } from "./pages/MachineLoadPage";
 import { MaterialsPage } from "./pages/MaterialsPage";
@@ -27,6 +28,7 @@ const WORKSPACES = new Set([
   "problem-analysis",
   "machine-load",
   "materials",
+  "delivery-map",
 ]);
 
 export type AppProps = {
@@ -83,6 +85,10 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         endDate={route.endDate}
         locateQuery={route.locateQuery}
       />
+    );
+  } else if (route.subpluginId === "delivery-map") {
+    workspace = (
+      <DeliveryMapPage branch={route.branch} search={route.deliveryMapSearch} />
     );
   }
 

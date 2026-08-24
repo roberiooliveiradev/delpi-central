@@ -222,6 +222,62 @@ export type MaterialsPayload = {
   };
 };
 
+export type DeliveryMapRow = {
+  production_order: string;
+  product_code: string;
+  product_description: string | null;
+  due_date: string | null;
+  planned_qty: number;
+  produced_qty: number;
+  pending_qty: number;
+  observation: string | null;
+  days_late: number;
+  is_delayed: boolean;
+  mp_ok: boolean;
+  work_center: string;
+  is_reported: boolean;
+};
+
+export type DeliveryMapSection = {
+  section_key: string;
+  label: string;
+  due_date: string | null;
+  row_count: number;
+  rows: DeliveryMapRow[];
+};
+
+export type DeliveryMapPayload = {
+  branch: string;
+  sections: DeliveryMapSection[];
+  summary: {
+    order_count: number;
+    section_count: number;
+  };
+  filters: {
+    search: string;
+  };
+  snapshot: {
+    refreshed_at: string | null;
+    refreshed_by?: string | null;
+    horizon_end?: string | null;
+    seeded: boolean;
+  };
+};
+
+export type DeliveryMapOpProgress = {
+  conjunto_key: string;
+  total: number;
+  completed: number;
+  in_progress: number;
+  percent: number;
+};
+
+export type DeliveryMapProgressPayload = {
+  branch: string;
+  items: Record<string, DeliveryMapOpProgress>;
+  polled_at: string;
+};
+
 export type DemandPayload = {
   branch: string;
   items: DemandLine[];

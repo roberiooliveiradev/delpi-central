@@ -5,7 +5,7 @@
   "description": "Plataforma de planejamento e controle da produção: gestão à vista, carga máquina e análise de problemas.",
   "category": "producao",
   "icon": "factory",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "type": "microfrontend",
   "basePath": "/apps/production-control",
   "entry": "/apps/production-control/assets/remoteEntry.js",
@@ -38,6 +38,12 @@
       "code": "production-control.materials.view",
       "name": "Materiais",
       "description": "Ver solicitações de compra em excesso que podem ser eliminadas.",
+      "module": "production-control"
+    },
+    {
+      "code": "production-control.delivery-map.view",
+      "name": "Mapa de entrega",
+      "description": "Ver OPs de PA com saldo a entregar, agrupadas pela data prevista.",
       "module": "production-control"
     },
     {
@@ -101,6 +107,14 @@
       "permission": "production-control.materials.view",
       "icon": "package",
       "order": 39,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/production-control/delivery-map",
+      "label": "Mapa de entrega",
+      "permission": "production-control.delivery-map.view",
+      "icon": "calendar-clock",
+      "order": 40,
       "showInMenu": false
     }
   ],
