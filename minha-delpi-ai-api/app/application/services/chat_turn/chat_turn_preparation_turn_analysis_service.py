@@ -187,6 +187,22 @@ class ChatTurnPreparationTurnAnalysisService:
                 )
 
         cls.mark_ran(True)
+        turn_grounding = workspace_context.get("turnGrounding") or {}
+        grounding_status = (
+            str(turn_grounding.get("status") or "").strip()
+            if isinstance(turn_grounding, dict)
+            else ""
+        )
+        working_memory = workspace_context.get("workingMemory") or {}
+        last_result_excerpt = (
+            working_memory.get("lastResultExcerpt")
+            if isinstance(working_memory, dict)
+            else None
+        )
+        if not isinstance(last_result_excerpt, dict):
+            excerpt_block = turn_grounding.get("excerpt") if isinstance(turn_grounding, dict) else None
+            last_result_excerpt = excerpt_block if isinstance(excerpt_block, dict) else None
+
         result = ChatTurnAnalysisService.analyze(
             llm_gateway=llm_gateway,
             message=message,
@@ -198,6 +214,8 @@ class ChatTurnPreparationTurnAnalysisService:
             actions_catalog_lines=action_lines,
             allowed_action_ids=allowed_set,
             allowed_skill_keys=skill_keys,
+            grounding_status=grounding_status or None,
+            last_result_excerpt=last_result_excerpt,
         )
 
         direct = result.direct_answer() if result.decision == "clarify" else None
