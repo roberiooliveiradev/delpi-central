@@ -594,9 +594,11 @@ body:has(.app-shell) {
 /*
  * Fill viewport (ex.: Sala de interação): um scroller no MFE, não no .content.
  * Contrato: classe `dashboard-page--fill` na raiz do app — sem if por rota.
+ * `scrollbar-gutter: auto` evita faixa vazia à direita (gutter estável sem barra).
  */
 .content:has(.dashboard-page--fill) {
   overflow: hidden;
+  scrollbar-gutter: auto;
 }
 
 .content > .app-host-federated:has(.dashboard-page--fill),

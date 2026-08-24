@@ -2482,7 +2482,7 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-commercial.dashboard-page {
+  .dashboard-commercial.dashboard-page:not(.dashboard-page--fill) {
     padding: 16px;
   }
 

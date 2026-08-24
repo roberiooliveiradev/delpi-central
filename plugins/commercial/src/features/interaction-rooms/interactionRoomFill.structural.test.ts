@@ -48,6 +48,9 @@ describe("interaction room fill CSS", () => {
       /\.app-host-federated__mount:has\(\.dashboard-page--fill\)/,
     );
     expect(portalCss).toMatch(/\.content:has\(\.dashboard-page--fill\)/);
+    expect(portalCss).toMatch(
+      /\.content:has\(\.dashboard-page--fill\) \{[\s\S]*?scrollbar-gutter:\s*auto;/,
+    );
     expect(portalCss).toMatch(/scrollbar-gutter:\s*stable/);
   });
 
