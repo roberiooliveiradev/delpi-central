@@ -4,10 +4,13 @@ from dataclasses import dataclass
 from datetime import date
 
 from app.application.unit_of_work import UnitOfWork
-from app.application.use_cases.dispatch_notifications_use_case import (
-    DispatchNotificationsUseCase,
+from app.application.services.automated_notification_dispatch_service import (
+    AutomatedNotificationDispatchService,
 )
-from app.domain.notifications.notification_automation import build_template_dispatch_request
+from app.domain.notifications.notification_automation import (
+    SOURCE_APP_BIRTHDAY_AUTOMATION,
+    build_template_dispatch_request,
+)
 
 
 @dataclass
@@ -29,8 +32,8 @@ class ProcessBirthdayNotificationsUseCase:
             day=target_date.day,
         )
 
-        sent = 0
         skipped = 0
+        recipient_ids: list[str] = []
 
         from uuid import UUID
 
@@ -51,13 +54,28 @@ class ProcessBirthdayNotificationsUseCase:
                 skipped += 1
                 continue
 
+            accepting = self.uow.notification_preferences.filter_user_ids_accepting_category(
+                [str(user_id)],
+                "birthday",
+            )
+            if not accepting:
+                skipped += 1
+                continue
+
+            recipient_ids.append(str(user_id))
+
+        sent = 0
+        if recipient_ids:
             request = build_template_dispatch_request(
                 template_id="birthday_v1",
-                user_ids=[user_id],
-                source_app="birthday-automation",
+                user_ids=recipient_ids,
+                source_app=SOURCE_APP_BIRTHDAY_AUTOMATION,
             )
-            DispatchNotificationsUseCase(self.uow).execute(request)
-            sent += 1
+            result = AutomatedNotificationDispatchService(self.uow).dispatch(
+                request,
+                created_by_user_id=None,
+            )
+            sent = result.created_count
 
         return ProcessBirthdayNotificationsResult(
             eligible=len(user_ids),
