@@ -1,6 +1,6 @@
-// src/ui/admin/rbac/UserEditPage.tsx
+// portal/src/ui/admin/rbac/UserEditPage.tsx
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
@@ -18,27 +18,9 @@ import {
 
 import "./RbacEditPage.css";
 import { UserUsageTab } from "./UserUsageTab";
-
-type UserPageTab = "summary" | "roles" | "groups" | "usage";
-
-const normalizeIds = (items: unknown[]): string[] => {
-  return items
-    .map((item) => {
-      if (typeof item === "string") return item;
-
-      if (
-        item &&
-        typeof item === "object" &&
-        "id" in item &&
-        typeof (item as { id?: unknown }).id === "string"
-      ) {
-        return (item as { id: string }).id;
-      }
-
-      return null;
-    })
-    .filter((id): id is string => !!id);
-};
+import { useAdminUserAccessProfile } from "./useAdminUserAccessProfile";
+import { useUserPageMode, type UserPageTab } from "./useUserPageMode";
+import { normalizeIds, userStatusLabel } from "./userEditUtils";
 
 export const UserEditPage = () => {
   const { userId = "" } = useParams<{ userId: string }>();
@@ -46,10 +28,21 @@ export const UserEditPage = () => {
   const showAlert = useAppAlert();
   const api = useAdminApi();
 
-  const [loading, setLoading] = useState(true);
+  const {
+    isEditing,
+    activeTab,
+    setActiveTab,
+    enterEdit,
+    exitEdit,
+    pageTitleSuffix,
+  } = useUserPageMode();
+
+  const accessProfile = useAdminUserAccessProfile(userId, !isEditing);
+
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<UserPageTab>("summary");
 
   const [user, setUser] = useState<AdminUser | null>(null);
   const [roles, setRoles] = useState<AdminRole[]>([]);
@@ -59,31 +52,23 @@ export const UserEditPage = () => {
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [birthDate, setBirthDate] = useState("");
 
+  const applyUserSnapshot = useCallback((found: AdminUser) => {
+    setUser(found);
+    setIsSuperadmin(!!found.is_superadmin);
+    setBirthDate(found.birth_date ? String(found.birth_date).slice(0, 10) : "");
+  }, []);
+
   useEffect(() => {
     if (!userId) return;
 
     let cancelled = false;
 
-    const load = async () => {
-      setLoading(true);
+    const loadUser = async () => {
+      setLoadingUser(true);
       setError(null);
-      setActiveTab("summary");
 
       try {
-        const [
-          usersRes,
-          allRolesRes,
-          allGroupsRes,
-          userRolesRes,
-          userGroupsRes,
-        ] = await Promise.all([
-          api.listUsers({ page: 1, pageSize: 999 }),
-          api.listRoles({ page: 1, pageSize: 999 }),
-          api.listGroups({ page: 1, pageSize: 999 }),
-          api.getUserRoles(userId),
-          api.getUserGroups(userId),
-        ]);
-
+        const usersRes = await api.listUsers({ page: 1, pageSize: 999 });
         if (cancelled) return;
 
         const found = (usersRes.data ?? []).find((item) => item.id === userId);
@@ -93,36 +78,83 @@ export const UserEditPage = () => {
           return;
         }
 
-        setUser(found);
-        setRoles(allRolesRes.data ?? []);
-        setGroups(allGroupsRes.data ?? []);
-        setSelectedRoleIds(normalizeIds(userRolesRes.data ?? []));
-        setSelectedGroupIds(normalizeIds(userGroupsRes.data ?? []));
-        setIsSuperadmin(!!found.is_superadmin);
-        setBirthDate(
-          found.birth_date ? String(found.birth_date).slice(0, 10) : ""
-        );
+        applyUserSnapshot(found);
       } catch (e: unknown) {
         if (!cancelled) {
           setError(
             e instanceof Error
               ? e.message
-              : "Não foi possível carregar o usuário."
+              : "Não foi possível carregar o usuário.",
           );
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadingUser(false);
       }
     };
 
-    void load();
+    void loadUser();
 
     return () => {
       cancelled = true;
     };
-  }, [api, userId]);
+  }, [api, applyUserSnapshot, userId]);
+
+  useEffect(() => {
+    if (!userId || !isEditing) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadEditData = async () => {
+      setLoadingEdit(true);
+
+      try {
+        const [allRolesRes, allGroupsRes, userRolesRes, userGroupsRes] =
+          await Promise.all([
+            api.listRoles({ page: 1, pageSize: 999 }),
+            api.listGroups({ page: 1, pageSize: 999 }),
+            api.getUserRoles(userId),
+            api.getUserGroups(userId),
+          ]);
+
+        if (cancelled) return;
+
+        setRoles(allRolesRes.data ?? []);
+        setGroups(allGroupsRes.data ?? []);
+        setSelectedRoleIds(normalizeIds(userRolesRes.data ?? []));
+        setSelectedGroupIds(normalizeIds(userGroupsRes.data ?? []));
+      } catch (e: unknown) {
+        if (!cancelled) {
+          await showAlert({
+            title: "Erro",
+            message:
+              e instanceof Error
+                ? e.message
+                : "Não foi possível carregar dados para edição.",
+          });
+          exitEdit();
+        }
+      } finally {
+        if (!cancelled) setLoadingEdit(false);
+      }
+    };
+
+    void loadEditData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [api, exitEdit, isEditing, showAlert, userId]);
 
   const goBack = () => navigate("/admin?tab=users");
+
+  const handleCancelEdit = () => {
+    if (user) {
+      applyUserSnapshot(user);
+    }
+    exitEdit();
+  };
 
   const save = async () => {
     if (!user) return;
@@ -155,7 +187,7 @@ export const UserEditPage = () => {
     }
   };
 
-  if (loading) {
+  if (loadingUser) {
     return (
       <div className="rbac-edit-page">
         <Spinner label="Carregando usuário…" />
@@ -174,8 +206,15 @@ export const UserEditPage = () => {
     );
   }
 
-  const userStatusLabel = user.active === false ? "Inativo" : "Ativo";
-  const busy = loading || saving;
+  const statusLabel = userStatusLabel(user.active);
+  const busy = loadingUser || loadingEdit || saving;
+
+  const tabItems = [
+    { id: "summary", label: "Resumo" },
+    { id: "roles", label: isEditing ? "Papéis diretos" : "Papéis" },
+    { id: "groups", label: "Grupos" },
+    { id: "usage", label: "Uso" },
+  ];
 
   return (
     <PageChrome
@@ -185,7 +224,7 @@ export const UserEditPage = () => {
         { label: "Usuários", onClick: goBack },
         { label: user.email },
       ]}
-      title={`Editar RBAC — ${user.email}`}
+      title={`${pageTitleSuffix} — ${user.email}`}
       subtitle={
         <>
           {user.name || "Sem nome"} · ID <code>{user.id}</code>
@@ -196,29 +235,39 @@ export const UserEditPage = () => {
           <Button variant="secondary" onClick={goBack} disabled={busy}>
             Voltar
           </Button>
-          <Button
-            variant="primary"
-            onClick={() => void save()}
-            disabled={busy}
-            loading={saving}
-          >
-            {saving ? "Salvando…" : "Salvar"}
-          </Button>
+          {isEditing ? (
+            <>
+              <Button variant="secondary" onClick={handleCancelEdit} disabled={busy}>
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => void save()}
+                disabled={busy}
+                loading={saving}
+              >
+                {saving ? "Salvando…" : "Salvar"}
+              </Button>
+            </>
+          ) : (
+            <Button variant="primary" onClick={() => enterEdit()} disabled={busy}>
+              Editar
+            </Button>
+          )}
         </>
       }
       tabs={{
-        items: [
-          { id: "summary", label: "Resumo" },
-          { id: "roles", label: "Papéis diretos" },
-          { id: "groups", label: "Grupos" },
-          { id: "usage", label: "Uso" },
-        ],
+        items: tabItems,
         value: activeTab,
         onChange: (id) => setActiveTab(id as UserPageTab),
       }}
     >
       <div className="rbac-edit-card user-rbac-body">
-        {activeTab === "summary" && (
+        {isEditing && loadingEdit ? (
+          <Spinner label="Carregando dados para edição…" />
+        ) : null}
+
+        {activeTab === "summary" && !(isEditing && loadingEdit) && (
           <div className="user-rbac-summary">
             <div className="user-rbac-summary-grid">
               <section className="user-rbac-panel">
@@ -236,7 +285,7 @@ export const UserEditPage = () => {
                         : "user-rbac-status-success",
                     ].join(" ")}
                   >
-                    {userStatusLabel}
+                    {statusLabel}
                   </span>
                 </div>
 
@@ -253,88 +302,83 @@ export const UserEditPage = () => {
 
                   <div className="user-rbac-info-item">
                     <span>Status</span>
-                    <strong>{userStatusLabel}</strong>
+                    <strong>{statusLabel}</strong>
                   </div>
 
-                  <label className="user-rbac-info-item user-rbac-info-item--field">
-                    <span>Data de nascimento</span>
-                    <Input
-                      type="date"
-                      value={birthDate}
-                      onChange={(event) => setBirthDate(event.target.value)}
-                      disabled={busy}
-                    />
-                    <small>Usada na automação de aniversário.</small>
-                  </label>
+                  {isEditing ? (
+                    <label className="user-rbac-info-item user-rbac-info-item--field">
+                      <span>Data de nascimento</span>
+                      <Input
+                        type="date"
+                        value={birthDate}
+                        onChange={(event) => setBirthDate(event.target.value)}
+                        disabled={busy}
+                      />
+                      <small>Usada na automação de aniversário.</small>
+                    </label>
+                  ) : (
+                    <div className="user-rbac-info-item">
+                      <span>Data de nascimento</span>
+                      <strong>
+                        {birthDate
+                          ? new Date(`${birthDate}T00:00:00`).toLocaleDateString("pt-BR")
+                          : "-"}
+                      </strong>
+                    </div>
+                  )}
                 </div>
               </section>
 
-              <section className="user-rbac-panel">
-                <div className="user-rbac-panel-header">
-                  <div>
-                    <h4>Acessos</h4>
-                    <p>Resumo dos vínculos diretos configurados no RBAC.</p>
+              {!isEditing ? (
+                <section className="user-rbac-panel">
+                  <div className="user-rbac-panel-header">
+                    <div>
+                      <h4>Mapa de acesso</h4>
+                      <p>Carregando perfil efetivo…</p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="user-rbac-stat-grid">
-                  <button
-                    type="button"
-                    className="user-rbac-stat-card"
-                    onClick={() => setActiveTab("roles")}
-                  >
-                    <strong>{selectedRoleIds.length}</strong>
-                    <span>Papéis diretos</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="user-rbac-stat-card"
-                    onClick={() => setActiveTab("groups")}
-                  >
-                    <strong>{selectedGroupIds.length}</strong>
-                    <span>Grupos</span>
-                  </button>
-                </div>
-              </section>
+                  {accessProfile.loading ? (
+                    <Spinner label="Carregando mapa de acesso…" />
+                  ) : accessProfile.error ? (
+                    <Alert tone="danger">{accessProfile.error}</Alert>
+                  ) : null}
+                </section>
+              ) : null}
             </div>
 
-            <section
-              className={[
-                "user-rbac-superadmin-card",
-                isSuperadmin ? "active" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              <div className="user-rbac-superadmin-content">
-                <div className="user-rbac-superadmin-icon">★</div>
-                <div>
-                  <h4>Privilégio administrativo</h4>
-                  <strong>Superadmin</strong>
-                  <p>
-                    Concede acesso administrativo completo, independentemente
-                    dos papéis, grupos ou permissões vinculadas ao usuário.
-                  </p>
+            {isEditing ? (
+              <section
+                className={[
+                  "user-rbac-superadmin-card",
+                  isSuperadmin ? "active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <div className="user-rbac-superadmin-content">
+                  <div className="user-rbac-superadmin-icon">★</div>
+                  <div>
+                    <h4>Privilégio administrativo</h4>
+                    <strong>Superadmin</strong>
+                    <p>
+                      Concede acesso administrativo completo, independentemente
+                      dos papéis, grupos ou permissões vinculadas ao usuário.
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <Switch
-                checked={isSuperadmin}
-                onChange={(event) => setIsSuperadmin(event.target.checked)}
-                disabled={busy}
-                label={isSuperadmin ? "Ativado" : "Desativado"}
-              />
-            </section>
-
-            <Alert tone="info">
-              Papéis diretos são concedidos diretamente ao usuário. Grupos podem
-              conceder papéis adicionais de forma indireta.
-            </Alert>
+                <Switch
+                  checked={isSuperadmin}
+                  onChange={(event) => setIsSuperadmin(event.target.checked)}
+                  disabled={busy}
+                  label={isSuperadmin ? "Ativado" : "Desativado"}
+                />
+              </section>
+            ) : null}
           </div>
         )}
 
-        {activeTab === "roles" && (
+        {isEditing && activeTab === "roles" && !loadingEdit && (
           <RelationshipPicker<AdminRole>
             title="Papéis diretos do Usuário"
             availableTitle="Papéis disponíveis"
@@ -352,7 +396,7 @@ export const UserEditPage = () => {
           />
         )}
 
-        {activeTab === "groups" && (
+        {isEditing && activeTab === "groups" && !loadingEdit && (
           <RelationshipPicker<AdminGroup>
             title="Grupos do Usuário"
             availableTitle="Grupos disponíveis"
@@ -369,6 +413,14 @@ export const UserEditPage = () => {
             onChange={setSelectedGroupIds}
           />
         )}
+
+        {!isEditing && (activeTab === "roles" || activeTab === "groups") ? (
+          accessProfile.loading ? (
+            <Spinner label="Carregando perfil de acesso…" />
+          ) : accessProfile.error ? (
+            <Alert tone="danger">{accessProfile.error}</Alert>
+          ) : null
+        ) : null}
 
         {activeTab === "usage" && userId ? (
           <UserUsageTab userId={userId} active={activeTab === "usage"} />
