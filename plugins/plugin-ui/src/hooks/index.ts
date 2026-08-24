@@ -5,4 +5,5 @@ export * from "./useEditableDraft";
 export * from "./useTableFontSize";
 export * from "./usePersistedViewLayout";
 export * from "./usePersistedBoolean";
+export * from "./useTopBarOverflowCollapsed";
 export * from "./usePersistedChartPreferences";

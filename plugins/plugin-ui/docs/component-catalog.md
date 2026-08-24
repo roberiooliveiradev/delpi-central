@@ -248,13 +248,15 @@ Compõe `UnderlineNav` + slots `secondary` / `actions`. CSS: `styles/top-bar.css
 |------|---------|--------|
 | `collapsible` | boolean | Liga chrome de recolher |
 | `collapseMode` | `rail` \| `hamburger` (default `rail`) | Visual quando colapsada |
-| `storageKey` | string | Persiste collapsed como `"1"`/`"0"` via `usePersistedBoolean` |
-| `collapsed` / `onCollapsedChange` | controlado | Opcional |
+| `collapseTrigger` | `manual` \| `overflow` (default `manual`) | `overflow` = hamburger só quando nav+slots não cabem (ResizeObserver) |
+| `storageKey` | string | Persiste collapsed (`manual` only) |
+| `collapsed` / `onCollapsedChange` | controlado | Opcional (`manual` only) |
 | `collapseLabel` / `expandLabel` / `menuLabel` | string | aria-labels (MFE passa PT) |
 | `portalScopeClassName` | string | Escopo CSS do menu hamburger no `body` |
 
-- **`rail` colapsado:** rótulo do item ativo + chevron Expandir; esconde nav, secondary e actions.
-- **`hamburger` colapsado:** ☰ + rótulo; **mantém** secondary/actions; ☰ abre lista de abas em `AnchoredPanelPortal`.
+- **`rail` + manual:** rótulo do item ativo + chevron; esconde nav, secondary e actions.
+- **`hamburger` + manual:** ☰ + rótulo; mantém secondary/actions; toggle chevron opcional.
+- **`hamburger` + overflow:** expande abas inline quando couber; ☰ automático quando não couber (sem localStorage).
 
 ```tsx
 const CommercialTopBar = createDashboardTopBar({ prefix: "cm" });
@@ -263,10 +265,8 @@ const CommercialTopBar = createDashboardTopBar({ prefix: "cm" });
   activeId="home"
   items={items}
   collapsible
-  collapseMode="rail"
-  storageKey="delpi.plugin-ui.topbar.collapsed"
-  collapseLabel="Recolher navegação"
-  expandLabel="Expandir navegação"
+  collapseMode="hamburger"
+  collapseTrigger="overflow"
   menuLabel="Menu de navegação"
   portalScopeClassName="dashboard-commercial"
   secondary={<Favorites />}

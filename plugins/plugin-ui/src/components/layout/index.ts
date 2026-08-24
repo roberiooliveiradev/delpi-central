@@ -311,6 +311,7 @@ export {
   type DashboardTopBarProps,
   type TopBarClassNames,
   type TopBarCollapseMode,
+  type TopBarCollapseTrigger,
   type TopBarProps,
 } from "./TopBar";
 export {

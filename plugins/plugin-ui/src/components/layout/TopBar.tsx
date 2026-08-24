@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -8,6 +9,7 @@ import {
 import { ChevronDown, ChevronUp, Menu } from "lucide-react";
 
 import { usePersistedBoolean } from "../../hooks/usePersistedBoolean";
+import { useTopBarOverflowCollapsed } from "../../hooks/useTopBarOverflowCollapsed";
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import { IconButton } from "../actions/IconButton";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
@@ -19,6 +21,7 @@ import {
 } from "./UnderlineNav";
 
 export type TopBarCollapseMode = "rail" | "hamburger";
+export type TopBarCollapseTrigger = "manual" | "overflow";
 
 export type TopBarClassNames = {
   root: string;
@@ -29,6 +32,7 @@ export type TopBarClassNames = {
   collapseToggle: string;
   collapsedRail: string;
   collapsedTitle: string;
+  measure: string;
   menuPanel: string;
   menuList: string;
   menuItem: string;
@@ -55,15 +59,20 @@ export type TopBarProps = {
   collapsible?: boolean;
   /** Visual mode when collapsed. Default `rail`. */
   collapseMode?: TopBarCollapseMode;
-  /** Persist collapsed state as `"1"` / `"0"`. */
+  /**
+   * `manual` — toggle + optional localStorage.
+   * `overflow` — hamburger when measure row exceeds host width (responsive).
+   */
+  collapseTrigger?: TopBarCollapseTrigger;
+  /** Persist collapsed state as `"1"` / `"0"` (manual trigger only). */
   storageKey?: string;
-  /** Controlled collapsed state. */
+  /** Controlled collapsed state (manual trigger only). */
   collapsed?: boolean;
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
-  /** aria-label when expanded (recolher). */
+  /** aria-label when expanded (recolher) — manual trigger. */
   collapseLabel?: string;
-  /** aria-label when collapsed (expandir). */
+  /** aria-label when collapsed (expandir) — manual trigger. */
   expandLabel?: string;
   /** aria-label for hamburger menu trigger + panel. */
   menuLabel?: string;
@@ -92,6 +101,7 @@ export function topBarBemClasses(prefix: string): TopBarClassNames {
       `${prefix}-topbar__collapsed-title`,
       "delpi-ui-topbar__collapsed-title",
     ),
+    measure: delpiUiClass(`${prefix}-topbar__measure`, "delpi-ui-topbar__measure"),
     menuPanel: delpiUiClass(
       `${prefix}-topbar__menu-panel`,
       "delpi-ui-topbar__menu-panel",
@@ -119,7 +129,7 @@ export function topBarBemClasses(prefix: string): TopBarClassNames {
   };
 }
 
-function useCollapsedState(options: {
+function useManualCollapsedState(options: {
   collapsible: boolean;
   storageKey?: string;
   collapsed?: boolean;
@@ -246,6 +256,46 @@ function TopBarHamburgerMenu({
   );
 }
 
+type TopBarExpandedRowProps = {
+  classNames: TopBarClassNames;
+  navClassNames: UnderlineNavClassNames;
+  items: UnderlineNavItem[];
+  activeId: string;
+  ariaLabel: string;
+  secondary?: ReactNode;
+  actions?: ReactNode;
+  collapseToggle?: ReactNode;
+  rowClassName?: string;
+};
+
+function TopBarExpandedRow({
+  classNames,
+  navClassNames,
+  items,
+  activeId,
+  ariaLabel,
+  secondary,
+  actions,
+  collapseToggle,
+  rowClassName,
+}: TopBarExpandedRowProps) {
+  return (
+    <div className={[classNames.row, rowClassName].filter(Boolean).join(" ")}>
+      <div className={classNames.nav}>
+        <UnderlineNav
+          classNames={navClassNames}
+          items={items}
+          activeId={activeId}
+          aria-label={ariaLabel}
+        />
+      </div>
+      {secondary ? <div className={classNames.secondary}>{secondary}</div> : null}
+      {actions ? <div className={classNames.actions}>{actions}</div> : null}
+      {collapseToggle}
+    </div>
+  );
+}
+
 export function TopBar({
   items,
   activeId,
@@ -258,6 +308,7 @@ export function TopBar({
   surface = false,
   collapsible = false,
   collapseMode = "rail",
+  collapseTrigger = "manual",
   storageKey,
   collapsed: collapsedProp,
   defaultCollapsed = false,
@@ -269,24 +320,38 @@ export function TopBar({
   className,
   "aria-label": ariaLabel = "Navegação",
 }: TopBarProps) {
-  const { collapsed, setCollapsed } = useCollapsedState({
-    collapsible,
+  const mode = collapseMode === "hamburger" ? "hamburger" : "rail";
+  const responsiveOverflow =
+    collapsible && collapseTrigger === "overflow" && mode === "hamburger";
+
+  const manualState = useManualCollapsedState({
+    collapsible: collapsible && !responsiveOverflow,
     storageKey,
     collapsed: collapsedProp,
     defaultCollapsed,
     onCollapsedChange,
   });
 
+  const measureRef = useRef<HTMLDivElement>(null);
+  const overflowCollapsed = useTopBarOverflowCollapsed(measureRef, {
+    enabled: responsiveOverflow,
+  }).collapsed;
+
   const [menuOpen, setMenuOpen] = useState(false);
   const menuAnchorRef = useRef<HTMLButtonElement>(null);
+
+  const isCollapsed = responsiveOverflow
+    ? overflowCollapsed
+    : collapsible && manualState.collapsed;
+
+  useEffect(() => {
+    if (isCollapsed) setMenuOpen(false);
+  }, [isCollapsed]);
 
   const activeItem = useMemo(
     () => items.find((item) => item.id === activeId) ?? items[0],
     [activeId, items],
   );
-
-  const isCollapsed = collapsible && collapsed;
-  const mode = collapseMode === "hamburger" ? "hamburger" : "rail";
 
   const rootClass = [
     classNames.root,
@@ -295,27 +360,44 @@ export function TopBar({
     surface ? withBemModifier(classNames.root, "surface") : null,
     isCollapsed ? withBemModifier(classNames.root, "collapsed") : null,
     collapsible ? withBemModifier(classNames.root, `mode-${mode}`) : null,
+    responsiveOverflow ? withBemModifier(classNames.root, "responsive") : null,
     className,
   ]
     .filter(Boolean)
     .join(" ");
 
-  const collapseToggle = collapsible ? (
-    <IconButton
-      className={classNames.collapseToggle}
-      aria-label={isCollapsed ? expandLabel : collapseLabel}
-      aria-expanded={!isCollapsed}
-      onClick={() => {
-        setMenuOpen(false);
-        setCollapsed(!isCollapsed);
-      }}
-    >
-      {isCollapsed ? (
-        <ChevronDown size={18} strokeWidth={2} aria-hidden />
-      ) : (
-        <ChevronUp size={18} strokeWidth={2} aria-hidden />
-      )}
-    </IconButton>
+  const manualCollapseToggle =
+    collapsible && !responsiveOverflow ? (
+      <IconButton
+        className={classNames.collapseToggle}
+        aria-label={isCollapsed ? expandLabel : collapseLabel}
+        aria-expanded={!isCollapsed}
+        onClick={() => {
+          setMenuOpen(false);
+          manualState.setCollapsed(!isCollapsed);
+        }}
+      >
+        {isCollapsed ? (
+          <ChevronDown size={18} strokeWidth={2} aria-hidden />
+        ) : (
+          <ChevronUp size={18} strokeWidth={2} aria-hidden />
+        )}
+      </IconButton>
+    ) : null;
+
+  const measureRow = responsiveOverflow ? (
+    <div ref={measureRef} className={classNames.measure} aria-hidden="true">
+      <TopBarExpandedRow
+        classNames={classNames}
+        navClassNames={navClassNames}
+        items={items}
+        activeId={activeId}
+        ariaLabel={ariaLabel}
+        secondary={secondary}
+        actions={actions}
+        rowClassName="delpi-ui-topbar__row--measure"
+      />
+    </div>
   ) : null;
 
   if (isCollapsed && mode === "rail") {
@@ -323,7 +405,7 @@ export function TopBar({
       <div className={rootClass}>
         <div className={[classNames.row, classNames.collapsedRail].join(" ")}>
           <span className={classNames.collapsedTitle}>{activeItem?.label}</span>
-          {collapseToggle}
+          {manualCollapseToggle}
         </div>
       </div>
     );
@@ -332,6 +414,7 @@ export function TopBar({
   if (isCollapsed && mode === "hamburger") {
     return (
       <div className={rootClass}>
+        {measureRow}
         <div className={[classNames.row, classNames.collapsedRail].join(" ")}>
           <button
             ref={menuAnchorRef}
@@ -349,7 +432,6 @@ export function TopBar({
           <span className={classNames.collapsedTitle}>{activeItem?.label}</span>
           {secondary ? <div className={classNames.secondary}>{secondary}</div> : null}
           {actions ? <div className={classNames.actions}>{actions}</div> : null}
-          {collapseToggle}
         </div>
         <TopBarHamburgerMenu
           open={menuOpen}
@@ -367,19 +449,17 @@ export function TopBar({
 
   return (
     <div className={rootClass}>
-      <div className={classNames.row}>
-        <div className={classNames.nav}>
-          <UnderlineNav
-            classNames={navClassNames}
-            items={items}
-            activeId={activeId}
-            aria-label={ariaLabel}
-          />
-        </div>
-        {secondary ? <div className={classNames.secondary}>{secondary}</div> : null}
-        {actions ? <div className={classNames.actions}>{actions}</div> : null}
-        {collapseToggle}
-      </div>
+      {measureRow}
+      <TopBarExpandedRow
+        classNames={classNames}
+        navClassNames={navClassNames}
+        items={items}
+        activeId={activeId}
+        ariaLabel={ariaLabel}
+        secondary={secondary}
+        actions={actions}
+        collapseToggle={manualCollapseToggle}
+      />
     </div>
   );
 }

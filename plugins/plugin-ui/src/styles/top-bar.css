@@ -4,6 +4,7 @@
  */
 
 .delpi-ui-topbar {
+  position: relative;
   min-width: 0;
   background: transparent;
   box-shadow: none;
@@ -73,6 +74,31 @@
 .delpi-ui-topbar__collapse-toggle {
   flex: 0 0 auto;
   margin-inline-start: 4px;
+}
+
+.delpi-ui-topbar__measure {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.delpi-ui-topbar__row--measure {
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 100%;
+}
+
+.delpi-ui-topbar__row--measure .delpi-ui-topbar__nav {
+  flex: 0 0 auto;
+}
+
+.delpi-ui-topbar__row--measure .delpi-ui-underline-nav__scroller {
+  overflow: visible;
 }
 
 .delpi-ui-topbar__collapsed-rail {

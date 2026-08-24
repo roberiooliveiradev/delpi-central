@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within, act } from "@testing-library/react";
 
 import { TopBar, topBarBemClasses } from "./TopBar";
 import { underlineNavBemClasses } from "./UnderlineNav";
@@ -114,7 +114,7 @@ describe("TopBar", () => {
     expect(storage.get("test:topbar")).toBe("0");
   });
 
-  it("hamburger: mantém secondary/actions e abre menu no portal", () => {
+  it("hamburger manual: mantém secondary/actions e abre menu no portal", () => {
     const onRooms = vi.fn();
     render(
       <TopBar
@@ -123,6 +123,7 @@ describe("TopBar", () => {
         activeId="home"
         collapsible
         collapseMode="hamburger"
+        collapseTrigger="manual"
         defaultCollapsed
         menuLabel="Menu de navegação"
         expandLabel="Expandir navegação"
@@ -144,5 +145,51 @@ describe("TopBar", () => {
     expect(within(menu).getByRole("menuitem", { name: /Sala/ })).toBeTruthy();
     fireEvent.click(within(menu).getByRole("menuitem", { name: /Sala/ }));
     expect(onRooms).toHaveBeenCalled();
+  });
+
+  it("hamburger overflow: colapsa quando measure excede host", async () => {
+    let callback: ResizeObserverCallback | null = null;
+    vi.stubGlobal(
+      "ResizeObserver",
+      vi.fn(function ResizeObserverStub(this: ResizeObserver, cb: ResizeObserverCallback) {
+        callback = cb;
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+        this.unobserve = vi.fn();
+      }),
+    );
+
+    const { container } = render(
+      <TopBar
+        classNames={topBarBemClasses("cm")}
+        navClassNames={underlineNavBemClasses("cm")}
+        activeId="home"
+        collapsible
+        collapseMode="hamburger"
+        collapseTrigger="overflow"
+        menuLabel="Menu de navegação"
+        items={[
+          { id: "home", label: "Início", onSelect: vi.fn() },
+          { id: "rooms", label: "Sala de interação", onSelect: vi.fn() },
+        ]}
+        secondary={<span>Favoritos</span>}
+        actions={<span>Usuário</span>}
+      />,
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    const measure = container.querySelector(".delpi-ui-topbar__measure") as HTMLElement;
+    expect(measure).toBeTruthy();
+
+    Object.defineProperty(root, "clientWidth", { value: 400, configurable: true });
+    Object.defineProperty(measure, "scrollWidth", { value: 640, configurable: true });
+    await act(async () => {
+      callback?.([], {} as ResizeObserver);
+    });
+
+    expect(root.className).toContain("delpi-ui-topbar--collapsed");
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.getByRole("button", { name: "Menu de navegação" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Recolher navegação" })).toBeNull();
   });
 });

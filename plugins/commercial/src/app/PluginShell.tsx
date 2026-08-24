@@ -25,6 +25,7 @@ import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
 import {
   TOP_BAR_COLLAPSE_MODE,
   TOP_BAR_COLLAPSE_STORAGE_KEY,
+  TOP_BAR_COLLAPSE_TRIGGER,
 } from "../content/topBarCollapseConfig";
 import { formatCurrency } from "../utils/format";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
@@ -363,7 +364,10 @@ export function PluginShell({
           activeId={activeId ?? ""}
           collapsible
           collapseMode={TOP_BAR_COLLAPSE_MODE}
-          storageKey={TOP_BAR_COLLAPSE_STORAGE_KEY}
+          collapseTrigger={TOP_BAR_COLLAPSE_TRIGGER}
+          storageKey={
+            TOP_BAR_COLLAPSE_TRIGGER === "manual" ? TOP_BAR_COLLAPSE_STORAGE_KEY : undefined
+          }
           collapseLabel={SHELL_NAV_CONTENT.collapseLabel}
           expandLabel={SHELL_NAV_CONTENT.expandLabel}
           menuLabel={SHELL_NAV_CONTENT.menuLabel}
