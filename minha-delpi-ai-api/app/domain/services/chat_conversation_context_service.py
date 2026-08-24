@@ -264,8 +264,44 @@ class ChatConversationContextService:
 
             if preview:
                 yield f"[dados da ferramenta — {label}]\n{preview}"
-            elif cls._STRUCTURE_PATH_HINT.search(path):
-                yield f"[consulta de estrutura registrada — {label}; sem preview armazenado]"
+            else:
+                excerpt_block = cls._excerpt_block_from_message(message, path=path)
+
+                if excerpt_block:
+                    yield excerpt_block
+                elif cls._STRUCTURE_PATH_HINT.search(path):
+                    yield f"[consulta de estrutura registrada — {label}; sem preview armazenado]"
+
+    @classmethod
+    def _excerpt_block_from_message(
+        cls,
+        message,
+        *,
+        path: str,
+    ) -> str:
+        metadata = cls._message_metadata(message)
+        snapshot = metadata.get("contextSnapshot")
+
+        if not isinstance(snapshot, dict):
+            return ""
+
+        excerpt = snapshot.get("lastResultExcerpt")
+
+        if not isinstance(excerpt, dict) or not excerpt:
+            return ""
+
+        from app.domain.services.chat_turn_grounding_content_service import (
+            ChatTurnGroundingContentService,
+        )
+
+        block = ChatTurnGroundingContentService.format_excerpt_prompt_block(excerpt)
+
+        if not block:
+            return ""
+
+        label = path or str(excerpt.get("operationId") or excerpt.get("profileKey") or "")
+
+        return f"[último resultado em foco — {label}]\n{block}"
 
     @classmethod
     def apply_analysis_mode(
