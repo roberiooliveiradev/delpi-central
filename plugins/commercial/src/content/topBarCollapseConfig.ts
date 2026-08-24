@@ -5,6 +5,6 @@
 export type TopBarCollapseMode = "rail" | "hamburger";
 
 /** Troque esta constante para `"hamburger"` ou `"rail"`. */
-export const TOP_BAR_COLLAPSE_MODE: TopBarCollapseMode = "rail";
+export const TOP_BAR_COLLAPSE_MODE: TopBarCollapseMode = "hamburger";
 
 export const TOP_BAR_COLLAPSE_STORAGE_KEY = "delpi.plugin-ui.topbar.collapsed";

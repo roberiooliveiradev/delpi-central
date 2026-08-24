@@ -24,9 +24,7 @@ describe("PluginShell TopBar collapse", () => {
   });
 
   it("exporta modo e chave canônicos do config", () => {
-    expect(TOP_BAR_COLLAPSE_MODE === "rail" || TOP_BAR_COLLAPSE_MODE === "hamburger").toBe(
-      true,
-    );
+    expect(TOP_BAR_COLLAPSE_MODE).toBe("hamburger");
     expect(TOP_BAR_COLLAPSE_STORAGE_KEY).toBe("delpi.plugin-ui.topbar.collapsed");
   });
 });
