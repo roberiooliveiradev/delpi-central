@@ -37,6 +37,9 @@ export function resolveShellNavItems(
 
 export const SHELL_NAV_CONTENT = {
   ariaLabel: "Áreas do Portal Comercial",
+  collapseLabel: "Recolher navegação",
+  expandLabel: "Expandir navegação",
+  menuLabel: "Menu de navegação",
   scopeLabel: "Escopo",
   scopeHelpAriaLabel: "Ajuda: Escopo",
   /** Item efêmero na Conta fora da carteira (não entra em SHELL_NAV_ITEMS). */

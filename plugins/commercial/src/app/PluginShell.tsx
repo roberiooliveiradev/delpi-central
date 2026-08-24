@@ -22,6 +22,10 @@ import {
   resolveHubSections,
 } from "../content/pluginRouteCatalog";
 import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
+import {
+  TOP_BAR_COLLAPSE_MODE,
+  TOP_BAR_COLLAPSE_STORAGE_KEY,
+} from "../content/topBarCollapseConfig";
 import { formatCurrency } from "../utils/format";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { navigateCustomerDetail, navigatePluginView } from "./pluginNavigation";
@@ -357,6 +361,13 @@ export function PluginShell({
         <CommercialTopBar
           aria-label={SHELL_NAV_CONTENT.ariaLabel}
           activeId={activeId ?? ""}
+          collapsible
+          collapseMode={TOP_BAR_COLLAPSE_MODE}
+          storageKey={TOP_BAR_COLLAPSE_STORAGE_KEY}
+          collapseLabel={SHELL_NAV_CONTENT.collapseLabel}
+          expandLabel={SHELL_NAV_CONTENT.expandLabel}
+          menuLabel={SHELL_NAV_CONTENT.menuLabel}
+          portalScopeClassName="dashboard-commercial"
           items={items.map((item) => ({
             id: item.id,
             label: item.label,
