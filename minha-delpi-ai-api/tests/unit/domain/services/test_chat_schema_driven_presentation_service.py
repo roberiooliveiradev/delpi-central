@@ -345,3 +345,50 @@ def test_schema_driven_metadata_builds_document_export_download_artifacts():
     kinds = [str(segment.get("kind") or "") for segment in render_plan.get("segments") or []]
     assert "download" in kinds
     assert meta.get("textPresentation", {}).get("type") == "markdown"
+
+
+def test_build_bundle_skips_chart_when_stock_chart_policy_is_skip():
+    """Perfil stock tem chart em viewOrder mas chartPolicy=skip — não montar chart."""
+    presenter = ExternalActionResultPresenter()
+    rows = [
+        {
+            "branch": "01",
+            "warehouse": "01",
+            "available_quantity": 0,
+            "current_quantity": 10,
+            "committed_quantity": 10,
+        },
+        {
+            "branch": "01",
+            "warehouse": "99",
+            "available_quantity": 5,
+            "current_quantity": 5,
+            "committed_quantity": 0,
+        },
+        {
+            "branch": "02",
+            "warehouse": "01",
+            "available_quantity": 2,
+            "current_quantity": 2,
+            "committed_quantity": 0,
+        },
+    ]
+    data = {"items": rows, "summary": {"available_quantity": 7}}
+
+    bundle = ChatSchemaDrivenPresentationService.build_bundle(
+        presenter,
+        data,
+        path="/products/10090016/stock",
+        entity="product_stock",
+    )
+
+    assert bundle.table is not None
+    assert bundle.chart is None
+    assert ChatSchemaDrivenPresentationService._chart_policy_is_skip(
+        path="/products/10090016/stock",
+        entity="product_stock",
+    )
+    assert not ChatSchemaDrivenPresentationService._profile_allows_chart(
+        path="/products/10090016/stock",
+        entity="product_stock",
+    )

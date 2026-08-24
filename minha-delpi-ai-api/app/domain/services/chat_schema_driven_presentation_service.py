@@ -149,15 +149,18 @@ class ChatSchemaDrivenPresentationService:
         rows = cls.extract_tabular_rows(root)
         kpi = cls.build_kpi(host, root, path=path, entity=entity)
         table = cls.build_table(host, rows, path=path) if rows else None
-        force_chart = cls._profile_allows_chart(path=path, entity=entity)
-        chart = cls.build_chart(
-            host,
-            root,
-            rows=rows,
-            path=path,
-            entity=entity,
-            force=force_chart,
-        )
+        chart = None
+
+        if not cls._chart_policy_is_skip(path=path, entity=entity):
+            force_chart = cls._profile_allows_chart(path=path, entity=entity)
+            chart = cls.build_chart(
+                host,
+                root,
+                rows=rows,
+                path=path,
+                entity=entity,
+                force=force_chart,
+            )
         tree = cls.build_tree(host, root, path=path)
         text = cls.build_text(host, root, rows=rows, path=path, entity=entity)
 
@@ -1005,6 +1008,9 @@ class ChatSchemaDrivenPresentationService:
         entity: str | None,
         force: bool = False,
     ) -> dict[str, Any] | None:
+        if not force and cls._chart_policy_is_skip(path=path, entity=entity):
+            return None
+
         kpi_chart = host._kpi_chart()
         safe_rows = rows or cls.extract_tabular_rows(root)
 
@@ -1349,7 +1355,15 @@ class ChatSchemaDrivenPresentationService:
         )
 
     @classmethod
+    def _chart_policy_is_skip(cls, *, path: str, entity: str | None) -> bool:
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        return str(profile.get("chartPolicy") or "auto").strip().lower() == "skip"
+
+    @classmethod
     def _profile_allows_chart(cls, *, path: str, entity: str | None) -> bool:
+        if cls._chart_policy_is_skip(path=path, entity=entity):
+            return False
+
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
         flags = {str(flag).strip().lower() for flag in (profile.get("flags") or []) if str(flag).strip()}
         view_order = {
