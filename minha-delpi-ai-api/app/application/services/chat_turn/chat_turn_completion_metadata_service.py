@@ -463,6 +463,7 @@ class ChatTurnCompletionMetadataService:
             assistant_metadata,
             workspace_context=turn.workspace_context,
             tool_context=turn.tool_context,
+            intelligence_metadata=intelligence_metadata,
         )
         ChatInteractivityTelemetryService.log_from_metadata(assistant_metadata)
 
@@ -491,17 +492,29 @@ class ChatTurnCompletionMetadataService:
         *,
         workspace_context: dict | None,
         tool_context: dict | None,
+        intelligence_metadata: dict | None = None,
     ) -> None:
         turn_grounding = None
 
-        if isinstance(tool_context, dict):
-            turn_grounding = tool_context.get("turnGrounding")
+        if isinstance(intelligence_metadata, dict):
+            turn_grounding = intelligence_metadata.get("turnGrounding")
 
-        if not isinstance(turn_grounding, dict) and isinstance(workspace_context, dict):
-            turn_grounding = workspace_context.get("turnGrounding")
+        if not isinstance(turn_grounding, dict) or not turn_grounding.get("status"):
+            if isinstance(tool_context, dict):
+                turn_grounding = tool_context.get("turnGrounding")
 
-        if not isinstance(turn_grounding, dict):
+        if not isinstance(turn_grounding, dict) or not turn_grounding.get("status"):
+            if isinstance(workspace_context, dict):
+                turn_grounding = workspace_context.get("turnGrounding")
+
+        if not isinstance(turn_grounding, dict) or not turn_grounding.get("status"):
             return
+
+        metadata["turnGrounding"] = {
+            key: turn_grounding.get(key)
+            for key in ("status", "reason", "referringTo", "excerpt")
+            if turn_grounding.get(key) is not None
+        }
 
         referring = turn_grounding.get("referringTo")
 

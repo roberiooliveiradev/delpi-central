@@ -59,12 +59,7 @@ class ChatGroundedCapabilityPlanningService:
         if not ChatTurnGroundingService.should_expand_from_excerpt(message, excerpt):
             return []
 
-        explicit_codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
-            message,
-            None,
-            previous_messages=previous_messages,
-            memory_snapshot=working if isinstance(working, dict) else None,
-        )
+        explicit_codes = ChatAnalysisIntentService.extract_all_product_codes(message)
 
         if explicit_codes:
             return []

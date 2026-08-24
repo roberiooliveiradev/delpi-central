@@ -75,3 +75,28 @@ def test_plan_empty_when_narrate_excerpt():
 
     assert planned == []
     assert selection.calls == []
+
+
+def test_plan_stock_fan_out_ignores_inherited_parent_code_only():
+    selection = _SelectionStub()
+    workspace = {
+        "turnGrounding": {"status": "grounded"},
+        "workingMemory": {
+            "operationalFocus": {"productCode": "90260149"},
+            "lastResultExcerpt": {
+                "title": "Estrutura 90260149",
+                "rowCount": 2,
+                "topKeys": ["10380044", "10380045"],
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="e o estoque desses itens?",
+        allowed_action_ids=["get_product_stock"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 2
+    assert {item["productCode"] for item in planned} == {"10380044", "10380045"}

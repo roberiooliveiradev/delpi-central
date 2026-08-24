@@ -73,6 +73,12 @@ class ChatToolContextPreTurnService:
         if isinstance(memory, dict):
             workspace["workingMemory"] = memory
 
+        if isinstance(agent_context, dict):
+            turn_grounding = agent_context.get("turnGrounding")
+
+            if isinstance(turn_grounding, dict) and turn_grounding.get("status"):
+                workspace["turnGrounding"] = dict(turn_grounding)
+
         user_context_items = (
             list(memory.get("userContextItems") or [])
             if isinstance(memory, dict)

@@ -678,6 +678,26 @@ class ChatTurnPreparationToolRoutingService:
             )
             tool_context = post_tool.tool_context
             analysis_mode = post_tool.analysis_mode
+
+            if skip_flags.skip_tools_for_grounded_narrate:
+                turn_grounding = workspace_context.get("turnGrounding")
+
+                if isinstance(turn_grounding, dict) and turn_grounding:
+                    tool_context = dict(tool_context)
+                    tool_context["turnGrounding"] = dict(turn_grounding)
+
+                narrate_applied, tool_context = (
+                    ChatConversationContextService.apply_grounded_narrate_mode(
+                        message,
+                        history_source,
+                        tool_context,
+                        workspace_context=workspace_context,
+                    )
+                )
+
+                if narrate_applied:
+                    analysis_mode = True
+
             pipeline_timings.mark("tools_done")
         else:
             pipeline_stages.append("tools")

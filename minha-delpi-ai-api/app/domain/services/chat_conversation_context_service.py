@@ -304,6 +304,76 @@ class ChatConversationContextService:
         return f"[último resultado em foco — {label}]\n{block}"
 
     @classmethod
+    def apply_grounded_narrate_mode(
+        cls,
+        message: str,
+        previous_messages: list | None,
+        tool_context: dict | None,
+        *,
+        workspace_context: dict | None = None,
+    ) -> tuple[bool, dict]:
+        """Injeta excerpt + histórico quando o turno grounded deve narrar sem nova tool."""
+        from app.domain.services.chat_turn_grounding_content_service import (
+            ChatTurnGroundingContentService,
+        )
+        from app.domain.services.chat_turn_grounding_service import (
+            ChatTurnGroundingService,
+        )
+
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        turn_grounding = workspace.get("turnGrounding") or {}
+        working = workspace.get("workingMemory") or {}
+        excerpt = working.get("lastResultExcerpt") if isinstance(working, dict) else None
+
+        if not isinstance(excerpt, dict):
+            excerpt = (
+                turn_grounding.get("excerpt")
+                if isinstance(turn_grounding, dict)
+                else None
+            )
+
+        if (
+            not isinstance(turn_grounding, dict)
+            or turn_grounding.get("status") != "grounded"
+            or not isinstance(excerpt, dict)
+            or not ChatTurnGroundingService.should_narrate_excerpt(message, excerpt)
+        ):
+            return False, dict(tool_context or {})
+
+        updated = dict(tool_context or {})
+        updated.pop("directAnswer", None)
+
+        blocks: list[str] = []
+        excerpt_block = ChatTurnGroundingContentService.format_excerpt_prompt_block(excerpt)
+
+        if excerpt_block:
+            blocks.append(excerpt_block)
+
+        analysis_block = cls.build_analysis_context(
+            previous_messages,
+            message=message,
+        )
+
+        if analysis_block:
+            blocks.append(analysis_block)
+
+        merged = "\n\n".join(block for block in blocks if block).strip()
+        existing = str(updated.get("context") or "").strip()
+
+        if merged:
+            updated["context"] = (
+                f"{existing}\n\n{merged}".strip() if existing else merged
+            )
+
+        updated["analysisMode"] = True
+        updated["groundedNarrate"] = True
+
+        if isinstance(turn_grounding, dict) and turn_grounding:
+            updated["turnGrounding"] = dict(turn_grounding)
+
+        return True, updated
+
+    @classmethod
     def apply_analysis_mode(
         cls,
         message: str,

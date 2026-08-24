@@ -186,3 +186,30 @@ def test_comparison_message_matches_intent_helper():
     assert ChatAnalysisIntentService.is_comparison_or_insight_request(
         "comparar as duas estruturas e traga insights"
     )
+
+
+def test_apply_grounded_narrate_mode_injects_excerpt_context():
+    tool_context = {"context": "", "toolCalls": []}
+    workspace = {
+        "turnGrounding": {"status": "grounded", "reason": "follow_up_items"},
+        "workingMemory": {
+            "lastResultExcerpt": {
+                "title": "Estrutura 90260149",
+                "rowCount": 3,
+                "topKeys": ["50230130", "10080109", "10380044"],
+            },
+        },
+    }
+
+    narrate_mode, updated = ChatConversationContextService.apply_grounded_narrate_mode(
+        "o que me diz sobre os itens?",
+        [],
+        tool_context,
+        workspace_context=workspace,
+    )
+
+    assert narrate_mode
+    assert updated.get("analysisMode") is True
+    assert updated.get("groundedNarrate") is True
+    assert "50230130" in updated.get("context", "")
+    assert updated.get("turnGrounding", {}).get("status") == "grounded"
