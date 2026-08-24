@@ -257,10 +257,15 @@ export function filterUnifiedTree(
     return tree;
   }
 
-  const branches = tree.branches.flatMap((branch) => {
+  const branches: RbacUnifiedTree["branches"] = [];
+
+  for (const branch of tree.branches) {
     if (branch.kind === "directRole") {
       const role = filterRoleNode(branch.role, normalized);
-      return role ? [{ ...branch, role }] : [];
+      if (role) {
+        branches.push({ ...branch, role });
+      }
+      continue;
     }
 
     const roles = branch.group.roles
@@ -272,11 +277,11 @@ export function filterUnifiedTree(
       !matchesQuery(branch.group.groupName, normalized) &&
       !(branch.group.description && matchesQuery(branch.group.description, normalized))
     ) {
-      return [];
+      continue;
     }
 
-    return [{ ...branch, group: { ...branch.group, roles } }];
-  });
+    branches.push({ ...branch, group: { ...branch.group, roles } });
+  }
 
   return { branches };
 }

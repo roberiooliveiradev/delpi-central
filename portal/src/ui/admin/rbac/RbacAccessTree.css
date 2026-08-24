@@ -1,0 +1,138 @@
+/* portal/src/ui/admin/rbac/RbacAccessTree.css */
+
+.rbac-access-tree-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rbac-access-tree-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rbac-access-tree-panel__stats {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.rbac-access-tree-panel__search {
+  min-width: min(100%, 280px);
+  flex: 1 1 220px;
+}
+
+.rbac-access-tree-superadmin-banner {
+  margin: 0;
+}
+
+.rbac-access-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rbac-access-tree--nested {
+  margin: 4px 0 2px 7px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.rbac-access-tree__item {
+  position: relative;
+}
+
+.rbac-access-tree--nested > .rbac-access-tree__item::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 14px;
+  width: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.rbac-access-tree-node {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 26px;
+}
+
+.rbac-access-tree-node__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.rbac-access-tree-node__link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.rbac-access-tree-node__link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.rbac-access-tree-node__static {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rbac-access-tree-node__muted {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rbac-access-tree-app-toggle {
+  border: none;
+  background: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.rbac-access-tree-app-toggle:hover {
+  color: var(--primary);
+}
+
+.rbac-access-tree-permissions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rbac-access-tree-permission {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+.rbac-access-tree-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
