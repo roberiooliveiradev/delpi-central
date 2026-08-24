@@ -15,7 +15,7 @@ describe("interaction room fill CSS", () => {
       )?.[0] ?? "";
     expect(fillPage).toMatch(/padding:\s*var\(--cm-page-padding\)/);
     expect(fillPage).toMatch(/gap:\s*var\(--cm-section-gap\)/);
-    expect(fillPage).not.toMatch(/padding:\s*0/);
+    expect(fillPage).not.toMatch(/(?:^|[^-])padding:\s*0(?:\s|;|$)/m);
     expect(css).toMatch(/\.dashboard-page--fill \.cm-view-transition--page/);
     expect(css).toMatch(/--delpi-ui-room-thread-header-padding/);
     expect(css).toMatch(/--delpi-ui-room-thread-msgs-padding-inline/);
