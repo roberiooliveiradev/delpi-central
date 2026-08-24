@@ -125,6 +125,9 @@ class ChatTurnCompletionFinalizeService:
             answer=answer,
             tool_context=turn.tool_context if isinstance(turn.tool_context, dict) else None,
             tool_calls=tool_calls,
+            message=turn.message,
+            workspace_context=turn.workspace_context,
+            previous_messages=turn.previous_messages,
         )
 
         correction_canvas_payload = (
@@ -185,6 +188,9 @@ class ChatTurnCompletionFinalizeService:
         answer: str,
         tool_context: dict | None,
         tool_calls: list,
+        message: str | None = None,
+        workspace_context: dict | None = None,
+        previous_messages: list | None = None,
     ) -> str:
         """Aplica a guarda CoT/EN no caminho livre (sem tools) e em llm_synthesis*."""
         from app.domain.services.chat_llm_synthesis_delivery_content_service import (
@@ -215,7 +221,27 @@ class ChatTurnCompletionFinalizeService:
         if not is_synthesis and has_tools and not reasoning_fallback:
             return answer
 
-        return ChatLlmSynthesisLeakGuardService.guard_answer(
+        guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
             answer=answer,
             fallback=ChatLlmSynthesisDeliveryContentService.safe_fallback_answer(),
         )
+
+        if (
+            guarded == ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+            and context.get("groundedNarrate")
+        ):
+            from app.application.services.chat_grounded_narrate_answer_service import (
+                ChatGroundedNarrateAnswerService,
+            )
+
+            template = ChatGroundedNarrateAnswerService.build_answer(
+                str(message or context.get("currentMessage") or ""),
+                previous_messages,
+                workspace_context=workspace_context,
+                tool_context=context,
+            )
+
+            if template:
+                return template
+
+        return guarded

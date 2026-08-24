@@ -454,6 +454,7 @@ class ChatTurnPreparationService:
             routing_disambiguation_answer=routing_disambiguation_answer,
             learning_term_confirmation_answer=learning_term_confirmation_answer,
             skip_tools_for_data_interpretation=skip_tools_for_data_interpretation,
+            skip_tools_for_grounded_narrate=skip_tool_flags.skip_tools_for_grounded_narrate,
             resolve_user_identity_answer=resolve_user_identity_answer,
             resolve_capabilities_answer=resolve_capabilities_answer,
             attachment_ids=getattr(request, "attachment_ids", None),

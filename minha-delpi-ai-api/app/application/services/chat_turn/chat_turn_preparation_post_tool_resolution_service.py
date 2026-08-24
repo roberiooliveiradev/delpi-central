@@ -67,6 +67,7 @@ class ChatTurnPreparationPostToolResolutionService:
         routing_disambiguation_answer: str | None,
         learning_term_confirmation_answer: str | None,
         skip_tools_for_data_interpretation: bool,
+        skip_tools_for_grounded_narrate: bool = False,
         resolve_user_identity_answer: Callable[[str], Any],
         resolve_capabilities_answer: Callable[[str], str | None],
         attachment_ids: list[str] | None = None,
@@ -340,6 +341,25 @@ class ChatTurnPreparationPostToolResolutionService:
 
             if "unclear_request" not in pipeline_stages:
                 pipeline_stages.append("unclear_request")
+
+        if not direct_answer and skip_tools_for_grounded_narrate:
+            from app.application.services.chat_grounded_narrate_answer_service import (
+                ChatGroundedNarrateAnswerService,
+            )
+
+            narrated = ChatGroundedNarrateAnswerService.build_answer(
+                message,
+                history_source,
+                workspace_context=workspace_context,
+                tool_context=tool_context,
+            )
+
+            if narrated:
+                direct_answer = narrated
+                skip_rag = True
+
+                if "grounded_narrate_direct" not in pipeline_stages:
+                    pipeline_stages.append("grounded_narrate_direct")
 
         if not direct_answer and skip_tools_for_data_interpretation:
             from app.application.services.chat_data_interpretation_answer_service import (

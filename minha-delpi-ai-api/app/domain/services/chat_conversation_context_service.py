@@ -158,6 +158,15 @@ class ChatConversationContextService:
         if not normalized:
             return ""
 
+        from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+            ChatLlmSynthesisDeliveryContentService,
+        )
+
+        safe_fallback = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+
+        if safe_fallback and safe_fallback in normalized:
+            return ""
+
         generic = (
             "visualização dos dados",
             "visualizacao dos dados",
