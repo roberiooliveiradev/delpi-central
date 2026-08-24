@@ -668,6 +668,7 @@ Exemplos de proteções atuais:
 | `POST /admin/rbac/roles` | `rbac.manage` + `roles.manage` |
 | `PUT /admin/rbac/roles/<role_id>` | `rbac.manage` + `roles.manage` |
 | `GET /admin/rbac/users` | `rbac.manage` + `users.view` |
+| `GET /admin/rbac/users/<user_id>/access-profile` | `rbac.manage` |
 | `PUT /admin/rbac/users/<user_id>` | `rbac.manage` + `users.manage` |
 | `DELETE /admin/rbac/users/<user_id>` | superadmin |
 | `GET /admin/rbac/permissions` | `rbac.manage` |

@@ -13,6 +13,7 @@ Painel compartilhado de analytics individuais: apps mais acessados, tempo de uso
 | Onde | Rota UI | API | Lazy load |
 |------|---------|-----|-----------|
 | **Admin** | `/admin/users/:id` → aba **Uso** | `GET /core-api/admin/rbac/users/{id}/usage` | Sim — só ao abrir a aba |
+| **Admin (RBAC)** | `/admin/users/:id` → abas Resumo/Papéis/Grupos | `GET /core-api/admin/rbac/users/{id}/access-profile` | Sim — hook view (ver [admin-usuario-view-rbac.md](./admin-usuario-view-rbac.md)) |
 | **Titular** | `/profile` → `#profile-usage` | `GET /core-api/me/usage` | Não — carrega com a página |
 
 Permissão admin: herda `rbac.manage` da área Admin / edição de usuário.
@@ -96,6 +97,7 @@ Deploy: rebuild `core-api` + `portal` após alterações de contrato.
 
 ## Relacionados
 
+- [admin-usuario-view-rbac.md](./admin-usuario-view-rbac.md) — perfil view-first + árvores RBAC
 - [admin-estatisticas.md](./admin-estatisticas.md) — engajamento **global** (DAU/WAU/MAU)
 - [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md) — coleta Socket/HTTP
 - [visao-geral-portal.md](./visao-geral-portal.md) — estrutura `src/ui/`
