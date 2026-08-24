@@ -2,6 +2,7 @@
 
 import { ApiClient } from "./apiClient";
 import type { UserUsageStatistics } from "./userUsageTypes";
+import type { UserAccessProfile } from "./userAccessProfileTypes";
 import type {
   PortalTourExplorersResponse,
   PortalTourTopExplorersResponse,
@@ -625,6 +626,12 @@ export class AdminApi {
   getAdminUserUsageStatistics(userId: string, periodDays: 7 | 30 | 90 = 30) {
     return this.client.get<UserUsageStatistics>(
       `/core-api/admin/rbac/users/${encodeURIComponent(userId)}/usage?periodDays=${periodDays}`,
+    );
+  }
+
+  getAdminUserAccessProfile(userId: string) {
+    return this.client.get<UserAccessProfile>(
+      `/core-api/admin/rbac/users/${encodeURIComponent(userId)}/access-profile`,
     );
   }
 
