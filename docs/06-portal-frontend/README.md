@@ -23,6 +23,8 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 | [playbook-portal-tour-gamificacao.md](./playbook-portal-tour-gamificacao.md) | Roadmap XP, celebrações, conquistas (Fases A–D) |
 | [notificacoes.md](./notificacoes.md) | Sino, `/notifications`, preferências |
 | [admin-estatisticas.md](./admin-estatisticas.md) | Aba Estatísticas no `/admin` |
+| [meu-uso-perfil-e-admin.md](./meu-uso-perfil-e-admin.md) | **Meu uso** (`/profile`) e aba **Uso** no Admin |
+| [user-usage-wireframes.md](./user-usage-wireframes.md) | Wireframes e mapa de componentes CSS |
 
 ---
 
@@ -30,8 +32,8 @@ Shell da Minha DELPI: login SSO, menu dinâmico, admin RBAC/apps, carregamento d
 
 | Cliente | Base path |
 |---|---|
-| `coreApi.ts` | `/core-api/me`, favoritos, notificações |
-| `adminApi.ts` | `/core-api/admin/rbac/*`, `/core-api/admin/apps/*`, `/admin/statistics` |
+| `coreApi.ts` | `/core-api/me`, favoritos, notificações, **`/me/usage`** |
+| `adminApi.ts` | `/core-api/admin/rbac/*`, `/core-api/admin/apps/*`, `/admin/statistics`, **`/admin/rbac/users/{id}/usage`** |
 | Plugins | `/apps/api-delpi/*`, `/apps/minha-delpi-ai/api/*` |
 
 ---

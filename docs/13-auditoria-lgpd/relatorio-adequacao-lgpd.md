@@ -441,7 +441,7 @@ Foram realizadas **12 fases** de adequação à LGPD, cobrindo backend, frontend
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `core-api/.../usage_tracking_purge_service.py` | Purge eventos + stores ao vivo/presença |
+| `core-api/.../usage_tracking_purge_service.py` | Purge eventos + **usage_sessions** + stores ao vivo/presença |
 | `core-api/.../manage_consent_use_case.py` | Purge ao revogar `usage_tracking` |
 | `core-api/.../anonymize_user_data_use_case.py` | Inclui eventos de uso na anonimização |
 | `core-api/.../process_birthday_notifications_use_case.py` | Exige `birthday_notifications` |

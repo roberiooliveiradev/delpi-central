@@ -26,13 +26,15 @@ portal/src/
 │   ├── HomePage.tsx
 │   ├── LoginPage.tsx
 │   ├── MyProfile.tsx
+│   ├── usage/               Meu uso + painel compartilhado (UserUsagePanel)
 │   └── admin/               Área administrativa (RBAC + apps)
 ├── state/
 │   └── AuthContext.tsx      Sessão Keycloak + carga Core API + Socket.IO
 ├── data/
 │   ├── keycloakClient.ts    Instância Keycloak (check-sso, PKCE)
 │   ├── apiClient.ts         HTTP com retry 401 + refresh token
-│   ├── coreApi.ts           /me, apps, favoritos, notificações
+│   ├── coreApi.ts           /me, apps, favoritos, notificações, /me/usage
+│   ├── userUsageTypes.ts    UserUsageStatistics (admin + perfil)
 │   └── adminApi.ts          /admin/rbac/* e /admin/apps/*
 ├── layout/
 │   └── Sidebar.tsx          Menu dinâmico, favoritos, notificações, logo → home
@@ -85,7 +87,7 @@ Além das rotas vindas de plugins (`routes` do contexto), o Portal define rotas 
 |---|---|---|
 | `/login` | `LoginPage` | Público (não autenticado) |
 | `/` | `HomePage` | Autenticado |
-| `/profile` | `MyProfile` | Autenticado |
+| `/profile` | `MyProfile` | Autenticado — inclui seção **Meu uso** (`#profile-usage`) |
 | `/admin` | `AdminPage` | `rbac.manage` |
 | `/delpi/products` | `ProductsPage` | Autenticado |
 | `/delpi/health` | `DelpiHealthPage` | Autenticado |
@@ -108,13 +110,19 @@ Base path relativo ao origin do Portal (mesmo host do gateway):
 /core-api/me/apps/favorites
 /core-api/me/notifications
 /core-api/me/dashboard
+/core-api/me/usage?periodDays=7|30|90
 ```
+
+Detalhes: [meu-uso-perfil-e-admin.md](./meu-uso-perfil-e-admin.md).
 
 ### Admin (`adminApi.ts`)
 
 ```text
 /core-api/admin/apps/*
 /core-api/admin/rbac/*
+/core-api/admin/rbac/users/{userId}/usage?periodDays=7|30|90
+/core-api/admin/statistics
+/core-api/admin/statistics/engagement
 ```
 
 ### API DELPI (`delpiApi.ts`)

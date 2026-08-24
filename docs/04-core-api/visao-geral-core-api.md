@@ -25,6 +25,7 @@ Visão **enxuta** da Core API. Detalhes de rotas, models, use cases e erros est�
 | Repositories | [repositories.md](./repositories.md) |
 | Erros API | [erros-api.md](./erros-api.md) |
 | Notificações | [notificacoes.md](./notificacoes.md) |
+| Uso por usuário | [estatisticas-uso-usuario.md](./estatisticas-uso-usuario.md) |
 | Manifesto / plugins | [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md) |
 | Registrar plugin (runbook) | [../10-guias-operacionais/registrar-plugin.md](../10-guias-operacionais/registrar-plugin.md) |
 

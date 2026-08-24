@@ -22,12 +22,13 @@ Eles representam ações de negócio como registrar plugin, listar apps do usuá
 | Pasta / grupo | Exemplos |
 |---|---|
 | Raiz | `get_me_use_case`, `list_user_apps_use_case`, `register_plugin_use_case`, `notify_user_use_case` |
-| `admin/` | `list_users_use_case`, `create_group_use_case`, `bulk_delete_users_use_case` |
+| `admin/` | `list_users_use_case`, `create_group_use_case`, `bulk_delete_users_use_case`, `get_engagement_statistics_use_case`, `get_user_usage_statistics_use_case` |
 | RBAC vínculos | `add_role_to_user_use_case`, `replace_role_permissions_use_case`, `set_user_superadmin_use_case` |
 | Plugins | `rollback_plugin_version_use_case`, `bulk_unregister_plugins_use_case`, `update_plugin_manifest_use_case` |
 | Rotas admin | `create_app_route_use_case`, `bulk_delete_routes_use_case` |
 | Notificações | `list_unread_notifications_use_case`, `mark_notification_read_use_case` |
 | Favoritos | `add_favorite_app_use_case`, `list_favorite_apps_use_case` |
+| Engajamento / uso | `get_engagement_statistics_use_case` (global), `get_user_usage_statistics_use_case` (por titular) — ver [estatisticas-uso-usuario.md](./estatisticas-uso-usuario.md) |
 
 Controllers finos: `app/interfaces/http/*_controller.py` instanciam use cases dentro de `SqlAlchemyUnitOfWork`.
 

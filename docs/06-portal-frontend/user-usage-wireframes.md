@@ -1,5 +1,7 @@
 # Portal — Uso por usuário (wireframes)
 
+> **Doc funcional:** [meu-uso-perfil-e-admin.md](./meu-uso-perfil-e-admin.md)  
+> **API:** [estatisticas-uso-usuario.md](../04-core-api/estatisticas-uso-usuario.md)  
 > **Código:** `portal/src/ui/usage/UserUsagePanel.tsx`  
 > **Admin:** `portal/src/ui/admin/rbac/UserUsageTab.tsx`  
 > **Perfil:** `portal/src/ui/MyProfile.tsx` (`#profile-usage`)

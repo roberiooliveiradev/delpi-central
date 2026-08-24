@@ -69,6 +69,9 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | GET | `/me/portal-tour/catalog` | Catálogo de desafios disponíveis ao usuário (RBAC + novidades) |
 | GET | `/me/portal-tour/achievements` | Conquistas do tour (selos desbloqueados) |
 | GET | `/me/usage` | Estatísticas de uso do titular logado (`periodDays=7\|30\|90`; exige consentimento `usage_tracking` para métricas reais) |
+
+Contrato JSON: [estatisticas-uso-usuario.md](./estatisticas-uso-usuario.md).
+
 | GET | `/me/directory/users` | Busca usuários Delpi (exclui o caller por padrão); query `q`, `limit`, `app`, `permission`, `include_self` |
 | POST | `/me/directory/users/lookup` | Resolve nomes por `{ "ids": ["uuid", ...] }` |
 
@@ -232,7 +235,7 @@ Legenda de permissões:
 | PUT | `/admin/rbac/users/{user_id}/groups` | Users W |
 | POST | `/admin/rbac/users/{user_id}/groups/{group_id}` | Users W |
 | DELETE | `/admin/rbac/users/{user_id}/groups/{group_id}` | Users W |
-| GET | `/admin/rbac/users/{user_id}/usage` | RBAC — engajamento individual (`periodDays=7\|30\|90`) |
+| GET | `/admin/rbac/users/{user_id}/usage` | RBAC — engajamento individual (`periodDays=7\|30\|90`) — [estatisticas-uso-usuario.md](./estatisticas-uso-usuario.md) |
 
 ### Permissions
 
@@ -250,7 +253,8 @@ Arquivos: `admin_statistics_controller.py`, `presence_controller.py`.
 | Método | Path | Permissão | Descrição |
 |---|---|---|---|
 | GET | `/admin/statistics` | `rbac.manage` | Snapshot agregado: usuários, apps, papéis, grupos, permissões, vínculos RBAC, campanhas de notificação, online, uso de apps |
-| GET | `/admin/statistics/engagement` | `rbac.manage` | Engajamento: DAU/WAU/MAU, stickiness, tempo médio, rankings de apps/usuários/rotas (`periodDays=7\|30\|90`) |
+| GET | `/admin/statistics/engagement` | `rbac.manage` | Engajamento **global**: DAU/WAU/MAU, stickiness, tempo médio, rankings de apps/usuários/rotas (`periodDays=7\|30\|90`) |
+| GET | `/admin/rbac/users/{user_id}/usage` | `rbac.manage` | Engajamento **por titular** (mesmo contrato que `/me/usage`) — ver [estatisticas-uso-usuario.md](./estatisticas-uso-usuario.md) |
 | GET | `/admin/users/presence` | Superadmin | Usuários com portal conectado (Socket.IO) |
 | GET | `/admin/apps/usage` | `rbac.manage` | Apps em uso agora, ranking 30 dias, apps fantasmas (excl. backend-only), trackableActive |
 | GET | `/admin/portal-tour/explorers` | `rbac.manage` | Usuários explorando o tour (`tourVersion`, `status`, `limit`, `offset`) |
@@ -291,8 +295,8 @@ Cliente Portal: `portal/src/hooks/useSocket.ts`.
 
 | Cliente | Arquivo |
 |---|---|
-| `/me`, apps, favoritos, notificações | `portal/src/data/coreApi.ts` |
-| Admin RBAC + apps | `portal/src/data/adminApi.ts` |
+| `/me`, apps, favoritos, notificações, `/me/usage` | `portal/src/data/coreApi.ts` |
+| Admin RBAC + apps + estatísticas por usuário | `portal/src/data/adminApi.ts` |
 
 Paths usados pelo admin batem com as tabelas acima (prefixo `/core-api/admin/rbac`).
 
@@ -300,6 +304,7 @@ Paths usados pelo admin batem com as tabelas acima (prefixo `/core-api/admin/rba
 
 ## 10. Documentos relacionados
 
+- [estatisticas-uso-usuario.md](./estatisticas-uso-usuario.md)
 - [README.md](./README.md)
 - [visao-geral-core-api.md](./visao-geral-core-api.md)
 - [../03-autenticacao-autorizacao/rbac.md](../03-autenticacao-autorizacao/rbac.md)

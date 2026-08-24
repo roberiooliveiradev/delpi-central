@@ -151,7 +151,9 @@ Gravação: eventos Socket `app_usage.close`, `disconnect` e flush TTL do store 
 
 Use case compartilhado: `GetUserUsageStatisticsUseCase`. Sem consentimento `usage_tracking`, a API retorna estrutura completa com zeros e `consent.granted: false`.
 
-**Portal:** aba **Uso** em Editar usuário (`UserEditPage`) e seção **Meu uso** em `/profile` — componente `UserUsagePanel`. Ver [user-usage-wireframes.md](../06-portal-frontend/user-usage-wireframes.md).
+Contrato completo, erros e testes: [estatisticas-uso-usuario.md](./estatisticas-uso-usuario.md).
+
+**Portal:** aba **Uso** em Editar usuário (`UserEditPage`) e seção **Meu uso** em `/profile` — componente `UserUsagePanel`. Ver [meu-uso-perfil-e-admin.md](../06-portal-frontend/meu-uso-perfil-e-admin.md) e [user-usage-wireframes.md](../06-portal-frontend/user-usage-wireframes.md).
 
 UI: [admin-estatisticas.md](../06-portal-frontend/admin-estatisticas.md).
 
@@ -176,10 +178,18 @@ Detalhes: [variaveis-de-ambiente.md](../02-infraestrutura/variaveis-de-ambiente.
 ## 9. Testes
 
 ```bash
-# Core API
+# Core API — coleta e integração
 docker exec delpi-core-api pytest app/tests/test_app_usage_ghost_apps.py \
   app/tests/test_record_integrated_app_usage_use_case.py \
   app/tests/test_app_usage_controller_integration.py -q
+
+# Core API — estatísticas por usuário + purge LGPD sessions
+docker exec delpi-core-api pytest \
+  app/tests/test_engagement_repository_user_methods.py \
+  app/tests/test_get_user_usage_statistics_use_case.py \
+  app/tests/test_user_usage_statistics_controller.py \
+  app/tests/test_me_usage_controller.py \
+  app/tests/test_usage_tracking_purge_service.py -q
 
 # api-delpi (rotas Google Sheets + middleware)
 docker exec delpi-api-delpi sh -c 'cd /app && PYTHONPATH=/app pytest \

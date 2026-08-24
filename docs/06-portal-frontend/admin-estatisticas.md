@@ -46,5 +46,7 @@ Botão **Atualizar** recarrega o snapshot. Timestamp exibido em `generatedAt` (h
 ## 3. Relacionados
 
 - [Controllers e rotas — estatísticas](../04-core-api/controllers-e-rotas.md#7-admin--estatísticas-e-presença)
+- [Estatísticas de uso por usuário (API)](../04-core-api/estatisticas-uso-usuario.md)
+- [Meu uso e aba Uso no Admin](./meu-uso-perfil-e-admin.md)
 - [Rastreamento de uso de apps](../04-core-api/rastreamento-uso-apps.md)
 - [Presença online e uso de apps (Socket.IO)](../01-arquitetura/event-driven-e-socket.md)

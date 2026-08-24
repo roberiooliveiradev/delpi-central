@@ -388,7 +388,9 @@ Consultas Admin (`rbac.manage`):
 | Método | Path | Descrição |
 |--------|------|-----------|
 | GET | `/admin/apps/usage` | Snapshot: apps em uso agora, top 30 dias, fantasmas, trackable |
-| GET | `/admin/statistics` | Inclui `apps.usage` no painel de estatísticas |
+| GET | `/admin/statistics/engagement` | Engajamento global: DAU/WAU/MAU, séries, rankings |
+| GET | `/admin/rbac/users/{user_id}/usage` | Engajamento **por titular** (`periodDays`) — [estatisticas-uso-usuario.md](../04-core-api/estatisticas-uso-usuario.md) |
+| GET | `/me/usage` | Self-service do titular (mesmo contrato) |
 | POST | `/integrations/app-usage/record` | Integração serviço (api-delpi); token `CORE_API_INTEGRATIONS_SERVICE_TOKEN` |
 
 **App fantasma:** cadastrada e `active=true`, sem abertura registrada nos últimos `APP_USAGE_HISTORY_DAYS` (padrão 30). Apps **`backend-only`** são **excluídos** da lista de fantasmas e de `trackableActive`.
