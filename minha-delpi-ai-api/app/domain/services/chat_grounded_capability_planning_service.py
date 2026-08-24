@@ -53,6 +53,19 @@ class ChatGroundedCapabilityPlanningService:
         if not isinstance(excerpt, dict):
             return []
 
+        if ChatTurnGroundingService.should_enrich_before_insight(message, excerpt):
+            return cls._plan_enrich_insight_actions(
+                selection_service,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                excerpt=excerpt,
+                previous_messages=previous_messages,
+                max_calls=max_calls,
+            )
+
+        if ChatTurnGroundingService.should_narrate_insight_only(message):
+            return []
+
         if ChatTurnGroundingService.should_narrate_excerpt(message, excerpt):
             return []
 
@@ -111,6 +124,120 @@ class ChatGroundedCapabilityPlanningService:
                 planned.append(payload)
 
         return planned
+
+    @classmethod
+    def _plan_enrich_insight_actions(
+        cls,
+        selection_service: Any,
+        *,
+        message: str,
+        allowed_action_ids: list[str] | None,
+        excerpt: dict[str, Any],
+        previous_messages: list | None = None,
+        max_calls: int | None = None,
+    ) -> list[dict]:
+        product_codes = cls._resolve_enrich_product_codes(message, excerpt=excerpt)
+
+        if not product_codes:
+            return []
+
+        artifact_key = ChatEntityCapabilityCatalogService.artifact_enrich_key(
+            str(excerpt.get("entity") or "").strip() or None,
+            str(excerpt.get("profileKey") or "").strip() or None,
+        )
+        scopes = ChatEntityCapabilityCatalogService.enrich_insight_scopes(artifact_key)
+
+        if not scopes:
+            return []
+
+        limit = min(
+            cls._resolve_max_calls(max_calls),
+            ChatEntityCapabilityCatalogService.max_extra_routes_per_turn(),
+        )
+        planned: list[dict] = []
+
+        for scope in scopes:
+            if len(planned) >= limit:
+                break
+
+            intent, route_segment = cls._scope_to_intent(scope)
+
+            for code in product_codes:
+                if len(planned) >= limit:
+                    break
+
+                selected = selection_service.select_action_for_product(
+                    message,
+                    product_code=code,
+                    allowed_action_ids=allowed_action_ids,
+                    intent=intent,
+                    route_segment=route_segment,
+                    previous_messages=previous_messages,
+                )
+
+                if not selected:
+                    continue
+
+                payload = dict(selected)
+                payload["reason"] = f"grounded_enrich_insight:{scope}:{code}"
+                planned.append(payload)
+
+        return planned
+
+    @classmethod
+    def _resolve_enrich_product_codes(
+        cls,
+        message: str,
+        *,
+        excerpt: dict[str, Any],
+    ) -> list[str]:
+        referent_type = ChatTurnGroundingService.resolve_referent_component_type(message)
+
+        if referent_type:
+            typed_keys = cls._codes_for_component_type(excerpt, referent_type)
+
+            if typed_keys:
+                cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
+                return typed_keys[:cap]
+
+        merged: list[str] = []
+        keys_by_type = excerpt.get("keysByComponentType")
+
+        if isinstance(keys_by_type, dict):
+            for values in keys_by_type.values():
+                if not isinstance(values, list):
+                    continue
+
+                for item in values:
+                    code = ChatProductQueryIntentService.normalize_product_code(str(item))
+
+                    if code and code not in merged:
+                        merged.append(code)
+
+        if merged:
+            cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
+            return merged[:cap]
+
+        if cls._message_requests_fan_out(message):
+            top_keys = [
+                ChatProductQueryIntentService.normalize_product_code(str(item))
+                for item in (excerpt.get("topKeys") or [])
+                if str(item).strip()
+            ]
+            top_keys = [code for code in top_keys if code]
+
+            if top_keys:
+                cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
+                return top_keys[:cap]
+
+        top_keys = [
+            ChatProductQueryIntentService.normalize_product_code(str(item))
+            for item in (excerpt.get("topKeys") or [])
+            if str(item).strip()
+        ]
+        top_keys = [code for code in top_keys if code]
+
+        return top_keys[:1]
 
     @classmethod
     def _resolve_product_codes(

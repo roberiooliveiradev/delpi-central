@@ -299,14 +299,20 @@ class ChatTurnPreparationToolRoutingService:
 
         skip_tools_for_grounded_narrate = (
             turn_grounding.get("status") == "grounded"
-            and ChatTurnGroundingService.should_narrate_excerpt(
-                message,
-                excerpt if isinstance(excerpt, dict) else None,
+            and ChatTurnGroundingService.resolve_grounded_stage(
+                message=message,
+                excerpt=excerpt if isinstance(excerpt, dict) else None,
             )
+            in {"grounded_narrate_recap", "grounded_narrate_insight"}
         )
 
         skip_tools_for_data_interpretation = (
             not skip_tools_for_grounded_narrate
+            and not ChatTurnGroundingService.should_enrich_before_insight(
+                message,
+                excerpt if isinstance(excerpt, dict) else None,
+            )
+            and not ChatTurnGroundingService.should_narrate_insight_only(message)
             and ChatAnalysisIntentService.is_data_interpretation_request(
                 message,
                 history_source,
@@ -388,6 +394,7 @@ class ChatTurnPreparationToolRoutingService:
         message: str,
         pipeline_stages: list[str],
         skip_flags: ChatTurnPreparationSkipToolFlags,
+        grounded_stage: str | None = None,
         canvas_action,
         pre_capability_answer: str | None,
         missing_product_code_answer: str | None,
@@ -413,7 +420,7 @@ class ChatTurnPreparationToolRoutingService:
         elif skip_flags.skip_tools_for_session_review:
             pipeline_stages.append("session_review")
         elif skip_flags.skip_tools_for_grounded_narrate:
-            pipeline_stages.append("grounded_narrate")
+            pipeline_stages.append(grounded_stage or "grounded_narrate")
         elif skip_flags.skip_tools_for_data_interpretation:
             pipeline_stages.append("data_interpretation")
         elif canvas_action:
@@ -605,6 +612,10 @@ class ChatTurnPreparationToolRoutingService:
                 message=message,
                 pipeline_stages=pipeline_stages,
                 skip_flags=skip_flags,
+                grounded_stage=(
+                    str((workspace_context.get("turnGrounding") or {}).get("stage") or "").strip()
+                    or None
+                ),
                 canvas_action=canvas_action,
                 pre_capability_answer=pre_capability_answer,
                 missing_product_code_answer=operational_guards.missing_product_code_answer,
@@ -686,17 +697,32 @@ class ChatTurnPreparationToolRoutingService:
                     tool_context = dict(tool_context)
                     tool_context["turnGrounding"] = dict(turn_grounding)
 
-                narrate_applied, tool_context = (
-                    ChatConversationContextService.apply_grounded_narrate_mode(
+                stage = str(turn_grounding.get("stage") or "").strip() if isinstance(turn_grounding, dict) else ""
+
+                if stage == "grounded_narrate_insight":
+                    from app.application.services.chat_grounded_insight_answer_service import (
+                        ChatGroundedInsightAnswerService,
+                    )
+
+                    _, tool_context = ChatGroundedInsightAnswerService.apply_narrate_insight_context(
                         message,
                         history_source,
                         tool_context,
                         workspace_context=workspace_context,
                     )
-                )
-
-                if narrate_applied:
                     analysis_mode = True
+                else:
+                    narrate_applied, tool_context = (
+                        ChatConversationContextService.apply_grounded_narrate_mode(
+                            message,
+                            history_source,
+                            tool_context,
+                            workspace_context=workspace_context,
+                        )
+                    )
+
+                    if narrate_applied:
+                        analysis_mode = True
 
             pipeline_timings.mark("tools_done")
         else:
@@ -732,6 +758,23 @@ class ChatTurnPreparationToolRoutingService:
             analysis_mode = post_tool.analysis_mode
             tool_calls = tool_context["toolCalls"]
             pipeline_timings.mark("tools_done")
+
+            stage = str(
+                (workspace_context.get("turnGrounding") or {}).get("stage") or ""
+            ).strip()
+
+            if stage == "grounded_enrich_insight":
+                from app.application.services.chat_grounded_insight_answer_service import (
+                    ChatGroundedInsightAnswerService,
+                )
+
+                _, tool_context = ChatGroundedInsightAnswerService.apply_enrich_context(
+                    message,
+                    history_source,
+                    tool_context,
+                    workspace_context=workspace_context,
+                )
+                analysis_mode = True
 
         return ChatTurnPreparationToolPhaseResult(
             tool_context=tool_context,

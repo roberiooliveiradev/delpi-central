@@ -343,23 +343,40 @@ class ChatTurnPreparationPostToolResolutionService:
                 pipeline_stages.append("unclear_request")
 
         if not direct_answer and skip_tools_for_grounded_narrate:
+            from app.application.services.chat_grounded_insight_answer_service import (
+                ChatGroundedInsightAnswerService,
+            )
             from app.application.services.chat_grounded_narrate_answer_service import (
                 ChatGroundedNarrateAnswerService,
             )
 
-            narrated = ChatGroundedNarrateAnswerService.build_answer(
-                message,
-                history_source,
-                workspace_context=workspace_context,
-                tool_context=tool_context,
-            )
+            stage = str(
+                (tool_context.get("turnGrounding") or workspace_context.get("turnGrounding") or {}).get(
+                    "stage"
+                )
+                or ""
+            ).strip()
 
-            if narrated:
-                direct_answer = narrated
-                skip_rag = True
+            if stage == "grounded_narrate_recap" or (
+                not stage
+                and ChatGroundedInsightAnswerService.is_recap_stage(
+                    workspace_context,
+                    tool_context,
+                )
+            ):
+                narrated = ChatGroundedNarrateAnswerService.build_answer(
+                    message,
+                    history_source,
+                    workspace_context=workspace_context,
+                    tool_context=tool_context,
+                )
 
-                if "grounded_narrate_direct" not in pipeline_stages:
-                    pipeline_stages.append("grounded_narrate_direct")
+                if narrated:
+                    direct_answer = narrated
+                    skip_rag = True
+
+                    if "grounded_narrate_direct" not in pipeline_stages:
+                        pipeline_stages.append("grounded_narrate_direct")
 
         if not direct_answer and skip_tools_for_data_interpretation:
             from app.application.services.chat_data_interpretation_answer_service import (

@@ -345,8 +345,16 @@ class ChatConversationContextService:
             not isinstance(turn_grounding, dict)
             or turn_grounding.get("status") != "grounded"
             or not isinstance(excerpt, dict)
-            or not ChatTurnGroundingService.should_narrate_excerpt(message, excerpt)
         ):
+            return False, dict(tool_context or {})
+
+        stage = str(turn_grounding.get("stage") or "").strip()
+        eligible = stage == "grounded_narrate_recap" or (
+            not stage
+            and ChatTurnGroundingService.should_narrate_excerpt(message, excerpt)
+        )
+
+        if not eligible:
             return False, dict(tool_context or {})
 
         updated = dict(tool_context or {})

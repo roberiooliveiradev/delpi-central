@@ -50,31 +50,34 @@ def test_plan_stock_fan_out_from_top_keys():
 
 def test_plan_empty_when_narrate_excerpt():
     selection = _SelectionStub()
+    excerpt = {
+        "title": "Estrutura 90260149",
+        "rowCount": 6,
+        "topKeys": ["10380044"],
+    }
     workspace = {
         "turnGrounding": {"status": "grounded"},
-        "workingMemory": {
-            "lastResultExcerpt": {
-                "title": "Estrutura 90260149",
-                "rowCount": 6,
-                "topKeys": ["10380044"],
-            }
-        },
+        "workingMemory": {"lastResultExcerpt": excerpt},
     }
 
-    assert ChatTurnGroundingService.should_narrate_excerpt(
+    assert not ChatTurnGroundingService.should_narrate_excerpt(
         "o que me diz sobre os itens?",
-        workspace["workingMemory"]["lastResultExcerpt"],
+        excerpt,
+    )
+    assert ChatTurnGroundingService.should_enrich_before_insight(
+        "o que me diz sobre os itens?",
+        excerpt,
     )
 
     planned = ChatGroundedCapabilityPlanningService.plan_actions(
         selection,
         message="o que me diz sobre os itens?",
-        allowed_action_ids=["get_product_stock"],
+        allowed_action_ids=["get_product_stock", "get_product_summary"],
         workspace_context=workspace,
     )
 
-    assert planned == []
-    assert selection.calls == []
+    assert len(planned) >= 1
+    assert selection.calls
 
 
 def test_plan_stock_fan_out_ignores_inherited_parent_code_only():
