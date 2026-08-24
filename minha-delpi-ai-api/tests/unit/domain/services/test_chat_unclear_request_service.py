@@ -59,3 +59,38 @@ def test_ambiguous_domain_direct_answer_and_suggestions():
     suggestions = ChatUnclearRequestService.build_suggestions(message="programação")
     assert any("produção" in item["label"].lower() for item in suggestions)
     assert all(item.get("label") and item.get("query") for item in suggestions)
+
+
+def test_grounded_status_skips_unclear():
+    assert (
+        ChatUnclearRequestService.classify(
+            "isso",
+            grounding_status="grounded",
+        )
+        is None
+    )
+    assert (
+        ChatUnclearRequestService.build_direct_answer(
+            message="isso",
+            grounding_status="grounded",
+        )
+        is None
+    )
+
+
+def test_recent_tool_success_skips_unclear():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/1/structure"},
+                    }
+                ]
+            },
+        }
+    ]
+
+    assert ChatUnclearRequestService.classify("os itens", previous_messages=history) is None

@@ -17,6 +17,7 @@ from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_turn_grounding_service import ChatTurnGroundingStatus
 
 
 @lru_cache(maxsize=1)
@@ -28,11 +29,36 @@ class ChatUnclearRequestService:
     """Classifica pedidos vagos e devolve uma resposta de esclarecimento."""
 
     @classmethod
-    def is_unclear_request(cls, message: str, *, previous_messages: list | None = None) -> bool:
-        return cls.classify(message, previous_messages=previous_messages) is not None
+    def is_unclear_request(
+        cls,
+        message: str,
+        *,
+        previous_messages: list | None = None,
+        grounding_status: str | None = None,
+    ) -> bool:
+        return (
+            cls.classify(
+                message,
+                previous_messages=previous_messages,
+                grounding_status=grounding_status,
+            )
+            is not None
+        )
 
     @classmethod
-    def classify(cls, message: str, *, previous_messages: list | None = None) -> str | None:
+    def classify(
+        cls,
+        message: str,
+        *,
+        previous_messages: list | None = None,
+        grounding_status: str | None = None,
+    ) -> str | None:
+        if cls._is_grounded_status(grounding_status):
+            return None
+
+        if cls._has_recent_assistant_tool_success(previous_messages):
+            return None
+
         text = str(message or "").strip()
 
         if not text:
@@ -72,8 +98,13 @@ class ChatUnclearRequestService:
         message: str,
         previous_messages: list | None = None,
         with_options: bool = False,
+        grounding_status: str | None = None,
     ) -> str | None:
-        category = cls.classify(message, previous_messages=previous_messages)
+        category = cls.classify(
+            message,
+            previous_messages=previous_messages,
+            grounding_status=grounding_status,
+        )
 
         if not category:
             return None
@@ -139,3 +170,43 @@ class ChatUnclearRequestService:
         trailing = re.sub(r"[\s!?.,:;]+$", "", normalized)
 
         return trailing == candidate
+
+    @classmethod
+    def _is_grounded_status(cls, grounding_status: str | None) -> bool:
+        status = str(grounding_status or "").strip().lower()
+
+        return status == ChatTurnGroundingStatus.GROUNDED.value
+
+    @classmethod
+    def _has_recent_assistant_tool_success(cls, previous_messages: list | None) -> bool:
+        for item in reversed(previous_messages or []):
+            role = str(
+                getattr(item, "role", None) or (item.get("role") if isinstance(item, dict) else "")
+            ).strip()
+
+            if role != "assistant":
+                continue
+
+            metadata = getattr(item, "metadata", None)
+
+            if metadata is None and isinstance(item, dict):
+                metadata = item.get("metadata")
+
+            if not isinstance(metadata, dict):
+                return False
+
+            for tool_call in metadata.get("toolCalls") or []:
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata")
+
+                if isinstance(tool_meta, dict) and tool_meta.get("ok"):
+                    return True
+
+            return False
+
+        return False
