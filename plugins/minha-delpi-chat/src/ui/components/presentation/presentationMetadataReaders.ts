@@ -157,20 +157,42 @@ export function getPresentationDecisionFromToolCalls(
     return null;
   }
 
+  let fallback: ChatPresentationDecision | null = null;
+
   for (const toolCall of toolCalls) {
-    const decision = (toolCall.metadata as Record<string, unknown>)?.presentationDecision;
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+    const decision = metadata?.presentationDecision;
 
     if (
-      decision &&
-      typeof decision === "object" &&
-      (typeof (decision as ChatPresentationDecision).selected === "string" ||
-        typeof (decision as ChatPresentationDecision).layoutMode === "string")
+      !decision ||
+      typeof decision !== "object" ||
+      !(
+        typeof (decision as ChatPresentationDecision).selected === "string" ||
+        typeof (decision as ChatPresentationDecision).layoutMode === "string"
+      )
     ) {
+      continue;
+    }
+
+    const role = String(metadata?.compositionRole || "")
+      .trim()
+      .toLowerCase();
+
+    if (role === "primary") {
       return decision as ChatPresentationDecision;
     }
+
+    if (role === "enrichment") {
+      if (!fallback) {
+        fallback = decision as ChatPresentationDecision;
+      }
+      continue;
+    }
+
+    return decision as ChatPresentationDecision;
   }
 
-  return null;
+  return fallback;
 }
 
 export function getPresentationInsightFromToolCalls(
@@ -313,16 +335,36 @@ export function getRenderPlanFromToolCalls(
     return null;
   }
 
+  let fallback: PresentationRenderPlan | null = null;
+
   for (const toolCall of toolCalls) {
     const metadata = toolCall.metadata as Record<string, unknown> | undefined;
     const renderPlan = metadata?.renderPlan;
 
-    if (renderPlan && typeof renderPlan === "object") {
+    if (!renderPlan || typeof renderPlan !== "object") {
+      continue;
+    }
+
+    const role = String(metadata?.compositionRole || "")
+      .trim()
+      .toLowerCase();
+
+    if (role === "primary") {
       return renderPlan as PresentationRenderPlan;
     }
+
+    if (role === "enrichment") {
+      if (!fallback) {
+        fallback = renderPlan as PresentationRenderPlan;
+      }
+      continue;
+    }
+
+    // Sem role: primeiro plan (wave-1 / único tool).
+    return renderPlan as PresentationRenderPlan;
   }
 
-  return null;
+  return fallback;
 }
 
 const PROSE_RENDER_PLAN_KINDS = new Set(["markdown", "decision"]);

@@ -710,6 +710,24 @@ class ChatToolContextService:
             )
         ChatPipelineTimings.mark_current("tools_wave2_done")
 
+        for tool_call in execution.safe_tool_calls:
+            if isinstance(tool_call, dict):
+                meta = tool_call.get("metadata")
+                if isinstance(meta, dict) and meta.get("ok"):
+                    meta.setdefault("compositionRole", "primary")
+
+        for tool_call in follow_state.safe_tool_calls:
+            if isinstance(tool_call, dict):
+                meta = tool_call.get("metadata")
+                if isinstance(meta, dict):
+                    meta["compositionRole"] = "enrichment"
+                    follow = tool_call.get("sufficiencyFollowUp") or tool_call.get(
+                        "anomalyFollowUp"
+                    )
+                    if isinstance(follow, dict) and follow.get("routeId"):
+                        meta["enrichmentRouteId"] = str(follow.get("routeId"))
+
+
         if isinstance(selected_external_action_meta, dict):
             audit = selected_external_action_meta.setdefault("enrichmentPlan", {})
 

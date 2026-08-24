@@ -114,6 +114,9 @@ class ChatConversationMemoryExtractor:
             if not isinstance(metadata, dict) or not metadata.get("ok"):
                 continue
 
+            if str(metadata.get("compositionRole") or "").strip().lower() == "enrichment":
+                continue
+
             path = str(metadata.get("path") or "")
             action_name = cls._action_name_from_path(path)
             params: dict[str, Any] = {}
@@ -141,6 +144,34 @@ class ChatConversationMemoryExtractor:
                 "name": action_name,
                 "params": params,
                 "resultType": result_type,
+                "path": path,
+            }
+
+        # Fallback: último ok mesmo se só houver enrichment (turno só follow-up).
+        for tool_call in reversed(calls):
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            path = str(metadata.get("path") or "")
+            action_name = cls._action_name_from_path(path)
+            params: dict[str, Any] = {}
+            code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
+
+            if code:
+                params["productCode"] = code
+
+            return {
+                "name": action_name,
+                "params": params,
+                "resultType": cls._result_type_from_metadata(metadata),
                 "path": path,
             }
 
