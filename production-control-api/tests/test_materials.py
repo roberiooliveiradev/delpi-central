@@ -7,11 +7,20 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from production_control_app.application.services.finished_product_shortage_service import (
+    FinishedProductShortageService,
+    _ShortageCache,
+)
 from production_control_app.application.services.materials_service import (
     MaterialsService,
     _MaterialsSnapshotCache,
 )
-from production_control_app.domain.errors import BranchAccessDenied
+from production_control_app.application.services.materials_settings import materials_settings
+from production_control_app.domain.errors import (
+    BranchAccessDenied,
+    DelpiGatewayError,
+    InvalidProductCode,
+)
 from production_control_app.domain.services.materials_excess import (
     classify_fully_eliminable,
     classify_shortage_products,
@@ -278,6 +287,10 @@ def test_materials_service_pages_and_summarizes() -> None:
     assert payload["summary"]["excess_product_count"] == 2
     assert payload["issues"][0]["id"] == "excess"
     assert payload["issues"][0]["product_count"] == 2
+    assert payload["issues"][2]["id"] == "pa-shortage"
+    assert "product_count" not in payload["issues"][2]
+    assert payload["issues"][2]["kind"] == "consult"
+    assert payload["didactic"]["steps"]
     assert "unit_price" not in payload["items"][0]
 
 
@@ -391,3 +404,252 @@ def test_materials_route_returns_envelope() -> None:
     assert body["success"] is True
     assert body["data"]["items"][0]["request_number"] == "SC001"
     assert body["data"]["issues"][0]["title"] == "Excesso de solicitações"
+
+
+def test_materials_catalog_includes_pa_shortage_consult() -> None:
+    catalog = materials_settings()
+    assert catalog["views"] == ["excess", "shortage", "pa-shortage"]
+    issue = catalog["issues"]["pa-shortage"]
+    assert issue["id"] == "pa-shortage"
+    assert issue["kind"] == "consult"
+    assert issue["severity"] == "attention"
+    assert len(catalog["didactic"]["steps"]) == 3
+
+
+class FakeShortageGateway:
+    def __init__(self, payload: dict[str, Any] | None = None, *, status_code: int | None = None):
+        self.payload = payload
+        self.status_code = status_code
+        self.calls = 0
+
+    def fetch_finished_product_shortages(self, *, product_code: str, branch: str) -> dict[str, Any]:
+        self.calls += 1
+        assert branch == "01"
+        assert product_code == "90263114"
+        if self.status_code:
+            raise DelpiGatewayError("Produto 90263114 não encontrado.", status_code=self.status_code)
+        return {"data": self.payload or {}}
+
+
+def _shortage_dump(**overrides: Any) -> dict[str, Any]:
+    payload = {
+        "product": {
+            "product_code": "90263114",
+            "product_description": "CHICOTE XYZ",
+            "product_type": "PA",
+        },
+        "summary": {
+            "open_set_count": 2,
+            "at_risk_set_count": 1,
+            "short_mp_count": 1,
+            "first_shortage_date": "2026-09-12",
+            "ok_set_count": 1,
+            "no_commitment_set_count": 0,
+        },
+        "sets": [
+            {
+                "production_order": "24608101001",
+                "status": "shortage",
+                "planned_start_date": "2026-09-12",
+                "due_date": "2026-09-20",
+                "materials": [
+                    {
+                        "product_code": "10080001",
+                        "product_description": "Cabo",
+                        "status": "shortage",
+                        "shortage_date": "2026-09-12",
+                        "shortage_quantity": 12,
+                        "unit": "KG",
+                        "consuming_production_order": "24608101003",
+                    }
+                ],
+            },
+            {
+                "production_order": "24609001001",
+                "status": "ok",
+                "planned_start_date": "2026-09-28",
+                "due_date": None,
+                "materials": [
+                    {
+                        "product_code": "10080001",
+                        "status": "ok",
+                        "shortage_quantity": 0,
+                    }
+                ],
+            },
+        ],
+        "materials": [{"product_code": "10080001", "ledger": [{"origin": "commitment"}]}],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_finished_product_shortages_pegs_sets() -> None:
+    service = FinishedProductShortageService(
+        FakeShortageGateway(_shortage_dump()),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    payload = service.get_shortages(_user(*FULL_PERMS), branch="01", product="90263114")
+    assert payload["state"] == "ok"
+    assert payload["summary"]["at_risk_set_count"] == 1
+    assert [item["status"] for item in payload["sets"]] == ["shortage", "ok"]
+    assert payload["didactic"]["steps"][0]["step"] == 1
+
+
+def test_finished_product_shortages_filters_status() -> None:
+    service = FinishedProductShortageService(
+        FakeShortageGateway(_shortage_dump()),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    payload = service.get_shortages(
+        _user(*FULL_PERMS),
+        branch="01",
+        product="90263114",
+        status="shortage",
+    )
+    assert [item["production_order"] for item in payload["sets"]] == ["24608101001"]
+    assert payload["filters"]["status"] == "shortage"
+    assert payload["summary"]["open_set_count"] == 2
+
+
+def test_finished_product_shortages_no_commitment_state() -> None:
+    dump = _shortage_dump(
+        summary={
+            "open_set_count": 1,
+            "at_risk_set_count": 0,
+            "short_mp_count": 0,
+            "first_shortage_date": None,
+            "ok_set_count": 0,
+            "no_commitment_set_count": 1,
+        },
+        sets=[
+            {
+                "production_order": "24608101001",
+                "status": "no_commitment",
+                "materials": [{"product_code": "10080001", "status": "no_commitment"}],
+            }
+        ],
+    )
+    service = FinishedProductShortageService(
+        FakeShortageGateway(dump),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    payload = service.get_shortages(_user(*FULL_PERMS), branch="01", product="90263114")
+    assert payload["sets"][0]["status"] == "no_commitment"
+
+
+def test_finished_product_shortages_not_found() -> None:
+    service = FinishedProductShortageService(
+        FakeShortageGateway(status_code=404),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    payload = service.get_shortages(_user(*FULL_PERMS), branch="01", product="90263114")
+    assert payload["state"] == "not_found"
+    assert "90263114" in payload["message"]
+
+
+def test_finished_product_shortages_rejects_short_code() -> None:
+    service = FinishedProductShortageService(
+        FakeShortageGateway(),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    with pytest.raises(InvalidProductCode):
+        service.get_shortages(_user(*FULL_PERMS), branch="01", product="9026")
+
+
+def test_finished_product_shortages_denies_without_permission() -> None:
+    service = FinishedProductShortageService(
+        FakeShortageGateway(),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    with pytest.raises(PermissionError):
+        service.get_shortages(
+            _user("production-control.access", "production-control.view.filial-01"),
+            branch="01",
+            product="90263114",
+        )
+
+
+def test_finished_product_shortages_denies_other_branch() -> None:
+    service = FinishedProductShortageService(
+        FakeShortageGateway(),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    with pytest.raises(BranchAccessDenied):
+        service.get_shortages(
+            _user(
+                "production-control.access",
+                "production-control.materials.view",
+                "production-control.view.filial-01",
+            ),
+            branch="02",
+            product="90263114",
+        )
+
+
+def test_finished_product_shortages_route_returns_envelope() -> None:
+    from production_control_app.interface.http.routes import materials_routes
+
+    original = materials_routes.build_finished_product_shortage_service
+    service = FinishedProductShortageService(
+        FakeShortageGateway(_shortage_dump()),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    materials_routes.build_finished_product_shortage_service = lambda: service  # type: ignore[assignment]
+    try:
+        app = FastAPI()
+
+        @app.middleware("http")
+        async def inject_user(request, call_next):
+            request.state.user = _user(*FULL_PERMS)
+            return await call_next(request)
+
+        app.include_router(materials_routes.router)
+        client = TestClient(app)
+        response = client.get(
+            "/materials/finished-product-shortages",
+            params={"branch": "01", "product": "90263114"},
+        )
+        bad = client.get(
+            "/materials/finished-product-shortages",
+            params={"branch": "01", "product": "12"},
+        )
+    finally:
+        materials_routes.build_finished_product_shortage_service = original  # type: ignore[assignment]
+
+    assert response.status_code == 200
+    assert response.json()["data"]["sets"][0]["status"] == "shortage"
+    assert bad.status_code == 422
+
+
+def test_finished_product_shortages_route_returns_403_for_other_branch() -> None:
+    from production_control_app.interface.http.routes import materials_routes
+
+    original = materials_routes.build_finished_product_shortage_service
+    service = FinishedProductShortageService(
+        FakeShortageGateway(_shortage_dump()),
+        cache=_ShortageCache(ttl_seconds=120),
+    )
+    materials_routes.build_finished_product_shortage_service = lambda: service  # type: ignore[assignment]
+    try:
+        app = FastAPI()
+
+        @app.middleware("http")
+        async def inject_user(request, call_next):
+            request.state.user = _user(
+                "production-control.access",
+                "production-control.materials.view",
+                "production-control.view.filial-01",
+            )
+            return await call_next(request)
+
+        app.include_router(materials_routes.router)
+        client = TestClient(app)
+        response = client.get(
+            "/materials/finished-product-shortages",
+            params={"branch": "02", "product": "90263114"},
+        )
+    finally:
+        materials_routes.build_finished_product_shortage_service = original  # type: ignore[assignment]
+
+    assert response.status_code == 403

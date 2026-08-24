@@ -21,6 +21,8 @@ type PpcWorkspaceHeaderProps = {
   subpluginId: string;
   detectorId?: string | null;
   materialsIssue?: string | null;
+  materialsSearch?: string | null;
+  materialsStatus?: string | null;
   deliveryMapSearch?: string | null;
   workCenter?: string | null;
   startDate?: string | null;
@@ -40,6 +42,8 @@ export function PpcWorkspaceHeader({
   subpluginId,
   detectorId,
   materialsIssue,
+  materialsSearch,
+  materialsStatus,
   deliveryMapSearch,
   workCenter,
   startDate,
@@ -55,6 +59,8 @@ export function PpcWorkspaceHeader({
         branch: next,
         detectorId,
         materialsIssue,
+        materialsSearch,
+        materialsStatus,
         deliveryMapSearch,
         workCenter,
         startDate,

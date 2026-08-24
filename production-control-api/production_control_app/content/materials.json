@@ -3,7 +3,7 @@
   "defaultPageSize": 50,
   "maxPageSize": 200,
   "defaultView": "excess",
-  "views": ["excess", "shortage"],
+  "views": ["excess", "shortage", "pa-shortage"],
   "sortFields": [
     "required_date",
     "request_number",
@@ -20,6 +20,9 @@
   ],
   "defaultSort": "required_date",
   "shortageDefaultSort": "shortage_quantity",
+  "minProductDigits": 8,
+  "finishedProductType": "PA",
+  "setStatuses": ["shortage", "no_commitment", "ok", "all"],
   "issues": {
     "excess": {
       "id": "excess",
@@ -32,6 +35,38 @@
       "title": "Solicitações insuficientes",
       "description": "Matérias-primas que, mesmo com saldo, pedidos e SC1 em aberto, não atingem o estoque de segurança.",
       "severity": "critical"
+    },
+    "pa-shortage": {
+      "id": "pa-shortage",
+      "title": "Ruptura no conjunto",
+      "description": "Informe o PA e veja quais OPs mãe do conjunto vão faltar matéria-prima no extrato (saldo + pedidos − empenhos).",
+      "severity": "attention",
+      "kind": "consult"
     }
+  },
+  "didactic": {
+    "steps": [
+      {
+        "step": 1,
+        "title": "Você informa o PA",
+        "body": "O código do produto acabado abre só os conjuntos (OPs mãe) ainda em aberto nesta filial."
+      },
+      {
+        "step": 2,
+        "title": "Lemos a estrutura (só MP)",
+        "body": "A explosão vigente da SG1 entra só com matéria-prima. Intermediário não conta como falta de material."
+      },
+      {
+        "step": 3,
+        "title": "No extrato, o empenho do conjunto decide",
+        "body": "Saldo 01+98+99 + pedidos − empenhos. Se o saldo projetado fica negativo no empenho daquele conjunto, a OP falta material."
+      }
+    ]
+  },
+  "states": {
+    "invalidCode": "Informe o código do PA com pelo menos 8 dígitos.",
+    "notFound": "Produto {code} não encontrado.",
+    "notFinishedProduct": "{code} não é um produto acabado (PA).",
+    "noOpenSets": "Não há conjunto aberto deste PA nesta filial."
   }
 }

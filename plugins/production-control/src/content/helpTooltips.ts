@@ -12,7 +12,7 @@ export const helpTooltips = {
     "Conjunto = C2_NUM (6 primeiros dígitos da OP completa). Ex.: 10840401003 inclui todas as OPs 108404…. Produto (PA) lista os conjuntos daquele acabado.",
   branch: "Filial TOTVS usada na consulta (Santa Catarina ou Espírito Santo).",
   materials:
-    "Dois recortes de matéria-prima: excesso de SC1 (documento inteiro já coberto depois do ESTSEG) e solicitações insuficientes (cobertura + SC1 não chega no estoque de segurança). PA e PI ficam de fora. Não elimina no TOTVS.",
+    "Três recortes de matéria-prima: excesso de SC1 (documento inteiro já coberto depois do ESTSEG), solicitações insuficientes (cobertura + SC1 não chega no estoque de segurança) e consulta de ruptura no conjunto do PA (extrato saldo + pedidos − empenhos). Não elimina no TOTVS.",
   deliveryMap:
     "OPs mãe de PA com saldo em aberto, agrupadas pela data prevista de entrega. O primeiro bloco reúne hoje e atrasadas. Observações vêm do TOTVS (C2_OBS). MP-OK e Feedback são marcações manuais do PCP. A barra de progresso carrega primeiro hoje+atrasadas e, em seguida, OPs com entrega em até 5 dias; demais datas ficam sem barra. Linha riscada só quando o conjunto atinge 100%. A lista congela até clicar em Atualizar.",
 } as const;

@@ -12,6 +12,7 @@ from app.application.security.api_delpi_permissions import (
 from app.core.responses import error_response, not_found_response
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
+    BRANCH_QUERY_REQUIRED,
     PRODUCT_DETAIL_VIEW_QUERY,
     PRODUCT_EXCLUSIVITY_VIEW_QUERY,
     SORT_DIR_QUERY_OPTIONAL,
@@ -46,6 +47,12 @@ from app.application.dto.product.get_product_sales_open_orders_request import Ge
 from app.application.dto.product.get_product_sales_billing_request import GetProductSalesBillingRequest
 from app.application.dto.product.get_product_pricing_request import GetProductPricingRequest
 from app.application.dto.product.product_playbook_request import ProductPlaybookRequest
+from app.application.dto.product.product_raw_material_set_shortage_request import (
+    ProductRawMaterialSetShortageRequest,
+)
+from app.interface.http.routes.product.raw_material_set_shortage_branch_access import (
+    branch_access_error as raw_material_set_shortage_branch_error,
+)
 from app.application.dto.product.product_cost_impact_request import ProductCostImpactRequest
 from app.application.dto.product.product_raw_material_price_request import (
     ProductRawMaterialPriceRequest,
@@ -79,6 +86,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_PRODUCTION_STATUS,
     PRODUCT_SHIPPING_STATUS,
     PRODUCT_FACTORY_STATUS,
+    PRODUCT_RAW_MATERIAL_SET_SHORTAGES,
     PRODUCT_COST_IMPACT_SIMULATION,
     PRODUCT_LAST_PURCHASE,
     PRODUCT_PURCHASE_PRICE_HISTORY,
@@ -143,6 +151,7 @@ from app.composition.product_composer import (
     build_get_product_production_status_use_case,
     build_get_product_shipping_status_use_case,
     build_get_product_factory_status_use_case,
+    build_get_product_raw_material_set_shortages_use_case,
     build_get_product_cost_impact_simulation_use_case,
     build_get_product_last_purchase_use_case,
     build_get_product_purchase_price_history_use_case,
@@ -522,6 +531,44 @@ def get_structure_exclusivity(
     except Exception as e:
         log_error(f"Erro ao buscar estrutura com exclusividade de {code}: {e}")
         return error_response(str(e), status_code=500)
+
+
+@router.get(
+    "/{code}/raw-material-set-shortages",
+    **PRODUCT_RAW_MATERIAL_SET_SHORTAGES,
+    response_model=CompositeAnalysisResponse,
+)
+@require_permission(API_DELPI_ACCESS)
+def get_raw_material_set_shortages(
+    code: str,
+    branch: str = BRANCH_QUERY_REQUIRED(),
+    max_depth: Optional[int] = Query(default=8, ge=1, le=20),
+):
+    branch_error = raw_material_set_shortage_branch_error(branch)
+    if branch_error:
+        return branch_error
+    try:
+        use_case = build_get_product_raw_material_set_shortages_use_case()
+        result = use_case.execute(
+            ProductRawMaterialSetShortageRequest(
+                code=code,
+                branch=branch,
+                max_depth=max_depth or 8,
+            )
+        )
+        if result is None:
+            return not_found_response(f"Produto {code} não encontrado.")
+        return product_success(
+            result,
+            operation_id=PRODUCT_RAW_MATERIAL_SET_SHORTAGES["operation_id"],
+            entity="product_raw_material_set_shortages",
+            shape="composite_analysis",
+            code=code,
+            message="Ruptura de matérias-primas no conjunto carregada com sucesso.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao consultar ruptura de MP no conjunto de {code}: {exc}")
+        return error_response(str(exc), status_code=500)
 
 
 @router.get("/{code}/production-status", **PRODUCT_PRODUCTION_STATUS)

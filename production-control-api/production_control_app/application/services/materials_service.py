@@ -181,23 +181,26 @@ class MaterialsService:
 
     def _issues(self, snapshot: MaterialsSnapshot) -> list[dict[str, Any]]:
         catalog = setting_map("issues")
+        counts = {
+            "excess": len({row.product_code for row in snapshot.excess}),
+            "shortage": len({row.product_code for row in snapshot.shortage}),
+        }
         cards: list[dict[str, Any]] = []
-        for view_id, rows in (
-            ("excess", snapshot.excess),
-            ("shortage", snapshot.shortage),
-        ):
+        for view_id in setting_list("views"):
             meta = catalog.get(view_id)
             if not isinstance(meta, dict):
                 continue
-            cards.append(
-                {
-                    "id": view_id,
-                    "title": str(meta.get("title") or "").strip(),
-                    "description": str(meta.get("description") or "").strip(),
-                    "severity": str(meta.get("severity") or "").strip() or "attention",
-                    "product_count": len({row.product_code for row in rows}),
-                }
-            )
+            card: dict[str, Any] = {
+                "id": view_id,
+                "title": str(meta.get("title") or "").strip(),
+                "description": str(meta.get("description") or "").strip(),
+                "severity": str(meta.get("severity") or "").strip() or "attention",
+            }
+            if view_id in counts:
+                card["product_count"] = counts[view_id]
+            else:
+                card["kind"] = str(meta.get("kind") or "consult").strip() or "consult"
+            cards.append(card)
         return cards
 
     def list_materials(
@@ -266,6 +269,7 @@ class MaterialsService:
             "branch": code,
             "view": query.view,
             "issues": self._issues(snapshot),
+            "didactic": setting_map("didactic"),
             "items": [row.to_dict() for row in page_items],
             "summary": {
                 "excess_product_count": len({row.product_code for row in snapshot.excess}),

@@ -12,6 +12,9 @@ from production_control_app.application.services.delivery_map_drawing_service im
 )
 from production_control_app.application.services.delivery_map_service import DeliveryMapService
 from production_control_app.application.services.demand_service import DemandService
+from production_control_app.application.services.finished_product_shortage_service import (
+    FinishedProductShortageService,
+)
 from production_control_app.application.services.materials_service import MaterialsService
 from production_control_app.application.services.machine_load_service import MachineLoadService
 from production_control_app.application.services.overview_service import OverviewService
@@ -116,6 +119,15 @@ def build_materials_service(
     gateway: DelpiProductionGateway | None = None,
 ) -> MaterialsService:
     return MaterialsService(
+        gateway or DelpiProductionGateway(),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_finished_product_shortage_service(
+    gateway: DelpiProductionGateway | None = None,
+) -> FinishedProductShortageService:
+    return FinishedProductShortageService(
         gateway or DelpiProductionGateway(),
         branch_access=build_branch_access_service(),
     )

@@ -12,6 +12,7 @@ export type PpcRoute = {
   demandStatus: string | null;
   materialsSearch: string | null;
   materialsIssue: string | null;
+  materialsStatus: string | null;
   deliveryMapSearch: string | null;
   requestNumber: string | null;
   requestItem: string | null;
@@ -21,7 +22,8 @@ export type PpcRoute = {
 
 /** Status da linha de demanda aceitos na URL — espelham o contrato do BFF. */
 const DEMAND_STATUSES = new Set(["late", "at_risk", "covered_by_order", "covered_by_stock"]);
-const MATERIALS_ISSUES = new Set(["excess", "shortage"]);
+const MATERIALS_ISSUES = new Set(["excess", "shortage", "pa-shortage"]);
+const MATERIALS_SET_STATUSES = new Set(["shortage", "no_commitment", "ok", "all"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -55,6 +57,7 @@ function parseSearch(search: string): {
   demandStatus: string | null;
   materialsSearch: string | null;
   materialsIssue: string | null;
+  materialsStatus: string | null;
   deliveryMapSearch: string | null;
   requestNumber: string | null;
   requestItem: string | null;
@@ -75,6 +78,10 @@ function parseSearch(search: string): {
     demandStatus: DEMAND_STATUSES.has(statusRaw) ? statusRaw : null,
     materialsSearch: sharedSearch,
     materialsIssue: MATERIALS_ISSUES.has(issueRaw) ? issueRaw : null,
+    materialsStatus:
+      MATERIALS_ISSUES.has(issueRaw) && issueRaw === "pa-shortage" && MATERIALS_SET_STATUSES.has(statusRaw)
+        ? statusRaw
+        : null,
     deliveryMapSearch: sharedSearch,
     requestNumber: params.get("request")?.trim() || null,
     requestItem: params.get("item")?.trim() || null,
@@ -101,6 +108,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     demandStatus: query.demandStatus,
     materialsSearch: query.materialsSearch,
     materialsIssue: query.materialsIssue,
+    materialsStatus: query.materialsStatus,
     deliveryMapSearch: query.deliveryMapSearch,
     requestNumber: query.requestNumber,
     requestItem: query.requestItem,
@@ -132,6 +140,7 @@ export function buildPpcHref(input: {
   demandStatus?: string | null;
   materialsSearch?: string | null;
   materialsIssue?: string | null;
+  materialsStatus?: string | null;
   deliveryMapSearch?: string | null;
   requestNumber?: string | null;
   requestItem?: string | null;
@@ -151,6 +160,9 @@ export function buildPpcHref(input: {
   if (input.demandStatus) params.set("status", input.demandStatus);
   if (input.materialsSearch) params.set("q", input.materialsSearch);
   if (input.materialsIssue) params.set("issue", input.materialsIssue);
+  if (input.materialsIssue === "pa-shortage" && input.materialsStatus) {
+    params.set("status", input.materialsStatus);
+  }
   if (input.deliveryMapSearch) params.set("q", input.deliveryMapSearch);
   if (input.requestNumber) params.set("request", input.requestNumber);
   if (input.requestItem) params.set("item", input.requestItem);

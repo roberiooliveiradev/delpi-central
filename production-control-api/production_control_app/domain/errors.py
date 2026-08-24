@@ -16,6 +16,14 @@ class InvalidBranch(ProductionControlError):
 class DelpiGatewayError(ProductionControlError):
     """Falha ao consultar a api-delpi."""
 
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class InvalidProductCode(ProductionControlError):
+    """Código de PA fora do contrato da consulta (mínimo 8 dígitos)."""
+
 
 class DetectorNotFound(ProductionControlError):
     """Detector fora do catálogo da Análise de problemas."""

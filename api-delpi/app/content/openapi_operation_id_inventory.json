@@ -2885,6 +2885,13 @@
       "stable": true
     },
     {
+      "operationId": "get_product_raw_material_set_shortages",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-set-shortages",
+      "tag": "products",
+      "stable": true
+    },
+    {
       "operationId": "get_product_purchase_budget_history",
       "method": "GET",
       "path": "/products/{code}/purchase-budget-history",

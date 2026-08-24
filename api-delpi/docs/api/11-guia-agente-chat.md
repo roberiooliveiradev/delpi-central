@@ -49,6 +49,7 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | Situação produtiva (PA/PI/OP/apontamentos) | `GET /products/{code}/production-status` | `get_product_production_status` |
 | Expedição / inspeção final do PA | `GET /products/{code}/shipping-status` | `get_product_shipping_status` |
 | Status fabril completo do produto | `GET /products/{code}/factory-status` | `get_product_factory_status` |
+| Ruptura de MP no conjunto do PA | `GET /products/{code}/raw-material-set-shortages` | `get_product_raw_material_set_shortages` |
 | Pareto MPs / simulação reajuste (PA) | `GET /products/{code}/cost-impact-simulation` | `get_product_cost_impact_simulation` |
 | Onde é usado / produto pai | `GET /products/{code}/parents` | `get_product_parents` |
 | Preço / tabela | `GET /products/{code}/pricing` | `get_product_pricing` |

@@ -2798,6 +2798,23 @@
       },
       "category": "products"
     },
+    "get_product_raw_material_set_shortages": {
+      "locale": {
+        "en": {
+          "summary": "Raw-material shortages in the finished-product order set",
+          "description": "Lists mother production orders of a finished product whose raw materials will go negative on the projected extract.",
+          "label": "Raw-material set shortages",
+          "whenToUse": "Use when asking which open orders of a finished product will lack raw material."
+        },
+        "pt-BR": {
+          "label": "Ruptura de matéria-prima no conjunto do PA",
+          "summary": "Ruptura de matéria-prima no conjunto do PA",
+          "description": "Lista as OPs mãe do produto acabado cujas matérias-primas ficam negativas no extrato projetado.",
+          "whenToUse": "Use para saber quais OPs abertas do PA vão faltar matéria-prima."
+        }
+      },
+      "category": "products"
+    },
     "get_product_sales_billing": {
       "locale": {
         "en": {

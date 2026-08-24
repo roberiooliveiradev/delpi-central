@@ -150,14 +150,17 @@ export type DemandHorizonBucket = {
   late: boolean;
 };
 
-export type MaterialsIssueId = "excess" | "shortage";
+export type MaterialsIssueId = "excess" | "shortage" | "pa-shortage";
+
+export type MaterialsSetStatus = "shortage" | "no_commitment" | "ok" | "all";
 
 export type MaterialsIssue = {
   id: MaterialsIssueId;
   title: string;
   description: string;
   severity: string;
-  product_count: number;
+  product_count?: number;
+  kind?: "consult" | "count";
 };
 
 export type MaterialsLine = {
@@ -197,10 +200,83 @@ export type MaterialsShortageLine = {
   shortage_quantity: number;
 };
 
+export type FinishedProductShortageLedgerRow = {
+  sequence: number;
+  event_date: string | null;
+  origin: string;
+  origin_label: string;
+  reference: string;
+  finished_production_order?: string | null;
+  inflow: number;
+  outflow: number;
+  running_balance: number;
+};
+
+export type FinishedProductShortageMaterial = {
+  product_code: string;
+  product_description: string;
+  unit: string;
+  status: Exclude<MaterialsSetStatus, "all">;
+  shortage_date: string | null;
+  shortage_quantity: number;
+  needed_quantity?: number;
+  consuming_production_order: string;
+  available_stock?: number;
+  safety_stock?: number;
+  structure_quantity?: number;
+};
+
+export type FinishedProductShortageSet = {
+  production_order: string;
+  order_number?: string;
+  order_item?: string;
+  planned_start_date: string | null;
+  due_date: string | null;
+  planned_quantity?: number;
+  open_quantity?: number;
+  status: Exclude<MaterialsSetStatus, "all">;
+  short_material_count?: number;
+  materials: FinishedProductShortageMaterial[];
+};
+
+export type FinishedProductShortagePayload = {
+  branch: string;
+  state: "ok" | "not_found" | "not_finished_product" | "no_open_sets";
+  message: string;
+  product: {
+    product_code: string;
+    product_description: string;
+    product_type?: string;
+  };
+  summary: {
+    open_set_count: number;
+    at_risk_set_count: number;
+    short_mp_count: number;
+    first_shortage_date: string | null;
+    ok_set_count: number;
+    no_commitment_set_count: number;
+  };
+  sets: FinishedProductShortageSet[];
+  materials: Array<{
+    product_code: string;
+    product_description?: string;
+    unit?: string;
+    ledger: FinishedProductShortageLedgerRow[];
+  }>;
+  didactic: {
+    steps: Array<{ step: number; title: string; body: string }>;
+  };
+  filters: {
+    product: string;
+    status: MaterialsSetStatus;
+  };
+};
+
 export type MaterialsPayload = {
   branch: string;
-  view: MaterialsIssueId;
+  view: Exclude<MaterialsIssueId, "pa-shortage">;
   issues: MaterialsIssue[];
+  didactic?: FinishedProductShortagePayload["didactic"];
   items: Array<MaterialsLine | MaterialsShortageLine>;
   summary: {
     excess_product_count: number;
@@ -211,7 +287,7 @@ export type MaterialsPayload = {
     search: string;
     sort: string;
     direction: "asc" | "desc";
-    view: MaterialsIssueId;
+    view: Exclude<MaterialsIssueId, "pa-shortage">;
   };
   pagination: {
     page: number;

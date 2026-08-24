@@ -280,6 +280,17 @@ class DelpiProductionGateway:
             params={"branch": branch},
         )
 
+    def fetch_finished_product_shortages(
+        self, *, product_code: str, branch: str
+    ) -> dict[str, Any]:
+        """Ruptura de MP no conjunto do PA — TOTVS puro, sem regra de tela do PCP."""
+        code = str(product_code or "").strip()
+        return self._request(
+            "GET",
+            f"/products/{code}/raw-material-set-shortages",
+            params={"branch": branch},
+        )
+
     def fetch_recently_closed_orders(self, *, days: int) -> dict[str, Any]:
         """Linhas SC6 encerradas no lookback (``C6_DATFAT``) — TOTVS puro."""
         return self._request(
@@ -320,7 +331,7 @@ class DelpiProductionGateway:
                 message = body.get("message") or body.get("detail") or message
             except Exception:
                 pass
-            raise DelpiGatewayError(str(message))
+            raise DelpiGatewayError(str(message), status_code=response.status_code)
         try:
             payload = response.json()
         except Exception as exc:

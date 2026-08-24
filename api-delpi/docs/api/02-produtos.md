@@ -225,6 +225,26 @@ Retorna blocos `structure`, `raw_material_stock`, `production`, `shipping`, `ind
 
 ---
 
+## GET /products/{code}/raw-material-set-shortages
+
+Consulta as OPs **mãe** abertas do PA e diz quais vão faltar matéria-prima. A conta é a do extrato de estoque de segurança: saldo `01+98+99` + SC7 − SD4; ruptura quando o saldo projetado fica negativo no empenho daquele conjunto.
+
+`operationId`: `get_product_raw_material_set_shortages`.  
+`meta.entity`: `product_raw_material_set_shortages` · `meta.shape`: `composite_analysis`.
+
+| Query | Descrição |
+|---|---|
+| `branch` | Filial TOTVS (`01` ou `02`) — obrigatória. |
+| `max_depth` | Profundidade da BOM (default `8`). |
+
+A OP mãe do empenho usa a chave canônica `LEFT(D4_OP, 8) + '001'` ([ordem-producao-chave.md](padroes-totvs/ordem-producao-chave.md)). OP aberta = saldo `C2_QUANT > C2_QUJE` e `C2_DATRF` vazio. SC1 **não** entra na projeção. ESTSEG vem só como contexto.
+
+**Não confundir** com `/factory-status` (estoque para montar 1 PA hoje) nem com `/supplies/safety-stock/items/{code}/details` (eixo MP).
+
+Consumidor: BFF `production-control-api` (`GET /materials/finished-product-shortages`).
+
+---
+
 ## GET /products/{code}/structure/excel
 
 Exporta estrutura em Excel. `operationId`: `get_product_structure_excel`.  

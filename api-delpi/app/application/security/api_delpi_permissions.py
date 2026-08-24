@@ -171,6 +171,15 @@ PRODUCTION_APPOINTMENTS_VIEW = "production-appointments.view"
 PRODUCTION_APPOINTMENTS_VIEW_FILIAL_SC = "production-appointments.view.filial-sc"
 PRODUCTION_APPOINTMENTS_VIEW_FILIAL_ES = "production-appointments.view.filial-es"
 
+# --- Portal PCP (production-control) ---
+PRODUCTION_CONTROL_ACCESS = "production-control.access"
+PRODUCTION_CONTROL_VIEW_FILIAL_01 = "production-control.view.filial-01"
+PRODUCTION_CONTROL_VIEW_FILIAL_02 = "production-control.view.filial-02"
+PRODUCTION_CONTROL_BRANCH_VIEW_PERMS = {
+    "01": PRODUCTION_CONTROL_VIEW_FILIAL_01,
+    "02": PRODUCTION_CONTROL_VIEW_FILIAL_02,
+}
+
 # --- análise de estoque de segurança ---
 SAFETY_STOCK_ACCESS = "estoque-seguranca.access"
 SAFETY_STOCK_VIEW_FILIAL_SC = "estoque-seguranca.view.filial-sc"

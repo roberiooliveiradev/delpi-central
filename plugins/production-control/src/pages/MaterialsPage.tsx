@@ -3,10 +3,11 @@ import {
   NavigationCard,
   navigationCardBemClasses,
 } from "@delpi/plugin-ui/index";
-import { PackageMinus, PackageX } from "lucide-react";
+import { Layers, PackageMinus, PackageX } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { DataTableSection } from "../components/dataTableUi";
+import { FinishedProductShortagePanel } from "../components/FinishedProductShortagePanel";
 import { MaterialsDetailModal } from "../components/MaterialsDetailModal";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { copy } from "../content/copy";
@@ -15,9 +16,15 @@ import { MATERIALS_DEFAULT_FILTERS, useMaterials, type MaterialsFilters } from "
 import type {
   MaterialsIssueId,
   MaterialsLine,
+  MaterialsSetStatus,
   MaterialsShortageLine,
   PpcBranch,
 } from "../types";
+import {
+  asMaterialsSetStatus,
+  asMaterialsWorkspace,
+  finishedProductShortageQueryCode,
+} from "../utils/finishedProductShortageQuery";
 import { downloadMaterialsExcel } from "../utils/materialsExcel";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
@@ -48,81 +55,114 @@ type MaterialsPageProps = {
   branch: PpcBranch;
   issue: string | null;
   search: string | null;
+  status: string | null;
   requestNumber: string | null;
   requestItem: string | null;
 };
 
-function asIssue(value: string | null): MaterialsIssueId {
-  return value === "shortage" ? "shortage" : "excess";
-}
-
-function defaultSortFor(view: MaterialsIssueId): string {
+function defaultSortFor(view: Exclude<MaterialsIssueId, "pa-shortage">): string {
   return view === "shortage" ? "shortage_quantity" : "required_date";
 }
 
-function syncMaterialsUrl(
-  branch: PpcBranch,
-  filters: MaterialsFilters,
-  selected: MaterialsLine | MaterialsShortageLine | null,
-) {
-  navigatePpc(
-    buildPpcHref({
-      subpluginId: "materials",
-      branch,
-      materialsIssue: filters.view,
-      materialsSearch: filters.search || null,
-      requestNumber:
-        selected && "request_number" in selected ? selected.request_number : null,
-      requestItem: selected && "request_item" in selected ? selected.request_item : null,
-    }),
-  );
+function issueIcon(id: MaterialsIssueId) {
+  if (id === "shortage") return <PackageX size={20} strokeWidth={1.75} />;
+  if (id === "pa-shortage") return <Layers size={20} strokeWidth={1.75} />;
+  return <PackageMinus size={20} strokeWidth={1.75} />;
+}
+
+function issueEyebrow(card: { id: MaterialsIssueId; severity: string; product_count?: number }) {
+  const severity = severityLabel[card.severity] ?? "";
+  if (card.id === "pa-shortage" || card.product_count == null) {
+    return `${severity} · ${copy.materials.consultEyebrow}`;
+  }
+  return `${severity} · ${copy.materials.issueCount(card.product_count)}`;
 }
 
 export function MaterialsPage({
   branch,
   issue,
   search,
+  status,
   requestNumber,
   requestItem,
 }: MaterialsPageProps) {
-  const initialView = asIssue(issue);
+  const workspace = asMaterialsWorkspace(issue);
+  const tableView: Exclude<MaterialsIssueId, "pa-shortage"> =
+    workspace === "shortage" ? "shortage" : "excess";
   const [filters, setFilters] = useState<MaterialsFilters>({
     ...MATERIALS_DEFAULT_FILTERS,
-    view: initialView,
-    sort: defaultSortFor(initialView),
-    search: search ?? requestNumber ?? "",
+    view: tableView,
+    sort: defaultSortFor(tableView),
+    search: workspace === "pa-shortage" ? "" : (search ?? requestNumber ?? ""),
   });
   const [searchDraft, setSearchDraft] = useState(filters.search);
   const [selected, setSelected] = useState<MaterialsLine | MaterialsShortageLine | null>(null);
+  const [paDraft, setPaDraft] = useState(workspace === "pa-shortage" ? (search ?? "") : "");
+  const [paQuery, setPaQuery] = useState(finishedProductShortageQueryCode(workspace, search));
+  const [setStatus, setSetStatus] = useState<MaterialsSetStatus>(asMaterialsSetStatus(status));
   const { data, loading, refreshing, error, reload } = useMaterials(branch, filters);
   const materials = copy.materials;
 
   useEffect(() => {
-    const nextView = asIssue(issue);
+    const nextWorkspace = asMaterialsWorkspace(issue);
+    const nextTable: Exclude<MaterialsIssueId, "pa-shortage"> =
+      nextWorkspace === "shortage" ? "shortage" : "excess";
     setFilters((current) => ({
       ...current,
-      view: nextView,
-      sort: current.view === nextView ? current.sort : defaultSortFor(nextView),
+      view: nextTable,
+      sort: current.view === nextTable ? current.sort : defaultSortFor(nextTable),
+      search: nextWorkspace === "pa-shortage" ? "" : current.search,
       page: 1,
     }));
     setSelected(null);
   }, [branch, issue]);
 
   useEffect(() => {
+    if (asMaterialsWorkspace(issue) !== "pa-shortage") return;
+    const nextDraft = search ?? "";
+    setPaDraft(nextDraft);
+    setPaQuery(finishedProductShortageQueryCode("pa-shortage", nextDraft));
+    setSetStatus(asMaterialsSetStatus(status));
+  }, [branch, issue, search, status]);
+
+  useEffect(() => {
+    if (workspace === "pa-shortage") return;
     const timer = window.setTimeout(() => {
       setFilters((current) =>
         current.search === searchDraft ? current : { ...current, search: searchDraft, page: 1 },
       );
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [searchDraft]);
+  }, [searchDraft, workspace]);
 
   useEffect(() => {
-    syncMaterialsUrl(branch, filters, selected);
-  }, [branch, filters, selected]);
+    if (workspace === "pa-shortage") {
+      navigatePpc(
+        buildPpcHref({
+          subpluginId: "materials",
+          branch,
+          materialsIssue: "pa-shortage",
+          materialsSearch: paQuery || null,
+          materialsStatus: setStatus === "all" ? null : setStatus,
+        }),
+      );
+      return;
+    }
+    navigatePpc(
+      buildPpcHref({
+        subpluginId: "materials",
+        branch,
+        materialsIssue: filters.view,
+        materialsSearch: filters.search || null,
+        requestNumber:
+          selected && "request_number" in selected ? selected.request_number : null,
+        requestItem: selected && "request_item" in selected ? selected.request_item : null,
+      }),
+    );
+  }, [branch, filters, paQuery, selected, setStatus, workspace]);
 
   useEffect(() => {
-    if (!data || selected || filters.view !== "excess") return;
+    if (!data || selected || workspace === "pa-shortage" || filters.view !== "excess") return;
     const { requestNumber: requestFromUrl, requestItem: itemFromUrl } =
       readMaterialsDetailDeepLink(window.location.search);
     if (!requestFromUrl) return;
@@ -133,10 +173,9 @@ export function MaterialsPage({
         (!itemFromUrl || row.request_item === itemFromUrl),
     );
     if (match) setSelected(match);
-  }, [data, selected, search, requestNumber, requestItem, filters.view]);
+  }, [data, selected, search, requestNumber, requestItem, filters.view, workspace]);
 
   const handleCloseDetail = () => {
-    syncMaterialsUrl(branch, filters, null);
     setSelected(null);
   };
 
@@ -145,6 +184,18 @@ export function MaterialsPage({
 
   const openIssue = (id: MaterialsIssueId) => {
     setSelected(null);
+    if (id === "pa-shortage") {
+      navigatePpc(
+        buildPpcHref({
+          subpluginId: "materials",
+          branch,
+          materialsIssue: "pa-shortage",
+          materialsSearch: paQuery || null,
+          materialsStatus: setStatus === "all" ? null : setStatus,
+        }),
+      );
+      return;
+    }
     setFilters((current) => ({
       ...current,
       view: id,
@@ -154,7 +205,7 @@ export function MaterialsPage({
   };
 
   const issues = data?.issues ?? [];
-  const view = data?.view ?? filters.view;
+  const view = workspace === "pa-shortage" ? "pa-shortage" : (data?.view ?? filters.view);
   const rows = data?.items ?? [];
   const isShortage = view === "shortage";
 
@@ -272,7 +323,9 @@ export function MaterialsPage({
         titleHint={helpTooltips.materials}
         branch={branch}
         subpluginId="materials"
-        materialsIssue={filters.view}
+        materialsIssue={workspace}
+        materialsSearch={workspace === "pa-shortage" ? paQuery || null : filters.search || null}
+        materialsStatus={workspace === "pa-shortage" && setStatus !== "all" ? setStatus : null}
         onRefresh={reload}
         refreshBusy={refreshing}
       />
@@ -299,14 +352,8 @@ export function MaterialsPage({
               >
                 <NavigationCard
                   classNames={navCardClassNames}
-                  icon={
-                    card.id === "shortage" ? (
-                      <PackageX size={20} strokeWidth={1.75} />
-                    ) : (
-                      <PackageMinus size={20} strokeWidth={1.75} />
-                    )
-                  }
-                  eyebrow={`${severityLabel[card.severity] ?? ""} · ${materials.issueCount(card.product_count)}`}
+                  icon={issueIcon(card.id)}
+                  eyebrow={issueEyebrow(card)}
                   title={card.title}
                   description={card.description}
                   onClick={() => openIssue(card.id)}
@@ -315,7 +362,18 @@ export function MaterialsPage({
             ))}
           </section>
 
-          {isShortage ? (
+          {workspace === "pa-shortage" ? (
+            <FinishedProductShortagePanel
+              branch={branch}
+              productQuery={paQuery}
+              draft={paDraft}
+              status={setStatus}
+              didactic={data.didactic}
+              onDraftChange={setPaDraft}
+              onSubmit={setPaQuery}
+              onStatusChange={setSetStatus}
+            />
+          ) : isShortage ? (
             <DataTableSection<MaterialsShortageLine>
               title={materials.shortageTableTitle}
               hint={materials.shortageTableHint}
