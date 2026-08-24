@@ -20,12 +20,7 @@ export function formatGeneratedAt(value: string) {
   }).format(date);
 }
 
-export function formatAppType(type: string) {
-  if (type === "iframe") return "Iframe";
-  if (type === "microfrontend") return "Microfrontend";
-  if (type === "backend-only") return "Backend-only";
-  return type;
-}
+export { formatAppType } from "../appTypeLabels";
 
 /** Apps com interface no portal — base para adoção e fantasmas. */
 export function getTrackableActiveApps(stats: AdminStatistics): number {

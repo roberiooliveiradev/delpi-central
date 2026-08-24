@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { HttpError } from "../../../data/apiClient";
-import type { AdminApp } from "../../../data/adminApi";
+import type { AdminApp, AppManifestType } from "../../../data/adminApi";
 
 import { useAdminApi } from "../../../hooks/useAdminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
@@ -22,6 +22,7 @@ import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import { resolveIcon } from "../../../utils/iconResolver";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
+import { APP_TYPE_OPTIONS, formatAppType } from "../appTypeLabels";
 import { Button, Input } from "../../../ui-kit";
 
 type AppSortField =
@@ -54,16 +55,6 @@ const SORT_OPTIONS: { field: AppSortField; label: string }[] = [
 ];
 
 const PAGE_SIZE = 10;
-
-const normalizeAppTypeLabel = (type?: string | null) => {
-  if (!type) return "Não informado";
-
-  if (type === "iframe") return "Iframe";
-  if (type === "microfrontend") return "Microfrontend";
-  if (type === "backend-only") return "Backend-only";
-
-  return type;
-};
 
 const getAppStatusLabel = (app: AdminApp) => {
   return app.active === false ? "Inativa" : "Ativa";
@@ -134,6 +125,11 @@ const hasActiveDateFilters = (filters: AppDateFilters) =>
       filters.updatedTo
   );
 
+const hasActiveFilters = (
+  filters: AppDateFilters,
+  typeFilter?: AppManifestType
+) => hasActiveDateFilters(filters) || Boolean(typeFilter);
+
 export const AppsTab = () => {
   const navigate = useNavigate();
   const showAlert = useAppAlert();
@@ -153,6 +149,7 @@ export const AppsTab = () => {
 
   const [dateFilters, setDateFilters] =
     useState<AppDateFilters>(EMPTY_DATE_FILTERS);
+  const [typeFilter, setTypeFilter] = useState<AppManifestType | undefined>();
 
   const api = useAdminApi();
 
@@ -168,6 +165,7 @@ export const AppsTab = () => {
         createdTo: dateFilters.createdTo || undefined,
         updatedFrom: dateFilters.updatedFrom || undefined,
         updatedTo: dateFilters.updatedTo || undefined,
+        type: typeFilter,
       }),
     PAGE_SIZE,
     [
@@ -178,6 +176,7 @@ export const AppsTab = () => {
       dateFilters.createdTo,
       dateFilters.updatedFrom,
       dateFilters.updatedTo,
+      typeFilter,
     ]
   );
 
@@ -227,8 +226,14 @@ export const AppsTab = () => {
     appsResource.setPage(1);
   };
 
-  const clearDateFilters = () => {
+  const toggleTypeFilter = (value: AppManifestType) => {
+    setTypeFilter((prev) => (prev === value ? undefined : value));
+    appsResource.setPage(1);
+  };
+
+  const clearFilters = () => {
     setDateFilters(EMPTY_DATE_FILTERS);
+    setTypeFilter(undefined);
     appsResource.setPage(1);
   };
 
@@ -380,6 +385,19 @@ export const AppsTab = () => {
         filterSlot={
           <>
             <div className="admin-entity-filters__group">
+              <span className="admin-entity-filters__label">Tipo:</span>
+              {APP_TYPE_OPTIONS.map(({ value, label }) => (
+                <Button
+                  key={value}
+                  size="sm"
+                  pressed={typeFilter === value}
+                  onClick={() => toggleTypeFilter(value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <div className="admin-entity-filters__group">
               <span className="admin-entity-filters__label">Criado em:</span>
               <Input
                 type="date"
@@ -427,9 +445,9 @@ export const AppsTab = () => {
                 aria-label="Data final de atualização"
               />
             </div>
-            {hasActiveDateFilters(dateFilters) ? (
-              <Button variant="ghost" size="sm" onClick={clearDateFilters}>
-                Limpar filtros de data
+            {hasActiveFilters(dateFilters, typeFilter) ? (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                Limpar filtros
               </Button>
             ) : null}
           </>
@@ -485,7 +503,7 @@ export const AppsTab = () => {
             tone: app.active === false ? "danger" : "success",
           },
           {
-            label: normalizeAppTypeLabel(app.type),
+            label: formatAppType(app.type),
           },
         ]}
         renderDescription={(app) => (

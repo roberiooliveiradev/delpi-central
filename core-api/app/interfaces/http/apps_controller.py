@@ -30,6 +30,7 @@ from app.application.use_cases.bulk_delete_routes_use_case import BulkDeleteRout
 
 from app.application.validators.manifest_validator import ManifestValidator
 
+from app.domain.plugins.plugin_types import ALLOWED_PLUGIN_TYPES
 from app.interfaces.http.utils.errors import unauthorized, forbidden, bad_request, not_found
 
 from app.interfaces.http.security.authorization import (
@@ -116,6 +117,16 @@ def list_apps():
     updated_to = _parse_optional_date_end(
         request.args.get("updated_to") or request.args.get("updatedTo")
     )
+    app_type = request.args.get("type")
+    if app_type is not None:
+        app_type = app_type.strip()
+        if not app_type:
+            app_type = None
+        elif app_type not in ALLOWED_PLUGIN_TYPES:
+            return bad_request(
+                "Parâmetro type inválido. Valores aceitos: "
+                "microfrontend, iframe, backend-only."
+            )
 
     with SqlAlchemyUnitOfWork() as uow:
         uc = ListAdminAppsUseCase(uow)
@@ -130,6 +141,7 @@ def list_apps():
             created_to=created_to,
             updated_from=updated_from,
             updated_to=updated_to,
+            app_type=app_type,
         )
 
     total_pages = (total + page_size - 1) // page_size

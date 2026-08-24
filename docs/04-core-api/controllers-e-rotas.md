@@ -142,7 +142,15 @@ Arquivo: `apps_controller.py`
 
 ### Listagem paginada
 
-`GET /admin/apps?page=1&page_size=10&q=&sort=name&direction=asc`
+`GET /admin/apps?page=1&page_size=10&q=&sort=name&direction=asc&type=microfrontend`
+
+Query params opcionais de filtro:
+
+| Param | Valores |
+|-------|---------|
+| `type` | `microfrontend`, `iframe`, `backend-only` |
+
+Valores inválidos em `type` retornam **400**.
 
 ```json
 {

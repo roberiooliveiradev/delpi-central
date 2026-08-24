@@ -33,11 +33,14 @@ export type ListUsersQueryOptions = ListQueryOptions & {
   groupId?: string;
 };
 
+export type AppManifestType = "microfrontend" | "iframe" | "backend-only";
+
 export type ListAppsQueryOptions = ListQueryOptions & {
   createdFrom?: string;
   createdTo?: string;
   updatedFrom?: string;
   updatedTo?: string;
+  type?: AppManifestType;
 };
 
 export type AdminUser = {
@@ -450,6 +453,7 @@ export class AdminApi {
     if (options?.createdTo) params.append("created_to", options.createdTo);
     if (options?.updatedFrom) params.append("updated_from", options.updatedFrom);
     if (options?.updatedTo) params.append("updated_to", options.updatedTo);
+    if (options?.type) params.append("type", options.type);
 
     const qs = params.toString();
 

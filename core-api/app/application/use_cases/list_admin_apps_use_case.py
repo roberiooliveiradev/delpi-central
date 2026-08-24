@@ -21,6 +21,7 @@ class ListAdminAppsUseCase:
         created_to: datetime | None = None,
         updated_from: datetime | None = None,
         updated_to: datetime | None = None,
+        app_type: str | None = None,
     ):
         return self.uow.admin_apps.list_paginated(
             page=page,
@@ -32,4 +33,5 @@ class ListAdminAppsUseCase:
             created_to=created_to,
             updated_from=updated_from,
             updated_to=updated_to,
+            app_type=app_type,
         )
