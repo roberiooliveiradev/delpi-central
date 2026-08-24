@@ -56,6 +56,40 @@ class ChatEntityCapabilityCatalogService:
         return str(route_id).strip() or None
 
     @classmethod
+    def enrich_insight_scopes(cls, artifact_key: str) -> tuple[str, ...]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "enrichInsightScopes") or {}
+
+        if not isinstance(node, dict):
+            return ()
+
+        scopes = node.get(str(artifact_key or "").strip())
+
+        if not isinstance(scopes, list) or not scopes:
+            scopes = node.get("default")
+
+        if not isinstance(scopes, list):
+            return ()
+
+        return tuple(str(item).strip() for item in scopes if str(item).strip())
+
+    @classmethod
+    def artifact_enrich_key(cls, entity: str | None, profile_key: str | None = None) -> str:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "artifactToEnrichKey") or {}
+
+        if isinstance(node, dict):
+            entity_key = str(entity or "").strip()
+
+            if entity_key and entity_key in node:
+                return str(node[entity_key]).strip()
+
+            profile = str(profile_key or "").strip()
+
+            if profile and profile in node:
+                return str(node[profile]).strip()
+
+        return "default"
+
+    @classmethod
     def available(
         cls,
         *,

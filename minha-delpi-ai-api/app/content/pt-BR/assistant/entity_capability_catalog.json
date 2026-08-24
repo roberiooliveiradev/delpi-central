@@ -41,7 +41,7 @@
       ]
     }
   },
-  "scopeToRouteId": {
+    "scopeToRouteId": {
     "profile": "productSummary",
     "stock": "productStock",
     "sales": "productSales",
@@ -49,5 +49,15 @@
     "parents": "productParents",
     "purchases": "productPurchases",
     "suppliers": "productSuppliers"
+  },
+  "enrichInsightScopes": {
+    "structure": ["stock", "profile"],
+    "stock": ["structure"],
+    "default": ["profile"]
+  },
+  "artifactToEnrichKey": {
+    "product_structure": "structure",
+    "product_stock": "stock",
+    "product_summary": "profile"
   }
 }
