@@ -33,6 +33,15 @@ export const ENGAGEMENT_LABELS = {
     "Rastreamento de uso desabilitado no servidor — métricas de tempo podem estar incompletas.",
 };
 
+export function formatSeriesDateLabel(isoDate: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate);
+  if (!match) {
+    return isoDate;
+  }
+
+  return `${match[3]}/${match[2]}`;
+}
+
 export function formatEngagementUserRow(user: AdminEngagementTopUser) {
   return {
     primary: user.name,

@@ -17,6 +17,7 @@ import {
   ENGAGEMENT_LABELS,
   ENGAGEMENT_PERIOD_OPTIONS,
   formatEngagementUserRow,
+  formatSeriesDateLabel,
 } from "../engagementLabels";
 import { STATS_CHART_COLORS } from "../statsTheme";
 import type { EngagementPeriodDays } from "../useAdminEngagementStats";
@@ -87,6 +88,29 @@ export function StatsUsagePage({
       {!coverage.trackingEnabled ? (
         <p className="admin-stats__coverage-notice">{ENGAGEMENT_LABELS.trackingDisabled}</p>
       ) : null}
+
+      <div className="admin-stats__charts-row admin-stats__charts-row--duo admin-stats__charts-row--trends">
+        <StatsChartCard title={ENGAGEMENT_LABELS.activeUsersSeries}>
+          <LineChart
+            points={(activity.activeUsersSeries ?? []).map((point) => ({
+              label: formatSeriesDateLabel(point.date),
+              value: point.activeUsers ?? 0,
+            }))}
+            valueLabel="usuários"
+            accent={STATS_CHART_COLORS.c1}
+          />
+        </StatsChartCard>
+        <StatsChartCard title={ENGAGEMENT_LABELS.durationSeries}>
+          <LineChart
+            points={(activity.durationSeries ?? []).map((point) => ({
+              label: formatSeriesDateLabel(point.date),
+              value: point.totalSeconds ?? 0,
+            }))}
+            formatValue={formatDuration}
+            accent={STATS_CHART_COLORS.c3}
+          />
+        </StatsChartCard>
+      </div>
 
       <StatsMiniKpiRow>
         <StatsMiniKpi tone="primary" label={ENGAGEMENT_LABELS.dau} value={activity.dau} />
@@ -171,27 +195,6 @@ export function StatsUsagePage({
             }))}
             valueLabel="aberturas"
             maxItems={8}
-          />
-        </StatsChartCard>
-      </div>
-
-      <div className="admin-stats__charts-row admin-stats__charts-row--duo">
-        <StatsChartCard title={ENGAGEMENT_LABELS.activeUsersSeries}>
-          <LineChart
-            points={(activity.activeUsersSeries ?? []).map((point) => ({
-              label: point.date,
-              value: point.activeUsers ?? 0,
-            }))}
-          />
-        </StatsChartCard>
-        <StatsChartCard title={ENGAGEMENT_LABELS.durationSeries}>
-          <LineChart
-            points={(activity.durationSeries ?? []).map((point) => ({
-              label: point.date,
-              value: point.totalSeconds ?? 0,
-            }))}
-            valueLabel=""
-            accent={STATS_CHART_COLORS.c3}
           />
         </StatsChartCard>
       </div>
