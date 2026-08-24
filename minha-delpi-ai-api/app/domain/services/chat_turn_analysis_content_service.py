@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import json
+
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_turn_grounding_content_service import (
+    ChatTurnGroundingContentService,
+)
 
 _BUNDLE = "turn_analysis"
 
@@ -47,6 +52,8 @@ class ChatTurnAnalysisContentService:
         heuristic_reason: str,
         skills_catalog: str,
         actions_catalog: str,
+        grounding_status: str = "ungrounded",
+        last_result_excerpt: dict | None = None,
     ) -> str:
         return ChatAssistantContentService.format(
             _BUNDLE,
@@ -59,7 +66,42 @@ class ChatTurnAnalysisContentService:
             heuristicReason=heuristic_reason,
             skillsCatalog=skills_catalog or "(nenhuma)",
             actionsCatalog=actions_catalog or "(nenhuma)",
+            groundingStatus=str(grounding_status or "ungrounded").strip() or "ungrounded",
+            lastResultExcerpt=cls.format_last_result_excerpt(last_result_excerpt),
         )
+
+    @classmethod
+    def format_last_result_excerpt(cls, excerpt: dict | None) -> str:
+        if not isinstance(excerpt, dict) or not excerpt:
+            return "(nenhum)"
+
+        payload = {
+            key: excerpt.get(key)
+            for key in (
+                "operationId",
+                "profileKey",
+                "entity",
+                "presentationType",
+                "title",
+                "rowCount",
+                "topKeys",
+                "preview",
+            )
+            if excerpt.get(key) is not None
+        }
+
+        if not payload:
+            return "(nenhum)"
+
+        preview = payload.get("preview")
+
+        if isinstance(preview, str):
+            max_chars = ChatTurnGroundingContentService.max_preview_chars()
+
+            if max_chars > 0 and len(preview) > max_chars:
+                payload["preview"] = f"{preview[:max_chars]}\n…"
+
+        return json.dumps(payload, ensure_ascii=False, indent=2)
 
     @classmethod
     def clarify_answer(cls, clarify_key: str | None = None) -> str:
