@@ -125,6 +125,23 @@ class ChatExternalActionOrchestrationService:
 
             return planned
 
+        if isinstance(workspace_context, dict):
+            from app.domain.services.chat_grounded_capability_planning_service import (
+                ChatGroundedCapabilityPlanningService,
+            )
+
+            grounded_planned = ChatGroundedCapabilityPlanningService.plan_actions(
+                selection_service,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                workspace_context=workspace_context,
+                previous_messages=previous_messages,
+                max_calls=max_calls,
+            )
+
+            if grounded_planned:
+                return _return_planned(grounded_planned, memory_snapshot=memory_snapshot)
+
         if forced_product_code and forced_intent:
             selected = selection_service.select_action_for_product(
                 message,
