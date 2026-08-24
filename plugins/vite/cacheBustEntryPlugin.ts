@@ -48,6 +48,27 @@ const __entry=${JSON.stringify(entryPath)};
 const __key=${sessionKey};
 const __url=new URL(location.href);
 const __recovering=__url.searchParams.has("_recover");
+const __fail=function(){
+  try{
+    var locked=sessionStorage.getItem(__key);
+    if(__recovering){
+      if(locked){
+        sessionStorage.removeItem(__key);
+        void fetch(location.href,{cache:"reload"}).finally(function(){
+          var u=new URL(location.href);
+          u.searchParams.set("_recover",String(Date.now()));
+          location.replace(u.toString());
+        });
+        return;
+      }
+    }else if(locked){
+      return;
+    }
+    sessionStorage.setItem(__key,"1");
+  }catch(e){}
+  __url.searchParams.set("_recover",String(Date.now()));
+  location.replace(__url.toString());
+};
 const __load=__recovering
   ?fetch(__entry,{cache:"reload"}).then(function(){return import(/* @vite-ignore */__entry)})
   :import(/* @vite-ignore */__entry);
@@ -57,14 +78,7 @@ __load.then(function(){
     __url.searchParams.delete("_recover");
     history.replaceState(history.state,"",__url.pathname+__url.search+__url.hash);
   }
-}).catch(function(){
-  try{
-    if(sessionStorage.getItem(__key))return;
-    sessionStorage.setItem(__key,"1");
-  }catch(e){}
-  __url.searchParams.set("_recover",String(Date.now()));
-  location.replace(__url.toString());
-});
+}).catch(__fail);
 </script>`;
 
         let next = html.replace(match[0], loader);

@@ -8,6 +8,9 @@ type PublicFallbackProps = {
   title?: string;
   /** `kiosk` (TV) usa composição em tela cheia com marca — o Stage kiosk não exibe logo. */
   chrome?: "default" | "kiosk" | "fullpage";
+  /** Falha de chunk após deploy — botão força nova recuperação. */
+  showRetry?: boolean;
+  onRetry?: () => void;
 };
 
 const DEFAULT_TITLE: Record<PublicFallbackKind, string> = {
@@ -34,6 +37,8 @@ export function PublicFallback({
   message,
   title,
   chrome = "default",
+  showRetry = false,
+  onRetry,
 }: PublicFallbackProps) {
   const isImmersive = chrome === "kiosk";
   const resolvedTitle = title?.trim() || DEFAULT_TITLE[kind];
@@ -61,6 +66,11 @@ export function PublicFallback({
         <h1 className="pub-fallback__title">{resolvedTitle}</h1>
         <p className="pub-fallback__message">{resolvedMessage}</p>
         <p className="pub-fallback__hint">{HINT[kind]}</p>
+        {showRetry && onRetry ? (
+          <button type="button" className="pub-fallback__retry" onClick={onRetry}>
+            Tentar novamente
+          </button>
+        ) : null}
       </div>
     </div>
   );

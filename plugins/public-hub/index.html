@@ -255,6 +255,22 @@
           (event && event.error && event.error.message) ||
           (event && event.message) ||
           "Erro ao carregar a página.";
+        if (
+          /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(
+            message,
+          )
+        ) {
+          try {
+            var recoverKey = "delpi-public-hub-asset-recover";
+            if (!sessionStorage.getItem(recoverKey)) {
+              sessionStorage.setItem(recoverKey, "1");
+              var recoverUrl = new URL(location.href);
+              recoverUrl.searchParams.set("_recover", String(Date.now()));
+              location.replace(recoverUrl.toString());
+              return;
+            }
+          } catch (recoverErr) {}
+        }
         root.innerHTML =
           '<div class="pub-fallback pub-fallback--fatal"><h1>Não foi possível exibir esta página</h1><p>' +
           message +

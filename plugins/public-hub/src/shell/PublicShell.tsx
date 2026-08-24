@@ -28,6 +28,10 @@ export function PublicShell() {
   useEffect(() => {
     if (!route || !page) return;
 
+    if (route.appId === "tv-dashboard" && route.pageId === "present") {
+      void import("../apps/tv-dashboard/PresentationView");
+    }
+
     if (page.documentTitle) {
       document.title = page.documentTitle;
     }

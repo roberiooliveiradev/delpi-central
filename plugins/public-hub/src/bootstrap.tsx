@@ -5,6 +5,9 @@ import {
   getReactDomClient,
   preparePluginUiRemote,
 } from "../../vite/federationShareScope";
+import { registerStaleModuleRecoverListener } from "../../vite/assetRecover";
+
+registerStaleModuleRecoverListener();
 
 await preparePluginUiRemote();
 

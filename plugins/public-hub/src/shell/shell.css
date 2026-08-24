@@ -146,6 +146,23 @@ body {
   max-width: 24rem;
 }
 
+.pub-fallback__retry {
+  margin-top: 1.25rem;
+  padding: 0.55rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--pub-accent) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pub-accent) 14%, var(--pub-surface));
+  color: var(--pub-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pub-fallback__retry:hover {
+  background: color-mix(in srgb, var(--pub-accent) 22%, var(--pub-surface));
+}
+
 /* TV wall / fullpage — composição imersiva com marca (Stage kiosk não tem logo). */
 .pub-fallback--immersive {
   min-height: 100%;

@@ -28,6 +28,8 @@ test("publicHubCacheBustEntryPlugin substitui script por import com recuperaçã
   assert.match(out, /import\(\/\* @vite-ignore \*\/__entry\)/);
   assert.match(out, /delpi-public-hub-asset-recover/);
   assert.match(out, /cache:"reload"/);
+  assert.match(out, /const __fail=function/);
+  assert.match(out, /fetch\(location\.href,\{cache:"reload"\}/);
 });
 
 test("cacheBustEntryPlugin com prefixo /assets/ para portal", () => {
