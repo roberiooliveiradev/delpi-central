@@ -68,9 +68,11 @@ describe("flattenDeliveryMapExcelRows", () => {
 });
 
 describe("deliveryMapExcelCellValues", () => {
-  it("exporta as colunas visíveis na tela (sem MP-OK e CT)", () => {
+  it("inclui MP-OK e Feedback antes de observações", () => {
     const values = deliveryMapExcelCellValues(
       row({
+        mp_ok: true,
+        work_center: "CDRL",
         observation: "apontada 1500",
         planned_qty: 6,
         pending_qty: 0.149,
@@ -83,6 +85,8 @@ describe("deliveryMapExcelCellValues", () => {
       "24/08/2026",
       6,
       0.149,
+      "X",
+      "CDRL",
       "apontada 1500",
     ]);
   });

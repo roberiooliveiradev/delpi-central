@@ -40,6 +40,7 @@ from production_control_app.domain.services.conjunto_operation_progress import (
     operation_key,
 )
 from production_control_app.domain.services.delivery_map_pull import normalize_pcp_order_rows
+from production_control_app.domain.services.production_order_key import order_belongs_to_conjunto
 
 _STATUS_FIELDS = (
     "production_status",
@@ -109,6 +110,9 @@ def _parse_payload_json(row: dict[str, Any]) -> dict[str, Any]:
     return {"orders": [], "overrides": {}}
 
 
+_INTERNAL_SNAPSHOT_FIELDS = ("refreshed_by",)
+
+
 class DeliveryMapService:
     def __init__(
         self,
@@ -135,6 +139,11 @@ class DeliveryMapService:
         start = date(year, month, 1)
         end = today + timedelta(days=days_forward)
         return start.isoformat(), end.isoformat(), end
+
+    def _progress_delivery_window(self, *, today: date) -> tuple[str | None, str]:
+        """Janela curta só para progresso vivo — atrasadas + até N dias à frente."""
+        days_forward = max(1, delivery_map_setting_int("progressHorizonDaysForward", 5))
+        return None, (today + timedelta(days=days_forward)).isoformat()
 
     def _pull_orders(self, *, branch: str, today: date) -> tuple[list[dict[str, Any]], date]:
         delivery_start, delivery_end, horizon_end = self._delivery_window(today=today)
@@ -274,6 +283,48 @@ class DeliveryMapService:
             seeded=seeded,
         )
 
+    def build_public(self, *, branch: str, search: str = "") -> dict[str, Any]:
+        """Mapa de entrega público: leitura anônima do snapshot, sem puxar o TOTVS."""
+        code = self._branch_access.assert_valid_branch(branch)
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "O mapa de entrega desta filial ainda não foi publicado pelo PCP."
+            )
+
+        timezone = delivery_map_setting_str("timezone", "America/Sao_Paulo")
+        today = today_in_timezone(timezone)
+        payload = self._present(
+            branch=code,
+            snapshot_row=row,
+            search=search,
+            today=today,
+            seeded=False,
+        )
+        return self._strip_public_identity(payload)
+
+    def build_public_progress(
+        self,
+        *,
+        branch: str,
+        production_orders: list[str],
+    ) -> dict[str, Any]:
+        """Progresso vivo anônimo — mesma regra do mapa autenticado, sem RBAC."""
+        code = self._branch_access.assert_valid_branch(branch)
+        return self._build_progress_for_branch(code, production_orders)
+
+    @staticmethod
+    def _strip_public_identity(payload: dict[str, Any]) -> dict[str, Any]:
+        public_payload = dict(payload)
+        snapshot = public_payload.get("snapshot")
+        if isinstance(snapshot, dict):
+            public_payload["snapshot"] = {
+                key: value
+                for key, value in snapshot.items()
+                if key not in _INTERNAL_SNAPSHOT_FIELDS
+            }
+        return public_payload
+
     def refresh(self, user: object | None, *, branch: str, search: str = "") -> dict[str, Any]:
         self._assert_view(user)
         code = self._branch_access.assert_valid_branch(branch)
@@ -363,177 +414,17 @@ class DeliveryMapService:
         self._assert_view(user)
         code = self._branch_access.assert_valid_branch(branch)
         self._branch_access.assert_can_view_branch(user, code)
+        return self._build_progress_for_branch(code, production_orders)
 
-        order_to_conjunto = conjunto_keys_from_orders(production_orders)
-        if not order_to_conjunto:
-            return {
-                "branch": code,
-                "items": {},
-                "polled_at": today_in_timezone(
-                    delivery_map_setting_str("timezone", "America/Sao_Paulo")
-                ).isoformat(),
-            }
-
-        conjunto_keys = set(order_to_conjunto.values())
-        fingerprint = ",".join(sorted(conjunto_keys))
-        ttl = max(5, delivery_map_setting_int("progressCacheTtlSeconds", 15))
-        cached = get_delivery_map_progress_cache(code, fingerprint)
-        if cached is not None:
-            return cached
-
-        timezone = delivery_map_setting_str("timezone", "America/Sao_Paulo")
-        today = today_in_timezone(timezone)
-        delivery_start, delivery_end, _ = self._delivery_window(today=today)
-
-        operations = self._fetch_machine_load_operations_window(
-            branch=code,
-            delivery_start=delivery_start,
-            delivery_end=delivery_end,
-            conjunto_keys=conjunto_keys,
-        )
-        operations = self._enrich_operations_live_status(branch=code, operations=operations)
-
-        grouped = filter_operations_for_conjuntos(operations, conjunto_keys)
-        progress_by_conjunto = {
-            key: compute_conjunto_progress(grouped.get(key) or [])
-            for key in conjunto_keys
-        }
-
-        items: dict[str, Any] = {}
-        for order, conjunto in order_to_conjunto.items():
-            stats = progress_by_conjunto.get(conjunto) or compute_conjunto_progress([])
-            items[order] = {
-                "conjunto_key": conjunto,
-                **stats,
-            }
-
-        payload = {
-            "branch": code,
-            "items": items,
-            "polled_at": today.isoformat(),
-        }
-        put_delivery_map_progress_cache(code, fingerprint, payload, ttl_seconds=float(ttl))
-        return payload
-
-    def _fetch_machine_load_operations_window(
+    def _build_progress_for_branch(
         self,
-        *,
-        branch: str,
-        delivery_start: str,
-        delivery_end: str,
-        conjunto_keys: set[str],
-    ) -> list[dict[str, Any]]:
-        if not conjunto_keys:
-            return []
-
-        page_size = max(1, min(delivery_map_setting_int("pageSize", 200), 200))
-        page = 1
-        collected: list[dict[str, Any]] = []
-
-        while True:
-            try:
-                payload = self._gateway.fetch_machine_load_operations(
-                    branch=branch,
-                    delivery_start=delivery_start,
-                    delivery_end=delivery_end,
-                    work_center=None,
-                    page=page,
-                    page_size=page_size,
-                )
-            except DelpiGatewayError:
-                break
-
-            data = _unwrap_data(payload)
-            batch = _dict_items(data)
-            for item in batch:
-                order = str(item.get("production_order") or "").strip()
-                for key in conjunto_keys:
-                    if order.startswith(key):
-                        collected.append(item)
-                        break
-
-            pagination = data.get("pagination") if isinstance(data.get("pagination"), dict) else {}
-            total_pages = int(pagination.get("total_pages") or 0)
-            is_complete = bool(pagination.get("is_complete"))
-            if is_complete or total_pages <= page or len(batch) < page_size:
-                break
-            page += 1
-            if page > 500:
-                break
-
-        return collected
-
-    def _enrich_operations_live_status(
-        self,
-        *,
-        branch: str,
-        operations: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        if not operations:
-            return operations
-
-        cached = get_live_status_cache(branch)
-        if cached is not None:
-            return self._apply_status_map(operations, cached)
-
-        keys = [
-            {"production_order": order, "operation_code": operation}
-            for order, operation in {operation_key(item) for item in operations}
-            if order and operation
-        ]
-        if not keys:
-            return operations
-
-        try:
-            status_payload = _unwrap_data(
-                self._gateway.fetch_machine_load_appointment_status(
-                    branch=branch,
-                    items=keys,
-                )
-            )
-        except DelpiGatewayError:
-            return operations
-        except Exception:
-            return operations
-
-        status_by_key = {operation_key(item): item for item in _dict_items(status_payload)}
-        put_live_status_cache(branch, status_by_key)
-        return self._apply_status_map(operations, status_by_key)
-
-    @staticmethod
-    def _apply_status_map(
-        operations: list[dict[str, Any]],
-        status_by_key: dict[tuple[str, str], dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        enriched: list[dict[str, Any]] = []
-        for item in operations:
-            status = status_by_key.get(operation_key(item))
-            if not status:
-                enriched.append(item)
-                continue
-            merged = dict(item)
-            for field in _STATUS_FIELDS:
-                if field in status:
-                    merged[field] = status[field]
-            enriched.append(merged)
-        return enriched
-
-    def build_progress(
-        self,
-        user: object | None,
-        *,
         branch: str,
         production_orders: list[str],
     ) -> dict[str, Any]:
-        """Progresso vivo por conjunto — independe do snapshot congelado da lista."""
-        self._assert_view(user)
-        code = self._branch_access.assert_valid_branch(branch)
-        self._branch_access.assert_can_view_branch(user, code)
-
         order_to_conjunto = conjunto_keys_from_orders(production_orders)
         if not order_to_conjunto:
             return {
-                "branch": code,
+                "branch": branch,
                 "items": {},
                 "polled_at": today_in_timezone(
                     delivery_map_setting_str("timezone", "America/Sao_Paulo")
@@ -543,21 +434,19 @@ class DeliveryMapService:
         conjunto_keys = set(order_to_conjunto.values())
         fingerprint = ",".join(sorted(conjunto_keys))
         ttl = max(5, delivery_map_setting_int("progressCacheTtlSeconds", 15))
-        cached = get_delivery_map_progress_cache(code, fingerprint)
+        cached = get_delivery_map_progress_cache(branch, fingerprint)
         if cached is not None:
             return cached
 
         timezone = delivery_map_setting_str("timezone", "America/Sao_Paulo")
         today = today_in_timezone(timezone)
-        delivery_start, delivery_end, _ = self._delivery_window(today=today)
 
-        operations = self._fetch_machine_load_operations_window(
-            branch=code,
-            delivery_start=delivery_start,
-            delivery_end=delivery_end,
+        operations = self._fetch_conjunto_operations(
+            branch=branch,
             conjunto_keys=conjunto_keys,
+            today=today,
         )
-        operations = self._enrich_operations_live_status(branch=code, operations=operations)
+        operations = self._enrich_operations_live_status(branch=branch, operations=operations)
 
         grouped = filter_operations_for_conjuntos(operations, conjunto_keys)
         progress_by_conjunto = {
@@ -574,24 +463,23 @@ class DeliveryMapService:
             }
 
         payload = {
-            "branch": code,
+            "branch": branch,
             "items": items,
             "polled_at": today.isoformat(),
         }
-        put_delivery_map_progress_cache(code, fingerprint, payload, ttl_seconds=float(ttl))
+        put_delivery_map_progress_cache(branch, fingerprint, payload, ttl_seconds=float(ttl))
         return payload
 
-    def _fetch_machine_load_operations_window(
+    def _paginate_machine_load_operations(
         self,
         *,
         branch: str,
-        delivery_start: str,
-        delivery_end: str,
-        conjunto_keys: set[str],
+        production_order: str | None = None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
+        scheduled_start: str | None = None,
+        scheduled_end: str | None = None,
     ) -> list[dict[str, Any]]:
-        if not conjunto_keys:
-            return []
-
         page_size = max(1, min(delivery_map_setting_int("pageSize", 200), 200))
         page = 1
         collected: list[dict[str, Any]] = []
@@ -602,6 +490,9 @@ class DeliveryMapService:
                     branch=branch,
                     delivery_start=delivery_start,
                     delivery_end=delivery_end,
+                    scheduled_start=scheduled_start,
+                    scheduled_end=scheduled_end,
+                    production_order=production_order,
                     work_center=None,
                     page=page,
                     page_size=page_size,
@@ -611,12 +502,7 @@ class DeliveryMapService:
 
             data = _unwrap_data(payload)
             batch = _dict_items(data)
-            for item in batch:
-                order = str(item.get("production_order") or "").strip()
-                for key in conjunto_keys:
-                    if order.startswith(key):
-                        collected.append(item)
-                        break
+            collected.extend(batch)
 
             pagination = data.get("pagination") if isinstance(data.get("pagination"), dict) else {}
             total_pages = int(pagination.get("total_pages") or 0)
@@ -628,6 +514,33 @@ class DeliveryMapService:
                 break
 
         return collected
+
+    def _fetch_conjunto_operations(
+        self,
+        *,
+        branch: str,
+        conjunto_keys: set[str],
+        today: date,
+    ) -> list[dict[str, Any]]:
+        """Operações SH8 do conjunto (PA mãe + intermediários), uma varredura paginada."""
+        if not conjunto_keys:
+            return []
+
+        delivery_start, delivery_end = self._progress_delivery_window(today=today)
+        deduped: dict[tuple[str, str], dict[str, Any]] = {}
+
+        for item in self._paginate_machine_load_operations(
+            branch=branch,
+            delivery_start=delivery_start,
+            delivery_end=delivery_end,
+        ):
+            order = item.get("production_order")
+            for conjunto_key in conjunto_keys:
+                if order_belongs_to_conjunto(order, conjunto_key):
+                    deduped[operation_key(item)] = item
+                    break
+
+        return list(deduped.values())
 
     def _enrich_operations_live_status(
         self,

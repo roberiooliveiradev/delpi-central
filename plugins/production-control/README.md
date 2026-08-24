@@ -49,7 +49,7 @@ Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
 **Materiais:** dois cards (`GET /materials`) — **Excesso de solicitações** e **Solicitações insuficientes**. O recorte ativo vai em `?issue=excess|shortage`. Excesso lista SC1 de **matéria-prima** cujo documento inteiro já está coberto por estoque + pedidos − empenhos **e** pelo ESTSEG. Falta lista produtos cuja cobertura + SC1 aberta não chega no estoque de segurança (inclui MP com ESTSEG e sem SC1). PA e PI não entram. `?q=` filtra; `?request=` + `?item=` reabre o detalhe no excesso. **Exportar Excel** baixa a página visível. Sem preço e sem escrita no TOTVS. Quem classifica é o BFF (FIFO por produto); o MFE é render-only.
 
-**Mapa de entrega:** grade estilo planilha (`GET /delivery-map`) com OPs **mãe** de PA (`8`/`9`) com saldo > 0. O primeiro bloco agrega **hoje + atrasadas**; os demais seguem a data prevista (`DT_ENTREGA`). Observações vêm do TOTVS (`observation` / `C2_OBS`). Snapshot congelado por filial — só **Atualizar** repuxa o TOTVS. Linha riscada quando já houve apontamento parcial. Barra de progresso ao lado da OP (`GET /delivery-map/progress`, polling ~15 s) com % das operações do conjunto (SH8 + status HZA vivo). **Exportar Excel** baixa o mapa visível (blocos por data, mesmas colunas da tela). `?q=` filtra OP/produto/observação.
+**Mapa de entrega:** grade estilo planilha (`GET /delivery-map`) com OPs **mãe** de PA (`8`/`9`) com saldo > 0. O primeiro bloco agrega **hoje + atrasadas**; os demais seguem a data prevista (`DT_ENTREGA`). Observações vêm do TOTVS (`observation` / `C2_OBS`); **MP-OK** e **Feedback** são marcações manuais do PCP no snapshot congelado. Snapshot congelado por filial — só **Atualizar** repuxa o TOTVS. Linha riscada quando o **conjunto** atinge 100% de progresso fabril (barra ao lado da OP). Barra de progresso (`GET /delivery-map/progress`, polling ~15 s): primeiro **Hoje + atrasadas**, depois demais OPs com entrega em até **5 dias**; demais datas ficam sem barra. **Exportar Excel** baixa o mapa visível (blocos por data, mesmas colunas da tela). `?q=` filtra OP/produto/observação/feedback.
 
 **Análise de problemas:** grade de cards, um por **detector** de exceção (`GET /problem-analysis`), e abaixo a tabela dos registros do detector aberto (`GET /problem-analysis/{detectorId}`). O deep link é `?detector=`; sem ele, abre o primeiro card do catálogo. Título, descrição, ícone e severidade vêm do BFF — o MFE é render-only e não decide o que é crítico.
 
@@ -80,7 +80,7 @@ Base: `/apps/production-control-api`
 | GET | `/materials?branch=&view=&search=&sort=&direction=&page=&pageSize=&refresh=` | Excesso ou falta de SC1 de MP vs ESTSEG |
 | GET | `/delivery-map?branch=&search=` | Mapa de entrega (snapshot congelado) |
 | POST | `/delivery-map/refresh?branch=&search=` | Repuxa OPs PA do TOTVS |
-| PATCH | `/delivery-map/overrides?branch=&search=` | Salva MP-OK / CT manuais |
+| PATCH | `/delivery-map/overrides?branch=&search=` | Salva MP-OK / Feedback manuais |
 | GET | `/machine-load?branch=&workCenter=&startDate=&endDate=` | Centros de trabalho + fila do CT ativo (snapshot) |
 | GET | `/machine-load/locate?branch=&q=` | Rastreio de conjunto (C2_NUM, 6 dígitos) ou produto (PA) |
 | POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS (janela por entrega do PA) |

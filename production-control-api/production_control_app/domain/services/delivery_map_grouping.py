@@ -32,7 +32,6 @@ def build_delivery_map_row(
     order: dict[str, Any],
     override: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    produced_qty = float(order.get("produced_qty") or 0)
     ovr = override if isinstance(override, dict) else {}
     return {
         "production_order": order.get("production_order"),
@@ -47,7 +46,8 @@ def build_delivery_map_row(
         "is_delayed": order.get("is_delayed"),
         "mp_ok": bool(ovr.get("mp_ok")),
         "work_center": str(ovr.get("work_center") or "").strip(),
-        "is_reported": produced_qty > 0,
+        # UI e Excel derivam o riscado do progresso vivo do conjunto (GET /delivery-map/progress).
+        "is_reported": False,
     }
 
 

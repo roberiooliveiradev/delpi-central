@@ -27,6 +27,9 @@ from production_control_app.interface.http.routes.overview_routes import router 
 from production_control_app.interface.http.routes.public_machine_load_routes import (
     router as public_machine_load_router,
 )
+from production_control_app.interface.http.routes.public_delivery_map_routes import (
+    router as public_delivery_map_router,
+)
 from production_control_app.interface.http.routes.problem_analysis_routes import (
     router as problem_analysis_router,
 )
@@ -113,6 +116,7 @@ app.include_router(subplugin_router)
 app.include_router(overview_router)
 app.include_router(machine_load_router)
 app.include_router(public_machine_load_router)
+app.include_router(public_delivery_map_router)
 app.include_router(problem_analysis_router)
 app.include_router(demand_router)
 app.include_router(materials_router)

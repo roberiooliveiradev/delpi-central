@@ -493,7 +493,8 @@ export const copy = {
     sectionCount: (count: number) =>
       count === 1 ? "1 OP" : `${count} OPs`,
     refreshConfirmTitle: "Atualizar mapa de entrega?",
-    refreshConfirmBody: "A lista será repuxada do TOTVS. A ordem e o agrupamento atuais serão substituídos.",
+    refreshConfirmBody:
+      "A lista será repuxada do TOTVS. MP-OK e Feedback das OPs que continuarem na lista serão preservados.",
     refreshConfirmAction: "Atualizar",
     columns: [
       { key: "op", label: "Número" },
@@ -501,10 +502,13 @@ export const copy = {
       { key: "due", label: "Dt. prevista" },
       { key: "planned", label: "Quant. original" },
       { key: "pending", label: "Saldo a entregar" },
+      { key: "mpOk", label: "MP-OK" },
+      { key: "feedback", label: "Feedback" },
       { key: "obs", label: "Observações" },
     ],
+    mpOkAria: (productionOrder: string) => `MP-OK da OP ${productionOrder}`,
+    feedbackAria: (productionOrder: string) => `Feedback da OP ${productionOrder}`,
     exportLabel: "Excel",
-    exportFileName: (branch: string) => `mapa-entrega-filial-${branch}`,
     exportSheetTitle: "Mapa de entrega",
     exportEmpty: "Não há OPs para exportar em Excel.",
     excelColumns: [
@@ -513,6 +517,8 @@ export const copy = {
       { key: "due", label: "DT. PREVISTA" },
       { key: "planned", label: "QUANT. ORIGINAL" },
       { key: "pending", label: "SALDO A ENTREGAR" },
+      { key: "mpOk", label: "MP-OK" },
+      { key: "feedback", label: "FEEDBACK" },
       { key: "obs", label: "OBSERVAÇÕES" },
     ],
     progressAria: (progress: {
@@ -526,6 +532,11 @@ export const copy = {
       }
       return `Progresso do conjunto: ${progress.percent}% (${progress.completed} de ${progress.total} operações apontadas)`;
     },
+    publicLink: "Link público",
+    publicLinkHint:
+      "Copia o link público do mapa de entrega desta filial para consulta somente leitura.",
+    publicLinkCopied: "Link copiado!",
+    publicLinkError: "Não foi possível copiar o link.",
   },
   branch: {
     label: "Filial",

@@ -8,6 +8,16 @@
   "overdueSectionLabel": "Hoje + atrasadas",
   "progressCacheTtlSeconds": 15,
   "progressPollIntervalSeconds": 15,
+  "progressHorizonDaysForward": 5,
+  "progressBatchSize": 40,
   "refreshConfirmTitle": "Atualizar mapa de entrega?",
-  "refreshConfirmBody": "A lista será repuxada do TOTVS. As marcações MP-OK e CT das OPs que continuarem na lista serão preservadas."
+  "refreshConfirmBody": "A lista será repuxada do TOTVS. As marcações MP-OK e Feedback das OPs que continuarem na lista serão preservadas.",
+  "publicDeliveryMap": {
+    "token": "aberto",
+    "messages": {
+      "invalidToken": "Link do mapa de entrega inválido ou desativado.",
+      "notPublished": "O mapa de entrega desta filial ainda não foi publicado pelo PCP.",
+      "progressBatchTooLarge": "Máximo de 40 OPs por consulta de progresso."
+    }
+  }
 }

@@ -17,6 +17,9 @@ from production_control_app.application.services.problem_analysis_settings impor
 from production_control_app.application.services.public_cockpit_access_service import (
     PublicCockpitAccessService,
 )
+from production_control_app.application.services.public_delivery_map_access_service import (
+    PublicDeliveryMapAccessService,
+)
 from production_control_app.application.services.public_machine_load_drawing_service import (
     PublicMachineLoadDrawingService,
 )
@@ -52,6 +55,10 @@ def build_branch_access_service() -> BranchAccessService:
 
 def build_public_cockpit_access_service() -> PublicCockpitAccessService:
     return PublicCockpitAccessService()
+
+
+def build_public_delivery_map_access_service() -> PublicDeliveryMapAccessService:
+    return PublicDeliveryMapAccessService()
 
 
 def build_machine_load_snapshot_repository() -> MachineLoadSnapshotRepositoryPort:

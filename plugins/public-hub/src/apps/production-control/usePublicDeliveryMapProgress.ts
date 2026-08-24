@@ -1,33 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { fetchDeliveryMapProgress } from "../api/ppcApi";
-import { copy } from "../content/copy";
-import type { DeliveryMapOpProgress, DeliveryMapPayload, PpcBranch } from "../types";
+import {
+  fetchPublicDeliveryMapProgress,
+  type DeliveryMapOpProgress,
+  type PublicDeliveryMapPayload,
+} from "./api";
 import {
   chunkDeliveryMapProgressOrders,
   collectDeliveryMapProgressOrderBatches,
   DELIVERY_MAP_PROGRESS_BATCH_SIZE,
-} from "../utils/deliveryMapProgressOrders";
+} from "./deliveryMapProgress";
 
 const POLL_MS = 15_000;
 
 async function fetchProgressForOrders(
-  branch: PpcBranch,
+  token: string,
+  branch: string,
   orders: readonly string[],
   signal: AbortSignal,
 ): Promise<Record<string, DeliveryMapOpProgress>> {
   const merged: Record<string, DeliveryMapOpProgress> = {};
   for (const chunk of chunkDeliveryMapProgressOrders(orders, DELIVERY_MAP_PROGRESS_BATCH_SIZE)) {
     if (signal.aborted) break;
-    const response = await fetchDeliveryMapProgress({ branch, orders: chunk, signal });
-    Object.assign(merged, response.items ?? {});
+    const items = await fetchPublicDeliveryMapProgress(token, branch, chunk);
+    Object.assign(merged, items);
   }
   return merged;
 }
 
-export function useDeliveryMapProgress(
-  branch: PpcBranch,
-  payload: DeliveryMapPayload | null,
+export function usePublicDeliveryMapProgress(
+  token: string,
+  branch: string,
+  payload: PublicDeliveryMapPayload | null,
 ): Record<string, DeliveryMapOpProgress> {
   const [items, setItems] = useState<Record<string, DeliveryMapOpProgress>>({});
   const batches = useMemo(() => collectDeliveryMapProgressOrderBatches(payload), [payload]);
@@ -50,6 +54,7 @@ export function useDeliveryMapProgress(
       try {
         if (priority.length > 0) {
           const priorityItems = await fetchProgressForOrders(
+            token,
             branch,
             priority,
             controller.signal,
@@ -60,6 +65,7 @@ export function useDeliveryMapProgress(
 
         if (deferred.length > 0) {
           const deferredItems = await fetchProgressForOrders(
+            token,
             branch,
             deferred,
             controller.signal,
@@ -69,7 +75,6 @@ export function useDeliveryMapProgress(
         }
       } catch {
         if (controller.signal.aborted) return;
-        /* mantém último progresso conhecido */
       }
     }
 
@@ -83,11 +88,7 @@ export function useDeliveryMapProgress(
       controller.abort();
       window.clearInterval(timer);
     };
-  }, [branch, batches, batchesKey]);
+  }, [token, branch, batches, batchesKey]);
 
   return items;
-}
-
-export function deliveryMapProgressAriaLabel(progress: DeliveryMapOpProgress): string {
-  return copy.deliveryMap.progressAria(progress);
 }

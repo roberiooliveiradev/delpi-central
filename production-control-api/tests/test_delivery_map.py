@@ -7,9 +7,13 @@ from typing import Any
 import pytest
 
 from production_control_app.application.services.delivery_map_service import DeliveryMapService
+from production_control_app.application.services.public_delivery_map_access_service import (
+    PublicDeliveryMapAccessService,
+)
 from production_control_app.domain.errors import SnapshotNotFound
 from production_control_app.domain.services.conjunto_operation_progress import (
     compute_conjunto_progress,
+    filter_operations_for_conjuntos,
 )
 from production_control_app.domain.services.delivery_map_grouping import group_delivery_map_sections
 from production_control_app.domain.services.delivery_map_merge import (
@@ -202,7 +206,7 @@ def test_patch_requires_snapshot() -> None:
         )
 
 
-def test_grouping_marks_reported_rows() -> None:
+def test_grouping_does_not_mark_partial_production_as_reported() -> None:
     today = date(2026, 8, 24)
     orders = [
         {
@@ -218,7 +222,7 @@ def test_grouping_marks_reported_rows() -> None:
         }
     ]
     sections = group_delivery_map_sections(orders, {}, today=today)
-    assert sections[0]["rows"][0]["is_reported"] is True
+    assert sections[0]["rows"][0]["is_reported"] is False
 
 
 def test_conjunto_progress_weights_started_and_in_progress() -> None:
@@ -234,3 +238,47 @@ def test_conjunto_progress_weights_started_and_in_progress() -> None:
     assert stats["completed"] == 1
     assert stats["in_progress"] == 1
     assert stats["percent"] == 38
+
+
+def test_public_delivery_map_token_matches_catalog_slug() -> None:
+    access = PublicDeliveryMapAccessService()
+
+    assert access.is_valid_token(access.token()) is True
+    assert access.is_valid_token(" ABERTO ") is True
+    assert access.is_valid_token("outro-token") is False
+
+
+def test_build_public_requires_published_snapshot() -> None:
+    service = DeliveryMapService(_FakeGateway([]), _FakeSnapshots())
+    with pytest.raises(SnapshotNotFound):
+        service.build_public(branch="01")
+
+
+def test_build_public_strips_refreshed_by() -> None:
+    snapshots = _FakeSnapshots()
+    snapshots.upsert(
+        branch="01",
+        horizon_end=date(2026, 9, 30),
+        payload={"orders": [_pcp_item()], "overrides": {}},
+        refreshed_by="pcp.user",
+    )
+    service = DeliveryMapService(_FakeGateway([]), snapshots)
+    payload = service.build_public(branch="01")
+    assert payload["summary"]["order_count"] == 1
+    assert "refreshed_by" not in payload["snapshot"]
+
+
+def test_conjunto_progress_includes_intermediary_production_orders() -> None:
+    operations = [
+        {"production_order": "10840401001", "operation_code": "10", "production_status": "started"},
+        {"production_order": "10840402001", "operation_code": "05", "production_status": "not_started"},
+        {"production_order": "10840402001", "operation_code": "06", "production_status": "not_started"},
+        {"production_order": "10840501001", "operation_code": "01", "production_status": "started"},
+    ]
+    grouped = filter_operations_for_conjuntos(operations, {"108404"})
+    stats = compute_conjunto_progress(grouped["108404"])
+
+    assert len(grouped["108404"]) == 3
+    assert stats["total"] == 3
+    assert stats["completed"] == 1
+    assert stats["percent"] == 33
