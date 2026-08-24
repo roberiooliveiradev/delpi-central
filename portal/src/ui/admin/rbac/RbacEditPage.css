@@ -151,6 +151,16 @@
   color: var(--danger);
 }
 
+.user-rbac-status-warning {
+  border-color: var(--alert-warning-border, var(--border));
+  background: var(--alert-warning-bg, color-mix(in srgb, var(--warning) 12%, transparent));
+  color: var(--warning);
+}
+
+.user-rbac-panel--access-map {
+  gap: 16px;
+}
+
 .user-rbac-stat-grid {
   display: grid;
   grid-template-columns: 1fr;

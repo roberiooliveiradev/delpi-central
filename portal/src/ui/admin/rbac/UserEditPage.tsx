@@ -7,20 +7,14 @@ import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
 import { useAdminApi } from "../../../hooks/useAdminApi";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
-import {
-  Alert,
-  Button,
-  Input,
-  PageChrome,
-  Spinner,
-  Switch,
-} from "../../../ui-kit";
+import { Alert, Button, PageChrome, Spinner } from "../../../ui-kit";
 
 import "./RbacEditPage.css";
+import { UserSummaryTab } from "./UserSummaryTab";
 import { UserUsageTab } from "./UserUsageTab";
 import { useAdminUserAccessProfile } from "./useAdminUserAccessProfile";
 import { useUserPageMode, type UserPageTab } from "./useUserPageMode";
-import { normalizeIds, userStatusLabel } from "./userEditUtils";
+import { normalizeIds } from "./userEditUtils";
 
 export const UserEditPage = () => {
   const { userId = "" } = useParams<{ userId: string }>();
@@ -187,6 +181,16 @@ export const UserEditPage = () => {
     }
   };
 
+  const openRoleAdmin = useCallback(
+    (roleId: string) => navigate(`/admin/roles/${roleId}`),
+    [navigate],
+  );
+
+  const openGroupAdmin = useCallback(
+    (groupId: string) => navigate(`/admin/groups/${groupId}`),
+    [navigate],
+  );
+
   if (loadingUser) {
     return (
       <div className="rbac-edit-page">
@@ -206,7 +210,6 @@ export const UserEditPage = () => {
     );
   }
 
-  const statusLabel = userStatusLabel(user.active);
   const busy = loadingUser || loadingEdit || saving;
 
   const tabItems = [
@@ -267,118 +270,32 @@ export const UserEditPage = () => {
           <Spinner label="Carregando dados para edição…" />
         ) : null}
 
-        {activeTab === "summary" && !(isEditing && loadingEdit) && (
-          <div className="user-rbac-summary">
-            <div className="user-rbac-summary-grid">
-              <section className="user-rbac-panel">
-                <div className="user-rbac-panel-header">
-                  <div>
-                    <h4>Usuário</h4>
-                    <p>Identidade sincronizada pelo provedor de autenticação.</p>
-                  </div>
+        {activeTab === "summary" && !(isEditing && loadingEdit) ? (
+          <UserSummaryTab
+            mode={isEditing ? "edit" : "view"}
+            user={user}
+            birthDate={birthDate}
+            isSuperadmin={isSuperadmin}
+            busy={busy}
+            accessProfile={accessProfile.data}
+            accessProfileLoading={accessProfile.loading}
+            accessProfileError={accessProfile.error}
+            onBirthDateChange={setBirthDate}
+            onSuperadminChange={setIsSuperadmin}
+            onOpenRole={openRoleAdmin}
+            onOpenGroup={openGroupAdmin}
+          />
+        ) : null}
 
-                  <span
-                    className={[
-                      "user-rbac-status",
-                      user.active === false
-                        ? "user-rbac-status-danger"
-                        : "user-rbac-status-success",
-                    ].join(" ")}
-                  >
-                    {statusLabel}
-                  </span>
-                </div>
+        {!isEditing && (activeTab === "roles" || activeTab === "groups") ? (
+          accessProfile.loading ? (
+            <Spinner label="Carregando perfil de acesso…" />
+          ) : accessProfile.error ? (
+            <Alert tone="danger">{accessProfile.error}</Alert>
+          ) : null
+        ) : null}
 
-                <div className="user-rbac-info-list">
-                  <div className="user-rbac-info-item">
-                    <span>Nome</span>
-                    <strong>{user.name || "-"}</strong>
-                  </div>
-
-                  <div className="user-rbac-info-item">
-                    <span>Email</span>
-                    <strong>{user.email}</strong>
-                  </div>
-
-                  <div className="user-rbac-info-item">
-                    <span>Status</span>
-                    <strong>{statusLabel}</strong>
-                  </div>
-
-                  {isEditing ? (
-                    <label className="user-rbac-info-item user-rbac-info-item--field">
-                      <span>Data de nascimento</span>
-                      <Input
-                        type="date"
-                        value={birthDate}
-                        onChange={(event) => setBirthDate(event.target.value)}
-                        disabled={busy}
-                      />
-                      <small>Usada na automação de aniversário.</small>
-                    </label>
-                  ) : (
-                    <div className="user-rbac-info-item">
-                      <span>Data de nascimento</span>
-                      <strong>
-                        {birthDate
-                          ? new Date(`${birthDate}T00:00:00`).toLocaleDateString("pt-BR")
-                          : "-"}
-                      </strong>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              {!isEditing ? (
-                <section className="user-rbac-panel">
-                  <div className="user-rbac-panel-header">
-                    <div>
-                      <h4>Mapa de acesso</h4>
-                      <p>Carregando perfil efetivo…</p>
-                    </div>
-                  </div>
-                  {accessProfile.loading ? (
-                    <Spinner label="Carregando mapa de acesso…" />
-                  ) : accessProfile.error ? (
-                    <Alert tone="danger">{accessProfile.error}</Alert>
-                  ) : null}
-                </section>
-              ) : null}
-            </div>
-
-            {isEditing ? (
-              <section
-                className={[
-                  "user-rbac-superadmin-card",
-                  isSuperadmin ? "active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <div className="user-rbac-superadmin-content">
-                  <div className="user-rbac-superadmin-icon">★</div>
-                  <div>
-                    <h4>Privilégio administrativo</h4>
-                    <strong>Superadmin</strong>
-                    <p>
-                      Concede acesso administrativo completo, independentemente
-                      dos papéis, grupos ou permissões vinculadas ao usuário.
-                    </p>
-                  </div>
-                </div>
-
-                <Switch
-                  checked={isSuperadmin}
-                  onChange={(event) => setIsSuperadmin(event.target.checked)}
-                  disabled={busy}
-                  label={isSuperadmin ? "Ativado" : "Desativado"}
-                />
-              </section>
-            ) : null}
-          </div>
-        )}
-
-        {isEditing && activeTab === "roles" && !loadingEdit && (
+        {isEditing && activeTab === "roles" && !loadingEdit ? (
           <RelationshipPicker<AdminRole>
             title="Papéis diretos do Usuário"
             availableTitle="Papéis disponíveis"
@@ -394,9 +311,9 @@ export const UserEditPage = () => {
             getDescription={(role) => role.description ?? null}
             onChange={setSelectedRoleIds}
           />
-        )}
+        ) : null}
 
-        {isEditing && activeTab === "groups" && !loadingEdit && (
+        {isEditing && activeTab === "groups" && !loadingEdit ? (
           <RelationshipPicker<AdminGroup>
             title="Grupos do Usuário"
             availableTitle="Grupos disponíveis"
@@ -412,14 +329,6 @@ export const UserEditPage = () => {
             getDescription={(group) => group.description ?? null}
             onChange={setSelectedGroupIds}
           />
-        )}
-
-        {!isEditing && (activeTab === "roles" || activeTab === "groups") ? (
-          accessProfile.loading ? (
-            <Spinner label="Carregando perfil de acesso…" />
-          ) : accessProfile.error ? (
-            <Alert tone="danger">{accessProfile.error}</Alert>
-          ) : null
         ) : null}
 
         {activeTab === "usage" && userId ? (
