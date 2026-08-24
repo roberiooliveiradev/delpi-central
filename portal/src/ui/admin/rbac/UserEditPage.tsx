@@ -163,11 +163,19 @@ export const UserEditPage = () => {
         birthDate: birthDate.trim() ? birthDate.trim() : null,
       });
 
+      applyUserSnapshot({
+        ...user,
+        is_superadmin: isSuperadmin,
+        birth_date: birthDate.trim() ? birthDate.trim() : null,
+      });
+
       await showAlert({
         title: "Usuário salvo",
         message: "Papéis, grupos e privilégios foram atualizados.",
       });
-      goBack();
+
+      exitEdit();
+      await accessProfile.load({ silent: true });
     } catch (e: unknown) {
       await showAlert({
         title: "Erro",
