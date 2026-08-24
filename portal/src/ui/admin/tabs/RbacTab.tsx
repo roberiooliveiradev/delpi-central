@@ -460,6 +460,7 @@ export const RbacTab = () => {
         getItemClassName={(user) =>
           onlineByUserId.has(user.id) ? "admin-entity-card--online" : undefined
         }
+        onOpenItem={(user) => navigate(`/admin/users/${user.id}`)}
         renderIcon={(user) => (
           <span className="admin-user-presence-icon">
             {getInitials(user)}
@@ -516,7 +517,7 @@ export const RbacTab = () => {
         ].filter(Boolean)}
         renderActions={(user) => [
           {
-            label: "Editar RBAC",
+            label: "Ver usuário",
             onClick: () => navigate(`/admin/users/${user.id}`),
           },
           {

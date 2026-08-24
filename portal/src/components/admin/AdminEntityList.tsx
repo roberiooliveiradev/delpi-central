@@ -82,6 +82,7 @@ type AdminEntityListProps<T> = {
   renderActions?: (item: T) => AdminEntityCardAction[];
 
   getItemClassName?: (item: T) => string | undefined;
+  onOpenItem?: (item: T) => void;
 
   className?: string;
 };
@@ -119,6 +120,7 @@ export function AdminEntityList<T>({
   renderMeta,
   renderActions,
   getItemClassName,
+  onOpenItem,
   className,
 }: AdminEntityListProps<T>) {
   const selectedSet = new Set(selectedIds);
@@ -280,10 +282,38 @@ export function AdminEntityList<T>({
                   className={[
                     "admin-entity-card",
                     selected ? "selected" : "",
+                    onOpenItem ? "admin-entity-card--clickable" : "",
                     itemClassName,
                   ]
                     .filter(Boolean)
                     .join(" ")}
+                  onClick={
+                    onOpenItem
+                      ? (event) => {
+                          const target = event.target as HTMLElement | null;
+                          if (
+                            target?.closest(
+                              "button, a, input, label, .admin-entity-card-select",
+                            )
+                          ) {
+                            return;
+                          }
+                          onOpenItem(item);
+                        }
+                      : undefined
+                  }
+                  onKeyDown={
+                    onOpenItem
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onOpenItem(item);
+                          }
+                        }
+                      : undefined
+                  }
+                  tabIndex={onOpenItem ? 0 : undefined}
+                  role={onOpenItem ? "button" : undefined}
                 >
                   {selectable && (
                     <div className="admin-entity-card-select">

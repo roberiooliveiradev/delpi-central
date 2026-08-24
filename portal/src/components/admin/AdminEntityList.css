@@ -367,6 +367,15 @@
   background: color-mix(in srgb, var(--primary) 5%, var(--surface));
 }
 
+.admin-entity-card--clickable {
+  cursor: pointer;
+}
+
+.admin-entity-card--clickable:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .admin-entity-card-select {
   width: 34px;
   height: 34px;
