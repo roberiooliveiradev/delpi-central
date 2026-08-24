@@ -458,6 +458,12 @@ class ChatTurnCompletionMetadataService:
             intent_route=intent_route if isinstance(intent_route, dict) else None,
             message=turn.message,
         )
+
+        cls._attach_turn_grounding_context_bar(
+            assistant_metadata,
+            workspace_context=turn.workspace_context,
+            tool_context=turn.tool_context,
+        )
         ChatInteractivityTelemetryService.log_from_metadata(assistant_metadata)
 
         from app.domain.services.chat_response_metadata_service import (
@@ -478,6 +484,38 @@ class ChatTurnCompletionMetadataService:
             )
 
         return answer, assistant_metadata
+
+    @staticmethod
+    def _attach_turn_grounding_context_bar(
+        metadata: dict,
+        *,
+        workspace_context: dict | None,
+        tool_context: dict | None,
+    ) -> None:
+        turn_grounding = None
+
+        if isinstance(tool_context, dict):
+            turn_grounding = tool_context.get("turnGrounding")
+
+        if not isinstance(turn_grounding, dict) and isinstance(workspace_context, dict):
+            turn_grounding = workspace_context.get("turnGrounding")
+
+        if not isinstance(turn_grounding, dict):
+            return
+
+        referring = turn_grounding.get("referringTo")
+
+        if not isinstance(referring, dict):
+            return
+
+        label = str(referring.get("label") or "").strip()
+
+        if not label:
+            return
+
+        interactivity = metadata.setdefault("interactivity", {})
+        context_bar = interactivity.setdefault("contextBar", {})
+        context_bar["summary"] = label
 
     @staticmethod
     def guideline_metadata(guidelines: list[dict]) -> list[dict]:
