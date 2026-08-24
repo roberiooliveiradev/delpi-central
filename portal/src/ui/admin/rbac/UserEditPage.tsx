@@ -5,13 +5,14 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
 import { useAdminApi } from "../../../hooks/useAdminApi";
-import { RelationshipPicker } from "../../../components/RelationshipPicker";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import { Alert, Button, PageChrome, Spinner } from "../../../ui-kit";
 
 import "./RbacEditPage.css";
 import { UserSummaryTab } from "./UserSummaryTab";
+import { UserGroupsEditTab } from "./UserGroupsEditTab";
 import { UserGroupsViewTab } from "./UserGroupsViewTab";
+import { UserRolesEditTab } from "./UserRolesEditTab";
 import { UserRolesViewTab } from "./UserRolesViewTab";
 import { UserUsageTab } from "./UserUsageTab";
 import { useAdminUserAccessProfile } from "./useAdminUserAccessProfile";
@@ -320,37 +321,19 @@ export const UserEditPage = () => {
         ) : null}
 
         {isEditing && activeTab === "roles" && !loadingEdit ? (
-          <RelationshipPicker<AdminRole>
-            title="Papéis diretos do Usuário"
-            availableTitle="Papéis disponíveis"
-            selectedTitle="Papéis vinculados ao usuário"
-            searchPlaceholder="Buscar papel..."
-            emptyAvailableText="Nenhum papel disponível para adicionar."
-            emptySelectedText="Nenhum papel direto vinculado a este usuário."
-            items={roles}
-            selectedIds={selectedRoleIds}
-            disabled={busy}
-            getId={(role) => role.id}
-            getTitle={(role) => role.name}
-            getDescription={(role) => role.description ?? null}
+          <UserRolesEditTab
+            roles={roles}
+            selectedRoleIds={selectedRoleIds}
+            busy={busy}
             onChange={setSelectedRoleIds}
           />
         ) : null}
 
         {isEditing && activeTab === "groups" && !loadingEdit ? (
-          <RelationshipPicker<AdminGroup>
-            title="Grupos do Usuário"
-            availableTitle="Grupos disponíveis"
-            selectedTitle="Grupos vinculados ao usuário"
-            searchPlaceholder="Buscar grupo..."
-            emptyAvailableText="Nenhum grupo disponível para adicionar."
-            emptySelectedText="Nenhum grupo vinculado a este usuário."
-            items={groups}
-            selectedIds={selectedGroupIds}
-            disabled={busy}
-            getId={(group) => group.id}
-            getTitle={(group) => group.name}
-            getDescription={(group) => group.description ?? null}
+          <UserGroupsEditTab
+            groups={groups}
+            selectedGroupIds={selectedGroupIds}
+            busy={busy}
             onChange={setSelectedGroupIds}
           />
         ) : null}

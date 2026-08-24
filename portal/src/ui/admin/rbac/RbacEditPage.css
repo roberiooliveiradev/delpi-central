@@ -186,6 +186,12 @@
   font-size: 13px;
 }
 
+.user-rbac-edit-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .user-rbac-stat-grid {
   display: grid;
   grid-template-columns: 1fr;
