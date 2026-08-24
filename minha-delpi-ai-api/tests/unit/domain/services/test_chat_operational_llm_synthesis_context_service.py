@@ -231,6 +231,7 @@ def test_build_facts_addon_includes_prose_panel_rule_when_decoupled():
         "llmProseDecoupled": True,
         "path": "/products/10080045/analyser",
         "dataAnswer": {"summary": {"answer": "Produto cadastrado."}},
+        "presentationDecision": {"selected": "table"},
     }
 
     addon = ChatOperationalLlmSynthesisContextService.build_facts_addon(_tool_calls(metadata))
@@ -239,6 +240,8 @@ def test_build_facts_addon_includes_prose_panel_rule_when_decoupled():
     assert "painel" in addon.lower()
     assert "fidelidade" in addon.lower()
     assert "snake_case" in addon.lower() or "rótulos" in addon.lower()
+    assert "tabela" in addon.lower()
+    assert "conforme a tabela" in addon.lower() or "componente principal" in addon.lower()
 
 
 def test_collect_fact_lines_includes_api_section_counts_and_attention():
