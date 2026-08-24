@@ -1,5 +1,10 @@
-import { copy } from "../content/copy";
-import type { DeliveryMapPayload, DeliveryMapRow, DeliveryMapSection, DeliveryMapOpProgress } from "../types";
+import type {
+  DeliveryMapOpProgress,
+  DeliveryMapRow,
+  DeliveryMapSection,
+  PublicDeliveryMapPayload,
+} from "./api";
+import { deliveryMapPublicCopy } from "./deliveryMapPublicContent";
 import { formatIsoDate } from "./formatIsoDate";
 import { isDeliveryMapRowReported } from "./deliveryMapRowReported";
 
@@ -27,7 +32,6 @@ const ALL_BORDERS = {
   right: THIN_BORDER,
 };
 
-/** Achata seções do mapa em linhas de planilha (cabeçalho + dados + linha em branco). */
 export function flattenDeliveryMapExcelRows(
   sections: readonly DeliveryMapSection[],
 ): DeliveryMapExcelSheetRow[] {
@@ -77,7 +81,7 @@ function triggerXlsxDownload(buffer: ArrayBuffer, fileName: string): void {
 }
 
 export async function downloadDeliveryMapExcel(
-  payload: DeliveryMapPayload,
+  payload: PublicDeliveryMapPayload,
   fileName: string,
   progressByOrder: Record<string, DeliveryMapOpProgress> = {},
 ): Promise<void> {
@@ -85,7 +89,7 @@ export async function downloadDeliveryMapExcel(
 
   const flatRows = flattenDeliveryMapExcelRows(payload.sections);
   if (!flatRows.some((entry) => entry.kind === "data")) {
-    window.alert(copy.deliveryMap.exportEmpty);
+    window.alert(deliveryMapPublicCopy.exportEmpty);
     return;
   }
 
@@ -93,8 +97,10 @@ export async function downloadDeliveryMapExcel(
   const ExcelJS = ExcelJSImport.default ?? ExcelJSImport;
 
   const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet(copy.deliveryMap.exportSheetTitle.slice(0, 31));
-  const headers = copy.deliveryMap.excelColumns.map((column) => column.label);
+  const sheet = workbook.addWorksheet(
+    deliveryMapPublicCopy.exportSheetTitle.slice(0, 31),
+  );
+  const headers = deliveryMapPublicCopy.excelColumns.map((column) => column.label);
 
   sheet.columns = [
     { width: 14 },

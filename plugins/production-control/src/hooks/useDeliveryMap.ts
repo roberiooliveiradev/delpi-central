@@ -93,7 +93,7 @@ export function useDeliveryMap(branch: PpcBranch, search: string) {
   };
 }
 
-/** Debounce de PATCH para MP-OK / CT sem spammar o BFF. */
+/** Debounce de PATCH para MP-OK / Feedback sem spammar o BFF. */
 export function useDeliveryMapOverrideSaver(
   saveOverrides: ReturnType<typeof useDeliveryMap>["saveOverrides"],
   debounceMs = 400,

@@ -118,3 +118,90 @@ export async function fetchPublicDrawingPdf(
   }
   return response.blob();
 }
+
+export type DeliveryMapRow = {
+  production_order: string;
+  product_code: string;
+  product_description: string | null;
+  due_date: string | null;
+  planned_qty: number;
+  produced_qty: number;
+  pending_qty: number;
+  observation: string | null;
+  days_late: number;
+  is_delayed: boolean;
+  mp_ok: boolean;
+  work_center: string;
+  is_reported: boolean;
+};
+
+export type DeliveryMapSection = {
+  section_key: string;
+  label: string;
+  due_date: string | null;
+  row_count: number;
+  rows: DeliveryMapRow[];
+};
+
+export type DeliveryMapOpProgress = {
+  conjunto_key: string;
+  total: number;
+  completed: number;
+  in_progress: number;
+  percent: number;
+};
+
+export type PublicDeliveryMapPayload = {
+  branch: string;
+  sections: DeliveryMapSection[];
+  summary: { order_count: number; section_count: number };
+  filters: { search: string };
+  snapshot: {
+    refreshed_at: string | null;
+    horizon_end: string | null;
+    seeded: boolean;
+  };
+};
+
+export async function fetchPublicDeliveryMap(
+  token: string,
+  branch: string,
+  search = "",
+): Promise<PublicDeliveryMapPayload> {
+  const params = new URLSearchParams({ branch });
+  if (search.trim()) params.set("search", search.trim());
+
+  const response = await fetch(
+    `${API_BASE}/public/delivery-map/${encodeURIComponent(token)}?${params}`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Mapa de entrega indisponível."));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<PublicDeliveryMapPayload>;
+  if (envelope.success === false || !envelope.data) {
+    throw new Error(envelope.message || "Mapa de entrega indisponível.");
+  }
+  return envelope.data;
+}
+
+export async function fetchPublicDeliveryMapProgress(
+  token: string,
+  branch: string,
+  orders: readonly string[],
+): Promise<Record<string, DeliveryMapOpProgress>> {
+  if (orders.length === 0) return {};
+  const params = new URLSearchParams({ branch, orders: orders.join(",") });
+  const response = await fetch(
+    `${API_BASE}/public/delivery-map/${encodeURIComponent(token)}/progress?${params}`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Progresso indisponível."));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<{ items: Record<string, DeliveryMapOpProgress> }>;
+  if (envelope.success === false || !envelope.data) {
+    throw new Error(envelope.message || "Progresso indisponível.");
+  }
+  return envelope.data.items ?? {};
+}

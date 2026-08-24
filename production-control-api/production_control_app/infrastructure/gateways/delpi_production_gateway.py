@@ -174,25 +174,38 @@ class DelpiProductionGateway:
         self,
         *,
         branch: str,
-        delivery_start: str | None,
-        delivery_end: str,
-        work_center: str | None,
+        delivery_start: str | None = None,
+        delivery_end: str | None = None,
+        scheduled_start: str | None = None,
+        scheduled_end: str | None = None,
+        production_order: str | None = None,
+        work_center: str | None = None,
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            "branch": branch,
+            "open_only": True,
+            "page": page,
+            "page_size": page_size,
+            "sort": "schedule_asc",
+        }
+        if delivery_start is not None:
+            params["delivery_start"] = delivery_start
+        if delivery_end is not None:
+            params["delivery_end"] = delivery_end
+        if scheduled_start is not None:
+            params["scheduled_start"] = scheduled_start
+        if scheduled_end is not None:
+            params["scheduled_end"] = scheduled_end
+        if production_order:
+            params["production_order"] = production_order
+        if work_center:
+            params["work_center"] = work_center
         return self._request(
             "GET",
             "/production/machine-load/operations",
-            params={
-                "branch": branch,
-                "delivery_start": delivery_start,
-                "delivery_end": delivery_end,
-                "work_center": work_center,
-                "open_only": True,
-                "page": page,
-                "page_size": page_size,
-                "sort": "schedule_asc",
-            },
+            params=params,
         )
 
     def fetch_machine_load_appointment_status(
