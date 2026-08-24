@@ -19,6 +19,10 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 from app.domain.services.chat_turn_grounding_service import ChatTurnGroundingService
+from app.domain.services.chat_grounded_enrich_planning_service import (
+    ChatGroundedEnrichPlanningService,
+    ChatGroundedEnrichPlan,
+)
 
 
 class ChatGroundedCapabilityPlanningService:
@@ -54,6 +58,24 @@ class ChatGroundedCapabilityPlanningService:
             return []
 
         if ChatTurnGroundingService.should_enrich_before_insight(message, excerpt):
+            enrich_plan = ChatGroundedEnrichPlanningService.build_plan(
+                message=message,
+                workspace_context=workspace_context,
+                excerpt=excerpt,
+                response_mode=(
+                    str(workspace_context.get("responseMode") or "").strip() or None
+                ),
+            )
+
+            if enrich_plan:
+                return cls._plan_from_enrich_plan(
+                    selection_service,
+                    message=message,
+                    allowed_action_ids=allowed_action_ids,
+                    enrich_plan=enrich_plan,
+                    previous_messages=previous_messages,
+                )
+
             return cls._plan_enrich_insight_actions(
                 selection_service,
                 message=message,
@@ -121,6 +143,48 @@ class ChatGroundedCapabilityPlanningService:
 
                 payload = dict(selected)
                 payload["reason"] = f"grounded_follow_up:{scope}:{code}"
+                planned.append(payload)
+
+        return planned
+
+    @classmethod
+    def _plan_from_enrich_plan(
+        cls,
+        selection_service: Any,
+        *,
+        message: str,
+        allowed_action_ids: list[str] | None,
+        enrich_plan: ChatGroundedEnrichPlan,
+        previous_messages: list | None = None,
+    ) -> list[dict]:
+        limit = enrich_plan.max_calls
+        planned: list[dict] = []
+        fan_out_cap = enrich_plan.max_fan_out
+
+        for scope in enrich_plan.planned_scopes:
+            if len(planned) >= limit:
+                break
+
+            intent, route_segment = cls._scope_to_intent(scope)
+
+            for code in enrich_plan.product_codes[:fan_out_cap]:
+                if len(planned) >= limit:
+                    break
+
+                selected = selection_service.select_action_for_product(
+                    message,
+                    product_code=code,
+                    allowed_action_ids=allowed_action_ids,
+                    intent=intent,
+                    route_segment=route_segment,
+                    previous_messages=previous_messages,
+                )
+
+                if not selected:
+                    continue
+
+                payload = dict(selected)
+                payload["reason"] = f"{enrich_plan.reason}:{scope}:{code}"
                 planned.append(payload)
 
         return planned

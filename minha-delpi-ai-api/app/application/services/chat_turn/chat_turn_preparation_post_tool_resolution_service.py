@@ -133,7 +133,10 @@ class ChatTurnPreparationPostToolResolutionService:
             or bool(attachment_welcome_direct)
             or bool(text_task_pure)
             or operational_optimize
-            or analysis_mode
+            or (
+                analysis_mode
+                and not cls._should_preserve_rag_for_enrich_insight(workspace_context)
+            )
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
             or (assistant_identity_question and profile_prep.skip_rag)
         )
@@ -632,3 +635,11 @@ class ChatTurnPreparationPostToolResolutionService:
             tool_context=tool_context,
             assistant_identity_direct=assistant_identity_direct,
         )
+
+    @staticmethod
+    def _should_preserve_rag_for_enrich_insight(workspace_context: dict | None) -> bool:
+        from app.domain.services.chat_grounded_enrich_planning_service import (
+            ChatGroundedEnrichPlanningService,
+        )
+
+        return ChatGroundedEnrichPlanningService.should_preserve_rag(workspace_context)

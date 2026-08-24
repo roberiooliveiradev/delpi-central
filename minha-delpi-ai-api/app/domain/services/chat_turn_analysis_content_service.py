@@ -54,6 +54,7 @@ class ChatTurnAnalysisContentService:
         actions_catalog: str,
         grounding_status: str = "ungrounded",
         last_result_excerpt: dict | None = None,
+        turn_grounding_stage: str | None = None,
     ) -> str:
         return ChatAssistantContentService.format(
             _BUNDLE,
@@ -67,6 +68,8 @@ class ChatTurnAnalysisContentService:
             skillsCatalog=skills_catalog or "(nenhuma)",
             actionsCatalog=actions_catalog or "(nenhuma)",
             groundingStatus=str(grounding_status or "ungrounded").strip() or "ungrounded",
+            turnGroundingStage=str(turn_grounding_stage or "unavailable").strip()
+            or "unavailable",
             lastResultExcerpt=cls.format_last_result_excerpt(last_result_excerpt),
         )
 
@@ -85,6 +88,7 @@ class ChatTurnAnalysisContentService:
                 "title",
                 "rowCount",
                 "topKeys",
+                "keysByComponentType",
                 "preview",
             )
             if excerpt.get(key) is not None

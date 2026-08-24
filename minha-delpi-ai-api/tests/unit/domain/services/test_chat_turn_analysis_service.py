@@ -143,6 +143,7 @@ def test_user_prompt_includes_grounding_block():
         skills_catalog="",
         actions_catalog="",
         grounding_status="grounded",
+        turn_grounding_stage="grounded_enrich_insight",
         last_result_excerpt={
             "title": "Estrutura 90260149",
             "rowCount": 6,
@@ -151,5 +152,13 @@ def test_user_prompt_includes_grounding_block():
     )
 
     assert "grounded" in prompt
+    assert "grounded_enrich_insight" in prompt
     assert "90260149" in prompt
     assert "10380044" in prompt
+
+
+def test_system_prompt_prefers_execute_for_grounded_enrich_insight():
+    prompt = ChatTurnAnalysisContentService.system_prompt()
+
+    assert "grounded_enrich_insight" in prompt
+    assert "decision=execute" in prompt

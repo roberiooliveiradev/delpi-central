@@ -50,10 +50,24 @@
     "purchases": "productPurchases",
     "suppliers": "productSuppliers"
   },
-  "enrichInsightScopes": {
+    "enrichInsightScopes": {
     "structure": ["stock", "profile"],
     "stock": ["structure"],
     "default": ["profile"]
+  },
+  "enrichInsightLimitsByMode": {
+    "fast": {
+      "maxExtraRoutes": 2,
+      "maxFanOut": 4
+    },
+    "normal": {
+      "maxExtraRoutes": 4,
+      "maxFanOut": 8
+    },
+    "thinker": {
+      "maxExtraRoutes": 6,
+      "maxFanOut": 12
+    }
   },
   "artifactToEnrichKey": {
     "product_structure": "structure",

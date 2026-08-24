@@ -203,6 +203,12 @@ class ChatTurnPreparationTurnAnalysisService:
             excerpt_block = turn_grounding.get("excerpt") if isinstance(turn_grounding, dict) else None
             last_result_excerpt = excerpt_block if isinstance(excerpt_block, dict) else None
 
+        turn_grounding_stage = (
+            str(turn_grounding.get("stage") or "").strip()
+            if isinstance(turn_grounding, dict)
+            else ""
+        )
+
         result = ChatTurnAnalysisService.analyze(
             llm_gateway=llm_gateway,
             message=message,
@@ -216,6 +222,7 @@ class ChatTurnPreparationTurnAnalysisService:
             allowed_skill_keys=skill_keys,
             grounding_status=grounding_status or None,
             last_result_excerpt=last_result_excerpt,
+            turn_grounding_stage=turn_grounding_stage or None,
         )
 
         direct = result.direct_answer() if result.decision == "clarify" else None

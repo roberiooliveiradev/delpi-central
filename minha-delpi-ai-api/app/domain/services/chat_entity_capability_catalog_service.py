@@ -90,6 +90,34 @@ class ChatEntityCapabilityCatalogService:
         return "default"
 
     @classmethod
+    def enrich_insight_limits_for_mode(cls, response_mode: str) -> dict[str, int]:
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        mode = ChatResponseModeService.normalize(response_mode)
+        node = ChatAssistantContentService.get_node(_BUNDLE, "enrichInsightLimitsByMode") or {}
+
+        if not isinstance(node, dict):
+            return {}
+
+        limits = node.get(mode)
+
+        if not isinstance(limits, dict):
+            limits = node.get("normal")
+
+        if not isinstance(limits, dict):
+            return {}
+
+        resolved: dict[str, int] = {}
+
+        for key in ("maxExtraRoutes", "maxFanOut"):
+            try:
+                resolved[key] = int(limits.get(key) or 0)
+            except (TypeError, ValueError):
+                resolved[key] = 0
+
+        return resolved
+
+    @classmethod
     def available(
         cls,
         *,

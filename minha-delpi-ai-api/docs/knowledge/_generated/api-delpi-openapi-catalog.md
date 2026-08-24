@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 680 · **Gerado em:** 2026-08-21 20:57 UTC
+**Provider:** `api-delpi` · **Rotas:** 682 · **Gerado em:** 2026-08-24 17:58 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -636,7 +636,7 @@
 | `GET` | `/propostas-comerciais/{proposta_interna}/pdf` | `export_proposta_comercial_pdf` | Export Proposta Comercial Pdf Route |
 | `POST` | `/propostas-comerciais/{proposta_interna}/pdf` | `export_proposta_comercial_pdf_with_overrides` | Export proposal commercial PDF with overrides |
 
-## Qualidade (145)
+## Qualidade (146)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -720,6 +720,7 @@
 | `POST` | `/quality/audit-5s/nonconformities/{nc_id}/attachments` | `attach_audit_5s_evidence` | Upload Nc Attachment |
 | `GET` | `/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file` | `download_audit_5s_nc_attachment` | Audit 5s nc attachment |
 | `POST` | `/quality/audit-5s/nonconformities/{nc_id}/complete-action` | `complete_audit_5s_nc_action` | Complete audit 5S NC action |
+| `POST` | `/quality/audit-5s/nonconformities/{nc_id}/force-close-without-treatment` | `force_close_audit_5s_nc_without_treatment` | Force Close Nc Without Treatment |
 | `POST` | `/quality/audit-5s/nonconformities/{nc_id}/reopen-action` | `reopen_audit_5s_nc_action` | Reopen Nc Action |
 | `GET` | `/quality/audit-5s/summary` | `get_audit_5s_summary` | Audit 5S |
 | `GET` | `/quality/audit-5s/summary/series` | `get_audit_5s_summary_series` | Audit 5S summary series |
@@ -856,6 +857,12 @@
 |--------|------|-------------|---------|
 | `GET` | `/supplies/stock-balances/items` | `get_supplies_stock_balances_items` | Stock balance items by warehouse |
 | `GET` | `/supplies/stock-balances/summary` | `get_supplies_stock_balances_summary` | Stock balances by warehouse |
+
+## Suprimentos — Solicitações de compra (1)
+
+| Método | Path | operationId | Summary |
+|--------|------|-------------|---------|
+| `GET` | `/supplies/purchase-requests/open-coverage` | `get_supplies_purchase_requests_open_coverage` | Open purchase requests with stock, order and commitment coverage |
 
 ## data (1)
 

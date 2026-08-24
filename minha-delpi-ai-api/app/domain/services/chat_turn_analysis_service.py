@@ -269,6 +269,7 @@ class ChatTurnAnalysisService:
         allowed_skill_keys: set[str] | None = None,
         grounding_status: str | None = None,
         last_result_excerpt: dict | None = None,
+        turn_grounding_stage: str | None = None,
     ) -> ChatTurnAnalysisResult:
         system = ChatTurnAnalysisContentService.system_prompt()
         user = ChatTurnAnalysisContentService.user_prompt(
@@ -281,6 +282,7 @@ class ChatTurnAnalysisService:
             actions_catalog="\n".join(actions_catalog_lines) or "(nenhuma)",
             grounding_status=str(grounding_status or "ungrounded"),
             last_result_excerpt=last_result_excerpt,
+            turn_grounding_stage=turn_grounding_stage,
         )
 
         try:
