@@ -1,0 +1,53 @@
+{
+  "version": "2026.08.1",
+  "limits": {
+    "maxExtraRoutesPerTurn": 4,
+    "maxFanOutKeys": 8
+  },
+  "domains": {
+    "product": {
+      "parameterStrategy": "product_code",
+      "capabilities": [
+        {
+          "routeId": "productSummary",
+          "scopeKey": "profile",
+          "labelKey": "summary",
+          "suggest": true
+        },
+        {
+          "routeId": "productStock",
+          "scopeKey": "stock",
+          "labelKey": "stock",
+          "suggest": true
+        },
+        {
+          "routeId": "productSales",
+          "scopeKey": "sales",
+          "labelKey": "sales",
+          "suggest": true
+        },
+        {
+          "routeId": "productStructure",
+          "scopeKey": "structure",
+          "labelKey": "structure",
+          "suggest": true
+        },
+        {
+          "routeId": "productParents",
+          "scopeKey": "parents",
+          "labelKey": "parents",
+          "suggest": false
+        }
+      ]
+    }
+  },
+  "scopeToRouteId": {
+    "profile": "productSummary",
+    "stock": "productStock",
+    "sales": "productSales",
+    "structure": "productStructure",
+    "parents": "productParents",
+    "purchases": "productPurchases",
+    "suppliers": "productSuppliers"
+  }
+}
