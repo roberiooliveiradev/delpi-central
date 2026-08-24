@@ -44,6 +44,12 @@ class ChatOperationalLlmSynthesisContextService:
 
             if panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
                 result = f"{result}\n\n{panel_rule}" if result else f"\n\n{panel_rule}"
+                kind_hint = ChatOperationalLlmSynthesisContextContentService.prose_panel_kind_hint(
+                    cls._primary_selected_kind(tool_calls)
+                )
+
+                if kind_hint:
+                    result = f"{result}\n\n{kind_hint}"
 
             fidelity_rule = ChatOperationalLlmSynthesisContextContentService.factual_fidelity_rule()
 
@@ -654,6 +660,30 @@ class ChatOperationalLlmSynthesisContextService:
                 return True
 
         return False
+
+    @classmethod
+    def _primary_selected_kind(cls, tool_calls: list | None) -> str | None:
+        if not isinstance(tool_calls, list):
+            return None
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            decision = metadata.get("presentationDecision")
+
+            if isinstance(decision, dict):
+                selected = str(decision.get("selected") or "").strip().lower()
+
+                if selected:
+                    return selected
+
+        return None
 
     @classmethod
     def _trim_block(cls, block: str, max_chars: int) -> str:

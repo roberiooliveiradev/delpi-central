@@ -30,6 +30,16 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def prose_panel_kind_hint(cls, selected: str | None) -> str:
+        kind = str(selected or "").strip().lower()
+
+        if not kind:
+            return ""
+
+        mapping = ChatAssistantContentService.get_mapping(_BUNDLE, "prosePanelKindHints")
+        return str(mapping.get(kind) or "").strip()
+
+    @classmethod
     def field_humanization_rule(cls) -> str:
         return str(
             ChatAssistantContentService.get(_BUNDLE, "fieldHumanizationRule", default="")

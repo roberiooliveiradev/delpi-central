@@ -7,7 +7,14 @@
     "o painel exibe",
     "abertura: cite o código"
   ],
-  "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, gráfico). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta.",
+  "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, KPI, gráfico ou dashboard). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta. Cite o componente principal (ex.: «conforme a tabela…», «conforme a árvore…») sem repetir as linhas.",
+  "prosePanelKindHints": {
+    "table": "Componente principal deste turno: **tabela**. Comente os números dela («conforme a tabela…»); não copie linhas.",
+    "tree": "Componente principal deste turno: **árvore**. Comente a hierarquia («conforme a árvore…»); não liste todos os nós.",
+    "kpi": "Componente principal deste turno: **indicador (KPI)**. Interprete o valor; não invente séries.",
+    "chart": "Componente principal deste turno: **gráfico**. Comente a tendência; não descreva cada ponto.",
+    "dashboard": "Componente principal deste turno: **painel consolidado**. Sintetize o conjunto; não repita cada card."
+  },
   "fieldHumanizationRule": "**Rótulos:** nunca use nomes técnicos de campo em inglês ou snake_case (ex.: `current_quantity`, `average_price`, `documents`). Sempre escreva o equivalente em português claro (ex.: quantidade atual, preço médio, documentos). Se o fato trouxer chave crua, traduza na prosa.",
   "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta». **Vereditos Sim/Não:** quando os fatos trouxerem resposta direta (ex.: MPs exclusivas = 0), reproduza o veredito sem contradizê-lo.",
   "multiSourceCrossRule": "Há **várias rotas** nos fatos. Cruze as fontes (ex.: estoque × vendas), cite o que cada consulta mostrou e não invente dados de rotas não listadas.",
