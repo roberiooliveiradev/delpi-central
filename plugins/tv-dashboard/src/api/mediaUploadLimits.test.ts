@@ -7,6 +7,11 @@ import {
 } from "./mediaUploadLimits";
 
 describe("mediaUploadLimits", () => {
+  it("detecta SVG por MIME e extensão", () => {
+    expect(detectMediaUploadKind(new File([], "logo.svg", { type: "image/svg+xml" }))).toBe("image");
+    expect(validateMediaUploadFile(new File([new Uint8Array(4)], "icon.svg", { type: "" }), ["image"])).toBeNull();
+  });
+
   it("detecta imagem e vídeo por MIME e extensão", () => {
     expect(detectMediaUploadKind(new File([], "a.png", { type: "image/png" }))).toBe("image");
     expect(detectMediaUploadKind(new File([], "a.mp4", { type: "video/mp4" }))).toBe("video");

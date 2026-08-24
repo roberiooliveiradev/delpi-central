@@ -3,7 +3,14 @@ export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_VIDEO_UPLOAD_BYTES = 200 * 1024 * 1024;
 export const MAX_FONT_UPLOAD_BYTES = 5 * 1024 * 1024;
 
-const IMAGE_MIME = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]);
+const IMAGE_MIME = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+]);
 const VIDEO_MIME = new Set(["video/mp4", "video/webm"]);
 const FONT_MIME = new Set([
   "font/woff2",
@@ -21,7 +28,7 @@ export function detectMediaUploadKind(file: File): MediaUploadKind | null {
   if (VIDEO_MIME.has(mime)) return "video";
   if (FONT_MIME.has(mime)) return "font";
   const name = file.name.toLowerCase();
-  if (/\.(jpe?g|png|webp|gif)$/.test(name)) return "image";
+  if (/\.(jpe?g|png|webp|gif|svg)$/.test(name)) return "image";
   if (/\.(mp4|webm)$/.test(name)) return "video";
   if (/\.(woff2|ttf|otf)$/.test(name)) return "font";
   return null;
@@ -40,14 +47,14 @@ export function validateMediaUploadFile(
 ): string | null {
   const kind = detectMediaUploadKind(file);
   if (!kind) {
-    return "Formato não suportado. Envie JPG, PNG, WEBP, GIF, MP4 ou WEBM.";
+    return "Formato não suportado. Envie JPG, PNG, WEBP, GIF, SVG, MP4 ou WEBM.";
   }
   if (allowedKinds && !allowedKinds.includes(kind)) {
     if (allowedKinds.includes("video") && !allowedKinds.includes("image")) {
       return "Envie um vídeo MP4 ou WEBM.";
     }
     if (allowedKinds.includes("image") && !allowedKinds.includes("video")) {
-      return "Envie uma imagem JPG, PNG, WEBP ou GIF.";
+      return "Envie uma imagem JPG, PNG, WEBP, GIF ou SVG.";
     }
     return "Tipo de arquivo não permitido neste contexto.";
   }

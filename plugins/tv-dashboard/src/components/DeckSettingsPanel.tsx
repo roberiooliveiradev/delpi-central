@@ -11,6 +11,7 @@ import {
   Clock,
   Copy,
   Filter,
+  FolderOpen,
   Globe,
   Layers,
   LayoutTemplate,
@@ -31,6 +32,7 @@ import type {
   Slide,
 } from "../api/tvDashboardApi";
 import { adminMediaUrl, uploadPlaylistMedia } from "../api/tvDashboardApi";
+import { validateMediaUploadFile } from "../api/mediaUploadLimits";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
@@ -56,6 +58,8 @@ import { PlaylistDataFiltersFields } from "./PlaylistDataFiltersFields";
 import { TdNativeTextField } from "./tdFormFields";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { ViewportResolutionFields } from "./ViewportResolutionFields";
+import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
+import { MediaLibraryModal } from "./MediaLibraryModal";
 
 type Props = {
   activeTab: Extract<DeckRibbonTabId, "slide" | "playlist">;
@@ -126,6 +130,8 @@ export function DeckSettingsPanel({
   onSaveSlide,
   onSaveSlides,
 }: Props) {
+  const editor = useOptionalComunicadoEditor();
+  const [playlistLibraryOpen, setPlaylistLibraryOpen] = useState(false);
   const slides = slidesProp ?? playlist.slides ?? [];
   const selectedSlides =
     selectedSlidesProp && selectedSlidesProp.length > 0
@@ -237,6 +243,11 @@ export function DeckSettingsPanel({
   }
 
   async function uploadMasterAsset(kind: "logo" | "background", file: File) {
+    const validationError = validateMediaUploadFile(file, ["image"]);
+    if (validationError) {
+      tvDashboardNotice(validationError);
+      return;
+    }
     setMasterUploading(true);
     try {
       const asset = await uploadPlaylistMedia(playlist.id, file);
@@ -495,6 +506,14 @@ export function DeckSettingsPanel({
     );
   }
 
+  function openPlaylistMediaLibrary() {
+    if (editor) {
+      editor.openMediaLibrary("playlist");
+      return;
+    }
+    setPlaylistLibraryOpen(true);
+  }
+
   if (activeTab === "playlist") {
     return (
       <>
@@ -569,6 +588,17 @@ export function DeckSettingsPanel({
                 onChange={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
               />
             </DeckRibbonTilePopover>
+          </div>
+        </DeckRibbonGroup>
+
+        <DeckRibbonGroup groupId="playlist-media" label="Mídia" hint={R.mediaLibrary}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTile
+              icon={FolderOpen}
+              label="Biblioteca"
+              hint={R.mediaLibrary}
+              onClick={openPlaylistMediaLibrary}
+            />
           </div>
         </DeckRibbonGroup>
 
@@ -716,6 +746,17 @@ export function DeckSettingsPanel({
             </DeckRibbonTilePopover>
           </div>
         </DeckRibbonGroup>
+        {!editor && playlistLibraryOpen ? (
+          <MediaLibraryModal
+            open={playlistLibraryOpen}
+            target="playlist"
+            playlistId={playlist.id}
+            uploading={false}
+            onClose={() => setPlaylistLibraryOpen(false)}
+            onPick={() => setPlaylistLibraryOpen(false)}
+            onUploaded={() => undefined}
+          />
+        ) : null}
       </>
     );
   }

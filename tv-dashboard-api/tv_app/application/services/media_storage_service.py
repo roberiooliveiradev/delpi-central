@@ -55,7 +55,7 @@ class MediaStorageService:
         kind = self.detect_kind(mime_type)
         if not kind:
             raise MediaValidationError(
-                "Formato não suportado. Envie JPG, PNG, WEBP, GIF, MP4, WEBM, WOFF2, TTF ou OTF."
+                "Formato não suportado. Envie JPG, PNG, WEBP, GIF, SVG, MP4, WEBM, WOFF2, TTF ou OTF."
             )
         normalized = (mime_type or "").split(";", 1)[0].strip().lower()
         return kind, normalized

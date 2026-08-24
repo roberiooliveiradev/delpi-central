@@ -38,6 +38,8 @@ describe("slide ribbon layout contract", () => {
     expect(background).toContain("td-deck-ribbon__tiles");
     expect(background).toContain("selectedSlides");
     expect(background).toContain("backgroundSlides");
+    expect(background).not.toContain('label="Biblioteca"');
+    expect(background).not.toContain("openMediaLibrary");
   });
 
   it("popovers da aba Tela usam chrome canônico do kit", () => {

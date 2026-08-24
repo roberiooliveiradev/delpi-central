@@ -930,7 +930,7 @@ export function ComunicadoEditorProvider({
       <input
         ref={media.fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm"
         hidden
         onChange={(event) => {
           const file = event.target.files?.[0];

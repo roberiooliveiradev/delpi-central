@@ -75,6 +75,15 @@ def test_media_storage_accepts_woff2_font():
         assert mime == "font/woff2"
 
 
+def test_media_storage_accepts_svg_image():
+    with tempfile.TemporaryDirectory() as tmp:
+        storage = MediaStorageService(base_dir=tmp)
+        stored, mime, kind = storage.save(content=b"<svg/>", mime_type="image/svg+xml")
+        assert stored.endswith(".svg")
+        assert kind == "image"
+        assert mime == "image/svg+xml"
+
+
 def test_media_storage_rejects_unknown_type():
     with tempfile.TemporaryDirectory() as tmp:
         storage = MediaStorageService(base_dir=tmp)

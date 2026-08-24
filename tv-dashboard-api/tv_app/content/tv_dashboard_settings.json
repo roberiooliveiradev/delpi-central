@@ -80,7 +80,8 @@
       "image/jpg": ".jpg",
       "image/png": ".png",
       "image/webp": ".webp",
-      "image/gif": ".gif"
+      "image/gif": ".gif",
+      "image/svg+xml": ".svg"
     },
     "videoMimeExtensions": {
       "video/mp4": ".mp4",

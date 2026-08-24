@@ -23,6 +23,9 @@ describe("playlist ribbon layout contract", () => {
     expect(panel).toContain('onSavePlaylistSettings("dataDefaults"');
     expect(panel).toContain('groupId="playlist-link"');
     expect(panel).toContain('groupId="playlist-master"');
+    expect(panel).toContain('groupId="playlist-media"');
+    expect(panel).toContain('label="Biblioteca"');
+    expect(panel).toContain("openPlaylistMediaLibrary");
     expect(panel).not.toContain("td-deck-tabs__grid--playlist-rotation");
     expect(panel).not.toContain("td-deck-playlist-link");
     expect(panel).not.toContain("td-deck-master--compact");

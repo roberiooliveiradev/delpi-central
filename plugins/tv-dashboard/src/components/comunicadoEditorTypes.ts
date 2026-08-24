@@ -3,7 +3,8 @@ export type MediaLibraryTarget =
   | "background"
   | "insert-image"
   | "insert-video"
-  | "custom-font";
+  | "custom-font"
+  | "playlist";
 
 export type ComunicadoEditorKeyboardActions = {
   selectedIds: string[];

@@ -88,6 +88,7 @@ function targetTitle(target: MediaLibraryTarget): string {
   if (target === "insert-image") return "Biblioteca — inserir imagem";
   if (target === "insert-video") return "Biblioteca — inserir vídeo";
   if (target === "custom-font") return "Biblioteca — fontes personalizadas";
+  if (target === "playlist") return "Biblioteca — programação";
   return "Biblioteca de mídia";
 }
 
@@ -208,8 +209,8 @@ export function MediaLibraryModal({
               : kindFilter === "font"
                 ? ".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
                 : kindFilter === "image"
-                  ? "image/jpeg,image/png,image/webp,image/gif"
-                  : "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,.woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
+                ? "image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                : "image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm,.woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
           }
           onChange={(event) => {
             const file = event.target.files?.[0];

@@ -90,6 +90,10 @@ export function useComunicadoEditorMedia({
         return;
       }
 
+      if (resolvedTarget === "playlist") {
+        return;
+      }
+
       if (resolvedTarget === "insert-image" || resolvedTarget === "insert-video") {
         const blockType = resolvedTarget === "insert-video" ? "video" : "image";
         let block = {

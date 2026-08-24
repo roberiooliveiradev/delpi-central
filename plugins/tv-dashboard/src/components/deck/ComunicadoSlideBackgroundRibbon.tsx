@@ -1,4 +1,4 @@
-import { FolderOpen, ImageOff, Upload } from "lucide-react";
+import { Upload, ImageOff } from "lucide-react";
 import { solidFromFill } from "@delpi/plugin-ui/index";
 
 import type { Slide } from "../../api/tvDashboardApi";
@@ -18,7 +18,6 @@ import { DeckRibbonTile } from "./DeckRibbonTile";
 import { TvRibbonColorPicker } from "./TvRibbonColorPicker";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
-const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 type Labels = Record<string, string>;
 
@@ -39,7 +38,6 @@ export function ComunicadoSlideBackgroundRibbon({
     background,
     playlistId,
     triggerUpload,
-    openMediaLibrary,
     setBackgroundColor,
     setBackground,
   } = useComunicadoEditor();
@@ -84,12 +82,6 @@ export function ComunicadoSlideBackgroundRibbon({
           disabled={uploading}
           onClick={() => triggerUpload("background")}
         />
-        <DeckRibbonTile
-          icon={FolderOpen}
-          label="Biblioteca"
-          hint={H.mediaLibrary}
-          onClick={() => openMediaLibrary("background")}
-        />
         {background?.type === "image" ? (
           <>
             <button
@@ -107,7 +99,6 @@ export function ComunicadoSlideBackgroundRibbon({
                     }
                   : undefined
               }
-              onClick={() => openMediaLibrary("background")}
             />
             <DeckRibbonTile
               icon={ImageOff}
