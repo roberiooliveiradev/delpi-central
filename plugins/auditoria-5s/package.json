@@ -16,6 +16,7 @@
     "check:nc-board-my-pending": "node --experimental-strip-types scripts/check-nc-board-my-pending-scope.ts",
     "check:nc-board-row-status": "node --experimental-strip-types scripts/check-nc-board-row-status.ts",
     "check:nc-board-progress": "node --experimental-strip-types scripts/check-nc-board-progress.ts",
+    "check:nc-board-admin-force-close": "node --experimental-strip-types scripts/check-nc-board-admin-force-close.ts",
     "preview": "vite preview"
   },
   "dependencies": {

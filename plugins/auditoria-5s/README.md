@@ -91,9 +91,13 @@ Rotas do Portal (por filial):
 
 Ações administrativas na UI (**Critérios**, **Excluir auditoria**, **Encerrar NC's em aberto**) aparecem **somente** na rota `/filial-XX/admin` **e** com a permissão `auditoria-5s.admin.filial-XX`. Na rota normal `/filial-XX` esses botões ficam ocultos, mesmo para quem tem a permissão (a API continua exigindo a permissão admin).
 
+No **board de não conformidades** (`/filial-XX/admin` → Gestão de NCs), o menu **Mais ações** (⋯) de cada linha inclui **Encerrar NC** (admin): cancela a NC `open`/`in_progress` sem tratar (`status=cancelled`), distinto de **Reabrir ação** (NC já `closed`).
+
 | Método | Path | Permissão |
 |--------|------|-----------|
 | `POST` | `/audits/{id}/close-without-nc-treatment` | `auditoria-5s.admin.filial-XX` da filial da auditoria |
+| `POST` | `/nonconformities/{nc_id}/force-close-without-treatment` | `auditoria-5s.admin.filial-XX` da filial da NC |
+| `POST` | `/nonconformities/{nc_id}/reopen-action` | `auditoria-5s.admin.filial-XX` da filial da NC |
 
 **Cadastro:** alterar permissões/rotas exige **nova versão** do manifesto (`register`, não “atualizar manifesto”). Versão atual: `0.2.0`.
 

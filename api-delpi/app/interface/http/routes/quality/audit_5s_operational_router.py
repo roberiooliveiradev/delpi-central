@@ -1262,6 +1262,69 @@ async def reopen_nc_action(nc_id: str):
         return error_response("Erro interno ao reabrir ação.", status_code=500)
 
 
+@router.post(
+    "/nonconformities/{nc_id}/force-close-without-treatment",
+    operation_id="force_close_audit_5s_nc_without_treatment",
+)
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
+async def force_close_nc_without_treatment(nc_id: str):
+    """Admin: encerra (cancela) NC em aberto sem tratar a ação corretiva."""
+    nc_id = nc_id.strip()
+    if not nc_id:
+        return error_response("Identificador da NC inválido.", status_code=400)
+
+    try:
+        repo = build_audit_5s_repository()
+        nc = repo.fetch_one(
+            """
+            SELECT n.id, n.audit_id, a.branch_code
+              FROM quality.audit_5s_nonconformities n
+              JOIN quality.audit_5s_audits a ON a.id = n.audit_id
+             WHERE n.id = %s
+            """,
+            (nc_id,),
+        )
+        if not nc:
+            return error_response("NC não encontrada.", status_code=404)
+
+        branch_error = branch_access_error(
+            nc["branch_code"],
+            require_admin=True,
+        )
+        if branch_error is not None:
+            return branch_error
+
+        data = repo.force_close_nc_without_treatment(
+            nonconformity_id=nc_id,
+            actor_user_id=_current_user_id(),
+        )
+        audit_id = str(data["audit_id"])
+        audit = repo.get_audit(audit_id)
+        if audit:
+            try:
+                await publish_audit_updated(
+                    audit_id=audit_id,
+                    audit=audit,
+                    event_type="nc_cancelled_without_treatment",
+                    actor_user_id=_current_user_id(),
+                    actor_display_name=_current_user_name(),
+                )
+            except Exception as publish_exc:
+                log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
+        return api_delpi_success(
+            data,
+            operation_id="force_close_audit_5s_nc_without_treatment",
+            message="Não conformidade encerrada sem tratamento.",
+        )
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status_code = 404 if "não encontrada" in message.lower() else 422
+        return error_response(message, status_code=status_code)
+    except Exception as exc:
+        log_error(f"Erro ao encerrar NC 5S sem tratamento: {exc}")
+        return error_response("Erro interno ao encerrar não conformidade.", status_code=500)
+
+
 @router.get("/nonconformities", operation_id="list_audit_5s_nonconformities_board")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_5s_nonconformities_board(

@@ -198,6 +198,11 @@ export function canAddNcBoardNotes(status: string, isRegistered = true): boolean
   return isRegistered && !isNcBoardViewOnly(status);
 }
 
+/** Admin: encerrar NC em aberto ou em tratamento sem concluir a ação corretiva. */
+export function canAdminForceCloseNcBoardItem(status: string): boolean {
+  return status === "open" || status === "in_progress";
+}
+
 export function ncBoardStatusVariant(
   status: string,
   isRegistered = true,

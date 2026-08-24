@@ -417,6 +417,14 @@ export async function reopenNcAction(ncId: string) {
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
+export async function forceCloseNcWithoutTreatment(ncId: string) {
+  const res = await httpPost<ApiEnvelope<Nonconformity>>(
+    `${API_BASE}/nonconformities/${ncId.trim()}/force-close-without-treatment`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
 export async function fetchNcActions(ncId: string) {
   const res = await httpGet<ApiEnvelope<NcAction[]>>(
     `${API_BASE}/nonconformities/${ncId}/actions`,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { reopenNcAction, type AuditArea, type AuditListItem } from "../api/audit5sApi";
+import { forceCloseNcWithoutTreatment, reopenNcAction, type AuditArea, type AuditListItem } from "../api/audit5sApi";
 import type { NcBoardItem } from "../types/ncManagement";
 import { formatRelativeUpdate } from "../utils/auditNc";
 import { NcBoardNotesModal } from "../components/NcBoardNotesModal";
@@ -38,7 +38,9 @@ export function NcManagementPage({
 }: Props) {
   const [modalState, setModalState] = useState<NcBoardModalState>(null);
   const [pendingReopen, setPendingReopen] = useState<NcBoardItem | null>(null);
+  const [pendingForceClose, setPendingForceClose] = useState<NcBoardItem | null>(null);
   const [reopening, setReopening] = useState(false);
+  const [forceClosing, setForceClosing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const { canAdmin } = useAudit5sAdminPermission(branch, pathname);
   const boardScope = ncBoardScopeFromLocation(pathname, search);
@@ -85,6 +87,23 @@ export function NcManagementPage({
       );
     } finally {
       setReopening(false);
+    }
+  }
+
+  async function handleConfirmForceClose() {
+    if (!pendingForceClose || forceClosing) return;
+    setForceClosing(true);
+    setActionError(null);
+    try {
+      await forceCloseNcWithoutTreatment(pendingForceClose.id);
+      setPendingForceClose(null);
+      await reload();
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Não foi possível encerrar a não conformidade.",
+      );
+    } finally {
+      setForceClosing(false);
     }
   }
 
@@ -160,6 +179,14 @@ export function NcManagementPage({
                 setActionError(null);
                 setPendingReopen(item);
               }}
+              onForceClose={
+                canAdmin
+                  ? (item) => {
+                      setActionError(null);
+                      setPendingForceClose(item);
+                    }
+                  : undefined
+              }
             />
           )}
         </div>
@@ -223,6 +250,50 @@ export function NcManagementPage({
                 onClick={() => void handleConfirmReopen()}
               >
                 {reopening ? "Reabrindo…" : "Reabrir ação"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingForceClose ? (
+        <div
+          className="a5s-confirm-overlay"
+          role="presentation"
+          onClick={() => !forceClosing && setPendingForceClose(null)}
+        >
+          <div
+            className="a5s-confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="a5s-force-close-nc-title"
+            aria-describedby="a5s-force-close-nc-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="a5s-force-close-nc-title" className="a5s-confirm-dialog__title">
+              Encerrar não conformidade?
+            </h2>
+            <p id="a5s-force-close-nc-desc" className="a5s-confirm-dialog__text">
+              A NC da auditoria <strong>{pendingForceClose.audit_code}</strong> será cancelada sem
+              concluir o plano de ação, as evidências ou o tratamento. O status passará para{" "}
+              <strong>Cancelada</strong>. Esta ação administrativa não pode ser desfeita.
+            </p>
+            <div className="a5s-confirm-dialog__actions">
+              <button
+                type="button"
+                className="a5s-btn a5s-btn--ghost"
+                disabled={forceClosing}
+                onClick={() => setPendingForceClose(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="a5s-btn a5s-btn--danger"
+                disabled={forceClosing}
+                onClick={() => void handleConfirmForceClose()}
+              >
+                {forceClosing ? "Encerrando…" : "Encerrar NC"}
               </button>
             </div>
           </div>

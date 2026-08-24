@@ -2128,6 +2128,56 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             self.commit()
         return self._get_nonconformity_by_id(nonconformity_id) or row
 
+    def force_close_nc_without_treatment(
+        self,
+        *,
+        nonconformity_id: str,
+        actor_user_id: str,
+    ) -> dict[str, Any]:
+        """Admin: cancela NC open/in_progress sem tratar a ação corretiva."""
+        nc = self.fetch_one(
+            """
+            SELECT id,
+                   audit_id,
+                   status
+              FROM quality.audit_5s_nonconformities
+             WHERE id = %s
+            """,
+            (nonconformity_id,),
+        )
+        if not nc:
+            raise PluginsRepositoryError("NC não encontrada.")
+        status = str(nc["status"] or "").strip().lower()
+        if status == "cancelled":
+            raise PluginsRepositoryError("NC já está cancelada.")
+        if status == "closed":
+            raise PluginsRepositoryError("NC já está concluída.")
+        if status not in ("open", "in_progress"):
+            raise PluginsRepositoryError(
+                "Somente não conformidades em aberto ou em tratamento podem ser encerradas sem tratar."
+            )
+
+        with self.db():
+            row = self._update_nonconformity_row(
+                nonconformity_id=nonconformity_id,
+                updates=["status = %s"],
+                params=["cancelled"],
+            )
+            if not row:
+                raise PluginsRepositoryError("Falha ao encerrar NC.")
+
+            self.execute(
+                """
+                INSERT INTO quality.audit_5s_nc_events (
+                    nonconformity_id, event_type, payload, actor_user_id
+                ) VALUES (%s, 'cancelled_without_treatment', '{}'::jsonb, %s)
+                """,
+                (nonconformity_id, actor_user_id),
+                auto_commit=False,
+            )
+            self.commit()
+        return self._get_nonconformity_by_id(nonconformity_id) or row
+
     def close_audit(self, audit_id: str) -> dict[str, Any]:
         audit = self.get_audit(audit_id)
         if not audit:

@@ -5,6 +5,7 @@ import {
   Eye,
   MessageSquarePlus,
   MoreHorizontal,
+  OctagonX,
   Pencil,
   RotateCcw,
 } from "lucide-react";
@@ -12,6 +13,7 @@ import {
 import type { NcBoardItem, NcBoardPagination } from "../types/ncManagement";
 import {
   canAddNcBoardNotes,
+  canAdminForceCloseNcBoardItem,
   canUpdateNcBoardItem,
   isNcBoardViewOnly,
   sensoName,
@@ -31,6 +33,7 @@ type Props = {
   onEdit: (item: NcBoardItem) => void;
   onNotes: (item: NcBoardItem) => void;
   onReopen?: (item: NcBoardItem) => void;
+  onForceClose?: (item: NcBoardItem) => void;
 };
 
 function truncateText(value: string | null | undefined, max = 72): string {
@@ -49,6 +52,7 @@ export function NcManagementTable({
   onEdit,
   onNotes,
   onReopen,
+  onForceClose,
 }: Props) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -62,6 +66,15 @@ export function NcManagementTable({
       Boolean(onReopen) &&
       item.is_registered !== false &&
       item.status === "closed"
+    );
+  }
+
+  function canForceCloseAction(item: NcBoardItem): boolean {
+    return (
+      canAdmin &&
+      Boolean(onForceClose) &&
+      item.is_registered !== false &&
+      canAdminForceCloseNcBoardItem(item.status)
     );
   }
 
@@ -102,8 +115,13 @@ export function NcManagementTable({
                 const showUpdate = canUpdateNcBoardItem(item.status);
                 const showNotes = !isNcBoardViewOnly(item.status);
                 const showReopen = canReopenAction(item);
+                const showForceClose = canForceCloseAction(item);
                 const menuItemCount =
-                  1 + (showUpdate ? 1 : 0) + (showNotes ? 1 : 0) + (showReopen ? 1 : 0);
+                  1 +
+                  (showUpdate ? 1 : 0) +
+                  (showNotes ? 1 : 0) +
+                  (showReopen ? 1 : 0) +
+                  (showForceClose ? 1 : 0);
                 return (
                 <tr
                   key={item.id}
@@ -239,6 +257,20 @@ export function NcManagementTable({
                             >
                               <RotateCcw size={14} aria-hidden />
                               Reabrir ação
+                            </button>
+                          ) : null}
+                          {showForceClose ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="a5s-row-menu__item a5s-row-menu__danger"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                onForceClose?.(item);
+                              }}
+                            >
+                              <OctagonX size={14} aria-hidden />
+                              Encerrar NC
                             </button>
                           ) : null}
                         </AuditRowMenuPortal>
