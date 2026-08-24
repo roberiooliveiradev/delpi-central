@@ -275,7 +275,8 @@ export function NotificationDispatchHistory({
             <History size={18} aria-hidden="true" /> Histórico de envios
           </h3>
           <p className="admin-notifications__panel-desc">
-            Auditoria de campanhas enviadas ou agendadas pela plataforma.
+            Campanhas do admin, integrações de plugins e automações da plataforma
+            (acesso RBAC, boas-vindas e aniversário).
           </p>
         </div>
         <div className="notification-dispatch-history__actions">
