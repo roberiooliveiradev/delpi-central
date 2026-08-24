@@ -136,4 +136,88 @@ describe("buildNativeSingleViewSegments", () => {
     expect(segments.some((segment) => segment.kind === "table")).toBe(true);
     expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
   });
+
+  it("honra lead markdown do renderPlan com selected=tree", () => {
+    const lead = "Estrutura com **3** níveis abaixo do PA.";
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "tree",
+        presentation: {
+          type: "tree",
+          title: "Estrutura",
+          roots: [{ id: "1", label: "PA" }],
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          llmProseDecoupled: true,
+          presentationDecision: { selected: "tree", layoutMode: "single" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              { kind: "tree", slot: "primary", source: "treePresentation" },
+            ],
+          },
+          treePresentation: {
+            type: "tree",
+            title: "Estrutura",
+            roots: [{ id: "1", label: "PA" }],
+          },
+        },
+      },
+    ] as never;
+
+    const segments = buildNativeSingleViewSegments(lead, toolCalls, visuals) ?? [];
+    expect(segments[0]?.kind).toBe("markdown");
+    expect(segments.some((segment) => segment.kind === "tree")).toBe(true);
+    expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
+  });
+
+  it("honra lead markdown do renderPlan com selected=kpi", () => {
+    const lead = "Vendas do período: **0** un.";
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "kpi",
+        presentation: {
+          type: "kpi",
+          title: "Vendas",
+          items: [{ label: "Qtd", value: 0 }],
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          llmProseDecoupled: true,
+          presentationDecision: { selected: "kpi", layoutMode: "single" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              { kind: "kpi", slot: "primary", source: "kpiPresentation" },
+            ],
+          },
+          kpiPresentation: {
+            type: "kpi",
+            title: "Vendas",
+            items: [{ label: "Qtd", value: 0 }],
+          },
+        },
+      },
+    ] as never;
+
+    const segments = buildNativeSingleViewSegments(lead, toolCalls, visuals) ?? [];
+    expect(segments.some((s) => s.kind === "markdown")).toBe(true);
+    expect(segments.some((s) => s.kind === "kpi")).toBe(true);
+    expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
+  });
 });

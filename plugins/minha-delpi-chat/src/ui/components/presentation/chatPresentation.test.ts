@@ -6,6 +6,7 @@ import {
   getAvailableFormatsFromToolCalls,
   getPresentationDecisionFromToolCalls,
   getPresentationInsightFromToolCalls,
+  getRenderPlanFromToolCalls,
   getPresentationMessageFromToolCalls,
   getPresentationPurposeFromToolCalls,
   getPresentationReadingLayersFromToolCalls,
@@ -413,6 +414,65 @@ describe("presentationDecision (Playbook 09)", () => {
     ]);
 
     expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
+  });
+
+  it("com llmProseDecoupled não expõe insight genérico de tabela", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        metadata: {
+          llmProseDecoupled: true,
+          presentationDecision: {
+            selected: "table",
+            insight: "A tabela lista os principais registros encontrados (4 linhas).",
+          },
+        },
+      },
+    ]);
+
+    expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
+  });
+});
+
+describe("compositionRole primary vs enrichment", () => {
+  it("prioriza renderPlan e decision do tool primary (stock) sobre enrichment (sales)", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          compositionRole: "primary",
+          path: "/products/10090016/stock",
+          presentationDecision: { selected: "table", layoutMode: "single" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              { kind: "table", slot: "primary", source: "tablePresentation" },
+            ],
+          },
+        },
+      },
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          compositionRole: "enrichment",
+          path: "/products/10090016/sales",
+          presentationDecision: { selected: "kpi", layoutMode: "single" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "kpi", slot: "primary", source: "kpiPresentation" }],
+          },
+        },
+      },
+    ]);
+
+    expect(getPresentationDecisionFromToolCalls(toolCalls)?.selected).toBe("table");
+    const plan = getRenderPlanFromToolCalls(toolCalls);
+    expect(plan?.segments?.some((s) => s.kind === "table")).toBe(true);
+    expect(plan?.segments?.some((s) => s.kind === "kpi")).toBe(false);
   });
 });
 
