@@ -302,6 +302,7 @@ npm run lint
 
 - Container: serviço `public-hub` / `delpi-public-hub` no `infra/docker-compose.yml` e `docker-compose.dev.yml`.
 - Nginx do container (`nginx.conf`) serve `/p/` (base dos assets) e `/welcome/` (alias) apontando para o mesmo `index.html`.
+- **Cache após deploy:** igual ao portal — chunks em `/p/assets/*` retornam **404** (nunca `index.html`); HTML com `no-store`; entry com recuperação automática (`?_recover=` + `cache: "reload"`). Chunk lazy da TV (`PresentationView`) redireciona uma vez em falha de hash. Ver `docs/06-portal-frontend/portal-deploy-cache-cloudflare.md` e `plugins/vite/cacheBustEntryPlugin.ts`.
 - Recriar em dev: `docker compose -f infra/docker-compose.dev.yml --env-file infra/.env up --build -d --force-recreate public-hub` e recarregar o gateway (`docker exec delpi-gateway nginx -s reload`).
 
 Playbook e contexto: `docs/12-roadmap-e-evolucao/customer-experience/PLAYBOOK-EXCELENCIA.md` (§5).

@@ -86,6 +86,8 @@ Registrado em `portal/vite.config.ts`.
 | `portal/nginx.conf` | Política de cache e 404 em `/assets/` |
 | `portal/index.html` | Template Vite (meta no-cache) |
 | `portal/vite/cacheBustEntryPlugin.ts` | import() do entry + recuperação com `cache: "reload"` |
+| `plugins/vite/cacheBustEntryPlugin.ts` | Implementação canônica (portal + public-hub `/p/assets/*`) |
+| `plugins/vite/lazyImportWithRecover.ts` | Recuperação de chunk lazy (ex.: `PresentationView` na TV) |
 | `portal/vite.config.ts` | Registra o plugin no build prod |
 | `gateway/nginx.conf` | Locations `/assets/` e `CDN-Cache-Control` no shell |
 | `infra/README-ambiente.md` | Checklist pós-deploy portal |

@@ -1,12 +1,15 @@
 import { lazy, Suspense, type ReactNode } from "react";
 
+import { lazyImportWithRecover } from "../../../../vite/lazyImportWithRecover";
 import type { AppPublicPages } from "../../shell/types";
 import { PublicLoadingSplash } from "../../shell/PublicLoadingSplash";
 import { fetchPublicPresentation, type PublicPresentationPayload } from "./api";
 
 /** Lazy: evita puxar tv-dashboard-presentation no boot de SIPAT/CX/Kaizen. */
-const PresentationView = lazy(() =>
-  import("./PresentationView").then((mod) => ({ default: mod.PresentationView })),
+const PresentationView = lazy(
+  lazyImportWithRecover(() =>
+    import("./PresentationView").then((mod) => ({ default: mod.PresentationView })),
+  ),
 );
 
 function LazyPresentation({
