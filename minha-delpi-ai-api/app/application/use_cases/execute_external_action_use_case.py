@@ -1,7 +1,9 @@
 from typing import Any
 from urllib.parse import quote
 from uuid import UUID
+import time
 
+from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.domain.exceptions.external_action_exceptions import ExternalActionValidationError
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.services.external_actions.external_action_execution_policy import (
@@ -122,6 +124,9 @@ class ExecuteExternalActionUseCase:
         )
         effective_ok = bool(result["ok"]) and not logical_failure
 
+        duration_ms = int(result.get("durationMs") or 0)
+        ChatPipelineTimings.record_wave_http_ms(duration_ms)
+
         self.audit_repository.log(
             user_id=UUID(user_id),
             action="external_action.called",
@@ -151,16 +156,22 @@ class ExecuteExternalActionUseCase:
             },
         )
 
-        presentation_metadata = (
-            self._build_presentation_metadata(
+        presentation_ms = 0
+        presentation_metadata: dict = {}
+
+        if effective_ok:
+            presentation_started = time.perf_counter()
+            presentation_metadata = self._build_presentation_metadata(
                 action=action,
                 sanitized_data=sanitized_data,
                 resolved_path=resolved_path,
                 request_parameters=request_parameters,
             )
-            if effective_ok
-            else {}
-        )
+            presentation_ms = max(
+                0,
+                int((time.perf_counter() - presentation_started) * 1000),
+            )
+            ChatPipelineTimings.record_wave_presentation_ms(presentation_ms)
 
         from app.domain.services.chat_operational_api_domain_service import (
             ChatOperationalApiDomainService,
@@ -168,6 +179,7 @@ class ExecuteExternalActionUseCase:
 
         execution_metadata = {
             "durationMs": result["durationMs"],
+            "presentationMs": presentation_ms,
             "sensitivity": action["sensitivity"],
             "apiRouteDomain": ChatOperationalApiDomainService.classify_path(resolved_path),
             **presentation_metadata,

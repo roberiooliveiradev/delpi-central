@@ -476,6 +476,75 @@ class ChatTurnPreparationToolRoutingService:
         max_external_action_calls: int | None,
         on_stream_activity=None,
     ) -> ChatTurnPreparationToolPhaseResult:
+        with ChatPipelineTimings.bind(pipeline_timings):
+            return cls._run_tool_phase_bound(
+                message=message,
+                request=request,
+                history_source=history_source,
+                workspace_context=workspace_context,
+                conversation_context=conversation_context,
+                pipeline_stages=pipeline_stages,
+                pipeline_timings=pipeline_timings,
+                canvas_action=canvas_action,
+                canvas_operational_update=canvas_operational_update,
+                pre_capability_answer=pre_capability_answer,
+                operational_guards=operational_guards,
+                routing_disambiguation_answer=routing_disambiguation_answer,
+                learning_term_confirmation_answer=learning_term_confirmation_answer,
+                interpretation_without_data_answer=interpretation_without_data_answer,
+                skip_flags=skip_flags,
+                small_talk_direct=small_talk_direct,
+                utility_direct=utility_direct,
+                web_save_sources_direct=web_save_sources_direct,
+                project_sources_direct=project_sources_direct,
+                web_post_search_direct=web_post_search_direct,
+                attachment_welcome_direct=attachment_welcome_direct,
+                unclear_direct=unclear_direct,
+                text_task_pure=text_task_pure,
+                fast_path=fast_path,
+                operational_optimize=operational_optimize,
+                analysis_mode=analysis_mode,
+                build_tool_context=build_tool_context,
+                maybe_extend_tool_context=maybe_extend_tool_context,
+                max_external_action_calls=max_external_action_calls,
+                on_stream_activity=on_stream_activity,
+            )
+
+    @classmethod
+    def _run_tool_phase_bound(
+        cls,
+        *,
+        message: str,
+        request,
+        history_source: list,
+        workspace_context: dict,
+        conversation_context: str,
+        pipeline_stages: list[str],
+        pipeline_timings: ChatPipelineTimings,
+        canvas_action,
+        canvas_operational_update: bool,
+        pre_capability_answer: str | None,
+        operational_guards: ChatTurnPreparationOperationalGuards,
+        routing_disambiguation_answer: str | None,
+        learning_term_confirmation_answer: str | None,
+        interpretation_without_data_answer: str | None,
+        skip_flags: ChatTurnPreparationSkipToolFlags,
+        small_talk_direct: str | None,
+        utility_direct: str | None,
+        web_save_sources_direct: str | None,
+        project_sources_direct: str | None,
+        web_post_search_direct: str | None,
+        attachment_welcome_direct: str | None,
+        unclear_direct: str | None,
+        text_task_pure: bool,
+        fast_path: bool,
+        operational_optimize: bool,
+        analysis_mode: bool,
+        build_tool_context: Callable[..., dict],
+        maybe_extend_tool_context: Callable[..., dict],
+        max_external_action_calls: int | None,
+        on_stream_activity=None,
+    ) -> ChatTurnPreparationToolPhaseResult:
         if skip_flags.skip_tools_for_attachment_document:
             operational_optimize = False
             analysis_mode = False
@@ -537,6 +606,16 @@ class ChatTurnPreparationToolRoutingService:
             ):
                 tool_context["clarifyInsteadOfGuess"] = True
 
+            tool_calls: list = []
+            for key in (
+                "tools_selection_done",
+                "tools_wave1_done",
+                "tools_critic_done",
+                "tools_wave2_done",
+                "tools_assemble_done",
+            ):
+                pipeline_timings.mark(key)
+
             if skip_flags.skip_tools_for_attachment_document:
                 from app.application.services.chat_document_vision_turn_service import (
                     ChatDocumentVisionTurnService,
@@ -560,7 +639,7 @@ class ChatTurnPreparationToolRoutingService:
                 if vision_meta:
                     tool_context["documentVision"] = vision_meta
 
-            tool_calls: list = []
+            pipeline_timings.mark("tools_agentic_done")
             post_tool = ChatIntelligencePipelineService.finalize_after_tools(
                 message,
                 history_source,
@@ -592,6 +671,7 @@ class ChatTurnPreparationToolRoutingService:
                 previous_messages=history_source,
                 on_stream_activity=on_stream_activity,
             )
+            pipeline_timings.mark("tools_agentic_done")
             post_tool = ChatIntelligencePipelineService.finalize_after_tools(
                 message,
                 history_source,

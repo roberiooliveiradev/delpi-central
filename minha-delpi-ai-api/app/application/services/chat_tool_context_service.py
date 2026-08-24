@@ -1,5 +1,6 @@
 import json
 
+from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
@@ -231,22 +232,29 @@ class ChatToolContextService:
             drawing_pdf_extract=drawing_pdf_extract,
             web_search_exclusive=web_search_exclusive,
         )
+        ChatPipelineTimings.mark_current("tools_selection_done")
 
         if selection.early_result is not None:
+            ChatPipelineTimings.mark_current("tools_wave1_done")
+            ChatPipelineTimings.mark_current("tools_critic_done")
+            ChatPipelineTimings.mark_current("tools_wave2_done")
+            ChatPipelineTimings.mark_current("tools_assemble_done")
             return selection.early_result
 
-        execution = self._execution_service.execute_selected_tools(
-            self,
-            user_id=user_id,
-            access_token=access_token,
-            message=message,
-            raw_message=raw_message,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            selected_tools=selection.selected_tools,
-            on_stream_activity=on_stream_activity,
-            paginated_service=paginated_service,
-        )
+        with ChatPipelineTimings.tools_wave("wave1"):
+            execution = self._execution_service.execute_selected_tools(
+                self,
+                user_id=user_id,
+                access_token=access_token,
+                message=message,
+                raw_message=raw_message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                selected_tools=selection.selected_tools,
+                on_stream_activity=on_stream_activity,
+                paginated_service=paginated_service,
+            )
+        ChatPipelineTimings.mark_current("tools_wave1_done")
 
         # Critic pós-wave-1 ANTES do assembly: follow-ups entram em safe_tool_calls
         # e entram em evidenceRefs / multiSourceCrossRule na síntese.
@@ -264,7 +272,7 @@ class ChatToolContextService:
             selected_external_action_meta=selection.selected_external_action_meta,
         )
 
-        return self._result_assembly_service.assemble_and_finalize(
+        result = self._result_assembly_service.assemble_and_finalize(
             self,
             message=message,
             raw_message=raw_message,
@@ -285,6 +293,8 @@ class ChatToolContextService:
             drawing_runtime_skills=drawing_runtime_skills,
             on_stream_activity=on_stream_activity,
         )
+        ChatPipelineTimings.mark_current("tools_assemble_done")
+        return result
 
     def run_post_rag_web_fallback(
         self,
@@ -662,7 +672,8 @@ class ChatToolContextService:
                 selected_external_action_meta["anomalyClarificationSuggestions"] = (
                     suggestions
                 )
-
+            ChatPipelineTimings.mark_current("tools_critic_done")
+            ChatPipelineTimings.mark_current("tools_wave2_done")
             return execution
 
         follow_ups = ChatOperationalSufficiencyCriticService.plan_follow_up_selections(
@@ -679,21 +690,25 @@ class ChatToolContextService:
                 selected_external_action_meta["anomalyClarificationSuggestions"] = (
                     suggestions
                 )
-
+            ChatPipelineTimings.mark_current("tools_critic_done")
+            ChatPipelineTimings.mark_current("tools_wave2_done")
             return execution
 
-        follow_state = self._execution_service.execute_selected_tools(
-            self,
-            user_id=user_id,
-            access_token=access_token,
-            message=message,
-            raw_message=raw_message,
-            allowed_action_ids=allowed_action_ids,
-            previous_messages=previous_messages,
-            selected_tools=follow_ups,
-            on_stream_activity=on_stream_activity,
-            paginated_service=paginated_service,
-        )
+        ChatPipelineTimings.mark_current("tools_critic_done")
+        with ChatPipelineTimings.tools_wave("wave2"):
+            follow_state = self._execution_service.execute_selected_tools(
+                self,
+                user_id=user_id,
+                access_token=access_token,
+                message=message,
+                raw_message=raw_message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                selected_tools=follow_ups,
+                on_stream_activity=on_stream_activity,
+                paginated_service=paginated_service,
+            )
+        ChatPipelineTimings.mark_current("tools_wave2_done")
 
         if isinstance(selected_external_action_meta, dict):
             audit = selected_external_action_meta.setdefault("enrichmentPlan", {})
