@@ -89,6 +89,14 @@ class ChatDataInsightService:
 
         rows = cls._resolve_rows(metadata, data)
         anomalies = ChatDataAnomalyDetectionService.detect(rows=rows, metadata=metadata)
+
+        if profile_key == "stock" and rows and len(rows) > 1:
+            anomalies = [
+                item
+                for item in anomalies
+                if str(item.get("type") or "").strip() != "zero_value"
+            ]
+
         anomaly_attention = ChatDataAnomalyDetectionService.attention_lines(
             anomalies,
             metadata=metadata,

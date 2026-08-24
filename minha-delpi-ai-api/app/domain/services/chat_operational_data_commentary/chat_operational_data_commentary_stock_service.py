@@ -84,6 +84,7 @@ class ChatOperationalDataCommentaryStockService:
         zero_available_positions = 0
         committed_over_current_positions = 0
         branch_available: dict[str, float] = {}
+        product_available: dict[str, float] = {}
 
         for item in items:
             available_raw = item.get("available_quantity")
@@ -95,6 +96,15 @@ class ChatOperationalDataCommentaryStockService:
             current = _OpsTable.parse_quantity(current_raw) if current_raw is not None else None
             committed = _OpsTable.parse_quantity(committed_raw or 0)
             branch = str(item.get("branch") or "").strip()
+            product_code = str(
+                item.get("product_code") or item.get("raw_material_code") or ""
+            ).strip()
+
+            if product_code:
+                bucket = product_available.setdefault(product_code, 0.0)
+
+                if available is not None:
+                    product_available[product_code] = bucket + available
 
             if available is not None:
                 has_available = True
@@ -130,6 +140,19 @@ class ChatOperationalDataCommentaryStockService:
 
         total_records = meta.get("total")
 
+        distinct_products = len(product_available)
+        rupture_products = sum(
+            1 for total in product_available.values() if float(total or 0) <= 0
+        )
+        top_product = ""
+        top_product_available = 0.0
+
+        if product_available:
+            top_product, top_product_available = max(
+                product_available.items(),
+                key=lambda pair: pair[1],
+            )
+
         return {
             "positions": len(items),
             "total_available": total_available,
@@ -141,6 +164,10 @@ class ChatOperationalDataCommentaryStockService:
             "top_branch": top_branch,
             "top_branch_available": top_branch_available,
             "total_records": int(total_records) if total_records is not None else None,
+            "distinct_products": distinct_products,
+            "rupture_products": rupture_products,
+            "top_product": top_product,
+            "top_product_available": top_product_available,
         }
 
     @classmethod
@@ -206,6 +233,41 @@ class ChatOperationalDataCommentaryStockService:
                     count=str(agg.get("committed_over_current_positions")),
                 )
             )
+
+        distinct_products = int(agg.get("distinct_products") or 0)
+
+        if distinct_products > 1:
+            highlights.append(
+                ChatOperationalDataCommentarySupportService._text(
+                    profile,
+                    "mpFanOutHeadline",
+                    count=str(distinct_products),
+                    total=fmt(agg.get("total_available")),
+                )
+            )
+
+            rupture_products = int(agg.get("rupture_products") or 0)
+
+            if rupture_products:
+                highlights.append(
+                    ChatOperationalDataCommentarySupportService._text(
+                        profile,
+                        "mpRupture",
+                        count=str(rupture_products),
+                    )
+                )
+
+            top_product = str(agg.get("top_product") or "").strip()
+
+            if top_product and float(agg.get("top_product_available") or 0) > 0:
+                highlights.append(
+                    ChatOperationalDataCommentarySupportService._text(
+                        profile,
+                        "mpConcentration",
+                        code=top_product,
+                        quantity=fmt(agg.get("top_product_available")),
+                    )
+                )
 
         return highlights
 

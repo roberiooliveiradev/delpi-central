@@ -101,6 +101,8 @@ class ChatGroundedInsightAnswerService:
         facts = ChatOperationalLlmSynthesisContextService.build_facts_addon(
             tool_calls,
             response_mode=response_mode,
+            tool_context=tool_context,
+            message=message,
         ).strip()
 
         if facts:
@@ -161,7 +163,30 @@ class ChatGroundedInsightAnswerService:
         if isinstance(turn_grounding, dict) and turn_grounding:
             updated["turnGrounding"] = dict(turn_grounding)
 
+        merged_commentary = cls._build_merged_mp_stock_commentary(
+            message,
+            updated.get("toolCalls"),
+        )
+
+        if merged_commentary:
+            updated["mergedMpStockCommentary"] = merged_commentary
+
         return updated
+
+    @classmethod
+    def _build_merged_mp_stock_commentary(
+        cls,
+        message: str,
+        tool_calls: list[Any] | None,
+    ) -> dict[str, Any] | None:
+        from app.domain.services.chat_grounded_mp_stock_aggregation_service import (
+            ChatGroundedMpStockAggregationService,
+        )
+
+        return ChatGroundedMpStockAggregationService.build_merged_commentary(
+            message,
+            tool_calls,
+        )
 
     @classmethod
     def _resolve_stage(

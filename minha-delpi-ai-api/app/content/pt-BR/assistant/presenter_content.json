@@ -1578,7 +1578,10 @@
       "attentionNegative": "Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado.",
       "attentionCommitted": "Empenho elevado pode bloquear novas saídas — conferir pedidos abertos.",
       "attentionFullyCommitted": "Todo o saldo consultado está empenhado ou indisponível para nova saída.",
-      "attentionPagination": "Há mais posições além desta página — peça a próxima página para ver o restante."
+      "attentionPagination": "Há mais posições além desta página — peça a próxima página para ver o restante.",
+      "mpFanOutHeadline": "**{count}** matéria(s)-prima(s) consultadas — saldo agregado **{total}** un.",
+      "mpRupture": "**{count}** MP(s) com ruptura ou saldo zerado.",
+      "mpConcentration": "Maior saldo em **{code}** ({quantity} un.)."
     },
     "rawMaterialPrice": {
       "highlightsHeader": "**Destaques**",

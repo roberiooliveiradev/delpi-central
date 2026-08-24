@@ -249,6 +249,18 @@ class ChatGroundedCapabilityPlanningService:
         return planned
 
     @classmethod
+    def _dedupe_codes(cls, codes: list[str]) -> list[str]:
+        ordered: list[str] = []
+
+        for code in codes:
+            token = str(code or "").strip()
+
+            if token and token not in ordered:
+                ordered.append(token)
+
+        return ordered
+
+    @classmethod
     def _resolve_enrich_product_codes(
         cls,
         message: str,
@@ -262,7 +274,7 @@ class ChatGroundedCapabilityPlanningService:
 
             if typed_keys:
                 cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
-                return typed_keys[:cap]
+                return cls._dedupe_codes(typed_keys)[:cap]
 
         merged: list[str] = []
         keys_by_type = excerpt.get("keysByComponentType")
@@ -280,7 +292,7 @@ class ChatGroundedCapabilityPlanningService:
 
         if merged:
             cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
-            return merged[:cap]
+            return cls._dedupe_codes(merged)[:cap]
 
         if cls._message_requests_fan_out(message):
             top_keys = [
@@ -325,7 +337,7 @@ class ChatGroundedCapabilityPlanningService:
 
             if typed_keys:
                 cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
-                return typed_keys[:cap]
+                return cls._dedupe_codes(typed_keys)[:cap]
 
         from app.domain.services.chat_turn_grounding_content_service import (
             ChatTurnGroundingContentService,

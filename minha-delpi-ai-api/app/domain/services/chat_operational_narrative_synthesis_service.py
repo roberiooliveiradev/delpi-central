@@ -207,6 +207,7 @@ class ChatOperationalNarrativeSynthesisService:
         facts = ChatOperationalLlmSynthesisContextService.build_facts_addon(
             tool_calls,
             response_mode=response_mode,
+            message=message,
         )
 
         return f"{addon}{facts}"

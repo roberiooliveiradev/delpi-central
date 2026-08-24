@@ -22,8 +22,40 @@ class ChatOperationalLlmSynthesisContextService:
         tool_calls: list | None,
         *,
         response_mode: str | None = None,
+        tool_context: dict[str, Any] | None = None,
+        message: str | None = None,
     ) -> str:
         lines = cls.collect_fact_lines(tool_calls, response_mode=response_mode)
+
+        merged_commentary = None
+
+        if isinstance(tool_context, dict):
+            cached = tool_context.get("mergedMpStockCommentary")
+
+            if isinstance(cached, dict):
+                merged_commentary = cached
+
+        if merged_commentary is None and str(message or "").strip():
+            from app.domain.services.chat_grounded_mp_stock_aggregation_service import (
+                ChatGroundedMpStockAggregationService,
+            )
+
+            merged_commentary = ChatGroundedMpStockAggregationService.build_merged_commentary(
+                str(message),
+                tool_calls,
+            )
+
+        if isinstance(merged_commentary, dict):
+            from app.domain.services.chat_grounded_mp_stock_aggregation_service import (
+                ChatGroundedMpStockAggregationService,
+            )
+
+            cls._append_unique_lines(
+                lines,
+                ChatGroundedMpStockAggregationService.commentary_lead_lines(
+                    merged_commentary
+                ),
+            )
 
         if not lines:
             return ""
