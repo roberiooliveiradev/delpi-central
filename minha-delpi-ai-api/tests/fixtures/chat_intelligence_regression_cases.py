@@ -3131,11 +3131,14 @@ FLOW_FAMILY_MATRIX_CASES = [
                 "title": "Estrutura 90260149",
                 "rowCount": 6,
                 "topKeys": ["10380044"],
+                "entity": "product_structure",
+                "profileKey": "structure",
             }
         },
         "expects": {
             "grounded_status": "grounded",
-            "should_narrate_excerpt": True,
+            "should_enrich_insight": True,
+            "should_narrate_excerpt": False,
             "session_review": False,
             "unclear_direct": False,
         },
@@ -3166,6 +3169,77 @@ FLOW_FAMILY_MATRIX_CASES = [
         "expects": {
             "grounded_status": "ungrounded",
             "unclear_direct": True,
+        },
+    },
+]
+
+GROUNDED_INSIGHT_REGRESSION_CASES = [
+    {
+        "id": "FF-GROUND-STRUCT-01",
+        "message": "qual a estrutura do produto 90260149",
+        "structure_payload": {
+            "product": {"product_code": "90260149", "description": "CHICOTE"},
+            "items": [
+                {
+                    "component_type": "PI",
+                    "component_code": "50231850",
+                    "description": "PI A",
+                },
+                {
+                    "component_type": "MP",
+                    "component_code": "10080109",
+                    "description": "MP A",
+                },
+            ],
+        },
+        "expects": {
+            "profile_key": "structure",
+            "must_not_contain": ["reformule", "reformular"],
+            "must_contain": ["90260149"],
+        },
+    },
+    {
+        "id": "FF-GROUND-INSIGHT-01",
+        "message": "o que me diz sobre os itens?",
+        "excerpt": {
+            "title": "Estrutura 90260149",
+            "rowCount": 6,
+            "topKeys": ["50231850", "10080109"],
+            "entity": "product_structure",
+            "profileKey": "structure",
+            "keysByComponentType": {
+                "PI": ["50231850"],
+                "MP": ["10080109", "10090014"],
+            },
+        },
+        "expects": {
+            "stage": "grounded_enrich_insight",
+            "planned_scopes": ["stock", "profile"],
+            "must_not_contain_in_facts": ["Código:", "Tipo:"],
+        },
+    },
+    {
+        "id": "FF-GROUND-MP-STOCK-01",
+        "message": "estoque das matérias-primas",
+        "workspace": {
+            "turnGrounding": {"status": "grounded"},
+            "workingMemory": {
+                "operationalFocus": {"productCode": "90260149"},
+                "lastResultExcerpt": {
+                    "title": "Estrutura 90260149",
+                    "rowCount": 2,
+                    "topKeys": ["50231850", "10080109", "10090014"],
+                    "keysByComponentType": {
+                        "PI": ["50231850"],
+                        "MP": ["10080109", "10090014"],
+                    },
+                },
+            },
+        },
+        "expects": {
+            "product_codes": ["10080109", "10090014"],
+            "must_not_include": ["90260149"],
+            "intent": "stock",
         },
     },
 ]

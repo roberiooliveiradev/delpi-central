@@ -115,6 +115,15 @@ def test_flow_family_matrix_gates(case: dict):
             is expects["should_expand_excerpt"]
         )
 
+    if "should_enrich_insight" in expects:
+        assert (
+            ChatTurnGroundingService.should_enrich_before_insight(
+                message,
+                excerpt if isinstance(excerpt, dict) else None,
+            )
+            is expects["should_enrich_insight"]
+        )
+
     if "unclear_direct" in expects:
         grounding = ChatTurnGroundingService.evaluate(
             message=message,

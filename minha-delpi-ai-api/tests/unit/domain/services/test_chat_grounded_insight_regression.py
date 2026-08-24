@@ -1,0 +1,142 @@
+"""Regressão dos três cenários grounded dos screenshots (E14)."""
+
+from __future__ import annotations
+
+import pytest
+
+from app.composition.content_composer import configure_domain_infrastructure_ports
+from app.domain.services.chat_grounded_capability_planning_service import (
+    ChatGroundedCapabilityPlanningService,
+)
+from app.domain.services.chat_grounded_enrich_planning_service import (
+    ChatGroundedEnrichPlanningService,
+)
+from app.domain.services.chat_operational_data_commentary_service import (
+    ChatOperationalDataCommentaryService,
+)
+from app.domain.services.chat_operational_llm_synthesis_context_service import (
+    ChatOperationalLlmSynthesisContextService,
+)
+from app.domain.services.chat_turn_grounding_service import ChatTurnGroundingService
+from tests.fixtures.chat_intelligence_regression_cases import (
+    GROUNDED_INSIGHT_REGRESSION_CASES,
+)
+
+configure_domain_infrastructure_ports()
+
+
+class _SelectionStub:
+    def select_action_for_product(
+        self,
+        message,
+        *,
+        product_code,
+        allowed_action_ids,
+        intent,
+        route_segment=None,
+        previous_messages=None,
+    ):
+        return {
+            "actionId": f"action-{intent}-{product_code}",
+            "intent": intent,
+            "productCode": product_code,
+        }
+
+
+@pytest.mark.parametrize(
+    "case",
+    GROUNDED_INSIGHT_REGRESSION_CASES,
+    ids=[str(item["id"]) for item in GROUNDED_INSIGHT_REGRESSION_CASES],
+)
+def test_grounded_insight_regression(case: dict):
+    case_id = str(case["id"])
+    expects = case["expects"]
+    message = str(case["message"])
+
+    if case_id == "FF-GROUND-STRUCT-01":
+        commentary = ChatOperationalDataCommentaryService.build(
+            expects["profile_key"],
+            case["structure_payload"],
+        )
+
+        assert commentary
+        combined = "\n".join(
+            str(line)
+            for line in (
+                *(commentary.get("highlights") or []),
+                *(commentary.get("summaryLines") or []),
+            )
+        ).lower()
+
+        for token in expects["must_not_contain"]:
+            assert token.lower() not in combined
+
+        for token in expects["must_contain"]:
+            assert token in combined
+
+        return
+
+    if case_id == "FF-GROUND-INSIGHT-01":
+        excerpt = case["excerpt"]
+        stage = ChatTurnGroundingService.resolve_grounded_stage(
+            message=message,
+            excerpt=excerpt,
+        )
+
+        assert stage == expects["stage"]
+
+        plan = ChatGroundedEnrichPlanningService.build_plan(
+            message=message,
+            workspace_context={},
+            excerpt=excerpt,
+            response_mode="normal",
+        )
+
+        assert plan is not None
+
+        for scope in expects["planned_scopes"]:
+            assert scope in plan.planned_scopes
+
+        tool_calls = [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/90260149/structure",
+                    "dataCommentary": {
+                        "highlights": ["Árvore com 6 componentes"],
+                    },
+                },
+            }
+        ]
+        facts = ChatOperationalLlmSynthesisContextService.build_facts_addon(
+            tool_calls,
+            message=message,
+        ).lower()
+
+        for token in expects["must_not_contain_in_facts"]:
+            assert token.lower() not in facts
+
+        return
+
+    if case_id == "FF-GROUND-MP-STOCK-01":
+        selection = _SelectionStub()
+        planned = ChatGroundedCapabilityPlanningService.plan_actions(
+            selection,
+            message=message,
+            allowed_action_ids=["get_product_stock"],
+            workspace_context=case["workspace"],
+        )
+
+        codes = [item["productCode"] for item in planned]
+
+        assert codes == expects["product_codes"]
+
+        for blocked in expects["must_not_include"]:
+            assert blocked not in codes
+
+        assert all(item["intent"] == expects["intent"] for item in planned)
+
+        return
+
+    raise AssertionError(f"Unhandled grounded insight case: {case_id}")
