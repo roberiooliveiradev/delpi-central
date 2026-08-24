@@ -167,8 +167,19 @@ def main() -> int:
             if meta.get("chartPresentation"):
                 print("FAIL chartPresentation presente com chartPolicy skip", file=sys.stderr)
                 return 3
+            selected = str((meta.get("presentationDecision") or {}).get("selected") or "")
+            if selected and selected != "table":
+                print(f"WARN stock selected={selected!r} (esperado table no Automático)")
+            role = str(meta.get("compositionRole") or "")
+            if role and role != "primary":
+                print(f"FAIL stock compositionRole={role!r}", file=sys.stderr)
+                return 5
         if "/sales" in path.lower() and meta.get("ok"):
             sales_ok = True
+            role = str(meta.get("compositionRole") or "")
+            if role and role != "enrichment":
+                print(f"FAIL sales compositionRole={role!r}", file=sys.stderr)
+                return 6
 
     answer = str(response.get("answer") or "")
     print("answer_preview=", answer[:240])
