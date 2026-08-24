@@ -3,8 +3,8 @@
 import { Activity } from "lucide-react";
 
 import type { AdminEngagementStatistics } from "../../../../data/adminApi";
-import { Button } from "../../../../ui-kit";
-import { BarChart, LineChart } from "../StatsCharts";
+import { Button, AreaChart } from "../../../../ui-kit";
+import { BarChart } from "../StatsCharts";
 import {
   StatsChartCard,
   StatsMiniKpi,
@@ -91,23 +91,25 @@ export function StatsUsagePage({
 
       <div className="admin-stats__charts-row admin-stats__charts-row--duo admin-stats__charts-row--trends">
         <StatsChartCard title={ENGAGEMENT_LABELS.activeUsersSeries}>
-          <LineChart
-            points={(activity.activeUsersSeries ?? []).map((point) => ({
-              label: formatSeriesDateLabel(point.date),
+          <AreaChart
+            data={(activity.activeUsersSeries ?? []).map((point) => ({
+              name: formatSeriesDateLabel(point.date),
               value: point.activeUsers ?? 0,
             }))}
-            valueLabel="usuários"
-            accent={STATS_CHART_COLORS.c1}
+            color={STATS_CHART_COLORS.c1}
+            valueSuffix="usuários"
+            hintText={ENGAGEMENT_LABELS.chartHoverHint}
           />
         </StatsChartCard>
         <StatsChartCard title={ENGAGEMENT_LABELS.durationSeries}>
-          <LineChart
-            points={(activity.durationSeries ?? []).map((point) => ({
-              label: formatSeriesDateLabel(point.date),
+          <AreaChart
+            data={(activity.durationSeries ?? []).map((point) => ({
+              name: formatSeriesDateLabel(point.date),
               value: point.totalSeconds ?? 0,
             }))}
-            formatValue={formatDuration}
-            accent={STATS_CHART_COLORS.c3}
+            color={STATS_CHART_COLORS.c3}
+            valueFormatter={formatDuration}
+            hintText={ENGAGEMENT_LABELS.chartHoverHint}
           />
         </StatsChartCard>
       </div>

@@ -1,0 +1,51 @@
+.portal-area-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.portal-area-chart__canvas {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.portal-area-chart__empty {
+  margin: 0;
+  padding: 48px 16px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.portal-area-chart__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.portal-area-chart__tooltip {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated, var(--surface));
+  color: var(--text);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 12%, transparent);
+  font-size: 0.8125rem;
+  max-width: 220px;
+}
+
+.portal-area-chart__tooltip-label {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.portal-area-chart__tooltip-value {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.35;
+}

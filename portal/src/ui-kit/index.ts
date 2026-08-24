@@ -66,3 +66,6 @@ export type { PageChromeProps } from "./layout/PageChrome";
 
 export { DenseTable } from "./data/DenseTable";
 export type { DenseTableProps } from "./data/DenseTable";
+
+export { AreaChart } from "./charts/AreaChart";
+export type { AreaChartPoint, AreaChartProps } from "./charts/AreaChart";

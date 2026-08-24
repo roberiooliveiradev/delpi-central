@@ -1418,89 +1418,11 @@
 }
 
 .admin-stats__charts-row--trends .admin-stats__chart-card {
-  min-height: 320px;
+  min-height: 300px;
 }
 
-.admin-stats-line-chart {
-  padding: 4px 0 0;
-}
-
-.admin-stats-line-chart--empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 220px;
-}
-
-.admin-stats-line-chart svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.admin-stats-line-chart__grid-line {
-  stroke: color-mix(in srgb, var(--border) 55%, transparent);
-  stroke-width: 1;
-  stroke-dasharray: 4 4;
-}
-
-.admin-stats-line-chart__axis-label {
-  fill: var(--text-muted);
-  font-size: 10px;
-  font-family: inherit;
-}
-
-.admin-stats-line-chart__line {
-  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--chart-1) 25%, transparent));
-}
-
-.admin-stats-line-chart__dot {
-  stroke: var(--surface-elevated, var(--surface));
-  stroke-width: 2;
-}
-
-.admin-stats-line-chart__dot--peak {
-  stroke-width: 2.5;
-}
-
-.admin-stats-line-chart__peak-label {
-  fill: var(--text);
-  font-size: 11px;
-  font-weight: 700;
-  font-family: inherit;
-}
-
-.admin-stats-line-chart__labels {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-  gap: 6px;
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.admin-stats-line-chart__labels li {
-  padding: 8px 6px;
-  border-radius: 8px;
-  text-align: center;
-  background: color-mix(in srgb, var(--surface-elevated) 90%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
-}
-
-.admin-stats-line-chart__labels span {
-  display: block;
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.admin-stats-line-chart__labels strong {
-  display: block;
-  margin-top: 2px;
-  color: var(--text);
-  font-size: 0.8125rem;
-  line-height: 1.3;
+.admin-stats__charts-row--trends .portal-area-chart {
+  flex: 1;
 }
 
 .admin-stats-top-users-list {
