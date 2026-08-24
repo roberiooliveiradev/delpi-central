@@ -36,12 +36,34 @@ Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e
 | Decisões travadas | Tabela sem Option A/B / TBD |
 | Matriz de fluxos transversais | Tabela Fluxo × superfície × P0/herança/fora (+ satélites) |
 | Etapas `E1…En` | Agrupamento lógico |
-| Subetapas `E*.S*` | Trabalho atomicamente entregável |
+| Subetapas `E*.S*` | Trabalho atomicamente entregável — **cada uma com receita** (ver abaixo) |
 | Critérios de pronto | Verificável |
 | Fora do escopo | Explícito |
 | Todos YAML | ids `eN-sM-slug` alinhados às subetapas |
+| Receita por subetapa | Obrigatória em planos multi-etapa (ver § Receita) |
 
 Citar arquivos canônicos com caminhos reais. Plan mode: iterar o documento do plano; só executar após pedido explícito do usuário.
+
+## Receita por subetapa (obrigatória)
+
+Planos com etapas `E*.S*` devem documentar **cada subetapa** como receita executável — para que um implementador (inclusive modelo simples) não improvise. Uma subetapa = um bloco com os campos abaixo (markdown `#### E*.S*`).
+
+| Campo | Conteúdo |
+|-------|----------|
+| **Objetivo** | Uma frase do resultado da subetapa |
+| **Fazer** | Lista numerada: arquivos a criar/alterar (paths reais), métodos/contratos, JSON keys, wiring no pipeline |
+| **Não fazer** | Anti-padrões explícitos (patch local, `if path`, texto PT no Python, escopo da subetapa seguinte) |
+| **Teste** | Comando pytest/npm/gate exato + arquivo de teste |
+| **Pronto quando** | Critério verificável (assert, grep, comportamento) |
+| **Commit** | Mensagem PT sugerida (porquê, não lista de arquivos) |
+
+Planos de inteligência transversal devem incluir, quando couber:
+
+- **Protocolo de execução** no corpo (commit+push por subetapa, não agrupar).
+- **Etapa verify-final** (ex. `E9`): rebuild + fluxo live + tabela pass/fail; commit só se fix de regressão.
+- **Satélites** na matriz de fluxos (send/stream/simulate, MFE, admin debug, modos fast/normal).
+
+Sem receita por subetapa = plano incompleto para execução delegada.
 
 ## Protocolo de execução (quando o plano declarar)
 

@@ -15,7 +15,7 @@ alwaysApply: true
 | `plugins-overlay-positioning.mdc` | **Overlay / toolbar / popover** — portal + coords; **proibido** clip/padding/abspos paliativo |
 | `plugins-reusable-components.mdc` | UI MFE — `@delpi/plugin-ui`; zero CSS de componente do kit no MFE |
 | `plugins-visual-design-system.mdc` | Tokens, layout, anti-vazamento CSS, claro/escuro |
-| `plan-construction.mdc` | CreatePlan / multi-etapa — **matriz de fluxos transversais** obrigatória (não só o sintoma) |
+| `plan-construction.mdc` | CreatePlan / multi-etapa — matriz de fluxos + **receita por `E*.S*`** (objetivo, fazer, não fazer, teste, pronto, commit) |
 | `test-and-commit.mdc` | Ao concluir alteração de código |
 | `infra-sequential-container-startup.mdc` | Deploy / docker up / rebuild |
 
