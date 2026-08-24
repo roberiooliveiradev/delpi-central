@@ -12,7 +12,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 |---------|----------------------|
 | actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
-| layout | PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
+| layout | TopBar, UnderlineNav, PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
 | feedback | EmptyState, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress, **AlertQueue**, **ScopeChipBar**, **WorklistItem**… |
 | forms | SelectField, DateField, MultiSelectField… |
 | data | DataTable, DataTableSection, CompactPagination, ConfigurablePresentationTable, **Timeline** (`ActivityTimeline` alias)… |
