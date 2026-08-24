@@ -113,6 +113,11 @@ class ChatIntelligenceMetadataService:
         if pipeline:
             metadata["pipeline"] = pipeline
 
+        turn_grounding = tool_context.get("turnGrounding")
+
+        if isinstance(turn_grounding, dict) and turn_grounding:
+            metadata["turnGrounding"] = turn_grounding
+
         if tool_context.get("drawingAnalysisMode"):
             metadata["drawingAnalysisMode"] = True
 

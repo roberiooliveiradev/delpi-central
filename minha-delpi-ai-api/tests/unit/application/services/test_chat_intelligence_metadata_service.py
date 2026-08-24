@@ -52,6 +52,22 @@ def test_build_includes_rag_retrieved_and_visible_counts():
     assert metadata["ragRetrievedChunkCount"] == 4
 
 
+def test_build_includes_turn_grounding_metadata():
+    metadata = ChatIntelligenceMetadataService.build(
+        sources=[],
+        tool_context={
+            "toolCalls": [],
+            "turnGrounding": {
+                "status": "grounded",
+                "referringTo": {"label": "Estrutura 90260149 · 6 itens"},
+            },
+        },
+    )
+
+    assert metadata["turnGrounding"]["status"] == "grounded"
+    assert "90260149" in metadata["turnGrounding"]["referringTo"]["label"]
+
+
 def test_build_pipeline_flags_includes_response_mode_effect():
     pipeline = ChatIntelligenceMetadataService.build_pipeline_flags(
         fast_path=False,
