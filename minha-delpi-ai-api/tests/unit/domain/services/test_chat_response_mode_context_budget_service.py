@@ -30,5 +30,29 @@ def test_admin_debug_keys():
     payload = ChatResponseModeContextBudgetService.resolve("normal").as_admin_debug()
 
     assert payload["mode"] == "normal"
+    assert payload["profile"] == "local"
     assert payload["historyMaxMessages"] == 12
     assert "messageSearchLookbackMessages" in payload
+
+
+def test_context_budget_cloud_profile_when_openai_compatible(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
+
+    payload = ChatResponseModeContextBudgetService.resolve(
+        "normal",
+        provider="openai_compatible",
+    ).as_admin_debug()
+
+    assert payload["profile"] == "cloud"
+    assert payload["toolContextMaxChars"] == 18000
+    assert payload["maxMultiActionsPerTurn"] == 5
+
+
+def test_context_budget_local_profile_for_ollama():
+    payload = ChatResponseModeContextBudgetService.resolve(
+        "thinker",
+        provider="ollama",
+    ).as_admin_debug()
+
+    assert payload["profile"] == "local"
+    assert payload["toolContextMaxChars"] == 14000

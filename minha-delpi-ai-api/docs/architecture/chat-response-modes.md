@@ -8,15 +8,22 @@ Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-
 
 ## Orçamento de contexto por modo (ago/2026)
 
-Além de `generationLimits`, o bundle declara `contextBudget` por modo (`historyMaxMessages`, RAG, tool clip, `messageSearch*`, `maxMultiActionsPerTurn`). Serviço canônico: `ChatResponseModeContextBudgetService`. Em `openai_compatible`, o prompt é truncado no cliente pelo budget (`num_ctx` continua só informativo no metadata).
+Além de `generationLimits`, o bundle declara `contextBudget` (perfil **local**, Ollama/RAM) e `contextBudgetCloud` (perfil **cloud**, `openai_compatible`/Kimi). Serviço canônico: `ChatResponseModeContextBudgetService` — expõe `profile: local|cloud` no `adminDebug.contextBudget`. Em cloud, o prompt é truncado no cliente pelo budget (`num_ctx` em `generationLimitsCloud` é informativo no metadata).
 
 Multi-intent no mesmo turno: Rápida costuma executar 1 action e oferecer chip «também consultar»; Normal/Pensador sobem o teto. Leituras OpenAPI independentes no mesmo plano podem rodar em paralelo (`ChatToolContextParallelReadService` — ver `chat-intelligence-base.md` § Parallel reads).
 
-| Modo | history | ragMaxChars | maxTokens (JSON) | maxMultiActionsPerTurn |
-|------|---------|-------------|------------------|------------------------|
-| fast | 4 | 4000 | 256 | 1 |
-| normal | 12 | 9000 | 1024 | 4 |
-| thinker | 20 | 12000 | 2048 | 6 |
+| Modo | Perfil | history | ragMaxChars | toolContextMaxChars | maxFactsChars (base) | maxMultiActions |
+|------|--------|---------|-------------|---------------------|----------------------|-----------------|
+| fast | local | 4 | 4000 | 4000 | 600 | 1 |
+| normal | local | 12 | 9000 | 10000 | 1200 | 4 |
+| thinker | local | 20 | 12000 | 14000 | 2000 | 6 |
+| fast | cloud | 4 | 6000 | 8000 | 800 | 1 |
+| normal | cloud | 12 | 12000 | 18000 | 1600 | 5 |
+| thinker | cloud | 20 | 18000 | 28000 | 3200 | 8 |
+
+**Enrich insight multi-rota** (`grounded_enrich_insight` com 2+ tools OK): orçamento dinâmico em `operational_llm_synthesis_context.json` → `enrichInsightFactsBudget` (`base + perTool × min(count, maxToolsCounted)`, capped por `hardCap`). Telemetria: `synthesisFactsTruncated`, `synthesisFactsBudgetChars` no pipeline/adminDebug. Modo **Rápida** + enrich pesado: chip «Para cruzar várias fontes, use modo Normal ou Pensador» (`groundedEnrichModeSuggestions`).
+
+`MAX_CONTEXT_CHARS=24000` recomendado em `infra/env.local.example` para cloud; default em `settings.py` permanece `12000` (dev fraco).
 
 No modo Rápida, pedidos multi-escopo executam a 1ª action e oferecem chips «Também consultar …» (`ChatMultiIntentContinuationService`). Ambiguidade operacional continua em clarificação (`clarifyInsteadOfGuess` no adminDebug), sem chute do LLM.
 

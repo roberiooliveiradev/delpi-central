@@ -226,14 +226,29 @@ class ChatResponseModeContentService:
         return max(1, value)
 
     @classmethod
-    def context_budget_node(cls, mode: str) -> dict[str, Any]:
+    def context_budget_node(cls, mode: str, *, profile: str = "local") -> dict[str, Any]:
+        profile_key = str(profile or "local").strip().lower()
+        section = "contextBudgetCloud" if profile_key == "cloud" else "contextBudget"
         node = ChatAssistantContentService.get_node(
             _BUNDLE,
-            "contextBudget",
+            section,
             str(mode or "").strip().lower(),
         )
 
         return node if isinstance(node, dict) else {}
+
+    @classmethod
+    def context_budget_profile_for_provider(cls, provider: str | None) -> str:
+        from app.domain.services.chat_llm_provider_normalization_service import (
+            ChatLlmProviderNormalizationService,
+        )
+
+        if ChatLlmProviderNormalizationService.is_openai_compatible(
+            str(provider or "").strip().lower(),
+        ):
+            return "cloud"
+
+        return "local"
 
     @classmethod
     def quality_fallback_min_chars(cls) -> int:

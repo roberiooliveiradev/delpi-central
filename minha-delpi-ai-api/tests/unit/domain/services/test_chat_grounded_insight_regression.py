@@ -139,4 +139,35 @@ def test_grounded_insight_regression(case: dict):
 
         return
 
+    if case_id == "FF-BUDGET-ENRICH-01":
+        from unittest.mock import patch
+
+        from app.domain.services.chat_response_mode_context_budget_service import (
+            ChatResponseModeContextBudgetService,
+        )
+
+        tool_context = dict(case["tool_context"])
+
+        with patch.object(
+            ChatResponseModeContextBudgetService,
+            "current_profile",
+            return_value="cloud",
+        ):
+            facts = ChatOperationalLlmSynthesisContextService.build_facts_addon(
+                case["tool_calls"],
+                response_mode=case["response_mode"],
+                tool_context=tool_context,
+                message=message,
+            )
+
+        assert len(facts.strip()) >= expects["min_facts_chars"]
+        assert tool_context.get("synthesisFactsTruncated") is expects[
+            "synthesis_facts_truncated"
+        ]
+        assert int(tool_context.get("synthesisFactsBudgetChars") or 0) >= expects[
+            "min_budget_chars"
+        ]
+
+        return
+
     raise AssertionError(f"Unhandled grounded insight case: {case_id}")

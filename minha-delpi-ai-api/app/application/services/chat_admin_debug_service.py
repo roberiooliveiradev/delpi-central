@@ -457,7 +457,8 @@ class ChatAdminDebugService:
             from app.infrastructure.llm.llm_request_context import get_active_config
 
             payload["contextBudget"] = ChatResponseModeContextBudgetService.resolve(
-                get_active_config().response_mode
+                get_active_config().response_mode,
+                provider=get_active_config().provider,
             ).as_admin_debug()
         except Exception:
             payload["contextBudget"] = None

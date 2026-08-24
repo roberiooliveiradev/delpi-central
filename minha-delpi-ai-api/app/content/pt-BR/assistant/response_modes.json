@@ -49,15 +49,15 @@
     "minAnswerChars": 40
   },
   "fastLlmBudget": {
-    "maxFactsChars": 380,
+    "maxFactsChars": 600,
     "skipProsePanelRules": true
   },
   "normalLlmBudget": {
-    "maxFactsChars": 520,
+    "maxFactsChars": 1200,
     "skipProsePanelRules": false
   },
   "thinkerLlmBudget": {
-    "maxFactsChars": 680,
+    "maxFactsChars": 2000,
     "skipProsePanelRules": false
   },
   "generationLimits": {
@@ -97,7 +97,7 @@
       "historySummaryMaxChars": 1500,
       "ragMaxChunks": 6,
       "ragMaxChars": 9000,
-      "toolContextMaxChars": 9000,
+      "toolContextMaxChars": 10000,
       "messageSearchMaxHits": 6,
       "messageSearchMaxChars": 3500,
       "messageSearchLookbackMessages": 80,
@@ -108,11 +108,66 @@
       "historySummaryMaxChars": 2500,
       "ragMaxChunks": 8,
       "ragMaxChars": 12000,
-      "toolContextMaxChars": 12000,
+      "toolContextMaxChars": 14000,
       "messageSearchMaxHits": 10,
       "messageSearchMaxChars": 6000,
       "messageSearchLookbackMessages": 120,
       "maxMultiActionsPerTurn": 6
+    }
+  },
+  "contextBudgetCloud": {
+    "fast": {
+      "historyMaxMessages": 4,
+      "historySummaryMaxChars": 800,
+      "ragMaxChunks": 4,
+      "ragMaxChars": 6000,
+      "toolContextMaxChars": 8000,
+      "messageSearchMaxHits": 4,
+      "messageSearchMaxChars": 2000,
+      "messageSearchLookbackMessages": 50,
+      "maxMultiActionsPerTurn": 1
+    },
+    "normal": {
+      "historyMaxMessages": 12,
+      "historySummaryMaxChars": 2000,
+      "ragMaxChunks": 8,
+      "ragMaxChars": 12000,
+      "toolContextMaxChars": 18000,
+      "messageSearchMaxHits": 8,
+      "messageSearchMaxChars": 4500,
+      "messageSearchLookbackMessages": 100,
+      "maxMultiActionsPerTurn": 5
+    },
+    "thinker": {
+      "historyMaxMessages": 20,
+      "historySummaryMaxChars": 3200,
+      "ragMaxChunks": 10,
+      "ragMaxChars": 18000,
+      "toolContextMaxChars": 28000,
+      "messageSearchMaxHits": 12,
+      "messageSearchMaxChars": 8000,
+      "messageSearchLookbackMessages": 140,
+      "maxMultiActionsPerTurn": 8
+    }
+  },
+  "generationLimitsCloud": {
+    "fast": {
+      "model": "qwen2.5:1.5b",
+      "maxTokens": 512,
+      "numCtx": 8192,
+      "temperature": 0.2
+    },
+    "normal": {
+      "model": "qwen2.5:1.5b",
+      "maxTokens": 2048,
+      "numCtx": 16384,
+      "temperature": 0.1
+    },
+    "thinker": {
+      "model": "qwen2.5:3b",
+      "maxTokens": 4096,
+      "numCtx": 32768,
+      "temperature": 0.15
     }
   },
   "latencyTargetsSec": {

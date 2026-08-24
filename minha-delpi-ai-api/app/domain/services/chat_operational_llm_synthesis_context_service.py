@@ -25,7 +25,16 @@ class ChatOperationalLlmSynthesisContextService:
         tool_context: dict[str, Any] | None = None,
         message: str | None = None,
     ) -> str:
-        lines = cls.collect_fact_lines(tool_calls, response_mode=response_mode)
+        stage = cls._resolve_turn_grounding_stage(tool_context)
+        ok_tool_count = cls._ok_external_action_count(tool_calls)
+        dedupe_product_profile = (
+            stage == "grounded_enrich_insight" and ok_tool_count > 1
+        )
+        lines = cls.collect_fact_lines(
+            tool_calls,
+            response_mode=response_mode,
+            dedupe_by_product_profile=dedupe_product_profile,
+        )
 
         merged_commentary = None
 
@@ -63,13 +72,23 @@ class ChatOperationalLlmSynthesisContextService:
         title = ChatOperationalLlmSynthesisContextContentService.title()
         body = "\n".join(f"- {line}" for line in lines)
         block = f"{title}\n{body}".strip()
-        max_chars = cls._resolve_max_chars(response_mode)
+        max_chars = cls._resolve_max_chars(
+            response_mode,
+            tool_calls=tool_calls,
+            tool_context=tool_context,
+            ok_tool_count=ok_tool_count,
+        )
+        truncated = len(block) > max_chars
 
-        if len(block) <= max_chars:
+        if not truncated:
             result = f"\n\n{block}"
         else:
             trimmed = cls._trim_block(block, max_chars)
             result = f"\n\n{trimmed}" if trimmed else ""
+
+        if isinstance(tool_context, dict):
+            tool_context["synthesisFactsBudgetChars"] = max_chars
+            tool_context["synthesisFactsTruncated"] = truncated
 
         if cls._should_append_prose_rules(tool_calls, response_mode):
             panel_rule = ChatOperationalLlmSynthesisContextContentService.prose_panel_rule()
@@ -119,25 +138,74 @@ class ChatOperationalLlmSynthesisContextService:
         return result
 
     @classmethod
-    def _resolve_max_chars(cls, response_mode: str | None) -> int:
+    def attach_synthesis_facts_telemetry(
+        cls,
+        metadata: dict[str, Any] | None,
+        tool_context: dict[str, Any] | None,
+    ) -> None:
+        if not isinstance(metadata, dict) or not isinstance(tool_context, dict):
+            return
+
+        if "synthesisFactsBudgetChars" not in tool_context:
+            return
+
+        pipeline = metadata.setdefault("intelligence", {}).setdefault("pipeline", {})
+        pipeline["synthesisFactsBudgetChars"] = tool_context.get("synthesisFactsBudgetChars")
+        pipeline["synthesisFactsTruncated"] = bool(tool_context.get("synthesisFactsTruncated"))
+
+        admin_debug = metadata.get("adminDebug")
+
+        if isinstance(admin_debug, dict):
+            admin_debug["synthesisFactsBudgetChars"] = tool_context.get("synthesisFactsBudgetChars")
+            admin_debug["synthesisFactsTruncated"] = bool(
+                tool_context.get("synthesisFactsTruncated"),
+            )
+
+    @classmethod
+    def _resolve_max_chars(
+        cls,
+        response_mode: str | None,
+        *,
+        tool_calls: list | None = None,
+        tool_context: dict[str, Any] | None = None,
+        ok_tool_count: int | None = None,
+    ) -> int:
         from app.domain.services.chat_response_mode_content_service import (
             ChatResponseModeContentService,
         )
+        from app.domain.services.chat_response_mode_context_budget_service import (
+            ChatResponseModeContextBudgetService,
+        )
         from app.domain.services.chat_response_mode_service import ChatResponseModeService
 
-        if ChatResponseModeService.normalize(response_mode) == "fast":
+        mode = ChatResponseModeService.normalize(response_mode)
+        stage = cls._resolve_turn_grounding_stage(tool_context)
+        counted = ok_tool_count if ok_tool_count is not None else cls._ok_external_action_count(
+            tool_calls,
+        )
+
+        if stage == "grounded_enrich_insight" and counted > 1:
+            profile = ChatResponseModeContextBudgetService.current_profile()
+
+            return ChatOperationalLlmSynthesisContextContentService.resolve_enrich_insight_facts_max_chars(
+                mode,
+                ok_tool_count=counted,
+                profile=profile,
+            )
+
+        if mode == "fast":
             fast_cap = ChatResponseModeContentService.fast_llm_max_facts_chars()
 
             if fast_cap is not None:
                 return fast_cap
 
-        if ChatResponseModeService.normalize(response_mode) == "normal":
+        if mode == "normal":
             normal_cap = ChatResponseModeContentService.normal_llm_max_facts_chars()
 
             if normal_cap is not None:
                 return normal_cap
 
-        if ChatResponseModeService.normalize(response_mode) == "thinker":
+        if mode == "thinker":
             thinker_cap = ChatResponseModeContentService.thinker_llm_max_facts_chars()
 
             if thinker_cap is not None:
@@ -182,11 +250,13 @@ class ChatOperationalLlmSynthesisContextService:
         tool_calls: list | None,
         *,
         response_mode: str | None = None,
+        dedupe_by_product_profile: bool = False,
     ) -> list[str]:
         if not isinstance(tool_calls, list):
             return []
 
         lines: list[str] = []
+        seen_product_profile: set[tuple[str, str]] = set()
 
         for tool_call in tool_calls:
             if str(tool_call.get("name") or "") != "execute_external_action":
@@ -206,9 +276,50 @@ class ChatOperationalLlmSynthesisContextService:
 
                 continue
 
+            if dedupe_by_product_profile:
+                path = str(metadata.get("path") or "").strip()
+                product_code = cls._product_code_from_path(path) or path
+                commentary = metadata.get("dataCommentary")
+                profile_key = ""
+
+                if isinstance(commentary, dict):
+                    profile_key = str(commentary.get("profileKey") or "").strip().lower()
+
+                dedupe_key = (product_code, profile_key)
+
+                if dedupe_key in seen_product_profile:
+                    continue
+
+                seen_product_profile.add(dedupe_key)
+
             cls._append_unique_lines(lines, cls._facts_from_metadata(metadata))
 
         return lines
+
+    @classmethod
+    def _resolve_turn_grounding_stage(cls, tool_context: dict[str, Any] | None) -> str:
+        if not isinstance(tool_context, dict):
+            return ""
+
+        turn_grounding = tool_context.get("turnGrounding")
+
+        if isinstance(turn_grounding, dict):
+            return str(turn_grounding.get("stage") or "").strip()
+
+        return str(tool_context.get("turnGroundingStage") or "").strip()
+
+    @classmethod
+    def _ok_external_action_count(cls, tool_calls: list | None) -> int:
+        if not isinstance(tool_calls, list):
+            return 0
+
+        return sum(
+            1
+            for tool_call in tool_calls
+            if str(tool_call.get("name") or "") == "execute_external_action"
+            and isinstance(tool_call.get("metadata"), dict)
+            and tool_call["metadata"].get("ok")
+        )
 
     @classmethod
     def _facts_from_metadata(cls, metadata: dict[str, Any]) -> list[str]:

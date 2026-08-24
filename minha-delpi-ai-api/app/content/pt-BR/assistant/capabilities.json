@@ -1263,9 +1263,9 @@
       "não reproduza frases de instrução"
     ],
     "factsMaxCharsByMode": {
-      "fast": 380,
-      "normal": 520,
-      "thinker": 1200
+      "fast": 600,
+      "normal": 1200,
+      "thinker": 2400
     }
   }
 }

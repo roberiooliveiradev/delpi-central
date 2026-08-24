@@ -53,3 +53,21 @@ def test_max_multi_actions_per_turn_by_mode():
     assert ChatResponseModeContextBudgetService.max_multi_actions_per_turn("fast") == 1
     assert ChatResponseModeContextBudgetService.max_multi_actions_per_turn("normal") == 4
     assert ChatResponseModeContextBudgetService.max_multi_actions_per_turn("thinker") == 6
+
+
+def test_llm_budget_max_facts_chars_recalibrated():
+    assert ChatResponseModeContentService.fast_llm_max_facts_chars() == 600
+    assert ChatResponseModeContentService.normal_llm_max_facts_chars() == 1200
+    assert ChatResponseModeContentService.thinker_llm_max_facts_chars() == 2000
+
+
+def test_context_budget_cloud_node_present_for_modes():
+    for mode in ("fast", "normal", "thinker"):
+        node = ChatResponseModeContentService.context_budget_node(mode, profile="cloud")
+        assert isinstance(node, dict)
+        assert int(node.get("toolContextMaxChars") or 0) >= int(
+            ChatResponseModeContentService.context_budget_node(mode, profile="local").get(
+                "toolContextMaxChars"
+            )
+            or 0
+        )

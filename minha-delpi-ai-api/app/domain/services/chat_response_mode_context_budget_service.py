@@ -14,6 +14,7 @@ from app.domain.services.chat_response_mode_service import ChatResponseModeServi
 @dataclass(frozen=True)
 class ChatContextBudget:
     mode: str
+    profile: str
     history_max_messages: int
     history_summary_max_chars: int
     rag_max_chunks: int
@@ -27,6 +28,7 @@ class ChatContextBudget:
     def as_admin_debug(self) -> dict[str, Any]:
         return {
             "mode": self.mode,
+            "profile": self.profile,
             "historyMaxMessages": self.history_max_messages,
             "historySummaryMaxChars": self.history_summary_max_chars,
             "ragMaxChunks": self.rag_max_chunks,
@@ -82,10 +84,11 @@ class ChatResponseModeContextBudgetService:
     }
 
     @classmethod
-    def resolve(cls, response_mode: str | None) -> ChatContextBudget:
+    def resolve(cls, response_mode: str | None, *, provider: str | None = None) -> ChatContextBudget:
         mode = ChatResponseModeService.normalize(response_mode)
+        profile = ChatResponseModeContentService.context_budget_profile_for_provider(provider)
         defaults = cls._DEFAULTS.get(mode) or cls._DEFAULTS["normal"]
-        node = ChatResponseModeContentService.context_budget_node(mode)
+        node = ChatResponseModeContentService.context_budget_node(mode, profile=profile)
 
         def _int(key: str, *, minimum: int = 1) -> int:
             raw = node.get(key) if isinstance(node, dict) else None
@@ -98,6 +101,7 @@ class ChatResponseModeContextBudgetService:
 
         return ChatContextBudget(
             mode=mode,
+            profile=profile,
             history_max_messages=_int("historyMaxMessages"),
             history_summary_max_chars=_int("historySummaryMaxChars", minimum=100),
             rag_max_chunks=_int("ragMaxChunks"),
@@ -111,6 +115,27 @@ class ChatResponseModeContextBudgetService:
             ),
             max_multi_actions_per_turn=_int("maxMultiActionsPerTurn"),
         )
+
+    @classmethod
+    def current_profile(cls) -> str:
+        provider = None
+
+        try:
+            from app.infrastructure.llm.llm_request_context import get_active_config
+
+            provider = get_active_config().provider
+        except Exception:
+            provider = None
+
+        if not provider:
+            try:
+                from app.infrastructure.config.llm_text_config import resolve_llm_text_config
+
+                provider = resolve_llm_text_config().provider
+            except Exception:
+                provider = "ollama"
+
+        return ChatResponseModeContentService.context_budget_profile_for_provider(provider)
 
     @classmethod
     def history_keep(cls, response_mode: str | None) -> int:

@@ -442,14 +442,34 @@ class ChatTurnCompletionMetadataService:
             tool_context=turn.tool_context,
         )
 
+        from app.application.services.chat_grounded_enrich_interactivity_service import (
+            ChatGroundedEnrichInteractivityService,
+        )
         from app.application.services.chat_interactivity_suggestion_service import (
             ChatInteractivitySuggestionService,
         )
         from app.application.services.chat_interactivity_telemetry_service import (
             ChatInteractivityTelemetryService,
         )
+        from app.domain.services.chat_operational_llm_synthesis_context_service import (
+            ChatOperationalLlmSynthesisContextService,
+        )
 
         intent_route = assistant_metadata.get("intentRouting")
+
+        ChatGroundedEnrichInteractivityService.attach_to_assistant_metadata(
+            assistant_metadata,
+            tool_context=turn.tool_context if isinstance(turn.tool_context, dict) else None,
+            response_mode=(
+                turn.tool_context.get("responseMode")
+                if isinstance(turn.tool_context, dict)
+                else None
+            ),
+        )
+        ChatOperationalLlmSynthesisContextService.attach_synthesis_facts_telemetry(
+            assistant_metadata,
+            turn.tool_context if isinstance(turn.tool_context, dict) else None,
+        )
 
         ChatInteractivitySuggestionService.attach_to_assistant_metadata(
             assistant_metadata,

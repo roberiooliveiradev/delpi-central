@@ -240,3 +240,23 @@ class ChatTurnGroundingContentService:
             lines.append(preview)
 
         return "\n".join(line for line in lines if line).strip()
+
+    @classmethod
+    def fast_enrich_insight_mode_suggestions(cls) -> list[dict[str, str]]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "fastEnrichInsightModeSuggestions")
+        suggestions: list[dict[str, str]] = []
+
+        if not isinstance(node, list):
+            return suggestions
+
+        for item in node:
+            if not isinstance(item, dict):
+                continue
+
+            label = str(item.get("label") or "").strip()
+            query = str(item.get("query") or "").strip()
+
+            if label and query:
+                suggestions.append({"label": label, "query": query})
+
+        return suggestions

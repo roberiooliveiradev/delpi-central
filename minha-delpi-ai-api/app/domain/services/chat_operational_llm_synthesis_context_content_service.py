@@ -214,4 +214,67 @@ class ChatOperationalLlmSynthesisContextContentService:
 
     @classmethod
     def max_thinker_prose_chars(cls) -> int:
-        return cls.limit_int("maxThinkerProseChars", 960)
+        return cls.limit_int("maxThinkerProseChars", 2400)
+
+    @classmethod
+    def enrich_insight_facts_budget_node(
+        cls,
+        *,
+        profile: str = "local",
+    ) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "enrichInsightFactsBudget")
+
+        if not isinstance(node, dict):
+            return {}
+
+        profile_node = node.get(str(profile or "local").strip().lower())
+
+        return profile_node if isinstance(profile_node, dict) else {}
+
+    @classmethod
+    def enrich_insight_facts_budget(
+        cls,
+        mode: str,
+        *,
+        profile: str = "local",
+    ) -> dict[str, int]:
+        mode_key = str(mode or "normal").strip().lower() or "normal"
+        profile_node = cls.enrich_insight_facts_budget_node(profile=profile)
+        mode_node = profile_node.get(mode_key)
+
+        if not isinstance(mode_node, dict):
+            mode_node = profile_node.get("normal") if isinstance(profile_node.get("normal"), dict) else {}
+
+        defaults = {
+            "base": 1200,
+            "perTool": 350,
+            "maxToolsCounted": 3,
+            "hardCap": 2800,
+        }
+
+        resolved: dict[str, int] = {}
+
+        for key, default in defaults.items():
+            raw = mode_node.get(key) if isinstance(mode_node, dict) else None
+
+            try:
+                resolved[key] = max(1, int(raw))
+            except (TypeError, ValueError):
+                resolved[key] = default
+
+        return resolved
+
+    @classmethod
+    def resolve_enrich_insight_facts_max_chars(
+        cls,
+        mode: str,
+        *,
+        ok_tool_count: int,
+        profile: str = "local",
+    ) -> int:
+        budget = cls.enrich_insight_facts_budget(mode, profile=profile)
+        extra_tools = max(0, int(ok_tool_count) - 1)
+        counted = min(extra_tools, budget["maxToolsCounted"])
+        dynamic = budget["base"] + (budget["perTool"] * counted)
+
+        return min(dynamic, budget["hardCap"])

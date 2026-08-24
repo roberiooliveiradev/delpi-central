@@ -3242,4 +3242,56 @@ GROUNDED_INSIGHT_REGRESSION_CASES = [
             "intent": "stock",
         },
     },
+    {
+        "id": "FF-BUDGET-ENRICH-01",
+        "message": "o que me diz sobre os itens?",
+        "response_mode": "thinker",
+        "provider": "openai_compatible",
+        "tool_context": {
+            "turnGrounding": {"stage": "grounded_enrich_insight"},
+        },
+        "tool_calls": [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080109/stock",
+                    "operationId": "get_product_stock",
+                    "dataCommentary": {
+                        "profileKey": "stock",
+                        "highlights": [{"text": "MP 10080109 com saldo positivo."}],
+                    },
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10090014/stock",
+                    "operationId": "get_product_stock",
+                    "dataCommentary": {
+                        "profileKey": "stock",
+                        "highlights": [{"text": "MP 10090014 com saldo positivo."}],
+                    },
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/50231850/profile",
+                    "operationId": "get_product_profile",
+                    "dataCommentary": {
+                        "profileKey": "generic_list",
+                        "summary": "PI 50231850 cadastrado.",
+                    },
+                },
+            },
+        ],
+        "expects": {
+            "min_facts_chars": 120,
+            "synthesis_facts_truncated": False,
+            "min_budget_chars": 4800,
+        },
+    },
 ]

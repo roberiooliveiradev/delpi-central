@@ -18,10 +18,10 @@
   "fieldHumanizationRule": "**Rótulos:** nunca use nomes técnicos de campo em inglês ou snake_case (ex.: `current_quantity`, `average_price`, `documents`). Sempre escreva o equivalente em português claro (ex.: quantidade atual, preço médio, documentos). Se o fato trouxer chave crua, traduza na prosa.",
   "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta». **Vereditos Sim/Não:** quando os fatos trouxerem resposta direta (ex.: MPs exclusivas = 0), reproduza o veredito sem contradizê-lo.",
   "multiSourceCrossRule": "Há **várias rotas** nos fatos. Cruze as fontes (ex.: estoque × vendas), cite o que cada consulta mostrou e não invente dados de rotas não listadas.",
-  "maxChars": 480,
+  "maxChars": 1200,
   "maxBriefProseChars": 220,
   "maxNormalProseChars": 520,
-  "maxThinkerProseChars": 960,
+  "maxThinkerProseChars": 2400,
   "maxHumanizedLines": 3,
   "maxHumanizedLinesWhenDecoupled": 2,
   "skipSummaryAnswerWhenDecoupled": true,
@@ -33,6 +33,48 @@
   "maxHighlights": 3,
   "maxLimitations": 2,
   "includeFailedTools": true,
+  "enrichInsightFactsBudget": {
+    "local": {
+      "fast": {
+        "base": 600,
+        "perTool": 350,
+        "maxToolsCounted": 3,
+        "hardCap": 2800
+      },
+      "normal": {
+        "base": 1200,
+        "perTool": 350,
+        "maxToolsCounted": 3,
+        "hardCap": 2800
+      },
+      "thinker": {
+        "base": 2000,
+        "perTool": 550,
+        "maxToolsCounted": 5,
+        "hardCap": 4500
+      }
+    },
+    "cloud": {
+      "fast": {
+        "base": 800,
+        "perTool": 500,
+        "maxToolsCounted": 4,
+        "hardCap": 4000
+      },
+      "normal": {
+        "base": 1600,
+        "perTool": 500,
+        "maxToolsCounted": 4,
+        "hardCap": 4000
+      },
+      "thinker": {
+        "base": 3200,
+        "perTool": 800,
+        "maxToolsCounted": 6,
+        "hardCap": 7000
+      }
+    }
+  },
   "answerEnrichment": {
     "productCodeOpening": "O produto **{productCode}**",
     "emptySectionSignals": [

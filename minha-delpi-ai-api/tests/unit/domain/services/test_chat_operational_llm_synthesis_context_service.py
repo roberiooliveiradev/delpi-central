@@ -305,3 +305,70 @@ def test_build_facts_addon_multi_source_includes_cross_rule_and_operation_ids():
     assert "/products/90260148/stock" in addon
     assert "/products/90260148/sales" in addon
     assert "várias rotas" in addon.casefold() or "varias rotas" in addon.casefold()
+
+
+def test_build_facts_addon_multi_source_uses_dynamic_enrich_budget(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
+
+    def _stock_tool(code: str) -> dict:
+        return {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": f"/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "dataCommentary": {
+                    "profileKey": "stock",
+                    "highlights": [{"text": f"Saldo **{code[-2:]}**."}],
+                },
+            },
+        }
+
+    tool_calls = [_stock_tool(f"9026014{i}") for i in range(4)]
+    tool_context = {"turnGrounding": {"stage": "grounded_enrich_insight"}}
+
+    addon = ChatOperationalLlmSynthesisContextService.build_facts_addon(
+        tool_calls,
+        response_mode="normal",
+        tool_context=tool_context,
+    )
+
+    assert len(addon) > 400
+    assert tool_context.get("synthesisFactsBudgetChars") == 2250
+    assert tool_context.get("synthesisFactsTruncated") is False
+
+
+def test_build_facts_addon_multi_source_signals_truncation():
+    from unittest.mock import patch
+
+    def _stock_tool(code: str, highlight: str) -> dict:
+        return {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": f"/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "dataCommentary": {
+                    "profileKey": "stock",
+                    "narrativeInsight": highlight,
+                },
+            },
+        }
+
+    filler = "Saldo detalhado com observação operacional longa " * 24
+    tool_calls = [_stock_tool(f"9026014{i}", filler) for i in range(4)]
+    tool_context = {"turnGrounding": {"stage": "grounded_enrich_insight"}}
+
+    with patch.object(
+        ChatOperationalLlmSynthesisContextService,
+        "_resolve_max_chars",
+        return_value=900,
+    ):
+        ChatOperationalLlmSynthesisContextService.build_facts_addon(
+            tool_calls,
+            response_mode="normal",
+            tool_context=tool_context,
+        )
+
+    assert tool_context.get("synthesisFactsBudgetChars") == 900
+    assert tool_context.get("synthesisFactsTruncated") is True

@@ -133,5 +133,11 @@
   },
   "clarify": {
     "ambiguousWhichArtifact": "Sobre qual resultado você quer falar? Escolha uma opção abaixo ou descreva em uma frase."
-  }
+  },
+  "fastEnrichInsightModeSuggestions": [
+    {
+      "label": "Para cruzar várias fontes, use modo Normal ou Pensador",
+      "query": "mude para o modo normal para cruzar várias fontes"
+    }
+  ]
 }
