@@ -73,13 +73,13 @@
   );
 }
 
-/* Sala: fill viewport — full-bleed (sem padding de página); inset só no stack interno. */
+/* Sala: fill viewport — mesmo padding/gap das outras telas; densifica só o stack interno. */
 .dashboard-commercial.dashboard-page--fill {
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  padding: 0;
-  gap: 0;
+  padding: var(--cm-page-padding);
+  gap: var(--cm-section-gap);
   --delpi-ui-room-thread-header-padding: var(--cm-gap-sm);
   --delpi-ui-room-thread-msgs-padding-inline: var(--cm-gap-sm);
   --delpi-ui-room-thread-dock-padding: 0.65rem var(--cm-gap-sm) var(--cm-gap-sm);
@@ -229,9 +229,9 @@
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-inbox-pane {
-  /* Mais folga lateral no modo lista (sem thread) — evita card colado/cortado. */
-  padding-block: var(--cm-gap-sm);
-  padding-inline: var(--cm-gap);
+  /* Padding de página já vem do --fill; sem inset extra no pane. */
+  padding-block: 0;
+  padding-inline: 0;
 }
 
 /*
@@ -2482,7 +2482,7 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-commercial.dashboard-page:not(.dashboard-page--fill) {
+  .dashboard-commercial.dashboard-page {
     padding: 16px;
   }
 

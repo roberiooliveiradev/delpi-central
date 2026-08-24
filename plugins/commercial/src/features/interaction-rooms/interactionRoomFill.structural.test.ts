@@ -13,9 +13,9 @@ describe("interaction room fill CSS", () => {
       css.match(
         /\.dashboard-commercial\.dashboard-page--fill \{[^}]+\}/,
       )?.[0] ?? "";
-    expect(fillPage).toMatch(/padding:\s*0/);
-    expect(fillPage).toMatch(/gap:\s*0/);
-    expect(fillPage).not.toMatch(/--cm-page-padding:\s*16px/);
+    expect(fillPage).toMatch(/padding:\s*var\(--cm-page-padding\)/);
+    expect(fillPage).toMatch(/gap:\s*var\(--cm-section-gap\)/);
+    expect(fillPage).not.toMatch(/padding:\s*0/);
     expect(css).toMatch(/\.dashboard-page--fill \.cm-view-transition--page/);
     expect(css).toMatch(/--delpi-ui-room-thread-header-padding/);
     expect(css).toMatch(/--delpi-ui-room-thread-msgs-padding-inline/);
@@ -72,7 +72,7 @@ describe("interaction room fill CSS", () => {
       /\.cm-room-inbox-pane__body > \.cm-room-inbox-panel \{[\s\S]*?min-height:\s*0;/,
     );
     expect(css).toMatch(
-      /\.cm-room-inbox-pane \{[\s\S]*?padding-inline:\s*var\(--cm-gap\);/,
+      /\.dashboard-page--fill \.cm-room-inbox-pane \{[\s\S]*?padding-inline:\s*0;/,
     );
     expect(css).toMatch(
       /\.cm-room-inbox-pane \.cm-room-inbox__list \{[\s\S]*?padding-inline:\s*0;/,
