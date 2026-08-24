@@ -43,6 +43,9 @@ from app.application.use_cases.admin.update_user_admin_use_case import UpdateUse
 from app.application.use_cases.admin.get_user_usage_statistics_use_case import (
     GetUserUsageStatisticsUseCase,
 )
+from app.application.use_cases.get_user_access_profile_use_case import (
+    GetUserAccessProfileUseCase,
+)
 from app.application.use_cases.admin.get_engagement_statistics_use_case import (
     ALLOWED_PERIOD_DAYS,
 )
@@ -1002,6 +1005,31 @@ def remove_group_from_user(user_id: str, group_id: str):
 
     except Exception as e:
         return api_error("remove_group_from_user_failed", str(e))
+
+
+@rbac_bp.route("/admin/rbac/users/<user_id>/access-profile", methods=["GET"])
+@require_permission("rbac.manage")
+def get_user_access_profile(user_id: str):
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        return api_error("validation_error", "user_id inválido.", status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            user = uow.users.get_by_id(user_uuid)
+            if not user:
+                return api_error("not_found", "Usuário não encontrado.", status=404)
+
+            profile = GetUserAccessProfileUseCase(uow).execute(
+                user_uuid,
+                is_superadmin=bool(getattr(user, "is_superadmin", False)),
+            )
+
+        return jsonify(profile), 200
+
+    except Exception as exc:
+        return server_error(str(exc))
 
 
 @rbac_bp.route("/admin/rbac/users/<user_id>/usage", methods=["GET"])
