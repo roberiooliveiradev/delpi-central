@@ -50,6 +50,10 @@ class ChatConversationMemoryExtractor:
         result["operationalFocus"] = entities
         result["lastAction"] = cls._extract_last_action(previous_messages, tool_calls)
         result["lastPresentation"] = cls._extract_last_presentation(previous_messages)
+        result["lastResultExcerpt"] = cls._extract_last_result_excerpt(
+            previous_messages,
+            tool_calls,
+        )
         result["canvas"] = cls._extract_canvas_state(previous_messages)
         result["lastAttachment"] = cls._extract_last_attachment(
             previous_messages,
@@ -223,6 +227,45 @@ class ChatConversationMemoryExtractor:
                 return {"type": "chat", "messageId": cls._message_id(item)}
 
         return None
+
+    @classmethod
+    def _extract_last_result_excerpt(
+        cls,
+        previous_messages: list[Any] | None,
+        tool_calls: list | None = None,
+    ) -> dict[str, Any] | None:
+        from app.domain.services.chat_last_result_excerpt_service import (
+            ChatLastResultExcerptService,
+        )
+
+        calls = list(tool_calls or [])
+        message_id: str | None = None
+
+        if not calls:
+            for item in reversed(previous_messages or []):
+                if cls._message_role(item) != "assistant":
+                    continue
+
+                metadata = cls._message_metadata(item)
+                stored = metadata.get("toolCalls") or []
+
+                if stored:
+                    calls = stored
+                    message_id = cls._message_id(item)
+                    break
+        elif previous_messages:
+            for item in reversed(previous_messages or []):
+                if cls._message_role(item) != "assistant":
+                    continue
+
+                metadata = cls._message_metadata(item)
+                stored = metadata.get("toolCalls") or []
+
+                if stored:
+                    message_id = cls._message_id(item)
+                    break
+
+        return ChatLastResultExcerptService.build(calls, message_id=message_id)
 
     @classmethod
     def _extract_canvas_state(

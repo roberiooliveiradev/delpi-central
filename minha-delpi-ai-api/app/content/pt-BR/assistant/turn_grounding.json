@@ -4,6 +4,14 @@
     "maxPreviewChars": 1200,
     "maxTopKeys": 8
   },
+  "extractKeyFields": [
+    "code",
+    "productCode",
+    "componentCode",
+    "itemCode",
+    "childCode",
+    "id"
+  ],
   "referringTo": {
     "labelTemplate": "{title} · {rowCount} itens",
     "labelTemplateNoCount": "{title}",

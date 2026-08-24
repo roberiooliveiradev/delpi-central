@@ -27,6 +27,14 @@ class ChatTurnGroundingContentService:
         return cls.limit_int("maxTopKeys", 8)
 
     @classmethod
+    def extract_key_fields(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip()
+            for item in ChatAssistantContentService.list(_BUNDLE, "extractKeyFields")
+            if str(item).strip()
+        )
+
+    @classmethod
     def last_result_heading(cls) -> str:
         return str(
             ChatAssistantContentService.get(_BUNDLE, "prompt", "lastResultHeading", default="")
