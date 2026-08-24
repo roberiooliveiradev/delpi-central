@@ -68,6 +68,7 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | GET/PATCH/DELETE | `/me/portal-tour` | Progresso do tour gamificado do portal — ver [portal-tour.md](../06-portal-frontend/portal-tour.md) |
 | GET | `/me/portal-tour/catalog` | Catálogo de desafios disponíveis ao usuário (RBAC + novidades) |
 | GET | `/me/portal-tour/achievements` | Conquistas do tour (selos desbloqueados) |
+| GET | `/me/usage` | Estatísticas de uso do titular logado (`periodDays=7\|30\|90`; exige consentimento `usage_tracking` para métricas reais) |
 | GET | `/me/directory/users` | Busca usuários Delpi (exclui o caller por padrão); query `q`, `limit`, `app`, `permission`, `include_self` |
 | POST | `/me/directory/users/lookup` | Resolve nomes por `{ "ids": ["uuid", ...] }` |
 
@@ -231,6 +232,7 @@ Legenda de permissões:
 | PUT | `/admin/rbac/users/{user_id}/groups` | Users W |
 | POST | `/admin/rbac/users/{user_id}/groups/{group_id}` | Users W |
 | DELETE | `/admin/rbac/users/{user_id}/groups/{group_id}` | Users W |
+| GET | `/admin/rbac/users/{user_id}/usage` | RBAC — engajamento individual (`periodDays=7\|30\|90`) |
 
 ### Permissions
 

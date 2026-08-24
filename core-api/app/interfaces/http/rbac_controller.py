@@ -40,6 +40,12 @@ from app.application.use_cases.list_permission_usage_use_case import ListPermiss
 from app.application.use_cases.admin.delete_user_use_case import DeleteUserUseCase
 from app.application.use_cases.admin.bulk_delete_users_use_case import BulkDeleteUsersUseCase
 from app.application.use_cases.admin.update_user_admin_use_case import UpdateUserAdminUseCase
+from app.application.use_cases.admin.get_user_usage_statistics_use_case import (
+    GetUserUsageStatisticsUseCase,
+)
+from app.application.use_cases.admin.get_engagement_statistics_use_case import (
+    ALLOWED_PERIOD_DAYS,
+)
 
 from app.application.use_cases.admin.create_group_use_case import CreateGroupUseCase
 from app.application.use_cases.admin.update_group_use_case import UpdateGroupUseCase
@@ -996,6 +1002,41 @@ def remove_group_from_user(user_id: str, group_id: str):
 
     except Exception as e:
         return api_error("remove_group_from_user_failed", str(e))
+
+
+@rbac_bp.route("/admin/rbac/users/<user_id>/usage", methods=["GET"])
+@require_permission("rbac.manage")
+def get_user_usage_statistics(user_id: str):
+    try:
+        raw_period = request.args.get("periodDays") or request.args.get("period_days") or "30"
+        try:
+            period_days = int(raw_period)
+        except (TypeError, ValueError):
+            return api_error("validation_error", "Parâmetro periodDays inválido.", status=400)
+
+        if period_days not in ALLOWED_PERIOD_DAYS:
+            return api_error(
+                "validation_error",
+                "periodDays deve ser 7, 30 ou 90.",
+                status=400,
+            )
+
+        with SqlAlchemyUnitOfWork() as uow:
+            result = GetUserUsageStatisticsUseCase(uow).execute(
+                user_id=UUID(user_id),
+                period_days=period_days,
+            )
+
+        return jsonify(result), 200
+
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+
+    except LookupError as exc:
+        return api_error("not_found", str(exc), status=404)
+
+    except Exception as exc:
+        return server_error(str(exc))
 
 
 # ==========================================================

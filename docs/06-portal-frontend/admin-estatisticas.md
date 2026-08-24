@@ -31,6 +31,10 @@ Cada painel pode ter atalho **Gerenciar** que navega para a aba correspondente.
 
 Rastreamento via api-delpi (rotas consumidas pelos dashboards) exige consentimento **`usage_tracking`** e header **`X-Delpi-Caller-App`** nos plugins — ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
+**Uso por usuário (admin):** em **Usuários → Editar → aba Uso**, painel `UserUsagePanel` consome `GET /admin/rbac/users/{id}/usage`. Lazy load ao abrir a aba.
+
+**Meu perfil:** seção **Meu uso** em `/profile` consome `GET /me/usage`. Wireframes: [user-usage-wireframes.md](./user-usage-wireframes.md).
+
 ---
 
 ## 2. Atualização

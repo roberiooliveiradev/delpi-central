@@ -20,6 +20,13 @@ def purge_usage_tracking_data(uow: UnitOfWork, *, user_id: UUID) -> int:
     repo = SqlAlchemyAppUsageRepository(uow.session)
     deleted = repo.delete_events_for_user(user_id=user_id)
 
+    from app.infrastructure.persistence.sqlalchemy.usage_session_repository import (
+        SqlAlchemyUsageSessionRepository,
+    )
+
+    session_repo = SqlAlchemyUsageSessionRepository(uow.session)
+    session_repo.delete_sessions_for_user(user_id=user_id)
+
     user_key = str(user_id)
     if is_app_usage_enabled():
         clear_user = getattr(get_app_usage_live_store(), "clear_user", None)

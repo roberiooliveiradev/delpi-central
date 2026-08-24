@@ -716,6 +716,52 @@ def revoke_consent(purpose: str):
 
 
 # ==========================================================
+# USAGE STATISTICS (SELF-SERVICE)
+# ==========================================================
+
+@me_bp.route("/me/usage", methods=["GET"])
+@require_auth()
+def get_my_usage_statistics():
+    user = g.current_user
+
+    try:
+        raw_period = request.args.get("periodDays") or request.args.get("period_days") or "30"
+        try:
+            period_days = int(raw_period)
+        except (TypeError, ValueError):
+            return api_error("validation_error", "Parâmetro periodDays inválido.", status=400)
+
+        from app.application.use_cases.admin.get_engagement_statistics_use_case import (
+            ALLOWED_PERIOD_DAYS,
+        )
+        from app.application.use_cases.admin.get_user_usage_statistics_use_case import (
+            GetUserUsageStatisticsUseCase,
+        )
+
+        if period_days not in ALLOWED_PERIOD_DAYS:
+            return api_error(
+                "validation_error",
+                "periodDays deve ser 7, 30 ou 90.",
+                status=400,
+            )
+
+        with SqlAlchemyUnitOfWork() as uow:
+            result = GetUserUsageStatisticsUseCase(uow).execute(
+                user_id=UUID(str(user.id)),
+                period_days=period_days,
+            )
+
+        return jsonify(result), 200
+
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+
+    except Exception:
+        logger.exception("get_my_usage_statistics_failed")
+        return api_error("server_error", "Internal server error", status=500)
+
+
+# ==========================================================
 # LGPD — DATA EXPORT (PORTABILITY)
 # ==========================================================
 

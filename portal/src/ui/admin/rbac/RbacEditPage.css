@@ -317,3 +317,13 @@
     text-align: left;
   }
 }
+
+.user-rbac-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-rbac-usage-intro {
+  margin-bottom: 0;
+}

@@ -17,8 +17,9 @@ import {
 } from "../../../ui-kit";
 
 import "./RbacEditPage.css";
+import { UserUsageTab } from "./UserUsageTab";
 
-type UserPageTab = "summary" | "roles" | "groups";
+type UserPageTab = "summary" | "roles" | "groups" | "usage";
 
 const normalizeIds = (items: unknown[]): string[] => {
   return items
@@ -210,6 +211,7 @@ export const UserEditPage = () => {
           { id: "summary", label: "Resumo" },
           { id: "roles", label: "Papéis diretos" },
           { id: "groups", label: "Grupos" },
+          { id: "usage", label: "Uso" },
         ],
         value: activeTab,
         onChange: (id) => setActiveTab(id as UserPageTab),
@@ -367,6 +369,10 @@ export const UserEditPage = () => {
             onChange={setSelectedGroupIds}
           />
         )}
+
+        {activeTab === "usage" && userId ? (
+          <UserUsageTab userId={userId} active={activeTab === "usage"} />
+        ) : null}
       </div>
     </PageChrome>
   );

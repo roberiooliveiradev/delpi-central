@@ -89,7 +89,7 @@ Plugins dashboards enviam o header em `httpClient.ts` — ver [08-plugins/README
 Comportamentos (maio/2026):
 
 - Socket **não** registra presença/uso ao vivo sem `usage_tracking`.
-- **Revogação** de `usage_tracking` → purge de `app_usage_events` + stores ao vivo/presença (`usage_tracking_purge_service`).
+- **Revogação** de `usage_tracking` → purge de `app_usage_events`, **`usage_sessions`** e stores ao vivo/presença (`usage_tracking_purge_service`).
 - **Anonimização** do titular → inclui purge de eventos de uso.
 - **Exportação** (`GET /me/export`) inclui campo `callerAppId` nos eventos.
 - Política de privacidade do portal documenta `localStorage` `delpi.portal.recentApps.v1`.
@@ -141,6 +141,17 @@ Gravação: eventos Socket `app_usage.close`, `disconnect` e flush TTL do store 
 | `backendOnlyActive` | Serviços sem UI (informativo) |
 
 `GET /admin/statistics/engagement?periodDays=7|30|90` — DAU/WAU/MAU, stickiness, tempo médio, rankings de apps/usuários/rotas e séries diárias.
+
+**Por usuário:**
+
+| Endpoint | Escopo | Descrição |
+|----------|--------|-----------|
+| `GET /admin/rbac/users/{user_id}/usage?periodDays=…` | Admin (`rbac.manage`) | Aberturas, tempo, apps e rotas do titular |
+| `GET /me/usage?periodDays=…` | Titular autenticado | Mesmo contrato; só dados próprios |
+
+Use case compartilhado: `GetUserUsageStatisticsUseCase`. Sem consentimento `usage_tracking`, a API retorna estrutura completa com zeros e `consent.granted: false`.
+
+**Portal:** aba **Uso** em Editar usuário (`UserEditPage`) e seção **Meu uso** em `/profile` — componente `UserUsagePanel`. Ver [user-usage-wireframes.md](../06-portal-frontend/user-usage-wireframes.md).
 
 UI: [admin-estatisticas.md](../06-portal-frontend/admin-estatisticas.md).
 

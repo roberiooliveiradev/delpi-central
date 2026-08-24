@@ -1,6 +1,7 @@
 // src/data/coreApi.ts
 
 import { ApiClient } from "./apiClient";
+import type { UserUsageStatistics } from "./userUsageTypes";
 
 export interface MeResponse {
   id: string;
@@ -708,6 +709,12 @@ export class CoreApi {
 
   getDataExport() {
     return this.client.get<DataExportResponse>("/core-api/me/data-export");
+  }
+
+  getMyUsageStatistics(periodDays: 7 | 30 | 90 = 30) {
+    return this.client.get<UserUsageStatistics>(
+      `/core-api/me/usage?periodDays=${periodDays}`,
+    );
   }
 
   dispatchNotifications(payload: DispatchNotificationsPayload) {

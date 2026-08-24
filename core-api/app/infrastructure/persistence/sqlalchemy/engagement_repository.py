@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from uuid import UUID
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -345,3 +346,239 @@ class SqlAlchemyEngagementRepository:
             "mau": mau,
             "stickiness": self.compute_stickiness(dau=dau, mau=mau),
         }
+
+    def user_count_events_since(self, *, user_id: UUID, since: datetime) -> int:
+        value = (
+            self.session.query(func.count(AppUsageEvent.id))
+            .filter(
+                AppUsageEvent.user_id == user_id,
+                AppUsageEvent.opened_at >= since,
+            )
+            .scalar()
+        )
+        return int(value or 0)
+
+    def user_count_sessions_since(self, *, user_id: UUID, since: datetime) -> int:
+        value = (
+            self.session.query(func.count(UsageSession.id))
+            .filter(
+                UsageSession.user_id == user_id,
+                UsageSession.started_at >= since,
+            )
+            .scalar()
+        )
+        return int(value or 0)
+
+    def user_usage_summary(self, *, user_id: UUID, since: datetime) -> dict:
+        total_opens = self.user_count_events_since(user_id=user_id, since=since)
+
+        apps_used = (
+            self.session.query(func.count(func.distinct(AppUsageEvent.app_id)))
+            .filter(
+                AppUsageEvent.user_id == user_id,
+                AppUsageEvent.opened_at >= since,
+            )
+            .scalar()
+        )
+
+        portal_duration = (
+            self.session.query(
+                func.coalesce(func.sum(UsageSession.duration_seconds), 0)
+            )
+            .filter(
+                UsageSession.user_id == user_id,
+                UsageSession.started_at >= since,
+                UsageSession.app_id.is_(None),
+            )
+            .scalar()
+        )
+
+        app_duration = (
+            self.session.query(
+                func.coalesce(func.sum(UsageSession.duration_seconds), 0)
+            )
+            .filter(
+                UsageSession.user_id == user_id,
+                UsageSession.started_at >= since,
+                UsageSession.app_id.isnot(None),
+            )
+            .scalar()
+        )
+
+        avg_session = (
+            self.session.query(func.avg(UsageSession.duration_seconds))
+            .filter(
+                UsageSession.user_id == user_id,
+                UsageSession.started_at >= since,
+            )
+            .scalar()
+        )
+
+        last_app_usage_at = (
+            self.session.query(func.max(AppUsageEvent.opened_at))
+            .filter(
+                AppUsageEvent.user_id == user_id,
+                AppUsageEvent.opened_at >= since,
+            )
+            .scalar()
+        )
+
+        portal_seconds = int(portal_duration or 0)
+        app_seconds = int(app_duration or 0)
+
+        return {
+            "totalOpens": total_opens,
+            "appsUsed": int(apps_used or 0),
+            "totalDurationSeconds": portal_seconds + app_seconds,
+            "portalDurationSeconds": portal_seconds,
+            "appDurationSeconds": app_seconds,
+            "avgSessionSeconds": round(float(avg_session or 0)),
+            "lastAppUsageAt": last_app_usage_at.isoformat() + "Z"
+            if last_app_usage_at
+            else None,
+        }
+
+    def user_opens_by_day(self, *, user_id: UUID, since: datetime) -> list[dict]:
+        day_expr = func.date(AppUsageEvent.opened_at)
+        rows = (
+            self.session.query(
+                day_expr.label("day"),
+                func.count(AppUsageEvent.id).label("open_count"),
+            )
+            .filter(
+                AppUsageEvent.user_id == user_id,
+                AppUsageEvent.opened_at >= since,
+            )
+            .group_by(day_expr)
+            .order_by(day_expr.asc())
+            .all()
+        )
+        return [
+            {
+                "date": row.day.isoformat() if hasattr(row.day, "isoformat") else str(row.day),
+                "opens": int(row.open_count or 0),
+            }
+            for row in rows
+        ]
+
+    def user_duration_by_day(self, *, user_id: UUID, since: datetime) -> list[dict]:
+        day_expr = func.date(UsageSession.started_at)
+        rows = (
+            self.session.query(
+                day_expr.label("day"),
+                func.coalesce(func.sum(UsageSession.duration_seconds), 0).label(
+                    "total_seconds"
+                ),
+            )
+            .filter(
+                UsageSession.user_id == user_id,
+                UsageSession.started_at >= since,
+            )
+            .group_by(day_expr)
+            .order_by(day_expr.asc())
+            .all()
+        )
+        return [
+            {
+                "date": row.day.isoformat() if hasattr(row.day, "isoformat") else str(row.day),
+                "totalSeconds": int(row.total_seconds or 0),
+            }
+            for row in rows
+        ]
+
+    def user_apps_by_opens(
+        self,
+        *,
+        user_id: UUID,
+        since: datetime,
+        limit: int = 8,
+    ) -> list[dict]:
+        rows = (
+            self.session.query(
+                AppUsageEvent.app_id,
+                App.name,
+                func.count(AppUsageEvent.id).label("open_count"),
+            )
+            .join(App, App.id == AppUsageEvent.app_id)
+            .filter(
+                AppUsageEvent.user_id == user_id,
+                AppUsageEvent.opened_at >= since,
+                App.type != BACKEND_ONLY_APP_TYPE,
+            )
+            .group_by(AppUsageEvent.app_id, App.name)
+            .order_by(func.count(AppUsageEvent.id).desc())
+            .limit(limit)
+            .all()
+        )
+        return [
+            {"id": row.app_id, "name": row.name, "count": int(row.open_count or 0)}
+            for row in rows
+        ]
+
+    def user_apps_by_duration(
+        self,
+        *,
+        user_id: UUID,
+        since: datetime,
+        limit: int = 8,
+    ) -> list[dict]:
+        rows = (
+            self.session.query(
+                UsageSession.app_id,
+                App.name,
+                func.coalesce(func.sum(UsageSession.duration_seconds), 0).label(
+                    "total_seconds"
+                ),
+            )
+            .join(App, App.id == UsageSession.app_id)
+            .filter(
+                UsageSession.user_id == user_id,
+                UsageSession.started_at >= since,
+                UsageSession.app_id.isnot(None),
+                App.type != BACKEND_ONLY_APP_TYPE,
+            )
+            .group_by(UsageSession.app_id, App.name)
+            .order_by(func.sum(UsageSession.duration_seconds).desc())
+            .limit(limit)
+            .all()
+        )
+        return [
+            {
+                "id": row.app_id,
+                "name": row.name,
+                "count": int(row.total_seconds or 0),
+            }
+            for row in rows
+        ]
+
+    def user_routes_by_opens(
+        self,
+        *,
+        user_id: UUID,
+        since: datetime,
+        limit: int = 8,
+    ) -> list[dict]:
+        rows = (
+            self.session.query(
+                AppUsageEvent.route_path,
+                func.count(AppUsageEvent.id).label("open_count"),
+            )
+            .filter(
+                AppUsageEvent.user_id == user_id,
+                AppUsageEvent.opened_at >= since,
+                AppUsageEvent.route_path.isnot(None),
+                AppUsageEvent.route_path != "",
+            )
+            .group_by(AppUsageEvent.route_path)
+            .order_by(func.count(AppUsageEvent.id).desc())
+            .limit(limit)
+            .all()
+        )
+        return [
+            {
+                "id": row.route_path,
+                "name": row.route_path,
+                "count": int(row.open_count or 0),
+            }
+            for row in rows
+        ]

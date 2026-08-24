@@ -28,6 +28,10 @@ import {
   HomeSummaryCard,
 } from "./home/HomePagePrimitives";
 
+import { UserUsagePanel } from "./usage/UserUsagePanel";
+import { USER_USAGE_LABELS } from "./usage/userUsageLabels";
+import { useMyUsageStats } from "./usage/useMyUsageStats";
+
 import "./MyProfile.css";
 
 /* =========================================
@@ -77,6 +81,14 @@ export const MyProfile = () => {
   const appsById = useAppsById();
 
   const [query, setQuery] = useState("");
+  const {
+    data: usageData,
+    loading: usageLoading,
+    error: usageError,
+    periodDays: usagePeriodDays,
+    changePeriod: changeUsagePeriod,
+    load: reloadUsage,
+  } = useMyUsageStats();
 
   /* =========================================
      FAVORITES
@@ -427,6 +439,32 @@ export const MyProfile = () => {
         >
           <PortalTourAchievementsPanel />
         </motion.div>
+
+        <motion.section
+          id="profile-usage"
+          className="home-panel home-panel-wide profile-grid-usage"
+          data-tour="profile-usage"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          custom={5}
+        >
+          <HomePanelHeader
+            title={USER_USAGE_LABELS.myUsageTitle}
+            hint={USER_USAGE_LABELS.myUsageHint}
+          />
+
+          <UserUsagePanel
+            variant="profile"
+            data={usageData}
+            loading={usageLoading}
+            error={usageError}
+            periodDays={usagePeriodDays}
+            onPeriodChange={changeUsagePeriod}
+            onRefresh={() => void reloadUsage()}
+            consentCtaHref="/privacy"
+          />
+        </motion.section>
 
         {/* APPS */}
 
