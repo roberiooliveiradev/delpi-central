@@ -910,7 +910,7 @@
       "presentationDecision": {
         "preferTreeOnStructureIntent": true
       },
-      "commentaryProfileKey": "parents",
+      "commentaryProfileKey": "structure",
       "narrativePolicy": "generic_data_summary"
     },
     "table_list": {

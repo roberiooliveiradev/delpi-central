@@ -20,6 +20,9 @@ from app.domain.services.chat_operational_data_commentary.chat_operational_data_
 from app.domain.services.chat_operational_data_commentary.chat_operational_data_commentary_stock_service import (
     ChatOperationalDataCommentaryStockService,
 )
+from app.domain.services.chat_operational_data_commentary.chat_operational_data_commentary_structure_service import (
+    ChatOperationalDataCommentaryStructureService,
+)
 from app.domain.services.chat_operational_data_commentary.chat_operational_data_commentary_support_service import (
     ChatOperationalDataCommentarySupportService,
 )
@@ -35,6 +38,7 @@ _BUILDER_STRATEGIES = frozenset(
         "directives",
         "sale_pricing_insight",
         "analyser_divergence",
+        "structure",
     }
 )
 
@@ -84,6 +88,7 @@ class ChatOperationalCommentaryBuilderRegistryService:
             "directives": ChatOperationalDataCommentaryStatusService._build_directives_commentary,
             "sale_pricing_insight": ChatOperationalDataCommentaryMiscService._build_sale_pricing_commentary,
             "analyser_divergence": ChatOperationalDataCommentaryMiscService._build_analyser_commentary,
+            "structure": ChatOperationalDataCommentaryStructureService._build_structure_commentary,
         }
 
         return mapping.get(strategy)

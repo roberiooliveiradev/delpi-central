@@ -1596,6 +1596,18 @@
       "noExclusiveMps": "Nenhuma MP marcada como exclusiva — risco de substituição compartilhado.",
       "noStructure": "Produto **sem componentes** retornados na profundidade consultada.",
       "attentionExclusiveSupply": "MPs exclusivas exigem validação de estoque/compras antes de montar o PA."
+    },
+    "structure": {
+      "highlightsHeader": "**Destaques**",
+      "attentionHeader": "**Pontos de atenção**",
+      "productLine": "Produto **{code}** — {description}.",
+      "productCodeOnly": "Produto **{code}**.",
+      "level1Summary": "A composição tem **{count}** componente(s) de nível 1.",
+      "compositionLine": "Na árvore: **{piCount}** intermediário(s) (PI) e **{mpCount}** matéria(s)-prima(s) distinta(s).",
+      "depthLine": "Profundidade de **{depth}** nível(is) abaixo do PA (PI → MP).",
+      "sharedMpLine": "**{count}** MP(s) reutilizada(s) em mais de um intermediário.",
+      "colorVariantsLine": "**{count}** intermediário(s) com variação de cor/cabo na descrição.",
+      "emptyStructure": "Nenhum componente retornado na estrutura do produto **{code}**."
     }
   },
   "productWithDetails": {

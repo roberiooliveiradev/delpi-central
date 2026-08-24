@@ -37,7 +37,8 @@
     "production_status": "Confirmar no Protheus se a OP aberta já iniciou apontamento e comparar quantidade apontada com a ordem.",
     "shipping_status": "Revisar perdas de inspeção frente ao expedido e validar CT/recurso dos registros com divergência.",
     "directives": "Conferir part numbers e última NF na tabela; pedir detalhe de fornecedor ou estrutura completa se precisar aprofundar.",
-    "structure_exclusivity": "Validar MPs marcadas como exclusivas na árvore e comparar com o catálogo de exclusividade quando houver dúvida."
+    "structure_exclusivity": "Validar MPs marcadas como exclusivas na árvore e comparar com o catálogo de exclusividade quando houver dúvida.",
+    "structure": "Explorar a árvore para ver MPs por intermediário; peça estoque das matérias-primas se precisar avaliar montagem."
   },
   "recommendations": {
     "factory_status": [
@@ -69,6 +70,11 @@
       "Ver estrutura completa do produto",
       "Listar MPs exclusivas do catálogo",
       "Comparar estrutura com exclusividade em outro PA"
+    ],
+    "structure": [
+      "Ver estoque das matérias-primas",
+      "Comparar estrutura com outro produto",
+      "Detalhar um intermediário (PI) específico"
     ],
     "generic_list": [
       "Filtrar os registros por critério relevante",
@@ -598,6 +604,26 @@
             "count": "{total}"
           }
         }
+      ]
+    },
+    "structure": {
+      "contentSection": "structure",
+      "builderStrategy": "structure",
+      "templateProseCommentary": "full",
+      "visualHints": ["tree"],
+      "colorDescriptionMarkers": [
+        "BRAN",
+        "BRANCO",
+        "AZUL",
+        "VERM",
+        "VERDE",
+        "PRETO",
+        "AMAREL",
+        "CINZA",
+        "MARROM",
+        "LARANJ",
+        "ROSA",
+        "ROXO"
       ]
     }
   }

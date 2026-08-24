@@ -21,6 +21,7 @@ _OPERATIONAL_PROFILES = frozenset(
         "shipping_status",
         "directives",
         "structure_exclusivity",
+        "structure",
         "sale_pricing",
         "analyser",
     }
