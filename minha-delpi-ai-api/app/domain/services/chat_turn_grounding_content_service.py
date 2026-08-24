@@ -130,6 +130,30 @@ class ChatTurnGroundingContentService:
         )
 
     @classmethod
+    def referent_type_triggers(cls) -> dict[str, tuple[str, ...]]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "referentTypeTriggers") or {}
+
+        if not isinstance(node, dict):
+            return {}
+
+        resolved: dict[str, tuple[str, ...]] = {}
+
+        for component_type, triggers in node.items():
+            if not isinstance(triggers, list):
+                continue
+
+            cleaned = tuple(
+                str(item).strip()
+                for item in triggers
+                if str(item).strip()
+            )
+
+            if cleaned:
+                resolved[str(component_type).strip().upper()] = cleaned
+
+        return resolved
+
+    @classmethod
     def clarify_ambiguous_artifact(cls) -> str:
         return str(
             ChatAssistantContentService.get(

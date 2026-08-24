@@ -93,3 +93,15 @@ def test_should_not_narrate_when_stock_expansion_requested():
         "e o estoque desses itens?",
         excerpt,
     )
+
+
+def test_resolve_referent_component_type_for_raw_materials():
+    assert ChatTurnGroundingService.resolve_referent_component_type(
+        "estoque das matérias-primas",
+    ) == "MP"
+
+
+def test_resolve_referent_component_type_for_intermediates():
+    assert ChatTurnGroundingService.resolve_referent_component_type(
+        "detalhe dos produtos intermediários",
+    ) == "PI"

@@ -120,7 +120,6 @@ class ChatGroundedCapabilityPlanningService:
         excerpt: dict[str, Any],
         working_memory: dict[str, Any],
     ) -> list[str]:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
         top_keys = [
             ChatProductQueryIntentService.normalize_product_code(str(item))
             for item in (excerpt.get("topKeys") or [])
@@ -128,15 +127,20 @@ class ChatGroundedCapabilityPlanningService:
         ]
         top_keys = [code for code in top_keys if code]
 
+        referent_type = ChatTurnGroundingService.resolve_referent_component_type(message)
+
+        if referent_type:
+            typed_keys = cls._codes_for_component_type(excerpt, referent_type)
+
+            if typed_keys:
+                cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
+                return typed_keys[:cap]
+
         from app.domain.services.chat_turn_grounding_content_service import (
             ChatTurnGroundingContentService,
         )
 
-        fan_out = any(
-            token in normalized
-            for token in ChatTurnGroundingContentService.fan_out_on_referent_items()
-            if ChatMessageNormalizationService.normalize_for_matching(token) in normalized
-        )
+        fan_out = cls._message_requests_fan_out(message)
 
         if fan_out and top_keys:
             cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
@@ -154,6 +158,51 @@ class ChatGroundedCapabilityPlanningService:
             return [top_keys[0]]
 
         return []
+
+    @classmethod
+    def _codes_for_component_type(
+        cls,
+        excerpt: dict[str, Any],
+        component_type: str,
+    ) -> list[str]:
+        keys_by_type = excerpt.get("keysByComponentType")
+
+        if not isinstance(keys_by_type, dict):
+            return []
+
+        raw = keys_by_type.get(str(component_type or "").strip().upper())
+
+        if not isinstance(raw, list):
+            return []
+
+        codes: list[str] = []
+
+        for item in raw:
+            code = ChatProductQueryIntentService.normalize_product_code(str(item))
+
+            if code and code not in codes:
+                codes.append(code)
+
+        return codes
+
+    @classmethod
+    def _message_requests_fan_out(cls, message: str) -> bool:
+        from app.domain.services.chat_turn_grounding_content_service import (
+            ChatTurnGroundingContentService,
+        )
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        if not normalized:
+            return False
+
+        for token in ChatTurnGroundingContentService.fan_out_on_referent_items():
+            candidate = ChatMessageNormalizationService.normalize_for_matching(token)
+
+            if candidate and candidate in normalized:
+                return True
+
+        return False
 
     @classmethod
     def _scope_to_intent(cls, scope: str) -> tuple[str, str | None]:

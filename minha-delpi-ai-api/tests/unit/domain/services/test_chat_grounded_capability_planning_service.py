@@ -100,3 +100,33 @@ def test_plan_stock_fan_out_ignores_inherited_parent_code_only():
 
     assert len(planned) == 2
     assert {item["productCode"] for item in planned} == {"10380044", "10380045"}
+
+
+def test_plan_stock_uses_mp_codes_for_raw_material_referent():
+    selection = _SelectionStub()
+    workspace = {
+        "turnGrounding": {"status": "grounded"},
+        "workingMemory": {
+            "operationalFocus": {"productCode": "90260149"},
+            "lastResultExcerpt": {
+                "title": "Estrutura 90260149",
+                "rowCount": 2,
+                "topKeys": ["50231850", "50231851", "10080109"],
+                "keysByComponentType": {
+                    "PI": ["50231850", "50231851"],
+                    "MP": ["10080109", "10090014"],
+                },
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="estoque das matérias-primas",
+        allowed_action_ids=["get_product_stock"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 2
+    assert {item["productCode"] for item in planned} == {"10080109", "10090014"}
+    assert "90260149" not in {item["productCode"] for item in planned}

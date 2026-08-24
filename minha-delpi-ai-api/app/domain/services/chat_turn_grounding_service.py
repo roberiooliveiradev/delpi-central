@@ -53,6 +53,7 @@ class ChatTurnGrounding:
                     "title",
                     "rowCount",
                     "topKeys",
+                    "keysByComponentType",
                     "messageId",
                 )
                 if self.excerpt.get(key) is not None
@@ -160,6 +161,30 @@ class ChatTurnGroundingService:
             return False
 
         return cls._should_expand_from_excerpt(normalized)
+
+    @classmethod
+    def resolve_referent_component_type(cls, message: str) -> str | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        if not normalized:
+            return None
+
+        triggers = ChatTurnGroundingContentService.referent_type_triggers()
+        best_type: str | None = None
+        best_length = 0
+
+        for component_type, tokens in triggers.items():
+            for token in tokens:
+                candidate = ChatMessageNormalizationService.normalize_for_matching(token)
+
+                if not candidate or candidate not in normalized:
+                    continue
+
+                if len(candidate) > best_length:
+                    best_type = component_type
+                    best_length = len(candidate)
+
+        return best_type
 
     @classmethod
     def _should_expand_from_excerpt(cls, normalized: str) -> bool:

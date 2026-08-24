@@ -91,6 +91,29 @@
     "itens da estrutura",
     "itens da lista"
   ],
+  "referentTypeTriggers": {
+    "MP": [
+      "materia prima",
+      "materias primas",
+      "matéria-prima",
+      "matérias-primas",
+      "materias-primas",
+      "mps",
+      "mp "
+    ],
+    "PI": [
+      "produto intermediario",
+      "produto intermediário",
+      "produtos intermediarios",
+      "produtos intermediários",
+      "intermediario",
+      "intermediário",
+      "intermediarios",
+      "intermediários",
+      "pis",
+      "pi "
+    ]
+  },
   "clarify": {
     "ambiguousWhichArtifact": "Sobre qual resultado você quer falar? Escolha uma opção abaixo ou descreva em uma frase."
   }
