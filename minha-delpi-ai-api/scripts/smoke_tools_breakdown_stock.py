@@ -124,7 +124,7 @@ def main() -> int:
     )
     session_id = str(session["id"])
     message = f"estoque do produto {_PRODUCT}"
-    print(f"OK session={session_id} msg={message!r}")
+    print(f"OK session={session_id} msg={message!r}", flush=True)
 
     response = _request(
         "POST",
@@ -133,14 +133,22 @@ def main() -> int:
         body={"message": message, "agentId": agent_id},
         timeout=360,
     )
-    timings = (response.get("intelligence") or {}).get("timings") or {}
+    intelligence = (response.get("metadata") or {}).get("intelligence") or {}
+    if not intelligence:
+        intelligence = (response.get("adminDebug") or {}).get("intelligence") or {}
+    if not intelligence:
+        intelligence = response.get("intelligence") or {}
+    timings = intelligence.get("timings") or {}
     breakdown = timings.get("toolsBreakdown") or {}
     tools_ms = int(timings.get("toolsMs") or 0)
 
     print("timings=", json.dumps(timings, ensure_ascii=False, indent=2))
 
+    stock_ok = False
+    sales_ok = False
     for call in response.get("toolCalls") or []:
         meta = call.get("metadata") or {}
+        path = str(meta.get("path") or "")
         print(
             "tool=",
             json.dumps(
@@ -149,10 +157,28 @@ def main() -> int:
                     "durationMs": meta.get("durationMs"),
                     "presentationMs": meta.get("presentationMs"),
                     "selected": (meta.get("presentationDecision") or {}).get("selected"),
+                    "hasChart": bool(meta.get("chartPresentation")),
                 },
                 ensure_ascii=False,
             ),
         )
+        if "/stock" in path.lower() and meta.get("ok"):
+            stock_ok = True
+            if meta.get("chartPresentation"):
+                print("FAIL chartPresentation presente com chartPolicy skip", file=sys.stderr)
+                return 3
+        if "/sales" in path.lower() and meta.get("ok"):
+            sales_ok = True
+
+    answer = str(response.get("answer") or "")
+    print("answer_preview=", answer[:240])
+
+    if not stock_ok:
+        print("FAIL sem toolCall de estoque", file=sys.stderr)
+        return 4
+
+    if not sales_ok:
+        print("WARN critic sales ausente (estoque pode não ter zero_value)")
 
     if not breakdown:
         print("FAIL toolsBreakdown ausente", file=sys.stderr)
@@ -172,8 +198,8 @@ def main() -> int:
     }
     print("extras=", json.dumps(extras, ensure_ascii=False))
 
-    # Baseline live (ago/2026): toolsMs ~1.7s; dominante wave1Ms (~44%),
-    # majoritariamente wave1HttpMs do GET /products/{code}/stock (~0.6s).
+    # Pós-E3 (ago/2026): wave1HttpMs caiu (NOLOCK+cache+query única).
+    # Span dominante típico passou a selectionMs (~50%+ de toolsMs).
     return 0
 
 
