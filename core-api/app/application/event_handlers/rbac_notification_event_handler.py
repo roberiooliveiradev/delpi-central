@@ -5,11 +5,16 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
+from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
+from app.application.services.automated_notification_dispatch_service import (
+    AutomatedNotificationDispatchService,
+)
 from app.application.services.rbac_access_delta_service import (
     AccessGain,
     RbacAccessDeltaService,
 )
 from app.domain.events.admin_events import AdminChangedEvent
+from app.domain.notifications.notification_automation import SOURCE_APP_RBAC_AUTOMATION
 from app.domain.notifications.notification_templates import NOTIFICATION_TEMPLATES
 from app.domain.notifications.portal_routes import PORTAL_APP_LAUNCHER_ROUTE
 from app.domain.ports.notification_repository import NotificationDTO
@@ -66,6 +71,7 @@ class RbacNotificationEventHandler:
             uow.app_queries,
         )
         self._notified_users: set[str] = set()
+        self._actor_user_id: str | None = None
 
     def handle(self, event: AdminChangedEvent) -> None:
         if event.entity != "rbac":
@@ -83,6 +89,7 @@ class RbacNotificationEventHandler:
             )
 
     def _dispatch(self, event: AdminChangedEvent) -> None:
+        self._actor_user_id = event.actor_user_id
         if event.action in _ACTIONS_USER_TARGETED:
             if not event.target_user_id:
                 return
@@ -366,6 +373,67 @@ class RbacNotificationEventHandler:
                 target_user_id=str(user.id),
             )
         )
+
+        self._record_completed_dispatch(
+            user=user,
+            template_spec=template_spec,
+            template_id=template_id,
+            title=title,
+            message=message,
+            action_label=action_label,
+            action_target=action_target,
+            vars=vars,
+            notification_id=str(notification_id),
+        )
+
+    def _record_completed_dispatch(
+        self,
+        *,
+        user,
+        template_spec,
+        template_id: str,
+        title: str,
+        message: str,
+        action_label: str,
+        action_target: str,
+        vars: dict[str, str],
+        notification_id: str,
+    ) -> None:
+        try:
+            request = DispatchNotificationsRequest(
+                title=title,
+                message=message,
+                type=template_spec.default_type,
+                category=template_spec.category,
+                presentation="template",
+                html_content=None,
+                action_type="portal_route",
+                action_label=action_label,
+                action_target=action_target,
+                icon="key-round",
+                metadata={
+                    "templateId": template_id,
+                    "vars": vars,
+                },
+                expires_at=None,
+                broadcast=False,
+                user_ids=[str(user.id)],
+                emails=[],
+                role_ids=[],
+                group_ids=[],
+                source_app=SOURCE_APP_RBAC_AUTOMATION,
+            )
+            AutomatedNotificationDispatchService(self.uow).record_completed(
+                request,
+                notification_ids=[notification_id],
+                created_by_user_id=self._actor_user_id,
+            )
+        except Exception:
+            logger.exception(
+                "Falha ao registrar auditoria de notificação RBAC: template=%s user=%s",
+                template_id,
+                user.id,
+            )
 
     def _previous_codes_for_user_event(self, event: AdminChangedEvent) -> list[str]:
         payload = event.payload or {}

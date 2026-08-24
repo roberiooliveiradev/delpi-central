@@ -5,6 +5,7 @@ from uuid import uuid4
 from app.application.event_handlers.rbac_notification_event_handler import (
     RbacNotificationEventHandler,
 )
+from app.domain.notifications.notification_automation import SOURCE_APP_RBAC_AUTOMATION
 from app.domain.notifications.portal_routes import PORTAL_APP_LAUNCHER_ROUTE
 from app.application.services.rbac_access_delta_service import AccessGain
 from app.domain.events.admin_events import AdminChangedEvent
@@ -19,6 +20,20 @@ class FakeUser:
         self.is_superadmin = False
 
 
+class FakeNotificationPreferences:
+    def is_category_important(self, user_id, category):
+        return False
+
+
+class FakeNotificationDispatches:
+    def __init__(self):
+        self.created = []
+
+    def create(self, dispatch):
+        self.created.append(dispatch)
+        return uuid4()
+
+
 class FakeUoW:
     def __init__(self):
         self.users = self
@@ -26,6 +41,8 @@ class FakeUoW:
         self.cache = None
         self.app_queries = self
         self.notifications = self
+        self.notification_preferences = FakeNotificationPreferences()
+        self.notification_dispatches = FakeNotificationDispatches()
         self.rbac_queries = self
         self._events = []
         self._user = None
@@ -89,6 +106,12 @@ def test_roles_replaced_with_added_role_ids_triggers_notification():
 
     assert len(uow._events) == 1
     assert uow._events[0].action == "notification_created"
+    assert len(uow.notification_dispatches.created) == 1
+    dispatch = uow.notification_dispatches.created[0]
+    assert dispatch.status == "completed"
+    assert dispatch.template_id == "app_access_granted_v1"
+    assert dispatch.category == "access"
+    assert dispatch.source_app == SOURCE_APP_RBAC_AUTOMATION
 
 
 def test_roles_replaced_without_added_skips():
@@ -249,6 +272,7 @@ def test_send_notification_mixed_app_and_system_creates_two_notifications():
     handler._send_notifications(uow._user, gain)
 
     assert len(uow.created_dtos) == 2
+    assert len(uow.notification_dispatches.created) == 2
     templates = [dto.metadata["templateId"] for dto in uow.created_dtos]
     assert templates == ["app_access_granted_v1", "system_access_granted_v1"]
     app_dto, system_dto = uow.created_dtos
