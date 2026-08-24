@@ -46,7 +46,15 @@ class ChatDataAnomalyDetectionService:
             )
             return anomalies
 
-        for row_index, row in enumerate(safe_rows[:50]):
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        max_rows = ChatHumanizedDataResponseContentService.max_rows_scan()
+        zero_value_max = ChatHumanizedDataResponseContentService.zero_value_max()
+        zero_value_count = 0
+
+        for row_index, row in enumerate(safe_rows[:max_rows]):
             for key, raw in row.items():
                 field = str(key or "").strip()
 
@@ -70,6 +78,9 @@ class ChatDataAnomalyDetectionService:
                     )
 
                 if value == 0 and cls._is_quantity_field(field):
+                    if zero_value_count >= zero_value_max:
+                        continue
+
                     anomalies.append(
                         {
                             "type": "zero_value",
@@ -79,6 +90,7 @@ class ChatDataAnomalyDetectionService:
                             "value": 0,
                         }
                     )
+                    zero_value_count += 1
 
         if meta.get("paginated") or cls._is_paginated(meta, len(safe_rows)):
             anomalies.append(
@@ -138,7 +150,8 @@ class ChatDataAnomalyDetectionService:
             if field_key and scope:
                 lines.append(f"{field_label} em {scope}: {impact}".strip(": "))
 
-        return lines[:6]
+        max_lines = ChatHumanizedDataResponseContentService.attention_lines_max()
+        return lines[:max_lines]
 
     @classmethod
     def _schema_labels_from_metadata(

@@ -97,6 +97,44 @@ def test_attention_lines_uses_llm_discovery_for_unknown_field(monkeypatch):
     assert "**weird_xyz_metric**" not in joined
 
 
+def test_detect_caps_zero_value_anomalies_but_keeps_signal():
+    rows = [
+        {
+            "available_quantity": 0,
+            "current_quantity": 0,
+            "quantity": 0,
+            "balance": 0,
+            "total": 0,
+        },
+        {
+            "available_quantity": 0,
+            "current_quantity": 0,
+            "quantity": 0,
+        },
+    ]
+
+    anomalies = ChatDataAnomalyDetectionService.detect(rows=rows)
+    zero_values = [item for item in anomalies if item.get("type") == "zero_value"]
+
+    assert zero_values
+    assert len(zero_values) <= 3
+    assert any(item.get("type") == "zero_value" for item in anomalies)
+
+
+def test_detect_does_not_cap_negative_value_with_zero_cap():
+    rows = [
+        {"available_quantity": -1, "current_quantity": 0, "quantity": 0, "balance": 0},
+        {"available_quantity": -2, "current_quantity": 0},
+    ]
+
+    anomalies = ChatDataAnomalyDetectionService.detect(rows=rows)
+    negatives = [item for item in anomalies if item.get("type") == "negative_value"]
+    zeros = [item for item in anomalies if item.get("type") == "zero_value"]
+
+    assert len(negatives) >= 2
+    assert len(zeros) <= 3
+
+
 def test_build_insight_does_not_fail_with_formatted_table_rows():
     metadata = {
         "path": "/products/90262404/factory-status",

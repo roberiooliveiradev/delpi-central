@@ -365,6 +365,11 @@
     "zero_value": "Valor zerado em **{field}** ({scope}).",
     "truncated_result": "Resultado possivelmente truncado ({scope})."
   },
+  "anomalyLimits": {
+    "maxRowsScan": 50,
+    "zeroValueMax": 3,
+    "attentionLinesMax": 6
+  },
   "visualHints": {
     "time_series": "série temporal",
     "categorical_ranking": "ranking categórico",

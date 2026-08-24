@@ -29,6 +29,27 @@ class ChatHumanizedDataResponseContentService:
         return ChatAssistantContentService.get_node(_BUNDLE, *path)
 
     @classmethod
+    def limit_int(cls, key: str, default: int) -> int:
+        node = cls.get_node("anomalyLimits", key)
+
+        try:
+            return int(node)
+        except (TypeError, ValueError):
+            return int(default)
+
+    @classmethod
+    def zero_value_max(cls) -> int:
+        return max(0, cls.limit_int("zeroValueMax", 3))
+
+    @classmethod
+    def attention_lines_max(cls) -> int:
+        return max(1, cls.limit_int("attentionLinesMax", 6))
+
+    @classmethod
+    def max_rows_scan(cls) -> int:
+        return max(1, cls.limit_int("maxRowsScan", 50))
+
+    @classmethod
     def recommendation_queries(cls, profile_key: str) -> list[dict[str, str]]:
         node = cls.get_node("recommendationQueries", str(profile_key or "").strip())
 
