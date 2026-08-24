@@ -135,6 +135,30 @@ def test_m10_post_turn_enriches_last_action():
     assert snapshot.get("lastAction", {}).get("name") == "stock_lookup"
 
 
+def test_m10_post_turn_enriches_last_result_excerpt():
+    snapshot = ChatConversationMemoryService.build_post_turn(
+        message="estoque do produto 10080001",
+        previous_messages=[],
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080001/stock",
+                    "presentation": {"type": "table", "title": "Estoque"},
+                    "dataAnswer": {"profileKey": "stock"},
+                    "summary": {"totalCount": 2},
+                },
+            }
+        ],
+    )
+
+    excerpt = snapshot.get("lastResultExcerpt") or {}
+
+    assert excerpt.get("profileKey") == "stock"
+    assert excerpt.get("presentationType") == "table"
+
+
 def test_m11_selective_clear_product():
     snapshot = {
         "operationalFocus": {"productCode": "10080001", "branch": "02"},
