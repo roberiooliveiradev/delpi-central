@@ -130,6 +130,12 @@ class ChatTurnGroundingService:
         if not isinstance(excerpt, dict) or not excerpt:
             return False
 
+        if cls.should_enrich_before_insight(message, excerpt):
+            return False
+
+        if cls.should_narrate_insight_only(message):
+            return False
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
 
         if not normalized:
@@ -145,6 +151,80 @@ class ChatTurnGroundingService:
             return False
 
         return True
+
+    @classmethod
+    def should_enrich_before_insight(
+        cls,
+        message: str,
+        excerpt: dict[str, Any] | None,
+    ) -> bool:
+        if not isinstance(excerpt, dict) or not excerpt:
+            return False
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        if not normalized:
+            return False
+
+        if not cls._normalized_contains_any(
+            normalized,
+            ChatTurnGroundingContentService.insight_enrich_triggers(),
+        ):
+            return False
+
+        keys_by_type = excerpt.get("keysByComponentType")
+
+        if isinstance(keys_by_type, dict) and any(
+            isinstance(values, list) and values for values in keys_by_type.values()
+        ):
+            return True
+
+        return cls._message_requests_fan_out(message)
+
+    @classmethod
+    def should_narrate_insight_only(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        if not normalized:
+            return False
+
+        return cls._normalized_contains_any(
+            normalized,
+            ChatTurnGroundingContentService.insight_narrate_triggers(),
+        )
+
+    @classmethod
+    def resolve_grounded_stage(
+        cls,
+        *,
+        message: str,
+        excerpt: dict[str, Any] | None,
+    ) -> str | None:
+        if cls.should_enrich_before_insight(message, excerpt):
+            return "grounded_enrich_insight"
+
+        if cls.should_narrate_insight_only(message):
+            return "grounded_narrate_insight"
+
+        if cls.should_narrate_excerpt(message, excerpt):
+            return "grounded_narrate_recap"
+
+        return None
+
+    @classmethod
+    def _message_requests_fan_out(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        if not normalized:
+            return False
+
+        for token in ChatTurnGroundingContentService.fan_out_on_referent_items():
+            candidate = ChatMessageNormalizationService.normalize_for_matching(token)
+
+            if candidate and candidate in normalized:
+                return True
+
+        return False
 
     @classmethod
     def should_expand_from_excerpt(
@@ -189,10 +269,9 @@ class ChatTurnGroundingService:
     @classmethod
     def _should_expand_from_excerpt(cls, normalized: str) -> bool:
         expand_triggers = ChatTurnGroundingContentService.expand_triggers()
-        insight_triggers = ChatTurnGroundingContentService.insight_triggers()
         fan_out_triggers = ChatTurnGroundingContentService.fan_out_on_referent_items()
 
-        if cls._normalized_contains_any(normalized, expand_triggers + insight_triggers):
+        if cls._normalized_contains_any(normalized, expand_triggers):
             return True
 
         if cls._normalized_contains_any(normalized, fan_out_triggers):

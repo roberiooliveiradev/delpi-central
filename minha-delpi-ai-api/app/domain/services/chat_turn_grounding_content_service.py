@@ -114,12 +114,24 @@ class ChatTurnGroundingContentService:
         )
 
     @classmethod
-    def insight_triggers(cls) -> tuple[str, ...]:
+    def insight_enrich_triggers(cls) -> tuple[str, ...]:
         return tuple(
             str(item).strip()
-            for item in ChatAssistantContentService.list(_BUNDLE, "insightTriggers")
+            for item in ChatAssistantContentService.list(_BUNDLE, "insightEnrichTriggers")
             if str(item).strip()
         )
+
+    @classmethod
+    def insight_narrate_triggers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip()
+            for item in ChatAssistantContentService.list(_BUNDLE, "insightNarrateTriggers")
+            if str(item).strip()
+        )
+
+    @classmethod
+    def insight_triggers(cls) -> tuple[str, ...]:
+        return cls.insight_enrich_triggers() + cls.insight_narrate_triggers()
 
     @classmethod
     def fan_out_on_referent_items(cls) -> tuple[str, ...]:

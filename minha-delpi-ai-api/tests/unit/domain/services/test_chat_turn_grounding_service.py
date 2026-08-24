@@ -65,16 +65,52 @@ def test_grounded_recent_tool_success():
     assert result.reason == "recent_tool_success"
 
 
-def test_should_narrate_excerpt_for_vague_items_question():
+def test_should_enrich_before_insight_for_items_question():
     excerpt = {
         "title": "Estrutura 90260149",
         "rowCount": 6,
         "topKeys": ["10380044"],
     }
 
-    assert ChatTurnGroundingService.should_narrate_excerpt(
-        "o que me diz sobre os itens?",
-        excerpt,
+    message = "o que me diz sobre os itens?"
+
+    assert ChatTurnGroundingService.should_enrich_before_insight(message, excerpt)
+    assert not ChatTurnGroundingService.should_narrate_excerpt(message, excerpt)
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(message=message, excerpt=excerpt)
+        == "grounded_enrich_insight"
+    )
+
+
+def test_resolve_grounded_stage_recap_for_list_codes():
+    excerpt = {
+        "title": "Estrutura 90260149",
+        "rowCount": 6,
+        "topKeys": ["10380044"],
+    }
+
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="lista os códigos",
+            excerpt=excerpt,
+        )
+        == "grounded_narrate_recap"
+    )
+
+
+def test_resolve_grounded_stage_narrate_insight_only():
+    excerpt = {
+        "title": "Estrutura 90260149",
+        "rowCount": 6,
+        "topKeys": ["10380044"],
+    }
+
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="o que isso implica?",
+            excerpt=excerpt,
+        )
+        == "grounded_narrate_insight"
     )
 
 

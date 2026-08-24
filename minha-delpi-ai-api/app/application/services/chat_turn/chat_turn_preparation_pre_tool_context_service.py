@@ -125,6 +125,14 @@ class ChatTurnPreparationPreToolContextService:
             previous_messages=history_source,
         )
         turn_grounding_metadata = turn_grounding.to_metadata()
+        grounded_stage = ChatTurnGroundingService.resolve_grounded_stage(
+            message=message,
+            excerpt=turn_grounding.excerpt if isinstance(turn_grounding.excerpt, dict) else None,
+        )
+
+        if grounded_stage:
+            turn_grounding_metadata["stage"] = grounded_stage
+
         workspace_context = dict(workspace_context)
         workspace_context["turnGrounding"] = turn_grounding_metadata
         stage_additions.append("turn_grounding")

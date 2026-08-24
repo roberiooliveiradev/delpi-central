@@ -24,7 +24,8 @@ def test_turn_grounding_status_values():
 
 def test_turn_grounding_trigger_lists_non_empty():
     assert ChatTurnGroundingContentService.expand_triggers()
-    assert ChatTurnGroundingContentService.insight_triggers()
+    assert ChatTurnGroundingContentService.insight_enrich_triggers()
+    assert ChatTurnGroundingContentService.insight_narrate_triggers()
     assert ChatTurnGroundingContentService.fan_out_on_referent_items()
 
 

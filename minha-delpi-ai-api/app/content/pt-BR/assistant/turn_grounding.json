@@ -66,7 +66,20 @@
     "nota fiscal",
     "nf de"
   ],
-  "insightTriggers": [
+  "insightEnrichTriggers": [
+    "o que me diz",
+    "o que você me diz",
+    "me fala sobre",
+    "me fale sobre",
+    "analise os itens",
+    "análise dos itens",
+    "analisa os itens",
+    "o que acha dos itens",
+    "o que acha destes itens",
+    "me conta sobre os itens",
+    "me conte sobre os itens"
+  ],
+  "insightNarrateTriggers": [
     "insight",
     "insights",
     "cruza",
@@ -78,7 +91,11 @@
     "o que voce tira",
     "o que você tira",
     "analise cruzada",
-    "análise cruzada"
+    "análise cruzada",
+    "resume",
+    "resuma",
+    "sintetize",
+    "sintetiza"
   ],
   "fanOutOnReferentItems": [
     "os itens",
