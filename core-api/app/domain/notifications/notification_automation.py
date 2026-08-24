@@ -3,6 +3,10 @@
 from app.application.dto.dispatch_notifications_request import DispatchNotificationsRequest
 from app.domain.notifications.notification_templates import NOTIFICATION_TEMPLATES
 
+SOURCE_APP_RBAC_AUTOMATION = "rbac-automation"
+SOURCE_APP_WELCOME_AUTOMATION = "welcome-automation"
+SOURCE_APP_BIRTHDAY_AUTOMATION = "birthday-automation"
+
 
 def build_template_dispatch_request(
     *,
