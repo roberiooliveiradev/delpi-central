@@ -129,18 +129,30 @@ class ChatTurnPreparationPreToolContextService:
         workspace_context["turnGrounding"] = turn_grounding_metadata
         stage_additions.append("turn_grounding")
 
+        from app.domain.services.chat_clarify_policy_service import (
+            ChatClarifyPolicyService,
+        )
+        from app.domain.services.chat_unclear_request_service import (
+            ChatUnclearRequestService,
+        )
+
+        clarify_policy = ChatClarifyPolicyService.resolve(turn_grounding)
         unclear_direct = None
+
         if (
             not attachment_ids
             and not direct_answer_bundle.small_talk_direct
             and not direct_answer_bundle.utility_direct
-            and not turn_grounding.is_grounded
         ):
-            unclear_direct = ChatUnclearRequestService.build_direct_answer(
-                message=message,
-                previous_messages=history_source,
-                grounding_status=turn_grounding.status.value,
-            )
+            if clarify_policy.kind.value == "ungrounded":
+                unclear_direct = ChatUnclearRequestService.build_direct_answer(
+                    message=message,
+                    previous_messages=history_source,
+                    grounding_status=turn_grounding.status.value,
+                )
+            elif clarify_policy.kind.value == "ambiguous" and clarify_policy.answer:
+                unclear_direct = clarify_policy.answer
+
             if unclear_direct:
                 stage_additions.append("unclear_request")
 
