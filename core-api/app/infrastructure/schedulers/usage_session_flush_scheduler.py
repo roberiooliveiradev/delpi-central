@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import time
 
 from flask import Flask
 
@@ -30,11 +29,14 @@ def _scheduler_loop(app: Flask, *, poll_seconds: int) -> None:
                     logger.debug("usage_session_flush flushed=%s", flushed)
         except Exception:
             logger.exception("Usage session flush scheduler tick failed")
-        time.sleep(poll_seconds)
+        socketio.sleep(poll_seconds)
 
 
 def start_usage_session_flush_scheduler(app: Flask) -> None:
     global _scheduler_started
+
+    if app.config.get("TESTING"):
+        return
 
     if not app.config.get("APP_USAGE_ENABLED", True):
         logger.info("Usage session flush scheduler disabled (app usage off)")
