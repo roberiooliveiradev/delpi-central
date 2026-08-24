@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 _BUNDLE = "turn_grounding"
@@ -111,3 +113,61 @@ class ChatTurnGroundingContentService:
             )
             or ""
         ).strip()
+
+    @classmethod
+    def format_excerpt_prompt_block(cls, excerpt: dict[str, Any] | None) -> str:
+        if not isinstance(excerpt, dict) or not excerpt:
+            return ""
+
+        lines = [cls.last_result_heading()]
+        title = str(excerpt.get("title") or "").strip()
+
+        if title:
+            lines.append(
+                ChatAssistantContentService.format(
+                    _BUNDLE,
+                    "prompt",
+                    "titleLine",
+                    default="Título: {title}",
+                    title=title,
+                )
+            )
+
+        row_count = excerpt.get("rowCount")
+
+        if isinstance(row_count, int) and row_count > 0:
+            lines.append(
+                ChatAssistantContentService.format(
+                    _BUNDLE,
+                    "prompt",
+                    "rowCountLine",
+                    default="Quantidade: {rowCount}",
+                    rowCount=row_count,
+                )
+            )
+
+        top_keys = excerpt.get("topKeys")
+
+        if isinstance(top_keys, list) and top_keys:
+            keys_text = ", ".join(str(item).strip() for item in top_keys if str(item).strip())
+            if keys_text:
+                lines.append(
+                    ChatAssistantContentService.format(
+                        _BUNDLE,
+                        "prompt",
+                        "topKeysLine",
+                        default="Códigos em foco: {topKeys}",
+                        topKeys=keys_text,
+                    )
+                )
+
+        preview = str(excerpt.get("preview") or "").strip()
+        max_chars = cls.max_preview_chars()
+
+        if preview:
+            if max_chars > 0 and len(preview) > max_chars:
+                preview = f"{preview[:max_chars]}\n…"
+
+            lines.append(preview)
+
+        return "\n".join(line for line in lines if line).strip()

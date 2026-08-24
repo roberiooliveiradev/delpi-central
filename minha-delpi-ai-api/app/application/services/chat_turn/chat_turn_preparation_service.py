@@ -235,6 +235,8 @@ class ChatTurnPreparationService:
         skip_tools_for_data_interpretation = (
             skip_tool_flags.skip_tools_for_data_interpretation
         )
+        if skip_tool_flags.skip_tools_for_grounded_narrate:
+            analysis_mode = True
 
         from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
             ChatTurnPreparationTurnAnalysisService,
@@ -266,6 +268,7 @@ class ChatTurnPreparationService:
             or skip_tool_flags.skip_tools_for_inactive_agent
             or skip_tool_flags.skip_tools_for_project_sources_content
             or skip_tool_flags.skip_tools_for_session_review
+            or skip_tool_flags.skip_tools_for_grounded_narrate
         )
         turn_analysis_outcome = ChatTurnPreparationTurnAnalysisService.maybe_analyze(
             message=message,
@@ -352,6 +355,13 @@ class ChatTurnPreparationService:
         tool_calls = tool_phase.tool_calls
         analysis_mode = tool_phase.analysis_mode
         operational_optimize = tool_phase.operational_optimize
+
+        if isinstance(tool_context, dict) and isinstance(
+            workspace_context.get("turnGrounding"),
+            dict,
+        ):
+            tool_context = dict(tool_context)
+            tool_context["turnGrounding"] = workspace_context.get("turnGrounding")
 
         if isinstance(tool_context, dict) and isinstance(
             workspace_context.get("turnAnalysis"),

@@ -32,6 +32,7 @@ class ChatTurnPreparationSkipToolFlags:
     skip_tools_for_inactive_agent: bool
     skip_tools_for_project_sources_content: bool
     skip_tools_for_session_review: bool
+    skip_tools_for_grounded_narrate: bool
     request_attachment_ids: list[str]
 
 
@@ -206,15 +207,6 @@ class ChatTurnPreparationToolRoutingService:
             resolve_chat_intelligence_runtime().assistant_identity_direct_enabled
             and ChatAssistantIdentityService.is_assistant_identity_question(message)
         )
-        skip_tools_for_data_interpretation = (
-            ChatAnalysisIntentService.is_data_interpretation_request(
-                message,
-                history_source,
-            )
-            and ChatConversationContextService.has_recent_tool_data(history_source)
-        )
-
-        request_attachment_ids = list(getattr(request, "attachment_ids", None) or [])
         from app.domain.services.chat_attachment_document_intent_service import (
             ChatAttachmentDocumentIntentService,
         )
@@ -225,6 +217,7 @@ class ChatTurnPreparationToolRoutingService:
         from app.domain.skills.chat_skill_registry import ChatSkillRegistry
 
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        request_attachment_ids = list(getattr(request, "attachment_ids", None) or [])
         has_agent = bool(workspace.get("agent"))
         runtime_skills = workspace.get("skills")
 
@@ -290,6 +283,37 @@ class ChatTurnPreparationToolRoutingService:
             ChatIntentRouterHeuristicsService.looks_conversation_meta(message)
         )
 
+        turn_grounding = workspace.get("turnGrounding") or {}
+        excerpt = (
+            working_memory.get("lastResultExcerpt")
+            if isinstance(working_memory, dict)
+            else None
+        )
+
+        if not isinstance(excerpt, dict):
+            excerpt = turn_grounding.get("excerpt")
+
+        from app.domain.services.chat_turn_grounding_service import (
+            ChatTurnGroundingService,
+        )
+
+        skip_tools_for_grounded_narrate = (
+            turn_grounding.get("status") == "grounded"
+            and ChatTurnGroundingService.should_narrate_excerpt(
+                message,
+                excerpt if isinstance(excerpt, dict) else None,
+            )
+        )
+
+        skip_tools_for_data_interpretation = (
+            not skip_tools_for_grounded_narrate
+            and ChatAnalysisIntentService.is_data_interpretation_request(
+                message,
+                history_source,
+            )
+            and ChatConversationContextService.has_recent_tool_data(history_source)
+        )
+
         return ChatTurnPreparationSkipToolFlags(
             skip_tools_for_user_identity=skip_tools_for_user_identity,
             skip_tools_for_assistant_identity=skip_tools_for_assistant_identity,
@@ -298,6 +322,7 @@ class ChatTurnPreparationToolRoutingService:
             skip_tools_for_inactive_agent=skip_tools_for_inactive_agent,
             skip_tools_for_project_sources_content=skip_tools_for_project_sources_content,
             skip_tools_for_session_review=skip_tools_for_session_review,
+            skip_tools_for_grounded_narrate=skip_tools_for_grounded_narrate,
             request_attachment_ids=request_attachment_ids,
         )
 
@@ -339,6 +364,7 @@ class ChatTurnPreparationToolRoutingService:
                 or skip_flags.skip_tools_for_user_identity
                 or skip_flags.skip_tools_for_assistant_identity
                 or skip_flags.skip_tools_for_data_interpretation
+                or skip_flags.skip_tools_for_grounded_narrate
                 or skip_flags.skip_tools_for_attachment_document
                 or skip_flags.skip_tools_for_inactive_agent
                 or skip_flags.skip_tools_for_project_sources_content
@@ -386,6 +412,8 @@ class ChatTurnPreparationToolRoutingService:
             pipeline_stages.append("assistant_identity_shortcut")
         elif skip_flags.skip_tools_for_session_review:
             pipeline_stages.append("session_review")
+        elif skip_flags.skip_tools_for_grounded_narrate:
+            pipeline_stages.append("grounded_narrate")
         elif skip_flags.skip_tools_for_data_interpretation:
             pipeline_stages.append("data_interpretation")
         elif canvas_action:
@@ -548,6 +576,9 @@ class ChatTurnPreparationToolRoutingService:
         if skip_flags.skip_tools_for_attachment_document:
             operational_optimize = False
             analysis_mode = False
+
+        if skip_flags.skip_tools_for_grounded_narrate:
+            analysis_mode = True
 
         if cls.should_skip_tools(
             canvas_action=canvas_action,

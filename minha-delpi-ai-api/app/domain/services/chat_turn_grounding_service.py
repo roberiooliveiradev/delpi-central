@@ -121,6 +121,71 @@ class ChatTurnGroundingService:
         )
 
     @classmethod
+    def should_narrate_excerpt(
+        cls,
+        message: str,
+        excerpt: dict[str, Any] | None,
+    ) -> bool:
+        if not isinstance(excerpt, dict) or not excerpt:
+            return False
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        if not normalized:
+            return False
+
+        if cls._should_expand_from_excerpt(normalized):
+            return False
+
+        has_content = bool(excerpt.get("preview")) or bool(excerpt.get("topKeys"))
+        row_count = excerpt.get("rowCount")
+
+        if not has_content and not (isinstance(row_count, int) and row_count > 0):
+            return False
+
+        return True
+
+    @classmethod
+    def should_expand_from_excerpt(
+        cls,
+        message: str,
+        excerpt: dict[str, Any] | None,
+    ) -> bool:
+        if not isinstance(excerpt, dict) or not excerpt:
+            return False
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        if not normalized:
+            return False
+
+        return cls._should_expand_from_excerpt(normalized)
+
+    @classmethod
+    def _should_expand_from_excerpt(cls, normalized: str) -> bool:
+        expand_triggers = ChatTurnGroundingContentService.expand_triggers()
+        insight_triggers = ChatTurnGroundingContentService.insight_triggers()
+        fan_out_triggers = ChatTurnGroundingContentService.fan_out_on_referent_items()
+
+        if cls._normalized_contains_any(normalized, expand_triggers + insight_triggers):
+            return True
+
+        if cls._normalized_contains_any(normalized, fan_out_triggers):
+            return cls._normalized_contains_any(normalized, expand_triggers)
+
+        return False
+
+    @staticmethod
+    def _normalized_contains_any(normalized: str, triggers: tuple[str, ...]) -> bool:
+        for token in triggers:
+            candidate = ChatMessageNormalizationService.normalize_for_matching(token)
+
+            if candidate and candidate in normalized:
+                return True
+
+        return False
+
+    @classmethod
     def _grounded(
         cls,
         *,

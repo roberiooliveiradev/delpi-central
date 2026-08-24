@@ -63,3 +63,33 @@ def test_grounded_recent_tool_success():
 
     assert result.status == ChatTurnGroundingStatus.GROUNDED
     assert result.reason == "recent_tool_success"
+
+
+def test_should_narrate_excerpt_for_vague_items_question():
+    excerpt = {
+        "title": "Estrutura 90260149",
+        "rowCount": 6,
+        "topKeys": ["10380044"],
+    }
+
+    assert ChatTurnGroundingService.should_narrate_excerpt(
+        "o que me diz sobre os itens?",
+        excerpt,
+    )
+
+
+def test_should_not_narrate_when_stock_expansion_requested():
+    excerpt = {
+        "title": "Estrutura 90260149",
+        "rowCount": 6,
+        "topKeys": ["10380044", "10380045"],
+    }
+
+    assert not ChatTurnGroundingService.should_narrate_excerpt(
+        "e o estoque desses itens?",
+        excerpt,
+    )
+    assert ChatTurnGroundingService.should_expand_from_excerpt(
+        "e o estoque desses itens?",
+        excerpt,
+    )

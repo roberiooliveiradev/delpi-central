@@ -18,7 +18,10 @@
     "defaultTitle": "Último resultado"
   },
   "prompt": {
-    "lastResultHeading": "Último resultado em foco"
+    "lastResultHeading": "Último resultado em foco",
+    "titleLine": "Título: {title}",
+    "rowCountLine": "Quantidade: {rowCount}",
+    "topKeysLine": "Códigos em foco: {topKeys}"
   },
   "statuses": {
     "grounded": "grounded",
