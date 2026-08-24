@@ -152,6 +152,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [streamingAnswer, setStreamingAnswer] = useState("");
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
   const [streamingToolCalls, setStreamingToolCalls] = useState<ChatToolCall[]>([]);
+  const [streamingPartialToolCalls, setStreamingPartialToolCalls] = useState<
+    ChatToolCall[]
+  >([]);
   const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
   const [streamingActivityLog, setStreamingActivityLog] = useState<ChatStreamActivityEntry[]>(
     [],
@@ -219,6 +222,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
+    setStreamingPartialToolCalls([]);
     setStreamingStatus(null);
     setStreamingActivityLog([]);
     setStreamingShowPresentation(true);
@@ -661,6 +665,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const {
     displayedAnswer: playbackAnswer,
     showPresentation: playbackShowPresentation,
+    visibleSegmentLimit: playbackVisibleSegmentLimit,
+    showSegmentSkeleton: playbackShowSegmentSkeleton,
     isPlaying: isPlaybackActive,
   } = useChatMessagePlayback(playbackPayload, finishPlayback);
 
@@ -1279,12 +1285,34 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           const streamToolCalls = snapshot.toolCalls ?? [];
           setStreamingToolCalls(streamToolCalls);
+          setStreamingPartialToolCalls([]);
           streamingToolCallsRef.current = streamToolCalls;
           setStreamingShowPresentation(hasRichPresentation);
           setStreamingActivityLog(snapshot.activityLog);
           setStreamingStatus(
             resolveStreamingHeadline(snapshot.status, snapshot.activityLog),
           );
+        },
+        onToolCallsPartial: (toolCalls: ChatToolCall[], wave?: number) => {
+          if (shouldIgnoreStreamEvent()) {
+            return;
+          }
+
+          markStreamProgress();
+          const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
+
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          setStreamingPartialToolCalls(toolCalls);
+          if (hasRichPresentation) {
+            setStreamingShowPresentation(true);
+          }
+
+          if (wave === 1 && hasRichPresentation) {
+            patchStreamStatus(sessionId, "Montando visualização inicial...");
+          }
         },
         onAssistantPending: () => {
           if (shouldIgnoreStreamEvent()) {
@@ -2352,10 +2380,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingPartialToolCalls,
     streamingAdminDebug,
     streamingStatus,
     streamingActivityLog,
     streamingShowPresentation,
+    playbackVisibleSegmentLimit,
+    playbackShowSegmentSkeleton,
     streamingCanvasOpen,
     lastSentUserText,
     isLoadingSessions,

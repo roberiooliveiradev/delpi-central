@@ -244,6 +244,22 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         *,
         allowed_action_ids: list[str] | None = None,
     ) -> list[dict]:
+        import time
+
+        from app.application.services.chat_pipeline_timings import ChatPipelineTimings
+        from app.application.services.external_actions.external_action_candidate_turn_cache import (
+            ExternalActionCandidateTurnCache,
+        )
+
+        cached = ExternalActionCandidateTurnCache.get(
+            query,
+            allowed_action_ids=allowed_action_ids,
+        )
+
+        if cached is not None:
+            return cached[:limit]
+
+        started = time.perf_counter()
         from app.domain.services.external_actions.external_action_candidate_discovery_service import (
             ExternalActionCandidateDiscoveryService,
         )
@@ -282,7 +298,17 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
             ExternalActionModel.path.asc(),
         ).limit(limit).all()
 
-        return [self._action_to_dict(action) for action in actions]
+        result = [self._action_to_dict(action) for action in actions]
+        ChatPipelineTimings.record_selection_candidate_db_ms(
+            max(0, int((time.perf_counter() - started) * 1000))
+        )
+        ExternalActionCandidateTurnCache.set(
+            query,
+            allowed_action_ids=allowed_action_ids,
+            candidates=result,
+        )
+
+        return result
 
     def search_similar_actions(
         self,

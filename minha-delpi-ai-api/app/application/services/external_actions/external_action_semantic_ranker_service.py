@@ -57,7 +57,17 @@ class ExternalActionSemanticRankerService:
 
         if self.external_action_repository:
             try:
+                import time
+
+                from app.application.services.chat_pipeline_timings import (
+                    ChatPipelineTimings,
+                )
+
+                embed_started = time.perf_counter()
                 message_embedding = self.embedding_gateway.embed(normalized_message)
+                ChatPipelineTimings.record_selection_embed_ms(
+                    max(0, int((time.perf_counter() - embed_started) * 1000))
+                )
                 similar = self.external_action_repository.search_similar_actions(
                     message_embedding,
                     allowed_action_ids=allowed_ids,

@@ -21,13 +21,18 @@ class FakeSelectionService:
         previous_messages=None,
     ):
         self.product_calls.append((product_code, intent))
+        action_id = (
+            "product-stock"
+            if intent == ChatProductQueryIntent.STOCK
+            else "product-structure"
+        )
         return {
             "name": "execute_external_action",
             "arguments": {
-                "actionId": "product-structure",
+                "actionId": action_id,
                 "parameters": {"code": product_code},
             },
-            "reason": f"estrutura {product_code}",
+            "reason": f"{intent} {product_code}",
         }
 
     def select_action(
@@ -162,7 +167,7 @@ def test_plan_actions_comparison_fetches_missing_structure(monkeypatch):
     assert service.product_calls[0][0] == "90260088"
 
 
-def test_plan_actions_single_code_uses_select_action():
+def test_plan_actions_single_code_uses_stock_fast_path():
     service = FakeSelectionService()
 
     planned = ChatExternalActionOrchestrationService.plan_actions(
@@ -173,7 +178,7 @@ def test_plan_actions_single_code_uses_select_action():
 
     assert len(planned) == 1
     assert planned[0]["arguments"]["actionId"] == "product-stock"
-    assert not service.product_calls
+    assert service.product_calls == [("10080047", ChatProductQueryIntent.STOCK)]
 
 
 def test_plan_actions_ignores_history_codes_when_message_names_product():
@@ -193,7 +198,7 @@ def test_plan_actions_ignores_history_codes_when_message_names_product():
 
     assert len(planned) == 1
     assert planned[0]["arguments"]["actionId"] == "product-stock"
-    assert len(service.product_calls) == 0
+    assert service.product_calls == [("10080099", ChatProductQueryIntent.STOCK)]
 
 
 def test_plan_actions_followup_uses_single_code_from_context():
@@ -208,7 +213,7 @@ def test_plan_actions_followup_uses_single_code_from_context():
     )
 
     assert len(planned) == 1
-    assert not service.product_calls
+    assert service.product_calls == [("10080047", ChatProductQueryIntent.STOCK)]
 
 
 def test_plan_actions_multi_scope_structure_and_guide(monkeypatch):

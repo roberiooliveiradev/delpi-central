@@ -58,6 +58,30 @@ class ChatToolContextSelectionService:
         drawing_pdf_extract: dict | None,
         web_search_exclusive: bool,
     ) -> ToolSelectionOutcome:
+        from app.application.services.chat_pipeline_timings import ChatPipelineTimings
+        from app.domain.services.chat_operational_intent_fast_path_service import (
+            ChatOperationalIntentFastPathService,
+        )
+
+        ChatPipelineTimings.mark_current("selection_start")
+        memory_snapshot = None
+        workspace_context_early = getattr(host, "_build_workspace_context", None)
+
+        if isinstance(workspace_context_early, dict):
+            working = workspace_context_early.get("workingMemory")
+
+            if isinstance(working, dict):
+                memory_snapshot = working
+
+        skip_llm_tool_selection = ChatOperationalIntentFastPathService.should_skip_llm_tool_selection(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+            drawing_analysis_mode=drawing_analysis_mode,
+            web_search_exclusive=web_search_exclusive,
+        )
+
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []
 
@@ -72,22 +96,25 @@ class ChatToolContextSelectionService:
             if isinstance(item, dict) and str(item.get("name") or "").strip()
         ]
 
-        if host.native_tool_calling_service:
-            native_result = host.native_tool_calling_service.select_tools(
-                message=message,
-                allowed_tool_names=allowed_tool_names,
-                tools_registry=host.execute_tool_use_case.tools,
-                agent_context=agent_context,
-                access_token=(
-                    getattr(host, "_access_token", None)
-                    if isinstance(getattr(host, "_access_token", None), str)
-                    else None
-                ),
-                max_tool_calls=max_external_action_calls,
-                shortlist_tool_names=shortlist_tool_names or None,
-            )
-            native_meta = native_result.get("meta") or native_meta
-            native_selections = list(native_result.get("selections") or [])
+        if host.native_tool_calling_service and not skip_llm_tool_selection:
+            with ChatPipelineTimings.selection_phase("selection_native_done"):
+                native_result = host.native_tool_calling_service.select_tools(
+                    message=message,
+                    allowed_tool_names=allowed_tool_names,
+                    tools_registry=host.execute_tool_use_case.tools,
+                    agent_context=agent_context,
+                    access_token=(
+                        getattr(host, "_access_token", None)
+                        if isinstance(getattr(host, "_access_token", None), str)
+                        else None
+                    ),
+                    max_tool_calls=max_external_action_calls,
+                    shortlist_tool_names=shortlist_tool_names or None,
+                )
+                native_meta = native_result.get("meta") or native_meta
+                native_selections = list(native_result.get("selections") or [])
+        else:
+            ChatPipelineTimings.mark_current("selection_native_done")
 
         if native_selections:
             selected_tools = native_selections
@@ -186,40 +213,44 @@ class ChatToolContextSelectionService:
             and actions_enabled
             and not native_selections
             and not web_search_exclusive
+            and not skip_llm_tool_selection
         ):
-            catalog_actions = []
+            with ChatPipelineTimings.selection_phase("selection_router_done"):
+                catalog_actions = []
 
-            if host.external_action_repository and allowed_action_ids:
-                catalog_actions = host.external_action_repository.find_candidate_actions(
-                    message,
-                    limit=Settings.CHAT_TOOL_ROUTER_MAX_ACTIONS,
-                    allowed_action_ids=allowed_action_ids,
+                if host.external_action_repository and allowed_action_ids:
+                    catalog_actions = host.external_action_repository.find_candidate_actions(
+                        message,
+                        limit=Settings.CHAT_TOOL_ROUTER_MAX_ACTIONS,
+                        allowed_action_ids=allowed_action_ids,
+                    )
+
+                from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
+                    ChatTurnPreparationTurnAnalysisService,
                 )
 
-            from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
-                ChatTurnPreparationTurnAnalysisService,
-            )
+                if ChatTurnPreparationTurnAnalysisService.ran_this_turn():
+                    router_suggestion = {"tools": [], "actionId": None}
+                else:
+                    router_suggestion = host.tool_router_service.suggest(
+                        message=message,
+                        allowed_tool_names=allowed_tool_names,
+                        allowed_actions=catalog_actions,
+                    )
 
-            if ChatTurnPreparationTurnAnalysisService.ran_this_turn():
-                router_suggestion = {"tools": [], "actionId": None}
-            else:
-                router_suggestion = host.tool_router_service.suggest(
-                    message=message,
-                    allowed_tool_names=allowed_tool_names,
-                    allowed_actions=catalog_actions,
-                )
+                for tool_name in router_suggestion.get("tools") or []:
+                    if any(str(item.get("name")) == tool_name for item in selected_tools):
+                        continue
 
-            for tool_name in router_suggestion.get("tools") or []:
-                if any(str(item.get("name")) == tool_name for item in selected_tools):
-                    continue
-
-                selected_tools.append(
-                    {
-                        "name": tool_name,
-                        "arguments": {},
-                        "reason": ChatToolContextContentService.get("router", "toolSuggested"),
-                    }
-                )
+                    selected_tools.append(
+                        {
+                            "name": tool_name,
+                            "arguments": {},
+                            "reason": ChatToolContextContentService.get("router", "toolSuggested"),
+                        }
+                    )
+        else:
+            ChatPipelineTimings.mark_current("selection_router_done")
 
         selected_external_action = None
         selected_external_action_meta = None
@@ -268,29 +299,30 @@ class ChatToolContextSelectionService:
                 else:
                     plan_workspace["skills"] = dict(drawing_runtime_skills)
 
-            planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
-                host.external_action_selection_service,
-                message=message,
-                raw_message=raw_message,
-                allowed_action_ids=allowed_action_ids or [],
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                max_calls=max_external_action_calls,
-                on_stream_activity=on_stream_activity,
-                workspace_context=plan_workspace,
-                forced_product_code=drawing_product_code if drawing_action_required else None,
-                forced_intent=(
-                    ChatProductQueryIntent.ANALYSER
-                    if drawing_action_required
-                    else None
-                ),
-                forced_reason=(
-                    ChatToolContextContentService.get("drawing", "forcedAnalyserReason")
-                    if drawing_action_required
-                    else None
-                ),
-                forced_drawing_analysis_mode=drawing_action_required,
-            )
+            with ChatPipelineTimings.selection_phase("selection_plan_done"):
+                planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
+                    host.external_action_selection_service,
+                    message=message,
+                    raw_message=raw_message,
+                    allowed_action_ids=allowed_action_ids or [],
+                    conversation_context=conversation_context,
+                    previous_messages=previous_messages,
+                    max_calls=max_external_action_calls,
+                    on_stream_activity=on_stream_activity,
+                    workspace_context=plan_workspace,
+                    forced_product_code=drawing_product_code if drawing_action_required else None,
+                    forced_intent=(
+                        ChatProductQueryIntent.ANALYSER
+                        if drawing_action_required
+                        else None
+                    ),
+                    forced_reason=(
+                        ChatToolContextContentService.get("drawing", "forcedAnalyserReason")
+                        if drawing_action_required
+                        else None
+                    ),
+                    forced_drawing_analysis_mode=drawing_action_required,
+                )
 
             if drawing_action_required and planned_external_actions:
                 planned_external_actions = [
@@ -457,6 +489,10 @@ class ChatToolContextSelectionService:
                             },
                         ),
                     )
+
+        else:
+            ChatPipelineTimings.mark_current("selection_plan_done")
+            ChatPipelineTimings.mark_current("selection_dispatch_done")
 
         if drawing_action_required and not selected_external_action:
             return ToolSelectionOutcome(

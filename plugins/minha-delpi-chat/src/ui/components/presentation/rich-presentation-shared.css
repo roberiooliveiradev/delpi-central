@@ -47,6 +47,45 @@
     both;
 }
 
+.mdc-assistant-content__segment-shell.mdc-rich-presentation--enter {
+  animation: mdc-rich-presentation-enter var(--mdc-motion-duration-slow)
+    var(--mdc-motion-ease-out) both;
+  animation-delay: calc(var(--segment-index, 0) * 80ms);
+}
+
+.mdc-rich-presentation__segment-skeleton {
+  margin: 0.75rem 0;
+  min-height: 5.5rem;
+  border-radius: var(--mdc-radius-sm);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mdc-bg-soft) 88%, transparent) 0%,
+    color-mix(in srgb, var(--mdc-card-border) 55%, transparent) 50%,
+    color-mix(in srgb, var(--mdc-bg-soft) 88%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: mdc-rich-presentation-skeleton 1.1s ease-in-out infinite;
+}
+
+.mdc-rich-presentation__segment-skeleton--table {
+  min-height: 8rem;
+}
+
+.mdc-rich-presentation__segment-skeleton--kpi,
+.mdc-rich-presentation__segment-skeleton--chart {
+  min-height: 6.5rem;
+}
+
+@keyframes mdc-rich-presentation-skeleton {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 .mdc-rich-table__header:has(.mdc-rich-table__title[aria-hidden="true"]),
 .mdc-rich-chart__header:has(.mdc-rich-chart__title[aria-hidden="true"]) {
   justify-content: flex-end;

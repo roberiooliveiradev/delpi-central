@@ -80,6 +80,7 @@ class ChatToolContextService:
         previous_messages: list | None = None,
         max_external_action_calls: int | None = None,
         on_stream_activity=None,
+        on_tool_calls_partial=None,
         agent_context: dict | None = None,
         working_memory: dict | None = None,
         attachment_context: str | None = None,
@@ -165,6 +166,7 @@ class ChatToolContextService:
                 previous_messages=previous_messages,
                 max_external_action_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,
+                on_tool_calls_partial=on_tool_calls_partial,
                 agent_context=agent_context,
                 working_memory=working_memory,
                 attachment_context=attachment_context,
@@ -196,6 +198,7 @@ class ChatToolContextService:
         previous_messages: list | None,
         max_external_action_calls: int | None,
         on_stream_activity,
+        on_tool_calls_partial=None,
         agent_context: dict | None,
         working_memory: dict | None,
         attachment_context: str | None,
@@ -255,6 +258,12 @@ class ChatToolContextService:
                 paginated_service=paginated_service,
             )
         ChatPipelineTimings.mark_current("tools_wave1_done")
+
+        self._emit_partial_tool_calls(
+            execution,
+            on_tool_calls_partial=on_tool_calls_partial,
+            wave=1,
+        )
 
         # Critic pós-wave-1 ANTES do assembly: follow-ups entram em safe_tool_calls
         # e entram em evidenceRefs / multiSourceCrossRule na síntese.
@@ -903,6 +912,42 @@ class ChatToolContextService:
 
 
 
+
+    def _emit_partial_tool_calls(
+        self,
+        execution,
+        *,
+        on_tool_calls_partial=None,
+        wave: int = 1,
+    ) -> None:
+        if not callable(on_tool_calls_partial):
+            return
+
+        partial: list[dict] = []
+
+        for tool_call in getattr(execution, "safe_tool_calls", None) or []:
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            enriched_metadata = dict(metadata)
+            enriched_metadata.setdefault("compositionRole", "primary")
+            partial.append(
+                {
+                    **tool_call,
+                    "metadata": enriched_metadata,
+                }
+            )
+
+        if partial:
+            on_tool_calls_partial(partial, wave)
 
     def _build_safe_tool_metadata(self, tool_name: str, metadata: dict | None, data) -> dict:
         return self._external_action_formatter._build_safe_tool_metadata(tool_name, metadata, data)

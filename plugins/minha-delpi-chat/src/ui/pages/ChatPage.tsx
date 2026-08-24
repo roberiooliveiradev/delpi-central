@@ -385,10 +385,13 @@ export function ChatPage({
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingPartialToolCalls,
     streamingAdminDebug,
     streamingStatus,
     streamingActivityLog,
     streamingShowPresentation,
+    playbackVisibleSegmentLimit,
+    playbackShowSegmentSkeleton,
     streamingCanvasOpen,
     lastSentUserText,
     isLoadingSessions,
@@ -2825,10 +2828,13 @@ export function ChatPage({
                     streamingAnswer={streamingAnswer}
                     streamingSources={streamingSources}
                     streamingToolCalls={streamingToolCalls}
+                    streamingPartialToolCalls={streamingPartialToolCalls}
                     streamingAdminDebug={streamingAdminDebug}
                     streamingStatus={streamingStatus}
                     streamingActivityLog={streamingActivityLog}
                     streamingShowPresentation={streamingShowPresentation}
+                    playbackVisibleSegmentLimit={playbackVisibleSegmentLimit}
+                    playbackShowSegmentSkeleton={playbackShowSegmentSkeleton}
                     streamingCanvasOpen={streamingCanvasOpen}
                     isStreaming={isStreamingActiveSession}
                     isPlaybackActive={isPlaybackActive}
@@ -3045,10 +3051,13 @@ export function ChatPage({
                 streamingAnswer={streamingAnswer}
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}
+                streamingPartialToolCalls={streamingPartialToolCalls}
                 streamingAdminDebug={streamingAdminDebug}
                 streamingStatus={streamingStatus}
                 streamingActivityLog={streamingActivityLog}
                 streamingShowPresentation={streamingShowPresentation}
+                playbackVisibleSegmentLimit={playbackVisibleSegmentLimit}
+                playbackShowSegmentSkeleton={playbackShowSegmentSkeleton}
                 streamingCanvasOpen={streamingCanvasOpen}
                 isStreaming={isStreamingActiveSession}
                 isPlaybackActive={isPlaybackActive}

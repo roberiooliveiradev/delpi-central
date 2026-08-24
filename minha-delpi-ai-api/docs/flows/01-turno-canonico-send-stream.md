@@ -87,6 +87,7 @@ Ordem típica com `persist_before_playback=true`:
 | 2 | `session_renamed` | título fallback (opcional) |
 | 3 | `status` | entendendo pergunta |
 | 4…n | `activity` | prepare worker (tools/RAG) |
+| | `tool_calls_partial` | após wave-1 (primary + metadata de apresentação) |
 | | `status` | direct / assembling / generating |
 | | `sources` | pós-assembly |
 | | `tool_calls` | + guidelines |

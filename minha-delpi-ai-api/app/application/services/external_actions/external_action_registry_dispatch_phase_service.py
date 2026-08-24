@@ -150,6 +150,11 @@ class ExternalActionRegistryDispatchPhaseService:
 
         ctx = self._enrich_product_context(ctx)
 
+        prioritize_intent_bound = bool(
+            ctx.product_code
+            and ctx.bound_product_intent in _INTENT_BOUND_PRODUCT_INTENTS
+        )
+
         handlers = {
             "operationalRoutes": lambda state: self._phase_operational_routes(
                 ctx,
@@ -178,8 +183,30 @@ class ExternalActionRegistryDispatchPhaseService:
 
         state = SqlFallbackRunState()
 
+        if prioritize_intent_bound:
+            selected = handlers["intentBoundRoutes"](state)
+
+            if selected:
+                from app.application.services.external_actions.external_action_selection_diagnostics_service import (
+                    ExternalActionSelectionDiagnosticsService,
+                )
+
+                return ExternalActionSelectionDiagnosticsService.annotate(
+                    selected,
+                    match_source="intentBoundRoutes",
+                )
+
         for phase in OperationalRouteRegistryService.dispatch_order():
             if phase == "sessionRefinement":
+                continue
+
+            if prioritize_intent_bound and phase in {
+                "operationalRoutes",
+                "domainRoutes",
+                "intentBoundRoutes",
+                "autoTierCRoutes",
+                "semanticFallback",
+            }:
                 continue
 
             handler = handlers.get(phase)

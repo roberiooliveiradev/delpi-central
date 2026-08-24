@@ -18,11 +18,15 @@ import { isExplicitTextSessionMode } from "../chatPresentation";
 type UseAssistantContentSegmentsArgs = {
   content: string;
   toolCalls: ChatToolCall[];
+  visibleSegmentLimit?: number;
+  showSegmentSkeleton?: boolean;
 };
 
 export function useAssistantContentSegments({
   content,
   toolCalls,
+  visibleSegmentLimit,
+  showSegmentSkeleton = false,
 }: UseAssistantContentSegmentsArgs) {
   const segments = useMemo(
     () => buildAssistantContentSegments(content, toolCalls),
@@ -77,6 +81,31 @@ export function useAssistantContentSegments({
     ],
   );
 
+  const limitedVisibleSegments = useMemo(() => {
+    if (visibleSegmentLimit === undefined) {
+      return visibleSegments;
+    }
+
+    const limit = Math.max(0, Math.min(visibleSegmentLimit, visibleSegments.length));
+    const revealed = visibleSegments.slice(0, limit);
+
+    if (
+      showSegmentSkeleton &&
+      limit < visibleSegments.length &&
+      visibleSegments[limit]
+    ) {
+      return [
+        ...revealed,
+        {
+          kind: "segmentSkeleton" as const,
+          placeholderKind: visibleSegments[limit].kind,
+        },
+      ];
+    }
+
+    return revealed;
+  }, [showSegmentSkeleton, visibleSegmentLimit, visibleSegments]);
+
   return {
     segments,
     visualFormatOptions,
@@ -84,6 +113,6 @@ export function useAssistantContentSegments({
     perSectionToolbar,
     routePresentation,
     routeToolCallBySectionId,
-    visibleSegments,
+    visibleSegments: limitedVisibleSegments,
   };
 }

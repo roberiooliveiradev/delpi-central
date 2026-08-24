@@ -92,34 +92,37 @@ class ExternalActionSelectionDispatchService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-        return self._registry_phases.run(
-            RegistryDispatchContext(
-                message=message,
-                normalized=normalized,
-                sql_source=sql_source,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                product_code=None,
-                bound_product_intent=ChatProductQueryIntent.FULL,
-                product_route_segment=None,
-                memory_snapshot=memory_snapshot,
-                action_repository=self._support.repository,
-            ),
-            callbacks=RegistryDispatchCallbacks(
-                candidates_loader=self._list_allowed_candidates,
-                build_date_branch_parameters=self._build_date_branch_parameters,
-                merge_date_parameters=self._merge_date_parameters,
-                path_lookup_loader=self._lookup_production_operational_actions,
-                rank_candidates=self._rank_candidates,
-                extract_sale_number=self._extract_sale_number,
-                select_product=self._select_product_action,
-                select_lmp=self._select_lmp_action,
-                select_sql=self._select_sql_or_data_action,
-                resolve_previous_external_action_id=self._support.resolve_previous_external_action_id,
-                clamp_max_depth_for_path=self._clamp_max_depth_for_path,
-            ),
-        )
+        from app.application.services.chat_pipeline_timings import ChatPipelineTimings
+
+        with ChatPipelineTimings.selection_phase("selection_dispatch_done"):
+            return self._registry_phases.run(
+                RegistryDispatchContext(
+                    message=message,
+                    normalized=normalized,
+                    sql_source=sql_source,
+                    allowed_action_ids=allowed_action_ids,
+                    conversation_context=conversation_context,
+                    previous_messages=previous_messages,
+                    product_code=None,
+                    bound_product_intent=ChatProductQueryIntent.FULL,
+                    product_route_segment=None,
+                    memory_snapshot=memory_snapshot,
+                    action_repository=self._support.repository,
+                ),
+                callbacks=RegistryDispatchCallbacks(
+                    candidates_loader=self._list_allowed_candidates,
+                    build_date_branch_parameters=self._build_date_branch_parameters,
+                    merge_date_parameters=self._merge_date_parameters,
+                    path_lookup_loader=self._lookup_production_operational_actions,
+                    rank_candidates=self._rank_candidates,
+                    extract_sale_number=self._extract_sale_number,
+                    select_product=self._select_product_action,
+                    select_lmp=self._select_lmp_action,
+                    select_sql=self._select_sql_or_data_action,
+                    resolve_previous_external_action_id=self._support.resolve_previous_external_action_id,
+                    clamp_max_depth_for_path=self._clamp_max_depth_for_path,
+                ),
+            )
 
     def _build_date_branch_parameters(
         self,

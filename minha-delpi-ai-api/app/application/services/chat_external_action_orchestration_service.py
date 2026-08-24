@@ -148,6 +148,42 @@ class ChatExternalActionOrchestrationService:
 
             return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
 
+        from app.domain.services.chat_operational_intent_fast_path_service import (
+            ChatOperationalIntentFastPathService,
+        )
+
+        fast_product_code, fast_intent = (
+            ChatOperationalIntentFastPathService.resolve_operational_fast_path(
+                selection_message,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                memory_snapshot=memory_snapshot,
+            )
+        )
+        fast_path_codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
+            selection_message,
+            conversation_context,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+        )
+
+        if (
+            fast_product_code
+            and fast_intent == ChatProductQueryIntent.STOCK
+            and len(fast_path_codes) <= 1
+            and not forced_drawing_analysis_mode
+        ):
+            selected = selection_service.select_action_for_product(
+                selection_message,
+                product_code=fast_product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=fast_intent,
+                previous_messages=previous_messages,
+            )
+
+            if selected:
+                return _return_planned([selected], memory_snapshot=memory_snapshot)
+
         from app.domain.services.chat_sql_authoring_guidance_service import (
             ChatSqlAuthoringGuidanceService,
         )

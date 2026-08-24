@@ -500,6 +500,7 @@ class ChatTurnUseCaseSupportService:
         previous_messages: list | None = None,
         max_external_action_calls: int | None = None,
         on_stream_activity: Callable | None = None,
+        on_tool_calls_partial: Callable | None = None,
         agent_context: dict | None = None,
         working_memory: dict | None = None,
     ) -> dict:
@@ -530,6 +531,7 @@ class ChatTurnUseCaseSupportService:
             previous_messages=previous_messages,
             max_external_action_calls=max_external_action_calls,
             on_stream_activity=on_stream_activity,
+            on_tool_calls_partial=on_tool_calls_partial,
             agent_context=agent_context,
             working_memory=working_memory,
             attachment_context=self.build_attachment_context(

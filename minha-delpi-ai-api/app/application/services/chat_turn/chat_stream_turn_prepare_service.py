@@ -90,6 +90,19 @@ class ChatStreamTurnPrepareService:
                 return
             state.activity_queue.put(("activity", entry))
 
+        def _on_tool_calls_partial(tool_calls: list[dict], wave: int = 1) -> None:
+            if suppress_activity["value"]:
+                return
+            state.activity_queue.put(
+                (
+                    "tool_calls_partial",
+                    {
+                        "toolCalls": tool_calls,
+                        "wave": wave,
+                    },
+                )
+            )
+
         def _run_prepare() -> None:
             from app.application.services.chat_stream_activity_service import (
                 ChatStreamActivityService,
@@ -205,6 +218,7 @@ class ChatStreamTurnPrepareService:
                 build_tool_context=partial(
                     self.turn_support.build_tool_context,
                     agent_context=workspace_context.get("agent"),
+                    on_tool_calls_partial=_on_tool_calls_partial,
                 ),
                 maybe_extend_tool_context=partial(
                     self.turn_support.maybe_extend_tool_context,
@@ -323,6 +337,14 @@ class ChatStreamTurnPrepareService:
                 yield {
                     "type": "activity",
                     "entry": payload,
+                }
+                continue
+
+            if kind == "tool_calls_partial":
+                yield {
+                    "type": "tool_calls_partial",
+                    "toolCalls": payload.get("toolCalls") or [],
+                    "wave": payload.get("wave") or 1,
                 }
                 continue
 

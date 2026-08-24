@@ -121,10 +121,13 @@ type ChatMessageListProps = {
   streamingAnswer?: string;
   streamingSources?: ChatSource[];
   streamingToolCalls?: ChatToolCall[];
+  streamingPartialToolCalls?: ChatToolCall[];
   streamingAdminDebug?: Record<string, unknown> | null;
   streamingStatus?: string | null;
   streamingActivityLog?: ChatStreamActivityEntry[];
   streamingShowPresentation?: boolean;
+  playbackVisibleSegmentLimit?: number;
+  playbackShowSegmentSkeleton?: boolean;
   streamingCanvasOpen?: ChatCanvasOpenPayload | null;
   isStreaming?: boolean;
   isPlaybackActive?: boolean;
@@ -470,10 +473,13 @@ export function ChatMessageList({
   streamingAnswer,
   streamingSources,
   streamingToolCalls = [],
+  streamingPartialToolCalls = [],
   streamingAdminDebug,
   streamingStatus,
   streamingActivityLog = [],
-  streamingShowPresentation: _streamingShowPresentation = true,
+  streamingShowPresentation = true,
+  playbackVisibleSegmentLimit,
+  playbackShowSegmentSkeleton = false,
   streamingCanvasOpen = null,
   isStreaming,
   isPlaybackActive = false,
@@ -614,8 +620,15 @@ export function ChatMessageList({
   const isActiveStream = Boolean(
     isPlaybackActive ||
       isStreaming ||
-      (isStreaming && streamingToolCalls.length > 0),
+      (isStreaming && streamingToolCalls.length > 0) ||
+      (isStreaming && streamingPartialToolCalls.length > 0),
   );
+  const effectiveStreamingToolCalls =
+    streamingToolCalls.length > 0 ? streamingToolCalls : streamingPartialToolCalls;
+  const showStreamingPresentation =
+    streamingShowPresentation &&
+    effectiveStreamingToolCalls.length > 0 &&
+    (Boolean(streamingAnswer?.trim()) || streamingPartialToolCalls.length > 0);
   const timelineItems = useMemo(() => {
     const visibleMessages = isActiveStream
       ? messages.filter((message) => !isAssistantGenerating(message))
@@ -624,17 +637,19 @@ export function ChatMessageList({
     return buildChatTimelineItems(visibleMessages);
   }, [isActiveStream, messages]);
   const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
-  const streamingPresentation = getPresentationPairFromToolCalls(streamingToolCalls);
+  const streamingPresentation = getPresentationPairFromToolCalls(
+    effectiveStreamingToolCalls,
+  );
   const suppressStreamingMarkdown = shouldSuppressMarkdownForPresentation(
     streamingAnswer,
     streamingPresentation,
-    streamingToolCalls,
+    effectiveStreamingToolCalls,
   );
   const showStreamingCaptionReveal =
     isActiveStream &&
     suppressStreamingMarkdown &&
     Boolean(streamingAnswer?.trim()) &&
-    isShortPresentationCaption(streamingAnswer, streamingToolCalls);
+    isShortPresentationCaption(streamingAnswer, effectiveStreamingToolCalls);
   const revealedStreamingCaption = useStreamingTextReveal(streamingAnswer, {
     enabled: showStreamingCaptionReveal && !isPlaybackActive,
     charsPerFrame: 3,
@@ -2076,7 +2091,13 @@ export function ChatMessageList({
                       >
                         <ChatAssistantContent
                           content={streamingMarkdownContent}
-                          toolCalls={streamingToolCalls}
+                          toolCalls={effectiveStreamingToolCalls}
+                          visibleSegmentLimit={
+                            isPlaybackActive ? playbackVisibleSegmentLimit : undefined
+                          }
+                          showSegmentSkeleton={
+                            isPlaybackActive ? playbackShowSegmentSkeleton : false
+                          }
                           onDrillDown={onDrillDown}
                           onOpenCanvas={onOpenCanvas}
                           getAccessToken={getAccessToken}
@@ -2103,14 +2124,20 @@ export function ChatMessageList({
                     )}
                   </div>
                 ) : null}
-                {streamingAnswer &&
+                {showStreamingPresentation &&
                 suppressStreamingMarkdown &&
                 !showStreamingCaptionReveal &&
-                streamingCaptionComplete ? (
+                (streamingCaptionComplete || streamingPartialToolCalls.length > 0) ? (
                   <div className="mdc-chat-stream-presentation is-visible">
                     <ChatAssistantContent
                       content={streamingAnswer}
-                      toolCalls={streamingToolCalls}
+                      toolCalls={effectiveStreamingToolCalls}
+                      visibleSegmentLimit={
+                        isPlaybackActive ? playbackVisibleSegmentLimit : undefined
+                      }
+                      showSegmentSkeleton={
+                        isPlaybackActive ? playbackShowSegmentSkeleton : false
+                      }
                       onDrillDown={onDrillDown}
                       onOpenCanvas={onOpenCanvas}
                       getAccessToken={getAccessToken}
@@ -2124,9 +2151,9 @@ export function ChatMessageList({
                   />
                 ) : null}
               </div>
-              {shouldShowActionResults(streamingAnswer, streamingToolCalls) ? (
+              {shouldShowActionResults(streamingAnswer, effectiveStreamingToolCalls) ? (
                 <div className="mdc-chat-stream-extras is-visible">
-                  <ChatActionResults toolCalls={streamingToolCalls} />
+                  <ChatActionResults toolCalls={effectiveStreamingToolCalls} />
                 </div>
               ) : null}
               {filterVisibleChatSources(streamingSources).length > 0 ? (

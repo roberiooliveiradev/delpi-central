@@ -74,6 +74,10 @@ type StreamCallbacks = {
   onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: SendChatMessageResponse["sources"]) => void;
   onToolCalls?: (toolCalls: SendChatMessageResponse["toolCalls"]) => void;
+  onToolCallsPartial?: (
+    toolCalls: SendChatMessageResponse["toolCalls"],
+    wave?: number,
+  ) => void;
   onToken?: (token: string) => void;
   onUserPersisted?: (messageId: string) => void;
   onSessionRenamed?: (title: string) => void;
@@ -497,6 +501,13 @@ async function consumeChatMessageStream(
 
       if (event === "tool_calls") {
         callbacks.onToolCalls?.((data.toolCalls as SendChatMessageResponse["toolCalls"]) ?? []);
+      }
+
+      if (event === "tool_calls_partial") {
+        const partialToolCalls =
+          (data.toolCalls as SendChatMessageResponse["toolCalls"]) ?? [];
+        const wave = typeof data.wave === "number" ? data.wave : undefined;
+        callbacks.onToolCallsPartial?.(partialToolCalls, wave);
       }
 
       if (event === "token") {

@@ -27,6 +27,13 @@ class ChatPipelineTimings:
         ("finalizeAfterToolsMs", "tools_agentic_done", "tools_done"),
     )
 
+    _SELECTION_BREAKDOWN_SPANS: tuple[tuple[str, str, str], ...] = (
+        ("selectionNativeMs", "selection_start", "selection_native_done"),
+        ("selectionRouterMs", "selection_native_done", "selection_router_done"),
+        ("selectionPlanMs", "selection_router_done", "selection_plan_done"),
+        ("selectionDispatchMs", "selection_plan_done", "selection_dispatch_done"),
+    )
+
     def __init__(self):
         self._started_at = time.perf_counter()
         self._marks: dict[str, float] = {"start": self._started_at}
@@ -53,6 +60,21 @@ class ChatPipelineTimings:
     def elapsed_sec(self) -> float:
         return max(0.0, time.perf_counter() - self._started_at)
 
+    def selection_breakdown(self) -> dict[str, int | None]:
+        breakdown: dict[str, int | None] = {}
+
+        for key, start_key, end_key in self._SELECTION_BREAKDOWN_SPANS:
+            breakdown[key] = self.span_ms(start_key, end_key)
+
+        for extra_key in ("selectionEmbedMs", "selectionCandidateDbMs"):
+            if extra_key in self._extras_ms:
+                breakdown[extra_key] = self._extras_ms[extra_key]
+
+        if not any(value is not None for value in breakdown.values()):
+            return {}
+
+        return breakdown
+
     def tools_breakdown(self) -> dict[str, int | None]:
         breakdown: dict[str, int | None] = {}
 
@@ -60,7 +82,14 @@ class ChatPipelineTimings:
             breakdown[key] = self.span_ms(start_key, end_key)
 
         for extra_key, value in self._extras_ms.items():
+            if extra_key.startswith("selection") and extra_key.endswith("Ms"):
+                continue
             breakdown[extra_key] = value
+
+        selection_breakdown = self.selection_breakdown()
+
+        if selection_breakdown:
+            breakdown["selectionBreakdown"] = selection_breakdown  # type: ignore[assignment]
 
         return breakdown
 
@@ -118,13 +147,34 @@ class ChatPipelineTimings:
             cls.add_current_extra_ms("wave2PresentationMs", ms)
 
     @classmethod
+    def record_selection_embed_ms(cls, ms: int) -> None:
+        cls.add_current_extra_ms("selectionEmbedMs", ms)
+
+    @classmethod
+    def record_selection_candidate_db_ms(cls, ms: int) -> None:
+        cls.add_current_extra_ms("selectionCandidateDbMs", ms)
+
+    @classmethod
+    @contextmanager
+    def selection_phase(cls, end_mark: str) -> Iterator[None]:
+        try:
+            yield
+        finally:
+            cls.mark_current(end_mark)
+
+    @classmethod
     @contextmanager
     def bind(cls, timings: "ChatPipelineTimings") -> Iterator["ChatPipelineTimings"]:
+        from app.application.services.external_actions.external_action_candidate_turn_cache import (
+            ExternalActionCandidateTurnCache,
+        )
+
         token = _current_timings.set(timings)
 
         try:
             yield timings
         finally:
+            ExternalActionCandidateTurnCache.clear()
             _current_timings.reset(token)
 
     @classmethod

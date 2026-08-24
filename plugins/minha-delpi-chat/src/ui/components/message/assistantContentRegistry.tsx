@@ -158,6 +158,26 @@ const BASE_RENDERERS: Record<AssistantContentSegment["kind"], AssistantSegmentRe
       />
     );
   },
+  segmentSkeleton: (segment, index) => {
+    if (segment.kind !== "segmentSkeleton") {
+      return null;
+    }
+
+    return (
+      <div
+        key={`segment-skeleton-${index}`}
+        className={[
+          "mdc-rich-presentation__segment-skeleton",
+          segment.placeholderKind
+            ? `mdc-rich-presentation__segment-skeleton--${segment.placeholderKind}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-hidden="true"
+      />
+    );
+  },
 };
 
 const customRenderers: Partial<

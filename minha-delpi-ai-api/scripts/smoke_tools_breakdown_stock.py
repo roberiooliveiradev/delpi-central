@@ -207,7 +207,13 @@ def main() -> int:
         for key in _EXTRA_KEYS
         if breakdown.get(key) is not None
     }
+    selection_breakdown = breakdown.get("selectionBreakdown")
     print("extras=", json.dumps(extras, ensure_ascii=False))
+    if selection_breakdown:
+        print(
+            "selectionBreakdown=",
+            json.dumps(selection_breakdown, ensure_ascii=False),
+        )
 
     # Pós-E3 (ago/2026): wave1HttpMs caiu (NOLOCK+cache+query única).
     # Span dominante típico passou a selectionMs (~50%+ de toolsMs).

@@ -17,4 +17,5 @@ export type AssistantContentSegment =
   | { kind: "kpi"; presentation: Extract<ChatPresentation, { type: "kpi" }> }
   | { kind: "dashboard"; presentation: Extract<ChatPresentation, { type: "dashboard" }> }
   | { kind: "download"; artifacts: ChatDownloadArtifact[] }
-  | { kind: "checklist"; markdown: string; title?: string };
+  | { kind: "checklist"; markdown: string; title?: string }
+  | { kind: "segmentSkeleton"; placeholderKind?: string };

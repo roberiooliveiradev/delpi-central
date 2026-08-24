@@ -104,6 +104,34 @@ def test_pipeline_timings_tools_breakdown_order_and_extras():
     assert abs(tools_ms - sum_spans) <= 1
 
 
+def test_pipeline_timings_selection_breakdown_nested():
+    timings = ChatPipelineTimings()
+    timings.mark("pre_tool_done")
+    timings.mark("selection_start")
+    time.sleep(0.001)
+    timings.mark("selection_native_done")
+    time.sleep(0.001)
+    timings.mark("selection_router_done")
+    time.sleep(0.001)
+    timings.mark("selection_plan_done")
+    time.sleep(0.001)
+    timings.mark("selection_dispatch_done")
+    timings.mark("tools_selection_done")
+    timings.add_extra_ms("selectionEmbedMs", 11)
+    timings.add_extra_ms("selectionCandidateDbMs", 7)
+
+    breakdown = timings.tools_breakdown()
+    selection_breakdown = breakdown.get("selectionBreakdown")
+
+    assert isinstance(selection_breakdown, dict)
+    assert selection_breakdown["selectionNativeMs"] is not None
+    assert selection_breakdown["selectionRouterMs"] is not None
+    assert selection_breakdown["selectionPlanMs"] is not None
+    assert selection_breakdown["selectionDispatchMs"] is not None
+    assert selection_breakdown["selectionEmbedMs"] == 11
+    assert selection_breakdown["selectionCandidateDbMs"] == 7
+
+
 def test_pipeline_timings_bind_and_wave_records_extras():
     timings = ChatPipelineTimings()
 

@@ -1,0 +1,21 @@
+{
+  "charsPerFrame": 3,
+  "segmentDelaysMs": {
+    "markdown": 0,
+    "table": 280,
+    "kpi": 320,
+    "chart": 320,
+    "tree": 360,
+    "dashboard": 400,
+    "decision": 200,
+    "download": 240,
+    "checklist": 200,
+    "stackSection": 180,
+    "code": 120,
+    "segmentSkeleton": 0
+  },
+  "skeletonMinMs": 180,
+  "enrichmentDelayMs": 240,
+  "proseToVisualsDelayMs": 40,
+  "visualsCompleteDelayMs": 420
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import type { ChatCanvasOpenPayload, ChatToolCall } from "../../../data/api/chatTypes";
 
@@ -31,6 +31,8 @@ type ChatAssistantContentProps = {
   content: string;
   toolCalls?: ChatToolCall[];
   responseModeEffectNotice?: string | null;
+  visibleSegmentLimit?: number;
+  showSegmentSkeleton?: boolean;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   requestChartExplanation?: boolean;
@@ -42,6 +44,8 @@ export function ChatAssistantContent({
   content,
   toolCalls = [],
   responseModeEffectNotice = null,
+  visibleSegmentLimit,
+  showSegmentSkeleton = false,
   onDrillDown,
   onOpenCanvas,
   requestChartExplanation = false,
@@ -56,7 +60,12 @@ export function ChatAssistantContent({
     routePresentation,
     routeToolCallBySectionId,
     visibleSegments,
-  } = useAssistantContentSegments({ content, toolCalls });
+  } = useAssistantContentSegments({
+    content,
+    toolCalls,
+    visibleSegmentLimit,
+    showSegmentSkeleton,
+  });
   const {
     dataCoverageNotice,
     presentationInsight,
@@ -202,9 +211,19 @@ export function ChatAssistantContent({
             ))}
           </>
         ) : (
-          visibleSegments.map((segment, index) =>
-            renderAssistantContentSegment(segment, index, segmentRenderContext),
-          )
+          visibleSegments.map((segment, index) => (
+            <div
+              key={`assistant-segment-${index}-${segment.kind}`}
+              className="mdc-assistant-content__segment-shell mdc-rich-presentation--enter"
+              style={
+                {
+                  "--segment-index": index,
+                } as CSSProperties
+              }
+            >
+              {renderAssistantContentSegment(segment, index, segmentRenderContext)}
+            </div>
+          ))
         )}
       </div>
 
