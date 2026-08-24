@@ -1,15 +1,36 @@
-import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { TopBar, topBarBemClasses } from "./TopBar";
 import { underlineNavBemClasses } from "./UnderlineNav";
 
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
 describe("TopBar", () => {
+  const storage = new Map<string, string>();
+
+  beforeEach(() => {
+    storage.clear();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+    });
+  });
+
   it("emite dual-class BEM com modifiers", () => {
     const cn = topBarBemClasses("cm");
     expect(cn.root).toContain("cm-topbar");
     expect(cn.root).toContain("delpi-ui-topbar");
     expect(cn.row).toContain("delpi-ui-topbar__row");
+    expect(cn.collapseToggle).toContain("delpi-ui-topbar__collapse-toggle");
   });
 
   it("compõe UnderlineNav e slot de actions", () => {
@@ -60,5 +81,68 @@ describe("TopBar", () => {
       />,
     );
     expect(container.firstElementChild?.className).toContain("delpi-ui-topbar--surface");
+  });
+
+  it("rail: recolhe para título + expand e persiste", () => {
+    render(
+      <TopBar
+        classNames={topBarBemClasses("cm")}
+        navClassNames={underlineNavBemClasses("cm")}
+        activeId="rooms"
+        collapsible
+        collapseMode="rail"
+        storageKey="test:topbar"
+        collapseLabel="Recolher navegação"
+        expandLabel="Expandir navegação"
+        items={[
+          { id: "home", label: "Início", onSelect: vi.fn() },
+          { id: "rooms", label: "Sala de interação", onSelect: vi.fn() },
+        ]}
+        secondary={<span>Favoritos</span>}
+        actions={<span>Usuário</span>}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Recolher navegação" }));
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.queryByText("Favoritos")).toBeNull();
+    expect(screen.getByText("Sala de interação")).toBeTruthy();
+    expect(storage.get("test:topbar")).toBe("1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Expandir navegação" }));
+    expect(screen.getByRole("navigation")).toBeTruthy();
+    expect(storage.get("test:topbar")).toBe("0");
+  });
+
+  it("hamburger: mantém secondary/actions e abre menu no portal", () => {
+    const onRooms = vi.fn();
+    render(
+      <TopBar
+        classNames={topBarBemClasses("cm")}
+        navClassNames={underlineNavBemClasses("cm")}
+        activeId="home"
+        collapsible
+        collapseMode="hamburger"
+        defaultCollapsed
+        menuLabel="Menu de navegação"
+        expandLabel="Expandir navegação"
+        items={[
+          { id: "home", label: "Início", onSelect: vi.fn() },
+          { id: "rooms", label: "Sala", onSelect: onRooms, count: 3 },
+        ]}
+        secondary={<span>Favoritos</span>}
+        actions={<span>Usuário</span>}
+      />,
+    );
+
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.getByText("Favoritos")).toBeTruthy();
+    expect(screen.getByText("Usuário")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Menu de navegação" }));
+    const menu = screen.getByRole("menu", { name: "Menu de navegação" });
+    expect(within(menu).getByRole("menuitem", { name: /Sala/ })).toBeTruthy();
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /Sala/ }));
+    expect(onRooms).toHaveBeenCalled();
   });
 });

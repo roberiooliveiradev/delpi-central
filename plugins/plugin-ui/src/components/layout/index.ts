@@ -310,6 +310,7 @@ export {
   topBarBemClasses,
   type DashboardTopBarProps,
   type TopBarClassNames,
+  type TopBarCollapseMode,
   type TopBarProps,
 } from "./TopBar";
 export {
