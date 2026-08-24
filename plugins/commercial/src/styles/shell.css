@@ -24,6 +24,8 @@
 .dashboard-commercial.dashboard-page--fill {
   height: 100%;
   overflow: hidden;
+  padding: 0;
+  gap: 0;
 }
 
 .dashboard-commercial button,

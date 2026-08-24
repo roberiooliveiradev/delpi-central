@@ -9,9 +9,13 @@ const css = readFileSync(join(dir, "../../index.css"), "utf8");
 describe("interaction room fill CSS", () => {
   it("preenche viewport só com --fill; chrome da thread no kit", () => {
     expect(css).toMatch(/\.dashboard-commercial\.dashboard-page--fill \{/);
-    expect(css).not.toMatch(
-      /\.dashboard-commercial\.dashboard-page--fill \{[^}]*--cm-page-padding:\s*16px/,
-    );
+    const fillPage =
+      css.match(
+        /\.dashboard-commercial\.dashboard-page--fill \{[^}]+\}/,
+      )?.[0] ?? "";
+    expect(fillPage).toMatch(/padding:\s*0/);
+    expect(fillPage).toMatch(/gap:\s*0/);
+    expect(fillPage).not.toMatch(/--cm-page-padding:\s*16px/);
     expect(css).toMatch(/\.dashboard-page--fill \.cm-view-transition--page/);
     expect(css).toMatch(/--delpi-ui-room-thread-header-padding/);
     expect(css).toMatch(/--delpi-ui-room-thread-msgs-padding-inline/);

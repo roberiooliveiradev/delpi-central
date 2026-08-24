@@ -73,11 +73,13 @@
   );
 }
 
-/* Sala: fill viewport — mesmo padding/gap das outras telas; densifica só o stack interno. */
+/* Sala: fill viewport — full-bleed (sem padding de página); inset só no stack interno. */
 .dashboard-commercial.dashboard-page--fill {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  padding: 0;
+  gap: 0;
   --delpi-ui-room-thread-header-padding: var(--cm-gap-sm);
   --delpi-ui-room-thread-msgs-padding-inline: var(--cm-gap-sm);
   --delpi-ui-room-thread-dock-padding: 0.65rem var(--cm-gap-sm) var(--cm-gap-sm);
