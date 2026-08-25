@@ -1011,6 +1011,8 @@ Grupo unificado **− / combobox / +** (`.delpi-ui-number-stepper*`). Preferir n
 
 Campo contínuo canônico: rótulo + slider + input numérico abaixo (digitar). Aceita `displayValue` com `%`/vírgula; valores negativos ficam em tom vermelho no texto e no slider (`.delpi-ui-range-field--negative`). CSS: `styles/range-field.css` (`.delpi-ui-range-field*`).
 
+Durante o arraste, o valor exibido fica em buffer local até o `value` do pai acompanhar (evita salto com PATCH assíncrono). `onCommit` dispara ao soltar o slider e no blur do input — use para persistência; `onChange` para UI ao vivo.
+
 ```tsx
 <RangeField
   id="alt-px"
@@ -1019,6 +1021,7 @@ Campo contínuo canônico: rótulo + slider + input numérico abaixo (digitar). 
   min={1}
   max={1080}
   onChange={setHeight}
+  onCommit={persistHeight}
 />
 ```
 

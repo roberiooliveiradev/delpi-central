@@ -1,4 +1,4 @@
-import type { CSSProperties, ChangeEvent } from "react";
+import type { CSSProperties, ChangeEvent, PointerEventHandler } from "react";
 
 import { mergeClassNames } from "./nativeControlClasses";
 
@@ -18,6 +18,9 @@ export type NativeRangeControlProps = {
   "aria-valuemin"?: number;
   "aria-valuemax"?: number;
   "aria-valuenow"?: number;
+  onPointerDown?: PointerEventHandler<HTMLInputElement>;
+  onPointerUp?: PointerEventHandler<HTMLInputElement>;
+  onPointerCancel?: PointerEventHandler<HTMLInputElement>;
 };
 
 /**
@@ -38,6 +41,9 @@ export function NativeRangeControl({
   "aria-valuemin": ariaValueMin,
   "aria-valuemax": ariaValueMax,
   "aria-valuenow": ariaValueNow,
+  onPointerDown,
+  onPointerUp,
+  onPointerCancel,
 }: NativeRangeControlProps) {
   return (
     <input
@@ -54,6 +60,9 @@ export function NativeRangeControl({
       aria-valuemin={ariaValueMin ?? min}
       aria-valuemax={ariaValueMax ?? max}
       aria-valuenow={ariaValueNow ?? value}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
       onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(Number(event.target.value))}
     />
   );

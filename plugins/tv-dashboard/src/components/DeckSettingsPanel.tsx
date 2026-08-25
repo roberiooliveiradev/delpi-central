@@ -155,6 +155,8 @@ export function DeckSettingsPanel({
   const [periodMixed, setPeriodMixed] = useState(false);
   const [masterUploading, setMasterUploading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [playlistDurationSec, setPlaylistDurationSec] = useState(playlist.defaultDurationSec);
+  const [playlistRefreshSec, setPlaylistRefreshSec] = useState(playlist.globalRefreshSec);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
 
@@ -225,6 +227,14 @@ export function DeckSettingsPanel({
     setPeriodMixed(periods.mixed);
     setPeriodDays(periods.mixed ? 30 : (periods.value ?? 30));
   }, [selectedSlides, playlist.defaultDurationSec, sections]);
+
+  useEffect(() => {
+    setPlaylistDurationSec(playlist.defaultDurationSec);
+  }, [playlist.defaultDurationSec]);
+
+  useEffect(() => {
+    setPlaylistRefreshSec(playlist.globalRefreshSec);
+  }, [playlist.globalRefreshSec]);
 
   const catalogItem = slide?.nativeScreenKey
     ? catalog.find((item) => item.key === slide.nativeScreenKey)
@@ -384,6 +394,10 @@ export function DeckSettingsPanel({
                       setDurationSec(value);
                       setDurationInherit(false);
                       setDurationInheritMixed(false);
+                    }}
+                    onCommit={(value) => {
+                      setDurationInherit(false);
+                      setDurationInheritMixed(false);
                       saveSlidePatch({ durationInherit: false, durationSec: value });
                     }}
                   />
@@ -476,6 +490,9 @@ export function DeckSettingsPanel({
                   onChange={(value) => {
                     setPeriodDays(value);
                     setPeriodMixed(false);
+                  }}
+                  onCommit={(value) => {
+                    setPeriodMixed(false);
                     saveSlidePatch({ periodDays: value });
                   }}
                 />
@@ -566,8 +583,9 @@ export function DeckSettingsPanel({
                 hint={F.defaultDuration}
                 min={5}
                 max={600}
-                value={playlist.defaultDurationSec}
-                onChange={(value) => onSavePlaylistSettings("defaultDurationSec", value)}
+                value={playlistDurationSec}
+                onChange={setPlaylistDurationSec}
+                onCommit={(value) => onSavePlaylistSettings("defaultDurationSec", value)}
               />
             </DeckRibbonTilePopover>
 
@@ -585,8 +603,9 @@ export function DeckSettingsPanel({
                 min={30}
                 max={3600}
                 step={10}
-                value={playlist.globalRefreshSec}
-                onChange={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
+                value={playlistRefreshSec}
+                onChange={setPlaylistRefreshSec}
+                onCommit={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
               />
             </DeckRibbonTilePopover>
 

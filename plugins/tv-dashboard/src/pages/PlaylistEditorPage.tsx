@@ -189,6 +189,7 @@ export function PlaylistEditorPage({
   >({});
   const saveComunicadoTimerRef = useRef<number | null>(null);
   const wsDraftTimerRef = useRef<number | null>(null);
+  const playlistSettingsSaveGenRef = useRef(0);
   const pendingComunicadoSaveRef = useRef<{
     slide: Slide;
     nativeConfig: Record<string, unknown>;
@@ -774,11 +775,11 @@ export function PlaylistEditorPage({
     if (!playlist) return;
     deckHistory.recordBeforeChange();
     const previousPlaylist = playlist;
-    // dataDefaults: otimista para fingerprint/preview atualizarem sem esperar o PATCH.
+    const saveGen = ++playlistSettingsSaveGenRef.current;
+    // Otimista: evita salto no RangeField enquanto o PATCH não volta.
     if (field === "dataDefaults" && value && typeof value === "object") {
       setPlaylist({ ...playlist, dataDefaults: value as Record<string, unknown> });
-    }
-    if (field === "viewport" && value && typeof value === "object") {
+    } else if (field === "viewport" && value && typeof value === "object") {
       const patch = value as {
         viewportProfile?: string;
         viewportWidth?: number | null;
@@ -790,6 +791,8 @@ export function PlaylistEditorPage({
         viewportWidth: patch.viewportWidth ?? null,
         viewportHeight: patch.viewportHeight ?? null,
       });
+    } else if (typeof value === "number" || typeof value === "string") {
+      setPlaylist({ ...playlist, [field]: value } as Playlist);
     }
     try {
       const body =
@@ -797,10 +800,11 @@ export function PlaylistEditorPage({
           ? (value as Parameters<typeof updatePlaylist>[1])
           : ({ [field]: value } as Parameters<typeof updatePlaylist>[1]);
       const updated = await updatePlaylist(playlist.id, body);
+      if (saveGen !== playlistSettingsSaveGenRef.current) return;
       setPlaylist({ ...updated, slides: previousPlaylist.slides });
       await deckHistory.confirmChange();
     } catch (caught) {
-      if (field === "dataDefaults" || field === "viewport") {
+      if (saveGen === playlistSettingsSaveGenRef.current) {
         setPlaylist(previousPlaylist);
       }
       deckHistory.cancelChange();

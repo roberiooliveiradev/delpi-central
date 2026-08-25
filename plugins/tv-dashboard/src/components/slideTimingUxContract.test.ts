@@ -14,6 +14,7 @@ describe("slide timing UX contract", () => {
     expect(panel).toContain("Herdar duração");
     expect(panel).toContain("durationSec: null");
     expect(panel).toContain("resolveSlideDurationSec");
+    expect(panel).toContain("onCommit");
     expect(filmstrip).toContain("td-deck-filmstrip__timing");
     expect(filmstrip).toContain("resolveSlideDurationSec");
     expect(css).toMatch(/\.td-deck-filmstrip__timing--override\s*\{/);

@@ -42,6 +42,66 @@ describe("RangeField", () => {
     expect(onChange).toHaveBeenCalledWith(42);
   });
 
+  it("mantém o thumb durante o arraste quando o pai atrasa o value", () => {
+    const onChange = vi.fn();
+    const onCommit = vi.fn();
+    const { rerender } = render(
+      <RangeField
+        id="rf-drag"
+        label="Duração"
+        value={460}
+        min={5}
+        max={600}
+        onChange={onChange}
+        onCommit={onCommit}
+      />,
+    );
+    const slider = screen.getByLabelText("Duração");
+    fireEvent.pointerDown(slider);
+    fireEvent.change(slider, { target: { value: "200" } });
+    expect(onChange).toHaveBeenCalledWith(200);
+    expect((slider as HTMLInputElement).value).toBe("200");
+
+    // Pai ainda não atualizou (PATCH pendente) — não pode snap-back para 460.
+    rerender(
+      <RangeField
+        id="rf-drag"
+        label="Duração"
+        value={460}
+        min={5}
+        max={600}
+        onChange={onChange}
+        onCommit={onCommit}
+      />,
+    );
+    expect((screen.getByLabelText("Duração") as HTMLInputElement).value).toBe("200");
+
+    fireEvent.pointerUp(screen.getByLabelText("Duração"));
+    expect(onCommit).toHaveBeenCalledWith(200);
+  });
+
+  it("onCommit no blur do input numérico", () => {
+    const onChange = vi.fn();
+    const onCommit = vi.fn();
+    render(
+      <RangeField
+        id="rf-commit"
+        label="Segundos"
+        value={30}
+        min={5}
+        max={600}
+        onChange={onChange}
+        onCommit={onCommit}
+      />,
+    );
+    const input = screen.getByLabelText("Segundos (digitar)");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "90" } });
+    fireEvent.blur(input);
+    expect(onChange).toHaveBeenCalledWith(90);
+    expect(onCommit).toHaveBeenCalledWith(90);
+  });
+
   it("exibe e aceita displayValue com sufixo %", () => {
     const onChange = vi.fn();
     const { rerender } = render(

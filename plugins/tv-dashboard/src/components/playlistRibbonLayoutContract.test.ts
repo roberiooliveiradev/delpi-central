@@ -17,6 +17,9 @@ describe("playlist ribbon layout contract", () => {
     expect(panel).toContain("ViewportResolutionFields");
     expect(panel).toContain('label="Duração"');
     expect(panel).toContain('label="Atualizar"');
+    expect(panel).toContain("onCommit");
+    expect(panel).toContain('onSavePlaylistSettings("defaultDurationSec"');
+    expect(panel).toContain('onSavePlaylistSettings("globalRefreshSec"');
     expect(panel).toContain("DeckRibbonTilePopover");
     expect(panel).toContain('groupId="playlist-filters"');
     expect(panel).toContain("PlaylistDataFiltersFields");
