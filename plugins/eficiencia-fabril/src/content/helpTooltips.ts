@@ -20,7 +20,7 @@ export const EF_HELP_TOOLTIPS = {
   },
   kpis: {
     efficiency:
-      "Média ponderada da eficiência (%) dos apontamentos válidos no período e filtros aplicados.",
+      "Média simples da eficiência (%) dos centros de trabalho (média de cada CT, depois média desses valores). Não é a média dos apontamentos.",
     appointments:
       "Total de apontamentos na tabela após filtros. Inclui contagem de fora da faixa e eficiência baixa no texto auxiliar.",
     modResult:

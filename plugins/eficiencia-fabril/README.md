@@ -10,7 +10,7 @@ Faixa válida e changelog jun/2026: [regras-faixa-eficiencia-producao.md](../../
 ## Funcionalidades (resumo)
 
 - Duas entradas no menu: **SC** (filial 01) e **ES** (filial 02)
-- KPIs: eficiência (média simples), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
+- KPIs: eficiência (média simples das médias por CT), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
 - Gráficos: eficiência por dia, MOD por dia, top operadores, eficiência por CT (cores por faixa), horas por CT
 - Tabela paginada com **ordenação por coluna** + exportação Excel (dados filtrados e ordenados em memória)
 - Clique na linha → detalhe do apontamento (mesmo contrato do OEE: roteiro, tempos com **textos de cálculo legíveis**, estrutura em **árvore**, `time_analysis.findings`)

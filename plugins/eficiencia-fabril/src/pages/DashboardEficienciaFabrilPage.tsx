@@ -274,8 +274,8 @@ function DashboardEficienciaFabrilContent({
             <KpiCard
               label="Eficiência"
               titleHint={EF_HELP_TOOLTIPS.kpis.efficiency}
-              value={formatPercent(summary.weighted_efficiency_pct)}
-              hint="Média da eficiência (%)"
+              value={formatPercent(summary.weighted_efficiency_pct, 2)}
+              hint="Média da eficiência dos CTs (%)"
               tone={
                 summary.weighted_efficiency_pct !== null &&
                 summary.weighted_efficiency_pct < EFFICIENCY_KPI_WARNING_PCT

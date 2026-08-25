@@ -285,7 +285,7 @@
     "group_description": "Descrição grupo",
     "warehouse_code": "Cód. armazém",
     "branch_code": "Cód. filial",
-    "weighted_efficiency_pct": "Eficiência ponderada (%)",
+    "weighted_efficiency_pct": "Eficiência média dos CTs (%)",
     "total_mod_result": "Resultado MOD total",
     "total_mod_profit": "Lucro MOD total",
     "total_mod_loss": "Prejuízo MOD total",

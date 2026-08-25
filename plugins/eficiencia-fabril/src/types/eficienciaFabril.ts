@@ -21,6 +21,7 @@ export type EficienciaFabrilFilterParams = {
 };
 
 export type EficienciaFabrilSummary = {
+  /** Média simples das eficiências por CT (não a média dos apontamentos). */
   weighted_efficiency_pct: number | null;
   total_mod_result: number | null;
   total_mod_profit: number | null;

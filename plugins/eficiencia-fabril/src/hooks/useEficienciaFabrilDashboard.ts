@@ -16,6 +16,7 @@ import {
   DEFAULT_APPOINTMENTS_SORT,
   sortAppointments,
 } from "../utils/appointmentsTableSort";
+import { averageWorkCenterEfficiencyPct } from "../utils/averageWorkCenterEfficiency";
 import { buildEmployeeOptionValue } from "../utils/filterOptions";
 
 const FALLBACK_PAGE_SIZE = 50;
@@ -81,15 +82,6 @@ function computeDashboardFromItems(
   const indicatorItems = okItems.filter(
     (item) => !isProductionEfficiencyOutlier(item.eficiencia_percentual)
   );
-
-  const efficiencyValues = indicatorItems
-    .map((item) => item.eficiencia_percentual)
-    .filter((value): value is number => value !== null && value !== undefined);
-
-  const weighted_efficiency_pct =
-    efficiencyValues.length === 0
-      ? null
-      : efficiencyValues.reduce((acc, value) => acc + value, 0) / efficiencyValues.length;
 
   const total_mod_result = indicatorItems.reduce(
     (acc, item) => acc + (item.resultado_mod ?? 0),
@@ -233,12 +225,18 @@ function computeDashboardFromItems(
     .map((row) => ({
       work_center: row.work_center,
       efficiency_pct:
-        row.countEfficiency > 0 ? row.sumEfficiency / row.countEfficiency : null,
+        row.countEfficiency > 0
+          ? Math.round((row.sumEfficiency / row.countEfficiency) * 100) / 100
+          : null,
       appointment_count: row.appointment_count,
     }))
     .sort((a, b) =>
       String(a.work_center ?? "").localeCompare(String(b.work_center ?? ""), "pt-BR")
     );
+
+  const weighted_efficiency_pct = averageWorkCenterEfficiencyPct(
+    efficiency_by_work_center
+  );
 
   const mod_result_by_work_center = [...workCenterMap.values()]
     .map((row) => ({

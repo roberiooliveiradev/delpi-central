@@ -4,13 +4,16 @@ export function getOperatorFirstName(value: string): string {
   return trimmed.split(/\s+/)[0] ?? trimmed;
 }
 
-export function formatPercent(value: number | null | undefined): string {
+export function formatPercent(
+  value: number | null | undefined,
+  fractionDigits = 1
+): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
   }
   return `${value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   })}%`;
 }
 
