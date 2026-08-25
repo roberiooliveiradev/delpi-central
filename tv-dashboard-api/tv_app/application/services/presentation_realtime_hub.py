@@ -239,12 +239,104 @@ class PresentationRealtimeHub:
             await self.broadcast_now(playlist_id, event)
             return
 
+        if message_type == "meeting_laser":
+            slide_id = self._clean_text(payload.get("slideId"))
+            if not slide_id or not client_id:
+                return
+            x = self._norm_coord(payload.get("x"))
+            y = self._norm_coord(payload.get("y"))
+            if x is None or y is None:
+                return
+            visible = bool(payload.get("visible", True))
+            await self.broadcast_now(
+                playlist_id,
+                {
+                    "type": "meeting_laser",
+                    "playlistId": playlist_id,
+                    "slideId": slide_id,
+                    "clientId": client_id,
+                    "x": x,
+                    "y": y,
+                    "visible": visible,
+                },
+            )
+            return
+
+        if message_type == "meeting_ink_stroke":
+            slide_id = self._clean_text(payload.get("slideId"))
+            stroke_id = self._clean_text(payload.get("strokeId"))
+            phase = self._clean_text(payload.get("phase"))
+            if (
+                not slide_id
+                or not client_id
+                or not stroke_id
+                or phase not in {"start", "move", "end"}
+            ):
+                return
+            points = self._norm_points(payload.get("points"))
+            if points is None:
+                return
+            await self.broadcast_now(
+                playlist_id,
+                {
+                    "type": "meeting_ink_stroke",
+                    "playlistId": playlist_id,
+                    "slideId": slide_id,
+                    "clientId": client_id,
+                    "strokeId": stroke_id,
+                    "phase": phase,
+                    "points": points,
+                },
+            )
+            return
+
+        if message_type == "meeting_ink_clear":
+            slide_id = self._clean_text(payload.get("slideId"))
+            if not slide_id or not client_id:
+                return
+            await self.broadcast_now(
+                playlist_id,
+                {
+                    "type": "meeting_ink_clear",
+                    "playlistId": playlist_id,
+                    "slideId": slide_id,
+                    "clientId": client_id,
+                },
+            )
+            return
+
     @staticmethod
     def _clean_text(value: Any) -> str | None:
         if not isinstance(value, str):
             return None
         cleaned = value.strip()
         return cleaned or None
+
+    @staticmethod
+    def _norm_coord(value: Any) -> float | None:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None
+        num = float(value)
+        if not (0.0 <= num <= 1.0):
+            return None
+        return num
+
+    @classmethod
+    def _norm_points(cls, value: Any) -> list[dict[str, float]] | None:
+        if not isinstance(value, list):
+            return None
+        # Cap por mensagem — evita flood no fan-out.
+        capped = value[:64]
+        points: list[dict[str, float]] = []
+        for item in capped:
+            if not isinstance(item, dict):
+                return None
+            x = cls._norm_coord(item.get("x"))
+            y = cls._norm_coord(item.get("y"))
+            if x is None or y is None:
+                return None
+            points.append({"x": x, "y": y})
+        return points
 
     def _purge_stale_presence_locked(
         self,

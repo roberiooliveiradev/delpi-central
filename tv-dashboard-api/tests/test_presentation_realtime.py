@@ -362,3 +362,91 @@ def test_realtime_hub_sends_playback_cursor_snapshot_on_connect():
         assert received[1]["slideId"] == "slide-9"
 
     asyncio.run(_run())
+
+
+def test_realtime_hub_broadcasts_meeting_laser_and_ink():
+    import asyncio
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        websocket = FakeWebSocket()
+        peer = FakeWebSocket()
+        hub._rooms["playlist-1"] = {websocket, peer}  # noqa: SLF001
+        hub._sessions[websocket] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id=None,
+            display_name="TV",
+            role="viewer",
+            can_edit=False,
+            allow_presence=False,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message=(
+                '{"type":"meeting_laser","clientId":"tv-a","slideId":"s1",'
+                '"x":0.5,"y":0.25,"visible":true}'
+            ),
+        )
+        assert len(sent) == 2
+        assert sent[0]["type"] == "meeting_laser"
+        assert sent[0]["x"] == 0.5
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message=(
+                '{"type":"meeting_ink_stroke","clientId":"tv-a","slideId":"s1",'
+                '"strokeId":"st-1","phase":"start","points":[{"x":0.1,"y":0.2}]}'
+            ),
+        )
+        assert sent[0]["type"] == "meeting_ink_stroke"
+        assert sent[0]["phase"] == "start"
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message='{"type":"meeting_ink_clear","clientId":"tv-a","slideId":"s1"}',
+        )
+        assert sent[0]["type"] == "meeting_ink_clear"
+
+    asyncio.run(_run())
+
+
+def test_realtime_hub_connect_does_not_snapshot_meeting_ink():
+    import asyncio
+
+    from starlette.websockets import WebSocketDisconnect
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        received: list[dict] = []
+
+        class FakeWebSocket:
+            async def accept(self) -> None:
+                return None
+
+            async def send_json(self, payload: dict) -> None:
+                received.append(payload)
+
+            async def receive_text(self) -> str:
+                raise WebSocketDisconnect()
+
+        session = PresentationRealtimeSession(
+            user_id=None,
+            display_name="TV",
+            role="viewer",
+            can_edit=False,
+            allow_presence=False,
+        )
+        await hub.connect(FakeWebSocket(), playlist_id="playlist-1", session=session)
+        assert received[0]["type"] == "connected"
+        assert all(item["type"] != "meeting_ink_stroke" for item in received)
+        assert all(item["type"] != "meeting_laser" for item in received)
+
+    asyncio.run(_run())
