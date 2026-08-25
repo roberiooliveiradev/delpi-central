@@ -17,6 +17,7 @@ import {
   LayoutTemplate,
   Link2,
   Monitor,
+  Presentation,
   RefreshCw,
   Trash2,
   Type,
@@ -587,6 +588,41 @@ export function DeckSettingsPanel({
                 value={playlist.globalRefreshSec}
                 onChange={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
               />
+            </DeckRibbonTilePopover>
+
+            <DeckRibbonTilePopover
+              icon={Presentation}
+              label="Modo"
+              hint={R.playbackMode}
+              panelLabel="Modo de reprodução"
+              panelClassName="td-deck-ribbon-tile-popover--timing"
+            >
+              <div className="td-deck-playback-mode" role="radiogroup" aria-label="Modo de reprodução">
+                <label className="td-deck-playback-mode__option">
+                  <input
+                    type="radio"
+                    name="td-playback-mode"
+                    checked={(playlist.playbackMode ?? "presentation") === "presentation"}
+                    onChange={() => onSavePlaylistSettings("playbackMode", "presentation")}
+                  />
+                  <span>
+                    <strong>Apresentação</strong>
+                    <small>Telas avançam sozinhas pela duração</small>
+                  </span>
+                </label>
+                <label className="td-deck-playback-mode__option">
+                  <input
+                    type="radio"
+                    name="td-playback-mode"
+                    checked={playlist.playbackMode === "meeting"}
+                    onChange={() => onSavePlaylistSettings("playbackMode", "meeting")}
+                  />
+                  <span>
+                    <strong>Reunião</strong>
+                    <small>Avanço manual (setas / botões / Espaço)</small>
+                  </span>
+                </label>
+              </div>
             </DeckRibbonTilePopover>
           </div>
         </DeckRibbonGroup>

@@ -469,6 +469,7 @@ export async function updatePlaylist(
     viewportHeight: number | null;
     transitionStyle: string;
     defaultDurationSec: number;
+    playbackMode: "presentation" | "meeting";
     globalRefreshSec: number;
     dataDefaults: Record<string, unknown>;
     masterConfig: PlaylistMasterConfig;

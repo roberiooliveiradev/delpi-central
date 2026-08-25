@@ -15,6 +15,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Controles da programação: pré-visualizar, atalhos, colaboradores e link da TV.",
     playlistFilters:
       "Filtros padrão da programação (filial, período, etc.): valem para todas as telas e fontes que aceitam o parâmetro, sem repetir a mesma chave.",
+    playbackMode:
+      "Apresentação: telas avançam sozinhas pela duração. Reunião: aguarda o usuário (setas, botões ou Espaço). Pode ser sobrescrito na TV com ?mode=.",
     pause: "Desativa a tela na exibição da TV sem removê-la da playlist.",
     activate: "Reativa uma tela pausada para voltar a aparecer na rotação.",
     duplicate: "Cria uma cópia idêntica da tela atual, logo após ela na lista.",
