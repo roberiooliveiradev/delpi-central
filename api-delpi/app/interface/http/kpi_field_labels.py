@@ -160,6 +160,10 @@ COMMERCIAL_CONVERSION_FIELD_LABELS: dict[str, str] = {
 
 COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "sales_order_otd_pct": "OTD pedidos (%)",
+    "otd_pct": "OTD pedidos (%)",
+    "fulfillment_pct": "Atendimento (%)",
+    "total_qty": "Quantidade total",
+    "fulfilled_qty": "Quantidade atendida",
     "total_lines": "Total de linhas",
     "on_time_lines": "Linhas no prazo",
     "late_lines": "Linhas atrasadas",

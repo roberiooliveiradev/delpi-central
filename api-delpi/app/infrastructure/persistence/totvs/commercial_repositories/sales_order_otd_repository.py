@@ -14,6 +14,8 @@ from app.domain.ports.commercial.sales_order_otd_repository_port import (
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_sql import (
+    build_sales_order_otd_analysis_by_customer_sql,
+    build_sales_order_otd_analysis_summary_sql,
     build_sales_order_otd_filters,
     build_sales_order_otd_late_days_stats_sql,
     build_sales_order_otd_line_detail_sql,
@@ -40,13 +42,22 @@ def _optional_float(value) -> Optional[float]:
 
 
 class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
+    @staticmethod
+    def _filter_kwargs(request) -> dict:
+        return {
+            "branch": getattr(request, "branch", None),
+            "start_date": getattr(request, "start_date", None),
+            "end_date": getattr(request, "end_date", None),
+            "customer_segment": getattr(request, "customer_segment", None),
+            "customer_codes": getattr(request, "customer_codes", None),
+            "customer_names": getattr(request, "customer_names", None),
+            "exclude_customer_codes": getattr(request, "exclude_customer_codes", None),
+            "exclude_customer_names": getattr(request, "exclude_customer_names", None),
+        }
+
     def get_sales_order_otd(self, request: SalesOrderOtdRequest) -> SalesOrderOtd:
         where_clause, where_params = build_sales_order_otd_filters(
-            branch=request.branch,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            customer_segment=request.customer_segment,
-            customer_codes=request.customer_codes,
+            **self._filter_kwargs(request),
         )
 
         sql, reference_params = build_sales_order_otd_sql(
@@ -77,6 +88,59 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             late_lines=0,
             sales_order_otd_pct=None,
         )
+
+    def get_sales_order_otd_analysis_summary(self, request: SalesOrderOtdRequest) -> dict:
+        where_clause, where_params = build_sales_order_otd_filters(
+            **self._filter_kwargs(request),
+        )
+        sql, reference_params = build_sales_order_otd_analysis_summary_sql(
+            where_clause=where_clause,
+            reference_end_date=request.end_date,
+        )
+        with self:
+            row = self.execute_one(sql, reference_params + where_params) or {}
+        total_lines = int(row.get("total_lines") or 0)
+        return {
+            "total_lines": total_lines,
+            "total_qty": round(float(row.get("total_qty") or 0), 2),
+            "fulfilled_qty": round(float(row.get("fulfilled_qty") or 0), 2),
+            "on_time_lines": int(row.get("on_time_lines") or 0),
+            "late_lines": int(row.get("late_lines") or 0),
+            "fulfillment_pct": _optional_float(row.get("fulfillment_pct")),
+            "otd_pct": _optional_float(row.get("otd_pct")),
+        }
+
+    def list_sales_order_otd_analysis_by_customer(
+        self,
+        request: SalesOrderOtdRequest,
+    ) -> list[dict]:
+        where_clause, where_params = build_sales_order_otd_filters(
+            **self._filter_kwargs(request),
+        )
+        sql, reference_params = build_sales_order_otd_analysis_by_customer_sql(
+            where_clause=where_clause,
+            reference_end_date=request.end_date,
+        )
+        with self:
+            rows = self.execute_query(sql, reference_params + where_params) or []
+        result: list[dict] = []
+        for row in rows:
+            result.append(
+                {
+                    "customer_code": str(row.get("customer_code") or "").strip(),
+                    "customer_store": str(row.get("customer_store") or "").strip(),
+                    "customer_name": str(row.get("customer_name") or "").strip(),
+                    "branch": str(row.get("branch") or "").strip(),
+                    "total_lines": int(row.get("total_lines") or 0),
+                    "total_qty": round(float(row.get("total_qty") or 0), 2),
+                    "fulfilled_qty": round(float(row.get("fulfilled_qty") or 0), 2),
+                    "on_time_lines": int(row.get("on_time_lines") or 0),
+                    "late_lines": int(row.get("late_lines") or 0),
+                    "fulfillment_pct": _optional_float(row.get("fulfillment_pct")),
+                    "otd_pct": _optional_float(row.get("otd_pct")),
+                }
+            )
+        return result
 
     def list_sales_order_otd_lines(
         self,

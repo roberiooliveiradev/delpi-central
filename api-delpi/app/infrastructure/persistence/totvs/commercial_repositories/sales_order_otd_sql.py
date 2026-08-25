@@ -85,12 +85,12 @@ def build_sales_order_otd_filters(
     end_date: Optional[str],
     customer_segment: Optional[str],
     customer_codes: Optional[list[str]] = None,
+    customer_names: Optional[list[str]] = None,
+    exclude_customer_codes: Optional[list[str]] = None,
+    exclude_customer_names: Optional[list[str]] = None,
 ) -> Tuple[str, tuple]:
-    from app.domain.services.commercial_customer_segment_service import (
-        CommercialCustomerSegmentService,
-    )
-    from app.domain.services.commercial_customer_codes_filter_service import (
-        CommercialCustomerCodesFilterService,
+    from app.domain.services.commercial_analysis_filter_service import (
+        CommercialAnalysisFilterService,
     )
 
     qb = QueryBuilder()
@@ -107,15 +107,15 @@ def build_sales_order_otd_filters(
 
     qb.date_range("C6.C6_ENTREG", start_date, end_date)
 
-    CommercialCustomerSegmentService.apply_segment_to_query_builder(
+    CommercialAnalysisFilterService.apply_to_query_builder(
         qb,
-        "C5.C5_CLIENTE",
-        customer_segment,
-    )
-    CommercialCustomerCodesFilterService.apply_to_query_builder(
-        qb,
-        "C5.C5_CLIENTE",
-        customer_codes,
+        customer_code_column="C5.C5_CLIENTE",
+        customer_name_column="SA1.A1_NOME",
+        customer_segment=customer_segment,
+        customer_codes=customer_codes,
+        customer_names=customer_names,
+        exclude_customer_codes=exclude_customer_codes,
+        exclude_customer_names=exclude_customer_names,
     )
 
     return qb.build()
@@ -154,6 +154,10 @@ def build_sales_order_otd_sql(
             INNER JOIN SC5010 C5 WITH (NOLOCK)
                 ON  C5.C5_FILIAL = C6.C6_FILIAL
                 AND C5.C5_NUM = C6.C6_NUM
+            LEFT JOIN SA1010 SA1 WITH (NOLOCK)
+                ON  SA1.A1_COD = C5.C5_CLIENTE
+                AND SA1.A1_LOJA = C5.C5_LOJACLI
+                AND SA1.D_E_L_E_T_ = ''
             WHERE {where_clause}
         )
         SELECT
@@ -171,6 +175,124 @@ def build_sales_order_otd_sql(
     """
 
     return sql, (reference_date, reference_date, reference_date)
+
+
+def build_sales_order_otd_analysis_summary_sql(
+    *,
+    where_clause: str,
+    reference_end_date: Optional[str],
+) -> Tuple[str, tuple]:
+    """Summary with qty + fulfillment + OTD for consolidated analysis route."""
+    reference_date = _reference_date_param(reference_end_date)
+    on_time = _SALES_ORDER_OTD_ON_TIME_CASE.replace("C6_DATFAT", "C6.C6_DATFAT").replace(
+        "C6_ENTREG", "C6.C6_ENTREG"
+    )
+    sql = f"""
+        WITH linhas_elegiveis AS (
+            SELECT DISTINCT
+                C6.C6_FILIAL,
+                C6.C6_NUM,
+                C6.C6_ITEM,
+                C6.C6_ENTREG,
+                C6.C6_DATFAT,
+                CONVERT(FLOAT, ISNULL(C6.C6_QTDVEN, 0)) AS qty_sold,
+                CONVERT(FLOAT, ISNULL(C6.C6_QTDENT, 0)) AS qty_delivered,
+                {on_time} AS is_on_time
+            FROM SC6010 C6 WITH (NOLOCK)
+            INNER JOIN SC5010 C5 WITH (NOLOCK)
+                ON  C5.C5_FILIAL = C6.C6_FILIAL
+                AND C5.C5_NUM = C6.C6_NUM
+            LEFT JOIN SA1010 SA1 WITH (NOLOCK)
+                ON  SA1.A1_COD = C5.C5_CLIENTE
+                AND SA1.A1_LOJA = C5.C5_LOJACLI
+                AND SA1.D_E_L_E_T_ = ''
+            WHERE {where_clause}
+        )
+        SELECT
+            COUNT(*) AS total_lines,
+            SUM(qty_sold) AS total_qty,
+            SUM(qty_delivered) AS fulfilled_qty,
+            SUM(is_on_time) AS on_time_lines,
+            SUM(CASE WHEN is_on_time = 0 THEN 1 ELSE 0 END) AS late_lines,
+            CAST(
+                CASE
+                    WHEN SUM(qty_sold) = 0 THEN NULL
+                    ELSE SUM(qty_delivered) * 100.0 / SUM(qty_sold)
+                END
+            AS DECIMAL(10, 2)) AS fulfillment_pct,
+            CAST(
+                CASE
+                    WHEN COUNT(*) = 0 THEN NULL
+                    ELSE SUM(is_on_time) * 100.0 / COUNT(*)
+                END
+            AS DECIMAL(10, 2)) AS otd_pct
+        FROM linhas_elegiveis
+    """
+    # on_time case embeds one '?' for reference date
+    return sql, (reference_date,)
+
+
+def build_sales_order_otd_analysis_by_customer_sql(
+    *,
+    where_clause: str,
+    reference_end_date: Optional[str],
+) -> Tuple[str, tuple]:
+    reference_date = _reference_date_param(reference_end_date)
+    on_time = _SALES_ORDER_OTD_ON_TIME_CASE.replace("C6_DATFAT", "C6.C6_DATFAT").replace(
+        "C6_ENTREG", "C6.C6_ENTREG"
+    )
+    sql = f"""
+        WITH linhas_elegiveis AS (
+            SELECT DISTINCT
+                C6.C6_FILIAL AS branch,
+                RTRIM(LTRIM(C5.C5_CLIENTE)) AS customer_code,
+                RTRIM(LTRIM(C5.C5_LOJACLI)) AS customer_store,
+                COALESCE(
+                    NULLIF(RTRIM(LTRIM(SA1.A1_NREDUZ)), ''),
+                    RTRIM(LTRIM(SA1.A1_NOME))
+                ) AS customer_name,
+                C6.C6_NUM,
+                C6.C6_ITEM,
+                CONVERT(FLOAT, ISNULL(C6.C6_QTDVEN, 0)) AS qty_sold,
+                CONVERT(FLOAT, ISNULL(C6.C6_QTDENT, 0)) AS qty_delivered,
+                {on_time} AS is_on_time
+            FROM SC6010 C6 WITH (NOLOCK)
+            INNER JOIN SC5010 C5 WITH (NOLOCK)
+                ON  C5.C5_FILIAL = C6.C6_FILIAL
+                AND C5.C5_NUM = C6.C6_NUM
+            LEFT JOIN SA1010 SA1 WITH (NOLOCK)
+                ON  SA1.A1_COD = C5.C5_CLIENTE
+                AND SA1.A1_LOJA = C5.C5_LOJACLI
+                AND SA1.D_E_L_E_T_ = ''
+            WHERE {where_clause}
+        )
+        SELECT
+            customer_code,
+            customer_store,
+            MAX(customer_name) AS customer_name,
+            MAX(branch) AS branch,
+            COUNT(*) AS total_lines,
+            SUM(qty_sold) AS total_qty,
+            SUM(qty_delivered) AS fulfilled_qty,
+            SUM(is_on_time) AS on_time_lines,
+            SUM(CASE WHEN is_on_time = 0 THEN 1 ELSE 0 END) AS late_lines,
+            CAST(
+                CASE
+                    WHEN SUM(qty_sold) = 0 THEN NULL
+                    ELSE SUM(qty_delivered) * 100.0 / SUM(qty_sold)
+                END
+            AS DECIMAL(10, 2)) AS fulfillment_pct,
+            CAST(
+                CASE
+                    WHEN COUNT(*) = 0 THEN NULL
+                    ELSE SUM(is_on_time) * 100.0 / COUNT(*)
+                END
+            AS DECIMAL(10, 2)) AS otd_pct
+        FROM linhas_elegiveis
+        GROUP BY customer_code, customer_store
+        ORDER BY total_qty DESC, customer_code ASC
+    """
+    return sql, (reference_date,)
 
 
 def _status_filter_clause(status: Optional[str]) -> str:

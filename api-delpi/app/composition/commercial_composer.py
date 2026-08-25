@@ -52,6 +52,9 @@ from app.application.use_cases.commercial.get_sales_order_otd_series_use_case im
 from app.application.use_cases.commercial.get_sales_order_otd_line_detail_use_case import (
     GetSalesOrderOtdLineDetailUseCase,
 )
+from app.application.use_cases.commercial.get_commercial_sales_order_otd_analysis_use_case import (
+    GetCommercialSalesOrderOtdAnalysisUseCase,
+)
 from app.infrastructure.persistence.totvs.commercial_repositories.new_business_rol_pct_repository import (
     NewBusinessRolPctRepository,
 )
@@ -146,6 +149,14 @@ def build_get_commercial_rol_analysis_use_case() -> GetCommercialRolAnalysisUseC
 
 def build_get_sales_order_otd_use_case() -> GetSalesOrderOtdUseCase:
     return GetSalesOrderOtdUseCase(
+        sales_order_otd_repository=SalesOrderOtdRepository()
+    )
+
+
+def build_get_commercial_sales_order_otd_analysis_use_case() -> (
+    GetCommercialSalesOrderOtdAnalysisUseCase
+):
+    return GetCommercialSalesOrderOtdAnalysisUseCase(
         sales_order_otd_repository=SalesOrderOtdRepository()
     )
 

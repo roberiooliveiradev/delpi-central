@@ -71,6 +71,7 @@ from app.composition.commercial_composer import (
     build_get_sales_order_otd_panel_use_case,
     build_get_sales_order_otd_series_use_case,
     build_get_sales_order_otd_line_detail_use_case,
+    build_get_commercial_sales_order_otd_analysis_use_case,
     build_get_new_business_rol_pct_use_case,
     build_get_head_office_weg_rol_target_use_case,
     build_get_branch_weg_rol_target_use_case,
@@ -887,6 +888,82 @@ def get_new_clients_average(
             status_code=500,
         )
     
+
+@router.get(
+    "/sales-order-otd/analysis",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_commercial_sales_order_otd_analysis",
+        path="/commercial/sales-order-otd/analysis",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_sales_order_otd_analysis(
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    granularity: str = GRANULARITY_QUERY_WEEK(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV de códigos TOTVS (include)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="CSV de nomes de cliente (include, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="CSV de códigos TOTVS (exclude)."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="CSV de nomes de cliente (exclude, NOT LIKE)."
+    ),
+    group_by: str = COMMERCIAL_ANALYSIS_GROUP_BY_QUERY(),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+):
+    try:
+        request = build_commercial_analysis_filter_request(
+            start_date=start_date,
+            end_date=end_date,
+            granularity=granularity,
+            branch=branch,
+            customer_segment=customer_segment,
+            customer_codes=customer_codes,
+            customer_names=customer_names,
+            exclude_customer_codes=exclude_customer_codes,
+            exclude_customer_names=exclude_customer_names,
+            group_by=group_by,
+            page=page,
+            page_size=page_size,
+        )
+        result = build_get_commercial_sales_order_otd_analysis_use_case().execute(
+            request
+        )
+        result = enrich_dashboard_metric(
+            result,
+            source_key=goal_keys.COMMERCIAL_SALES_ORDER_OTD,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            summary_key="summary",
+            recompute_target_pct_from="otd_pct",
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_commercial_sales_order_otd_analysis",
+            message="Commercial sales order OTD analysis fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(
+            f"Validation error while fetching commercial sales order OTD analysis: {exc}"
+        )
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching commercial sales order OTD analysis: {exc}")
+        return error_response(
+            "Internal error while fetching commercial sales order OTD analysis.",
+            status_code=500,
+        )
+
 
 @router.get(
     "/sales-order-otd/series",

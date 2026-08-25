@@ -279,6 +279,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_new_clients_average": RouteContract("new_clients_average", "scalar"),
     "get_sales_order_otd": RouteContract("sales_order_otd", "scalar"),
+    "get_commercial_sales_order_otd_analysis": RouteContract(
+        "commercial_sales_order_otd", "composite_analysis"
+    ),
     "get_sales_order_otd_panel": RouteContract("sales_order_otd_panel", "paged_list"),
     "get_sales_order_otd_series": RouteContract("sales_order_otd_series", "scalar"),
     "get_sales_order_otd_line_detail": RouteContract(

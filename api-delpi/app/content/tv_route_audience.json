@@ -4095,6 +4095,21 @@
       },
       "category": "commercial"
     },
+    "get_commercial_sales_order_otd_analysis": {
+      "locale": {
+        "en": {
+          "summary": "Sales order OTD consolidated analysis",
+          "description": "Composite OTD package with summary, series and optional customer breakdown including fulfillment qty.",
+          "label": "Sales order OTD analysis"
+        },
+        "pt-BR": {
+          "label": "Análise consolidada de OTD de pedidos",
+          "summary": "Pacote consolidado de OTD e atendimento de pedidos",
+          "description": "Summary com qty/OTD, série temporal e breakdown por cliente."
+        }
+      },
+      "category": "commercial"
+    },
     "get_sales_order_otd_line_detail": {
       "locale": {
         "en": {
