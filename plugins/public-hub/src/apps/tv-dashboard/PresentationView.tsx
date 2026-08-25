@@ -16,6 +16,7 @@ import {
   resolveSlideTransitionStyle,
   presentationSurfaceFromViewMode,
   presentationStageEntranceClass,
+  ExternalSlideView,
   type ComunicadoBlock,
   type InputFilterContributions,
   type PresentationRealtimeEvent,
@@ -23,7 +24,6 @@ import {
 
 import type { PublicPresentationPayload, PublicSlide } from "./api";
 import { refreshPublicPresentation, sendPresentationHeartbeat } from "./api";
-import { ExternalSlideView } from "./ExternalSlideView";
 
 /**
  * Viewer puro da programação TV.
@@ -219,7 +219,12 @@ export function PresentationView({
                   onInputValueChange={active ? handleInputValueChange : undefined}
                 />
               ) : (
-                <ExternalSlideView slide={slide} active={active} />
+                <ExternalSlideView
+                  url={slide.external?.url}
+                  title={slide.title}
+                  sandbox={slide.external?.sandbox}
+                  active={active}
+                />
               )}
             </div>
           );

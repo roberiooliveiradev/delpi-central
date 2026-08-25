@@ -42,6 +42,8 @@ export type {
 } from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
+export { ExternalSlideView } from "./ExternalSlideView";
+export type { ExternalSlideViewProps } from "./ExternalSlideView";
 export {
   DesignViewportStage,
   computeDesignViewportScale,

@@ -6,6 +6,7 @@ import {
   PresentationStageControls,
   PresentationPlaybackProvider,
   NativeSlideView,
+  ExternalSlideView,
   DesignViewportStage,
   presentationStageEntranceClass,
   buildAdminPresentationWsUrl,
@@ -26,7 +27,6 @@ import {
   rewriteAdminMediaUrlsForBrowser,
 } from "../api/browserSafeMediaUrl";
 import { getAccessToken } from "../api/httpClient";
-import { ExternalSlidePreview } from "./ExternalSlidePreview";
 import "./presentation.css";
 
 type Props = {
@@ -179,7 +179,16 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
 
   if (!slides.length) {
     return (
-      <div className="tdp-stage" data-viewport={viewport}>
+      <div
+        className={[
+          "tdp-stage",
+          "tdp-stage--preview-shell",
+          presentationStageEntranceClass("kiosk"),
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-viewport={viewport}
+      >
         <div className="tdp-empty">Nenhuma tela configurada.</div>
       </div>
     );
@@ -245,7 +254,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
                   onInputValueChange={active ? handleInputValueChange : undefined}
                 />
               ) : (
-                <ExternalSlidePreview
+                <ExternalSlideView
                   url={slide.external?.url}
                   title={slide.title}
                   sandbox={slide.external?.sandbox}
