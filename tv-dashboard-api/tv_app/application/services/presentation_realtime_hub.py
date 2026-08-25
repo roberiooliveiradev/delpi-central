@@ -31,6 +31,8 @@ class PresentationRealtimeHub:
         self._rooms: dict[str, set[WebSocket]] = {}
         self._client_meta: dict[str, dict[WebSocket, dict[str, Any]]] = {}
         self._sessions: dict[WebSocket, PresentationRealtimeSession] = {}
+        # Último cursor de reunião por playlist (efêmero; late join).
+        self._playback_cursors: dict[str, dict[str, Any]] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
@@ -68,6 +70,11 @@ class PresentationRealtimeHub:
             self._sessions[websocket] = session
         try:
             await websocket.send_json({"type": "connected", "playlistId": playlist_id})
+            async with self._lock:
+                cursor_raw = self._playback_cursors.get(playlist_id)
+                cursor_snapshot = dict(cursor_raw) if cursor_raw else None
+            if cursor_snapshot:
+                await websocket.send_json(cursor_snapshot)
             while True:
                 message = await websocket.receive_text()
                 if message.strip().lower() == "ping":
@@ -207,6 +214,30 @@ class PresentationRealtimeHub:
                     "updatedAt": int(time.time() * 1000),
                 },
             )
+            return
+
+        if message_type == "playback_cursor":
+            slide_id = self._clean_text(payload.get("slideId"))
+            if not slide_id or not client_id:
+                return
+            index_raw = payload.get("index")
+            index: int | None = None
+            if isinstance(index_raw, int) and not isinstance(index_raw, bool):
+                index = max(0, index_raw)
+            elif isinstance(index_raw, float) and index_raw.is_integer():
+                index = max(0, int(index_raw))
+            event = {
+                "type": "playback_cursor",
+                "playlistId": playlist_id,
+                "slideId": slide_id,
+                "clientId": client_id,
+                "index": index,
+                "updatedAt": int(time.time() * 1000),
+            }
+            async with self._lock:
+                self._playback_cursors[playlist_id] = dict(event)
+            await self.broadcast_now(playlist_id, event)
+            return
 
     @staticmethod
     def _clean_text(value: Any) -> str | None:

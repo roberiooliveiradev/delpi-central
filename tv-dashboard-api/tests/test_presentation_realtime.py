@@ -281,3 +281,84 @@ def test_admin_presentation_ws_requires_token():
         with pytest.raises(Exception):
             with client.websocket_connect(f"/playlists/{playlist_id}/presentation-ws"):
                 pass
+
+
+def test_realtime_hub_broadcasts_playback_cursor_without_presence():
+    """Viewers públicos (allow_presence=False) podem publicar cursor de reunião."""
+    import asyncio
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        websocket = FakeWebSocket()
+        peer = FakeWebSocket()
+        hub._rooms["playlist-1"] = {websocket, peer}  # noqa: SLF001
+        hub._sessions[websocket] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id=None,
+            display_name="TV",
+            role="viewer",
+            can_edit=False,
+            allow_presence=False,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message=(
+                '{"type":"playback_cursor","clientId":"tv-a","slideId":"slide-2","index":1}'
+            ),
+        )
+        assert len(sent) == 2
+        assert all(item["type"] == "playback_cursor" for item in sent)
+        assert sent[0]["slideId"] == "slide-2"
+        assert sent[0]["clientId"] == "tv-a"
+        assert sent[0]["index"] == 1
+        assert hub._playback_cursors["playlist-1"]["slideId"] == "slide-2"  # noqa: SLF001
+
+    asyncio.run(_run())
+
+
+def test_realtime_hub_sends_playback_cursor_snapshot_on_connect():
+    import asyncio
+
+    from starlette.websockets import WebSocketDisconnect
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        received: list[dict] = []
+
+        class FakeWebSocket:
+            async def accept(self) -> None:
+                return None
+
+            async def send_json(self, payload: dict) -> None:
+                received.append(payload)
+
+            async def receive_text(self) -> str:
+                raise WebSocketDisconnect()
+
+        hub._playback_cursors["playlist-1"] = {  # noqa: SLF001
+            "type": "playback_cursor",
+            "playlistId": "playlist-1",
+            "slideId": "slide-9",
+            "clientId": "tv-a",
+            "index": 3,
+            "updatedAt": 1,
+        }
+        session = PresentationRealtimeSession(
+            user_id=None,
+            display_name="TV",
+            role="viewer",
+            can_edit=False,
+            allow_presence=False,
+        )
+        await hub.connect(FakeWebSocket(), playlist_id="playlist-1", session=session)
+        assert received[0]["type"] == "connected"
+        assert received[1]["type"] == "playback_cursor"
+        assert received[1]["slideId"] == "slide-9"
+
+    asyncio.run(_run())
