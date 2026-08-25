@@ -26,6 +26,15 @@ export type PresentationSelectionUpdateEvent = {
   updatedAt?: number;
 };
 
+export type PresentationPlaybackCursorEvent = {
+  type: "playback_cursor";
+  playlistId?: string;
+  slideId: string;
+  clientId: string;
+  index?: number | null;
+  updatedAt?: number;
+};
+
 export type PresentationRealtimeEvent = {
   type: string;
   reason?: string;
@@ -38,6 +47,7 @@ export type PresentationRealtimeEvent = {
   displayName?: string;
   selectedIds?: string[];
   updatedAt?: number;
+  index?: number | null;
 };
 
 type RealtimeSend = (payload: Record<string, unknown>) => void;
@@ -48,6 +58,7 @@ type Options = {
   onPresentationUpdated?: (event: PresentationRealtimeEvent) => void;
   onSlideDraft?: (event: PresentationSlideDraftEvent) => void;
   onSelectionUpdate?: (event: PresentationSelectionUpdateEvent) => void;
+  onPlaybackCursor?: (event: PresentationPlaybackCursorEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
   onConnectionChange?: (connected: boolean) => void;
   presence?: PresentationPresencePeer;
@@ -103,6 +114,25 @@ export function parsePresentationRealtimeEvent(value: unknown): PresentationReal
       updatedAt: typeof payload.updatedAt === "number" ? payload.updatedAt : undefined,
     };
   }
+  if (payload.type === "playback_cursor") {
+    const slideId = payload.slideId;
+    const clientId = payload.clientId;
+    if (typeof slideId !== "string" || typeof clientId !== "string") return null;
+    const index =
+      typeof payload.index === "number" && Number.isFinite(payload.index)
+        ? payload.index
+        : payload.index === null
+          ? null
+          : undefined;
+    return {
+      type: "playback_cursor",
+      playlistId: typeof payload.playlistId === "string" ? payload.playlistId : undefined,
+      slideId,
+      clientId,
+      index,
+      updatedAt: typeof payload.updatedAt === "number" ? payload.updatedAt : undefined,
+    };
+  }
   if (payload.type !== "presence_update") return payload as PresentationRealtimeEvent;
   if (!Array.isArray(payload.peers)) return null;
 
@@ -150,6 +180,7 @@ export function usePresentationRealtime({
   onPresentationUpdated,
   onSlideDraft,
   onSelectionUpdate,
+  onPlaybackCursor,
   onPresenceUpdate,
   onConnectionChange,
   presence,
@@ -164,6 +195,8 @@ export function usePresentationRealtime({
   slideDraftHandlerRef.current = onSlideDraft;
   const selectionHandlerRef = useRef(onSelectionUpdate);
   selectionHandlerRef.current = onSelectionUpdate;
+  const playbackCursorHandlerRef = useRef(onPlaybackCursor);
+  playbackCursorHandlerRef.current = onPlaybackCursor;
   const presenceHandlerRef = useRef(onPresenceUpdate);
   presenceHandlerRef.current = onPresenceUpdate;
   const connectionHandlerRef = useRef(onConnectionChange);
@@ -242,6 +275,9 @@ export function usePresentationRealtime({
           }
           if (payload.type === "selection_update") {
             selectionHandlerRef.current?.(payload as PresentationSelectionUpdateEvent);
+          }
+          if (payload.type === "playback_cursor") {
+            playbackCursorHandlerRef.current?.(payload as PresentationPlaybackCursorEvent);
           }
           if (payload.type === "presence_update") {
             presenceHandlerRef.current?.(payload.peers ?? []);

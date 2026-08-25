@@ -36,10 +36,15 @@ export {
 export type {
   PresentationPresencePeer,
   PresentationPresenceRole,
+  PresentationPlaybackCursorEvent,
   PresentationRealtimeEvent,
   PresentationSelectionUpdateEvent,
   PresentationSlideDraftEvent,
 } from "./usePresentationRealtime";
+export {
+  applyPlaybackCursorToIndex,
+  resolvePresentationPlaybackClientId,
+} from "./playbackCursor";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
 export { ExternalSlideView } from "./ExternalSlideView";
