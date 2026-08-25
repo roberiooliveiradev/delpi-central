@@ -72,6 +72,13 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   /* Estável entre re-renders (ex.: setBooting) — senão o engine faz setPayload em loop (#185). */
   const browserInitial = useMemo(() => forBrowserDisplay(initial), [initial]);
 
+  const [livePlaylistMode, setLivePlaylistMode] = useState(
+    () => browserInitial.playlist.playbackMode,
+  );
+  useEffect(() => {
+    setLivePlaylistMode(browserInitial.playlist.playbackMode);
+  }, [browserInitial.playlist.playbackMode]);
+
   const wsUrl = useMemo(() => {
     if (!playlistId) return null;
     const token = getAccessToken();
@@ -114,7 +121,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   } = usePresentationEngine({
     initialPayload: browserInitial,
     onRefresh: onRefresh ? reloadWithFilters : undefined,
-    enableHiddenPause: false,
+    enableHiddenPause: true,
     enableKeyboardControls: true,
     refreshNativeSlidesOnly: true,
     autoAdvance,
