@@ -198,7 +198,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       className={[
         "tdp-stage",
         "tdp-stage--preview-shell",
-        presentationStageEntranceClass("preview"),
+        presentationStageEntranceClass("kiosk"),
         presenterMode ? "tdp-stage--presenter" : null,
         booting ? "tdp-stage--boot" : null,
       ]
@@ -224,7 +224,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
         viewportWidth={payload.playlist.viewportWidth}
         viewportHeight={payload.playlist.viewportHeight}
         className="tdp-stage__design"
-        surface="preview"
+        surface="kiosk"
         fit="auto"
       >
         {slides.map((slide, slideIndex) => {

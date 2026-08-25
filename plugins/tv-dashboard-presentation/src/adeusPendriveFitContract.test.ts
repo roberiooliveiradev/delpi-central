@@ -110,6 +110,17 @@ describe("Adeus Pendrive / host-fit — sem corte", () => {
     expect(resolvePresentationScaleMethod("preview")).toBe("transform");
   });
 
+  it("prévia de validação TV usa kiosk; thumbnails/filmstrip usam preview (contrato fonte)", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const previewPage = readFileSync(
+      join(here, "../../tv-dashboard/src/presentation/PresentationPreview.tsx"),
+      "utf8",
+    );
+    expect(previewPage).toContain('surface="kiosk"');
+    expect(previewPage).toContain('presentationStageEntranceClass("kiosk")');
+    expect(previewPage).not.toContain('surface="preview"');
+  });
+
   it("código: kiosk usa zoom + pin top 0 (contrato fonte)", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const stageSrc = readFileSync(join(here, "DesignViewportStage.tsx"), "utf8");
