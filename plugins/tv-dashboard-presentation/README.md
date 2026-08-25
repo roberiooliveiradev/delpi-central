@@ -104,7 +104,10 @@ Docker: `npm install` em **ambos** (`tv-dashboard-presentation` para tipos TS + 
 - Prefixo **`tdp-`** (tv-dashboard presentation)
 - Gráficos: **`tdp-series-chart*`** (título, legenda, eixos, grade, tabela de dados)
 - Modo kiosk público: `.tdp-stage--kiosk` dentro de `.pub-kiosk-root` (public-hub)
-- Preview admin: `.tdp-stage--preview-shell`
+- Preview admin (validação TV): `.tdp-stage--preview-shell` + `DesignViewportStage surface="kiosk"` (zoom). Filmstrip/thumbnail: `surface="preview"` (`transform`).
+- `ExternalSlideView` — iframe externo canônico (prévia + public-hub)
+- **Playback mode:** `playlist.playbackMode` + `?mode=` + toolbar; `autoAdvance: false` desliga o timer sem apagar `durationSec`. `?presenter=1` (notas) é ortogonal.
+- Overlay live do editor na prévia ≠ TV até flush/save (intencional).
 
 ---
 

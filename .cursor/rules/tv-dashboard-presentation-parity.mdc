@@ -22,6 +22,9 @@ alwaysApply: false
 | Projeção KPI/chart/texto | Cliente: `applyViewProjection` / `textViewProjection` — **não** bake `serverProjectionApplied` |
 | Ordem na TV (filmstrip) | `presentationSlideOrder.ts` ≡ `is_slide_visible_in_presentation` |
 | Dados ao abrir prévia | `preparePreviewNavigation` (flush) + `overlayLiveCustomMessageSlidesOnPreviewPayload` |
+| Fit / escala | Prévia de **validação** e TV: `surface=kiosk` (`zoom`). Filmstrip/thumbnail: `surface=preview` (`transform`) |
+| External iframe | `ExternalSlideView` em `tv-dashboard-presentation` |
+| Enrich prévia ≡ TV | `preview-payload?parity=tv` (default na `PlaylistPreviewPage`); sem flag = JWT do editor |
 
 ## Anti-padrões (proibido)
 
@@ -35,6 +38,8 @@ alwaysApply: false
 8. **Scrollbar da tabela só no portal** — depender do `* { scrollbar-width: thin }` global do portal (public-hub não tem). Estilizar `.delpi-ui-config-table__frame` / `.tdp-table-frame` no kit/native-screens. Wrap `table_view` no editor: `touch-action: pan-x pan-y` (não herdar `none` do bloco).
 9. **Lógica de negócio em `PresentationView` / `usePresentationEngine`** além de playback — present não escolhe métrica, período nem encoding.
 10. **Índice do filmstrip ≠ ordem da TV** — numerar incluindo slides/seções pausados (present os omite). Usar `buildPresentationOrderIndexBySlideId`.
+11. **Prévia de validação com `surface=preview`** — usa `transform` e diverge do kiosk (`zoom`). Validação TV = `kiosk`; só thumbnail/filmstrip usam `preview`.
+12. **Assumir enrich JWT = TV** — sem `parity=tv`, o preview-payload usa o Bearer do editor (`authScope=user`).
 
 Incidente jul/2026: prévia com cards vazios/duplicados e layout ≠ editor por payload stale + logo duplicado.  
 Incidente jul/2026 (gráfico): pizza/rosca correta no editor, errada em `/preview` e `/present/` porque `applyViewProjection` retornava cedo com `serverProjectionApplied` e ignorava `groupByCategory`.  
