@@ -35,6 +35,33 @@ export type PresentationPlaybackCursorEvent = {
   updatedAt?: number;
 };
 
+export type PresentationMeetingLaserEvent = {
+  type: "meeting_laser";
+  playlistId?: string;
+  slideId: string;
+  clientId: string;
+  x: number;
+  y: number;
+  visible: boolean;
+};
+
+export type PresentationMeetingInkStrokeEvent = {
+  type: "meeting_ink_stroke";
+  playlistId?: string;
+  slideId: string;
+  clientId: string;
+  strokeId: string;
+  phase: "start" | "move" | "end";
+  points: Array<{ x: number; y: number }>;
+};
+
+export type PresentationMeetingInkClearEvent = {
+  type: "meeting_ink_clear";
+  playlistId?: string;
+  slideId: string;
+  clientId: string;
+};
+
 export type PresentationRealtimeEvent = {
   type: string;
   reason?: string;
@@ -48,6 +75,12 @@ export type PresentationRealtimeEvent = {
   selectedIds?: string[];
   updatedAt?: number;
   index?: number | null;
+  x?: number;
+  y?: number;
+  visible?: boolean;
+  strokeId?: string;
+  phase?: string;
+  points?: Array<{ x: number; y: number }>;
 };
 
 type RealtimeSend = (payload: Record<string, unknown>) => void;
@@ -59,14 +92,27 @@ type Options = {
   onSlideDraft?: (event: PresentationSlideDraftEvent) => void;
   onSelectionUpdate?: (event: PresentationSelectionUpdateEvent) => void;
   onPlaybackCursor?: (event: PresentationPlaybackCursorEvent) => void;
+  onMeetingLaser?: (event: PresentationMeetingLaserEvent) => void;
+  onMeetingInk?: (event: PresentationMeetingInkStrokeEvent) => void;
+  onMeetingInkClear?: (event: PresentationMeetingInkClearEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
   onConnectionChange?: (connected: boolean) => void;
   presence?: PresentationPresencePeer;
   sendRef?: React.MutableRefObject<RealtimeSend | null>;
+  /** Espelha o send do socket (ex.: anotações de reunião no consumer). */
+  externalSendRef?: React.MutableRefObject<RealtimeSend | null>;
   reconnectMs?: number;
   pingMs?: number;
   updateDebounceMs?: number;
 };
+
+function parseNormPoint(value: unknown): { x: number; y: number } | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.x !== "number" || typeof row.y !== "number") return null;
+  if (!Number.isFinite(row.x) || !Number.isFinite(row.y)) return null;
+  return { x: row.x, y: row.y };
+}
 
 export function parsePresentationRealtimeEvent(value: unknown): PresentationRealtimeEvent | null {
   if (!value || typeof value !== "object") return null;
@@ -133,6 +179,63 @@ export function parsePresentationRealtimeEvent(value: unknown): PresentationReal
       updatedAt: typeof payload.updatedAt === "number" ? payload.updatedAt : undefined,
     };
   }
+  if (payload.type === "meeting_laser") {
+    const slideId = payload.slideId;
+    const clientId = payload.clientId;
+    if (typeof slideId !== "string" || typeof clientId !== "string") return null;
+    if (typeof payload.x !== "number" || typeof payload.y !== "number") return null;
+    if (!Number.isFinite(payload.x) || !Number.isFinite(payload.y)) return null;
+    return {
+      type: "meeting_laser",
+      playlistId: typeof payload.playlistId === "string" ? payload.playlistId : undefined,
+      slideId,
+      clientId,
+      x: payload.x,
+      y: payload.y,
+      visible: Boolean(payload.visible),
+    };
+  }
+  if (payload.type === "meeting_ink_stroke") {
+    const slideId = payload.slideId;
+    const clientId = payload.clientId;
+    const strokeId = payload.strokeId;
+    const phase = payload.phase;
+    if (
+      typeof slideId !== "string" ||
+      typeof clientId !== "string" ||
+      typeof strokeId !== "string" ||
+      (phase !== "start" && phase !== "move" && phase !== "end")
+    ) {
+      return null;
+    }
+    if (!Array.isArray(payload.points)) return null;
+    const points: Array<{ x: number; y: number }> = [];
+    for (const item of payload.points) {
+      const point = parseNormPoint(item);
+      if (!point) return null;
+      points.push(point);
+    }
+    return {
+      type: "meeting_ink_stroke",
+      playlistId: typeof payload.playlistId === "string" ? payload.playlistId : undefined,
+      slideId,
+      clientId,
+      strokeId,
+      phase,
+      points,
+    };
+  }
+  if (payload.type === "meeting_ink_clear") {
+    const slideId = payload.slideId;
+    const clientId = payload.clientId;
+    if (typeof slideId !== "string" || typeof clientId !== "string") return null;
+    return {
+      type: "meeting_ink_clear",
+      playlistId: typeof payload.playlistId === "string" ? payload.playlistId : undefined,
+      slideId,
+      clientId,
+    };
+  }
   if (payload.type !== "presence_update") return payload as PresentationRealtimeEvent;
   if (!Array.isArray(payload.peers)) return null;
 
@@ -181,10 +284,14 @@ export function usePresentationRealtime({
   onSlideDraft,
   onSelectionUpdate,
   onPlaybackCursor,
+  onMeetingLaser,
+  onMeetingInk,
+  onMeetingInkClear,
   onPresenceUpdate,
   onConnectionChange,
   presence,
   sendRef,
+  externalSendRef,
   reconnectMs = 5000,
   pingMs = 30000,
   updateDebounceMs = 200,
@@ -197,11 +304,18 @@ export function usePresentationRealtime({
   selectionHandlerRef.current = onSelectionUpdate;
   const playbackCursorHandlerRef = useRef(onPlaybackCursor);
   playbackCursorHandlerRef.current = onPlaybackCursor;
+  const meetingLaserHandlerRef = useRef(onMeetingLaser);
+  meetingLaserHandlerRef.current = onMeetingLaser;
+  const meetingInkHandlerRef = useRef(onMeetingInk);
+  meetingInkHandlerRef.current = onMeetingInk;
+  const meetingInkClearHandlerRef = useRef(onMeetingInkClear);
+  meetingInkClearHandlerRef.current = onMeetingInkClear;
   const presenceHandlerRef = useRef(onPresenceUpdate);
   presenceHandlerRef.current = onPresenceUpdate;
   const connectionHandlerRef = useRef(onConnectionChange);
   connectionHandlerRef.current = onConnectionChange;
   const sendRefStable = sendRef;
+  const externalSendRefStable = externalSendRef;
   const updateTimerRef = useRef<number | null>(null);
   const pendingEventRef = useRef<PresentationRealtimeEvent | null>(null);
 
@@ -209,6 +323,7 @@ export function usePresentationRealtime({
     if (!enabled || !wsUrl) {
       connectionHandlerRef.current?.(false);
       if (sendRefStable) sendRefStable.current = null;
+      if (externalSendRefStable) externalSendRefStable.current = null;
       return undefined;
     }
 
@@ -244,12 +359,12 @@ export function usePresentationRealtime({
       ws = new WebSocket(wsUrl);
       ws.onopen = () => {
         connectionHandlerRef.current?.(true);
-        if (sendRefStable) {
-          sendRefStable.current = (payload) => {
-            if (ws?.readyState !== WebSocket.OPEN) return;
-            ws.send(JSON.stringify(payload));
-          };
-        }
+        const send: RealtimeSend = (payload) => {
+          if (ws?.readyState !== WebSocket.OPEN) return;
+          ws.send(JSON.stringify(payload));
+        };
+        if (sendRefStable) sendRefStable.current = send;
+        if (externalSendRefStable) externalSendRefStable.current = send;
         if (presence) {
           ws?.send(JSON.stringify({ type: "presence_join", ...presence }));
         }
@@ -279,6 +394,15 @@ export function usePresentationRealtime({
           if (payload.type === "playback_cursor") {
             playbackCursorHandlerRef.current?.(payload as PresentationPlaybackCursorEvent);
           }
+          if (payload.type === "meeting_laser") {
+            meetingLaserHandlerRef.current?.(payload as PresentationMeetingLaserEvent);
+          }
+          if (payload.type === "meeting_ink_stroke") {
+            meetingInkHandlerRef.current?.(payload as PresentationMeetingInkStrokeEvent);
+          }
+          if (payload.type === "meeting_ink_clear") {
+            meetingInkClearHandlerRef.current?.(payload as PresentationMeetingInkClearEvent);
+          }
           if (payload.type === "presence_update") {
             presenceHandlerRef.current?.(payload.peers ?? []);
           }
@@ -288,6 +412,7 @@ export function usePresentationRealtime({
       };
       ws.onclose = () => {
         if (sendRefStable) sendRefStable.current = null;
+        if (externalSendRefStable) externalSendRefStable.current = null;
         connectionHandlerRef.current?.(false);
         if (pingTimer != null) {
           window.clearInterval(pingTimer);
@@ -332,6 +457,7 @@ export function usePresentationRealtime({
       }
       ws = null;
       if (sendRefStable) sendRefStable.current = null;
+      if (externalSendRefStable) externalSendRefStable.current = null;
       connectionHandlerRef.current?.(false);
       presenceHandlerRef.current?.([]);
     }
@@ -377,6 +503,7 @@ export function usePresentationRealtime({
     pingMs,
     updateDebounceMs,
     sendRefStable,
+    externalSendRefStable,
     presence?.clientId,
     presence?.displayName,
     presence?.role,

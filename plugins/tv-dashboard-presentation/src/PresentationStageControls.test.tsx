@@ -83,4 +83,44 @@ describe("PresentationStageControls", () => {
     );
     expect(screen.getByRole("button", { name: "Pausar" })).toBeTruthy();
   });
+
+  it("em reunião mostra Caneta/Laser/Limpar e alterna tool", () => {
+    const onTool = vi.fn();
+    const onClear = vi.fn();
+    render(
+      <PresentationStageControls
+        index={0}
+        total={2}
+        paused={false}
+        onPauseToggle={() => undefined}
+        onPrevious={() => undefined}
+        onNext={() => undefined}
+        playbackMode="meeting"
+        annotationTool="none"
+        onAnnotationToolChange={onTool}
+        onClearAnnotations={onClear}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Caneta" }));
+    expect(onTool).toHaveBeenCalledWith("pen");
+    fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    expect(onClear).toHaveBeenCalled();
+  });
+
+  it("em apresentação não mostra ferramentas de anotação", () => {
+    render(
+      <PresentationStageControls
+        index={0}
+        total={2}
+        paused={false}
+        onPauseToggle={() => undefined}
+        onPrevious={() => undefined}
+        onNext={() => undefined}
+        playbackMode="presentation"
+        onAnnotationToolChange={() => undefined}
+        onClearAnnotations={() => undefined}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Caneta" })).toBeNull();
+  });
 });

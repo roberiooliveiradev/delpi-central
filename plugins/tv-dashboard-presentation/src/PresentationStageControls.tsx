@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { PresentationSection } from "./types";
 import { playbackModeLabel, type PlaybackMode } from "./playbackMode";
+import type { MeetingAnnotationTool } from "./meetingAnnotationTypes";
 
 type Props = {
   index: number;
@@ -18,6 +19,10 @@ type Props = {
   /** Modo efetivo — em reunião oculta Pausar. */
   playbackMode?: PlaybackMode;
   onPlaybackModeChange?: (mode: PlaybackMode) => void;
+  /** Ferramentas de anotação — só em meeting quando callbacks presentes. */
+  annotationTool?: MeetingAnnotationTool;
+  onAnnotationToolChange?: (tool: MeetingAnnotationTool) => void;
+  onClearAnnotations?: () => void;
 };
 
 /** Controles de slide (anterior / pausa / próxima) — prévia admin e apresentação. */
@@ -34,6 +39,9 @@ export function PresentationStageControls({
   className,
   playbackMode = "presentation",
   onPlaybackModeChange,
+  annotationTool = "none",
+  onAnnotationToolChange,
+  onClearAnnotations,
 }: Props) {
   const rootClass = [
     "tdp-preview-controls",
@@ -50,6 +58,8 @@ export function PresentationStageControls({
   const showSectionJump = jumpSections.length >= 1 && typeof onJumpToSection === "function";
   const showModeToggle = typeof onPlaybackModeChange === "function";
   const autoAdvance = playbackMode === "presentation";
+  const showMeetingTools =
+    playbackMode === "meeting" && typeof onAnnotationToolChange === "function";
 
   const menuId = useId();
   const modeMenuId = useId();
@@ -128,6 +138,51 @@ export function PresentationStageControls({
       >
         Próxima
       </button>
+      {showMeetingTools ? (
+        <>
+          <button
+            type="button"
+            className={[
+              "tdp-preview-controls__btn",
+              annotationTool === "pen" ? "tdp-preview-controls__btn--active" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-pressed={annotationTool === "pen"}
+            tabIndex={visible ? 0 : -1}
+            onClick={() =>
+              onAnnotationToolChange?.(annotationTool === "pen" ? "none" : "pen")
+            }
+          >
+            Caneta
+          </button>
+          <button
+            type="button"
+            className={[
+              "tdp-preview-controls__btn",
+              annotationTool === "laser" ? "tdp-preview-controls__btn--active" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-pressed={annotationTool === "laser"}
+            tabIndex={visible ? 0 : -1}
+            onClick={() =>
+              onAnnotationToolChange?.(annotationTool === "laser" ? "none" : "laser")
+            }
+          >
+            Laser
+          </button>
+          <button
+            type="button"
+            className="tdp-preview-controls__btn"
+            tabIndex={visible ? 0 : -1}
+            disabled={typeof onClearAnnotations !== "function"}
+            onClick={() => onClearAnnotations?.()}
+          >
+            Limpar
+          </button>
+        </>
+      ) : null}
       {showSectionJump ? (
         <div ref={jumpRef} className="tdp-preview-controls__section-jump">
           <button

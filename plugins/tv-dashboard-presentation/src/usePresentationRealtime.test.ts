@@ -105,6 +105,56 @@ describe("parsePresentationRealtimeEvent", () => {
       }),
     ).toBeNull();
   });
+
+  it("aceita meeting_laser / meeting_ink_stroke / meeting_ink_clear", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "meeting_laser",
+        slideId: "s1",
+        clientId: "tv-a",
+        x: 0.25,
+        y: 0.75,
+        visible: true,
+      }),
+    ).toEqual({
+      type: "meeting_laser",
+      slideId: "s1",
+      clientId: "tv-a",
+      x: 0.25,
+      y: 0.75,
+      visible: true,
+    });
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "meeting_ink_stroke",
+        slideId: "s1",
+        clientId: "tv-a",
+        strokeId: "st-1",
+        phase: "move",
+        points: [{ x: 0.1, y: 0.2 }],
+      }),
+    ).toMatchObject({ type: "meeting_ink_stroke", strokeId: "st-1", phase: "move" });
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "meeting_ink_clear",
+        slideId: "s1",
+        clientId: "tv-a",
+      }),
+    ).toEqual({ type: "meeting_ink_clear", slideId: "s1", clientId: "tv-a" });
+  });
+
+  it("rejeita meeting_ink_stroke com phase inválida", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "meeting_ink_stroke",
+        slideId: "s1",
+        clientId: "tv-a",
+        strokeId: "st-1",
+        phase: "draw",
+        points: [],
+      }),
+    ).toBeNull();
+  });
 });
 
 describe("isTvDashboardPortalPath", () => {

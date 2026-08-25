@@ -425,6 +425,11 @@
   background: color-mix(in srgb, #089bdb 32%, transparent);
 }
 
+.tdp-preview-controls__btn--active {
+  background: color-mix(in srgb, #089bdb 42%, transparent);
+  border-color: color-mix(in srgb, #38bdf8 55%, transparent);
+}
+
 .tdp-preview-controls__btn:disabled {
   opacity: 0.45;
   cursor: default;

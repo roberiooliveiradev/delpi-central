@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 
 import { applySlideDraftToPayload } from "./applySlideDraftToPayload";
 import {
@@ -7,6 +7,9 @@ import {
 import type { PresentationPayloadLike, PresentationSlide } from "./types";
 import {
   usePresentationRealtime,
+  type PresentationMeetingInkClearEvent,
+  type PresentationMeetingInkStrokeEvent,
+  type PresentationMeetingLaserEvent,
   type PresentationPlaybackCursorEvent,
   type PresentationRealtimeEvent,
 } from "./usePresentationRealtime";
@@ -34,6 +37,13 @@ export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
    */
   syncPlaybackCursor?: boolean;
   playbackClientId?: string | null;
+  /** Modo reunião: retransmite caneta/laser (handlers no consumer). */
+  syncMeetingAnnotations?: boolean;
+  onMeetingLaser?: (event: PresentationMeetingLaserEvent) => void;
+  onMeetingInk?: (event: PresentationMeetingInkStrokeEvent) => void;
+  onMeetingInkClear?: (event: PresentationMeetingInkClearEvent) => void;
+  /** Espelha o send do WS para o consumer (anotações). */
+  externalSendRef?: MutableRefObject<((payload: Record<string, unknown>) => void) | null>;
 };
 
 export function usePresentationEngine<T extends PresentationPayloadLike>({
@@ -47,6 +57,11 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   autoAdvance = true,
   syncPlaybackCursor = false,
   playbackClientId = null,
+  syncMeetingAnnotations = false,
+  onMeetingLaser,
+  onMeetingInk,
+  onMeetingInkClear,
+  externalSendRef,
 }: UsePresentationEngineOptions<T>) {
   const keyboardEnabled = enableKeyboardControls ?? enableKeyboardPause;
   const [payload, setPayload] = useState(initialPayload);
@@ -60,6 +75,12 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   const slidesRef = useRef<T["slides"]>([] as T["slides"]);
   const clientIdRef = useRef(playbackClientId);
   clientIdRef.current = playbackClientId;
+  const meetingLaserRef = useRef(onMeetingLaser);
+  meetingLaserRef.current = onMeetingLaser;
+  const meetingInkRef = useRef(onMeetingInk);
+  meetingInkRef.current = onMeetingInk;
+  const meetingInkClearRef = useRef(onMeetingInkClear);
+  meetingInkClearRef.current = onMeetingInkClear;
 
   const slides = useMemo(
     () => [...(payload.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder) as T["slides"],
@@ -215,9 +236,12 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   }, [refreshSec, reloadPayload, onRefresh, refreshNativeSlidesOnly, current?.slideType]);
 
   usePresentationRealtime({
-    enabled: Boolean(realtimeWsUrl && (onRefresh || syncPlaybackCursor)),
+    enabled: Boolean(
+      realtimeWsUrl && (onRefresh || syncPlaybackCursor || syncMeetingAnnotations),
+    ),
     wsUrl: realtimeWsUrl,
     sendRef,
+    externalSendRef,
     onPresentationUpdated: onRefresh
       ? (event) => {
           void reloadPayload(event);
@@ -227,6 +251,15 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
       setPayload((prev) => applySlideDraftToPayload(prev, event.slideId, event.nativeConfig));
     },
     onPlaybackCursor: syncPlaybackCursor ? onPlaybackCursor : undefined,
+    onMeetingLaser: syncMeetingAnnotations
+      ? (event) => meetingLaserRef.current?.(event)
+      : undefined,
+    onMeetingInk: syncMeetingAnnotations
+      ? (event) => meetingInkRef.current?.(event)
+      : undefined,
+    onMeetingInkClear: syncMeetingAnnotations
+      ? (event) => meetingInkClearRef.current?.(event)
+      : undefined,
   });
 
   useEffect(() => {

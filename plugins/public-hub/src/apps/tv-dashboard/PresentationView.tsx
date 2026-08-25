@@ -5,10 +5,12 @@ import {
   NativeSlideView,
   PresentationStageControls,
   PresentationPlaybackProvider,
+  MeetingAnnotationOverlay,
   applyRuntimeInputValue,
   emptyInputFilterContributions,
   hasInputFilterContributions,
   isComunicadoInputBlock,
+  useMeetingAnnotations,
   usePresentationChromeVisibility,
   usePresentationEngine,
   useSessionPlaybackMode,
@@ -20,6 +22,9 @@ import {
   ExternalSlideView,
   type ComunicadoBlock,
   type InputFilterContributions,
+  type PresentationMeetingInkClearEvent,
+  type PresentationMeetingInkStrokeEvent,
+  type PresentationMeetingLaserEvent,
   type PresentationRealtimeEvent,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -96,6 +101,16 @@ export function PresentationView({
     () => resolvePresentationPlaybackClientId(token || initialPayload.playlist.id),
     [token, initialPayload.playlist.id],
   );
+  const meetingSendRef = useRef<((payload: Record<string, unknown>) => void) | null>(null);
+  const meetingHandlersRef = useRef<{
+    laser: (event: PresentationMeetingLaserEvent) => void;
+    ink: (event: PresentationMeetingInkStrokeEvent) => void;
+    clear: (event: PresentationMeetingInkClearEvent) => void;
+  }>({
+    laser: () => undefined,
+    ink: () => undefined,
+    clear: () => undefined,
+  });
 
   const {
     payload,
@@ -119,7 +134,25 @@ export function PresentationView({
       mode === "public" && token ? buildPublicPresentationWsUrl(token) : null,
     syncPlaybackCursor: playbackMode === "meeting",
     playbackClientId,
+    syncMeetingAnnotations: playbackMode === "meeting",
+    externalSendRef: meetingSendRef,
+    onMeetingLaser: (event) => meetingHandlersRef.current.laser(event),
+    onMeetingInk: (event) => meetingHandlersRef.current.ink(event),
+    onMeetingInkClear: (event) => meetingHandlersRef.current.clear(event),
   });
+
+  const currentSlideId = slides[index]?.id ?? "";
+  const annotations = useMeetingAnnotations({
+    enabled: playbackMode === "meeting",
+    clientId: playbackClientId,
+    slideId: currentSlideId,
+    sendRef: meetingSendRef,
+  });
+  meetingHandlersRef.current = {
+    laser: annotations.applyRemoteLaser,
+    ink: annotations.applyRemoteInk,
+    clear: annotations.applyRemoteInkClear,
+  };
 
   useEffect(() => {
     setLivePlaylistMode(payload.playlist.playbackMode);
@@ -237,6 +270,16 @@ export function PresentationView({
             </div>
           );
         })}
+        <MeetingAnnotationOverlay
+          enabled={playbackMode === "meeting"}
+          slideId={currentSlideId}
+          clientId={playbackClientId}
+          tool={annotations.tool}
+          strokes={annotations.strokes}
+          lasers={annotations.lasers}
+          onLocalStroke={annotations.publishStroke}
+          onLocalLaser={annotations.publishLaser}
+        />
       </DesignViewportStage>
       <PresentationStageControls
         index={index}
@@ -250,6 +293,9 @@ export function PresentationView({
         onJumpToSection={goToSection}
         playbackMode={playbackMode}
         onPlaybackModeChange={setPlaybackMode}
+        annotationTool={annotations.tool}
+        onAnnotationToolChange={annotations.setTool}
+        onClearAnnotations={annotations.clearInk}
       />
       </div>
     </PresentationPlaybackProvider>

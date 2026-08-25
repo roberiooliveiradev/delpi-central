@@ -34,6 +34,9 @@ export {
   usePresentationRealtime,
 } from "./usePresentationRealtime";
 export type {
+  PresentationMeetingInkClearEvent,
+  PresentationMeetingInkStrokeEvent,
+  PresentationMeetingLaserEvent,
   PresentationPresencePeer,
   PresentationPresenceRole,
   PresentationPlaybackCursorEvent,
@@ -64,6 +67,8 @@ export {
 } from "./meetingInkModel";
 export { MeetingAnnotationOverlay } from "./MeetingAnnotationOverlay";
 export type { MeetingAnnotationOverlayProps } from "./MeetingAnnotationOverlay";
+export { useMeetingAnnotations } from "./useMeetingAnnotations";
+export type { UseMeetingAnnotationsOptions } from "./useMeetingAnnotations";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
 export { ExternalSlideView } from "./ExternalSlideView";
