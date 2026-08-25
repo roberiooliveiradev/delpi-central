@@ -237,4 +237,51 @@ def test_grounded_insight_regression(case: dict):
 
         return
 
+    if case_id == "FF-QUALITY-T2-NORMAL-01":
+        from app.domain.services.chat_operational_llm_synthesis_brief_direct_service import (
+            ChatOperationalLlmSynthesisBriefDirectService,
+        )
+        from app.domain.services.chat_presentation_prose_delivery_service import (
+            ChatPresentationProseDeliveryService,
+        )
+        from app.domain.services.chat_response_mode_service import ChatResponseModeService
+
+        tool_context = dict(case["tool_context"])
+        tool_calls = case["tool_calls"]
+
+        brief = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+            message,
+            tool_calls,
+            response_mode=case["response_mode"],
+            tool_context=tool_context,
+        )
+
+        if expects.get("brief_direct_is_none"):
+            assert brief is None
+
+        direct, _, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+            message=message,
+            response_mode=case["response_mode"],
+            direct_answer=None,
+            skip_rag=False,
+            tool_calls=tool_calls,
+            tool_context=tool_context,
+        )
+
+        assert direct is None
+        assert effect == expects["synthesis_effect"]
+        assert bool(tool_context.get("commentaryBriefDirect")) is expects[
+            "commentary_brief_direct"
+        ]
+
+        fallback = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+            "",
+            tool_calls,
+        )
+
+        for code in expects.get("fallback_must_include_codes") or []:
+            assert code in fallback
+
+        return
+
     raise AssertionError(f"Unhandled grounded insight case: {case_id}")

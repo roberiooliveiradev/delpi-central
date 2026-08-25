@@ -3418,4 +3418,81 @@ GROUNDED_INSIGHT_REGRESSION_CASES = [
             "markers_remain": False,
         },
     },
+    {
+        "id": "FF-QUALITY-T2-NORMAL-01",
+        "message": "o que me diz sobre os itens?",
+        "response_mode": "normal",
+        "tool_context": {
+            "groundedEnrichInsight": True,
+            "turnGrounding": {"stage": "grounded_enrich_insight"},
+        },
+        "tool_calls": [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "llmProseDecoupled": True,
+                    "path": "/products/50230130/stock",
+                    "operationId": "get_product_stock",
+                    "dataCommentary": {
+                        "profileKey": "stock",
+                        "highlights": [
+                            {"text": "O produto **50230130** Saldo disponível total: **0** un."}
+                        ],
+                    },
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "llmProseDecoupled": True,
+                    "path": "/products/50230131/stock",
+                    "operationId": "get_product_stock",
+                    "dataCommentary": {
+                        "profileKey": "stock",
+                        "highlights": [
+                            {"text": "O produto **50230131** Saldo disponível total: **0** un."}
+                        ],
+                    },
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "llmProseDecoupled": True,
+                    "path": "/products/50230132/stock",
+                    "operationId": "get_product_stock",
+                    "dataCommentary": {
+                        "profileKey": "stock",
+                        "highlights": [
+                            {"text": "O produto **50230132** Saldo disponível total: **0** un."}
+                        ],
+                    },
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "llmProseDecoupled": True,
+                    "path": "/products/50230133/stock",
+                    "operationId": "get_product_stock",
+                    "dataCommentary": {
+                        "profileKey": "stock",
+                        "highlights": [
+                            {"text": "O produto **50230133** Saldo disponível total: **0** un."}
+                        ],
+                    },
+                },
+            },
+        ],
+        "expects": {
+            "brief_direct_is_none": True,
+            "synthesis_effect": "llm_synthesis",
+            "commentary_brief_direct": False,
+            "fallback_must_include_codes": ["50230130", "50230131"],
+        },
+    },
 ]
