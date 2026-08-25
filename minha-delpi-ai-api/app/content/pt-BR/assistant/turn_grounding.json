@@ -18,9 +18,13 @@
   "extractKeyFields": [
     "code",
     "productCode",
+    "product_code",
     "componentCode",
+    "component_code",
     "itemCode",
+    "item_code",
     "childCode",
+    "child_code",
     "id"
   ],
   "referringTo": {

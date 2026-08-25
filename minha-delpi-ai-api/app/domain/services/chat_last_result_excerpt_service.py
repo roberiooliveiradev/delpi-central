@@ -66,7 +66,137 @@ class ChatLastResultExcerptService:
         if keys_by_component_type:
             excerpt["keysByComponentType"] = keys_by_component_type
 
+        excerpt = cls._merge_typed_keys_from_tool_calls(excerpt, tool_calls)
+
         return {key: value for key, value in excerpt.items() if value is not None}
+
+    @classmethod
+    def build_preserving_structure_types(
+        cls,
+        tool_calls: list[Any] | None,
+        *,
+        message_id: str | None = None,
+        previous_messages: list[Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Monta excerpt do turno e preserva keysByComponentType da BOM se o turno atual for stock/enrich."""
+        excerpt = cls.build(tool_calls, message_id=message_id)
+
+        if not excerpt:
+            return None
+
+        typed = excerpt.get("keysByComponentType")
+
+        if isinstance(typed, dict) and typed.get("MP"):
+            return excerpt
+
+        prior_typed = cls._find_structure_typed_keys(previous_messages)
+
+        if not prior_typed:
+            return excerpt
+
+        merged = dict(typed) if isinstance(typed, dict) else {}
+
+        for component_type, codes in prior_typed.items():
+            if not isinstance(codes, list):
+                continue
+
+            bucket = list(merged.get(component_type) or [])
+
+            for code in codes:
+                token = str(code or "").strip()
+
+                if token and token not in bucket:
+                    bucket.append(token)
+
+            if bucket:
+                merged[str(component_type).upper()] = bucket
+
+        if merged:
+            excerpt["keysByComponentType"] = merged
+
+        return excerpt
+
+    @classmethod
+    def _merge_typed_keys_from_tool_calls(
+        cls,
+        excerpt: dict[str, Any],
+        tool_calls: list[Any] | None,
+    ) -> dict[str, Any]:
+        merged: dict[str, list[str]] = {}
+        existing = excerpt.get("keysByComponentType")
+
+        if isinstance(existing, dict):
+            for key, values in existing.items():
+                if isinstance(values, list):
+                    merged[str(key).upper()] = [
+                        str(item).strip() for item in values if str(item).strip()
+                    ]
+
+        for tool_call in tool_calls or []:
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            for component_type, codes in cls._extract_keys_by_component_type(metadata).items():
+                bucket = merged.setdefault(str(component_type).upper(), [])
+
+                for code in codes:
+                    if code not in bucket:
+                        bucket.append(code)
+
+        if merged:
+            excerpt["keysByComponentType"] = merged
+
+        return excerpt
+
+    @classmethod
+    def _find_structure_typed_keys(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> dict[str, list[str]]:
+        for item in reversed(previous_messages or []):
+            if not isinstance(item, dict):
+                continue
+
+            role = str(item.get("role") or item.get("sender") or "").strip().lower()
+
+            if role not in {"assistant", "ai"}:
+                continue
+
+            metadata = item.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            stored = metadata.get("toolCalls") or []
+
+            if not isinstance(stored, list) or not stored:
+                continue
+
+            prior = cls.build(stored)
+
+            if not isinstance(prior, dict):
+                continue
+
+            typed = prior.get("keysByComponentType")
+
+            if isinstance(typed, dict) and (typed.get("MP") or typed.get("PI")):
+                return {
+                    str(key).upper(): [
+                        str(code).strip() for code in values if str(code).strip()
+                    ]
+                    for key, values in typed.items()
+                    if isinstance(values, list)
+                }
+
+        return {}
 
     @classmethod
     def _select_primary_tool_call(cls, tool_calls: list[Any] | None) -> dict[str, Any] | None:

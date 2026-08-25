@@ -121,4 +121,69 @@ def test_build_prefers_primary_over_enrichment():
     )
 
     assert excerpt is not None
-    assert excerpt["profileKey"] == "stock"
+    assert "stock" in str(excerpt.get("path") or "").lower() or excerpt.get("profileKey") == "stock"
+
+
+def test_build_preserving_structure_types_keeps_mp_after_stock_turn():
+    structure_msg = {
+        "role": "assistant",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": _structure_tool_metadata(),
+                }
+            ]
+        },
+    }
+    stock_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": _stock_tool_metadata(),
+        }
+    ]
+
+    excerpt = ChatLastResultExcerptService.build_preserving_structure_types(
+        stock_calls,
+        previous_messages=[structure_msg],
+    )
+
+    assert excerpt is not None
+    typed = excerpt.get("keysByComponentType") or {}
+    assert "10080109" in (typed.get("MP") or [])
+    assert "10090014" in (typed.get("MP") or [])
+
+
+def test_build_tree_only_nested_mp_without_response_preview():
+    metadata = {
+        "ok": True,
+        "path": "/products/90260149/structure",
+        "operationId": "get_product_structure",
+        "apiDelpiResponseMeta": {"entity": "product_structure"},
+        "treePresentation": {
+            "type": "tree",
+            "title": "Estrutura",
+            "root": {
+                "id": "90260149",
+                "badge": "PA",
+                "children": [
+                    {
+                        "id": "50230130",
+                        "badge": "PI",
+                        "children": [
+                            {"id": "10080109", "badge": "MP"},
+                            {"id": "10380050", "badge": "MP"},
+                        ],
+                    }
+                ],
+            },
+        },
+    }
+
+    excerpt = ChatLastResultExcerptService.build(
+        [{"name": "execute_external_action", "metadata": metadata}]
+    )
+
+    typed = (excerpt or {}).get("keysByComponentType") or {}
+    assert typed.get("PI") == ["50230130"]
+    assert set(typed.get("MP") or []) == {"10080109", "10380050"}

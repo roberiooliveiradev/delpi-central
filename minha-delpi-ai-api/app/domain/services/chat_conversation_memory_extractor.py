@@ -265,7 +265,11 @@ class ChatConversationMemoryExtractor:
                     message_id = cls._message_id(item)
                     break
 
-        return ChatLastResultExcerptService.build(calls, message_id=message_id)
+        return ChatLastResultExcerptService.build_preserving_structure_types(
+            calls,
+            message_id=message_id,
+            previous_messages=previous_messages,
+        )
 
     @classmethod
     def _extract_canvas_state(
