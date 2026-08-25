@@ -116,6 +116,20 @@ class ChatOperationalLlmSynthesisContextService:
 
                 if json_fallback:
                     result = f"{result}\n\n{json_fallback}" if result else f"\n\n{json_fallback}"
+
+                from app.domain.services.chat_response_mode_content_service import (
+                    ChatResponseModeContentService,
+                )
+
+                if isinstance(tool_context, dict) and tool_context.get(
+                    ChatResponseModeContentService.commentary_grounded_enrich_insight_flag()
+                ):
+                    reminder = (
+                        ChatOperationalLlmSynthesisContextContentService.enrich_insight_composition_reminder()
+                    )
+
+                    if reminder:
+                        result = f"{result}\n\n{reminder}" if result else f"\n\n{reminder}"
             elif panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
                 result = f"{result}\n\n{panel_rule}" if result else f"\n\n{panel_rule}"
                 kind_hint = ChatOperationalLlmSynthesisContextContentService.prose_panel_kind_hint(

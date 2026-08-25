@@ -48,6 +48,17 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def enrich_insight_composition_reminder(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "enrichInsightCompositionReminder",
+                default="",
+            )
+            or ""
+        ).strip()
+
+    @classmethod
     def prose_panel_kind_hint(cls, selected: str | None) -> str:
         kind = str(selected or "").strip().lower()
 

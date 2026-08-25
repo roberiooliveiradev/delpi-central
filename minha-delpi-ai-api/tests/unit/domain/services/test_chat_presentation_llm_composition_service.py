@@ -216,3 +216,75 @@ def test_enrich_multi_tool_interleaved_composition():
     assert "tree" in kinds
     assert kinds.count("table") == 2
     assert len(plan["segments"]) >= 5
+
+
+def test_normal_enrich_facts_include_composition_slots_and_reminder():
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+    from app.domain.services.chat_operational_llm_synthesis_context_service import (
+        ChatOperationalLlmSynthesisContextService,
+    )
+
+    configure_domain_infrastructure_ports()
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "path": "/products/90260149/structure",
+                "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "pa"}},
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Itens",
+                    "rows": [{"code": "10080109"}],
+                },
+                "presentationDecision": {"selected": "tree"},
+            },
+        },
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "path": "/products/10080109/stock",
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Estoque",
+                    "rows": [{"code": "10080109", "qty": 0}],
+                },
+            },
+        },
+    ]
+
+    addon = ChatOperationalLlmSynthesisContextService.build_facts_addon(
+        tool_calls,
+        response_mode="normal",
+        tool_context={"groundedEnrichInsight": True},
+    )
+
+    assert "[[tree]]" in addon or "[[table]]" in addon or "Slots" in addon or "slots" in addon.lower()
+    assert "marcador" in addon.lower() or "composição" in addon.lower() or "cruzado" in addon.lower()
+
+
+def test_normal_enrich_composition_apply_builds_stack():
+    metadata = {
+        "ok": True,
+        "path": "/products/90260149/structure",
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "pa"}},
+        "tablePresentation": {
+            "type": "table",
+            "title": "Estoque",
+            "rows": [{"code": "10080109"}],
+        },
+    }
+
+    cleaned = ChatPresentationLlmCompositionService.apply(
+        metadata,
+        "Padrão da BOM.\n\n[[tree]]\n\nSaldos.\n\n[[table]]\n\nConclusão.",
+        response_mode="normal",
+    )
+
+    assert metadata.get("proseCompositionSource") == "llm"
+    assert metadata["renderPlan"]["layoutMode"] == "stack"
+    assert "[[" not in cleaned
