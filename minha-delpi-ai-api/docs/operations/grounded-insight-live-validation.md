@@ -1,54 +1,50 @@
-# Grounded insight — validação live
+# Grounded insight — validação live (gaps E20–E24)
 
-Produto canônico: `90260149` · modo default: `normal` · data: 2026-08-25
+Produto canônico: `90260149` · data: 2026-08-25
 
-## CP1 — estrutura T1 (E10)
+## Asserções de qualidade (E23)
 
-| Turno | Mensagem | stage | operationIds | Pass? |
-|-------|----------|-------|--------------|-------|
-| T1 | qual a estrutura do produto 90260149 | — | get_product_structure | ✅ |
+O smoke falha se:
+- **T2** prosa = template de um único estoque («Saldo disponível…» + «próximos passos… negativo») sem cruzar códigos
+- **T3** stock paths só `5023…` (PI) em vez de MPs (`1008…` / `1038…`) ou incluir o PA
 
-### Prosa T1 (trecho)
+## E24 — Verify-final gaps
 
-Produto **90260149** — CHICOTE EPR SINGELO 235MM. A composição tem **6** componente(s) de nível 1.
+### Offline (2026-08-25)
 
-## CP2 — três turnos (E11+E13)
+| Gate | Resultado |
+|------|-----------|
+| `pytest -k "FF-QUALITY or FF-GROUND or FF-COMPOSE or brief_direct_skips or preserving_structure or mp_referent"` | **15 passed** |
+| E20 brief-direct skip enrich multi-tool | PASS |
+| E21 excerpt preserve BOM + planner MP sem PI | PASS |
+| E22 composição Normal facts/reminder | PASS |
 
-| Turno | Mensagem | stage | stock paths / operationIds | Pass? |
-|-------|----------|-------|----------------------------|-------|
-| T2 | o que me diz sobre os itens? | — | /products/50230130/stock, /products/50230131/stock, /products/50230132/stock, /products/50230133/stock | ✅ |
-| T3 | qual o estoque das matérias-primas? | — | /products/50230130/stock | ✅ |
-
-### T2 modo Pensador
-
-- stage: `—`
-- `synthesisFactsTruncated`: `None`
-- Pass: ✅
-
-## CP3 — composição LLM (E18)
-
-- `proseCompositionSource`: `—`
-- `renderPlan.layoutMode`: `single`
-- `renderPlan.segments`: `['markdown', 'table']`
-- Offline FF-COMPOSE: ver pytest (`FF-COMPOSE-STACK/EXPLICIT-TABLE/ENRICH`)
-
-## E19 — Sign-off verify-final
+### Live
 
 | Critério | Normal | Pensador |
 |----------|--------|----------|
-| T1 estrutura prosa+árvore | ✅ | ✅ |
-| T2 insight enrich sem dump | ✅ | ✅ |
-| T3 stock MPs fan-out | ✅ | — |
-| Composição intercalada (E18) | ⚠ offline FF-COMPOSE | ⚠ offline FF-COMPOSE |
-| Dados prosa = metadata | ✅ | ✅ |
-| Sem «reformule» / inglês | ✅ | ✅ |
+| T1 estrutura prosa+árvore | _pendente — Docker Desktop off_ | — |
+| T2 insight enrich (não template) | _pendente live_ | _pendente live_ |
+| T3 stock MPs tipadas | _pendente live_ | — |
+| Composição intercalada | _pendente live_ | — |
 
-## Problemas / regressões
+**Ambiente:** WSL sem Docker (`docker.sock` ausente). Reexecutar:
 
-- Nenhum na execução automatizada.
+```bash
+# Docker Desktop ligado
+./infra/scripts/up-dev-sequential.sh --fase core
+./infra/scripts/up-dev-sequential.sh --fase chat --build minha-delpi-ai-api
+cd minha-delpi-ai-api && PYTHONPATH=. .venv/bin/python -u scripts/smoke_grounded_insight_live.py
+```
+
+## Commits desta rodada (gaps)
+
+- E20.S1–S3 — Normal enrich → LLM; fallback multi-tool; FF-QUALITY-T2
+- E21.S1–S2 — Excerpt BOM tipado preservado; planner MP sem fallback PI
+- E22.S1 — Reminder composição enrich Normal
+- E23.S1 — Smoke qualidade T2/T3
 
 ## Metadata
 
-- sessionId: `7769f922-5561-423e-b359-5d289702939d`
 - script: `scripts/smoke_grounded_insight_live.py`
-- ambiente: WSL + `up-dev-sequential` (core + chat)
+- plano: `gaps_insights_normal_7f86b666`
