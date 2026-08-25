@@ -1,6 +1,6 @@
 # Rotas comerciais consolidadas — ROL e OTD
 
-> **Status:** especificação aprovada — rotas **ainda não implementadas** (plano E1–E4).  
+> **Status:** implementado (E1–E4) — `GET /commercial/rol` e `GET /commercial/sales-order-otd/analysis` publicados na api-delpi.  
 > Consumidores-alvo: tv-dashboard, Portal Comercial (BFF futuro), minha-delpi-chat, SI.
 
 ## Overview

@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 682,
+  "operation_count": 684,
   "operations": [
     {
       "method": "POST",
@@ -2683,6 +2683,425 @@
     },
     {
       "method": "GET",
+      "path": "/commercial/rol",
+      "operationId": "get_commercial_rol",
+      "summary": "Commercial ROL consolidated analysis",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size.",
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "default": "week"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "TOTVS branch code (01|02). Omit for consolidated.",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "CSV customer names include (LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV customer codes exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "CSV customer names exclude (NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "group_by",
+          "in": "query",
+          "required": false,
+          "description": "Breakdown mode: none, customer or branch.",
+          "type": "string",
+          "enum": [
+            "none",
+            "customer",
+            "branch"
+          ],
+          "default": "customer"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number when group_by=customer.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Page size when group_by=customer.",
+          "type": "integer",
+          "default": 50
+        },
+        {
+          "name": "include",
+          "in": "query",
+          "required": false,
+          "description": "CSV flags: portfolio.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol",
+        "shape": "composite_analysis",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial ROL consolidated analysis",
+            "description": "Composite ROL package with summary, series, optional customer breakdown and weekly portfolio.",
+            "label": "Commercial ROL analysis"
+          },
+          "pt-BR": {
+            "summary": "Pacote consolidado de ROL comercial",
+            "description": "Summary, série, breakdown por cliente e carteira semanal opcional (include=portfolio).",
+            "label": "Análise consolidada de ROL comercial"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "group_by": {
+            "locale": {
+              "en": {
+                "description": "Como agregar o resultado (geral, branch, product etc.).",
+                "label": "Group by"
+              },
+              "pt-BR": {
+                "description": "Como agregar o resultado (geral, filial, produto etc.).",
+                "label": "Agrupar por"
+              }
+            },
+            "enumLabels": {
+              "branch": {
+                "en": {
+                  "label": "Branch"
+                },
+                "pt-BR": {
+                  "label": "Filial"
+                }
+              },
+              "branch_summary": {
+                "en": {
+                  "label": "Branch summary"
+                },
+                "pt-BR": {
+                  "label": "Resumo por filial"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "day_work_center": {
+                "en": {
+                  "label": "Day × work center"
+                },
+                "pt-BR": {
+                  "label": "Dia × centro de trabalho"
+                }
+              },
+              "general": {
+                "en": {
+                  "label": "General"
+                },
+                "pt-BR": {
+                  "label": "Geral"
+                }
+              },
+              "product": {
+                "en": {
+                  "label": "Product"
+                },
+                "pt-BR": {
+                  "label": "Produto"
+                }
+              },
+              "product_group": {
+                "en": {
+                  "label": "Product group"
+                },
+                "pt-BR": {
+                  "label": "Grupo de produto"
+                }
+              },
+              "unit": {
+                "en": {
+                  "label": "Unit"
+                },
+                "pt-BR": {
+                  "label": "Unidade"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Summary, série, breakdown por cliente e carteira semanal opcional (include=portfolio).",
+          "label": "Análise consolidada de ROL comercial"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Composite ROL package with summary, series, optional customer breakdown and weekly portfolio."
+    },
+    {
+      "method": "GET",
       "path": "/commercial/rol/by-customer",
       "operationId": "get_commercial_rol_by_customer",
       "summary": "Commercial ROL ranking by customer",
@@ -3300,6 +3719,419 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Sales order otd."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/analysis",
+      "operationId": "get_commercial_sales_order_otd_analysis",
+      "summary": "Sales order OTD consolidated analysis",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size.",
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "default": "week"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV de códigos TOTVS de clientes (filtro de carteira).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "CSV customer names include (LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV customer codes exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "CSV customer names exclude (NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "group_by",
+          "in": "query",
+          "required": false,
+          "description": "Breakdown mode: none, customer or branch.",
+          "type": "string",
+          "enum": [
+            "none",
+            "customer",
+            "branch"
+          ],
+          "default": "customer"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number when group_by=customer.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Page size when group_by=customer.",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_sales_order_otd",
+        "shape": "composite_analysis",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Sales order OTD consolidated analysis",
+            "description": "Composite OTD package with summary, series and optional customer breakdown including fulfillment qty.",
+            "label": "Sales order OTD analysis"
+          },
+          "pt-BR": {
+            "summary": "Pacote consolidado de OTD e atendimento de pedidos",
+            "description": "Summary com qty/OTD, série temporal e breakdown por cliente.",
+            "label": "Análise consolidada de OTD de pedidos"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "group_by": {
+            "locale": {
+              "en": {
+                "description": "Como agregar o resultado (geral, branch, product etc.).",
+                "label": "Group by"
+              },
+              "pt-BR": {
+                "description": "Como agregar o resultado (geral, filial, produto etc.).",
+                "label": "Agrupar por"
+              }
+            },
+            "enumLabels": {
+              "branch": {
+                "en": {
+                  "label": "Branch"
+                },
+                "pt-BR": {
+                  "label": "Filial"
+                }
+              },
+              "branch_summary": {
+                "en": {
+                  "label": "Branch summary"
+                },
+                "pt-BR": {
+                  "label": "Resumo por filial"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "day_work_center": {
+                "en": {
+                  "label": "Day × work center"
+                },
+                "pt-BR": {
+                  "label": "Dia × centro de trabalho"
+                }
+              },
+              "general": {
+                "en": {
+                  "label": "General"
+                },
+                "pt-BR": {
+                  "label": "Geral"
+                }
+              },
+              "product": {
+                "en": {
+                  "label": "Product"
+                },
+                "pt-BR": {
+                  "label": "Produto"
+                }
+              },
+              "product_group": {
+                "en": {
+                  "label": "Product group"
+                },
+                "pt-BR": {
+                  "label": "Grupo de produto"
+                }
+              },
+              "unit": {
+                "en": {
+                  "label": "Unit"
+                },
+                "pt-BR": {
+                  "label": "Unidade"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Summary com qty/OTD, série temporal e breakdown por cliente.",
+          "label": "Análise consolidada de OTD de pedidos"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Composite OTD package with summary, series and optional customer breakdown including fulfillment qty."
     },
     {
       "method": "GET",
@@ -60794,123 +61626,6 @@
     },
     {
       "method": "GET",
-      "path": "/products/{code}/raw-material-set-shortages",
-      "operationId": "get_product_raw_material_set_shortages",
-      "summary": "Raw-material shortages in the finished-product order set",
-      "tags": [
-        "products"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "code",
-          "in": "path",
-          "required": true,
-          "description": "Code query parameter.",
-          "type": "string"
-        },
-        {
-          "name": "branch",
-          "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "enum": [
-            "01",
-            "02"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "max_depth",
-          "in": "query",
-          "required": false,
-          "description": "Max depth query parameter.",
-          "type": "integer",
-          "default": 8
-        }
-      ],
-      "xDelpi": {
-        "entity": "product_raw_material_set_shortages",
-        "shape": "composite_analysis",
-        "category": "products",
-        "locale": {
-          "en": {
-            "summary": "Raw-material shortages in the finished-product order set",
-            "description": "Lists mother production orders of a finished product whose raw materials will go negative on the projected extract.",
-            "label": "Raw-material set shortages"
-          },
-          "pt-BR": {
-            "summary": "Ruptura de matéria-prima no conjunto do PA",
-            "description": "Lista as OPs mãe do produto acabado cujas matérias-primas ficam negativas no extrato projetado.",
-            "label": "Ruptura de matéria-prima no conjunto do PA"
-          }
-        },
-        "params": {
-          "branch": {
-            "locale": {
-              "en": {
-                "description": "Protheus branch code (01 or 02).",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Filial TOTVS (01 ou 02).",
-                "label": "Filial"
-              }
-            },
-            "enumLabels": {
-              "01": {
-                "en": {
-                  "label": "Branch 01"
-                },
-                "pt-BR": {
-                  "label": "Filial 01"
-                }
-              },
-              "02": {
-                "en": {
-                  "label": "Branch 02"
-                },
-                "pt-BR": {
-                  "label": "Filial 02"
-                }
-              }
-            }
-          },
-          "code": {
-            "locale": {
-              "en": {
-                "description": "Finished product code.",
-                "label": "Code"
-              },
-              "pt-BR": {
-                "description": "Código do produto acabado.",
-                "label": "Código"
-              }
-            }
-          },
-          "max_depth": {
-            "locale": {
-              "en": {
-                "description": "Max depth query parameter.",
-                "label": "Max depth"
-              },
-              "pt-BR": {
-                "description": "Profundidade máxima da hierarquia/estrutura retornada.",
-                "label": "Profundidade máxima"
-              }
-            }
-          }
-        },
-        "tv": {
-          "description": "Lista as OPs mãe do produto acabado cujas matérias-primas ficam negativas no extrato projetado.",
-          "label": "Ruptura de matéria-prima no conjunto do PA"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Raw-material shortages in the finished-product order set."
-    },
-    {
-      "method": "GET",
       "path": "/products/{code}/purchase-budget-history",
       "operationId": "get_product_purchase_budget_history",
       "summary": "Product purchase budget history",
@@ -61666,6 +62381,150 @@
         "presentationStrategy": "enriched"
       },
       "description": "Product raw material price intelligence."
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/raw-material-set-shortages",
+      "operationId": "get_product_raw_material_set_shortages",
+      "summary": "Raw-material shortages in the finished-product order set",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "code",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "max_depth",
+          "in": "query",
+          "required": false,
+          "description": "Max depth query parameter.",
+          "type": "integer",
+          "default": 8
+        }
+      ],
+      "xDelpi": {
+        "entity": "product_raw_material_set_shortages",
+        "shape": "composite_analysis",
+        "category": "products",
+        "locale": {
+          "en": {
+            "summary": "Raw-material shortages in the finished-product order set",
+            "description": "Lists mother production orders of a finished product whose raw materials will go negative on the projected extract.",
+            "whenToUse": "Use when asking which open orders of a finished product will lack raw material.",
+            "label": "Raw-material set shortages"
+          },
+          "pt-BR": {
+            "summary": "Ruptura de matéria-prima no conjunto do PA",
+            "description": "Lista as OPs mãe do produto acabado cujas matérias-primas ficam negativas no extrato projetado.",
+            "whenToUse": "Use para saber quais OPs abertas do PA vão faltar matéria-prima.",
+            "label": "Ruptura de matéria-prima no conjunto do PA"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (01 or 02).",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Filial TOTVS (01 ou 02).",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "code": {
+            "locale": {
+              "en": {
+                "description": "Finished product code.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do produto acabado.",
+                "label": "Código"
+              }
+            }
+          },
+          "max_depth": {
+            "locale": {
+              "en": {
+                "description": "Max depth query parameter.",
+                "label": "Max depth"
+              },
+              "pt-BR": {
+                "description": "Profundidade máxima da hierarquia/estrutura retornada.",
+                "label": "Profundidade máxima"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para saber quais OPs abertas do PA vão faltar matéria-prima.",
+          "description": "Lista as OPs mãe do produto acabado cujas matérias-primas ficam negativas no extrato projetado.",
+          "label": "Ruptura de matéria-prima no conjunto do PA"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Raw-material shortages in the finished-product order set."
     },
     {
       "method": "GET",

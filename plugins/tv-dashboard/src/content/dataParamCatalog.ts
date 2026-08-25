@@ -473,7 +473,7 @@ export const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
   filial_id: { "01": "Filial 01", "02": "Filial 02", "all": "Todas" },
   freight_mode: { "cif": "CIF", "fob": "FOB" },
   granularity: { "auto": "Automático", "day": "Dia", "month": "Mês", "week": "Semana", "year": "Ano" },
-  group_by: { "branch": "Filial", "branch_summary": "Resumo por filial", "day": "Dia", "day_work_center": "Dia × centro de trabalho", "general": "Geral", "product": "Produto", "product_group": "Grupo de produto", "unit": "Unidade" },
+  group_by: { "branch": "Filial", "branch_summary": "Resumo por filial", "customer": "Cliente", "day": "Dia", "day_work_center": "Dia × centro de trabalho", "general": "Geral", "none": "Nenhum", "product": "Produto", "product_group": "Grupo de produto", "unit": "Unidade" },
   inspecao_status: { "all": "Todos", "inspecionou": "Inspecionou", "nao_inspecionou": "Não inspecionou", "sem_cadastro": "Não possui inspeção cadastrada" },
   invoice_type: { "other": "Outros", "repair_shipment": "Remessa ou retorno de conserto", "return": "Devolução", "sale": "Venda", "sample": "Amostra" },
   linked_sort_dir: { "asc": "Crescente", "desc": "Decrescente" },

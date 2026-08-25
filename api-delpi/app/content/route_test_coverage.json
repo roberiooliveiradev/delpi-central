@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-24",
-  "baselineOperationCount": 682,
-  "operationCount": 682,
-  "coveredCount": 610,
+  "generatedAt": "2026-08-25",
+  "baselineOperationCount": 684,
+  "operationCount": 684,
+  "coveredCount": 612,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 20,
-      "covered": 20,
+      "total": 22,
+      "covered": 22,
       "gap": 0,
       "exempt": 0
     },
@@ -343,6 +343,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_commercial_rol",
+      "method": "GET",
+      "path": "/commercial/rol",
+      "module": "commercial",
+      "entity": "commercial_rol",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
       "operationId": "get_commercial_rol_by_customer",
       "method": "GET",
       "path": "/commercial/rol/by-customer",
@@ -367,6 +376,15 @@
       "module": "commercial",
       "entity": "sales_order_otd",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_commercial_sales_order_otd_analysis",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/analysis",
+      "module": "commercial",
+      "entity": "commercial_sales_order_otd",
+      "shape": "composite_analysis",
       "status": "covered"
     },
     {
@@ -3980,15 +3998,6 @@
       "status": "covered"
     },
     {
-      "operationId": "get_product_raw_material_set_shortages",
-      "method": "GET",
-      "path": "/products/{code}/raw-material-set-shortages",
-      "module": "products",
-      "entity": "product_raw_material_set_shortages",
-      "shape": "composite_analysis",
-      "status": "covered"
-    },
-    {
       "operationId": "get_product_purchase_budget_history",
       "method": "GET",
       "path": "/products/{code}/purchase-budget-history",
@@ -4021,6 +4030,15 @@
       "path": "/products/{code}/raw-material-price-intelligence",
       "module": "products",
       "entity": "product_raw_material_price_intelligence",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_product_raw_material_set_shortages",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-set-shortages",
+      "module": "products",
+      "entity": "product_raw_material_set_shortages",
       "shape": "composite_analysis",
       "status": "covered"
     },
