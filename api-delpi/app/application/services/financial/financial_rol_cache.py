@@ -6,8 +6,11 @@ from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.composition.query_cache_composer import build_query_cache
 
 
+def _csv(values: list[str] | None) -> str:
+    return ",".join(values or [])
+
+
 def financial_rol_cache_key(request: GetRolRequest) -> str:
-    codes = ",".join(request.customer_codes or [])
     return "|".join(
         [
             "financial-rol",
@@ -15,7 +18,10 @@ def financial_rol_cache_key(request: GetRolRequest) -> str:
             request.start_date or "",
             request.end_date or "",
             request.customer_segment or "",
-            codes,
+            _csv(request.customer_codes),
+            _csv(request.customer_names),
+            _csv(request.exclude_customer_codes),
+            _csv(request.exclude_customer_names),
         ]
     )
 

@@ -1134,6 +1134,21 @@
       },
       "category": "commercial"
     },
+    "get_commercial_rol": {
+      "locale": {
+        "en": {
+          "summary": "Commercial ROL consolidated analysis",
+          "description": "Composite ROL package with summary, series, optional customer breakdown and weekly portfolio.",
+          "label": "Commercial ROL analysis"
+        },
+        "pt-BR": {
+          "label": "Análise consolidada de ROL comercial",
+          "summary": "Pacote consolidado de ROL comercial",
+          "description": "Summary, série, breakdown por cliente e carteira semanal opcional (include=portfolio)."
+        }
+      },
+      "category": "commercial"
+    },
     "get_commercial_rol_series": {
       "locale": {
         "en": {

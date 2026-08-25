@@ -6,11 +6,8 @@ from app.application.services.financial.financial_rol_cache import (
     set_cached_financial_rol,
 )
 from app.domain.ports.financial.financial_query_repository_port import FinancialQueryRepositoryPort
-from app.domain.services.commercial_customer_segment_service import (
-    CommercialCustomerSegmentService,
-)
-from app.domain.services.commercial_customer_codes_filter_service import (
-    CommercialCustomerCodesFilterService,
+from app.domain.services.commercial_analysis_filter_service import (
+    CommercialAnalysisFilterService,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
@@ -34,15 +31,15 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         if request.branch:
             vendas_qb.eq("D2.D2_FILIAL", request.branch)
         vendas_qb.date_range("D2.D2_EMISSAO", request.start_date, request.end_date)
-        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+        CommercialAnalysisFilterService.apply_to_query_builder(
             vendas_qb,
-            "D2.D2_CLIENTE",
-            request.customer_segment,
-        )
-        CommercialCustomerCodesFilterService.apply_to_query_builder(
-            vendas_qb,
-            "D2.D2_CLIENTE",
-            request.customer_codes,
+            customer_code_column="D2.D2_CLIENTE",
+            customer_name_column="A1.A1_NOME",
+            customer_segment=request.customer_segment,
+            customer_codes=request.customer_codes,
+            customer_names=request.customer_names,
+            exclude_customer_codes=request.exclude_customer_codes,
+            exclude_customer_names=request.exclude_customer_names,
         )
         vendas_where, vendas_params = vendas_qb.build()
 
@@ -55,15 +52,15 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         if request.branch:
             dev_qb.eq("D1.D1_FILIAL", request.branch)
         dev_qb.date_range("D1.D1_DTDIGIT", request.start_date, request.end_date)
-        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+        CommercialAnalysisFilterService.apply_to_query_builder(
             dev_qb,
-            "D1.D1_FORNECE",
-            request.customer_segment,
-        )
-        CommercialCustomerCodesFilterService.apply_to_query_builder(
-            dev_qb,
-            "D1.D1_FORNECE",
-            request.customer_codes,
+            customer_code_column="D1.D1_FORNECE",
+            customer_name_column="A1D.A1_NOME",
+            customer_segment=request.customer_segment,
+            customer_codes=request.customer_codes,
+            customer_names=request.customer_names,
+            exclude_customer_codes=request.exclude_customer_codes,
+            exclude_customer_names=request.exclude_customer_names,
         )
         dev_where, dev_params = dev_qb.build()
 
@@ -169,6 +166,11 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 )) AS VLR_DEVOLUCAO
 
             FROM SD1010 D1 WITH (NOLOCK)
+
+            LEFT JOIN SA1010 A1D WITH (NOLOCK)
+                ON  A1D.D_E_L_E_T_ = ''
+                AND A1D.A1_COD  = D1.D1_FORNECE
+                AND A1D.A1_LOJA = D1.D1_LOJA
 
             WHERE {dev_where}
                 AND (

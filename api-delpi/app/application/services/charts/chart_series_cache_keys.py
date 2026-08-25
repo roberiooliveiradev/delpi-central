@@ -32,6 +32,9 @@ def commercial_rol_series_cache_key(request: CommercialRolSeriesRequest) -> str:
             request.date_end or "",
             request.customer_segment or "",
             ",".join(request.customer_codes or []),
+            ",".join(request.customer_names or []),
+            ",".join(request.exclude_customer_codes or []),
+            ",".join(request.exclude_customer_names or []),
         ]
     )
 

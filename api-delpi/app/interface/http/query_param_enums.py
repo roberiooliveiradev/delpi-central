@@ -175,6 +175,26 @@ PAC_PLAN_STATUS_VALUES = (
     "cancelled",
 )
 
+def GRANULARITY_QUERY_WEEK():
+    return Query(
+    "week",
+    description="Series bucket size.",
+    pattern=_enum_pattern(GRANULARITY_VALUES),
+    enum=list(GRANULARITY_VALUES),
+)
+
+COMMERCIAL_ANALYSIS_GROUP_BY_VALUES = ("none", "customer", "branch")
+
+
+def COMMERCIAL_ANALYSIS_GROUP_BY_QUERY():
+    return Query(
+        "customer",
+        description="Breakdown mode: none, customer or branch.",
+        pattern=_enum_pattern(COMMERCIAL_ANALYSIS_GROUP_BY_VALUES),
+        enum=list(COMMERCIAL_ANALYSIS_GROUP_BY_VALUES),
+    )
+
+
 def GRANULARITY_QUERY_REQUIRED():
     return Query(
     ...,

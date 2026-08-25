@@ -29,8 +29,14 @@ from app.application.use_cases.commercial.get_commercial_rol_series_use_case imp
 from app.application.use_cases.commercial.get_commercial_rol_by_customer_use_case import (
     GetCommercialRolByCustomerUseCase,
 )
+from app.application.use_cases.commercial.get_commercial_rol_analysis_use_case import (
+    GetCommercialRolAnalysisUseCase,
+)
 from app.infrastructure.persistence.totvs.commercial_repositories.commercial_rol_by_customer_repository import (
     CommercialRolByCustomerRepository,
+)
+from app.infrastructure.persistence.totvs.commercial_repositories.commercial_weekly_portfolio_repository import (
+    CommercialWeeklyPortfolioRepository,
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_rol_pct_repository import NewClientsRolPctRepository
 from app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
@@ -121,6 +127,20 @@ def build_get_commercial_rol_series_use_case() -> GetCommercialRolSeriesUseCase:
 def build_get_commercial_rol_by_customer_use_case() -> GetCommercialRolByCustomerUseCase:
     return GetCommercialRolByCustomerUseCase(
         repository=CommercialRolByCustomerRepository()
+    )
+
+
+def build_get_commercial_rol_analysis_use_case() -> GetCommercialRolAnalysisUseCase:
+    financial = FinancialRepository()
+    return GetCommercialRolAnalysisUseCase(
+        financial_query_repository=financial,
+        rol_series_use_case=GetCommercialRolSeriesUseCase(
+            financial_query_repository=financial
+        ),
+        rol_by_customer_use_case=GetCommercialRolByCustomerUseCase(
+            repository=CommercialRolByCustomerRepository()
+        ),
+        weekly_portfolio_repository=CommercialWeeklyPortfolioRepository(),
     )
 
 
