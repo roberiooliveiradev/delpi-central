@@ -52,6 +52,7 @@ def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
         "viewportHeight": int(height) if height is not None else None,
         "transitionStyle": row["transition_style"],
         "defaultDurationSec": row["default_duration_sec"],
+        "playbackMode": row.get("playback_mode") or "presentation",
         "globalRefreshSec": row["global_refresh_sec"],
         "isActive": row["is_active"],
         "viewCount": row["view_count"],
@@ -534,6 +535,7 @@ class PlaylistRepository:
         clear_viewport_dims: bool = False,
         transition_style: str | None = None,
         default_duration_sec: int | None = None,
+        playback_mode: str | None = None,
         global_refresh_sec: int | None = None,
         data_defaults: dict[str, Any] | None = None,
         master_config: dict[str, Any] | None = None,
@@ -546,6 +548,7 @@ class PlaylistRepository:
             "viewport_profile": viewport_profile,
             "transition_style": transition_style,
             "default_duration_sec": default_duration_sec,
+            "playback_mode": playback_mode,
             "global_refresh_sec": global_refresh_sec,
         }
         for column, value in mapping.items():
@@ -683,10 +686,10 @@ class PlaylistRepository:
                     INSERT INTO tv_dashboard.playlists (
                       public_token, name, description, viewport_profile, viewport_width, viewport_height,
                       transition_style,
-                      default_duration_sec, global_refresh_sec, data_defaults, master_config,
+                      default_duration_sec, playback_mode, global_refresh_sec, data_defaults, master_config,
                       is_active, created_by, owner_user_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, FALSE, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, FALSE, %s, %s)
                     RETURNING *
                     """,
                     (
@@ -698,6 +701,7 @@ class PlaylistRepository:
                         source.get("viewportHeight"),
                         source["transitionStyle"],
                         source["defaultDurationSec"],
+                        source.get("playbackMode") or "presentation",
                         source["globalRefreshSec"],
                         json.dumps(source.get("dataDefaults") or {}),
                         json.dumps(source.get("masterConfig") or {}),

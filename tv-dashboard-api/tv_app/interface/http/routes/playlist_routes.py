@@ -55,6 +55,7 @@ class UpdatePlaylistBody(BaseModel):
     viewportHeight: int | None = Field(default=None, ge=64, le=7680)
     transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
+    playbackMode: Literal["presentation", "meeting"] | None = None
     globalRefreshSec: int | None = Field(default=None, ge=30, le=3600)
     dataDefaults: dict[str, Any] | None = None
     masterConfig: dict[str, Any] | None = None
@@ -269,6 +270,7 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
             clear_viewport_dims=clear_dims,
             transition_style=body.transitionStyle,
             default_duration_sec=body.defaultDurationSec,
+            playback_mode=body.playbackMode,
             global_refresh_sec=body.globalRefreshSec,
             data_defaults=body.dataDefaults,
             master_config=body.masterConfig,

@@ -26,6 +26,8 @@ export type PresentationPlaylist = {
   transitionStyle?: string;
   globalRefreshSec?: number;
   defaultDurationSec?: number;
+  /** presentation = auto-advance; meeting = manual. */
+  playbackMode?: "presentation" | "meeting";
 };
 
 export type PresentationMeta = {

@@ -238,6 +238,7 @@ class PresentationPayloadService:
                 "transitionStyle": playlist_transition,
                 "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
                 "defaultDurationSec": default_duration,
+                "playbackMode": playlist.get("playbackMode") or "presentation",
                 "publicToken": playlist["publicToken"],
                 "publicUrl": self.build_public_url(playlist["publicToken"]),
                 **({"masterConfig": playlist_master} if playlist_master else {}),
