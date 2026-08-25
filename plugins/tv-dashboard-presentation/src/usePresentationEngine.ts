@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { applySlideDraftToPayload } from "./applySlideDraftToPayload";
+import {
+  applyPlaybackCursorToIndex,
+} from "./playbackCursor";
 import type { PresentationPayloadLike, PresentationSlide } from "./types";
 import {
   usePresentationRealtime,
+  type PresentationPlaybackCursorEvent,
   type PresentationRealtimeEvent,
 } from "./usePresentationRealtime";
 import { resolveSlideTransitionStyle } from "./presentationTransition";
@@ -24,6 +28,12 @@ export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
    * Default true = modo apresentação (comportamento histórico).
    */
   autoAdvance?: boolean;
+  /**
+   * Modo reunião: publica/aplica `playback_cursor` via WS.
+   * Requer `playbackClientId` estável por aba.
+   */
+  syncPlaybackCursor?: boolean;
+  playbackClientId?: string | null;
 };
 
 export function usePresentationEngine<T extends PresentationPayloadLike>({
@@ -35,6 +45,8 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   refreshNativeSlidesOnly = false,
   realtimeWsUrl = null,
   autoAdvance = true,
+  syncPlaybackCursor = false,
+  playbackClientId = null,
 }: UsePresentationEngineOptions<T>) {
   const keyboardEnabled = enableKeyboardControls ?? enableKeyboardPause;
   const [payload, setPayload] = useState(initialPayload);
@@ -43,11 +55,17 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   const [hidden, setHidden] = useState(
     typeof document !== "undefined" ? document.visibilityState === "hidden" : false,
   );
+  const sendRef = useRef<((payload: Record<string, unknown>) => void) | null>(null);
+  const localNavRef = useRef(false);
+  const slidesRef = useRef<T["slides"]>([] as T["slides"]);
+  const clientIdRef = useRef(playbackClientId);
+  clientIdRef.current = playbackClientId;
 
   const slides = useMemo(
     () => [...(payload.slides ?? [])].sort((a, b) => a.sortOrder - b.sortOrder) as T["slides"],
     [payload.slides],
   );
+  slidesRef.current = slides;
 
   const playlist = payload.playlist;
   const viewport = playlist.viewportProfile || "1080p";
@@ -61,26 +79,45 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     current.native?.data &&
     current.native.data.error === true;
 
+  const publishCursor = useCallback(
+    (nextIndex: number) => {
+      if (!syncPlaybackCursor) return;
+      const clientId = clientIdRef.current;
+      const send = sendRef.current;
+      const slide = slidesRef.current[nextIndex];
+      if (!clientId || !send || !slide) return;
+      send({
+        type: "playback_cursor",
+        clientId,
+        slideId: slide.id,
+        index: nextIndex,
+      });
+    },
+    [syncPlaybackCursor],
+  );
+
   const goPrevious = useCallback(() => {
+    const len = slides.length;
+    if (len <= 1) return;
+    localNavRef.current = true;
     setIndex((prev) => {
-      const len = slides.length;
-      if (len <= 1) return prev;
-      return (prev - 1 + len) % len;
+      const next = (prev - 1 + len) % len;
+      return next;
     });
   }, [slides.length]);
 
   const goNext = useCallback(() => {
-    setIndex((prev) => {
-      const len = slides.length;
-      if (len <= 1) return prev;
-      return (prev + 1) % len;
-    });
+    const len = slides.length;
+    if (len <= 1) return;
+    localNavRef.current = true;
+    setIndex((prev) => (prev + 1) % len);
   }, [slides.length]);
 
   const goToIndex = useCallback(
     (nextIndex: number) => {
       if (!slides.length) return;
       const clamped = Math.max(0, Math.min(slides.length - 1, Math.floor(nextIndex)));
+      localNavRef.current = true;
       setIndex(clamped);
     },
     [slides.length],
@@ -89,10 +126,18 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   const goToSection = useCallback(
     (sectionId: string) => {
       const target = slides.findIndex((slide) => slide.sectionId === sectionId);
-      if (target >= 0) setIndex(target);
+      if (target < 0) return;
+      localNavRef.current = true;
+      setIndex(target);
     },
     [slides],
   );
+
+  useEffect(() => {
+    if (!localNavRef.current) return;
+    localNavRef.current = false;
+    publishCursor(index);
+  }, [index, publishCursor]);
 
   const reloadPayload = useCallback(
     async (event?: PresentationRealtimeEvent) => {
@@ -101,6 +146,19 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
       if (next) setPayload(next);
     },
     [onRefresh],
+  );
+
+  const onPlaybackCursor = useCallback(
+    (event: PresentationPlaybackCursorEvent) => {
+      if (!syncPlaybackCursor) return;
+      const selfId = clientIdRef.current;
+      if (selfId && event.clientId === selfId) return;
+      const next = applyPlaybackCursorToIndex(slidesRef.current, event.slideId, event.index);
+      if (next == null) return;
+      localNavRef.current = false;
+      setIndex(next);
+    },
+    [syncPlaybackCursor],
   );
 
   /*
@@ -129,6 +187,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     const baseSec = current?.durationSec ?? playlist.defaultDurationSec ?? 30;
     const durationMs = (nativeError ? nativeErrorAdvanceSec : baseSec) * 1000;
     const timer = window.setTimeout(() => {
+      // Timer local — não publica cursor (só meeting sync via navegação manual).
       setIndex((prev: number) => (prev + 1) % slides.length);
     }, durationMs);
     return () => window.clearTimeout(timer);
@@ -156,15 +215,18 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   }, [refreshSec, reloadPayload, onRefresh, refreshNativeSlidesOnly, current?.slideType]);
 
   usePresentationRealtime({
-    enabled: Boolean(realtimeWsUrl && onRefresh),
+    enabled: Boolean(realtimeWsUrl && (onRefresh || syncPlaybackCursor)),
     wsUrl: realtimeWsUrl,
-    onPresentationUpdated: (event) => {
-      void reloadPayload(event);
-    },
+    sendRef,
+    onPresentationUpdated: onRefresh
+      ? (event) => {
+          void reloadPayload(event);
+        }
+      : undefined,
     onSlideDraft: (event) => {
-      // Tempo real enquanto o editor digita — sem esperar autosave + HTTP.
       setPayload((prev) => applySlideDraftToPayload(prev, event.slideId, event.nativeConfig));
     },
+    onPlaybackCursor: syncPlaybackCursor ? onPlaybackCursor : undefined,
   });
 
   useEffect(() => {

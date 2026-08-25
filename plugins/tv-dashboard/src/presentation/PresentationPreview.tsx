@@ -16,6 +16,7 @@ import {
   hasInputFilterContributions,
   isComunicadoInputBlock,
   useSessionPlaybackMode,
+  resolvePresentationPlaybackClientId,
   type ComunicadoBlock,
   type InputFilterContributions,
   type PresentationRealtimeEvent,
@@ -107,6 +108,11 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     playlistMode: livePlaylistMode,
   });
 
+  const playbackClientId = useMemo(
+    () => resolvePresentationPlaybackClientId(playlistId || browserInitial.playlist.id),
+    [playlistId, browserInitial.playlist.id],
+  );
+
   const {
     index,
     slides,
@@ -126,6 +132,8 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     refreshNativeSlidesOnly: true,
     autoAdvance,
     realtimeWsUrl: wsUrl,
+    syncPlaybackCursor: playbackMode === "meeting",
+    playbackClientId,
   });
 
   useEffect(() => {

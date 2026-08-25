@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   DesignViewportStage,
@@ -16,6 +16,7 @@ import {
   resolveSlideTransitionStyle,
   presentationSurfaceFromViewMode,
   presentationStageEntranceClass,
+  resolvePresentationPlaybackClientId,
   ExternalSlideView,
   type ComunicadoBlock,
   type InputFilterContributions,
@@ -91,6 +92,11 @@ export function PresentationView({
     playlistMode: livePlaylistMode,
   });
 
+  const playbackClientId = useMemo(
+    () => resolvePresentationPlaybackClientId(token || initialPayload.playlist.id),
+    [token, initialPayload.playlist.id],
+  );
+
   const {
     payload,
     setPayload,
@@ -111,6 +117,8 @@ export function PresentationView({
     autoAdvance,
     realtimeWsUrl:
       mode === "public" && token ? buildPublicPresentationWsUrl(token) : null,
+    syncPlaybackCursor: playbackMode === "meeting",
+    playbackClientId,
   });
 
   useEffect(() => {
