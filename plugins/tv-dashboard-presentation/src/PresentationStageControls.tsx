@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { CircleDot, PenLine } from "lucide-react";
 import type { PresentationSection } from "./types";
 import { playbackModeLabel, type PlaybackMode } from "./playbackMode";
 import type { MeetingAnnotationTool } from "./meetingAnnotationTypes";
@@ -144,6 +145,8 @@ export function PresentationStageControls({
             type="button"
             className={[
               "tdp-preview-controls__btn",
+              "tdp-preview-controls__btn--tool",
+              "tdp-preview-controls__btn--tool-pen",
               annotationTool === "pen" ? "tdp-preview-controls__btn--active" : null,
             ]
               .filter(Boolean)
@@ -154,12 +157,15 @@ export function PresentationStageControls({
               onAnnotationToolChange?.(annotationTool === "pen" ? "none" : "pen")
             }
           >
+            <PenLine className="tdp-preview-controls__icon" aria-hidden size={14} strokeWidth={2.25} />
             Caneta
           </button>
           <button
             type="button"
             className={[
               "tdp-preview-controls__btn",
+              "tdp-preview-controls__btn--tool",
+              "tdp-preview-controls__btn--tool-laser",
               annotationTool === "laser" ? "tdp-preview-controls__btn--active" : null,
             ]
               .filter(Boolean)
@@ -170,6 +176,7 @@ export function PresentationStageControls({
               onAnnotationToolChange?.(annotationTool === "laser" ? "none" : "laser")
             }
           >
+            <CircleDot className="tdp-preview-controls__icon" aria-hidden size={14} strokeWidth={2.25} />
             Laser
           </button>
           <button

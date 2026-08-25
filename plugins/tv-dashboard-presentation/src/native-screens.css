@@ -430,6 +430,32 @@
   border-color: color-mix(in srgb, #38bdf8 55%, transparent);
 }
 
+.tdp-preview-controls__btn--tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: color-mix(in srgb, #f87171 55%, transparent);
+  background: color-mix(in srgb, #ef4444 20%, transparent);
+  color: #fecaca;
+}
+
+.tdp-preview-controls__btn--tool:hover:not(:disabled) {
+  background: color-mix(in srgb, #ef4444 34%, transparent);
+  border-color: color-mix(in srgb, #f87171 75%, transparent);
+  color: #fff;
+}
+
+.tdp-preview-controls__btn--tool.tdp-preview-controls__btn--active {
+  background: color-mix(in srgb, #ef4444 52%, transparent);
+  border-color: #f87171;
+  color: #fff;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #f87171 45%, transparent);
+}
+
+.tdp-preview-controls__icon {
+  flex-shrink: 0;
+}
+
 .tdp-preview-controls__btn:disabled {
   opacity: 0.45;
   cursor: default;
