@@ -108,7 +108,15 @@ class ChatPresentationLlmCompositionService:
     ) -> list[dict[str, Any]]:
         slots: list[dict[str, Any]] = []
 
-        if isinstance(tool_calls, list) and len(tool_calls) > 1:
+        if isinstance(tool_calls, list) and len(
+            [
+                item
+                for item in tool_calls
+                if str(item.get("name") or "") == "execute_external_action"
+                and isinstance(item.get("metadata"), dict)
+                and item["metadata"].get("ok")
+            ]
+        ) > 1:
             for tool_call in tool_calls:
                 if str(tool_call.get("name") or "") != "execute_external_action":
                     continue
@@ -121,12 +129,53 @@ class ChatPresentationLlmCompositionService:
                 slots.extend(cls._slots_from_metadata(meta, operation_id=cls._operation_id(meta)))
 
             if slots:
-                return cls._dedupe_slots(slots)
+                return cls._reindex_slots_globally(cls._dedupe_slots(slots))
 
         if isinstance(metadata, dict):
             slots.extend(cls._slots_from_metadata(metadata))
 
-        return cls._dedupe_slots(slots)
+        return cls._reindex_slots_globally(cls._dedupe_slots(slots))
+
+    @classmethod
+    def _reindex_slots_globally(cls, slots: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Índices 1-based estáveis por kind — ordem por operationId, depois source."""
+        counters: dict[str, int] = {}
+        ordered = sorted(
+            slots,
+            key=lambda item: (
+                str(item.get("kind") or ""),
+                str(item.get("operationId") or ""),
+                str(item.get("source") or ""),
+                int(item.get("index") or 0),
+            ),
+        )
+        output: list[dict[str, Any]] = []
+
+        for slot in ordered:
+            kind = str(slot.get("kind") or "").strip().lower()
+            counters[kind] = counters.get(kind, 0) + 1
+            refreshed = dict(slot)
+            refreshed["index"] = counters[kind]
+            refreshed["slot"] = f"{kind}:{counters[kind]}" if counters[kind] > 1 else kind
+            output.append(refreshed)
+
+        # Preserve original encounter order for resolve (kind groups stay sorted by opId).
+        return output
+
+    @classmethod
+    def available_composition_slot_kinds(
+        cls,
+        metadata: dict[str, Any] | None = None,
+        *,
+        tool_calls: list | None = None,
+    ) -> list[str]:
+        return sorted(
+            {
+                str(slot.get("kind") or "").strip().lower()
+                for slot in cls.collect_available_slots(metadata, tool_calls=tool_calls)
+                if str(slot.get("kind") or "").strip()
+            }
+        )
 
     @classmethod
     def resolve_component_ref(

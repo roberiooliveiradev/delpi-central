@@ -151,3 +151,68 @@ def test_apply_json_fallback_prose_composition_segments():
     assert "tree" in kinds
     assert "table" in kinds
     assert "[[" not in cleaned
+
+
+def test_enrich_multi_tool_interleaved_composition():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260149/structure",
+                "operationId": "get_product_structure",
+                "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "pa"}},
+            },
+        },
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10080109/stock",
+                "operationId": "get_product_stock",
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Estoque MP",
+                    "rows": [{"code": "10080109", "qty": 12}],
+                },
+            },
+        },
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/10090014/stock",
+                "operationId": "get_product_stock_b",
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Estoque MP 2",
+                    "rows": [{"code": "10090014", "qty": 0}],
+                },
+            },
+        },
+    ]
+    primary = tool_calls[0]["metadata"]
+    slots = ChatPresentationLlmCompositionService.collect_available_slots(
+        primary,
+        tool_calls=tool_calls,
+    )
+    table_slots = [slot for slot in slots if slot["kind"] == "table"]
+
+    assert len(table_slots) >= 2
+    assert {slot["index"] for slot in table_slots} >= {1, 2}
+
+    cleaned = ChatPresentationLlmCompositionService.apply(
+        primary,
+        "Estrutura do PA.\n\n[[tree]]\n\nEstoque da primeira MP.\n\n[[table:1]]\n\nSegunda MP.\n\n[[table:2]]\n\nConclusão.",
+        tool_calls=tool_calls,
+        response_mode="normal",
+    )
+
+    assert "[[" not in cleaned
+    plan = primary["renderPlan"]
+    assert plan["layoutMode"] == "stack"
+    kinds = [seg["kind"] for seg in plan["segments"]]
+    assert kinds.count("markdown") >= 3
+    assert "tree" in kinds
+    assert kinds.count("table") == 2
+    assert len(plan["segments"]) >= 5
