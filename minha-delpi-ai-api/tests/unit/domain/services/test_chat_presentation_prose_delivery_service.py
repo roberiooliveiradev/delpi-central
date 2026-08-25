@@ -556,6 +556,41 @@ def test_resolve_llm_synthesis_answer_fallback_uses_data_commentary_when_empty()
     assert "engenharia" in fallback.lower()
 
 
+def test_resolve_llm_synthesis_answer_fallback_aggregates_multi_tool_commentaries():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "path": "/products/50230130/stock",
+                "dataCommentary": {
+                    "highlights": [{"text": "O produto **50230130** saldo **0**."}],
+                },
+            },
+        },
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "llmProseDecoupled": True,
+                "path": "/products/50230131/stock",
+                "dataCommentary": {
+                    "highlights": [{"text": "O produto **50230131** saldo **0**."}],
+                },
+            },
+        },
+    ]
+
+    fallback = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
+        "",
+        tool_calls,
+    )
+
+    assert "50230130" in fallback
+    assert "50230131" in fallback
+
+
 def test_resolve_llm_synthesis_answer_fallback_keeps_nonempty_llm_answer():
     tool_calls = [
         {

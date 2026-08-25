@@ -195,6 +195,11 @@
     "skipBriefDirectWhenGroundedEnrich": true,
     "minOkToolsForBriefDirectSkip": 2,
     "groundedEnrichInsightFlag": "groundedEnrichInsight",
+    "multiToolFallback": {
+      "enabled": true,
+      "maxLeads": 4,
+      "separator": "\n\n"
+    },
     "synthesisEffectByDepth": {
       "brief": "llm_synthesis_brief",
       "standard": "llm_synthesis",

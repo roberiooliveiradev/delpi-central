@@ -297,6 +297,38 @@ class ChatResponseModeContentService:
         ).strip()
 
     @classmethod
+    def commentary_multi_tool_fallback_enabled(cls) -> bool:
+        node = cls._commentary_lead_node().get("multiToolFallback")
+
+        if not isinstance(node, dict):
+            return True
+
+        return bool(node.get("enabled", True))
+
+    @classmethod
+    def commentary_multi_tool_fallback_max_leads(cls) -> int:
+        node = cls._commentary_lead_node().get("multiToolFallback")
+
+        if not isinstance(node, dict):
+            return 4
+
+        try:
+            return max(1, int(node.get("maxLeads", 4)))
+        except (TypeError, ValueError):
+            return 4
+
+    @classmethod
+    def commentary_multi_tool_fallback_separator(cls) -> str:
+        node = cls._commentary_lead_node().get("multiToolFallback")
+
+        if not isinstance(node, dict):
+            return "\n\n"
+
+        sep = node.get("separator")
+
+        return sep if isinstance(sep, str) else "\n\n"
+
+    @classmethod
     def commentary_lead_synthesis_effect(cls, depth: str) -> str:
         node = cls._commentary_lead_node().get("synthesisEffectByDepth")
 

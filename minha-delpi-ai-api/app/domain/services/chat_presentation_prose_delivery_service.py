@@ -588,8 +588,13 @@ class ChatPresentationProseDeliveryService:
         *,
         compact: bool = False,
         commentary_depth: str | None = None,
+        aggregate_multi_tool: bool | None = None,
     ) -> str:
-        """Quando síntese LLM falha ou retorna vazio, usa dataCommentary como lead."""
+        """Quando síntese LLM falha ou retorna vazio, usa dataCommentary como lead.
+
+        Com vários tools OK, agrega até N leads (config commentaryLead.multiToolFallback)
+        para não ficar só no primeiro estoque.
+        """
         body = str(answer or "").strip()
         min_chars = ChatPresentationProseDeliveryContentService.llm_synthesis_answer_fallback_min_chars()
 
@@ -602,6 +607,18 @@ class ChatPresentationProseDeliveryService:
         from app.domain.services.chat_humanized_data_response_service import (
             ChatHumanizedDataResponseService,
         )
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+
+        should_aggregate = (
+            ChatResponseModeContentService.commentary_multi_tool_fallback_enabled()
+            if aggregate_multi_tool is None
+            else bool(aggregate_multi_tool)
+        )
+        max_leads = ChatResponseModeContentService.commentary_multi_tool_fallback_max_leads()
+        separator = ChatResponseModeContentService.commentary_multi_tool_fallback_separator()
+        leads: list[str] = []
 
         for tool_call in tool_calls:
             if str(tool_call.get("name") or "") != "execute_external_action":
@@ -624,10 +641,25 @@ class ChatPresentationProseDeliveryService:
                 depth=commentary_depth,
             )
 
-            if fallback:
+            if not fallback:
+                continue
+
+            if not should_aggregate:
                 return fallback
 
-        return body
+            if fallback not in leads:
+                leads.append(fallback)
+
+            if len(leads) >= max_leads:
+                break
+
+        if not leads:
+            return body
+
+        if len(leads) == 1:
+            return leads[0]
+
+        return separator.join(leads)
 
     @classmethod
     def _format_data_commentary_lead(
