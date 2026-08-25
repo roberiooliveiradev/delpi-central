@@ -60,6 +60,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Biblioteca de templates (4B.8):** home «Biblioteca de templates» (perm. `tv-dashboard.templates.manage`) — CRUD, publish/draft/archive, import preview→apply, editor em `/templates/:id`; no editor de playlist só **aplicar published** (cópia). Runbook: `register-manifest.sh` + atribuir permissão ao curador no RBAC.
 - **Tabela (canvas):** grade estática editável, separada de `table_view` (dados live)
 - **Notas do apresentador:** salvas por tela; preview admin com `?presenter=1` mostra notas e próxima tela sem afetar o kiosk
+- **Modo de reprodução:** `playbackMode` na programação — **apresentação** (auto-advance por duração) ou **reunião** (avanço manual). Resolução efetiva: `?mode=presentation|meeting` → override de sessão (toolbar) → default da playlist. Ortogonal a `?presenter=1`.
 - **Presença no editor:** chip «Também editando» via WebSocket (sem merge CRDT)
 - **Conectores MVP:** selecione 2 elementos → **Conectar** no ribbon Alinhar (seta entre centros); arrastar a seta solta a ligação — [§19.22](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1922-conectores-mvp-entre-blocos-jul2026)
 - **Telas nativas OEE/OTD/PPM:** dual-KPI + série temporal SVG (`ConfigurableSeriesChart`)

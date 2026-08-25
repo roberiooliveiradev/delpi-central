@@ -30,7 +30,8 @@ import {
 
 | Export | Função |
 |---|---|
-| `usePresentationEngine` | Autoplay, transições, refresh periódico, pausa por visibilidade |
+| `usePresentationEngine` | Autoplay (quando `autoAdvance`), transições, refresh periódico, pausa por visibilidade; em reunião Espaço = próximo |
+| `resolvePlaybackMode` / `useSessionPlaybackMode` | Modo `presentation` \| `meeting` (URL → sessão → playlist) |
 | `useFullscreenStage` | Duplo-clique → fullscreen (preview admin) |
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
 | `DesignViewportStage` | Escala uniforme do canvas de design no container |
