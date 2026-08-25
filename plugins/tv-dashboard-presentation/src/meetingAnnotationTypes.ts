@@ -21,6 +21,8 @@ export type MeetingLaserState = {
 
 export type MeetingInkStrokePhase = "start" | "move" | "end";
 
-/** Cor accent única (P0). */
-export const MEETING_INK_COLOR = "#38bdf8";
-export const MEETING_INK_WIDTH_PX = 3;
+/** Cor accent única (P0) — vermelho estilo PowerPoint. */
+export const MEETING_INK_COLOR = "#ef4444";
+/** Núcleo do apontador laser (mesmo vermelho da caneta). */
+export const MEETING_LASER_COLOR = "#ff1a1a";
+export const MEETING_INK_WIDTH_PX = 3.5;

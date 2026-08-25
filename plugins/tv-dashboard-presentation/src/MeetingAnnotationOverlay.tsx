@@ -159,10 +159,11 @@ export function MeetingAnnotationOverlay({
         {visibleStrokes.map((stroke) => (
           <path
             key={stroke.strokeId}
+            className="tdp-meeting-annotation__stroke"
             d={meetingPointsToSvgPath(stroke.points)}
             fill="none"
             stroke={MEETING_INK_COLOR}
-            strokeWidth={(MEETING_INK_WIDTH_PX / 10).toFixed(2)}
+            strokeWidth={MEETING_INK_WIDTH_PX}
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"

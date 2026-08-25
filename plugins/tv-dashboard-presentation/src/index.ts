@@ -51,6 +51,7 @@ export {
 export {
   MEETING_INK_COLOR,
   MEETING_INK_WIDTH_PX,
+  MEETING_LASER_COLOR,
   type MeetingAnnotationTool,
   type MeetingInkStroke,
   type MeetingInkStrokePhase,
