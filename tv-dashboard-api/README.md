@@ -244,7 +244,9 @@ Salas por `playlist_id`. Evento típico:
 
 Disparado após CRUD de slides, upload de mídia, alterações na programação e exclusão.
 
-**Editor admin:** sincronização exclusivamente via WebSocket — `presentation_updated` após persistência na API, `slide_draft` para edição ao vivo sem esperar o autosave e `selection_update` para destacar os blocos selecionados por outros editores. A identidade e o papel publicados vêm do JWT validado no servidor; o socket público é somente leitura.
+**Editor admin:** sincronização exclusivamente via WebSocket — `presentation_updated` após persistência na API, `slide_draft` para edição ao vivo sem esperar o autosave e `selection_update` para destacar os blocos selecionados por outros editores. A identidade e o papel publicados vêm do JWT validado no servidor; o socket público é somente leitura para draft/seleção.
+
+**Modo reunião (`playbackMode=meeting`):** qualquer viewer na sala (incl. WS público) pode enviar `playback_cursor` `{ slideId, clientId, index? }`. O hub guarda o último cursor em memória e reenvia no `connected` (late join). Último comando vence; o cliente ignora eco do próprio `clientId`. Em modo **apresentação** o cursor **não** é sincronizado (cada tela + timer independentes). Não há persistência em Postgres.
 
 `selection_update` contém `slideId`, `selectedIds`, `clientId`, `displayName` e `updatedAt`. Seleção vazia limpa o chrome remoto; desconexão remove a seleção por meio do `presence_update`. O estado é transitório e não é persistido no slide.
 
