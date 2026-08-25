@@ -4,6 +4,8 @@ from typing import Any, List, Optional
 
 @dataclass
 class EficienciaFabrilSummary:
+    # Nome histórico do contrato. Semântica: média simples das médias por CT
+    # (não média dos apontamentos).
     weighted_efficiency_pct: Optional[float] = None
     total_mod_result: Optional[float] = None
     total_mod_profit: Optional[float] = None

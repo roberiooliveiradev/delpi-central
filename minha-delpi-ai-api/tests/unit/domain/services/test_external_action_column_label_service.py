@@ -94,7 +94,7 @@ def test_detect_guide_profile_for_sg2_schema():
 def test_label_for_eficiencia_fabril_summary_and_items():
     service = ExternalActionColumnLabelService()
 
-    assert service.label_for("weighted_efficiency_pct") == "Eficiência ponderada (%)"
+    assert service.label_for("weighted_efficiency_pct") == "Eficiência média dos CTs (%)"
     assert service.label_for("total_mod_result") == "Resultado MOD total"
     assert service.label_for("appointment_count") == "Qtd. de apontamentos"
     assert service.label_for("tempo_real_horas") == "Tempo real (h)"

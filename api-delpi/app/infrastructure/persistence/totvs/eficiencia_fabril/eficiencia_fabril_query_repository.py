@@ -16,6 +16,9 @@ from app.application.dto.eficiencia_fabril.get_eficiencia_fabril_dashboard_reque
 from app.domain.ports.eficiencia_fabril.eficiencia_fabril_query_repository_port import (
     EficienciaFabrilQueryRepositoryPort,
 )
+from app.domain.production.eficiencia_fabril_efficiency_by_work_center import (
+    average_efficiency_across_work_centers,
+)
 from app.domain.production.factory_shifts import resolve_factory_shift
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_settings import (
@@ -64,7 +67,6 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                 f"""
                 SELECT
                     COUNT(*) AS appointment_count,
-                    ROUND(AVG(EFICIENCIA_PERCENTUAL), 2) AS weighted_efficiency_pct,
                     ROUND(SUM(RESULTADO_MOD), 2) AS total_mod_result,
                     ROUND(SUM(LUCRO_MOD), 2) AS total_mod_profit,
                     ROUND(SUM(PREJUIZO_MOD), 2) AS total_mod_loss,
@@ -135,6 +137,22 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                 base_params + (self.settings.status_registro_ok,),
             )
 
+            work_center_efficiency = self.execute_query(
+                f"""
+                SELECT
+                    LTRIM(RTRIM(CENTRO_TRABALHO)) AS work_center,
+                    ROUND(AVG(EFICIENCIA_PERCENTUAL), 2) AS efficiency_pct,
+                    COUNT(*) AS appointment_count
+                FROM {view}
+                WHERE {base_where}
+                  AND STATUS_REGISTRO = ?
+                  AND CENTRO_TRABALHO IS NOT NULL
+                  AND LTRIM(RTRIM(CENTRO_TRABALHO)) <> ''
+                GROUP BY LTRIM(RTRIM(CENTRO_TRABALHO))
+                """,
+                base_params + (self.settings.status_registro_ok,),
+            )
+
             hours_by_work_center = self.execute_query(
                 f"""
                 SELECT TOP {self.settings.top_work_centers_limit}
@@ -174,6 +192,9 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             )
 
         summary = self._map_summary(summary_row, invalid_row)
+        summary.weighted_efficiency_pct = average_efficiency_across_work_centers(
+            work_center_efficiency
+        )
         items = [self._map_item(row) for row in item_rows]
 
         return EficienciaFabrilDashboardResponse(

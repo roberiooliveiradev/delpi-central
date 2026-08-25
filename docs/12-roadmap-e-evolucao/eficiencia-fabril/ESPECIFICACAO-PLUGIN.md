@@ -82,7 +82,8 @@ Se o usuário filtrar explicitamente por um CT excluído, a API retorna conjunto
 | Regra | Detalhe |
 |-------|---------|
 | Base | Apenas `STATUS_REGISTRO = 'OK'` |
-| Agregação | **Média simples** de `EFICIENCIA_PERCENTUAL` (não ponderada por tempo) |
+| Agregação por CT | **Média simples** de `EFICIENCIA_PERCENTUAL` no CT (não ponderada por tempo) |
+| KPI Eficiência | **Média simples das médias por CT** (não média dos apontamentos) |
 | Faixa | Apenas eficiência na faixa **0–199%** entra em KPIs/gráficos (alinhado ao OEE) |
 | Tabela | Registros fora da faixa **permanecem** na tabela com status **Verificar** (linha em vermelho) |
 
@@ -95,7 +96,7 @@ Constantes: `isProductionEfficiencyOutlier()` / `PRODUCTION_EFFICIENCY_VALID_*_P
 
 ### 4.4 KPI — card Eficiência
 
-- Valor: média simples (%) dos indicadores.
+- Valor: média simples (%) das eficiências dos CTs (média de cada CT, depois média desses valores).
 - Cor **vermelha** se média **< 95%** (`EFFICIENCY_KPI_WARNING_PCT`).
 
 ### 4.5 KPI — card Apontamentos
