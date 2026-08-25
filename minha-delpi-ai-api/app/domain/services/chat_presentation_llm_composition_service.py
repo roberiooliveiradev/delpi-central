@@ -183,21 +183,28 @@ class ChatPresentationLlmCompositionService:
         *,
         response_mode: str | None = None,
         explicit_format: str | None = None,
+        workspace_context: dict[str, Any] | None = None,
     ) -> str:
         from app.domain.services.chat_presentation_profile_service import (
             ChatPresentationProfileService,
         )
+        from app.domain.services.chat_presentation_user_format_preference_service import (
+            ChatPresentationUserFormatPreferenceService,
+        )
 
-        explicit = str(
-            explicit_format
-            or (metadata or {}).get("explicitSessionFormat")
-            or ""
-        ).strip().lower()
+        format_token = ChatPresentationUserFormatPreferenceService.resolve_composition_format_token(
+            metadata,
+            explicit_format=explicit_format,
+            workspace_context=workspace_context,
+        )
 
-        by_format = ChatProseCompositionContentService.policy_for_explicit_format(explicit)
+        by_format = ChatProseCompositionContentService.policy_for_explicit_format(format_token)
 
         if by_format:
             return by_format
+
+        # Modo Rápida: mantém política do perfil, mas maxMarkers=1 via content service.
+        del response_mode
 
         path = str((metadata or {}).get("path") or "").strip() or None
         entity = None
@@ -391,11 +398,29 @@ class ChatPresentationLlmCompositionService:
         if fence:
             candidate = fence.group(1)
         else:
-            start = text.rfind("{")
-            end = text.rfind("}")
+            marker = text.find('{"proseComposition"')
 
-            if start >= 0 and end > start:
-                candidate = text[start : end + 1]
+            if marker < 0:
+                marker = text.find("{'proseComposition'")
+
+            if marker >= 0:
+                depth = 0
+
+                for idx in range(marker, len(text)):
+                    char = text[idx]
+
+                    if char == "{":
+                        depth += 1
+                    elif char == "}":
+                        depth -= 1
+
+                        if depth == 0:
+                            candidate = text[marker : idx + 1]
+                            break
+                else:
+                    return None
+            else:
+                return None
 
         try:
             payload = json.loads(candidate)

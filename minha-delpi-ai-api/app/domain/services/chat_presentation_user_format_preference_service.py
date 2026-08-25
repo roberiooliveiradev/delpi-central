@@ -194,3 +194,74 @@ class ChatPresentationUserFormatPreferenceService:
             rows=rows,
             intent=intent,
         )
+
+    @classmethod
+    def resolve_composition_format_token(
+        cls,
+        metadata: dict[str, Any] | None = None,
+        *,
+        explicit_format: str | None = None,
+        workspace_context: dict[str, Any] | None = None,
+    ) -> str | None:
+        """Resolve formato efetivo para gates de composição LLM (toolbar / memória)."""
+        from app.domain.services.chat_presentation_text_first_policy_service import (
+            ChatPresentationTextFirstPolicyService,
+        )
+
+        candidates = [
+            explicit_format,
+            (metadata or {}).get("explicitSessionFormat"),
+            (metadata or {}).get("sessionResponseFormat"),
+        ]
+
+        behavior = None
+
+        if isinstance(workspace_context, dict):
+            behavior = workspace_context.get("behaviorInstructions")
+
+        if behavior is None and isinstance(metadata, dict):
+            behavior = metadata.get("behaviorInstructions")
+
+        if isinstance(behavior, dict):
+            candidates.append(behavior.get("responseFormat"))
+
+        for raw in candidates:
+            normalized = ChatPresentationTextFirstPolicyService.normalize_explicit_format(raw)
+
+            if normalized:
+                return normalized
+
+            token = str(raw or "").strip().lower()
+
+            if token in {"automatic", "auto"}:
+                return "automatic"
+
+            if token in _USER_FORMAT_ALIASES:
+                return _USER_FORMAT_ALIASES[token]
+
+        return None
+
+    @classmethod
+    def resolve_prose_composition_policy(
+        cls,
+        metadata: dict[str, Any] | None = None,
+        *,
+        explicit_format: str | None = None,
+        workspace_context: dict[str, Any] | None = None,
+        response_mode: str | None = None,
+    ) -> str:
+        from app.domain.services.chat_presentation_llm_composition_service import (
+            ChatPresentationLlmCompositionService,
+        )
+
+        token = cls.resolve_composition_format_token(
+            metadata,
+            explicit_format=explicit_format,
+            workspace_context=workspace_context,
+        )
+
+        return ChatPresentationLlmCompositionService.resolve_policy(
+            metadata if isinstance(metadata, dict) else {},
+            response_mode=response_mode,
+            explicit_format=token,
+        )
