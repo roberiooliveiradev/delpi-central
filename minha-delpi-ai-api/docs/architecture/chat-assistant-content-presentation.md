@@ -173,12 +173,23 @@ Serviços: `ChatPresentationDataShapeAnalyzer`, `ChatPresentationViewIntentServi
 | Modo | Quando | Comportamento |
 |------|--------|---------------|
 | **renderPlan** | `renderPlan.version === 1` | Executor mecânico (`renderPlanSegmentBuilder.ts`) — **preferido** |
+| **llm composition** | `proseCompositionSource === "llm"` | Mesmo executor; segmentos intercalam `markdown` (`slot: assistantProse` + `text`) e visuais; **não** reordenar no MFE |
 | **stack** | `layoutMode === "stack"` | Segmentos do plano stack (lead, tabelas, tail) |
 | **single** | `layoutMode === "single"` | Um visual nativo ou só markdown (`nativeSingleViewBuilder.ts`) |
-| **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Legado — posições de marcadores |
+| **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Fallback legado — só se **não** houver `renderPlan` llm-authored |
 
-Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`, `renderPlanSegmentBuilder.ts`.
+Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`, `renderPlanSegmentBuilder.ts`, `presentationStackBlueprint.ts`.
 
+### Composição LLM (E18 — ago/2026)
+
+Quando a síntese LLM emite marcadores `[[table]]` / `[[tree]]` / … (ou JSON `proseComposition.segments`), a API valida slots e grava `renderPlan` com `proseCompositionSource: "llm"`. O MFE:
+
+1. Prefere `buildSegmentsFromRenderPlan` (`prefersLlmAuthoredRenderPlan`).
+2. Materializa `slot: assistantProse` a partir de `segment.text` (não re-parseia marcadores).
+3. Consome tabelas indexadas (`table:1`, `table:2`) na ordem do plano.
+4. **Não** revalida slots no TypeScript — contrato fechado na API.
+
+Preferências do usuário (`explicitSessionFormat` / `behaviorInstructions.responseFormat`): formato nativo (tabela/árvore/…) → `api_only` (sem marcadores); Automático → `llm_markers_stack`.
 ---
 
 ## Barra de troca de formato

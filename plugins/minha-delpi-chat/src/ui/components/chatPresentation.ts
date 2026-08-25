@@ -69,6 +69,8 @@ export {
   getTextPresentationTitleFromToolCalls,
   hasExplicitPresentationFormatChoice,
   hasRenderPlanContract,
+  getProseCompositionSourceFromToolCalls,
+  prefersLlmAuthoredRenderPlan,
   isExplicitTextSessionMode,
   isRenderPlanVisualKindAllowed,
   mapPresentationDecisionToViewFormat,

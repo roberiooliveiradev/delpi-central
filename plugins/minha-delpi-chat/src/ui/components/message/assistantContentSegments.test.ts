@@ -115,6 +115,56 @@ describe("assistantContentSegments", () => {
     expect(segments.some((item) => item.kind === "table")).toBe(true);
   });
 
+  it("com proseCompositionSource=llm segue renderPlan intercalado (sem reordenar)", () => {
+    const segments = buildAssistantContentSegments("fallback [[tree]] no markdown", [
+      {
+        name: "execute_external_action",
+        metadata: {
+          proseCompositionSource: "llm",
+          treePresentation: {
+            type: "tree",
+            title: "Estrutura",
+            root: { id: "1", label: "PA", children: [] },
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Estoque",
+            columns: [{ key: "code", label: "Código" }],
+            rows: [{ code: "10080109" }],
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            proseCompositionSource: "llm",
+            segments: [
+              {
+                kind: "markdown",
+                slot: "assistantProse",
+                source: "assistantMessage",
+                text: "Lead da composição.",
+              },
+              { kind: "tree", slot: "tree", source: "treePresentation" },
+              {
+                kind: "markdown",
+                slot: "assistantProse",
+                source: "assistantMessage",
+                text: "Comentário de estoque.",
+              },
+              { kind: "table", slot: "table", source: "tablePresentation", index: 1 },
+            ],
+          },
+        },
+      },
+    ]);
+
+    const kinds = segments.map((item) => item.kind);
+
+    expect(kinds).toEqual(["markdown", "tree", "markdown", "table"]);
+    expect(String((segments[0] as { markdown?: string }).markdown || "")).toContain(
+      "Lead da composição",
+    );
+  });
+
   it("não trata conteúdo inteiro de resposta SQL como título de apresentação", () => {
     const intro =
       "Segue a consulta em SQL (somente leitura, sem executar no sistema). " +

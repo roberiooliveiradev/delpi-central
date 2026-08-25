@@ -363,6 +363,34 @@ function takeVisual(
   return next;
 }
 
+function takeTableByIndex(
+  tables: AssistantContentSegment[],
+  used: Set<AssistantContentSegment>,
+  index: number | undefined,
+): AssistantContentSegment | null {
+  const unused = tables.filter((item) => !used.has(item));
+
+  if (!unused.length) {
+    return null;
+  }
+
+  if (index == null || Number.isNaN(Number(index))) {
+    const next = unused[0];
+    used.add(next);
+    return next;
+  }
+
+  const pos = Math.max(1, Number(index)) - 1;
+  const next = unused[pos] ?? unused[0];
+
+  if (!next) {
+    return null;
+  }
+
+  used.add(next);
+  return next;
+}
+
 function appendLeadMarkdown(
   segments: AssistantContentSegment[],
   commentary: string,
@@ -444,6 +472,18 @@ export function buildSegmentsFromRenderPlan(
         continue;
       }
 
+      if (slot === "assistantProse" || slot === "assistantMessage") {
+        const inline = String(
+          (spec as { text?: string }).text || "",
+        ).trim();
+
+        if (inline) {
+          pushMarkdownSegments(segments, inline, parseMarkdown, appendUnique);
+        }
+
+        continue;
+      }
+
       if (slot === "highlights" && sections.destaques?.trim()) {
         maybePushStackSection(plan, segments, "highlights", appendUnique, toolCalls);
         pushSectionFraming(plan, segments, "highlights", parseMarkdown, appendUnique);
@@ -495,13 +535,25 @@ export function buildSegmentsFromRenderPlan(
           toolCalls,
           { sectionPerRole: true },
         );
-      } else if (slot === "primary") {
-        for (const table of resolveTableSegmentsForRenderSpec(spec, tables, plan, toolCalls)) {
-          if (table.kind !== "table") {
-            continue;
-          }
+      } else {
+        // LLM composition / primary: table, table:1, table:2, primary
+        const picked = takeTableByIndex(
+          tables,
+          usedVisuals,
+          (spec as { index?: number }).index,
+        );
 
-          appendUnique(segments, table);
+        if (picked) {
+          appendUnique(segments, picked);
+        } else {
+          for (const table of resolveTableSegmentsForRenderSpec(spec, tables, plan, toolCalls)) {
+            if (table.kind !== "table" || usedVisuals.has(table)) {
+              continue;
+            }
+
+            usedVisuals.add(table);
+            appendUnique(segments, table);
+          }
         }
       }
 

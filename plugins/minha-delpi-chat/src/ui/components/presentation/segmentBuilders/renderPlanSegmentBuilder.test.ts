@@ -415,4 +415,95 @@ describe("renderPlanSegmentBuilder", () => {
 
     expect(segments.some((segment) => segment.kind === "download")).toBe(true);
   });
+
+  it("materializa renderPlan llm-authored com assistantProse e tabelas indexadas", () => {
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "tree",
+        presentation: {
+          type: "tree",
+          title: "Estrutura",
+          root: { id: "90260149", label: "PA", children: [] },
+        },
+      },
+      {
+        kind: "table",
+        presentation: {
+          type: "table",
+          title: "Estoque MP 1",
+          columns: [{ key: "code", label: "Código" }],
+          rows: [{ code: "10080109" }],
+        },
+      },
+      {
+        kind: "table",
+        presentation: {
+          type: "table",
+          title: "Estoque MP 2",
+          columns: [{ key: "code", label: "Código" }],
+          rows: [{ code: "10090014" }],
+        },
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          proseCompositionSource: "llm",
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            proseCompositionSource: "llm",
+            segments: [
+              {
+                kind: "markdown",
+                slot: "assistantProse",
+                source: "assistantMessage",
+                text: "Estrutura do PA.",
+              },
+              { kind: "tree", slot: "tree", source: "treePresentation" },
+              {
+                kind: "markdown",
+                slot: "assistantProse",
+                source: "assistantMessage",
+                text: "Estoque da primeira MP.",
+              },
+              { kind: "table", slot: "table:1", source: "tablePresentation", index: 1 },
+              {
+                kind: "markdown",
+                slot: "assistantProse",
+                source: "assistantMessage",
+                text: "Segunda MP.",
+              },
+              { kind: "table", slot: "table:2", source: "tablePresentation", index: 2 },
+            ],
+          },
+        },
+      },
+    ] as never;
+
+    const segments =
+      buildSegmentsFromRenderPlan(
+        "fallback commentary with [[tree]] should be ignored",
+        visuals,
+        parseMarkdown,
+        (target, segment) => {
+          target.push(segment);
+        },
+        toolCalls,
+      ) ?? [];
+
+    const kinds = segments.map((segment) => segment.kind);
+
+    expect(kinds).toEqual([
+      "markdown",
+      "tree",
+      "markdown",
+      "table",
+      "markdown",
+      "table",
+    ]);
+    expect(String((segments[0] as { markdown?: string }).markdown)).toContain("Estrutura do PA");
+    expect(String((segments[2] as { markdown?: string }).markdown)).toContain("primeira MP");
+  });
 });

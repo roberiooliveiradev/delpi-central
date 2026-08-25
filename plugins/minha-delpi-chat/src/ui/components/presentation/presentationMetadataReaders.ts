@@ -285,10 +285,14 @@ export type PresentationRenderHints = {
 export type PresentationRenderPlan = {
   version?: number;
   layoutMode?: string;
+  proseCompositionSource?: string;
   segments?: Array<{
     kind: string;
     slot?: string;
     source?: string;
+    text?: string;
+    index?: number;
+    operationId?: string;
   }>;
 };
 
@@ -510,6 +514,47 @@ export function hasRenderPlanContract(toolCalls?: ChatToolCall[]): boolean {
       Array.isArray(renderPlan.segments) &&
       renderPlan.segments.length > 0,
   );
+}
+
+/** E18 — composição LLM: API fechou renderPlan com prosa intercalada. */
+export function getProseCompositionSourceFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): string | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+
+    if (!metadata) {
+      continue;
+    }
+
+    const root = String(metadata.proseCompositionSource || "").trim();
+
+    if (root) {
+      return root;
+    }
+
+    const plan = metadata.renderPlan;
+
+    if (plan && typeof plan === "object") {
+      const fromPlan = String(
+        (plan as { proseCompositionSource?: string }).proseCompositionSource || "",
+      ).trim();
+
+      if (fromPlan) {
+        return fromPlan;
+      }
+    }
+  }
+
+  return null;
+}
+
+export function prefersLlmAuthoredRenderPlan(toolCalls?: ChatToolCall[]): boolean {
+  return getProseCompositionSourceFromToolCalls(toolCalls) === "llm" && hasRenderPlanContract(toolCalls);
 }
 
 export function getStoryPresentationFromToolCalls(

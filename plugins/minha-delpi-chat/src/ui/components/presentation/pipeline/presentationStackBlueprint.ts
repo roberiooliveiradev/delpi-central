@@ -3,7 +3,7 @@ import type { ChatToolCall } from "../../../../data/api/chatTypes";
 import { stripPresentationSectionMarkers } from "../../message/chatMarkdown";
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 import type { CommentarySections } from "../../message/assistantContentInterleave";
-import { hasRenderPlanContract } from "../presentationMetadataReaders";
+import { hasRenderPlanContract, prefersLlmAuthoredRenderPlan } from "../presentationMetadataReaders";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { buildSegmentsFromRenderPlan } from "../segmentBuilders/renderPlanSegmentBuilder";
 
@@ -33,8 +33,9 @@ export function buildCanonicalStackSegments(
 ): AssistantContentSegment[] {
   const trimmedCommentary = String(commentary || "").trim();
 
-  // renderPlan v1 manda — multi-rota por path só no legado sem contrato.
-  if (hasRenderPlanContract(toolCalls)) {
+  // E18: renderPlan llm-authored manda — sem reordenar no MFE.
+  // renderPlan v1 genérico também manda; multi-rota por path só no legado sem contrato.
+  if (prefersLlmAuthoredRenderPlan(toolCalls) || hasRenderPlanContract(toolCalls)) {
     const fromRenderPlan = buildSegmentsFromRenderPlan(
       trimmedCommentary,
       orderedVisuals,
