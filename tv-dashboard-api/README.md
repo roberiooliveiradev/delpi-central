@@ -248,6 +248,8 @@ Disparado após CRUD de slides, upload de mídia, alterações na programação 
 
 **Modo reunião (`playbackMode=meeting`):** qualquer viewer na sala (incl. WS público) pode enviar `playback_cursor` `{ slideId, clientId, index? }`. O hub guarda o último cursor em memória e reenvia no `connected` (late join). Último comando vence; o cliente ignora eco do próprio `clientId`. Em modo **apresentação** o cursor **não** é sincronizado (cada tela + timer independentes). Não há persistência em Postgres.
 
+**Anotações efêmeras (reunião):** fan-out de `meeting_laser` `{ clientId, slideId, x, y, visible }`, `meeting_ink_stroke` `{ clientId, slideId, strokeId, points, phase }` e `meeting_ink_clear` `{ clientId, slideId }`. Coords normalizadas 0–1. **Sem snapshot no `connected`** (só `playback_cursor` restaura late join). Sem Postgres / storage — F5 na aba limpa o overlay local; peers abertos continuam com o que já tinham até clear/slide change.
+
 `selection_update` contém `slideId`, `selectedIds`, `clientId`, `displayName` e `updatedAt`. Seleção vazia limpa o chrome remoto; desconexão remove a seleção por meio do `presence_update`. O estado é transitório e não é persistido no slide.
 
 **Gateway:** `proxy_pass` estático para `tv-dashboard-api:8000` (variável `$upstream` quebra upgrade WebSocket).

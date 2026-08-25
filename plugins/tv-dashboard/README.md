@@ -62,6 +62,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Notas do apresentador:** salvas por tela; preview admin com `?presenter=1` mostra notas e próxima tela sem afetar o kiosk
 - **Modo de reprodução:** `playbackMode` na programação — **apresentação** (auto-advance por duração) ou **reunião** (avanço manual). Resolução efetiva: `?mode=presentation|meeting` → override de sessão (toolbar) → default da playlist. Ortogonal a `?presenter=1`.
   - **Sync multi-tela (reunião):** todas as TVs/prévias no mesmo link compartilham o slide via WS `playback_cursor` (último comando vence; late join recebe o cursor atual). Modo apresentação não sincroniza índice.
+  - **Caneta / laser (reunião):** toolbar com Caneta, Laser e Limpar; traços e ponteiro sincronizam ao vivo (`meeting_ink_stroke`, `meeting_laser`, `meeting_ink_clear`). Estado **só em memória** — F5 limpa; late join **não** restaura ink; mudar de slide zera o overlay. Modo apresentação não mostra as ferramentas.
 - **Presença no editor:** chip «Também editando» via WebSocket (sem merge CRDT)
 - **Conectores MVP:** selecione 2 elementos → **Conectar** no ribbon Alinhar (seta entre centros); arrastar a seta solta a ligação — [§19.22](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1922-conectores-mvp-entre-blocos-jul2026)
 - **Telas nativas OEE/OTD/PPM:** dual-KPI + série temporal SVG (`ConfigurableSeriesChart`)
