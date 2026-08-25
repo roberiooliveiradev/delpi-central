@@ -36,6 +36,7 @@ export type PublicPresentationPayload = {
     transitionStyle: string;
     globalRefreshSec: number;
     defaultDurationSec: number;
+    playbackMode?: "presentation" | "meeting";
     publicUrl?: string;
   };
   presentationMeta?: {

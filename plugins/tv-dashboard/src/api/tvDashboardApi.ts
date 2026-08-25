@@ -58,6 +58,8 @@ export type Playlist = {
   viewportHeight?: number | null;
   transitionStyle: string;
   defaultDurationSec: number;
+  /** presentation = auto-advance; meeting = manual. */
+  playbackMode?: "presentation" | "meeting";
   globalRefreshSec: number;
   isActive: boolean;
   viewCount: number;
@@ -188,6 +190,7 @@ export type PresentationPayload = {
     transitionStyle: string;
     globalRefreshSec: number;
     defaultDurationSec: number;
+    playbackMode?: "presentation" | "meeting";
     /** Token capability — mídia browser-safe via `/public/present/...`. */
     publicToken?: string;
     publicUrl?: string;

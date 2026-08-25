@@ -11,6 +11,7 @@ import {
   isComunicadoInputBlock,
   usePresentationChromeVisibility,
   usePresentationEngine,
+  useSessionPlaybackMode,
   buildPublicPresentationWsUrl,
   resolveSlideTransitionStyle,
   presentationSurfaceFromViewMode,
@@ -74,6 +75,22 @@ export function PresentationView({
 
   const { visible: chromeVisible } = usePresentationChromeVisibility();
 
+  const [livePlaylistMode, setLivePlaylistMode] = useState(
+    () => initialPayload.playlist.playbackMode,
+  );
+  useEffect(() => {
+    setLivePlaylistMode(initialPayload.playlist.playbackMode);
+  }, [initialPayload.playlist.playbackMode]);
+
+  const {
+    playbackMode,
+    setPlaybackMode,
+    autoAdvance,
+  } = useSessionPlaybackMode({
+    scopeKey: token || initialPayload.playlist.id,
+    playlistMode: livePlaylistMode,
+  });
+
   const {
     payload,
     setPayload,
@@ -91,9 +108,14 @@ export function PresentationView({
     enableKeyboardControls: true,
     enableHiddenPause: true,
     refreshNativeSlidesOnly: true,
+    autoAdvance,
     realtimeWsUrl:
       mode === "public" && token ? buildPublicPresentationWsUrl(token) : null,
   });
+
+  useEffect(() => {
+    setLivePlaylistMode(payload.playlist.playbackMode);
+  }, [payload.playlist.playbackMode]);
 
   const heartbeatIntervalSec =
     payload.presentationMeta?.heartbeatIntervalSec ?? 60;
@@ -167,7 +189,8 @@ export function PresentationView({
             .filter(Boolean)
             .join(" ")}
         >
-          Pré-visualização · ← → slides · Espaço pausa
+          Pré-visualização · Modo {playbackMode === "meeting" ? "reunião" : "apresentação"} · ← →
+          slides · Espaço {playbackMode === "meeting" ? "= próxima" : "pausa"}
         </div>
       ) : null}
       <DesignViewportStage
@@ -212,6 +235,8 @@ export function PresentationView({
         onNext={goNext}
         sections={payload.sections}
         onJumpToSection={goToSection}
+        playbackMode={playbackMode}
+        onPlaybackModeChange={setPlaybackMode}
       />
       </div>
     </PresentationPlaybackProvider>

@@ -14,6 +14,7 @@ import {
   emptyInputFilterContributions,
   hasInputFilterContributions,
   isComunicadoInputBlock,
+  useSessionPlaybackMode,
   type ComunicadoBlock,
   type InputFilterContributions,
   type PresentationRealtimeEvent,
@@ -91,6 +92,15 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   );
 
   const {
+    playbackMode,
+    setPlaybackMode,
+    autoAdvance,
+  } = useSessionPlaybackMode({
+    scopeKey: playlistId || browserInitial.playlist.id,
+    playlistMode: livePlaylistMode,
+  });
+
+  const {
     index,
     slides,
     viewport,
@@ -107,8 +117,13 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     enableHiddenPause: false,
     enableKeyboardControls: true,
     refreshNativeSlidesOnly: true,
+    autoAdvance,
     realtimeWsUrl: wsUrl,
   });
+
+  useEffect(() => {
+    setLivePlaylistMode(payload.playlist.playbackMode);
+  }, [payload.playlist.playbackMode]);
 
   // Primeiro paint: sem fade/entrada — evita flash ao abrir a prévia.
   useEffect(() => {
@@ -193,7 +208,9 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
           .filter(Boolean)
           .join(" ")}
       >
-        Pré-visualização · ← → slides · Espaço pausa · duplo-clique = tela cheia
+        Pré-visualização · Modo {playbackMode === "meeting" ? "reunião" : "apresentação"} · ← →
+        slides · Espaço {playbackMode === "meeting" ? "= próxima" : "pausa"} · duplo-clique =
+        tela cheia
       </div>
       <DesignViewportStage
         viewportProfile={viewport}
@@ -242,6 +259,8 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
         onNext={goNext}
         sections={payload.sections}
         onJumpToSection={goToSection}
+        playbackMode={playbackMode}
+        onPlaybackModeChange={setPlaybackMode}
       />
       {presenterMode ? (
         <aside className="tdp-presenter-panel" aria-label="Notas do apresentador">
