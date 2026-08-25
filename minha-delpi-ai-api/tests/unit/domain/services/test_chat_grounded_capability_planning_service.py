@@ -133,3 +133,27 @@ def test_plan_stock_uses_mp_codes_for_raw_material_referent():
     assert len(planned) == 2
     assert {item["productCode"] for item in planned} == {"10080109", "10090014"}
     assert "90260149" not in {item["productCode"] for item in planned}
+
+
+def test_plan_stock_mp_referent_without_bucket_does_not_fallback_to_pi():
+    selection = _SelectionStub()
+    workspace = {
+        "turnGrounding": {"status": "grounded"},
+        "workingMemory": {
+            "operationalFocus": {"productCode": "90260149"},
+            "lastResultExcerpt": {
+                "title": "Estoque 50230130",
+                "topKeys": ["50230130"],
+                "path": "/products/50230130/stock",
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="qual o estoque das matérias-primas?",
+        allowed_action_ids=["get_product_stock"],
+        workspace_context=workspace,
+    )
+
+    assert planned == []

@@ -261,6 +261,56 @@ class ChatGroundedCapabilityPlanningService:
         return ordered
 
     @classmethod
+    def _resolve_product_codes(
+        cls,
+        message: str,
+        *,
+        excerpt: dict[str, Any],
+        working_memory: dict[str, Any],
+    ) -> list[str]:
+        top_keys = [
+            ChatProductQueryIntentService.normalize_product_code(str(item))
+            for item in (excerpt.get("topKeys") or [])
+            if str(item).strip()
+        ]
+        top_keys = [code for code in top_keys if code]
+
+        referent_type = ChatTurnGroundingService.resolve_referent_component_type(message)
+
+        if referent_type:
+            typed_keys = cls._codes_for_component_type(excerpt, referent_type)
+
+            if typed_keys:
+                cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
+                return cls._dedupe_codes(typed_keys)[:cap]
+
+            # Pedido tipado (MP/PI) sem bucket: não cair no primeiro PI/topKey.
+            return []
+
+        from app.domain.services.chat_turn_grounding_content_service import (
+            ChatTurnGroundingContentService,
+        )
+
+        fan_out = cls._message_requests_fan_out(message)
+
+        if fan_out and top_keys:
+            cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
+            return top_keys[:cap]
+
+        operational_focus = working_memory.get("operationalFocus") or {}
+        focus_code = ChatProductQueryIntentService.normalize_product_code(
+            str(operational_focus.get("productCode") or ""),
+        )
+
+        if focus_code:
+            return [focus_code]
+
+        if top_keys:
+            return [top_keys[0]]
+
+        return []
+
+    @classmethod
     def _resolve_enrich_product_codes(
         cls,
         message: str,
@@ -275,6 +325,8 @@ class ChatGroundedCapabilityPlanningService:
             if typed_keys:
                 cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
                 return cls._dedupe_codes(typed_keys)[:cap]
+
+            return []
 
         merged: list[str] = []
         keys_by_type = excerpt.get("keysByComponentType")
@@ -314,53 +366,6 @@ class ChatGroundedCapabilityPlanningService:
         top_keys = [code for code in top_keys if code]
 
         return top_keys[:1]
-
-    @classmethod
-    def _resolve_product_codes(
-        cls,
-        message: str,
-        *,
-        excerpt: dict[str, Any],
-        working_memory: dict[str, Any],
-    ) -> list[str]:
-        top_keys = [
-            ChatProductQueryIntentService.normalize_product_code(str(item))
-            for item in (excerpt.get("topKeys") or [])
-            if str(item).strip()
-        ]
-        top_keys = [code for code in top_keys if code]
-
-        referent_type = ChatTurnGroundingService.resolve_referent_component_type(message)
-
-        if referent_type:
-            typed_keys = cls._codes_for_component_type(excerpt, referent_type)
-
-            if typed_keys:
-                cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
-                return cls._dedupe_codes(typed_keys)[:cap]
-
-        from app.domain.services.chat_turn_grounding_content_service import (
-            ChatTurnGroundingContentService,
-        )
-
-        fan_out = cls._message_requests_fan_out(message)
-
-        if fan_out and top_keys:
-            cap = ChatEntityCapabilityCatalogService.max_fan_out_keys()
-            return top_keys[:cap]
-
-        operational_focus = working_memory.get("operationalFocus") or {}
-        focus_code = ChatProductQueryIntentService.normalize_product_code(
-            str(operational_focus.get("productCode") or ""),
-        )
-
-        if focus_code:
-            return [focus_code]
-
-        if top_keys:
-            return [top_keys[0]]
-
-        return []
 
     @classmethod
     def _codes_for_component_type(
