@@ -89,11 +89,15 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         tool_calls: list | None,
         *,
         response_mode: str | None,
+        tool_context: dict | None = None,
     ) -> str | None:
         normalized = ChatResponseModeService.normalize(response_mode)
         config = cls._resolve_mode_config(normalized)
 
         if not config:
+            return None
+
+        if cls.should_skip_for_cross_tool_insight(tool_calls, tool_context=tool_context):
             return None
 
         if not cls._qualifies(tool_calls):
@@ -116,6 +120,50 @@ class ChatOperationalLlmSynthesisBriefDirectService:
             return None
 
         return enriched
+
+    @classmethod
+    def should_skip_for_cross_tool_insight(
+        cls,
+        tool_calls: list | None,
+        *,
+        tool_context: dict | None = None,
+    ) -> bool:
+        """Enrich multi-tool exige síntese LLM — não lead de um único commentary."""
+        if not ChatResponseModeContentService.commentary_skip_brief_direct_when_grounded_enrich():
+            return False
+
+        flag = ChatResponseModeContentService.commentary_grounded_enrich_insight_flag()
+
+        if isinstance(tool_context, dict) and tool_context.get(flag):
+            return True
+
+        min_tools = ChatResponseModeContentService.commentary_min_ok_tools_for_brief_direct_skip()
+        ok_count = cls._count_ok_operational_tools(tool_calls)
+
+        return ok_count >= min_tools
+
+    @classmethod
+    def _count_ok_operational_tools(cls, tool_calls: list | None) -> int:
+        if not isinstance(tool_calls, list):
+            return 0
+
+        count = 0
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
+                continue
+
+            count += 1
+
+        return count
 
     @classmethod
     def _resolve_mode_config(cls, normalized_mode: str) -> dict[str, int] | None:

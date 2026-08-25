@@ -192,6 +192,9 @@
     },
     "defaultDepth": "standard",
     "briefDirectToolContextFlag": "commentaryBriefDirect",
+    "skipBriefDirectWhenGroundedEnrich": true,
+    "minOkToolsForBriefDirectSkip": 2,
+    "groundedEnrichInsightFlag": "groundedEnrichInsight",
     "synthesisEffectByDepth": {
       "brief": "llm_synthesis_brief",
       "standard": "llm_synthesis",

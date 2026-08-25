@@ -280,6 +280,23 @@ class ChatResponseModeContentService:
         ).strip()
 
     @classmethod
+    def commentary_skip_brief_direct_when_grounded_enrich(cls) -> bool:
+        return bool(cls._commentary_lead_node().get("skipBriefDirectWhenGroundedEnrich", True))
+
+    @classmethod
+    def commentary_min_ok_tools_for_brief_direct_skip(cls) -> int:
+        try:
+            return max(2, int(cls._commentary_lead_node().get("minOkToolsForBriefDirectSkip", 2)))
+        except (TypeError, ValueError):
+            return 2
+
+    @classmethod
+    def commentary_grounded_enrich_insight_flag(cls) -> str:
+        return str(
+            cls._commentary_lead_node().get("groundedEnrichInsightFlag") or "groundedEnrichInsight",
+        ).strip()
+
+    @classmethod
     def commentary_lead_synthesis_effect(cls, depth: str) -> str:
         node = cls._commentary_lead_node().get("synthesisEffectByDepth")
 

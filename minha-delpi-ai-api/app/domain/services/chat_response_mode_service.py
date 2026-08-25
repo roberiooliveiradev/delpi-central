@@ -147,6 +147,7 @@ class ChatResponseModeService:
                 message,
                 tool_calls,
                 response_mode=response_mode,
+                tool_context=tool_context if isinstance(tool_context, dict) else None,
             )
 
             if brief_direct:

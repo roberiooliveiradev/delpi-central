@@ -320,6 +320,96 @@ def test_generic_list_summary_only_does_not_brief_direct_in_normal():
     assert effect != "llm_synthesis_brief" or direct is None
 
 
+def _stock_tool(code: str) -> dict:
+    return {
+        "name": "execute_external_action",
+        "metadata": {
+            "ok": True,
+            "llmProseDecoupled": True,
+            "path": f"/products/{code}/stock",
+            "operationId": "get_product_stock",
+            "dataCommentary": {
+                "profileKey": "stock",
+                "highlights": [
+                    {"text": f"O produto **{code}** Saldo disponível total: **0** un."}
+                ],
+                "attention": [f"Valor zerado em estoque ({code})."],
+            },
+        },
+    }
+
+
+def test_normal_brief_direct_skips_when_grounded_enrich_insight_flag():
+    tools = [_stock_tool("50230130")]
+    tool_context = {"groundedEnrichInsight": True}
+
+    answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "o que me diz sobre os itens?",
+        tools,
+        response_mode="normal",
+        tool_context=tool_context,
+    )
+
+    assert answer is None
+    assert ChatOperationalLlmSynthesisBriefDirectService.should_skip_for_cross_tool_insight(
+        tools,
+        tool_context=tool_context,
+    )
+
+
+def test_normal_brief_direct_skips_when_multi_tool_ok():
+    tools = [
+        _stock_tool("50230130"),
+        _stock_tool("50230131"),
+        _stock_tool("50230132"),
+        _stock_tool("50230133"),
+    ]
+
+    answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "o que me diz sobre os itens?",
+        tools,
+        response_mode="normal",
+        tool_context={},
+    )
+
+    assert answer is None
+
+
+def test_normal_brief_direct_keeps_single_stock_without_enrich_flag():
+    tools = [_stock_tool("10080109")]
+
+    answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "estoque do 10080109",
+        tools,
+        response_mode="normal",
+        tool_context={},
+    )
+
+    assert answer
+    assert "10080109" in answer
+
+
+def test_apply_turn_policy_normal_enrich_multi_tool_forces_llm_synthesis():
+    tools = [
+        _stock_tool("50230130"),
+        _stock_tool("50230131"),
+    ]
+    tool_context = {"groundedEnrichInsight": True}
+
+    direct, _, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="o que me diz sobre os itens?",
+        response_mode="normal",
+        direct_answer=None,
+        skip_rag=False,
+        tool_calls=tools,
+        tool_context=tool_context,
+    )
+
+    assert direct is None
+    assert tool_context.get("commentaryBriefDirect") is not True
+    assert effect == "llm_synthesis"
+
+
 def test_to_commentary_mirror_accepts_string_summary():
     from app.domain.services.chat_humanized_data_response_service import (
         ChatHumanizedDataResponseService,
