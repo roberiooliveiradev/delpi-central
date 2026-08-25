@@ -40,6 +40,16 @@ _SKIP_THINKER = os.environ.get("SMOKE_SKIP_THINKER", "").strip().lower() in {
 
 _REFORMULE_RE = re.compile(r"\b(reformule|reformular)\b", re.I)
 _TECH_DUMP_RE = re.compile(r"\b(Código|Tipo)\s*:", re.I)
+_SINGLE_STOCK_TEMPLATE_RE = re.compile(
+    r"Saldo disponível total:.*posição\(ões\).*Pontos de atenção",
+    re.I | re.S,
+)
+_PROXIMOS_PASSOS_NEGATIVO_RE = re.compile(
+    r"Próximos passos.*disponível negativo",
+    re.I | re.S,
+)
+# Códigos típicos de PI Delpi (não MP) — T3 não deve ficar só nisso quando pediu MPs.
+_PI_ONLY_STOCK_RE = re.compile(r"/products/(5023\d{4})/stock", re.I)
 
 
 @dataclass
@@ -330,6 +340,30 @@ def _validate_cp2_t2(result: TurnResult) -> None:
     if not result.operation_ids and not result.stock_paths:
         result.warnings.append("sem operationId/stock visível — agente sem actions?")
 
+    # Qualidade: não aceitar template de um único estoque + próximos passos genéricos.
+    if _SINGLE_STOCK_TEMPLATE_RE.search(result.prose) and _PROXIMOS_PASSOS_NEGATIVO_RE.search(
+        result.prose
+    ):
+        codes_in_prose = set(re.findall(r"\b(50\d{6}|10\d{6})\b", result.prose))
+        if len(codes_in_prose) <= 1:
+            result.errors.append(
+                "T2 prosa parece template de um único estoque (sem síntese cruzada)"
+            )
+
+    if len(result.stock_paths) >= 2:
+        codes = set()
+        for path in result.stock_paths:
+            match = re.search(r"/products/([^/]+)/stock", path, re.I)
+            if match:
+                codes.add(match.group(1))
+        if len(codes) >= 2:
+            # Soft: se multi-stock ok mas prosa cita só um código, avisar.
+            cited = set(re.findall(r"\b(" + "|".join(re.escape(c) for c in codes) + r")\b", result.prose))
+            if len(cited) < 2 and _SINGLE_STOCK_TEMPLATE_RE.search(result.prose):
+                result.errors.append(
+                    "T2 multi-stock sem síntese: prosa não cruza os códigos consultados"
+                )
+
 
 def _validate_cp2_t3(result: TurnResult, parent_product: str) -> None:
     if not result.stock_paths:
@@ -344,6 +378,18 @@ def _validate_cp2_t3(result: TurnResult, parent_product: str) -> None:
     if result.stock_paths and not mp_hits:
         result.errors.append("nenhum path stock de MP distinto do PA")
 
+    # Qualidade: se todos os paths forem só PI 5023xxxx, falha (deveria fan-out MP).
+    pi_only = [
+        path
+        for path in result.stock_paths
+        if _PI_ONLY_STOCK_RE.search(path)
+    ]
+    non_pi = [path for path in result.stock_paths if not _PI_ONLY_STOCK_RE.search(path)]
+
+    if result.stock_paths and pi_only and not non_pi:
+        result.errors.append(
+            "T3 só consultou PI (5023…) — esperado fan-out de MPs (ex. 1008…/1038…)"
+        )
 
 def _print_turn(result: TurnResult) -> None:
     status = "PASS" if result.passed else "FAIL"
