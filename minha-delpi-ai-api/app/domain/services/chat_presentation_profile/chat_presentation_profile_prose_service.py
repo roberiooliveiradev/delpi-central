@@ -81,3 +81,52 @@ class ChatPresentationProfileProseService:
 
         return None
 
+    @classmethod
+    def prose_composition_policy(
+        cls,
+        *,
+        entity: str | None = None,
+        path: str | None = None,
+        profile_key: str | None = None,
+    ) -> str:
+        """Política de composição LLM (marcadores) por perfil/entitySet."""
+        from app.domain.services.chat_prose_composition_content_service import (
+            ChatProseCompositionContentService,
+        )
+
+        key = str(profile_key or "").strip()
+
+        if not key:
+            key = presentation_profile_service().resolve_profile_key(path, entity)
+
+        profile = presentation_profile_service().profile(key)
+
+        if isinstance(profile, dict):
+            inline = str(profile.get("proseCompositionPolicy") or "").strip()
+
+            if inline:
+                return inline
+
+        by_profile = presentation_profile_service().node("proseCompositionPolicyByProfile")
+
+        if isinstance(by_profile, dict) and key:
+            mapped = str(by_profile.get(key) or "").strip()
+
+            if mapped:
+                return mapped
+
+        token = str(entity or "").strip()
+        by_entity_set = presentation_profile_service().node("proseCompositionPolicyByEntitySet")
+
+        if isinstance(by_entity_set, dict) and token:
+            for set_key, configured in by_entity_set.items():
+                if token not in presentation_profile_service().entity_set(str(set_key or "")):
+                    continue
+
+                mapped = str(configured or "").strip()
+
+                if mapped:
+                    return mapped
+
+        return ChatProseCompositionContentService.default_policy()
+

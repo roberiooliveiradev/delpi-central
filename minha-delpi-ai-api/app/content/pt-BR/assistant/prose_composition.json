@@ -1,0 +1,99 @@
+{
+  "version": "2026.08.1",
+  "markers": {
+    "table": {
+      "aliases": ["table", "tabela"],
+      "slotKinds": ["table"],
+      "metadataSources": ["tablePresentation", "tablePresentations"]
+    },
+    "tree": {
+      "aliases": ["tree", "arvore", "árvore"],
+      "slotKinds": ["tree"],
+      "metadataSources": ["treePresentation"]
+    },
+    "chart": {
+      "aliases": ["chart", "grafico", "gráfico"],
+      "slotKinds": ["chart", "line_chart", "bar_chart", "donut"],
+      "metadataSources": ["chartPresentation"]
+    },
+    "kpi": {
+      "aliases": ["kpi"],
+      "slotKinds": ["kpi"],
+      "metadataSources": ["kpiPresentation"]
+    },
+    "dashboard": {
+      "aliases": ["dashboard"],
+      "slotKinds": ["dashboard"],
+      "metadataSources": ["dashboardPresentation"]
+    }
+  },
+  "policies": {
+    "api_only": {
+      "llmMayEmitMarkers": false,
+      "maxMarkers": 0,
+      "allowStack": false
+    },
+    "llm_markers": {
+      "llmMayEmitMarkers": true,
+      "maxMarkers": 4,
+      "allowStack": true
+    },
+    "llm_markers_stack": {
+      "llmMayEmitMarkers": true,
+      "maxMarkers": 6,
+      "allowStack": true
+    },
+    "llm_markers_stack_only": {
+      "llmMayEmitMarkers": true,
+      "maxMarkers": 8,
+      "allowStack": true,
+      "requireStackLayout": true
+    }
+  },
+  "defaultPolicy": "llm_markers",
+  "policyByExplicitFormat": {
+    "automatic": "llm_markers_stack",
+    "auto": "llm_markers_stack",
+    "text": "llm_markers",
+    "texto": "llm_markers",
+    "table": "api_only",
+    "tabela": "api_only",
+    "tree": "api_only",
+    "arvore": "api_only",
+    "chart": "api_only",
+    "grafico": "api_only",
+    "kpi": "api_only",
+    "dashboard": "api_only",
+    "canvas": "api_only"
+  },
+  "policyByResponseMode": {
+    "fast": {
+      "maxMarkers": 1,
+      "preferBriefLead": true
+    },
+    "normal": {
+      "maxMarkers": 4,
+      "preferBriefLead": false
+    },
+    "thinker": {
+      "maxMarkers": 6,
+      "preferBriefLead": false
+    }
+  },
+  "forbiddenWhenExplicit": {
+    "table": ["tree", "chart", "dashboard", "kpi"],
+    "tree": ["table", "chart", "dashboard", "kpi"],
+    "chart": ["table", "tree", "dashboard", "kpi"],
+    "kpi": ["table", "tree", "chart", "dashboard"],
+    "dashboard": ["table", "tree", "chart", "kpi"]
+  },
+  "promptRules": {
+    "compositionIntro": "Composição visual: use marcadores na prosa para indicar onde o painel deve inserir componentes nativos. Não copie linhas de tabela/árvore.",
+    "markerCatalogLine": "Marcadores permitidos neste turno: {markers}.",
+    "markerUsage": "Escreva uma frase introdutória e, na linha seguinte, o marcador sozinho (ex.: [[table]] ou [[table:1]]). Use índice (:1, :2) quando houver várias tabelas.",
+    "noCopyRows": "Proibido transcrever linhas GFM, nós da árvore ou séries do gráfico — o componente nativo exibe os dados.",
+    "fallbackNoSlot": "Se não houver slot disponível para um marcador, omita o marcador e continue só com prosa.",
+    "availableSlotsLine": "Slots disponíveis: {slots}."
+  },
+  "markerPattern": "\\[\\[(tabela|table|grafico|chart|arvore|árvore|tree|kpi|dashboard)(?::(\\d+))?\\]\\]"
+}

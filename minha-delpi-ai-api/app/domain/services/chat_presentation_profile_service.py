@@ -153,6 +153,20 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         )
 
     @classmethod
+    def prose_composition_policy(
+        cls,
+        *,
+        entity: str | None = None,
+        path: str | None = None,
+        profile_key: str | None = None,
+    ) -> str:
+        return ChatPresentationProfileProseService.prose_composition_policy(
+            entity=entity,
+            path=path,
+            profile_key=profile_key,
+        )
+
+    @classmethod
     def operational_empty_route_key(cls, entity: str | None) -> str | None:
         return ChatPresentationProfileEntityService.operational_empty_route_key(entity)
 

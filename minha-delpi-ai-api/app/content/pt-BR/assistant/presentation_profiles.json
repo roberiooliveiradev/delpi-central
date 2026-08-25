@@ -435,6 +435,24 @@
     "tree_hierarchy": "llm",
     "generic": "llm"
   },
+  "proseCompositionPolicyByProfile": {
+    "tree_hierarchy": "llm_markers_stack",
+    "stock": "llm_markers_stack",
+    "analyser": "llm_markers_stack",
+    "structure_exclusivity": "llm_markers_stack",
+    "factory_status": "llm_markers",
+    "production_status": "llm_markers",
+    "shipping_status": "llm_markers",
+    "table_list": "llm_markers",
+    "playbook_report": "llm_markers",
+    "kpi_series": "llm_markers",
+    "kpi_dashboard": "llm_markers",
+    "generic": "llm_markers"
+  },
+  "proseCompositionPolicyByEntitySet": {
+    "playbookOperational": "llm_markers",
+    "productListPresent": "llm_markers"
+  },
   "entityPresentationRouting": {
     "operationalEmptyKeys": {
       "product_suppliers": "suppliers",
