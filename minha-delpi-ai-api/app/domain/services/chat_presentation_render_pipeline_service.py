@@ -30,6 +30,13 @@ class ChatPresentationRenderPipelineService:
         ChatPresentationPayloadPruningService.prune(metadata)
         ChatPresentationRenderPlanService.build(metadata)
 
+        from app.domain.services.chat_presentation_llm_composition_service import (
+            ChatPresentationLlmCompositionService,
+        )
+
+        # Após plano determinístico: anota allowed markers; merge se markdown já tiver [[…]].
+        ChatPresentationLlmCompositionService.apply_after_deterministic_plan(metadata)
+
     @classmethod
     def _sync_stack_layout_policy_before_render(cls, metadata: dict[str, Any]) -> None:
         decision = metadata.get("presentationDecision")

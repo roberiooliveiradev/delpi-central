@@ -129,18 +129,40 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
                     response_mode_effect=effect,
                 )
 
-        return cls._substitute_safe_generic_fallback(
-            cls._guard_instruction_leak(
-                body,
+        return cls._apply_prose_composition(
+            cls._substitute_safe_generic_fallback(
+                cls._guard_instruction_leak(
+                    body,
+                    message=message,
+                    tool_calls=tool_calls,
+                    response_mode=normalized_mode,
+                    response_mode_effect=effect,
+                ),
                 message=message,
                 tool_calls=tool_calls,
                 response_mode=normalized_mode,
                 response_mode_effect=effect,
             ),
-            message=message,
             tool_calls=tool_calls,
             response_mode=normalized_mode,
-            response_mode_effect=effect,
+        )
+
+    @classmethod
+    def _apply_prose_composition(
+        cls,
+        body: str,
+        *,
+        tool_calls: list | None,
+        response_mode: str,
+    ) -> str:
+        from app.domain.services.chat_presentation_llm_composition_service import (
+            ChatPresentationLlmCompositionService,
+        )
+
+        return ChatPresentationLlmCompositionService.apply_to_tool_calls(
+            body,
+            tool_calls,
+            response_mode=response_mode,
         )
 
     @classmethod
