@@ -128,6 +128,27 @@ describe("usePresentationEngine", () => {
     expect(result.current.paused).toBe(true);
   });
 
+  it("com autoAdvance false não agenda timer e Space avança", () => {
+    const { result } = renderHook(() =>
+      usePresentationEngine({
+        initialPayload: payload,
+        enableHiddenPause: false,
+        enableKeyboardControls: true,
+        autoAdvance: false,
+      }),
+    );
+    expect(result.current.index).toBe(0);
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(result.current.index).toBe(0);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+    });
+    expect(result.current.index).toBe(1);
+    expect(result.current.paused).toBe(false);
+  });
+
   it("salta para o primeiro slide da seção (goToSection)", () => {
     const withSections: PresentationPayloadLike = {
       ...payload,

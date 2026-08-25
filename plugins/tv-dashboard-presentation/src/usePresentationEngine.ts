@@ -14,11 +14,16 @@ export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
   onRefresh?: (event?: PresentationRealtimeEvent) => Promise<T | null>;
   /** @deprecated Use `enableKeyboardControls` (Space + setas). */
   enableKeyboardPause?: boolean;
-  /** Space = pausa; ←/→ = slide anterior/próximo. */
+  /** Space = pausa (apresentação) ou próximo (reunião); ←/→ = slide anterior/próximo. */
   enableKeyboardControls?: boolean;
   enableHiddenPause?: boolean;
   refreshNativeSlidesOnly?: boolean;
   realtimeWsUrl?: string | null;
+  /**
+   * Quando false (modo reunião), o timer de duração não agenda.
+   * Default true = modo apresentação (comportamento histórico).
+   */
+  autoAdvance?: boolean;
 };
 
 export function usePresentationEngine<T extends PresentationPayloadLike>({
@@ -29,6 +34,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   enableHiddenPause = true,
   refreshNativeSlidesOnly = false,
   realtimeWsUrl = null,
+  autoAdvance = true,
 }: UsePresentationEngineOptions<T>) {
   const keyboardEnabled = enableKeyboardControls ?? enableKeyboardPause;
   const [payload, setPayload] = useState(initialPayload);
@@ -119,7 +125,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   }, [slides.length, index]);
 
   useEffect(() => {
-    if (!slides.length || paused || (enableHiddenPause && hidden)) return;
+    if (!autoAdvance || !slides.length || paused || (enableHiddenPause && hidden)) return;
     const baseSec = current?.durationSec ?? playlist.defaultDurationSec ?? 30;
     const durationMs = (nativeError ? nativeErrorAdvanceSec : baseSec) * 1000;
     const timer = window.setTimeout(() => {
@@ -127,6 +133,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     }, durationMs);
     return () => window.clearTimeout(timer);
   }, [
+    autoAdvance,
     slides.length,
     index,
     current,
@@ -168,7 +175,11 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
 
       if (event.code === "Space") {
         event.preventDefault();
-        setPaused((value: boolean) => !value);
+        if (autoAdvance) {
+          setPaused((value: boolean) => !value);
+        } else {
+          goNext();
+        }
         return;
       }
       if (event.code === "ArrowLeft") {
@@ -183,7 +194,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [keyboardEnabled, goNext, goPrevious]);
+  }, [keyboardEnabled, autoAdvance, goNext, goPrevious]);
 
   return {
     payload,

@@ -2,6 +2,14 @@ import "./native-screens.css";
 
 export { usePresentationEngine } from "./usePresentationEngine";
 export {
+  DEFAULT_PLAYBACK_MODE,
+  isAutoAdvanceMode,
+  parsePlaybackMode,
+  playbackModeLabel,
+  resolvePlaybackMode,
+  type PlaybackMode,
+} from "./playbackMode";
+export {
   applySlideDraftToPayload,
   mergeSlideDraftOntoNative,
 } from "./applySlideDraftToPayload";
