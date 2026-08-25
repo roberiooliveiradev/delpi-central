@@ -170,4 +170,71 @@ def test_grounded_insight_regression(case: dict):
 
         return
 
+    if case_id.startswith("FF-COMPOSE-"):
+        from app.domain.services.chat_presentation_llm_composition_service import (
+            ChatPresentationLlmCompositionService,
+        )
+
+        metadata = dict(case.get("metadata") or {})
+        tool_calls = case.get("tool_calls")
+        if tool_calls and not metadata:
+            metadata = dict(tool_calls[0]["metadata"])
+            tool_calls = [
+                {**item, "metadata": dict(item["metadata"])} for item in tool_calls
+            ]
+            tool_calls[0]["metadata"] = metadata
+
+        cleaned = ChatPresentationLlmCompositionService.apply(
+            metadata,
+            str(case["llm_answer"]),
+            response_mode=str(case.get("response_mode") or "normal"),
+            explicit_format=case.get("explicit_format"),
+            tool_calls=tool_calls,
+        )
+
+        if expects.get("markers_remain") is False:
+            assert "[[" not in cleaned
+
+        if "cleaned_equals" in expects:
+            assert cleaned == expects["cleaned_equals"]
+
+        if "prose_composition_source" in expects:
+            assert metadata.get("proseCompositionSource") == expects[
+                "prose_composition_source"
+            ]
+
+        if "prose_composition_source_not" in expects:
+            assert metadata.get("proseCompositionSource") != expects[
+                "prose_composition_source_not"
+            ]
+
+        decision = metadata.get("presentationDecision") or {}
+        if "prose_composition_allowed" in expects:
+            assert decision.get("proseCompositionAllowed") is expects[
+                "prose_composition_allowed"
+            ]
+        if "prose_composition_policy" in expects:
+            assert decision.get("proseCompositionPolicy") == expects[
+                "prose_composition_policy"
+            ]
+
+        plan = metadata.get("renderPlan") or {}
+        kinds = [seg.get("kind") for seg in (plan.get("segments") or [])]
+
+        if "layout_mode" in expects:
+            assert plan.get("layoutMode") == expects["layout_mode"]
+        if "segment_kinds" in expects:
+            assert kinds == expects["segment_kinds"]
+        if "min_segments" in expects:
+            assert len(plan.get("segments") or []) >= expects["min_segments"]
+        if "table_count" in expects:
+            assert kinds.count("table") == expects["table_count"]
+        if "must_include_kinds" in expects:
+            for kind in expects["must_include_kinds"]:
+                assert kind in kinds
+        if expects.get("no_tree_in_plan"):
+            assert "tree" not in kinds
+
+        return
+
     raise AssertionError(f"Unhandled grounded insight case: {case_id}")

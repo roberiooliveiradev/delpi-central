@@ -3294,4 +3294,128 @@ GROUNDED_INSIGHT_REGRESSION_CASES = [
             "min_budget_chars": 4800,
         },
     },
+    {
+        "id": "FF-COMPOSE-STACK-01",
+        "message": "estrutura e estoque do 90260149",
+        "explicit_format": "automatic",
+        "response_mode": "normal",
+        "llm_answer": (
+            "A BOM do PA.\n\n[[tree]]\n\n"
+            "Saldo das matérias-primas:\n\n[[table]]\n\n"
+            "Leitura consolidada."
+        ),
+        "metadata": {
+            "path": "/products/90260149/structure",
+            "ok": True,
+            "treePresentation": {
+                "type": "tree",
+                "title": "Estrutura 90260149",
+                "root": {"id": "90260149", "label": "PA"},
+            },
+            "tablePresentation": {
+                "type": "table",
+                "title": "Estoque MP",
+                "columns": ["code", "qty"],
+                "rows": [{"code": "10080109", "qty": 12}],
+            },
+        },
+        "expects": {
+            "prose_composition_source": "llm",
+            "layout_mode": "stack",
+            "segment_kinds": ["markdown", "tree", "markdown", "table", "markdown"],
+            "markers_remain": False,
+        },
+    },
+    {
+        "id": "FF-COMPOSE-EXPLICIT-TABLE-01",
+        "message": "mostre em tabela",
+        "explicit_format": "table",
+        "response_mode": "normal",
+        "llm_answer": "Lead da tabela.\n\n[[tree]]\n\n[[table]]",
+        "metadata": {
+            "path": "/products/90260149/structure",
+            "ok": True,
+            "explicitSessionFormat": "table",
+            "treePresentation": {
+                "type": "tree",
+                "title": "Estrutura",
+                "root": {"id": "90260149"},
+            },
+            "tablePresentation": {
+                "type": "table",
+                "title": "Itens",
+                "rows": [{"code": "10080109"}],
+            },
+        },
+        "expects": {
+            "prose_composition_allowed": False,
+            "prose_composition_policy": "api_only",
+            "prose_composition_source_not": "llm",
+            "cleaned_equals": "Lead da tabela.",
+            "no_tree_in_plan": True,
+        },
+    },
+    {
+        "id": "FF-COMPOSE-ENRICH-01",
+        "message": "o que me diz sobre os itens?",
+        "response_mode": "thinker",
+        "llm_answer": (
+            "Leitura cruzada da estrutura.\n\n[[tree]]\n\n"
+            "Estoque da primeira MP.\n\n[[table:1]]\n\n"
+            "Segunda MP.\n\n[[table:2]]\n\n"
+            "Conclusão grounded."
+        ),
+        "tool_context": {
+            "turnGrounding": {"stage": "grounded_enrich_insight"},
+        },
+        "tool_calls": [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/90260149/structure",
+                    "operationId": "get_product_structure",
+                    "treePresentation": {
+                        "type": "tree",
+                        "title": "Estrutura",
+                        "root": {"id": "90260149"},
+                    },
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080109/stock",
+                    "operationId": "get_product_stock",
+                    "tablePresentation": {
+                        "type": "table",
+                        "title": "Estoque MP A",
+                        "rows": [{"code": "10080109", "qty": 12}],
+                    },
+                },
+            },
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10090014/stock",
+                    "operationId": "get_product_stock_b",
+                    "tablePresentation": {
+                        "type": "table",
+                        "title": "Estoque MP B",
+                        "rows": [{"code": "10090014", "qty": 0}],
+                    },
+                },
+            },
+        ],
+        "expects": {
+            "prose_composition_source": "llm",
+            "layout_mode": "stack",
+            "min_segments": 5,
+            "table_count": 2,
+            "must_include_kinds": ["markdown", "tree", "table"],
+            "markers_remain": False,
+        },
+    },
 ]
