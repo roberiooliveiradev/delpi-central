@@ -18,6 +18,7 @@ import { DeckRibbonTile } from "./DeckRibbonTile";
 import { TvRibbonColorPicker } from "./TvRibbonColorPicker";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
+const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 type Labels = Record<string, string>;
 
