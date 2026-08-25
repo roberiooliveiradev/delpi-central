@@ -639,8 +639,27 @@ export type PreviewFilterOverrides = {
   bySourceId?: Record<string, Record<string, string | number | boolean | null>>;
 };
 
-export async function getPreviewPayload(id: string, filters?: PreviewFilterOverrides | null) {
+export type PreviewPayloadOptions = {
+  filters?: PreviewFilterOverrides | null;
+  /** Enrich como TV pública (service auth). Default na página de prévia. */
+  parity?: "tv";
+};
+
+export async function getPreviewPayload(
+  id: string,
+  filtersOrOptions?: PreviewFilterOverrides | PreviewPayloadOptions | null,
+) {
+  const options: PreviewPayloadOptions =
+    filtersOrOptions &&
+    typeof filtersOrOptions === "object" &&
+    ("filters" in filtersOrOptions || "parity" in filtersOrOptions)
+      ? (filtersOrOptions as PreviewPayloadOptions)
+      : { filters: filtersOrOptions as PreviewFilterOverrides | null | undefined };
+  const filters = options.filters;
   const params = new URLSearchParams();
+  if (options.parity === "tv") {
+    params.set("parity", "tv");
+  }
   if (filters) {
     const slide = filters.slide ?? {};
     const bySourceId = filters.bySourceId ?? {};

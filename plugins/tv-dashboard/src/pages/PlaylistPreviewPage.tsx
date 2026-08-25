@@ -39,7 +39,10 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const next = withLiveOverlay(playlistId, await getPreviewPayload(playlistId));
+      const next = withLiveOverlay(
+        playlistId,
+        await getPreviewPayload(playlistId, { parity: "tv" }),
+      );
       rememberPreviewPayloadCache(playlistId, next);
       setPayload(next);
     } catch (err) {
@@ -49,7 +52,13 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
 
   const onRefresh = useCallback(
     async (filters?: InputFilterContributions | null) =>
-      withLiveOverlay(playlistId, await getPreviewPayload(playlistId, filters ?? undefined)),
+      withLiveOverlay(
+        playlistId,
+        await getPreviewPayload(playlistId, {
+          filters: filters ?? undefined,
+          parity: "tv",
+        }),
+      ),
     [playlistId],
   );
 

@@ -359,12 +359,20 @@ def preview_payload(
     request: Request,
     playlist_id: UUID,
     filters: str | None = Query(default=None, description="JSON { slide, bySourceId }"),
+    parity: str | None = Query(
+        default=None,
+        description="parity=tv: enrich como present (service auth); omitido: JWT do editor",
+    ),
 ):
     guarded = require_playlist_access(request, playlist_id, need="read")
     if is_access_error(guarded):
         return guarded
     user, _access_result = guarded
     auth = request.headers.get("Authorization")
+    # Validação TV: mesmo caminho de enrich do /present/ (service), JWT só no gate de acesso.
+    use_tv_parity = (parity or "").strip().lower() == "tv"
+    enrich_auth = None if use_tv_parity else auth
+    enrich_user = None if use_tv_parity else user
     df_params: dict[str, str] = {}
     for key, value in request.query_params.multi_items():
         if key.startswith("df.") and len(key) > 3:
@@ -373,8 +381,8 @@ def preview_payload(
     try:
         payload = _present.build_by_id(
             playlist_id,
-            authorization=auth,
-            user=user,
+            authorization=enrich_auth,
+            user=enrich_user,
             filter_overrides=filter_overrides,
         )
     except PlaylistNotFoundError:
