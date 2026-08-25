@@ -18,6 +18,8 @@ export {
   usePresentationChromeVisibility,
 } from "./usePresentationChromeVisibility";
 export { PresentationStageControls } from "./PresentationStageControls";
+export { useSessionPlaybackMode } from "./useSessionPlaybackMode";
+export type { UseSessionPlaybackModeOptions } from "./useSessionPlaybackMode";
 export {
   PresentationPlaybackProvider,
   usePresentationPlayback,

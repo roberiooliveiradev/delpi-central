@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { PresentationSection } from "./types";
+import { playbackModeLabel, type PlaybackMode } from "./playbackMode";
 
 type Props = {
   index: number;
@@ -14,6 +15,9 @@ type Props = {
   /** Quando false, oculta com transição (idle). */
   visible?: boolean;
   className?: string;
+  /** Modo efetivo — em reunião oculta Pausar. */
+  playbackMode?: PlaybackMode;
+  onPlaybackModeChange?: (mode: PlaybackMode) => void;
 };
 
 /** Controles de slide (anterior / pausa / próxima) — prévia admin e apresentação. */
@@ -28,6 +32,8 @@ export function PresentationStageControls({
   onJumpToSection,
   visible = true,
   className,
+  playbackMode = "presentation",
+  onPlaybackModeChange,
 }: Props) {
   const rootClass = [
     "tdp-preview-controls",
@@ -42,28 +48,42 @@ export function PresentationStageControls({
     namedSections.length === 1 && Boolean(namedSections[0]?.isMain);
   const jumpSections = onlyMain ? [] : namedSections;
   const showSectionJump = jumpSections.length >= 1 && typeof onJumpToSection === "function";
+  const showModeToggle = typeof onPlaybackModeChange === "function";
+  const autoAdvance = playbackMode === "presentation";
 
   const menuId = useId();
+  const modeMenuId = useId();
   const jumpRef = useRef<HTMLDivElement | null>(null);
+  const modeRef = useRef<HTMLDivElement | null>(null);
   const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+  const [modeMenuOpen, setModeMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!visible) setSectionMenuOpen(false);
+    if (!visible) {
+      setSectionMenuOpen(false);
+      setModeMenuOpen(false);
+    }
   }, [visible]);
 
   useEffect(() => {
-    if (!sectionMenuOpen) return;
+    if (!sectionMenuOpen && !modeMenuOpen) return;
 
     const onPointerDown = (event: PointerEvent) => {
-      const root = jumpRef.current;
-      if (!root) return;
-      if (event.target instanceof Node && !root.contains(event.target)) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (sectionMenuOpen && jumpRef.current && !jumpRef.current.contains(target)) {
         setSectionMenuOpen(false);
+      }
+      if (modeMenuOpen && modeRef.current && !modeRef.current.contains(target)) {
+        setModeMenuOpen(false);
       }
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSectionMenuOpen(false);
+      if (event.key === "Escape") {
+        setSectionMenuOpen(false);
+        setModeMenuOpen(false);
+      }
     };
 
     window.addEventListener("pointerdown", onPointerDown);
@@ -72,7 +92,7 @@ export function PresentationStageControls({
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [sectionMenuOpen]);
+  }, [sectionMenuOpen, modeMenuOpen]);
 
   return (
     <div className={rootClass} aria-hidden={!visible}>
@@ -87,16 +107,18 @@ export function PresentationStageControls({
       </button>
       <span className="tdp-preview-controls__status">
         {index + 1} / {total}
-        {paused ? " · Pausado" : ""}
+        {autoAdvance && paused ? " · Pausado" : ""}
       </span>
-      <button
-        type="button"
-        className="tdp-preview-controls__btn"
-        onClick={onPauseToggle}
-        tabIndex={visible ? 0 : -1}
-      >
-        {paused ? "Retomar" : "Pausar"}
-      </button>
+      {autoAdvance ? (
+        <button
+          type="button"
+          className="tdp-preview-controls__btn"
+          onClick={onPauseToggle}
+          tabIndex={visible ? 0 : -1}
+        >
+          {paused ? "Retomar" : "Pausar"}
+        </button>
+      ) : null}
       <button
         type="button"
         className="tdp-preview-controls__btn"
@@ -122,7 +144,10 @@ export function PresentationStageControls({
             aria-expanded={sectionMenuOpen}
             aria-controls={menuId}
             tabIndex={visible ? 0 : -1}
-            onClick={() => setSectionMenuOpen((open) => !open)}
+            onClick={() => {
+              setModeMenuOpen(false);
+              setSectionMenuOpen((open) => !open);
+            }}
           >
             Seção…
           </button>
@@ -145,6 +170,62 @@ export function PresentationStageControls({
                     }}
                   >
                     {section.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+      {showModeToggle ? (
+        <div ref={modeRef} className="tdp-preview-controls__section-jump">
+          <button
+            type="button"
+            className={[
+              "tdp-preview-controls__btn",
+              "tdp-preview-controls__section-trigger",
+              modeMenuOpen ? "tdp-preview-controls__section-trigger--open" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-label="Modo de reprodução"
+            aria-haspopup="listbox"
+            aria-expanded={modeMenuOpen}
+            aria-controls={modeMenuId}
+            tabIndex={visible ? 0 : -1}
+            onClick={() => {
+              setSectionMenuOpen(false);
+              setModeMenuOpen((open) => !open);
+            }}
+          >
+            {playbackModeLabel(playbackMode)}
+          </button>
+          {modeMenuOpen ? (
+            <ul
+              id={modeMenuId}
+              className="tdp-preview-controls__section-menu"
+              role="listbox"
+              aria-label="Modo de reprodução"
+            >
+              {(
+                [
+                  { id: "presentation" as const, hint: "Avanço automático" },
+                  { id: "meeting" as const, hint: "Avanço manual" },
+                ] as const
+              ).map((option) => (
+                <li key={option.id} role="presentation">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={playbackMode === option.id}
+                    className="tdp-preview-controls__section-option"
+                    onClick={() => {
+                      onPlaybackModeChange?.(option.id);
+                      setModeMenuOpen(false);
+                    }}
+                  >
+                    {playbackModeLabel(option.id)}
+                    <span className="tdp-preview-controls__mode-hint"> · {option.hint}</span>
                   </button>
                 </li>
               ))}

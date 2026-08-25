@@ -47,4 +47,40 @@ describe("PresentationStageControls", () => {
     );
     expect(screen.queryByRole("button", { name: "Ir para seção" })).toBeNull();
   });
+
+  it("em reunião oculta Pausar e permite trocar modo", () => {
+    const onMode = vi.fn();
+    render(
+      <PresentationStageControls
+        index={0}
+        total={2}
+        paused={false}
+        onPauseToggle={() => undefined}
+        onPrevious={() => undefined}
+        onNext={() => undefined}
+        playbackMode="meeting"
+        onPlaybackModeChange={onMode}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Pausar" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Modo de reprodução" }));
+    fireEvent.click(screen.getByRole("option", { name: /Apresentação/ }));
+    expect(onMode).toHaveBeenCalledWith("presentation");
+  });
+
+  it("em apresentação mostra Pausar", () => {
+    render(
+      <PresentationStageControls
+        index={0}
+        total={2}
+        paused={false}
+        onPauseToggle={() => undefined}
+        onPrevious={() => undefined}
+        onNext={() => undefined}
+        playbackMode="presentation"
+        onPlaybackModeChange={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Pausar" })).toBeTruthy();
+  });
 });

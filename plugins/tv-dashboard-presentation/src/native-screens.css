@@ -513,6 +513,11 @@
   outline: none;
 }
 
+.tdp-preview-controls__mode-hint {
+  font-weight: 500;
+  opacity: 0.72;
+}
+
 .tdp-presentation-video {
   position: relative;
   width: 100%;
