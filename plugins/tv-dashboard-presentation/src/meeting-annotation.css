@@ -1,0 +1,40 @@
+.tdp-meeting-annotation {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.tdp-meeting-annotation--interactive {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.tdp-meeting-annotation--laser {
+  cursor: none;
+}
+
+.tdp-meeting-annotation__ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tdp-meeting-annotation__laser {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(248, 113, 113, 0.95) 0%,
+    rgba(248, 113, 113, 0.55) 35%,
+    rgba(248, 113, 113, 0) 70%
+  );
+  box-shadow: 0 0 12px 4px rgba(248, 113, 113, 0.55);
+  pointer-events: none;
+}

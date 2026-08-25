@@ -45,6 +45,25 @@ export {
   applyPlaybackCursorToIndex,
   resolvePresentationPlaybackClientId,
 } from "./playbackCursor";
+export {
+  MEETING_INK_COLOR,
+  MEETING_INK_WIDTH_PX,
+  type MeetingAnnotationTool,
+  type MeetingInkStroke,
+  type MeetingInkStrokePhase,
+  type MeetingLaserState,
+  type MeetingNormPoint,
+} from "./meetingAnnotationTypes";
+export {
+  applyMeetingInkStrokeEvent,
+  clearMeetingInkForSlide,
+  createMeetingStrokeId,
+  meetingPointsToSvgPath,
+  normalizeMeetingPoint,
+  strokesForSlide,
+} from "./meetingInkModel";
+export { MeetingAnnotationOverlay } from "./MeetingAnnotationOverlay";
+export type { MeetingAnnotationOverlayProps } from "./MeetingAnnotationOverlay";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
 export { ExternalSlideView } from "./ExternalSlideView";
