@@ -36,6 +36,10 @@ export type MeetingAnnotationOverlayProps = {
   onLocalLaser: (event: { x: number; y: number; visible: boolean }) => void;
 };
 
+/** Idle sem movimento some o laser (estilo PowerPoint). */
+const LASER_IDLE_HIDE_MS = 1800;
+const LASER_MOVE_THROTTLE_MS = 16;
+
 function pointerToNorm(
   event: ReactPointerEvent<HTMLDivElement>,
   el: HTMLDivElement,
@@ -48,6 +52,7 @@ function pointerToNorm(
 
 /**
  * Overlay efêmero de caneta/laser (modo reunião).
+ * Laser: segue o cursor com a ferramenta ativa (sem precisar segurar o clique).
  * Estado só em memória React — F5 limpa.
  */
 export function MeetingAnnotationOverlay({
@@ -63,19 +68,49 @@ export function MeetingAnnotationOverlay({
   const rootRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef<{ strokeId: string; pointerId: number } | null>(null);
   const lastMoveAtRef = useRef(0);
+  const laserIdleTimerRef = useRef<number | null>(null);
+  const onLocalLaserRef = useRef(onLocalLaser);
+  onLocalLaserRef.current = onLocalLaser;
 
   useEffect(() => {
     drawingRef.current = null;
   }, [slideId]);
 
+  const clearLaserIdleTimer = useCallback(() => {
+    if (laserIdleTimerRef.current != null) {
+      window.clearTimeout(laserIdleTimerRef.current);
+      laserIdleTimerRef.current = null;
+    }
+  }, []);
+
+  const endLaser = useCallback(() => {
+    clearLaserIdleTimer();
+    onLocalLaserRef.current({ x: 0.5, y: 0.5, visible: false });
+  }, [clearLaserIdleTimer]);
+
+  const showLaserAt = useCallback(
+    (point: MeetingNormPoint) => {
+      onLocalLaserRef.current({ ...point, visible: true });
+      clearLaserIdleTimer();
+      laserIdleTimerRef.current = window.setTimeout(() => {
+        laserIdleTimerRef.current = null;
+        onLocalLaserRef.current({ ...point, visible: false });
+      }, LASER_IDLE_HIDE_MS);
+    },
+    [clearLaserIdleTimer],
+  );
+
+  useEffect(() => {
+    if (tool !== "laser") {
+      endLaser();
+    }
+    return () => clearLaserIdleTimer();
+  }, [tool, endLaser, clearLaserIdleTimer]);
+
   const visibleStrokes = strokesForSlide(strokes, slideId);
   const visibleLasers = lasers.filter(
     (laser) => laser.visible && laser.slideId === slideId,
   );
-
-  const endLaser = useCallback(() => {
-    onLocalLaser({ x: 0.5, y: 0.5, visible: false });
-  }, [onLocalLaser]);
 
   if (!enabled) return null;
 
@@ -95,42 +130,44 @@ export function MeetingAnnotationOverlay({
       aria-hidden={!interactive}
       onPointerDown={(event) => {
         if (!interactive || !rootRef.current) return;
+        if (tool === "laser") {
+          // Laser segue hover — clique só reposiciona; não captura (evita sumir no up).
+          const point = pointerToNorm(event, rootRef.current);
+          showLaserAt(point);
+          return;
+        }
         event.preventDefault();
         rootRef.current.setPointerCapture(event.pointerId);
         const point = pointerToNorm(event, rootRef.current);
-        if (tool === "pen") {
-          const strokeId = createMeetingStrokeId(clientId);
-          drawingRef.current = { strokeId, pointerId: event.pointerId };
-          onLocalStroke({ strokeId, phase: "start", points: [point] });
-          return;
-        }
-        onLocalLaser({ ...point, visible: true });
+        const strokeId = createMeetingStrokeId(clientId);
+        drawingRef.current = { strokeId, pointerId: event.pointerId };
+        onLocalStroke({ strokeId, phase: "start", points: [point] });
       }}
       onPointerMove={(event) => {
         if (!interactive || !rootRef.current) return;
-        const now = performance.now();
-        if (tool === "laser" && now - lastMoveAtRef.current < 32) return;
-        lastMoveAtRef.current = now;
-        const point = pointerToNorm(event, rootRef.current);
         if (tool === "laser") {
-          if ((event.buttons & 1) === 0 && event.pointerType === "mouse") return;
-          onLocalLaser({ ...point, visible: true });
+          const now = performance.now();
+          if (now - lastMoveAtRef.current < LASER_MOVE_THROTTLE_MS) return;
+          lastMoveAtRef.current = now;
+          showLaserAt(pointerToNorm(event, rootRef.current));
           return;
         }
         const drawing = drawingRef.current;
         if (!drawing || drawing.pointerId !== event.pointerId) return;
+        const point = pointerToNorm(event, rootRef.current);
         onLocalStroke({ strokeId: drawing.strokeId, phase: "move", points: [point] });
       }}
+      onPointerEnter={(event) => {
+        if (tool !== "laser" || !rootRef.current) return;
+        showLaserAt(pointerToNorm(event, rootRef.current));
+      }}
       onPointerUp={(event) => {
+        if (tool === "laser") return;
         if (!rootRef.current) return;
         try {
           rootRef.current.releasePointerCapture(event.pointerId);
         } catch {
           // ignore
-        }
-        if (tool === "laser") {
-          endLaser();
-          return;
         }
         const drawing = drawingRef.current;
         if (!drawing || drawing.pointerId !== event.pointerId) return;
