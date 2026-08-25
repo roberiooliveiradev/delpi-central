@@ -331,6 +331,19 @@ class ChatPresentationLlmCompositionService:
         cleaned = cls.strip_markers(raw)
         cls._store_display_markdown(metadata, cleaned)
 
+        if marker_count < 1:
+            json_result = cls._try_apply_json_fallback(
+                metadata,
+                raw,
+                allowed_kinds=allowed_kinds,
+                tool_calls=tool_calls,
+                policy=policy,
+                response_mode=response_mode,
+            )
+
+            if json_result is not None:
+                return json_result
+
         if marker_count >= 1:
             layout_mode = "stack" if marker_count >= 2 or policy.endswith("stack") else "single"
             policy_node = ChatProseCompositionContentService.policy_node(policy)
@@ -349,6 +362,143 @@ class ChatPresentationLlmCompositionService:
                 "segments": render_segments,
                 "proseCompositionSource": "llm",
             }
+
+        return cleaned
+
+    @classmethod
+    def _try_apply_json_fallback(
+        cls,
+        metadata: dict[str, Any],
+        raw: str,
+        *,
+        allowed_kinds: list[str],
+        tool_calls: list | None,
+        policy: str,
+        response_mode: str | None,
+    ) -> str | None:
+        import json
+
+        text = str(raw or "").strip()
+
+        if not text or "proseComposition" not in text:
+            return None
+
+        payload = None
+        candidate = text
+
+        fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL | re.IGNORECASE)
+
+        if fence:
+            candidate = fence.group(1)
+        else:
+            start = text.rfind("{")
+            end = text.rfind("}")
+
+            if start >= 0 and end > start:
+                candidate = text[start : end + 1]
+
+        try:
+            payload = json.loads(candidate)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+        if not isinstance(payload, dict):
+            return None
+
+        composition = payload.get("proseComposition")
+
+        if not isinstance(composition, dict):
+            return None
+
+        raw_segments = composition.get("segments")
+
+        if not isinstance(raw_segments, list) or not raw_segments:
+            return None
+
+        max_markers = ChatProseCompositionContentService.max_markers(
+            policy,
+            response_mode=response_mode,
+        )
+        render_segments: list[dict[str, Any]] = []
+        marker_count = 0
+        prose_parts: list[str] = []
+
+        for item in raw_segments:
+            if not isinstance(item, dict):
+                continue
+
+            kind = str(item.get("kind") or "").strip().lower()
+
+            if kind == "markdown":
+                text_part = str(item.get("text") or "").strip()
+
+                if text_part:
+                    prose_parts.append(text_part)
+                    render_segments.append(
+                        {
+                            "kind": "markdown",
+                            "slot": "assistantProse",
+                            "source": "assistantMessage",
+                            "text": text_part,
+                        }
+                    )
+                continue
+
+            if marker_count >= max_markers:
+                continue
+
+            index_raw = item.get("index")
+
+            try:
+                index = int(index_raw) if index_raw not in (None, "") else None
+            except (TypeError, ValueError):
+                index = None
+
+            ref = cls.resolve_component_ref(
+                kind,
+                index,
+                metadata,
+                tool_calls=tool_calls,
+                allowed_kinds=allowed_kinds,
+            )
+
+            if not ref:
+                continue
+
+            marker_count += 1
+            render_segments.append(
+                {
+                    "kind": ref["kind"],
+                    "slot": ref["slot"],
+                    "source": ref["source"],
+                    **({"index": ref["index"]} if ref.get("index") is not None else {}),
+                    **({"operationId": ref["operationId"]} if ref.get("operationId") else {}),
+                }
+            )
+
+        if marker_count < 1:
+            return None
+
+        cleaned = "\n\n".join(prose_parts).strip() or cls.strip_markers(text)
+        # Remove trailing JSON blob from display prose when it was appended.
+        cleaned = re.sub(
+            r"\s*\{[^{}]*\"proseComposition\"[^{}]*\}\s*$",
+            "",
+            cleaned,
+            flags=re.DOTALL,
+        ).strip() or cleaned
+        cls._store_display_markdown(metadata, cleaned)
+
+        layout_mode = "stack" if marker_count >= 2 or str(policy).endswith("stack") else "single"
+        decision = metadata.setdefault("presentationDecision", {})
+        decision["layoutMode"] = layout_mode
+        metadata["proseCompositionSource"] = "llm"
+        metadata["renderPlan"] = {
+            "version": 1,
+            "layoutMode": layout_mode,
+            "segments": render_segments,
+            "proseCompositionSource": "llm",
+        }
 
         return cleaned
 

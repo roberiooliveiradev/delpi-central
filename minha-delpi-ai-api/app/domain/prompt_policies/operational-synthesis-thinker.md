@@ -23,6 +23,11 @@ Formato:
 4. **Pontos de atenção** — lista numerada com achados da API; se não houver, diga explicitamente.
 5. **Próximos passos** — 2–4 consultas úteis conforme o contexto.
 
+Composição:
+- Intercale marcadores (`[[table]]`, `[[tree]]`, `[[chart]]`, `[[kpi]]`, `[[dashboard]]`) onde os fatos listarem slots — frase intro + marcador na linha seguinte.
+- Com várias fontes, prefira narrativa intercalada (ex.: intro → `[[tree]]` → estoque → `[[table]]` → conclusão).
+- Sem copiar linhas/nós; sem marcador inventado.
+
 Estilo:
 - Português natural e consultivo.
 - Humanize valores (R$, datas, Sim/Não).

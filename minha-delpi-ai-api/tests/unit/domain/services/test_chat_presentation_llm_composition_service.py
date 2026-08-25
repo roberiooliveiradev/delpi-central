@@ -92,3 +92,62 @@ def test_finalize_annotates_allowed_marker_kinds():
     decision = metadata["presentationDecision"]
     assert decision.get("proseCompositionAllowed") is True
     assert "tree" in (decision.get("allowedMarkerKinds") or [])
+
+
+def test_facts_addon_includes_composition_slots_and_rule():
+    from app.domain.services.chat_operational_llm_synthesis_context_service import (
+        ChatOperationalLlmSynthesisContextService,
+    )
+
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260149/structure",
+                "llmProseDecoupled": True,
+                "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+                "dataAnswer": {"summary": {"answer": "BOM com 6 itens"}},
+                "presentationDecision": {"selected": "tree"},
+            },
+        }
+    ]
+
+    addon = ChatOperationalLlmSynthesisContextService.build_facts_addon(
+        tool_calls,
+        response_mode="normal",
+    )
+
+    assert "[[tree]]" in addon or "Slots disponíveis" in addon or "slots" in addon.lower()
+    assert "marcador" in addon.lower() or "composição" in addon.lower() or "Composição" in addon
+
+
+def test_apply_json_fallback_prose_composition_segments():
+    metadata = {
+        "path": "/products/90260149/structure",
+        "ok": True,
+        "presentationDecision": {},
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+        "tablePresentation": {
+            "type": "table",
+            "title": "Itens",
+            "rows": [{"code": "10080109"}],
+        },
+    }
+    answer = (
+        'Leitura da BOM.\n'
+        '{"proseComposition":{"segments":['
+        '{"kind":"markdown","text":"Árvore da estrutura."},'
+        '{"kind":"tree","index":1},'
+        '{"kind":"markdown","text":"Tabela de itens."},'
+        '{"kind":"table","index":1}'
+        "]}}"
+    )
+
+    cleaned = ChatPresentationLlmCompositionService.apply(metadata, answer)
+
+    assert metadata.get("proseCompositionSource") == "llm"
+    kinds = [seg["kind"] for seg in metadata["renderPlan"]["segments"]]
+    assert "tree" in kinds
+    assert "table" in kinds
+    assert "[[" not in cleaned

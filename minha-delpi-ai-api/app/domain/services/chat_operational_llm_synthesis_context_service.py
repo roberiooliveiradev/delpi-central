@@ -92,8 +92,31 @@ class ChatOperationalLlmSynthesisContextService:
 
         if cls._should_append_prose_rules(tool_calls, response_mode):
             panel_rule = ChatOperationalLlmSynthesisContextContentService.prose_panel_rule()
+            composition_active = cls._should_append_composition_rules(tool_calls, response_mode)
 
-            if panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
+            if composition_active:
+                composition_rule = (
+                    ChatOperationalLlmSynthesisContextContentService.prose_composition_rule()
+                )
+
+                if composition_rule:
+                    result = f"{result}\n\n{composition_rule}" if result else f"\n\n{composition_rule}"
+
+                slots_line = cls._available_composition_slots_line(
+                    tool_calls,
+                    response_mode=response_mode,
+                )
+
+                if slots_line:
+                    result = f"{result}\n\n{slots_line}" if result else f"\n\n{slots_line}"
+
+                json_fallback = (
+                    ChatOperationalLlmSynthesisContextContentService.prose_composition_json_fallback()
+                )
+
+                if json_fallback:
+                    result = f"{result}\n\n{json_fallback}" if result else f"\n\n{json_fallback}"
+            elif panel_rule and cls._tool_calls_use_prose_panel(tool_calls):
                 result = f"{result}\n\n{panel_rule}" if result else f"\n\n{panel_rule}"
                 kind_hint = ChatOperationalLlmSynthesisContextContentService.prose_panel_kind_hint(
                     cls._primary_selected_kind(tool_calls)
@@ -243,6 +266,117 @@ class ChatOperationalLlmSynthesisContextService:
             return False
 
         return True
+
+    @classmethod
+    def _should_append_composition_rules(
+        cls,
+        tool_calls: list | None,
+        response_mode: str | None,
+    ) -> bool:
+        from app.domain.services.chat_presentation_llm_composition_service import (
+            ChatPresentationLlmCompositionService,
+        )
+        from app.domain.services.chat_prose_composition_content_service import (
+            ChatProseCompositionContentService,
+        )
+
+        if not cls._tool_calls_use_prose_panel(tool_calls):
+            return False
+
+        primary = cls._primary_ok_metadata(tool_calls)
+
+        if not isinstance(primary, dict):
+            return False
+
+        policy = ChatPresentationLlmCompositionService.resolve_policy(
+            primary,
+            response_mode=response_mode,
+        )
+
+        if not ChatProseCompositionContentService.llm_may_emit_markers(policy):
+            return False
+
+        slots = ChatPresentationLlmCompositionService.collect_available_slots(
+            primary,
+            tool_calls=tool_calls,
+        )
+
+        return bool(slots)
+
+    @classmethod
+    def _available_composition_slots_line(
+        cls,
+        tool_calls: list | None,
+        *,
+        response_mode: str | None = None,
+    ) -> str:
+        from app.domain.services.chat_presentation_llm_composition_service import (
+            ChatPresentationLlmCompositionService,
+        )
+        from app.domain.services.chat_prose_composition_content_service import (
+            ChatProseCompositionContentService,
+        )
+
+        primary = cls._primary_ok_metadata(tool_calls)
+
+        if not isinstance(primary, dict):
+            return ""
+
+        slots = ChatPresentationLlmCompositionService.collect_available_slots(
+            primary,
+            tool_calls=tool_calls,
+        )
+
+        if not slots:
+            return ""
+
+        labels: list[str] = []
+        seen: set[str] = set()
+
+        for slot in slots:
+            kind = str(slot.get("kind") or "").strip().lower()
+            index = slot.get("index")
+
+            if not kind:
+                continue
+
+            token = f"[[{kind}:{index}]]" if index not in (None, 1) else f"[[{kind}]]"
+
+            if token in seen:
+                continue
+
+            seen.add(token)
+            labels.append(token)
+
+        if not labels:
+            return ""
+
+        catalog = ChatProseCompositionContentService.prompt_rule(
+            "markerCatalogLine",
+            markers=", ".join(labels),
+        )
+        available = ChatProseCompositionContentService.prompt_rule(
+            "availableSlotsLine",
+            slots=", ".join(labels),
+        )
+
+        return "\n".join(part for part in (catalog, available) if part).strip()
+
+    @classmethod
+    def _primary_ok_metadata(cls, tool_calls: list | None) -> dict[str, Any] | None:
+        if not isinstance(tool_calls, list):
+            return None
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if isinstance(metadata, dict) and metadata.get("ok"):
+                return metadata
+
+        return None
 
     @classmethod
     def collect_fact_lines(

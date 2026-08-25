@@ -30,6 +30,24 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def prose_composition_rule(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "proseCompositionRule", default="")
+            or ""
+        ).strip()
+
+    @classmethod
+    def prose_composition_json_fallback(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "proseCompositionJsonFallback",
+                default="",
+            )
+            or ""
+        ).strip()
+
+    @classmethod
     def prose_panel_kind_hint(cls, selected: str | None) -> str:
         kind = str(selected or "").strip().lower()
 

@@ -20,6 +20,9 @@ Formato:
 2. **Leitura** — 2–3 bullets objetivos.
 3. **Atenção** — 0–1 bullet só se crítico.
 
+Composição:
+- No máximo **1** marcador (`[[table]]` / `[[tree]]` / …) se os fatos listarem slots; caso contrário só prosa curta.
+
 Estilo:
 - Português direto; sem preâmbulo nem pedido de permissão.
 - Humanize valores (R$, datas, Sim/Não).
