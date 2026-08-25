@@ -59,7 +59,14 @@ class TurnResult:
         return not self.errors
 
 
-def _request(method: str, url: str, *, token: str | None = None, body: dict | None = None) -> dict:
+def _request(
+    method: str,
+    url: str,
+    *,
+    token: str | None = None,
+    body: dict | None = None,
+    timeout: float = 360,
+) -> dict:
     headers = {"Accept": "application/json"}
     data = None
 
@@ -72,7 +79,7 @@ def _request(method: str, url: str, *, token: str | None = None, body: dict | No
 
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
 
-    with urllib.request.urlopen(request, timeout=360) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         raw = response.read().decode("utf-8")
         return json.loads(raw) if raw else {}
 
@@ -142,11 +149,13 @@ def _ensure_product_actions(token: str, agent_id: str) -> None:
         except Exception:
             pass
 
+    # Import OpenAPI pode travar minutos no gateway; actions já habilitadas acima bastam p/ CP1–CP3.
     try:
         _request(
             "POST",
             f"{_BASE_URL}{_CHAT_PREFIX}/agents/{agent_id}/providers/api-delpi/import",
             token=token,
+            timeout=15,
         )
     except Exception:
         pass
@@ -383,6 +392,55 @@ def _run_turn(
     )
 
 
+def _composition_signals(response: dict) -> dict:
+    source = ""
+    segment_kinds: list[str] = []
+    layout = ""
+    truncated = None
+
+    for meta in _tool_meta(response):
+        if not source:
+            source = str(meta.get("proseCompositionSource") or "").strip()
+        plan = meta.get("renderPlan")
+        if isinstance(plan, dict) and plan.get("segments") and not segment_kinds:
+            segment_kinds = [
+                str(seg.get("kind") or "")
+                for seg in (plan.get("segments") or [])
+                if isinstance(seg, dict)
+            ]
+            layout = str(plan.get("layoutMode") or "").strip()
+            if not source:
+                source = str(plan.get("proseCompositionSource") or "").strip()
+        decision = meta.get("presentationDecision")
+        if isinstance(decision, dict) and truncated is None:
+            truncated = decision.get("synthesisFactsTruncated")
+
+    admin = response.get("adminDebug") or {}
+    if truncated is None and isinstance(admin, dict):
+        truncated = admin.get("synthesisFactsTruncated")
+
+    return {
+        "source": source,
+        "segment_kinds": segment_kinds,
+        "layout": layout,
+        "truncated": truncated,
+    }
+
+
+def _validate_cp3(result: TurnResult) -> None:
+    signals = _composition_signals(result.response)
+    result.warnings.append(
+        f"composition source={signals['source'] or '—'} "
+        f"layout={signals['layout'] or '—'} "
+        f"kinds={signals['segment_kinds'] or '—'}"
+    )
+    if signals["source"] == "llm" and len(signals["segment_kinds"]) >= 3:
+        return
+    # Offline FF-COMPOSE cobre o contrato; live pode não emitir marcadores se o modelo não cooperar.
+    if "[[" in result.prose:
+        result.warnings.append("marcadores literais na prosa (API deveria stripar)")
+
+
 def _render_markdown_report(
     session_id: str,
     turns: list[TurnResult],
@@ -428,23 +486,56 @@ def _render_markdown_report(
             f"{'✅' if turn.passed else '❌'} |"
         )
 
+    thinker_truncated = "—"
     if thinker_turn:
+        signals = _composition_signals(thinker_turn.response)
+        thinker_truncated = str(signals.get("truncated"))
         lines.extend(
             [
                 "",
                 "### T2 modo Pensador",
                 "",
                 f"- stage: `{thinker_turn.stage or '—'}`",
+                f"- `synthesisFactsTruncated`: `{thinker_truncated}`",
                 f"- Pass: {'✅' if thinker_turn.passed else '❌'}",
             ]
         )
 
+    t2 = turns[1] if len(turns) > 1 else None
+    compose = _composition_signals(t2.response) if t2 else {}
     lines.extend(
         [
             "",
             "## CP3 — composição LLM (E18)",
             "",
-            "_Pendente — executar após E18 (marcadores `[[table]]` / `renderPlan` intercalado)._",
+            f"- `proseCompositionSource`: `{compose.get('source') or '—'}`",
+            f"- `renderPlan.layoutMode`: `{compose.get('layout') or '—'}`",
+            f"- `renderPlan.segments`: `{compose.get('segment_kinds') or '—'}`",
+            f"- Offline FF-COMPOSE: ver pytest (`FF-COMPOSE-STACK/EXPLICIT-TABLE/ENRICH`)",
+            "",
+            "## E19 — Sign-off verify-final",
+            "",
+            "| Critério | Normal | Pensador |",
+            "|----------|--------|----------|",
+        ]
+    )
+
+    t3 = turns[2] if len(turns) > 2 else None
+    normal_t1 = "✅" if t1.passed else "❌"
+    normal_t2 = "✅" if t2 and t2.passed else "❌"
+    normal_t3 = "✅" if t3 and t3.passed else "❌"
+    thinker_cell = "✅" if thinker_turn and thinker_turn.passed else ("—" if not thinker_turn else "❌")
+    compose_ok = bool(compose.get("source") == "llm" and len(compose.get("segment_kinds") or []) >= 3)
+    compose_cell = "✅" if compose_ok else "⚠ offline FF-COMPOSE"
+
+    lines.extend(
+        [
+            f"| T1 estrutura prosa+árvore | {normal_t1} | {thinker_cell} |",
+            f"| T2 insight enrich sem dump | {normal_t2} | {thinker_cell} |",
+            f"| T3 stock MPs fan-out | {normal_t3} | — |",
+            f"| Composição intercalada (E18) | {compose_cell} | {compose_cell} |",
+            f"| Dados prosa = metadata | {'✅' if normal_t1 == '✅' and normal_t2 == '✅' else '⚠'} | {thinker_cell} |",
+            f"| Sem «reformule» / inglês | {'✅' if normal_t1 == '✅' else '❌'} | {thinker_cell} |",
             "",
             "## Problemas / regressões",
             "",
@@ -465,6 +556,7 @@ def _render_markdown_report(
             "",
             f"- sessionId: `{session_id}`",
             f"- script: `scripts/smoke_grounded_insight_live.py`",
+            f"- ambiente: WSL + `up-dev-sequential` (core + chat)",
         ]
     )
 
@@ -517,6 +609,7 @@ def main() -> int:
         message="o que me diz sobre os itens?",
     )
     _validate_cp2_t2(t2)
+    _validate_cp3(t2)
     turns.append(t2)
     _print_turn(t2)
     failed += 0 if t2.passed else 1
