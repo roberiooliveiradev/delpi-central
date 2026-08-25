@@ -52,3 +52,27 @@ def test_apply_codes_in_list():
     where, params = qb.build()
     assert "D2.D2_CLIENTE IN" in where
     assert list(params) == ["A", "B"]
+
+
+def test_apply_exclude_codes_not_in():
+    qb = QueryBuilder()
+    CommercialCustomerCodesFilterService.apply_exclude_to_query_builder(
+        qb, "D2.D2_CLIENTE", ["A", "B"]
+    )
+    where, params = qb.build()
+    assert "D2.D2_CLIENTE NOT IN" in where
+    assert list(params) == ["A", "B"]
+
+
+def test_apply_exclude_none_or_empty_skips():
+    qb = QueryBuilder()
+    qb.raw("1 = 1")
+    CommercialCustomerCodesFilterService.apply_exclude_to_query_builder(
+        qb, "D2.D2_CLIENTE", None
+    )
+    CommercialCustomerCodesFilterService.apply_exclude_to_query_builder(
+        qb, "D2.D2_CLIENTE", []
+    )
+    where, params = qb.build()
+    assert where == "1 = 1"
+    assert list(params) == []

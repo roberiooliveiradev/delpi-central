@@ -51,3 +51,13 @@ class CommercialCustomerCodesFilterService:
             qb.raw("1 = 0")
             return
         qb.in_list(column, codes)
+
+    @staticmethod
+    def apply_exclude_to_query_builder(
+        qb,
+        column_expression: str,
+        codes: Optional[list[str]],
+    ) -> None:
+        if not codes:
+            return
+        qb.not_in_list(column_expression.strip(), codes)

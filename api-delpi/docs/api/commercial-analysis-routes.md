@@ -27,7 +27,10 @@ Rotas especializadas existentes (`/commercial/rol/series`, `/commercial/rol/by-c
 | Paths | `/commercial/rol` e `/commercial/sales-order-otd/analysis` |
 | Por cliente | Sim — `group_by=customer` (default **`customer`** para TV/slides tabulares) |
 | Por segmento | Filtro `customer_segment` (`weg` \| `new_business`), não substitui breakdown |
-| Multi-select cliente | `customer_codes` CSV (padrão existente, até 2000) |
+| Include cliente | `customer_codes` CSV (IN, até 2000) **e** `customer_names` CSV (LIKE `%termo%` no nome, OR entre termos) |
+| Exclude cliente | `exclude_customer_codes` CSV (NOT IN) **e** `exclude_customer_names` CSV (NOT LIKE por termo; exclui se o nome contiver qualquer termo) |
+| Composição filtros | `customer_segment` → include (codes ∪ names) → exclude (codes ∪ names); exclude sempre ganha |
+| Match de nome | Contém (case-insensitive); máx. 50 termos; máx. 80 chars/termo |
 | Metas | `summary.goal` via enrichment SI (`commercial_rol`, `commercial_sales_order_otd`) |
 | Carteira semanal | Bloco `portfolio` na rota ROL quando `include=portfolio` |
 | Consumidores | tv-dashboard, commercial-api (proxy futuro), minha-delpi-chat, SI — **mesmo contrato** |
@@ -40,7 +43,8 @@ Rotas especializadas existentes (`/commercial/rol/series`, `/commercial/rol/by-c
 | ROL + meta + série + cliente num pacote | Nova `GET /commercial/rol` compõe `GetCommercialRolSeriesUseCase` + `GetCommercialRolByCustomerUseCase` + SI enrichment |
 | OTD + qty atendida + meta + série + cliente | Nova `GET /commercial/sales-order-otd/analysis` estende `sales_order_otd_repository` |
 | Filtros WEG/NN | `CommercialCustomerSegmentService` |
-| Multi-cliente | `CommercialCustomerCodesFilterService` |
+| Multi-cliente (include código) | Estender `CommercialCustomerCodesFilterService` com `apply_exclude_to_query_builder` (NOT IN) |
+| Include/exclude por nome | Novo `CommercialCustomerNameFilterService` (normalize CSV + LIKE / NOT LIKE no `customer_name` / `A1_NOME`) |
 | Previsão carteira semanal | View `pedidos_venda_abertos` agregada por semana de entrega — bloco `portfolio` em ROL |
 
 Referências no código:
@@ -58,13 +62,29 @@ Referências no código:
 
 ```
 start_date, end_date
-granularity          # day | week | month | year (default week)
-branch               # 01 | 02 | omitido = consolidado (01+02 no summary/series)
-customer_segment     # weg | new_business
-customer_codes       # CSV multi-select
-group_by             # none | customer | branch  (default customer)
-page, page_size      # quando group_by=customer (default 50, max 500)
+granularity              # day | week | month | year (default week)
+branch                   # 01 | 02 | omitido = consolidado (01+02 no summary/series)
+customer_segment         # weg | new_business
+customer_codes           # CSV — include (IN)
+customer_names           # CSV — include (LIKE %termo% no nome; OR entre termos)
+exclude_customer_codes   # CSV — exclude (NOT IN)
+exclude_customer_names   # CSV — exclude (NOT LIKE %termo%; AND entre termos)
+group_by                 # none | customer | branch  (default customer)
+page, page_size          # quando group_by=customer (default 50, max 500)
 ```
+
+**Semântica include/exclude**
+
+| Params | SQL efetivo |
+|--------|-------------|
+| só `customer_codes` | `code IN (...)` |
+| só `customer_names` | `name LIKE %t1% OR name LIKE %t2% …` |
+| codes + names (include) | `(code IN (...)) OR (name LIKE …)` |
+| `exclude_customer_codes` | `code NOT IN (...)` |
+| `exclude_customer_names` | `name NOT LIKE %t1% AND name NOT LIKE %t2% …` |
+| include + exclude | (include) **AND** (exclude) — cliente excluído nunca entra |
+
+Ex.: `customer_segment=new_business&exclude_customer_names=Schulz,Wanke` → NN sem esses nomes.
 
 **Só ROL:**
 
@@ -299,7 +319,10 @@ Quando `group_by=none` ou `group_by=branch`: `by_customer` = `[]`, `pagination` 
 | Overview Portal (futuro) | commercial-api proxy | mesmas rotas api-delpi | herança |
 | Chat operacional | minha-delpi-ai-api | registry + presentation profile | herança |
 | Filtro WEG / NN | query | `customer_segment` | P0 |
-| Multi-cliente | query | `customer_codes` | P0 |
+| Include cliente (código) | query | `customer_codes` | P0 |
+| Include cliente (nome) | query | `customer_names` (LIKE) | P0 |
+| Exclude cliente (código) | query | `exclude_customer_codes` | P0 |
+| Exclude cliente (nome) | query | `exclude_customer_names` (NOT LIKE) | P0 |
 | Breakdown por cliente | query | `group_by=customer` (default) | P0 |
 | Rotas legadas series/scalar | compat | `/rol/series`, `/sales-order-otd` | mantidas |
 
@@ -327,9 +350,9 @@ flowchart TB
 
 | Camada | Artefatos |
 |--------|-----------|
-| Domain | `CommercialAnalysisFilterRequest` + `CommercialAnalysisFilterService` |
+| Domain | `CommercialAnalysisFilterRequest` + `CommercialAnalysisFilterService`; estender `CommercialCustomerCodesFilterService` (exclude); novo `CommercialCustomerNameFilterService` (include/exclude LIKE) |
 | Application | `GetCommercialRolAnalysisUseCase`, `GetCommercialSalesOrderOtdAnalysisUseCase` |
-| Infrastructure | SQL OTD agregado por período/cliente; query portfolio semanal em repo PVA |
+| Infrastructure | SQL OTD agregado por período/cliente; query portfolio semanal em repo PVA; predicados include/exclude aplicados no query builder |
 | Interface | Rotas em `app/interface/http/routes/commercial/commercial_router.py` |
 | Content | `app/content/tv_route_audience.json` — category `commercial` |
 
@@ -337,7 +360,7 @@ flowchart TB
 
 | Etapa | Entrega |
 |-------|---------|
-| E1 | `CommercialAnalysisFilterRequest` + service + testes |
+| E1 | `CommercialAnalysisFilterRequest` + service (include/exclude code+name) + testes |
 | E2 | `GET /commercial/rol` + OpenAPI + smoke + sync TV |
 | E3 | `GET /commercial/sales-order-otd/analysis` + SQL + testes |
 | E4 | Gates cobertura + sync catálogo TV |
@@ -366,6 +389,7 @@ Checklist: `new-api-route-checklist.mdc` (OpenAPI bilíngue, `route_contract_reg
 ## Critérios de pronto
 
 - Duas rotas publicadas, contrato idêntico de filtros, breakdown **por cliente** (default `group_by=customer`)
+- Include/exclude por **código e nome** (`customer_codes` / `customer_names` / `exclude_customer_codes` / `exclude_customer_names`)
 - Carteira semanal via `include=portfolio` na rota ROL
 - TV catalog com 2 operationIds genéricos
 - Testes + gates OpenAPI/TV verdes

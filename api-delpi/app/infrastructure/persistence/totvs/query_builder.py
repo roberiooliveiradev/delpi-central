@@ -85,6 +85,19 @@ class QueryBuilder:
 
         self._params.extend(values)
 
+    def not_in_list(self, field: str, values: Optional[Iterable]):
+
+        if not values:
+            return
+
+        values = list(values)
+
+        placeholders = ",".join("?" for _ in values)
+
+        self._filters.append(f"{field} NOT IN ({placeholders})")
+
+        self._params.extend(values)
+
     # --------------------------------------------------
     # BETWEEN
     # --------------------------------------------------
