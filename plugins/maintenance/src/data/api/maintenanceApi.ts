@@ -213,6 +213,7 @@ export type PreventivaAlerta = {
   data_ultima_reposicao: string;
   media_golpes: number;
   golpes_atuais: number;
+  golpes_history?: number[];
   percentual_uso: number;
   status: string;
 };

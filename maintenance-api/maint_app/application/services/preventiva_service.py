@@ -20,7 +20,14 @@ STATUS_RANK = {
 }
 
 _ALERTAS_SNAPSHOT_TTL_SECONDS = 300
+_GOLPES_HISTORY_MAX_POINTS = 12
 _alertas_snapshot_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+
+
+def _trim_golpes_history(history: list[int]) -> list[int]:
+    if len(history) <= _GOLPES_HISTORY_MAX_POINTS:
+        return history
+    return history[-_GOLPES_HISTORY_MAX_POINTS:]
 
 
 def invalidate_alertas_snapshot_cache(*, filial: str | None = None) -> None:
@@ -368,7 +375,7 @@ class PreventivaService:
                     "data_ultima_reposicao": row["data_reposicao"],
                     "media_golpes": round(media, 2),
                     "golpes_atuais": golpes_atuais,
-                    "golpes_history": history_map.get(key, []),
+                    "golpes_history": _trim_golpes_history(history_map.get(key, [])),
                     "percentual_uso": round(percentual, 2),
                     "status": status_value,
                 }

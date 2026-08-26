@@ -2,7 +2,11 @@ from unittest.mock import MagicMock
 from datetime import datetime, timezone
 
 import maint_app.application.services.preventiva_service as preventiva_module
-from maint_app.application.services.preventiva_service import PreventivaService, _match_status
+from maint_app.application.services.preventiva_service import (
+    PreventivaService,
+    _match_status,
+    _trim_golpes_history,
+)
 
 
 def setup_function():
@@ -18,6 +22,11 @@ def test_match_status_critico():
     assert _match_status(96, rules) == "CRÍTICO"
     assert _match_status(85, rules) == "ATENÇÃO"
     assert _match_status(50, rules) == "OK"
+
+
+def test_trim_golpes_history_keeps_last_points():
+    long_series = list(range(1, 20))
+    assert _trim_golpes_history(long_series) == list(range(8, 20))
 
 
 def test_listar_alertas_usa_batch_maps():

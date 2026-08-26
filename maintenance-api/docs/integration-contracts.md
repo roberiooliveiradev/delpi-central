@@ -66,6 +66,7 @@ A API dedicada reforça o filtro **3019** em `GET /maintenance/mini-aplicadores/
 | Rota BFF | Descrição |
 |----------|-----------|
 | `GET /maintenance/preventiva/detalhe` | Consolida alerta, ferramenta, peça, estoque e histórico num único payload |
+| `GET /maintenance/preventiva/alertas` | Ranking preventivo paginado; cada item inclui `golpes_history: number[]` (últimos 12 ciclos, ordem cronológica ASC) para sparkline temporal no MFE |
 | Gateway batch | `DelpiMiniAplicatorsGateway.obter_golpes_batch` → `POST .../golpes/batch` |
 
 Detalhe de payloads: [PLAYBOOK-01](../../docs/12-roadmap-e-evolucao/maintenance/PLAYBOOK-01-fronteiras-api-delpi.md).

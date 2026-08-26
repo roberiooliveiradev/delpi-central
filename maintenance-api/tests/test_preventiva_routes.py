@@ -33,6 +33,7 @@ def test_preventiva_alertas_envelope(mock_service, _public, mock_user, mock_scop
                 "golpes_atuais": 10,
                 "media_golpes": 100,
                 "percentual_uso": 10,
+                "golpes_history": [80_000, 90_000],
             }
         ],
         1,
@@ -45,3 +46,4 @@ def test_preventiva_alertas_envelope(mock_service, _public, mock_user, mock_scop
     assert payload["success"] is True
     assert payload["data"]["total"] == 1
     assert payload["data"]["items"][0]["status"] == "OK"
+    assert payload["data"]["items"][0]["golpes_history"] == [80_000, 90_000]
