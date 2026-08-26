@@ -14,6 +14,7 @@ import { FerramentaAuditoriaSection } from "../../components/FerramentaAuditoria
 import { FerramentasPorPecaSearchCard } from "../../components/FerramentasPorPecaSearchCard";
 import { FerramentaOndeUsadoSection } from "../../components/FerramentaOndeUsadoSection";
 import { FerramentaRevisaoProgramadaSection } from "../../components/FerramentaRevisaoProgramadaSection";
+import { ComponentesEstoqueSection } from "../../components/ComponentesEstoqueSection";
 import { ReposicoesGolpesChart } from "../../components/ReposicoesGolpesChart";
 import { FerramentaReposicaoIndicadores } from "../../components/FerramentaReposicaoIndicadores";
 import {
@@ -92,7 +93,6 @@ export function MiniAplicadoresPage({
   const [total, setTotal] = useState(0);
   const ferramentasTable = useServerTable({ defaultSortKey: "codigo" });
   const reposicoesTable = useServerTable({ defaultSortKey: "data", defaultSortDirection: "desc" });
-  const componentesTable = useServerTable({ defaultSortKey: "nivel" });
   const [estruturaComponentes, setEstruturaComponentes] = useState<ComponenteItem[]>([]);
   const [allReposicoesChart, setAllReposicoesChart] = useState<ReposicaoItem[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
@@ -100,8 +100,6 @@ export function MiniAplicadoresPage({
   const reposicaoFormRef = useRef<HTMLElement>(null);
   const historicoSectionRef = useRef<HTMLDivElement>(null);
   const scrollHistoricoOnCloseRef = useRef(false);
-  const [componentes, setComponentes] = useState<ComponenteItem[]>([]);
-  const [componentesTotal, setComponentesTotal] = useState(0);
   const [motivos, setMotivos] = useState<MotivoItem[]>([]);
   const [reposicoes, setReposicoes] = useState<ReposicaoItem[]>([]);
   const [reposicoesTotal, setReposicoesTotal] = useState(0);
@@ -123,7 +121,6 @@ export function MiniAplicadoresPage({
   const [ferramentasLoading, setFerramentasLoading] = useState(false);
   const [detalheLoading, setDetalheLoading] = useState(false);
   const [reposicoesLoading, setReposicoesLoading] = useState(false);
-  const [componentesLoading, setComponentesLoading] = useState(false);
   const [golpesLoading, setGolpesLoading] = useState(false);
   const golpesRequestRef = useRef(0);
   const editingReposicaoRef = useRef<ReposicaoItem | null>(null);
@@ -447,30 +444,6 @@ export function MiniAplicadoresPage({
     reposicoesTable.query,
   ]);
 
-  const loadComponentesTable = useCallback(async () => {
-    if (!codigoFerramenta) return;
-    setComponentesLoading(true);
-    try {
-      const data = await fetchComponentes(
-        codigoFerramenta,
-        filial,
-        {
-          page: componentesTable.query.page,
-          pageSize: componentesTable.query.pageSize,
-          sortKey: componentesTable.query.sortKey,
-          sortDirection: componentesTable.query.sortDirection,
-        },
-        getAccessToken,
-      );
-      setComponentes(data.items ?? []);
-      setComponentesTotal(data.total ?? 0);
-    } catch {
-      setComponentes([]);
-      setComponentesTotal(0);
-    } finally {
-      setComponentesLoading(false);
-    }
-  }, [codigoFerramenta, componentesTable.query, filial, getAccessToken]);
 
   const loadDetalheBase = useCallback(async () => {
     if (!codigoFerramenta) return;
@@ -505,12 +478,11 @@ export function MiniAplicadoresPage({
     setError(null);
     await Promise.all([
       loadDetalheBase(),
-      loadComponentesTable(),
       loadReposicoesTable(),
       refreshHistoricoChart(),
     ]);
     setDetalheVersion((current) => current + 1);
-  }, [loadComponentesTable, loadDetalheBase, loadReposicoesTable, refreshHistoricoChart]);
+  }, [loadDetalheBase, loadReposicoesTable, refreshHistoricoChart]);
 
   const handleRevisaoFeedback = useCallback((message: { type: "success" | "error"; text: string }) => {
     if (message.type === "success") {
@@ -555,14 +527,12 @@ export function MiniAplicadoresPage({
     scrollHistoricoOnCloseRef.current = false;
     setShowReposicaoForm(false);
     reposicoesTable.resetPage();
-    componentesTable.resetPage();
     void loadDetalheBase();
   }, [
     codigoFerramenta,
     filial,
     loadDetalheBase,
     reposicoesTable.resetPage,
-    componentesTable.resetPage,
   ]);
 
   useEffect(() => {
@@ -575,10 +545,6 @@ export function MiniAplicadoresPage({
     void refreshHistoricoChart();
   }, [codigoFerramenta, filial, refreshHistoricoChart]);
 
-  useEffect(() => {
-    if (!codigoFerramenta) return;
-    void loadComponentesTable();
-  }, [codigoFerramenta, loadComponentesTable]);
 
   useEffect(() => {
     if (codigoFerramenta) return;
@@ -847,65 +813,6 @@ export function MiniAplicadoresPage({
     return columns;
   }, [canManageMiniApplicators, pecaDescricaoMap]);
 
-  const componentesColumns = useMemo<DataTableColumn<ComponenteItem>[]>(
-    () => [
-      {
-        key: "nivel",
-        header: "Nível",
-        sortable: true,
-        sortValue: (item) => item.nivel,
-        render: (item) => item.nivel,
-        align: "center",
-      },
-      {
-        key: "codigo",
-        header: "Código",
-        sortable: true,
-        sortValue: (item) => item.codigo,
-        render: (item) => (
-          <span className="dm-datatable__cell-indent" style={{ paddingLeft: `${item.nivel * 12}px` }}>
-            {item.codigo}
-          </span>
-        ),
-      },
-      {
-        key: "descricao",
-        header: "Descrição",
-        sortable: true,
-        sortValue: (item) => item.descricao,
-        render: (item) => item.descricao,
-      },
-      {
-        key: "unidade",
-        header: "Un.",
-        sortable: true,
-        sortValue: (item) => item.unidade,
-        render: (item) => item.unidade,
-        align: "center",
-      },
-      {
-        key: "estoque01",
-        header: "Estoque 01",
-        headerHint: DM_HELP.miniAplicadores.estoque01,
-        headerHint: DM_HELP.miniAplicadores.estoque01,
-        sortable: true,
-        sortValue: (item) => item.estoque_local_01,
-        render: (item) => item.estoque_local_01.toLocaleString("pt-BR"),
-        align: "right",
-      },
-      {
-        key: "estoque99",
-        header: "Estoque 99",
-        headerHint: DM_HELP.miniAplicadores.estoque99,
-        headerHint: DM_HELP.miniAplicadores.estoque99,
-        sortable: true,
-        sortValue: (item) => item.estoque_local_99,
-        render: (item) => item.estoque_local_99.toLocaleString("pt-BR"),
-        align: "right",
-      },
-    ],
-    [],
-  );
 
   return (
     <>
@@ -1254,6 +1161,7 @@ export function MiniAplicadoresPage({
             <DataTableSection
               columnPreferencesKey="maintenance:MiniAplicadoresPage:hist-rico-de-reposi-es-1:v1"
               title="Histórico de reposições"
+              titleHint={DM_HELP.miniAplicadores.historico}
             actions={
               <div className="dm-row-actions">
                 {canManageMiniApplicators && !showReposicaoForm && !editingReposicaoId ? (
@@ -1329,24 +1237,11 @@ export function MiniAplicadoresPage({
           />
           </div>
 
-          <DataTableSection
-            columnPreferencesKey="maintenance:MiniAplicadoresPage:componentes-e-estoque-2:v1"
-            title="Componentes e estoque"
-            countBadgeLabel="item(ns)"
-            columns={componentesColumns}
-            rows={componentes}
-            loading={componentesLoading}
-            emptyMessage="Nenhum componente amarrado a esta ferramenta."
-            getRowKey={(item, index) => `${item.codigo}-${item.nivel}-${index}`}
-            serverTable={{
-              page: componentesTable.query.page,
-              pageSize: componentesTable.query.pageSize,
-              total: componentesTotal,
-              onPageChange: componentesTable.setPage,
-              sortKey: componentesTable.query.sortKey,
-              sortDirection: componentesTable.query.sortDirection,
-              onSortChange: componentesTable.handleSortChange,
-            }}
+          <ComponentesEstoqueSection
+            filial={filial}
+            codigoFerramenta={codigoFerramenta}
+            getAccessToken={getAccessToken}
+            estruturaItems={estruturaComponentes}
           />
 
           <FerramentaOndeUsadoSection

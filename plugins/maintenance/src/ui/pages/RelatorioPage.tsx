@@ -22,7 +22,7 @@ import {
 } from "../../components/data";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
-import { MaintenanceActionButton } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
@@ -33,11 +33,8 @@ import { useServerTable } from "../../hooks/useServerTable";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 import { formatCodigoDescricao } from "../../utils/pecaOptions";
 import {
-  fetchComponentes,
-  fetchFerramenta,
-  fetchPecas,
   fetchPreventivaAlertas,
-  fetchPreventivaHistorico,
+  fetchPreventivaDetalhe,
   fetchPreventivaResumo,
   fetchRevisaoProgramadaAlertas,
   fetchRevisaoProgramadaResumo,
@@ -126,6 +123,7 @@ function FilterKpiButton({
   onClick,
   icon,
   title,
+  titleHint,
   value,
   tone,
 }: {
@@ -133,6 +131,7 @@ function FilterKpiButton({
   onClick: () => void;
   icon: ReactNode;
   title: string;
+  titleHint?: string;
   value: string | number;
   tone: FilterKpiTone;
 }) {
@@ -147,7 +146,13 @@ function FilterKpiButton({
       </div>
       {KPI_CN.body ? (
         <div className={KPI_CN.body}>
-          <p className={KPI_CN.title}>{title}</p>
+          <p className={KPI_CN.title}>
+            {titleHint ? (
+              <MaintenanceTitleWithHelp title={title} hint={titleHint} />
+            ) : (
+              title
+            )}
+          </p>
           <p className={KPI_CN.value}>{value}</p>
         </div>
       ) : null}
@@ -168,6 +173,7 @@ export function RelatorioPage({
 
   const [listTab, setListTab] = useState<ListReportTab>("alertas");
   const [activeTab, setActiveTab] = useState<ReportTab>("alertas");
+  const [loadedTabs, setLoadedTabs] = useState<Set<ListReportTab>>(() => new Set(["alertas"]));
   const alertasTable = useServerTable({ defaultSortKey: "percentual", defaultSortDirection: "desc" });
   const ultimasTable = useServerTable({ defaultSortKey: "data", defaultSortDirection: "desc" });
   const revisoesTable = useServerTable({ defaultSortKey: "dias_restantes", defaultSortDirection: "asc" });
@@ -348,8 +354,29 @@ export function RelatorioPage({
   ]);
 
   const loadReport = useCallback(async () => {
-    await Promise.all([loadResumo(), loadAlertas(), loadUltimas(), loadRevisaoResumo(), loadRevisoes()]);
-  }, [loadAlertas, loadResumo, loadRevisaoResumo, loadRevisoes, loadUltimas]);
+    const tasks: Promise<void>[] = [loadResumo()];
+    if (loadedTabs.has("alertas")) {
+      tasks.push(loadAlertas());
+    }
+    if (loadedTabs.has("ultimas")) {
+      tasks.push(loadUltimas());
+    }
+    if (loadedTabs.has("revisoes")) {
+      tasks.push(loadRevisaoResumo(), loadRevisoes());
+    }
+    await Promise.all(tasks);
+  }, [loadAlertas, loadResumo, loadRevisaoResumo, loadRevisoes, loadUltimas, loadedTabs]);
+
+  const ensureTabLoaded = useCallback((tab: ListReportTab) => {
+    setLoadedTabs((current) => {
+      if (current.has(tab)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(tab);
+      return next;
+    });
+  }, []);
 
   const resolveFeitoDate = useCallback(
     (item: RevisaoProgramadaAlerta) =>
@@ -409,22 +436,29 @@ export function RelatorioPage({
   }, [loadResumo]);
 
   useEffect(() => {
+    if (!loadedTabs.has("alertas")) {
+      return;
+    }
     void loadAlertas();
-  }, [loadAlertas]);
+  }, [loadAlertas, loadedTabs]);
 
   useEffect(() => {
+    if (!loadedTabs.has("ultimas")) {
+      return;
+    }
     void loadUltimas();
-  }, [loadUltimas]);
+  }, [loadUltimas, loadedTabs]);
 
   useEffect(() => {
+    if (!loadedTabs.has("revisoes")) {
+      return;
+    }
     void loadRevisaoResumo();
-  }, [loadRevisaoResumo]);
-
-  useEffect(() => {
     void loadRevisoes();
-  }, [loadRevisoes]);
+  }, [loadRevisaoResumo, loadRevisoes, loadedTabs]);
 
   useEffect(() => {
+    setLoadedTabs(new Set(["alertas"]));
     alertasTable.resetPage();
     ultimasTable.resetPage();
     revisoesTable.resetPage();
@@ -434,6 +468,13 @@ export function RelatorioPage({
     setPecaFiltro("");
     setStatusFiltro([]);
     setRevisaoStatusFiltro([]);
+    setAlertas([]);
+    setAlertasTotal(0);
+    setUltimas([]);
+    setUltimasTotal(0);
+    setRevisoes([]);
+    setRevisoesTotal(0);
+    setRevisaoResumo(EMPTY_REVISAO_RESUMO);
   }, [filial, alertasTable.resetPage, revisoesTable.resetPage, ultimasTable.resetPage]);
 
   const loadDetail = useCallback(
@@ -443,40 +484,21 @@ export function RelatorioPage({
       setDetailData(null);
       setActiveTab("detalhe");
       try {
-        const alertaMatch =
-          alertas.find(
-            (item) =>
-              item.codigo_ferramenta === next.codigo_ferramenta &&
-              item.codigo_peca === next.codigo_peca,
-          ) ?? null;
-
-        const [historicoData, ferramentaData, pecasData, componentesData] = await Promise.all([
-          fetchPreventivaHistorico(
-            {
-              filial,
-              codigo_ferramenta: next.codigo_ferramenta,
-              codigo_peca: next.codigo_peca,
-            },
-            getAccessToken,
-          ),
-          fetchFerramenta(next.codigo_ferramenta, filial, getAccessToken).catch(() => null),
-          fetchPecas(next.codigo_ferramenta, filial, getAccessToken).catch(() => ({ items: [] })),
-          fetchComponentes(next.codigo_ferramenta, filial, {}, getAccessToken).catch(() => ({
-            items: [],
-          })),
-        ]);
-
-        const peca = (pecasData.items ?? []).find((item) => item.codigo === next.codigo_peca);
-        const componente = (componentesData.items ?? []).find(
-          (item) => item.codigo === next.codigo_peca,
+        const data = await fetchPreventivaDetalhe(
+          {
+            filial,
+            codigo_ferramenta: next.codigo_ferramenta,
+            codigo_peca: next.codigo_peca,
+          },
+          getAccessToken,
         );
 
         setDetailData({
-          alerta: alertaMatch,
-          ferramenta: ferramentaData,
-          pecaDescricao: peca?.descricao ?? null,
-          estoqueLocal01: componente?.estoque_local_01 ?? null,
-          historico: historicoData.items ?? [],
+          alerta: data.alerta,
+          ferramenta: data.ferramenta,
+          pecaDescricao: data.pecaDescricao,
+          estoqueLocal01: data.estoqueLocal01,
+          historico: data.historico ?? [],
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Falha ao carregar detalhes.");
@@ -485,7 +507,7 @@ export function RelatorioPage({
         setDetailLoading(false);
       }
     },
-    [alertas, filial, getAccessToken],
+    [filial, getAccessToken],
   );
 
   const applyFilters = () => {
@@ -521,6 +543,7 @@ export function RelatorioPage({
     setActiveTab(tab);
     if (tab === "alertas" || tab === "ultimas" || tab === "revisoes") {
       setListTab(tab);
+      ensureTabLoaded(tab);
     }
   };
 
@@ -722,14 +745,14 @@ export function RelatorioPage({
                 }))
               }
             />
-            <button
-              type="button"
-              className="dm-ghost-btn dm-ghost-btn--sm"
+            <MaintenanceActionButton
+              variant="ghost"
+              className="dm-ghost-btn--sm"
               disabled={feitoSavingId === item.revisao_id}
               onClick={() => void handleMarcarRevisaoFeita(item)}
             >
               {feitoSavingId === item.revisao_id ? "Salvando…" : "Marcar feito"}
-            </button>
+            </MaintenanceActionButton>
           </div>
         ),
       });
@@ -830,6 +853,7 @@ export function RelatorioPage({
               icon={<CircleAlert size={20} />}
               tone="danger"
               title="Revisão vencida"
+              titleHint={DM_HELP.relatorio.kpiRevisaoVencida}
               value={revisaoResumo.critico}
             />
             <FilterKpiButton
@@ -838,6 +862,7 @@ export function RelatorioPage({
               icon={<AlertTriangle size={20} />}
               tone="warning"
               title="Próxima do prazo"
+              titleHint={DM_HELP.relatorio.kpiRevisaoAtencao}
               value={revisaoResumo.atencao}
             />
             <FilterKpiButton
@@ -846,10 +871,12 @@ export function RelatorioPage({
               icon={<CheckCircle2 size={20} />}
               tone="success"
               title="No prazo"
+              titleHint={DM_HELP.relatorio.kpiRevisaoOk}
               value={revisaoResumo.ok}
             />
             <KpiCard
               title="Ferramentas programadas"
+              titleHint={DM_HELP.relatorio.kpiFerramentasProgramadas}
               value={String(revisaoResumo.total)}
               icon={<LineChart size={20} aria-hidden="true" />}
             />
@@ -862,6 +889,7 @@ export function RelatorioPage({
               icon={<CircleAlert size={20} />}
               tone="danger"
               title="Crítico"
+              titleHint={DM_HELP.relatorio.kpiCritico}
               value={resumo.critico}
             />
             <FilterKpiButton
@@ -870,6 +898,7 @@ export function RelatorioPage({
               icon={<AlertTriangle size={20} />}
               tone="warning"
               title="Atenção"
+              titleHint={DM_HELP.relatorio.kpiAtencao}
               value={resumo.atencao}
             />
             <FilterKpiButton
@@ -878,10 +907,12 @@ export function RelatorioPage({
               icon={<CheckCircle2 size={20} />}
               tone="success"
               title="OK"
+              titleHint={DM_HELP.relatorio.kpiOk}
               value={resumo.ok}
             />
             <KpiCard
               title="Pares monitorados"
+              titleHint={DM_HELP.relatorio.kpiParesMonitorados}
               value={String(resumo.total)}
               subtitle={`${ultimasTotal} últimas reposições na filial`}
               icon={<LineChart size={20} aria-hidden="true" />}
@@ -921,23 +952,35 @@ export function RelatorioPage({
           }
         />
         <div className="dm-filter-bar__actions">
-          <button type="button" className="dm-ghost-btn" onClick={clearFilters}>
+          <MaintenanceActionButton variant="ghost" onClick={clearFilters}>
             <X size={16} />
             Limpar
-          </button>
-          <button type="button" className="dm-primary-btn" onClick={applyFilters}>
+          </MaintenanceActionButton>
+          <MaintenanceActionButton onClick={applyFilters}>
             <Search size={16} />
             Buscar
-          </button>
-          <button
-            type="button"
-            className="dm-ghost-btn"
+          </MaintenanceActionButton>
+          <MaintenanceActionButton
+            variant="ghost"
             onClick={() => void loadReport()}
-            disabled={alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading}
+            disabled={
+              alertasLoading ||
+              ultimasLoading ||
+              resumoLoading ||
+              revisoesLoading ||
+              revisaoResumoLoading
+            }
+            aria-busy={
+              alertasLoading ||
+              ultimasLoading ||
+              resumoLoading ||
+              revisoesLoading ||
+              revisaoResumoLoading
+            }
           >
             <RefreshCw size={16} />
             Recarregar
-          </button>
+          </MaintenanceActionButton>
         </div>
       </FilterBar>
 
@@ -970,6 +1013,7 @@ export function RelatorioPage({
               columnPreferencesKey="maintenance:RelatorioPage:ranking-preventivo:v1"
               embedded
               title="Ranking preventivo"
+              titleHint={DM_HELP.relatorio.tabRanking}
               hint="Clique em uma linha para abrir a aba Detalhe preventivo."
               columns={alertasColumns}
               rows={alertas}
@@ -997,6 +1041,7 @@ export function RelatorioPage({
               columnPreferencesKey="maintenance:RelatorioPage:revis-es-programadas-1:v1"
               embedded
               title="Revisões programadas"
+              titleHint={DM_HELP.relatorio.tabRevisoesTable}
               hint="Clique em uma linha para abrir a ferramenta. Marque a revisão como feita para reprogramar a próxima."
               columns={revisoesColumns}
               rows={revisoes}
@@ -1021,6 +1066,7 @@ export function RelatorioPage({
               columnPreferencesKey="maintenance:RelatorioPage:ltimas-reposi-es-por-pe-a-2:v1"
               embedded
               title="Últimas reposições por peça"
+              titleHint={DM_HELP.relatorio.tabUltimasTable}
               hint="Clique em uma linha para abrir o detalhe preventivo."
               columns={ultimasColumns}
               rows={ultimas}

@@ -7,6 +7,8 @@ import {
   formatReposicaoIndicadorDate,
 } from "../utils/reposicaoIndicadores";
 import { formatCodigoDescricao } from "../utils/pecaOptions";
+import { MaintenanceSectionHintLabel } from "../app/maintenanceUi";
+import { DM_HELP } from "../content/helpTooltips";
 import { KpiCard } from "./data/KpiCard";
 import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 
@@ -42,7 +44,12 @@ export function FerramentaReposicaoIndicadores({
       return (
         <section className="dm-card dm-indicadores-card">
           <div className="dm-section-header">
-            <h3 className="dm-section-header__title">Indicadores</h3>
+            <h3 className="dm-section-header__title">
+              <MaintenanceSectionHintLabel
+                label="Indicadores"
+                hint={DM_HELP.miniAplicadores.indicadores}
+              />
+            </h3>
           </div>
           <p className="dm-indicadores-card__empty">Nenhuma reposição com os filtros aplicados.</p>
         </section>
@@ -62,7 +69,12 @@ export function FerramentaReposicaoIndicadores({
     <section className="dm-card dm-indicadores-card">
       <div className="dm-section-header">
         <div className="dm-section-header__title-group">
-          <h3 className="dm-section-header__title">Indicadores</h3>
+          <h3 className="dm-section-header__title">
+            <MaintenanceSectionHintLabel
+              label="Indicadores"
+              hint={DM_HELP.miniAplicadores.indicadores}
+            />
+          </h3>
           {filtrosAtivos ? (
             <p className="dm-section-header__hint">Com filtros do histórico aplicados.</p>
           ) : null}
@@ -75,21 +87,25 @@ export function FerramentaReposicaoIndicadores({
       <div className="dm-indicadores-kpi-grid">
         <KpiCard
           title="Total de reposições"
+          titleHint={DM_HELP.miniAplicadores.indicadoresTotal}
           value={formatNumber(indicadores.total)}
           icon={<Repeat size={20} aria-hidden="true" />}
         />
         <KpiCard
           title="Peças distintas"
+          titleHint={DM_HELP.miniAplicadores.indicadoresPecasDistintas}
           value={formatNumber(indicadores.pecasDistintas)}
           icon={<Layers size={20} aria-hidden="true" />}
         />
         <KpiCard
           title="Média de golpes"
+          titleHint={DM_HELP.miniAplicadores.indicadoresMediaGolpes}
           value={formatNumber(indicadores.mediaGolpes)}
           icon={<Activity size={20} aria-hidden="true" />}
         />
         <KpiCard
           title="Última reposição"
+          titleHint={DM_HELP.miniAplicadores.indicadoresUltimaReposicao}
           value={formatReposicaoIndicadorDate(indicadores.ultimaReposicao)}
           icon={<Calendar size={20} aria-hidden="true" />}
         />

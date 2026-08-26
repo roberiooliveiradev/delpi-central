@@ -22,7 +22,7 @@ const paginationKit = createDashboardPaginationKit({
     pagesAriaLabel: "Páginas",
     previous: "Anterior",
     next: "Próxima",
-    info: (page, totalPages, total) =>
+    info: ({ page, totalPages, total }) =>
       totalPages > 0 ? `Página ${page} de ${totalPages} (${total} registro(s))` : "Sem registros",
     jumpLabel: "Ir para",
     jumpInputAriaLabel: "Número da página",

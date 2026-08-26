@@ -19,6 +19,9 @@ import {
 } from "../data/api/maintenanceApi";
 import { BrDateInput, FieldLabel, PendingChangeBadge, StateBox, StatusBadge } from "./data";
 import { MaintenanceActionButton, MaintenanceSectionHintLabel } from "../app/maintenanceUi";
+import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
+import { DmNativeTextAreaField } from "./dmFormFields";
+import { fromDateInputValue, toDateInputValue } from "../utils/datetimeLocal";
 
 type FerramentaRevisaoProgramadaSectionProps = {
   filial: string;

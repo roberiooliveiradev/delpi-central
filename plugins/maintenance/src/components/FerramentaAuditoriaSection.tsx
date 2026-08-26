@@ -213,11 +213,11 @@ export function FerramentaAuditoriaSection({
           />
         ) : (
           <DataTable
-            columns={auditColumns}
+            columns={auditColumns as DataTableColumn<unknown>[]}
             rows={items}
             loading={loading}
             emptyMessage="Nenhum evento registrado para esta ferramenta."
-            getRowKey={(item) => item.audit_id}
+            rowKey={(item: FerramentaAuditItem) => item.audit_id}
           />
         )}
         {!loading && total > 0 ? (

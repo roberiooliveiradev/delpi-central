@@ -258,6 +258,24 @@ export function fetchPreventivaHistorico(
   );
 }
 
+export type PreventivaDetalhe = {
+  alerta: PreventivaAlerta | null;
+  ferramenta: FerramentaItem | null;
+  pecaDescricao: string | null;
+  estoqueLocal01: number | null;
+  historico: PreventivaHistoricoItem[];
+};
+
+export function fetchPreventivaDetalhe(
+  params: { filial: string; codigo_ferramenta: string; codigo_peca: string },
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams(params);
+  return maintenanceFetch<PreventivaDetalhe>(`/preventiva/detalhe?${search.toString()}`, {
+    getAccessToken,
+  });
+}
+
 export type RevisaoProgramadaItem = {
   revisao_id: string;
   filial: string;

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { DM_HELP } from "../content/helpTooltips";
 import { fetchOndeUsado, type OndeUsadoItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
 import { DataTableSection, type DataTableColumn } from "./data";
@@ -118,7 +119,7 @@ export function FerramentaOndeUsadoSection({
       <DataTableSection
         columnPreferencesKey="maintenance:FerramentaOndeUsadoSection:onde-usado:v1"
         title="Onde é usado"
-        titleHint="Produtos pai (PA/PI) que utilizam esta ferramenta na estrutura vigente."
+        titleHint={DM_HELP.miniAplicadores.ondeUsado}
         countBadgeLabel="produto(s)"
         columns={columns}
         rows={items}

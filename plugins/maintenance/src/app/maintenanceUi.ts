@@ -6,6 +6,7 @@ import {
   createDashboardStatusBadge,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
+  FieldLabel,
   SectionHintLabel,
   titleWithHelpBemClasses,
 } from "@delpi/plugin-ui/index";
@@ -20,6 +21,7 @@ export const UI_PREFIX = "dm";
 export const DM_PORTAL_SCOPE = "dashboard-maintenance";
 
 export const MaintenanceActionButton = ActionButton;
+export const MaintenanceFieldLabel = FieldLabel;
 export const MaintenanceSectionHintLabel = SectionHintLabel;
 export const MaintenanceTitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses(UI_PREFIX),
