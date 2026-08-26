@@ -166,13 +166,18 @@ class InteractionRoomContentService:
 
     @classmethod
     def task_title_from_message_body(cls, body_text: str) -> str:
-        limit = max(1, min(cls.setting_int("taskTitleMaxChars", 500), 500))
-        cleaned = " ".join(str(body_text or "").split())
+        limit = max(
+            1,
+            min(cls.setting_int("taskTitleSummaryMaxChars", 80), 200),
+        )
+        text = cls.markdown_image_pattern().sub("", str(body_text or ""))
+        cleaned = " ".join(text.split())
         if not cleaned:
             return cls.message("taskFromMessageDefaultTitle")
         if len(cleaned) <= limit:
             return cleaned
-        return cleaned[:limit].rstrip()
+        trimmed = cleaned[: max(1, limit - 1)].rstrip()
+        return f"{trimmed}…"
 
     @classmethod
     def related_entity_type_room(cls) -> str:

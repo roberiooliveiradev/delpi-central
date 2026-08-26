@@ -86,7 +86,9 @@ class CreateTaskFromInteractionMessageUseCase:
         title = InteractionRoomContentService.task_title_from_message_body(
             message.body_text
         )
-        description = (request.description or "").strip() or None
+        override = (request.description or "").strip()
+        body = (message.body_text or "").strip()
+        description = override or body or None
         task = self._worklist.create_task(
             user_id=actor,
             data=CreateTaskInput(

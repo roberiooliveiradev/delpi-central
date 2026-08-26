@@ -167,6 +167,7 @@ def test_creates_task_linked_to_room_and_message() -> None:
 
     task = result.task
     assert task.title == "Confirmar produto 90AAAA01 no pedido"
+    assert task.description == "Confirmar produto 90AAAA01 no pedido"
     assert task.related_entity_type == "interaction_room"
     assert task.related_entity_id == str(room_id)
     assert task.source_interaction_message_id == message_id
@@ -244,6 +245,26 @@ def test_rejects_message_from_other_room() -> None:
             )
         )
     assert str(exc.value) == InteractionRoomContentService.error("messageNotInRoom")
+
+
+def test_title_summary_strips_images_and_truncates() -> None:
+    InteractionRoomContentService.clear_cache()
+    long_body = "A" * 120 + " ![img](attachment:11111111-2222-3333-4444-555555555555)"
+    rooms = FakeRooms()
+    messages = FakeMessages()
+    room_id, message_id = _seed_room_message(rooms=rooms, messages=messages, body=long_body)
+    uc, _ = _use_case(rooms, messages)
+    result = uc.execute(
+        CreateTaskFromInteractionMessageInput(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id="u1",
+        )
+    )
+    assert len(result.task.title) <= 80
+    assert result.task.title.endswith("…")
+    assert "attachment:" not in result.task.title
+    assert result.task.description == long_body.strip()
 
 
 def test_v020_adds_source_interaction_message_column() -> None:

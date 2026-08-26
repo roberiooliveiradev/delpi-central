@@ -91,6 +91,7 @@
   },
   "settings": {
     "taskTitleMaxChars": 500,
+    "taskTitleSummaryMaxChars": 80,
     "relatedEntityTypeRoom": "interaction_room",
     "taskMentionKind": "task",
     "taskRefMessageKind": "task_ref",
