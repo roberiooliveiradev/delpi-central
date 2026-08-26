@@ -1,7 +1,6 @@
 import { Settings, LineChart } from "lucide-react";
 
 import { StateBox } from "../../components/data";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 
 type PlaceholderPageProps = {
@@ -22,7 +21,7 @@ export function PlaceholderPage({
   onNavigate,
 }: PlaceholderPageProps) {
   return (
-    <MaintenanceShell>
+    <div className="dm-page-stack">
       <PageHeader
         title={title}
         subtitle={subtitle}
@@ -33,7 +32,7 @@ export function PlaceholderPage({
       <section className="dm-card">
         <StateBox>Entrega prevista na {phase} do roadmap.</StateBox>
       </section>
-    </MaintenanceShell>
+    </div>
   );
 }
 

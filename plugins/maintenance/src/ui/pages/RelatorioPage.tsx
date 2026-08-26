@@ -22,7 +22,6 @@ import {
 } from "../../components/data";
 import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import {
   useMaintenanceActiveFilial,
@@ -767,7 +766,7 @@ export function RelatorioPage({
     selection?.codigo_ferramenta === codigoFerramenta && selection?.codigo_peca === codigoPeca;
 
   return (
-    <MaintenanceShell>
+    <div className="dm-page-stack">
       <MiniAplicadoresPageHeader
         title="Relatório preventivo"
         subtitle="Preventiva por golpes, revisões programadas por tempo e detalhe por ferramenta/peça."
@@ -1035,6 +1034,6 @@ export function RelatorioPage({
           ) : null}
         </div>
       </section>
-    </MaintenanceShell>
+    </div>
   );
 }

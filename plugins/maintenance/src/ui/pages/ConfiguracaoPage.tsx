@@ -16,7 +16,6 @@ import {
   DmNativeTextField,
 } from "../../components/dmFormFields";
 import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import {
   useMaintenanceActiveFilial,
@@ -514,7 +513,7 @@ export function ConfiguracaoPage({
   }, [canManageMiniApplicators, statusEdits]);
 
   return (
-    <MaintenanceShell>
+    <div className="dm-page-stack">
       <MiniAplicadoresPageHeader
         title="Configuração"
         subtitle={`Motivos de troca e regras de status preventivo por golpes da filial ${filialDisplayName}.`}
@@ -652,6 +651,6 @@ export function ConfiguracaoPage({
           onSortChange: statusTable.handleSortChange,
         }}
       />
-    </MaintenanceShell>
+    </div>
   );
 }

@@ -2,7 +2,6 @@ import { ClipboardList } from "lucide-react";
 
 import { StateBox } from "../../components/data";
 import { ManutencaoGeralFormEmbed } from "../../components/ManutencaoGeralFormEmbed";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
 import { resolveManutencaoGeralFormUrl } from "../../utils/manutencaoGeralFormUrl";
@@ -32,7 +31,7 @@ export function ManutencaoGeralPage({
 
   if (scopeLoading) {
     return (
-      <MaintenanceShell>
+      <div className="dm-page-stack">
         <PageHeader
           title="Manutenção geral"
           subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
@@ -42,13 +41,13 @@ export function ManutencaoGeralPage({
           onNavigate={onNavigate}
         />
         <StateBox>Carregando…</StateBox>
-      </MaintenanceShell>
+      </div>
     );
   }
 
   if (!canAccess) {
     return (
-      <MaintenanceShell>
+      <div className="dm-page-stack">
         <PageHeader
           title="Manutenção geral"
           subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
@@ -61,7 +60,7 @@ export function ManutencaoGeralPage({
           Acesso restrito para a filial {effectiveFilial}. Solicite{" "}
           <code>maintenance.manutencao-geral.view.filial-01</code>.
         </StateBox>
-      </MaintenanceShell>
+      </div>
     );
   }
 
@@ -70,7 +69,7 @@ export function ManutencaoGeralPage({
 
   if (!formUrl) {
     return (
-      <MaintenanceShell>
+      <div className="dm-page-stack">
         <PageHeader
           title="Manutenção geral"
           subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
@@ -83,18 +82,18 @@ export function ManutencaoGeralPage({
           URL do formulário não configurada. Defina <code>routes[].entry</code> no manifesto de
           Manutenção e re-registre o app no portal.
         </StateBox>
-      </MaintenanceShell>
+      </div>
     );
   }
 
   return (
-    <MaintenanceShell variant="embed">
+    <div className="dm-page-stack">
       <ManutencaoGeralFormEmbed
         formUrl={formUrl}
         pathname={pathname}
         homePath={homePath}
         onNavigate={onNavigate}
       />
-    </MaintenanceShell>
+    </div>
   );
 }

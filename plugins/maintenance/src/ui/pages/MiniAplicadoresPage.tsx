@@ -35,7 +35,6 @@ import {
   type MotivoItem,
   type ReposicaoItem,
 } from "../../data/api/maintenanceApi";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
 import {
   fromDatetimeLocalValue,
@@ -900,7 +899,7 @@ export function MiniAplicadoresPage({
   );
 
   return (
-    <MaintenanceShell>
+    <div className="dm-page-stack">
       <MiniAplicadoresPageHeader
         title={codigoFerramenta ? `Ferramenta ${codigoFerramenta}` : "Ferramentas"}
         subtitle={
@@ -1329,6 +1328,6 @@ export function MiniAplicadoresPage({
           />
         </>
       )}
-    </MaintenanceShell>
+    </div>
   );
 }

@@ -1,7 +1,9 @@
 import { useMaintenanceRouterPath } from "./hooks/useMaintenanceRouterPath";
 import { parseMaintenancePath } from "./utils/routeParser";
+import { resolveMaintenanceNavId } from "./app/maintenanceNav";
 import { navigateMaintenance } from "./utils/navigation";
 import { PageTransition } from "./components/PageTransition";
+import { MaintenancePluginShell } from "./components/MaintenancePluginShell";
 import { HomePage } from "./ui/pages/HomePage";
 import { MiniAplicadoresPage } from "./ui/pages/MiniAplicadoresPage";
 import { ConfiguracaoPage } from "./ui/pages/ConfiguracaoPage";
@@ -94,5 +96,14 @@ export default function App({
     );
   }
 
-  return <PageTransition transitionKey={transitionKey}>{page}</PageTransition>;
+  return (
+    <MaintenancePluginShell
+      activeNavId={resolveMaintenanceNavId(route.view)}
+      filialScope={route.filialScope}
+      getAccessToken={getAccessToken}
+      onNavigate={onNavigate}
+    >
+      <PageTransition transitionKey={transitionKey}>{page}</PageTransition>
+    </MaintenancePluginShell>
+  );
 }

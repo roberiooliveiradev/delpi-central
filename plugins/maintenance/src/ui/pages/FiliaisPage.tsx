@@ -10,7 +10,6 @@ import {
   StateBox,
 } from "../../components/data";
 import { EditableCell } from "../../components/EditableCell";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import {
   createFilial,
@@ -241,7 +240,7 @@ export function FiliaisPage({
 
   if (scopeLoading) {
     return (
-      <MaintenanceShell>
+      <div className="dm-page-stack">
         <PageHeader
           title="Filiais"
           subtitle="Cadastro de filiais operacionais do módulo Manutenção."
@@ -251,13 +250,13 @@ export function FiliaisPage({
           onNavigate={onNavigate}
         />
         <StateBox>Carregando…</StateBox>
-      </MaintenanceShell>
+      </div>
     );
   }
 
   if (!canManageFiliais) {
     return (
-      <MaintenanceShell>
+      <div className="dm-page-stack">
         <PageHeader
           title="Filiais"
           subtitle="Cadastro de filiais operacionais do módulo Manutenção."
@@ -269,12 +268,12 @@ export function FiliaisPage({
         <StateBox variant="error">
           Acesso restrito. É necessária a permissão <code>maintenance.manage</code>.
         </StateBox>
-      </MaintenanceShell>
+      </div>
     );
   }
 
   return (
-    <MaintenanceShell>
+    <div className="dm-page-stack">
       <PageHeader
         title="Filiais"
         subtitle="Cadastro de filiais operacionais. Os nomes cadastrados aqui aparecem no seletor de filial e nas telas do módulo."
@@ -345,6 +344,6 @@ export function FiliaisPage({
           onSortChange: filiaisTable.handleSortChange,
         }}
       />
-    </MaintenanceShell>
+    </div>
   );
 }

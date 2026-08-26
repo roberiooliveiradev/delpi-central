@@ -9,7 +9,6 @@ import {
   StateBox,
 } from "../../components/data";
 import { FilialSwitcher } from "../../components/FilialSwitcher";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import {
   createProgramaMaquinaProduto,
@@ -384,7 +383,7 @@ export function ProgramasMaquinasPage({
   }
 
   return (
-    <MaintenanceShell>
+    <div className="dm-page-stack">
       <PageHeader
         title="Programas de máquina"
         subtitle={subtitle}
@@ -492,6 +491,6 @@ export function ProgramasMaquinasPage({
           }}
         />
       </section>
-    </MaintenanceShell>
+    </div>
   );
 }

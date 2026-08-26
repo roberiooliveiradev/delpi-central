@@ -11,7 +11,6 @@ import type { LucideIcon } from "lucide-react";
 
 import { StateBox } from "../../components/data";
 import { FilialSwitcher } from "../../components/FilialSwitcher";
-import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
@@ -78,7 +77,7 @@ export function HomePage({
   const showFilialSwitcher = !filialLoading && filiais.length > 1;
 
   return (
-    <MaintenanceShell>
+    <div className="dm-page-stack">
       <div className="dm-home">
         <PageHeader
           title="Manutenção"
@@ -188,6 +187,6 @@ export function HomePage({
           </section>
         ) : null}
       </div>
-    </MaintenanceShell>
+    </div>
   );
 }

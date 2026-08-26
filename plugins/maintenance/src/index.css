@@ -254,6 +254,13 @@
 }
 
 /* ——— Home (estilo alinhado ao Delpi Reports) ——— */
+.dashboard-maintenance .dm-shell-chrome{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  flex: 1;
+}
 .dashboard-maintenance .dm-home{
   display: flex;
   flex-direction: column;
