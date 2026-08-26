@@ -1,6 +1,5 @@
 import { useMaintenanceRouterPath } from "./hooks/useMaintenanceRouterPath";
 import { parseMaintenancePath } from "./utils/routeParser";
-import { resolveMaintenanceNavId } from "./app/maintenanceNav";
 import { navigateMaintenance } from "./utils/navigation";
 import { PageTransition } from "./components/PageTransition";
 import { MaintenancePluginShell } from "./components/MaintenancePluginShell";
@@ -98,7 +97,8 @@ export default function App({
 
   return (
     <MaintenancePluginShell
-      activeNavId={resolveMaintenanceNavId(route.view)}
+      routeView={route.view}
+      pathname={pathname}
       filialScope={route.filialScope}
       getAccessToken={getAccessToken}
       onNavigate={onNavigate}

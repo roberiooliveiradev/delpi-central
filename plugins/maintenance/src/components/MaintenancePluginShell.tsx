@@ -1,24 +1,10 @@
 import { useMemo, type ReactNode } from "react";
-import {
-  Building2,
-  ClipboardList,
-  Cpu,
-  Hammer,
-  Home,
-} from "lucide-react";
+import { ClipboardList, Cpu, Hammer, Home, LineChart, Settings } from "lucide-react";
 
-import {
-  resolveMaintenanceNavPath,
-  type MaintenanceNavId,
-} from "../app/maintenanceNav";
+import { resolveMaintenanceShellChrome } from "../app/maintenanceShellChrome";
 import { MaintenanceTopBar, DM_PORTAL_SCOPE } from "../app/maintenanceUi";
 import { FilialSwitcher } from "./FilialSwitcher";
 import { MaintenanceShell } from "./MaintenanceShell";
-import {
-  resolveShellNavItems,
-  SHELL_NAV_CONTENT,
-  type ShellNavCapabilities,
-} from "../content/shellNav";
 import {
   TOP_BAR_COLLAPSE_MODE,
   TOP_BAR_COLLAPSE_STORAGE_KEY,
@@ -27,41 +13,33 @@ import {
 import { useMaintenanceActiveFilial } from "../hooks/useMaintenanceScope";
 import { resolveFilialDisplayName } from "../utils/maintenanceFilialSelection";
 import { MAINTENANCE_ROUTES } from "../constants/routes";
+import type { MaintenanceView } from "../utils/routeParser";
 
 type MaintenancePluginShellProps = {
   children: ReactNode;
   variant?: "default" | "embed";
-  activeNavId: MaintenanceNavId;
+  routeView: MaintenanceView;
+  pathname: string;
   filialScope?: string;
   getAccessToken?: () => string | undefined;
   onNavigate: (path: string) => void;
 };
 
-const NAV_ICONS: Record<MaintenanceNavId, ReactNode> = {
+const TOP_BAR_ICONS: Record<string, ReactNode> = {
   home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
-  filiais: <Building2 size={16} strokeWidth={1.75} aria-hidden="true" />,
-  "mini-aplicadores": <Hammer size={16} strokeWidth={1.75} aria-hidden="true" />,
+  ferramentas: <Hammer size={16} strokeWidth={1.75} aria-hidden="true" />,
+  relatorio: <LineChart size={16} strokeWidth={1.75} aria-hidden="true" />,
+  configuracao: <Settings size={16} strokeWidth={1.75} aria-hidden="true" />,
+  filiais: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
   "programas-maquinas": <Cpu size={16} strokeWidth={1.75} aria-hidden="true" />,
   "manutencao-geral": <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
-function resolveShellCapabilities(
-  canManageFiliais: boolean,
-  submodules: Array<{ id: string }>,
-): ShellNavCapabilities {
-  const ids = new Set(submodules.map((item) => item.id));
-  return {
-    filiais: canManageFiliais,
-    "mini-aplicadores": ids.has("mini-aplicadores"),
-    "programas-maquinas": ids.has("programas-maquinas"),
-    "manutencao-geral": ids.has("manutencao-geral"),
-  };
-}
-
 export function MaintenancePluginShell({
   children,
   variant = "default",
-  activeNavId,
+  routeView,
+  pathname,
   filialScope,
   getAccessToken,
   onNavigate,
@@ -71,25 +49,25 @@ export function MaintenancePluginShell({
     activeFilial,
     setActiveFilial,
     loading: filialLoading,
-    submodules,
-    canManageFiliais,
+    canManageMiniApplicators,
   } = useMaintenanceActiveFilial(getAccessToken, filialScope);
 
-  const capabilities = useMemo(
-    () => resolveShellCapabilities(canManageFiliais, submodules),
-    [canManageFiliais, submodules],
+  const shellChrome = useMemo(
+    () =>
+      resolveMaintenanceShellChrome({
+        view: routeView,
+        pathname,
+        filialScope,
+        showConfiguration: canManageMiniApplicators,
+      }),
+    [canManageMiniApplicators, filialScope, pathname, routeView],
   );
 
-  const navItems = useMemo(
-    () => resolveShellNavItems(capabilities),
-    [capabilities],
-  );
-
-  const showTopBar = variant !== "embed";
+  const showTopBar = variant !== "embed" && shellChrome.showTopBar;
 
   const handleFilialChange = (filialId: string) => {
     setActiveFilial(filialId);
-    if (activeNavId === "manutencao-geral") {
+    if (routeView === "manutencao-geral") {
       onNavigate(MAINTENANCE_ROUTES.manutencaoGeral(filialId));
       return;
     }
@@ -97,7 +75,7 @@ export function MaintenancePluginShell({
   };
 
   const topBarActions =
-    !filialLoading && filiais.length > 1 ? (
+    showTopBar && !filialLoading && filiais.length > 1 ? (
       <FilialSwitcher
         filiais={filiais.map((filial) => ({
           id: filial.id,
@@ -109,30 +87,36 @@ export function MaintenancePluginShell({
       />
     ) : null;
 
+  const topBarItems = useMemo(
+    () =>
+      shellChrome.items.map((item) => ({
+        id: item.id,
+        label: item.label,
+        icon: TOP_BAR_ICONS[item.id] ?? TOP_BAR_ICONS.home,
+        title: item.label,
+        onSelect: () => onNavigate(item.path),
+      })),
+    [onNavigate, shellChrome.items],
+  );
+
   return (
     <MaintenanceShell variant={variant}>
       {showTopBar ? (
         <div className="dm-shell-chrome">
           <MaintenanceTopBar
-            aria-label={SHELL_NAV_CONTENT.ariaLabel}
-            activeId={activeNavId}
+            aria-label={shellChrome.ariaLabel}
+            activeId={shellChrome.activeId}
             collapsible
             collapseMode={TOP_BAR_COLLAPSE_MODE}
             collapseTrigger={TOP_BAR_COLLAPSE_TRIGGER}
             storageKey={
               TOP_BAR_COLLAPSE_TRIGGER === "manual" ? TOP_BAR_COLLAPSE_STORAGE_KEY : undefined
             }
-            collapseLabel={SHELL_NAV_CONTENT.collapseLabel}
-            expandLabel={SHELL_NAV_CONTENT.expandLabel}
-            menuLabel={SHELL_NAV_CONTENT.menuLabel}
+            collapseLabel="Recolher navegação"
+            expandLabel="Expandir navegação"
+            menuLabel="Menu de navegação"
             portalScopeClassName={DM_PORTAL_SCOPE}
-            items={navItems.map((item) => ({
-              id: item.id,
-              label: item.label,
-              icon: NAV_ICONS[item.id],
-              title: item.label,
-              onSelect: () => onNavigate(resolveMaintenanceNavPath(item.id, filialScope ?? activeFilial)),
-            }))}
+            items={topBarItems}
             actions={topBarActions}
           />
           {children}
