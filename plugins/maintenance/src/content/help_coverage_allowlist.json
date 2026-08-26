@@ -28,11 +28,6 @@
       "id": "nivel"
     },
     {
-      "file": "components/FerramentaRevisaoProgramadaSection.tsx",
-      "kind": "column",
-      "id": "data_revisao"
-    },
-    {
       "file": "components/FerramentasPorPecaSearchCard.tsx",
       "kind": "column",
       "id": "codigo"
