@@ -91,6 +91,80 @@ class PreventivaService:
         alertas = self._sort_alertas(alertas, query.sort_by, query.sort_dir)
         return paginate_slice(alertas, query)
 
+    def obter_detalhe(
+        self,
+        *,
+        filial: str,
+        codigo_ferramenta: str,
+        codigo_peca: str,
+    ) -> dict[str, Any]:
+        rules = self._status_repo.list_active(filial=filial)
+        alertas = self._get_alertas_snapshot(filial=filial, rules=rules)
+        alerta = next(
+            (
+                item
+                for item in alertas
+                if item["codigo_ferramenta"] == codigo_ferramenta
+                and item["codigo_peca"] == codigo_peca
+            ),
+            None,
+        )
+        historico = self.listar_historico(
+            filial=filial,
+            codigo_ferramenta=codigo_ferramenta,
+            codigo_peca=codigo_peca,
+        )
+
+        ferramenta_payload: dict[str, Any] | None = None
+        peca_descricao: str | None = None
+        estoque_local_01: float | None = None
+
+        if self._totvs is not None:
+            try:
+                ferramenta_payload = self._totvs.obter_ferramenta(codigo_ferramenta)
+            except Exception:
+                ferramenta_payload = None
+
+            try:
+                pecas_payload = self._totvs.listar_pecas(codigo_ferramenta)
+                for peca in self._extract_items(pecas_payload):
+                    if str(peca.get("codigo") or "").strip() == codigo_peca:
+                        peca_descricao = str(peca.get("descricao") or "") or None
+                        break
+            except Exception:
+                pass
+
+            try:
+                componentes_payload = self._totvs.listar_componentes(
+                    codigo_ferramenta=codigo_ferramenta,
+                    filial=filial,
+                )
+                for componente in self._extract_items(componentes_payload):
+                    if str(componente.get("codigo") or "").strip() == codigo_peca:
+                        if not peca_descricao:
+                            peca_descricao = str(componente.get("descricao") or "") or None
+                        raw_stock = componente.get("estoque_local_01")
+                        if raw_stock is not None:
+                            estoque_local_01 = float(raw_stock)
+                        break
+            except Exception:
+                pass
+
+        ferramenta_item = None
+        if isinstance(ferramenta_payload, dict):
+            ferramenta_item = {
+                "codigo": codigo_ferramenta,
+                "descricao": self._extract_descricao(ferramenta_payload),
+            }
+
+        return {
+            "alerta": alerta,
+            "ferramenta": ferramenta_item,
+            "pecaDescricao": peca_descricao,
+            "estoqueLocal01": estoque_local_01,
+            "historico": historico,
+        }
+
     def listar_historico(
         self,
         *,

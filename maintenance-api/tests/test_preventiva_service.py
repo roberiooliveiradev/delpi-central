@@ -187,3 +187,52 @@ def test_listar_historico_exclui_motivos_marcados():
     assert historico[0]["golpes"] == 80_000
 
 
+def test_obter_detalhe_consolida_payload():
+    reposicao_repo = MagicMock()
+    status_repo = MagicMock()
+    reposicao_repo.list_ultimas_por_par.return_value = [
+        {
+            "codigo_ferramenta": "23-001",
+            "codigo_peca": "30190006",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+    ]
+    status_repo.list_active.return_value = [{"descricao": "OK", "operador": "<", "percentual": 80}]
+    reposicao_repo.media_golpes_map.return_value = {("23-001", "30190006"): 100.0}
+    reposicao_repo.golpes_history_map.return_value = {("23-001", "30190006"): [50_000]}
+    reposicao_repo.list_preventiva_by_ferramenta.return_value = [
+        {
+            "reposicao_id": "abc",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+            "golpes": 50_000,
+        }
+    ]
+
+    totvs = MagicMock()
+    totvs.obter_golpes_batch.return_value = {
+        "items": [{"codigo_ferramenta": "23-001", "total_golpes": 50}],
+    }
+    totvs.obter_ferramenta.return_value = {"codigo": "23-001", "descricao": "MINI APLICADOR"}
+    totvs.listar_pecas.return_value = {
+        "items": [{"codigo": "30190006", "descricao": "GRAMPEADOR DO ISOLANTE"}]
+    }
+    totvs.listar_componentes.return_value = {
+        "items": [{"codigo": "30190006", "descricao": "GRAMPEADOR DO ISOLANTE", "estoque_local_01": 3}]
+    }
+
+    service = PreventivaService(
+        reposicao_repo=reposicao_repo,
+        status_repo=status_repo,
+        totvs_gateway=totvs,
+    )
+    detalhe = service.obter_detalhe(
+        filial="01",
+        codigo_ferramenta="23-001",
+        codigo_peca="30190006",
+    )
+
+    assert detalhe["alerta"] is not None
+    assert detalhe["ferramenta"]["descricao"] == "MINI APLICADOR"
+    assert detalhe["pecaDescricao"] == "GRAMPEADOR DO ISOLANTE"
+    assert detalhe["estoqueLocal01"] == 3.0
+    assert len(detalhe["historico"]) == 1

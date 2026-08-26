@@ -60,6 +60,13 @@ A API dedicada reforça o filtro **3019** em `GET /maintenance/mini-aplicadores/
 | Repositório TOTVS | `app/infrastructure/persistence/totvs/mini_applicators_repository.py` |
 | Composer | registrar em `engineering_composer` ou equivalente |
 
+
+**BFF maintenance-api (preventiva):**
+
+| Rota BFF | Descrição |
+|----------|-----------|
+| `GET /maintenance/preventiva/detalhe` | Consolida alerta, ferramenta, peça, estoque e histórico num único payload |
+
 Detalhe de payloads: [PLAYBOOK-01](../../docs/12-roadmap-e-evolucao/maintenance/PLAYBOOK-01-fronteiras-api-delpi.md).
 
 ---

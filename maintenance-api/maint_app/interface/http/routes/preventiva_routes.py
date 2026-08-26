@@ -75,6 +75,28 @@ def list_historico(
     return ok({"items": items, "total": len(items)}, message="Histórico listado.")
 
 
+@router.get("/detalhe")
+def obter_detalhe(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    codigo_ferramenta: str = Query(...),
+    codigo_peca: str = Query(...),
+):
+    scope = resolve_access_scope(request)
+    user = resolve_user(request)
+    try:
+        assert_submodule_view(user, _SUBMODULE_ID, codigo_filial=filial, scope=scope)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    data = build_preventiva_service().obter_detalhe(
+        filial=filial,
+        codigo_ferramenta=codigo_ferramenta,
+        codigo_peca=codigo_peca,
+    )
+    return ok(data, message="Detalhe preventivo obtido.")
+
+
 @router.get("/ultimas-reposicoes")
 def list_ultimas_reposicoes(
     request: Request,
