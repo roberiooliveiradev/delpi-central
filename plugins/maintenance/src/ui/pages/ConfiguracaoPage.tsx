@@ -14,6 +14,8 @@ import {
   DmNativeTextField,
 } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
+import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
+import { MotivoListCard, StatusPreventivoListCard } from "../../components/listCards/MaintenanceListCards";
 import { MaintenanceActionButton, MaintenanceFilterCheckboxField } from "../../app/maintenanceUi";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
@@ -583,6 +585,8 @@ export function ConfiguracaoPage({
         loading={motivosLoading}
         emptyMessage="Nenhum motivo cadastrado."
         getRowKey={(item) => String(item.motivo_id)}
+        viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.motivos}
+        renderCard={(item) => <MotivoListCard item={item} />}
         serverTable={{
           page: motivosTable.query.page,
           pageSize: motivosTable.query.pageSize,
@@ -653,6 +657,8 @@ export function ConfiguracaoPage({
         loading={statusLoading}
         emptyMessage="Nenhuma regra de status cadastrada."
         getRowKey={(item) => String(item.status_id)}
+        viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.statusPreventivo}
+        renderCard={(item) => <StatusPreventivoListCard item={item} />}
         serverTable={{
           page: statusTable.query.page,
           pageSize: statusTable.query.pageSize,

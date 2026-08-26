@@ -1087,38 +1087,6 @@
   font-size: var(--dm-font-sm);
   font-weight: 600;
   color: var(--dm-title);
-}.dashboard-maintenance .dm-revisao-historico-scroll{
-  overflow-x: auto;
-  border: 1px solid var(--dm-card-border);
-  border-radius: 12px;
-}.dashboard-maintenance .dm-revisao-historico-table{
-  width: 100%;
-  min-width: 520px;
-  border-collapse: collapse;
-  font-size: var(--dm-font-sm);
-}.dashboard-maintenance .dm-revisao-historico-table th,
-.dashboard-maintenance .dm-revisao-historico-table td{
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--dm-card-border);
-  text-align: left;
-  vertical-align: top;
-}.dashboard-maintenance .dm-revisao-historico-table th{
-  font-size: var(--dm-font-xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--dm-text-muted);
-  background: color-mix(in srgb, var(--dm-accent) 6%, var(--dm-card-bg));
-}.dashboard-maintenance .dm-revisao-historico-table tbody tr:last-child td{
-  border-bottom: 0;
-}.dashboard-maintenance .dm-revisao-historico-table td input[type="date"],
-.dashboard-maintenance .dm-revisao-historico-table td input:not([type="date"]){
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}.dashboard-maintenance .dm-revisao-historico-actions{
-  flex-wrap: nowrap;
-  justify-content: flex-end;
 }.dashboard-maintenance .dm-revisao-ferramenta__form-panel{
   border-top: 1px solid var(--dm-card-border);
   padding-top: 12px;

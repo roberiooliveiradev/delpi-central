@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarClock, ChevronDown } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
@@ -17,7 +17,7 @@ import {
   type RevisaoProgramadaItem,
   type RevisaoProgramadaRealizacao,
 } from "../data/api/maintenanceApi";
-import { BrDateInput, FieldLabel, PendingChangeBadge, StateBox, StatusBadge } from "./data";
+import { BrDateInput, DataTableSection, FieldLabel, PendingChangeBadge, StateBox, StatusBadge, type DataTableColumn } from "./data";
 import { MaintenanceActionButton, MaintenanceSectionHintLabel } from "../app/maintenanceUi";
 import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 import { DmNativeTextAreaField } from "./dmFormFields";
@@ -337,6 +337,127 @@ export function FerramentaRevisaoProgramadaSection({
     }
   }
 
+  const realizacoesColumns = useMemo<DataTableColumn<RevisaoProgramadaRealizacao>[]>(() => {
+    const columns: DataTableColumn<RevisaoProgramadaRealizacao>[] = [
+      {
+        key: "data_revisao",
+        header: "Data da revisão",
+        headerHint: DM_HELP.revisao.historico,
+        className: "dm-datatable__col--revisao-feito",
+        render: (item) => {
+          const isEditing = editingRealizacaoId === item.realizacao_id && realizacaoDraft;
+          return isEditing ? (
+            <NativeTextControl
+              type="date"
+              value={realizacaoDraft.data_revisao}
+              onChange={(value) =>
+                setRealizacaoDraft((prev) => (prev ? { ...prev, data_revisao: value } : prev))
+              }
+            />
+          ) : (
+            formatDateTime(item.data_revisao)
+          );
+        },
+      },
+      {
+        key: "intervalo",
+        header: "Intervalo",
+        render: (item) => `${item.intervalo_meses} mes(es)`,
+      },
+      {
+        key: "data_registro",
+        header: "Registrado em",
+        render: (item) => formatDateTime(item.data_registro),
+      },
+      {
+        key: "observacao",
+        header: "Observação",
+        render: (item) => {
+          const isEditing = editingRealizacaoId === item.realizacao_id && realizacaoDraft;
+          return isEditing ? (
+            <NativeTextControl
+              value={realizacaoDraft.observacao}
+              onChange={(value) =>
+                setRealizacaoDraft((prev) => (prev ? { ...prev, observacao: value } : prev))
+              }
+              placeholder="Opcional"
+            />
+          ) : (
+            item.observacao?.trim() || "—"
+          );
+        },
+      },
+    ];
+
+    if (canManage) {
+      columns.push({
+        key: "acoes",
+        header: "Ações",
+        className: "dm-datatable__col--revisao-feito",
+        interactive: true,
+        render: (item) => {
+          const isEditing = editingRealizacaoId === item.realizacao_id && realizacaoDraft;
+          return (
+            <div className="dm-row-actions dm-revisao-feito-actions">
+              {isEditing ? (
+                <>
+                  <MaintenanceActionButton
+                    type="button"
+                    disabled={saving || !isRealizacaoDirty(item, realizacaoDraft!)}
+                    onClick={() => void handleSaveRealizacao(item)}
+                    variant="ghost"
+                    className="dm-btn--sm"
+                  >
+                    Salvar
+                  </MaintenanceActionButton>
+                  <MaintenanceActionButton
+                    type="button"
+                    disabled={saving}
+                    onClick={cancelEditRealizacao}
+                    variant="ghost"
+                    className="dm-btn--sm"
+                  >
+                    Cancelar
+                  </MaintenanceActionButton>
+                </>
+              ) : (
+                <>
+                  <MaintenanceActionButton
+                    type="button"
+                    disabled={saving || Boolean(editingRealizacaoId)}
+                    title={DM_HELP.revisao.historicoEditar}
+                    onClick={() => startEditRealizacao(item)}
+                    variant="ghost"
+                    className="dm-btn--sm"
+                  >
+                    Editar
+                  </MaintenanceActionButton>
+                  <MaintenanceActionButton
+                    type="button"
+                    disabled={saving || Boolean(editingRealizacaoId)}
+                    title={DM_HELP.revisao.historicoExcluir}
+                    onClick={() => void handleDeleteRealizacao(item)}
+                    variant="ghost"
+                    className="dm-btn--sm dm-btn--danger"
+                  >
+                    Excluir
+                  </MaintenanceActionButton>
+                </>
+              )}
+            </div>
+          );
+        },
+      });
+    }
+
+    return columns;
+  }, [
+    canManage,
+    editingRealizacaoId,
+    realizacaoDraft,
+    saving,
+  ]);
+
   const formToggleLabel = schedule
     ? formExpanded
       ? "Ocultar configuração"
@@ -413,115 +534,15 @@ export function FerramentaRevisaoProgramadaSection({
 
       {!loading ? (
         <div className="dm-revisao-ferramenta__historico">
-          <div className="dm-revisao-ferramenta__historico-header">
-            <h4 className="dm-revisao-ferramenta__historico-title">
-              <MaintenanceSectionHintLabel
-                label="Últimas revisões feitas"
-                hint={DM_HELP.revisao.historico}
-              />
-            </h4>
-          </div>
-          {realizacoes.length === 0 ? (
-            <StateBox>Nenhuma revisão marcada como feita ainda.</StateBox>
-          ) : (
-            <div className="dm-revisao-historico-scroll">
-              <table className="dm-revisao-historico-table">
-                <thead>
-                  <tr>
-                    <th>Data da revisão</th>
-                    <th>Intervalo</th>
-                    <th>Registrado em</th>
-                    <th>Observação</th>
-                    {canManage ? <th>Ações</th> : null}
-                  </tr>
-                </thead>
-                <tbody>
-                  {realizacoes.map((item) => {
-                    const isEditing = editingRealizacaoId === item.realizacao_id && realizacaoDraft;
-                    return (
-                      <tr key={item.realizacao_id}>
-                        <td>
-                          {isEditing ? (
-                            <NativeTextControl
-                              type="date"
-                              value={realizacaoDraft.data_revisao}
-                              onChange={(value) =>
-                                setRealizacaoDraft((prev) =>
-                                  prev ? { ...prev, data_revisao: value } : prev,
-                                )
-                              }
-                            />
-                          ) : (
-                            formatDateTime(item.data_revisao)
-                          )}
-                        </td>
-                        <td>{item.intervalo_meses} mes(es)</td>
-                        <td>{formatDateTime(item.data_registro)}</td>
-                        <td>
-                          {isEditing ? (
-                            <NativeTextControl
-                              value={realizacaoDraft.observacao}
-                              onChange={(value) =>
-                                setRealizacaoDraft((prev) =>
-                                  prev ? { ...prev, observacao: value } : prev,
-                                )
-                              }
-                              placeholder="Opcional"
-                            />
-                          ) : (
-                            item.observacao?.trim() || "—"
-                          )}
-                        </td>
-                        {canManage ? (
-                          <td>
-                            <div className="dm-row-actions dm-revisao-historico-actions">
-                              {isEditing ? (
-                                <>
-                                  <MaintenanceActionButton
-                                    type="button"
-                                    disabled={saving || !isRealizacaoDirty(item, realizacaoDraft)}
-                                    onClick={() => void handleSaveRealizacao(item)}
-                                   variant="ghost" className="dm-btn--sm">
-                                    Salvar
-                                  </MaintenanceActionButton>
-                                  <MaintenanceActionButton
-                                    type="button"
-                                    disabled={saving}
-                                    onClick={cancelEditRealizacao}
-                                   variant="ghost" className="dm-btn--sm">
-                                    Cancelar
-                                  </MaintenanceActionButton>
-                                </>
-                              ) : (
-                                <>
-                                  <MaintenanceActionButton
-                                    type="button"
-                                    disabled={saving || Boolean(editingRealizacaoId)}
-                                    title={DM_HELP.revisao.historicoEditar}
-                                    onClick={() => startEditRealizacao(item)}
-                                   variant="ghost" className="dm-btn--sm">
-                                    Editar
-                                  </MaintenanceActionButton>
-                                  <MaintenanceActionButton
-                                    type="button"
-                                    disabled={saving || Boolean(editingRealizacaoId)}
-                                    title={DM_HELP.revisao.historicoExcluir}
-                                    onClick={() => void handleDeleteRealizacao(item)}
-                                   variant="ghost" className="dm-btn--sm dm-btn--danger">
-                                    Excluir
-                                  </MaintenanceActionButton>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        ) : null}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <DataTableSection
+            embedded
+            title="Últimas revisões feitas"
+            titleHint={DM_HELP.revisao.historico}
+            columns={realizacoesColumns}
+            rows={realizacoes}
+            emptyMessage="Nenhuma revisão marcada como feita ainda."
+            getRowKey={(item) => item.realizacao_id}
+          />
         </div>
       ) : null}
 

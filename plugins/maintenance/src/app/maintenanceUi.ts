@@ -1,6 +1,7 @@
 import {
   ActionButton,
   createDashboardFilterCheckboxField,
+  createDashboardInteractiveDataCard,
   createDashboardLoadingActivityCard,
   createDashboardPageHero,
   createDashboardScreenLoading,
@@ -58,4 +59,8 @@ export const MaintenanceTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const MaintenanceFilterCheckboxField = createDashboardFilterCheckboxField({
   classNames: filterCheckboxFieldBemClasses(UI_PREFIX),
   labels: { defaultCheckboxLabel: "Ativar" },
+});
+
+export const MaintenanceInteractiveDataCard = createDashboardInteractiveDataCard({
+  prefix: UI_PREFIX,
 });

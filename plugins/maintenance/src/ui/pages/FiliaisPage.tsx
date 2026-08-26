@@ -11,6 +11,8 @@ import {
 import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
 import { DmNativeTextField } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
+import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
+import { FilialListCard } from "../../components/listCards/MaintenanceListCards";
 import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import { EditableCell } from "../../components/EditableCell";
 import {
@@ -328,9 +330,11 @@ export function FiliaisPage({
               onChange={setNovoNome}
               placeholder="Matriz"
             />
-            <MaintenanceActionButton type="submit" variant="primary">
-              Adicionar filial
-            </MaintenanceActionButton>
+            <div className="dm-filter-bar__actions">
+              <MaintenanceActionButton type="submit" variant="primary">
+                Adicionar filial
+              </MaintenanceActionButton>
+            </div>
           </FilterBar>
         }
         columns={columns}
@@ -338,6 +342,8 @@ export function FiliaisPage({
         loading={loading}
         emptyMessage="Nenhuma filial cadastrada."
         getRowKey={(item) => String(item.filial_id)}
+        viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.filiais}
+        renderCard={(item) => <FilialListCard filial={item} />}
         serverTable={{
           page: filiaisTable.query.page,
           pageSize: filiaisTable.query.pageSize,

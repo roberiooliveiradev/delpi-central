@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DM_HELP } from "../content/helpTooltips";
+import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../content/listLayoutKeys";
+import { OndeUsadoListCard } from "./listCards/MaintenanceListCards";
 import { fetchOndeUsado, type OndeUsadoItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
 import { DataTableSection, type DataTableColumn } from "./data";
@@ -126,6 +128,8 @@ export function FerramentaOndeUsadoSection({
         loading={loading}
         emptyMessage="Esta ferramenta não aparece como componente de nenhum produto na BOM."
         getRowKey={(item, index) => `${item.codigo}-${item.nivel}-${index}`}
+        viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.ondeUsado}
+        renderCard={(item) => <OndeUsadoListCard item={item} />}
         serverTable={{
           page: ondeUsadoTable.query.page,
           pageSize: ondeUsadoTable.query.pageSize,

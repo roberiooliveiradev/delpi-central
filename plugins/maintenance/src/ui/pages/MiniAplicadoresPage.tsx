@@ -38,6 +38,8 @@ import {
 } from "../../data/api/maintenanceApi";
 import { MaintenanceActionButton, MaintenanceFieldLabel } from "../../app/maintenanceUi";
 import { DM_HELP } from "../../content/helpTooltips";
+import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
+import { FerramentaListCard, ReposicaoListCard } from "../../components/listCards/MaintenanceListCards";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   fromDatetimeLocalValue,
@@ -922,6 +924,13 @@ export function MiniAplicadoresPage({
             getRowKey={(item) => item.codigo}
             getRowClassName={(item) => (item.bloqueado ? "is-blocked" : undefined)}
             onRowClick={(item) => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
+            viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.ferramentas}
+            renderCard={(item) => (
+              <FerramentaListCard
+                item={item}
+                onActivate={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
+              />
+            )}
             serverTable={{
               page: ferramentasTable.query.page,
               pageSize: ferramentasTable.query.pageSize,
@@ -1193,22 +1202,24 @@ export function MiniAplicadoresPage({
                   onChange={setFiltroHistoricoMotivoDraft}
                 />
                 <label className="dm-field dm-field--filter-date">
-                  <span>De</span>
+                  <MaintenanceFieldLabel label="De" hint={DM_HELP.miniAplicadores.dataReposicao} />
                   <BrDateInput
                     value={filtroHistoricoDataInicialDraft}
                     onChange={setFiltroHistoricoDataInicialDraft}
                   />
                 </label>
                 <label className="dm-field dm-field--filter-date">
-                  <span>Até</span>
+                  <MaintenanceFieldLabel label="Até" hint={DM_HELP.miniAplicadores.dataReposicao} />
                   <BrDateInput
                     value={filtroHistoricoDataFinalDraft}
                     onChange={setFiltroHistoricoDataFinalDraft}
                   />
                 </label>
-                <MaintenanceActionButton type="button" onClick={applyHistoricoFilters} variant="ghost">
-                  Aplicar filtro
-                </MaintenanceActionButton>
+                <div className="dm-filter-bar__actions">
+                  <MaintenanceActionButton type="button" onClick={applyHistoricoFilters} variant="ghost">
+                    Aplicar filtro
+                  </MaintenanceActionButton>
+                </div>
               </FilterBar>
             }
             columns={reposicoesColumns}
@@ -1217,6 +1228,16 @@ export function MiniAplicadoresPage({
             emptyMessage="Nenhuma reposição registrada."
             getRowKey={(item) => item.reposicao_id}
             getRowClassName={(item) => (editingReposicaoId === item.reposicao_id ? "is-selected" : undefined)}
+            viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.reposicoes}
+            renderCard={(item) => (
+              <ReposicaoListCard
+                item={item}
+                pecaDescricao={pecaDescricaoMap[item.codigo_peca.trim()]}
+                onActivate={
+                  canManageMiniApplicators ? () => handleEditReposicao(item) : undefined
+                }
+              />
+            )}
             serverTable={{
               page: reposicoesTable.query.page,
               pageSize: reposicoesTable.query.pageSize,

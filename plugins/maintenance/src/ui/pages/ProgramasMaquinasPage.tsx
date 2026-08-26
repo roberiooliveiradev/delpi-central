@@ -10,6 +10,11 @@ import {
 import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
 import { DmNativeTextField } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
+import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
+import {
+  ProgramaCadastroListCard,
+  ProgramaRankingListCard,
+} from "../../components/listCards/MaintenanceListCards";
 import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import {
   createProgramaMaquinaProduto,
@@ -420,6 +425,8 @@ export function ProgramasMaquinasPage({
           loading={rankingLoading}
           emptyMessage="Nenhum intermediário encontrado no período."
           getRowKey={(row) => row.intermediate_code}
+          viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.programasRanking}
+          renderCard={(row) => <ProgramaRankingListCard row={row} />}
           serverTable={{
             page: rankingTable.query.page,
             pageSize: rankingTable.query.pageSize,
@@ -458,6 +465,8 @@ export function ProgramasMaquinasPage({
           loading={cadastroLoading}
           emptyMessage="Nenhum produto cadastrado ainda."
           getRowKey={(row) => row.id}
+          viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.programasCadastro}
+          renderCard={(row) => <ProgramaCadastroListCard row={row} />}
           serverTable={{
             page: cadastroTable.query.page,
             pageSize: cadastroTable.query.pageSize,

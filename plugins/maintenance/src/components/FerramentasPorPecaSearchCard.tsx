@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { MaintenanceActionButton } from "../app/maintenanceUi";
 import { DmNativeTextField } from "./dmFormFields";
 import { DM_HELP } from "../content/helpTooltips";
+import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../content/listLayoutKeys";
+import { PecaAmarradaListCard } from "./listCards/MaintenanceListCards";
 import {
   fetchPecasReposicao,
   type PecaReposicaoItem,
@@ -224,6 +226,10 @@ export function FerramentasPorPecaSearchCard({
             }
             embedded
             onRowClick={handleSelectPeca}
+            viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.pecasAmarradas}
+            renderCard={(item) => (
+              <PecaAmarradaListCard item={item} onActivate={() => handleSelectPeca(item)} />
+            )}
             serverTable={{
               page: pecasTable.query.page,
               pageSize: pecasTable.query.pageSize,
