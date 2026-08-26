@@ -64,3 +64,52 @@ def test_user_series_methods_return_empty_for_unknown_user():
     assert repo.user_routes_by_opens(user_id=user_id, since=since) == []
     assert repo.user_count_events_since(user_id=user_id, since=since) == 0
     assert repo.user_count_sessions_since(user_id=user_id, since=since) == 0
+
+
+def test_duration_by_day_returns_average_seconds_per_unique_user():
+    session = MagicMock()
+    query = MagicMock()
+    query.filter.return_value = query
+    query.group_by.return_value = query
+    query.order_by.return_value = query
+
+    day = datetime(2026, 8, 24).date()
+    row = MagicMock()
+    row.day = day
+    row.total_seconds = 3600
+    row.unique_users = 3
+    query.all.return_value = [row]
+    session.query.return_value = query
+
+    repo = SqlAlchemyEngagementRepository(session)
+    since = datetime.utcnow() - timedelta(days=7)
+    result = repo.duration_by_day(since=since)
+
+    assert result == [
+        {
+            "date": "2026-08-24",
+            "avgSecondsPerUser": 1200,
+        }
+    ]
+
+
+def test_active_users_by_day_uses_distinct_user_count():
+    session = MagicMock()
+    query = MagicMock()
+    query.filter.return_value = query
+    query.group_by.return_value = query
+    query.order_by.return_value = query
+
+    day = datetime(2026, 8, 14).date()
+    row = MagicMock()
+    row.day = day
+    row.active_users = 24
+    query.all.return_value = [row]
+    session.query.return_value = query
+
+    repo = SqlAlchemyEngagementRepository(session)
+    since = datetime.utcnow() - timedelta(days=30)
+    result = repo.active_users_by_day(since=since)
+
+    assert result == [{"date": "2026-08-14", "activeUsers": 24}]
+    session.query.assert_called()

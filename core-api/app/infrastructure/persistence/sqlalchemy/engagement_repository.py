@@ -58,6 +58,7 @@ class SqlAlchemyEngagementRepository:
         ]
 
     def duration_by_day(self, *, since: datetime) -> list[dict]:
+        """Tempo médio por usuário único em cada dia (soma ÷ distinct users)."""
         day_expr = func.date(UsageSession.started_at)
         rows = (
             self.session.query(
@@ -65,19 +66,29 @@ class SqlAlchemyEngagementRepository:
                 func.coalesce(func.sum(UsageSession.duration_seconds), 0).label(
                     "total_seconds"
                 ),
+                func.count(func.distinct(UsageSession.user_id)).label("unique_users"),
             )
             .filter(UsageSession.started_at >= since)
             .group_by(day_expr)
             .order_by(day_expr.asc())
             .all()
         )
-        return [
-            {
-                "date": row.day.isoformat() if hasattr(row.day, "isoformat") else str(row.day),
-                "totalSeconds": int(row.total_seconds or 0),
-            }
-            for row in rows
-        ]
+        series: list[dict] = []
+        for row in rows:
+            unique_users = int(row.unique_users or 0)
+            total_seconds = int(row.total_seconds or 0)
+            avg_seconds = (
+                int(round(total_seconds / unique_users)) if unique_users > 0 else 0
+            )
+            series.append(
+                {
+                    "date": row.day.isoformat()
+                    if hasattr(row.day, "isoformat")
+                    else str(row.day),
+                    "avgSecondsPerUser": avg_seconds,
+                }
+            )
+        return series
 
     def top_apps_by_opens(self, *, since: datetime, limit: int = 8) -> list[dict]:
         rows = (

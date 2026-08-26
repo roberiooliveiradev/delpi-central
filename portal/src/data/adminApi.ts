@@ -141,7 +141,8 @@ export type AdminAppUsageSnapshot = {
 export type AdminEngagementSeriesPoint = {
   date: string;
   activeUsers?: number;
-  totalSeconds?: number;
+  /** Média de segundos por usuário único no dia (série de duração). */
+  avgSecondsPerUser?: number;
 };
 
 export type AdminEngagementTopUser = {

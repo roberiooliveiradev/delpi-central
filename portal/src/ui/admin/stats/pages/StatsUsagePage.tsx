@@ -105,7 +105,7 @@ export function StatsUsagePage({
           <AreaChart
             data={(activity.durationSeries ?? []).map((point) => ({
               name: formatSeriesDateLabel(point.date),
-              value: point.totalSeconds ?? 0,
+              value: point.avgSecondsPerUser ?? 0,
             }))}
             color={STATS_CHART_COLORS.c3}
             valueFormatter={formatDuration}

@@ -24,7 +24,7 @@ export const ENGAGEMENT_LABELS = {
   topUsers: "Usuários mais ativos",
   topRoutes: "Rotas mais acessadas",
   activeUsersSeries: "Usuários ativos por dia",
-  durationSeries: "Tempo total por dia",
+  durationSeries: "Tempo médio por usuário / dia",
   chartHoverHint: "Passe o mouse sobre o gráfico para ver os valores.",
   coverage: "Cobertura de rastreamento",
   viewEngagement: "Ver engajamento completo",
