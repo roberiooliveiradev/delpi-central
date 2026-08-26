@@ -1,6 +1,6 @@
 # Status atual — Manutenção
 
-**Última atualização:** jun/2026
+**Última atualização:** ago/2026
 
 ## O que existe no monorepo
 
@@ -44,6 +44,22 @@
 | **Revisão programada** | Agenda por ferramenta no detalhe (intervalo, referência manual, marcar feito); alertas no relatório; histórico de realizações com editar/excluir |
 | **Auditoria da ferramenta** | `audit_logs` nas mutações de reposição/revisão; timeline paginada no detalhe (`GET .../auditoria`) |
 | **StateBox dismissível** | Botão fechar em avisos de sucesso/erro (mini-aplicadores, config, filiais, relatório) |
+
+## Entregas UI excelência (ago/2026)
+
+| Tema | Detalhe |
+|------|---------|
+| **Shell / nav** | Hub sem TopBar; sub-abas mini-aplicadores na TopBar; `maintenanceShellChrome.ts` |
+| **PageHero compact** | Todas as páginas via kit; zero nav embutida no hero |
+| **Helps 100%** | `DM_HELP` + gate `helpCoverage.structural.test.mjs` |
+| **Tabelas kit** | `DataTableSection` + toggle Tabela/Cards + colunas persistidas |
+| **Gráfico golpes** | `ChartViewShell` + tipos + export tabular |
+| **KPIs relatório** | `RelatorioKpiStrip` com `SimpleKpiCard` clicável |
+| **Detalhe preventivo** | Gráficos via kit (`ChartViewShell`) |
+| **Ranking sparklines** | CompareSparkline + SeriesSparkline; backend `golpes_history[]` (cap 12) |
+| **Fonte tabela** | `fontSizePreferencesKey` no ranking e lista de ferramentas |
+| **Freshness** | «Atualizado às…» no hero (Relatório, Ferramentas, Filiais) |
+| **Config forms** | FilterBar + ActionButton; colunas dimensionadas |
 
 ## Fases do roadmap
 

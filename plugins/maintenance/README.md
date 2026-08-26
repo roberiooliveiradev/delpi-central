@@ -55,10 +55,19 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 | `BrDateInput` | `src/components/data/BrDateInput.tsx` | Data em pt-BR (`dd/mm/aaaa`); valor interno `YYYY-MM-DD` |
 | `BrDatetimeInput` | `src/components/data/BrDatetimeInput.tsx` | Data/hora em pt-BR (`dd/mm/aaaa HH:mm`, 24h); valor interno `YYYY-MM-DDTHH:mm` |
 | `datetimeLocal` | `src/utils/datetimeLocal.ts` | Conversão exibição pt-BR ↔ ISO para API |
-| `ReposicoesGolpesChart` | `src/components/ReposicoesGolpesChart.tsx` | Gráfico de linha (golpes por reposição) no detalhe da ferramenta |
-| `FerramentaReposicaoIndicadores` | `src/components/FerramentaReposicaoIndicadores.tsx` | KPIs de reposição ao lado do gráfico |
-| `PreventivaDetailPanel` | `src/components/PreventivaDetailPanel.tsx` | Detalhe preventivo + gráficos Recharts |
+| `PreventivaDetailPanel` | `src/components/PreventivaDetailPanel.tsx` | Detalhe preventivo + gráficos via `ChartViewShell` / `MultiTypeSeriesChart` |
+| `ReposicoesGolpesChart` | `src/components/ReposicoesGolpesChart.tsx` | Golpes por reposição — tipos coluna/linha/área + export CSV/XLSX/PDF |
+| `RelatorioKpiStrip` | `src/components/RelatorioKpiStrip.tsx` | KPIs clicáveis do relatório (`SimpleKpiCard` do kit) |
+| `MaintenanceHeroFreshness` | `src/components/MaintenanceHeroFreshness.tsx` | «Atualizado às HH:mm» no slot `actions` do PageHero |
+| `maintenanceUi.ts` | `src/app/maintenanceUi.ts` | Factories kit: hero, KPI, sparklines, export, fonte de tabela |
 | `pecaOptions` | `src/utils/pecaOptions.ts` | Rótulos de peça; prefixo canônico `3019` |
+| `FerramentaReposicaoIndicadores` | `src/components/FerramentaReposicaoIndicadores.tsx` | KPIs de reposição ao lado do gráfico |
+
+**Loading centralizado:** `MaintenanceLoadingCard` + `MaintenanceScreenLoading` (`maintenanceUi.ts`) — sem `StateBox` para carregamento de listas/tabelas/gráficos.
+
+**Ranking preventivo:** colunas «Uso visual» (`CompareSparkline`) e «Histórico visual» (`SeriesSparkline` + `golpes_history[]` da API). Controle de fonte da tabela via `fontSizePreferencesKey` na toolbar.
+
+**Freshness:** páginas com refresh manual (Relatório, lista de ferramentas, Filiais) exibem «Atualizado às HH:mm» ao lado do botão Atualizar no hero.
 
 **Paginação server-side:** todas as tabelas do MFE usam `serverTable` + `DataTableSection.serverTable` (`page`, `page_size`, `sort_by`, `sort_dir` + filtros na API). Ao paginar ou ordenar, só a tabela entra em loading — a página não recarrega.
 

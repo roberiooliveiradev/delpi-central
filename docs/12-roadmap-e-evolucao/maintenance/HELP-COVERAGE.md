@@ -10,7 +10,7 @@ Padrão: **hover no texto do rótulo** via `DM_HELP` em [`helpTooltips.ts`](../.
 | Home | `home.*` | P0 |
 | Filiais | `filiais.*` | P0 |
 | Mini-aplicadores lista | `miniAplicadores.*` | P0 |
-| Relatório preventivo | `relatorio.*` | P0 |
+| Relatório preventivo | `relatorio.*` (incl. `rankingUsoVisual`, `rankingHistoricoVisual`) | P0 |
 | Configuração | `configuracao.*` | P0 |
 | Programas máquina | `programas.*` | P0 |
 | Manutenção geral | `manutencaoGeral.*` | P0 |
@@ -20,7 +20,12 @@ Padrão: **hover no texto do rótulo** via `DM_HELP` em [`helpTooltips.ts`](../.
 ## Gate
 
 ```bash
-node plugins/maintenance/src/content/helpCoverage.structural.test.mjs
+cd plugins/maintenance
+npm run audit:helps
+npm test
+npx vite build
+node src/layout/pageHero.structural.test.mjs
+node src/content/helpCoverage.structural.test.mjs
 ```
 
 ## Isenções
