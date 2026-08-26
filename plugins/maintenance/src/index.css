@@ -94,6 +94,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--dm-section-gap, 16px);
+}.dashboard-maintenance .delpi-ui-page-hero,
+.dashboard-maintenance .dm-page-hero{
+  margin-bottom: var(--dm-section-gap);
 }.dashboard-maintenance .dm-page-hero .dm-page-hero__title {
   display: inline-flex;
   align-items: center;
