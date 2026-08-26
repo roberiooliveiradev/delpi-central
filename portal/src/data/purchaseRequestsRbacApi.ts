@@ -34,7 +34,11 @@ function unwrap<T>(body: Envelope<T>): T {
 }
 
 export class PurchaseRequestsRbacApi {
-  constructor(private readonly client: ApiClient) {}
+  private client: ApiClient;
+
+  constructor(client: ApiClient) {
+    this.client = client;
+  }
 
   async getUserProtheusMapping(userId: string): Promise<UserProtheusMapping | null> {
     const body = await this.client.get<Envelope<{ mapping: UserProtheusMapping | null }>>(
