@@ -34,7 +34,7 @@ Edite `infra/.env.local` e preencha:
 
 | Variável | Descrição |
 |---|---|
-| `DEV_BASE_URL` | URL do gateway dev (padrão: `http://localhost`) |
+| `DEV_BASE_URL` | URL do gateway dev (padrão: `http://localhost`; WSL com gateway em `:9080` pode manter o padrão — `get-dev-token.sh` tenta fallback `http://localhost:9080`) |
 | `DEV_KC_REALM` | Realm Keycloak (padrão: `delpi`) |
 | `DEV_KC_CLIENT_ID` | Client público do Portal (padrão: `delpi-central`) |
 | `DEV_PORTAL_USERNAME` | Usuário Keycloak com `apps.manage` ou superadmin |

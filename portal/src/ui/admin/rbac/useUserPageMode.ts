@@ -3,14 +3,14 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
-export type UserPageTab = "summary" | "roles" | "groups" | "usage";
+export type UserPageTab = "summary" | "roles" | "groups" | "usage" | "totvs";
 
 export type UserPageMode = "view" | "edit";
 
 const MODE_PARAM = "mode";
 const TAB_PARAM = "tab";
 
-const TAB_VALUES: UserPageTab[] = ["summary", "roles", "groups", "usage"];
+const TAB_VALUES: UserPageTab[] = ["summary", "roles", "groups", "usage", "totvs"];
 
 function parseTab(value: string | null): UserPageTab {
   if (value && TAB_VALUES.includes(value as UserPageTab)) {

@@ -12,6 +12,7 @@ import {
   KeyRound,
   Megaphone,
   MessageCircle,
+  ShoppingCart,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -60,6 +61,7 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
     { id: "commercial", label: "Portal Comercial", notificationLabel: "Faturar notas fiscais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
     { id: "commercial_tasks", label: "Tarefas", notificationLabel: "Tarefas comerciais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
     { id: "commercial_collaboration", label: "Sala de interação", notificationLabel: "Menções na sala de interação", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
+    { id: "purchase_requests", label: "Solicitações de Compras", notificationLabel: "Pedido vinculado à solicitação de compra", icon: "shopping-cart", mutable: true, kind: "app", sourceApps: ["purchase-requests"], pluginId: "purchase-requests" },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",
@@ -81,6 +83,7 @@ const ICON_BY_NAME: Record<string, LucideIcon> = {
   "file-text": FileText,
   "file-output": FileText,
   briefcase: Briefcase,
+  "shopping-cart": ShoppingCart,
 };
 
 export function resolveNotificationCategoryId(

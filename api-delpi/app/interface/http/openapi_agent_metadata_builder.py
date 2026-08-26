@@ -116,6 +116,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_purchase_request_coverage": (
         "solicitações de compra em aberto de MP com cobertura de saldo, pedidos e empenhos"
     ),
+    "supplies_purchase_request_linked_order": (
+        "pedidos de compra recém-vinculados a solicitações de compra"
+    ),
     "third_party_material_shipment": (
         "remessas de materiais de terceiros para beneficiamento"
     ),

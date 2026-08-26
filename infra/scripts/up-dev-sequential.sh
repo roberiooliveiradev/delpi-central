@@ -145,6 +145,7 @@ FASE_MFE=(
   production-control
   financial
   travel-expenses
+  purchase-requests
   cultura-delpi
   codigo-etica
   guias-procedimentos
@@ -163,6 +164,7 @@ FASE_API=(
   strategic-indicators-api
   transformometro-api
   maintenance-api
+  purchase-requests-api
   commercial-api
   cipa-api
   comite-etica-conduta-api

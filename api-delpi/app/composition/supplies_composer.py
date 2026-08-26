@@ -53,6 +53,24 @@ from app.infrastructure.persistence.google_sheets.supplies.negotiation_savings_r
 from app.application.use_cases.supplies.get_purchase_requests_open_coverage_use_case import (
     GetPurchaseRequestsOpenCoverageUseCase,
 )
+from app.application.use_cases.supplies.get_supplies_purchase_request_lines_use_case import (
+    GetSuppliesPurchaseRequestLinesUseCase,
+)
+from app.application.use_cases.supplies.list_supplies_purchase_request_lines_use_case import (
+    ListSuppliesPurchaseRequestLinesUseCase,
+)
+from app.application.use_cases.supplies.list_supplies_purchase_request_recent_linked_orders_use_case import (
+    ListSuppliesPurchaseRequestRecentLinkedOrdersUseCase,
+)
+from app.application.use_cases.supplies.list_supplies_purchase_request_requesters_use_case import (
+    ListSuppliesPurchaseRequestRequestersUseCase,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_repository import (
+    PurchaseRequestLinesRepository,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_linked_orders_repository import (
+    PurchaseRequestLinkedOrdersRepository,
+)
 from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_item_details_use_case import (
     GetSafetyStockConsumptionAnalysisItemDetailsUseCase,
 )
@@ -190,6 +208,38 @@ def build_get_purchase_requests_open_coverage_use_case() -> (
     GetPurchaseRequestsOpenCoverageUseCase
 ):
     return GetPurchaseRequestsOpenCoverageUseCase(repository=SafetyStockQueryRepository())
+
+
+def build_list_supplies_purchase_request_lines_use_case() -> (
+    ListSuppliesPurchaseRequestLinesUseCase
+):
+    return ListSuppliesPurchaseRequestLinesUseCase(
+        repository=PurchaseRequestLinesRepository(),
+    )
+
+
+def build_list_supplies_purchase_request_requesters_use_case() -> (
+    ListSuppliesPurchaseRequestRequestersUseCase
+):
+    return ListSuppliesPurchaseRequestRequestersUseCase(
+        repository=PurchaseRequestLinesRepository(),
+    )
+
+
+def build_get_supplies_purchase_request_lines_use_case() -> (
+    GetSuppliesPurchaseRequestLinesUseCase
+):
+    return GetSuppliesPurchaseRequestLinesUseCase(
+        repository=PurchaseRequestLinesRepository(),
+    )
+
+
+def build_list_supplies_purchase_request_recent_linked_orders_use_case() -> (
+    ListSuppliesPurchaseRequestRecentLinkedOrdersUseCase
+):
+    return ListSuppliesPurchaseRequestRecentLinkedOrdersUseCase(
+        repository=PurchaseRequestLinkedOrdersRepository(),
+    )
 
 
 def build_get_safety_stock_filters_use_case() -> GetSafetyStockFiltersUseCase:

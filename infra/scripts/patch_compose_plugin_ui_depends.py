@@ -33,6 +33,7 @@ FEDERATED_PLUGINS = {
     "inspecoes-entrada",
     "inspecoes-processo",
     "pedidos-venda-abertos",
+    "purchase-requests",
     "propostas-comerciais",
     "financeiro-centro-custo",
     "financeiro-inadimplencia",
