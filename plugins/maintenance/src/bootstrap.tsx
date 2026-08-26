@@ -16,10 +16,9 @@ const { default: App } = await import("./App");
 const roots = new WeakMap<HTMLElement, Root>();
 
 function renderApp(el: HTMLElement, props: AppProps = {}) {
-  let root = roots.get(el);
-
-  if (!root) {
-    root = ReactDOM.createRoot(el);
+  const existing = roots.get(el);
+  const root = existing ?? ReactDOM.createRoot(el);
+  if (!existing) {
     roots.set(el, root);
   }
 
