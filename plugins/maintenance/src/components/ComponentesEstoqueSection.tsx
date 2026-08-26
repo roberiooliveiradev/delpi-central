@@ -6,6 +6,7 @@ import { DM_HELP } from "../content/helpTooltips";
 import { fetchComponentes, type ComponenteItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
 import { ComponentesEstoqueTree } from "./ComponentesEstoqueTree";
+import { ComponenteEstoqueBadges, ComponenteEstoqueCell } from "./ComponenteEstoqueBadges";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 
 const DmSegmentToggle = createDashboardSegmentToggle("dm");
@@ -64,7 +65,7 @@ function buildComponentesColumns(): DataTableColumn<ComponenteItem>[] {
       headerHint: DM_HELP.miniAplicadores.estoque01,
       sortable: true,
       sortValue: (item) => item.estoque_local_01,
-      render: (item) => item.estoque_local_01.toLocaleString("pt-BR"),
+      render: (item) => <ComponenteEstoqueCell local="01" value={item.estoque_local_01} />,
       align: "right",
     },
     {
@@ -73,7 +74,7 @@ function buildComponentesColumns(): DataTableColumn<ComponenteItem>[] {
       headerHint: DM_HELP.miniAplicadores.estoque99,
       sortable: true,
       sortValue: (item) => item.estoque_local_99,
-      render: (item) => item.estoque_local_99.toLocaleString("pt-BR"),
+      render: (item) => <ComponenteEstoqueCell local="99" value={item.estoque_local_99} />,
       align: "right",
     },
   ];

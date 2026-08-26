@@ -8,6 +8,7 @@ import {
   countComponenteTreeNodes,
   type ComponenteTreeNode,
 } from "../utils/componentesTree";
+import { ComponenteEstoqueBadges } from "./ComponenteEstoqueBadges";
 
 type ComponentesEstoqueTreeProps = {
   items: ComponenteItem[];
@@ -58,12 +59,14 @@ function ComponenteTreeRow({
 
         <div className="dm-componentes-tree__content">
           <div className="dm-componentes-tree__primary">
-            <span className="dm-componentes-tree__code">{item.codigo}</span>
-            <span className="dm-componentes-tree__desc">{item.descricao}</span>
-            <span className="dm-componentes-tree__stock">
-              01: {item.estoque_local_01.toLocaleString("pt-BR")} · 99:{" "}
-              {item.estoque_local_99.toLocaleString("pt-BR")}
-            </span>
+            <div className="dm-componentes-tree__identity">
+              <span className="dm-componentes-tree__code">{item.codigo}</span>
+              <span className="dm-componentes-tree__desc">{item.descricao}</span>
+            </div>
+            <ComponenteEstoqueBadges
+              estoqueLocal01={item.estoque_local_01}
+              estoqueLocal99={item.estoque_local_99}
+            />
           </div>
         </div>
       </div>
