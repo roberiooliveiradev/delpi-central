@@ -16,6 +16,7 @@ import {
   CommercialScopeChipBar,
   CommercialSectionCard,
   CommercialStateBanner,
+  CommercialViewTransition,
 } from "../../app/commercialUi";
 import { markdownToPlainPreview } from "@delpi/plugin-ui/index";
 import {
@@ -258,6 +259,10 @@ export function InteractionRoomsInboxPage({
         </CommercialStateBanner>
       ) : null}
       <div className="cm-room-inbox-pane__body">
+      <CommercialViewTransition
+        transitionKey={`${filter}:${query.trim()}`}
+        tone="panel"
+      >
       <CommercialRoomInboxPanel aria-label={content.inboxListAriaLabel}>
       {loading ? (
         <CommercialLoadingCard title={content.loadingLabel} variant="panel" />
@@ -353,6 +358,7 @@ export function InteractionRoomsInboxPage({
         />
       ) : null}
       </CommercialRoomInboxPanel>
+      </CommercialViewTransition>
       </div>
     </section>
   );

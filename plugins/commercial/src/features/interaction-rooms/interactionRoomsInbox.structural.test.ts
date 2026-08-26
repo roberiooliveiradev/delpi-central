@@ -45,6 +45,7 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/unread_count|unreadCount/);
     expect(source).toMatch(/inboxEmptyCopy/);
     expect(source).toMatch(/loadingLabel/);
-    expect(source).not.toMatch(/cm-message-bubble|<textarea/);
+    expect(source).toMatch(/CommercialViewTransition/);
+    expect(source).toMatch(/transitionKey=\{\`\$\{filter\}:\$\{query\.trim\(\)\}\`\}/);
   });
 });

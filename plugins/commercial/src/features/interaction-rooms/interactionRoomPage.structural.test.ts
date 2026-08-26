@@ -27,7 +27,7 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/listInteractionMessages/);
     expect(source).toMatch(/roomView/);
     expect(source).toMatch(/CommercialViewTransition/);
-    expect(source).toMatch(/transitionKey=\{roomView\}/);
+    expect(source).toMatch(/transitionKey=\{roomId\.trim\(\)\}/);
     expect(source).toMatch(/transitionKey=\{sidePanelMode \?\? "closed"\}/);
     expect(source).toMatch(/nav=\{/);
     expect(source).toMatch(/navAriaLabel=\{content\.roomViewNavAriaLabel\}/);

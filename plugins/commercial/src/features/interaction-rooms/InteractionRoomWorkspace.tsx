@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { InteractionInboxFilter } from "../../api/interactionRoomsApi";
-import { CommercialResizableColumns } from "../../app/commercialUi";
+import { CommercialResizableColumns, CommercialViewTransition } from "../../app/commercialUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   buildInteractionRoomPath,
@@ -93,35 +93,46 @@ export function InteractionRoomWorkspace({
   return (
     <section className="cm-room-workspace">
       <div className="cm-room-workspace__grid">
-        {stacked ? (
-          roomId ? (
-            thread
+        <CommercialViewTransition
+          transitionKey={
+            stacked
+              ? roomId ?? "inbox"
+              : roomId
+                ? `split-${roomId}`
+                : "inbox-full"
+          }
+          tone="page"
+        >
+          {stacked ? (
+            roomId ? (
+              thread
+            ) : (
+              inbox
+            )
+          ) : roomId ? (
+            <CommercialResizableColumns
+              left={inbox}
+              right={thread}
+              leftWidthPx={leftWidth}
+              collapsed={collapsed}
+              onLeftWidthChange={(widthPx) => {
+                setLeftWidth(widthPx);
+                writeInboxWidthPx(widthPx);
+              }}
+              onCollapsedChange={(next) => {
+                setCollapsed(next);
+                writeInboxCollapsed(next);
+              }}
+              labels={{
+                separatorAriaLabel: content.inboxResizeAriaLabel,
+                collapseAriaLabel: content.inboxCollapseAriaLabel,
+                expandAriaLabel: content.inboxExpandAriaLabel,
+              }}
+            />
           ) : (
             inbox
-          )
-        ) : roomId ? (
-          <CommercialResizableColumns
-            left={inbox}
-            right={thread}
-            leftWidthPx={leftWidth}
-            collapsed={collapsed}
-            onLeftWidthChange={(widthPx) => {
-              setLeftWidth(widthPx);
-              writeInboxWidthPx(widthPx);
-            }}
-            onCollapsedChange={(next) => {
-              setCollapsed(next);
-              writeInboxCollapsed(next);
-            }}
-            labels={{
-              separatorAriaLabel: content.inboxResizeAriaLabel,
-              collapseAriaLabel: content.inboxCollapseAriaLabel,
-              expandAriaLabel: content.inboxExpandAriaLabel,
-            }}
-          />
-        ) : (
-          inbox
-        )}
+          )}
+        </CommercialViewTransition>
       </div>
     </section>
   );

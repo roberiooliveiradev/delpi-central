@@ -881,6 +881,7 @@ export function InteractionRoomPage({
       ) : null}
       {!loading && room ? (
         <>
+        <CommercialViewTransition transitionKey={roomId.trim()} tone="page">
         <CommercialRoomConversationShell
           wrapRoot={false}
           dropOverlayLabel={content.dropOverlayLabel}
@@ -1149,6 +1150,7 @@ export function InteractionRoomPage({
             </CommercialRoomSidePanel>
           }
         />
+        </CommercialViewTransition>
         <InteractionRoomRenameDialog
           open={renameDialogOpen}
           busy={renamingRoom}
