@@ -9,10 +9,12 @@ import {
   createDashboardTabularExportButtons,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
+  createSimpleKpiCard,
   FieldLabel,
   filterCheckboxFieldBemClasses,
   SectionHintLabel,
   titleWithHelpBemClasses,
+  type DashboardSimpleKpiCardProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
 
@@ -70,3 +72,10 @@ export const MaintenanceTabularExportButtons = createDashboardTabularExportButto
   prefix: UI_PREFIX,
   groupAriaLabel: "Exportar dados",
 });
+
+export const MaintenanceSimpleKpiCard = createSimpleKpiCard(UI_PREFIX, {
+  withBody: true,
+  withSubtitle: true,
+});
+
+export type MaintenanceSimpleKpiCardProps = DashboardSimpleKpiCardProps;

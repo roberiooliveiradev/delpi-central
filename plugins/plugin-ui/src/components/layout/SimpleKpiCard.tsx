@@ -38,6 +38,8 @@ export type SimpleKpiCardProps = {
   onClick?: () => void;
   /** Rótulo acessível quando `onClick` está definido. */
   "aria-label"?: string;
+  /** Estado selecionado (filtro KPI acionável). */
+  pressed?: boolean;
 };
 
 export function simpleKpiCardBemClasses(
@@ -206,11 +208,13 @@ export function SimpleKpiCard({
   className,
   onClick,
   "aria-label": ariaLabel,
+  pressed = false,
 }: SimpleKpiCardProps) {
   const interactive = typeof onClick === "function";
   const articleClass = [
     classNames.article,
     interactive ? "delpi-ui-kpi-card--interactive" : null,
+    interactive && pressed ? "delpi-ui-kpi-card--pressed" : null,
     className,
   ]
     .filter(Boolean)
@@ -276,6 +280,7 @@ export function SimpleKpiCard({
           }
         }}
         aria-label={ariaLabel ?? `Abrir detalhes: ${title}`}
+        aria-pressed={pressed}
       >
         {body}
       </article>

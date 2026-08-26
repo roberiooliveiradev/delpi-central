@@ -1152,9 +1152,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-}.dashboard-maintenance .dm-filter-kpi.is-active{
-  border-color: color-mix(in srgb, var(--dm-accent) 55%, var(--dm-card-border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dm-accent) 35%, transparent);
 }.dashboard-maintenance .dm-indicadores-breakdown{
   display: grid;
   gap: 10px;

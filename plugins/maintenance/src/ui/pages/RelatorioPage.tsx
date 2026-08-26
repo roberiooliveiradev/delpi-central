@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, CircleAlert, LineChart, RefreshCw, Search, X } from "lucide-react";
-import {
-  NativeTextControl,
-  simpleKpiCardBemClasses,
-  simpleKpiCardIconToneClass,
-} from "@delpi/plugin-ui/index";
+import { RefreshCw, Search, X } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   PreventivaDetailPanel,
@@ -15,7 +11,6 @@ import {
   type DataTableColumn,
   DataTableSection,
   FilterBar,
-  KpiCard,
   MultiSelectField,
   StateBox,
   StatusBadge,
@@ -24,6 +19,7 @@ import { DmNativeTextField } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { MaintenanceActionButton, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
+import { RelatorioKpiStrip } from "../../components/RelatorioKpiStrip";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
@@ -111,52 +107,6 @@ function CodigoDescricaoCell({
       <span className="dm-datatable__codigo-descricao__codigo">{codigo}</span>
       <span className="dm-datatable__codigo-descricao__descricao">{label}</span>
     </span>
-  );
-}
-
-const KPI_CN = simpleKpiCardBemClasses("dm", "kpi-card", { withBody: true, withSubtitle: true });
-
-type FilterKpiTone = "danger" | "warning" | "success";
-
-function FilterKpiButton({
-  active,
-  onClick,
-  icon,
-  title,
-  titleHint,
-  value,
-  tone,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: ReactNode;
-  title: string;
-  titleHint?: string;
-  value: string | number;
-  tone: FilterKpiTone;
-}) {
-  return (
-    <button
-      type="button"
-      className={`${KPI_CN.article} dm-filter-kpi${active ? " is-active" : ""}`}
-      onClick={onClick}
-    >
-      <div className={`${KPI_CN.icon} ${simpleKpiCardIconToneClass("dm", tone)}`} aria-hidden="true">
-        {icon}
-      </div>
-      {KPI_CN.body ? (
-        <div className={KPI_CN.body}>
-          <p className={KPI_CN.title}>
-            {titleHint ? (
-              <MaintenanceTitleWithHelp title={title} hint={titleHint} />
-            ) : (
-              title
-            )}
-          </p>
-          <p className={KPI_CN.value}>{value}</p>
-        </div>
-      ) : null}
-    </button>
   );
 }
 
@@ -840,80 +790,15 @@ export function RelatorioPage({
       <section className="dm-page-stack">
 
       <section className="dm-kpi-grid dm-kpi-grid--report">
-        {listTab === "revisoes" ? (
-          <>
-            <FilterKpiButton
-              active={revisaoStatusFiltro.includes("CRÍTICO")}
-              onClick={() => toggleRevisaoStatusFiltro("CRÍTICO")}
-              icon={<CircleAlert size={20} />}
-              tone="danger"
-              title="Revisão vencida"
-              titleHint={DM_HELP.relatorio.kpiRevisaoVencida}
-              value={revisaoResumo.critico}
-            />
-            <FilterKpiButton
-              active={revisaoStatusFiltro.includes("ATENÇÃO")}
-              onClick={() => toggleRevisaoStatusFiltro("ATENÇÃO")}
-              icon={<AlertTriangle size={20} />}
-              tone="warning"
-              title="Próxima do prazo"
-              titleHint={DM_HELP.relatorio.kpiRevisaoAtencao}
-              value={revisaoResumo.atencao}
-            />
-            <FilterKpiButton
-              active={revisaoStatusFiltro.includes("OK")}
-              onClick={() => toggleRevisaoStatusFiltro("OK")}
-              icon={<CheckCircle2 size={20} />}
-              tone="success"
-              title="No prazo"
-              titleHint={DM_HELP.relatorio.kpiRevisaoOk}
-              value={revisaoResumo.ok}
-            />
-            <KpiCard
-              title="Ferramentas programadas"
-              titleHint={DM_HELP.relatorio.kpiFerramentasProgramadas}
-              value={String(revisaoResumo.total)}
-              icon={<LineChart size={20} aria-hidden="true" />}
-            />
-          </>
-        ) : (
-          <>
-            <FilterKpiButton
-              active={statusFiltro.includes("CRÍTICO")}
-              onClick={() => toggleStatusFiltro("CRÍTICO")}
-              icon={<CircleAlert size={20} />}
-              tone="danger"
-              title="Crítico"
-              titleHint={DM_HELP.relatorio.kpiCritico}
-              value={resumo.critico}
-            />
-            <FilterKpiButton
-              active={statusFiltro.includes("ATENÇÃO")}
-              onClick={() => toggleStatusFiltro("ATENÇÃO")}
-              icon={<AlertTriangle size={20} />}
-              tone="warning"
-              title="Atenção"
-              titleHint={DM_HELP.relatorio.kpiAtencao}
-              value={resumo.atencao}
-            />
-            <FilterKpiButton
-              active={statusFiltro.includes("OK")}
-              onClick={() => toggleStatusFiltro("OK")}
-              icon={<CheckCircle2 size={20} />}
-              tone="success"
-              title="OK"
-              titleHint={DM_HELP.relatorio.kpiOk}
-              value={resumo.ok}
-            />
-            <KpiCard
-              title="Pares monitorados"
-              titleHint={DM_HELP.relatorio.kpiParesMonitorados}
-              value={String(resumo.total)}
-              subtitle={`${ultimasTotal} últimas reposições na filial`}
-              icon={<LineChart size={20} aria-hidden="true" />}
-            />
-          </>
-        )}
+        <RelatorioKpiStrip
+          mode={listTab === "revisoes" ? "revisoes" : "preventiva"}
+          resumo={listTab === "revisoes" ? revisaoResumo : resumo}
+          statusFiltro={statusFiltro}
+          revisaoStatusFiltro={revisaoStatusFiltro}
+          onToggleStatus={toggleStatusFiltro}
+          onToggleRevisaoStatus={toggleRevisaoStatusFiltro}
+          ultimasTotal={ultimasTotal}
+        />
       </section>
 
       <FilterBar className="dm-filter-bar--relatorio">

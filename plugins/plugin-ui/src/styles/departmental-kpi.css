@@ -50,6 +50,16 @@ button.delpi-ui-kpi-card--interactive:active,
   transform: translateY(1px);
 }
 
+.delpi-ui-kpi-card--interactive[aria-pressed="true"],
+.delpi-ui-kpi-card--pressed {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 55%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 35%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   button.delpi-ui-kpi-card--interactive,
   .delpi-ui-kpi-card--interactive[role="button"] {
