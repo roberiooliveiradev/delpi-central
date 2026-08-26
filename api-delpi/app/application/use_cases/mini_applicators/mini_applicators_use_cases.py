@@ -4,6 +4,9 @@ from app.application.dto.mini_applicators.list_ferramentas_request import (
 from app.application.dto.mini_applicators.list_pecas_reposicao_request import (
     ListMiniApplicatorsPecasReposicaoRequest,
 )
+from app.application.services.mini_applicators.mini_applicators_golpes_cache import (
+    get_or_set_cached_golpes_batch,
+)
 from app.application.models.page import Page
 from app.domain.entities.mini_applicators.mini_applicator_tool import MiniApplicatorTool
 from app.domain.ports.mini_applicators.mini_applicators_repository_port import (
@@ -65,7 +68,11 @@ class PostMiniApplicatorsGolpesBatchUseCase:
         filial: str,
         items: list[dict],
     ) -> dict:
-        batch_items = self._repository.get_golpes_batch(filial=filial, items=items)
+        batch_items = get_or_set_cached_golpes_batch(
+            filial=filial,
+            items=items,
+            factory=lambda: self._repository.get_golpes_batch(filial=filial, items=items),
+        )
         return {
             "items": batch_items,
             "total": len(batch_items),

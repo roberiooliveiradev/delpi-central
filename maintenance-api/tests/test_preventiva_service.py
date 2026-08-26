@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 from datetime import datetime, timezone
 
 import maint_app.application.services.preventiva_service as preventiva_module
+from maint_app.application.list_query import ListQuery
 from maint_app.application.services.preventiva_service import (
     PreventivaService,
     _match_status,
@@ -11,6 +12,7 @@ from maint_app.application.services.preventiva_service import (
 
 def setup_function():
     preventiva_module._alertas_snapshot_cache.clear()
+    preventiva_module._snapshot_build_locks.clear()
 
 
 def test_match_status_critico():
@@ -139,6 +141,51 @@ def test_listar_alertas_enriquece_descricoes():
 
     assert alertas[0]["descricao_ferramenta"] == "MINI APLICADOR"
     assert alertas[0]["descricao_peca"] == "GRAMPEADOR DO ISOLANTE"
+
+
+def test_listar_alertas_enriquece_somente_pagina_sem_filtro_texto():
+    reposicao_repo = MagicMock()
+    status_repo = MagicMock()
+    rows = [
+        {
+            "codigo_ferramenta": f"23-{index:03d}",
+            "codigo_peca": f"301900{index:02d}",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+        for index in range(1, 6)
+    ]
+    reposicao_repo.list_ultimas_por_par.return_value = rows
+    status_repo.list_active.return_value = [
+        {"descricao": "OK", "operador": "<", "percentual": 80},
+    ]
+    reposicao_repo.media_golpes_map.return_value = {
+        (row["codigo_ferramenta"], row["codigo_peca"]): 100.0 for row in rows
+    }
+    reposicao_repo.golpes_history_map.return_value = {
+        (row["codigo_ferramenta"], row["codigo_peca"]): [50_000] for row in rows
+    }
+
+    totvs = MagicMock()
+    totvs.obter_golpes_batch.return_value = {
+        "items": [{"codigo_ferramenta": row["codigo_ferramenta"], "total_golpes": 50} for row in rows],
+    }
+    totvs.obter_ferramenta.return_value = {"descricao": "FERRAMENTA"}
+    totvs.listar_pecas.return_value = {"items": []}
+    totvs.listar_componentes.return_value = {"items": []}
+
+    service = PreventivaService(
+        reposicao_repo=reposicao_repo,
+        status_repo=status_repo,
+        totvs_gateway=totvs,
+    )
+    alertas, total = service.listar_alertas(
+        filial="01",
+        query=ListQuery(page=1, page_size=2, sort_by="ferramenta", sort_dir="asc"),
+    )
+
+    assert total == 5
+    assert len(alertas) == 2
+    assert totvs.obter_ferramenta.call_count == 2
 
 
 def test_fetch_golpes_fallback_threadpool_when_batch_falha():

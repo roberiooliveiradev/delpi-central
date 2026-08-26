@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -22,6 +23,8 @@ STATUS_RANK = {
 _ALERTAS_SNAPSHOT_TTL_SECONDS = 300
 _GOLPES_HISTORY_MAX_POINTS = 12
 _alertas_snapshot_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_snapshot_build_locks: dict[str, threading.Lock] = {}
+_snapshot_locks_guard = threading.Lock()
 
 
 def _trim_golpes_history(history: list[int]) -> list[int]:
@@ -32,9 +35,20 @@ def _trim_golpes_history(history: list[int]) -> list[int]:
 
 def invalidate_alertas_snapshot_cache(*, filial: str | None = None) -> None:
     if filial:
-        _alertas_snapshot_cache.pop(filial, None)
+        with _snapshot_lock_for(filial):
+            _alertas_snapshot_cache.pop(filial, None)
     else:
-        _alertas_snapshot_cache.clear()
+        with _snapshot_locks_guard:
+            _alertas_snapshot_cache.clear()
+
+
+def _snapshot_lock_for(filial: str) -> threading.Lock:
+    with _snapshot_locks_guard:
+        lock = _snapshot_build_locks.get(filial)
+        if lock is None:
+            lock = threading.Lock()
+            _snapshot_build_locks[filial] = lock
+        return lock
 
 
 def _match_status(percentual_uso: float, rules: list[dict[str, Any]]) -> str:
@@ -95,15 +109,29 @@ class PreventivaService:
         ]
 
         alertas = self._get_alertas_snapshot(filial=filial, rules=rules)
-        alertas = self._enriquecer_descricoes(alertas, filial=filial)
-        alertas = self._filter_alertas(
-            alertas,
-            ferramenta=ferramenta,
-            peca=peca,
-            statuses=normalized_statuses,
-        )
+        if normalized_statuses:
+            allowed = {str(item) for item in normalized_statuses}
+            alertas = [item for item in alertas if str(item.get("status")) in allowed]
+
+        has_text_filter = bool(str(ferramenta or "").strip()) or bool(str(peca or "").strip())
+        enriched_for_text_filter = False
+
+        if has_text_filter:
+            if self._filter_requires_descricao(alertas, ferramenta=ferramenta, peca=peca):
+                alertas = self._enriquecer_descricoes(alertas, filial=filial)
+                enriched_for_text_filter = True
+            alertas = self._filter_alertas(
+                alertas,
+                ferramenta=ferramenta,
+                peca=peca,
+                statuses=[],
+            )
+
         alertas = self._sort_alertas(alertas, query.sort_by, query.sort_dir)
-        return paginate_slice(alertas, query)
+        page, total = paginate_slice(alertas, query)
+        if not enriched_for_text_filter:
+            page = self._enriquecer_descricoes(page, filial=filial)
+        return page, total
 
     def obter_detalhe(
         self,
@@ -241,20 +269,27 @@ class PreventivaService:
         if cached and (now - cached[0]) < _ALERTAS_SNAPSHOT_TTL_SECONDS:
             return [dict(item) for item in cached[1]]
 
-        rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
-        media_map = self._reposicao_repo.media_golpes_map(filial=filial)
-        history_map = self._reposicao_repo.golpes_history_map(filial=filial)
-        golpes_map = self._fetch_golpes_batch(filial=filial, rows=rows)
-        alertas = self._build_alertas(
-            rows,
-            filial=filial,
-            rules=rules,
-            media_map=media_map,
-            history_map=history_map,
-            golpes_map=golpes_map,
-        )
-        _alertas_snapshot_cache[filial] = (now, alertas)
-        return [dict(item) for item in alertas]
+        lock = _snapshot_lock_for(filial)
+        with lock:
+            now = time.monotonic()
+            cached = _alertas_snapshot_cache.get(filial)
+            if cached and (now - cached[0]) < _ALERTAS_SNAPSHOT_TTL_SECONDS:
+                return [dict(item) for item in cached[1]]
+
+            rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
+            media_map = self._reposicao_repo.media_golpes_map(filial=filial)
+            history_map = self._reposicao_repo.golpes_history_map(filial=filial)
+            golpes_map = self._fetch_golpes_batch(filial=filial, rows=rows)
+            alertas = self._build_alertas(
+                rows,
+                filial=filial,
+                rules=rules,
+                media_map=media_map,
+                history_map=history_map,
+                golpes_map=golpes_map,
+            )
+            _alertas_snapshot_cache[filial] = (time.monotonic(), alertas)
+            return [dict(item) for item in alertas]
 
     @staticmethod
     def _format_data_inicial(data_ultima: Any) -> str:
@@ -397,6 +432,34 @@ class PreventivaService:
             return True
         return False
 
+    @staticmethod
+    def _term_matches_any_codigo(
+        term: str | None,
+        items: list[dict[str, Any]],
+        codigo_field: str,
+    ) -> bool:
+        if not term or not term.strip():
+            return True
+        normalized = term.strip().lower()
+        return any(normalized in str(item.get(codigo_field) or "").lower() for item in items)
+
+    def _filter_requires_descricao(
+        self,
+        alertas: list[dict[str, Any]],
+        *,
+        ferramenta: str | None,
+        peca: str | None,
+    ) -> bool:
+        if ferramenta and not self._term_matches_any_codigo(
+            ferramenta,
+            alertas,
+            "codigo_ferramenta",
+        ):
+            return True
+        if peca and not self._term_matches_any_codigo(peca, alertas, "codigo_peca"):
+            return True
+        return False
+
     def _filter_alertas(
         self,
         alertas: list[dict[str, Any]],
@@ -522,12 +585,16 @@ class PreventivaService:
         if self._totvs is None:
             return ferramenta_descricoes, peca_descricoes
 
-        for codigo_ferramenta in sorted(ferramentas):
+        max_workers = min(len(ferramentas), 8)
+
+        def _resolve_one(codigo_ferramenta: str) -> tuple[str, str, dict[tuple[str, str], str]]:
+            local_peca_descricoes: dict[tuple[str, str], str] = {}
+            ferramenta_descricao = ""
             try:
                 ferramenta_payload = self._totvs.obter_ferramenta(codigo_ferramenta)
-                ferramenta_descricoes[codigo_ferramenta] = self._extract_descricao(ferramenta_payload)
+                ferramenta_descricao = self._extract_descricao(ferramenta_payload)
             except Exception:
-                ferramenta_descricoes[codigo_ferramenta] = ""
+                ferramenta_descricao = ""
 
             try:
                 pecas_payload = self._totvs.listar_pecas(codigo_ferramenta)
@@ -535,7 +602,9 @@ class PreventivaService:
                     codigo_peca = str(peca.get("codigo") or "").strip()
                     if not codigo_peca:
                         continue
-                    peca_descricoes[(codigo_ferramenta, codigo_peca)] = str(peca.get("descricao") or "")
+                    local_peca_descricoes[(codigo_ferramenta, codigo_peca)] = str(
+                        peca.get("descricao") or ""
+                    )
             except Exception:
                 pass
 
@@ -549,10 +618,22 @@ class PreventivaService:
                     if not codigo_peca:
                         continue
                     key = (codigo_ferramenta, codigo_peca)
-                    if key not in peca_descricoes or not peca_descricoes[key]:
-                        peca_descricoes[key] = str(componente.get("descricao") or "")
+                    if key not in local_peca_descricoes or not local_peca_descricoes[key]:
+                        local_peca_descricoes[key] = str(componente.get("descricao") or "")
             except Exception:
                 pass
+
+            return codigo_ferramenta, ferramenta_descricao, local_peca_descricoes
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(_resolve_one, codigo_ferramenta)
+                for codigo_ferramenta in sorted(ferramentas)
+            ]
+            for future in as_completed(futures):
+                codigo_ferramenta, ferramenta_descricao, local_peca_descricoes = future.result()
+                ferramenta_descricoes[codigo_ferramenta] = ferramenta_descricao
+                peca_descricoes.update(local_peca_descricoes)
 
         return ferramenta_descricoes, peca_descricoes
 

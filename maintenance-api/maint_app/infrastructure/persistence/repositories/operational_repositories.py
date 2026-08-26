@@ -14,6 +14,8 @@ from maint_app.infrastructure.persistence.views import (
     VW_STATUS_PECA_ATIVOS,
 )
 
+_GOLPES_HISTORY_LIMIT = 12
+
 
 def _coerce_reposicao_date_bound(value: str | None, *, end_of_day: bool = False) -> datetime | None:
     if value is None:
@@ -597,11 +599,23 @@ class ReposicaoRepository(PluginBaseRepository):
         rows = self.fetch_all(
             f"""
             SELECT codigo_ferramenta, codigo_peca, golpes
-            FROM {VW_REPOSICOES_PREVENTIVA}
-            WHERE filial = %s
+            FROM (
+                SELECT
+                    codigo_ferramenta,
+                    codigo_peca,
+                    golpes,
+                    data_reposicao,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY codigo_ferramenta, codigo_peca
+                        ORDER BY data_reposicao DESC
+                    ) AS rn
+                FROM {VW_REPOSICOES_PREVENTIVA}
+                WHERE filial = %s
+            ) ranked
+            WHERE rn <= %s
             ORDER BY codigo_ferramenta, codigo_peca, data_reposicao ASC
             """,
-            (filial,),
+            (filial, _GOLPES_HISTORY_LIMIT),
         )
         result: dict[tuple[str, str], list[int]] = {}
         for row in rows:
