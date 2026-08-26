@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Building2, RefreshCw } from "lucide-react";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   type DataTableColumn,
@@ -10,6 +9,8 @@ import {
   StateBox,
 } from "../../components/data";
 import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
+import { DmNativeTextField } from "../../components/dmFormFields";
+import { DM_HELP } from "../../content/helpTooltips";
 import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import { EditableCell } from "../../components/EditableCell";
 import {
@@ -309,24 +310,24 @@ export function FiliaisPage({
         hint="Filial inativa não aparece no seletor operacional. Exclusão só é permitida sem motivos, status ou reposições vinculados."
         toolbar={
           <FilterBar embedded onSubmit={handleCreate}>
-            <label className="dm-field">
-              <span>Código</span>
-              <NativeTextControl
-                value={novoCodigo}
-                onChange={(value) => setNovoCodigo(value.replace(/\D/g, "").slice(0, 2))}
-                placeholder="01"
-                inputMode="numeric"
-                maxLength={2}
-              />
-            </label>
-            <label className="dm-field">
-              <span>Nome</span>
-              <NativeTextControl
-                value={novoNome}
-                onChange={setNovoNome}
-                placeholder="Matriz"
-              />
-            </label>
+            <DmNativeTextField
+              id="dm-filial-codigo"
+              label="Código"
+              hint={DM_HELP.filiais.codigo}
+              value={novoCodigo}
+              onChange={(value) => setNovoCodigo(value.replace(/\D/g, "").slice(0, 2))}
+              placeholder="01"
+              inputMode="numeric"
+              maxLength={2}
+            />
+            <DmNativeTextField
+              id="dm-filial-nome"
+              label="Nome"
+              hint={DM_HELP.filiais.nome}
+              value={novoNome}
+              onChange={setNovoNome}
+              placeholder="Matriz"
+            />
             <MaintenanceActionButton type="submit" variant="primary">
               Adicionar filial
             </MaintenanceActionButton>

@@ -1,8 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { MaintenanceActionButton } from "../app/maintenanceUi";
+import { DmNativeTextField } from "./dmFormFields";
+import { DM_HELP } from "../content/helpTooltips";
 import {
   fetchPecasReposicao,
   type PecaReposicaoItem,
@@ -181,22 +182,22 @@ export function FerramentasPorPecaSearchCard({
           {error ? <p className="dm-inline-error">{error}</p> : null}
 
           <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
-            <label className="dm-field">
-              <span>Código da peça</span>
-              <NativeTextControl
-                value={codigoDraft}
-                onChange={setCodigoDraft}
-                placeholder="Ex.: 3019 ou 30190036"
-              />
-            </label>
-            <label className="dm-field">
-              <span>Descrição da peça</span>
-              <NativeTextControl
-                value={descricaoDraft}
-                onChange={setDescricaoDraft}
-                placeholder="Ex.: GRAMPEADOR"
-              />
-            </label>
+            <DmNativeTextField
+              id="dm-busca-peca-codigo"
+              label="Código da peça"
+              hint={DM_HELP.miniAplicadores.buscaPeca}
+              value={codigoDraft}
+              onChange={setCodigoDraft}
+              placeholder="Ex.: 3019 ou 30190036"
+            />
+            <DmNativeTextField
+              id="dm-busca-peca-descricao"
+              label="Descrição da peça"
+              hint={DM_HELP.miniAplicadores.buscaPeca}
+              value={descricaoDraft}
+              onChange={setDescricaoDraft}
+              placeholder="Ex.: GRAMPEADOR"
+            />
             <div className="dm-filter-bar__actions">
               {(codigoFiltro || descricaoFiltro) ? (
                 <MaintenanceActionButton variant="ghost" onClick={handleClearFilters}>

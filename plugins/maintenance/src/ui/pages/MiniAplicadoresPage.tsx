@@ -20,6 +20,7 @@ import { FerramentaReposicaoIndicadores } from "../../components/FerramentaRepos
 import {
   DmNativeSelectField,
   DmNativeTextAreaField,
+  DmNativeTextField,
 } from "../../components/dmFormFields";
 import {
   createReposicao,
@@ -871,22 +872,22 @@ export function MiniAplicadoresPage({
           />
 
           <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
-            <label className="dm-field">
-              <span>Buscar por código</span>
-              <NativeTextControl
-                value={codigo}
-                onChange={setCodigo}
-                placeholder="Ex.: 23 ou 23-026"
-              />
-            </label>
-            <label className="dm-field">
-              <span>Buscar por descrição</span>
-              <NativeTextControl
-                value={descricao}
-                onChange={setDescricao}
-                placeholder="Ex.: 23-"
-              />
-            </label>
+            <DmNativeTextField
+              id="dm-busca-ferramenta-codigo"
+              label="Buscar por código"
+              hint={DM_HELP.miniAplicadores.buscaFerramentaCodigo}
+              value={codigo}
+              onChange={setCodigo}
+              placeholder="Ex.: 23 ou 23-026"
+            />
+            <DmNativeTextField
+              id="dm-busca-ferramenta-descricao"
+              label="Buscar por descrição"
+              hint={DM_HELP.miniAplicadores.buscaFerramentaDescricao}
+              value={descricao}
+              onChange={setDescricao}
+              placeholder="Ex.: 23-"
+            />
             <div className="dm-filter-bar__actions">
               <NativeCheckboxControl
                 className="dm-checkbox-field"

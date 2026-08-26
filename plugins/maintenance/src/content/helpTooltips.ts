@@ -38,6 +38,8 @@ export const DM_HELP = {
     estoque01: "Saldo no almoxarifado (local 01).",
     estoque99: "Saldo na fábrica (local 99).",
     buscaPeca: "Busca peças 3019 por código ou descrição.",
+    buscaFerramentaCodigo: "Filtra ferramentas por código TOTVS (grupos 23 e 24).",
+    buscaFerramentaDescricao: "Filtra ferramentas por trecho da descrição.",
     ondeUsado: "Produtos que utilizam componentes desta ferramenta.",
     auditoria: "Histórico de alterações registradas no módulo.",
   },

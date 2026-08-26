@@ -20,6 +20,7 @@ import {
   StateBox,
   StatusBadge,
 } from "../../components/data";
+import { DmNativeTextField } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { MaintenanceActionButton, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
@@ -922,23 +923,23 @@ export function RelatorioPage({
       </section>
 
       <FilterBar className="dm-filter-bar--relatorio">
-        <label className="dm-field">
-          <span>Ferramenta</span>
-          <NativeTextControl
-            value={ferramentaFiltro}
-            onChange={setFerramentaFiltro}
-            placeholder="Código ou descrição…"
-          />
-        </label>
-        <label className="dm-field">
-          <span>Peça</span>
-          <NativeTextControl
-            value={pecaFiltro}
-            onChange={setPecaFiltro}
-            placeholder="Código ou descrição…"
-            disabled={listTab === "revisoes"}
-          />
-        </label>
+        <DmNativeTextField
+          id="dm-relatorio-filtro-ferramenta"
+          label="Ferramenta"
+          hint={DM_HELP.relatorio.filtroFerramenta}
+          value={ferramentaFiltro}
+          onChange={setFerramentaFiltro}
+          placeholder="Código ou descrição…"
+        />
+        <DmNativeTextField
+          id="dm-relatorio-filtro-peca"
+          label="Peça"
+          hint={DM_HELP.relatorio.filtroPeca}
+          value={pecaFiltro}
+          onChange={setPecaFiltro}
+          placeholder="Código ou descrição…"
+          disabled={listTab === "revisoes"}
+        />
         <MultiSelectField
           className="dm-field--multi-select"
           label="Status"

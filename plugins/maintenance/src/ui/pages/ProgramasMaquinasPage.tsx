@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Cpu, Plus, Trash2 } from "lucide-react";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   type DataTableColumn,
@@ -9,6 +8,8 @@ import {
   StateBox,
 } from "../../components/data";
 import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
+import { DmNativeTextField } from "../../components/dmFormFields";
+import { DM_HELP } from "../../content/helpTooltips";
 import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import {
   createProgramaMaquinaProduto,
@@ -395,14 +396,14 @@ export function ProgramasMaquinasPage({
 
       <section className="dm-card">
         <FilterBar onSubmit={handleRankingSearch} className="dm-filter-bar--search">
-          <label className="dm-field">
-            <span>Buscar PI / PA</span>
-            <NativeTextControl
-              value={rankingCodigo}
-              onChange={setRankingCodigo}
-              placeholder="Código intermediário ou PA"
-            />
-          </label>
+          <DmNativeTextField
+            id="dm-programas-ranking-busca"
+            label="Buscar PI / PA"
+            hint={DM_HELP.programas.busca}
+            value={rankingCodigo}
+            onChange={setRankingCodigo}
+            placeholder="Código intermediário ou PA"
+          />
           <div className="dm-filter-bar__actions">
             <MaintenanceActionButton type="submit" variant="primary">
               Buscar
@@ -433,14 +434,14 @@ export function ProgramasMaquinasPage({
 
       <section className="dm-card">
         <FilterBar onSubmit={handleCadastroSearch} className="dm-filter-bar--search">
-          <label className="dm-field">
-            <span>Buscar cadastro</span>
-            <NativeTextControl
-              value={cadastroCodigo}
-              onChange={setCadastroCodigo}
-              placeholder="Código ou nome do programa"
-            />
-          </label>
+          <DmNativeTextField
+            id="dm-programas-cadastro-busca"
+            label="Buscar cadastro"
+            hint={DM_HELP.programas.busca}
+            value={cadastroCodigo}
+            onChange={setCadastroCodigo}
+            placeholder="Código ou nome do programa"
+          />
           <div className="dm-filter-bar__actions">
             <MaintenanceActionButton type="submit" variant="primary">
               Buscar
