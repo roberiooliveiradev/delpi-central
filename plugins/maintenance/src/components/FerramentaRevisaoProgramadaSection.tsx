@@ -17,10 +17,8 @@ import {
   type RevisaoProgramadaItem,
   type RevisaoProgramadaRealizacao,
 } from "../data/api/maintenanceApi";
-import { BrDateInput, FieldLabel, HelpTooltip, PendingChangeBadge, StateBox, StatusBadge } from "./data";
-import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
-import { DmNativeTextAreaField } from "./dmFormFields";
-import { fromDateInputValue, toDateInputValue } from "../utils/datetimeLocal";
+import { BrDateInput, FieldLabel, PendingChangeBadge, StateBox, StatusBadge } from "./data";
+import { MaintenanceActionButton, MaintenanceSectionHintLabel } from "../app/maintenanceUi";
 
 type FerramentaRevisaoProgramadaSectionProps = {
   filial: string;
@@ -349,11 +347,10 @@ export function FerramentaRevisaoProgramadaSection({
       <div className="dm-section-header">
         <div className="dm-section-header__title-group">
           <h3 className="dm-section-header__title">
-            Revisão programada
-            <HelpTooltip
-              content={DM_HELP.revisao.section}
-              ariaLabel="Ajuda: revisão programada"
-              className="dm-section-header__help"
+            <MaintenanceSectionHintLabel
+              label="Revisão programada"
+              hint={DM_HELP.revisao.section}
+              className="dm-section-header__title-help"
             />
           </h3>
           <p className="dm-section-header__hint">
@@ -401,14 +398,13 @@ export function FerramentaRevisaoProgramadaSection({
             <FieldLabel label="Data do feito" hint={DM_HELP.revisao.registrar}  className="dm-field__label" />
             <BrDateInput value={feitoDate} onChange={setFeitoDate} />
           </label>
-          <button
+          <MaintenanceActionButton
             type="button"
-            className="dm-primary-btn"
             onClick={() => void handleRegistrar()}
             disabled={saving}
-          >
+           variant="primary">
             Marcar feito
-          </button>
+          </MaintenanceActionButton>
         </div>
       ) : null}
 
@@ -416,10 +412,9 @@ export function FerramentaRevisaoProgramadaSection({
         <div className="dm-revisao-ferramenta__historico">
           <div className="dm-revisao-ferramenta__historico-header">
             <h4 className="dm-revisao-ferramenta__historico-title">
-              Últimas revisões feitas
-              <HelpTooltip
-                content={DM_HELP.revisao.historico}
-                ariaLabel="Ajuda: histórico de revisões"
+              <MaintenanceSectionHintLabel
+                label="Últimas revisões feitas"
+                hint={DM_HELP.revisao.historico}
               />
             </h4>
           </div>
@@ -479,43 +474,39 @@ export function FerramentaRevisaoProgramadaSection({
                             <div className="dm-row-actions dm-revisao-historico-actions">
                               {isEditing ? (
                                 <>
-                                  <button
+                                  <MaintenanceActionButton
                                     type="button"
-                                    className="dm-ghost-btn dm-ghost-btn--sm"
                                     disabled={saving || !isRealizacaoDirty(item, realizacaoDraft)}
                                     onClick={() => void handleSaveRealizacao(item)}
-                                  >
+                                   variant="ghost" className="dm-ghost-btn--sm">
                                     Salvar
-                                  </button>
-                                  <button
+                                  </MaintenanceActionButton>
+                                  <MaintenanceActionButton
                                     type="button"
-                                    className="dm-ghost-btn dm-ghost-btn--sm"
                                     disabled={saving}
                                     onClick={cancelEditRealizacao}
-                                  >
+                                   variant="ghost" className="dm-ghost-btn--sm">
                                     Cancelar
-                                  </button>
+                                  </MaintenanceActionButton>
                                 </>
                               ) : (
                                 <>
-                                  <button
+                                  <MaintenanceActionButton
                                     type="button"
-                                    className="dm-ghost-btn dm-ghost-btn--sm"
                                     disabled={saving || Boolean(editingRealizacaoId)}
                                     title={DM_HELP.revisao.historicoEditar}
                                     onClick={() => startEditRealizacao(item)}
-                                  >
+                                   variant="ghost" className="dm-ghost-btn--sm">
                                     Editar
-                                  </button>
-                                  <button
+                                  </MaintenanceActionButton>
+                                  <MaintenanceActionButton
                                     type="button"
-                                    className="dm-ghost-btn dm-ghost-btn--sm dm-ghost-btn--danger"
                                     disabled={saving || Boolean(editingRealizacaoId)}
                                     title={DM_HELP.revisao.historicoExcluir}
                                     onClick={() => void handleDeleteRealizacao(item)}
-                                  >
+                                   variant="ghost" className="dm-ghost-btn--sm dm-ghost-btn--danger">
                                     Excluir
-                                  </button>
+                                  </MaintenanceActionButton>
                                 </>
                               )}
                             </div>
@@ -585,9 +576,9 @@ export function FerramentaRevisaoProgramadaSection({
                 placeholder="Opcional — checklist ou pontos a verificar"
               />
               <div className="dm-form-grid__buttons dm-field--span-full">
-                <button type="submit" className="dm-primary-btn" disabled={saving}>
+                <MaintenanceActionButton type="submit" disabled={saving} variant="primary">
                   Programar revisão
-                </button>
+                </MaintenanceActionButton>
               </div>
             </form>
           ) : null}
@@ -641,22 +632,20 @@ export function FerramentaRevisaoProgramadaSection({
                 placeholder="Opcional — checklist ou pontos a verificar"
               />
               <div className="dm-revisao-ferramenta__actions dm-field--span-full">
-                <button
+                <MaintenanceActionButton
                   type="button"
-                  className="dm-ghost-btn"
                   onClick={() => void handleSave()}
                   disabled={saving || !isDirty(schedule, draft)}
-                >
+                 variant="ghost">
                   Salvar alterações
-                </button>
-                <button
+                </MaintenanceActionButton>
+                <MaintenanceActionButton
                   type="button"
-                  className="dm-ghost-btn dm-ghost-btn--danger"
                   onClick={() => void handleDelete()}
                   disabled={saving}
-                >
+                 variant="ghost" className="dm-ghost-btn--danger">
                   Remover
-                </button>
+                </MaintenanceActionButton>
               </div>
             </div>
           ) : null}

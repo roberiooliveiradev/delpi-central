@@ -35,7 +35,8 @@ import {
   type MotivoItem,
   type ReposicaoItem,
 } from "../../data/api/maintenanceApi";
-import { MaintenanceActionButton } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceFieldLabel } from "../../app/maintenanceUi";
+import { DM_HELP } from "../../content/helpTooltips";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   fromDatetimeLocalValue,
@@ -785,6 +786,7 @@ export function MiniAplicadoresPage({
       {
         key: "data",
         header: "Data",
+        headerHint: DM_HELP.miniAplicadores.dataReposicao,
         sortable: true,
         sortValue: (item) => new Date(item.data_reposicao).getTime(),
         render: (item) => new Date(item.data_reposicao).toLocaleString("pt-BR"),
@@ -792,6 +794,7 @@ export function MiniAplicadoresPage({
       {
         key: "peca",
         header: "Peça",
+        headerHint: DM_HELP.miniAplicadores.peca,
         sortable: true,
         sortValue: (item) => item.codigo_peca,
         render: (item) => (
@@ -804,6 +807,7 @@ export function MiniAplicadoresPage({
       {
         key: "golpes",
         header: "Golpes",
+        headerHint: DM_HELP.miniAplicadores.golpes,
         sortable: true,
         sortValue: (item) => item.golpes,
         render: (item) => item.golpes,
@@ -812,6 +816,7 @@ export function MiniAplicadoresPage({
       {
         key: "motivo",
         header: "Motivo",
+        headerHint: DM_HELP.miniAplicadores.motivo,
         sortable: true,
         sortValue: (item) => item.motivo_descricao ?? String(item.motivo_id),
         render: (item) => item.motivo_descricao ?? item.motivo_id,
@@ -825,16 +830,15 @@ export function MiniAplicadoresPage({
         interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
-            <button type="button" className="dm-ghost-btn" onClick={() => handleEditReposicao(item)}>
+            <MaintenanceActionButton type="button" onClick={() => handleEditReposicao(item)} variant="ghost">
               Editar
-            </button>
-            <button
+            </MaintenanceActionButton>
+            <MaintenanceActionButton
               type="button"
-              className="dm-ghost-btn dm-ghost-btn--danger"
               onClick={() => void handleDeleteReposicao(item)}
-            >
+             variant="ghost" className="dm-ghost-btn--danger">
               Excluir
-            </button>
+            </MaintenanceActionButton>
           </div>
         ),
       });
@@ -882,6 +886,8 @@ export function MiniAplicadoresPage({
       {
         key: "estoque01",
         header: "Estoque 01",
+        headerHint: DM_HELP.miniAplicadores.estoque01,
+        headerHint: DM_HELP.miniAplicadores.estoque01,
         sortable: true,
         sortValue: (item) => item.estoque_local_01,
         render: (item) => item.estoque_local_01.toLocaleString("pt-BR"),
@@ -890,6 +896,8 @@ export function MiniAplicadoresPage({
       {
         key: "estoque99",
         header: "Estoque 99",
+        headerHint: DM_HELP.miniAplicadores.estoque99,
+        headerHint: DM_HELP.miniAplicadores.estoque99,
         sortable: true,
         sortValue: (item) => item.estoque_local_99,
         render: (item) => item.estoque_local_99.toLocaleString("pt-BR"),
@@ -982,9 +990,9 @@ export function MiniAplicadoresPage({
                 }}
                 label="Mostrar bloqueadas"
               />
-              <button type="submit" className="dm-primary-btn">
+              <MaintenanceActionButton type="submit" variant="primary">
                 Buscar
-              </button>
+              </MaintenanceActionButton>
             </div>
           </FilterBar>
 
@@ -1004,6 +1012,7 @@ export function MiniAplicadoresPage({
                   })}`
                 : "Ferramentas"
             }
+            titleHint={DM_HELP.miniAplicadores.listaTitle}
             columns={ferramentasColumns}
             rows={items}
             loading={ferramentasLoading}
@@ -1042,9 +1051,9 @@ export function MiniAplicadoresPage({
                   {editingReposicaoId ? "Editar reposição" : "Nova reposição"}
                 </h3>
                 {!editingReposicaoId ? (
-                  <button type="button" className="dm-ghost-btn" onClick={() => closeReposicaoForm()}>
+                  <MaintenanceActionButton type="button" onClick={() => closeReposicaoForm()} variant="ghost">
                     Fechar
-                  </button>
+                  </MaintenanceActionButton>
                 ) : null}
               </div>
               <form
@@ -1055,6 +1064,7 @@ export function MiniAplicadoresPage({
                 <DmNativeSelectField
                   id="dm-reposicao-peca"
                   label="Peça"
+                  hint={DM_HELP.miniAplicadores.peca}
                   className={`dm-field--span-full${reposicaoFormErrors.codigoPeca ? " dm-field--invalid" : ""}`}
                   controlClassName="dm-select-peca"
                   value={codigoPeca}
@@ -1084,7 +1094,11 @@ export function MiniAplicadoresPage({
                 <label
                   className={`dm-field dm-field--span-4${reposicaoFormErrors.dataReposicao ? " dm-field--invalid" : ""}`}
                 >
-                  <span>Data da reposição</span>
+                  <MaintenanceFieldLabel
+                    label="Data da reposição"
+                    hint={DM_HELP.miniAplicadores.dataReposicao}
+                    className="dm-field__label"
+                  />
                   <BrDatetimeInput
                     value={dataReposicao}
                     error={reposicaoFormErrors.dataReposicao}
@@ -1097,7 +1111,11 @@ export function MiniAplicadoresPage({
                 <label
                   className={`dm-field dm-field--span-4${reposicaoFormErrors.dataUltimaReposicao ? " dm-field--invalid" : ""}`}
                 >
-                  <span>Data da última reposição</span>
+                  <MaintenanceFieldLabel
+                    label="Data da última reposição"
+                    hint={DM_HELP.miniAplicadores.dataUltima}
+                    className="dm-field__label"
+                  />
                   <BrDatetimeInput
                     value={dataUltimaReposicao}
                     error={reposicaoFormErrors.dataUltimaReposicao}
@@ -1113,7 +1131,11 @@ export function MiniAplicadoresPage({
                   className={`dm-field dm-field--span-2 dm-golpes-field${golpesLoading ? " is-loading" : ""}${reposicaoFormErrors.golpes ? " dm-field--invalid" : ""}`}
                   aria-busy={golpesLoading}
                 >
-                  <span>{golpesLoading ? "Calculando golpes…" : "Golpes"}</span>
+                  <MaintenanceFieldLabel
+                    label={golpesLoading ? "Calculando golpes…" : "Golpes"}
+                    hint={DM_HELP.miniAplicadores.golpes}
+                    className="dm-field__label"
+                  />
                   <div className="dm-golpes-field__control">
                     <NativeTextControl
                       type="number"
@@ -1141,21 +1163,24 @@ export function MiniAplicadoresPage({
                   ) : null}
                 </div>
 
-                <button
+                <MaintenanceActionButton
                   type="button"
-                  className="dm-ghost-btn dm-form-grid__suggest dm-field--span-2"
                   disabled={golpesLoading || !codigoPeca}
+                  title={DM_HELP.miniAplicadores.sugerirGolpes}
                   onClick={() => void handleSuggestGolpes()}
+                  variant="ghost"
+                  className="dm-form-grid__suggest dm-field--span-2"
                 >
                   {golpesLoading ? (
                     <Loader2 size={16} className="dm-spin" aria-hidden="true" />
                   ) : null}
                   {golpesLoading ? "Calculando…" : "Sugerir golpes"}
-                </button>
+                </MaintenanceActionButton>
 
                 <DmNativeSelectField
                   id="dm-reposicao-motivo"
                   label="Motivo"
+                  hint={DM_HELP.miniAplicadores.motivo}
                   className={`dm-field--span-full${reposicaoFormErrors.motivoId ? " dm-field--invalid" : ""}`}
                   value={motivoId}
                   onChange={(value) => {
@@ -1177,6 +1202,7 @@ export function MiniAplicadoresPage({
                 <DmNativeTextAreaField
                   id="dm-reposicao-observacao"
                   label="Observação"
+                  hint={DM_HELP.miniAplicadores.observacao}
                   className="dm-field--span-full dm-field--textarea"
                   span={false}
                   rows={4}
@@ -1186,13 +1212,13 @@ export function MiniAplicadoresPage({
                 />
 
                 <div className="dm-form-grid__buttons dm-field--span-full">
-                  <button type="submit" className="dm-primary-btn" disabled={!codigoPeca}>
+                  <MaintenanceActionButton type="submit" disabled={!codigoPeca} variant="primary">
                     {editingReposicaoId ? "Salvar alterações" : "Registrar reposição"}
-                  </button>
+                  </MaintenanceActionButton>
                   {editingReposicaoId ? (
-                    <button type="button" className="dm-ghost-btn" onClick={() => closeReposicaoForm()}>
+                    <MaintenanceActionButton type="button" onClick={() => closeReposicaoForm()} variant="ghost">
                       Cancelar edição
-                    </button>
+                    </MaintenanceActionButton>
                   ) : null}
                 </div>
               </form>
@@ -1231,18 +1257,17 @@ export function MiniAplicadoresPage({
             actions={
               <div className="dm-row-actions">
                 {canManageMiniApplicators && !showReposicaoForm && !editingReposicaoId ? (
-                  <button type="button" className="dm-primary-btn" onClick={openNovaReposicao}>
+                  <MaintenanceActionButton type="button" onClick={openNovaReposicao} variant="primary">
                     <PlusCircle size={16} />
                     Nova reposição
-                  </button>
+                  </MaintenanceActionButton>
                 ) : null}
-                <button
+                <MaintenanceActionButton
                   type="button"
-                  className="dm-ghost-btn"
                   onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadores)}
-                >
+                 variant="ghost">
                   Voltar para lista
-                </button>
+                </MaintenanceActionButton>
               </div>
             }
             toolbar={
@@ -1278,9 +1303,9 @@ export function MiniAplicadoresPage({
                     onChange={setFiltroHistoricoDataFinalDraft}
                   />
                 </label>
-                <button type="button" className="dm-ghost-btn" onClick={applyHistoricoFilters}>
+                <MaintenanceActionButton type="button" onClick={applyHistoricoFilters} variant="ghost">
                   Aplicar filtro
-                </button>
+                </MaintenanceActionButton>
               </FilterBar>
             }
             columns={reposicoesColumns}
