@@ -35,7 +35,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/interactionRoomAuthorAvatarFields/);
     expect(source).toMatch(/interactionRoomParticipantAvatar/);
     expect(source).toMatch(/CommercialMessageThread/);
-    expect(source).toMatch(/CommercialSoftEmptyState/);
+    expect(source).toMatch(/CommercialEmptyGuidance/);
+    expect(source).toMatch(/emptyContent/);
     expect(source).toMatch(/roomEmptyTitle/);
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/resolveActionExtras/);

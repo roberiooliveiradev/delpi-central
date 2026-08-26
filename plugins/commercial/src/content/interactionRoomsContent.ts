@@ -5,6 +5,18 @@ export const INTERACTION_ROOMS_CONTENT = {
   inboxEmptyTitle: "Nenhuma sala ainda",
   inboxEmptyDescription:
     "Abra um pedido ou conta e use a sala na ficha, ou aguarde a caixa de entrada ser preenchida.",
+  inboxFilterEmptyUnreadTitle: "Nenhuma conversa não lida",
+  inboxFilterEmptyUnreadDescription:
+    "Quando alguém enviar mensagem nova, a sala aparecerá neste filtro.",
+  inboxFilterEmptyMentionedTitle: "Nenhuma menção pendente",
+  inboxFilterEmptyMentionedDescription:
+    "Salas em que você foi mencionado aparecem aqui.",
+  inboxFilterEmptyProcessTitle: "Nenhum processo em andamento",
+  inboxFilterEmptyProcessDescription:
+    "Salas ligadas a processos comerciais aparecem neste filtro.",
+  inboxFilterEmptyWallTitle: "Nenhum mural ainda",
+  inboxFilterEmptyWallDescription:
+    "Murais da equipe aparecem aqui quando forem criados ou vinculados a um grupo.",
   inboxListAriaLabel: "Salas de interação",
   inboxToolbarTitle: "Conversas",
   filtersAriaLabel: "Filtros da caixa de entrada",

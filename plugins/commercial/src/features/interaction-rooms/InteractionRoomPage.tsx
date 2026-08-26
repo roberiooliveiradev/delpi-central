@@ -31,8 +31,8 @@ import {
   CM_PORTAL_SCOPE,
   CommercialActionButton,
   CommercialAlertQueue,
+  CommercialEmptyGuidance,
   CommercialEmptyState,
-  CommercialSoftEmptyState,
   CommercialLoadingCard,
   CommercialMessageThread,
   CommercialRoomContextPanel,
@@ -1042,41 +1042,41 @@ export function InteractionRoomPage({
                       />
                     }
                   >
-                    {threadMessages.length === 0 ? (
-                      <CommercialSoftEmptyState
-                        title={content.roomEmptyTitle}
-                        message={content.roomEmptyDescription}
-                        icon={<MessageSquare aria-hidden />}
-                      />
-                    ) : (
-                      <CommercialMessageThread
-                        listAriaLabel={content.roomMessagesAriaLabel}
-                        emptyLabel={content.roomEmptyTitle}
-                        messages={threadMessages}
-                        resolveActions={resolveActions}
-                        resolveActionExtras={resolveActionExtras}
-                        onParentQuoteClick={onParentQuoteClick}
-                        portalScopeClassName={CM_PORTAL_SCOPE}
-                        actionsToolbarAriaLabel={
-                          content.messageActionsToolbarAriaLabel
-                        }
-                        resolveAttachmentImageSrc={(attachmentId) =>
-                          attachmentThumbUrls[attachmentId] ?? null
-                        }
-                        onAttachmentImageClick={(attachmentId) => {
-                          const row =
-                            attachmentMetaRef.current[attachmentId];
-                          if (!row) return;
-                          setInlinePreview({
-                            kind: "remote",
-                            id: row.id,
-                            fileName: row.file_name,
-                            contentType: row.content_type,
-                            byteSize: row.byte_size,
-                          });
-                        }}
-                      />
-                    )}
+                    <CommercialMessageThread
+                      listAriaLabel={content.roomMessagesAriaLabel}
+                      emptyLabel={content.roomEmptyTitle}
+                      emptyContent={
+                        <CommercialEmptyGuidance
+                          variant="canvas"
+                          title={content.roomEmptyTitle}
+                          message={content.roomEmptyDescription}
+                          icon={<MessageSquare aria-hidden />}
+                        />
+                      }
+                      messages={threadMessages}
+                      resolveActions={resolveActions}
+                      resolveActionExtras={resolveActionExtras}
+                      onParentQuoteClick={onParentQuoteClick}
+                      portalScopeClassName={CM_PORTAL_SCOPE}
+                      actionsToolbarAriaLabel={
+                        content.messageActionsToolbarAriaLabel
+                      }
+                      resolveAttachmentImageSrc={(attachmentId) =>
+                        attachmentThumbUrls[attachmentId] ?? null
+                      }
+                      onAttachmentImageClick={(attachmentId) => {
+                        const row =
+                          attachmentMetaRef.current[attachmentId];
+                        if (!row) return;
+                        setInlinePreview({
+                          kind: "remote",
+                          id: row.id,
+                          fileName: row.file_name,
+                          contentType: row.content_type,
+                          byteSize: row.byte_size,
+                        });
+                      }}
+                    />
                   </CommercialRoomConversationChatColumn>
                 </div>
               )}

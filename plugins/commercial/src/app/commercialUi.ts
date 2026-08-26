@@ -5,6 +5,7 @@ import {
   createDashboardAttachmentPreviewStrip,
   createDashboardDetailCard,
   createDashboardEmptyState,
+  createDashboardEmptyGuidance,
   createDashboardSoftEmptyState,
   createDashboardDetailFieldGrid,
   createDashboardSectionCard,
@@ -256,6 +257,7 @@ export const CommercialEmptyState = createDashboardEmptyState({
   defaultMessage: "",
 });
 export const CommercialSoftEmptyState = createDashboardSoftEmptyState(UI_PREFIX);
+export const CommercialEmptyGuidance = createDashboardEmptyGuidance(UI_PREFIX);
 const CommercialMetricKpiBase = createMetricKpiCard(UI_PREFIX);
 type CommercialMetricCardProps = {
   label: string;

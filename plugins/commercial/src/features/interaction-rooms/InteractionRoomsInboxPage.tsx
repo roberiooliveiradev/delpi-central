@@ -9,7 +9,7 @@ import {
 import {
   CommercialActionButton,
   CommercialCatalogSearchBar,
-  CommercialEmptyState,
+  CommercialEmptyGuidance,
   CommercialLoadingCard,
   CommercialRoomInboxList,
   CommercialRoomInboxPanel,
@@ -69,6 +69,39 @@ function filterLabel(id: InteractionInboxFilter): string {
     wall: INTERACTION_ROOMS_CONTENT.filterWall,
   };
   return map[id] ?? String(id);
+}
+
+function inboxEmptyCopy(
+  filter: InteractionInboxFilter,
+): { title: string; message: string } {
+  const content = INTERACTION_ROOMS_CONTENT;
+  switch (filter) {
+    case "unread":
+      return {
+        title: content.inboxFilterEmptyUnreadTitle,
+        message: content.inboxFilterEmptyUnreadDescription,
+      };
+    case "mentioned":
+      return {
+        title: content.inboxFilterEmptyMentionedTitle,
+        message: content.inboxFilterEmptyMentionedDescription,
+      };
+    case "process":
+      return {
+        title: content.inboxFilterEmptyProcessTitle,
+        message: content.inboxFilterEmptyProcessDescription,
+      };
+    case "wall":
+      return {
+        title: content.inboxFilterEmptyWallTitle,
+        message: content.inboxFilterEmptyWallDescription,
+      };
+    default:
+      return {
+        title: content.inboxEmptyTitle,
+        message: content.inboxEmptyDescription,
+      };
+  }
 }
 
 function customerIdentity(item: InteractionRoomInboxItemDto): {
@@ -190,6 +223,8 @@ export function InteractionRoomsInboxPage({
     [],
   );
 
+  const inboxEmpty = inboxEmptyCopy(filter);
+
   return (
     <section className="cm-room-inbox-pane">
       <CommercialSectionCard
@@ -228,15 +263,23 @@ export function InteractionRoomsInboxPage({
         <CommercialLoadingCard title={content.loadingLabel} variant="panel" />
       ) : null}
       {!loading && !error && items.length === 0 ? (
-        <CommercialEmptyState
-          title={content.inboxEmptyTitle}
-          message={content.inboxEmptyDescription}
+        <CommercialEmptyGuidance
+          variant="panel"
+          title={inboxEmpty.title}
+          message={inboxEmpty.message}
         />
       ) : null}
       {!loading && items.length > 0 ? (
         <CommercialRoomInboxList
           listAriaLabel={content.inboxListAriaLabel}
-          emptyLabel={content.inboxEmptyTitle}
+          emptyLabel={inboxEmpty.title}
+          emptyContent={
+            <CommercialEmptyGuidance
+              variant="panel"
+              title={inboxEmpty.title}
+              message={inboxEmpty.message}
+            />
+          }
           unreadBadgeLabel={(count) =>
             content.unreadBadge.replace("{count}", String(count))
           }

@@ -39,10 +39,11 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/markdownToPlainPreview/);
     expect(source).toMatch(/last_message_preview/);
     expect(source).toMatch(/CommercialLoadingCard/);
-    expect(source).toMatch(/CommercialEmptyState/);
+    expect(source).toMatch(/CommercialEmptyGuidance/);
+    expect(source).toMatch(/inboxFilterEmptyWallTitle/);
     expect(source).toMatch(/unreadBadgeLabel/);
     expect(source).toMatch(/unread_count|unreadCount/);
-    expect(source).toMatch(/inboxEmptyTitle/);
+    expect(source).toMatch(/inboxEmptyCopy/);
     expect(source).toMatch(/loadingLabel/);
     expect(source).not.toMatch(/cm-message-bubble|<textarea/);
   });
