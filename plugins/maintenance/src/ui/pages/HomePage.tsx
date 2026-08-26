@@ -11,6 +11,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { MaintenancePageHero } from "../../app/maintenanceUi";
 import { StateBox } from "../../components/data";
+import { FilialSwitcher } from "../../components/FilialSwitcher";
 import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
@@ -45,11 +46,30 @@ export function HomePage({
   const {
     filiais,
     activeFilial,
+    setActiveFilial,
     loading: filialLoading,
     error: optionsError,
     submodules,
     canManageFiliais,
   } = useMaintenanceActiveFilial(getAccessToken, filialScope);
+
+  const heroFilialSwitcher =
+    !filialLoading && filiais.length > 1 ? (
+      <FilialSwitcher
+        filiais={filiais.map((filial) => ({
+          id: filial.id,
+          label: resolveFilialDisplayName(filiais, filial.id),
+        }))}
+        value={activeFilial ?? filiais[0]?.id ?? ""}
+        onChange={(filialId) => {
+          setActiveFilial(filialId);
+          if (filialScope) {
+            onNavigate(MAINTENANCE_ROUTES.filialHome(filialId));
+          }
+        }}
+        compact
+      />
+    ) : null;
 
   const subtitle = useMemo(() => {
     if (filiais.length > 1) {
@@ -79,6 +99,7 @@ export function HomePage({
           </>
         }
         description={subtitle}
+        actions={heroFilialSwitcher}
       />
 
       <section className="dm-page-stack">
