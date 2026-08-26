@@ -30,6 +30,7 @@ from commercial_app.application.services.commercial_realtime_notify import (
     notify_room_inbox_changed,
     notify_room_pin_changed,
     notify_room_reaction_changed,
+    notify_room_updated,
     notify_worklist_changed,
 )
 from commercial_app.composition.commercial_composer import (
@@ -268,7 +269,13 @@ def rename_interaction_room(
             title=body.title,
         )
         try:
-            notify_room_inbox_changed(room_id=str(room.id))
+            notify_room_updated(
+                room_id=str(room.id),
+                title=room.title,
+                actor_user_id=actor,
+                actor_display_name=actor_display_name_from_request(request),
+                actor_client_id=client_id_from_request(request),
+            )
         except Exception:  # noqa: BLE001
             logger.exception("interaction_room_rename_notify_failed")
         return ok(

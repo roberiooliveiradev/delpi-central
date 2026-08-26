@@ -678,6 +678,37 @@ def test_notify_interaction_room_activity_includes_inbox(monkeypatch):
     assert "room.inbox.changed" in types
 
 
+def test_notify_room_updated_broadcasts_thread_and_inbox(monkeypatch):
+    hub = MagicMock()
+    scheduled: list[tuple[str, dict]] = []
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
+        hub,
+    )
+    from commercial_app.application.services.commercial_realtime_notify import (
+        INTERACTION_HUB_ROOM,
+        interaction_room_key,
+        notify_room_updated,
+    )
+
+    notify_room_updated(
+        room_id="00000000-0000-0000-0000-000000000111",
+        title="Pedido 12345",
+        actor_user_id="u1",
+        actor_display_name="Ana",
+        actor_client_id="client-a",
+    )
+    rooms = {room for room, _ in scheduled}
+    rid = "00000000-0000-0000-0000-000000000111"
+    assert interaction_room_key(rid) in rooms
+    assert INTERACTION_HUB_ROOM in rooms
+    updated = next(p for _, p in scheduled if p["type"] == "room.updated")
+    assert updated["roomId"] == rid
+    assert updated["title"] == "Pedido 12345"
+    assert updated["actorClientId"] == "client-a"
+
+
 def test_realtime_handshake_joins_interaction_hub() -> None:
     from pathlib import Path
 
