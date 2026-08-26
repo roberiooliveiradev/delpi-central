@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Settings } from "lucide-react";
-import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   type DataTableColumn,
   DataTableSection,
-  FieldLabel,
   FilterBar,
   PendingChangeBadge,
   StateBox,
@@ -16,7 +14,7 @@ import {
   DmNativeTextField,
 } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
-import { MaintenanceActionButton } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceFilterCheckboxField } from "../../app/maintenanceUi";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
@@ -96,7 +94,6 @@ export function ConfiguracaoPage({
   onNavigate,
 }: ConfiguracaoPageProps) {
   const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
-  const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
   const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
   const motivosTable = useServerTable({ defaultSortKey: "descricao" });
@@ -345,6 +342,7 @@ export function ConfiguracaoPage({
         key: "excluir_preventiva",
         header: "Ignora preventiva",
         headerHint: DM_HELP.configuracao.excluirPreventiva,
+        className: "dm-datatable__col--config-flag",
         align: "center",
         render: (item) => {
           const draft = motivoEdits[item.motivo_id] ?? toMotivoDraft(item);
@@ -352,8 +350,11 @@ export function ConfiguracaoPage({
             return draft.excluir_preventiva ? "Sim" : "Não";
           }
           return (
-            <NativeCheckboxControl
-              className="dm-checkbox-field"
+            <MaintenanceFilterCheckboxField
+              id={`dm-config-motivo-flag-${item.motivo_id}`}
+              label="Não conta"
+              hint={DM_HELP.configuracao.excluirPreventiva}
+              checkboxLabel="Ativar"
               checked={draft.excluir_preventiva}
               onChange={(checked) =>
                 setMotivoEdits((prev) => ({
@@ -363,13 +364,6 @@ export function ConfiguracaoPage({
                     excluir_preventiva: checked,
                   },
                 }))
-              }
-              label={
-                <FieldLabel
-                  className="dm-field__label"
-                  label="Não conta"
-                  hint={DM_HELP.configuracao.excluirPreventiva}
-                />
               }
             />
           );
@@ -381,6 +375,7 @@ export function ConfiguracaoPage({
       columns.push({
         key: "acoes",
         header: "Ações",
+        className: "dm-datatable__col--config-actions",
         interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
@@ -436,6 +431,7 @@ export function ConfiguracaoPage({
         key: "operador",
         header: "Operador",
         headerHint: DM_HELP.configuracao.statusOperador,
+        className: "dm-datatable__col--config-operador",
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).operador,
         render: (item) => {
@@ -465,6 +461,7 @@ export function ConfiguracaoPage({
         key: "percentual",
         header: "Percentual",
         headerHint: DM_HELP.configuracao.statusPercentual,
+        className: "dm-datatable__col--config-percentual",
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).percentual,
         render: (item) => {
@@ -497,6 +494,7 @@ export function ConfiguracaoPage({
       columns.push({
         key: "acoes",
         header: "Ações",
+        className: "dm-datatable__col--config-actions",
         interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
@@ -564,17 +562,13 @@ export function ConfiguracaoPage({
                 onChange={setNovoMotivo}
                 placeholder="Ex.: DESGASTE"
               />
-              <NativeCheckboxControl
-                className="dm-checkbox-field"
+              <MaintenanceFilterCheckboxField
+                id="dm-config-novo-motivo-flag"
+                label="Não conta no preventivo"
+                hint={DM_HELP.configuracao.excluirPreventiva}
+                checkboxLabel="Ativar"
                 checked={novoMotivoExcluirPreventiva}
                 onChange={setNovoMotivoExcluirPreventiva}
-                label={
-                  <FieldLabel
-                    className="dm-field__label"
-                    label="Não conta no preventivo"
-                    hint={DM_HELP.configuracao.excluirPreventiva}
-                  />
-                }
               />
               <div className="dm-filter-bar__actions">
                 <MaintenanceActionButton type="submit" variant="primary">

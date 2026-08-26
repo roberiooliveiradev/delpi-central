@@ -70,6 +70,26 @@
   max-width: 8.75rem;
 }
 
+.dashboard-maintenance .dm-table-section--editable-config .dm-datatable__col--config-flag {
+  width: 9.5rem;
+  max-width: 9.5rem;
+}
+
+.dashboard-maintenance .dm-table-section--editable-config .dm-datatable__col--config-operador {
+  width: 6.5rem;
+  max-width: 6.5rem;
+}
+
+.dashboard-maintenance .dm-table-section--editable-config .dm-datatable__col--config-percentual {
+  width: 7rem;
+  max-width: 7rem;
+}
+
+.dashboard-maintenance .dm-table-section--editable-config .dm-datatable__col--config-actions {
+  width: 11rem;
+  max-width: 11rem;
+}
+
 .dashboard-maintenance .dm-revisao-feito-actions {
   display: grid;
   gap: 6px;

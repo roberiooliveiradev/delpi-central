@@ -651,6 +651,18 @@
   min-width: 0;
   width: 100%;
 }
+.dashboard-maintenance .dm-filter-bar--motivo-create [class*="-filter-bar__grid"]{
+  grid-template-columns: minmax(12rem, 1fr) auto auto;
+  align-items: end;
+}
+.dashboard-maintenance .dm-filter-bar--status-create [class*="-filter-bar__grid"]{
+  grid-template-columns: minmax(10rem, 1fr) 5.5rem 6.5rem auto;
+  align-items: end;
+}
+.dashboard-maintenance .dm-filter-bar--motivo-create .dm-filter-bar__actions,
+.dashboard-maintenance .dm-filter-bar--status-create .dm-filter-bar__actions{
+  flex-wrap: nowrap;
+}
 .dashboard-maintenance .dm-auditoria-timeline__footer{
   margin-top: 16px;
   display: flex;
@@ -688,6 +700,14 @@
     grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
   }
   .dashboard-maintenance .dm-filter-bar--relatorio .dm-filter-bar__actions{
+    flex-wrap: wrap;
+  }
+  .dashboard-maintenance .dm-filter-bar--motivo-create [class*="-filter-bar__grid"],
+  .dashboard-maintenance .dm-filter-bar--status-create [class*="-filter-bar__grid"]{
+    grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  }
+  .dashboard-maintenance .dm-filter-bar--motivo-create .dm-filter-bar__actions,
+  .dashboard-maintenance .dm-filter-bar--status-create .dm-filter-bar__actions{
     flex-wrap: wrap;
   }
 }

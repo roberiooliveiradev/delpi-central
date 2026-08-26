@@ -1,5 +1,6 @@
 import {
   ActionButton,
+  createDashboardFilterCheckboxField,
   createDashboardLoadingActivityCard,
   createDashboardPageHero,
   createDashboardScreenLoading,
@@ -7,6 +8,7 @@ import {
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   FieldLabel,
+  filterCheckboxFieldBemClasses,
   SectionHintLabel,
   titleWithHelpBemClasses,
 } from "@delpi/plugin-ui/index";
@@ -52,3 +54,8 @@ export function MaintenancePageHero(
 }
 
 export const MaintenanceTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
+
+export const MaintenanceFilterCheckboxField = createDashboardFilterCheckboxField({
+  classNames: filterCheckboxFieldBemClasses(UI_PREFIX),
+  labels: { defaultCheckboxLabel: "Ativar" },
+});
