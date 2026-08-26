@@ -525,7 +525,17 @@ export function RelatorioPage({
     setRevisoes([]);
     setRevisoesTotal(0);
     setRevisaoResumo(EMPTY_REVISAO_RESUMO);
+    setSelection(null);
+    setDetailData(null);
+    setActiveTab("alertas");
+    setListTab("alertas");
   }, [filial, alertasTable.resetPage, revisoesTable.resetPage, ultimasTable.resetPage]);
+
+  useEffect(() => {
+    if (activeTab === "detalhe" && !selection) {
+      setActiveTab(listTab);
+    }
+  }, [activeTab, listTab, selection]);
 
   const loadDetail = useCallback(
     async (next: Selection) => {
@@ -590,6 +600,9 @@ export function RelatorioPage({
 
   const handleTabChange = (id: string) => {
     const tab = id as ReportTab;
+    if (tab === "detalhe" && !selection) {
+      return;
+    }
     setActiveTab(tab);
     if (tab === "alertas" || tab === "ultimas" || tab === "revisoes") {
       setListTab(tab);
@@ -598,8 +611,29 @@ export function RelatorioPage({
   };
 
   const handleCloseDetail = () => {
+    setSelection(null);
+    setDetailData(null);
     setActiveTab(listTab);
   };
+
+  const reportTabs = useMemo(
+    () => {
+      const tabs = [
+        { id: "alertas", label: "Alertas por golpes", count: alertasTotal },
+        { id: "revisoes", label: "Revisões programadas", count: revisoesTotal },
+        { id: "ultimas", label: "Últimas reposições", count: ultimasTotal },
+      ];
+      if (selection) {
+        tabs.push({
+          id: "detalhe",
+          label: "Detalhe preventivo",
+          count: 1,
+        });
+      }
+      return tabs;
+    },
+    [alertasTotal, revisoesTotal, ultimasTotal, selection],
+  );
 
   const ultimasColumns = useMemo<DataTableColumn<UltimaReposicaoItem>[]>(
     () => [
@@ -1027,16 +1061,7 @@ export function RelatorioPage({
           ariaLabel="Relatório preventivo"
           activeId={activeTab}
           onChange={handleTabChange}
-          tabs={[
-            { id: "alertas", label: "Alertas por golpes", count: alertasTotal },
-            { id: "revisoes", label: "Revisões programadas", count: revisoesTotal },
-            { id: "ultimas", label: "Últimas reposições", count: ultimasTotal },
-            {
-              id: "detalhe",
-              label: "Detalhe preventivo",
-              count: selection ? 1 : undefined,
-            },
-          ]}
+          tabs={reportTabs}
         />
 
         <div key={activeTab} className="dm-content-transition">
