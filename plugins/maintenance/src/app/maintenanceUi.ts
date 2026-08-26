@@ -10,6 +10,7 @@ import {
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   createDashboardCompareSparkline,
+  createDashboardSeriesSparkline,
   createSimpleKpiCard,
   FieldLabel,
   filterCheckboxFieldBemClasses,
@@ -82,3 +83,5 @@ export const MaintenanceSimpleKpiCard = createSimpleKpiCard(UI_PREFIX, {
 export type MaintenanceSimpleKpiCardProps = DashboardSimpleKpiCardProps;
 
 export const MaintenanceCompareSparkline = createDashboardCompareSparkline({ prefix: UI_PREFIX });
+
+export const MaintenanceSeriesSparkline = createDashboardSeriesSparkline({ prefix: UI_PREFIX });

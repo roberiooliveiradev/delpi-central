@@ -15,6 +15,7 @@ import {
 } from "../shape/colorUtils";
 import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import { FitText } from "./FitText";
+import { SeriesSparkline, seriesSparklineBemClasses } from "../data/SeriesSparkline";
 import { KpiPartResizeHandles } from "./KpiPartResizeHandles";
 import { metricKpiCardBemClasses, type MetricKpiCardTone } from "./MetricKpiCard";
 import {
@@ -284,26 +285,7 @@ export type DelpiKpiCardProps = {
  * Card KPI canônico Delpi composto por primitivos (`card`/`title`/`value`/`hint`/`icon`)
  * com `data-kpi-part` — mesmo padrão de ConfigurableSeriesChart.
  */
-function KpiSparklineSvg({ points }: { points: number[] }) {
-  if (points.length < 2) return null;
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const span = max - min || 1;
-  const w = 100;
-  const h = 36;
-  const d = points
-    .map((point, index) => {
-      const x = (index / (points.length - 1)) * w;
-      const y = h - ((point - min) / span) * (h - 4) - 2;
-      return `${index === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(" ");
-  return (
-    <svg className="delpi-kpi-sparkline__svg" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden>
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
-}
+const DELPI_KPI_SERIES_SPARKLINE = seriesSparklineBemClasses("delpi");
 
 function KpiPartRichEditor({
   partRef,
@@ -835,7 +817,7 @@ export function DelpiKpiCard({
                 onPointerDown={sparklinePtr.onPointerDown}
                 onDoubleClick={sparklinePtr.onDoubleClick}
               >
-                <KpiSparklineSvg points={sparkPoints} />
+                <SeriesSparkline classNames={DELPI_KPI_SERIES_SPARKLINE} points={sparkPoints} />
                 <KpiPartResizeHandles
                   visible={sparklineShowResize}
                   onResizePointerDown={(handle, event) =>

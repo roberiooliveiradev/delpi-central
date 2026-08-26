@@ -18,7 +18,7 @@ import {
 import { DmNativeTextField } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
-import { MaintenanceActionButton, MaintenanceCompareSparkline, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceCompareSparkline, MaintenanceSeriesSparkline, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
 import { RelatorioKpiStrip } from "../../components/RelatorioKpiStrip";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
@@ -27,7 +27,7 @@ import {
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
-import { resolvePreventivaCompareSparklineTone } from "../../utils/preventivaCompareSparklineTone";
+import { resolvePreventivaCompareSparklineTone, resolvePreventivaSeriesSparklineTone } from "../../utils/preventivaCompareSparklineTone";
 import { formatCodigoDescricao } from "../../utils/pecaOptions";
 import {
   fetchPreventivaAlertas,
@@ -627,6 +627,23 @@ export function RelatorioPage({
             aria-label={`Média ${item.media_golpes.toLocaleString("pt-BR")} golpes; atuais ${item.golpes_atuais.toLocaleString("pt-BR")}`}
           />
         ),
+      },
+      {
+        key: "historico_visual",
+        header: "Histórico visual",
+        sortable: false,
+        headerHint: DM_HELP.relatorio.rankingHistoricoVisual,
+        render: (item) => {
+          const points = item.golpes_history ?? [];
+          if (points.length < 2) return "—";
+          return (
+            <MaintenanceSeriesSparkline
+              points={points}
+              tone={resolvePreventivaSeriesSparklineTone(item.status)}
+              aria-label={`Histórico de ${points.length} reposições`}
+            />
+          );
+        },
       },
     ],
     [],

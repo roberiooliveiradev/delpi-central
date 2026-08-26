@@ -402,6 +402,15 @@ export {
   type DashboardCompareSparklineProps,
 } from "./CompareSparkline";
 export {
+  SeriesSparkline,
+  createDashboardSeriesSparkline,
+  seriesSparklineBemClasses,
+  type DashboardSeriesSparklineProps,
+  type SeriesSparklineClassNames,
+  type SeriesSparklineProps,
+  type SeriesSparklineTone,
+} from "./SeriesSparkline";
+export {
   TrendDelta,
   createDashboardTrendDelta,
   formatTrendDeltaPct,
