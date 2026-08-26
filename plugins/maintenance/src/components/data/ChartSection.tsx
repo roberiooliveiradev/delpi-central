@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Maximize2 } from "lucide-react";
 
-import { MaintenanceActionButton } from "../app/maintenanceUi";
+import { MaintenanceActionButton } from "../../app/maintenanceUi";
 import { ChartExpandModal } from "./ChartExpandModal";
 
 type ChartSectionProps = {
