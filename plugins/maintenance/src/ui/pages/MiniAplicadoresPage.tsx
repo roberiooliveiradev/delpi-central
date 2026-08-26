@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Hammer, Loader2, Lock, PlusCircle, RefreshCw } from "lucide-react";
-import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { Hammer, Loader2, PlusCircle, RefreshCw } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell, DataTableSection, FilterBar, MultiSelectField, StateBox } from "../../components/data";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
@@ -11,6 +11,7 @@ import {
 import { useServerTable } from "../../hooks/useServerTable";
 import { FerramentaAuditoriaSection } from "../../components/FerramentaAuditoriaSection";
 import { FerramentasPorPecaSearchCard } from "../../components/FerramentasPorPecaSearchCard";
+import { FerramentasSearchCard } from "../../components/FerramentasSearchCard";
 import { FerramentaOndeUsadoSection } from "../../components/FerramentaOndeUsadoSection";
 import { FerramentaRevisaoProgramadaSection } from "../../components/FerramentaRevisaoProgramadaSection";
 import { ComponentesEstoqueSection } from "../../components/ComponentesEstoqueSection";
@@ -26,22 +27,21 @@ import {
   deleteReposicao,
   fetchAllReposicoes,
   fetchComponentes,
-  fetchFerramentas,
   fetchMotivos,
   fetchReposicoes,
   suggestGolpes,
   updateReposicao,
   type ComponenteItem,
-  type FerramentaItem,
   type MotivoItem,
   type ReposicaoItem,
 } from "../../data/api/maintenanceApi";
-import { MaintenanceActionButton, MaintenanceFieldLabel } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceFieldLabel, MaintenanceSegmentToggle } from "../../app/maintenanceUi";
 import { MaintenanceHeroFreshness } from "../../components/MaintenanceHeroFreshness";
 import { useMaintenanceFreshness } from "../../hooks/useMaintenanceFreshness";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
-import { FerramentaListCard, ReposicaoListCard } from "../../components/listCards/MaintenanceListCards";
+import { ReposicaoListCard } from "../../components/listCards/MaintenanceListCards";
+import { usePersistedSearchMode } from "../../hooks/usePersistedSearchMode";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   fromDatetimeLocalValue,
@@ -88,14 +88,11 @@ export function MiniAplicadoresPage({
   const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
   const { lastUpdatedAt, touchFreshness } = useMaintenanceFreshness();
-  const [descricao, setDescricao] = useState("");
-  const [codigo, setCodigo] = useState("");
-  const [incluirBloqueados, setIncluirBloqueados] = useState(false);
-  const [selectedPecaCodigo, setSelectedPecaCodigo] = useState<string | null>(null);
-  const [selectedPecaDescricao, setSelectedPecaDescricao] = useState("");
-  const [items, setItems] = useState<FerramentaItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const ferramentasTable = useServerTable({ defaultSortKey: "codigo" });
+  const { mode: searchMode, setMode: setSearchMode } = usePersistedSearchMode({
+    storageKey: MAINTENANCE_LIST_LAYOUT_KEYS.searchMode,
+  });
+  const [listRefreshSignal, setListRefreshSignal] = useState(0);
+  const [listLoading, setListLoading] = useState(false);
   const reposicoesTable = useServerTable({ defaultSortKey: "data", defaultSortDirection: "desc" });
   const [estruturaComponentes, setEstruturaComponentes] = useState<ComponenteItem[]>([]);
   const [allReposicoesChart, setAllReposicoesChart] = useState<ReposicaoItem[]>([]);
@@ -122,7 +119,6 @@ export function MiniAplicadoresPage({
   const [filtroHistoricoMotivoDraft, setFiltroHistoricoMotivoDraft] = useState<string[]>([]);
   const [filtroHistoricoDataInicialDraft, setFiltroHistoricoDataInicialDraft] = useState("");
   const [filtroHistoricoDataFinalDraft, setFiltroHistoricoDataFinalDraft] = useState("");
-  const [ferramentasLoading, setFerramentasLoading] = useState(false);
   const [detalheLoading, setDetalheLoading] = useState(false);
   const [reposicoesLoading, setReposicoesLoading] = useState(false);
   const [golpesLoading, setGolpesLoading] = useState(false);
@@ -317,45 +313,6 @@ export function MiniAplicadoresPage({
     },
     [codigoFerramenta, editingReposicaoId, filial, getAccessToken],
   );
-
-  const loadFerramentas = useCallback(async () => {
-    setFerramentasLoading(true);
-    setError(null);
-    try {
-      const data = await fetchFerramentas(
-        {
-          codigo: selectedPecaCodigo ? undefined : codigo.trim() || undefined,
-          descricao: selectedPecaCodigo ? undefined : descricao.trim() || undefined,
-          codigoPeca: selectedPecaCodigo ?? undefined,
-          incluirBloqueados,
-          filial,
-          page: ferramentasTable.query.page,
-          pageSize: ferramentasTable.query.pageSize,
-          sortKey: ferramentasTable.query.sortKey,
-          sortDirection: ferramentasTable.query.sortDirection,
-        },
-        getAccessToken,
-      );
-      setItems(data.items ?? []);
-      setTotal(data.total ?? 0);
-      touchFreshness();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar ferramentas.");
-      setItems([]);
-      setTotal(0);
-    } finally {
-      setFerramentasLoading(false);
-    }
-  }, [
-    codigo,
-    descricao,
-    filial,
-    incluirBloqueados,
-    selectedPecaCodigo,
-    ferramentasTable.query,
-    getAccessToken,
-    touchFreshness,
-  ]);
 
   const loadHistoricoChart = useCallback(
     async (total: number) => {
@@ -554,16 +511,6 @@ export function MiniAplicadoresPage({
 
 
   useEffect(() => {
-    if (codigoFerramenta) return;
-    void loadFerramentas();
-  }, [codigoFerramenta, loadFerramentas]);
-
-  useEffect(() => {
-    if (codigoFerramenta) return;
-    ferramentasTable.resetPage();
-  }, [filial, codigoFerramenta, ferramentasTable.resetPage]);
-
-  useEffect(() => {
     if (!codigoFerramenta || !codigoPeca || !showReposicaoForm || editingReposicaoId) return;
     void refreshSuggestGolpes({
       codigoPecaValue: codigoPeca,
@@ -597,23 +544,6 @@ export function MiniAplicadoresPage({
       current.filter((codigo) => pecasHistorico.some((item) => item.codigo === codigo)),
     );
   }, [pecasHistorico]);
-
-  async function handleSearch(event: React.FormEvent) {
-    event.preventDefault();
-    setSelectedPecaCodigo(null);
-    setSelectedPecaDescricao("");
-    ferramentasTable.resetPage();
-    await loadFerramentas();
-  }
-
-  const handleSelectPeca = useCallback(
-    (peca: { codigo: string; descricao: string } | null) => {
-      setSelectedPecaCodigo(peca?.codigo ?? null);
-      setSelectedPecaDescricao(peca?.descricao ?? "");
-      ferramentasTable.resetPage();
-    },
-    [ferramentasTable.resetPage],
-  );
 
   async function handleSuggestGolpes() {
     if (!codigoFerramenta || !codigoPeca) return;
@@ -727,33 +657,6 @@ export function MiniAplicadoresPage({
     }
   }
 
-  const ferramentasColumns = useMemo<DataTableColumn<FerramentaItem>[]>(
-    () => [
-      {
-        key: "codigo",
-        header: "Código",
-        sortable: true,
-        sortValue: (item) => item.codigo,
-        render: (item) => (
-          <span className="dm-ferramenta-codigo">
-            {item.bloqueado ? (
-              <Lock size={14} className="dm-ferramenta-codigo__lock" aria-hidden="true" />
-            ) : null}
-            <span>{item.codigo}</span>
-          </span>
-        ),
-      },
-      {
-        key: "descricao",
-        header: "Descrição",
-        sortable: true,
-        sortValue: (item) => item.descricao,
-        render: (item) => item.descricao,
-      },
-    ],
-    [],
-  );
-
   const reposicoesColumns = useMemo<DataTableColumn<ReposicaoItem>[]>(() => {
     const columns: DataTableColumn<ReposicaoItem>[] = [
       {
@@ -842,9 +745,11 @@ export function MiniAplicadoresPage({
             <MaintenanceHeroFreshness updatedAt={lastUpdatedAt} />
             <MaintenanceActionButton
               variant="ghost"
-              onClick={() => (codigoFerramenta ? void loadDetalhe() : void loadFerramentas())}
-            disabled={codigoFerramenta ? detalheLoading : ferramentasLoading}
-            aria-busy={codigoFerramenta ? detalheLoading : ferramentasLoading}
+              onClick={() =>
+                codigoFerramenta ? void loadDetalhe() : setListRefreshSignal((current) => current + 1)
+              }
+            disabled={codigoFerramenta ? detalheLoading : listLoading}
+            aria-busy={codigoFerramenta ? detalheLoading : listLoading}
           >
             <RefreshCw
               size={16}
@@ -853,7 +758,7 @@ export function MiniAplicadoresPage({
                   ? detalheLoading
                     ? "dm-spin"
                     : undefined
-                  : ferramentasLoading
+                  : listLoading
                     ? "dm-spin"
                     : undefined
               }
@@ -869,88 +774,40 @@ export function MiniAplicadoresPage({
 
       {!codigoFerramenta ? (
         <>
-          <FerramentasPorPecaSearchCard
-            filial={filial}
-            selectedPecaCodigo={selectedPecaCodigo}
-            onSelectPeca={handleSelectPeca}
-            getAccessToken={getAccessToken}
-          />
-
-          <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
-            <DmNativeTextField
-              id="dm-busca-ferramenta-codigo"
-              label="Buscar por código"
-              hint={DM_HELP.miniAplicadores.buscaFerramentaCodigo}
-              value={codigo}
-              onChange={setCodigo}
-              placeholder="Ex.: 23 ou 23-026"
+          <div className="dm-search-mode-bar">
+            <MaintenanceSegmentToggle
+              ariaLabel="Modo de busca de ferramentas"
+              idPrefix="dm-ma-search-mode"
+              value={searchMode}
+              onChange={setSearchMode}
+              options={[
+                { value: "tool", label: "Por ferramenta" },
+                { value: "part", label: "Por peça" },
+              ]}
             />
-            <DmNativeTextField
-              id="dm-busca-ferramenta-descricao"
-              label="Buscar por descrição"
-              hint={DM_HELP.miniAplicadores.buscaFerramentaDescricao}
-              value={descricao}
-              onChange={setDescricao}
-              placeholder="Ex.: 23-"
+          </div>
+
+          {searchMode === "tool" ? (
+            <FerramentasSearchCard
+              filial={filial}
+              getAccessToken={getAccessToken}
+              onNavigateToFerramenta={(codigo) =>
+                onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(codigo))
+              }
+              refreshSignal={listRefreshSignal}
+              onLoadingChange={setListLoading}
             />
-            <div className="dm-filter-bar__actions">
-              <NativeCheckboxControl
-                className="dm-checkbox-field"
-                checked={incluirBloqueados}
-                onChange={(checked) => {
-                  setIncluirBloqueados(checked);
-                  ferramentasTable.resetPage();
-                }}
-                label="Mostrar bloqueadas"
-              />
-              <MaintenanceActionButton type="submit" variant="primary">
-                Buscar
-              </MaintenanceActionButton>
-            </div>
-          </FilterBar>
-
-          {error ? (
-            <StateBox variant="error" onDismiss={() => setError(null)}>
-              {error}
-            </StateBox>
-          ) : null}
-
-          <DataTableSection
-            columnPreferencesKey="maintenance:MiniAplicadoresPage:miniaplicadorespage:v1"
-            fontSizePreferencesKey="maintenance:mini-aplicadores:lista:table-font-size:v1"
-            title={
-              selectedPecaCodigo
-                ? `Ferramentas com peça ${formatPecaLabel({
-                    codigo: selectedPecaCodigo,
-                    descricao: selectedPecaDescricao,
-                  })}`
-                : "Ferramentas"
-            }
-            titleHint={DM_HELP.miniAplicadores.listaTitle}
-            columns={ferramentasColumns}
-            rows={items}
-            loading={ferramentasLoading}
-            emptyMessage="Nenhuma ferramenta encontrada."
-            getRowKey={(item) => item.codigo}
-            getRowClassName={(item) => (item.bloqueado ? "is-blocked" : undefined)}
-            onRowClick={(item) => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
-            viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.ferramentas}
-            renderCard={(item) => (
-              <FerramentaListCard
-                item={item}
-                onActivate={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(item.codigo))}
-              />
-            )}
-            serverTable={{
-              page: ferramentasTable.query.page,
-              pageSize: ferramentasTable.query.pageSize,
-              total,
-              onPageChange: ferramentasTable.setPage,
-              sortKey: ferramentasTable.query.sortKey,
-              sortDirection: ferramentasTable.query.sortDirection,
-              onSortChange: ferramentasTable.handleSortChange,
-            }}
-          />
+          ) : (
+            <FerramentasPorPecaSearchCard
+              filial={filial}
+              getAccessToken={getAccessToken}
+              onNavigateToFerramenta={(codigo) =>
+                onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(codigo))
+              }
+              refreshSignal={listRefreshSignal}
+              onLoadingChange={setListLoading}
+            />
+          )}
         </>
       ) : (
         <>

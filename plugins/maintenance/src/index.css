@@ -97,6 +97,88 @@
 }.dashboard-maintenance .delpi-ui-page-hero,
 .dashboard-maintenance .dm-page-hero{
   margin-bottom: var(--dm-section-gap);
+}.dashboard-maintenance .dm-search-mode-bar{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}.dashboard-maintenance .dm-peca-ferramentas-tree{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px 16px;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__count{
+  margin: 0;
+  color: var(--dm-text-muted);
+  font-size: var(--dm-font-sm);
+}.dashboard-maintenance .dm-peca-ferramentas-tree__list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__item{
+  border: 1px solid var(--dm-border-subtle);
+  border-radius: var(--dm-radius-md);
+  background: var(--dm-card-bg);
+  overflow: hidden;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__peca-trigger{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--dm-text);
+  text-align: left;
+  cursor: pointer;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__peca-trigger:hover,
+.dashboard-maintenance .dm-peca-ferramentas-tree__peca-trigger:focus-visible{
+  background: color-mix(in srgb, var(--dm-accent) 8%, transparent);
+}.dashboard-maintenance .dm-peca-ferramentas-tree__peca-label{
+  font-weight: 600;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__branch-list{
+  list-style: none;
+  margin: 0;
+  padding: 0 12px 12px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__ferramenta{
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--dm-radius-sm);
+  background: color-mix(in srgb, var(--dm-surface-muted) 70%, transparent);
+  color: var(--dm-text);
+  text-align: left;
+  cursor: pointer;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__ferramenta:hover,
+.dashboard-maintenance .dm-peca-ferramentas-tree__ferramenta:focus-visible{
+  background: color-mix(in srgb, var(--dm-accent) 10%, var(--dm-surface-muted));
+}.dashboard-maintenance .dm-peca-ferramentas-tree__ferramenta-codigo{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}.dashboard-maintenance .dm-peca-ferramentas-tree__ferramenta-desc{
+  color: var(--dm-text-muted);
+}.dashboard-maintenance .dm-peca-ferramentas-tree__branch-state{
+  padding: 8px 12px 12px 36px;
+  color: var(--dm-text-muted);
+  font-size: var(--dm-font-sm);
+}.dashboard-maintenance .dm-peca-ferramentas-tree__branch-state--error{
+  color: var(--dm-danger);
+}.dashboard-maintenance .dm-peca-ferramentas-tree__bulk-actions{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }.dashboard-maintenance .dm-page-hero .dm-page-hero__title {
   display: inline-flex;
   align-items: center;

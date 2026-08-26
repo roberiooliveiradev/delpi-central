@@ -69,6 +69,13 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 
 **Freshness:** páginas com refresh manual (Relatório, lista de ferramentas, Filiais) exibem «Atualizado às HH:mm» ao lado do botão Atualizar no hero.
 
+**Busca de ferramentas (lista Mini-aplicadores):**
+
+- Toggle persistido **Por ferramenta** (default) × **Por peça** (`localStorage`: `maintenance:MiniAplicadoresPage:search-mode:v1`).
+- Modo **ferramenta:** card colapsável `FerramentasSearchCard` — filtros horizontais + tabela/cards no mesmo card (`toolbarFilters` do kit).
+- Modo **peça:** card `FerramentasPorPecaSearchCard` — filtros de peça 3019 + árvore accordion (lazy fetch das ferramentas ao expandir; **Expandir tudo / Recolher tudo** na página atual). Auto-expand só após «Buscar peças» com código ou descrição preenchidos.
+- Respiro entre `PageHero` e conteúdo: `margin-bottom: var(--dm-section-gap)` em todas as páginas do MFE.
+
 **Paginação server-side:** todas as tabelas do MFE usam `serverTable` + `DataTableSection.serverTable` (`page`, `page_size`, `sort_by`, `sort_dir` + filtros na API). Ao paginar ou ordenar, só a tabela entra em loading — a página não recarrega.
 
 **Reposição (detalhe da ferramenta):**

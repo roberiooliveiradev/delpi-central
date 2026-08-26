@@ -25,16 +25,6 @@
     "id": "nivel"
   },
   {
-    "file": "components/FerramentasPorPecaSearchCard.tsx",
-    "kind": "column",
-    "id": "codigo"
-  },
-  {
-    "file": "components/FerramentasPorPecaSearchCard.tsx",
-    "kind": "column",
-    "id": "descricao"
-  },
-  {
     "file": "ui/pages/FiliaisPage.tsx",
     "kind": "column",
     "id": "codigo"
@@ -48,16 +38,6 @@
     "file": "ui/pages/FiliaisPage.tsx",
     "kind": "column",
     "id": "status"
-  },
-  {
-    "file": "ui/pages/MiniAplicadoresPage.tsx",
-    "kind": "column",
-    "id": "codigo"
-  },
-  {
-    "file": "ui/pages/MiniAplicadoresPage.tsx",
-    "kind": "column",
-    "id": "descricao"
   },
   {
     "file": "ui/pages/ProgramasMaquinasPage.tsx",

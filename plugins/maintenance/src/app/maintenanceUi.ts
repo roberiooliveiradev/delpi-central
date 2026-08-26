@@ -5,6 +5,7 @@ import {
   createDashboardLoadingActivityCard,
   createDashboardPageHero,
   createDashboardScreenLoading,
+  createDashboardSegmentToggle,
   createDashboardStatusBadge,
   createDashboardTabularExportButtons,
   createDashboardTableFontSizeControls,
@@ -93,3 +94,5 @@ export const MaintenanceSeriesSparkline = createDashboardSeriesSparkline({ prefi
 export const MaintenanceTableFontSizeControls = createDashboardTableFontSizeControls({
   prefix: UI_PREFIX,
 });
+
+export const MaintenanceSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
