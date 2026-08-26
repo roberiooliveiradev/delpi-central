@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "node --test src/content/helpCoverage.structural.test.mjs",
+    "audit:helps": "node scripts/audit_help_coverage.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

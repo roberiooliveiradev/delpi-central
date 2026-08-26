@@ -130,7 +130,16 @@ Textos em [`src/content/helpTooltips.ts`](src/content/helpTooltips.ts) (`DM_HELP
 Gate de cobertura:
 
 ```bash
-node plugins/maintenance/src/content/helpCoverage.structural.test.mjs
+cd plugins/maintenance
+npm run audit:helps
+npm test
+```
+
+Ou diretamente:
+
+```bash
+node plugins/maintenance/scripts/audit_help_coverage.mjs
+node --test plugins/maintenance/src/content/helpCoverage.structural.test.mjs
 ```
 
 Inventário: [HELP-COVERAGE.md](../../docs/12-roadmap-e-evolucao/maintenance/HELP-COVERAGE.md).
