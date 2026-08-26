@@ -1,0 +1,100 @@
+/**
+ * EmptyGuidance — panel (inbox sidebar) and canvas (thread) empty hints.
+ */
+
+.delpi-ui-empty-guidance {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.delpi-ui-empty-guidance--panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1rem 0.85rem;
+  border-radius: 0.5rem;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface-muted, var(--surface-muted, #f1f5f9)) 72%,
+    transparent
+  );
+}
+
+.delpi-ui-empty-guidance--panel .delpi-ui-empty-guidance__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--delpi-ui-text, var(--foreground, #0f172a));
+}
+
+.delpi-ui-empty-guidance--panel .delpi-ui-empty-guidance__message {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--delpi-ui-text-muted, var(--muted-foreground, #64748b));
+}
+
+.delpi-ui-empty-guidance--canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 100%;
+  padding: 2.75rem 1.5rem;
+  text-align: center;
+  user-select: none;
+}
+
+.delpi-ui-empty-guidance--canvas .delpi-ui-empty-guidance__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.45rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #64748b));
+  opacity: var(--delpi-ui-soft-empty-icon-opacity, 0.36);
+}
+
+.delpi-ui-empty-guidance--canvas .delpi-ui-empty-guidance__icon svg {
+  width: var(--delpi-ui-soft-empty-icon-size, 2.75rem);
+  height: var(--delpi-ui-soft-empty-icon-size, 2.75rem);
+  stroke-width: 1.15;
+}
+
+.delpi-ui-empty-guidance--canvas .delpi-ui-empty-guidance__title {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-text-muted, var(--delpi-ui-muted, #94a3b8)) 88%,
+    transparent
+  );
+}
+
+.delpi-ui-empty-guidance--canvas .delpi-ui-empty-guidance__message {
+  margin: 0;
+  max-width: 20rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-text-muted, var(--delpi-ui-muted, #94a3b8)) 58%,
+    transparent
+  );
+}
+
+.delpi-ui-empty-guidance__actions {
+  pointer-events: auto;
+  margin-top: 0.35rem;
+}
+
+.delpi-ui-empty-guidance--canvas .delpi-ui-empty-guidance__actions {
+  margin-top: 0.65rem;
+}

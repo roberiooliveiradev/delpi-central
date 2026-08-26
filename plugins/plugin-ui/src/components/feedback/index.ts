@@ -69,6 +69,15 @@ export {
   type SoftEmptyStateProps,
 } from "./SoftEmptyState";
 export {
+  EmptyGuidance,
+  createDashboardEmptyGuidance,
+  emptyGuidanceBemClasses,
+  type DashboardEmptyGuidanceProps,
+  type EmptyGuidanceClassNames,
+  type EmptyGuidanceProps,
+  type EmptyGuidanceVariant,
+} from "./EmptyGuidance";
+export {
   useConfirmDialogController,
   unsavedChangesDialogOptions,
   type ConfirmDialogOptions,

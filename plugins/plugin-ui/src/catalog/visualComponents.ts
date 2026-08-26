@@ -168,6 +168,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("layout", "FitText"),
   // feedback
   vc("feedback", "EmptyState"),
+  vc("feedback", "EmptyGuidance", {
+    addedAt: "2026-08-26",
+    changeNote: "Unified panel/canvas empty hints for collaboration surfaces",
+  }),
   vc("feedback", "LoadingState"),
   vc("feedback", "ScreenLoading", {
     addedAt: "2026-07-28",

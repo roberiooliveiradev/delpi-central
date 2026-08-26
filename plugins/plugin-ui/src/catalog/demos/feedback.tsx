@@ -1,4 +1,4 @@
-import { Activity, Info } from "lucide-react";
+import { Activity, Info, MessageSquare } from "lucide-react";
 import { useState } from "react";
 
 import { PUC_DASHBOARD_ROOT, PUC_PREFIX } from "../../app/bemPrefix";
@@ -9,6 +9,8 @@ import {
   drawerShellBemClasses,
   EmptyState,
   emptyStatePanelBemClasses,
+  EmptyGuidance,
+  emptyGuidanceBemClasses,
   InfoStatePanel,
   infoStateBemClasses,
   LoadingActivityCard,
@@ -32,6 +34,7 @@ import {
 import type { CatalogEntryDraft } from "../types";
 
 const emptyCn = emptyStatePanelBemClasses(PUC_PREFIX);
+const emptyGuidanceCn = emptyGuidanceBemClasses(PUC_PREFIX);
 const loadingCn = loadingStatePanelBemClasses(PUC_PREFIX);
 const bannerCn = stateBannerBemClasses(PUC_PREFIX);
 const badgeCn = statusBadgeBemClasses(PUC_PREFIX);
@@ -64,6 +67,44 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
             classNames={emptyCn}
             defaultMessage="Sem itens."
           />
+        ),
+      },
+    ],
+  },
+  {
+    id: "feedback.EmptyGuidance",
+    family: "feedback",
+    exportName: "EmptyGuidance",
+    title: "EmptyGuidance",
+    description: "Aviso vazio unificado: painel (inbox) ou canvas (thread).",
+    docAnchor: "emptyguidance",
+    propsSummary: ["variant", "title", "message", "icon", "children"],
+    demos: [
+      {
+        id: "panel",
+        label: "Panel",
+        render: () => (
+          <EmptyGuidance
+            variant="panel"
+            title="Nenhuma conversa"
+            message="Quando alguém iniciar um chat, aparecerá aqui."
+            classNames={emptyGuidanceCn}
+          />
+        ),
+      },
+      {
+        id: "canvas",
+        label: "Canvas",
+        render: () => (
+          <div style={{ minHeight: 220, display: "flex" }}>
+            <EmptyGuidance
+              variant="canvas"
+              title="Selecione uma conversa"
+              message="Escolha na lista ou crie uma nova sala."
+              icon={<MessageSquare />}
+              classNames={emptyGuidanceCn}
+            />
+          </div>
         ),
       },
     ],
