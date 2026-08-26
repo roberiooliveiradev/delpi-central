@@ -68,6 +68,15 @@ export type CommercialRoomPinEvent = {
   actorClientId?: string | null;
 };
 
+export type CommercialRoomUpdatedEvent = {
+  type: "room.updated";
+  roomId: string;
+  title?: string;
+  actorUserId?: string | null;
+  actorDisplayName?: string | null;
+  actorClientId?: string | null;
+};
+
 export type CommercialRoomDeletedEvent = {
   type: "room.deleted";
   roomId: string;
@@ -101,6 +110,7 @@ export type CommercialInteractionRoomEvent =
   | CommercialRoomMentionEvent
   | CommercialRoomAttachmentEvent
   | CommercialRoomPinEvent
+  | CommercialRoomUpdatedEvent
   | CommercialRoomDeletedEvent
   | CommercialRoomInboxChangedEvent;
 
@@ -110,6 +120,7 @@ const ROOM_FANOUT_TYPES = new Set([
   "room.message.deleted",
   "room.reaction",
   "room.pin",
+  "room.updated",
   "room.deleted",
   "room.inbox.changed",
 ]);

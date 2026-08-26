@@ -28,7 +28,9 @@ import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import { resolveThreadLoadingState } from "./interactionRoomLoadingState";
 import {
-  interactionRoomNoticeVariantForComposerKind,
+  formatInteractionRoomPinByOtherNotice,
+  formatInteractionRoomReactionByOtherNotice,
+  isInteractionRoomOwnActor,
   type InteractionRoomComposerNoticeKind,
 } from "./interactionRoomNoticePolicy";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
@@ -185,10 +187,9 @@ export function InteractionRoomPage({
   }, []);
 
   const onRoomRealtimeEvent = useCallback((event: CommercialInteractionRoomEvent) => {
+    const selfClientId = getCommercialClientId();
     if (event.type === "room.deleted") {
-      const self = (getCommercialClientId() || "").trim();
-      const actor = (event.actorClientId || "").trim();
-      if (self && actor && self === actor) return;
+      if (isInteractionRoomOwnActor(event.actorClientId, selfClientId)) return;
       setRoom(null);
       onRoomTitle?.(null);
       setMembers([]);
@@ -199,13 +200,40 @@ export function InteractionRoomPage({
       if (href) navigatePluginPath(href);
       return;
     }
+    if (event.type === "room.updated") {
+      const title = (event.title || "").trim();
+      if (title) {
+        setRoom((prev) => (prev ? { ...prev, title } : prev));
+        onRoomTitle?.(title);
+      }
+      return;
+    }
+    if (
+      event.type === "room.pin" &&
+      !isInteractionRoomOwnActor(event.actorClientId, selfClientId)
+    ) {
+      notifyInfo(
+        formatInteractionRoomPinByOtherNotice(event.actorDisplayName || ""),
+      );
+    }
+    if (
+      event.type === "room.reaction" &&
+      !isInteractionRoomOwnActor(event.actorClientId, selfClientId)
+    ) {
+      notifyInfo(
+        formatInteractionRoomReactionByOtherNotice(
+          event.actorDisplayName || "",
+          event.code || "",
+        ),
+      );
+    }
     if (event.type === "room.attachment") {
       const messageId = (event.messageId || "").trim();
       if (messageId) bumpMessageAttachments(messageId);
       return;
     }
     const next = applyInteractionRoomRealtime(threadRef.current, event, {
-      ignoreActorClientId: getCommercialClientId(),
+      ignoreActorClientId: selfClientId,
     });
     threadRef.current = next;
     setMessages(next.messages);
@@ -215,6 +243,7 @@ export function InteractionRoomPage({
     basePath,
     onRoomTitle,
     notifyError,
+    notifyInfo,
     content.deleteRoomDeletedElsewhere,
   ]);
 
@@ -442,7 +471,7 @@ export function InteractionRoomPage({
       message: content.deleteRoomConfirmMessage,
       confirmLabel: content.deleteRoomConfirmLabel,
       cancelLabel: content.deleteRoomCancelLabel,
-      variant: "error",
+      variant: "danger",
     });
     if (!ok) return;
     setDeletingRoomId(id);

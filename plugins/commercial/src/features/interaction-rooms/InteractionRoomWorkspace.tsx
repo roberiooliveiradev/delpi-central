@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { InteractionInboxFilter } from "../../api/interactionRoomsApi";
-import { CommercialResizableColumns, CommercialViewTransition } from "../../app/commercialUi";
+import { CommercialResizableColumns, CommercialStateBanner, CommercialViewTransition } from "../../app/commercialUi";
+import { useCommercialRealtime } from "../../app/CommercialRealtimeProvider";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   buildInteractionRoomPath,
@@ -34,6 +35,7 @@ export function InteractionRoomWorkspace({
   search,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
+  const { connectionError } = useCommercialRealtime();
   const parsed = parseInteractionRoomSearch(search);
   const [filter, setFilter] = useState<InteractionInboxFilter>(parsed.filter);
   const [query, setQuery] = useState(parsed.q);
@@ -92,6 +94,11 @@ export function InteractionRoomWorkspace({
 
   return (
     <section className="cm-room-workspace">
+      {connectionError ? (
+        <CommercialStateBanner variant="warning">
+          {content.roomConnectionErrorBanner}
+        </CommercialStateBanner>
+      ) : null}
       <div className="cm-room-workspace__grid">
         <CommercialViewTransition
           transitionKey={

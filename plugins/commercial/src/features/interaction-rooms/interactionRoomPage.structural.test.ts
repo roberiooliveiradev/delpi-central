@@ -74,7 +74,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/scrollThreadMessageIntoView/);
     expect(source).toMatch(/shouldStickThreadToBottom/);
     expect(source).toMatch(/useInteractionRoomSync/);
-    expect(source).toMatch(/applyInteractionRoomRealtime/);
+    expect(source).toMatch(/room\.updated/);
+    expect(source).toMatch(/formatInteractionRoomPinByOtherNotice/);
     expect(source).not.toMatch(/cm-message-bubble/);
     expect(source).toMatch(/mode=\{editingMessageId \? "edit" : "compose"\}/);
     expect(source).toMatch(/editBanner=\{editBanner\}/);

@@ -110,13 +110,19 @@ describe("applyInteractionRoomRealtime", () => {
     });
     expect(inbox).toBe(cleared);
   });
-});
 
-  it("ignora room.deleted (navegação fica no host)", () => {
-    const next = applyInteractionRoomRealtime(
-      { messages: [base], pinnedMessageIds: new Set(["m1"]) },
-      { type: "room.deleted", roomId: "r1" },
-    );
-    expect(next.messages).toHaveLength(1);
-    expect(next.pinnedMessageIds.has("m1")).toBe(true);
+  it("ignora room.deleted e room.updated (host trata)", () => {
+    const state = { messages: [base], pinnedMessageIds: new Set(["m1"]) };
+    const deleted = applyInteractionRoomRealtime(state, {
+      type: "room.deleted",
+      roomId: "r1",
+    });
+    expect(deleted).toBe(state);
+    const updated = applyInteractionRoomRealtime(state, {
+      type: "room.updated",
+      roomId: "r1",
+      title: "Novo título",
+    });
+    expect(updated).toBe(state);
   });
+});

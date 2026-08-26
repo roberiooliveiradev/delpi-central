@@ -21,7 +21,8 @@ describe("InteractionRoomWorkspace", () => {
     expect(workspace).not.toMatch(/CommercialPagePath/);
     expect(workspace).not.toMatch(/CommercialUnderlineNav/);
     expect(workspace).not.toMatch(/selectRoomTitle/);
-    expect(workspace).toMatch(/CommercialViewTransition/);
+    expect(workspace).toMatch(/roomConnectionErrorBanner/);
+    expect(workspace).toMatch(/CommercialStateBanner/);
     expect(workspace).toMatch(/inbox-full/);
     expect(app).toMatch(/InteractionRoomWorkspace/);
     expect(app).toMatch(/interaction_room_detail/);
