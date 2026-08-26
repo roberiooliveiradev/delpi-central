@@ -1,6 +1,8 @@
 import {
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useRef,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -10,7 +12,6 @@ import {
   MEETING_INK_WIDTH_PX,
   type MeetingAnnotationTool,
   type MeetingInkStroke,
-  type MeetingLaserState,
   type MeetingNormPoint,
 } from "./meetingAnnotationTypes";
 import {
@@ -21,24 +22,37 @@ import {
 } from "./meetingInkModel";
 import "./meeting-annotation.css";
 
+export type MeetingRemoteLaserEvent = {
+  clientId: string;
+  slideId: string;
+  x: number;
+  y: number;
+  visible: boolean;
+};
+
+export type MeetingAnnotationOverlayHandle = {
+  paintRemoteLaser: (event: MeetingRemoteLaserEvent) => void;
+  clearLasersForSlide: (slideId: string) => void;
+};
+
 export type MeetingAnnotationOverlayProps = {
   enabled: boolean;
   slideId: string;
   clientId: string;
   tool: MeetingAnnotationTool;
   strokes: MeetingInkStroke[];
-  lasers: MeetingLaserState[];
   onLocalStroke: (event: {
     strokeId: string;
     phase: "start" | "move" | "end";
     points: MeetingNormPoint[];
   }) => void;
-  onLocalLaser: (event: { x: number; y: number; visible: boolean }) => void;
+  /** Throttled network publish only — local paint is DOM/rAF, no parent setState. */
+  onLocalLaserNetwork: (event: { x: number; y: number; visible: boolean }) => void;
 };
 
 /** Idle sem movimento some o laser (estilo PowerPoint). */
 const LASER_IDLE_HIDE_MS = 1800;
-const LASER_MOVE_THROTTLE_MS = 16;
+const LASER_NETWORK_THROTTLE_MS = 90;
 
 function pointerToNorm(
   event: ReactPointerEvent<HTMLDivElement>,
@@ -50,31 +64,130 @@ function pointerToNorm(
   return normalizeMeetingPoint((event.clientX - rect.left) / w, (event.clientY - rect.top) / h);
 }
 
+type RemoteLaserEntry = {
+  slideId: string;
+  x: number;
+  y: number;
+  visible: boolean;
+};
+
 /**
  * Overlay efêmero de caneta/laser (modo reunião).
- * Laser: segue o cursor com a ferramenta ativa (sem precisar segurar o clique).
- * Estado só em memória React — F5 limpa.
+ * Laser: paint local/remoto via DOM + rAF — sem re-render do deck por movimento.
  */
-export function MeetingAnnotationOverlay({
-  enabled,
-  slideId,
-  clientId,
-  tool,
-  strokes,
-  lasers,
-  onLocalStroke,
-  onLocalLaser,
-}: MeetingAnnotationOverlayProps) {
+export const MeetingAnnotationOverlay = forwardRef<
+  MeetingAnnotationOverlayHandle,
+  MeetingAnnotationOverlayProps
+>(function MeetingAnnotationOverlay(
+  {
+    enabled,
+    slideId,
+    clientId,
+    tool,
+    strokes,
+    onLocalStroke,
+    onLocalLaserNetwork,
+  },
+  ref,
+) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const localLaserRef = useRef<HTMLSpanElement>(null);
+  const remoteLayerRef = useRef<HTMLDivElement>(null);
+  const remoteLaserElsRef = useRef<Map<string, HTMLSpanElement>>(new Map());
+  const remoteLaserStateRef = useRef<Map<string, RemoteLaserEntry>>(new Map());
   const drawingRef = useRef<{ strokeId: string; pointerId: number } | null>(null);
-  const lastMoveAtRef = useRef(0);
   const laserIdleTimerRef = useRef<number | null>(null);
-  const onLocalLaserRef = useRef(onLocalLaser);
-  onLocalLaserRef.current = onLocalLaser;
+  const paintRafRef = useRef<number | null>(null);
+  const localLaserVisibleRef = useRef(false);
+  const localLaserPointRef = useRef<MeetingNormPoint>({ x: 0.5, y: 0.5 });
+  const lastNetworkAtRef = useRef(0);
+  const pendingNetworkRef = useRef<{ x: number; y: number; visible: boolean } | null>(null);
+  const networkTimerRef = useRef<number | null>(null);
+  const onLocalLaserNetworkRef = useRef(onLocalLaserNetwork);
+  onLocalLaserNetworkRef.current = onLocalLaserNetwork;
 
   useEffect(() => {
     drawingRef.current = null;
   }, [slideId]);
+
+  const applyLaserTransform = useCallback(
+    (el: HTMLSpanElement, point: MeetingNormPoint, root: HTMLDivElement) => {
+      const w = root.clientWidth || 1;
+      const h = root.clientHeight || 1;
+      el.style.transform = `translate3d(${point.x * w}px, ${point.y * h}px, 0) translate(-50%, -50%)`;
+    },
+    [],
+  );
+
+  const paintLasers = useCallback(() => {
+    paintRafRef.current = null;
+    const root = rootRef.current;
+    const localEl = localLaserRef.current;
+    if (!root) return;
+
+    if (localEl) {
+      localEl.style.opacity = localLaserVisibleRef.current ? "1" : "0";
+      if (localLaserVisibleRef.current) {
+        applyLaserTransform(localEl, localLaserPointRef.current, root);
+      }
+    }
+
+    const layer = remoteLayerRef.current;
+    if (!layer) return;
+
+    for (const [remoteClientId, state] of remoteLaserStateRef.current) {
+      let el = remoteLaserElsRef.current.get(remoteClientId);
+      if (!el) {
+        el = document.createElement("span");
+        el.className = "tdp-meeting-annotation__laser";
+        el.dataset.clientId = remoteClientId;
+        layer.appendChild(el);
+        remoteLaserElsRef.current.set(remoteClientId, el);
+      }
+      const show = state.visible && state.slideId === slideId;
+      el.style.opacity = show ? "1" : "0";
+      if (show) {
+        applyLaserTransform(el, { x: state.x, y: state.y }, root);
+      }
+    }
+  }, [applyLaserTransform, slideId]);
+
+  const scheduleLaserPaint = useCallback(() => {
+    if (paintRafRef.current != null) return;
+    paintRafRef.current = window.requestAnimationFrame(paintLasers);
+  }, [paintLasers]);
+
+  useEffect(() => {
+    scheduleLaserPaint();
+  }, [slideId, scheduleLaserPaint]);
+
+  const flushLaserNetwork = useCallback(() => {
+    networkTimerRef.current = null;
+    const pending = pendingNetworkRef.current;
+    if (!pending) return;
+    pendingNetworkRef.current = null;
+    lastNetworkAtRef.current = performance.now();
+    onLocalLaserNetworkRef.current(pending);
+  }, []);
+
+  const emitLaserNetwork = useCallback(
+    (event: { x: number; y: number; visible: boolean }) => {
+      pendingNetworkRef.current = event;
+      const now = performance.now();
+      const elapsed = now - lastNetworkAtRef.current;
+      if (elapsed >= LASER_NETWORK_THROTTLE_MS) {
+        flushLaserNetwork();
+        return;
+      }
+      if (networkTimerRef.current == null) {
+        networkTimerRef.current = window.setTimeout(
+          flushLaserNetwork,
+          LASER_NETWORK_THROTTLE_MS - elapsed,
+        );
+      }
+    },
+    [flushLaserNetwork],
+  );
 
   const clearLaserIdleTimer = useCallback(() => {
     if (laserIdleTimerRef.current != null) {
@@ -83,34 +196,80 @@ export function MeetingAnnotationOverlay({
     }
   }, []);
 
-  const endLaser = useCallback(() => {
+  const hideLocalLaser = useCallback(() => {
     clearLaserIdleTimer();
-    onLocalLaserRef.current({ x: 0.5, y: 0.5, visible: false });
-  }, [clearLaserIdleTimer]);
+    localLaserVisibleRef.current = false;
+    scheduleLaserPaint();
+    emitLaserNetwork({ x: localLaserPointRef.current.x, y: localLaserPointRef.current.y, visible: false });
+  }, [clearLaserIdleTimer, emitLaserNetwork, scheduleLaserPaint]);
 
-  const showLaserAt = useCallback(
+  const showLocalLaserAt = useCallback(
     (point: MeetingNormPoint) => {
-      onLocalLaserRef.current({ ...point, visible: true });
+      localLaserPointRef.current = point;
+      localLaserVisibleRef.current = true;
+      scheduleLaserPaint();
+      emitLaserNetwork({ ...point, visible: true });
       clearLaserIdleTimer();
       laserIdleTimerRef.current = window.setTimeout(() => {
         laserIdleTimerRef.current = null;
-        onLocalLaserRef.current({ ...point, visible: false });
+        localLaserVisibleRef.current = false;
+        scheduleLaserPaint();
+        emitLaserNetwork({ ...point, visible: false });
       }, LASER_IDLE_HIDE_MS);
     },
-    [clearLaserIdleTimer],
+    [clearLaserIdleTimer, emitLaserNetwork, scheduleLaserPaint],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      paintRemoteLaser: (event: MeetingRemoteLaserEvent) => {
+        if (event.clientId === clientId) return;
+        if (!event.visible) {
+          remoteLaserStateRef.current.delete(event.clientId);
+          const el = remoteLaserElsRef.current.get(event.clientId);
+          if (el) el.style.opacity = "0";
+          return;
+        }
+        remoteLaserStateRef.current.set(event.clientId, {
+          slideId: event.slideId,
+          x: event.x,
+          y: event.y,
+          visible: true,
+        });
+        scheduleLaserPaint();
+      },
+      clearLasersForSlide: (targetSlideId: string) => {
+        for (const [remoteClientId, state] of remoteLaserStateRef.current) {
+          if (state.slideId !== targetSlideId) continue;
+          state.visible = false;
+          const el = remoteLaserElsRef.current.get(remoteClientId);
+          if (el) el.style.opacity = "0";
+        }
+        scheduleLaserPaint();
+      },
+    }),
+    [clientId, scheduleLaserPaint],
   );
 
   useEffect(() => {
     if (tool !== "laser") {
-      endLaser();
+      hideLocalLaser();
     }
-    return () => clearLaserIdleTimer();
-  }, [tool, endLaser, clearLaserIdleTimer]);
+    return () => {
+      clearLaserIdleTimer();
+      if (networkTimerRef.current != null) {
+        window.clearTimeout(networkTimerRef.current);
+        networkTimerRef.current = null;
+      }
+      if (paintRafRef.current != null) {
+        window.cancelAnimationFrame(paintRafRef.current);
+        paintRafRef.current = null;
+      }
+    };
+  }, [tool, hideLocalLaser, clearLaserIdleTimer]);
 
   const visibleStrokes = strokesForSlide(strokes, slideId);
-  const visibleLasers = lasers.filter(
-    (laser) => laser.visible && laser.slideId === slideId,
-  );
 
   if (!enabled) return null;
 
@@ -131,9 +290,7 @@ export function MeetingAnnotationOverlay({
       onPointerDown={(event) => {
         if (!interactive || !rootRef.current) return;
         if (tool === "laser") {
-          // Laser segue hover — clique só reposiciona; não captura (evita sumir no up).
-          const point = pointerToNorm(event, rootRef.current);
-          showLaserAt(point);
+          showLocalLaserAt(pointerToNorm(event, rootRef.current));
           return;
         }
         event.preventDefault();
@@ -146,10 +303,7 @@ export function MeetingAnnotationOverlay({
       onPointerMove={(event) => {
         if (!interactive || !rootRef.current) return;
         if (tool === "laser") {
-          const now = performance.now();
-          if (now - lastMoveAtRef.current < LASER_MOVE_THROTTLE_MS) return;
-          lastMoveAtRef.current = now;
-          showLaserAt(pointerToNorm(event, rootRef.current));
+          showLocalLaserAt(pointerToNorm(event, rootRef.current));
           return;
         }
         const drawing = drawingRef.current;
@@ -159,7 +313,7 @@ export function MeetingAnnotationOverlay({
       }}
       onPointerEnter={(event) => {
         if (tool !== "laser" || !rootRef.current) return;
-        showLaserAt(pointerToNorm(event, rootRef.current));
+        showLocalLaserAt(pointerToNorm(event, rootRef.current));
       }}
       onPointerUp={(event) => {
         if (tool === "laser") return;
@@ -181,10 +335,7 @@ export function MeetingAnnotationOverlay({
           onLocalStroke({ strokeId: drawing.strokeId, phase: "end", points: [] });
           drawingRef.current = null;
         }
-        if (tool === "laser") endLaser();
-      }}
-      onPointerLeave={() => {
-        if (tool === "laser") endLaser();
+        if (tool === "laser") hideLocalLaser();
       }}
     >
       <svg
@@ -207,13 +358,19 @@ export function MeetingAnnotationOverlay({
           />
         ))}
       </svg>
-      {visibleLasers.map((laser) => (
-        <span
-          key={laser.clientId}
-          className="tdp-meeting-annotation__laser"
-          style={{ left: `${laser.x * 100}%`, top: `${laser.y * 100}%` }}
-        />
-      ))}
+      <div
+        ref={remoteLayerRef}
+        className="tdp-meeting-annotation__remote-lasers"
+        aria-hidden="true"
+      />
+      <span
+        ref={localLaserRef}
+        className="tdp-meeting-annotation__laser tdp-meeting-annotation__laser--local"
+        aria-hidden="true"
+        style={{ opacity: 0 }}
+      />
     </div>
   );
-}
+});
+
+MeetingAnnotationOverlay.displayName = "MeetingAnnotationOverlay";

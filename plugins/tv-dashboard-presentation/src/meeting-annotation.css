@@ -29,12 +29,21 @@
   filter: drop-shadow(0 0 1.5px rgba(239, 68, 68, 0.55));
 }
 
+.tdp-meeting-annotation__remote-lasers {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+
 .tdp-meeting-annotation__laser {
   position: absolute;
+  left: 0;
+  top: 0;
   z-index: 2;
   width: 28px;
   height: 28px;
-  margin: -14px 0 0 -14px;
   border-radius: 50%;
   /* Núcleo claro + bloom vermelho (referência: laser PowerPoint). */
   background: radial-gradient(
@@ -51,5 +60,5 @@
     0 0 16px 6px rgba(239, 68, 68, 0.85),
     0 0 32px 14px rgba(185, 28, 28, 0.4);
   pointer-events: none;
-  will-change: left, top;
+  will-change: transform, opacity;
 }
