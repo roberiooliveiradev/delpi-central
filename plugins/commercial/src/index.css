@@ -728,8 +728,18 @@
 .dashboard-commercial .cm-task-detail-card__body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--delpi-space-md, 1rem);
   min-width: 0;
+}
+
+.dashboard-commercial .cm-task-detail-card__prose {
+  margin: 0;
+}
+
+.dashboard-commercial .cm-task-detail-card__prose .delpi-ui-message-thread__body,
+.dashboard-commercial .cm-task-detail-card__prose .delpi-ui-message-thread__body-rich {
+  margin: 0;
+  max-width: none;
 }
 
 .dashboard-commercial .cm-task-link-chips {

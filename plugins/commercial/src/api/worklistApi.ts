@@ -13,6 +13,14 @@ export type TaskAssigneeGroupDto = {
   name?: string;
 };
 
+export type TaskSourceMessageMentionDto = {
+  id: string;
+  message_id?: string;
+  mention_kind: string;
+  ref?: Record<string, unknown>;
+  label: string;
+};
+
 export type CommercialTaskDto = {
   id: string;
   title: string;
@@ -34,6 +42,7 @@ export type CommercialTaskDto = {
   customers?: TaskCustomerDto[];
   bucket?: "overdue" | "today" | "later" | string;
   attachment_count?: number;
+  source_message_mentions?: TaskSourceMessageMentionDto[];
 };
 
 export type WorklistScope = "mine" | "team";

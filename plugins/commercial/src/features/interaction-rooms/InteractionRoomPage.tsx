@@ -30,6 +30,7 @@ import { resolveThreadLoadingState } from "./interactionRoomLoadingState";
 import {
   formatInteractionRoomPinByOtherNotice,
   formatInteractionRoomReactionByOtherNotice,
+  interactionRoomNoticeVariantForComposerKind,
   isInteractionRoomOwnActor,
   type InteractionRoomComposerNoticeKind,
 } from "./interactionRoomNoticePolicy";

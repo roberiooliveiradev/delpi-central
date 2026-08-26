@@ -134,7 +134,7 @@ function hitsToSegments(source: string, hits: Hit[]): MentionTextSegment[] {
  */
 export function parseMentionText(
   text: string,
-  mentions: MentionTextItem[] | null | undefined = undefined,
+  mentions: readonly MentionTextItem[] | null | undefined = undefined,
 ): MentionTextSegment[] {
   const source = text ?? "";
   if (!source) return [];

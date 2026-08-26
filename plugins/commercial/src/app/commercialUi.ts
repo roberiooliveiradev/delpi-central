@@ -553,6 +553,7 @@ export const CommercialMentionMenu = createDashboardMentionMenu(UI_PREFIX);
 export const CommercialMentionComposer = createDashboardMentionComposer(UI_PREFIX);
 export const CommercialEmojiInsertMenu = createDashboardEmojiInsertMenu(UI_PREFIX);
 export const CommercialMessageThread = createDashboardMessageThread(UI_PREFIX);
+export { MessageBodyReadonly as CommercialMessageBodyReadonly } from "@delpi/plugin-ui/index";
 export const CommercialEntityUnfurlCard = createDashboardEntityUnfurlCard(UI_PREFIX);
 export const CommercialReactionBar = createDashboardReactionBar(UI_PREFIX);
 export const CommercialReactionQuickBar = createDashboardReactionQuickBar(UI_PREFIX);

@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 import type { ResolveAttachmentImageSrc } from "../rich-text/richTextMarkdown";
-import { MentionText, type MentionTextPropsOnActivate } from "./MentionText";
+import { MentionText } from "./MentionText";
 import { messageThreadBemClasses } from "./MessageThread";
 import {
   messageBodyHtmlFromMarkdown,
@@ -17,7 +17,7 @@ export type MessageBodyReadonlyProps = {
   bemPrefix?: string;
   resolveAttachmentImageSrc?: ResolveAttachmentImageSrc;
   onAttachmentImageClick?: (attachmentId: string) => void;
-  onMentionActivate?: MentionTextPropsOnActivate;
+  onMentionActivate?: (item: MentionTextItem, event: MouseEvent<HTMLElement>) => void;
 };
 
 /**
@@ -49,7 +49,7 @@ export function MessageBodyReadonly({
         classNames={classNames.mention}
         className={[classNames.body, className].filter(Boolean).join(" ")}
         text={source}
-        mentions={mentions ?? undefined}
+        mentions={mentions ? [...mentions] : undefined}
         onMentionActivate={onMentionActivate}
       />
     );
