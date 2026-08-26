@@ -20,7 +20,7 @@ import {
   StateBox,
   StatusBadge,
 } from "../../components/data";
-import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
+import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { MaintenanceActionButton } from "../../app/maintenanceUi";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
@@ -706,7 +706,7 @@ export function RelatorioPage({
       columns.push({
         key: "acoes",
         header: "Feito",
-        headerHint: CONFIG_TOOLTIPS.revisaoRegistrar,
+        headerHint: DM_HELP.revisao.registrar,
         className: "dm-datatable__col--revisao-feito",
         interactive: true,
         render: (item) => (

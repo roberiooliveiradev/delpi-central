@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CalendarClock, ChevronDown } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
-import { CONFIG_TOOLTIPS } from "../content/configTooltips";
+import { DM_HELP } from "../content/helpTooltips";
 import {
   createRevisaoProgramada,
   deleteRevisaoProgramada,
@@ -350,7 +350,7 @@ export function FerramentaRevisaoProgramadaSection({
           <h3 className="dm-section-header__title">
             Revisão programada
             <HelpTooltip
-              content={CONFIG_TOOLTIPS.revisaoSection}
+              content={DM_HELP.revisao.section}
               ariaLabel="Ajuda: revisão programada"
               className="dm-section-header__help"
             />
@@ -397,7 +397,7 @@ export function FerramentaRevisaoProgramadaSection({
       {!loading && canManage && schedule ? (
         <div className="dm-revisao-ferramenta__feito">
           <label className="dm-field dm-revisao-ferramenta__feito-date">
-            <FieldLabel label="Data do feito" hint={CONFIG_TOOLTIPS.revisaoRegistrar}  className="dm-field__label" />
+            <FieldLabel label="Data do feito" hint={DM_HELP.revisao.registrar}  className="dm-field__label" />
             <BrDateInput value={feitoDate} onChange={setFeitoDate} />
           </label>
           <button
@@ -417,7 +417,7 @@ export function FerramentaRevisaoProgramadaSection({
             <h4 className="dm-revisao-ferramenta__historico-title">
               Últimas revisões feitas
               <HelpTooltip
-                content={CONFIG_TOOLTIPS.revisaoHistorico}
+                content={DM_HELP.revisao.historico}
                 ariaLabel="Ajuda: histórico de revisões"
               />
             </h4>
@@ -501,7 +501,7 @@ export function FerramentaRevisaoProgramadaSection({
                                     type="button"
                                     className="dm-ghost-btn dm-ghost-btn--sm"
                                     disabled={saving || Boolean(editingRealizacaoId)}
-                                    title={CONFIG_TOOLTIPS.revisaoHistoricoEditar}
+                                    title={DM_HELP.revisao.historicoEditar}
                                     onClick={() => startEditRealizacao(item)}
                                   >
                                     Editar
@@ -510,7 +510,7 @@ export function FerramentaRevisaoProgramadaSection({
                                     type="button"
                                     className="dm-ghost-btn dm-ghost-btn--sm dm-ghost-btn--danger"
                                     disabled={saving || Boolean(editingRealizacaoId)}
-                                    title={CONFIG_TOOLTIPS.revisaoHistoricoExcluir}
+                                    title={DM_HELP.revisao.historicoExcluir}
                                     onClick={() => void handleDeleteRealizacao(item)}
                                   >
                                     Excluir
@@ -549,7 +549,7 @@ export function FerramentaRevisaoProgramadaSection({
           {formExpanded && !schedule ? (
             <form className="dm-form-grid dm-revisao-ferramenta__form" onSubmit={handleCreate}>
               <label className="dm-field dm-field--span-3">
-                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo}  className="dm-field__label" />
+                <FieldLabel label="Intervalo (meses)" hint={DM_HELP.revisao.intervalo}  className="dm-field__label" />
                 <NativeTextControl
                   type="number"
                   min={1}
@@ -564,7 +564,7 @@ export function FerramentaRevisaoProgramadaSection({
                 />
               </label>
               <label className="dm-field dm-field--span-4">
-                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia}  className="dm-field__label" />
+                <FieldLabel label="Data de referência" hint={DM_HELP.revisao.referencia}  className="dm-field__label" />
                 <BrDateInput
                   value={createDraft.data_referencia}
                   onChange={(value) =>
@@ -575,7 +575,7 @@ export function FerramentaRevisaoProgramadaSection({
               <DmNativeTextAreaField
                 id="dm-revisao-create-obs"
                 label="Observação"
-                hint={CONFIG_TOOLTIPS.revisaoObservacao}
+                hint={DM_HELP.revisao.observacao}
                 className="dm-field--span-full dm-field--textarea"
                 span={false}
                 rows={4}
@@ -594,7 +594,7 @@ export function FerramentaRevisaoProgramadaSection({
           {formExpanded && schedule ? (
             <div className="dm-form-grid dm-revisao-ferramenta__edit">
               <label className="dm-field dm-field--span-3">
-                <FieldLabel label="Intervalo (meses)" hint={CONFIG_TOOLTIPS.revisaoIntervalo}  className="dm-field__label" />
+                <FieldLabel label="Intervalo (meses)" hint={DM_HELP.revisao.intervalo}  className="dm-field__label" />
                 <div className="dm-editable-cell">
                   <NativeTextControl
                     type="number"
@@ -609,7 +609,7 @@ export function FerramentaRevisaoProgramadaSection({
                 </div>
               </label>
               <label className="dm-field dm-field--span-4">
-                <FieldLabel label="Data de referência" hint={CONFIG_TOOLTIPS.revisaoReferencia}  className="dm-field__label" />
+                <FieldLabel label="Data de referência" hint={DM_HELP.revisao.referencia}  className="dm-field__label" />
                 <div className="dm-editable-cell">
                   <BrDateInput
                     value={draft.data_referencia}
@@ -631,7 +631,7 @@ export function FerramentaRevisaoProgramadaSection({
               <DmNativeTextAreaField
                 id="dm-revisao-edit-obs"
                 label="Observação"
-                hint={CONFIG_TOOLTIPS.revisaoObservacao}
+                hint={DM_HELP.revisao.observacao}
                 className="dm-field--span-full dm-field--textarea"
                 span={false}
                 rows={4}

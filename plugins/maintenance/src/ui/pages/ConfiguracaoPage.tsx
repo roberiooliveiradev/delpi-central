@@ -5,6 +5,7 @@ import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import {
   type DataTableColumn,
   DataTableSection,
+  FieldLabel,
   FilterBar,
   HelpTooltip,
   PendingChangeBadge,
@@ -15,7 +16,8 @@ import {
   DmNativeSelectField,
   DmNativeTextField,
 } from "../../components/dmFormFields";
-import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
+import { DM_HELP } from "../../content/helpTooltips";
+import { MaintenanceActionButton } from "../../app/maintenanceUi";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
@@ -318,7 +320,7 @@ export function ConfiguracaoPage({
       {
         key: "descricao",
         header: "Descrição",
-        headerHint: CONFIG_TOOLTIPS.motivoDescricao,
+        headerHint: DM_HELP.configuracao.motivoDescricao,
         sortable: true,
         sortValue: (item) => motivoEdits[item.motivo_id]?.descricao ?? item.descricao,
         render: (item) =>
@@ -344,7 +346,7 @@ export function ConfiguracaoPage({
       {
         key: "excluir_preventiva",
         header: "Ignora preventiva",
-        headerHint: CONFIG_TOOLTIPS.excluirPreventiva,
+        headerHint: DM_HELP.configuracao.excluirPreventiva,
         align: "center",
         render: (item) => {
           const draft = motivoEdits[item.motivo_id] ?? toMotivoDraft(item);
@@ -364,11 +366,14 @@ export function ConfiguracaoPage({
                   },
                 }))
               }
-            >
-              <HelpTooltip content={CONFIG_TOOLTIPS.excluirPreventiva} wrap ariaLabel="Ajuda: ignora preventiva">
-                <span>Não conta</span>
-              </HelpTooltip>
-            </NativeCheckboxControl>
+              label={
+                <FieldLabel
+                  className="dm-field__label"
+                  label="Não conta"
+                  hint={DM_HELP.configuracao.excluirPreventiva}
+                />
+              }
+            />
           );
         },
       },
@@ -381,16 +386,19 @@ export function ConfiguracaoPage({
         interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
-            <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveMotivo(item.motivo_id)}>
+            <MaintenanceActionButton
+              variant="ghost"
+              onClick={() => void handleSaveMotivo(item.motivo_id)}
+            >
               Salvar
-            </button>
-            <button
-              type="button"
-              className="dm-ghost-btn dm-ghost-btn--danger"
+            </MaintenanceActionButton>
+            <MaintenanceActionButton
+              variant="ghost"
+              className="dm-ghost-btn--danger"
               onClick={() => void handleDeleteMotivo(item.motivo_id, item.descricao)}
             >
               Excluir
-            </button>
+            </MaintenanceActionButton>
           </div>
         ),
       });
@@ -404,7 +412,7 @@ export function ConfiguracaoPage({
       {
         key: "status",
         header: "Status",
-        headerHint: CONFIG_TOOLTIPS.statusDescricao,
+        headerHint: DM_HELP.configuracao.statusDescricao,
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).descricao,
         render: (item) => {
@@ -429,7 +437,7 @@ export function ConfiguracaoPage({
       {
         key: "operador",
         header: "Operador",
-        headerHint: CONFIG_TOOLTIPS.statusOperador,
+        headerHint: DM_HELP.configuracao.statusOperador,
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).operador,
         render: (item) => {
@@ -458,7 +466,7 @@ export function ConfiguracaoPage({
       {
         key: "percentual",
         header: "Percentual",
-        headerHint: CONFIG_TOOLTIPS.statusPercentual,
+        headerHint: DM_HELP.configuracao.statusPercentual,
         sortable: true,
         sortValue: (item) => (statusEdits[item.status_id] ?? item).percentual,
         render: (item) => {
@@ -494,16 +502,19 @@ export function ConfiguracaoPage({
         interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
-            <button type="button" className="dm-ghost-btn" onClick={() => void handleSaveStatus(item.status_id)}>
+            <MaintenanceActionButton
+              variant="ghost"
+              onClick={() => void handleSaveStatus(item.status_id)}
+            >
               Salvar
-            </button>
-            <button
-              type="button"
-              className="dm-ghost-btn dm-ghost-btn--danger"
+            </MaintenanceActionButton>
+            <MaintenanceActionButton
+              variant="ghost"
+              className="dm-ghost-btn--danger"
               onClick={() => void handleDeleteStatus(item.status_id, item.descricao)}
             >
               Excluir
-            </button>
+            </MaintenanceActionButton>
           </div>
         ),
       });
@@ -547,14 +558,14 @@ export function ConfiguracaoPage({
         columnPreferencesKey="maintenance:ConfiguracaoPage:motivos-de-reposi-o:v1"
         className="dm-table-section--editable-config"
         title="Motivos de reposição"
-        titleHint={CONFIG_TOOLTIPS.motivosSection}
+        titleHint={DM_HELP.configuracao.motivosSection}
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded className="dm-filter-bar--motivo-create" onSubmit={handleCreateMotivo}>
               <DmNativeTextField
                 id="dm-config-novo-motivo"
                 label="Novo motivo"
-                hint={CONFIG_TOOLTIPS.motivoDescricao}
+                hint={DM_HELP.configuracao.motivoDescricao}
                 value={novoMotivo}
                 onChange={setNovoMotivo}
                 placeholder="Ex.: DESGASTE"
@@ -563,14 +574,19 @@ export function ConfiguracaoPage({
                 className="dm-checkbox-field"
                 checked={novoMotivoExcluirPreventiva}
                 onChange={setNovoMotivoExcluirPreventiva}
-              >
-                <HelpTooltip content={CONFIG_TOOLTIPS.excluirPreventiva} wrap ariaLabel="Ajuda: não conta no preventivo">
-                  <span>Não conta no preventivo</span>
-                </HelpTooltip>
-              </NativeCheckboxControl>
-              <button type="submit" className="dm-primary-btn">
-                Adicionar
-              </button>
+                label={
+                  <FieldLabel
+                    className="dm-field__label"
+                    label="Não conta no preventivo"
+                    hint={DM_HELP.configuracao.excluirPreventiva}
+                  />
+                }
+              />
+              <div className="dm-filter-bar__actions">
+                <MaintenanceActionButton type="submit" variant="primary">
+                  Adicionar
+                </MaintenanceActionButton>
+              </div>
             </FilterBar>
           ) : null
         }
@@ -594,14 +610,14 @@ export function ConfiguracaoPage({
         columnPreferencesKey="maintenance:ConfiguracaoPage:status-preventivo-1:v1"
         className="dm-table-section--editable-config dm-table-section--editable-status"
         title="Status preventivo"
-        titleHint={CONFIG_TOOLTIPS.statusSection}
+        titleHint={DM_HELP.configuracao.statusSection}
         toolbar={
           canManageMiniApplicators ? (
             <FilterBar embedded className="dm-filter-bar--status-create" onSubmit={handleCreateStatus}>
               <DmNativeTextField
                 id="dm-config-novo-status"
                 label="Novo status"
-                hint={CONFIG_TOOLTIPS.statusDescricao}
+                hint={DM_HELP.configuracao.statusDescricao}
                 value={novoStatus.descricao}
                 onChange={(descricao) => setNovoStatus((prev) => ({ ...prev, descricao }))}
                 placeholder="Ex.: CRÍTICO"
@@ -609,7 +625,7 @@ export function ConfiguracaoPage({
               <DmNativeSelectField
                 id="dm-config-status-operador"
                 label="Operador"
-                hint={CONFIG_TOOLTIPS.statusOperador}
+                hint={DM_HELP.configuracao.statusOperador}
                 value={novoStatus.operador}
                 onChange={(operador) =>
                   setNovoStatus((prev) => ({
@@ -625,7 +641,7 @@ export function ConfiguracaoPage({
               <DmNativeTextField
                 id="dm-config-status-percentual"
                 label="Percentual"
-                hint={CONFIG_TOOLTIPS.statusPercentual}
+                hint={DM_HELP.configuracao.statusPercentual}
                 type="number"
                 min={0}
                 value={String(novoStatus.percentual)}
@@ -636,9 +652,11 @@ export function ConfiguracaoPage({
                   }))
                 }
               />
-              <button type="submit" className="dm-primary-btn">
-                Adicionar
-              </button>
+              <div className="dm-filter-bar__actions">
+                <MaintenanceActionButton type="submit" variant="primary">
+                  Adicionar
+                </MaintenanceActionButton>
+              </div>
             </FilterBar>
           ) : null
         }
