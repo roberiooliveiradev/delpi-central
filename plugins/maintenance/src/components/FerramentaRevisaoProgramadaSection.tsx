@@ -362,16 +362,19 @@ export function FerramentaRevisaoProgramadaSection({
       {
         key: "intervalo",
         header: "Intervalo",
+        headerHint: DM_HELP.revisao.historicoIntervalo,
         render: (item) => `${item.intervalo_meses} mes(es)`,
       },
       {
         key: "data_registro",
         header: "Registrado em",
+        headerHint: DM_HELP.revisao.historicoRegistradoEm,
         render: (item) => formatDateTime(item.data_registro),
       },
       {
         key: "observacao",
         header: "Observação",
+        headerHint: DM_HELP.revisao.observacao,
         render: (item) => {
           const isEditing = editingRealizacaoId === item.realizacao_id && realizacaoDraft;
           return isEditing ? (

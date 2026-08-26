@@ -516,6 +516,7 @@ export function RelatorioPage({
       {
         key: "data",
         header: "Data",
+        headerHint: DM_HELP.relatorio.colDataReposicao,
         sortable: true,
         sortValue: (item) => new Date(item.data_reposicao).getTime(),
         render: (item) => new Date(item.data_reposicao).toLocaleString("pt-BR"),
@@ -523,6 +524,7 @@ export function RelatorioPage({
       {
         key: "ferramenta",
         header: "Ferramenta",
+        headerHint: DM_HELP.relatorio.colFerramenta,
         sortable: true,
         sortValue: (item) =>
           formatCodigoDescricao(item.codigo_ferramenta, item.descricao_ferramenta),
@@ -536,6 +538,7 @@ export function RelatorioPage({
       {
         key: "peca",
         header: "Peça",
+        headerHint: DM_HELP.relatorio.colPeca,
         sortable: true,
         sortValue: (item) => formatCodigoDescricao(item.codigo_peca, item.descricao_peca),
         render: (item) => (
@@ -545,6 +548,7 @@ export function RelatorioPage({
       {
         key: "golpes",
         header: "Golpes",
+        headerHint: DM_HELP.relatorio.colGolpes,
         sortable: true,
         sortValue: (item) => item.golpes,
         render: (item) => item.golpes.toLocaleString("pt-BR"),
@@ -566,6 +570,7 @@ export function RelatorioPage({
       {
         key: "status",
         header: "Status",
+        headerHint: DM_HELP.relatorio.colStatusPreventiva,
         interactive: true,
         sortable: true,
         sortValue: (item) => statusSortRank(item.status),
@@ -574,6 +579,7 @@ export function RelatorioPage({
       {
         key: "ferramenta",
         header: "Ferramenta",
+        headerHint: DM_HELP.relatorio.colFerramenta,
         sortable: true,
         sortValue: (item) =>
           formatCodigoDescricao(item.codigo_ferramenta, item.descricao_ferramenta),
@@ -587,6 +593,7 @@ export function RelatorioPage({
       {
         key: "peca",
         header: "Peça",
+        headerHint: DM_HELP.relatorio.colPeca,
         sortable: true,
         sortValue: (item) => formatCodigoDescricao(item.codigo_peca, item.descricao_peca),
         render: (item) => (
@@ -596,6 +603,7 @@ export function RelatorioPage({
       {
         key: "ultima",
         header: "Última reposição",
+        headerHint: DM_HELP.relatorio.colUltimaReposicao,
         sortable: true,
         sortValue: (item) => new Date(item.data_ultima_reposicao).getTime(),
         render: (item) => new Date(item.data_ultima_reposicao).toLocaleString("pt-BR"),
@@ -603,6 +611,7 @@ export function RelatorioPage({
       {
         key: "golpes_atuais",
         header: "Golpes atuais",
+        headerHint: DM_HELP.relatorio.colGolpesAtuais,
         sortable: true,
         sortValue: (item) => item.golpes_atuais,
         render: (item) => item.golpes_atuais.toLocaleString("pt-BR"),
@@ -611,6 +620,7 @@ export function RelatorioPage({
       {
         key: "media",
         header: "Média",
+        headerHint: DM_HELP.relatorio.colMediaGolpes,
         sortable: true,
         sortValue: (item) => item.media_golpes,
         render: (item) => item.media_golpes.toLocaleString("pt-BR"),
@@ -619,6 +629,7 @@ export function RelatorioPage({
       {
         key: "percentual",
         header: "% uso",
+        headerHint: DM_HELP.relatorio.colPercentualUso,
         sortable: true,
         sortValue: (item) => item.percentual_uso,
         render: (item) => `${item.percentual_uso.toLocaleString("pt-BR")}%`,
@@ -664,6 +675,7 @@ export function RelatorioPage({
       {
         key: "status",
         header: "Status",
+        headerHint: DM_HELP.relatorio.colRevisaoStatus,
         sortable: true,
         sortValue: (item) => statusSortRank(item.status),
         render: (item) => <StatusBadge status={item.status} />,
@@ -671,6 +683,7 @@ export function RelatorioPage({
       {
         key: "ferramenta",
         header: "Ferramenta",
+        headerHint: DM_HELP.relatorio.colRevisaoFerramenta,
         sortable: true,
         sortValue: (item) =>
           formatCodigoDescricao(item.codigo_ferramenta, item.descricao_ferramenta),
@@ -684,6 +697,7 @@ export function RelatorioPage({
       {
         key: "intervalo",
         header: "Intervalo",
+        headerHint: DM_HELP.revisao.intervalo,
         sortable: true,
         sortValue: (item) => item.intervalo_meses,
         render: (item) => `${item.intervalo_meses} mes(es)`,
@@ -692,6 +706,7 @@ export function RelatorioPage({
       {
         key: "ultima",
         header: "Referência",
+        headerHint: DM_HELP.revisao.referencia,
         sortable: true,
         sortValue: (item) => new Date(item.data_referencia ?? 0).getTime(),
         render: (item) => formatDateTime(item.data_referencia),
@@ -699,6 +714,7 @@ export function RelatorioPage({
       {
         key: "proxima",
         header: "Próxima revisão",
+        headerHint: DM_HELP.relatorio.colRevisaoProxima,
         sortable: true,
         sortValue: (item) => new Date(item.data_proxima_revisao ?? 0).getTime(),
         render: (item) => formatDate(item.data_proxima_revisao),
@@ -706,6 +722,7 @@ export function RelatorioPage({
       {
         key: "dias_restantes",
         header: "Dias restantes",
+        headerHint: DM_HELP.relatorio.colRevisaoDiasRestantes,
         sortable: true,
         sortValue: (item) => item.dias_restantes ?? 999999,
         render: (item) =>

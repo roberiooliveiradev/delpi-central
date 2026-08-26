@@ -227,6 +227,7 @@ export function ProgramasMaquinasPage({
       {
         key: "intermediate_code",
         header: "Intermediário",
+        headerHint: DM_HELP.programas.rankingIntermediario,
         sortable: true,
         render: (row) => (
           <span>
@@ -240,23 +241,27 @@ export function ProgramasMaquinasPage({
       {
         key: "finished_product_code",
         header: "Produto acabado",
+        headerHint: DM_HELP.programas.rankingProdutoAcabado,
         sortable: true,
         render: (row) => row.finished_product_code || "—",
       },
       {
         key: "cutting_work_center",
         header: "CT corte",
+        headerHint: DM_HELP.programas.rankingCtCorte,
         sortable: true,
         render: (row) => row.cutting_work_center || "—",
       },
       {
         key: "has_open_production_order",
         header: "OP aberta",
+        headerHint: DM_HELP.programas.rankingOpAberta,
         render: (row) => (row.has_open_production_order ? "Sim" : "Não"),
       },
       {
         key: "qty_produced",
         header: "Qtd produzida",
+        headerHint: DM_HELP.programas.rankingQtdProduzida,
         sortable: true,
         align: "right",
         render: (row) => formatQty(row.qty_produced),
@@ -290,42 +295,49 @@ export function ProgramasMaquinasPage({
       {
         key: "codigo_intermediario",
         header: "Intermediário",
+        headerHint: DM_HELP.programas.cadastroIntermediario,
         sortable: true,
         render: (row) => row.codigo_intermediario,
       },
       {
         key: "descricao_intermediario",
         header: "Descrição",
+        headerHint: DM_HELP.programas.cadastroDescricao,
         sortable: true,
         render: (row) => row.descricao_intermediario || "—",
       },
       {
         key: "codigo_produto_acabado",
         header: "PA",
+        headerHint: DM_HELP.programas.cadastroPa,
         sortable: true,
         render: (row) => row.codigo_produto_acabado || "—",
       },
       {
         key: "codigo_ct_corte",
         header: "CT",
+        headerHint: DM_HELP.programas.cadastroCt,
         sortable: true,
         render: (row) => row.codigo_ct_corte || "—",
       },
       {
         key: "data_ativacao",
         header: "Ativação",
+        headerHint: DM_HELP.programas.cadastroAtivacao,
         sortable: true,
         render: (row) => formatDateTime(row.data_ativacao),
       },
       {
         key: "usuario_ativacao_nome",
         header: "Ativado por",
+        headerHint: DM_HELP.programas.cadastroAtivadoPor,
         sortable: true,
         render: (row) => row.usuario_ativacao_nome || "—",
       },
       {
         key: "ativo",
         header: "Ativo",
+        headerHint: DM_HELP.programas.cadastroAtivo,
         sortable: true,
         render: (row) => (row.ativo ? "Sim" : "Não"),
       },

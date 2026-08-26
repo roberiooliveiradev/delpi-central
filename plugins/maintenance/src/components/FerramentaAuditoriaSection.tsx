@@ -8,6 +8,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { auditActionLabel, auditPayloadSummary, formatAuditUser } from "../content/auditLabels";
+import { DM_HELP } from "../content/helpTooltips";
 import { fetchFerramentaAuditoria, type FerramentaAuditItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
 import { DataTable, Pagination, Timeline, type DataTableColumn } from "./data";
@@ -45,24 +46,28 @@ const auditColumns: DataTableColumn<FerramentaAuditItem>[] = [
   {
     key: "data",
     header: "Quando",
+    headerHint: DM_HELP.miniAplicadores.auditoriaQuando,
     sortable: false,
     render: (item) => formatDateTime(item.data_criacao),
   },
   {
     key: "acao",
     header: "Ação",
+    headerHint: DM_HELP.miniAplicadores.auditoriaAcao,
     sortable: false,
     render: (item) => auditActionLabel(item.acao),
   },
   {
     key: "detalhe",
     header: "Detalhe",
+    headerHint: DM_HELP.miniAplicadores.auditoriaDetalhe,
     sortable: false,
     render: (item) => auditPayloadSummary(item.payload),
   },
   {
     key: "usuario",
     header: "Usuário",
+    headerHint: DM_HELP.miniAplicadores.auditoriaUsuario,
     sortable: false,
     render: (item) => {
       const label = formatAuditUser(item.usuario_nome, item.usuario_sub);

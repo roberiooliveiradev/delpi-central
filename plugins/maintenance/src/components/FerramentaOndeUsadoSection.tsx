@@ -29,6 +29,7 @@ export function FerramentaOndeUsadoSection({
       {
         key: "nivel",
         header: "Nível",
+        headerHint: DM_HELP.miniAplicadores.ondeUsadoNivel,
         sortable: true,
         sortValue: (item) => item.nivel,
         render: (item) => item.nivel,
@@ -37,6 +38,7 @@ export function FerramentaOndeUsadoSection({
       {
         key: "codigo",
         header: "Código",
+        headerHint: DM_HELP.miniAplicadores.ondeUsadoCodigo,
         sortable: true,
         sortValue: (item) => item.codigo,
         render: (item) => (
@@ -48,6 +50,7 @@ export function FerramentaOndeUsadoSection({
       {
         key: "descricao",
         header: "Descrição",
+        headerHint: DM_HELP.miniAplicadores.ondeUsadoDescricao,
         sortable: true,
         sortValue: (item) => item.descricao,
         render: (item) => item.descricao,
@@ -55,6 +58,7 @@ export function FerramentaOndeUsadoSection({
       {
         key: "tipo",
         header: "Tipo",
+        headerHint: DM_HELP.miniAplicadores.ondeUsadoTipo,
         sortable: true,
         sortValue: (item) => item.tipo,
         render: (item) => item.tipo || "—",
@@ -63,6 +67,7 @@ export function FerramentaOndeUsadoSection({
       {
         key: "unidade",
         header: "Un.",
+        headerHint: DM_HELP.miniAplicadores.ondeUsadoUnidade,
         sortable: true,
         sortValue: (item) => item.unidade,
         render: (item) => item.unidade || "—",
@@ -71,6 +76,7 @@ export function FerramentaOndeUsadoSection({
       {
         key: "quantidade",
         header: "Quantidade",
+        headerHint: DM_HELP.miniAplicadores.ondeUsadoQuantidade,
         sortable: true,
         sortValue: (item) => item.quantidade,
         render: (item) => item.quantidade.toLocaleString("pt-BR"),

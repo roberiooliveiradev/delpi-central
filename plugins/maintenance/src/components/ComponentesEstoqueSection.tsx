@@ -25,6 +25,7 @@ function buildComponentesColumns(): DataTableColumn<ComponenteItem>[] {
     {
       key: "nivel",
       header: "Nível",
+      headerHint: DM_HELP.miniAplicadores.componentesNivel,
       sortable: true,
       sortValue: (item) => item.nivel,
       render: (item) => item.nivel,
@@ -33,6 +34,7 @@ function buildComponentesColumns(): DataTableColumn<ComponenteItem>[] {
     {
       key: "codigo",
       header: "Código",
+      headerHint: DM_HELP.miniAplicadores.componentesCodigo,
       sortable: true,
       sortValue: (item) => item.codigo,
       render: (item) => (
@@ -47,6 +49,7 @@ function buildComponentesColumns(): DataTableColumn<ComponenteItem>[] {
     {
       key: "descricao",
       header: "Descrição",
+      headerHint: DM_HELP.miniAplicadores.componentesDescricao,
       sortable: true,
       sortValue: (item) => item.descricao,
       render: (item) => item.descricao,
@@ -54,6 +57,7 @@ function buildComponentesColumns(): DataTableColumn<ComponenteItem>[] {
     {
       key: "unidade",
       header: "Un.",
+      headerHint: DM_HELP.miniAplicadores.componentesUnidade,
       sortable: true,
       sortValue: (item) => item.unidade,
       render: (item) => item.unidade,

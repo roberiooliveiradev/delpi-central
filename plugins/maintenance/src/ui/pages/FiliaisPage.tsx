@@ -163,6 +163,7 @@ export function FiliaisPage({
       {
         key: "codigo",
         header: "Código",
+        headerHint: DM_HELP.filiais.codigo,
         sortable: true,
         sortValue: (item) => item.codigo_filial,
         render: (item) => item.codigo_filial,
@@ -170,6 +171,7 @@ export function FiliaisPage({
       {
         key: "nome",
         header: "Nome",
+        headerHint: DM_HELP.filiais.nome,
         sortable: true,
         sortValue: (item) => (edits[item.filial_id] ?? item).nome_filial,
         render: (item) => {
@@ -195,6 +197,7 @@ export function FiliaisPage({
       {
         key: "status",
         header: "Status",
+        headerHint: DM_HELP.filiais.status,
         sortable: true,
         sortValue: (item) => (edits[item.filial_id] ?? item).status_filial,
         render: (item) => {
