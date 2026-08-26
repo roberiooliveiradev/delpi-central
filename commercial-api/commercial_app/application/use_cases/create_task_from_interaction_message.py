@@ -141,6 +141,7 @@ class CreateTaskFromInteractionMessageUseCase:
         override = (request.description or "").strip()
         body = (message.body_text or "").strip()
         description = override or body or None
+        source_mentions = tuple(m.to_dict() for m in message.mentions)
         task = self._worklist.create_task(
             user_id=actor,
             data=CreateTaskInput(
@@ -153,6 +154,7 @@ class CreateTaskFromInteractionMessageUseCase:
                 related_entity_type=InteractionRoomContentService.related_entity_type_room(),
                 related_entity_id=str(request.room_id),
                 source_interaction_message_id=request.message_id,
+                source_message_mentions=source_mentions,
             ),
             actor_is_portfolio_manager=actor_is_portfolio_manager,
         )

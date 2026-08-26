@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 from uuid import UUID
 
 
@@ -58,6 +58,7 @@ class CommercialTask:
     related_entity_type: str | None = None
     related_entity_id: str | None = None
     source_interaction_message_id: UUID | None = None
+    source_message_mentions: tuple[Mapping[str, Any], ...] = field(default_factory=tuple)
 
     def resolved_assignee_user_ids(self) -> tuple[str, ...]:
         if self.assignee_user_ids:
@@ -115,6 +116,9 @@ class CommercialTask:
                 if self.source_interaction_message_id
                 else None
             ),
+            "source_message_mentions": [
+                dict(item) for item in self.source_message_mentions
+            ],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

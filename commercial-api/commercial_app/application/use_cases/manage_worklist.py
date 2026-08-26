@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Literal, Sequence
+from typing import Any, Literal, Mapping, Sequence
 from uuid import UUID
 
 from commercial_app.domain.entities.task import (
@@ -43,6 +43,7 @@ class CreateTaskInput:
     related_entity_type: str | None = None
     related_entity_id: str | None = None
     source_interaction_message_id: UUID | None = None
+    source_message_mentions: Sequence[Mapping[str, Any]] | None = None
 
 
 @dataclass(frozen=True)
@@ -425,6 +426,7 @@ class ManageWorklistUseCase:
             related_entity_type=data.related_entity_type,
             related_entity_id=data.related_entity_id,
             source_interaction_message_id=data.source_interaction_message_id,
+            source_message_mentions=data.source_message_mentions,
         )
         if self._audit:
             self._audit.append(

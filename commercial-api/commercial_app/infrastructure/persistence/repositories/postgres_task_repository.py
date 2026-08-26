@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 from uuid import UUID
 
 from commercial_app.domain.entities.task import (
@@ -25,6 +26,7 @@ _TASK_COLUMNS = """
     id, title, description, task_type, status, priority, due_at, completed_at,
     completed_by_user_id, assignee_user_id, created_by_user_id, customer_code, customer_store,
     related_entity_type, related_entity_id, source_interaction_message_id,
+    source_message_mentions,
     created_at, updated_at
 """
 
@@ -32,6 +34,7 @@ _TASK_COLUMNS_ALIASED = """
     t.id, t.title, t.description, t.task_type, t.status, t.priority, t.due_at, t.completed_at,
     t.completed_by_user_id, t.assignee_user_id, t.created_by_user_id, t.customer_code, t.customer_store,
     t.related_entity_type, t.related_entity_id, t.source_interaction_message_id,
+    t.source_message_mentions,
     t.created_at, t.updated_at
 """
 
@@ -95,6 +98,11 @@ def _row_task_base(row: dict[str, Any] | None) -> CommercialTask | None:
             else None
         ),
         source_interaction_message_id=row.get("source_interaction_message_id"),
+        source_message_mentions=tuple(
+            dict(item)
+            for item in (row.get("source_message_mentions") or [])
+            if isinstance(item, dict)
+        ),
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
@@ -531,6 +539,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         related_entity_type: str | None = None,
         related_entity_id: str | None = None,
         source_interaction_message_id: UUID | None = None,
+        source_message_mentions: Sequence[Mapping[str, Any]] | None = None,
     ) -> CommercialTask:
         with self.db():
             assignees = self._resolve_assignees(
@@ -547,13 +556,18 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
             primary_customer = custs[0] if custs else None
             related_type = (related_entity_type or "").strip() or None
             related_id = (related_entity_id or "").strip() or None
+            mentions_payload = json.dumps(
+                [dict(item) for item in (source_message_mentions or ())],
+                ensure_ascii=False,
+            )
             row = self.execute_returning_one(
                 f"""
                 INSERT INTO commercial.tasks (
                     title, description, task_type, priority, due_at,
                     assignee_user_id, created_by_user_id, customer_code, customer_store,
-                    related_entity_type, related_entity_id, source_interaction_message_id
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    related_entity_type, related_entity_id, source_interaction_message_id,
+                    source_message_mentions
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                 RETURNING {_TASK_COLUMNS}
                 """,
                 (
@@ -569,6 +583,7 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                     related_type,
                     related_id,
                     source_interaction_message_id,
+                    mentions_payload,
                 ),
                 auto_commit=False,
             )

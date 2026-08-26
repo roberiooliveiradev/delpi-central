@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 from uuid import UUID, uuid4
 
 import pytest
@@ -121,6 +121,7 @@ class InMemoryTaskRepo:
         related_entity_type: str | None = None,
         related_entity_id: str | None = None,
         source_interaction_message_id: UUID | None = None,
+        source_message_mentions: Sequence[Mapping[str, object]] | None = None,
     ) -> CommercialTask:
         now = datetime.now(timezone.utc)
         assignees = tuple(
@@ -159,6 +160,9 @@ class InMemoryTaskRepo:
             related_entity_type=(related_entity_type or "").strip() or None,
             related_entity_id=(related_entity_id or "").strip() or None,
             source_interaction_message_id=source_interaction_message_id,
+            source_message_mentions=tuple(
+                dict(item) for item in (source_message_mentions or ())
+            ),
         )
         self.items[task.id] = task
         return task

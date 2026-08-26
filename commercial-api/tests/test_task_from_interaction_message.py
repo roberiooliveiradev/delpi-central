@@ -322,6 +322,45 @@ def test_rejects_message_from_other_room() -> None:
     assert str(exc.value) == InteractionRoomContentService.error("messageNotInRoom")
 
 
+def test_persists_source_message_mentions() -> None:
+    rooms = FakeRooms()
+    messages = FakeMessages()
+    room_id, message_id = _seed_room_message(rooms=rooms, messages=messages)
+    mention_id = uuid4()
+    messages.items[message_id] = InteractionMessage(
+        id=message_id,
+        room_id=room_id,
+        message_kind="text",
+        body_text="Falar com @Ana Silva",
+        created_at=_now(),
+        author_user_id="u1",
+        mentions=(
+            InteractionMention(
+                id=mention_id,
+                message_id=message_id,
+                mention_kind="user",
+                ref={"user_id": "u2"},
+                label="@Ana Silva",
+            ),
+        ),
+    )
+    uc, tasks = _use_case(rooms, messages)
+    result = uc.execute(
+        CreateTaskFromInteractionMessageInput(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id="u1",
+        )
+    )
+    payload = result.task.to_dict()
+    assert len(payload["source_message_mentions"]) == 1
+    assert payload["source_message_mentions"][0]["mention_kind"] == "user"
+    assert payload["source_message_mentions"][0]["label"] == "@Ana Silva"
+    stored = tasks.items[result.task.id].source_message_mentions
+    assert len(stored) == 1
+    assert stored[0]["mention_kind"] == "user"
+
+
 def test_clones_message_attachments_and_rewrites_description(
     tmp_path: Path,
 ) -> None:
@@ -393,6 +432,18 @@ def test_title_summary_strips_images_and_truncates() -> None:
     assert result.task.title.endswith("…")
     assert "attachment:" not in result.task.title
     assert result.task.description == long_body.strip()
+
+
+def test_v022_adds_source_message_mentions_column() -> None:
+    from pathlib import Path
+
+    text = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "V022__task_source_message_mentions.sql"
+    ).read_text(encoding="utf-8")
+    assert "source_message_mentions" in text
+    assert "ADD COLUMN IF NOT EXISTS source_message_mentions" in text
 
 
 def test_v020_adds_source_interaction_message_column() -> None:

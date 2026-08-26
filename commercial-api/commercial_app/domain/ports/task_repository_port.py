@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Sequence
+from typing import Any, Mapping, Sequence
 from uuid import UUID
 
 from commercial_app.domain.entities.task import (
@@ -68,6 +68,7 @@ class TaskRepositoryPort(ABC):
         related_entity_type: str | None = None,
         related_entity_id: str | None = None,
         source_interaction_message_id: UUID | None = None,
+        source_message_mentions: Sequence[Mapping[str, Any]] | None = None,
     ) -> CommercialTask:
         raise NotImplementedError
 
