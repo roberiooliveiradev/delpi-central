@@ -5,6 +5,7 @@ from typing import Any
 
 from maint_app.application.services.filial_access_scope_service import FilialAccessScope
 from maint_app.domain.ports.mini_applicators_totvs_port import MiniApplicatorsTotvsPort
+from maint_app.application.services.preventiva_service import invalidate_alertas_snapshot_cache
 from maint_app.infrastructure.persistence.repositories.operational_repositories import (
     ReposicaoRepository,
 )
@@ -159,7 +160,9 @@ class ReposicaoService:
             normalized["filial"],
             user=user,
         )
-        return self._reposicao_repo.create(normalized)
+        created = self._reposicao_repo.create(normalized)
+        invalidate_alertas_snapshot_cache(filial=str(normalized["filial"]))
+        return created
 
     def update(
         self,
@@ -185,7 +188,9 @@ class ReposicaoService:
             normalized["filial"],
             user=user,
         )
-        return self._reposicao_repo.update(reposicao_id, normalized)
+        updated = self._reposicao_repo.update(reposicao_id, normalized)
+        invalidate_alertas_snapshot_cache(filial=str(normalized["filial"]))
+        return updated
 
     def delete(
         self,
@@ -206,4 +211,7 @@ class ReposicaoService:
             str(existing["filial"]),
             user=user,
         )
-        return self._reposicao_repo.soft_delete(reposicao_id)
+        deleted = self._reposicao_repo.soft_delete(reposicao_id)
+        if deleted:
+            invalidate_alertas_snapshot_cache(filial=str(existing["filial"]))
+        return deleted

@@ -23,6 +23,13 @@ _ALERTAS_SNAPSHOT_TTL_SECONDS = 300
 _alertas_snapshot_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 
 
+def invalidate_alertas_snapshot_cache(*, filial: str | None = None) -> None:
+    if filial:
+        _alertas_snapshot_cache.pop(filial, None)
+    else:
+        _alertas_snapshot_cache.clear()
+
+
 def _match_status(percentual_uso: float, rules: list[dict[str, Any]]) -> str:
     for rule in rules:
         operador = str(rule.get("operador") or "")
