@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import Any
 
@@ -16,6 +18,9 @@ STATUS_RANK = {
     "OK": 2,
     "SEM STATUS": 3,
 }
+
+_ALERTAS_SNAPSHOT_TTL_SECONDS = 300
+_alertas_snapshot_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 
 
 def _match_status(percentual_uso: float, rules: list[dict[str, Any]]) -> str:
@@ -47,8 +52,7 @@ class PreventivaService:
 
     def resumo_alertas(self, *, filial: str) -> dict[str, int]:
         rules = self._status_repo.list_active(filial=filial)
-        rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
-        alertas = self._build_alertas(rows, filial=filial, rules=rules)
+        alertas = self._get_alertas_snapshot(filial=filial, rules=rules)
         return {
             "critico": sum(1 for item in alertas if item["status"] == "CRÍTICO"),
             "atencao": sum(1 for item in alertas if item["status"] == "ATENÇÃO"),
@@ -75,33 +79,17 @@ class PreventivaService:
             for item in status_values
             if str(item).strip() and str(item).strip().upper() not in {"", "TODOS"}
         ]
-        sql_sort_keys = frozenset({"data", "ferramenta", "peca", "golpes"})
-        sort_key = (query.sort_by or "percentual").strip().lower()
-        use_memory_path = len(normalized_statuses) > 0 or sort_key not in sql_sort_keys
 
-        if use_memory_path:
-            rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
-            alertas = self._build_alertas(rows, filial=filial, rules=rules)
-            alertas = self._enriquecer_descricoes(alertas, filial=filial)
-            alertas = self._filter_alertas(
-                alertas,
-                ferramenta=ferramenta,
-                peca=peca,
-                statuses=normalized_statuses,
-            )
-            alertas = self._sort_alertas(alertas, query.sort_by, query.sort_dir)
-            return paginate_slice(alertas, query)
-
-        rows, total = self._reposicao_repo.list_ultimas_por_par_paged(
-            filial=filial,
-            query=query,
+        alertas = self._get_alertas_snapshot(filial=filial, rules=rules)
+        alertas = self._enriquecer_descricoes(alertas, filial=filial)
+        alertas = self._filter_alertas(
+            alertas,
             ferramenta=ferramenta,
             peca=peca,
+            statuses=normalized_statuses,
         )
-        alertas = self._build_alertas(rows, filial=filial, rules=rules)
-        alertas = self._enriquecer_descricoes(alertas, filial=filial)
-        alertas = self._filter_alertas(alertas, ferramenta=ferramenta, peca=peca, statuses=[])
-        return alertas, total
+        alertas = self._sort_alertas(alertas, query.sort_by, query.sort_dir)
+        return paginate_slice(alertas, query)
 
     def listar_historico(
         self,
@@ -154,34 +142,118 @@ class PreventivaService:
         filtered = self._filter_ultimas(enriched, ferramenta=ferramenta, peca=peca)
         return filtered, total
 
-    def _obter_golpes_atuais(
+    def _get_alertas_snapshot(
         self,
         *,
         filial: str,
-        codigo_ferramenta: str,
-        codigo_peca: str,
-        data_ultima: Any,
-    ) -> int:
-        if self._totvs is None:
-            return 0
+        rules: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        now = time.monotonic()
+        cached = _alertas_snapshot_cache.get(filial)
+        if cached and (now - cached[0]) < _ALERTAS_SNAPSHOT_TTL_SECONDS:
+            return [dict(item) for item in cached[1]]
 
+        rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
+        media_map = self._reposicao_repo.media_golpes_map(filial=filial)
+        history_map = self._reposicao_repo.golpes_history_map(filial=filial)
+        golpes_map = self._fetch_golpes_batch(filial=filial, rows=rows)
+        alertas = self._build_alertas(
+            rows,
+            filial=filial,
+            rules=rules,
+            media_map=media_map,
+            history_map=history_map,
+            golpes_map=golpes_map,
+        )
+        _alertas_snapshot_cache[filial] = (now, alertas)
+        return [dict(item) for item in alertas]
+
+    @staticmethod
+    def _format_data_inicial(data_ultima: Any) -> str:
         if isinstance(data_ultima, datetime):
-            data_inicial = data_ultima.replace(tzinfo=None).isoformat(timespec="seconds")
-        else:
-            raw = str(data_ultima or "").strip()
-            data_inicial = raw if "T" in raw else f"{raw[:10]}T00:00:00"
+            return data_ultima.replace(tzinfo=None).isoformat(timespec="seconds")
+        raw = str(data_ultima or "").strip()
+        return raw if "T" in raw else f"{raw[:10]}T00:00:00"
+
+    def _fetch_golpes_batch(
+        self,
+        *,
+        filial: str,
+        rows: list[dict[str, Any]],
+    ) -> dict[tuple[str, str], int]:
+        if self._totvs is None or not rows:
+            return {}
 
         data_final = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0).isoformat()
-        try:
-            payload = self._totvs.obter_golpes(
-                filial=filial,
-                codigo_ferramenta=codigo_ferramenta,
-                data_inicial=data_inicial,
-                data_final=data_final,
+        items: list[dict[str, str]] = []
+        keys: list[tuple[str, str]] = []
+        for row in rows:
+            codigo_ferramenta = str(row["codigo_ferramenta"])
+            codigo_peca = str(row["codigo_peca"])
+            keys.append((codigo_ferramenta, codigo_peca))
+            items.append(
+                {
+                    "codigo_ferramenta": codigo_ferramenta,
+                    "data_inicial": self._format_data_inicial(row["data_reposicao"]),
+                    "data_final": data_final,
+                }
             )
-            return int(payload.get("total_golpes") or 0)
-        except Exception:
-            return 0
+
+        if hasattr(self._totvs, "obter_golpes_batch"):
+            try:
+                payload = self._totvs.obter_golpes_batch(filial=filial, items=items)
+                batch_items = payload.get("items") if isinstance(payload, dict) else None
+                if isinstance(batch_items, list):
+                    result: dict[tuple[str, str], int] = {}
+                    for index, batch_item in enumerate(batch_items):
+                        if not isinstance(batch_item, dict) or index >= len(keys):
+                            continue
+                        result[keys[index]] = int(batch_item.get("total_golpes") or 0)
+                    if len(result) == len(keys):
+                        return result
+            except Exception:
+                pass
+
+        return self._fetch_golpes_threadpool(
+            filial=filial,
+            rows=rows,
+            data_final=data_final,
+        )
+
+    def _fetch_golpes_threadpool(
+        self,
+        *,
+        filial: str,
+        rows: list[dict[str, Any]],
+        data_final: str,
+    ) -> dict[tuple[str, str], int]:
+        if self._totvs is None or not rows:
+            return {}
+
+        result: dict[tuple[str, str], int] = {}
+        max_workers = min(len(rows), 8)
+
+        def _fetch_one(row: dict[str, Any]) -> tuple[tuple[str, str], int]:
+            codigo_ferramenta = str(row["codigo_ferramenta"])
+            codigo_peca = str(row["codigo_peca"])
+            key = (codigo_ferramenta, codigo_peca)
+            try:
+                payload = self._totvs.obter_golpes(
+                    filial=filial,
+                    codigo_ferramenta=codigo_ferramenta,
+                    data_inicial=self._format_data_inicial(row["data_reposicao"]),
+                    data_final=data_final,
+                )
+                return key, int(payload.get("total_golpes") or 0)
+            except Exception:
+                return key, 0
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(_fetch_one, row) for row in rows]
+            for future in as_completed(futures):
+                key, total = future.result()
+                result[key] = total
+        return result
 
     def _build_alertas(
         self,
@@ -189,18 +261,22 @@ class PreventivaService:
         *,
         filial: str,
         rules: list[dict[str, Any]],
+        media_map: dict[tuple[str, str], float] | None = None,
+        history_map: dict[tuple[str, str], list[int]] | None = None,
+        golpes_map: dict[tuple[str, str], int] | None = None,
     ) -> list[dict[str, Any]]:
-        media_map = self._reposicao_repo.media_golpes_map(filial=filial)
+        if media_map is None:
+            media_map = self._reposicao_repo.media_golpes_map(filial=filial)
+        if history_map is None:
+            history_map = self._reposicao_repo.golpes_history_map(filial=filial)
+        if golpes_map is None:
+            golpes_map = self._fetch_golpes_batch(filial=filial, rows=rows)
+
         alertas: list[dict[str, Any]] = []
         for row in rows:
             key = (str(row["codigo_ferramenta"]), str(row["codigo_peca"]))
             media = media_map.get(key, 0.0)
-            golpes_atuais = self._obter_golpes_atuais(
-                filial=filial,
-                codigo_ferramenta=row["codigo_ferramenta"],
-                codigo_peca=row["codigo_peca"],
-                data_ultima=row["data_reposicao"],
-            )
+            golpes_atuais = golpes_map.get(key, 0)
             percentual = (golpes_atuais / media * 100) if media > 0 else 0.0
             status_value = _match_status(percentual, rules) if media > 0 else "SEM STATUS"
             alertas.append(
@@ -211,6 +287,7 @@ class PreventivaService:
                     "data_ultima_reposicao": row["data_reposicao"],
                     "media_golpes": round(media, 2),
                     "golpes_atuais": golpes_atuais,
+                    "golpes_history": history_map.get(key, []),
                     "percentual_uso": round(percentual, 2),
                     "status": status_value,
                 }

@@ -1,7 +1,12 @@
 from unittest.mock import MagicMock
 from datetime import datetime, timezone
 
+import maint_app.application.services.preventiva_service as preventiva_module
 from maint_app.application.services.preventiva_service import PreventivaService, _match_status
+
+
+def setup_function():
+    preventiva_module._alertas_snapshot_cache.clear()
 
 
 def test_match_status_critico():
@@ -15,7 +20,7 @@ def test_match_status_critico():
     assert _match_status(50, rules) == "OK"
 
 
-def test_listar_alertas_usa_media_golpes_map():
+def test_listar_alertas_usa_batch_maps():
     reposicao_repo = MagicMock()
     status_repo = MagicMock()
     reposicao_repo.list_ultimas_por_par.return_value = [
@@ -31,9 +36,13 @@ def test_listar_alertas_usa_media_golpes_map():
         {"descricao": "OK", "operador": "<", "percentual": 80},
     ]
     reposicao_repo.media_golpes_map.return_value = {("23-001", "P1"): 100.0}
+    reposicao_repo.golpes_history_map.return_value = {("23-001", "P1"): [80_000, 90_000]}
 
     totvs = MagicMock()
-    totvs.obter_golpes.return_value = {"total_golpes": 96}
+    totvs.obter_golpes_batch.return_value = {
+        "items": [{"codigo_ferramenta": "23-001", "total_golpes": 96}],
+        "total": 1,
+    }
 
     service = PreventivaService(
         reposicao_repo=reposicao_repo,
@@ -43,11 +52,47 @@ def test_listar_alertas_usa_media_golpes_map():
     alertas, total = service.listar_alertas(filial="01")
 
     status_repo.list_active.assert_called_once_with(filial="01")
+    reposicao_repo.media_golpes_map.assert_called_once_with(filial="01")
+    reposicao_repo.golpes_history_map.assert_called_once_with(filial="01")
+    totvs.obter_golpes_batch.assert_called_once()
     assert total == 1
     assert len(alertas) == 1
     assert alertas[0]["status"] == "CRÍTICO"
-    reposicao_repo.media_golpes_map.assert_called_once_with(filial="01")
     assert alertas[0]["golpes_atuais"] == 96
+    assert alertas[0]["golpes_history"] == [80_000, 90_000]
+
+
+def test_resumo_compartilha_snapshot_cache():
+    reposicao_repo = MagicMock()
+    status_repo = MagicMock()
+    reposicao_repo.list_ultimas_por_par.return_value = [
+        {
+            "codigo_ferramenta": "23-001",
+            "codigo_peca": "P1",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+    ]
+    status_repo.list_active.return_value = [
+        {"descricao": "OK", "operador": "<", "percentual": 80},
+    ]
+    reposicao_repo.media_golpes_map.return_value = {("23-001", "P1"): 100.0}
+    reposicao_repo.golpes_history_map.return_value = {("23-001", "P1"): [50_000]}
+    totvs = MagicMock()
+    totvs.obter_golpes_batch.return_value = {
+        "items": [{"codigo_ferramenta": "23-001", "total_golpes": 50}],
+    }
+
+    service = PreventivaService(
+        reposicao_repo=reposicao_repo,
+        status_repo=status_repo,
+        totvs_gateway=totvs,
+    )
+    resumo = service.resumo_alertas(filial="01")
+    service.listar_alertas(filial="01")
+
+    assert resumo["total"] == 1
+    assert reposicao_repo.list_ultimas_por_par.call_count == 1
+    assert totvs.obter_golpes_batch.call_count == 1
 
 
 def test_listar_alertas_enriquece_descricoes():
@@ -63,10 +108,13 @@ def test_listar_alertas_enriquece_descricoes():
     status_repo.list_active.return_value = [
         {"descricao": "OK", "operador": "<", "percentual": 80},
     ]
-    reposicao_repo.media_golpes_map.return_value = {("23-001", "P1"): 100.0}
+    reposicao_repo.media_golpes_map.return_value = {("23-001", "30190006"): 100.0}
+    reposicao_repo.golpes_history_map.return_value = {("23-001", "30190006"): [50_000]}
 
     totvs = MagicMock()
-    totvs.obter_golpes.return_value = {"total_golpes": 50}
+    totvs.obter_golpes_batch.return_value = {
+        "items": [{"codigo_ferramenta": "23-001", "total_golpes": 50}],
+    }
     totvs.obter_ferramenta.return_value = {"codigo": "23-001", "descricao": "MINI APLICADOR"}
     totvs.listar_pecas.return_value = {
         "items": [{"codigo": "30190006", "descricao": "GRAMPEADOR DO ISOLANTE"}]
@@ -82,6 +130,35 @@ def test_listar_alertas_enriquece_descricoes():
 
     assert alertas[0]["descricao_ferramenta"] == "MINI APLICADOR"
     assert alertas[0]["descricao_peca"] == "GRAMPEADOR DO ISOLANTE"
+
+
+def test_fetch_golpes_fallback_threadpool_when_batch_falha():
+    reposicao_repo = MagicMock()
+    status_repo = MagicMock()
+    reposicao_repo.list_ultimas_por_par.return_value = [
+        {
+            "codigo_ferramenta": "23-001",
+            "codigo_peca": "P1",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+    ]
+    status_repo.list_active.return_value = [{"descricao": "OK", "operador": "<", "percentual": 80}]
+    reposicao_repo.media_golpes_map.return_value = {("23-001", "P1"): 100.0}
+    reposicao_repo.golpes_history_map.return_value = {("23-001", "P1"): []}
+
+    totvs = MagicMock()
+    totvs.obter_golpes_batch.side_effect = RuntimeError("batch unavailable")
+    totvs.obter_golpes.return_value = {"total_golpes": 42}
+
+    service = PreventivaService(
+        reposicao_repo=reposicao_repo,
+        status_repo=status_repo,
+        totvs_gateway=totvs,
+    )
+    alertas, _total = service.listar_alertas(filial="01")
+
+    totvs.obter_golpes.assert_called_once()
+    assert alertas[0]["golpes_atuais"] == 42
 
 
 def test_listar_historico_exclui_motivos_marcados():
@@ -108,3 +185,5 @@ def test_listar_historico_exclui_motivos_marcados():
     )
     assert len(historico) == 1
     assert historico[0]["golpes"] == 80_000
+
+
