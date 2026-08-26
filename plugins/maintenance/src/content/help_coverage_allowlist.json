@@ -1,0 +1,186 @@
+{
+  "generatedAt": "2026-08-26",
+  "note": "E3.S3 baseline",
+  "gaps": [
+    {
+      "file": "components/FerramentaAuditoriaSection.tsx",
+      "kind": "column",
+      "id": "data"
+    },
+    {
+      "file": "components/FerramentaAuditoriaSection.tsx",
+      "kind": "column",
+      "id": "acao"
+    },
+    {
+      "file": "components/FerramentaAuditoriaSection.tsx",
+      "kind": "column",
+      "id": "detalhe"
+    },
+    {
+      "file": "components/FerramentaAuditoriaSection.tsx",
+      "kind": "column",
+      "id": "usuario"
+    },
+    {
+      "file": "components/FerramentaOndeUsadoSection.tsx",
+      "kind": "column",
+      "id": "nivel"
+    },
+    {
+      "file": "components/FerramentaRevisaoProgramadaSection.tsx",
+      "kind": "column",
+      "id": "data_revisao"
+    },
+    {
+      "file": "components/FerramentasPorPecaSearchCard.tsx",
+      "kind": "column",
+      "id": "codigo"
+    },
+    {
+      "file": "components/FerramentasPorPecaSearchCard.tsx",
+      "kind": "column",
+      "id": "descricao"
+    },
+    {
+      "file": "ui/pages/FiliaisPage.tsx",
+      "kind": "column",
+      "id": "codigo"
+    },
+    {
+      "file": "ui/pages/FiliaisPage.tsx",
+      "kind": "column",
+      "id": "nome"
+    },
+    {
+      "file": "ui/pages/FiliaisPage.tsx",
+      "kind": "column",
+      "id": "status"
+    },
+    {
+      "file": "ui/pages/MiniAplicadoresPage.tsx",
+      "kind": "column",
+      "id": "codigo"
+    },
+    {
+      "file": "ui/pages/MiniAplicadoresPage.tsx",
+      "kind": "column",
+      "id": "descricao"
+    },
+    {
+      "file": "ui/pages/MiniAplicadoresPage.tsx",
+      "kind": "column",
+      "id": "nivel"
+    },
+    {
+      "file": "ui/pages/MiniAplicadoresPage.tsx",
+      "kind": "column",
+      "id": "unidade"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "intermediate_code"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "finished_product_code"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "cutting_work_center"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "has_open_production_order"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "qty_produced"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "codigo_intermediario"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "descricao_intermediario"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "codigo_produto_acabado"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "codigo_ct_corte"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "data_ativacao"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "usuario_ativacao_nome"
+    },
+    {
+      "file": "ui/pages/ProgramasMaquinasPage.tsx",
+      "kind": "column",
+      "id": "ativo"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "data"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "ferramenta"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "peca"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "golpes"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "status"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "ultima"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "golpes_atuais"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "media"
+    },
+    {
+      "file": "ui/pages/RelatorioPage.tsx",
+      "kind": "column",
+      "id": "percentual"
+    }
+  ]
+}

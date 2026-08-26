@@ -122,3 +122,15 @@ Ver [PLAYBOOK-01](../../docs/12-roadmap-e-evolucao/maintenance/PLAYBOOK-01-front
 ## Design
 
 Seguir [plugins-visual-design-system](../../.cursor/rules/plugins-visual-design-system.mdc) — padrão de tabelas alinhado ao Transformômetro (`DataTableSection`, paginação, ordenação).
+
+## Helps (hover no rótulo)
+
+Textos em [`src/content/helpTooltips.ts`](src/content/helpTooltips.ts) (`DM_HELP`). Balões aparecem ao passar o mouse **sobre o texto do rótulo** (`FieldLabel`, `SectionHintLabel`, `titleHint` / `headerHint` no kit) — sem ícone `?`.
+
+Gate de cobertura:
+
+```bash
+node plugins/maintenance/src/content/helpCoverage.structural.test.mjs
+```
+
+Inventário: [HELP-COVERAGE.md](../../docs/12-roadmap-e-evolucao/maintenance/HELP-COVERAGE.md).
