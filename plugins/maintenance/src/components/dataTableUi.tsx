@@ -75,7 +75,7 @@ export type MaintenanceDataTableSectionProps<T> = Omit<
   serverTable?: ServerTableConfig;
   /** Compat legado — mapeado para `headerActions`. */
   actions?: ReactNode;
-  /** Compat legado — mapeado para `toolbarLeading`. */
+  /** Compat legado — mapeado para `toolbarFilters` (largura total abaixo do toggle Tabela/Cards). */
   toolbar?: ReactNode;
   countBadgeLabel?: string;
   badge?: ReactNode;
@@ -117,7 +117,8 @@ export function DataTableSection<T>({
       {...rest}
       rowKey={resolvedRowKey}
       headerActions={actions ?? rest.headerActions}
-      toolbarLeading={toolbar ?? rest.toolbarLeading}
+      toolbarFilters={toolbar ?? rest.toolbarFilters}
+      toolbarLeading={rest.toolbarLeading}
       hideSearch={hideSearch}
       hidePageSizeSelect={hidePageSizeSelect}
       hint={resolvedHint}

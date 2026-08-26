@@ -1193,7 +1193,7 @@ export function MiniAplicadoresPage({
               </div>
             }
             toolbar={
-              <FilterBar embedded>
+              <FilterBar embedded className="dm-filter-bar--historico">
                 <MultiSelectField
                   label="Filtrar por peça"
                   className="dm-field--filter-peca"

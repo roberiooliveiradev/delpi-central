@@ -663,6 +663,36 @@
   min-width: 0;
   width: 100%;
 }
+/* Busca standalone (lista ferramentas, peças, programas). */
+.dashboard-maintenance .dm-filter-bar--search [class*="-filter-bar__grid"]{
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  align-items: end;
+}
+.dashboard-maintenance .dm-filter-bar--search .dm-filter-bar__actions{
+  flex-wrap: nowrap;
+  align-self: end;
+}
+/* Cadastro filiais — código + nome + ação na mesma linha. */
+.dashboard-maintenance .dm-filter-bar--filial-create [class*="-filter-bar__grid"]{
+  grid-template-columns: minmax(6rem, 8rem) minmax(12rem, 1fr) auto;
+  align-items: end;
+}
+.dashboard-maintenance .dm-filter-bar--filial-create .dm-filter-bar__actions{
+  flex-wrap: nowrap;
+}
+/* Histórico de reposições — peça, motivo, datas e ação. */
+.dashboard-maintenance .dm-filter-bar--historico [class*="-filter-bar__grid"]{
+  grid-template-columns:
+    minmax(10rem, 1.2fr)
+    minmax(10rem, 1.2fr)
+    minmax(9rem, 11rem)
+    minmax(9rem, 11rem)
+    auto;
+  align-items: end;
+}
+.dashboard-maintenance .dm-filter-bar--historico .dm-filter-bar__actions{
+  flex-wrap: nowrap;
+}
 .dashboard-maintenance .dm-filter-bar--motivo-create [class*="-filter-bar__grid"]{
   grid-template-columns: minmax(12rem, 1fr) auto auto;
   align-items: end;
@@ -712,6 +742,16 @@
     grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
   }
   .dashboard-maintenance .dm-filter-bar--relatorio .dm-filter-bar__actions{
+    flex-wrap: wrap;
+  }
+  .dashboard-maintenance .dm-filter-bar--search [class*="-filter-bar__grid"],
+  .dashboard-maintenance .dm-filter-bar--filial-create [class*="-filter-bar__grid"],
+  .dashboard-maintenance .dm-filter-bar--historico [class*="-filter-bar__grid"]{
+    grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  }
+  .dashboard-maintenance .dm-filter-bar--search .dm-filter-bar__actions,
+  .dashboard-maintenance .dm-filter-bar--filial-create .dm-filter-bar__actions,
+  .dashboard-maintenance .dm-filter-bar--historico .dm-filter-bar__actions{
     flex-wrap: wrap;
   }
   .dashboard-maintenance .dm-filter-bar--motivo-create [class*="-filter-bar__grid"],

@@ -320,7 +320,7 @@ export function FiliaisPage({
         title="Catálogo de filiais"
         hint="Filial inativa não aparece no seletor operacional. Exclusão só é permitida sem motivos, status ou reposições vinculados."
         toolbar={
-          <FilterBar embedded onSubmit={handleCreate}>
+          <FilterBar embedded className="dm-filter-bar--filial-create" onSubmit={handleCreate}>
             <DmNativeTextField
               id="dm-filial-codigo"
               label="Código"

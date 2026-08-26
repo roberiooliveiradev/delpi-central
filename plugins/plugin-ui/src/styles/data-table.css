@@ -726,6 +726,18 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   margin-bottom: 12px;
 }
 
+/** FilterBar / formulários de filtro — linha dedicada abaixo da toolbar nativa. */
+.delpi-ui-table-section__toolbar-filters {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 12px;
+}
+
+.delpi-ui-table-section__toolbar-filters .delpi-ui-filter-bar {
+  margin-bottom: 0;
+  width: 100%;
+}
+
 .delpi-ui-table-toolbar__search-group,
 .delpi-ui-table-toolbar__extra {
   display: inline-flex;

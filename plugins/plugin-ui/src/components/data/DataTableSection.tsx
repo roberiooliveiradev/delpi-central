@@ -80,6 +80,7 @@ export type DataTableSectionClassNames = {
   actions: string;
   noPrint: string;
   toolbar: string;
+  toolbarFilters: string;
   searchGroup: string;
   search: string;
   searchIcon: string;
@@ -154,6 +155,8 @@ export type DataTableSectionProps<T> = {
   toolbarExtra?: ReactNode;
   /** Conteúdo à esquerda da toolbar (além do toggle Tabela/Cards nativo). */
   toolbarLeading?: ReactNode;
+  /** Filtros/formulários em linha própria, largura total (FilterBar embedded). */
+  toolbarFilters?: ReactNode;
   /**
    * Chave estável de localStorage para preferências de colunas.
    * Quando definida, exibe o menu “Colunas” e filtra a tabela.
@@ -226,6 +229,10 @@ export function dataTableSectionBemClasses(prefix: string): DataTableSectionClas
     actions: delpiUiClass(`${section}__actions`, `${uiSection}__actions`),
     noPrint: delpiUiClass(`${prefix}-no-print`, "delpi-ui-no-print"),
     toolbar: delpiUiClass(toolbar, uiToolbar),
+    toolbarFilters: delpiUiClass(
+      `${section}__toolbar-filters`,
+      `${uiSection}__toolbar-filters`,
+    ),
     searchGroup: delpiUiClass(`${toolbar}__search-group`, `${uiToolbar}__search-group`),
     search: delpiUiClass(search, uiSearch),
     searchIcon: delpiUiClass(`${search}__icon`, `${uiSearch}__icon`),
@@ -309,6 +316,7 @@ export function DataTableSection<T>({
   serverSearch,
   toolbarExtra,
   toolbarLeading,
+  toolbarFilters,
   columnPreferencesKey,
   defaultColumnVisibility,
   onVisibleColumnKeysChange,
@@ -691,6 +699,10 @@ export function DataTableSection<T>({
               <div className={sectionClassNames.toolbarExtra}>{nativeToolbarExtra}</div>
             ) : null}
             </div>
+          ) : null}
+
+          {toolbarFilters ? (
+            <div className={sectionClassNames.toolbarFilters}>{toolbarFilters}</div>
           ) : null}
 
           {showCards ? (
