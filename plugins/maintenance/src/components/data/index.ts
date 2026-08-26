@@ -3,8 +3,12 @@ export { BrDatetimeInput } from "./BrDatetimeInput";
 export { ChartExpandModal } from "./ChartExpandModal";
 export { ChartSection } from "./ChartSection";
 export { CodigoDescricaoCell } from "./CodigoDescricaoCell";
-export { DataTable } from "./DataTable";
-export { DataTableSection, DEFAULT_TABLE_PAGE_SIZE } from "./DataTableSection";
+export {
+  DataTable,
+  DataTableSection,
+  DEFAULT_TABLE_PAGE_SIZE,
+  type DataTableColumn,
+} from "../dataTableUi";
 export { Pagination } from "./Pagination";
 export { FilialBadge } from "./FilialBadge";
 export { FilterBar } from "./FilterBar";
@@ -16,4 +20,4 @@ export { StateBox } from "./StateBox";
 export { StatusBadge } from "./StatusBadge";
 export { KpiCard, type KpiCardProps } from "./KpiCard";
 export { Timeline } from "./Timeline";
-export type { DataTableColumn } from "./types";
+export type { ServerPaginationConfig, ServerTableConfig } from "./types";

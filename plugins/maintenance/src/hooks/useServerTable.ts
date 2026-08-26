@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { DEFAULT_TABLE_PAGE_SIZE } from "../components/data/DataTableSection";
+import { DEFAULT_TABLE_PAGE_SIZE } from "../components/dataTableUi";
 
 export type ServerTableQuery = {
   page: number;
