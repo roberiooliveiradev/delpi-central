@@ -1,4 +1,4 @@
-import { ChevronDown, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { MaintenanceActionButton, MaintenanceNativeCheckboxControl } from "../app/maintenanceUi";
@@ -35,7 +35,6 @@ export function FerramentasSearchCard({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(true);
 
   const columns = useMemo<DataTableColumn<FerramentaItem>[]>(
     () => [
@@ -123,33 +122,19 @@ export function FerramentasSearchCard({
   }
 
   return (
-    <section className={`dm-card dm-collapsible-card${expanded ? "" : " is-collapsed"}`}>
-      <div className="dm-section-header dm-collapsible-card__header">
-        <button
-          type="button"
-          className="dm-collapsible-card__trigger"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((current) => !current)}
-        >
-          <ChevronDown
-            size={18}
-            aria-hidden="true"
-            className={expanded ? "dm-collapsible-card__chevron is-open" : "dm-collapsible-card__chevron"}
-          />
-          <div className="dm-section-header__title-group">
-            <h2 className="dm-section-header__title">Buscar ferramentas</h2>
-            <p className="dm-section-header__hint">
-              Ferramentas dos grupos 23 e 24. Use código, descrição ou inclua bloqueadas.
-            </p>
-          </div>
-        </button>
+    <section className="dm-card">
+      <div className="dm-section-header">
+        <div className="dm-section-header__title-group">
+          <h2 className="dm-section-header__title">Buscar ferramentas</h2>
+          <p className="dm-section-header__hint">
+            Ferramentas dos grupos 23 e 24. Use código, descrição ou inclua bloqueadas.
+          </p>
+        </div>
       </div>
 
-      {expanded ? (
-        <>
-          {error ? <p className="dm-inline-error">{error}</p> : null}
+      {error ? <p className="dm-inline-error">{error}</p> : null}
 
-          <DataTableSection
+      <DataTableSection
             columnPreferencesKey="maintenance:MiniAplicadoresPage:miniaplicadorespage:v1"
             fontSizePreferencesKey="maintenance:mini-aplicadores:lista:table-font-size:v1"
             title="Ferramentas"
@@ -213,8 +198,6 @@ export function FerramentasSearchCard({
               onSortChange: ferramentasTable.handleSortChange,
             }}
           />
-        </>
-      ) : null}
     </section>
   );
 }
