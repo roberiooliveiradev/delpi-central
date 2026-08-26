@@ -174,6 +174,10 @@ export {
 } from "./mentionComposerCaret";
 export { parseMentionText } from "./parseMentionText";
 export {
+  MessageBodyReadonly,
+  type MessageBodyReadonlyProps,
+} from "./MessageBodyReadonly";
+export {
   attachmentIdsInMarkdown,
   enrichMessageHtmlMentions,
   markdownToPlainPreview,
