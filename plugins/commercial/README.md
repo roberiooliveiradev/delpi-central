@@ -264,6 +264,18 @@ Inbox e thread nativos no **mesmo workspace** (WF-SALA-01): lista ~20% | convers
 
 Rebuild: remote `plugin-ui` **antes** do MFE `dashboard-commercial` (`./infra/scripts/up-dev-sequential.sh`).
 
+### Notificações da sala
+
+Política canônica: `src/features/interaction-rooms/interactionRoomNoticePolicy.ts`.
+
+| Superfície | Quando |
+|------------|--------|
+| **FloatingNotice** (toast) | Ações locais (enviar, pin, tarefa, sucesso/erro do composer); pin/reação de **outro** usuário |
+| **StateBanner** | Fetch bloqueante, WS offline (`roomConnectionErrorBanner`) |
+| ~~AlertQueue na thread~~ | Legado — migrar para FloatingNotice |
+
+Textos em `src/content/interactionRoomsContent.ts` (`noticePinByOtherTemplate`, `noticeReactionByOtherTemplate`, …).
+
 Contrato HTTP completo: [API-ROUTES.md § 3.21](../../docs/12-roadmap-e-evolucao/commercial/API-ROUTES.md). Paths EN (prefixo `/interaction-rooms`):
 
 | Método | Path relativo | `operationId` |

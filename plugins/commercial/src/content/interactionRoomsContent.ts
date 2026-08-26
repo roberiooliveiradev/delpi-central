@@ -145,6 +145,12 @@ export const INTERACTION_ROOMS_CONTENT = {
   contextSubtitlePinOne: "1 fixada",
   contextSubtitlePins: "{count} fixadas",
   roomAlertsAriaLabel: "Avisos da sala",
+  roomConnectionErrorBanner:
+    "Conexão em tempo real indisponível. As mensagens podem atrasar até reconectar.",
+  noticePinByOtherTemplate: "{author} fixou uma mensagem nesta conversa.",
+  noticeReactionByOtherTemplate: "{author} reagiu com {emoji} a uma mensagem.",
+  noticeReactionFallbackEmoji: "•",
+  roomFallbackAuthor: "Alguém",
   alertDismissMs: 4000,
   composerPlaceholder: "Escreva uma mensagem… Use @ para mencionar.",
   composerSendAriaLabel: "Enviar mensagem",
