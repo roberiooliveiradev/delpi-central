@@ -6,7 +6,6 @@ import { type DataTableColumn, BrDateInput, BrDatetimeInput, CodigoDescricaoCell
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import {
   useMaintenanceActiveFilial,
-  useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
@@ -82,7 +81,6 @@ export function MiniAplicadoresPage({
   codigoFerramenta,
 }: MiniAplicadoresPageProps) {
   const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
-  const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
   const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
   const [descricao, setDescricao] = useState("");
@@ -831,10 +829,6 @@ export function MiniAplicadoresPage({
         }
         filial={filial}
         filialDisplayName={filialDisplayName}
-        moduleHomePath={moduleHomePath}
-        showConfiguration={canManageMiniApplicators}
-        currentPath={pathname}
-        onNavigate={onNavigate}
         actions={
           <MaintenanceActionButton
             variant="ghost"

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { MaintenancePageHero, MaintenanceStatusBadge } from "../app/maintenanceUi";
-import { MiniAplicadoresNav } from "./MiniAplicadoresNav";
 import { resolveFilialDisplayName } from "../utils/maintenanceFilialSelection";
 
 type MaintenanceMiniAplicadoresHeroProps = {
@@ -9,10 +8,6 @@ type MaintenanceMiniAplicadoresHeroProps = {
   description?: ReactNode;
   filial: string;
   filialDisplayName?: string;
-  moduleHomePath: string;
-  showConfiguration?: boolean;
-  currentPath?: string;
-  onNavigate: (path: string) => void;
   actions?: ReactNode;
 };
 
@@ -21,10 +16,6 @@ export function MaintenanceMiniAplicadoresHero({
   description,
   filial,
   filialDisplayName,
-  moduleHomePath,
-  showConfiguration = false,
-  currentPath,
-  onNavigate,
   actions,
 }: MaintenanceMiniAplicadoresHeroProps) {
   const badgeLabel = filialDisplayName ?? resolveFilialDisplayName([], filial) ?? filial;
@@ -38,13 +29,6 @@ export function MaintenanceMiniAplicadoresHero({
         <MaintenanceStatusBadge variant="info" label={badgeLabel} />
       }
       actions={actions}
-    >
-      <MiniAplicadoresNav
-        currentPath={currentPath}
-        moduleHomePath={moduleHomePath}
-        showConfiguration={showConfiguration}
-        onNavigate={onNavigate}
-      />
-    </MaintenancePageHero>
+    />
   );
 }

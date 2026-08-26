@@ -20,7 +20,6 @@ import { MaintenanceActionButton } from "../../app/maintenanceUi";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
-  useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
@@ -534,10 +533,6 @@ export function ConfiguracaoPage({
         description={`Motivos de troca e regras de status preventivo por golpes da filial ${filialDisplayName}.`}
         filial={filial}
         filialDisplayName={filialDisplayName}
-        moduleHomePath={moduleHomePath}
-        showConfiguration={canManageMiniApplicators}
-        currentPath={pathname}
-        onNavigate={onNavigate}
       />
 
       <section className="dm-page-stack">

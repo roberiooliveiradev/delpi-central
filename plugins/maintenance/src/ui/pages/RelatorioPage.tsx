@@ -27,7 +27,6 @@ import { MaintenanceActionButton, MaintenanceTitleWithHelp } from "../../app/mai
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
-  useMaintenanceModuleHomePath,
   useOperationalFilial,
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
@@ -168,7 +167,6 @@ export function RelatorioPage({
   onNavigate,
 }: RelatorioPageProps) {
   const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
-  const moduleHomePath = useMaintenanceModuleHomePath(getAccessToken, filialScope ?? filial);
   const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
 
@@ -802,10 +800,6 @@ export function RelatorioPage({
         description="Preventiva por golpes, revisões programadas por tempo e detalhe por ferramenta/peça."
         filial={filial}
         filialDisplayName={filialDisplayName}
-        moduleHomePath={moduleHomePath}
-        showConfiguration={canManageMiniApplicators}
-        currentPath={pathname}
-        onNavigate={onNavigate}
         actions={
           <MaintenanceActionButton
             variant="ghost"
