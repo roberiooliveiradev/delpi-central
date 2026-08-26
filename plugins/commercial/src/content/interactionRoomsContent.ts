@@ -22,6 +22,7 @@ export const INTERACTION_ROOMS_CONTENT = {
   inboxFilterEmptyWallError: "Não foi possível abrir o mural comercial.",
   inboxListAriaLabel: "Salas de interação",
   inboxToolbarTitle: "Conversas",
+  inboxBackAriaLabel: "Voltar para conversas",
   filtersAriaLabel: "Filtros da caixa de entrada",
   searchPlaceholder: "Buscar por título da sala",
   reloadLabel: "Tentar de novo",

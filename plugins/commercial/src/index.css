@@ -231,7 +231,6 @@
 
 .dashboard-commercial .cm-room-workspace__grid > .cm-room-inbox-pane {
   flex: 1 1 auto;
-  border-right: none;
 }
 
 /* Inbox dentro do split (coluna esquerda) também precisa encher a altura. */
@@ -250,7 +249,7 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border-right: 1px solid var(--cm-border, var(--border, #e6e6e6));
+  /* Divider só via handle ResizableColumns no split — sem border-right aqui. */
 }
 
 .dashboard-commercial.dashboard-page--fill .cm-room-inbox-pane {

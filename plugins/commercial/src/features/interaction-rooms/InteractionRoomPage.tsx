@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Files, MessageSquare, PanelRight, Search } from "lucide-react";
+import { ArrowLeft, Files, MessageSquare, PanelRight, Search } from "lucide-react";
 import { roomHeaderBemClasses } from "@delpi/plugin-ui/index";
 
 import {
@@ -104,6 +104,7 @@ export function InteractionRoomPage({
   basePath,
   roomId,
   variant = "page",
+  inboxHref,
   onRoomTitle,
 }: Props) {
   const content = INTERACTION_ROOMS_CONTENT;
@@ -944,6 +945,18 @@ export function InteractionRoomPage({
           header={
             <CommercialRoomHeader
               title={room.title}
+              leadingAction={
+                inboxHref ? (
+                  <CommercialActionButton
+                    variant="ghost"
+                    aria-label={content.inboxBackAriaLabel}
+                    title={content.inboxBackAriaLabel}
+                    onClick={() => navigatePluginPath(inboxHref)}
+                  >
+                    <ArrowLeft size={16} aria-hidden />
+                  </CommercialActionButton>
+                ) : undefined
+              }
               onTitleClick={
                 entityHref
                   ? () => {

@@ -1,4 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -13,6 +16,7 @@ const labels = {
   collapseAriaLabel: "Collapse inbox",
   expandAriaLabel: "Expand inbox",
 };
+const stylesDir = join(dirname(fileURLToPath(import.meta.url)), "../../styles");
 
 afterEach(() => {
   cleanup();
@@ -94,5 +98,12 @@ describe("ResizableColumns", () => {
     expect(onLeftWidthChange).not.toHaveBeenCalled();
     fireEvent.click(collapse);
     expect(screen.queryByText("Inbox")).toBeNull();
+  });
+
+  it("rail recolhido não duplica border-right (divider só no handle)", () => {
+    const css = readFileSync(join(stylesDir, "resizable-columns.css"), "utf8");
+    const rail = css.match(/\.delpi-ui-resizable-columns__left--rail \{[^}]+\}/)?.[0] ?? "";
+    expect(rail).not.toMatch(/border-right:\s*1px/);
+    expect(css).toMatch(/\.delpi-ui-resizable-columns__handle::before/);
   });
 });

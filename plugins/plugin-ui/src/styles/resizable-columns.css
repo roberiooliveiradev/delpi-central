@@ -24,7 +24,7 @@
   align-items: flex-start;
   justify-content: center;
   padding-top: 0.35rem;
-  border-right: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  /* Divider único: linha do handle — sem border-right no rail recolhido. */
 }
 
 .delpi-ui-resizable-columns__right {

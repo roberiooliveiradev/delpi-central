@@ -35,6 +35,32 @@ describe("RoomHeader", () => {
     expect(screen.getByRole("button", { name: "Invite" })).toBeTruthy();
   });
 
+  it("renderiza leadingAction antes do título", () => {
+    const { container } = render(
+      <RoomHeader
+        classNames={classNames}
+        title="WEG LINHARES"
+        leadingAction={
+          <button type="button" aria-label="Voltar para conversas">
+            Back
+          </button>
+        }
+      />,
+    );
+    const titles = container.querySelector(".delpi-ui-room-header__titles");
+    expect(titles).toBeTruthy();
+    const leading = container.querySelector(".delpi-ui-room-header__leading");
+    const title = container.querySelector(".delpi-ui-room-header__title");
+    expect(leading).toBeTruthy();
+    expect(title).toBeTruthy();
+    expect(
+      [...(titles?.children ?? [])].indexOf(leading as Element),
+    ).toBeLessThan([...(titles?.children ?? [])].indexOf(title as Element));
+    expect(
+      screen.getByRole("button", { name: "Voltar para conversas" }),
+    ).toBeTruthy();
+  });
+
   it("renderiza slot nav após avatares e antes de actions", () => {
     const { container } = render(
       <RoomHeader
@@ -85,11 +111,12 @@ describe("RoomHeader", () => {
     expect(root).toMatch(/flex-wrap:\s*nowrap;/);
     expect(root).toMatch(/align-items:\s*center;/);
     expect(title).toMatch(/text-overflow:\s*ellipsis;/);
+    expect(css).toMatch(/\.delpi-ui-room-header__leading \{/);
     expect(css).toMatch(/\.delpi-ui-room-header__chip \{/);
     expect(css).toMatch(/\.delpi-ui-room-header__nav \{/);
     expect(css).toMatch(/\.delpi-ui-room-header__title-button \{/);
     expect(css).toMatch(
-      /\.delpi-ui-room-header__people \[aria-pressed="true"\]/,
+      /\.delpi-ui-room-header__people \.delpi-ui-action-btn\[aria-pressed="true"\]/,
     );
     expect(css).toMatch(/--delpi-ui-room-header-control-gap/);
     expect(css).toMatch(

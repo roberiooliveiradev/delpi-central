@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 683 · **Gerado em:** 2026-08-25 13:03 UTC
+**Provider:** `api-delpi` · **Rotas:** 686 · **Gerado em:** 2026-08-26 15:09 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -45,7 +45,7 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (20)
+## Comercial (22)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -63,9 +63,11 @@
 | `GET` | `/commercial/proposals` | `list_commercial_proposals` | Commercial proposals |
 | `GET` | `/commercial/proposals/{proposal_number}` | `get_commercial_proposal` | Commercial proposal detail (sales order) |
 | `GET` | `/commercial/proposals/{proposal_number}/history/events` | `get_commercial_proposal_history_events` | Commercial proposal stage history |
+| `GET` | `/commercial/rol` | `get_commercial_rol` | Commercial ROL consolidated analysis |
 | `GET` | `/commercial/rol/by-customer` | `get_commercial_rol_by_customer` | Commercial ROL ranking by customer |
 | `GET` | `/commercial/rol/series` | `get_commercial_rol_series` | Commercial rol series |
 | `GET` | `/commercial/sales-order-otd` | `get_sales_order_otd` | Sales order otd |
+| `GET` | `/commercial/sales-order-otd/analysis` | `get_commercial_sales_order_otd_analysis` | Sales order OTD consolidated analysis |
 | `GET` | `/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}` | `get_sales_order_otd_line_detail` | Sales order otd line detail |
 | `GET` | `/commercial/sales-order-otd/panel` | `get_sales_order_otd_panel` | Sales order otd panel |
 | `GET` | `/commercial/sales-order-otd/series` | `get_sales_order_otd_series` | Sales order otd series |
@@ -187,7 +189,7 @@
 | `GET` | `/reports/runs/{run_id}` | `get_report_run` | Get Report Run |
 | `POST` | `/reports/schedules/process-pending` | `process_pending_report_schedules` | Process Pending Report Schedules |
 
-## Engenharia (27)
+## Engenharia (28)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -210,6 +212,7 @@
 | `GET` | `/engineering/lmps/{sale_number}/history/events` | `get_lmp_history_events` | Lmp history events |
 | `GET` | `/engineering/lmps/{sale_number}/history/flow` | `get_lmp_history_flow` | Lmp history flow |
 | `GET` | `/engineering/mini-applicators/ferramentas` | `list_mini_applicators_ferramentas` | list ferramentas mini-aplicadores |
+| `POST` | `/engineering/mini-applicators/ferramentas/golpes/batch` | `post_mini_applicators_golpes_batch` | Golpes batch for mini-applicator tools |
 | `GET` | `/engineering/mini-applicators/ferramentas/{codigo}` | `get_mini_applicators_ferramenta` | Mini applicators tool |
 | `GET` | `/engineering/mini-applicators/ferramentas/{codigo}/componentes` | `list_mini_applicators_componentes` | Mini applicators components |
 | `GET` | `/engineering/mini-applicators/ferramentas/{codigo}/golpes` | `get_mini_applicators_golpes` | Golpes do mini-aplicador no period |

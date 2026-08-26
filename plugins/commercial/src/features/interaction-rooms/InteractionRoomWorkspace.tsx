@@ -88,7 +88,7 @@ export function InteractionRoomWorkspace({
       basePath={basePath}
       roomId={roomId}
       variant="pane"
-      inboxHref={listHref}
+      inboxHref={stacked ? listHref : undefined}
     />
   ) : null;
 

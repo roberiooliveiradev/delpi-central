@@ -14,6 +14,10 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/wrapRoot=\{false\}/);
     expect(source).not.toMatch(/InteractionRoomConversationShell/);
     expect(source).toMatch(/CommercialRoomHeader/);
+    expect(source).toMatch(/inboxHref/);
+    expect(source).toMatch(/inboxBackAriaLabel/);
+    expect(source).toMatch(/leadingAction=/);
+    expect(source).toMatch(/ArrowLeft/);
     expect(source).not.toMatch(/CommercialUnderlineNav/);
     expect(source).toMatch(/onTitleClick/);
     expect(source).toMatch(/titleActionLabel/);

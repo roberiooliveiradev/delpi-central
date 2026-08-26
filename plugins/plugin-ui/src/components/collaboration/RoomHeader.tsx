@@ -15,6 +15,7 @@ import {
 export type RoomHeaderClassNames = {
   root: string;
   titles: string;
+  leading: string;
   title: string;
   titleButton: string;
   subtitle: string;
@@ -30,6 +31,8 @@ export type RoomHeaderClassNames = {
 export type RoomHeaderProps = {
   title: string;
   classNames: RoomHeaderClassNames;
+  /** Control before the title (e.g. back to inbox on narrow layouts). */
+  leadingAction?: ReactNode;
   subtitle?: ReactNode;
   chips?: ReactNode;
   /** Inline view switcher (e.g. Chat | Shared) after avatars, before actions. */
@@ -53,6 +56,7 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
   return {
     root: pair(base, ui),
     titles: pair(`${base}__titles`, `${ui}__titles`),
+    leading: pair(`${base}__leading`, `${ui}__leading`),
     title: pair(`${base}__title`, `${ui}__title`),
     titleButton: pair(`${base}__title-button`, `${ui}__title-button`),
     subtitle: pair(`${base}__subtitle`, `${ui}__subtitle`),
@@ -73,6 +77,7 @@ export function roomHeaderBemClasses(prefix: string): RoomHeaderClassNames {
 export function RoomHeader({
   title,
   classNames,
+  leadingAction,
   subtitle,
   chips,
   nav,
@@ -89,6 +94,9 @@ export function RoomHeader({
   return (
     <header className={rootClass}>
       <div className={classNames.titles}>
+        {leadingAction ? (
+          <div className={classNames.leading}>{leadingAction}</div>
+        ) : null}
         <h2 className={classNames.title}>
           {onTitleClick ? (
             <button

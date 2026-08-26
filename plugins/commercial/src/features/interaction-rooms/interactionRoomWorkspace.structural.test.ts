@@ -16,6 +16,7 @@ describe("InteractionRoomWorkspace", () => {
     expect(workspace).toMatch(/buildInteractionRoomSearch/);
     expect(workspace).toMatch(/CommercialResizableColumns/);
     expect(workspace).toMatch(/max-width: 899px/);
+    expect(workspace).toMatch(/inboxHref=\{stacked \? listHref : undefined\}/);
     expect(workspace).toMatch(/writeInboxWidthPx/);
     expect(workspace).not.toMatch(/CommercialPageHero/);
     expect(workspace).not.toMatch(/CommercialPagePath/);

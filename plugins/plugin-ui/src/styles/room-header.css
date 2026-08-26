@@ -17,6 +17,12 @@
   flex: 1 1 auto;
 }
 
+.delpi-ui-room-header__leading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
 .delpi-ui-room-header__title {
   margin: 0;
   min-width: 0;
