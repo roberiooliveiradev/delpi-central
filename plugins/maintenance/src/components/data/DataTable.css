@@ -86,8 +86,36 @@
 }
 
 .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__col--config-actions {
-  width: 11rem;
-  max-width: 11rem;
+  width: 13rem;
+  max-width: 13rem;
+}
+
+.dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table tbody td {
+  vertical-align: middle;
+  padding-block: 8px;
+}
+
+.dashboard-maintenance .dm-table-section--editable-config .dm-datatable__col--config-flag {
+  text-align: center;
+}
+
+.dashboard-maintenance .dm-table-section--editable-config .dm-datatable__col--config-flag .delpi-ui-native-checkbox {
+  justify-content: center;
+  margin-inline: auto;
+}
+
+.dashboard-maintenance .dm-row-actions--inline {
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.dashboard-maintenance .dm-row-actions--inline .delpi-ui-action-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-height: 32px;
+  padding-inline: 10px;
 }
 
 .dashboard-maintenance .dm-revisao-feito-actions {

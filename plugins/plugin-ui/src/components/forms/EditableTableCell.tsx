@@ -1,4 +1,8 @@
-import type { ChangeEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
+
+import { NativeSelectControl } from "./NativeSelectControl";
+import { NativeTextControl } from "./NativeTextControl";
+import { mergeClassNames, NATIVE_CONTROL_COMPACT_CLASS } from "./nativeControlClasses";
 
 export type EditableTableCellClassNames = {
   root: string;
@@ -34,7 +38,7 @@ export function editableTableCellBemClasses(prefix: string): EditableTableCellCl
 }
 
 /**
- * Célula editável de tabela (input ou select nativo) + slot de badge.
+ * Célula editável de tabela (NativeTextControl / NativeSelectControl compactos) + slot de badge.
  * Mantém o controle no DOM do plugin (CSS BEM via classNames).
  */
 export function EditableTableCell({
@@ -52,28 +56,24 @@ export function EditableTableCell({
   options = [],
   placeholderOption,
 }: EditableTableCellProps) {
-  const controlClassName = classNames.control;
+  const controlClassName = mergeClassNames(
+    NATIVE_CONTROL_COMPACT_CLASS,
+    classNames.control,
+  );
 
   const control =
     as === "select" ? (
-      <select
+      <NativeSelectControl
         className={controlClassName}
         value={String(value)}
         disabled={disabled}
         aria-label={ariaLabel}
-        onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}
-      >
-        {placeholderOption !== undefined ? (
-          <option value="">{placeholderOption}</option>
-        ) : null}
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        options={options}
+        placeholderOption={placeholderOption}
+        onChange={onChange}
+      />
     ) : (
-      <input
+      <NativeTextControl
         className={controlClassName}
         type={type}
         value={value}
@@ -82,7 +82,7 @@ export function EditableTableCell({
         placeholder={placeholder}
         min={min}
         step={step}
-        onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
+        onChange={onChange}
       />
     );
 

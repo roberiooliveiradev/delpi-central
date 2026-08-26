@@ -14,6 +14,7 @@ import {
   createDashboardSeriesSparkline,
   createSimpleKpiCard,
   FieldLabel,
+  NativeCheckboxControl,
   filterCheckboxFieldBemClasses,
   SectionHintLabel,
   titleWithHelpBemClasses,
@@ -66,6 +67,8 @@ export const MaintenanceFilterCheckboxField = createDashboardFilterCheckboxField
   classNames: filterCheckboxFieldBemClasses(UI_PREFIX),
   labels: { defaultCheckboxLabel: "Ativar" },
 });
+
+export const MaintenanceNativeCheckboxControl = NativeCheckboxControl;
 
 export const MaintenanceInteractiveDataCard = createDashboardInteractiveDataCard({
   prefix: UI_PREFIX,

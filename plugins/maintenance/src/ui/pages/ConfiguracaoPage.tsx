@@ -16,7 +16,7 @@ import {
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
 import { MotivoListCard, StatusPreventivoListCard } from "../../components/listCards/MaintenanceListCards";
-import { MaintenanceActionButton, MaintenanceFilterCheckboxField } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceFilterCheckboxField, MaintenanceNativeCheckboxControl } from "../../app/maintenanceUi";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
@@ -352,12 +352,10 @@ export function ConfiguracaoPage({
             return draft.excluir_preventiva ? "Sim" : "Não";
           }
           return (
-            <MaintenanceFilterCheckboxField
+            <MaintenanceNativeCheckboxControl
               id={`dm-config-motivo-flag-${item.motivo_id}`}
-              label="Não conta"
-              hint={DM_HELP.configuracao.excluirPreventiva}
-              checkboxLabel="Ativar"
               checked={draft.excluir_preventiva}
+              aria-label="Não conta no preventivo"
               onChange={(checked) =>
                 setMotivoEdits((prev) => ({
                   ...prev,
@@ -380,7 +378,7 @@ export function ConfiguracaoPage({
         className: "dm-datatable__col--config-actions",
         interactive: true,
         render: (item) => (
-          <div className="dm-row-actions">
+          <div className="dm-row-actions dm-row-actions--inline">
             <MaintenanceActionButton
               variant="ghost"
               onClick={() => void handleSaveMotivo(item.motivo_id)}
@@ -499,7 +497,7 @@ export function ConfiguracaoPage({
         className: "dm-datatable__col--config-actions",
         interactive: true,
         render: (item) => (
-          <div className="dm-row-actions">
+          <div className="dm-row-actions dm-row-actions--inline">
             <MaintenanceActionButton
               variant="ghost"
               onClick={() => void handleSaveStatus(item.status_id)}

@@ -18,6 +18,7 @@ describe("EditableTableCell", () => {
     );
 
     expect(container.querySelector(".dm-editable-cell")).toBeTruthy();
+    expect(screen.getByLabelText("Descrição").className).toContain("delpi-ui-native-control");
     fireEvent.change(screen.getByLabelText("Descrição"), { target: { value: "xyz" } });
     expect(onChange).toHaveBeenCalledWith("xyz");
     expect(screen.getByTestId("badge")).toBeTruthy();

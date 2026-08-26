@@ -540,14 +540,15 @@
   color: var(--dm-text-muted);
 }.dashboard-maintenance .dm-editable-cell{
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   min-width: 0;
-}.dashboard-maintenance .dm-editable-cell input,
-.dashboard-maintenance .dm-editable-cell select{
-  width: 100%;
+}.dashboard-maintenance .dm-editable-cell .delpi-ui-native-control{
+  flex: 1 1 8rem;
+  min-width: 0;
 }.dashboard-maintenance .dm-filial-badge{
   margin: 0;
   padding: 8px 12px;
@@ -630,6 +631,7 @@
 }.dashboard-maintenance .dm-row-actions{
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }.dashboard-maintenance .delpi-ui-action-btn.dm-btn--danger{
   color: #b42318;
@@ -1485,8 +1487,7 @@
     width: 100%;
   }.dashboard-maintenance .dm-kpi-inline{
     width: 100%;
-  }.dashboard-maintenance .dm-datatable table.dm-table td input,
-  .dashboard-maintenance .dm-datatable table.dm-table td select{
+  }.dashboard-maintenance .dm-datatable table.dm-table td .delpi-ui-native-control{
     width: 100%;
     min-width: 0;
   }

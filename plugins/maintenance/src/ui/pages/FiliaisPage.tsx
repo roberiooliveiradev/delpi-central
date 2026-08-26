@@ -224,9 +224,10 @@ export function FiliaisPage({
       {
         key: "acoes",
         header: "Ações",
+        className: "dm-datatable__col--config-actions",
         interactive: true,
         render: (item) => (
-          <div className="dm-row-actions">
+          <div className="dm-row-actions dm-row-actions--inline">
             <MaintenanceActionButton variant="ghost" onClick={() => void handleSave(item.filial_id)}>
               Salvar
             </MaintenanceActionButton>
@@ -315,6 +316,7 @@ export function FiliaisPage({
 
       <DataTableSection
         columnPreferencesKey="maintenance:FiliaisPage:cat-logo-de-filiais:v1"
+        className="dm-table-section--editable-config"
         title="Catálogo de filiais"
         hint="Filial inativa não aparece no seletor operacional. Exclusão só é permitida sem motivos, status ou reposições vinculados."
         toolbar={
