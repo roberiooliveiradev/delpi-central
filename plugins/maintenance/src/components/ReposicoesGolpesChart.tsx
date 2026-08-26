@@ -63,11 +63,12 @@ export function ReposicoesGolpesChart({
   loading = false,
 }: ReposicoesGolpesChartProps) {
   const [expanded, setExpanded] = useState(false);
-  const { chartType, setChartType } = usePersistedChartPreferences({
+  const { preferences, setChartType } = usePersistedChartPreferences({
     storageKey: CHART_STORAGE_KEY,
     defaults: { chartType: "line" },
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
+  const chartType = preferences.chartType ?? "line";
 
   const { chartData, series } = useMemo(() => {
     const sorted = [...reposicoes].sort(

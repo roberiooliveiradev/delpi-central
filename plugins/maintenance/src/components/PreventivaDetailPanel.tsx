@@ -71,18 +71,21 @@ export function PreventivaDetailPanel({
   const alerta = data?.alerta;
   const ferramenta = data?.ferramenta;
 
-  const { chartType: usoChartType, setChartType: setUsoChartType } = usePersistedChartPreferences({
-    storageKey: USO_CHART_STORAGE_KEY,
-    defaults: { chartType: "bar" },
-    allowedChartTypes: RANKING_TYPES,
-  });
+  const { preferences: usoPreferences, setChartType: setUsoChartType } =
+    usePersistedChartPreferences({
+      storageKey: USO_CHART_STORAGE_KEY,
+      defaults: { chartType: "bar" },
+      allowedChartTypes: RANKING_TYPES,
+    });
+  const usoChartType = usoPreferences.chartType ?? "bar";
 
-  const { chartType: historicoChartType, setChartType: setHistoricoChartType } =
+  const { preferences: historicoPreferences, setChartType: setHistoricoChartType } =
     usePersistedChartPreferences({
       storageKey: HISTORICO_CHART_STORAGE_KEY,
       defaults: { chartType: "line" },
       allowedChartTypes: TIME_MULTI_SERIES_TYPES,
     });
+  const historicoChartType = historicoPreferences.chartType ?? "line";
 
   const historicoChart = useMemo(
     () =>
