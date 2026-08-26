@@ -26,6 +26,7 @@ export type ResizableColumnsClassNames = {
   leftRail: string;
   right: string;
   handle: string;
+  handleDragging: string;
   collapse: string;
   collapseExpanded: string;
   collapseCollapsed: string;
@@ -64,6 +65,10 @@ export function resizableColumnsBemClasses(prefix: string): ResizableColumnsClas
     leftRail: pair(`${base}__left ${base}__left--rail`, `${ui}__left ${ui}__left--rail`),
     right: pair(`${base}__right`, `${ui}__right`),
     handle: pair(`${base}__handle`, `${ui}__handle`),
+    handleDragging: pair(
+      `${base}__handle ${base}__handle--dragging`,
+      `${ui}__handle ${ui}__handle--dragging`,
+    ),
     collapse: pair(`${base}__collapse`, `${ui}__collapse`),
     collapseExpanded: pair(
       `${base}__collapse ${base}__collapse--expanded`,
@@ -111,6 +116,7 @@ export function ResizableColumns({
     defaultLeftWidthPx ?? minLeftPx,
   );
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
+  const [isDragging, setIsDragging] = useState(false);
   const dragging = useRef(false);
 
   const isCollapsed = collapsed ?? internalCollapsed;
@@ -179,7 +185,10 @@ export function ResizableColumns({
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (isCollapsed || event.button !== 0) return;
     dragging.current = true;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsDragging(true);
+    if (typeof event.currentTarget.setPointerCapture === "function") {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
   };
 
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -190,8 +199,10 @@ export function ResizableColumns({
     setWidth(event.clientX - leftEdge);
   };
 
-  const onPointerUp = () => {
+  const endDrag = () => {
+    if (!dragging.current) return;
     dragging.current = false;
+    setIsDragging(false);
   };
 
   const onHandleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -225,6 +236,10 @@ export function ResizableColumns({
     setCollapsed(!isCollapsed);
   };
 
+  const handleClass = [
+    isDragging ? classNames.handleDragging : classNames.handle,
+  ].join(" ");
+
   const collapseButton = (
     <button
       type="button"
@@ -256,7 +271,7 @@ export function ResizableColumns({
       </div>
       <div
         id={separatorId}
-        className={classNames.handle}
+        className={handleClass}
         role="separator"
         aria-orientation="vertical"
         aria-label={labels.separatorAriaLabel}
@@ -264,8 +279,8 @@ export function ResizableColumns({
         tabIndex={isCollapsed ? -1 : 0}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
         onKeyDown={onHandleKeyDown}
       >
         {isCollapsed ? null : collapseButton}

@@ -17,7 +17,6 @@
 
 .delpi-ui-resizable-columns__left {
   flex: 0 0 auto;
-  border-right: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
 }
 
 .delpi-ui-resizable-columns__left--rail {
@@ -25,48 +24,74 @@
   align-items: flex-start;
   justify-content: center;
   padding-top: 0.35rem;
+  border-right: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
 }
 
 .delpi-ui-resizable-columns__right {
   flex: 1 1 auto;
 }
 
+/* Faixa fina de hit-test centrada na linha — sem bloco colorido (padrão Cursor). */
 .delpi-ui-resizable-columns__handle {
-  flex: 0 0 10px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  margin: 0 2px;
-  padding-top: 0.35rem;
-  background: transparent;
+  position: relative;
+  flex: 0 0 8px;
+  width: 8px;
+  margin: 0 4px;
+  align-self: stretch;
   cursor: col-resize;
   touch-action: none;
-  border-radius: 0.25rem;
+  background: transparent;
 }
 
-.delpi-ui-resizable-columns__handle:hover {
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
-    transparent
-  );
+.delpi-ui-resizable-columns__handle::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  background: var(--delpi-ui-border, var(--border, #e6e6e6));
+  pointer-events: none;
+  transition:
+    width 0.12s ease,
+    background-color 0.12s ease;
+}
+
+.delpi-ui-resizable-columns__handle:hover::before,
+.delpi-ui-resizable-columns__handle:focus-visible::before,
+.delpi-ui-resizable-columns__handle--dragging::before {
+  width: 2px;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 .delpi-ui-resizable-columns__handle:focus-visible {
+  outline: none;
+}
+
+.delpi-ui-resizable-columns__handle:focus-visible::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
-  outline-offset: 2px;
+  outline-offset: -1px;
+  pointer-events: none;
 }
 
 .delpi-ui-resizable-columns__collapse {
+  position: absolute;
+  top: 0.35rem;
+  left: calc(50% + 6px);
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: 0.4rem;
+  border-radius: 0.35rem;
   color: inherit;
   background: transparent;
   cursor: pointer;
@@ -91,6 +116,9 @@
 }
 
 .delpi-ui-resizable-columns__collapse--collapsed {
+  position: static;
+  width: 36px;
+  height: 36px;
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
@@ -102,6 +130,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .delpi-ui-resizable-columns__left {
+    transition: none;
+  }
+
+  .delpi-ui-resizable-columns__handle::before {
     transition: none;
   }
 }

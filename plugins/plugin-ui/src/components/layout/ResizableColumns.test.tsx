@@ -56,6 +56,25 @@ describe("ResizableColumns", () => {
     expect(screen.getByText("Inbox")).toBeTruthy();
   });
 
+  it("applies dragging modifier on the divider line while resizing", () => {
+    render(
+      <ResizableColumns
+        classNames={classNames}
+        labels={labels}
+        defaultLeftWidthPx={280}
+        left={<div>Inbox</div>}
+        right={<div>Thread</div>}
+      />,
+    );
+    const separator = screen.getByRole("separator", { name: "Resize inbox" });
+    expect(separator.className).toContain("test-resizable-columns__handle");
+    expect(separator.className).not.toContain("--dragging");
+    fireEvent.pointerDown(separator, { button: 0, pointerId: 1 });
+    expect(separator.className).toContain("--dragging");
+    fireEvent.pointerUp(separator, { pointerId: 1 });
+    expect(separator.className).not.toContain("--dragging");
+  });
+
   it("collapse button stops propagation so handle drag does not start", () => {
     const onLeftWidthChange = vi.fn();
     render(
