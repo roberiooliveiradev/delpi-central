@@ -73,3 +73,26 @@ class InteractionMessageMarkdownAttachmentsService:
             return f"![{alt}]({_ATTACHMENT_PREFIX}{uuid})"
 
         return image_re.sub(_replace, text)
+
+    @classmethod
+    def rewrite_attachment_ids(
+        cls, body_text: str, id_map: dict[str, str]
+    ) -> str:
+        """Substitui `attachment:{oldUuid}` por `attachment:{newUuid}`."""
+        text = str(body_text or "")
+        if not id_map:
+            return text
+        image_re = InteractionRoomContentService.markdown_image_pattern()
+
+        def _replace(match: re.Match[str]) -> str:
+            alt = match.group(1) or ""
+            href = str(match.group(2) or "").strip()
+            if not href.startswith(_ATTACHMENT_PREFIX) or href.startswith(_PENDING_PREFIX):
+                return match.group(0)
+            old_id = href[len(_ATTACHMENT_PREFIX) :]
+            new_id = str(id_map.get(old_id) or "").strip()
+            if not new_id:
+                return match.group(0)
+            return f"![{alt}]({_ATTACHMENT_PREFIX}{new_id})"
+
+        return image_re.sub(_replace, text)

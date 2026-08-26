@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Mapping, Sequence
 from uuid import UUID, uuid4
 
 import pytest
 
+from commercial_app.application.services.attachment_storage import AttachmentStorage
 from commercial_app.application.use_cases.create_task_from_interaction_message import (
     CreateTaskFromInteractionMessageInput,
     CreateTaskFromInteractionMessageUseCase,
@@ -16,6 +18,7 @@ from commercial_app.application.use_cases.manage_interaction_messages import (
     ManageInteractionMessagesUseCase,
 )
 from commercial_app.application.use_cases.manage_worklist import ManageWorklistUseCase
+from commercial_app.domain.entities.attachment import CommercialAttachment
 from commercial_app.domain.entities.interaction_room import (
     InteractionMention,
     InteractionMessage,
@@ -82,6 +85,69 @@ class FakeMessages:
         return message
 
 
+class FakeAttachments:
+    def __init__(self) -> None:
+        self.items: list[CommercialAttachment] = []
+
+    def list_for_owner(
+        self,
+        *,
+        owner_type: str,
+        owner_id: str,
+        limit: int = 50,
+    ) -> Sequence[CommercialAttachment]:
+        return [
+            item
+            for item in self.items
+            if item.owner_type == owner_type and item.owner_id == owner_id
+        ][:limit]
+
+    def count_for_owners(self, *, owner_type: str, owner_ids: Sequence[str]) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for item in self.items:
+            if item.owner_type != owner_type or item.owner_id not in owner_ids:
+                continue
+            counts[item.owner_id] = counts.get(item.owner_id, 0) + 1
+        return counts
+
+    def get_by_id(self, attachment_id: UUID) -> CommercialAttachment | None:
+        for item in self.items:
+            if item.id == attachment_id:
+                return item
+        return None
+
+    def create(
+        self,
+        *,
+        owner_type: str,
+        owner_id: str,
+        file_name: str,
+        storage_key: str,
+        content_type: str,
+        byte_size: int,
+        uploaded_by_user_id: str,
+    ) -> CommercialAttachment:
+        record = CommercialAttachment(
+            id=uuid4(),
+            owner_type=owner_type,
+            owner_id=owner_id,
+            file_name=file_name,
+            storage_key=storage_key,
+            content_type=content_type,
+            byte_size=byte_size,
+            uploaded_by_user_id=uploaded_by_user_id,
+            created_at=datetime.now(timezone.utc),
+        )
+        self.items.append(record)
+        return record
+
+    def delete(self, attachment_id: UUID) -> CommercialAttachment | None:
+        for index, item in enumerate(self.items):
+            if item.id == attachment_id:
+                return self.items.pop(index)
+        return None
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -130,8 +196,14 @@ def _use_case(
     rooms: FakeRooms,
     messages: FakeMessages,
     tasks: InMemoryTaskRepo | None = None,
+    attachments: FakeAttachments | None = None,
+    storage: AttachmentStorage | None = None,
 ) -> tuple[CreateTaskFromInteractionMessageUseCase, InMemoryTaskRepo]:
     task_repo = tasks or InMemoryTaskRepo()
+    attachment_repo = attachments or FakeAttachments()
+    attachment_storage = storage or AttachmentStorage(
+        base_dir=str(Path("/tmp/commercial-task-from-message-test")),
+    )
     worklist = ManageWorklistUseCase(
         task_repository=task_repo,
         activity_repository=InMemoryActivityRepo(),
@@ -146,6 +218,9 @@ def _use_case(
             messages=messages,
             worklist=worklist,
             interaction_messages=interaction_messages,
+            attachments=attachment_repo,
+            attachment_storage=attachment_storage,
+            tasks=task_repo,
         ),
         task_repo,
     )
@@ -245,6 +320,59 @@ def test_rejects_message_from_other_room() -> None:
             )
         )
     assert str(exc.value) == InteractionRoomContentService.error("messageNotInRoom")
+
+
+def test_clones_message_attachments_and_rewrites_description(
+    tmp_path: Path,
+) -> None:
+    rooms = FakeRooms()
+    messages = FakeMessages()
+    attachments = FakeAttachments()
+    storage = AttachmentStorage(base_dir=str(tmp_path))
+    room_id, message_id = _seed_room_message(
+        rooms=rooms,
+        messages=messages,
+        body="Veja ![img](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)",
+    )
+    source_id = UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+    stored = storage.save(
+        owner_type="room_message",
+        owner_id=str(message_id),
+        original_name="foto.png",
+        content=b"png-bytes",
+        mime_type="image/png",
+    )
+    attachments.items.append(
+        CommercialAttachment(
+            id=source_id,
+            owner_type="room_message",
+            owner_id=str(message_id),
+            file_name=stored.file_name,
+            storage_key=stored.storage_key,
+            content_type="image/png",
+            byte_size=stored.byte_size,
+            uploaded_by_user_id="u1",
+            created_at=_now(),
+        )
+    )
+    uc, tasks = _use_case(rooms, messages, attachments=attachments, storage=storage)
+    result = uc.execute(
+        CreateTaskFromInteractionMessageInput(
+            room_id=room_id,
+            message_id=message_id,
+            actor_user_id="u1",
+        )
+    )
+    task = result.task
+    cloned = [
+        item
+        for item in attachments.items
+        if item.owner_type == "task" and item.owner_id == str(task.id)
+    ]
+    assert len(cloned) == 1
+    assert str(source_id) not in (task.description or "")
+    assert f"attachment:{cloned[0].id}" in (task.description or "")
+    assert tasks.items[task.id].description == task.description
 
 
 def test_title_summary_strips_images_and_truncates() -> None:

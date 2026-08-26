@@ -676,6 +676,28 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 raise
             return self._hydrate([base])[0]
 
+    def update_description(
+        self,
+        *,
+        task_id: UUID,
+        description: str | None,
+    ) -> CommercialTask | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.tasks
+               SET description = %s,
+                   updated_at = NOW()
+             WHERE id = %s AND deleted_at IS NULL
+         RETURNING {_TASK_COLUMNS}
+            """,
+            (description, str(task_id)),
+        )
+        base = _row_task_base(row)
+        if base is None:
+            return None
+        hydrated = self._hydrate([base])
+        return hydrated[0] if hydrated else None
+
     def update(
         self,
         *,

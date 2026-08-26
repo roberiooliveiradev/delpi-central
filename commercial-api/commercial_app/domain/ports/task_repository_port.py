@@ -104,6 +104,16 @@ class TaskRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def update_description(
+        self,
+        *,
+        task_id: UUID,
+        description: str | None,
+    ) -> CommercialTask | None:
+        """Atualiza observação da tarefa (uso interno pós-create)."""
+        raise NotImplementedError
+
+    @abstractmethod
     def update(
         self,
         *,

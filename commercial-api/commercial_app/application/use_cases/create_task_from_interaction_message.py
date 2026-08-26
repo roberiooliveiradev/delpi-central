@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID
 
+from commercial_app.application.services.attachment_storage import AttachmentStorage
 from commercial_app.application.use_cases.manage_interaction_messages import (
     ManageInteractionMessagesUseCase,
     PostInteractionMessageInput,
@@ -15,11 +16,16 @@ from commercial_app.application.use_cases.manage_worklist import (
 )
 from commercial_app.domain.entities.interaction_room import InteractionMessage
 from commercial_app.domain.entities.task import CommercialTask
+from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
 from commercial_app.domain.ports.interaction_message_repository_port import (
     InteractionMessageRepositoryPort,
 )
 from commercial_app.domain.ports.interaction_room_repository_port import (
     InteractionRoomRepositoryPort,
+)
+from commercial_app.domain.ports.task_repository_port import TaskRepositoryPort
+from commercial_app.domain.services.interaction_message_markdown_attachments_service import (
+    InteractionMessageMarkdownAttachmentsService,
 )
 from commercial_app.domain.services.interaction_room_access_service import (
     InteractionRoomAccessService,
@@ -57,12 +63,58 @@ class CreateTaskFromInteractionMessageUseCase:
         messages: InteractionMessageRepositoryPort,
         worklist: ManageWorklistUseCase,
         interaction_messages: ManageInteractionMessagesUseCase,
+        attachments: AttachmentRepositoryPort,
+        attachment_storage: AttachmentStorage,
+        tasks: TaskRepositoryPort,
     ) -> None:
         self._rooms = rooms
         self._messages = messages
         self._worklist = worklist
         self._interaction_messages = interaction_messages
+        self._attachments = attachments
+        self._attachment_storage = attachment_storage
+        self._tasks = tasks
         self._access = InteractionRoomAccessService(rooms)
+
+    def _clone_message_attachments_to_task(
+        self,
+        *,
+        message_id: UUID,
+        task_id: UUID,
+        actor_user_id: str,
+        body_text: str,
+    ) -> str:
+        records = list(
+            self._attachments.list_for_owner(
+                owner_type="room_message",
+                owner_id=str(message_id),
+            )
+        )
+        if not records:
+            return body_text
+        id_map: dict[str, str] = {}
+        for record in records:
+            stored = self._attachment_storage.copy_to_owner(
+                source_storage_key=record.storage_key,
+                owner_type="task",
+                owner_id=str(task_id),
+                original_name=record.file_name,
+                content_type=record.content_type,
+            )
+            cloned = self._attachments.create(
+                owner_type="task",
+                owner_id=str(task_id),
+                file_name=stored.file_name,
+                storage_key=stored.storage_key,
+                content_type=record.content_type,
+                byte_size=stored.byte_size,
+                uploaded_by_user_id=actor_user_id,
+            )
+            id_map[str(record.id)] = str(cloned.id)
+        return InteractionMessageMarkdownAttachmentsService.rewrite_attachment_ids(
+            body_text,
+            id_map,
+        )
 
     def execute(
         self,
@@ -104,6 +156,20 @@ class CreateTaskFromInteractionMessageUseCase:
             ),
             actor_is_portfolio_manager=actor_is_portfolio_manager,
         )
+        if description:
+            rewritten = self._clone_message_attachments_to_task(
+                message_id=request.message_id,
+                task_id=task.id,
+                actor_user_id=actor,
+                body_text=description,
+            )
+            if rewritten != description:
+                updated = self._tasks.update_description(
+                    task_id=task.id,
+                    description=rewritten,
+                )
+                if updated is not None:
+                    task = updated
         mention_kind = InteractionRoomContentService.task_mention_kind()
         task_ref_message = self._interaction_messages.post(
             PostInteractionMessageInput(

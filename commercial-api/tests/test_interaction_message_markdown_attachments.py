@@ -21,6 +21,19 @@ def test_lists_ids_and_pending() -> None:
     )
 
 
+def test_rewrite_attachment_ids() -> None:
+    InteractionRoomContentService.clear_cache()
+    body = "x ![s](attachment:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee) y"
+    out = InteractionMessageMarkdownAttachmentsService.rewrite_attachment_ids(
+        body,
+        {"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee": "11111111-2222-3333-4444-555555555555"},
+    )
+    assert (
+        out
+        == "x ![s](attachment:11111111-2222-3333-4444-555555555555) y"
+    )
+
+
 def test_rewrite_pending() -> None:
     InteractionRoomContentService.clear_cache()
     body = "x ![s](attachment:pending:local-1) y"

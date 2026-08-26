@@ -226,6 +226,20 @@ class InMemoryTaskRepo:
         self.items[task.id] = updated
         return updated
 
+    def update_description(
+        self,
+        *,
+        task_id: UUID,
+        description: str | None,
+    ) -> CommercialTask | None:
+        task = self.items.get(task_id)
+        if task is None:
+            return None
+        now = datetime.now(timezone.utc)
+        updated = replace(task, description=description, updated_at=now)
+        self.items[task.id] = updated
+        return updated
+
     def update(
         self,
         *,

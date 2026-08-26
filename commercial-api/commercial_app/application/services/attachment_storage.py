@@ -118,6 +118,24 @@ class AttachmentStorage:
             byte_size=len(content),
         )
 
+    def copy_to_owner(
+        self,
+        *,
+        source_storage_key: str,
+        owner_type: str,
+        owner_id: str,
+        original_name: str,
+        content_type: str,
+    ) -> StoredAttachment:
+        source = self.resolve_file(storage_key=source_storage_key)
+        return self.save(
+            owner_type=owner_type,
+            owner_id=owner_id,
+            original_name=original_name,
+            content=source.read_bytes(),
+            mime_type=content_type,
+        )
+
     def resolve_file(self, *, storage_key: str) -> Path:
         base = self.base_dir.resolve()
         normalized_key = storage_key.strip().lstrip("/")

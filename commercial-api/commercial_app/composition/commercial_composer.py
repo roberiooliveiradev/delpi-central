@@ -380,6 +380,9 @@ def build_create_task_from_interaction_message_use_case() -> (
                 messages=build_interaction_message_repository(),
                 worklist=build_manage_worklist_use_case(),
                 interaction_messages=build_manage_interaction_messages_use_case(),
+                attachments=build_attachment_repository(),
+                attachment_storage=build_attachment_storage(),
+                tasks=build_task_repository(),
             )
         )
     return _create_task_from_interaction_message_use_case
