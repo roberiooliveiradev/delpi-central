@@ -22,8 +22,9 @@
 
 .delpi-ui-resizable-columns__left--rail {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 0.35rem;
 }
 
 .delpi-ui-resizable-columns__right {
@@ -31,14 +32,24 @@
 }
 
 .delpi-ui-resizable-columns__handle {
-  flex: 0 0 6px;
+  flex: 0 0 10px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  margin: 0 2px;
   padding-top: 0.35rem;
   background: transparent;
   cursor: col-resize;
   touch-action: none;
+  border-radius: 0.25rem;
+}
+
+.delpi-ui-resizable-columns__handle:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
 }
 
 .delpi-ui-resizable-columns__handle:focus-visible {
@@ -64,6 +75,23 @@
 .delpi-ui-resizable-columns__collapse:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: 2px;
+}
+
+.delpi-ui-resizable-columns__collapse--expanded {
+  color: var(--delpi-ui-text-muted, var(--muted-foreground, #64748b));
+}
+
+.delpi-ui-resizable-columns__collapse--expanded:hover {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    transparent
+  );
+}
+
+.delpi-ui-resizable-columns__collapse--collapsed {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 @media (prefers-reduced-motion: no-preference) {

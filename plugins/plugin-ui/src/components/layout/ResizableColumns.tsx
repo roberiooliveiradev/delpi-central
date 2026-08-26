@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -26,6 +27,8 @@ export type ResizableColumnsClassNames = {
   right: string;
   handle: string;
   collapse: string;
+  collapseExpanded: string;
+  collapseCollapsed: string;
 };
 
 export type ResizableColumnsLabels = {
@@ -62,6 +65,14 @@ export function resizableColumnsBemClasses(prefix: string): ResizableColumnsClas
     right: pair(`${base}__right`, `${ui}__right`),
     handle: pair(`${base}__handle`, `${ui}__handle`),
     collapse: pair(`${base}__collapse`, `${ui}__collapse`),
+    collapseExpanded: pair(
+      `${base}__collapse ${base}__collapse--expanded`,
+      `${ui}__collapse ${ui}__collapse--expanded`,
+    ),
+    collapseCollapsed: pair(
+      `${base}__collapse ${base}__collapse--collapsed`,
+      `${ui}__collapse ${ui}__collapse--collapsed`,
+    ),
   };
 }
 
@@ -201,6 +212,36 @@ export function ResizableColumns({
     .filter(Boolean)
     .join(" ");
 
+  const collapseButtonClass = isCollapsed
+    ? classNames.collapseCollapsed
+    : classNames.collapseExpanded;
+
+  const onCollapsePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
+  const onCollapseClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setCollapsed(!isCollapsed);
+  };
+
+  const collapseButton = (
+    <button
+      type="button"
+      className={collapseButtonClass}
+      aria-label={isCollapsed ? labels.expandAriaLabel : labels.collapseAriaLabel}
+      aria-pressed={isCollapsed}
+      onPointerDown={onCollapsePointerDown}
+      onClick={onCollapseClick}
+    >
+      {isCollapsed ? (
+        <PanelLeftOpen size={16} aria-hidden />
+      ) : (
+        <PanelLeftClose size={16} aria-hidden />
+      )}
+    </button>
+  );
+
   return (
     <div ref={rootRef} className={rootClass}>
       <div
@@ -211,7 +252,7 @@ export function ResizableColumns({
             : { width }
         }
       >
-        {isCollapsed ? null : left}
+        {isCollapsed ? collapseButton : left}
       </div>
       <div
         id={separatorId}
@@ -227,20 +268,7 @@ export function ResizableColumns({
         onPointerCancel={onPointerUp}
         onKeyDown={onHandleKeyDown}
       >
-        <button
-          type="button"
-          className={classNames.collapse}
-          aria-label={
-            isCollapsed ? labels.expandAriaLabel : labels.collapseAriaLabel
-          }
-          onClick={() => setCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? (
-            <PanelLeftOpen size={16} aria-hidden />
-          ) : (
-            <PanelLeftClose size={16} aria-hidden />
-          )}
-        </button>
+        {isCollapsed ? null : collapseButton}
       </div>
       <div className={classNames.right}>{right}</div>
     </div>

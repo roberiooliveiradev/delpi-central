@@ -50,7 +50,30 @@ describe("ResizableColumns", () => {
     expect(screen.getByText("Inbox")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Collapse inbox" }));
     expect(screen.queryByText("Inbox")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Expand inbox" }));
+    const expand = screen.getByRole("button", { name: "Expand inbox" });
+    expect(expand.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(expand);
     expect(screen.getByText("Inbox")).toBeTruthy();
+  });
+
+  it("collapse button stops propagation so handle drag does not start", () => {
+    const onLeftWidthChange = vi.fn();
+    render(
+      <ResizableColumns
+        classNames={classNames}
+        labels={labels}
+        defaultLeftWidthPx={280}
+        left={<div>Inbox</div>}
+        right={<div>Thread</div>}
+        onLeftWidthChange={onLeftWidthChange}
+      />,
+    );
+    const separator = screen.getByRole("separator", { name: "Resize inbox" });
+    const collapse = screen.getByRole("button", { name: "Collapse inbox" });
+    fireEvent.pointerDown(collapse, { button: 0, pointerId: 1 });
+    fireEvent.pointerMove(separator, { clientX: 400, pointerId: 1 });
+    expect(onLeftWidthChange).not.toHaveBeenCalled();
+    fireEvent.click(collapse);
+    expect(screen.queryByText("Inbox")).toBeNull();
   });
 });
