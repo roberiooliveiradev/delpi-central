@@ -1,23 +1,19 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { ExternalLink, Hammer, Package, PlusCircle } from "lucide-react";
 import { useMemo } from "react";
+import {
+  ChartTypeSegmentToggle,
+  ChartViewShell,
+  MultiTypeSeriesChart,
+  RANKING_TYPES,
+  TIME_MULTI_SERIES_TYPES,
+  usePersistedChartPreferences,
+  type MultiTypeSeriesSpec,
+} from "@delpi/plugin-ui/index";
 
-import { MaintenanceActionButton } from "../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceSectionHintLabel } from "../app/maintenanceUi";
+import { DM_HELP } from "../content/helpTooltips";
 import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
-import { ChartSection, StateBox, StatusBadge } from "./data";
+import { StateBox, StatusBadge } from "./data";
 import { MAINTENANCE_ROUTES } from "../constants/routes";
 import type { FerramentaItem, PreventivaAlerta, PreventivaHistoricoItem } from "../data/api/maintenanceApi";
 
@@ -39,6 +35,11 @@ type PreventivaDetailPanelProps = {
   onClose: () => void;
 };
 
+const USO_CHART_STORAGE_KEY = "maintenance:preventiva-uso:chart:v1";
+const HISTORICO_CHART_STORAGE_KEY = "maintenance:preventiva-historico:chart:v1";
+const USO_CHART_HEIGHT = 240;
+const HISTORICO_CHART_HEIGHT = 280;
+
 function formatDate(value: string | undefined): string {
   if (!value) return "—";
   return new Date(value).toLocaleString("pt-BR");
@@ -56,29 +57,6 @@ function statusAccent(status: string | undefined): string {
   return "var(--dm-accent, #089bdb)";
 }
 
-function buildLinearTrend(values: number[]): number[] {
-  const points = values.map((value, index) => ({ x: index, y: value }));
-  const count = points.length;
-  if (count === 0) return [];
-  if (count === 1) return [values[0] ?? 0];
-
-  const sumX = points.reduce((total, point) => total + point.x, 0);
-  const sumY = points.reduce((total, point) => total + point.y, 0);
-  const sumXY = points.reduce((total, point) => total + point.x * point.y, 0);
-  const sumXX = points.reduce((total, point) => total + point.x * point.x, 0);
-  const denominator = count * sumXX - sumX * sumX;
-
-  if (denominator === 0) {
-    const average = sumY / count;
-    return values.map(() => Math.round(average));
-  }
-
-  const slope = (count * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / count;
-
-  return points.map((point) => Math.round(slope * point.x + intercept));
-}
-
 export function PreventivaDetailPanel({
   codigoFerramenta,
   codigoPeca,
@@ -93,32 +71,73 @@ export function PreventivaDetailPanel({
   const alerta = data?.alerta;
   const ferramenta = data?.ferramenta;
 
-  const historicoChart = useMemo(() => {
-    const golpes = (data?.historico ?? []).map((row) => row.golpes);
-    const tendencia = buildLinearTrend(golpes);
+  const { chartType: usoChartType, setChartType: setUsoChartType } = usePersistedChartPreferences({
+    storageKey: USO_CHART_STORAGE_KEY,
+    defaults: { chartType: "bar" },
+    allowedChartTypes: RANKING_TYPES,
+  });
 
-    return (data?.historico ?? []).map((row, index) => ({
-      label: new Date(row.data_reposicao).toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "short",
-        year: "2-digit",
-      }),
-      golpes: row.golpes,
-      tendencia: tendencia[index] ?? row.golpes,
-    }));
-  }, [data?.historico]);
+  const { chartType: historicoChartType, setChartType: setHistoricoChartType } =
+    usePersistedChartPreferences({
+      storageKey: HISTORICO_CHART_STORAGE_KEY,
+      defaults: { chartType: "line" },
+      allowedChartTypes: TIME_MULTI_SERIES_TYPES,
+    });
 
-  const usageChart =
-    alerta && alerta.media_golpes > 0
-      ? [
-          { name: "Golpes atuais", value: alerta.golpes_atuais, fill: statusAccent(alerta.status) },
-          {
-            name: "Média histórica",
-            value: Math.round(alerta.media_golpes),
-            fill: "color-mix(in srgb, var(--dm-accent) 55%, #94a3b8)",
-          },
-        ]
-      : [];
+  const historicoChart = useMemo(
+    () =>
+      (data?.historico ?? []).map((row) => ({
+        label: new Date(row.data_reposicao).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "short",
+          year: "2-digit",
+        }),
+        golpes: row.golpes,
+      })),
+    [data?.historico],
+  );
+
+  const usageChart = useMemo(
+    () =>
+      alerta && alerta.media_golpes > 0
+        ? [
+            {
+              name: "Golpes atuais",
+              value: alerta.golpes_atuais,
+              fill: statusAccent(alerta.status),
+            },
+            {
+              name: "Média histórica",
+              value: Math.round(alerta.media_golpes),
+              fill: "color-mix(in srgb, var(--dm-accent) 55%, #94a3b8)",
+            },
+          ]
+        : [],
+    [alerta],
+  );
+
+  const historicoSeries = useMemo<MultiTypeSeriesSpec[]>(
+    () => [
+      {
+        dataKey: "golpes",
+        name: "Golpes por ciclo",
+        fill: "var(--dm-accent, #089bdb)",
+        trendSource: true,
+      },
+    ],
+    [],
+  );
+
+  const usoSeries = useMemo<MultiTypeSeriesSpec[]>(
+    () => [
+      {
+        dataKey: "value",
+        name: "Golpes",
+        fill: "var(--dm-accent, #089bdb)",
+      },
+    ],
+    [],
+  );
 
   const RootTag = isPage ? "section" : "aside";
 
@@ -220,92 +239,91 @@ export function PreventivaDetailPanel({
           )}
 
           {usageChart.length > 0 ? (
-            <ChartSection
-              title="Uso vs. média"
-              inlineChartHeight={240}
-              renderChart={(height) => (
-                <ResponsiveContainer width="100%" height={height}>
-                  <BarChart data={usageChart} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
-                    <Tooltip formatter={(value) => formatNumber(Number(value))} />
-                    <Legend />
-                    <Bar dataKey="value" name="Golpes" radius={[8, 8, 0, 0]} maxBarSize={72}>
-                      {usageChart.map((entry) => (
-                        <Cell key={entry.name} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                    {alerta ? (
-                      <ReferenceLine
-                        y={alerta.media_golpes}
-                        stroke="#64748b"
-                        strokeDasharray="4 4"
-                        label={{
-                          value: `Média ${formatNumber(Math.round(alerta.media_golpes))}`,
-                          position: "insideTopRight",
-                          fill: "#64748b",
-                          fontSize: 11,
-                        }}
-                      />
-                    ) : null}
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            />
+            <section className="dm-card dm-chart-section">
+              <div className="dm-section-header">
+                <div className="dm-section-header__title-group">
+                  <h3 className="dm-section-header__title">
+                    <MaintenanceSectionHintLabel
+                      label="Uso vs. média"
+                      hint={DM_HELP.preventivaDetalhe.comparativo}
+                    />
+                  </h3>
+                </div>
+              </div>
+              <ChartViewShell
+                prefix="dm"
+                typeToggleLabel="Tipo de gráfico"
+                typeToggle={
+                  <ChartTypeSegmentToggle
+                    family="ranking"
+                    value={usoChartType}
+                    onChange={setUsoChartType}
+                    idPrefix="preventiva-uso-type"
+                    prefix="dm"
+                    portalScopeClassName="dashboard-maintenance"
+                  />
+                }
+              >
+                <MultiTypeSeriesChart
+                  data={usageChart}
+                  categoryKey="name"
+                  series={usoSeries}
+                  chartType={usoChartType}
+                  height={USO_CHART_HEIGHT}
+                  formatY={formatNumber}
+                  formatTooltipValue={formatNumber}
+                  categoryFillKey="fill"
+                />
+              </ChartViewShell>
+            </section>
           ) : null}
 
-          <ChartSection
-            title="Histórico de golpes entre reposições"
-            actions={
-              historicoChart.length > 0 ? (
-                <span className="dm-badge">{historicoChart.length} trocas</span>
-              ) : undefined
-            }
-            inlineChartHeight={280}
-            renderChart={
-              historicoChart.length > 0
-                ? (height) => (
-                    <ResponsiveContainer width="100%" height={height}>
-                      <LineChart data={historicoChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                        <YAxis tickFormatter={(value) => formatNumber(Number(value))} width={72} />
-                        <Tooltip
-                          formatter={(value, name) => [
-                            formatNumber(Number(value)),
-                            name === "tendencia" ? "Tendência" : "Golpes por ciclo",
-                          ]}
-                        />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="golpes"
-                          name="Golpes por ciclo"
-                          stroke="var(--dm-accent, #089bdb)"
-                          strokeWidth={2.5}
-                          dot={{ r: 4, strokeWidth: 2 }}
-                          activeDot={{ r: 6 }}
-                        />
-                        <Line
-                          type="linear"
-                          dataKey="tendencia"
-                          name="Tendência"
-                          stroke="#94a3b8"
-                          strokeWidth={2}
-                          strokeDasharray="6 4"
-                          dot={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  )
-                : undefined
-            }
-          >
-            {historicoChart.length === 0 ? (
+          <section className="dm-card dm-chart-section">
+            <div className="dm-section-header">
+              <div className="dm-section-header__title-group">
+                <h3 className="dm-section-header__title">
+                  <MaintenanceSectionHintLabel
+                    label="Histórico de golpes entre reposições"
+                    hint={DM_HELP.preventivaDetalhe.historicoGolpes}
+                  />
+                </h3>
+              </div>
+              {historicoChart.length > 0 ? (
+                <div className="dm-section-header__meta">
+                  <span className="dm-badge">{historicoChart.length} trocas</span>
+                </div>
+              ) : null}
+            </div>
+            {historicoChart.length > 0 ? (
+              <ChartViewShell
+                prefix="dm"
+                typeToggleLabel="Tipo de gráfico"
+                typeToggle={
+                  <ChartTypeSegmentToggle
+                    family="time_multi_series"
+                    value={historicoChartType}
+                    onChange={setHistoricoChartType}
+                    idPrefix="preventiva-historico-type"
+                    prefix="dm"
+                    portalScopeClassName="dashboard-maintenance"
+                  />
+                }
+              >
+                <MultiTypeSeriesChart
+                  data={historicoChart}
+                  categoryKey="label"
+                  series={historicoSeries}
+                  chartType={historicoChartType}
+                  height={HISTORICO_CHART_HEIGHT}
+                  showTrend
+                  formatY={formatNumber}
+                  formatTooltipValue={formatNumber}
+                />
+              </ChartViewShell>
+            ) : (
               <StateBox>Nenhuma reposição registrada para este par.</StateBox>
-            ) : null}
-          </ChartSection>
+            )}
+          </section>
 
           <div className="dm-detail-panel__actions">
             <MaintenanceActionButton
