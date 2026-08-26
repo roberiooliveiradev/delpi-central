@@ -482,6 +482,7 @@ services:
 
     volumes:
       - ../portal:/app
+      - ../plugins/vite/cacheBustEntryPlugin.ts:/plugins/vite/cacheBustEntryPlugin.ts:ro
       - /app/node_modules
 
     depends_on:

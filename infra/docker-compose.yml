@@ -403,8 +403,8 @@ services:
 
   portal:
     build:
-      context: ../portal
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: portal/Dockerfile.prod
       args:
         VITE_KC_URL: ${VITE_KC_URL}
         VITE_KC_REALM: ${VITE_KC_REALM}
