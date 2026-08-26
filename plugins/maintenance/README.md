@@ -83,6 +83,16 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 
 **Filial na UI:** nome exibido vem do catálogo Postgres (`resolveFilialDisplayName`), não só o código `01`/`02`.
 
+## Layout (hub vs chrome das apps)
+
+| Superfície | TopBar | Navegação |
+|------------|--------|-----------|
+| **Hub** (`/apps/maintenance`, `/filial-XX`) | Oculta | `FilialSwitcher` no hero + card «Começar» |
+| **Mini-aplicadores** | Início · Ferramentas · Relatório preventivo · Configuração (+ filial) | Sub-abas só na TopBar; hero compacto (título + badge filial) |
+| **Filiais / Programas / Manutenção geral** | Início (+ filial) | Voltar ao hub filial; sem nav módulo completa |
+
+Resolver canônico: [`maintenanceShellChrome.ts`](src/app/maintenanceShellChrome.ts) + [`MaintenancePluginShell.tsx`](src/components/MaintenancePluginShell.tsx).
+
 ## Registro no portal
 
 ```bash

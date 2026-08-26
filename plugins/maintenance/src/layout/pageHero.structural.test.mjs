@@ -39,4 +39,10 @@ describe("Maintenance page hero — ui/pages", () => {
       assert.ok(usesHero, `${file}: deve usar MaintenancePageHero ou MaintenanceMiniAplicadoresHero`);
     }
   });
+
+  it("hero mini-aplicadores sem nav embutida (sub-abas na TopBar)", () => {
+    const heroSource = readFileSync(join(here, "../components/MaintenanceMiniAplicadoresHero.tsx"), "utf8");
+    assert.doesNotMatch(heroSource, /MiniAplicadoresNav/);
+    assert.doesNotMatch(heroSource, /<MaintenancePageHero[\s\S]*>[\s\S]*<nav/);
+  });
 });
