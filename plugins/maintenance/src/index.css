@@ -1122,6 +1122,19 @@
 }.dashboard-maintenance .dm-ferramenta-analytics .dm-chart-section{
   margin-bottom: 0;
   min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}.dashboard-maintenance .dm-ferramenta-analytics .dm-chart-section .dm-chart-view-shell,
+.dashboard-maintenance .dm-ferramenta-analytics .dm-chart-section .delpi-ui-chart-view-shell{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}.dashboard-maintenance .dm-ferramenta-analytics .dm-chart-section .dm-chart-view-shell__plot,
+.dashboard-maintenance .dm-ferramenta-analytics .dm-chart-section .delpi-ui-chart-view-shell__plot{
+  flex: 1;
+  min-height: 280px;
 }.dashboard-maintenance .dm-indicadores-card{
   display: flex;
   flex-direction: column;

@@ -6,6 +6,7 @@ import {
   createDashboardPageHero,
   createDashboardScreenLoading,
   createDashboardStatusBadge,
+  createDashboardTabularExportButtons,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   FieldLabel,
@@ -63,4 +64,9 @@ export const MaintenanceFilterCheckboxField = createDashboardFilterCheckboxField
 
 export const MaintenanceInteractiveDataCard = createDashboardInteractiveDataCard({
   prefix: UI_PREFIX,
+});
+
+export const MaintenanceTabularExportButtons = createDashboardTabularExportButtons({
+  prefix: UI_PREFIX,
+  groupAriaLabel: "Exportar dados",
 });

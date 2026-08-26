@@ -1,20 +1,23 @@
 import { useMemo, useState } from "react";
 import { Maximize2 } from "lucide-react";
-import { ChartViewShell, chartViewShellBemClasses } from "@delpi/plugin-ui/index";
 import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+  ChartTypeSegmentToggle,
+  ChartViewShell,
+  MultiTypeSeriesChart,
+  TIME_MULTI_SERIES_TYPES,
+  runTabularExport,
+  usePersistedChartPreferences,
+  type MultiTypeSeriesSpec,
+} from "@delpi/plugin-ui/index";
 
-import { MaintenanceActionButton, MaintenanceSectionHintLabel } from "../app/maintenanceUi";
+import {
+  MaintenanceActionButton,
+  MaintenanceSectionHintLabel,
+  MaintenanceTabularExportButtons,
+} from "../app/maintenanceUi";
 import { DM_HELP } from "../content/helpTooltips";
 import type { ReposicaoItem } from "../data/api/maintenanceApi";
+import { buildReposicoesGolpesExportPayload } from "../utils/buildReposicoesGolpesExportPayload";
 import { formatCodigoDescricao } from "../utils/pecaOptions";
 import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 import { ChartExpandModal } from "./data/ChartExpandModal";
@@ -36,7 +39,9 @@ const PECA_LINE_COLORS = [
   "#ec4899",
 ];
 
-const CHART_SHELL_CN = chartViewShellBemClasses("dm");
+const CHART_STORAGE_KEY = "maintenance:reposicoes-golpes:chart:v1";
+const INLINE_CHART_HEIGHT = 320;
+const EXPANDED_CHART_HEIGHT = 560;
 
 function formatEventLabel(value: string): string {
   return new Date(value).toLocaleString("pt-BR", {
@@ -48,48 +53,8 @@ function formatEventLabel(value: string): string {
   });
 }
 
-type GolpesChartBodyProps = {
-  chartData: Record<string, string | number | null>[];
-  pecaSeries: Array<{ codigo: string; name: string; color: string }>;
-  pecaLabels: Record<string, string>;
-  height: number;
-};
-
-function GolpesChartBody({ chartData, pecaSeries, pecaLabels, height }: GolpesChartBodyProps) {
-  return (
-    <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={chartData} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--dm-card-border, #334155)" />
-        <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip
-          formatter={(value, name) => {
-            const codigo = String(name);
-            const descricao = pecaLabels[codigo];
-            return [
-              Number(value ?? 0).toLocaleString("pt-BR"),
-              descricao ? formatCodigoDescricao(codigo, descricao) : codigo,
-            ];
-          }}
-          labelFormatter={(label) => label}
-        />
-        <Legend />
-        {pecaSeries.map((series) => (
-          <Line
-            key={series.codigo}
-            type="monotone"
-            dataKey={series.codigo}
-            name={series.name}
-            stroke={series.color}
-            strokeWidth={2}
-            dot={{ r: 3, strokeWidth: 2 }}
-            activeDot={{ r: 5 }}
-            connectNulls
-          />
-        ))}
-      </LineChart>
-    </ResponsiveContainer>
-  );
+function formatGolpes(value: number): string {
+  return value.toLocaleString("pt-BR");
 }
 
 export function ReposicoesGolpesChart({
@@ -98,14 +63,19 @@ export function ReposicoesGolpesChart({
   loading = false,
 }: ReposicoesGolpesChartProps) {
   const [expanded, setExpanded] = useState(false);
+  const { chartType, setChartType } = usePersistedChartPreferences({
+    storageKey: CHART_STORAGE_KEY,
+    defaults: { chartType: "line" },
+    allowedChartTypes: TIME_MULTI_SERIES_TYPES,
+  });
 
-  const { chartData, pecaSeries } = useMemo(() => {
+  const { chartData, series } = useMemo(() => {
     const sorted = [...reposicoes].sort(
       (first, second) =>
         new Date(first.data_reposicao).getTime() - new Date(second.data_reposicao).getTime(),
     );
-    const pecas = [...new Set(sorted.map((item) => item.codigo_peca))].sort((first, second) =>
-      first.localeCompare(second, "pt-BR"),
+    const pecas = [...new Set(sorted.map((item) => item.codigo_peca))].sort((a, b) =>
+      a.localeCompare(b, "pt-BR"),
     );
 
     const chartData = sorted.map((item) => {
@@ -119,20 +89,67 @@ export function ReposicoesGolpesChart({
       return row;
     });
 
-    const pecaSeries = pecas.map((codigo, index) => ({
-      codigo,
-      name: codigo,
-      color: PECA_LINE_COLORS[index % PECA_LINE_COLORS.length],
+    const series: MultiTypeSeriesSpec[] = pecas.map((codigo, index) => ({
+      dataKey: codigo,
+      name: pecaLabels[codigo] ? formatCodigoDescricao(codigo, pecaLabels[codigo]) : codigo,
+      fill: PECA_LINE_COLORS[index % PECA_LINE_COLORS.length],
     }));
 
-    return { chartData, pecaSeries };
-  }, [reposicoes]);
+    return { chartData, series };
+  }, [pecaLabels, reposicoes]);
 
-  const inlineHeight = 300;
-  const expandedHeight = 560;
-  const expandable = !loading && chartData.length > 0 && pecaSeries.length > 0;
+  const hasChart = !loading && chartData.length > 0 && series.length > 0;
 
-  const expandAction = expandable ? (
+  const exportPayload = useMemo(
+    () => buildReposicoesGolpesExportPayload(reposicoes, pecaLabels),
+    [pecaLabels, reposicoes],
+  );
+
+  const chartShell = (height: number) => (
+    <ChartViewShell
+      prefix="dm"
+      typeToggleLabel="Tipo de gráfico"
+      typeToggle={
+        <ChartTypeSegmentToggle
+          family="time_multi_series"
+          value={chartType}
+          onChange={setChartType}
+          idPrefix="reposicoes-golpes-type"
+          prefix="dm"
+          portalScopeClassName="dashboard-maintenance"
+        />
+      }
+      exportActions={
+        <MaintenanceTabularExportButtons
+          compact
+          disabled={!hasChart}
+          onExport={(format) => {
+            runTabularExport({
+              kind: "table",
+              format,
+              payload: exportPayload,
+            });
+          }}
+        />
+      }
+    >
+      {loading ? (
+        <MaintenanceTableLoading titleKey="grafico" variant="compact" />
+      ) : hasChart ? (
+        <MultiTypeSeriesChart
+          data={chartData}
+          categoryKey="label"
+          series={series}
+          chartType={chartType}
+          height={height}
+          formatY={formatGolpes}
+          formatTooltipValue={formatGolpes}
+        />
+      ) : null}
+    </ChartViewShell>
+  );
+
+  const expandAction = hasChart ? (
     <MaintenanceActionButton
       variant="ghost"
       className="dm-chart-section__expand"
@@ -159,34 +176,16 @@ export function ReposicoesGolpesChart({
           <div className="dm-section-header__meta">{expandAction}</div>
         </div>
 
-        <ChartViewShell classNames={CHART_SHELL_CN} extra={null}>
-          {loading ? (
-            <MaintenanceTableLoading titleKey="grafico" variant="compact" />
-          ) : !expandable ? null : (
-            <GolpesChartBody
-              chartData={chartData}
-              pecaSeries={pecaSeries}
-              pecaLabels={pecaLabels}
-              height={inlineHeight}
-            />
-          )}
-        </ChartViewShell>
+        {chartShell(INLINE_CHART_HEIGHT)}
       </section>
 
-      {expandable ? (
+      {hasChart ? (
         <ChartExpandModal
           open={expanded}
           title="Golpes por reposição"
           onClose={() => setExpanded(false)}
         >
-          <ChartViewShell classNames={CHART_SHELL_CN}>
-            <GolpesChartBody
-              chartData={chartData}
-              pecaSeries={pecaSeries}
-              pecaLabels={pecaLabels}
-              height={expandedHeight}
-            />
-          </ChartViewShell>
+          {chartShell(EXPANDED_CHART_HEIGHT)}
         </ChartExpandModal>
       ) : null}
     </>
