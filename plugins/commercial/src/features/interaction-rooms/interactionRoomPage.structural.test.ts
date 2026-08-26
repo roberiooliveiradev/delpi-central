@@ -37,7 +37,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/CommercialMessageThread/);
     expect(source).toMatch(/CommercialEmptyGuidance/);
     expect(source).toMatch(/emptyContent/);
-    expect(source).toMatch(/roomEmptyTitle/);
+    expect(source).toMatch(/resolveThreadLoadingState/);
+    expect(source).toMatch(/roomRefreshingLabel/);
     expect(source).toMatch(/resolveActions/);
     expect(source).toMatch(/resolveActionExtras/);
     expect(source).toMatch(/portalScopeClassName=\{CM_PORTAL_SCOPE\}/);

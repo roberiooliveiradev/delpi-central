@@ -34,6 +34,7 @@ import {
 } from "../../hooks/useCustomerAvatarPresence";
 import { formatInboxMetaLabel } from "./formatInboxMetaLabel";
 import { inboxCustomerAvatarName } from "./inboxCustomerAvatarName";
+import { resolveInboxLoadingState } from "./interactionRoomLoadingState";
 
 type Props = {
   basePath: string;
@@ -225,6 +226,11 @@ export function InteractionRoomsInboxPage({
   );
 
   const inboxEmpty = inboxEmptyCopy(filter);
+  const { initialLoading, refreshing } = resolveInboxLoadingState({
+    loading,
+    itemCount: items.length,
+    hasError: Boolean(error),
+  });
 
   return (
     <section className="cm-room-inbox-pane">
@@ -264,17 +270,26 @@ export function InteractionRoomsInboxPage({
         tone="panel"
       >
       <CommercialRoomInboxPanel aria-label={content.inboxListAriaLabel}>
-      {loading ? (
+      {refreshing ? (
+        <div
+          className="cm-room-inbox-pane__refresh"
+          role="status"
+          aria-live="polite"
+        >
+          {content.inboxRefreshingLabel}
+        </div>
+      ) : null}
+      {initialLoading ? (
         <CommercialLoadingCard title={content.loadingLabel} variant="panel" />
       ) : null}
-      {!loading && !error && items.length === 0 ? (
+      {!initialLoading && !error && items.length === 0 ? (
         <CommercialEmptyGuidance
           variant="panel"
           title={inboxEmpty.title}
           message={inboxEmpty.message}
         />
       ) : null}
-      {!loading && items.length > 0 ? (
+      {!initialLoading && items.length > 0 ? (
         <CommercialRoomInboxList
           listAriaLabel={content.inboxListAriaLabel}
           emptyLabel={inboxEmpty.title}

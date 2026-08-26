@@ -26,6 +26,7 @@ import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
+import { resolveThreadLoadingState } from "./interactionRoomLoadingState";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import {
   CM_PORTAL_SCOPE,
@@ -139,6 +140,10 @@ export function InteractionRoomPage({
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
+  const roomSnapshotRef = useRef<{ roomId: string; hasData: boolean }>({
+    roomId: "",
+    hasData: false,
+  });
   const [sidePanelMode, setSidePanelMode] = useState<"context" | "find" | null>(
     null,
   );
@@ -256,6 +261,18 @@ export function InteractionRoomPage({
       return;
     }
     const controller = new AbortController();
+    const keepSnapshot =
+      roomSnapshotRef.current.roomId === id &&
+      id !== "" &&
+      roomSnapshotRef.current.hasData;
+    if (!keepSnapshot) {
+      setRoom(null);
+      onRoomTitle?.(null);
+      setMembers([]);
+      setMessages([]);
+      setPinnedMessageIds(new Set());
+      roomSnapshotRef.current = { roomId: id, hasData: false };
+    }
     setLoading(true);
     void (async () => {
       try {
@@ -271,6 +288,7 @@ export function InteractionRoomPage({
         setMembers(memberRows);
         setMessages([...messageRows].reverse());
         setPinnedMessageIds(new Set(pinRows.map((pin) => pin.message_id)));
+        roomSnapshotRef.current = { roomId: id, hasData: true };
         void markInteractionRoomRead(id, controller.signal).catch(() => undefined);
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
@@ -283,6 +301,7 @@ export function InteractionRoomPage({
         setMembers([]);
         setMessages([]);
         setPinnedMessageIds(new Set());
+        roomSnapshotRef.current = { roomId: id, hasData: false };
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -860,6 +879,11 @@ export function InteractionRoomPage({
     el.scrollTop = el.scrollHeight;
   }, [threadMessages.length, loading]);
 
+  const { initialLoading, refreshing } = resolveThreadLoadingState({
+    loading,
+    hasRoomSnapshot: Boolean(room),
+  });
+
   return (
     <section
       className={
@@ -876,11 +900,20 @@ export function InteractionRoomPage({
           />
         </div>
       ) : null}
-      {loading ? (
+      {initialLoading ? (
         <CommercialLoadingCard title={content.roomLoadingLabel} variant="panel" />
       ) : null}
-      {!loading && room ? (
+      {room ? (
         <>
+        {refreshing ? (
+          <div
+            className="cm-room-thread__refresh"
+            role="status"
+            aria-live="polite"
+          >
+            {content.roomRefreshingLabel}
+          </div>
+        ) : null}
         <CommercialViewTransition transitionKey={roomId.trim()} tone="page">
         <CommercialRoomConversationShell
           wrapRoot={false}
@@ -1164,7 +1197,7 @@ export function InteractionRoomPage({
         />
         </>
       ) : null}
-      {!loading && !room ? (
+      {!initialLoading && !room ? (
         <CommercialEmptyState
           title={content.roomFallbackTitle}
           message={content.roomMissingId}

@@ -163,11 +163,36 @@
 }
 
 .dashboard-commercial .cm-room-inbox-pane__body {
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+}
+
+.dashboard-commercial .cm-room-inbox-pane__refresh,
+.dashboard-commercial .cm-room-thread__refresh {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.65rem;
+  z-index: 2;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--delpi-ui-text-muted, var(--muted-foreground, #64748b));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--background, #fff)) 88%,
+    transparent
+  );
+  box-shadow: 0 1px 4px color-mix(in srgb, #000 8%, transparent);
+  pointer-events: none;
+}
+
+.dashboard-commercial .cm-room-thread {
+  position: relative;
 }
 
 .dashboard-commercial .cm-room-workspace {
