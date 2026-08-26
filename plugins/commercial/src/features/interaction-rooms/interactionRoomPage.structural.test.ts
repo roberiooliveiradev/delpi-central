@@ -63,8 +63,9 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/flush/);
     expect(source).not.toMatch(/CommercialHostDrawer/);
     expect(source).not.toMatch(/portalTarget/);
-    expect(source).toMatch(/CommercialAlertQueue/);
-    expect(source).toMatch(/cm-room-alert-host/);
+    expect(source).not.toMatch(/CommercialAlertQueue/);
+    expect(source).toMatch(/pushRoomNotice/);
+    expect(source).not.toMatch(/cm-room-alert-host/);
     expect(source).toMatch(/onRoomTitle/);
     expect(source).toMatch(/contextToggle/);
     expect(source).not.toMatch(/CommercialStateBanner/);

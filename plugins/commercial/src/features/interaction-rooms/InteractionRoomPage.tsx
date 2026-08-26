@@ -27,11 +27,14 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { useUserProfilePhotoUrls } from "../../hooks/useUserProfilePhotoUrls";
 import { applyInteractionRoomRealtime } from "./applyInteractionRoomRealtime";
 import { resolveThreadLoadingState } from "./interactionRoomLoadingState";
+import {
+  interactionRoomNoticeVariantForComposerKind,
+  type InteractionRoomComposerNoticeKind,
+} from "./interactionRoomNoticePolicy";
 import type { CommercialInteractionRoomEvent } from "../../constants/interactionRoomRealtime";
 import {
   CM_PORTAL_SCOPE,
   CommercialActionButton,
-  CommercialAlertQueue,
   CommercialEmptyGuidance,
   CommercialEmptyState,
   CommercialLoadingCard,
@@ -93,12 +96,6 @@ type Props = {
   onRoomTitle?: (title: string | null) => void;
 };
 
-type RoomAlert = {
-  id: string;
-  title: string;
-  tone: "info" | "danger";
-};
-
 /** Página da sala — só kit (header + thread + composer). */
 export function InteractionRoomPage({
   basePath,
@@ -113,7 +110,6 @@ export function InteractionRoomPage({
   const [members, setMembers] = useState<InteractionRoomMemberDto[]>([]);
   const [messages, setMessages] = useState<InteractionMessageDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [alerts, setAlerts] = useState<RoomAlert[]>([]);
   const [creatingTaskMessageId, setCreatingTaskMessageId] = useState<string | null>(
     null,
   );
@@ -136,7 +132,7 @@ export function InteractionRoomPage({
   const { currentUserId, myPortfolio, canManagePortfolios } = usePortfolioScope();
   const sessionUserId = currentUserId ?? myPortfolio?.user_id ?? null;
   const confirm = useCommercialConfirm();
-  const { notifySuccess, notifyError } = useCommercialFloatingNotice();
+  const { notifySuccess, notifyError, notifyInfo } = useCommercialFloatingNotice();
   const addFilesRef = useRef<(files: File[]) => void>(() => undefined);
   const msgsRef = useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = useRef(true);
@@ -222,15 +218,18 @@ export function InteractionRoomPage({
     content.deleteRoomDeletedElsewhere,
   ]);
 
-  useInteractionRoomSync(room?.id, onRoomRealtimeEvent, Boolean(room?.id));
+  const pushRoomNotice = useCallback(
+    (message: string, kind: InteractionRoomComposerNoticeKind) => {
+      const variant = interactionRoomNoticeVariantForComposerKind(kind);
+      if (variant === "error") notifyError(message);
+      else if (variant === "info") notifyInfo(message);
+      else if (variant === "warning") notifyInfo(message, { autoDismissMs: 6500 });
+      else notifySuccess(message);
+    },
+    [notifyError, notifyInfo, notifySuccess],
+  );
 
-  const pushRoomAlert = useCallback((title: string, tone: RoomAlert["tone"]) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setAlerts((prev) => [...prev, { id, title, tone }]);
-    window.setTimeout(() => {
-      setAlerts((prev) => prev.filter((item) => item.id !== id));
-    }, INTERACTION_ROOMS_CONTENT.alertDismissMs);
-  }, []);
+  useInteractionRoomSync(room?.id, onRoomRealtimeEvent, Boolean(room?.id));
 
   const authorIds = useMemo(() => {
     const ids = new Set<string>();
@@ -256,7 +255,7 @@ export function InteractionRoomPage({
     setAttachmentEpochByMessageId({});
     if (!id) {
       setLoading(false);
-      pushRoomAlert(content.roomMissingId, "danger");
+      pushRoomNotice(content.roomMissingId, "error");
       onRoomTitle?.(null);
       return;
     }
@@ -292,9 +291,9 @@ export function InteractionRoomPage({
         void markInteractionRoomRead(id, controller.signal).catch(() => undefined);
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
-        pushRoomAlert(
+        pushRoomNotice(
           err instanceof Error ? err.message : content.roomLoadError,
-          "danger",
+          "error",
         );
         setRoom(null);
         onRoomTitle?.(null);
@@ -307,7 +306,7 @@ export function InteractionRoomPage({
       }
     })();
     return () => controller.abort();
-  }, [roomId, content.roomMissingId, content.roomLoadError, onRoomTitle, pushRoomAlert]);
+  }, [roomId, content.roomMissingId, content.roomLoadError, onRoomTitle, pushRoomNotice]);
 
   const onMessageCreated = useCallback((created: InteractionMessageDto) => {
     setMessages((prev) => [...prev, created]);
@@ -339,11 +338,11 @@ export function InteractionRoomPage({
       try {
         const created = await createTaskFromInteractionMessage(id, messageId);
         setMessages((prev) => [...prev, created.task_ref_message]);
-        pushRoomAlert(content.createTaskOk, "info");
+        pushRoomNotice(content.createTaskOk, "info");
       } catch (err: unknown) {
-        pushRoomAlert(
+        pushRoomNotice(
           err instanceof Error ? err.message : content.createTaskError,
-          "danger",
+          "error",
         );
       } finally {
         setCreatingTaskMessageId(null);
@@ -354,7 +353,7 @@ export function InteractionRoomPage({
       creatingTaskMessageId,
       content.createTaskOk,
       content.createTaskError,
-      pushRoomAlert,
+      pushRoomNotice,
     ],
   );
 
@@ -367,7 +366,7 @@ export function InteractionRoomPage({
         if (nextPinned) {
           await pinInteractionMessage(id, messageId);
           setPinnedMessageIds((prev) => new Set(prev).add(messageId));
-          pushRoomAlert(content.pinOk, "info");
+          pushRoomNotice(content.pinOk, "info");
         } else {
           await unpinInteractionMessage(id, messageId);
           setPinnedMessageIds((prev) => {
@@ -375,18 +374,18 @@ export function InteractionRoomPage({
             next.delete(messageId);
             return next;
           });
-          pushRoomAlert(content.unpinOk, "info");
+          pushRoomNotice(content.unpinOk, "info");
         }
       } catch (err: unknown) {
-        pushRoomAlert(
+        pushRoomNotice(
           err instanceof Error ? err.message : content.pinError,
-          "danger",
+          "error",
         );
       } finally {
         setPinningMessageId(null);
       }
     },
-    [roomId, pinningMessageId, content.pinOk, content.unpinOk, content.pinError, pushRoomAlert],
+    [roomId, pinningMessageId, content.pinOk, content.unpinOk, content.pinError, pushRoomNotice],
   );
 
   const onDeleteMessage = useCallback(
@@ -409,11 +408,11 @@ export function InteractionRoomPage({
         );
         if (editingMessageId === messageId) setEditingMessageId(null);
         if (replyMessageId === messageId) setReplyMessageId(null);
-        pushRoomAlert(content.deleteOk, "info");
+        pushRoomNotice(content.deleteOk, "info");
       } catch (err: unknown) {
-        pushRoomAlert(
+        pushRoomNotice(
           err instanceof Error ? err.message : content.deleteError,
-          "danger",
+          "error",
         );
       } finally {
         setDeletingMessageId(null);
@@ -431,7 +430,7 @@ export function InteractionRoomPage({
       content.deleteError,
       editingMessageId,
       replyMessageId,
-      pushRoomAlert,
+      pushRoomNotice,
     ],
   );
 
@@ -443,7 +442,7 @@ export function InteractionRoomPage({
       message: content.deleteRoomConfirmMessage,
       confirmLabel: content.deleteRoomConfirmLabel,
       cancelLabel: content.deleteRoomCancelLabel,
-      variant: "danger",
+      variant: "error",
     });
     if (!ok) return;
     setDeletingRoomId(id);
@@ -576,11 +575,11 @@ export function InteractionRoomPage({
           reactions={row.reactions ?? []}
           sessionUserId={sessionUserId}
           onReactionsChange={onMessageReactionsChange}
-          onError={(text) => pushRoomAlert(text, "danger")}
+          onError={(text) => pushRoomNotice(text, "error")}
         />
       );
     },
-    [messages, roomId, sessionUserId, onMessageReactionsChange, pushRoomAlert],
+    [messages, roomId, sessionUserId, onMessageReactionsChange, pushRoomNotice],
   );
 
   const threadMessages = useMemo(
@@ -633,7 +632,7 @@ export function InteractionRoomPage({
                   reactions={message.reactions ?? []}
                   sessionUserId={sessionUserId}
                   onReactionsChange={onMessageReactionsChange}
-                  onError={(text) => pushRoomAlert(text, "danger")}
+                  onError={(text) => pushRoomNotice(text, "error")}
                 />
                 <InteractionRoomMessageAttachments
                   messageId={message.id}
@@ -669,7 +668,7 @@ export function InteractionRoomPage({
       attachmentEpochByMessageId,
       roomId,
       onMessageReactionsChange,
-      pushRoomAlert,
+      pushRoomNotice,
       mergeAttachmentThumbUrls,
     ],
   );
@@ -764,9 +763,9 @@ export function InteractionRoomPage({
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
         setFindResults([]);
-        pushRoomAlert(
+        pushRoomNotice(
           err instanceof Error ? err.message : content.findInChatError,
-          "danger",
+          "error",
         );
       } finally {
         if (!controller.signal.aborted) setFindLoading(false);
@@ -892,14 +891,6 @@ export function InteractionRoomPage({
           : commercialRoomConversationClassNames.root
       }
     >
-      {alerts.length > 0 ? (
-        <div className="cm-room-alert-host">
-          <CommercialAlertQueue
-            items={alerts}
-            aria-label={content.roomAlertsAriaLabel}
-          />
-        </div>
-      ) : null}
       {initialLoading ? (
         <CommercialLoadingCard title={content.roomLoadingLabel} variant="panel" />
       ) : null}
@@ -1028,7 +1019,7 @@ export function InteractionRoomPage({
                 >
                   <InteractionRoomSharedView
                     roomId={room.id}
-                    onError={(message) => pushRoomAlert(message, "danger")}
+                    onError={(message) => pushRoomNotice(message, "error")}
                   />
                 </div>
               ) : (
@@ -1068,7 +1059,7 @@ export function InteractionRoomPage({
                         onMessageCreated={onMessageCreated}
                         onMessageAttachmentsSettled={bumpMessageAttachments}
                         onError={(message) =>
-                          pushRoomAlert(message, "danger")
+                          pushRoomNotice(message, "error")
                         }
                         onAddFilesReady={(addFiles) => {
                           addFilesRef.current = addFiles;
