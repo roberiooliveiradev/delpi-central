@@ -19,7 +19,7 @@ export type SimpleKpiCardLayout = "iconStart" | "iconEnd";
 
 export type SimpleKpiCardProps = {
   title: string;
-  /** Ajuda no ícone (?) ao lado do título (HelpTooltip do plugin-ui). */
+  /** Ajuda no hover do texto do título (HelpTooltip wrap — sem ícone ?). */
   titleHint?: string;
   value: string;
   icon: ReactNode;
@@ -225,14 +225,18 @@ export function SimpleKpiCard({
   const content = (
     <>
       <p className={classNames.title}>
-        {title}
         {titleHint ? (
           <HelpTooltip
             content={titleHint}
             ariaLabel={`Ajuda: ${title}`}
-            className={classNames.titleHelp}
-          />
-        ) : null}
+            wrap
+            placement="bottom"
+          >
+            <span className={classNames.titleHelp}>{title}</span>
+          </HelpTooltip>
+        ) : (
+          title
+        )}
       </p>
       <ValueTag className={valueClassName}>{loading ? "…" : value}</ValueTag>
       {subtitle && classNames.subtitle ? (
