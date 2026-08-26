@@ -111,6 +111,9 @@ export const ADMINISTRATION_CONTENT = {
     adding: "Adicionando…",
     noMembers: "Nenhum membro neste grupo.",
     memberCount: "{count} membro(s)",
+    openGroupWall: "Mural do grupo",
+    openGroupWallOpening: "Abrindo mural…",
+    openGroupWallError: "Não foi possível abrir o mural do grupo.",
     membersFacepileAria: "Membros do grupo {name}",
   },
   metrics: {

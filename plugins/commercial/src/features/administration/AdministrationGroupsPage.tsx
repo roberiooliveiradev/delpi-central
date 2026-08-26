@@ -11,7 +11,10 @@ import {
   renameCommercialGroup,
   type CommercialGroupDto,
 } from "../../api/commercialGroupsApi";
+import { resolveInteractionRoom } from "../../api/interactionRoomsApi";
 import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
+import { buildInteractionRoomPath } from "../../app/pluginRoutes";
+import { navigatePluginPath } from "../../app/pluginNavigation";
 import {
   CommercialActionButton,
   CommercialAvatarStack,
@@ -285,6 +288,30 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
     }
   };
 
+  const onOpenGroupWall = async (group: CommercialGroupDto) => {
+    const key = `${group.id}:wall`;
+    setBusyKey(key);
+    try {
+      const room = await resolveInteractionRoom({
+        kind: "wall",
+        group_id: group.id,
+        title: group.name,
+      });
+      const href = buildInteractionRoomPath(basePath, room.id);
+      if (!href) {
+        notifyError(copy.openGroupWallError);
+        return;
+      }
+      navigatePluginPath(href);
+    } catch (err: unknown) {
+      notifyError(
+        err instanceof Error ? err.message : copy.openGroupWallError,
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
   const onRemoveMember = async (groupId: string, userId: string) => {
     const key = `${groupId}:remove:${userId}`;
     setBusyKey(key);
@@ -492,6 +519,15 @@ export function AdministrationGroupsPage({ basePath }: AdministrationGroupsPageP
                         {copy.rename}
                       </CommercialActionButton>
                     ) : null}
+                    <CommercialActionButton
+                      variant="ghost"
+                      disabled={Boolean(busyKey)}
+                      onClick={() => void onOpenGroupWall(group)}
+                    >
+                      {busyKey === `${group.id}:wall`
+                        ? copy.openGroupWallOpening
+                        : copy.openGroupWall}
+                    </CommercialActionButton>
                     <CommercialActionButton
                       variant="ghost"
                       disabled={Boolean(busyKey)}

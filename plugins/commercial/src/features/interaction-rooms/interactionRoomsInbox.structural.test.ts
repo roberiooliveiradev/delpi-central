@@ -41,6 +41,8 @@ describe("InteractionRoomsInboxPage", () => {
     expect(source).toMatch(/CommercialLoadingCard/);
     expect(source).toMatch(/CommercialEmptyGuidance/);
     expect(source).toMatch(/inboxFilterEmptyWallTitle/);
+    expect(source).toMatch(/inboxFilterEmptyWallAction/);
+    expect(source).toMatch(/resolveInteractionRoom/);
     expect(source).toMatch(/unreadBadgeLabel/);
     expect(source).toMatch(/unread_count|unreadCount/);
     expect(source).toMatch(/inboxEmptyCopy/);

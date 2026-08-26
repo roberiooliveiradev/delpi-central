@@ -1,8 +1,9 @@
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 
 import {
   listInteractionRooms,
+  resolveInteractionRoom,
   type InteractionInboxFilter,
   type InteractionRoomInboxItemDto,
 } from "../../api/interactionRoomsApi";
@@ -118,6 +119,69 @@ function customerIdentity(item: InteractionRoomInboxItemDto): {
   return { code, store, name };
 }
 
+function WallFilterEmpty({
+  basePath,
+  title,
+  message,
+}: {
+  basePath: string;
+  title: string;
+  message: string;
+}) {
+  const content = INTERACTION_ROOMS_CONTENT;
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onOpenGlobalWall = useCallback(async () => {
+    setOpening(true);
+    setError(null);
+    try {
+      const room = await resolveInteractionRoom({ kind: "wall" });
+      const href = buildInteractionRoomPath(basePath, room.id);
+      if (!href) {
+        setError(content.inboxFilterEmptyWallError);
+        return;
+      }
+      navigatePluginPath(href);
+    } catch {
+      setError(content.inboxFilterEmptyWallError);
+    } finally {
+      setOpening(false);
+    }
+  }, [basePath, content.inboxFilterEmptyWallError]);
+
+  return (
+    <CommercialEmptyGuidance variant="panel" title={title} message={message}>
+      <CommercialActionButton
+        variant="primary"
+        disabled={opening}
+        onClick={() => void onOpenGlobalWall()}
+      >
+        {opening ? content.inboxFilterEmptyWallOpening : content.inboxFilterEmptyWallAction}
+      </CommercialActionButton>
+      {error ? (
+        <CommercialStateBanner variant="error">{error}</CommercialStateBanner>
+      ) : null}
+    </CommercialEmptyGuidance>
+  );
+}
+
+function inboxEmptyNode(
+  filter: InteractionInboxFilter,
+  basePath: string,
+): { title: string; message: string; node?: ReactNode } {
+  const copy = inboxEmptyCopy(filter);
+  if (filter === "wall") {
+    return {
+      ...copy,
+      node: (
+        <WallFilterEmpty basePath={basePath} title={copy.title} message={copy.message} />
+      ),
+    };
+  }
+  return copy;
+}
+
 /** Inbox composta só com kit (RoomInboxList + search + filtros). */
 export function InteractionRoomsInboxPage({
   basePath,
@@ -225,7 +289,7 @@ export function InteractionRoomsInboxPage({
     [],
   );
 
-  const inboxEmpty = inboxEmptyCopy(filter);
+  const inboxEmpty = inboxEmptyNode(filter, basePath);
   const { initialLoading, refreshing } = resolveInboxLoadingState({
     loading,
     itemCount: items.length,
@@ -283,22 +347,26 @@ export function InteractionRoomsInboxPage({
         <CommercialLoadingCard title={content.loadingLabel} variant="panel" />
       ) : null}
       {!initialLoading && !error && items.length === 0 ? (
-        <CommercialEmptyGuidance
-          variant="panel"
-          title={inboxEmpty.title}
-          message={inboxEmpty.message}
-        />
+        inboxEmpty.node ?? (
+          <CommercialEmptyGuidance
+            variant="panel"
+            title={inboxEmpty.title}
+            message={inboxEmpty.message}
+          />
+        )
       ) : null}
       {!initialLoading && items.length > 0 ? (
         <CommercialRoomInboxList
           listAriaLabel={content.inboxListAriaLabel}
           emptyLabel={inboxEmpty.title}
           emptyContent={
-            <CommercialEmptyGuidance
-              variant="panel"
-              title={inboxEmpty.title}
-              message={inboxEmpty.message}
-            />
+            inboxEmpty.node ?? (
+              <CommercialEmptyGuidance
+                variant="panel"
+                title={inboxEmpty.title}
+                message={inboxEmpty.message}
+              />
+            )
           }
           unreadBadgeLabel={(count) =>
             content.unreadBadge.replace("{count}", String(count))

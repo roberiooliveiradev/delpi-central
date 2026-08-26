@@ -16,7 +16,10 @@ export const INTERACTION_ROOMS_CONTENT = {
     "Salas ligadas a processos comerciais aparecem neste filtro.",
   inboxFilterEmptyWallTitle: "Nenhum mural ainda",
   inboxFilterEmptyWallDescription:
-    "Murais da equipe aparecem aqui quando forem criados ou vinculados a um grupo.",
+    "Abra o mural comercial global ou vincule murais a grupos da equipe.",
+  inboxFilterEmptyWallAction: "Abrir mural comercial",
+  inboxFilterEmptyWallOpening: "Abrindo mural…",
+  inboxFilterEmptyWallError: "Não foi possível abrir o mural comercial.",
   inboxListAriaLabel: "Salas de interação",
   inboxToolbarTitle: "Conversas",
   filtersAriaLabel: "Filtros da caixa de entrada",
