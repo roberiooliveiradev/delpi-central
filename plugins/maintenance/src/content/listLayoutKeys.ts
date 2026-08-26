@@ -1,6 +1,7 @@
 /** Chaves localStorage para toggle Tabela/Cards (DataTableSection kit). */
 export const MAINTENANCE_LIST_LAYOUT_KEYS = {
   filiais: "maintenance:FiliaisPage:layout:v1",
+  searchMode: "maintenance:MiniAplicadoresPage:search-mode:v1",
   ferramentas: "maintenance:MiniAplicadoresPage:ferramentas:layout:v1",
   reposicoes: "maintenance:MiniAplicadoresPage:reposicoes:layout:v1",
   pecasAmarradas: "maintenance:FerramentasPorPecaSearchCard:layout:v1",
