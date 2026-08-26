@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Search, X } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
@@ -18,7 +18,7 @@ import {
 import { DmNativeTextField } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
-import { MaintenanceActionButton, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenanceCompareSparkline, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
 import { RelatorioKpiStrip } from "../../components/RelatorioKpiStrip";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
@@ -27,6 +27,7 @@ import {
 } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
 import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
+import { resolvePreventivaCompareSparklineTone } from "../../utils/preventivaCompareSparklineTone";
 import { formatCodigoDescricao } from "../../utils/pecaOptions";
 import {
   fetchPreventivaAlertas,
@@ -612,6 +613,20 @@ export function RelatorioPage({
         sortValue: (item) => item.percentual_uso,
         render: (item) => `${item.percentual_uso.toLocaleString("pt-BR")}%`,
         align: "right",
+      },
+      {
+        key: "uso_visual",
+        header: "Uso visual",
+        sortable: false,
+        headerHint: DM_HELP.relatorio.rankingUsoVisual,
+        render: (item) => (
+          <MaintenanceCompareSparkline
+            prior={item.media_golpes}
+            current={item.golpes_atuais}
+            tone={resolvePreventivaCompareSparklineTone(item.media_golpes, item.golpes_atuais)}
+            aria-label={`Média ${item.media_golpes.toLocaleString("pt-BR")} golpes; atuais ${item.golpes_atuais.toLocaleString("pt-BR")}`}
+          />
+        ),
       },
     ],
     [],
