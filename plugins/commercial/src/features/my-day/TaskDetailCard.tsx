@@ -1,5 +1,9 @@
-import { attachmentIdsInMarkdown, type MentionTextItem } from "@delpi/plugin-ui/index";
-import { ActionButton, StatusBadge } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  StatusBadge,
+  attachmentIdsInMarkdown,
+  type MentionTextItem,
+} from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { downloadAttachmentBlob } from "../../api/attachmentsApi";
