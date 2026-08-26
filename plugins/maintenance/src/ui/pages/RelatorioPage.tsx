@@ -923,6 +923,7 @@ export function RelatorioPage({
           {activeTab === "alertas" ? (
             <DataTableSection
               columnPreferencesKey="maintenance:RelatorioPage:ranking-preventivo:v1"
+              fontSizePreferencesKey="maintenance:relatorio:alertas:table-font-size:v1"
               embedded
               title="Ranking preventivo"
               titleHint={DM_HELP.relatorio.tabRanking}

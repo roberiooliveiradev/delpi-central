@@ -7,6 +7,7 @@ import {
   createDashboardScreenLoading,
   createDashboardStatusBadge,
   createDashboardTabularExportButtons,
+  createDashboardTableFontSizeControls,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   createDashboardCompareSparkline,
@@ -85,3 +86,7 @@ export type MaintenanceSimpleKpiCardProps = DashboardSimpleKpiCardProps;
 export const MaintenanceCompareSparkline = createDashboardCompareSparkline({ prefix: UI_PREFIX });
 
 export const MaintenanceSeriesSparkline = createDashboardSeriesSparkline({ prefix: UI_PREFIX });
+
+export const MaintenanceTableFontSizeControls = createDashboardTableFontSizeControls({
+  prefix: UI_PREFIX,
+});

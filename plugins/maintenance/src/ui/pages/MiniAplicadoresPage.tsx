@@ -908,6 +908,7 @@ export function MiniAplicadoresPage({
 
           <DataTableSection
             columnPreferencesKey="maintenance:MiniAplicadoresPage:miniaplicadorespage:v1"
+            fontSizePreferencesKey="maintenance:mini-aplicadores:lista:table-font-size:v1"
             title={
               selectedPecaCodigo
                 ? `Ferramentas com peça ${formatPecaLabel({
