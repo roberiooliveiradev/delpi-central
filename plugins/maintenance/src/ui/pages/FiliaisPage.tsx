@@ -352,7 +352,33 @@ export function FiliaisPage({
         emptyMessage="Nenhuma filial cadastrada."
         getRowKey={(item) => String(item.filial_id)}
         viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.filiais}
-        renderCard={(item) => <FilialListCard filial={item} />}
+        renderCard={(item) => {
+          const draft = edits[item.filial_id] ?? {
+            nome_filial: item.nome_filial,
+            status_filial: item.status_filial,
+          };
+          return (
+            <FilialListCard
+              filial={item}
+              draft={draft}
+              dirty={isFilialDirty(item, edits)}
+              onNomeChange={(nome_filial) =>
+                setEdits((prev) => ({
+                  ...prev,
+                  [item.filial_id]: { ...draft, nome_filial },
+                }))
+              }
+              onStatusChange={(status_filial) =>
+                setEdits((prev) => ({
+                  ...prev,
+                  [item.filial_id]: { ...draft, status_filial },
+                }))
+              }
+              onSave={() => void handleSave(item.filial_id)}
+              onDelete={() => void handleDelete(item)}
+            />
+          );
+        }}
         serverTable={{
           page: filiaisTable.query.page,
           pageSize: filiaisTable.query.pageSize,

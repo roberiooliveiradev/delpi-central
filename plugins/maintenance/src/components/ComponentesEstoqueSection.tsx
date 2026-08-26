@@ -5,6 +5,7 @@ import { MaintenanceSectionHintLabel } from "../app/maintenanceUi";
 import { DM_HELP } from "../content/helpTooltips";
 import { fetchComponentes, type ComponenteItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
+import { ComponentesEstoqueTree } from "./ComponentesEstoqueTree";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 
 const DmSegmentToggle = createDashboardSegmentToggle("dm");
@@ -76,34 +77,6 @@ function buildComponentesColumns(): DataTableColumn<ComponenteItem>[] {
       align: "right",
     },
   ];
-}
-
-function ComponentesEstoqueTree({ items }: { items: ComponenteItem[] }) {
-  if (items.length === 0) {
-    return <p className="dm-chart-empty">Nenhum componente amarrado a esta ferramenta.</p>;
-  }
-
-  return (
-    <div className="dm-componentes-tree-scroll">
-      <ul className="dm-componentes-tree" role="tree">
-        {items.map((item, index) => (
-          <li
-            key={`${item.codigo}-${item.nivel}-${index}`}
-            className="dm-componentes-tree__row"
-            role="treeitem"
-            style={{ paddingLeft: `${Math.max(0, item.nivel - 1) * 16}px` }}
-          >
-            <span className="dm-componentes-tree__code">{item.codigo}</span>
-            <span className="dm-componentes-tree__desc">{item.descricao}</span>
-            <span className="dm-componentes-tree__stock">
-              01: {item.estoque_local_01.toLocaleString("pt-BR")} · 99:{" "}
-              {item.estoque_local_99.toLocaleString("pt-BR")}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
 }
 
 export function ComponentesEstoqueSection({

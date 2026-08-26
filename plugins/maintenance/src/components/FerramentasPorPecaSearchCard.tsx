@@ -138,7 +138,6 @@ export function FerramentasPorPecaSearchCard({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(true);
   const [expandedPecas, setExpandedPecas] = useState<Set<string>>(() => new Set());
   const [ferramentasCache, setFerramentasCache] = useState<FerramentasCache>(() => new Map());
 
@@ -251,28 +250,16 @@ export function FerramentasPorPecaSearchCard({
   }
 
   return (
-    <section className={`dm-card dm-collapsible-card${expanded ? "" : " is-collapsed"}`}>
-      <div className="dm-section-header dm-collapsible-card__header">
-        <button
-          type="button"
-          className="dm-collapsible-card__trigger"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((current) => !current)}
-        >
-          <ChevronDown
-            size={18}
-            aria-hidden="true"
-            className={expanded ? "dm-collapsible-card__chevron is-open" : "dm-collapsible-card__chevron"}
-          />
-          <div className="dm-section-header__title-group">
-            <h2 className="dm-section-header__title">Buscar ferramentas por peça</h2>
-            <p className="dm-section-header__hint">
-              Peças cadastradas no grupo 3019 (catálogo Protheus). Expanda uma peça para ver as
-              ferramentas amarradas.
-            </p>
-          </div>
-        </button>
-        {expanded && items.length > 0 ? (
+    <section className="dm-card">
+      <div className="dm-section-header">
+        <div className="dm-section-header__title-group">
+          <h2 className="dm-section-header__title">Buscar ferramentas por peça</h2>
+          <p className="dm-section-header__hint">
+            Peças cadastradas no grupo 3019 (catálogo Protheus). Expanda uma peça para ver as
+            ferramentas amarradas.
+          </p>
+        </div>
+        {items.length > 0 ? (
           <div className="dm-peca-ferramentas-tree__bulk-actions">
             <MaintenanceActionButton variant="ghost" className="dm-btn--sm" onClick={expandAllVisible}>
               Expandir tudo
@@ -284,11 +271,9 @@ export function FerramentasPorPecaSearchCard({
         ) : null}
       </div>
 
-      {expanded ? (
-        <>
-          {error ? <p className="dm-inline-error">{error}</p> : null}
+      {error ? <p className="dm-inline-error">{error}</p> : null}
 
-          <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
+      <FilterBar onSubmit={handleSearch} className="dm-filter-bar--search">
             <DmNativeTextField
               id="dm-busca-peca-codigo"
               label="Código da peça"
@@ -317,7 +302,7 @@ export function FerramentasPorPecaSearchCard({
             </div>
           </FilterBar>
 
-          {loading && items.length === 0 ? (
+      {loading && items.length === 0 ? (
             <p className="dm-inline-hint" aria-busy="true">
               Carregando peças…
             </p>
@@ -327,7 +312,7 @@ export function FerramentasPorPecaSearchCard({
             <p className="dm-inline-hint">Nenhuma peça 3019 encontrada com os filtros informados.</p>
           ) : null}
 
-          {items.length > 0 ? (
+      {items.length > 0 ? (
             <div className="dm-peca-ferramentas-tree" aria-busy={loading}>
               <p className="dm-peca-ferramentas-tree__count">{total} peça(s)</p>
               <ul className="dm-peca-ferramentas-tree__list" role="tree">
@@ -374,8 +359,6 @@ export function FerramentasPorPecaSearchCard({
                 />
               ) : null}
             </div>
-          ) : null}
-        </>
       ) : null}
     </section>
   );

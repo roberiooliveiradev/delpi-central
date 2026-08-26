@@ -1,6 +1,12 @@
-import { Lock } from "lucide-react";
+import { Lock, Plus, Trash2 } from "lucide-react";
+import type { MouseEvent, ReactNode } from "react";
 
-import { MaintenanceInteractiveDataCard, MaintenanceStatusBadge } from "../../app/maintenanceUi";
+import {
+  MaintenanceActionButton,
+  MaintenanceInteractiveDataCard,
+  MaintenanceNativeCheckboxControl,
+  MaintenanceStatusBadge,
+} from "../../app/maintenanceUi";
 import type {
   FerramentaItem,
   FilialItem,
@@ -12,12 +18,86 @@ import type {
   ReposicaoItem,
   StatusItem,
 } from "../../data/api/maintenanceApi";
+import { EditableCell } from "../EditableCell";
 import { CodigoDescricaoCell } from "../data/CodigoDescricaoCell";
+import { PendingChangeBadge } from "../data";
 import { formatCodigoDescricao } from "../../utils/pecaOptions";
 
-export function FilialListCard({ filial }: { filial: FilialItem }) {
+type ListCardInlineActionsProps = {
+  onSave?: () => void;
+  onDelete?: () => void;
+  saveLabel?: string;
+  deleteLabel?: ReactNode;
+};
+
+function ListCardInlineActions({
+  onSave,
+  onDelete,
+  saveLabel = "Salvar",
+  deleteLabel = "Excluir",
+}: ListCardInlineActionsProps) {
+  if (!onSave && !onDelete) return null;
+
+  function stopActivate(event: MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+  }
+
+  return (
+    <div className="dm-row-actions dm-row-actions--inline dm-list-card__actions">
+      {onSave ? (
+        <MaintenanceActionButton
+          variant="ghost"
+          onClick={(event) => {
+            stopActivate(event);
+            onSave();
+          }}
+        >
+          {saveLabel}
+        </MaintenanceActionButton>
+      ) : null}
+      {onDelete ? (
+        <MaintenanceActionButton
+          variant="ghost"
+          className="dm-btn--danger"
+          onClick={(event) => {
+            stopActivate(event);
+            onDelete();
+          }}
+        >
+          {deleteLabel}
+        </MaintenanceActionButton>
+      ) : null}
+    </div>
+  );
+}
+
+export function FilialListCard({
+  filial,
+  draft,
+  dirty = false,
+  onNomeChange,
+  onStatusChange,
+  onSave,
+  onDelete,
+}: {
+  filial: FilialItem;
+  draft?: { nome_filial: string; status_filial: "ativo" | "inativo" };
+  dirty?: boolean;
+  onNomeChange?: (nome: string) => void;
+  onStatusChange?: (status: "ativo" | "inativo") => void;
+  onSave?: () => void;
+  onDelete?: () => void;
+}) {
+  const current = draft ?? {
+    nome_filial: filial.nome_filial,
+    status_filial: filial.status_filial,
+  };
+  const editable = Boolean(onSave || onDelete);
+
   return (
     <MaintenanceInteractiveDataCard
+      className={editable ? "dm-list-card--editable" : undefined}
+      interactive={false}
       fields={[
         {
           id: "codigo",
@@ -28,19 +108,44 @@ export function FilialListCard({ filial }: { filial: FilialItem }) {
         {
           id: "nome",
           label: "Nome",
-          value: filial.nome_filial,
+          value: editable ? (
+            <EditableCell
+              value={current.nome_filial}
+              aria-label={`Nome da filial ${filial.codigo_filial}`}
+              onChange={(nome_filial) => onNomeChange?.(nome_filial)}
+              badge={<PendingChangeBadge visible={dirty} />}
+            />
+          ) : (
+            current.nome_filial
+          ),
         },
         {
           id: "status",
           label: "Status",
-          value: (
+          value: editable ? (
+            <EditableCell
+              as="select"
+              value={current.status_filial}
+              aria-label={`Status da filial ${filial.codigo_filial}`}
+              onChange={(status_filial) =>
+                onStatusChange?.(status_filial as "ativo" | "inativo")
+              }
+              options={[
+                { value: "ativo", label: "Ativo" },
+                { value: "inativo", label: "Inativo" },
+              ]}
+            />
+          ) : (
             <MaintenanceStatusBadge
-              variant={filial.status_filial === "ativo" ? "success" : "neutral"}
-              label={filial.status_filial === "ativo" ? "Ativo" : "Inativo"}
+              variant={current.status_filial === "ativo" ? "success" : "neutral"}
+              label={current.status_filial === "ativo" ? "Ativo" : "Inativo"}
             />
           ),
         },
       ]}
+      actions={
+        editable ? <ListCardInlineActions onSave={onSave} onDelete={onDelete} /> : undefined
+      }
     />
   );
 }
@@ -83,14 +188,16 @@ export function FerramentaListCard({ item, onActivate }: FerramentaListCardProps
 type ReposicaoListCardProps = {
   item: ReposicaoItem;
   pecaDescricao?: string;
-  onActivate?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
-export function ReposicaoListCard({ item, pecaDescricao, onActivate }: ReposicaoListCardProps) {
+export function ReposicaoListCard({ item, pecaDescricao, onEdit, onDelete }: ReposicaoListCardProps) {
+  const editable = Boolean(onEdit || onDelete);
+
   return (
     <MaintenanceInteractiveDataCard
-      onActivate={onActivate}
-      openHint="Editar reposição"
+      interactive={false}
       ariaLabel={`Reposição ${item.reposicao_id}`}
       fields={[
         {
@@ -120,6 +227,15 @@ export function ReposicaoListCard({ item, pecaDescricao, onActivate }: Reposicao
           value: item.motivo_descricao ?? String(item.motivo_id),
         },
       ]}
+      actions={
+        editable ? (
+          <ListCardInlineActions
+            onSave={onEdit}
+            saveLabel="Editar"
+            onDelete={onDelete}
+          />
+        ) : undefined
+      }
     />
   );
 }
@@ -173,54 +289,172 @@ export function OndeUsadoListCard({ item }: { item: OndeUsadoItem }) {
   );
 }
 
-export function MotivoListCard({ item }: { item: MotivoItem }) {
+export function MotivoListCard({
+  item,
+  draft,
+  dirty = false,
+  onDescricaoChange,
+  onExcluirPreventivaChange,
+  onSave,
+  onDelete,
+}: {
+  item: MotivoItem;
+  draft?: { descricao: string; excluir_preventiva: boolean };
+  dirty?: boolean;
+  onDescricaoChange?: (descricao: string) => void;
+  onExcluirPreventivaChange?: (checked: boolean) => void;
+  onSave?: () => void;
+  onDelete?: () => void;
+}) {
+  const current = draft ?? {
+    descricao: item.descricao,
+    excluir_preventiva: Boolean(item.excluir_preventiva),
+  };
+  const editable = Boolean(onSave || onDelete);
+
   return (
     <MaintenanceInteractiveDataCard
+      className={editable ? "dm-list-card--editable" : undefined}
+      interactive={false}
       fields={[
         {
           id: "descricao",
           label: "Descrição",
           valueTone: "title",
-          value: item.descricao,
+          value: editable ? (
+            <EditableCell
+              value={current.descricao}
+              aria-label={`Descrição do motivo ${item.motivo_id}`}
+              onChange={(descricao) => onDescricaoChange?.(descricao)}
+              badge={<PendingChangeBadge visible={dirty} />}
+            />
+          ) : (
+            item.descricao
+          ),
         },
         {
           id: "excluir",
           label: "Ignora preventiva",
-          value: item.excluir_preventiva ? "Sim" : "Não",
+          value: editable ? (
+            <MaintenanceNativeCheckboxControl
+              id={`dm-config-motivo-flag-card-${item.motivo_id}`}
+              checked={current.excluir_preventiva}
+              aria-label="Não conta no preventivo"
+              onChange={(checked) => onExcluirPreventivaChange?.(checked)}
+            />
+          ) : (
+            current.excluir_preventiva ? "Sim" : "Não"
+          ),
         },
       ]}
+      actions={
+        editable ? <ListCardInlineActions onSave={onSave} onDelete={onDelete} /> : undefined
+      }
     />
   );
 }
 
-export function StatusPreventivoListCard({ item }: { item: StatusItem }) {
+const STATUS_OPERATORS = [">=", "<=", ">", "<"] as const;
+
+export function StatusPreventivoListCard({
+  item,
+  draft,
+  dirty = false,
+  onDescricaoChange,
+  onOperadorChange,
+  onPercentualChange,
+  onSave,
+  onDelete,
+}: {
+  item: StatusItem;
+  draft?: StatusItem;
+  dirty?: boolean;
+  onDescricaoChange?: (descricao: string) => void;
+  onOperadorChange?: (operador: StatusItem["operador"]) => void;
+  onPercentualChange?: (percentual: number) => void;
+  onSave?: () => void;
+  onDelete?: () => void;
+}) {
+  const current = draft ?? item;
+  const editable = Boolean(onSave || onDelete);
+
   return (
     <MaintenanceInteractiveDataCard
+      className={editable ? "dm-list-card--editable" : undefined}
+      interactive={false}
       fields={[
         {
           id: "status",
           label: "Status",
           valueTone: "title",
-          value: item.descricao,
+          value: editable ? (
+            <EditableCell
+              value={current.descricao}
+              aria-label={`Descrição do status ${item.status_id}`}
+              onChange={(descricao) => onDescricaoChange?.(descricao)}
+              badge={<PendingChangeBadge visible={dirty} />}
+            />
+          ) : (
+            item.descricao
+          ),
         },
         {
           id: "operador",
           label: "Operador",
-          value: item.operador,
+          value: editable ? (
+            <EditableCell
+              as="select"
+              value={current.operador}
+              aria-label={`Operador do status ${item.status_id}`}
+              onChange={(operador) =>
+                onOperadorChange?.(operador as StatusItem["operador"])
+              }
+              options={STATUS_OPERATORS.map((operador) => ({
+                value: operador,
+                label: operador,
+              }))}
+            />
+          ) : (
+            item.operador
+          ),
         },
         {
           id: "percentual",
           label: "Percentual",
-          value: `${item.percentual}%`,
+          value: editable ? (
+            <EditableCell
+              type="number"
+              min={0}
+              value={current.percentual}
+              aria-label={`Percentual do status ${item.status_id}`}
+              onChange={(raw) => onPercentualChange?.(Number(raw))}
+            />
+          ) : (
+            `${item.percentual}%`
+          ),
         },
       ]}
+      actions={
+        editable ? <ListCardInlineActions onSave={onSave} onDelete={onDelete} /> : undefined
+      }
     />
   );
 }
 
-export function ProgramaRankingListCard({ row }: { row: RankingIntermediarioItem }) {
+export function ProgramaRankingListCard({
+  row,
+  canManage = false,
+  adding = false,
+  onAdd,
+}: {
+  row: RankingIntermediarioItem;
+  canManage?: boolean;
+  adding?: boolean;
+  onAdd?: () => void;
+}) {
   return (
     <MaintenanceInteractiveDataCard
+      interactive={false}
       fields={[
         {
           id: "pi",
@@ -249,13 +483,41 @@ export function ProgramaRankingListCard({ row }: { row: RankingIntermediarioItem
           value: (row.qty_produced ?? 0).toLocaleString("pt-BR"),
         },
       ]}
+      actions={
+        canManage ? (
+          <MaintenanceActionButton
+            variant="ghost"
+            disabled={Boolean(row.already_registered) || adding}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAdd?.();
+            }}
+          >
+            <Plus size={16} aria-hidden />{" "}
+            {row.already_registered ? "Já cadastrado" : "Adicionar"}
+          </MaintenanceActionButton>
+        ) : row.already_registered ? (
+          <span className="dm-list-card__meta">Cadastrado</span>
+        ) : undefined
+      }
     />
   );
 }
 
-export function ProgramaCadastroListCard({ row }: { row: ProgramaMaquinaProduto }) {
+export function ProgramaCadastroListCard({
+  row,
+  canManage = false,
+  onToggleAtivo,
+  onDelete,
+}: {
+  row: ProgramaMaquinaProduto;
+  canManage?: boolean;
+  onToggleAtivo?: () => void;
+  onDelete?: () => void;
+}) {
   return (
     <MaintenanceInteractiveDataCard
+      interactive={false}
       fields={[
         {
           id: "pi",
@@ -279,6 +541,32 @@ export function ProgramaCadastroListCard({ row }: { row: ProgramaMaquinaProduto 
           value: row.ativo ? "Sim" : "Não",
         },
       ]}
+      actions={
+        canManage ? (
+          <div className="dm-row-actions dm-row-actions--inline dm-list-card__actions">
+            <MaintenanceActionButton
+              variant="ghost"
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleAtivo?.();
+              }}
+            >
+              {row.ativo ? "Desativar" : "Ativar"}
+            </MaintenanceActionButton>
+            <MaintenanceActionButton
+              variant="ghost"
+              className="dm-btn--danger"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete?.();
+              }}
+              aria-label={`Remover ${row.codigo_intermediario}`}
+            >
+              <Trash2 size={16} />
+            </MaintenanceActionButton>
+          </div>
+        ) : undefined
+      }
     />
   );
 }

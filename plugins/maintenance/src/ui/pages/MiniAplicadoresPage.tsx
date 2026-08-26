@@ -1100,8 +1100,11 @@ export function MiniAplicadoresPage({
               <ReposicaoListCard
                 item={item}
                 pecaDescricao={pecaDescricaoMap[item.codigo_peca.trim()]}
-                onActivate={
+                onEdit={
                   canManageMiniApplicators ? () => handleEditReposicao(item) : undefined
+                }
+                onDelete={
+                  canManageMiniApplicators ? () => void handleDeleteReposicao(item) : undefined
                 }
               />
             )}

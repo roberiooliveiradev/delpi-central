@@ -584,7 +584,45 @@ export function ConfiguracaoPage({
         emptyMessage="Nenhum motivo cadastrado."
         getRowKey={(item) => String(item.motivo_id)}
         viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.motivos}
-        renderCard={(item) => <MotivoListCard item={item} />}
+        renderCard={(item) => (
+          <MotivoListCard
+            item={item}
+            draft={motivoEdits[item.motivo_id]}
+            dirty={isMotivoDirty(item, motivoEdits)}
+            onDescricaoChange={
+              canManageMiniApplicators
+                ? (descricao) =>
+                    setMotivoEdits((prev) => ({
+                      ...prev,
+                      [item.motivo_id]: {
+                        ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
+                        descricao,
+                      },
+                    }))
+                : undefined
+            }
+            onExcluirPreventivaChange={
+              canManageMiniApplicators
+                ? (excluir_preventiva) =>
+                    setMotivoEdits((prev) => ({
+                      ...prev,
+                      [item.motivo_id]: {
+                        ...(prev[item.motivo_id] ?? toMotivoDraft(item)),
+                        excluir_preventiva,
+                      },
+                    }))
+                : undefined
+            }
+            onSave={
+              canManageMiniApplicators ? () => void handleSaveMotivo(item.motivo_id) : undefined
+            }
+            onDelete={
+              canManageMiniApplicators
+                ? () => void handleDeleteMotivo(item.motivo_id, item.descricao)
+                : undefined
+            }
+          />
+        )}
         serverTable={{
           page: motivosTable.query.page,
           pageSize: motivosTable.query.pageSize,
@@ -656,7 +694,51 @@ export function ConfiguracaoPage({
         emptyMessage="Nenhuma regra de status cadastrada."
         getRowKey={(item) => String(item.status_id)}
         viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.statusPreventivo}
-        renderCard={(item) => <StatusPreventivoListCard item={item} />}
+        renderCard={(item) => {
+          const draft = statusEdits[item.status_id] ?? item;
+          return (
+            <StatusPreventivoListCard
+              item={item}
+              draft={draft}
+              dirty={isStatusDirty(item, statusEdits)}
+              onDescricaoChange={
+                canManageMiniApplicators
+                  ? (descricao) =>
+                      setStatusEdits((prev) => ({
+                        ...prev,
+                        [item.status_id]: { ...draft, descricao },
+                      }))
+                  : undefined
+              }
+              onOperadorChange={
+                canManageMiniApplicators
+                  ? (operador) =>
+                      setStatusEdits((prev) => ({
+                        ...prev,
+                        [item.status_id]: { ...draft, operador },
+                      }))
+                  : undefined
+              }
+              onPercentualChange={
+                canManageMiniApplicators
+                  ? (percentual) =>
+                      setStatusEdits((prev) => ({
+                        ...prev,
+                        [item.status_id]: { ...draft, percentual },
+                      }))
+                  : undefined
+              }
+              onSave={
+                canManageMiniApplicators ? () => void handleSaveStatus(item.status_id) : undefined
+              }
+              onDelete={
+                canManageMiniApplicators
+                  ? () => void handleDeleteStatus(item.status_id, item.descricao)
+                  : undefined
+              }
+            />
+          );
+        }}
         serverTable={{
           page: statusTable.query.page,
           pageSize: statusTable.query.pageSize,

@@ -426,7 +426,14 @@ export function ProgramasMaquinasPage({
           emptyMessage="Nenhum intermediário encontrado no período."
           getRowKey={(row) => row.intermediate_code}
           viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.programasRanking}
-          renderCard={(row) => <ProgramaRankingListCard row={row} />}
+          renderCard={(row) => (
+            <ProgramaRankingListCard
+              row={row}
+              canManage={canManage}
+              adding={addingCode === row.intermediate_code}
+              onAdd={() => void handleAdd(row)}
+            />
+          )}
           serverTable={{
             page: rankingTable.query.page,
             pageSize: rankingTable.query.pageSize,
@@ -466,7 +473,14 @@ export function ProgramasMaquinasPage({
           emptyMessage="Nenhum produto cadastrado ainda."
           getRowKey={(row) => row.id}
           viewLayoutPreferencesKey={MAINTENANCE_LIST_LAYOUT_KEYS.programasCadastro}
-          renderCard={(row) => <ProgramaCadastroListCard row={row} />}
+          renderCard={(row) => (
+            <ProgramaCadastroListCard
+              row={row}
+              canManage={canManage}
+              onToggleAtivo={() => void handleToggleAtivo(row)}
+              onDelete={() => void handleDelete(row)}
+            />
+          )}
           serverTable={{
             page: cadastroTable.query.page,
             pageSize: cadastroTable.query.pageSize,
