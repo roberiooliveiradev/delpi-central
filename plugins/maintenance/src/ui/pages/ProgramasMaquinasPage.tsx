@@ -8,8 +8,7 @@ import {
   FilterBar,
   StateBox,
 } from "../../components/data";
-import { FilialSwitcher } from "../../components/FilialSwitcher";
-import { PageHeader } from "../../components/PageHeader";
+import { MaintenancePageHero } from "../../app/maintenanceUi";
 import {
   createProgramaMaquinaProduto,
   deleteProgramaMaquinaProduto,
@@ -21,10 +20,7 @@ import {
 } from "../../data/api/maintenanceApi";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
 import { useServerTable } from "../../hooks/useServerTable";
-import {
-  resolveFilialDisplayName,
-  setStoredFilial,
-} from "../../utils/maintenanceFilialSelection";
+import { resolveFilialDisplayName } from "../../utils/maintenanceFilialSelection";
 
 type ProgramasMaquinasPageProps = {
   getAccessToken?: () => string | undefined;
@@ -47,14 +43,11 @@ function formatDateTime(value: string | null | undefined): string {
 
 export function ProgramasMaquinasPage({
   getAccessToken,
-  pathname,
   filialScope,
-  onNavigate,
 }: ProgramasMaquinasPageProps) {
   const {
     filiais,
     activeFilial,
-    setActiveFilial,
     submodules,
     loading: scopeLoading,
   } = useMaintenanceActiveFilial(getAccessToken, filialScope);
@@ -150,11 +143,6 @@ export function ProgramasMaquinasPage({
   useEffect(() => {
     void loadCadastro();
   }, [loadCadastro]);
-
-  const handleFilialChange = (next: string) => {
-    setActiveFilial(next);
-    setStoredFilial(next);
-  };
 
   const handleToggleAtivo = useCallback(
     async (item: ProgramaMaquinaProduto) => {
@@ -383,26 +371,19 @@ export function ProgramasMaquinasPage({
   }
 
   return (
-    <div className="dm-page-stack">
-      <PageHeader
-        title="Programas de máquina"
-        subtitle={subtitle}
-        icon={Cpu}
-        currentPath={pathname}
-        filialScope={filialScope ?? filial}
-        onNavigate={onNavigate}
-        actions={
-          filiais.length > 1 ? (
-            <FilialSwitcher
-              filiais={filiais}
-              value={filial ?? ""}
-              onChange={handleFilialChange}
-              compact
-            />
-          ) : null
+    <>
+      <MaintenancePageHero
+        eyebrow="DELPI • MANUTENÇÃO"
+        title={
+          <>
+            <Cpu size={28} strokeWidth={1.75} aria-hidden />
+            Programas de máquina
+          </>
         }
+        description={subtitle}
       />
 
+      <section className="dm-page-stack">
       {scopeLoading ? <p className="dm-home-banner">Carregando escopo…</p> : null}
 
       {error ? (
@@ -491,6 +472,7 @@ export function ProgramasMaquinasPage({
           }}
         />
       </section>
-    </div>
+      </section>
+    </>
   );
 }

@@ -9,8 +9,8 @@ import {
   PendingChangeBadge,
   StateBox,
 } from "../../components/data";
+import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
 import { EditableCell } from "../../components/EditableCell";
-import { PageHeader } from "../../components/PageHeader";
 import {
   createFilial,
   deleteFilial,
@@ -41,9 +41,7 @@ function isFilialDirty(item: FilialItem, edits: Record<number, FilialDraft>): bo
 
 export function FiliaisPage({
   getAccessToken,
-  pathname,
   filialScope,
-  onNavigate,
 }: FiliaisPageProps) {
   const { canManageFiliais, loading: scopeLoading } = useMaintenanceActiveFilial(
     getAccessToken,
@@ -238,56 +236,60 @@ export function FiliaisPage({
     [edits],
   );
 
+  const heroDescription = canManageFiliais
+    ? "Cadastro de filiais operacionais. Os nomes cadastrados aqui aparecem no seletor de filial e nas telas do módulo."
+    : "Cadastro de filiais operacionais do módulo Manutenção.";
+
+  const refreshAction = canManageFiliais ? (
+    <MaintenanceActionButton variant="ghost" onClick={() => void loadData()} disabled={loading}>
+      <RefreshCw size={16} className={loading ? "dm-spin" : undefined} aria-hidden />
+      {loading ? "Carregando…" : "Atualizar"}
+    </MaintenanceActionButton>
+  ) : undefined;
+
+  const pageHero = (
+    <MaintenancePageHero
+      eyebrow="DELPI • MANUTENÇÃO"
+      title={
+        <>
+          <Building2 size={28} strokeWidth={1.75} aria-hidden />
+          Filiais
+        </>
+      }
+      description={heroDescription}
+      actions={refreshAction}
+    />
+  );
+
   if (scopeLoading) {
     return (
-      <div className="dm-page-stack">
-        <PageHeader
-          title="Filiais"
-          subtitle="Cadastro de filiais operacionais do módulo Manutenção."
-          icon={Building2}
-          currentPath={pathname}
-          filialScope={filialScope}
-          onNavigate={onNavigate}
-        />
-        <StateBox>Carregando…</StateBox>
-      </div>
+      <>
+        {pageHero}
+        <section className="dm-page-stack">
+          <StateBox>Carregando…</StateBox>
+        </section>
+      </>
     );
   }
 
   if (!canManageFiliais) {
     return (
-      <div className="dm-page-stack">
-        <PageHeader
-          title="Filiais"
-          subtitle="Cadastro de filiais operacionais do módulo Manutenção."
-          icon={Building2}
-          currentPath={pathname}
-          filialScope={filialScope}
-          onNavigate={onNavigate}
-        />
-        <StateBox variant="error">
-          Acesso restrito. É necessária a permissão <code>maintenance.manage</code>.
-        </StateBox>
-      </div>
+      <>
+        {pageHero}
+        <section className="dm-page-stack">
+          <StateBox variant="error">
+            Acesso restrito. É necessária a permissão <code>maintenance.manage</code>.
+          </StateBox>
+        </section>
+      </>
     );
   }
 
   return (
-    <div className="dm-page-stack">
-      <PageHeader
-        title="Filiais"
-        subtitle="Cadastro de filiais operacionais. Os nomes cadastrados aqui aparecem no seletor de filial e nas telas do módulo."
-        icon={Building2}
-        currentPath={pathname}
-        filialScope={filialScope}
-        onNavigate={onNavigate}
-        actions={
-          <button type="button" className="dm-primary-btn" onClick={() => void loadData()} disabled={loading}>
-            <RefreshCw size={16} className={loading ? "dm-spin" : undefined} />
-            {loading ? "Carregando…" : "Atualizar"}
-          </button>
-        }
-      />
+    <>
+      {pageHero}
+
+      <section className="dm-page-stack">
 
       {error ? (
         <StateBox variant="error" onDismiss={() => setError(null)}>
@@ -344,6 +346,7 @@ export function FiliaisPage({
           onSortChange: filiaisTable.handleSortChange,
         }}
       />
-    </div>
+      </section>
+    </>
   );
 }

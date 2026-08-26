@@ -35,7 +35,8 @@ import {
   type MotivoItem,
   type ReposicaoItem,
 } from "../../data/api/maintenanceApi";
-import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
+import { MaintenanceActionButton } from "../../app/maintenanceUi";
+import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   fromDatetimeLocalValue,
   isValidDateRange,
@@ -899,15 +900,19 @@ export function MiniAplicadoresPage({
   );
 
   return (
-    <div className="dm-page-stack">
-      <MiniAplicadoresPageHeader
-        title={codigoFerramenta ? `Ferramenta ${codigoFerramenta}` : "Ferramentas"}
-        subtitle={
+    <>
+      <MaintenanceMiniAplicadoresHero
+        title={
+          <>
+            <Hammer size={28} strokeWidth={1.75} aria-hidden />
+            {codigoFerramenta ? `Ferramenta ${codigoFerramenta}` : "Ferramentas"}
+          </>
+        }
+        description={
           codigoFerramenta
             ? "Histórico de reposições, revisão programada e cadastro de nova troca."
             : "Ferramentas dos grupos 23 e 24 via api-delpi."
         }
-        icon={Hammer}
         filial={filial}
         filialDisplayName={filialDisplayName}
         moduleHomePath={moduleHomePath}
@@ -915,15 +920,23 @@ export function MiniAplicadoresPage({
         currentPath={pathname}
         onNavigate={onNavigate}
         actions={
-          <button
-            type="button"
-            className="dm-primary-btn"
+          <MaintenanceActionButton
+            variant="ghost"
             onClick={() => (codigoFerramenta ? void loadDetalhe() : void loadFerramentas())}
             disabled={codigoFerramenta ? detalheLoading : ferramentasLoading}
           >
             <RefreshCw
               size={16}
-              className={codigoFerramenta ? (detalheLoading ? "dm-spin" : undefined) : ferramentasLoading ? "dm-spin" : undefined}
+              className={
+                codigoFerramenta
+                  ? detalheLoading
+                    ? "dm-spin"
+                    : undefined
+                  : ferramentasLoading
+                    ? "dm-spin"
+                    : undefined
+              }
+              aria-hidden
             />
             {codigoFerramenta
               ? detalheLoading
@@ -932,9 +945,11 @@ export function MiniAplicadoresPage({
               : ferramentasLoading
                 ? "Carregando…"
                 : "Atualizar"}
-          </button>
+          </MaintenanceActionButton>
         }
       />
+
+      <section className="dm-page-stack">
 
       {!codigoFerramenta ? (
         <>
@@ -1328,6 +1343,7 @@ export function MiniAplicadoresPage({
           />
         </>
       )}
-    </div>
+      </section>
+    </>
   );
 }

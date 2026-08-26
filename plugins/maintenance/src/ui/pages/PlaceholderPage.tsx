@@ -1,12 +1,13 @@
 import { Settings, LineChart } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
+import { MaintenancePageHero } from "../../app/maintenanceUi";
 import { StateBox } from "../../components/data";
-import { PageHeader } from "../../components/PageHeader";
 
 type PlaceholderPageProps = {
   title: string;
   subtitle: string;
-  icon: typeof Settings;
+  icon: LucideIcon;
   phase: string;
   pathname?: string;
   onNavigate: (path: string) => void;
@@ -15,24 +16,28 @@ type PlaceholderPageProps = {
 export function PlaceholderPage({
   title,
   subtitle,
-  icon,
+  icon: Icon,
   phase,
-  pathname,
-  onNavigate,
 }: PlaceholderPageProps) {
   return (
-    <div className="dm-page-stack">
-      <PageHeader
-        title={title}
-        subtitle={subtitle}
-        icon={icon}
-        currentPath={pathname}
-        onNavigate={onNavigate}
+    <>
+      <MaintenancePageHero
+        eyebrow="DELPI • MANUTENÇÃO"
+        title={
+          <>
+            <Icon size={28} strokeWidth={1.75} aria-hidden />
+            {title}
+          </>
+        }
+        description={subtitle}
       />
-      <section className="dm-card">
-        <StateBox>Entrega prevista na {phase} do roadmap.</StateBox>
+
+      <section className="dm-page-stack">
+        <section className="dm-card">
+          <StateBox>Entrega prevista na {phase} do roadmap.</StateBox>
+        </section>
       </section>
-    </div>
+    </>
   );
 }
 

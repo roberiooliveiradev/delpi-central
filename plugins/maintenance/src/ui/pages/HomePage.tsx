@@ -9,9 +9,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { MaintenancePageHero } from "../../app/maintenanceUi";
 import { StateBox } from "../../components/data";
-import { FilialSwitcher } from "../../components/FilialSwitcher";
-import { PageHeader } from "../../components/PageHeader";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
 import {
@@ -45,7 +44,6 @@ export function HomePage({
   const {
     filiais,
     activeFilial,
-    setActiveFilial,
     loading: filialLoading,
     error: optionsError,
     submodules,
@@ -62,11 +60,6 @@ export function HomePage({
     return "Gestão de manutenção industrial — escolha um submódulo para continuar.";
   }, [activeFilial, filiais]);
 
-  const handleFilialChange = (filialId: string) => {
-    setActiveFilial(filialId);
-    onNavigate(MAINTENANCE_ROUTES.filialHome(filialId));
-  };
-
   const handleOpenSubmodule = (entryPath: string) => {
     if (activeFilial) {
       setStoredFilial(activeFilial);
@@ -74,119 +67,112 @@ export function HomePage({
     onNavigate(entryPath);
   };
 
-  const showFilialSwitcher = !filialLoading && filiais.length > 1;
-
   return (
-    <div className="dm-page-stack">
-      <div className="dm-home">
-        <PageHeader
-          title="Manutenção"
-          subtitle={subtitle}
-          icon={Wrench}
-          showNav={false}
-          onNavigate={onNavigate}
-          actions={
-            showFilialSwitcher ? (
-              <FilialSwitcher
-                filiais={filiais}
-                value={activeFilial ?? filiais[0]?.id ?? ""}
-                onChange={handleFilialChange}
-                compact
-              />
-            ) : null
-          }
-        />
+    <>
+      <MaintenancePageHero
+        eyebrow="DELPI • MANUTENÇÃO"
+        title={
+          <>
+            <Wrench size={28} strokeWidth={1.75} aria-hidden />
+            Manutenção
+          </>
+        }
+        description={subtitle}
+      />
 
-        {filialLoading ? (
-          <p className="dm-home-banner">Carregando filiais e submódulos…</p>
-        ) : null}
+      <section className="dm-page-stack">
+        <div className="dm-home">
+          {filialLoading ? (
+            <p className="dm-home-banner">Carregando filiais e submódulos…</p>
+          ) : null}
 
-        {optionsError ? (
-          <p className="dm-home-banner dm-home-banner--error" role="alert">
-            {optionsError}
-          </p>
-        ) : null}
+          {optionsError ? (
+            <p className="dm-home-banner dm-home-banner--error" role="alert">
+              {optionsError}
+            </p>
+          ) : null}
 
-        {!filialLoading && !optionsError ? (
-          <section className="dm-home-section" aria-label="Entradas do módulo">
-            <div className="dm-home-section__header">
-              <div>
-                <h2 className="dm-home-section__title">Começar</h2>
-                <p className="dm-home-section__hint">
-                  Atalhos disponíveis conforme sua permissão nesta filial.
-                </p>
+          {!filialLoading && !optionsError ? (
+            <section className="dm-home-section" aria-label="Entradas do módulo">
+              <div className="dm-home-section__header">
+                <div>
+                  <h2 className="dm-home-section__title">Começar</h2>
+                  <p className="dm-home-section__hint">
+                    Atalhos disponíveis conforme sua permissão nesta filial.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {canManageFiliais || submodules.length > 0 ? (
-              <ul className="dm-home-list">
-                {canManageFiliais ? (
-                  <li className="dm-home-list__item">
-                    <button
-                      type="button"
-                      className="dm-home-list__link"
-                      onClick={() => onNavigate(MAINTENANCE_ROUTES.filiais)}
-                    >
-                      <span className="dm-home-list__icon" aria-hidden>
-                        <Building2 size={20} />
-                      </span>
-                      <span className="dm-home-list__body">
-                        <strong>Filiais</strong>
-                        <span>
-                          Cadastro de filiais operacionais do módulo.
+              {canManageFiliais || submodules.length > 0 ? (
+                <ul className="dm-home-list">
+                  {canManageFiliais ? (
+                    <li className="dm-home-list__item">
+                      <button
+                        type="button"
+                        className="dm-home-list__link"
+                        onClick={() => onNavigate(MAINTENANCE_ROUTES.filiais)}
+                      >
+                        <span className="dm-home-list__icon" aria-hidden>
+                          <Building2 size={20} />
                         </span>
-                      </span>
-                      <span className="dm-home-list__meta">
-                        <span className="dm-home-pill dm-home-pill--muted">
-                          Administração
-                        </span>
-                        <ChevronRight size={18} aria-hidden />
-                      </span>
-                    </button>
-                  </li>
-                ) : null}
-
-                {submodules.map((submodule) => (
-                  <li key={submodule.id} className="dm-home-list__item">
-                    <button
-                      type="button"
-                      className="dm-home-list__link"
-                      onClick={() => handleOpenSubmodule(submodule.entry_path)}
-                    >
-                      <span className="dm-home-list__icon" aria-hidden>
-                        <SubmoduleIcon icon={submodule.icon} />
-                      </span>
-                      <span className="dm-home-list__body">
-                        <strong>{submodule.label}</strong>
-                        <span>{submodule.description}</span>
-                      </span>
-                      <span className="dm-home-list__meta">
-                        {activeFilial ? (
-                          <span className="dm-home-pill dm-home-pill--info">
-                            {resolveFilialDisplayName(filiais, activeFilial)}
+                        <span className="dm-home-list__body">
+                          <strong>Filiais</strong>
+                          <span>
+                            Cadastro de filiais operacionais do módulo.
                           </span>
-                        ) : (
+                        </span>
+                        <span className="dm-home-list__meta">
                           <span className="dm-home-pill dm-home-pill--muted">
-                            Submódulo
+                            Administração
                           </span>
-                        )}
-                        <ChevronRight size={18} aria-hidden />
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <StateBox>
-                Nenhum submódulo disponível para esta filial. Solicite
-                permissões como{" "}
-                <code>maintenance.mini-applicators.view.filial-XX</code> ou{" "}
-                <code>maintenance.manutencao-geral.view.filial-XX</code>.
-              </StateBox>
-            )}
-          </section>
-        ) : null}
-      </div>
-    </div>
+                          <ChevronRight size={18} aria-hidden />
+                        </span>
+                      </button>
+                    </li>
+                  ) : null}
+
+                  {submodules.map((submodule) => (
+                    <li key={submodule.id} className="dm-home-list__item">
+                      <button
+                        type="button"
+                        className="dm-home-list__link"
+                        onClick={() => handleOpenSubmodule(submodule.entry_path)}
+                      >
+                        <span className="dm-home-list__icon" aria-hidden>
+                          <SubmoduleIcon icon={submodule.icon} />
+                        </span>
+                        <span className="dm-home-list__body">
+                          <strong>{submodule.label}</strong>
+                          <span>{submodule.description}</span>
+                        </span>
+                        <span className="dm-home-list__meta">
+                          {activeFilial ? (
+                            <span className="dm-home-pill dm-home-pill--info">
+                              {resolveFilialDisplayName(filiais, activeFilial)}
+                            </span>
+                          ) : (
+                            <span className="dm-home-pill dm-home-pill--muted">
+                              Submódulo
+                            </span>
+                          )}
+                          <ChevronRight size={18} aria-hidden />
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <StateBox>
+                  Nenhum submódulo disponível para esta filial. Solicite
+                  permissões como{" "}
+                  <code>maintenance.mini-applicators.view.filial-XX</code> ou{" "}
+                  <code>maintenance.manutencao-geral.view.filial-XX</code>.
+                </StateBox>
+              )}
+            </section>
+          ) : null}
+        </div>
+      </section>
+    </>
   );
 }

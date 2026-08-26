@@ -89,12 +89,14 @@ export function ActionButton(props: ActionButtonProps) {
     );
   }
 
+  const buttonProps = props as Extract<ActionButtonProps, { href?: undefined }>;
+
   return (
     <button
-      type={props.type ?? "button"}
+      type={buttonProps.type ?? "button"}
       className={rootClass}
       disabled={disabled}
-      onClick={props.onClick}
+      onClick={buttonProps.onClick}
       aria-label={ariaLabel}
       aria-expanded={ariaExpanded}
       title={title}

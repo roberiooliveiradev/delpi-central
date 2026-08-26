@@ -1,8 +1,8 @@
 import { ClipboardList } from "lucide-react";
 
+import { MaintenancePageHero } from "../../app/maintenanceUi";
 import { StateBox } from "../../components/data";
 import { ManutencaoGeralFormEmbed } from "../../components/ManutencaoGeralFormEmbed";
-import { PageHeader } from "../../components/PageHeader";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
 import { resolveManutencaoGeralFormUrl } from "../../utils/manutencaoGeralFormUrl";
 import { resolveMaintenanceHomePath } from "../../utils/routeParser";
@@ -14,6 +14,24 @@ type ManutencaoGeralPageProps = {
   alternateEntry?: string;
   onNavigate: (path: string) => void;
 };
+
+const HERO_DESCRIPTION =
+  "Formulário de registro de máquinas, equipamentos e lâmpadas.";
+
+function ManutencaoGeralHero({ title = "Manutenção geral" }: { title?: string }) {
+  return (
+    <MaintenancePageHero
+      eyebrow="DELPI • MANUTENÇÃO"
+      title={
+        <>
+          <ClipboardList size={28} strokeWidth={1.75} aria-hidden />
+          {title}
+        </>
+      }
+      description={HERO_DESCRIPTION}
+    />
+  );
+}
 
 export function ManutencaoGeralPage({
   getAccessToken,
@@ -31,36 +49,26 @@ export function ManutencaoGeralPage({
 
   if (scopeLoading) {
     return (
-      <div className="dm-page-stack">
-        <PageHeader
-          title="Manutenção geral"
-          subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
-          icon={ClipboardList}
-          currentPath={pathname}
-          filialScope={filialScope ?? effectiveFilial}
-          onNavigate={onNavigate}
-        />
-        <StateBox>Carregando…</StateBox>
-      </div>
+      <>
+        <ManutencaoGeralHero />
+        <section className="dm-page-stack">
+          <StateBox>Carregando…</StateBox>
+        </section>
+      </>
     );
   }
 
   if (!canAccess) {
     return (
-      <div className="dm-page-stack">
-        <PageHeader
-          title="Manutenção geral"
-          subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
-          icon={ClipboardList}
-          currentPath={pathname}
-          filialScope={filialScope ?? effectiveFilial}
-          onNavigate={onNavigate}
-        />
-        <StateBox variant="error">
-          Acesso restrito para a filial {effectiveFilial}. Solicite{" "}
-          <code>maintenance.manutencao-geral.view.filial-01</code>.
-        </StateBox>
-      </div>
+      <>
+        <ManutencaoGeralHero />
+        <section className="dm-page-stack">
+          <StateBox variant="error">
+            Acesso restrito para a filial {effectiveFilial}. Solicite{" "}
+            <code>maintenance.manutencao-geral.view.filial-01</code>.
+          </StateBox>
+        </section>
+      </>
     );
   }
 
@@ -69,31 +77,26 @@ export function ManutencaoGeralPage({
 
   if (!formUrl) {
     return (
-      <div className="dm-page-stack">
-        <PageHeader
-          title="Manutenção geral"
-          subtitle="Formulário de registro de máquinas, equipamentos e lâmpadas."
-          icon={ClipboardList}
-          currentPath={pathname}
-          filialScope={filialScope ?? effectiveFilial}
-          onNavigate={onNavigate}
-        />
-        <StateBox variant="error">
-          URL do formulário não configurada. Defina <code>routes[].entry</code> no manifesto de
-          Manutenção e re-registre o app no portal.
-        </StateBox>
-      </div>
+      <>
+        <ManutencaoGeralHero />
+        <section className="dm-page-stack">
+          <StateBox variant="error">
+            URL do formulário não configurada. Defina <code>routes[].entry</code> no manifesto de
+            Manutenção e re-registre o app no portal.
+          </StateBox>
+        </section>
+      </>
     );
   }
 
   return (
-    <div className="dm-page-stack">
+    <section className="dm-page-stack">
       <ManutencaoGeralFormEmbed
         formUrl={formUrl}
         pathname={pathname}
         homePath={homePath}
         onNavigate={onNavigate}
       />
-    </div>
+    </section>
   );
 }

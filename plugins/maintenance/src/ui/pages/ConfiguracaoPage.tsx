@@ -16,7 +16,7 @@ import {
   DmNativeTextField,
 } from "../../components/dmFormFields";
 import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
-import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
+import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
   useMaintenanceModuleHomePath,
@@ -513,11 +513,15 @@ export function ConfiguracaoPage({
   }, [canManageMiniApplicators, statusEdits]);
 
   return (
-    <div className="dm-page-stack">
-      <MiniAplicadoresPageHeader
-        title="Configuração"
-        subtitle={`Motivos de troca e regras de status preventivo por golpes da filial ${filialDisplayName}.`}
-        icon={Settings}
+    <>
+      <MaintenanceMiniAplicadoresHero
+        title={
+          <>
+            <Settings size={28} strokeWidth={1.75} aria-hidden />
+            Configuração
+          </>
+        }
+        description={`Motivos de troca e regras de status preventivo por golpes da filial ${filialDisplayName}.`}
         filial={filial}
         filialDisplayName={filialDisplayName}
         moduleHomePath={moduleHomePath}
@@ -525,6 +529,8 @@ export function ConfiguracaoPage({
         currentPath={pathname}
         onNavigate={onNavigate}
       />
+
+      <section className="dm-page-stack">
 
       {error ? (
         <StateBox variant="error" onDismiss={() => setError(null)}>
@@ -651,6 +657,7 @@ export function ConfiguracaoPage({
           onSortChange: statusTable.handleSortChange,
         }}
       />
-    </div>
+      </section>
+    </>
   );
 }

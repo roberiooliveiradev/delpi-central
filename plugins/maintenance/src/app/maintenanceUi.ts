@@ -7,6 +7,7 @@ import {
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   SectionHintLabel,
+  titleWithHelpBemClasses,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
 
@@ -20,7 +21,12 @@ export const DM_PORTAL_SCOPE = "dashboard-maintenance";
 
 export const MaintenanceActionButton = ActionButton;
 export const MaintenanceSectionHintLabel = SectionHintLabel;
-export const MaintenanceTitleWithHelp = createDashboardTitleWithHelp({ prefix: UI_PREFIX });
+export const MaintenanceTitleWithHelp = createDashboardTitleWithHelp({
+  classNames: titleWithHelpBemClasses(UI_PREFIX),
+  labels: {
+    titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
+  },
+});
 export const MaintenanceStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 
 export const MaintenanceLoadingCard = createDashboardLoadingActivityCard({

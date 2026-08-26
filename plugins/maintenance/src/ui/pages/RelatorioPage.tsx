@@ -22,7 +22,8 @@ import {
 } from "../../components/data";
 import { CONFIG_TOOLTIPS } from "../../content/configTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
-import { MiniAplicadoresPageHeader } from "../../components/MiniAplicadoresPageHeader";
+import { MaintenanceActionButton } from "../../app/maintenanceUi";
+import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
   useMaintenanceModuleHomePath,
@@ -766,11 +767,15 @@ export function RelatorioPage({
     selection?.codigo_ferramenta === codigoFerramenta && selection?.codigo_peca === codigoPeca;
 
   return (
-    <div className="dm-page-stack">
-      <MiniAplicadoresPageHeader
-        title="Relatório preventivo"
-        subtitle="Preventiva por golpes, revisões programadas por tempo e detalhe por ferramenta/peça."
-        icon={LineChart}
+    <>
+      <MaintenanceMiniAplicadoresHero
+        title={
+          <>
+            <LineChart size={28} strokeWidth={1.75} aria-hidden />
+            Relatório preventivo
+          </>
+        }
+        description="Preventiva por golpes, revisões programadas por tempo e detalhe por ferramenta/peça."
         filial={filial}
         filialDisplayName={filialDisplayName}
         moduleHomePath={moduleHomePath}
@@ -778,26 +783,42 @@ export function RelatorioPage({
         currentPath={pathname}
         onNavigate={onNavigate}
         actions={
-          <button
-            type="button"
-            className="dm-primary-btn"
+          <MaintenanceActionButton
+            variant="ghost"
             onClick={() => void loadReport()}
-            disabled={alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading}
+            disabled={
+              alertasLoading ||
+              ultimasLoading ||
+              resumoLoading ||
+              revisoesLoading ||
+              revisaoResumoLoading
+            }
           >
             <RefreshCw
               size={16}
               className={
-                alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading
+                alertasLoading ||
+                ultimasLoading ||
+                resumoLoading ||
+                revisoesLoading ||
+                revisaoResumoLoading
                   ? "dm-spin"
                   : undefined
               }
+              aria-hidden
             />
-            {alertasLoading || ultimasLoading || resumoLoading || revisoesLoading || revisaoResumoLoading
+            {alertasLoading ||
+            ultimasLoading ||
+            resumoLoading ||
+            revisoesLoading ||
+            revisaoResumoLoading
               ? "Carregando…"
               : "Atualizar"}
-          </button>
+          </MaintenanceActionButton>
         }
       />
+
+      <section className="dm-page-stack">
 
       <section className="dm-kpi-grid dm-kpi-grid--report">
         {listTab === "revisoes" ? (
@@ -1034,6 +1055,7 @@ export function RelatorioPage({
           ) : null}
         </div>
       </section>
-    </div>
+      </section>
+    </>
   );
 }
