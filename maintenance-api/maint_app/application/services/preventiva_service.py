@@ -190,13 +190,11 @@ class PreventivaService:
         filial: str,
         rules: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
+        media_map = self._reposicao_repo.media_golpes_map(filial=filial)
         alertas: list[dict[str, Any]] = []
         for row in rows:
-            media = self._reposicao_repo.media_golpes(
-                filial=filial,
-                codigo_ferramenta=row["codigo_ferramenta"],
-                codigo_peca=row["codigo_peca"],
-            )
+            key = (str(row["codigo_ferramenta"]), str(row["codigo_peca"]))
+            media = media_map.get(key, 0.0)
             golpes_atuais = self._obter_golpes_atuais(
                 filial=filial,
                 codigo_ferramenta=row["codigo_ferramenta"],

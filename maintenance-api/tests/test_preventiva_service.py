@@ -15,7 +15,7 @@ def test_match_status_critico():
     assert _match_status(50, rules) == "OK"
 
 
-def test_listar_alertas_ordenacao():
+def test_listar_alertas_usa_media_golpes_map():
     reposicao_repo = MagicMock()
     status_repo = MagicMock()
     reposicao_repo.list_ultimas_por_par.return_value = [
@@ -30,7 +30,7 @@ def test_listar_alertas_ordenacao():
         {"descricao": "ATENÇÃO", "operador": ">=", "percentual": 80},
         {"descricao": "OK", "operador": "<", "percentual": 80},
     ]
-    reposicao_repo.media_golpes.return_value = 100.0
+    reposicao_repo.media_golpes_map.return_value = {("23-001", "P1"): 100.0}
 
     totvs = MagicMock()
     totvs.obter_golpes.return_value = {"total_golpes": 96}
@@ -46,6 +46,7 @@ def test_listar_alertas_ordenacao():
     assert total == 1
     assert len(alertas) == 1
     assert alertas[0]["status"] == "CRÍTICO"
+    reposicao_repo.media_golpes_map.assert_called_once_with(filial="01")
     assert alertas[0]["golpes_atuais"] == 96
 
 
@@ -62,7 +63,7 @@ def test_listar_alertas_enriquece_descricoes():
     status_repo.list_active.return_value = [
         {"descricao": "OK", "operador": "<", "percentual": 80},
     ]
-    reposicao_repo.media_golpes.return_value = 100.0
+    reposicao_repo.media_golpes_map.return_value = {("23-001", "P1"): 100.0}
 
     totvs = MagicMock()
     totvs.obter_golpes.return_value = {"total_golpes": 50}
