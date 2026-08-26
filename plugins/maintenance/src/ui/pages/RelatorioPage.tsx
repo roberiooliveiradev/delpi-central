@@ -20,6 +20,8 @@ import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { MaintenanceActionButton, MaintenanceCompareSparkline, MaintenanceSeriesSparkline, MaintenanceTitleWithHelp } from "../../app/maintenanceUi";
 import { RelatorioKpiStrip } from "../../components/RelatorioKpiStrip";
+import { MaintenanceHeroFreshness } from "../../components/MaintenanceHeroFreshness";
+import { useMaintenanceFreshness } from "../../hooks/useMaintenanceFreshness";
 import { MaintenanceMiniAplicadoresHero } from "../../components/MaintenanceMiniAplicadoresHero";
 import {
   useMaintenanceActiveFilial,
@@ -155,6 +157,7 @@ export function RelatorioPage({
   const [feitoSavingId, setFeitoSavingId] = useState<string | null>(null);
   const [appliedFerramentaFiltro, setAppliedFerramentaFiltro] = useState("");
   const [appliedPecaFiltro, setAppliedPecaFiltro] = useState("");
+  const { lastUpdatedAt, touchFreshness } = useMaintenanceFreshness();
 
   const statusOptions = useMemo(
     () => STATUS_OPTIONS.map((status) => ({ value: status, label: status })),
@@ -183,12 +186,13 @@ export function RelatorioPage({
     try {
       const data = await fetchPreventivaResumo(filial, getAccessToken);
       setResumo(data);
+      touchFreshness();
     } catch {
       setResumo(EMPTY_RESUMO);
     } finally {
       setResumoLoading(false);
     }
-  }, [filial, getAccessToken]);
+  }, [filial, getAccessToken, touchFreshness]);
 
   const loadAlertas = useCallback(async () => {
     setAlertasLoading(true);
@@ -211,6 +215,7 @@ export function RelatorioPage({
       );
       setAlertas(data.items ?? []);
       setAlertasTotal(data.total ?? 0);
+      touchFreshness();
     } catch (err) {
       setAlertasError(err instanceof Error ? err.message : "Falha ao carregar alertas.");
       setAlertas([]);
@@ -225,6 +230,7 @@ export function RelatorioPage({
     filial,
     getAccessToken,
     statusFiltro,
+    touchFreshness,
   ]);
 
   const loadUltimas = useCallback(async () => {
@@ -247,6 +253,7 @@ export function RelatorioPage({
       );
       setUltimas(data.items ?? []);
       setUltimasTotal(data.total ?? 0);
+      touchFreshness();
     } catch (err) {
       setUltimasError(err instanceof Error ? err.message : "Falha ao carregar últimas reposições.");
       setUltimas([]);
@@ -254,19 +261,20 @@ export function RelatorioPage({
     } finally {
       setUltimasLoading(false);
     }
-  }, [appliedFerramentaFiltro, appliedPecaFiltro, filial, getAccessToken, ultimasTable.query]);
+  }, [appliedFerramentaFiltro, appliedPecaFiltro, filial, getAccessToken, ultimasTable.query, touchFreshness]);
 
   const loadRevisaoResumo = useCallback(async () => {
     setRevisaoResumoLoading(true);
     try {
       const data = await fetchRevisaoProgramadaResumo(filial, getAccessToken);
       setRevisaoResumo(data);
+      touchFreshness();
     } catch {
       setRevisaoResumo(EMPTY_REVISAO_RESUMO);
     } finally {
       setRevisaoResumoLoading(false);
     }
-  }, [filial, getAccessToken]);
+  }, [filial, getAccessToken, touchFreshness]);
 
   const loadRevisoes = useCallback(async () => {
     setRevisoesLoading(true);
@@ -288,6 +296,7 @@ export function RelatorioPage({
       );
       setRevisoes(data.items ?? []);
       setRevisoesTotal(data.total ?? 0);
+      touchFreshness();
     } catch (err) {
       setRevisoesError(err instanceof Error ? err.message : "Falha ao carregar revisões programadas.");
       setRevisoes([]);
@@ -301,6 +310,7 @@ export function RelatorioPage({
     getAccessToken,
     revisaoStatusFiltro,
     revisoesTable.query,
+    touchFreshness,
   ]);
 
   const loadReport = useCallback(async () => {
@@ -783,9 +793,11 @@ export function RelatorioPage({
         filial={filial}
         filialDisplayName={filialDisplayName}
         actions={
-          <MaintenanceActionButton
-            variant="ghost"
-            onClick={() => void loadReport()}
+          <div className="dm-hero-actions">
+            <MaintenanceHeroFreshness updatedAt={lastUpdatedAt} />
+            <MaintenanceActionButton
+              variant="ghost"
+              onClick={() => void loadReport()}
             disabled={
               alertasLoading ||
               ultimasLoading ||
@@ -816,6 +828,7 @@ export function RelatorioPage({
             />
             Atualizar
           </MaintenanceActionButton>
+          </div>
         }
       />
 

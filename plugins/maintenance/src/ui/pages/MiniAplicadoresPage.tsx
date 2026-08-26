@@ -37,6 +37,8 @@ import {
   type ReposicaoItem,
 } from "../../data/api/maintenanceApi";
 import { MaintenanceActionButton, MaintenanceFieldLabel } from "../../app/maintenanceUi";
+import { MaintenanceHeroFreshness } from "../../components/MaintenanceHeroFreshness";
+import { useMaintenanceFreshness } from "../../hooks/useMaintenanceFreshness";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
 import { FerramentaListCard, ReposicaoListCard } from "../../components/listCards/MaintenanceListCards";
@@ -85,6 +87,7 @@ export function MiniAplicadoresPage({
   const filial = useOperationalFilial(getAccessToken, filialScope) ?? "01";
   const { canManageMiniApplicators, filiais } = useMaintenanceActiveFilial(getAccessToken, filialScope);
   const filialDisplayName = resolveFilialDisplayName(filiais, filial);
+  const { lastUpdatedAt, touchFreshness } = useMaintenanceFreshness();
   const [descricao, setDescricao] = useState("");
   const [codigo, setCodigo] = useState("");
   const [incluirBloqueados, setIncluirBloqueados] = useState(false);
@@ -335,6 +338,7 @@ export function MiniAplicadoresPage({
       );
       setItems(data.items ?? []);
       setTotal(data.total ?? 0);
+      touchFreshness();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar ferramentas.");
       setItems([]);
@@ -350,6 +354,7 @@ export function MiniAplicadoresPage({
     selectedPecaCodigo,
     ferramentasTable.query,
     getAccessToken,
+    touchFreshness,
   ]);
 
   const loadHistoricoChart = useCallback(
@@ -483,7 +488,8 @@ export function MiniAplicadoresPage({
       refreshHistoricoChart(),
     ]);
     setDetalheVersion((current) => current + 1);
-  }, [loadDetalheBase, loadReposicoesTable, refreshHistoricoChart]);
+    touchFreshness();
+  }, [loadDetalheBase, loadReposicoesTable, refreshHistoricoChart, touchFreshness]);
 
   const handleRevisaoFeedback = useCallback((message: { type: "success" | "error"; text: string }) => {
     if (message.type === "success") {
@@ -832,9 +838,11 @@ export function MiniAplicadoresPage({
         filial={filial}
         filialDisplayName={filialDisplayName}
         actions={
-          <MaintenanceActionButton
-            variant="ghost"
-            onClick={() => (codigoFerramenta ? void loadDetalhe() : void loadFerramentas())}
+          <div className="dm-hero-actions">
+            <MaintenanceHeroFreshness updatedAt={lastUpdatedAt} />
+            <MaintenanceActionButton
+              variant="ghost"
+              onClick={() => (codigoFerramenta ? void loadDetalhe() : void loadFerramentas())}
             disabled={codigoFerramenta ? detalheLoading : ferramentasLoading}
             aria-busy={codigoFerramenta ? detalheLoading : ferramentasLoading}
           >
@@ -853,6 +861,7 @@ export function MiniAplicadoresPage({
             />
             Atualizar
           </MaintenanceActionButton>
+          </div>
         }
       />
 

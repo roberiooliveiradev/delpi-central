@@ -98,6 +98,16 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+}.dashboard-maintenance .dm-hero-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}.dashboard-maintenance .dm-hero-freshness {
+  color: var(--dm-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
 }.dashboard-maintenance .dm-form-embed__loading{
   position: absolute;
   inset: 0;

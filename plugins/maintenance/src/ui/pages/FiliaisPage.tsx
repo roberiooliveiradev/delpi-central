@@ -9,6 +9,8 @@ import {
   StateBox,
 } from "../../components/data";
 import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
+import { MaintenanceHeroFreshness } from "../../components/MaintenanceHeroFreshness";
+import { useMaintenanceFreshness } from "../../hooks/useMaintenanceFreshness";
 import { DmNativeTextField } from "../../components/dmFormFields";
 import { DM_HELP } from "../../content/helpTooltips";
 import { MAINTENANCE_LIST_LAYOUT_KEYS } from "../../content/listLayoutKeys";
@@ -52,6 +54,7 @@ export function FiliaisPage({
     filialScope,
   );
   const filiaisTable = useServerTable({ defaultSortKey: "codigo" });
+  const { lastUpdatedAt, touchFreshness } = useMaintenanceFreshness();
   const [filiais, setFiliais] = useState<FilialItem[]>([]);
   const [filiaisTotal, setFiliaisTotal] = useState(0);
   const [edits, setEdits] = useState<Record<number, FilialDraft>>({});
@@ -90,6 +93,7 @@ export function FiliaisPage({
         }
         return next;
       });
+      touchFreshness();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar filiais.");
       setFiliais([]);
@@ -98,7 +102,7 @@ export function FiliaisPage({
     } finally {
       setLoading(false);
     }
-  }, [filiaisTable.query, getAccessToken]);
+  }, [filiaisTable.query, getAccessToken, touchFreshness]);
 
   useEffect(() => {
     if (canManageFiliais) {
@@ -245,10 +249,13 @@ export function FiliaisPage({
     : "Cadastro de filiais operacionais do módulo Manutenção.";
 
   const refreshAction = canManageFiliais ? (
-    <MaintenanceActionButton variant="ghost" onClick={() => void loadData()} disabled={loading} aria-busy={loading}>
-      <RefreshCw size={16} className={loading ? "dm-spin" : undefined} aria-hidden />
-      Atualizar
-    </MaintenanceActionButton>
+    <div className="dm-hero-actions">
+      <MaintenanceHeroFreshness updatedAt={lastUpdatedAt} />
+      <MaintenanceActionButton variant="ghost" onClick={() => void loadData()} disabled={loading} aria-busy={loading}>
+        <RefreshCw size={16} className={loading ? "dm-spin" : undefined} aria-hidden />
+        Atualizar
+      </MaintenanceActionButton>
+    </div>
   ) : undefined;
 
   const pageHero = (
