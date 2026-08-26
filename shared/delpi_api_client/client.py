@@ -91,6 +91,58 @@ class DelpiApiClient:
         data, _meta, _error = parse_envelope(body)
         return data if data is not None else body
 
+    def _post(
+        self,
+        path: str,
+        *,
+        json_body: Mapping[str, Any] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        apply_internal_service_headers(headers)
+        if self._caller_app:
+            headers["X-Delpi-Caller-App"] = self._caller_app
+        if authorization:
+            headers["Authorization"] = authorization
+
+        resp = None
+        last_connect_error: httpx.ConnectError | None = None
+        for attempt in range(3):
+            try:
+                with httpx.Client(base_url=self._base_url, timeout=self._timeout) as client:
+                    resp = client.post(path, json=dict(json_body or {}), headers=headers)
+                break
+            except httpx.ConnectError as exc:
+                last_connect_error = exc
+                if attempt < 2:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                raise DelpiApiError(
+                    503,
+                    f"Falha ao conectar na api-delpi ({self._base_url}): {exc}",
+                ) from exc
+
+        if resp is None and last_connect_error is not None:
+            raise DelpiApiError(
+                503,
+                f"Falha ao conectar na api-delpi ({self._base_url}): {last_connect_error}",
+            ) from last_connect_error
+
+        body: dict[str, Any] | Any
+        try:
+            body = resp.json()
+        except Exception:
+            body = None
+
+        if resp.status_code >= 400:
+            raise DelpiApiError(
+                resp.status_code,
+                format_error_message(body, fallback=resp.text[:500]),
+            )
+
+        data, _meta, _error = parse_envelope(body)
+        return data if data is not None else body
+
     def get_path(
         self,
         path: str,
@@ -387,6 +439,18 @@ class DelpiApiClient:
         return self._get(
             f"/engineering/mini-applicators/ferramentas/{codigo}/golpes",
             params=params,
+            authorization=authorization,
+        )
+
+    def post_mini_applicators_golpes_batch(
+        self,
+        *,
+        body: Mapping[str, Any],
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._post(
+            "/engineering/mini-applicators/ferramentas/golpes/batch",
+            json_body=body,
             authorization=authorization,
         )
 

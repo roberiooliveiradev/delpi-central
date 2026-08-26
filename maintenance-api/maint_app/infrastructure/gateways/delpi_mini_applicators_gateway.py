@@ -69,6 +69,17 @@ class DelpiMiniAplicatorsGateway:
             authorization=bearer_authorization_from_context(),
         )
 
+    def obter_golpes_batch(
+        self,
+        *,
+        filial: str,
+        items: list[dict[str, str]],
+    ) -> dict:
+        return self._client.post_mini_applicators_golpes_batch(
+            body={"filial": filial, "items": items},
+            authorization=bearer_authorization_from_context(),
+        )
+
     def listar_componentes(self, *, codigo_ferramenta: str, filial: str) -> dict:
         return self._client.list_mini_applicators_componentes(
             codigo_ferramenta,

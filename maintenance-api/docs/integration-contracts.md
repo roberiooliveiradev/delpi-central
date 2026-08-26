@@ -48,24 +48,25 @@ Leitura **TOTVS / Protheus** para mini-aplicadores passa **exclusivamente** pela
 | `GET /engineering/mini-applicators/ferramentas/{codigo}` | `get_mini_applicators_ferramenta` | `mini_applicators_ferramenta` / `scalar` |
 | `GET /engineering/mini-applicators/ferramentas/{codigo}/pecas` | `list_mini_applicators_pecas` | `mini_applicators_peca` / `list` — grupo TOTVS **3019** |
 | `GET /engineering/mini-applicators/ferramentas/{codigo}/golpes` | `get_mini_applicators_golpes` | `mini_applicators_golpes` / `scalar` |
+| `POST /engineering/mini-applicators/ferramentas/golpes/batch` | `post_mini_applicators_golpes_batch` | `mini_applicators_golpes` / `list` |
 | `GET /engineering/mini-applicators/ferramentas/{codigo}/componentes` | `list_mini_applicators_componentes` | `mini_applicators_componente` / `list` — árvore completa (estoque) |
 
 A API dedicada reforça o filtro **3019** em `GET /maintenance/mini-aplicadores/ferramentas/{codigo}/pecas` (select de reposição), derivando da **mesma árvore vigente** de `/componentes`. A rota `/componentes` lista todos os itens amarrados — **sem** filtro 3019.
 
 **Implementação api-delpi (alvo):**
 
-| Camada | Arquivo (alvo) |
-|--------|----------------|
-| Rotas HTTP | `app/interface/http/routes/engineering/mini_applicators_router.py` |
-| Repositório TOTVS | `app/infrastructure/persistence/totvs/mini_applicators_repository.py` |
-| Composer | registrar em `engineering_composer` ou equivalente |
-
+| Camada | Arquivo |
+|--------|---------|
+| Rotas HTTP | `app/interface/http/routes/engineering/engineering_router.py` |
+| Repositório TOTVS | `app/infrastructure/persistence/totvs/engineering_repositories/mini_applicators_repository.py` |
+| Composer | `app/composition/engineering_composer.py` |
 
 **BFF maintenance-api (preventiva):**
 
 | Rota BFF | Descrição |
 |----------|-----------|
 | `GET /maintenance/preventiva/detalhe` | Consolida alerta, ferramenta, peça, estoque e histórico num único payload |
+| Gateway batch | `DelpiMiniAplicatorsGateway.obter_golpes_batch` → `POST .../golpes/batch` |
 
 Detalhe de payloads: [PLAYBOOK-01](../../docs/12-roadmap-e-evolucao/maintenance/PLAYBOOK-01-fronteiras-api-delpi.md).
 

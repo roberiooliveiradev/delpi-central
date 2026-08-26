@@ -128,3 +128,42 @@ def test_listar_onde_usado_propaga_client(monkeypatch):
         "23-026",
         authorization="Bearer token",
     )
+
+
+def test_obter_golpes_batch_propaga_client(monkeypatch):
+    client = MagicMock()
+    client.post_mini_applicators_golpes_batch.return_value = {
+        "items": [{"codigo_ferramenta": "23-001", "total_golpes": 10}],
+        "total": 1,
+    }
+    monkeypatch.setattr(
+        "maint_app.infrastructure.gateways.delpi_mini_applicators_gateway.bearer_authorization_from_context",
+        lambda: "Bearer token",
+    )
+
+    gateway = DelpiMiniAplicatorsGateway(client)
+    result = gateway.obter_golpes_batch(
+        filial="01",
+        items=[
+            {
+                "codigo_ferramenta": "23-001",
+                "data_inicial": "2026-01-01T00:00:00",
+                "data_final": "2026-06-01T00:00:00",
+            }
+        ],
+    )
+
+    assert result["total"] == 1
+    client.post_mini_applicators_golpes_batch.assert_called_once_with(
+        body={
+            "filial": "01",
+            "items": [
+                {
+                    "codigo_ferramenta": "23-001",
+                    "data_inicial": "2026-01-01T00:00:00",
+                    "data_final": "2026-06-01T00:00:00",
+                }
+            ],
+        },
+        authorization="Bearer token",
+    )

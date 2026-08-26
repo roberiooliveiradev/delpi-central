@@ -32,6 +32,13 @@ class MiniApplicatorsTotvsPort(Protocol):
         data_final: str,
     ) -> dict: ...
 
+    def obter_golpes_batch(
+        self,
+        *,
+        filial: str,
+        items: list[dict[str, str]],
+    ) -> dict: ...
+
     def listar_componentes(self, *, codigo_ferramenta: str, filial: str) -> dict: ...
 
     def listar_onde_usado(self, *, codigo_ferramenta: str) -> dict: ...
