@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCw, Search, X } from "lucide-react";
+import { LineChart, RefreshCw, Search, X } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
