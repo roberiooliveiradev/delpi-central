@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 682 · **Gerado em:** 2026-08-24 17:58 UTC
+**Provider:** `api-delpi` · **Rotas:** 683 · **Gerado em:** 2026-08-25 13:03 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -870,7 +870,7 @@
 |--------|------|-------------|---------|
 | `POST` | `/data/sql` | `execute_readonly_sql` | Execute readonly sql |
 
-## products (35)
+## products (36)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -899,6 +899,7 @@
 | `GET` | `/products/{code}/purchase-price-history` | `get_product_purchase_price_history` | Product purchase price history |
 | `GET` | `/products/{code}/purchases` | `get_product_purchases` | Product purchases |
 | `GET` | `/products/{code}/raw-material-price-intelligence` | `get_product_raw_material_price_intelligence` | Product raw material price intelligence |
+| `GET` | `/products/{code}/raw-material-set-shortages` | `get_product_raw_material_set_shortages` | Raw-material shortages in the finished-product order set |
 | `GET` | `/products/{code}/sales` | `get_product_sales_summary` | Product sales summary |
 | `GET` | `/products/{code}/sales/billing` | `get_product_sales_billing` | Faturamento do product |
 | `GET` | `/products/{code}/sales/open-orders` | `get_product_sales_open_orders` | Product sales open orders |
