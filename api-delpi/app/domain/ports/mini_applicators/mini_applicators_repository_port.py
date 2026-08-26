@@ -31,6 +31,13 @@ class MiniApplicatorsRepositoryPort(Protocol):
         data_final: str,
     ) -> dict: ...
 
+    def get_golpes_batch(
+        self,
+        *,
+        filial: str,
+        items: list[dict],
+    ) -> list[dict]: ...
+
     def list_componentes(self, *, codigo_ferramenta: str, filial: str) -> list[dict]: ...
 
     def list_pecas_reposicao(

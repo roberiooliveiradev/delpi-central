@@ -55,6 +55,27 @@ class GetMiniApplicatorsGolpesUseCase:
         )
 
 
+class PostMiniApplicatorsGolpesBatchUseCase:
+    def __init__(self, repository: MiniApplicatorsRepositoryPort):
+        self._repository = repository
+
+    def execute(
+        self,
+        *,
+        filial: str,
+        items: list[dict],
+    ) -> dict:
+        batch_items = self._repository.get_golpes_batch(filial=filial, items=items)
+        return {
+            "items": batch_items,
+            "total": len(batch_items),
+            "summary": {
+                "requested_count": len(items),
+                "returned_count": len(batch_items),
+            },
+        }
+
+
 class ListMiniApplicatorsComponentesUseCase:
     def __init__(self, repository: MiniApplicatorsRepositoryPort):
         self._repository = repository

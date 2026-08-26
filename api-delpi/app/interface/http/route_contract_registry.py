@@ -234,6 +234,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "mini_applicators_peca", "paged_list"
     ),
     "get_mini_applicators_golpes": RouteContract("mini_applicators_golpes", "scalar"),
+    "post_mini_applicators_golpes_batch": RouteContract("mini_applicators_golpes", "list"),
     "list_mini_applicators_componentes": RouteContract("mini_applicators_componente", "list"),
     # Vendas e dados
     "list_sale_orders": RouteContract("sale_order", "paged_list"),

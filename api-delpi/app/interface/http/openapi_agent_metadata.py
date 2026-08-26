@@ -445,6 +445,15 @@ MINI_APPLICATORS_GOLPES_GET = agent_route(
     operation_id="get_mini_applicators_golpes",
 )
 
+MINI_APPLICATORS_GOLPES_BATCH = agent_route(
+    summary="Golpes batch for mini-applicator tools",
+    description=(
+        "Calculates strike counts for multiple mini-applicator tools in one request. "
+        "Groups tools by period and uses a single SQL query per period."
+    ),
+    operation_id="post_mini_applicators_golpes_batch",
+)
+
 MINI_APPLICATORS_COMPONENTES_LIST = agent_route(
     summary="Componentes do mini-aplicador",
     description=(

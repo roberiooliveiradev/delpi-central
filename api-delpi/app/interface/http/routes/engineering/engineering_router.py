@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import (
@@ -18,6 +18,7 @@ from app.application.dto.transforma_mais.process_summary_request import (
 from app.application.dto.transformometro.dashboard_evolucao_request import (
     DashboardEvolucaoRequest,
 )
+from app.application.dto.mini_applicators.golpes_batch_request import GolpesBatchRequest
 from app.application.dto.mini_applicators.list_ferramentas_request import (
     ListMiniApplicatorsFerramentasRequest,
 )
@@ -37,6 +38,7 @@ from app.composition.engineering_composer import (
     build_engineering_list_transforma_mais_processes_use_case,
     build_get_mini_applicators_ferramenta_use_case,
     build_get_mini_applicators_golpes_use_case,
+    build_post_mini_applicators_golpes_batch_use_case,
     build_list_mini_applicators_componentes_use_case,
     build_list_mini_applicators_ferramentas_use_case,
     build_list_mini_applicators_pecas_reposicao_use_case,
@@ -76,6 +78,7 @@ from app.interface.http.openapi_agent_metadata import (
     MINI_APPLICATORS_PECAS_LIST,
     MINI_APPLICATORS_PECAS_REPOSICAO_LIST,
     MINI_APPLICATORS_GOLPES_GET,
+    MINI_APPLICATORS_GOLPES_BATCH,
     MINI_APPLICATORS_COMPONENTES_LIST,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
@@ -830,6 +833,31 @@ def get_mini_applicators_golpes_route(
         log_error(f"Erro ao calcular golpes mini-aplicador {codigo}: {exc}")
         return error_response(
             "Erro interno ao calcular golpes do mini-aplicador.",
+            status_code=500,
+        )
+
+
+@router.post(
+    "/mini-applicators/ferramentas/golpes/batch",
+    **MINI_APPLICATORS_GOLPES_BATCH,
+)
+@require_any_permission(MINI_APPLICATORS_ACCESS)
+def post_mini_applicators_golpes_batch_route(body: GolpesBatchRequest = Body(...)):
+    try:
+        use_case = build_post_mini_applicators_golpes_batch_use_case()
+        result = use_case.execute(
+            filial=body.filial,
+            items=[item.model_dump() for item in body.items],
+        )
+        return api_delpi_success(
+            result,
+            operation_id="post_mini_applicators_golpes_batch",
+            message="Golpes batch calculados.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao calcular golpes batch mini-aplicador: {exc}")
+        return error_response(
+            "Erro interno ao calcular golpes batch do mini-aplicador.",
             status_code=500,
         )
 

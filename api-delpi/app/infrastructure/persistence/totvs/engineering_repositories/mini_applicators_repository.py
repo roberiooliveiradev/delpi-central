@@ -291,18 +291,113 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
         data_inicial: str,
         data_final: str,
     ) -> dict:
-        data_ini, hora_ini = parse_protheus_period_start(data_inicial)
-        data_fim, hora_fim = parse_protheus_period_end(data_final)
-        query = """
-            SELECT CAST(
-                SUM(
-                    CASE
-                        WHEN SD4.D4_QTDEORI > SD4.D4_QUANT
-                        THEN SD4.D4_QTDEORI - SD4.D4_QUANT
-                        ELSE SD4.D4_QTDEORI
-                    END
-                ) AS BIGINT
-            ) AS total_golpes
+        batch = self.get_golpes_batch(
+            filial=filial,
+            items=[
+                {
+                    "codigo_ferramenta": codigo_ferramenta,
+                    "data_inicial": data_inicial,
+                    "data_final": data_final,
+                }
+            ],
+        )
+        if batch:
+            return batch[0]
+        return {
+            "codigo_ferramenta": codigo_ferramenta.strip(),
+            "filial": filial.strip(),
+            "data_inicial": data_inicial,
+            "data_final": data_final,
+            "total_golpes": 0,
+        }
+
+    def get_golpes_batch(
+        self,
+        *,
+        filial: str,
+        items: list[dict],
+    ) -> list[dict]:
+        if not items:
+            return []
+
+        grouped: dict[tuple[str, str, str, str], list[str]] = {}
+        item_meta: list[tuple[str, str, str, str]] = []
+        branch = filial.strip()
+
+        for item in items:
+            codigo = str(item.get("codigo_ferramenta") or "").strip()
+            data_inicial = str(item.get("data_inicial") or "").strip()
+            data_final = str(item.get("data_final") or "").strip()
+            if not codigo or not data_inicial or not data_final:
+                item_meta.append((codigo, data_inicial, data_final, branch))
+                continue
+            data_ini, hora_ini = parse_protheus_period_start(data_inicial)
+            data_fim, hora_fim = parse_protheus_period_end(data_final)
+            period_key = (data_ini, hora_ini, data_fim, hora_fim)
+            grouped.setdefault(period_key, []).append(codigo)
+            item_meta.append((codigo, data_inicial, data_final, branch))
+
+        totals_by_code_period: dict[tuple[str, tuple[str, str, str, str]], int] = {}
+        for period_key, codigos in grouped.items():
+            unique_codigos = sorted(set(codigos))
+            if not unique_codigos:
+                continue
+            period_totals = self._get_golpes_totals_for_period(
+                filial=branch,
+                codigos=unique_codigos,
+                period_key=period_key,
+            )
+            for codigo, total in period_totals.items():
+                totals_by_code_period[(codigo, period_key)] = total
+
+        results: list[dict] = []
+        for codigo, data_inicial, data_final, item_filial in item_meta:
+            if not codigo or not data_inicial or not data_final:
+                results.append(
+                    {
+                        "codigo_ferramenta": codigo,
+                        "filial": item_filial,
+                        "data_inicial": data_inicial,
+                        "data_final": data_final,
+                        "total_golpes": 0,
+                    }
+                )
+                continue
+            data_ini, hora_ini = parse_protheus_period_start(data_inicial)
+            data_fim, hora_fim = parse_protheus_period_end(data_final)
+            period_key = (data_ini, hora_ini, data_fim, hora_fim)
+            total = totals_by_code_period.get((codigo, period_key), 0)
+            results.append(
+                {
+                    "codigo_ferramenta": codigo,
+                    "filial": item_filial,
+                    "data_inicial": data_inicial,
+                    "data_final": data_final,
+                    "total_golpes": total,
+                }
+            )
+        return results
+
+    def _get_golpes_totals_for_period(
+        self,
+        *,
+        filial: str,
+        codigos: list[str],
+        period_key: tuple[str, str, str, str],
+    ) -> dict[str, int]:
+        data_ini, hora_ini, data_fim, hora_fim = period_key
+        placeholders = ", ".join("?" for _ in codigos)
+        query = f"""
+            SELECT SH4.H4_CODIGO AS codigo_ferramenta,
+                   CAST(
+                       SUM(
+                           CASE
+                               WHEN SD4.D4_QTDEORI > SD4.D4_QUANT
+                               THEN SD4.D4_QTDEORI - SD4.D4_QUANT
+                               ELSE SD4.D4_QTDEORI
+                           END
+                       ) AS BIGINT
+                   ) AS total_golpes
             FROM SD4010 AS SD4 WITH (NOLOCK)
             INNER JOIN SHY010 AS SHY WITH (NOLOCK)
                 ON SHY.HY_FILIAL = SD4.D4_FILIAL
@@ -321,7 +416,7 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
               AND SH4.H4_FILIAL = ?
               AND SB1.D_E_L_E_T_ = ''
               AND SB1.B1_GRUPO = '1008'
-              AND SH4.H4_CODIGO = ?
+              AND SH4.H4_CODIGO IN ({placeholders})
               AND EXISTS (
                 SELECT 1
                 FROM SH6010 AS SH6 WITH (NOLOCK)
@@ -339,12 +434,13 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
                       OR (SH6.H6_DATAINI = ? AND SH6.H6_HORAINI <= ?)
                   )
               )
+            GROUP BY SH4.H4_CODIGO
         """
-        params = (
-            filial.strip(),
-            filial.strip(),
-            filial.strip(),
-            codigo_ferramenta.strip(),
+        params: tuple = (
+            filial,
+            filial,
+            filial,
+            *codigos,
             data_ini,
             data_ini,
             hora_ini,
@@ -353,14 +449,11 @@ class MiniApplicatorsRepository(BaseRepository, MiniApplicatorsRepositoryPort):
             hora_fim,
         )
         with self:
-            total = self.execute_scalar(query, params)
-        return {
-            "codigo_ferramenta": codigo_ferramenta.strip(),
-            "filial": filial.strip(),
-            "data_inicial": data_inicial,
-            "data_final": data_final,
-            "total_golpes": int(total or 0),
-        }
+            rows = self.execute_query(query, params)
+        totals = {str(row["codigo_ferramenta"]).strip(): int(row.get("total_golpes") or 0) for row in rows}
+        for codigo in codigos:
+            totals.setdefault(codigo, 0)
+        return totals
 
     def list_componentes(self, *, codigo_ferramenta: str, filial: str) -> list[dict]:
         query = """
