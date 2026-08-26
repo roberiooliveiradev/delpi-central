@@ -53,11 +53,14 @@ def normalize_path(path: str) -> str:
 
 
 def _is_root_health_path(normalized: str) -> bool:
-    """Health raiz da API — com ou sem prefixo root_path (/apps/api-delpi)."""
+    """Health raiz da API — com ou sem prefixo root_path (/apps/<service>)."""
     if normalized == "/health":
         return True
-    # Com --root-path /apps/api-delpi o scope chega como /apps/api-delpi/health.
-    # Não liberar rotas aninhadas (ex.: /retrabalhos/health).
+    if normalized.endswith("/health"):
+        parts = [part for part in normalized.split("/") if part]
+        # /apps/<service>/health — health raiz de BFFs/plugins (não rotas aninhadas).
+        if len(parts) == 3 and parts[0] == "apps" and parts[2] == "health":
+            return True
     return normalized.endswith("/api-delpi/health")
 
 

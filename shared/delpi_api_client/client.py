@@ -42,7 +42,7 @@ class DelpiApiClient:
         self,
         path: str,
         *,
-        params: Mapping[str, str | None] | None = None,
+        params: Mapping[str, str | None | list[str]] | None = None,
         authorization: str | None = None,
     ) -> dict[str, Any]:
         clean_params = {k: v for k, v in (params or {}).items() if v is not None}

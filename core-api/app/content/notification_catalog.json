@@ -166,6 +166,14 @@
       "kind": "app",
       "sourceApps": ["commercial"],
       "pluginId": "commercial"
+    },
+    "purchase_requests": {
+      "label": "Solicitações de Compras",
+      "notificationLabel": "Pedido vinculado à solicitação de compra",
+      "kind": "app",
+      "mutable": true,
+      "sourceApps": ["purchase-requests"],
+      "pluginId": "purchase-requests"
     }
   },
   "legacyCategoryAliases": {

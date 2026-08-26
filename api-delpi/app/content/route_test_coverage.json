@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-25",
-  "baselineOperationCount": 684,
-  "operationCount": 684,
-  "coveredCount": 612,
+  "generatedAt": "2026-08-26",
+  "baselineOperationCount": 687,
+  "operationCount": 687,
+  "coveredCount": 615,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -194,8 +194,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 24,
-      "covered": 24,
+      "total": 27,
+      "covered": 27,
       "gap": 0,
       "exempt": 0
     },
@@ -6037,6 +6037,33 @@
       "path": "/supplies/purchase-requests/open-coverage",
       "module": "supplies",
       "entity": "supplies_purchase_request_coverage",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_line",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines/{branch}/{request_number}",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_line",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/recent-linked-orders",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_linked_order",
       "shape": "list",
       "status": "covered"
     },

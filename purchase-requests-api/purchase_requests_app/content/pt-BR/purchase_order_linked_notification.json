@@ -1,0 +1,11 @@
+{
+  "titleTemplate": "Pedido {order} vinculado à SC {request}",
+  "messageTemplate": "Produto {product_code} — {product_description}\nFornecedor {supplier} · Entrega prevista {delivery_date}",
+  "actionLabel": "Abrir solicitação",
+  "type": "info",
+  "deepLinkPath": "/apps/purchase-requests",
+  "emptyValue": "—",
+  "eventType": "purchase_order_created",
+  "category": "purchase_requests",
+  "sourceApp": "purchase-requests"
+}

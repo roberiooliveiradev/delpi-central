@@ -13,6 +13,7 @@ import { Link, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
 import { PortalMobileNavBar } from "../layout/PortalMobileNavBar";
+import { FederatedAppRouteGuard } from "../routes/FederatedAppRouteGuard";
 import { ProtectedRoute } from "../routes/ProtectedRoute";
 import { Unauthorized } from "./Unauthorized";
 import { motion } from "framer-motion";
@@ -332,29 +333,49 @@ function AppShell() {
               />
             ))}
 
-            {federatedAppHosts.map((host) => (
-              <Route
-                key={host.appId}
-                path={host.path}
-                element={
-                  <ProtectedRoute permission={host.permission}>
-                    <AppHost key={host.appId} />
-                  </ProtectedRoute>
-                }
-              />
-            ))}
+            {federatedAppHosts.map((host) => {
+              const catalogApp = apps.find((app) => app.id === host.appId);
+              if (!catalogApp) return null;
 
-            {embeddedAppHosts.map((host) => (
-              <Route
-                key={host.appId}
-                path={host.path}
-                element={
-                  <ProtectedRoute permission={host.permission}>
-                    <AppHost key={host.appId} />
-                  </ProtectedRoute>
-                }
-              />
-            ))}
+              return (
+                <Route
+                  key={host.appId}
+                  path={host.path}
+                  element={
+                    <FederatedAppRouteGuard
+                      app={catalogApp}
+                      fallbackPermission={host.permission}
+                    >
+                      <AnimatedWrapper>
+                        <AppHost key={host.appId} />
+                      </AnimatedWrapper>
+                    </FederatedAppRouteGuard>
+                  }
+                />
+              );
+            })}
+
+            {embeddedAppHosts.map((host) => {
+              const catalogApp = apps.find((app) => app.id === host.appId);
+              if (!catalogApp) return null;
+
+              return (
+                <Route
+                  key={host.appId}
+                  path={host.path}
+                  element={
+                    <FederatedAppRouteGuard
+                      app={catalogApp}
+                      fallbackPermission={host.permission}
+                    >
+                      <AnimatedWrapper>
+                        <AppHost key={host.appId} />
+                      </AnimatedWrapper>
+                    </FederatedAppRouteGuard>
+                  }
+                />
+              );
+            })}
 
             {/*
               Deep links /apps/* sem app autorizado: não mandar para a home

@@ -30,13 +30,27 @@ if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
   exit 1
 fi
 
-RESP=$(curl -sf -X POST "${BASE_URL}/auth/realms/${REALM}/protocol/openid-connect/token" \
-  -d "client_id=${CLIENT_ID}" \
-  -d "username=${USERNAME}" \
-  -d "password=${PASSWORD}" \
-  -d "grant_type=password") || {
+fetch_token() {
+  local base_url="$1"
+  curl -sf -X POST "${base_url%/}/auth/realms/${REALM}/protocol/openid-connect/token" \
+    -d "client_id=${CLIENT_ID}" \
+    -d "username=${USERNAME}" \
+    -d "password=${PASSWORD}" \
+    -d "grant_type=password"
+}
+
+RESP=""
+if RESP=$(fetch_token "$BASE_URL"); then
+  :
+elif [ "$BASE_URL" = "http://localhost" ] || [ "$BASE_URL" = "http://localhost/" ]; then
+  FALLBACK_URL="http://localhost:9080"
+  RESP=$(fetch_token "$FALLBACK_URL") || {
+    echo "[ERRO] Falha ao obter token em ${BASE_URL} e ${FALLBACK_URL}/auth/realms/${REALM}/..." >&2
+    exit 1
+  }
+else
   echo "[ERRO] Falha ao obter token em ${BASE_URL}/auth/realms/${REALM}/..." >&2
   exit 1
-}
+fi
 
 python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])" <<<"$RESP"

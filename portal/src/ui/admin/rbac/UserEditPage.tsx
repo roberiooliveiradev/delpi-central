@@ -14,6 +14,7 @@ import { UserGroupsEditTab } from "./UserGroupsEditTab";
 import { UserGroupsViewTab } from "./UserGroupsViewTab";
 import { UserRolesEditTab } from "./UserRolesEditTab";
 import { UserRolesViewTab } from "./UserRolesViewTab";
+import { UserTotvsTab } from "./UserTotvsTab";
 import { UserUsageTab } from "./UserUsageTab";
 import { useAdminUserAccessProfile } from "./useAdminUserAccessProfile";
 import { useUserPageMode, type UserPageTab } from "./useUserPageMode";
@@ -228,6 +229,7 @@ export const UserEditPage = () => {
     { id: "roles", label: isEditing ? "Papéis diretos" : "Papéis" },
     { id: "groups", label: "Grupos" },
     { id: "usage", label: "Uso" },
+    { id: "totvs", label: "TOTVS" },
   ];
 
   return (
@@ -340,6 +342,10 @@ export const UserEditPage = () => {
 
         {activeTab === "usage" && userId ? (
           <UserUsageTab userId={userId} active={activeTab === "usage"} />
+        ) : null}
+
+        {activeTab === "totvs" && user ? (
+          <UserTotvsTab user={user} active={activeTab === "totvs"} />
         ) : null}
       </div>
     </PageChrome>

@@ -1654,6 +1654,102 @@ services:
     networks:
       - delpi-network
 
+  purchase-requests-api:
+    build:
+      context: ..
+      dockerfile: purchase-requests-api/Dockerfile
+
+    container_name: delpi-purchase-requests-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      PURCHASE_REQUESTS_API_ROOT_PATH: /apps/purchase-requests-api
+      PURCHASE_REQUESTS_RUN_MIGRATIONS_ON_STARTUP: ${PURCHASE_REQUESTS_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_API_URL: http://delpi-api-delpi:8000
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-60}
+      DELPI_API_CALLER_APP: purchase-requests-api
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
+      PURCHASE_REQUESTS_PO_NOTIFICATIONS_ENABLED: ${PURCHASE_REQUESTS_PO_NOTIFICATIONS_ENABLED:-true}
+      PURCHASE_REQUESTS_PO_NOTIFICATIONS_INTERVAL_SECONDS: ${PURCHASE_REQUESTS_PO_NOTIFICATIONS_INTERVAL_SECONDS:-120}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      core-api:
+        condition: service_started
+      api-delpi:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  purchase-requests:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: purchase-requests/Dockerfile
+      target: production
+
+    container_name: delpi-purchase-requests
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   commercial-api:
     build:
       context: ..
@@ -2248,6 +2344,8 @@ services:
       - cipa
       - travel-expenses-api
       - travel-expenses
+      - purchase-requests-api
+      - purchase-requests
       - comite-etica-conduta-api
       - comite-etica-conduta
 

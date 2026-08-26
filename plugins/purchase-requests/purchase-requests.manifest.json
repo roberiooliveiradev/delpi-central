@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "purchase-requests",
+  "name": "Solicitações de Compras",
+  "description": "Consulta operacional de solicitações de compra com escopo por centro de custo.",
+  "icon": "shopping-cart-icon",
+  "version": "0.1.1",
+  "type": "microfrontend",
+  "basePath": "/apps/purchase-requests",
+  "entry": "/apps/purchase-requests/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "purchase-requests.access",
+      "name": "Acessar Solicitações de Compras",
+      "description": "Permite abrir o módulo de solicitações de compra.",
+      "module": "purchase-requests"
+    },
+    {
+      "code": "purchase-requests.view-all",
+      "name": "Ver todas as SC da filial",
+      "description": "Bypass de escopo por centro de custo dentro da filial autorizada.",
+      "module": "purchase-requests"
+    },
+    {
+      "code": "purchase-requests.admin",
+      "name": "Administrar Solicitações de Compras",
+      "description": "Mapeamento Protheus, escopos de visibilidade e notificações.",
+      "module": "purchase-requests"
+    },
+    {
+      "code": "purchase-requests.export",
+      "name": "Exportar Solicitações de Compras",
+      "description": "Permite exportações futuras do módulo.",
+      "module": "purchase-requests"
+    },
+    {
+      "code": "purchase-requests.unit.filial-01",
+      "name": "Solicitações — Filial 01",
+      "description": "Escopo de dados da filial SC (01).",
+      "module": "purchase-requests"
+    },
+    {
+      "code": "purchase-requests.unit.filial-02",
+      "name": "Solicitações — Filial 02",
+      "description": "Escopo de dados da filial ES (02).",
+      "module": "purchase-requests"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/purchase-requests",
+      "label": "Solicitações de Compras",
+      "permission": "purchase-requests.access",
+      "icon": "shopping-cart-icon",
+      "order": 31,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}
