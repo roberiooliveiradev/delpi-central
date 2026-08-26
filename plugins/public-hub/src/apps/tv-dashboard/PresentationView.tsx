@@ -271,14 +271,14 @@ export function PresentationView({
           );
         })}
         <MeetingAnnotationOverlay
+          ref={annotations.overlayRef}
           enabled={playbackMode === "meeting"}
           slideId={currentSlideId}
           clientId={playbackClientId}
           tool={annotations.tool}
           strokes={annotations.strokes}
-          lasers={annotations.lasers}
           onLocalStroke={annotations.publishStroke}
-          onLocalLaser={annotations.publishLaser}
+          onLocalLaserNetwork={annotations.publishLaserNetwork}
         />
       </DesignViewportStage>
       <PresentationStageControls

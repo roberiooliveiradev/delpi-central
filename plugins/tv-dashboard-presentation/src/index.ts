@@ -67,7 +67,11 @@ export {
   strokesForSlide,
 } from "./meetingInkModel";
 export { MeetingAnnotationOverlay } from "./MeetingAnnotationOverlay";
-export type { MeetingAnnotationOverlayProps } from "./MeetingAnnotationOverlay";
+export type {
+  MeetingAnnotationOverlayHandle,
+  MeetingAnnotationOverlayProps,
+  MeetingRemoteLaserEvent,
+} from "./MeetingAnnotationOverlay";
 export { useMeetingAnnotations } from "./useMeetingAnnotations";
 export type { UseMeetingAnnotationsOptions } from "./useMeetingAnnotations";
 export { useFullscreenStage } from "./useFullscreenStage";

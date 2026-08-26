@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 
+import type { MeetingAnnotationOverlayHandle } from "./MeetingAnnotationOverlay";
 import type {
   MeetingAnnotationTool,
   MeetingInkStroke,
-  MeetingLaserState,
   MeetingNormPoint,
 } from "./meetingAnnotationTypes";
 import {
@@ -27,6 +27,7 @@ export type UseMeetingAnnotationsOptions = {
 
 /**
  * Estado efêmero de caneta/laser no modo reunião (só memória React).
+ * Laser: paint no overlay (DOM/rAF); hook só publica WS throttled.
  * F5 limpa; late join não restaura ink.
  */
 export function useMeetingAnnotations({
@@ -37,7 +38,7 @@ export function useMeetingAnnotations({
 }: UseMeetingAnnotationsOptions) {
   const [tool, setToolState] = useState<MeetingAnnotationTool>("none");
   const [strokes, setStrokes] = useState<MeetingInkStroke[]>([]);
-  const [lasers, setLasers] = useState<MeetingLaserState[]>([]);
+  const overlayRef = useRef<MeetingAnnotationOverlayHandle>(null);
 
   const setTool = useCallback(
     (next: MeetingAnnotationTool) => {
@@ -54,29 +55,16 @@ export function useMeetingAnnotations({
     if (!enabled) setToolState("none");
   }, [enabled]);
 
-  useEffect(() => {
-    // Troca de slide: ink/laser são efêmeros por tela (sem restore).
-    setStrokes([]);
-    setLasers([]);
-  }, [slideId]);
-
   const applyRemoteLaser = useCallback(
     (event: PresentationMeetingLaserEvent) => {
       if (!enabled) return;
       if (clientId && event.clientId === clientId) return;
-      setLasers((prev) => {
-        const without = prev.filter((laser) => laser.clientId !== event.clientId);
-        if (!event.visible) return without;
-        return [
-          ...without,
-          {
-            clientId: event.clientId,
-            slideId: event.slideId,
-            x: event.x,
-            y: event.y,
-            visible: true,
-          },
-        ];
+      overlayRef.current?.paintRemoteLaser({
+        clientId: event.clientId,
+        slideId: event.slideId,
+        x: event.x,
+        y: event.y,
+        visible: event.visible,
       });
     },
     [clientId, enabled],
@@ -103,30 +91,15 @@ export function useMeetingAnnotations({
     (event: PresentationMeetingInkClearEvent) => {
       if (!enabled) return;
       setStrokes((prev) => clearMeetingInkForSlide(prev, event.slideId));
-      setLasers((prev) =>
-        prev.filter((laser) => !(laser.slideId === event.slideId && laser.visible)),
-      );
+      overlayRef.current?.clearLasersForSlide(event.slideId);
     },
     [enabled],
   );
 
-  const publishLaser = useCallback(
+  /** Network-only laser publish (throttled in overlay). No React state update. */
+  const publishLaserNetwork = useCallback(
     (event: { x: number; y: number; visible: boolean }) => {
       if (!enabled || !clientId || !slideId) return;
-      setLasers((prev) => {
-        const without = prev.filter((laser) => laser.clientId !== clientId);
-        if (!event.visible) return without;
-        return [
-          ...without,
-          {
-            clientId,
-            slideId,
-            x: event.x,
-            y: event.y,
-            visible: true,
-          },
-        ];
-      });
       sendRef.current?.({
         type: "meeting_laser",
         clientId,
@@ -170,7 +143,7 @@ export function useMeetingAnnotations({
   const clearInk = useCallback(() => {
     if (!enabled || !clientId || !slideId) return;
     setStrokes((prev) => clearMeetingInkForSlide(prev, slideId));
-    setLasers((prev) => prev.filter((laser) => laser.slideId !== slideId));
+    overlayRef.current?.clearLasersForSlide(slideId);
     sendRef.current?.({
       type: "meeting_ink_clear",
       clientId,
@@ -182,10 +155,10 @@ export function useMeetingAnnotations({
     tool,
     setTool,
     strokes,
-    lasers,
+    overlayRef,
     clearInk,
     publishStroke,
-    publishLaser,
+    publishLaserNetwork,
     applyRemoteLaser,
     applyRemoteInk,
     applyRemoteInkClear,
