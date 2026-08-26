@@ -227,9 +227,14 @@ export type PreventivaHistoricoItem = {
 export function fetchPreventivaResumo(
   filial: string,
   getAccessToken?: () => string | undefined,
+  options: { refresh?: boolean } = {},
 ) {
+  const search = new URLSearchParams({ filial });
+  if (options.refresh) {
+    search.set("refresh", "true");
+  }
   return maintenanceFetch<PreventivaResumo>(
-    `/preventiva/resumo?filial=${encodeURIComponent(filial)}`,
+    `/preventiva/resumo?${search.toString()}`,
     { getAccessToken },
   );
 }
@@ -239,9 +244,13 @@ export function fetchPreventivaAlertas(
   query: ListQueryParams = {},
   filters: ListQueryFilters = {},
   getAccessToken?: () => string | undefined,
+  options: { refresh?: boolean } = {},
 ) {
   const search = new URLSearchParams({ filial });
   appendListQuery(search, query, filters);
+  if (options.refresh) {
+    search.set("refresh", "true");
+  }
   return maintenanceFetch<PagedItems<PreventivaAlerta>>(
     `/preventiva/alertas?${search.toString()}`,
     { getAccessToken },

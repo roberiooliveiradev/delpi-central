@@ -14,6 +14,27 @@ def setup_function() -> None:
     reset_query_cache_for_tests()
 
 
+def test_golpes_batch_cache_key_buckets_data_final() -> None:
+    items_a = [
+        {
+            "codigo_ferramenta": "23-001",
+            "data_inicial": "2026-01-01T00:00:00",
+            "data_final": "2026-06-01T12:00:10",
+        }
+    ]
+    items_b = [
+        {
+            "codigo_ferramenta": "23-001",
+            "data_inicial": "2026-01-01T00:00:00",
+            "data_final": "2026-06-01T12:00:45",
+        }
+    ]
+    assert golpes_batch_cache_key(filial="01", items=items_a) == golpes_batch_cache_key(
+        filial="01",
+        items=items_b,
+    )
+
+
 def test_golpes_batch_cache_key_is_stable() -> None:
     items = [
         {

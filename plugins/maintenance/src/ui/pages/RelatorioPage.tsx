@@ -181,10 +181,10 @@ export function RelatorioPage({
     );
   }, []);
 
-  const loadResumo = useCallback(async () => {
+  const loadResumo = useCallback(async (refresh = false) => {
     setResumoLoading(true);
     try {
-      const data = await fetchPreventivaResumo(filial, getAccessToken);
+      const data = await fetchPreventivaResumo(filial, getAccessToken, { refresh });
       setResumo(data);
       touchFreshness();
     } catch {
@@ -194,7 +194,7 @@ export function RelatorioPage({
     }
   }, [filial, getAccessToken, touchFreshness]);
 
-  const loadAlertas = useCallback(async () => {
+  const loadAlertas = useCallback(async (refresh = false) => {
     setAlertasLoading(true);
     setAlertasError(null);
     try {
@@ -212,6 +212,7 @@ export function RelatorioPage({
           status: statusFiltro.length > 0 ? statusFiltro : undefined,
         },
         getAccessToken,
+        { refresh },
       );
       setAlertas(data.items ?? []);
       setAlertasTotal(data.total ?? 0);
@@ -306,6 +307,7 @@ export function RelatorioPage({
     }
   }, [
     appliedFerramentaFiltro,
+    appliedPecaFiltro,
     filial,
     getAccessToken,
     revisaoStatusFiltro,
@@ -313,10 +315,89 @@ export function RelatorioPage({
     touchFreshness,
   ]);
 
-  const loadReport = useCallback(async () => {
-    const tasks: Promise<void>[] = [loadResumo()];
+  const loadTabCounts = useCallback(
+    async (refresh = false) => {
+      const alertasFilters = {
+        ferramenta: appliedFerramentaFiltro.trim() || undefined,
+        peca: appliedPecaFiltro.trim() || undefined,
+        status: statusFiltro.length > 0 ? statusFiltro : undefined,
+      };
+      const ultimasFilters = {
+        ferramenta: appliedFerramentaFiltro.trim() || undefined,
+        peca: appliedPecaFiltro.trim() || undefined,
+      };
+      const revisoesFilters = {
+        ferramenta: appliedFerramentaFiltro.trim() || undefined,
+        status: revisaoStatusFiltro.length > 0 ? revisaoStatusFiltro : undefined,
+      };
+
+      const [alertasResult, ultimasResult, revisoesResult] = await Promise.allSettled([
+        fetchPreventivaAlertas(
+          filial,
+          {
+            page: 1,
+            pageSize: 1,
+            sortKey: alertasTable.query.sortKey,
+            sortDirection: alertasTable.query.sortDirection,
+          },
+          alertasFilters,
+          getAccessToken,
+          { refresh },
+        ),
+        fetchUltimasReposicoes(
+          filial,
+          {
+            page: 1,
+            pageSize: 1,
+            sortKey: ultimasTable.query.sortKey,
+            sortDirection: ultimasTable.query.sortDirection,
+          },
+          ultimasFilters,
+          getAccessToken,
+        ),
+        fetchRevisaoProgramadaAlertas(
+          filial,
+          {
+            page: 1,
+            pageSize: 1,
+            sortKey: revisoesTable.query.sortKey,
+            sortDirection: revisoesTable.query.sortDirection,
+          },
+          revisoesFilters,
+          getAccessToken,
+        ),
+      ]);
+
+      if (alertasResult.status === "fulfilled") {
+        setAlertasTotal(alertasResult.value.total ?? 0);
+      }
+      if (ultimasResult.status === "fulfilled") {
+        setUltimasTotal(ultimasResult.value.total ?? 0);
+      }
+      if (revisoesResult.status === "fulfilled") {
+        setRevisoesTotal(revisoesResult.value.total ?? 0);
+      }
+    },
+    [
+      alertasTable.query.sortDirection,
+      alertasTable.query.sortKey,
+      appliedFerramentaFiltro,
+      appliedPecaFiltro,
+      filial,
+      getAccessToken,
+      revisaoStatusFiltro,
+      revisoesTable.query.sortDirection,
+      revisoesTable.query.sortKey,
+      statusFiltro,
+      ultimasTable.query.sortDirection,
+      ultimasTable.query.sortKey,
+    ],
+  );
+
+  const loadReport = useCallback(async (refresh = false) => {
+    const tasks: Promise<void>[] = [loadResumo(refresh), loadTabCounts(refresh)];
     if (loadedTabs.has("alertas")) {
-      tasks.push(loadAlertas());
+      tasks.push(loadAlertas(refresh));
     }
     if (loadedTabs.has("ultimas")) {
       tasks.push(loadUltimas());
@@ -325,7 +406,15 @@ export function RelatorioPage({
       tasks.push(loadRevisaoResumo(), loadRevisoes());
     }
     await Promise.all(tasks);
-  }, [loadAlertas, loadResumo, loadRevisaoResumo, loadRevisoes, loadUltimas, loadedTabs]);
+  }, [
+    loadAlertas,
+    loadResumo,
+    loadRevisaoResumo,
+    loadRevisoes,
+    loadTabCounts,
+    loadUltimas,
+    loadedTabs,
+  ]);
 
   const ensureTabLoaded = useCallback((tab: ListReportTab) => {
     setLoadedTabs((current) => {
@@ -393,7 +482,8 @@ export function RelatorioPage({
 
   useEffect(() => {
     void loadResumo();
-  }, [loadResumo]);
+    void loadTabCounts();
+  }, [loadResumo, loadTabCounts]);
 
   useEffect(() => {
     if (!loadedTabs.has("alertas")) {
@@ -814,7 +904,7 @@ export function RelatorioPage({
             <MaintenanceHeroFreshness updatedAt={lastUpdatedAt} />
             <MaintenanceActionButton
               variant="ghost"
-              onClick={() => void loadReport()}
+              onClick={() => void loadReport(true)}
             disabled={
               alertasLoading ||
               ultimasLoading ||
@@ -904,7 +994,7 @@ export function RelatorioPage({
           </MaintenanceActionButton>
           <MaintenanceActionButton
             variant="ghost"
-            onClick={() => void loadReport()}
+            onClick={() => void loadReport(true)}
             disabled={
               alertasLoading ||
               ultimasLoading ||

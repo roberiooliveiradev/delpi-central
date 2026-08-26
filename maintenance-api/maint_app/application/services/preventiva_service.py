@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -20,9 +21,18 @@ STATUS_RANK = {
     "SEM STATUS": 3,
 }
 
-_ALERTAS_SNAPSHOT_TTL_SECONDS = 300
+_ALERTAS_BASE_TTL_SECONDS = 300
 _GOLPES_HISTORY_MAX_POINTS = 12
-_alertas_snapshot_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+
+
+@dataclass(frozen=True)
+class _PreventivaBaseSnapshot:
+    rows: list[dict[str, Any]]
+    media_map: dict[tuple[str, str], float]
+    history_map: dict[tuple[str, str], list[int]]
+
+
+_preventiva_base_cache: dict[str, tuple[float, _PreventivaBaseSnapshot]] = {}
 _snapshot_build_locks: dict[str, threading.Lock] = {}
 _snapshot_locks_guard = threading.Lock()
 
@@ -36,10 +46,10 @@ def _trim_golpes_history(history: list[int]) -> list[int]:
 def invalidate_alertas_snapshot_cache(*, filial: str | None = None) -> None:
     if filial:
         with _snapshot_lock_for(filial):
-            _alertas_snapshot_cache.pop(filial, None)
+            _preventiva_base_cache.pop(filial, None)
     else:
         with _snapshot_locks_guard:
-            _alertas_snapshot_cache.clear()
+            _preventiva_base_cache.clear()
 
 
 def _snapshot_lock_for(filial: str) -> threading.Lock:
@@ -78,7 +88,9 @@ class PreventivaService:
         self._status_repo = status_repo or StatusPecaRepository()
         self._totvs = totvs_gateway
 
-    def resumo_alertas(self, *, filial: str) -> dict[str, int]:
+    def resumo_alertas(self, *, filial: str, refresh: bool = False) -> dict[str, int]:
+        if refresh:
+            invalidate_alertas_snapshot_cache(filial=filial)
         rules = self._status_repo.list_active(filial=filial)
         alertas = self._get_alertas_snapshot(filial=filial, rules=rules)
         return {
@@ -98,7 +110,10 @@ class PreventivaService:
         peca: str | None = None,
         status: str | None = None,
         statuses: list[str] | None = None,
+        refresh: bool = False,
     ) -> tuple[list[dict[str, Any]], int]:
+        if refresh:
+            invalidate_alertas_snapshot_cache(filial=filial)
         query = query or ListQuery(page=1, page_size=20, sort_by="percentual", sort_dir="desc")
         rules = self._status_repo.list_active(filial=filial)
         status_values = statuses if statuses is not None else ([status] if status else [])
@@ -258,38 +273,43 @@ class PreventivaService:
         filtered = self._filter_ultimas(enriched, ferramenta=ferramenta, peca=peca)
         return filtered, total
 
+    def _get_preventiva_base(self, *, filial: str) -> _PreventivaBaseSnapshot:
+        now = time.monotonic()
+        cached = _preventiva_base_cache.get(filial)
+        if cached and (now - cached[0]) < _ALERTAS_BASE_TTL_SECONDS:
+            return cached[1]
+
+        lock = _snapshot_lock_for(filial)
+        with lock:
+            now = time.monotonic()
+            cached = _preventiva_base_cache.get(filial)
+            if cached and (now - cached[0]) < _ALERTAS_BASE_TTL_SECONDS:
+                return cached[1]
+
+            snapshot = _PreventivaBaseSnapshot(
+                rows=self._reposicao_repo.list_ultimas_por_par(filial=filial),
+                media_map=self._reposicao_repo.media_golpes_map(filial=filial),
+                history_map=self._reposicao_repo.golpes_history_map(filial=filial),
+            )
+            _preventiva_base_cache[filial] = (time.monotonic(), snapshot)
+            return snapshot
+
     def _get_alertas_snapshot(
         self,
         *,
         filial: str,
         rules: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        now = time.monotonic()
-        cached = _alertas_snapshot_cache.get(filial)
-        if cached and (now - cached[0]) < _ALERTAS_SNAPSHOT_TTL_SECONDS:
-            return [dict(item) for item in cached[1]]
-
-        lock = _snapshot_lock_for(filial)
-        with lock:
-            now = time.monotonic()
-            cached = _alertas_snapshot_cache.get(filial)
-            if cached and (now - cached[0]) < _ALERTAS_SNAPSHOT_TTL_SECONDS:
-                return [dict(item) for item in cached[1]]
-
-            rows = self._reposicao_repo.list_ultimas_por_par(filial=filial)
-            media_map = self._reposicao_repo.media_golpes_map(filial=filial)
-            history_map = self._reposicao_repo.golpes_history_map(filial=filial)
-            golpes_map = self._fetch_golpes_batch(filial=filial, rows=rows)
-            alertas = self._build_alertas(
-                rows,
-                filial=filial,
-                rules=rules,
-                media_map=media_map,
-                history_map=history_map,
-                golpes_map=golpes_map,
-            )
-            _alertas_snapshot_cache[filial] = (time.monotonic(), alertas)
-            return [dict(item) for item in alertas]
+        base = self._get_preventiva_base(filial=filial)
+        golpes_map = self._fetch_golpes_batch(filial=filial, rows=base.rows)
+        return self._build_alertas(
+            base.rows,
+            filial=filial,
+            rules=rules,
+            media_map=base.media_map,
+            history_map=base.history_map,
+            golpes_map=golpes_map,
+        )
 
     @staticmethod
     def _format_data_inicial(data_ultima: Any) -> str:

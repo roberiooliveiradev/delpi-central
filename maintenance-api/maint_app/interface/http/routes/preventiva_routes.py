@@ -15,7 +15,11 @@ _SUBMODULE_ID = "mini-aplicadores"
 
 
 @router.get("/resumo")
-def resumo_alertas(request: Request, filial: str = Query(..., min_length=2, max_length=2)):
+def resumo_alertas(
+    request: Request,
+    filial: str = Query(..., min_length=2, max_length=2),
+    refresh: bool = Query(False),
+):
     scope = resolve_access_scope(request)
     user = resolve_user(request)
     try:
@@ -23,7 +27,7 @@ def resumo_alertas(request: Request, filial: str = Query(..., min_length=2, max_
     except PermissionError as exc:
         return fail(str(exc), 403)
 
-    data = build_preventiva_service().resumo_alertas(filial=filial)
+    data = build_preventiva_service().resumo_alertas(filial=filial, refresh=refresh)
     return ok(data, message="Resumo preventivo calculado.")
 
 
@@ -34,6 +38,7 @@ def list_alertas(
     ferramenta: str | None = Query(None),
     peca: str | None = Query(None),
     status: list[str] | None = Query(None),
+    refresh: bool = Query(False),
     query: ListQuery = Depends(list_query_params),
 ):
     scope = resolve_access_scope(request)
@@ -49,6 +54,7 @@ def list_alertas(
         ferramenta=ferramenta,
         peca=peca,
         statuses=status,
+        refresh=refresh,
     )
     return ok({"items": items, "total": total}, message="Alertas preventivos listados.")
 

@@ -11,7 +11,7 @@ from maint_app.application.services.preventiva_service import (
 
 
 def setup_function():
-    preventiva_module._alertas_snapshot_cache.clear()
+    preventiva_module._preventiva_base_cache.clear()
     preventiva_module._snapshot_build_locks.clear()
 
 
@@ -103,7 +103,42 @@ def test_resumo_compartilha_snapshot_cache():
 
     assert resumo["total"] == 1
     assert reposicao_repo.list_ultimas_por_par.call_count == 1
-    assert totvs.obter_golpes_batch.call_count == 1
+    assert totvs.obter_golpes_batch.call_count == 2
+
+
+def test_golpes_atuais_atualizam_a_cada_requisicao():
+    reposicao_repo = MagicMock()
+    status_repo = MagicMock()
+    reposicao_repo.list_ultimas_por_par.return_value = [
+        {
+            "codigo_ferramenta": "23-001",
+            "codigo_peca": "P1",
+            "data_reposicao": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+    ]
+    status_repo.list_active.return_value = [
+        {"descricao": "OK", "operador": "<", "percentual": 80},
+    ]
+    reposicao_repo.media_golpes_map.return_value = {("23-001", "P1"): 100.0}
+    reposicao_repo.golpes_history_map.return_value = {("23-001", "P1"): [50_000]}
+    totvs = MagicMock()
+    totvs.obter_golpes_batch.side_effect = [
+        {"items": [{"codigo_ferramenta": "23-001", "total_golpes": 50}]},
+        {"items": [{"codigo_ferramenta": "23-001", "total_golpes": 75}]},
+    ]
+
+    service = PreventivaService(
+        reposicao_repo=reposicao_repo,
+        status_repo=status_repo,
+        totvs_gateway=totvs,
+    )
+    first, _ = service.listar_alertas(filial="01")
+    second, _ = service.listar_alertas(filial="01")
+
+    assert first[0]["golpes_atuais"] == 50
+    assert second[0]["golpes_atuais"] == 75
+    assert reposicao_repo.list_ultimas_por_par.call_count == 1
+    assert totvs.obter_golpes_batch.call_count == 2
 
 
 def test_listar_alertas_enriquece_descricoes():
