@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import calendar
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from typing import Any
 
@@ -375,19 +376,34 @@ class RevisaoProgramadaService:
         if not items or self._totvs is None:
             return items
 
-        ferramentas = {str(item["codigo_ferramenta"]) for item in items}
-        descricoes: dict[str, str] = {}
-        for codigo in sorted(ferramentas):
-            try:
-                payload = self._totvs.obter_ferramenta(codigo)
-                descricoes[codigo] = self._extract_descricao(payload)
-            except Exception:
-                descricoes[codigo] = ""
+        ferramentas = sorted({str(item["codigo_ferramenta"]) for item in items})
+        descricoes = self._resolver_descricoes_batch(ferramentas)
 
         for item in items:
             codigo = str(item["codigo_ferramenta"])
             item["descricao_ferramenta"] = descricoes.get(codigo, "")
         return items
+
+    def _resolver_descricoes_batch(self, ferramentas: list[str]) -> dict[str, str]:
+        if self._totvs is None or not ferramentas:
+            return {}
+
+        descricoes: dict[str, str] = {}
+        max_workers = min(len(ferramentas), 8)
+
+        def _fetch_descricao(codigo: str) -> tuple[str, str]:
+            try:
+                payload = self._totvs.obter_ferramenta(codigo)
+                return codigo, self._extract_descricao(payload)
+            except Exception:
+                return codigo, ""
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(_fetch_descricao, codigo) for codigo in ferramentas]
+            for future in as_completed(futures):
+                codigo, descricao = future.result()
+                descricoes[codigo] = descricao
+        return descricoes
 
     @staticmethod
     def _extract_descricao(payload: Any) -> str:
