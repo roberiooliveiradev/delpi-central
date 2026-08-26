@@ -26,6 +26,24 @@ describe("RoomInboxList", () => {
     expect(screen.getByRole("status").textContent).toBe("No rooms");
   });
 
+  it("renders emptyContent slot when provided", () => {
+    render(
+      <RoomInboxList
+        classNames={classNames}
+        items={[]}
+        listAriaLabel="Inbox"
+        emptyLabel="No rooms"
+        emptyContent={
+          <div role="status">
+            <h3>Custom empty</h3>
+          </div>
+        }
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Custom empty" })).toBeTruthy();
+    expect(screen.queryByText("No rooms")).toBeNull();
+  });
+
   it("selects a room and shows unread badge", () => {
     const onSelect = vi.fn();
     render(

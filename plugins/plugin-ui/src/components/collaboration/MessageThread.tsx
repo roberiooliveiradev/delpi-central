@@ -92,6 +92,8 @@ export type MessageThreadProps = {
   classNames: MessageThreadClassNames;
   listAriaLabel: string;
   emptyLabel: string;
+  /** Rich empty slot (e.g. EmptyGuidance); falls back to emptyLabel text. */
+  emptyContent?: ReactNode;
   /** Host builds edit/delete/reply/pin/task actions per message. */
   resolveActions?: (message: MessageThreadItem) => MessageThreadAction[];
   /** When set, that message shows `renderEditSlot` instead of the body. */
@@ -265,6 +267,7 @@ export function MessageThread({
   classNames,
   listAriaLabel,
   emptyLabel,
+  emptyContent,
   resolveActions,
   editingId = null,
   renderEditSlot,
@@ -284,8 +287,10 @@ export function MessageThread({
   if (messages.length === 0) {
     return (
       <div className={rootClass}>
-        <div className={classNames.empty} role="status">
-          {emptyLabel}
+        <div className={classNames.empty}>
+          {emptyContent ?? (
+            <span role="status">{emptyLabel}</span>
+          )}
         </div>
       </div>
     );

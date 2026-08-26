@@ -26,6 +26,24 @@ describe("MessageThread", () => {
     expect(screen.getByRole("status").textContent).toBe("No messages yet");
   });
 
+  it("renders emptyContent slot when provided", () => {
+    render(
+      <MessageThread
+        classNames={classNames}
+        messages={[]}
+        listAriaLabel="Messages"
+        emptyLabel="No messages yet"
+        emptyContent={
+          <div role="status">
+            <p>Pick a conversation</p>
+          </div>
+        }
+      />,
+    );
+    expect(screen.getByText("Pick a conversation")).toBeTruthy();
+    expect(screen.queryByText("No messages yet")).toBeNull();
+  });
+
   it("renders text bubbles and system lines with reply indent", () => {
     const { container } = render(
       <MessageThread

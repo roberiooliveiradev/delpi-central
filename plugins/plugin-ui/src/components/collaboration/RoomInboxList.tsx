@@ -40,6 +40,8 @@ export type RoomInboxListProps = {
   classNames: RoomInboxListClassNames;
   listAriaLabel: string;
   emptyLabel: string;
+  /** Rich empty slot (e.g. EmptyGuidance); falls back to emptyLabel text. */
+  emptyContent?: ReactNode;
   unreadBadgeLabel?: (count: number) => string;
   onSelect?: (id: string) => void;
   leading?: (item: RoomInboxListItem) => ReactNode;
@@ -102,6 +104,7 @@ export function RoomInboxList({
   classNames,
   listAriaLabel,
   emptyLabel,
+  emptyContent,
   unreadBadgeLabel,
   onSelect,
   leading,
@@ -115,8 +118,10 @@ export function RoomInboxList({
   if (items.length === 0) {
     return (
       <div className={rootClass}>
-        <div className={classNames.empty} role="status">
-          {emptyLabel}
+        <div className={classNames.empty}>
+          {emptyContent ?? (
+            <span role="status">{emptyLabel}</span>
+          )}
         </div>
       </div>
     );
