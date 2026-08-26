@@ -481,14 +481,14 @@ export function FerramentaRevisaoProgramadaSection({
                                     type="button"
                                     disabled={saving || !isRealizacaoDirty(item, realizacaoDraft)}
                                     onClick={() => void handleSaveRealizacao(item)}
-                                   variant="ghost" className="dm-ghost-btn--sm">
+                                   variant="ghost" className="dm-btn--sm">
                                     Salvar
                                   </MaintenanceActionButton>
                                   <MaintenanceActionButton
                                     type="button"
                                     disabled={saving}
                                     onClick={cancelEditRealizacao}
-                                   variant="ghost" className="dm-ghost-btn--sm">
+                                   variant="ghost" className="dm-btn--sm">
                                     Cancelar
                                   </MaintenanceActionButton>
                                 </>
@@ -499,7 +499,7 @@ export function FerramentaRevisaoProgramadaSection({
                                     disabled={saving || Boolean(editingRealizacaoId)}
                                     title={DM_HELP.revisao.historicoEditar}
                                     onClick={() => startEditRealizacao(item)}
-                                   variant="ghost" className="dm-ghost-btn--sm">
+                                   variant="ghost" className="dm-btn--sm">
                                     Editar
                                   </MaintenanceActionButton>
                                   <MaintenanceActionButton
@@ -507,7 +507,7 @@ export function FerramentaRevisaoProgramadaSection({
                                     disabled={saving || Boolean(editingRealizacaoId)}
                                     title={DM_HELP.revisao.historicoExcluir}
                                     onClick={() => void handleDeleteRealizacao(item)}
-                                   variant="ghost" className="dm-ghost-btn--sm dm-ghost-btn--danger">
+                                   variant="ghost" className="dm-btn--sm dm-btn--danger">
                                     Excluir
                                   </MaintenanceActionButton>
                                 </>
@@ -646,7 +646,7 @@ export function FerramentaRevisaoProgramadaSection({
                   type="button"
                   onClick={() => void handleDelete()}
                   disabled={saving}
-                 variant="ghost" className="dm-ghost-btn--danger">
+                 variant="ghost" className="dm-btn--danger">
                   Remover
                 </MaintenanceActionButton>
               </div>

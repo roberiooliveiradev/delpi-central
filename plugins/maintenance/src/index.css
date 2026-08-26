@@ -649,77 +649,11 @@
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
-}.dashboard-maintenance .dm-primary-btn,
-.dashboard-maintenance .dm-link-btn{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 10px 16px;
-  border-radius: var(--dm-control-radius);
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.16s ease,
-    box-shadow 0.2s ease;
-}.dashboard-maintenance .dm-primary-btn:hover,
-.dashboard-maintenance .dm-link-btn:hover{
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--dm-accent) 12%, transparent);
-}.dashboard-maintenance .dm-primary-btn:active,
-.dashboard-maintenance .dm-link-btn:active{
-  transform: scale(0.98);
-}.dashboard-maintenance .dm-primary-btn:disabled,
-.dashboard-maintenance .dm-link-btn:disabled{
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}.dashboard-maintenance .dm-primary-btn{
-  border: 0;
-  background: var(--dm-accent);
-  color: white;
-}.dashboard-maintenance .dm-ghost-btn{
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: var(--dm-control-height, 44px);
-  height: auto;
-  padding: 10px 16px;
-  border-radius: var(--dm-control-radius);
-  border: 1px solid var(--dm-card-border);
-  background: transparent;
-  color: var(--dm-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  box-sizing: border-box;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
-}.dashboard-maintenance .dm-ghost-btn:hover:not(:disabled){
-  border-color: color-mix(in srgb, var(--dm-accent) 40%, var(--dm-card-border));
-  background: color-mix(in srgb, var(--dm-accent) 8%, var(--dm-card-bg));
-}.dashboard-maintenance .dm-ghost-btn:disabled{
-  opacity: 0.65;
-  cursor: not-allowed;
-}.dashboard-maintenance .dm-link-btn{
-  border: 1px solid var(--dm-card-border);
-  background: transparent;
-  color: var(--dm-accent);
 }.dashboard-maintenance .dm-row-actions{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}.dashboard-maintenance .dm-ghost-btn--danger{
+}.dashboard-maintenance .delpi-ui-action-btn.dm-btn--danger{
   color: #b42318;
   border-color: color-mix(in srgb, #b42318 35%, var(--dm-card-border));
 }.dashboard-maintenance .dm-field{
@@ -931,8 +865,7 @@
 }.dashboard-maintenance .dm-field--filter-date{
   flex-basis: 180px;
   min-width: min(100%, 160px);
-}.dashboard-maintenance .dm-btn--sm,
-.dashboard-maintenance .dm-ghost-btn--sm{
+}.dashboard-maintenance .dm-btn--sm{
   min-height: 28px;
   padding: 4px 8px;
   font-size: var(--dm-font-xs);
@@ -1551,30 +1484,22 @@
     align-items: stretch;
   }.dashboard-maintenance .dm-form-grid__suggest,
   .dashboard-maintenance .dm-form-grid__buttons,
-  .dashboard-maintenance .dm-form-grid__buttons .dm-primary-btn,
-  .dashboard-maintenance .dm-form-grid__buttons .dm-ghost-btn{
+  .dashboard-maintenance .dm-form-grid__buttons .delpi-ui-action-btn{
     width: 100%;
     margin-left: 0;
   }.dashboard-maintenance .dm-field{
     min-width: 0;
     width: 100%;
   }.dashboard-maintenance .dm-nav__link,
-  .dashboard-maintenance .dm-datatable .dm-ghost-btn,
-  .dashboard-maintenance .dm-datatable .dm-primary-btn,
-  .dashboard-maintenance .dm-datatable .dm-link-btn,
-  .dashboard-maintenance .dm-row-actions .dm-ghost-btn,
-  .dashboard-maintenance .dm-row-actions .dm-primary-btn,
-  .dashboard-maintenance .dm-row-actions .dm-link-btn,
+  .dashboard-maintenance .dm-datatable .delpi-ui-action-btn,
+  .dashboard-maintenance .dm-row-actions .delpi-ui-action-btn,
   .dashboard-maintenance .dm-badge,
-  .dashboard-maintenance .dm-section-header__meta .dm-ghost-btn,
-  .dashboard-maintenance .dm-section-header__meta .dm-primary-btn,
-  .dashboard-maintenance .dm-section-header__meta .dm-link-btn{
+  .dashboard-maintenance .dm-section-header__meta .delpi-ui-action-btn{
     width: auto;
   }.dashboard-maintenance .dm-row-actions{
     width: 100%;
     justify-content: flex-end;
-  }.dashboard-maintenance .dm-row-actions .dm-ghost-btn,
-  .dashboard-maintenance .dm-row-actions .dm-primary-btn{
+  }.dashboard-maintenance .dm-row-actions .delpi-ui-action-btn{
     flex: 1 1 8rem;
     min-width: 0;
   }.dashboard-maintenance .dm-filial-switcher__options{

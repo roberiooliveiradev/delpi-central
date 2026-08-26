@@ -84,7 +84,7 @@
   box-sizing: border-box;
 }
 
-.dashboard-maintenance .dm-revisao-feito-actions .dm-ghost-btn {
+.dashboard-maintenance .dm-revisao-feito-actions .delpi-ui-action-btn {
   width: 100%;
   justify-content: center;
   padding-inline: 8px;
@@ -168,7 +168,7 @@
     align-items: center;
   }
 
-  .dashboard-maintenance .dm-revisao-feito-actions .dm-ghost-btn {
+  .dashboard-maintenance .dm-revisao-feito-actions .delpi-ui-action-btn {
     width: auto;
     flex-shrink: 0;
   }
@@ -247,7 +247,7 @@
     flex-wrap: nowrap;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-row-actions .dm-ghost-btn {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-row-actions .delpi-ui-action-btn {
     flex: 1 1 auto;
     min-width: 0;
   }

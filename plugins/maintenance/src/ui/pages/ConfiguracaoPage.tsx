@@ -393,7 +393,7 @@ export function ConfiguracaoPage({
             </MaintenanceActionButton>
             <MaintenanceActionButton
               variant="ghost"
-              className="dm-ghost-btn--danger"
+              className="dm-btn--danger"
               onClick={() => void handleDeleteMotivo(item.motivo_id, item.descricao)}
             >
               Excluir
@@ -509,7 +509,7 @@ export function ConfiguracaoPage({
             </MaintenanceActionButton>
             <MaintenanceActionButton
               variant="ghost"
-              className="dm-ghost-btn--danger"
+              className="dm-btn--danger"
               onClick={() => void handleDeleteStatus(item.status_id, item.descricao)}
             >
               Excluir

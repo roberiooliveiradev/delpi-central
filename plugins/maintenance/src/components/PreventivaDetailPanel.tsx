@@ -15,6 +15,7 @@ import {
 import { ExternalLink, Hammer, Package, PlusCircle } from "lucide-react";
 import { useMemo } from "react";
 
+import { MaintenanceActionButton } from "../app/maintenanceUi";
 import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 import { ChartSection, StateBox, StatusBadge } from "./data";
 import { MAINTENANCE_ROUTES } from "../constants/routes";
@@ -134,9 +135,13 @@ export function PreventivaDetailPanel({
               {codigoFerramenta} / {codigoPeca}
             </h3>
           </div>
-          <button type="button" className="dm-ghost-btn dm-detail-panel__close" onClick={onClose}>
+          <MaintenanceActionButton
+            variant="ghost"
+            className="dm-detail-panel__close"
+            onClick={onClose}
+          >
             {isPage ? "Voltar à lista" : "Fechar"}
-          </button>
+          </MaintenanceActionButton>
         </div>
       ) : (
         <div className="dm-detail-panel__header">
@@ -303,22 +308,20 @@ export function PreventivaDetailPanel({
           </ChartSection>
 
           <div className="dm-detail-panel__actions">
-            <button
-              type="button"
-              className="dm-primary-btn"
+            <MaintenanceActionButton
+              variant="primary"
               onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(codigoFerramenta))}
             >
               <ExternalLink size={16} />
               Abrir ferramenta
-            </button>
-            <button
-              type="button"
-              className="dm-ghost-btn"
+            </MaintenanceActionButton>
+            <MaintenanceActionButton
+              variant="ghost"
               onClick={() => onNavigate(MAINTENANCE_ROUTES.miniAplicadorDetail(codigoFerramenta))}
             >
               <PlusCircle size={16} />
               Nova reposição
-            </button>
+            </MaintenanceActionButton>
           </div>
         </div>
       ) : null}

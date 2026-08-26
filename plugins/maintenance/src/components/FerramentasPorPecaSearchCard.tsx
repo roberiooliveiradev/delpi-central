@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
+import { MaintenanceActionButton } from "../app/maintenanceUi";
 import {
   fetchPecasReposicao,
   type PecaReposicaoItem,
@@ -159,13 +160,13 @@ export function FerramentasPorPecaSearchCard({
           </div>
         </button>
         {selectedPecaCodigo ? (
-          <button
-            type="button"
-            className="dm-ghost-btn dm-ghost-btn--sm"
+          <MaintenanceActionButton
+            variant="ghost"
+            className="dm-btn--sm"
             onClick={() => onSelectPeca(null)}
           >
             Limpar peça selecionada
-          </button>
+          </MaintenanceActionButton>
         ) : null}
       </div>
 
@@ -198,13 +199,13 @@ export function FerramentasPorPecaSearchCard({
             </label>
             <div className="dm-filter-bar__actions">
               {(codigoFiltro || descricaoFiltro) ? (
-                <button type="button" className="dm-ghost-btn" onClick={handleClearFilters}>
+                <MaintenanceActionButton variant="ghost" onClick={handleClearFilters}>
                   Limpar filtros
-                </button>
+                </MaintenanceActionButton>
               ) : null}
-              <button type="submit" className="dm-primary-btn">
+              <MaintenanceActionButton type="submit" variant="primary">
                 Buscar peças
-              </button>
+              </MaintenanceActionButton>
             </div>
           </FilterBar>
 

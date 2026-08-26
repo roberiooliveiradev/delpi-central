@@ -802,7 +802,7 @@ export function MiniAplicadoresPage({
             <MaintenanceActionButton
               type="button"
               onClick={() => void handleDeleteReposicao(item)}
-             variant="ghost" className="dm-ghost-btn--danger">
+             variant="ghost" className="dm-btn--danger">
               Excluir
             </MaintenanceActionButton>
           </div>

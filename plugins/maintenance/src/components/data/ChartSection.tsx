@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Maximize2 } from "lucide-react";
 
+import { MaintenanceActionButton } from "../app/maintenanceUi";
 import { ChartExpandModal } from "./ChartExpandModal";
 
 type ChartSectionProps = {
@@ -38,15 +39,15 @@ export function ChartSection({
           <div className="dm-section-header__meta">
             {actions}
             {expandable ? (
-              <button
-                type="button"
-                className="dm-ghost-btn dm-chart-section__expand"
+              <MaintenanceActionButton
+                variant="ghost"
+                className="dm-chart-section__expand"
                 onClick={() => setExpanded(true)}
                 aria-label={`Expandir gráfico: ${title}`}
               >
                 <Maximize2 size={16} aria-hidden="true" />
                 Expandir
-              </button>
+              </MaintenanceActionButton>
             ) : null}
           </div>
         </div>

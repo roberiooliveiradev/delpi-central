@@ -8,7 +8,7 @@ import {
   FilterBar,
   StateBox,
 } from "../../components/data";
-import { MaintenancePageHero } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
 import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import {
   createProgramaMaquinaProduto,
@@ -261,15 +261,14 @@ export function ProgramasMaquinasPage({
         interactive: true,
         render: (row) =>
           canManage ? (
-            <button
-              type="button"
-              className="dm-ghost-btn"
+            <MaintenanceActionButton
+              variant="ghost"
               disabled={Boolean(row.already_registered) || addingCode === row.intermediate_code}
               onClick={() => void handleAdd(row)}
             >
               <Plus size={16} aria-hidden />{" "}
               {row.already_registered ? "Já cadastrado" : "Adicionar"}
-            </button>
+            </MaintenanceActionButton>
           ) : row.already_registered ? (
             "Cadastrado"
           ) : (
@@ -331,21 +330,17 @@ export function ProgramasMaquinasPage({
         render: (row) =>
           canManage ? (
             <span className="dm-row-actions">
-              <button
-                type="button"
-                className="dm-ghost-btn"
-                onClick={() => void handleToggleAtivo(row)}
-              >
+              <MaintenanceActionButton variant="ghost" onClick={() => void handleToggleAtivo(row)}>
                 {row.ativo ? "Desativar" : "Ativar"}
-              </button>
-              <button
-                type="button"
-                className="dm-ghost-btn dm-ghost-btn--danger"
+              </MaintenanceActionButton>
+              <MaintenanceActionButton
+                variant="ghost"
+                className="dm-btn--danger"
                 onClick={() => void handleDelete(row)}
                 aria-label={`Remover ${row.codigo_intermediario}`}
               >
                 <Trash2 size={16} />
-              </button>
+              </MaintenanceActionButton>
             </span>
           ) : (
             "—"
@@ -409,9 +404,9 @@ export function ProgramasMaquinasPage({
             />
           </label>
           <div className="dm-filter-bar__actions">
-            <button type="submit" className="dm-primary-btn">
+            <MaintenanceActionButton type="submit" variant="primary">
               Buscar
-            </button>
+            </MaintenanceActionButton>
           </div>
         </FilterBar>
 
@@ -447,9 +442,9 @@ export function ProgramasMaquinasPage({
             />
           </label>
           <div className="dm-filter-bar__actions">
-            <button type="submit" className="dm-primary-btn">
+            <MaintenanceActionButton type="submit" variant="primary">
               Buscar
-            </button>
+            </MaintenanceActionButton>
           </div>
         </FilterBar>
 

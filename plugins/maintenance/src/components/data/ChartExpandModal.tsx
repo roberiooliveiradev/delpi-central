@@ -1,6 +1,8 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 
+import { MaintenanceActionButton } from "../../app/maintenanceUi";
+
 type ChartExpandModalProps = {
   open: boolean;
   title: string;
@@ -49,10 +51,14 @@ export function ChartExpandModal({
             <h2 className="dm-chart-modal__title">{title}</h2>
             {actions ? <div className="dm-chart-modal__actions">{actions}</div> : null}
           </div>
-          <button type="button" className="dm-ghost-btn dm-chart-modal__close" onClick={onClose}>
+          <MaintenanceActionButton
+            variant="ghost"
+            className="dm-chart-modal__close"
+            onClick={onClose}
+          >
             <X size={16} aria-hidden="true" />
             Fechar
-          </button>
+          </MaintenanceActionButton>
         </header>
         <div className="dm-chart-modal__body">
           <div className="dm-chart-wrap dm-chart-wrap--expanded">{children}</div>

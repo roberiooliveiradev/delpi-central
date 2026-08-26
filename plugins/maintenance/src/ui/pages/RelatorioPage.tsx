@@ -747,7 +747,7 @@ export function RelatorioPage({
             />
             <MaintenanceActionButton
               variant="ghost"
-              className="dm-ghost-btn--sm"
+              className="dm-btn--sm"
               disabled={feitoSavingId === item.revisao_id}
               onClick={() => void handleMarcarRevisaoFeita(item)}
             >

@@ -220,16 +220,16 @@ export function FiliaisPage({
         interactive: true,
         render: (item) => (
           <div className="dm-row-actions">
-            <button type="button" className="dm-ghost-btn" onClick={() => void handleSave(item.filial_id)}>
+            <MaintenanceActionButton variant="ghost" onClick={() => void handleSave(item.filial_id)}>
               Salvar
-            </button>
-            <button
-              type="button"
-              className="dm-ghost-btn dm-ghost-btn--danger"
+            </MaintenanceActionButton>
+            <MaintenanceActionButton
+              variant="ghost"
+              className="dm-btn--danger"
               onClick={() => void handleDelete(item)}
             >
               Excluir
-            </button>
+            </MaintenanceActionButton>
           </div>
         ),
       },
@@ -327,9 +327,9 @@ export function FiliaisPage({
                 placeholder="Matriz"
               />
             </label>
-            <button type="submit" className="dm-primary-btn">
+            <MaintenanceActionButton type="submit" variant="primary">
               Adicionar filial
-            </button>
+            </MaintenanceActionButton>
           </FilterBar>
         }
         columns={columns}
