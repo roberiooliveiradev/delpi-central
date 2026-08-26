@@ -1,6 +1,7 @@
 import { ClipboardList } from "lucide-react";
 
 import { MaintenancePageHero } from "../../app/maintenanceUi";
+import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import { StateBox } from "../../components/data";
 import { ManutencaoGeralFormEmbed } from "../../components/ManutencaoGeralFormEmbed";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
@@ -52,7 +53,7 @@ export function ManutencaoGeralPage({
       <>
         <ManutencaoGeralHero />
         <section className="dm-page-stack">
-          <StateBox>Carregando…</StateBox>
+          <MaintenanceScreenLoadingState labelKey="manutencaoGeral" />
         </section>
       </>
     );

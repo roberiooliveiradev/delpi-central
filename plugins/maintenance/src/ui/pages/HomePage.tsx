@@ -11,6 +11,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { MaintenancePageHero } from "../../app/maintenanceUi";
 import { StateBox } from "../../components/data";
+import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import { MAINTENANCE_ROUTES } from "../../constants/routes";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
 import {
@@ -82,9 +83,7 @@ export function HomePage({
 
       <section className="dm-page-stack">
         <div className="dm-home">
-          {filialLoading ? (
-            <p className="dm-home-banner">Carregando filiais e submódulos…</p>
-          ) : null}
+          {filialLoading ? <MaintenanceScreenLoadingState labelKey="home" /> : null}
 
           {optionsError ? (
             <p className="dm-home-banner dm-home-banner--error" role="alert">

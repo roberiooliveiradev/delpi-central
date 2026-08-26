@@ -9,6 +9,7 @@ import {
   StateBox,
 } from "../../components/data";
 import { MaintenancePageHero } from "../../app/maintenanceUi";
+import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import {
   createProgramaMaquinaProduto,
   deleteProgramaMaquinaProduto,
@@ -384,7 +385,7 @@ export function ProgramasMaquinasPage({
       />
 
       <section className="dm-page-stack">
-      {scopeLoading ? <p className="dm-home-banner">Carregando escopo…</p> : null}
+      {scopeLoading ? <MaintenanceScreenLoadingState labelKey="programas" /> : null}
 
       {error ? (
         <StateBox variant="error" onDismiss={() => setError(null)}>

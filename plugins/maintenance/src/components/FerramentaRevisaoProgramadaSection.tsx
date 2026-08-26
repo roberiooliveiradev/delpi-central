@@ -18,6 +18,7 @@ import {
   type RevisaoProgramadaRealizacao,
 } from "../data/api/maintenanceApi";
 import { BrDateInput, FieldLabel, HelpTooltip, PendingChangeBadge, StateBox, StatusBadge } from "./data";
+import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 import { DmNativeTextAreaField } from "./dmFormFields";
 import { fromDateInputValue, toDateInputValue } from "../utils/datetimeLocal";
 
@@ -366,7 +367,7 @@ export function FerramentaRevisaoProgramadaSection({
         ) : null}
       </div>
 
-      {loading ? <StateBox>Carregando revisão programada…</StateBox> : null}
+      {loading ? <MaintenanceTableLoading titleKey="revisao" /> : null}
 
       {!loading && schedule && alerta ? (
         <div className="dm-revisao-ferramenta__metrics">

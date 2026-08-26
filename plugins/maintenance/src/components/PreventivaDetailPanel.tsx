@@ -15,6 +15,7 @@ import {
 import { ExternalLink, Hammer, Package, PlusCircle } from "lucide-react";
 import { useMemo } from "react";
 
+import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 import { ChartSection, StateBox, StatusBadge } from "./data";
 import { MAINTENANCE_ROUTES } from "../constants/routes";
 import type { FerramentaItem, PreventivaAlerta, PreventivaHistoricoItem } from "../data/api/maintenanceApi";
@@ -155,7 +156,7 @@ export function PreventivaDetailPanel({
 
       {hasSelection && loading ? (
         <div className="dm-detail-panel__loading">
-          <StateBox>Carregando detalhes…</StateBox>
+          <MaintenanceTableLoading titleKey="detalhe" variant="panel" />
         </div>
       ) : null}
 

@@ -10,6 +10,7 @@ import {
   StateBox,
 } from "../../components/data";
 import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
+import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import { EditableCell } from "../../components/EditableCell";
 import {
   createFilial,
@@ -241,9 +242,9 @@ export function FiliaisPage({
     : "Cadastro de filiais operacionais do módulo Manutenção.";
 
   const refreshAction = canManageFiliais ? (
-    <MaintenanceActionButton variant="ghost" onClick={() => void loadData()} disabled={loading}>
+    <MaintenanceActionButton variant="ghost" onClick={() => void loadData()} disabled={loading} aria-busy={loading}>
       <RefreshCw size={16} className={loading ? "dm-spin" : undefined} aria-hidden />
-      {loading ? "Carregando…" : "Atualizar"}
+      Atualizar
     </MaintenanceActionButton>
   ) : undefined;
 
@@ -266,7 +267,7 @@ export function FiliaisPage({
       <>
         {pageHero}
         <section className="dm-page-stack">
-          <StateBox>Carregando…</StateBox>
+          <MaintenanceScreenLoadingState labelKey="filiais" />
         </section>
       </>
     );

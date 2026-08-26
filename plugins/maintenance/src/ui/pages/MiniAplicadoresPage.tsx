@@ -924,6 +924,7 @@ export function MiniAplicadoresPage({
             variant="ghost"
             onClick={() => (codigoFerramenta ? void loadDetalhe() : void loadFerramentas())}
             disabled={codigoFerramenta ? detalheLoading : ferramentasLoading}
+            aria-busy={codigoFerramenta ? detalheLoading : ferramentasLoading}
           >
             <RefreshCw
               size={16}
@@ -938,13 +939,7 @@ export function MiniAplicadoresPage({
               }
               aria-hidden
             />
-            {codigoFerramenta
-              ? detalheLoading
-                ? "Carregando…"
-                : "Atualizar"
-              : ferramentasLoading
-                ? "Carregando…"
-                : "Atualizar"}
+            Atualizar
           </MaintenanceActionButton>
         }
       />

@@ -793,6 +793,13 @@ export function RelatorioPage({
               revisoesLoading ||
               revisaoResumoLoading
             }
+            aria-busy={
+              alertasLoading ||
+              ultimasLoading ||
+              resumoLoading ||
+              revisoesLoading ||
+              revisaoResumoLoading
+            }
           >
             <RefreshCw
               size={16}
@@ -807,13 +814,7 @@ export function RelatorioPage({
               }
               aria-hidden
             />
-            {alertasLoading ||
-            ultimasLoading ||
-            resumoLoading ||
-            revisoesLoading ||
-            revisaoResumoLoading
-              ? "Carregando…"
-              : "Atualizar"}
+            Atualizar
           </MaintenanceActionButton>
         }
       />

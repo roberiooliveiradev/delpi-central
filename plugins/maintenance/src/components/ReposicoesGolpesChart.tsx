@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Maximize2 } from "lucide-react";
+import { ChartViewShell, chartViewShellBemClasses } from "@delpi/plugin-ui/index";
 import {
   CartesianGrid,
   Legend,
@@ -10,9 +12,12 @@ import {
   YAxis,
 } from "recharts";
 
-import { ChartSection } from "./data";
+import { MaintenanceActionButton, MaintenanceSectionHintLabel } from "../app/maintenanceUi";
+import { DM_HELP } from "../content/helpTooltips";
 import type { ReposicaoItem } from "../data/api/maintenanceApi";
 import { formatCodigoDescricao } from "../utils/pecaOptions";
+import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
+import { ChartExpandModal } from "./data/ChartExpandModal";
 
 type ReposicoesGolpesChartProps = {
   reposicoes: ReposicaoItem[];
@@ -30,6 +35,8 @@ const PECA_LINE_COLORS = [
   "#eab308",
   "#ec4899",
 ];
+
+const CHART_SHELL_CN = chartViewShellBemClasses("dm");
 
 function formatEventLabel(value: string): string {
   return new Date(value).toLocaleString("pt-BR", {
@@ -90,6 +97,8 @@ export function ReposicoesGolpesChart({
   pecaLabels = {},
   loading = false,
 }: ReposicoesGolpesChartProps) {
+  const [expanded, setExpanded] = useState(false);
+
   const { chartData, pecaSeries } = useMemo(() => {
     const sorted = [...reposicoes].sort(
       (first, second) =>
@@ -119,30 +128,67 @@ export function ReposicoesGolpesChart({
     return { chartData, pecaSeries };
   }, [reposicoes]);
 
-  if (loading) {
-    return (
-      <ChartSection title="Golpes por reposição">
-        <p className="dm-chart-empty">Carregando histórico…</p>
-      </ChartSection>
-    );
-  }
+  const inlineHeight = 300;
+  const expandedHeight = 560;
+  const expandable = !loading && chartData.length > 0 && pecaSeries.length > 0;
 
-  if (chartData.length === 0 || pecaSeries.length === 0) {
-    return null;
-  }
+  const expandAction = expandable ? (
+    <MaintenanceActionButton
+      variant="ghost"
+      className="dm-chart-section__expand"
+      onClick={() => setExpanded(true)}
+      aria-label="Expandir gráfico: Golpes por reposição"
+    >
+      <Maximize2 size={16} aria-hidden="true" />
+      Expandir
+    </MaintenanceActionButton>
+  ) : null;
 
   return (
-    <ChartSection
-      title="Golpes por reposição"
-      inlineChartHeight={300}
-      renderChart={(height) => (
-        <GolpesChartBody
-          chartData={chartData}
-          pecaSeries={pecaSeries}
-          pecaLabels={pecaLabels}
-          height={height}
-        />
-      )}
-    />
+    <>
+      <section className="dm-card dm-chart-section">
+        <div className="dm-section-header">
+          <div className="dm-section-header__title-group">
+            <h3 className="dm-section-header__title">
+              <MaintenanceSectionHintLabel
+                label="Golpes por reposição"
+                hint={DM_HELP.miniAplicadores.chartGolpes}
+              />
+            </h3>
+          </div>
+          <div className="dm-section-header__meta">{expandAction}</div>
+        </div>
+
+        <ChartViewShell classNames={CHART_SHELL_CN} extra={null}>
+          {loading ? (
+            <MaintenanceTableLoading titleKey="grafico" variant="compact" />
+          ) : !expandable ? null : (
+            <GolpesChartBody
+              chartData={chartData}
+              pecaSeries={pecaSeries}
+              pecaLabels={pecaLabels}
+              height={inlineHeight}
+            />
+          )}
+        </ChartViewShell>
+      </section>
+
+      {expandable ? (
+        <ChartExpandModal
+          open={expanded}
+          title="Golpes por reposição"
+          onClose={() => setExpanded(false)}
+        >
+          <ChartViewShell classNames={CHART_SHELL_CN}>
+            <GolpesChartBody
+              chartData={chartData}
+              pecaSeries={pecaSeries}
+              pecaLabels={pecaLabels}
+              height={expandedHeight}
+            />
+          </ChartViewShell>
+        </ChartExpandModal>
+      ) : null}
+    </>
   );
 }

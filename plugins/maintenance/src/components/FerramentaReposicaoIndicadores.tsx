@@ -8,6 +8,7 @@ import {
 } from "../utils/reposicaoIndicadores";
 import { formatCodigoDescricao } from "../utils/pecaOptions";
 import { KpiCard } from "./data/KpiCard";
+import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 
 type FerramentaReposicaoIndicadoresProps = {
   reposicoes: ReposicaoItem[];
@@ -31,10 +32,7 @@ export function FerramentaReposicaoIndicadores({
   if (loading) {
     return (
       <section className="dm-card dm-indicadores-card" aria-busy="true">
-        <div className="dm-section-header">
-          <h3 className="dm-section-header__title">Indicadores</h3>
-        </div>
-        <p className="dm-indicadores-card__empty">Calculando indicadores…</p>
+        <MaintenanceTableLoading titleKey="default" variant="panel" />
       </section>
     );
   }

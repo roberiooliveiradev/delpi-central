@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { useGoogleEmbeddedForm } from "../hooks/useGoogleEmbeddedForm";
+import { MaintenanceTableLoading } from "./MaintenanceLoadingState";
 
 const IFRAME_LOAD_TIMEOUT_MS = 20_000;
 
@@ -120,7 +121,7 @@ export function ManutencaoGeralFormEmbed({
 
       {!iframeReady ? (
         <div className="dm-form-embed__loading" aria-live="polite">
-          Carregando formulário…
+          <MaintenanceTableLoading titleKey="manutencaoGeral" variant="panel" />
         </div>
       ) : null}
 
