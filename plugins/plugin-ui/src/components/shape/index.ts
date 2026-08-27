@@ -50,6 +50,25 @@ export {
   resolveBoxShadowStack,
 } from "./boxShadowModel";
 export type { BoxShadowModel, BoxShadowStack } from "./boxShadowModel";
+export {
+  DEFAULT_AMBIENT_TEXT_SHADOW_LAYER,
+  DEFAULT_TEXT_SHADOW_MODEL,
+  MAX_TEXT_SHADOW_LAYERS,
+  addTextShadowLayer,
+  boxShadowCssToTextShadowCss,
+  buildTextShadowPresetsFromBox,
+  clampTextShadowModel,
+  formatTextShadow,
+  formatTextShadowStack,
+  parseTextShadow,
+  parseTextShadowStack,
+  patchTextShadow,
+  removeTextShadowLayer,
+  resolveTextShadowModel,
+  resolveTextShadowStack,
+  textShadowsEqual,
+} from "./textShadowModel";
+export type { TextShadowModel, TextShadowPreset, TextShadowStack } from "./textShadowModel";
 export { ShapeStyleGallery, ShapeStyleMenu, ShapeStyleRibbonStrip, SHAPE_THEME_STYLE_PRESETS, SHAPE_QUICK_STYLE_PRESETS } from "./ShapeStyleGallery";
 export type { ShapeStyleGalleryProps, ShapeStyleMenuProps } from "./ShapeStyleGallery";
 export {
