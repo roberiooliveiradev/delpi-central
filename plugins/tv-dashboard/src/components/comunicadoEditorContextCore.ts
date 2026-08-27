@@ -422,6 +422,7 @@ export type ComunicadoEditorContextValue = {
   /** Troca mídia do bloco selecionado pela imagem do clipboard (mantém frame). */
   replaceSelectedMediaFromClipboard: () => Promise<boolean>;
   setBackgroundColor: (value: string) => void;
+  setBackgroundFill: (fill: import("@delpi/plugin-ui/index").DelpiFill) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
   setBackground: (background: ComunicadoBackground) => void;
   /** Vincula texto/forma selecionado à fonte preferida do slide (ou abre catálogo). */

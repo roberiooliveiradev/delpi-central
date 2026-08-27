@@ -8,14 +8,39 @@ import {
   type DelpiFillKind,
   type DelpiGradientStop,
 } from "@delpi/plugin-ui/index";
-import type { ComunicadoBackground, ComunicadoBlockStyle } from "@delpi/tv-dashboard-presentation";
+import {
+  resolveComunicadoBackgroundUnderlay,
+  type ComunicadoBackground,
+  type ComunicadoBlockStyle,
+} from "@delpi/tv-dashboard-presentation";
 
 /** TV liga Cor + Gradiente; RichText e outros hosts hex-only não passam isto. */
 export const TV_ALLOWED_FILL_KINDS: readonly DelpiFillKind[] = ["solid", "gradient"];
 
+function underlayToFill(
+  underlay: ReturnType<typeof resolveComunicadoBackgroundUnderlay>,
+): DelpiFill {
+  if (underlay.type === "color") {
+    if (!underlay.value || underlay.value === "transparent") return { kind: "none" };
+    return { kind: "solid", color: underlay.value };
+  }
+  const stops =
+    underlay.stops && underlay.stops.length >= 2
+      ? normalizeGradientStops(underlay.stops)
+      : stopsFromLegacyFromTo(underlay.from, underlay.to);
+  return {
+    kind: "gradient",
+    angle: normalizeFillAngle(underlay.angle ?? 180),
+    stops,
+  };
+}
+
 export function backgroundToFill(background: ComunicadoBackground | undefined): DelpiFill {
-  if (!background || background.type === "image") {
+  if (!background) {
     return { kind: "solid", color: "#ffffff" };
+  }
+  if (background.type === "image") {
+    return underlayToFill(resolveComunicadoBackgroundUnderlay(background));
   }
   if (background.type === "color") {
     if (!background.value || background.value === "transparent") return { kind: "none" };
@@ -32,7 +57,10 @@ export function backgroundToFill(background: ComunicadoBackground | undefined): 
   };
 }
 
-/** Hex da aba Cor não pode apagar um fundo já em gradiente (onChange residual). */
+/**
+ * Hex da aba Cor: bloqueia só em gradiente puro (evita onChange residual).
+ * Com imagem ativa, o hex patcha o underlay — permitido.
+ */
 export function shouldApplyBackgroundSolidHex(
   background: ComunicadoBackground | undefined,
 ): boolean {
