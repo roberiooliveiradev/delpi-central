@@ -332,6 +332,12 @@
   flex-shrink: 0;
 }
 
+.dashboard-cipa .cipa-chip-list__reorder {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .dashboard-cipa .cipa-participant-role-select {
   width: min(210px, 32vw);
 }

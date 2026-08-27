@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus, RefreshCw, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, RefreshCw, X } from "lucide-react";
 import {
   ActionButton,
   BackLink,
@@ -38,6 +38,7 @@ import {
 } from "../ui/cipaUi";
 import { mergeCompositionWithExternals } from "../utils/cipaComposition";
 import { mergeMinuteContentHtml, splitMinuteContentForSave } from "../utils/minuteContent";
+import { moveArrayItemAt, participantsWithSortOrder } from "../utils/participantOrder";
 
 type Props = {
   unitCode: "01" | "02";
@@ -202,6 +203,11 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
     setParticipants((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function moveParticipant(index: number, delta: number) {
+    markParticipantsTouched();
+    setParticipants((prev) => moveArrayItemAt(prev, index, delta));
+  }
+
   function toggleSigner(index: number, checked: boolean) {
     markParticipantsTouched();
     setParticipants((prev) =>
@@ -236,7 +242,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
         end_time: endTime || null,
         location,
         ...contentFields,
-        participants,
+        participants: participantsWithSortOrder(participants),
       };
       if (currentId && statusRequiresNewVersion(minuteStatus)) {
         // Ata já enviada/assinada: reabrir criando nova versão apenas no salvar
@@ -471,6 +477,13 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
             </div>
 
             {participants.length > 0 ? (
+              <p className="cipa-compose__hint">
+                Use as setas para definir a ordem dos participantes. Essa ordem vale na
+                listagem de signatários, na prévia e no PDF.
+              </p>
+            ) : null}
+
+            {participants.length > 0 ? (
               <ul className="cipa-chip-list">
                 {participants.map((item, index) => (
                   <li key={`${item.display_name}-${index}`}>
@@ -487,6 +500,24 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                       </span>
                     </span>
                     <div className="cipa-chip-list__actions">
+                      <span className="cipa-chip-list__reorder">
+                        <IconButton
+                          tone="ghost"
+                          aria-label={`Subir ${item.display_name}`}
+                          disabled={index === 0}
+                          onClick={() => moveParticipant(index, -1)}
+                        >
+                          <ArrowUp size={16} />
+                        </IconButton>
+                        <IconButton
+                          tone="ghost"
+                          aria-label={`Descer ${item.display_name}`}
+                          disabled={index === participants.length - 1}
+                          onClick={() => moveParticipant(index, 1)}
+                        >
+                          <ArrowDown size={16} />
+                        </IconButton>
+                      </span>
                       <FormSelectControl
                         value={item.role_in_meeting}
                         onChange={(role) => updateParticipantRole(index, role)}

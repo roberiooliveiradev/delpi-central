@@ -97,6 +97,80 @@ describe("MinuteEditorPage composição CIPA", () => {
     ).toBeNull();
   });
 
+  it("reordena participantes e persiste sort_order e sign_order ao salvar", async () => {
+    api.getMinute.mockResolvedValue({
+      minute: {
+        id: "minute-1",
+        title: "Ata com ordem",
+        meeting_type: "ordinary",
+        meeting_date: "2026-07-16",
+        status: "draft",
+        start_time: null,
+        end_time: null,
+        location: "",
+      },
+      version: { body_html: "<p>ok</p>" },
+      participants: [
+        {
+          user_id: "11111111-1111-1111-1111-111111111111",
+          display_name: "Primeiro",
+          role_in_meeting: "president",
+          presence: "present",
+          is_external: false,
+          must_sign: true,
+        },
+        {
+          user_id: "22222222-2222-2222-2222-222222222222",
+          display_name: "Segundo",
+          role_in_meeting: "secretary",
+          presence: "present",
+          is_external: false,
+          must_sign: true,
+        },
+      ],
+      signers: [],
+      signatures: [],
+      action_items: [],
+      versions: [],
+    });
+    api.updateMinute.mockResolvedValue({ minute: { id: "minute-1" } });
+    api.setSigners.mockResolvedValue({});
+
+    render(<MinuteEditorPage unitCode="01" minuteId="minute-1" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Primeiro").length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Descer Primeiro/ }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^Salvar ata$/ })[0]);
+
+    await waitFor(() => expect(api.updateMinute).toHaveBeenCalled());
+    const payload = api.updateMinute.mock.calls[0][1];
+    expect(payload.participants).toEqual([
+      expect.objectContaining({
+        display_name: "Segundo",
+        sort_order: 0,
+      }),
+      expect.objectContaining({
+        display_name: "Primeiro",
+        sort_order: 1,
+      }),
+    ]);
+
+    await waitFor(() => expect(api.setSigners).toHaveBeenCalled());
+    expect(api.setSigners.mock.calls[0][1]).toEqual([
+      expect.objectContaining({
+        user_id: "22222222-2222-2222-2222-222222222222",
+        sign_order: 1,
+      }),
+      expect.objectContaining({
+        user_id: "11111111-1111-1111-1111-111111111111",
+        sign_order: 2,
+      }),
+    ]);
+  });
+
   it("ata em assinatura: avisa e só cria nova versão ao salvar", async () => {
     api.getMinute.mockResolvedValue({
       minute: {
