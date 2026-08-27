@@ -4,6 +4,9 @@ from typing import Any, Optional
 
 from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
 from app.application.shared.chart_period_buckets import build_period_buckets
+from app.application.use_cases.commercial.commercial_analysis_payload_helpers import (
+    branch_breakdown_rows,
+)
 from app.application.use_cases.commercial.get_commercial_rol_analysis_use_case import (
     _to_iso_date,
 )
@@ -42,6 +45,10 @@ class GetCommercialSalesOrderOtdAnalysisUseCase:
         }
         if pagination is not None:
             payload["pagination"] = pagination
+        if request.group_by == "branch":
+            payload["by_branch"] = branch_breakdown_rows(
+                (summary or {}).get("by_branch") if isinstance(summary, dict) else None
+            )
         return payload
 
     def _otd_request(
@@ -70,21 +77,63 @@ class GetCommercialSalesOrderOtdAnalysisUseCase:
         start_iso: Optional[str],
         end_iso: Optional[str],
     ) -> dict[str, Any]:
-        metrics = self._repository.get_sales_order_otd_analysis_summary(
-            self._otd_request(
-                request,
-                branch=request.branch,
-                start_iso=start_iso,
-                end_iso=end_iso,
+        if request.branch:
+            metrics = self._repository.get_sales_order_otd_analysis_summary(
+                self._otd_request(
+                    request,
+                    branch=request.branch,
+                    start_iso=start_iso,
+                    end_iso=end_iso,
+                )
             )
-        )
+            totals = dict(metrics)
+            by_branch = {f"branch_{request.branch}": dict(metrics)}
+        else:
+            metrics_01 = self._repository.get_sales_order_otd_analysis_summary(
+                self._otd_request(
+                    request,
+                    branch=FILIAL_01,
+                    start_iso=start_iso,
+                    end_iso=end_iso,
+                )
+            )
+            metrics_02 = self._repository.get_sales_order_otd_analysis_summary(
+                self._otd_request(
+                    request,
+                    branch=FILIAL_02,
+                    start_iso=start_iso,
+                    end_iso=end_iso,
+                )
+            )
+            totals = {
+                "total_lines": int(metrics_01["total_lines"] + metrics_02["total_lines"]),
+                "total_qty": round(metrics_01["total_qty"] + metrics_02["total_qty"], 2),
+                "fulfilled_qty": round(
+                    metrics_01["fulfilled_qty"] + metrics_02["fulfilled_qty"], 2
+                ),
+                "on_time_lines": int(
+                    metrics_01["on_time_lines"] + metrics_02["on_time_lines"]
+                ),
+                "late_lines": int(metrics_01["late_lines"] + metrics_02["late_lines"]),
+                "fulfillment_pct": None,
+                "otd_pct": None,
+            }
+            denom_qty = totals["total_qty"]
+            if denom_qty:
+                totals["fulfillment_pct"] = round(
+                    totals["fulfilled_qty"] * 100.0 / denom_qty, 2
+                )
+            lines = totals["total_lines"]
+            if lines:
+                totals["otd_pct"] = round(totals["on_time_lines"] * 100.0 / lines, 2)
+            by_branch = {"branch_01": metrics_01, "branch_02": metrics_02}
         return {
             "start_date": start_iso or request.start_date,
             "end_date": end_iso or request.end_date,
             "branch": request.branch,
             "customer_segment": request.customer_segment,
-            "totals": metrics,
-            **metrics,
+            "totals": totals,
+            "by_branch": by_branch,
         }
 
     def _build_series(

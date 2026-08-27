@@ -2263,3 +2263,75 @@ def test_enrich_si_meta_partial_keeps_registered_goal_metric(operation_id: str):
     assert by_field.get("goal_value") == 8.0
     assert by_field.get("value") == 4.39
     assert by_field["goal_value"] != by_field["value"]
+
+
+def test_commercial_rol_table_field_switches_with_group_by():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _extract_table_rows,
+        _resolve_table_field,
+    )
+
+    route_info = {
+        "tableFields": "series",
+        "tableFieldsByParam": {
+            "group_by": {
+                "customer": "by_customer",
+                "branch": "by_branch",
+                "none": "series",
+            }
+        },
+        "seriesField": "series",
+    }
+    payload = {
+        "summary": {"totals": {"rol": 100.0}},
+        "series": [
+            {
+                "period_label": "sem 1",
+                "rol_filial_01": 50.0,
+                "rol_filial_02": 60.0,
+            }
+        ],
+        "by_customer": [
+            {
+                "customer_name": "Cliente A",
+                "branch": "01",
+                "rol": 10.0,
+            }
+        ],
+        "by_branch": [
+            {"branch": "01", "rol": 50.0},
+            {"branch": "02", "rol": 60.0},
+        ],
+    }
+
+    assert _resolve_table_field(route_info, {"group_by": "customer"}) == "by_customer"
+    assert _resolve_table_field(route_info, {"group_by": "branch"}) == "by_branch"
+    assert _resolve_table_field(route_info, {"group_by": "none"}) == "series"
+    assert _resolve_table_field(route_info, {}) == "series"
+    route_with_defaults = {
+        **route_info,
+        "defaultParams": {"group_by": "customer"},
+    }
+    assert _resolve_table_field(route_with_defaults, {}) == "by_customer"
+    assert _resolve_table_field(route_with_defaults, None) == "by_customer"
+
+    rows, _ = _extract_table_rows(
+        payload,
+        _resolve_table_field(route_info, {"group_by": "customer"}),
+        50,
+    )
+    assert rows[0]["customer_name"] == "Cliente A"
+
+    rows, _ = _extract_table_rows(
+        payload,
+        _resolve_table_field(route_info, {"group_by": "branch"}),
+        50,
+    )
+    assert {row["branch"] for row in rows} == {"01", "02"}
+
+    rows, _ = _extract_table_rows(
+        payload,
+        _resolve_table_field(route_info, {"group_by": "none"}),
+        50,
+    )
+    assert rows[0]["period_label"] == "sem 1"

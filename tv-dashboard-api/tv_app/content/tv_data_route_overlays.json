@@ -780,6 +780,16 @@
     "get_commercial_rol": {
       "seriesField": "series",
       "tableFields": "series",
+      "tableFieldsByParam": {
+        "group_by": {
+          "customer": "by_customer",
+          "branch": "by_branch",
+          "none": "series"
+        }
+      },
+      "defaultParams": {
+        "group_by": "customer"
+      },
       "allowedDisplayModes": [
         "kpi",
         "line_chart",
@@ -805,6 +815,12 @@
         "end_date": "Data fim",
         "rol_filial_01": "ROL filial 01",
         "rol_filial_02": "ROL filial 02",
+        "customer_code": "Código cliente",
+        "customer_name": "Cliente",
+        "customer_store": "Loja cliente",
+        "share_pct": "% participação",
+        "rank": "Ranking",
+        "branch": "Filial",
         "rol_with_ipi": "ROL"
       },
       "valueFieldTypes": {
@@ -837,6 +853,50 @@
           "direction": "asc"
         }
       ]
+    },
+    "get_commercial_sales_order_otd_analysis": {
+      "seriesField": "series",
+      "tableFields": "series",
+      "tableFieldsByParam": {
+        "group_by": {
+          "customer": "by_customer",
+          "branch": "by_branch",
+          "none": "series"
+        }
+      },
+      "defaultParams": {
+        "group_by": "customer"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "line_chart",
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "total_qty",
+        "fulfilled_qty",
+        "fulfillment_pct",
+        "otd_pct"
+      ],
+      "valueFieldLabels": {
+        "period_label": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)",
+        "customer_code": "Código cliente",
+        "customer_name": "Cliente",
+        "customer_store": "Loja cliente",
+        "branch": "Filial",
+        "total_lines": "Linhas",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas"
+      },
+      "whenToUse": "KPI usa summary.totals; tabela por cliente/filial conforme group_by; série temporal quando group_by=none."
     },
     "get_refugos_rankings": {
       "tableFields": "items",

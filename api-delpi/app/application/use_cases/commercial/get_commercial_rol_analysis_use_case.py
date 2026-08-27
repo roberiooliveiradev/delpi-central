@@ -16,6 +16,9 @@ from app.application.use_cases.commercial.get_commercial_rol_by_customer_use_cas
 from app.application.use_cases.commercial.get_commercial_rol_series_use_case import (
     GetCommercialRolSeriesUseCase,
 )
+from app.application.use_cases.commercial.commercial_analysis_payload_helpers import (
+    branch_breakdown_rows,
+)
 from app.domain.entities.commercial.weekly_portfolio import (
     WeeklyPortfolioBranchTotals,
     WeeklyPortfolioSnapshot,
@@ -96,6 +99,10 @@ class GetCommercialRolAnalysisUseCase:
             payload["pagination"] = pagination
         if request.include_portfolio:
             payload["portfolio"] = self._build_portfolio(request).to_dict()
+        if request.group_by == "branch":
+            payload["by_branch"] = branch_breakdown_rows(
+                (summary or {}).get("by_branch") if isinstance(summary, dict) else None
+            )
         return payload
 
     def _filter_kwargs(self, request: CommercialAnalysisFilterRequest) -> dict[str, Any]:

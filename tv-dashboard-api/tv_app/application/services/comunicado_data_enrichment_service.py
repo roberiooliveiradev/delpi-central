@@ -685,6 +685,63 @@ _SKIP_GENERIC_LIST_KEYS = frozenset(
 )
 
 
+def _rows_from_branch_map(raw: Any) -> list[dict[str, Any]] | None:
+    if not isinstance(raw, dict):
+        return None
+    rows: list[dict[str, Any]] = []
+    for key, metrics in raw.items():
+        if not isinstance(metrics, dict):
+            continue
+        branch_key = str(key).strip()
+        branch_code = (
+            branch_key.replace("branch_", "", 1)
+            if branch_key.startswith("branch_")
+            else branch_key
+        )
+        rows.append({"branch": branch_code, **metrics})
+    return rows or None
+
+
+def _payload_node(data: Any, path: str | None) -> Any:
+    node = unwrap_operational_data(data)
+    field_path = str(path or "").strip()
+    if not field_path:
+        return node
+    if not isinstance(node, dict):
+        return None
+    for part in field_path.split("."):
+        if not isinstance(node, dict):
+            return None
+        node = node.get(part)
+    return node
+
+
+def _resolve_table_field(
+    route_info: dict[str, Any] | None,
+    params: dict[str, Any] | None = None,
+) -> str | None:
+    if not isinstance(route_info, dict):
+        return None
+    mapping = route_info.get("tableFieldsByParam")
+    request_params = params if isinstance(params, dict) else {}
+    if isinstance(mapping, dict):
+        for param_name, value_map in mapping.items():
+            if not isinstance(value_map, dict):
+                continue
+            param_value = str(request_params.get(param_name) or "").strip().lower()
+            if not param_value:
+                default_params = route_info.get("defaultParams")
+                if isinstance(default_params, dict):
+                    param_value = str(default_params.get(param_name) or "").strip().lower()
+            if not param_value:
+                continue
+            resolved = value_map.get(param_value)
+            if isinstance(resolved, str) and resolved.strip():
+                return resolved.strip()
+    table_field = route_info.get("tableFields")
+    return str(table_field).strip() if table_field else None
+
+
 def _rows_from_list_or_page(raw: Any) -> list[Any] | None:
     """Lista bare ou envelope Page `{ items|rows: [...] }` (ex.: lines/orders OTD)."""
     if isinstance(raw, list):
@@ -718,9 +775,13 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
             keys.append(key)
 
     for key in keys:
-        rows = _rows_from_list_or_page(data.get(key))
+        raw = _payload_node(data, key)
+        rows = _rows_from_list_or_page(raw)
         if rows:
             return rows
+        branch_rows = _rows_from_branch_map(raw)
+        if branch_rows:
+            return branch_rows
 
     for key, raw in data.items():
         if key in _SKIP_GENERIC_LIST_KEYS:
@@ -908,6 +969,7 @@ def _source_table_for_route(
     route_info: dict[str, Any] | None,
     *,
     branch: str | None = None,
+    params: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Tabela-fonte canônica (`Fonte`) para transformações M.
 
@@ -916,7 +978,7 @@ def _source_table_for_route(
     """
     if not isinstance(route_info, dict):
         return None
-    table_field = route_info.get("tableFields")
+    table_field = _resolve_table_field(route_info, params)
     if table_field and str(table_field).strip():
         rows, columns = _extract_table_rows(
             data,
@@ -978,15 +1040,16 @@ def _infer_auto_display_mode(
     meta: dict[str, Any],
     *,
     binding: dict[str, Any] | None = None,
+    params: dict[str, Any] | None = None,
 ) -> str:
     shape = str(meta.get("shape") or route_info.get("metaShape") or "scalar").lower()
-    table_field = route_info.get("tableFields")
+    table_field = _resolve_table_field(route_info, params)
     binding_payload = binding if isinstance(binding, dict) else {}
 
     if shape in {"list", "paged_list", "hierarchy"} and _list_from_data(data, table_field):
         return "table"
 
-    if route_info.get("tableFields") or shape == "paged_list":
+    if table_field or shape == "paged_list":
         return "table"
 
     rows, _ = _extract_table_rows(
@@ -1407,6 +1470,7 @@ class ComunicadoDataEnrichmentService:
                 route_info,
                 meta,
                 binding=binding,
+                params=merged_params,
             )
 
         value_fields = _value_fields_for_binding(route_info, binding)
@@ -1416,6 +1480,7 @@ class ComunicadoDataEnrichmentService:
         branch = merged_params.get("branch")
         branch_str = str(branch).strip() if branch else None
         max_rows = _resolve_table_max_rows(binding, route_info)
+        table_field = _resolve_table_field(route_info, merged_params)
 
         if mode == "kpi":
             primary = metrics[0] if metrics else None
@@ -1435,7 +1500,7 @@ class ComunicadoDataEnrichmentService:
             # kpiMetrics — sombreava o campo `value` no texto dinâmico / tabela fantasma.
             rows, columns = _extract_table_rows(
                 data,
-                route_info.get("tableFields"),
+                table_field,
                 max_rows,
                 meta=meta,
                 series_field=route_info.get("seriesField"),
@@ -1473,7 +1538,7 @@ class ComunicadoDataEnrichmentService:
 
         rows, columns = _extract_table_rows(
             data,
-            route_info.get("tableFields"),
+            table_field,
             max_rows,
             meta=meta,
             series_field=route_info.get("seriesField"),
@@ -1615,7 +1680,12 @@ class ComunicadoDataEnrichmentService:
                 target_step_name=target_step_name,
                 culture=str(m_query_setting("defaultCulture", "pt-BR")),
                 deadline_ms=deadline_ms,
-                source_table=_source_table_for_route(data, route_info, branch=branch_str),
+                source_table=_source_table_for_route(
+                    data,
+                    route_info,
+                    branch=branch_str,
+                    params=merged_params if isinstance(merged_params, dict) else None,
+                ),
             )
             transformed = transform_result["data"]
             server_transform_applied = bool(transform_result["applied"])
