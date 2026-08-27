@@ -8775,6 +8775,21 @@
     },
     "category": "commercial"
   },
+  "get_sales_order_otd_series_by_customer": {
+    "locale": {
+      "en": {
+        "summary": "Sales order OTD series by customer",
+        "description": "On-time delivery metrics per customer for each period bucket (day, week, month or year).",
+        "label": "Sales order OTD series by customer"
+      },
+      "pt-BR": {
+        "label": "Indicador — Série temporal de OTD de pedidos por cliente",
+        "summary": "Série temporal de OTD de pedidos por cliente",
+        "description": "OTD, quantidade e atendimento por cliente em cada bucket temporal (dia, semana, mês ou ano)."
+      }
+    },
+    "category": "commercial"
+  },
   "get_sales_order_otd_by_branch": {
     "locale": {
       "en": {

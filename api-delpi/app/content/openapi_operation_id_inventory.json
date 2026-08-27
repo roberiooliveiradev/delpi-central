@@ -1,11 +1,14 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 675,
-  "stableCount": 675,
-  "autoCount": 0,
+  "operationCount": 694,
+  "stableCount": 692,
+  "autoCount": 2,
   "recommendationCollisions": [],
-  "autoByTag": {},
+  "autoByTag": {
+    "Suprimentos — Usuários Protheus": 1,
+    "Suprimentos — Solicitações de compra": 1
+  },
   "operations": [
     {
       "operationId": "create_canal_denuncia",
@@ -172,6 +175,13 @@
       "operationId": "get_sales_order_otd_series",
       "method": "GET",
       "path": "/commercial/sales-order-otd/series",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_series_by_customer",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/series-by-customer",
       "tag": "Comercial",
       "stable": true
     },
@@ -541,15 +551,15 @@
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_components_meta",
-      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
       "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/meta",
       "tag": "Dashboard",
       "stable": true
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_components_realized",
-      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
       "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-components/realized",
       "tag": "Dashboard",
       "stable": true
     },
@@ -583,15 +593,15 @@
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
-      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
       "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/meta",
       "tag": "Dashboard",
       "stable": true
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
-      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
       "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-components/realized",
       "tag": "Dashboard",
       "stable": true
     },
@@ -764,15 +774,15 @@
       "stable": true
     },
     {
-      "operationId": "create_lmp_nonconformity",
-      "method": "POST",
+      "operationId": "list_lmp_nonconformities",
+      "method": "GET",
       "path": "/engineering/lmps/nonconformities",
       "tag": "Engenharia",
       "stable": true
     },
     {
-      "operationId": "list_lmp_nonconformities",
-      "method": "GET",
+      "operationId": "create_lmp_nonconformity",
+      "method": "POST",
       "path": "/engineering/lmps/nonconformities",
       "tag": "Engenharia",
       "stable": true
@@ -858,6 +868,13 @@
       "operationId": "list_mini_applicators_ferramentas",
       "method": "GET",
       "path": "/engineering/mini-applicators/ferramentas",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "post_mini_applicators_golpes_batch",
+      "method": "POST",
+      "path": "/engineering/mini-applicators/ferramentas/golpes/batch",
       "tag": "Engenharia",
       "stable": true
     },
@@ -1037,15 +1054,15 @@
       "stable": true
     },
     {
-      "operationId": "create_guias_procedimentos_admin_department",
-      "method": "POST",
+      "operationId": "list_guias_procedimentos_admin_departments",
+      "method": "GET",
       "path": "/guias-procedimentos/admin/departments",
       "tag": "Guias e Procedimentos — Admin",
       "stable": true
     },
     {
-      "operationId": "list_guias_procedimentos_admin_departments",
-      "method": "GET",
+      "operationId": "create_guias_procedimentos_admin_department",
+      "method": "POST",
       "path": "/guias-procedimentos/admin/departments",
       "tag": "Guias e Procedimentos — Admin",
       "stable": true
@@ -1079,15 +1096,15 @@
       "stable": true
     },
     {
-      "operationId": "create_guias_procedimentos_admin_procedure",
-      "method": "POST",
+      "operationId": "list_guias_procedimentos_admin_procedures",
+      "method": "GET",
       "path": "/guias-procedimentos/admin/procedures",
       "tag": "Guias e Procedimentos — Admin",
       "stable": true
     },
     {
-      "operationId": "list_guias_procedimentos_admin_procedures",
-      "method": "GET",
+      "operationId": "create_guias_procedimentos_admin_procedure",
+      "method": "POST",
       "path": "/guias-procedimentos/admin/procedures",
       "tag": "Guias e Procedimentos — Admin",
       "stable": true
@@ -1401,15 +1418,15 @@
       "stable": true
     },
     {
-      "operationId": "create_invoice_issuance_request",
-      "method": "POST",
+      "operationId": "list_invoice_issuance_requests",
+      "method": "GET",
       "path": "/invoice-issuance/requests",
       "tag": "Invoice issuance",
       "stable": true
     },
     {
-      "operationId": "list_invoice_issuance_requests",
-      "method": "GET",
+      "operationId": "create_invoice_issuance_request",
+      "method": "POST",
       "path": "/invoice-issuance/requests",
       "tag": "Invoice issuance",
       "stable": true
@@ -1478,15 +1495,15 @@
       "stable": true
     },
     {
-      "operationId": "create_lancamento_notas_fiscais_request",
-      "method": "POST",
+      "operationId": "list_lancamento_notas_fiscais_requests",
+      "method": "GET",
       "path": "/lancamento-notas-fiscais/requests",
       "tag": "Lançamento de Notas Fiscais",
       "stable": true
     },
     {
-      "operationId": "list_lancamento_notas_fiscais_requests",
-      "method": "GET",
+      "operationId": "create_lancamento_notas_fiscais_request",
+      "method": "POST",
       "path": "/lancamento-notas-fiscais/requests",
       "tag": "Lançamento de Notas Fiscais",
       "stable": true
@@ -1569,15 +1586,15 @@
       "stable": true
     },
     {
-      "operationId": "create_mural_acessos_hub",
-      "method": "POST",
+      "operationId": "list_mural_acessos_hubs",
+      "method": "GET",
       "path": "/mural-acessos/hubs",
       "tag": "Mural de Acessos",
       "stable": true
     },
     {
-      "operationId": "list_mural_acessos_hubs",
-      "method": "GET",
+      "operationId": "create_mural_acessos_hub",
+      "method": "POST",
       "path": "/mural-acessos/hubs",
       "tag": "Mural de Acessos",
       "stable": true
@@ -1604,15 +1621,15 @@
       "stable": true
     },
     {
-      "operationId": "create_mural_acessos_link",
-      "method": "POST",
+      "operationId": "list_mural_acessos_links",
+      "method": "GET",
       "path": "/mural-acessos/hubs/{hub_id}/links",
       "tag": "Mural de Acessos",
       "stable": true
     },
     {
-      "operationId": "list_mural_acessos_links",
-      "method": "GET",
+      "operationId": "create_mural_acessos_link",
+      "method": "POST",
       "path": "/mural-acessos/hubs/{hub_id}/links",
       "tag": "Mural de Acessos",
       "stable": true
@@ -1737,15 +1754,15 @@
       "stable": true
     },
     {
-      "operationId": "create_seller_portfolio",
-      "method": "POST",
+      "operationId": "list_seller_portfolios",
+      "method": "GET",
       "path": "/pedidos-venda-abertos/sellers",
       "tag": "Pedidos de Venda em Aberto",
       "stable": true
     },
     {
-      "operationId": "list_seller_portfolios",
-      "method": "GET",
+      "operationId": "create_seller_portfolio",
+      "method": "POST",
       "path": "/pedidos-venda-abertos/sellers",
       "tag": "Pedidos de Venda em Aberto",
       "stable": true
@@ -1779,15 +1796,15 @@
       "stable": true
     },
     {
-      "operationId": "add_seller_customer",
-      "method": "POST",
+      "operationId": "remove_seller_customer",
+      "method": "DELETE",
       "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
       "tag": "Pedidos de Venda em Aberto",
       "stable": true
     },
     {
-      "operationId": "remove_seller_customer",
-      "method": "DELETE",
+      "operationId": "add_seller_customer",
+      "method": "POST",
       "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
       "tag": "Pedidos de Venda em Aberto",
       "stable": true
@@ -1842,15 +1859,15 @@
       "stable": true
     },
     {
-      "operationId": "create_planejamento_orcamentario_admin_budget_responsibility",
-      "method": "POST",
+      "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
+      "method": "GET",
       "path": "/planejamento-orcamentario/admin/budget-responsibilities",
       "tag": "Planejamento Orçamentário",
       "stable": true
     },
     {
-      "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
-      "method": "GET",
+      "operationId": "create_planejamento_orcamentario_admin_budget_responsibility",
+      "method": "POST",
       "path": "/planejamento-orcamentario/admin/budget-responsibilities",
       "tag": "Planejamento Orçamentário",
       "stable": true
@@ -1884,15 +1901,15 @@
       "stable": true
     },
     {
-      "operationId": "create_planejamento_orcamentario_admin_capex_category",
-      "method": "POST",
+      "operationId": "list_planejamento_orcamentario_admin_capex_categories",
+      "method": "GET",
       "path": "/planejamento-orcamentario/admin/capex/categories",
       "tag": "Planejamento Orçamentário",
       "stable": true
     },
     {
-      "operationId": "list_planejamento_orcamentario_admin_capex_categories",
-      "method": "GET",
+      "operationId": "create_planejamento_orcamentario_admin_capex_category",
+      "method": "POST",
       "path": "/planejamento-orcamentario/admin/capex/categories",
       "tag": "Planejamento Orçamentário",
       "stable": true
@@ -1947,15 +1964,15 @@
       "stable": true
     },
     {
-      "operationId": "create_planejamento_orcamentario_admin_exercise",
-      "method": "POST",
+      "operationId": "list_planejamento_orcamentario_admin_exercises",
+      "method": "GET",
       "path": "/planejamento-orcamentario/admin/exercises",
       "tag": "Planejamento Orçamentário",
       "stable": true
     },
     {
-      "operationId": "list_planejamento_orcamentario_admin_exercises",
-      "method": "GET",
+      "operationId": "create_planejamento_orcamentario_admin_exercise",
+      "method": "POST",
       "path": "/planejamento-orcamentario/admin/exercises",
       "tag": "Planejamento Orçamentário",
       "stable": true
@@ -1975,15 +1992,15 @@
       "stable": true
     },
     {
-      "operationId": "create_planejamento_orcamentario_admin_guidance_draft",
-      "method": "POST",
+      "operationId": "get_planejamento_orcamentario_admin_guidance",
+      "method": "GET",
       "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/guidance",
       "tag": "Planejamento Orçamentário",
       "stable": true
     },
     {
-      "operationId": "get_planejamento_orcamentario_admin_guidance",
-      "method": "GET",
+      "operationId": "create_planejamento_orcamentario_admin_guidance_draft",
+      "method": "POST",
       "path": "/planejamento-orcamentario/admin/exercises/{exercise_id}/guidance",
       "tag": "Planejamento Orçamentário",
       "stable": true
@@ -2045,15 +2062,15 @@
       "stable": true
     },
     {
-      "operationId": "create_planejamento_orcamentario_admin_scope",
-      "method": "POST",
+      "operationId": "list_planejamento_orcamentario_admin_scopes",
+      "method": "GET",
       "path": "/planejamento-orcamentario/admin/scopes",
       "tag": "Planejamento Orçamentário",
       "stable": true
     },
     {
-      "operationId": "list_planejamento_orcamentario_admin_scopes",
-      "method": "GET",
+      "operationId": "create_planejamento_orcamentario_admin_scope",
+      "method": "POST",
       "path": "/planejamento-orcamentario/admin/scopes",
       "tag": "Planejamento Orçamentário",
       "stable": true
@@ -2178,15 +2195,15 @@
       "stable": true
     },
     {
-      "operationId": "create_planejamento_orcamentario_capex_investment",
-      "method": "POST",
+      "operationId": "list_planejamento_orcamentario_capex_investments",
+      "method": "GET",
       "path": "/planejamento-orcamentario/capex/investments",
       "tag": "Planejamento Orçamentário",
       "stable": true
     },
     {
-      "operationId": "list_planejamento_orcamentario_capex_investments",
-      "method": "GET",
+      "operationId": "create_planejamento_orcamentario_capex_investment",
+      "method": "POST",
       "path": "/planejamento-orcamentario/capex/investments",
       "tag": "Planejamento Orçamentário",
       "stable": true
@@ -2626,6 +2643,27 @@
       "stable": true
     },
     {
+      "operationId": "get_production_machine_load_appointment_status",
+      "method": "POST",
+      "path": "/production/machine-load/appointment-status",
+      "tag": "Produção — Carga máquina",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_machine_load_operations",
+      "method": "GET",
+      "path": "/production/machine-load/operations",
+      "tag": "Produção — Carga máquina",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_machine_load_work_centers",
+      "method": "GET",
+      "path": "/production/machine-load/work-centers",
+      "tag": "Produção — Carga máquina",
+      "stable": true
+    },
+    {
       "operationId": "list_production_machine_program_top_intermediates",
       "method": "GET",
       "path": "/production/machine-programs/top-intermediates",
@@ -2735,6 +2773,13 @@
       "method": "GET",
       "path": "/production/planned-vs-real-time",
       "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_order_sets_incomplete",
+      "method": "GET",
+      "path": "/production/production-order-sets/incomplete",
+      "tag": "Produção — Conjuntos de OP",
       "stable": true
     },
     {
@@ -3137,15 +3182,15 @@
       "stable": true
     },
     {
-      "operationId": "create_quality_action_plan",
-      "method": "POST",
+      "operationId": "list_quality_action_plans",
+      "method": "GET",
       "path": "/quality/action-plans",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "list_quality_action_plans",
-      "method": "GET",
+      "operationId": "create_quality_action_plan",
+      "method": "POST",
       "path": "/quality/action-plans",
       "tag": "Qualidade",
       "stable": true
@@ -3319,15 +3364,15 @@
       "stable": true
     },
     {
-      "operationId": "attach_quality_action_plan_evidence",
-      "method": "POST",
+      "operationId": "list_quality_action_plan_evidences",
+      "method": "GET",
       "path": "/quality/action-plans/{plan_id}/evidences",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "list_quality_action_plan_evidences",
-      "method": "GET",
+      "operationId": "attach_quality_action_plan_evidence",
+      "method": "POST",
       "path": "/quality/action-plans/{plan_id}/evidences",
       "tag": "Qualidade",
       "stable": true
@@ -3459,13 +3504,6 @@
       "stable": true
     },
     {
-      "operationId": "create_audit_5s_area",
-      "method": "POST",
-      "path": "/quality/audit-5s/areas",
-      "tag": "Qualidade",
-      "stable": true
-    },
-    {
       "operationId": "list_audit_5s_areas",
       "method": "GET",
       "path": "/quality/audit-5s/areas",
@@ -3473,15 +3511,22 @@
       "stable": true
     },
     {
-      "operationId": "create_audit_5s_audit",
+      "operationId": "create_audit_5s_area",
       "method": "POST",
-      "path": "/quality/audit-5s/audits",
+      "path": "/quality/audit-5s/areas",
       "tag": "Qualidade",
       "stable": true
     },
     {
       "operationId": "list_audit_5s_audits",
       "method": "GET",
+      "path": "/quality/audit-5s/audits",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "create_audit_5s_audit",
+      "method": "POST",
       "path": "/quality/audit-5s/audits",
       "tag": "Qualidade",
       "stable": true
@@ -3557,15 +3602,15 @@
       "stable": true
     },
     {
-      "operationId": "create_audit_5s_nonconformity",
-      "method": "POST",
+      "operationId": "list_audit_5s_nonconformities",
+      "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "list_audit_5s_nonconformities",
-      "method": "GET",
+      "operationId": "create_audit_5s_nonconformity",
+      "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
       "tag": "Qualidade",
       "stable": true
@@ -3585,15 +3630,15 @@
       "stable": true
     },
     {
-      "operationId": "attach_audit_5s_response_photo",
-      "method": "POST",
+      "operationId": "list_audit_5s_response_attachments",
+      "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "list_audit_5s_response_attachments",
-      "method": "GET",
+      "operationId": "attach_audit_5s_response_photo",
+      "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
       "tag": "Qualidade",
       "stable": true
@@ -3655,13 +3700,6 @@
       "stable": true
     },
     {
-      "operationId": "create_audit_5s_nc_action",
-      "method": "POST",
-      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
-      "tag": "Qualidade",
-      "stable": true
-    },
-    {
       "operationId": "list_audit_5s_nc_actions",
       "method": "GET",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
@@ -3669,15 +3707,22 @@
       "stable": true
     },
     {
-      "operationId": "attach_audit_5s_evidence",
+      "operationId": "create_audit_5s_nc_action",
       "method": "POST",
-      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
       "tag": "Qualidade",
       "stable": true
     },
     {
       "operationId": "list_audit_5s_nc_attachments",
       "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "attach_audit_5s_evidence",
+      "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
       "tag": "Qualidade",
       "stable": true
@@ -3693,6 +3738,13 @@
       "operationId": "complete_audit_5s_nc_action",
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "force_close_audit_5s_nc_without_treatment",
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/force-close-without-treatment",
       "tag": "Qualidade",
       "stable": true
     },
@@ -3725,15 +3777,15 @@
       "stable": true
     },
     {
-      "operationId": "create_kaizen_record",
-      "method": "POST",
+      "operationId": "list_kaizen_records",
+      "method": "GET",
       "path": "/quality/kaizens/records",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "list_kaizen_records",
-      "method": "GET",
+      "operationId": "create_kaizen_record",
+      "method": "POST",
       "path": "/quality/kaizens/records",
       "tag": "Qualidade",
       "stable": true
@@ -3802,15 +3854,15 @@
       "stable": true
     },
     {
-      "operationId": "attach_kaizen_evidence",
-      "method": "POST",
+      "operationId": "list_kaizen_evidences",
+      "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/evidences",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "list_kaizen_evidences",
-      "method": "GET",
+      "operationId": "attach_kaizen_evidence",
+      "method": "POST",
       "path": "/quality/kaizens/records/{record_id}/evidences",
       "tag": "Qualidade",
       "stable": true
@@ -3921,15 +3973,15 @@
       "stable": true
     },
     {
-      "operationId": "create_quality_label",
-      "method": "POST",
+      "operationId": "list_quality_labels",
+      "method": "GET",
       "path": "/quality/labels",
       "tag": "Qualidade",
       "stable": true
     },
     {
-      "operationId": "list_quality_labels",
-      "method": "GET",
+      "operationId": "create_quality_label",
+      "method": "POST",
       "path": "/quality/labels",
       "tag": "Qualidade",
       "stable": true
@@ -4201,15 +4253,15 @@
       "stable": true
     },
     {
-      "operationId": "create_report_definition",
-      "method": "POST",
+      "operationId": "list_report_definitions",
+      "method": "GET",
       "path": "/reports/definitions",
       "tag": "Delpi Reports",
       "stable": true
     },
     {
-      "operationId": "list_report_definitions",
-      "method": "GET",
+      "operationId": "create_report_definition",
+      "method": "POST",
       "path": "/reports/definitions",
       "tag": "Delpi Reports",
       "stable": true
@@ -4397,15 +4449,15 @@
       "stable": true
     },
     {
-      "operationId": "create_scheduling_booking",
-      "method": "POST",
+      "operationId": "list_scheduling_bookings",
+      "method": "GET",
       "path": "/scheduling/bookings",
       "tag": "Agendamento",
       "stable": true
     },
     {
-      "operationId": "list_scheduling_bookings",
-      "method": "GET",
+      "operationId": "create_scheduling_booking",
+      "method": "POST",
       "path": "/scheduling/bookings",
       "tag": "Agendamento",
       "stable": true
@@ -4446,15 +4498,15 @@
       "stable": true
     },
     {
-      "operationId": "create_scheduling_resource",
-      "method": "POST",
+      "operationId": "list_scheduling_resources",
+      "method": "GET",
       "path": "/scheduling/resources",
       "tag": "Agendamento",
       "stable": true
     },
     {
-      "operationId": "list_scheduling_resources",
-      "method": "GET",
+      "operationId": "create_scheduling_resource",
+      "method": "POST",
       "path": "/scheduling/resources",
       "tag": "Agendamento",
       "stable": true
@@ -4495,6 +4547,15 @@
       "stable": true
     },
     {
+      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "method": "GET",
+      "path": "/supplies/protheus-users/by-email",
+      "tag": "Suprimentos — Usuários Protheus",
+      "stable": false,
+      "functionName": "get_protheus_user_by_email_route",
+      "recommendedCanonical": "get_protheus_user_by_email_route"
+    },
+    {
       "operationId": "get_supplies_purchase_order_otd",
       "method": "GET",
       "path": "/supplies/purchase-order-otd",
@@ -4514,6 +4575,50 @@
       "path": "/supplies/purchase-order-otd/series",
       "tag": "Suprimentos",
       "stable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines/{branch}/{request_number}",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_purchase_requests_open_coverage",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/open-coverage",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/recent-linked-orders",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_receipts",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/recent-linked-receipts",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/requesters",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": false,
+      "functionName": "list_supplies_purchase_request_requesters_route",
+      "recommendedCanonical": "list_supplies_purchase_request_requesters_route"
     },
     {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",

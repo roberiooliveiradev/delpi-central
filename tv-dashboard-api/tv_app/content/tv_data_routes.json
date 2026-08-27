@@ -773,17 +773,100 @@
       ]
     },
     {
-      "operationId": "get_commercial_rol_by_customer",
+      "operationId": "get_commercial_rol_by_branch",
       "httpMethod": "GET",
-      "label": "Indicador — ROL por cliente",
+      "label": "ROL comercial por filial",
       "category": "commercial",
-      "path": "/commercial/rol/by-customer",
+      "path": "/commercial/rol/by-branch",
       "allowedDisplayModes": [
-        "kpi",
+        "table",
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Lista os maiores clientes por receita operacional líquida no período, com linha Demais opcional.",
+      "description": "ROL das filiais 01 e 02 em lista tabular.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "whenToUse": "Use em tabela comparativa por filial.",
+      "tableFields": "items",
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "returns",
+        "discounts"
+      ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "returns": "Devoluções",
+        "discounts": "Descontos"
+      }
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer",
+      "httpMethod": "GET",
+      "label": "ROL comercial por cliente",
+      "category": "commercial",
+      "path": "/commercial/rol/by-customer",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Ranking de clientes por ROL no período.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -826,6 +909,24 @@
           "label": "Códigos de clientes",
           "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
         },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
         "limit": {
           "type": "integer",
           "optional": true,
@@ -839,41 +940,42 @@
           "label": "Incluir Demais",
           "default": true,
           "description": "Quando verdadeiro, agrega clientes fora do Top N na linha Demais."
-        },
-        "customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (incluir)"
-        },
-        "exclude_customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes (excluir)"
-        },
-        "exclude_customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (excluir)"
         }
       },
       "paramStrategy": "date_range",
       "dateRangeKeys": [
         "start_date",
         "end_date"
-      ]
+      ],
+      "tableFields": "items",
+      "valueFields": [
+        "rol",
+        "share_pct",
+        "rank"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "rol": "ROL",
+        "share_pct": "% participação",
+        "rank": "Ranking"
+      },
+      "whenToUse": "Use em tabela de ranking por cliente."
     },
     {
       "operationId": "get_commercial_rol_series",
       "httpMethod": "GET",
-      "label": "Indicador — Série temporal de rol comercial",
+      "label": "Série temporal de ROL comercial",
       "category": "commercial",
       "path": "/commercial/rol/series",
       "allowedDisplayModes": [
         "line_chart",
+        "table",
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Série temporal de rol comercial».",
+      "description": "Pontos de ROL por período (filiais 01 e 02).",
       "paramSchema": {
         "granularity": {
           "type": "string",
@@ -921,29 +1023,70 @@
         "customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Nomes de clientes (incluir)"
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
         },
         "exclude_customer_codes": {
           "type": "string",
           "optional": true,
-          "label": "Códigos de clientes (excluir)"
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
         },
         "exclude_customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Nomes de clientes (excluir)"
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
         }
       },
       "paramStrategy": "date_range",
       "dateRangeKeys": [
         "start_date",
         "end_date"
+      ],
+      "seriesField": "points",
+      "tableFields": "points",
+      "valueFields": [
+        "rol_matrix",
+        "rol_branch"
+      ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "rol_matrix": "ROL filial 01",
+        "rol_branch": "ROL filial 02"
+      },
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "rol_matrix": "number",
+        "rol_branch": "number"
+      },
+      "whenToUse": "Use em gráfico de linha ou tabela temporal de ROL.",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "rol_matrix",
+            "rol_branch"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
       ]
     },
     {
       "operationId": "get_sales_order_otd",
       "httpMethod": "GET",
-      "label": "Indicador — Otd de pedidos de venda",
+      "label": "OTD de pedidos de venda",
       "category": "commercial",
       "path": "/commercial/sales-order-otd",
       "allowedDisplayModes": [
@@ -951,7 +1094,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Otd de pedidos de venda».",
+      "description": "Percentual de entrega no prazo de pedidos de venda.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -997,24 +1140,240 @@
         "customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Nomes de clientes (incluir)"
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
         },
         "exclude_customer_codes": {
           "type": "string",
           "optional": true,
-          "label": "Códigos de clientes (excluir)"
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
         },
         "exclude_customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Nomes de clientes (excluir)"
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
         }
       },
       "paramStrategy": "date_range",
       "dateRangeKeys": [
         "start_date",
         "end_date"
-      ]
+      ],
+      "valueFields": [
+        "sales_order_otd_pct"
+      ],
+      "valueFieldLabels": {
+        "sales_order_otd_pct": "OTD pedidos (%)",
+        "total_lines": "Total de linhas",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "whenToUse": "Use em card KPI de OTD."
+    },
+    {
+      "operationId": "get_sales_order_otd_by_branch",
+      "httpMethod": "GET",
+      "label": "OTD de pedidos por filial",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/by-branch",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "OTD das filiais 01 e 02 em lista tabular.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "whenToUse": "Use em tabela comparativa de OTD por filial.",
+      "tableFields": "items",
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty"
+      ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)"
+      }
+    },
+    {
+      "operationId": "get_sales_order_otd_by_customer",
+      "httpMethod": "GET",
+      "label": "OTD de pedidos por cliente",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/by-customer",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "OTD e atendimento agregados por cliente.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "whenToUse": "Use em tabela de OTD por cliente.",
+      "tableFields": "items",
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "branch": "Filial",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)"
+      }
     },
     {
       "operationId": "get_sales_order_otd_line_detail",
@@ -1145,6 +1504,24 @@
           "label": "Códigos de clientes",
           "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
         },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
         "status": {
           "type": "string",
           "optional": true,
@@ -1191,21 +1568,6 @@
           "optional": true,
           "label": "Busca",
           "description": "Texto livre de busca."
-        },
-        "customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (incluir)"
-        },
-        "exclude_customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes (excluir)"
-        },
-        "exclude_customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (excluir)"
         }
       },
       "paramStrategy": "date_range",
@@ -1213,10 +1575,6 @@
         "start_date",
         "end_date"
       ],
-      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
-      "tvConstraints": {
-        "maxRows": 200
-      },
       "openEndedDateRange": true,
       "valueFieldTypes": {
         "sales_order_otd_pct": "number",
@@ -1226,26 +1584,31 @@
         "promised_date": "date",
         "invoice_date": "date"
       },
+      "tvConstraints": {
+        "maxRows": 200
+      },
       "tableFields": "lines",
       "valueFields": [
         "sales_order_otd_pct",
         "late_percentage",
         "late_lines",
         "total_lines"
-      ]
+      ],
+      "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida."
     },
     {
       "operationId": "get_sales_order_otd_series",
       "httpMethod": "GET",
-      "label": "Indicador — Série temporal otd de pedidos de venda",
+      "label": "Série temporal de OTD de pedidos",
       "category": "commercial",
       "path": "/commercial/sales-order-otd/series",
       "allowedDisplayModes": [
         "line_chart",
+        "table",
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Série temporal otd de pedidos de venda».",
+      "description": "Pontos de OTD por período com quantidade, atendimento e % (filiais 01/02 e consolidado).",
       "paramSchema": {
         "granularity": {
           "type": "string",
@@ -1304,24 +1667,230 @@
         "customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Nomes de clientes (incluir)"
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
         },
         "exclude_customer_codes": {
           "type": "string",
           "optional": true,
-          "label": "Códigos de clientes (excluir)"
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
         },
         "exclude_customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Nomes de clientes (excluir)"
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
         }
       },
       "paramStrategy": "date_range",
       "dateRangeKeys": [
         "start_date",
         "end_date"
+      ],
+      "seriesField": "points",
+      "tableFields": "points",
+      "valueFields": [
+        "otd_pct",
+        "total_qty",
+        "fulfilled_qty",
+        "fulfillment_pct",
+        "total_lines",
+        "otd_filial_01",
+        "otd_filial_02"
+      ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "otd_filial_01": "OTD filial 01",
+        "otd_filial_02": "OTD filial 02",
+        "otd_pct": "OTD (%)",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "fulfillment_pct": "% atendimento",
+        "total_lines": "Total de itens"
+      },
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_filial_01": "number",
+        "otd_filial_02": "number",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number"
+      },
+      "whenToUse": "Use em gráfico/tabela temporal de OTD; filtre por customer_names para um cliente.",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "total_qty",
+            "fulfilled_qty",
+            "otd_pct"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
       ]
+    },
+    {
+      "operationId": "get_sales_order_otd_series_by_customer",
+      "httpMethod": "GET",
+      "label": "Série temporal de OTD de pedidos por cliente",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/series-by-customer",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "OTD e atendimento por cliente em cada bucket temporal (cliente × período).",
+      "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "top_customers": {
+          "type": "integer",
+          "optional": true,
+          "label": "Top clientes",
+          "default": 20,
+          "description": "Máximo de clientes por quantidade total quando não há filtro customer_codes/customer_names (padrão 20, máximo 100)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "tableFields": "items",
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty",
+        "total_lines"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "branch": "Filial",
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)"
+      },
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number"
+      },
+      "whenToUse": "Use em tabela cliente×semana (ou outra granularidade); filtre por customer_names ou use top_customers."
     },
     {
       "operationId": "get_cultura_delpi_content",
@@ -1662,11 +2231,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -1723,11 +2292,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -1784,11 +2353,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -1845,11 +2414,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -1906,11 +2475,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -1967,11 +2536,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2028,11 +2597,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2089,11 +2658,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2150,11 +2719,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2211,11 +2780,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2272,11 +2841,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2333,11 +2902,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2394,11 +2963,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2455,11 +3024,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2516,11 +3085,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2577,11 +3146,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2638,11 +3207,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2699,11 +3268,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2760,11 +3329,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2821,11 +3390,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2882,11 +3451,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -2943,11 +3512,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3004,11 +3573,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3065,11 +3634,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3126,11 +3695,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3187,11 +3756,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3248,11 +3817,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3309,11 +3878,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3370,11 +3939,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3431,11 +4000,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3492,11 +4061,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3553,11 +4122,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3614,11 +4183,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3675,11 +4244,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3736,11 +4305,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3797,11 +4366,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3858,11 +4427,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3919,11 +4488,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -3980,11 +4549,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4041,11 +4610,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4102,11 +4671,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4163,11 +4732,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4224,11 +4793,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4285,11 +4854,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4346,11 +4915,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4407,11 +4976,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4468,18 +5037,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
-      "labelAliases": [
-        "PPM Externo Componentes — meta",
-        "PPM chicotes 9026 — meta"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "value"
+      ],
+      "labelAliases": [
+        "PPM Externo Componentes — meta",
+        "PPM chicotes 9026 — meta"
       ]
     },
     {
@@ -4533,18 +5102,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
-      "labelAliases": [
-        "PPM Externo Componentes — realizado",
-        "PPM chicotes 9026 — realizado"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "value"
+      ],
+      "labelAliases": [
+        "PPM Externo Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
       ]
     },
     {
@@ -4598,11 +5167,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4659,11 +5228,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4720,11 +5289,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4781,11 +5350,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -4842,18 +5411,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
-      "labelAliases": [
-        "PPM Interno Componentes — meta",
-        "PPM chicotes 9026 — meta"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "value"
+      ],
+      "labelAliases": [
+        "PPM Interno Componentes — meta",
+        "PPM chicotes 9026 — meta"
       ]
     },
     {
@@ -4907,18 +5476,18 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
-      "labelAliases": [
-        "PPM Interno Componentes — realizado",
-        "PPM chicotes 9026 — realizado"
-      ],
       "valueFieldTypes": {
         "value": "number"
       },
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "value"
+      ],
+      "labelAliases": [
+        "PPM Interno Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
       ]
     },
     {
@@ -4972,11 +5541,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5033,11 +5602,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5094,11 +5663,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5155,11 +5724,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5219,11 +5788,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5280,11 +5849,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5341,11 +5910,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5402,11 +5971,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -5460,11 +6029,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5521,11 +6090,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5582,11 +6151,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5643,11 +6212,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5704,11 +6273,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5765,11 +6334,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5826,11 +6395,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5887,11 +6456,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -5948,11 +6517,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -6009,11 +6578,11 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       },
       "valueFields": [
         "value"
@@ -6420,13 +6989,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items",
-        "comparable_goal"
-      ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
@@ -6435,7 +6997,14 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items",
+        "comparable_goal"
+      ]
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -6556,7 +7125,6 @@
         "start_date",
         "end_date"
       ],
-      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
       "openEndedDateRange": true,
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
@@ -6566,7 +7134,8 @@
         "customer_name": "Cliente",
         "product_code": "Código do produto",
         "status": "Status"
-      }
+      },
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar."
     },
     {
       "operationId": "export_lmp_nonconformities",
@@ -7234,13 +7803,6 @@
         "investment_total_month": "number",
         "net_savings_month": "number"
       },
-      "valueFields": [
-        "total_investment_in_period",
-        "total_gross_savings_in_period",
-        "total_hours_saved_until_now",
-        "implemented_solutions_count",
-        "solutions_started_in_period_count"
-      ],
       "valueFieldLabels": {
         "total_investment_in_period": "Investimento total",
         "total_gross_costs_until_now": "Investimento total",
@@ -7261,7 +7823,14 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count",
+        "solutions_started_in_period_count"
+      ]
     },
     {
       "operationId": "get_transformometro_savings_investment_series",
@@ -7337,6 +7906,24 @@
         "start_date",
         "end_date"
       ],
+      "openEndedDateRange": true,
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      },
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
+      "tableFields": "points",
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -7351,25 +7938,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "openEndedDateRange": true,
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
-      },
-      "tableFields": "points",
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      }
+      ]
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -12332,10 +12901,10 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "list_production_appointments",
@@ -13338,23 +13907,23 @@
         "start_date",
         "end_date"
       ],
-      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
-      "tvConstraints": {
-        "maxRows": 10000,
-        "bulkList": true
-      },
       "valueFieldTypes": {
         "eficiencia_percentual": "number",
         "resultado_mod": "number",
         "tempo_real_horas": "number",
         "tempo_previsto_horas": "number"
       },
+      "tvConstraints": {
+        "maxRows": 10000,
+        "bulkList": true
+      },
       "valueFields": [
         "eficiencia_percentual",
         "resultado_mod",
         "tempo_real_horas",
         "tempo_previsto_horas"
-      ]
+      ],
+      "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center."
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -13513,23 +14082,23 @@
         "start_date",
         "end_date"
       ],
-      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
-      "tvConstraints": {
-        "maxRows": 200
-      },
       "valueFieldTypes": {
         "efficiency_pct": "number",
         "appointment_count": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFieldLabels": {
+        "efficiency_pct": "Eficiência %",
+        "appointment_count": "Apontamentos",
+        "work_center": "Centro de trabalho"
       },
       "valueFields": [
         "efficiency_pct",
         "appointment_count"
       ],
-      "valueFieldLabels": {
-        "efficiency_pct": "Eficiência %",
-        "appointment_count": "Apontamentos",
-        "work_center": "Centro de trabalho"
-      }
+      "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado)."
     },
     {
       "operationId": "get_production_losses_records",
@@ -14134,10 +14703,21 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "seriesField": "points",
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -14153,18 +14733,7 @@
           "direction": "asc"
         }
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ]
+      "seriesField": "points"
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -14222,14 +14791,14 @@
         "value",
         "otdPct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -14581,10 +15150,6 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -14592,7 +15157,11 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      }
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "seriesField": "points"
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -14650,14 +15219,14 @@
         "value",
         "oeePct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -15861,13 +16430,13 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
+      },
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
       },
       "tableFields": "items"
     },
@@ -19039,20 +19608,20 @@
         "start_date",
         "end_date"
       ],
-      "labelAliases": [
-        "Auditoria 5S — resumo"
-      ],
-      "valueFields": [
-        "value",
-        "average_score"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "value",
+        "average_score"
+      ],
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ]
     },
     {
       "operationId": "get_audit_5s_summary_series",
@@ -19652,15 +20221,6 @@
         "start_date",
         "end_date"
       ],
-      "labelAliases": [
-        "Kaizens — resumo e listagem (PostgreSQL)",
-        "Kaizens — resumo e listagem (Google Sheets)"
-      ],
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
@@ -19669,7 +20229,16 @@
         "ideas_goal": "Ideias / meta",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
+      "labelAliases": [
+        "Kaizens — resumo e listagem (PostgreSQL)",
+        "Kaizens — resumo e listagem (Google Sheets)"
+      ]
     },
     {
       "operationId": "get_kaizen_summary_series",
@@ -20276,33 +20845,33 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "type": "customer"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "labelAliases": [
-        "Qualidade — dias sem NC no cliente",
-        "Dias sem defeitos no cliente"
-      ],
       "valueFieldTypes": {
         "value": "number",
         "current_days_without_nc": "number",
         "record_days_without_nc": "number",
         "nc_count": "number"
       },
-      "valueFields": [
-        "value",
-        "current_days_without_nc"
-      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldLabels": {
         "value": "Dias sem NC",
         "current_days_without_nc": "Dias atuais sem NC",
         "record_days_without_nc": "Recorde de dias sem NC",
         "last_nc_date": "Data da última NC"
-      }
+      },
+      "defaultParams": {
+        "type": "customer"
+      },
+      "valueFields": [
+        "value",
+        "current_days_without_nc"
+      ],
+      "labelAliases": [
+        "Qualidade — dias sem NC no cliente",
+        "Dias sem defeitos no cliente"
+      ]
     },
     {
       "operationId": "list_ppm_external",
@@ -20486,14 +21055,6 @@
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -20505,7 +21066,15 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -20689,15 +21258,6 @@
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -20709,7 +21269,16 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -21280,14 +21849,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
-      "valueFields": [
-        "value",
-        "sharePct",
-        "percentual",
-        "quantity",
-        "occurrenceCount"
-      ],
       "valueFieldLabels": {
         "value": "Valor (R$)",
         "sharePct": "Participação (%)",
@@ -21296,7 +21857,15 @@
         "occurrenceCount": "Ocorrências",
         "code": "Código",
         "label": "Descrição"
-      }
+      },
+      "tableFields": "items",
+      "valueFields": [
+        "value",
+        "sharePct",
+        "percentual",
+        "quantity",
+        "occurrenceCount"
+      ]
     },
     {
       "operationId": "get_refugos_registros",
@@ -22839,6 +23408,26 @@
       ]
     },
     {
+      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "httpMethod": "GET",
+      "label": "Get Protheus User By Email Route",
+      "category": "supplies",
+      "path": "/supplies/protheus-users/by-email",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "email": {
+          "type": "string",
+          "optional": false,
+          "label": "Email"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "get_supplies_purchase_order_otd",
       "httpMethod": "GET",
       "label": "OTD pedidos de compra (MP)",
@@ -22970,10 +23559,6 @@
         "start_date",
         "end_date"
       ],
-      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
-      "tvConstraints": {
-        "maxRows": 200
-      },
       "openEndedDateRange": true,
       "valueFieldTypes": {
         "purchase_order_otd_pct": "number",
@@ -22984,12 +23569,16 @@
         "invoice_issue_date": "date",
         "purchase_order_issue_date": "date"
       },
+      "tvConstraints": {
+        "maxRows": 200
+      },
       "tableFields": "lines",
       "valueFields": [
         "purchase_order_otd_pct",
         "late_lines",
         "total_lines"
-      ]
+      ],
+      "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view."
     },
     {
       "operationId": "get_supplies_purchase_order_otd_series",
@@ -23050,6 +23639,148 @@
       ]
     },
     {
+      "operationId": "list_supplies_purchase_request_lines",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Supplies purchase request line",
+      "category": "supplies",
+      "path": "/supplies/purchase-requests/lines",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Retorna supplies purchase request line via API DELPI. Lista paginada de registros. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "cost_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost centers"
+        },
+        "request_number": {
+          "type": "string",
+          "optional": true,
+          "label": "Request number"
+        },
+        "requester_protheus_user_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Requester protheus user id"
+        },
+        "product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
+        },
+        "order_number": {
+          "type": "string",
+          "optional": true,
+          "label": "Order number"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_from",
+        "date_to"
+      ]
+    },
+    {
+      "operationId": "get_supplies_purchase_request_lines",
+      "httpMethod": "GET",
+      "label": "Lista — Supplies purchase request line",
+      "category": "supplies",
+      "path": "/supplies/purchase-requests/lines/{branch}/{request_number}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Retorna supplies purchase request line via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "in": "path",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "request_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Request number",
+          "in": "path"
+        },
+        "date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "cost_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost centers"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_from",
+        "date_to"
+      ]
+    },
+    {
       "operationId": "get_supplies_purchase_requests_open_coverage",
       "httpMethod": "GET",
       "label": "Lista — Solicitações de compra em aberto com cobertura",
@@ -23075,6 +23806,134 @@
         }
       },
       "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_orders",
+      "httpMethod": "GET",
+      "label": "Lista — Pedidos de compra recém-vinculados a solicitações de compra",
+      "category": "supplies",
+      "path": "/supplies/purchase-requests/recent-linked-orders",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Retorna pedidos de compra recém-vinculados a solicitações de compra via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "paramSchema": {
+        "after_recno": {
+          "type": "integer",
+          "optional": true,
+          "label": "After recno",
+          "default": 0
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 100,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_receipts",
+      "httpMethod": "GET",
+      "label": "Lista — Recebimentos de nf de entrada recém-vinculados a pedidos e solicitações de compra",
+      "category": "supplies",
+      "path": "/supplies/purchase-requests/recent-linked-receipts",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Retorna recebimentos de NF de entrada recém-vinculados a pedidos e solicitações de compra via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "paramSchema": {
+        "after_recno": {
+          "type": "integer",
+          "optional": true,
+          "label": "After recno",
+          "default": 0
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 100,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "httpMethod": "GET",
+      "label": "List Supplies Purchase Request Requesters Route",
+      "category": "supplies",
+      "path": "/supplies/purchase-requests/requesters",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "date_from": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_to": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "cost_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Cost centers"
+        },
+        "request_number": {
+          "type": "string",
+          "optional": true,
+          "label": "Request number"
+        },
+        "product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
+        },
+        "order_number": {
+          "type": "string",
+          "optional": true,
+          "label": "Order number"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_from",
+        "date_to"
+      ]
     },
     {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",
@@ -23657,25 +24516,25 @@
         }
       },
       "paramStrategy": "direct",
+      "tvConstraints": {
+        "maxRows": 50,
+        "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "stock_value": "Valor (R$)",
+        "quantity": "Quantidade"
+      },
       "defaultParams": {
         "page": 1,
         "page_size": 50,
         "only_positive": true,
         "sort": "stock_value_desc"
       },
-      "tvConstraints": {
-        "maxRows": 50,
-        "requiresBranchPermission": true
-      },
       "tableFields": "items",
       "valueFields": [
         "stock_value",
         "quantity"
-      ],
-      "valueFieldLabels": {
-        "stock_value": "Valor (R$)",
-        "quantity": "Quantidade"
-      }
+      ]
     },
     {
       "operationId": "get_supplies_stock_balances_summary",
@@ -23722,17 +24581,17 @@
         "maxRows": 12,
         "requiresBranchPermission": true
       },
+      "valueFieldLabels": {
+        "product_count": "Qtd. de produtos",
+        "total_stock_value": "Valor do estoque (R$)",
+        "total_quantity": "Quantidade total"
+      },
       "tableFields": "by_warehouse",
       "valueFields": [
         "product_count",
         "total_stock_value",
         "total_quantity"
-      ],
-      "valueFieldLabels": {
-        "product_count": "Qtd. de produtos",
-        "total_stock_value": "Valor do estoque (R$)",
-        "total_quantity": "Quantidade total"
-      }
+      ]
     },
     {
       "operationId": "get_supplies_stock_value",
@@ -24587,217 +25446,6 @@
         }
       },
       "paramStrategy": "direct"
-    },
-    {
-      "operationId": "get_commercial_rol_by_branch",
-      "httpMethod": "GET",
-      "label": "Indicador — ROL por filial",
-      "category": "commercial",
-      "path": "/commercial/rol/by-branch",
-      "allowedDisplayModes": [
-        "table",
-        "auto"
-      ],
-      "metaShape": "paged_list",
-      "description": "ROL das filiais 01 e 02 em lista tabular.",
-      "paramSchema": {
-        "start_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data início",
-          "format": "date"
-        },
-        "end_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data fim",
-          "format": "date"
-        },
-        "customer_segment": {
-          "type": "string",
-          "optional": true,
-          "label": "Segmento de cliente",
-          "enum": [
-            "weg",
-            "new_business"
-          ]
-        },
-        "customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes"
-        },
-        "customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (incluir)"
-        },
-        "exclude_customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes (excluir)"
-        },
-        "exclude_customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (excluir)"
-        }
-      },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "whenToUse": "Use em tabela comparativa por filial."
-    },
-    {
-      "operationId": "get_sales_order_otd_by_customer",
-      "httpMethod": "GET",
-      "label": "Indicador — OTD por cliente",
-      "category": "commercial",
-      "path": "/commercial/sales-order-otd/by-customer",
-      "allowedDisplayModes": [
-        "table",
-        "auto"
-      ],
-      "metaShape": "paged_list",
-      "description": "OTD agregado por cliente.",
-      "paramSchema": {
-        "branch": {
-          "type": "string",
-          "optional": true,
-          "label": "Filial",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
-        },
-        "start_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data início",
-          "format": "date",
-          "description": "Início do período (AAAA-MM-DD)."
-        },
-        "end_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data fim",
-          "format": "date",
-          "description": "Fim do período (AAAA-MM-DD)."
-        },
-        "customer_segment": {
-          "type": "string",
-          "optional": true,
-          "label": "Segmento",
-          "enum": [
-            "weg",
-            "new_business"
-          ],
-          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
-        },
-        "customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes",
-          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
-        },
-        "page": {
-          "type": "integer",
-          "optional": true,
-          "label": "Página"
-        },
-        "page_size": {
-          "type": "integer",
-          "optional": true,
-          "label": "Itens por página"
-        },
-        "customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (incluir)"
-        },
-        "exclude_customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes (excluir)"
-        },
-        "exclude_customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (excluir)"
-        }
-      },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "whenToUse": "Use em tabela de OTD por cliente."
-    },
-    {
-      "operationId": "get_sales_order_otd_by_branch",
-      "httpMethod": "GET",
-      "label": "Indicador — OTD por filial",
-      "category": "commercial",
-      "path": "/commercial/sales-order-otd/by-branch",
-      "allowedDisplayModes": [
-        "table",
-        "auto"
-      ],
-      "metaShape": "paged_list",
-      "description": "OTD das filiais 01 e 02.",
-      "paramSchema": {
-        "start_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data início",
-          "format": "date"
-        },
-        "end_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data fim",
-          "format": "date"
-        },
-        "customer_segment": {
-          "type": "string",
-          "optional": true,
-          "label": "Segmento de cliente",
-          "enum": [
-            "weg",
-            "new_business"
-          ]
-        },
-        "customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes"
-        },
-        "customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (incluir)"
-        },
-        "exclude_customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes (excluir)"
-        },
-        "exclude_customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (excluir)"
-        }
-      },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "whenToUse": "Use em tabela de OTD por filial."
     }
   ]
 }

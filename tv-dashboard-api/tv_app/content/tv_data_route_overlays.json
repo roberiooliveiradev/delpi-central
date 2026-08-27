@@ -1170,6 +1170,51 @@
       "description": "OTD e atendimento agregados por cliente.",
       "whenToUse": "Use em tabela de OTD por cliente."
     },
+    "get_sales_order_otd_series_by_customer": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty",
+        "total_lines"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "branch": "Filial",
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)"
+      },
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number"
+      },
+      "label": "Série temporal de OTD de pedidos por cliente",
+      "description": "OTD e atendimento por cliente em cada bucket temporal (cliente × período).",
+      "whenToUse": "Use em tabela cliente×semana (ou outra granularidade); filtre por customer_names ou use top_customers."
+    },
     "get_sales_order_otd_by_branch": {
       "tableFields": "items",
       "allowedDisplayModes": [

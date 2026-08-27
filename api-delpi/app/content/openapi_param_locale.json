@@ -431,6 +431,18 @@
         }
       }
     },
+    "top_customers": {
+      "locale": {
+        "en": {
+          "label": "Top customers",
+          "description": "Max customers by total quantity when no customer_codes or customer_names filter is set (default 20, max 100)."
+        },
+        "pt-BR": {
+          "label": "Top clientes",
+          "description": "Máximo de clientes por quantidade total quando não há filtro customer_codes/customer_names (padrão 20, máximo 100)."
+        }
+      }
+    },
     "include": {
       "locale": {
         "en": {
