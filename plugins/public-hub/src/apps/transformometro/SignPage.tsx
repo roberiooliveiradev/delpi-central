@@ -118,15 +118,18 @@ export function SignPage({ context, token }: Props) {
         </header>
       )}
 
-      <MeetingMinuteDocumentView
-        minute={context.minute}
-        version={context.version}
-        participants={context.participants}
-        signers={context.signers}
-        signatures={context.signatures}
-        getSignatureImage={getSignatureImage}
-        ariaLabel="Prévia da ata Transforma+"
-      />
+      <section className="pub-sign-document" aria-label="Documento">
+        <h2 className="pub-sign-document__title">Documento</h2>
+        <MeetingMinuteDocumentView
+          minute={context.minute}
+          version={context.version}
+          participants={context.participants}
+          signers={context.signers}
+          signatures={context.signatures}
+          getSignatureImage={getSignatureImage}
+          ariaLabel="Prévia da ata Transforma+"
+        />
+      </section>
 
       {!showSignedBanner ? (
         <form className="tm-sign__form" onSubmit={onSign}>

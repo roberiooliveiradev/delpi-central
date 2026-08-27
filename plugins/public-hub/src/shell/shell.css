@@ -396,3 +396,26 @@ html.pub-kiosk #root {
   min-height: 0;
   flex: none;
 }
+
+/* Seção Documento — páginas públicas de assinatura (CIPA / Transformômetro). */
+.pub-sign-document {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.pub-sign-document__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--pub-text);
+}
+
+.pub-sign-document .delpi-ui-document-reader {
+  width: 100%;
+}
+
+.pub-sign-document .delpi-ui-document-reader__toolbar {
+  justify-content: flex-end;
+}

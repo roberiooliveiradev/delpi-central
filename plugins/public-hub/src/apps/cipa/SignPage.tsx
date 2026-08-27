@@ -118,15 +118,18 @@ export function CipaSignPage({ context, token }: Props) {
         </header>
       )}
 
-      <CipaMeetingMinuteDocumentView
-        minute={context.minute}
-        version={context.version}
-        participants={context.participants as never[]}
-        signers={context.signers as never[]}
-        signatures={context.signatures}
-        getSignatureImage={getSignatureImage}
-        ariaLabel="Prévia da ata CIPA"
-      />
+      <section className="pub-sign-document" aria-label="Documento">
+        <h2 className="pub-sign-document__title">Documento</h2>
+        <CipaMeetingMinuteDocumentView
+          minute={context.minute}
+          version={context.version}
+          participants={context.participants as never[]}
+          signers={context.signers as never[]}
+          signatures={context.signatures}
+          getSignatureImage={getSignatureImage}
+          ariaLabel="Prévia da ata CIPA"
+        />
+      </section>
 
       {!showSignedBanner ? (
         <form className="cipa-sign__form" onSubmit={onSign}>
