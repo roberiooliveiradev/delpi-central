@@ -70,7 +70,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     markerRadius: "Raio do marcador (ponto) em pixels.",
     applyMarkerStyleToAll: "Replica o estilo do marcador em todos os pontos da série.",
     tableFrameShadow: "Sombra da moldura da tabela.",
-    textShadow: "Preset de sombra tipográfica no texto selecionado.",
+    textShadow: "Sombra tipográfica — presets e editor completo (paridade forma).",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Camadas, alinhamento, agrupamento e rotação — mesmo padrão Organizar do Excel.",

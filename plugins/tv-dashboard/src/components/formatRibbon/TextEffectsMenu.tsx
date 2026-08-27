@@ -2,9 +2,14 @@ import { ALargeSmall, FlipVertical2 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import {
   COMUNICADO_TEXT_SHADOW_PRESETS,
-  resolveTextShadowPresetId,
 } from "@delpi/tv-dashboard-presentation";
-import { AnchoredPanelPortal, FieldLabel, HintAction, useRibbonSectionPopoverSurface } from "@delpi/plugin-ui/index";
+import {
+  AnchoredPanelPortal,
+  FieldLabel,
+  HintAction,
+  TextShadowMenu,
+  useRibbonSectionPopoverSurface,
+} from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
@@ -13,6 +18,12 @@ import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonSelect } from "../tdRibbonUi";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+
+const TEXT_SHADOW_PRESETS = COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
+  id: preset.id,
+  label: preset.label,
+  value: preset.value,
+}));
 
 /** Espessuras do contorno tipográfico (pt). */
 const TEXT_STROKE_WIDTH_OPTIONS = [0, 0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
@@ -31,115 +42,106 @@ type PanelProps = {
   formatStyle: TextFormatStyleSnapshot | undefined;
   onUpdate: (patch: TextFormatStyleSnapshot) => void;
   idPrefix: string;
+  shadowInline?: boolean;
 };
 
 /** Controles de efeitos — compartilhados entre popover e sidebar. */
-function TextEffectsPanel({ formatStyle, onUpdate, idPrefix }: PanelProps) {
+function TextEffectsPanel({ formatStyle, onUpdate, idPrefix, shadowInline }: PanelProps) {
   const strokeId = `${idPrefix}-stroke-w`;
-  const shadowId = `${idPrefix}-shadow`;
 
   return (
     <div className="td-text-effects-panel" role="group" aria-label="Efeitos de texto">
-      <div className="td-text-effects-panel__row">
-        <TvRibbonColorPicker
-          hint={H.textStroke}
-          label="Contorno"
-          ariaLabel="Contorno do texto"
-          variant="outline"
-          value={formatStyle?.textStrokeColor ?? ""}
-          onChange={(color) =>
-            onUpdate({
-              textStrokeColor: color,
-              textStrokeWidth:
-                formatStyle?.textStrokeWidth && formatStyle.textStrokeWidth > 0
-                  ? formatStyle.textStrokeWidth
-                  : 1,
-            })
-          }
-          onNoFill={() =>
-            onUpdate({
-              textStrokeColor: undefined,
-              textStrokeWidth: 0,
-            })
-          }
-        />
-        <div className="td-text-effects-panel__field">
-          <FieldLabel
-            htmlFor={strokeId}
-            label="Espessura"
+      <section className="td-text-effects-panel__section" aria-label="Contorno">
+        <p className="td-text-effects-panel__section-label">Contorno</p>
+        <div className="td-text-effects-panel__row">
+          <TvRibbonColorPicker
             hint={H.textStroke}
-            className="td-deck-ribbon__field-label"
-          />
-          <TdRibbonSelect
-            id={strokeId}
-            className="td-deck-ribbon__select--stroke-w"
-            aria-label="Espessura do contorno"
-            value={String(formatStyle?.textStrokeWidth ?? 0)}
-            options={TEXT_STROKE_WIDTH_OPTIONS.map((width) => ({
-              value: String(width),
-              label: width === 0 ? "Sem" : `${width} pt`,
-            }))}
-            onChange={(value) => {
-              const width = Math.max(0, Number(value) || 0);
+            label="Contorno"
+            ariaLabel="Contorno do texto"
+            variant="outline"
+            value={formatStyle?.textStrokeColor ?? ""}
+            onChange={(color) =>
               onUpdate({
-                textStrokeWidth: width,
-                textStrokeColor:
-                  width > 0
-                    ? formatStyle?.textStrokeColor || formatStyle?.color || "#0f172a"
-                    : undefined,
-              });
-            }}
+                textStrokeColor: color,
+                textStrokeWidth:
+                  formatStyle?.textStrokeWidth && formatStyle.textStrokeWidth > 0
+                    ? formatStyle.textStrokeWidth
+                    : 1,
+              })
+            }
+            onNoFill={() =>
+              onUpdate({
+                textStrokeColor: undefined,
+                textStrokeWidth: 0,
+              })
+            }
           />
+          <div className="td-text-effects-panel__field">
+            <FieldLabel
+              htmlFor={strokeId}
+              label="Espessura"
+              hint={H.textStroke}
+              className="td-deck-ribbon__field-label"
+            />
+            <TdRibbonSelect
+              id={strokeId}
+              className="td-deck-ribbon__select--stroke-w"
+              aria-label="Espessura do contorno"
+              value={String(formatStyle?.textStrokeWidth ?? 0)}
+              options={TEXT_STROKE_WIDTH_OPTIONS.map((width) => ({
+                value: String(width),
+                label: width === 0 ? "Sem" : `${width} pt`,
+              }))}
+              onChange={(value) => {
+                const width = Math.max(0, Number(value) || 0);
+                onUpdate({
+                  textStrokeWidth: width,
+                  textStrokeColor:
+                    width > 0
+                      ? formatStyle?.textStrokeColor || formatStyle?.color || "#0f172a"
+                      : undefined,
+                });
+              }}
+            />
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="td-text-effects-panel__row">
-        <div className="td-text-effects-panel__field td-text-effects-panel__field--shadow">
-          <FieldLabel
-            htmlFor={shadowId}
-            label="Sombra"
-            hint={H.textShadow}
-            className="td-deck-ribbon__field-label"
-          />
-          <TdRibbonSelect
-            id={shadowId}
-            className="td-deck-ribbon__select--shadow"
-            aria-label="Sombra do texto"
-            value={resolveTextShadowPresetId(formatStyle?.textShadow)}
-            options={[
-              ...COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
-                value: preset.id,
-                label: preset.label,
-              })),
-              ...(resolveTextShadowPresetId(formatStyle?.textShadow) === "custom"
-                ? [{ value: "custom", label: "Personalizada" }]
-                : []),
-            ]}
-            onChange={(value) => {
-              const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === value);
-              onUpdate({
-                textShadow: value === "none" ? "" : (preset?.value ?? formatStyle?.textShadow),
-              });
-            }}
-          />
+      <section className="td-text-effects-panel__section" aria-label="Sombra">
+        <p className="td-text-effects-panel__section-label">Sombra</p>
+        <div className="td-text-effects-panel__row td-text-effects-panel__row--shadow">
+          <HintAction hint={H.textShadow} ariaLabel="Ajuda: Sombra tipográfica">
+            <TextShadowMenu
+              inline={shadowInline}
+              value={formatStyle?.textShadow || undefined}
+              presets={TEXT_SHADOW_PRESETS}
+              onChange={(value) => onUpdate({ textShadow: value ?? "" })}
+            />
+          </HintAction>
         </div>
-        <HintAction hint={H.textReflection} ariaLabel="Ajuda: Reflexo tipográfico">
-          <button
-            type="button"
-            className={[
-              "td-text-effects-panel__reflection",
-              formatStyle?.textReflection ? "td-text-effects-panel__reflection--on" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            aria-pressed={Boolean(formatStyle?.textReflection)}
-            onClick={() => onUpdate({ textReflection: !formatStyle?.textReflection })}
-          >
-            <FlipVertical2 size={16} aria-hidden="true" />
-            Reflexo
-          </button>
-        </HintAction>
-      </div>
+      </section>
+
+      <section className="td-text-effects-panel__section" aria-label="Reflexo">
+        <p className="td-text-effects-panel__section-label">Reflexo</p>
+        <div className="td-text-effects-panel__row">
+          <HintAction hint={H.textReflection} ariaLabel="Ajuda: Reflexo tipográfico">
+            <button
+              type="button"
+              className={[
+                "td-text-effects-panel__reflection",
+                formatStyle?.textReflection ? "td-text-effects-panel__reflection--on" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={Boolean(formatStyle?.textReflection)}
+              onClick={() => onUpdate({ textReflection: !formatStyle?.textReflection })}
+            >
+              <FlipVertical2 size={16} aria-hidden="true" />
+              Reflexo
+            </button>
+          </HintAction>
+        </div>
+      </section>
     </div>
   );
 }
@@ -167,6 +169,7 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "popover" }: 
         formatStyle={formatStyle}
         onUpdate={onUpdate}
         idPrefix={`td-pane-fx-${reactId}`}
+        shadowInline
       />
     );
   }
