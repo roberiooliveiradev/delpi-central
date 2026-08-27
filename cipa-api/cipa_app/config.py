@@ -102,6 +102,20 @@ class Settings:
     CIPA_PUBLIC_SIGN_PATH: str = _get_env(
         "CIPA_PUBLIC_SIGN_PATH", default="/p/cipa/sign"
     )
+    CIPA_SIGN_INVITE_MAIL_TRACE_ENABLED: bool = (
+        str(
+            _get_env("CIPA_SIGN_INVITE_MAIL_TRACE_ENABLED", default="false") or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    CIPA_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES: str = _get_env(
+        "CIPA_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES",
+        default="15",
+    )
+    CIPA_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT: str = _get_env(
+        "CIPA_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT",
+        default="50",
+    )
     CIPA_SIPAT_QR_DIR: str = _get_env(
         "CIPA_SIPAT_QR_DIR", default="/app/data/cipa/sipat-qr"
     )

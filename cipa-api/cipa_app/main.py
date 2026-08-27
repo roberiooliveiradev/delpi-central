@@ -1,6 +1,7 @@
+import asyncio
 import logging
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -53,7 +54,20 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    yield
+    trace_poller = None
+    if settings.CIPA_SIGN_INVITE_MAIL_TRACE_ENABLED:
+        from cipa_app.startup.sign_invite_mail_trace_job import (
+            run_sign_invite_mail_trace_loop,
+        )
+
+        trace_poller = asyncio.create_task(run_sign_invite_mail_trace_loop())
+    try:
+        yield
+    finally:
+        if trace_poller is not None:
+            trace_poller.cancel()
+            with suppress(asyncio.CancelledError):
+                await trace_poller
 
 
 app = FastAPI(
