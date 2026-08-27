@@ -152,6 +152,53 @@ def test_branch_breakdown_rows_normalizes_branch_codes():
     ]
 
 
+def test_branch_series_scalar_fields_flattens_branch_metrics():
+    from app.application.use_cases.commercial.commercial_analysis_payload_helpers import (
+        branch_series_scalar_fields,
+    )
+
+    fields = branch_series_scalar_fields(
+        {"otd_pct": 91.0, "total_qty": 10.0},
+        {"otd_pct": 88.0, "total_qty": 12.0},
+        "otd_pct",
+        "total_qty",
+    )
+    assert fields == {
+        "otd_pct_filial_01": 91.0,
+        "otd_pct_filial_02": 88.0,
+        "total_qty_filial_01": 10.0,
+        "total_qty_filial_02": 12.0,
+    }
+
+
+def test_otd_group_by_none_series_uses_scalar_branch_fields():
+    repo = MagicMock()
+    repo.get_sales_order_otd_analysis_summary.return_value = {
+        "total_lines": 10,
+        "total_qty": 100.0,
+        "fulfilled_qty": 90.0,
+        "on_time_lines": 9,
+        "late_lines": 1,
+        "fulfillment_pct": 90.0,
+        "otd_pct": 90.0,
+    }
+    uc = GetCommercialSalesOrderOtdAnalysisUseCase(sales_order_otd_repository=repo)
+    result = uc.execute(
+        CommercialAnalysisFilterRequest(
+            start_date="20260803",
+            end_date="20260807",
+            group_by="none",
+        )
+    )
+    assert result["by_customer"] == []
+    assert len(result["series"]) >= 1
+    row = result["series"][0]
+    assert row["otd_pct_filial_01"] == 90.0
+    assert row["otd_pct_filial_02"] == 90.0
+    assert "branch_01" not in row
+    assert "branch_02" not in row
+
+
 def test_otd_group_by_customer_and_branch():
     repo = MagicMock()
     repo.get_sales_order_otd_analysis_summary.return_value = {

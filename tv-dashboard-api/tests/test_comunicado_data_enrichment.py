@@ -2335,3 +2335,52 @@ def test_commercial_rol_table_field_switches_with_group_by():
         50,
     )
     assert rows[0]["period_label"] == "sem 1"
+
+
+def test_commercial_route_unset_group_by_uses_catalog_default_for_table_field():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _effective_route_params,
+        _resolve_table_field,
+    )
+    from tv_app.application.services.tv_data_route_catalog_service import (
+        TvDataRouteCatalogService,
+    )
+
+    route = TvDataRouteCatalogService().get_route("get_commercial_sales_order_otd_analysis")
+    assert isinstance(route, dict)
+    effective = _effective_route_params({}, route)
+    assert effective.get("group_by") == "customer"
+    assert _resolve_table_field(route, effective) == "by_customer"
+
+
+def test_otd_series_table_rows_avoid_object_branch_cells():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _extract_table_rows,
+        _resolve_table_field,
+    )
+
+    route_info = {
+        "tableFields": "series",
+        "tableFieldsByParam": {
+            "group_by": {
+                "customer": "by_customer",
+                "branch": "by_branch",
+                "none": "series",
+            }
+        },
+        "seriesField": "series",
+    }
+    payload = {
+        "series": [
+            {
+                "period_label": "sem 1",
+                "otd_pct_filial_01": 91.0,
+                "otd_pct_filial_02": 88.0,
+            }
+        ]
+    }
+    table_field = _resolve_table_field(route_info, {"group_by": "none"})
+    rows, columns = _extract_table_rows(payload, table_field, 50, meta={})
+    assert rows[0]["otd_pct_filial_01"] == 91.0
+    assert all(not isinstance(cell, dict) for row in rows for cell in row.values())
+    assert {col["key"] for col in columns} >= {"otd_pct_filial_01", "otd_pct_filial_02"}

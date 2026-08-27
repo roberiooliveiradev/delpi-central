@@ -6,6 +6,7 @@ from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtd
 from app.application.shared.chart_period_buckets import build_period_buckets
 from app.application.use_cases.commercial.commercial_analysis_payload_helpers import (
     branch_breakdown_rows,
+    branch_series_scalar_fields,
 )
 from app.application.use_cases.commercial.get_commercial_rol_analysis_use_case import (
     _to_iso_date,
@@ -192,20 +193,26 @@ class GetCommercialSalesOrderOtdAnalysisUseCase:
                 on_time = metrics_01["on_time_lines"] + metrics_02["on_time_lines"]
                 if lines:
                     primary["otd_pct"] = round(on_time * 100.0 / lines, 2)
-            points.append(
-                {
-                    "period_label": bucket.label,
-                    "sort_key": bucket.key,
-                    "start_date": bucket.start_date,
-                    "end_date": bucket.end_date,
-                    "total_qty": (primary or {}).get("total_qty"),
-                    "fulfilled_qty": (primary or {}).get("fulfilled_qty"),
-                    "fulfillment_pct": (primary or {}).get("fulfillment_pct"),
-                    "otd_pct": (primary or {}).get("otd_pct"),
-                    "branch_01": metrics_01,
-                    "branch_02": metrics_02,
-                }
+            point: dict[str, Any] = {
+                "period_label": bucket.label,
+                "sort_key": bucket.key,
+                "start_date": bucket.start_date,
+                "end_date": bucket.end_date,
+                "total_qty": (primary or {}).get("total_qty"),
+                "fulfilled_qty": (primary or {}).get("fulfilled_qty"),
+                "fulfillment_pct": (primary or {}).get("fulfillment_pct"),
+                "otd_pct": (primary or {}).get("otd_pct"),
+            }
+            point.update(
+                branch_series_scalar_fields(
+                    metrics_01,
+                    metrics_02,
+                    "otd_pct",
+                    "fulfillment_pct",
+                    "total_qty",
+                )
             )
+            points.append(point)
         return points
 
     def _build_by_customer(

@@ -11,6 +11,9 @@ from tv_app.application.services.comunicado_input_filters_service import (
     merge_filter_layers,
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
+from tv_app.application.services.data.tv_data_param_defaults_service import (
+    apply_catalog_param_defaults,
+)
 from tv_app.application.services.data.tv_data_param_validation_service import (
     assert_merged_route_params,
 )
@@ -714,6 +717,17 @@ def _payload_node(data: Any, path: str | None) -> Any:
             return None
         node = node.get(part)
     return node
+
+
+def _effective_route_params(
+    merged_params: dict[str, Any] | None,
+    route_info: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Params efetivos para apresentação — alinha com gateway (defaultParams do catálogo)."""
+    return apply_catalog_param_defaults(
+        merged_params if isinstance(merged_params, dict) else {},
+        route_info if isinstance(route_info, dict) else {},
+    )
 
 
 def _resolve_table_field(
@@ -1464,23 +1478,24 @@ class ComunicadoDataEnrichmentService:
     ) -> dict[str, Any]:
         mode = normalize_display_mode(display_mode)
         data = unwrap_operational_data(data)
+        effective_params = _effective_route_params(merged_params, route_info)
         if mode == "auto":
             mode = _infer_auto_display_mode(
                 data,
                 route_info,
                 meta,
                 binding=binding,
-                params=merged_params,
+                params=effective_params,
             )
 
         value_fields = _value_fields_for_binding(route_info, binding)
         metrics = _extract_kpi_metrics(
             data, route_info=route_info, binding=binding, meta=meta
         )
-        branch = merged_params.get("branch")
+        branch = effective_params.get("branch")
         branch_str = str(branch).strip() if branch else None
         max_rows = _resolve_table_max_rows(binding, route_info)
-        table_field = _resolve_table_field(route_info, merged_params)
+        table_field = _resolve_table_field(route_info, effective_params)
 
         if mode == "kpi":
             primary = metrics[0] if metrics else None
@@ -1684,7 +1699,10 @@ class ComunicadoDataEnrichmentService:
                     data,
                     route_info,
                     branch=branch_str,
-                    params=merged_params if isinstance(merged_params, dict) else None,
+                    params=_effective_route_params(
+                        merged_params if isinstance(merged_params, dict) else None,
+                        route_info,
+                    ),
                 ),
             )
             transformed = transform_result["data"]
