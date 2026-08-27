@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ComunicadoChartType } from "./comunicadoTypes";
 import { chartTypeHasBasicRender, chartTypeLabel, toSeriesChartKind } from "./comunicadoChartView";
 
-const ALL_CHART_TYPES: ComunicadoChartType[] = [
+const SERIES_CHART_TYPES: ComunicadoChartType[] = [
   "line",
   "bar",
   "horizontal_bar",
@@ -21,8 +21,8 @@ const ALL_CHART_TYPES: ComunicadoChartType[] = [
 ];
 
 describe("toSeriesChartKind", () => {
-  it("mapeia todos os ComunicadoChartType para paint nativo", () => {
-    for (const chartType of ALL_CHART_TYPES) {
+  it("mapeia tipos series-based para paint nativo", () => {
+    for (const chartType of SERIES_CHART_TYPES) {
       expect(toSeriesChartKind(chartType), chartType).not.toBeNull();
       expect(chartTypeHasBasicRender(chartType)).toBe(true);
     }
@@ -39,5 +39,11 @@ describe("toSeriesChartKind", () => {
     expect(toSeriesChartKind("funnel")).toBe("funnel");
     expect(toSeriesChartKind("horizontal_bar")).toBe("horizontal_bar");
     expect(chartTypeLabel("horizontal_bar")).toBe("Barras");
+  });
+
+  it("gauge tem paint básico sem SeriesChartKind", () => {
+    expect(toSeriesChartKind("gauge")).toBeNull();
+    expect(chartTypeHasBasicRender("gauge")).toBe(true);
+    expect(chartTypeLabel("gauge")).toBe("Velocímetro");
   });
 });

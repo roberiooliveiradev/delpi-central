@@ -58,4 +58,14 @@ describe("SpeedometerGauge", () => {
     render(<SpeedometerGauge value={null} label="Sem dados" unit="%" />);
     expect(screen.getByText("—")).toBeTruthy();
   });
+
+  it("accentColor pinta agulha e hub", () => {
+    const { container } = render(
+      <SpeedometerGauge value={90} label="Accent" accentColor="#112233" />,
+    );
+    const needle = container.querySelector(".delpi-ui-speedometer-gauge__needle");
+    const hub = container.querySelector(".delpi-ui-speedometer-gauge__hub");
+    expect(needle?.getAttribute("stroke")).toBe("#112233");
+    expect(hub?.getAttribute("fill")).toBe("#112233");
+  });
 });

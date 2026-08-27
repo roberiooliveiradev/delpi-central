@@ -13,7 +13,8 @@ export type DelpiChartType =
   | "combo"
   | "waterfall"
   | "funnel"
-  | "histogram";
+  | "histogram"
+  | "gauge";
 
 export type DelpiChartCatalogCategory = "series" | "comparison" | "distribution" | "special";
 
@@ -47,6 +48,7 @@ export const DELPI_CHART_TYPE_CATALOG: DelpiChartCatalogEntry[] = [
   { type: "combo", label: "Combinado", category: "special", icon: "ChartSpline" },
   { type: "waterfall", label: "Cascata", category: "special", icon: "ChartNoAxesColumnIncreasing" },
   { type: "funnel", label: "Funil", category: "special", icon: "Filter" },
+  { type: "gauge", label: "Velocímetro", category: "special", icon: "Gauge" },
 ];
 
 export type DelpiTableInsertPreset = "grid" | "minimal" | "banded";

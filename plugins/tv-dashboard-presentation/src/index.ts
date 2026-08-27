@@ -1175,6 +1175,7 @@ export {
   normalizeChartProjection,
   normalizeKpiProjection,
   normalizeTableProjection,
+  resolveProjectedGoalValue,
   suggestDefaultProjections,
   tableProjectionFromSelectedFields,
   type ChartSeriesProjection,
@@ -1187,15 +1188,22 @@ export {
   type ViewProjectionSelection,
 } from "./viewProjection";
 export {
+  WELL_GOAL,
   chartAxesEditorHint,
   chartCategoryWellLabel,
+  chartGoalWellLabel,
+  chartPolicyHasGoalWell,
   chartSeriesWellLabel,
   resolveChartDataPolicy,
   resolveChartSeriesDefaultAggregation,
   type ChartDataPolicy,
   type ChartDataRowMode,
+  type ChartDataWellRole,
   type ChartDataWellSpec,
 } from "./chartDataPolicy";
+export { resolveEffectiveChartGoal } from "./resolveEffectiveChartGoal";
+export { resolveGaugeChartModel, type GaugeChartModel } from "./gaugeChartModel";
+export { GaugeChartView } from "./GaugeChartView";
 export {
   parseProjectionNumber,
   FIELD_LIST_JOIN,

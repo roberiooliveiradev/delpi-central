@@ -149,8 +149,19 @@ export function VisualDataViewInspector({
       ...selected,
       chartProjection: next,
     } as ComunicadoBlock);
+    const enableGoal = Boolean(next?.goalField?.trim());
+    const chartOptionsPatch =
+      enableGoal && selected.type === "chart_view"
+        ? {
+            chartOptions: {
+              ...(selected.chartOptions ?? {}),
+              showGoalLine: true,
+            },
+          }
+        : {};
     updateSelected({
       chartProjection: next,
+      ...chartOptionsPatch,
       ...(framePatch ?? {}),
     } as Partial<ComunicadoBlock>);
   };
@@ -222,8 +233,12 @@ export function VisualDataViewInspector({
       valueFieldOptions.length > 0 ? (
         <DeckField
           id="td-view-chart-axes"
-          label="Eixos e séries"
-          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAxesProjection}
+          label={selected.chartType === "gauge" ? "Valor e meta" : "Eixos e séries"}
+          hint={
+            selected.chartType === "gauge"
+              ? TV_DASHBOARD_HELP_TOOLTIPS.data.chartGaugeProjection
+              : TV_DASHBOARD_HELP_TOOLTIPS.data.chartAxesProjection
+          }
         >
           <ChartAxesProjectionEditor
             idPrefix="td-view-chart-axis"

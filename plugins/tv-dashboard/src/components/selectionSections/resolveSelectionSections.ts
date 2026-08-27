@@ -91,18 +91,34 @@ function resolveSingleBlockSections(
       return withCommonTail(["typography", "shapeChrome", "inputBinding"]);
     case "kpi_view":
       return withCommonTail(["typography", "kpiAppearance", "numberFormat", "appearance"]);
-    case "chart_view":
-      return withCommonTail([
-        "typography",
-        "chartLayout",
-        "chartStyles",
-        "chartType",
-        "chartLabels",
-        "chartAxes",
-        "numberFormat",
-        "chartSeries",
-        "appearance",
-      ]);
+    case "chart_view": {
+      const isGauge = selected.chartType === "gauge";
+      return withCommonTail(
+        isGauge
+          ? [
+              "typography",
+              "chartLayout",
+              "chartStyles",
+              "chartType",
+              "chartLabels",
+              "chartAxes",
+              "numberFormat",
+              "chartSeries",
+              "appearance",
+            ]
+          : [
+              "typography",
+              "chartLayout",
+              "chartStyles",
+              "chartType",
+              "chartLabels",
+              "chartAxes",
+              "numberFormat",
+              "chartSeries",
+              "appearance",
+            ],
+      );
+    }
     case "table_view":
       return withCommonTail([
         "tableStyleOptions",

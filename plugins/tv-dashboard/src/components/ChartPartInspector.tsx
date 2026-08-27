@@ -13,8 +13,10 @@ import {
   clampChartPartFrame,
   defaultChartPartFrame,
   deleteChartPart,
+  discoverResolvedFieldOptions,
   formatDesignPx,
   hostRelativeFrameToPageBottomLeftPx,
+  isDataSourceBlockType,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
   partsToChartOptions,
@@ -25,10 +27,12 @@ import {
   resolveViewportPixelSize,
   serializeChartPartRef,
   upsertChartPartState,
+  VIEW_AGGREGATION_OPTIONS,
   type ComunicadoChartOptions,
   type ComunicadoChartPartFrame,
   type ComunicadoChartViewBlock,
   type ComunicadoFrame,
+  type ViewAggregation,
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -72,6 +76,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     viewportProfile,
     viewportWidth,
     viewportHeight,
+    blocks,
   } = useComunicadoEditor();
 
   if (!selectedChartPart) return null;
@@ -557,10 +562,81 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       {selectedChartPart.kind === "goalLine" ? (
         <>
           <p className="td-deck-inspector__hint">
-            Informe o valor numérico da meta. A linha só aparece no gráfico depois que o valor for
-            definido.
+            Amarre uma coluna numérica do mesmo modelo de dados ou informe um valor fixo. O número
+            fixo tem prioridade sobre a coluna. A meta só aparece com valor efetivo definido.
           </p>
-          <DeckField id="td-chart-part-goal-value" label="Valor da meta">
+          <DeckField id="td-chart-part-goal-field" label="Coluna de meta">
+            <FormSelectControl
+              id="td-chart-part-goal-field"
+              ariaLabel="Coluna de meta do modelo de dados"
+              value={block.chartProjection?.goalField ?? ""}
+              onChange={(value) => {
+                const trimmed = value.trim();
+                const nextProjection = {
+                  ...(block.chartProjection ?? {}),
+                  ...(trimmed
+                    ? {
+                        goalField: trimmed,
+                        goalAggregation: block.chartProjection?.goalAggregation ?? ("first" as ViewAggregation),
+                      }
+                    : { goalField: undefined, goalAggregation: undefined }),
+                };
+                const hasEncoding =
+                  Boolean(nextProjection.categoryField) ||
+                  Boolean(nextProjection.series?.length) ||
+                  Boolean(trimmed);
+                const nextOptions = { ...options, showGoalLine: true };
+                updateSelected({
+                  chartProjection: hasEncoding ? nextProjection : undefined,
+                  chartOptions: nextOptions,
+                  chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
+                } as Partial<typeof block>);
+              }}
+              options={[
+                { value: "", label: "Nenhuma (só número fixo)" },
+                ...(() => {
+                  const sourceId = block.dataSourceId?.trim();
+                  const source = sourceId
+                    ? blocks.find(
+                        (item) => item.id === sourceId && isDataSourceBlockType(item.type),
+                      )
+                    : undefined;
+                  const resolved =
+                    source && "resolved" in source ? source.resolved : block.resolved;
+                  return discoverResolvedFieldOptions(resolved).map((item) => ({
+                    value: item.field,
+                    label: item.label,
+                  }));
+                })(),
+              ]}
+            />
+          </DeckField>
+          {block.chartProjection?.goalField ? (
+            <DeckField id="td-chart-part-goal-agg" label="Agregação da coluna">
+              <FormSelectControl
+                id="td-chart-part-goal-agg"
+                ariaLabel="Agregação da coluna de meta"
+                value={block.chartProjection?.goalAggregation ?? "first"}
+                onChange={(value) => {
+                  const nextOptions = { ...options, showGoalLine: true };
+                  updateSelected({
+                    chartProjection: {
+                      ...(block.chartProjection ?? {}),
+                      goalField: block.chartProjection?.goalField,
+                      goalAggregation: value as ViewAggregation,
+                    },
+                    chartOptions: nextOptions,
+                    chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
+                  } as Partial<typeof block>);
+                }}
+                options={VIEW_AGGREGATION_OPTIONS.map((item) => ({
+                  value: item.value,
+                  label: item.label,
+                }))}
+              />
+            </DeckField>
+          ) : null}
+          <DeckField id="td-chart-part-goal-value" label="Valor da meta (override)">
             <NativeTextControl
               id="td-chart-part-goal-value"
               type="number"

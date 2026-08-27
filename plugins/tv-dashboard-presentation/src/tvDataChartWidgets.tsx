@@ -5,6 +5,7 @@ import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comu
 import { pieInnerRadiusForChartType, toSeriesChartKind } from "./comunicadoChartView";
 import type { ComunicadoChartType, ComunicadoDataResolved } from "./comunicadoTypes";
 import { formatNumber } from "./nativeFormat";
+import { resolveEffectiveChartGoal } from "./resolveEffectiveChartGoal";
 
 export function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
@@ -69,12 +70,18 @@ export function TvDataSeriesChartWidget({
   // Bubble: size é canal no ponto — nunca overlay de 2ª série na legenda.
   const multiSeriesList =
     chartType === "bubble" ? undefined : seriesList.length > 1 ? seriesList : undefined;
+  const displayOptions = resolveChartDisplayOptions(chartOptions, resolved);
+  const effectiveGoal = resolveEffectiveChartGoal({
+    goalLineValue: displayOptions.goalLineValue,
+    projectedGoal: resolved.chart?.projectedGoal,
+  });
+  const optionsWithGoal = { ...displayOptions, goalLineValue: effectiveGoal };
   return (
     <ConfigurableSeriesChart
       chartType={kind}
       points={points}
       seriesList={multiSeriesList}
-      options={resolveChartDisplayOptions(chartOptions, resolved)}
+      options={optionsWithGoal}
       chartParts={chartParts}
       interaction={interaction}
       pieInnerRadiusRatio={pieInnerRadiusForChartType(chartType)}

@@ -493,31 +493,43 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
   const ctrl = useChartDesignControls();
   if (!ctrl) return null;
 
+  const isGauge = ctrl.block.chartType === "gauge";
+  const axisTiles = (
+    isGauge
+      ? ([
+          {
+            id: "goalLine" as const,
+            icon: Goal,
+            label: "Meta",
+            hint: "Liga a meta do velocímetro e abre coluna/valor no inspetor.",
+          },
+        ] as const)
+      : ([
+          {
+            id: "axes" as const,
+            icon: BarChart3,
+            label: "Eixos",
+            hint: "Liga os eixos e abre opções de estilo.",
+          },
+          {
+            id: "gridlines" as const,
+            icon: Grid3x3,
+            label: "Grade",
+            hint: "Liga a grade horizontal e edita o traço das linhas.",
+          },
+          {
+            id: "goalLine" as const,
+            icon: Goal,
+            label: "Meta",
+            hint: "Liga a linha de meta e abre coluna ou valor numérico no inspetor.",
+          },
+        ] as const)
+  );
+
   const body = (
     <div className="td-deck-ribbon__stack td-deck-ribbon__stack--ribbon-row">
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-        {(
-          [
-            {
-              id: "axes" as const,
-              icon: BarChart3,
-              label: "Eixos",
-              hint: "Liga os eixos e abre opções de estilo.",
-            },
-            {
-              id: "gridlines" as const,
-              icon: Grid3x3,
-              label: "Grade",
-              hint: "Liga a grade horizontal e edita o traço das linhas.",
-            },
-            {
-              id: "goalLine" as const,
-              icon: Goal,
-              label: "Meta",
-              hint: "Liga a linha de meta e abre o campo do valor no inspetor.",
-            },
-          ] as const
-        ).map((item) => {
+        {axisTiles.map((item) => {
           const enabled = isChartElementEnabled(item.id, ctrl.options);
           const focused = isChartElementOpenForPart(item.id, ctrl.selectedChartPart);
           return (
@@ -538,29 +550,38 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
           );
         })}
       </div>
-      <DeckField
-        id="td-chart-ribbon-category-sort"
-        label="Ordenar categorias"
-        hint="A→Z nos centros de trabalho; Valor para ranking."
-      >
-        <FormSelectControl
+      {!isGauge ? (
+        <DeckField
           id="td-chart-ribbon-category-sort"
-          ariaLabel="Ordenar categorias do eixo"
-          value={ctrl.options.legendSort ?? "auto"}
-          onChange={(value) =>
-            ctrl.persistOptions({
-              ...ctrl.options,
-              legendSort: value as ComunicadoChartOptions["legendSort"],
-            })
-          }
-          options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({
-            value: entry.value,
-            label: entry.label,
-          }))}
-        />
-      </DeckField>
+          label="Ordenar categorias"
+          hint="A→Z nos centros de trabalho; Valor para ranking."
+        >
+          <FormSelectControl
+            id="td-chart-ribbon-category-sort"
+            ariaLabel="Ordenar categorias do eixo"
+            value={ctrl.options.legendSort ?? "auto"}
+            onChange={(value) =>
+              ctrl.persistOptions({
+                ...ctrl.options,
+                legendSort: value as ComunicadoChartOptions["legendSort"],
+              })
+            }
+            options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({
+              value: entry.value,
+              label: entry.label,
+            }))}
+          />
+        </DeckField>
+      ) : null}
     </div>
   );
 
-  return wrapPane("Eixos", H.chartAxes, layout, body, true, "chart-axes");
+  return wrapPane(
+    isGauge ? "Meta" : "Eixos",
+    isGauge ? H.chartGaugeMeta : H.chartAxes,
+    layout,
+    body,
+    true,
+    "chart-axes",
+  );
 }

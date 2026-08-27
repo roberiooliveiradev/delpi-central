@@ -14,7 +14,8 @@ export type ChartDataWellRole =
   | "series"
   | "xMeasure"
   | "yMeasure"
-  | "size";
+  | "size"
+  | "goal";
 
 export type ChartDataWellSpec = {
   id: string;
@@ -90,7 +91,37 @@ const WELL_SIZE: ChartDataWellSpec = {
   valueKind: "measure",
 };
 
-const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
+/** Meta escalar a partir de coluna (não vira série de legenda). */
+export const WELL_GOAL: ChartDataWellSpec = {
+  id: "goal",
+  role: "goal",
+  label: "Meta",
+  valueKind: "measure",
+};
+
+/** Tipos com linha de meta / by_goal + velocímetro. */
+const CHART_TYPES_WITH_GOAL_WELL: ComunicadoChartType[] = [
+  "line",
+  "area",
+  "bar",
+  "horizontal_bar",
+  "stacked_bar",
+  "combo",
+  "histogram",
+  "scatter",
+  "bubble",
+  "radar",
+  "waterfall",
+  "gauge",
+];
+
+function withOptionalGoal(wells: ChartDataWellSpec[], chartType: ComunicadoChartType): ChartDataWellSpec[] {
+  if (!CHART_TYPES_WITH_GOAL_WELL.includes(chartType)) return wells;
+  if (wells.some((well) => well.role === "goal")) return wells;
+  return [...wells, WELL_GOAL];
+}
+
+const POLICIES_BASE: Record<ComunicadoChartType, ChartDataPolicy> = {
   line: {
     chartType: "line",
     family: "series",
@@ -211,14 +242,46 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     maxCategories: 12,
     wells: [WELL_CATEGORY, WELL_VALUE],
   },
+  gauge: {
+    chartType: "gauge",
+    family: "special",
+    rowMode: "rowwise",
+    defaultAggregation: "first",
+    maxSeries: 1,
+    wells: [
+      { id: "value", role: "value", label: "Valor", valueKind: "measure", required: true },
+    ],
+  },
 };
+
+const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = Object.fromEntries(
+  (Object.keys(POLICIES_BASE) as ComunicadoChartType[]).map((chartType) => {
+    const base = POLICIES_BASE[chartType];
+    return [
+      chartType,
+      {
+        ...base,
+        wells: withOptionalGoal(base.wells, chartType),
+      },
+    ];
+  }),
+) as Record<ComunicadoChartType, ChartDataPolicy>;
 
 export function resolveChartDataPolicy(chartType: ComunicadoChartType): ChartDataPolicy {
   return POLICIES[chartType] ?? POLICIES.line;
 }
 
+export function chartPolicyHasGoalWell(chartType: ComunicadoChartType): boolean {
+  return resolveChartDataPolicy(chartType).wells.some((well) => well.role === "goal");
+}
+
 /** Hint do painel Dados conforme a policy. */
 export function chartAxesEditorHint(policy: ChartDataPolicy, hasProjection: boolean): string {
+  if (policy.chartType === "gauge") {
+    return hasProjection
+      ? "Valor = agulha do velocímetro; Meta (opcional) = coluna do mesmo modelo."
+      : "Escolha a medida do valor e, se quiser, a coluna de meta.";
+  }
   if (policy.chartType === "pie" || policy.chartType === "doughnut") {
     return hasProjection
       ? "Categoria = fatias; Valor = ângulo (agregado por categoria)."
@@ -257,6 +320,10 @@ export function chartSeriesWellLabel(policy: ChartDataPolicy): string {
       item.role === "yMeasure",
   );
   return well?.label ?? "Séries (Y)";
+}
+
+export function chartGoalWellLabel(policy: ChartDataPolicy): string {
+  return policy.wells.find((item) => item.role === "goal")?.label ?? "Meta";
 }
 
 /**

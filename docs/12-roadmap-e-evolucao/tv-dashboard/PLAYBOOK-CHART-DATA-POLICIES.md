@@ -1,9 +1,9 @@
 # Playbook — Políticas de dados por tipo de gráfico
 
-> **Status:** P0–P3 implementados no código (jul/2026) — policy + group-by + wells/hints  
-> **Pacote canônico:** `@delpi/tv-dashboard-presentation` (`chartDataPolicy` + `viewProjection`)  
-> **UI:** `plugins/tv-dashboard` (wells / labels do painel Dados)  
-> **Paint:** `@delpi/plugin-ui` (já renderiza pizza/rosca/etc.; não redefine encoding)
+> **Status:** P0–P3 + gauge + meta-por-coluna (ago/2026) — policy + group-by + wells/hints + `goalField`  
+> **Pacote canônico:** `@delpi/tv-dashboard-presentation` (`chartDataPolicy` + `viewProjection` + `gaugeChartModel`)  
+> **UI:** `plugins/tv-dashboard` (wells / labels do painel Dados + inspetor de meta)  
+> **Paint:** `@delpi/plugin-ui` (séries SVG + `SpeedometerGauge`; não redefine encoding)
 
 Complementa [PLAYBOOK-EXCELENCIA §19](./PLAYBOOK-EXCELENCIA.md#19-gráfico-composto-por-primitivos--edição-no-palco-onda-4g) (primitivos no palco) com a camada que faltava: **como a tabela vira pontos** conforme a classe do gráfico.
 
@@ -107,6 +107,16 @@ Campos sugeridos (TS canônico, ex. `chartDataPolicy.ts`):
 | `combo` | Categoria + séries (`plotOn` primary/secondary) | `groupByCategory` se X repetir |
 | `waterfall` | Categoria ordenada + valor (delta) | `groupByCategory` + ordem estável |
 | `funnel` | Estágio + valor | `groupByCategory` + ordenar por valor |
+| `gauge` | **Valor** (agulha) + **Meta** (coluna opcional) | `rowwise` / agregação escalar (`first`) |
+
+### 5.5 Meta a partir da coluna (`goalField`)
+
+Tipos com linha de meta (cartesianos + `gauge`) expõem well opcional `goal`:
+
+- Encoding: `chartProjection.goalField` + `goalAggregation` (default `first`)
+- Resolução: agrega a coluna → `resolved.chart.projectedGoal` (não grava em `chartOptions`)
+- Precedência no paint: `goalLineValue` manual finito **>** `projectedGoal` **>** null
+- Helper: `resolveEffectiveChartGoal` (séries + velocímetro)
 
 ---
 

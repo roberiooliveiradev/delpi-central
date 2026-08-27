@@ -65,6 +65,10 @@ export type ChartViewProjection = {
    * `undefined` = policy do tipo; `0`/`null` = sem teto (todas as categorias).
    */
   maxCategories?: number | null;
+  /** Coluna de meta (mesmo modelo de dados) — agrega para escalar único. */
+  goalField?: string;
+  /** Agregação da coluna de meta. Default `first`. */
+  goalAggregation?: ViewAggregation;
 };
 
 export type TableColumnProjection = {
@@ -221,7 +225,18 @@ export function normalizeChartProjection(raw: unknown): ChartViewProjection | un
       .filter((item): item is ChartSeriesProjection => item != null);
     if (series.length > 0) next.series = series;
   }
-  return next.categoryField || next.series ? next : undefined;
+  const goalField = String((raw as ChartViewProjection).goalField ?? "").trim();
+  if (goalField) next.goalField = goalField;
+  const goalAggregation = (raw as ChartViewProjection).goalAggregation;
+  if (goalAggregation) next.goalAggregation = goalAggregation;
+  const maxCategories = (raw as ChartViewProjection).maxCategories;
+  if (maxCategories === null || maxCategories === 0) {
+    next.maxCategories = maxCategories;
+  } else {
+    const maxCatNum = asFiniteNumber(maxCategories);
+    if (maxCatNum != null) next.maxCategories = maxCatNum;
+  }
+  return next.categoryField || next.series || next.goalField ? next : undefined;
 }
 
 export function normalizeTableProjection(raw: unknown): TableViewProjection | undefined {
@@ -616,6 +631,41 @@ function aggregateGroupRows(
   return aggregateValues(values, agg);
 }
 
+/** Agrega a coluna de meta da projection → escalar único (não série). */
+export function resolveProjectedGoalValue(
+  rows: Array<Record<string, unknown>>,
+  goalField: string | undefined,
+  aggregation: ViewAggregation = "first",
+): number | null {
+  const field = goalField?.trim();
+  if (!field || rows.length === 0) return null;
+  const values = columnValuesFromRows(rows, field).filter((value) => value != null && value !== "");
+  if (values.length === 0) return null;
+  return aggregateValues(values, aggregation);
+}
+
+function withProjectedGoal(
+  resolved: ComunicadoDataResolved,
+  projection: ChartViewProjection | undefined,
+): ComunicadoDataResolved {
+  const rows = resolved.table?.rows ?? [];
+  const projectedGoal = resolveProjectedGoalValue(
+    rows,
+    projection?.goalField,
+    projection?.goalAggregation ?? "first",
+  );
+  if (projectedGoal == null && resolved.chart?.projectedGoal == null) {
+    return resolved;
+  }
+  return {
+    ...resolved,
+    chart: {
+      ...(resolved.chart ?? {}),
+      projectedGoal,
+    },
+  };
+}
+
 function applyChartProjection(
   resolved: ComunicadoDataResolved,
   projection: ChartViewProjection | undefined,
@@ -626,6 +676,40 @@ function applyChartProjection(
   const seriesDefs = projection?.series ?? [];
   const policy = resolveChartDataPolicy(chartType);
 
+  if (chartType === "gauge" && seriesDefs.length > 0) {
+    const valueField = seriesDefs[0]!;
+    const value =
+      rows.length > 0
+        ? aggregateValues(
+            columnValuesFromRows(rows, valueField.field).filter((v) => v != null && v !== ""),
+            valueField.aggregation ?? policy.defaultAggregation,
+          )
+        : asFiniteNumber(
+            (resolved.kpiMetrics ?? []).find((m) => m.field === valueField.field)?.value ??
+              resolved.kpi?.value,
+          );
+    const label = resolveFieldDisplayLabel({
+      field: valueField.field,
+      projectionLabel: valueField.label,
+      resolvedLabel: (resolved.kpiMetrics ?? []).find((m) => m.field === valueField.field)?.label,
+    });
+    const next: ComunicadoDataResolved = {
+      ...resolved,
+      kpi: { value: value ?? resolved.kpi?.value, label: label || resolved.kpi?.label },
+      chart: {
+        points:
+          value != null
+            ? [{ label, value }]
+            : resolved.chart?.points,
+        series:
+          value != null
+            ? [{ name: label || valueField.field, field: valueField.field, points: [{ label, value }] }]
+            : resolved.chart?.series,
+      },
+    };
+    return withProjectedGoal(next, projection);
+  }
+
   if (seriesDefs.length > 0 && rows.length > 0) {
     const chart = buildSeriesFromTable(
       rows,
@@ -634,7 +718,7 @@ function applyChartProjection(
       policy,
       projection?.maxCategories,
     );
-    return { ...resolved, chart };
+    return withProjectedGoal({ ...resolved, chart }, projection);
   }
 
   // Pizza/barra sem série explícita: só categoria → contagem por grupo.
@@ -651,7 +735,7 @@ function applyChartProjection(
       policy,
       projection.maxCategories,
     );
-    return { ...resolved, chart };
+    return withProjectedGoal({ ...resolved, chart }, projection);
   }
 
   if (seriesDefs.length > 1 && (resolved.kpiMetrics?.length ?? 0) > 0) {
@@ -674,14 +758,17 @@ function applyChartProjection(
       })
       .filter((item): item is NonNullable<typeof item> => item != null);
     if (series.length > 0) {
-      return {
-        ...resolved,
-        chart: {
-          points: series.flatMap((item) => item.points),
-          chartType: policy.chartType === "line" ? "bar" : policy.chartType,
-          series,
+      return withProjectedGoal(
+        {
+          ...resolved,
+          chart: {
+            points: series.flatMap((item) => item.points),
+            chartType: policy.chartType === "line" ? "bar" : policy.chartType,
+            series,
+          },
         },
-      };
+        projection,
+      );
     }
   }
 
@@ -690,10 +777,11 @@ function applyChartProjection(
       seriesDefs.length > 0
         ? { selectedValueFields: seriesDefs.map((item) => item.field) }
         : fallbackSelection;
-    return applyMetricSelectionToResolved(resolved, selection) ?? resolved;
+    const selected = applyMetricSelectionToResolved(resolved, selection) ?? resolved;
+    return withProjectedGoal(selected, projection);
   }
 
-  return resolved;
+  return withProjectedGoal(resolved, projection);
 }
 
 /**
@@ -740,7 +828,11 @@ export function applyViewProjection(
 
   // Chart: sempre reaplicar a partir das rows + chartType quando a projeção existe.
   // Evita TV/prévia travadas no bake rowwise do servidor após mudar pizza/rosca no editor.
-  if (selection.chartProjection?.series?.length || selection.chartProjection?.categoryField) {
+  if (
+    selection.chartProjection?.series?.length ||
+    selection.chartProjection?.categoryField ||
+    selection.chartProjection?.goalField
+  ) {
     const rows = next.table?.rows ?? [];
     if (rows.length > 0 || !resolved.serverProjectionApplied) {
       next = applyChartProjection(
@@ -915,6 +1007,22 @@ export function suggestDefaultProjections(
               ]
             : []),
         ],
+      };
+    }
+  } else if (policy.chartType === "gauge") {
+    const measure = numericFields[0];
+    if (measure) {
+      chartProjection = {
+        series: [
+          {
+            field: measure.field,
+            label: measure.label,
+            aggregation: "first",
+          },
+        ],
+        ...(numericFields[1]
+          ? { goalField: numericFields[1].field, goalAggregation: "first" as const }
+          : {}),
       };
     }
   } else if (policy.chartType === "histogram") {

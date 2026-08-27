@@ -52,4 +52,28 @@ describe("chartDataPolicy", () => {
     const hint = chartAxesEditorHint(resolveChartDataPolicy("pie"), true);
     expect(hint.toLowerCase()).toContain("fatia");
   });
+
+  it("gauge: special, valor + well goal, agregação first", () => {
+    const policy = resolveChartDataPolicy("gauge");
+    expect(policy.family).toBe("special");
+    expect(policy.rowMode).toBe("rowwise");
+    expect(policy.defaultAggregation).toBe("first");
+    expect(policy.maxSeries).toBe(1);
+    expect(policy.wells.some((w) => w.role === "value")).toBe(true);
+    expect(policy.wells.some((w) => w.role === "goal")).toBe(true);
+  });
+
+  it("tipos cartesianos com meta incluem well goal", () => {
+    for (const chartType of ["line", "bar", "combo", "histogram"] as const) {
+      expect(
+        resolveChartDataPolicy(chartType).wells.some((w) => w.role === "goal"),
+        chartType,
+      ).toBe(true);
+    }
+  });
+
+  it("pizza/funnel não têm well goal (sem linha de meta)", () => {
+    expect(resolveChartDataPolicy("pie").wells.some((w) => w.role === "goal")).toBe(false);
+    expect(resolveChartDataPolicy("funnel").wells.some((w) => w.role === "goal")).toBe(false);
+  });
 });

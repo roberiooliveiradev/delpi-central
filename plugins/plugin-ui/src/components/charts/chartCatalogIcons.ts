@@ -13,6 +13,7 @@ import {
   Circle,
   CircleDot,
   Filter,
+  Gauge,
   Radar,
   type LucideIcon,
 } from "lucide-react";
@@ -36,6 +37,7 @@ export const DELPI_CHART_CATALOG_ICON_MAP: Record<string, LucideIcon> = {
   Radar,
   ChartSpline,
   Filter,
+  Gauge,
   /* Aliases legados (catálogo / callers antigos). */
   LineChart: ChartLine,
   AreaChart: ChartArea,

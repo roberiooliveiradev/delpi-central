@@ -417,7 +417,8 @@ export type ComunicadoChartType =
   | "combo"
   | "waterfall"
   | "funnel"
-  | "histogram";
+  | "histogram"
+  | "gauge";
 
 export type ComunicadoTablePreset = "grid" | "minimal" | "banded";
 
@@ -657,6 +658,11 @@ export type ComunicadoDataResolved = {
       plotOn?: "primary" | "secondary";
       points: Array<{ label?: unknown; value?: unknown; size?: unknown }>;
     }>;
+    /**
+     * Meta escalar resolvida de `chartProjection.goalField` (não persiste em chartOptions).
+     * Precedência no paint: `goalLineValue` manual > `projectedGoal`.
+     */
+    projectedGoal?: number | null;
   };
   table?: {
     rows?: Array<Record<string, unknown>>;

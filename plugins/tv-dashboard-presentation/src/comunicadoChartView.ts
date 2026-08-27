@@ -18,6 +18,7 @@ export function chartTypeLabel(chartType: ComunicadoChartType): string {
     waterfall: "Cascata",
     funnel: "Funil",
     histogram: "Histograma",
+    gauge: "Velocímetro",
   };
   return labels[chartType] ?? chartType;
 }
@@ -28,8 +29,9 @@ export function tablePresetLabel(preset: string): string {
   return "Grade padrão";
 }
 
-/** Tipos com paint SVG nativo no palco (4H.7 + avançados). */
+/** Tipos com paint nativo no palco (séries SVG + gauge kit). */
 export function chartTypeHasBasicRender(chartType: ComunicadoChartType): boolean {
+  if (chartType === "gauge") return true;
   return toSeriesChartKind(chartType) != null;
 }
 

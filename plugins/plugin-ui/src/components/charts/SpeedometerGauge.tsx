@@ -58,6 +58,11 @@ export type SpeedometerGaugeProps = {
   classNames?: Partial<SpeedometerGaugeClassNames>;
   /** Prefixo BEM dual-class. Default `ds`. */
   prefix?: string;
+  /**
+   * Cor de destaque (agulha / preenchimento / hub). Quando definida, sobrescreve
+   * a cor do tom automático nesses elementos; as faixas R/O/G permanecem semânticas.
+   */
+  accentColor?: string;
   "aria-label"?: string;
 };
 
@@ -194,6 +199,7 @@ export function SpeedometerGauge({
   className,
   classNames: classNamesOverride,
   prefix = "ds",
+  accentColor,
   "aria-label": ariaLabel,
 }: SpeedometerGaugeProps) {
   const uid = useId();
@@ -222,6 +228,7 @@ export function SpeedometerGauge({
     zonesResolved.warningBelow,
   );
   const toneColor = SPEEDOMETER_TONE_COLORS[resolvedTone];
+  const accent = accentColor?.trim() || toneColor;
   const fillPath =
     ratio <= 0 ? "" : describeArc(CX, CY, R, START_ANGLE, START_ANGLE - ratio * SWEEP);
   const display = numeric == null ? "—" : formatValue(numeric);
@@ -288,8 +295,8 @@ export function SpeedometerGauge({
       >
         <defs>
           <linearGradient id={`${uid}-fill`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={toneColor} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={toneColor} stopOpacity={0.75} />
+            <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={accent} stopOpacity={0.75} />
           </linearGradient>
         </defs>
         {zones.map((zone) =>
@@ -347,11 +354,11 @@ export function SpeedometerGauge({
               y1={CY}
               x2={tipPoint.x}
               y2={tipPoint.y}
-              stroke={toneColor}
+              stroke={accent}
               strokeWidth={3}
               strokeLinecap="round"
             />
-            <circle className={classNames.hub} cx={CX} cy={CY} r={5.5} fill={toneColor} />
+            <circle className={classNames.hub} cx={CX} cy={CY} r={5.5} fill={accent} />
           </>
         ) : null}
         <text className={classNames.value} x={CX} y={CY - 10} textAnchor="middle">

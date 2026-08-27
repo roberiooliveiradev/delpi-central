@@ -207,6 +207,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     openDataPanel: "Abre o painel de fontes de dados.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
     chartAxes: "Eixos, grade, meta e ordenação A→Z das categorias (centros de trabalho).",
+    chartGaugeMeta:
+      "Meta do velocímetro: ligue a meta e escolha uma coluna do modelo de dados ou um valor numérico no inspetor.",
     chartFormat: "Estilo, preenchimento, contorno e raio da área do gráfico na aba Elemento.",
     chartSeriesColor: "Cor principal da série de dados do gráfico.",
     canvasTable:
@@ -430,7 +432,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     kpiMetricsProjection:
       "Por coluna: ligar/desligar, agregação (soma, média…) e formato. Regras de cor globais ficam em Aparência; regras por métrica sobrescrevem quando definidas.",
     chartAxesProjection:
-      "Escolha o campo do eixo X (categoria) e uma ou mais séries no Y. Várias séries sobrepõem no gráfico de linha/área.",
+      "Escolha o campo do eixo X (categoria) e uma ou mais séries no Y. Várias séries sobrepõem no gráfico de linha/área. Meta (opcional) amarra uma coluna numérica do mesmo modelo — valor escalar para a linha de meta.",
+    chartGaugeProjection:
+      "Valor = agulha do velocímetro; Meta (opcional) = coluna numérica do mesmo modelo de dados.",
     connectFlow:
       "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados. Qualquer fonte serve para qualquer visual.",
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */

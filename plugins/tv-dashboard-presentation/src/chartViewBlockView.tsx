@@ -4,11 +4,14 @@ import {
   toSeriesChartKind,
 } from "./comunicadoChartView";
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
+import { resolveChartDisplayOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
 import {
   DataBlockRefreshBadge,
   withDataBlockLoadingClass,
 } from "./dataBlockRefreshChrome";
+import { GaugeChartView } from "./GaugeChartView";
+import { resolveGaugeChartModel } from "./gaugeChartModel";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import {
   mergeChartViewFilterParams,
@@ -42,9 +45,11 @@ function ChartTypePlaceholder({
   const hint = loading
     ? "Carregando dados…"
     : bound
-      ? chartType === "pie" || chartType === "doughnut"
-        ? "Sem fatias — escolha a categoria (ex.: Tipo) na conexão do visual"
-        : "Sem série ou valor — escolha campos na conexão do visual"
+      ? chartType === "gauge"
+        ? "Sem valor — escolha a medida na conexão do visual"
+        : chartType === "pie" || chartType === "doughnut"
+          ? "Sem fatias — escolha a categoria (ex.: Tipo) na conexão do visual"
+          : "Sem série ou valor — escolha campos na conexão do visual"
       : interactive
         ? "Conecte uma fonte de dados"
         : label;
@@ -100,6 +105,44 @@ export function ChartViewBlockView({
           loading={loading}
           interactive={interactive}
           bound={bound}
+        />
+      </div>
+    );
+  }
+
+  if (block.chartType === "gauge") {
+    const displayOptions = resolveChartDisplayOptions(block.chartOptions, resolved);
+    const model = resolveGaugeChartModel({
+      block,
+      resolved,
+      options: displayOptions,
+    });
+    if (model.value == null) {
+      return (
+        <div className="tdp-data-block tdp-data-block--chart">
+          <ChartTypePlaceholder
+            chartType={block.chartType}
+            label={label}
+            loading={loading}
+            interactive={interactive}
+            bound
+          />
+        </div>
+      );
+    }
+    return (
+      <div
+        className={withDataBlockLoadingClass(
+          "tdp-data-block tdp-data-block--chart tdp-data-block--chart-gauge",
+          loading,
+        )}
+      >
+        <DataBlockRefreshBadge loading={loading} />
+        <GaugeChartView
+          model={model}
+          options={displayOptions}
+          chartParts={block.chartParts}
+          interaction={chartInteraction}
         />
       </div>
     );
