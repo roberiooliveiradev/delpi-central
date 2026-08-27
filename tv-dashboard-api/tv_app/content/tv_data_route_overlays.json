@@ -777,6 +777,67 @@
         "auto"
       ]
     },
+    "get_commercial_rol": {
+      "seriesField": "series",
+      "tableFields": "series",
+      "allowedDisplayModes": [
+        "kpi",
+        "line_chart",
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "returns",
+        "discounts",
+        "rol_filial_01",
+        "rol_filial_02"
+      ],
+      "valueFieldLabels": {
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "returns": "Devoluções",
+        "discounts": "Descontos",
+        "period_label": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "rol_filial_01": "ROL filial 01",
+        "rol_filial_02": "ROL filial 02",
+        "rol_with_ipi": "ROL"
+      },
+      "valueFieldTypes": {
+        "period_label": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "rol": "number",
+        "gross_revenue": "number",
+        "returns": "number",
+        "discounts": "number",
+        "rol_filial_01": "number",
+        "rol_filial_02": "number"
+      },
+      "label": "Análise consolidada de ROL comercial",
+      "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio).",
+      "whenToUse": "Use gráfico de linha ou tabela na série temporal (rol_filial_01/02). KPI usa summary.totals; evite misturar colunas de resumo com linhas da série.",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "period_label",
+            "rol_filial_01",
+            "rol_filial_02"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
+      ]
+    },
     "get_refugos_rankings": {
       "tableFields": "items",
       "valueFields": [

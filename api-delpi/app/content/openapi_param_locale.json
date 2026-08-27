@@ -1298,7 +1298,7 @@
       "locale": {
         "en": {
           "label": "Group by",
-          "description": "Como agregar o resultado (geral, branch, product etc.)."
+          "description": "Breakdown mode: none, customer or branch."
         },
         "pt-BR": {
           "label": "Agrupar por",

@@ -93,6 +93,7 @@ from app.interface.http.routes.engineering.lmp_route_helpers import (
 from app.interface.http.kpi_field_labels import (
     COMMERCIAL_CONVERSION_FIELD_LABELS,
     COMMERCIAL_ROL_FIELD_LABELS,
+    COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
     kpi_fields,
 )
@@ -475,7 +476,10 @@ def get_commercial_rol(
             result,
             operation_id="get_commercial_rol",
             message="Commercial ROL analysis fetched successfully.",
-            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+            fields=kpi_fields(
+                COMMERCIAL_ROL_FIELD_LABELS,
+                COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS,
+            ),
         )
     except ValueError as exc:
         log_error(f"Validation error while fetching commercial ROL analysis: {exc}")

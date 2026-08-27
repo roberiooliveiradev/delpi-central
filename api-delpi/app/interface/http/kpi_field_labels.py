@@ -205,6 +205,19 @@ COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "customer_name": "Cliente",
 }
 
+COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS: dict[str, str] = {
+    "period_label": "Período",
+    "sort_key": "Chave de ordenação",
+    "start_date": "Data início",
+    "end_date": "Data fim",
+    "rol_filial_01": "ROL filial 01",
+    "rol_filial_02": "ROL filial 02",
+    "totals": "Totais",
+    "by_branch": "Por filial",
+    "granularity": "Granularidade",
+    "group_by": "Agrupar por",
+}
+
 PRODUCTION_OEE_FIELD_LABELS: dict[str, str] = {
     "overall_equipment_effectiveness_pct": "OEE (%)",
     "oee_pct": "OEE (%)",

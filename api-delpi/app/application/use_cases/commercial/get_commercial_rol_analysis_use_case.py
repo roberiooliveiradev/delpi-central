@@ -165,7 +165,6 @@ class GetCommercialRolAnalysisUseCase:
             "customer_segment": request.customer_segment,
             "totals": totals,
             "by_branch": by_branch,
-            **totals,
         }
 
     def _build_series(
@@ -185,22 +184,22 @@ class GetCommercialRolAnalysisUseCase:
         points: list[dict[str, Any]] = []
         for point in response.points:
             if request.branch == HEAD_OFFICE_BRANCH:
-                branch_01 = {"rol": point.rol_matrix}
-                branch_02 = {"rol": None}
+                rol_filial_01 = point.rol_matrix
+                rol_filial_02 = None
             elif request.branch == BRANCH_OFFICE_BRANCH:
-                branch_01 = {"rol": None}
-                branch_02 = {"rol": point.rol_branch}
+                rol_filial_01 = None
+                rol_filial_02 = point.rol_branch
             else:
-                branch_01 = {"rol": point.rol_matrix}
-                branch_02 = {"rol": point.rol_branch}
+                rol_filial_01 = point.rol_matrix
+                rol_filial_02 = point.rol_branch
             points.append(
                 {
                     "period_label": point.periodo,
                     "sort_key": point.sort_key,
                     "start_date": point.start_date,
                     "end_date": point.end_date,
-                    "branch_01": branch_01,
-                    "branch_02": branch_02,
+                    "rol_filial_01": rol_filial_01,
+                    "rol_filial_02": rol_filial_02,
                 }
             )
         return points

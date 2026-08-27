@@ -122,5 +122,5 @@ def test_get_commercial_rol_analysis_use_case_builds_payload():
     )
     assert result["summary"]["totals"]["rol"] == 24.0
     assert len(result["series"]) == 1
-    assert result["series"][0]["branch_01"]["rol"] == 5.0
+    assert result["series"][0]["rol_filial_01"] == 5.0
     assert "pagination" in result
