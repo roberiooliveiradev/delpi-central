@@ -32,6 +32,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { DeckRibbonTilePopover } from "../deck/DeckRibbonTilePopover";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonSelect } from "../tdRibbonUi";
 import { SelectionPaneSection } from "./SelectionPaneSection";
@@ -157,95 +158,117 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
     updateBlock(table.id, { cells });
   }
 
-  const structure = (
-    <>
-      <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
-        <label className="td-deck-ribbon__frame-field">
-          <span className="td-deck-ribbon__field-label">Linhas</span>
-          <ComboboxNumberControl
-            className="td-deck-ribbon__number-combobox"
-            compact
-            square={false}
-            min={1}
-            max={20}
-            value={table.rows}
-            options={ROW_PRESETS}
-            clamp={(value) => Math.max(1, Math.min(20, value))}
-            portalScopeClassName="dashboard-tv-dashboard"
-            aria-label="Linhas da Grade"
-            onChange={(value) => {
-              const rows = Math.max(1, Math.min(20, value));
-              updateSelected({
-                rows,
-                cells: normalizeCanvasTableCells(table.cells, rows, table.cols),
-              });
-            }}
-          />
-        </label>
-        <label className="td-deck-ribbon__frame-field">
-          <span className="td-deck-ribbon__field-label">Colunas</span>
-          <ComboboxNumberControl
-            className="td-deck-ribbon__number-combobox"
-            compact
-            square={false}
-            min={1}
-            max={12}
-            value={table.cols}
-            options={COL_PRESETS}
-            clamp={(value) => Math.max(1, Math.min(12, value))}
-            portalScopeClassName="dashboard-tv-dashboard"
-            aria-label="Colunas da Grade"
-            onChange={(value) => {
-              const cols = Math.max(1, Math.min(12, value));
-              updateSelected({
-                cols,
-                cells: normalizeCanvasTableCells(table.cells, table.rows, cols),
-              });
-            }}
-          />
-        </label>
-        <label className="td-deck-ribbon__frame-field">
-          <span className="td-deck-ribbon__field-label">Fonte (px)</span>
-          <ComboboxNumberControl
-            className="td-deck-ribbon__number-combobox"
-            compact
-            square={false}
-            min={8}
-            max={96}
-            value={opts.fontSize}
-            options={FONT_SIZE_PRESETS}
-            clamp={(value) => Math.max(8, Math.min(96, value))}
-            portalScopeClassName="dashboard-tv-dashboard"
-            aria-label="Tamanho da fonte da Grade"
-            onChange={(fontSize) => {
-              updateSelected({
-                canvasTableOptions: {
-                  ...(table.canvasTableOptions ?? {}),
-                  fontSize,
-                },
-                style: { ...(table.style ?? {}), fontSize },
-              });
-            }}
-          />
-        </label>
-      </div>
-      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-        <DeckRibbonTile
-          icon={Heading2}
-          label="Cabeçalho"
-          hint="Usa a primeira linha como cabeçalho da Grade."
-          active={Boolean(table.headerRow)}
-          onClick={() => updateSelected({ headerRow: !table.headerRow })}
+  const structureFields = (
+    <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
+      <label className="td-deck-ribbon__frame-field">
+        <span className="td-deck-ribbon__field-label">Linhas</span>
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
+          min={1}
+          max={20}
+          value={table.rows}
+          options={ROW_PRESETS}
+          clamp={(value) => Math.max(1, Math.min(20, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Linhas da Grade"
+          onChange={(value) => {
+            const rows = Math.max(1, Math.min(20, value));
+            updateSelected({
+              rows,
+              cells: normalizeCanvasTableCells(table.cells, rows, table.cols),
+            });
+          }}
         />
-        <DeckRibbonTile
-          icon={Database}
-          label="Dados"
-          hint={H.openDataPanel}
-          onClick={() => openDataPanel()}
+      </label>
+      <label className="td-deck-ribbon__frame-field">
+        <span className="td-deck-ribbon__field-label">Colunas</span>
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
+          min={1}
+          max={12}
+          value={table.cols}
+          options={COL_PRESETS}
+          clamp={(value) => Math.max(1, Math.min(12, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Colunas da Grade"
+          onChange={(value) => {
+            const cols = Math.max(1, Math.min(12, value));
+            updateSelected({
+              cols,
+              cells: normalizeCanvasTableCells(table.cells, table.rows, cols),
+            });
+          }}
         />
-      </div>
-    </>
+      </label>
+      <label className="td-deck-ribbon__frame-field">
+        <span className="td-deck-ribbon__field-label">Fonte (px)</span>
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
+          min={8}
+          max={96}
+          value={opts.fontSize}
+          options={FONT_SIZE_PRESETS}
+          clamp={(value) => Math.max(8, Math.min(96, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Tamanho da fonte da Grade"
+          onChange={(fontSize) => {
+            updateSelected({
+              canvasTableOptions: {
+                ...(table.canvasTableOptions ?? {}),
+                fontSize,
+              },
+              style: { ...(table.style ?? {}), fontSize },
+            });
+          }}
+        />
+      </label>
+    </div>
   );
+
+  const structureTiles = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      {layout === "ribbon" ? (
+        <DeckRibbonTilePopover
+          icon={Grid3x3}
+          label="Estrutura"
+          hint="Linhas, colunas e tamanho da fonte da Grade."
+          panelLabel="Linhas, colunas e fonte"
+          panelClassName="td-deck-ribbon-tile-popover--wide"
+        >
+          {structureFields}
+        </DeckRibbonTilePopover>
+      ) : null}
+      <DeckRibbonTile
+        icon={Heading2}
+        label="Cabeçalho"
+        hint="Usa a primeira linha como cabeçalho da Grade."
+        active={Boolean(table.headerRow)}
+        onClick={() => updateSelected({ headerRow: !table.headerRow })}
+      />
+      <DeckRibbonTile
+        icon={Database}
+        label="Dados"
+        hint={H.openDataPanel}
+        onClick={() => openDataPanel()}
+      />
+    </div>
+  );
+
+  const structure =
+    layout === "pane" ? (
+      <>
+        {structureFields}
+        {structureTiles}
+      </>
+    ) : (
+      structureTiles
+    );
 
   const design = (
     <>
