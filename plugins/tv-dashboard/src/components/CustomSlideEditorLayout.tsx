@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import { useMemo, useRef } from "react";
 
 import type { Slide } from "../api/tvDashboardApi";
+import { useComunicadoBackgroundPreload } from "../hooks/useComunicadoBackgroundPreload";
 import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataCatalogModalHost } from "./DataCatalogModalHost";
@@ -45,7 +46,13 @@ export function CustomSlideEditorLayout({
     isDataPreviewStale,
     dataPreviewLoading,
     refreshDataPreview,
+    playlistId,
   } = useComunicadoEditor();
+  useComunicadoBackgroundPreload({
+    playlistId,
+    slides: workspaceProps.slides,
+    masterConfig: chromeProps.playlist.masterConfig,
+  });
   const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
   const isTemplate = variant === "template";
 
