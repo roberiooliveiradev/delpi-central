@@ -65,3 +65,17 @@ class DelpiPurchaseRequestsGateway:
                 "limit": str(limit),
             },
         )
+
+    def list_recent_linked_receipts(
+        self,
+        *,
+        after_recno: int = 0,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        return self._client.get_path(
+            "/supplies/purchase-requests/recent-linked-receipts",
+            params={
+                "after_recno": str(after_recno),
+                "limit": str(limit),
+            },
+        )

@@ -48,17 +48,21 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    poller = None
+    pollers: list[asyncio.Task] = []
     if settings.PURCHASE_REQUESTS_PO_NOTIFICATIONS_ENABLED:
         from purchase_requests_app.startup.purchase_order_linked_notification_job import (
             run_purchase_order_linked_notification_loop,
         )
+        from purchase_requests_app.startup.purchase_receipt_recorded_notification_job import (
+            run_purchase_receipt_recorded_notification_loop,
+        )
 
-        poller = asyncio.create_task(run_purchase_order_linked_notification_loop())
+        pollers.append(asyncio.create_task(run_purchase_order_linked_notification_loop()))
+        pollers.append(asyncio.create_task(run_purchase_receipt_recorded_notification_loop()))
     try:
         yield
     finally:
-        if poller is not None:
+        for poller in pollers:
             poller.cancel()
             with suppress(asyncio.CancelledError):
                 await poller

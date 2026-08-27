@@ -178,7 +178,7 @@
     },
     "purchase_requests": {
       "label": "Solicitações de Compras",
-      "notificationLabel": "Pedido vinculado à solicitação de compra",
+      "notificationLabel": "Atualizações da solicitação de compra",
       "kind": "app",
       "mutable": true,
       "sourceApps": ["purchase-requests"],

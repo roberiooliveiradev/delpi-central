@@ -1,0 +1,16 @@
+{
+  "titleTemplate": "Recebimento da SC {request} — NF {invoice}",
+  "messageTemplate": "Produto {product_code} — {product_description}\nFornecedor {supplier} · {quantity} un. em {entry_date}",
+  "actionLabel": "Abrir solicitação",
+  "type": "success",
+  "deepLinkPath": "/apps/purchase-requests",
+  "emptyValue": "—",
+  "eventType": "purchase_receipt_recorded",
+  "category": "purchase_requests",
+  "sourceApp": "purchase-requests",
+  "corePermanentRejectionSubstrings": [
+    "no recipients have access to the source application",
+    "no recipients accept this notification category",
+    "user not found or inactive"
+  ]
+}

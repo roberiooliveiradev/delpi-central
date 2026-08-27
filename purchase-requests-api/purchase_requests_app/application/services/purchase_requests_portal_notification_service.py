@@ -12,10 +12,14 @@ from purchase_requests_app.config import settings
 from purchase_requests_app.domain.services.purchase_order_linked_notification_content_service import (
     PurchaseOrderLinkedNotificationContentService as Content,
 )
+from purchase_requests_app.domain.services.purchase_receipt_recorded_notification_content_service import (
+    PurchaseReceiptRecordedNotificationContentService as ReceiptContent,
+)
 
 logger = logging.getLogger("purchase_requests.portal_notifications")
 
 EVENT_PURCHASE_ORDER_CREATED = "purchase_order_created"
+EVENT_PURCHASE_RECEIPT_RECORDED = "purchase_receipt_recorded"
 
 
 @dataclass(frozen=True)
@@ -190,6 +194,63 @@ class PurchaseRequestsPortalNotificationService:
                 "branch": branch,
                 "orderNumber": order_number,
                 "orderItem": order_item,
+                "requestNumber": request_number,
+                "productCode": product_code,
+            },
+        )
+
+    def notify_purchase_receipt_recorded(
+        self,
+        *,
+        user_ids: Sequence[str],
+        branch: str,
+        invoice_number: str,
+        invoice_series: str,
+        invoice_item: str,
+        request_number: str,
+        order_number: str,
+        product_code: str,
+        product_description: str | None,
+        supplier_name: str | None,
+        quantity: float | int | str | None,
+        entry_date: str | None,
+    ) -> PortalNotifyOutcome:
+        title = ReceiptContent.format_title(
+            request_number=request_number,
+            invoice_number=invoice_number,
+        )
+        message = ReceiptContent.format_message(
+            product_code=product_code,
+            product_description=product_description,
+            supplier_name=supplier_name,
+            quantity=quantity,
+            entry_date=entry_date,
+        )
+        action_target = ReceiptContent.build_deep_link_path(
+            branch=branch,
+            request_number=request_number,
+        )
+        series = (invoice_series or "").strip()
+        dedupe_key = (
+            f"{ReceiptContent.source_app()}:purchase_receipt_recorded:"
+            f"{branch}:{invoice_number}:{series}:{invoice_item}"
+        )
+        return self.send(
+            user_ids=user_ids,
+            title=title,
+            message=message,
+            notification_type=ReceiptContent.notification_type(),
+            action_label=ReceiptContent.action_label(),
+            action_target=action_target,
+            dedupe_key=dedupe_key,
+            event_type=ReceiptContent.event_type() or EVENT_PURCHASE_RECEIPT_RECORDED,
+            category=ReceiptContent.category(),
+            metadata={
+                "branch": branch,
+                "invoiceNumber": invoice_number,
+                "invoiceSeries": series,
+                "invoiceItem": invoice_item,
+                "orderNumber": order_number,
                 "requestNumber": request_number,
                 "productCode": product_code,
             },
