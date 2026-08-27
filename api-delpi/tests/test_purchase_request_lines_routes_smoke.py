@@ -8,6 +8,7 @@ from app.interface.http.routes.supplies.purchase_requests_router import (
     get_supplies_purchase_request_lines_route,
     list_supplies_purchase_request_lines_route,
     list_supplies_purchase_request_recent_linked_orders_route,
+    list_supplies_purchase_request_recent_linked_receipts_route,
 )
 from tests.support.route_contract_smoke import assert_envelope_meta, body_json
 
@@ -87,5 +88,28 @@ def test_list_supplies_purchase_request_recent_linked_orders_meta(mock_build) ->
     assert_envelope_meta(
         body_json(response),
         operation_id="list_supplies_purchase_request_recent_linked_orders",
+        shape="list",
+    )
+
+
+@patch(f"{_ROUTER}.build_list_supplies_purchase_request_recent_linked_receipts_use_case")
+def test_list_supplies_purchase_request_recent_linked_receipts_meta(mock_build) -> None:
+    mock_build.return_value = MagicMock(
+        execute=MagicMock(
+            return_value={
+                "items": [],
+                "after_recno": 0,
+                "limit": 100,
+                "max_recno": 0,
+            }
+        )
+    )
+    response = list_supplies_purchase_request_recent_linked_receipts_route(
+        after_recno=0,
+        limit=100,
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="list_supplies_purchase_request_recent_linked_receipts",
         shape="list",
     )

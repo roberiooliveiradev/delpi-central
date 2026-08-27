@@ -119,6 +119,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_purchase_request_linked_order": (
         "pedidos de compra recém-vinculados a solicitações de compra"
     ),
+    "supplies_purchase_request_linked_receipt": (
+        "recebimentos de NF de entrada recém-vinculados a pedidos e solicitações de compra"
+    ),
     "third_party_material_shipment": (
         "remessas de materiais de terceiros para beneficiamento"
     ),
