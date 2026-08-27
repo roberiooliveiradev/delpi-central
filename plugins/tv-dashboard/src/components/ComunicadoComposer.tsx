@@ -27,15 +27,7 @@ import {
   useComunicadoGoogleFonts,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
@@ -130,16 +122,27 @@ function resolveComposerBlockDataLoading(
   return !hasResolved && dataPreviewLoading;
 }
 
-function useCanvasBackgroundPaint(): { style: CSSProperties; imageSrc?: string } {
+function useCanvasBackgroundPaint(): {
+  style: CSSProperties;
+  imageSrc?: string;
+  imageLoading: boolean;
+} {
   const { background, playlistId } = useComunicadoEditor();
   const imageApiUrl =
     background?.type === "image"
       ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
       : undefined;
-  const { src: imageBlobUrl } = useAuthenticatedBlobUrl(imageApiUrl);
+  const { src: imageBlobUrl, loading: imageLoading } = useAuthenticatedBlobUrl(imageApiUrl);
+  const previousSrcRef = useRef<string | undefined>();
+
+  useEffect(() => {
+    if (imageBlobUrl) previousSrcRef.current = imageBlobUrl;
+  }, [imageBlobUrl]);
 
   const style = useMemo(() => comunicadoBackgroundRootStyle(background), [background]);
-  return { style, imageSrc: imageBlobUrl };
+  const imageSrc = imageBlobUrl ?? (imageLoading ? previousSrcRef.current : undefined);
+
+  return { style, imageSrc, imageLoading: Boolean(imageApiUrl) && imageLoading && !imageSrc };
 }
 
 function MasterLogoOverlay() {
