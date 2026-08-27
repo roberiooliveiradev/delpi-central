@@ -86,6 +86,31 @@ describe("buildRouteDefaultParams", () => {
     expect(params.status).toBeUndefined();
   });
 
+  it("não pré-preenche group_by/granularity opcionais (Não definido aqui)", () => {
+    const params = buildRouteDefaultParams({
+      operationId: "get_commercial_rol",
+      label: "ROL",
+      category: "commercial",
+      defaultParams: { group_by: "customer" },
+      paramSchema: {
+        group_by: {
+          type: "string",
+          optional: true,
+          enum: ["none", "customer", "branch"],
+          default: "customer",
+        },
+        granularity: {
+          type: "string",
+          optional: true,
+          enum: ["day", "week", "month", "year"],
+          default: "week",
+        },
+      },
+    });
+    expect(params.group_by).toBeUndefined();
+    expect(params.granularity).toBeUndefined();
+  });
+
   it("SI com competence + datas não grava dateRangePreset no bloco (herança)", () => {
     const params = buildRouteDefaultParams({
       operationId: "get_si_indicator_quality_ppm_external_realized",

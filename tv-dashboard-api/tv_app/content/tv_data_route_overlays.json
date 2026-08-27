@@ -787,9 +787,6 @@
           "none": "series"
         }
       },
-      "defaultParams": {
-        "group_by": "customer"
-      },
       "allowedDisplayModes": [
         "kpi",
         "line_chart",
@@ -863,9 +860,6 @@
           "branch": "by_branch",
           "none": "series"
         }
-      },
-      "defaultParams": {
-        "group_by": "customer"
       },
       "allowedDisplayModes": [
         "kpi",

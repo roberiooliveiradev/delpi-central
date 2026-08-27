@@ -2348,9 +2348,13 @@ def test_commercial_route_unset_group_by_uses_catalog_default_for_table_field():
 
     route = TvDataRouteCatalogService().get_route("get_commercial_sales_order_otd_analysis")
     assert isinstance(route, dict)
+    # Wire: «Não definido aqui» omite group_by / granularity.
     effective = _effective_route_params({}, route)
-    assert effective.get("group_by") == "customer"
+    assert "group_by" not in effective
+    assert "granularity" not in effective
+    # Apresentação: schema.default (customer) alinha com Query default da api-delpi.
     assert _resolve_table_field(route, effective) == "by_customer"
+    assert _resolve_table_field(route, {}) == "by_customer"
 
 
 def test_build_table_columns_uses_route_and_meta_labels():

@@ -13,6 +13,7 @@ from tv_app.application.services.comunicado_input_filters_service import (
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
+    schema_param_default,
 )
 from tv_app.application.services.data.tv_data_param_validation_service import (
     assert_merged_route_params,
@@ -743,6 +744,9 @@ def _resolve_table_field(
             if not isinstance(value_map, dict):
                 continue
             param_value = str(request_params.get(param_name) or "").strip().lower()
+            if not param_value:
+                # Alinha com default do Query na api-delpi (param omitido no wire).
+                param_value = str(schema_param_default(route_info, param_name) or "").strip().lower()
             if not param_value:
                 default_params = route_info.get("defaultParams")
                 if isinstance(default_params, dict):

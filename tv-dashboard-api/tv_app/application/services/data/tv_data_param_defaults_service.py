@@ -91,11 +91,19 @@ def apply_catalog_param_defaults(
 
     merged: dict[str, Any] = {}
     for key, value in catalog_defaults.items():
-        if key in _CATALOG_PERIOD_KEYS:
+        key_str = str(key)
+        if key_str in _CATALOG_PERIOD_KEYS:
             continue
         if value is None or value == "":
             continue
-        merged[str(key)] = value
+        # Select opcional (enum): não forçar via defaultParams — «Não definido aqui»
+        # omite o param no wire e a api-delpi aplica o próprio default do Query.
+        spec = schema.get(key_str) if isinstance(schema.get(key_str), dict) else {}
+        if isinstance(spec, dict) and not should_apply_schema_default(key_str, spec):
+            enum = spec.get("enum")
+            if enum:
+                continue
+        merged[key_str] = value
 
     if isinstance(params, Mapping):
         for key, value in params.items():
@@ -121,3 +129,18 @@ def apply_catalog_param_defaults(
 
     # Sem datas/preset/periodDays explícitos → não injeta janela (histórico completo).
     return merged
+
+
+def schema_param_default(route: Mapping[str, Any] | None, param_name: str) -> str | None:
+    """Default declarativo do paramSchema (contrato OpenAPI / FastAPI Query)."""
+    if not isinstance(route, Mapping):
+        return None
+    schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
+    spec = schema.get(param_name) if isinstance(schema.get(param_name), dict) else {}
+    if not isinstance(spec, dict):
+        return None
+    raw = spec.get("default")
+    if raw is None or raw == "":
+        return None
+    text = str(raw).strip()
+    return text or None

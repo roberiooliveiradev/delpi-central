@@ -67,14 +67,21 @@ export function buildRouteDefaultParams(
 ): NonNullable<ComunicadoDataBinding["params"]> {
   const defaults: NonNullable<ComunicadoDataBinding["params"]> = {};
   const catalogDefaults = route.defaultParams ?? {};
+  const schema = route.paramSchema ?? {};
   for (const [key, value] of Object.entries(catalogDefaults)) {
     if (value === undefined || value === null || value === "") continue;
     // periodDays nunca como default de catálogo — evita «últimos N dias» implícito.
     if (key === PERIOD_DAYS_PARAM) continue;
+    const spec = schema[key] as
+      | { default?: ParamValue; optional?: boolean; enum?: unknown[] }
+      | undefined;
+    // Select opcional: «Não definido aqui» — não pré-preencher no bloco.
+    if (spec && !shouldApplySchemaDefault(key, spec) && Array.isArray(spec.enum) && spec.enum.length) {
+      continue;
+    }
     defaults[key] = value as ParamValue;
   }
 
-  const schema = route.paramSchema ?? {};
   for (const [key, raw] of Object.entries(schema)) {
     const spec = raw as { default?: ParamValue; optional?: boolean; enum?: unknown[] };
     if (defaults[key] !== undefined && defaults[key] !== "") continue;

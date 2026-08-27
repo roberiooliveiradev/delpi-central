@@ -7,6 +7,7 @@ from tv_app.infrastructure.gateways.delpi_operational_gateway import _build_quer
 
 
 def test_apply_defaults_uses_route_default_params_for_optional_group_by():
+    """Select opcional: defaultParams NÃO força o wire — «Não definido aqui» omite o param."""
     route = {
         "paramSchema": {
             "group_by": {
@@ -14,14 +15,23 @@ def test_apply_defaults_uses_route_default_params_for_optional_group_by():
                 "optional": True,
                 "default": "customer",
                 "enum": ["none", "customer", "branch"],
-            }
+            },
+            "granularity": {
+                "type": "string",
+                "optional": True,
+                "default": "week",
+                "enum": ["day", "week", "month", "year"],
+            },
         },
         "defaultParams": {"group_by": "customer"},
     }
     merged = apply_catalog_param_defaults({}, route)
-    assert merged["group_by"] == "customer"
+    assert "group_by" not in merged
+    assert "granularity" not in merged
     merged_none = apply_catalog_param_defaults({"group_by": "none"}, route)
     assert merged_none["group_by"] == "none"
+    merged_week = apply_catalog_param_defaults({"granularity": "week"}, route)
+    assert merged_week["granularity"] == "week"
     """Sem datas/preset → não inventa periodDays (histórico completo)."""
     route = {
         "paramSchema": {
