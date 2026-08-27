@@ -13,6 +13,12 @@ export {
   isSignatureImageFile,
 } from "./blobFromSignatureImageFile";
 export {
+  blobFromTypedSignatureName,
+  fitTypedSignatureFontSize,
+  TYPED_SIGNATURE_FONT_FAMILY,
+  type BlobFromTypedSignatureNameOptions,
+} from "./blobFromTypedSignatureName";
+export {
   centerSignaturePngBlob,
   type CenterSignatureOptions,
 } from "./centerSignaturePngBlob";

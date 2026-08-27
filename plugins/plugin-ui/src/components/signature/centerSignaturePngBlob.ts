@@ -5,13 +5,16 @@ export type CenterSignatureOptions = {
   targetHeight?: number;
   padding?: number;
   alphaThreshold?: number;
+  /** Margem extra ao recortar a tinta — preserva anti-alias e hastes de fonte script. */
+  cropInset?: number;
 };
 
 const DEFAULTS = {
   targetWidth: 640,
   targetHeight: 220,
-  padding: 20,
+  padding: 24,
   alphaThreshold: 8,
+  cropInset: 4,
 } as const;
 
 /**
@@ -26,6 +29,7 @@ export async function centerSignaturePngBlob(
   const targetHeight = options.targetHeight ?? DEFAULTS.targetHeight;
   const padding = options.padding ?? DEFAULTS.padding;
   const alphaThreshold = options.alphaThreshold ?? DEFAULTS.alphaThreshold;
+  const cropInset = options.cropInset ?? DEFAULTS.cropInset;
 
   try {
     const bitmap = await createImageBitmap(source);
@@ -62,6 +66,11 @@ export async function centerSignaturePngBlob(
       }
     }
     if (maxX < 0 || maxY < 0) return source;
+
+    minX = Math.max(0, minX - cropInset);
+    minY = Math.max(0, minY - cropInset);
+    maxX = Math.min(width - 1, maxX + cropInset);
+    maxY = Math.min(height - 1, maxY + cropInset);
 
     const inkW = maxX - minX + 1;
     const inkH = maxY - minY + 1;

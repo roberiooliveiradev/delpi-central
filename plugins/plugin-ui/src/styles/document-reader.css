@@ -228,14 +228,18 @@
   align-items: flex-end;
   justify-content: center;
   width: 100%;
-  height: 14mm;
+  min-height: 14mm;
+  height: auto;
+  max-height: 18mm;
 }
 
 .delpi-ui-document-signature__image img {
   display: block;
-  max-width: 42mm;
-  max-height: 13mm;
+  width: auto;
+  max-width: min(100%, 52mm);
+  max-height: 17mm;
   object-fit: contain;
+  object-position: center bottom;
 }
 
 .delpi-ui-document-signature__line {

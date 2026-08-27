@@ -2,7 +2,8 @@ import { Keyboard, PenLine, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { blobFromSignatureImageFile } from "./blobFromSignatureImageFile";
-import { centerSignaturePngBlob } from "./centerSignaturePngBlob";
+import { blobFromTypedSignatureName } from "./blobFromTypedSignatureName";
+import { centerSignaturePngBlob, type CenterSignatureOptions } from "./centerSignaturePngBlob";
 import { SignaturePad, type SignaturePadProps } from "./SignaturePad";
 
 export type SignatureCaptureMode = "draw" | "type" | "upload";
@@ -29,28 +30,6 @@ export type SignatureCapturePanelProps = {
     pad?: SignaturePadProps["labels"];
   };
 };
-
-async function blobFromTypedName(text: string, width = 640, height = 220): Promise<Blob | null> {
-  const trimmed = text.trim();
-  if (!trimmed) return null;
-  const canvas = document.createElement("canvas");
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  canvas.width = Math.round(width * dpr);
-  canvas.height = Math.round(height * dpr);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#0f172a";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const fontSize = Math.max(28, Math.min(56, Math.floor(width / Math.max(8, trimmed.length * 0.55))));
-  ctx.font = `italic ${fontSize}px "Segoe Script", "Brush Script MT", "Apple Chancery", cursive`;
-  ctx.fillText(trimmed, width / 2, height / 2);
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), "image/png");
-  });
-}
 
 export function SignatureCapturePanel({
   disabled = false,
@@ -86,7 +65,7 @@ export function SignatureCapturePanel({
     };
   }, [previewUrl]);
 
-  async function publish(blob: Blob | null) {
+  async function publish(blob: Blob | null, centerOptions?: CenterSignatureOptions) {
     if (previewUrl) {
       try {
         URL.revokeObjectURL(previewUrl);
@@ -99,7 +78,7 @@ export function SignatureCapturePanel({
       onChange?.(null);
       return;
     }
-    const centered = await centerSignaturePngBlob(blob);
+    const centered = await centerSignaturePngBlob(blob, centerOptions);
     let nextUrl: string | null = null;
     try {
       nextUrl = URL.createObjectURL(centered);
@@ -118,8 +97,8 @@ export function SignatureCapturePanel({
   async function applyTyped() {
     if (disabled) return;
     setUploadError(null);
-    const blob = await blobFromTypedName(typedName, width, height);
-    await publish(blob);
+    const blob = await blobFromTypedSignatureName(typedName, width, height);
+    await publish(blob, { padding: 28, cropInset: 6 });
   }
 
   async function handleUpload(file: File | null) {
