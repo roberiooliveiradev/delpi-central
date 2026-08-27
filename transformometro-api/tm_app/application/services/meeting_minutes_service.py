@@ -12,6 +12,9 @@ from tm_app.application.services.tm_meeting_minute_sign_invite_service import (
     TmMeetingMinuteSignInviteService,
 )
 from tm_app.application.services.tm_sign_pending_mail_service import TmSignPendingMailService
+from tm_app.application.services.sign_invite_mail_presentation_service import (
+    enrich_signers_with_last_invite_mail,
+)
 from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
 from tm_app.domain.services.minute_status_transition_service import MinuteStatusTransitionError, MinuteStatusTransitionService
 from tm_app.infrastructure.pdf.minute_pdf_renderer import MinutePdfRenderer
@@ -159,7 +162,14 @@ class MeetingMinutesService:
         )
 
     def get_detail(self, user: Any, minute_id: str) -> dict[str, Any]:
-        minute=self._load(user,"view",minute_id); signers=self.repo.list_signers(minute_id); user_id=self._user_id(user)
+        minute=self._load(user,"view",minute_id)
+        signers=self.repo.list_signers(minute_id)
+        signers=enrich_signers_with_last_invite_mail(
+            repo=self.repo,
+            minute_id=minute_id,
+            signers=signers,
+        )
+        user_id=self._user_id(user)
         signer=next((s for s in signers if str(s.get("user_id"))==user_id),None)
         return {"minute":minute,"version":self.repo.get_version(minute_id),"participants":self.repo.list_participants(minute_id),"signers":signers,"signatures":self.repo.list_signatures(minute_id),"versions":self.repo.list_versions(minute_id),"viewer":{"user_id":user_id or None,"is_signer":bool(signer),"has_signed":bool(signer and signer["status"]=="signed"),"can_sign_now":bool(signer and minute["status"] in {"awaiting_signatures","partially_signed"} and signer["status"] in {"pending","viewed"})}}
 
