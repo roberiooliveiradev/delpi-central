@@ -1,10 +1,10 @@
 {
   "version": 1,
   "generatedAt": "2026-08-27",
-  "baselineOperationCount": 684,
-  "operationCount": 685,
-  "coveredCount": 613,
-  "gapCount": 71,
+  "baselineOperationCount": 694,
+  "operationCount": 694,
+  "coveredCount": 619,
+  "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 23,
-      "covered": 23,
+      "total": 24,
+      "covered": 24,
       "gap": 0,
       "exempt": 0
     },
@@ -44,8 +44,8 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 27,
-      "covered": 27,
+      "total": 28,
+      "covered": 28,
       "gap": 0,
       "exempt": 0
     },
@@ -158,9 +158,9 @@
       "exempt": 0
     },
     "quality": {
-      "total": 145,
+      "total": 146,
       "covered": 145,
-      "gap": 0,
+      "gap": 1,
       "exempt": 0
     },
     "refugos": {
@@ -194,9 +194,9 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 24,
-      "covered": 24,
-      "gap": 0,
+      "total": 30,
+      "covered": 28,
+      "gap": 2,
       "exempt": 0
     },
     "system": {
@@ -343,6 +343,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_commercial_rol_by_branch",
+      "method": "GET",
+      "path": "/commercial/rol/by-branch",
+      "module": "commercial",
+      "entity": "commercial_rol_by_branch",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_commercial_rol_by_customer",
       "method": "GET",
       "path": "/commercial/rol/by-customer",
@@ -370,6 +379,24 @@
       "status": "covered"
     },
     {
+      "operationId": "get_sales_order_otd_by_branch",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/by-branch",
+      "module": "commercial",
+      "entity": "sales_order_otd_by_branch",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_sales_order_otd_by_customer",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/by-customer",
+      "module": "commercial",
+      "entity": "sales_order_otd_by_customer",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_sales_order_otd_line_detail",
       "method": "GET",
       "path": "/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
@@ -394,6 +421,15 @@
       "module": "commercial",
       "entity": "sales_order_otd_series",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_sales_order_otd_series_by_customer",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/series-by-customer",
+      "module": "commercial",
+      "entity": "sales_order_otd_series_by_customer",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -1276,6 +1312,15 @@
       "module": "engineering",
       "entity": "mini_applicators_ferramenta",
       "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "post_mini_applicators_golpes_batch",
+      "method": "POST",
+      "path": "/engineering/mini-applicators/ferramentas/golpes/batch",
+      "module": "engineering",
+      "entity": "mini_applicators_golpes",
+      "shape": "list",
       "status": "covered"
     },
     {
@@ -4961,6 +5006,15 @@
       "status": "covered"
     },
     {
+      "operationId": "force_close_audit_5s_nc_without_treatment",
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/force-close-without-treatment",
+      "module": "quality",
+      "entity": "force_close_audit_5s_nc_without_treatment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
       "operationId": "reopen_audit_5s_nc_action",
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/reopen-action",
@@ -5987,6 +6041,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "method": "GET",
+      "path": "/supplies/protheus-users/by-email",
+      "module": "supplies",
+      "entity": "protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
       "operationId": "get_supplies_purchase_order_otd",
       "method": "GET",
       "path": "/supplies/purchase-order-otd",
@@ -6014,6 +6077,24 @@
       "status": "covered"
     },
     {
+      "operationId": "list_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_line",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_request_lines",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/lines/{branch}/{request_number}",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_line",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_supplies_purchase_requests_open_coverage",
       "method": "GET",
       "path": "/supplies/purchase-requests/open-coverage",
@@ -6021,6 +6102,33 @@
       "entity": "supplies_purchase_request_coverage",
       "shape": "list",
       "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_orders",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/recent-linked-orders",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_linked_order",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_recent_linked_receipts",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/recent-linked-receipts",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_linked_receipt",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/requesters",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "shape": "scalar",
+      "status": "gap"
     },
     {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",
@@ -6344,33 +6452,6 @@
       "module": "system",
       "entity": "protheus_table_schema",
       "shape": "composite_analysis",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_commercial_rol_by_branch",
-      "method": "GET",
-      "path": "/commercial/rol/by-branch",
-      "module": "commercial",
-      "entity": "commercial_rol_by_customer",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_sales_order_otd_by_customer",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/by-customer",
-      "module": "commercial",
-      "entity": "commercial_rol_by_customer",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_sales_order_otd_by_branch",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/by-branch",
-      "module": "commercial",
-      "entity": "commercial_rol_by_customer",
-      "shape": "paged_list",
       "status": "covered"
     }
   ]
