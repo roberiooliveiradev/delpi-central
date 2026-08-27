@@ -182,6 +182,18 @@
           }
         },
         "params": {
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
           "customer_segment": {
             "locale": {
               "en": {
@@ -454,6 +466,18 @@
               }
             }
           },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
           "customer_segment": {
             "locale": {
               "en": {
@@ -595,6 +619,18 @@
           }
         },
         "params": {
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
           "customer_segment": {
             "locale": {
               "en": {
@@ -856,6 +892,18 @@
           }
         },
         "params": {
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
           "customer_segment": {
             "locale": {
               "en": {
@@ -1125,6 +1173,18 @@
                 "pt-BR": {
                   "label": "SC"
                 }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
               }
             }
           },
@@ -1675,6 +1735,18 @@
                 "pt-BR": {
                   "label": "SC"
                 }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
               }
             }
           },
@@ -2820,7 +2892,7 @@
           },
           "pt-BR": {
             "summary": "Pacote consolidado de ROL comercial",
-            "description": "Summary, série, breakdown por cliente e carteira semanal opcional (include=portfolio).",
+            "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio).",
             "label": "Análise consolidada de ROL comercial"
           }
         },
@@ -2875,6 +2947,76 @@
                 },
                 "pt-BR": {
                   "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "include": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders).",
+                "label": "Include sections"
+              },
+              "pt-BR": {
+                "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal).",
+                "label": "Seções opcionais"
+              }
+            },
+            "enumLabels": {
+              "portfolio": {
+                "en": {
+                  "label": "Portfolio"
+                },
+                "pt-BR": {
+                  "label": "Carteira semanal"
                 }
               }
             }
@@ -2996,6 +3138,14 @@
                   "label": "Filial"
                 }
               },
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
               "branch_summary": {
                 "en": {
                   "label": "Branch summary"
@@ -3026,6 +3176,14 @@
                 },
                 "pt-BR": {
                   "label": "Geral"
+                }
+              },
+              "none": {
+                "en": {
+                  "label": "None"
+                },
+                "pt-BR": {
+                  "label": "Nenhum"
                 }
               },
               "product": {
@@ -3093,7 +3251,7 @@
           }
         },
         "tv": {
-          "description": "Summary, série, breakdown por cliente e carteira semanal opcional (include=portfolio).",
+          "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio).",
           "label": "Análise consolidada de ROL comercial"
         },
         "presentationStrategy": "as_delivered"
@@ -3241,6 +3399,18 @@
                 "pt-BR": {
                   "label": "SC"
                 }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
               }
             }
           },
@@ -3408,6 +3578,18 @@
           }
         },
         "params": {
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
           "customer_segment": {
             "locale": {
               "en": {
@@ -3655,6 +3837,18 @@
               }
             }
           },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
           "customer_segment": {
             "locale": {
               "en": {
@@ -3853,7 +4047,7 @@
           },
           "pt-BR": {
             "summary": "Pacote consolidado de OTD e atendimento de pedidos",
-            "description": "Summary com qty/OTD, série temporal e breakdown por cliente.",
+            "description": "Pacote com resumo (quantidade e OTD), série temporal e detalhamento por cliente.",
             "label": "Análise consolidada de OTD de pedidos"
           }
         },
@@ -3909,6 +4103,54 @@
                 "pt-BR": {
                   "label": "SC"
                 }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
               }
             }
           },
@@ -4029,6 +4271,14 @@
                   "label": "Filial"
                 }
               },
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
               "branch_summary": {
                 "en": {
                   "label": "Branch summary"
@@ -4059,6 +4309,14 @@
                 },
                 "pt-BR": {
                   "label": "Geral"
+                }
+              },
+              "none": {
+                "en": {
+                  "label": "None"
+                },
+                "pt-BR": {
+                  "label": "Nenhum"
                 }
               },
               "product": {
@@ -4126,7 +4384,7 @@
           }
         },
         "tv": {
-          "description": "Summary com qty/OTD, série temporal e breakdown por cliente.",
+          "description": "Pacote com resumo (quantidade e OTD), série temporal e detalhamento por cliente.",
           "label": "Análise consolidada de OTD de pedidos"
         },
         "presentationStrategy": "as_delivered"
@@ -4265,6 +4523,18 @@
                 "pt-BR": {
                   "label": "SC"
                 }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
               }
             }
           },
@@ -4511,6 +4781,18 @@
                 "pt-BR": {
                   "label": "SC"
                 }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
               }
             }
           },
@@ -5291,6 +5573,18 @@
                 "pt-BR": {
                   "label": "SC"
                 }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
               }
             }
           },
@@ -46544,6 +46838,14 @@
                   "label": "Filial"
                 }
               },
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
               "branch_summary": {
                 "en": {
                   "label": "Branch summary"
@@ -46574,6 +46876,14 @@
                 },
                 "pt-BR": {
                   "label": "Geral"
+                }
+              },
+              "none": {
+                "en": {
+                  "label": "None"
+                },
+                "pt-BR": {
+                  "label": "Nenhum"
                 }
               },
               "product": {
@@ -47503,6 +47813,14 @@
                   "label": "Filial"
                 }
               },
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
               "branch_summary": {
                 "en": {
                   "label": "Branch summary"
@@ -47533,6 +47851,14 @@
                 },
                 "pt-BR": {
                   "label": "Geral"
+                }
+              },
+              "none": {
+                "en": {
+                  "label": "None"
+                },
+                "pt-BR": {
+                  "label": "Nenhum"
                 }
               },
               "product": {

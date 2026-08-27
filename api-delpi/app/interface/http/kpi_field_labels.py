@@ -182,6 +182,10 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
 
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "rol": "ROL realizado",
+    "rol_with_ipi": "ROL com IPI",
+    "gross_revenue": "Receita bruta",
+    "returns": "Devoluções",
+    "discounts": "Descontos",
     "target": "Meta ROL (R$)",
     "total_rol": "ROL total",
     "new_business_rol": "ROL novos negócios",
@@ -195,6 +199,10 @@ COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "total_new_clients": "Total clientes novos",
     "monthly_average": "Média mensal",
     "qtd_months": "Qtd. meses",
+    "share_pct": "% participação",
+    "open_value": "Valor em aberto",
+    "customer_code": "Código cliente",
+    "customer_name": "Cliente",
 }
 
 PRODUCTION_OEE_FIELD_LABELS: dict[str, str] = {

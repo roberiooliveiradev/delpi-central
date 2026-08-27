@@ -37,6 +37,8 @@ def test_global_param_locale_catalog():
     params = load_global_param_locale()
     assert params["branch"]["locale"]["en"]["label"] == "Branch"
     assert params["branch"]["locale"]["pt-BR"]["label"] == "Filial"
+    assert params["customer_codes"]["locale"]["pt-BR"]["label"] == "Códigos de clientes"
+    assert params["include"]["locale"]["pt-BR"]["label"] == "Seções opcionais"
 
 
 def test_global_param_enum_labels_bilingual():

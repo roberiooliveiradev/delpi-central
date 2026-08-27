@@ -1144,7 +1144,7 @@
         "pt-BR": {
           "label": "Análise consolidada de ROL comercial",
           "summary": "Pacote consolidado de ROL comercial",
-          "description": "Summary, série, breakdown por cliente e carteira semanal opcional (include=portfolio)."
+          "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio)."
         }
       },
       "category": "commercial"
@@ -4105,7 +4105,7 @@
         "pt-BR": {
           "label": "Análise consolidada de OTD de pedidos",
           "summary": "Pacote consolidado de OTD e atendimento de pedidos",
-          "description": "Summary com qty/OTD, série temporal e breakdown por cliente."
+          "description": "Pacote com resumo (quantidade e OTD), série temporal e detalhamento por cliente."
         }
       },
       "category": "commercial"

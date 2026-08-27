@@ -427,22 +427,22 @@ def get_commercial_rol(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (include)."
+        None, description="Comma-separated TOTVS customer codes (include)."
     ),
     customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (include, LIKE)."
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
     exclude_customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (exclude)."
+        None, description="Comma-separated TOTVS customer codes to exclude."
     ),
     exclude_customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (exclude, NOT LIKE)."
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
     group_by: str = COMMERCIAL_ANALYSIS_GROUP_BY_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     include: Optional[str] = Query(
-        None, description="CSV flags: portfolio (carteira semanal)."
+        None, description="Comma-separated flags for optional sections (e.g. portfolio)."
     ),
 ):
     try:
@@ -904,16 +904,16 @@ def get_commercial_sales_order_otd_analysis(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (include)."
+        None, description="Comma-separated TOTVS customer codes (include)."
     ),
     customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (include, LIKE)."
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
     exclude_customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (exclude)."
+        None, description="Comma-separated TOTVS customer codes to exclude."
     ),
     exclude_customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (exclude, NOT LIKE)."
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
     group_by: str = COMMERCIAL_ANALYSIS_GROUP_BY_QUERY(),
     page: int = Query(1, ge=1),
