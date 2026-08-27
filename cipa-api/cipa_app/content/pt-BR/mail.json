@@ -9,5 +9,16 @@
     "footerSite": "www.delpi.com.br",
     "footerMeta": "Minha DELPI — CIPA",
     "footerNote": "Esta mensagem foi enviada automaticamente. O link é pessoal e expira após o prazo configurado."
+  },
+  "signPendingReminder": {
+    "subject": "Lembrete de assinatura — Ata {{minuteNumber}} da CIPA",
+    "headerTitle": "CIPA",
+    "headerSubtitle": "Comissão Interna de Prevenção de Acidentes",
+    "greeting": "Olá, {{displayName}}.",
+    "intro": "Lembrete: a ata {{minuteNumber}} — {{title}} — ainda aguarda sua assinatura. Use o novo link abaixo — links anteriores podem ter sido substituídos.",
+    "ctaLabel": "Assinar ata",
+    "footerSite": "www.delpi.com.br",
+    "footerMeta": "Minha DELPI — CIPA",
+    "footerNote": "Esta mensagem foi enviada automaticamente. O link é pessoal e expira após o prazo configurado."
   }
 }

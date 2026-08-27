@@ -392,14 +392,43 @@ class MeetingMinutesService:
             actor_user_id=self._user_id(user),
             action="send_for_signature",
         )
-        self._dispatch_sign_invites(updated, signers)
+        self._dispatch_sign_invites(updated, signers, template_key="signPending")
         return {"minute": updated, "signers": signers}
+
+    def resend_sign_invites(self, user, minute_id: str) -> dict[str, Any]:
+        minute = self._load_authorized(user, "submit", minute_id)
+        if minute.get("status") not in {"awaiting_signatures", "partially_signed"}:
+            raise ValueError(
+                "Reenvio só é permitido enquanto a ata aguarda assinaturas. "
+                "Se a ata estiver em revisão, use «Enviar para assinatura»."
+            )
+        signers = self.repo.list_signers(minute_id)
+        targets = [
+            signer
+            for signer in signers
+            if str(signer.get("status") or "") in {"pending", "viewed"}
+        ]
+        if not targets:
+            raise ValueError("Não há signatários pendentes para reenviar.")
+        dispatched = self._dispatch_sign_invites(
+            minute,
+            targets,
+            template_key="signPendingReminder",
+        )
+        return {
+            "minute": minute,
+            "signers": targets,
+            "resent_count": dispatched["resent_count"],
+            "mail_sent": dispatched["mail_sent"],
+        }
 
     def _dispatch_sign_invites(
         self,
         minute: dict[str, Any],
         signers: list[dict[str, Any]],
-    ) -> None:
+        *,
+        template_key: str = "signPending",
+    ) -> dict[str, Any]:
         mail_signers: list[dict[str, Any]] = []
         minute_id = str(minute["id"])
         minute_number = str(minute.get("minute_number") or "")
@@ -426,11 +455,13 @@ class MeetingMinutesService:
                     unit_code=unit_code,
                     dedupe_key=dedupe,
                 )
-        self.sign_pending_mail.notify_signers(
+        mail_sent = self.sign_pending_mail.notify_signers(
             signers=mail_signers,
             minute_number=minute_number,
             title=minute_title,
+            template_key=template_key,
         )
+        return {"resent_count": len(mail_signers), "mail_sent": mail_sent}
 
     def sign_context(self, user, minute_id: str) -> dict[str, Any]:
         minute = self._load_authorized(user, "sign", minute_id)

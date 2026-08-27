@@ -42,6 +42,7 @@ vi.mock("../api/cipaApi", () => ({
   listMinutes: api.listMinutes,
   pendingSignatures: vi.fn(),
   refuseMinute: vi.fn(),
+  resendSignInvites: vi.fn(),
   searchDirectoryUsers: vi.fn(),
   sendForSignature: vi.fn(),
   setSigners: vi.fn(),
@@ -491,6 +492,40 @@ describe("CipaAppShell compartilhado", () => {
     );
     await screen.findByLabelText("Modo de leitura da ata");
     expect(screen.queryByRole("button", { name: /Assinar/ })).toBeNull();
+  });
+
+  it("mostra Reenviar convites para gestor com signatários pendentes", async () => {
+    api.getMinute.mockResolvedValue({
+      minute: {
+        id: "minute-1",
+        unit_code: "01",
+        title: "Reunião extraordinária",
+        minute_number: "2026/010",
+        meeting_type: "extraordinary",
+        meeting_date: "2026-08-26",
+        status: "awaiting_signatures",
+      },
+      version: { body_html: "<p>Documento da ata.</p>", content_hash: "hash" },
+      participants: [],
+      signers: [
+        { id: "s1", user_id: "u1", display_name: "Ana", status: "pending" },
+        { id: "s2", user_id: "u2", display_name: "Bob", status: "signed" },
+      ],
+      signatures: [],
+      action_items: [],
+      versions: [],
+    });
+
+    render(
+      <CipaAppShell
+        route={{ kind: "detail", unitCode: "01", minuteId: "minute-1" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    expect(await screen.findByRole("button", { name: /Reenviar convites/ })).toBeTruthy();
   });
 
   it("histórico da ata usa timeline em árvore com branches de auditoria", async () => {

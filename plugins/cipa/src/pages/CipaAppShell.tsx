@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Download,
   FilePlus2,
+  Mail,
   PenLine,
   Pencil,
   RefreshCw,
@@ -27,6 +28,7 @@ import {
   getMinute,
   listMinutes,
   pendingSignatures,
+  resendSignInvites,
   sendForSignature,
   type MinuteDetail,
   type MinuteListItem,
@@ -708,6 +710,15 @@ function MinuteDetailPage({
 
   const minute = detail?.minute;
   const status = String(minute?.status || "");
+  const canResend = useMemo(() => {
+    if (status !== "awaiting_signatures" && status !== "partially_signed") {
+      return false;
+    }
+    return (detail?.signers ?? []).some((signer) => {
+      const sig = String(signer.status ?? "");
+      return sig === "pending" || sig === "viewed";
+    });
+  }, [detail?.signers, status]);
 
   const confirmDelete = async () => {
     setBusy(true);
@@ -768,6 +779,20 @@ function MinuteDetailPage({
                 Enviar para assinatura
               </ActionButton>
             )}
+            {canManage && canResend ? (
+              <ActionButton
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  resendSignInvites(minuteId)
+                    .then(() => reload())
+                    .catch((err) => setError(err instanceof Error ? err.message : "Erro"))
+                    .finally(() => setBusy(false));
+                }}
+              >
+                <Mail size={16} /> Reenviar convites
+              </ActionButton>
+            ) : null}
             {canSign && detail?.viewer?.can_sign_now && (
               <ActionButton
                 variant="primary"

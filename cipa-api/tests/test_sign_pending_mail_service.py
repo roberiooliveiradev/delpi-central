@@ -91,3 +91,24 @@ def test_notify_signers_skips_when_graph_not_configured():
 
     assert sent == 0
     mail.send_mail_to.assert_not_called()
+
+
+def test_build_subject_and_html_use_reminder_template():
+    svc = CipaSignPendingMailService(
+        mail_client=MagicMock(),
+        directory=MagicMock(),
+        enabled=True,
+    )
+
+    subject = svc.build_subject(minute_number="2026/010", template_key="signPendingReminder")
+    html_body = svc.build_html(
+        display_name="Ana",
+        minute_number="2026/010",
+        title="Reunião",
+        sign_url="https://portal/p/cipa/sign/abc",
+        template_key="signPendingReminder",
+    )
+
+    assert "Lembrete de assinatura" in subject
+    assert "Lembrete:" in html_body
+    assert "links anteriores podem ter sido substituídos" in html_body
