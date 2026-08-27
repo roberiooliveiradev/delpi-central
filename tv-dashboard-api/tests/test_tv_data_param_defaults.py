@@ -5,7 +5,6 @@ from tv_app.application.services.data.tv_data_param_validation_service import va
 from tv_app.infrastructure.gateways.delpi_operational_gateway import _build_query_params
 
 
-
 def test_apply_defaults_uses_route_default_params_for_optional_group_by():
     """Select opcional: defaultParams NÃO força o wire — «Não definido aqui» omite o param."""
     route = {
@@ -32,6 +31,42 @@ def test_apply_defaults_uses_route_default_params_for_optional_group_by():
     assert merged_none["group_by"] == "none"
     merged_week = apply_catalog_param_defaults({"granularity": "week"}, route)
     assert merged_week["granularity"] == "week"
+
+
+def test_gateway_omits_optional_enum_selects_when_unset():
+    """«Não definido aqui» omite group_by/granularity; a api-delpi aplica Query default."""
+    route = {
+        "paramStrategy": "date_range",
+        "dateRangeKeys": ["start_date", "end_date"],
+        "openEndedDateRange": True,
+        "defaultParams": {"group_by": "customer"},
+        "paramSchema": {
+            "group_by": {
+                "type": "string",
+                "optional": True,
+                "default": "customer",
+                "enum": ["none", "customer", "branch"],
+            },
+            "granularity": {
+                "type": "string",
+                "optional": True,
+                "default": "week",
+                "enum": ["day", "week", "month", "year"],
+            },
+            "start_date": {"type": "string", "optional": True},
+            "end_date": {"type": "string", "optional": True},
+        },
+    }
+    query = _build_query_params(route, {})
+    assert "group_by" not in query
+    assert "granularity" not in query
+
+    query_set = _build_query_params(route, {"group_by": "none", "granularity": "month"})
+    assert query_set["group_by"] == "none"
+    assert query_set["granularity"] == "month"
+
+
+def test_apply_defaults_never_injects_period_days():
     """Sem datas/preset → não inventa periodDays (histórico completo)."""
     route = {
         "paramSchema": {
