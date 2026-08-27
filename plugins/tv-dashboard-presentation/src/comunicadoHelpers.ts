@@ -136,6 +136,7 @@ import {
 } from "./comunicadoVisualBox";
 import type {
   ComunicadoBackground,
+  ComunicadoBackgroundUnderlay,
   ComunicadoBlock,
   ComunicadoBlockStyle,
   ComunicadoCanvasTableBlock,
@@ -835,7 +836,11 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
   const background = config.background ?? DEFAULT_BACKGROUND;
   const serializedBackground =
     background.type === "image"
-      ? { type: "image", assetId: background.assetId }
+      ? {
+          type: "image",
+          assetId: background.assetId,
+          ...(background.underlay ? { underlay: background.underlay } : {}),
+        }
       : background.type === "gradient"
         ? {
             type: "gradient",
@@ -1069,15 +1074,57 @@ function normalizeCustomFonts(value: unknown): ComunicadoCustomFontRef[] | undef
   return fonts.length ? fonts : undefined;
 }
 
+function normalizeBackgroundUnderlay(value: unknown): ComunicadoBackgroundUnderlay | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  if (raw.type === "color") {
+    const color = typeof raw.value === "string" && raw.value.trim() ? raw.value.trim() : undefined;
+    return color ? { type: "color", value: color } : undefined;
+  }
+  if (raw.type === "gradient") {
+    const from = typeof raw.from === "string" && raw.from.trim() ? raw.from : "#0f172a";
+    const to = typeof raw.to === "string" && raw.to.trim() ? raw.to : "#1e3a5f";
+    const angle = typeof raw.angle === "number" ? raw.angle : 180;
+    const rawStops = Array.isArray(raw.stops) ? raw.stops : [];
+    const parsedStops = rawStops.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const stop = item as Record<string, unknown>;
+      if (typeof stop.color !== "string" || !stop.color.trim()) return [];
+      const position = Number(stop.position);
+      return [
+        {
+          color: stop.color.trim(),
+          position: Number.isFinite(position) ? position : 0,
+          ...(typeof stop.opacity === "number" ? { opacity: stop.opacity } : {}),
+        },
+      ];
+    });
+    const stops = parsedStops.length >= 2 ? parsedStops : [
+      { color: from, position: 0 },
+      { color: to, position: 100 },
+    ];
+    return {
+      type: "gradient",
+      from: stops[0]?.color ?? from,
+      to: stops[stops.length - 1]?.color ?? to,
+      angle,
+      stops,
+    };
+  }
+  return undefined;
+}
+
 function normalizeBackground(value: unknown): ComunicadoBackground {
   if (!value || typeof value !== "object") return DEFAULT_BACKGROUND;
   const bg = value as Record<string, unknown>;
   if (bg.type === "image") {
+    const underlay = normalizeBackgroundUnderlay(bg.underlay);
     return {
       type: "image",
       assetId: typeof bg.assetId === "string" ? bg.assetId : undefined,
       url: typeof bg.url === "string" ? bg.url : undefined,
       value: typeof bg.value === "string" ? bg.value : undefined,
+      ...(underlay ? { underlay } : {}),
     };
   }
   if (bg.type === "gradient") {

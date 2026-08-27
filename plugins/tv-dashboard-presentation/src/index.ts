@@ -477,7 +477,15 @@ export {
   comunicadoBackgroundCssProperties,
   comunicadoBackgroundImageUrl,
   comunicadoBackgroundRootStyle,
+  resolveComunicadoBackgroundUnderlay,
+  DEFAULT_IMAGE_BACKGROUND_UNDERLAY,
 } from "./comunicadoBackgroundStyle";
+export {
+  applyBackgroundImagePreservingUnderlay,
+  fillToBackgroundUnderlay,
+  patchBackgroundUnderlay,
+  removeBackgroundImage,
+} from "./comunicadoBackgroundPatch";
 export {
   applyColorPaintToCss,
   applyCssShapePaints,
