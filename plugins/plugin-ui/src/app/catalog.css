@@ -379,20 +379,20 @@
 }
 
 /* Layout BEM demos */
-.dashboard-plugin-ui .puc-page-header {
+.dashboard-plugin-ui .puc-page-header:not(.puc-page-header--hero) {
   display: flex;
   gap: 14px;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
-.dashboard-plugin-ui .puc-page-header__brand {
+.dashboard-plugin-ui .puc-page-header:not(.puc-page-header--hero) .puc-page-header__brand {
   display: flex;
   gap: 12px;
   align-items: flex-start;
 }
 
-.dashboard-plugin-ui .puc-header__icon {
+.dashboard-plugin-ui .puc-page-header:not(.puc-page-header--hero) .puc-header__icon {
   width: 48px;
   height: 48px;
   border-radius: 14px;
@@ -402,7 +402,7 @@
   color: var(--puc-accent);
 }
 
-.dashboard-plugin-ui .puc-page-header__content {
+.dashboard-plugin-ui .puc-page-header:not(.puc-page-header--hero) .puc-page-header__content {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -809,11 +809,7 @@
 }
 
 .dashboard-plugin-ui .puc-table th {
-  background: color-mix(in srgb, var(--puc-accent) 8%, var(--puc-surface));
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  /* Cabeçalho visual vem do kit (.delpi-ui-table th) */
 }
 
 .dashboard-plugin-ui .puc-table__empty {

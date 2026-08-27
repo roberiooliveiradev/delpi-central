@@ -64,20 +64,25 @@ table.delpi-ui-table td {
   vertical-align: top;
 }
 
-table.delpi-ui-table th {
-  font-weight: 650;
-  font-size: var(--delpi-ui-table-header-font-size, 0.92em);
-  letter-spacing: 0.01em;
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-surface, var(--surface, #ffffff)) 90%,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%
+table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th {
+  font-weight: 700;
+  font-size: var(--delpi-ui-table-header-font-size, 0.75rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: linear-gradient(
+    180deg,
+    var(--delpi-ui-title, var(--secundary, #003866)) 0%,
+    color-mix(
+      in srgb,
+      var(--delpi-ui-title, var(--secundary, #003866)) 82%,
+      var(--delpi-ui-accent, var(--primary, #089bdb))
+    ) 100%
   );
   border-bottom-color: color-mix(
     in srgb,
-    var(--delpi-ui-border, var(--border, #e6e6e6)) 70%,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 30%
+    var(--delpi-ui-title, var(--secundary, #003866)) 75%,
+    black
   );
   white-space: nowrap;
   vertical-align: middle;
@@ -174,6 +179,23 @@ table.delpi-ui-table:not(.delpi-ui-table--grid-preview) tbody tr:last-child td {
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
+table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th .delpi-ui-table__sort-button:hover,
+table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th .delpi-ui-table__sort-button:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th .delpi-ui-table__sort-button--active,
+table.delpi-ui-table:not(.delpi-ui-table--grid-preview)
+  th
+  .delpi-ui-table__sort-button--active
+  .delpi-ui-table__sort-indicator {
+  color: #ffffff;
+}
+
+table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th .delpi-ui-table__sort-indicator {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .delpi-ui-table__col--numeric {
   text-align: right;
   white-space: nowrap;
@@ -216,6 +238,18 @@ table.delpi-ui-table--grid-preview td {
   padding: 6px 10px;
   vertical-align: middle;
   border: 1px solid var(--delpi-ui-border, var(--border, #d8dde6));
+}
+
+table.delpi-ui-table--grid-preview th {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 90%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%
+  );
 }
 
 table.delpi-ui-table--grid-preview tbody tr:nth-child(even) td {
@@ -619,6 +653,33 @@ table.delpi-ui-table:not(.delpi-ui-table--clickable)
   );
 }
 
+:root[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-button:hover,
+:root[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-button:focus-visible,
+[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-button:hover,
+[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-button:focus-visible {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 14%, transparent);
+}
+
+:root[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-indicator,
+[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-indicator {
+  color: color-mix(in srgb, var(--delpi-ui-text, #f5f5f5) 62%, transparent);
+}
+
+:root[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-button--active,
+:root[data-theme="dark"]
+  table.delpi-ui-table
+  th
+  .delpi-ui-table__sort-button--active
+  .delpi-ui-table__sort-indicator,
+[data-theme="dark"] table.delpi-ui-table th .delpi-ui-table__sort-button--active,
+[data-theme="dark"]
+  table.delpi-ui-table
+  th
+  .delpi-ui-table__sort-button--active
+  .delpi-ui-table__sort-indicator {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
 table.delpi-ui-table--clickable tbody tr.is-selected {
   background: color-mix(
     in srgb,
@@ -851,7 +912,6 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
 }
 
 .delpi-ui-detail-card table.delpi-ui-table th {
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
   white-space: nowrap;
 }
 

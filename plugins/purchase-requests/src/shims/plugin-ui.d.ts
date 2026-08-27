@@ -31,15 +31,32 @@ declare module "@delpi/plugin-ui/index" {
 
   export function stateBannerBemClasses(prefix: string): Record<string, string>;
 
-  export type DashboardPageHeaderProps = {
-    title: ReactNode;
-    subtitle?: ReactNode;
-    onRefresh?: () => void;
-    refreshing?: boolean;
+  export type PageHeaderLayout = "brand" | "titleRow" | "stack" | "hero";
+
+  export type PageHeaderMetaItem = {
+    icon?: ReactNode;
+    label: ReactNode;
   };
 
+  export type PageHeaderProps = {
+    layout: PageHeaderLayout;
+    title: ReactNode;
+    subtitle?: ReactNode;
+    eyebrow?: ReactNode;
+    icon?: ReactNode;
+    onRefresh?: () => void;
+    refreshing?: boolean;
+    metaItems?: readonly PageHeaderMetaItem[];
+    classNames: Record<string, string | undefined>;
+    labels: { refresh: string; refreshing: string };
+  };
+
+  export function PageHeader(props: PageHeaderProps): ReactElement;
+
+  export type DashboardPageHeaderProps = Omit<PageHeaderProps, "classNames" | "labels" | "layout">;
+
   export function createDashboardPageHeader(config: {
-    layout: string;
+    layout: PageHeaderLayout;
     classNames: Record<string, string | undefined>;
     labels: { refresh: string; refreshing: string };
   }): ComponentType<DashboardPageHeaderProps>;
@@ -48,6 +65,8 @@ declare module "@delpi/plugin-ui/index" {
     prefix: string,
     options?: { buttonClass?: string; spinClass?: string },
   ): Record<string, string | undefined>;
+
+  export function pageHeaderHeroBemClasses(prefix: string): Record<string, string | undefined>;
 
   export type DashboardSectionCardProps = {
     title: string;

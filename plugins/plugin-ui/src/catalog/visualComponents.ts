@@ -63,8 +63,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("help", "TitleWithHelp"),
   // layout
   vc("layout", "PageHeader", {
-    updatedAt: "2026-07-16",
-    changeNote: "Dual-class delpi-ui-page-header + slot nav",
+    updatedAt: "2026-08-27",
+    changeNote: "Layout hero (gradiente + chips de contexto) + dual-class",
   }),
   vc("layout", "UnderlineNav", {
     addedAt: "2026-08-06",
@@ -224,8 +224,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("data", "DataTable", {
     addedAt: PACKAGE_INITIAL_DATE,
-    updatedAt: "2026-07-17",
-    changeNote: "Modo grid-preview com eventos de header/célula, seleção e índice",
+    updatedAt: "2026-08-27",
+    changeNote: "Cabeçalho navy (modo claro) alinhado ao padrão operacional 5S",
   }),
   vc("data", "DataTableSection", {
     addedAt: PACKAGE_INITIAL_DATE,
