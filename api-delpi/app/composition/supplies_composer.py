@@ -62,6 +62,9 @@ from app.application.use_cases.supplies.list_supplies_purchase_request_lines_use
 from app.application.use_cases.supplies.list_supplies_purchase_request_recent_linked_orders_use_case import (
     ListSuppliesPurchaseRequestRecentLinkedOrdersUseCase,
 )
+from app.application.use_cases.supplies.list_supplies_purchase_request_recent_linked_receipts_use_case import (
+    ListSuppliesPurchaseRequestRecentLinkedReceiptsUseCase,
+)
 from app.application.use_cases.supplies.list_supplies_purchase_request_requesters_use_case import (
     ListSuppliesPurchaseRequestRequestersUseCase,
 )
@@ -70,6 +73,9 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_linked_orders_repository import (
     PurchaseRequestLinkedOrdersRepository,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_linked_receipts_repository import (
+    PurchaseRequestLinkedReceiptsRepository,
 )
 from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_item_details_use_case import (
     GetSafetyStockConsumptionAnalysisItemDetailsUseCase,
@@ -239,6 +245,14 @@ def build_list_supplies_purchase_request_recent_linked_orders_use_case() -> (
 ):
     return ListSuppliesPurchaseRequestRecentLinkedOrdersUseCase(
         repository=PurchaseRequestLinkedOrdersRepository(),
+    )
+
+
+def build_list_supplies_purchase_request_recent_linked_receipts_use_case() -> (
+    ListSuppliesPurchaseRequestRecentLinkedReceiptsUseCase
+):
+    return ListSuppliesPurchaseRequestRecentLinkedReceiptsUseCase(
+        repository=PurchaseRequestLinkedReceiptsRepository(),
     )
 
 

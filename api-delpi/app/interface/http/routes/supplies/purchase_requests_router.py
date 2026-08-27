@@ -15,6 +15,7 @@ from app.composition.supplies_composer import (
     build_get_supplies_purchase_request_lines_use_case,
     build_list_supplies_purchase_request_lines_use_case,
     build_list_supplies_purchase_request_recent_linked_orders_use_case,
+    build_list_supplies_purchase_request_recent_linked_receipts_use_case,
     build_list_supplies_purchase_request_requesters_use_case,
 )
 from app.core.exceptions import DatabaseConnectionError
@@ -271,5 +272,42 @@ def list_supplies_purchase_request_recent_linked_orders_route(
         log_error(f"Erro ao listar PCs vinculados à SC: {exc}")
         return error_response(
             "Erro interno ao listar pedidos de compra vinculados à SC.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/recent-linked-receipts",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_supplies_purchase_request_recent_linked_receipts",
+        path="/supplies/purchase-requests/recent-linked-receipts",
+    ),
+)
+@require_auth()
+def list_supplies_purchase_request_recent_linked_receipts_route(
+    after_recno: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+):
+    try:
+        use_case = build_list_supplies_purchase_request_recent_linked_receipts_use_case()
+        result = use_case.execute(after_recno=after_recno, limit=limit)
+        return api_delpi_success(
+            result,
+            operation_id="list_supplies_purchase_request_recent_linked_receipts",
+            message="Recebimentos recém-vinculados à SC carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar recebimentos vinculados à SC: {exc}")
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError as exc:
+        log_error(f"Banco indisponível ao listar recebimentos vinculados à SC: {exc}")
+        return error_response(
+            "Não foi possível consultar o TOTVS para os recebimentos vinculados à SC.",
+            status_code=503,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar recebimentos vinculados à SC: {exc}")
+        return error_response(
+            "Erro interno ao listar recebimentos vinculados à SC.",
             status_code=500,
         )

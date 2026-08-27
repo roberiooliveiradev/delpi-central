@@ -7,6 +7,7 @@ from purchase_requests_app.infrastructure.persistence.plugins_postgres_connectio
 )
 
 JOB_KEY_PURCHASE_ORDER_LINKED = "purchase_order_linked"
+JOB_KEY_PURCHASE_RECEIPT_RECORDED = "purchase_receipt_recorded"
 
 
 class PurchaseOrderNotificationCursorRepository:
