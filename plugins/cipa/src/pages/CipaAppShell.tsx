@@ -45,6 +45,10 @@ import {
 } from "../security/cipaAccess";
 import { buildMinuteHistoryTimelineItems } from "../utils/minuteHistoryTimelineView";
 import {
+  resolveSignInviteMailBadge,
+  type LastInviteMail,
+} from "../utils/signInviteMailBadge";
+import {
   CipaContentCard,
   CipaPageNotices,
   CipaFilterInputField,
@@ -836,14 +840,50 @@ function MinuteDetailPage({
       />
 
       {detail ? (
-        <MinuteDocumentView
-          detail={detail}
-          toolbar={
-            <DocumentReaderToolbar
-              printTitle={String(minute?.title || minute?.minute_number || "Ata CIPA")}
-            />
-          }
-        />
+        <>
+          {canManage &&
+          (status === "awaiting_signatures" || status === "partially_signed") &&
+          (detail.signers?.length ?? 0) > 0 ? (
+            <CipaSectionCard title="Convites por e-mail">
+              <ul className="cipa-signer-mail-list">
+                {(detail.signers || []).map((signer) => {
+                  const mailBadge = resolveSignInviteMailBadge(
+                    signer.last_invite_mail as LastInviteMail | undefined,
+                  );
+                  return (
+                    <li
+                      key={String(signer.id || signer.user_id || signer.display_name)}
+                      className="cipa-signer-mail-list__item"
+                    >
+                      <span className="cipa-signer-mail-list__name">
+                        {String(signer.display_name || "Signatário")}
+                      </span>
+                      {mailBadge ? (
+                        <span title={mailBadge.title}>
+                          <StatusBadge
+                            label={mailBadge.label}
+                            variant={mailBadge.variant}
+                            classNames={cipaStatusBadgeClassNames}
+                          />
+                        </span>
+                      ) : (
+                        <span className="cipa-signer-mail-list__empty">Sem envio registrado</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </CipaSectionCard>
+          ) : null}
+          <MinuteDocumentView
+            detail={detail}
+            toolbar={
+              <DocumentReaderToolbar
+                printTitle={String(minute?.title || minute?.minute_number || "Ata CIPA")}
+              />
+            }
+          />
+        </>
       ) : (
         <CipaStateBox variant="loading" message="Carregando modo de leitura…" />
       )}
