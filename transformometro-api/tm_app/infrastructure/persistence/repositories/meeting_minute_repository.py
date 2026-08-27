@@ -287,6 +287,96 @@ class MeetingMinuteRepository(PluginBaseRepository):
             )
         return None
 
+    def update_invite_mail_send_result(
+        self,
+        *,
+        invite_id: str,
+        mail_template_key: str | None,
+        mail_recipient: str | None,
+        mail_send_status: str,
+        mail_delivery_status: str,
+        mail_last_error: str | None = None,
+        mail_sent_at: Any | None = None,
+    ) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            f"""UPDATE {_S}.tm_meeting_minute_sign_invites
+            SET mail_template_key=%s,
+                mail_recipient=%s,
+                mail_send_status=%s,
+                mail_delivery_status=%s,
+                mail_attempts=mail_attempts+1,
+                mail_last_error=%s,
+                mail_sent_at=COALESCE(%s, mail_sent_at, NOW())
+            WHERE id=%s::uuid
+            RETURNING *""",
+            (
+                mail_template_key,
+                mail_recipient,
+                mail_send_status,
+                mail_delivery_status,
+                mail_last_error,
+                mail_sent_at,
+                invite_id,
+            ),
+        )
+
+    def update_invite_mail_delivery_result(
+        self,
+        *,
+        invite_id: str,
+        mail_delivery_status: str,
+        mail_delivered_at: Any | None = None,
+        mail_trace_id: str | None = None,
+        mail_last_error: str | None = None,
+    ) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            f"""UPDATE {_S}.tm_meeting_minute_sign_invites
+            SET mail_delivery_status=%s,
+                mail_delivered_at=COALESCE(%s, mail_delivered_at),
+                mail_trace_id=COALESCE(%s, mail_trace_id),
+                mail_last_error=COALESCE(%s, mail_last_error)
+            WHERE id=%s::uuid
+            RETURNING *""",
+            (
+                mail_delivery_status,
+                mail_delivered_at,
+                mail_trace_id,
+                mail_last_error,
+                invite_id,
+            ),
+        )
+
+    def list_invites_pending_trace(self, *, since: Any, limit: int = 100) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            f"""SELECT *
+            FROM {_S}.tm_meeting_minute_sign_invites
+            WHERE mail_send_status='accepted'
+              AND mail_delivery_status='trace_pending'
+              AND mail_sent_at IS NOT NULL
+              AND mail_sent_at >= %s
+            ORDER BY mail_sent_at ASC
+            LIMIT %s""",
+            (since, int(limit)),
+        )
+
+    def get_latest_invite_mail_by_signer_ids(
+        self,
+        *,
+        minute_id: str,
+        signer_ids: list[str],
+    ) -> dict[str, dict[str, Any]]:
+        if not signer_ids:
+            return {}
+        rows = self.fetch_all(
+            f"""SELECT DISTINCT ON (signer_id) *
+            FROM {_S}.tm_meeting_minute_sign_invites
+            WHERE minute_id=%s::uuid
+              AND signer_id = ANY(%s::uuid[])
+            ORDER BY signer_id, created_at DESC""",
+            (minute_id, signer_ids),
+        )
+        return {str(row["signer_id"]): row for row in rows}
+
     def get_signer(self, signer_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
             f"SELECT * FROM {_S}.tm_meeting_minute_signers WHERE id=%s::uuid",
