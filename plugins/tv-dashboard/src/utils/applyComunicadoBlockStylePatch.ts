@@ -1,9 +1,9 @@
 import {
   applyBlockShapeChromeStyle,
+  applyVisualBoxContentRunsTypographyOverride,
   blockUsesInnerShapeChrome,
   isComunicadoVisualBoxBlock,
   isInnerShapeChromeStyleKey,
-  stripContentRunStylesOverriddenByContainer,
   typographyKeysFromContainerPatch,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
@@ -84,8 +84,8 @@ export function applyComunicadoBlockStylePatch(
   }
 
   /*
-   * Tipografia do container sobrepõe a pontual: remove as mesmas chaves dos
-   * contentRuns para o CSS do bloco voltar a mandar (ex.: negrito no chip).
+   * Tipografia do container sobrepõe a pontual: materializa namedStyle e remove
+   * chaves inline para o CSS do bloco voltar a mandar.
    */
   if (isComunicadoVisualBoxBlock(next) && "contentRuns" in next) {
     const typographyKeys = typographyKeysFromContainerPatch({
@@ -93,11 +93,7 @@ export function applyComunicadoBlockStylePatch(
       ...Object.fromEntries(clearKeys.map((key) => [key, undefined])),
     });
     if (typographyKeys.length > 0) {
-      const nextRuns = stripContentRunStylesOverriddenByContainer(
-        next.contentRuns,
-        typographyKeys,
-      );
-      next = { ...next, contentRuns: nextRuns } as ComunicadoBlock;
+      next = applyVisualBoxContentRunsTypographyOverride(next, typographyKeys);
     }
   }
 

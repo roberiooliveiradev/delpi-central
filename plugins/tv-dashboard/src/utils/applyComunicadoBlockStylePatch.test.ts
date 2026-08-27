@@ -103,4 +103,17 @@ describe("applyComunicadoBlockStylePatch", () => {
     expect(next.contentRuns?.every((run) => run.style?.fontWeight == null)).toBe(true);
     expect(next.contentRuns?.some((run) => run.dataRef?.field === "ppm")).toBe(true);
   });
+
+  it("materializa namedStyle ao patch tipográfico de container", () => {
+    const block = {
+      ...createShapeBlock("rectangle"),
+      content: "Subtítulo",
+      contentRuns: [{ text: "Subtítulo", style: { namedStyle: "subtitle" as const } }],
+      style: { zIndex: 2, fontSize: 28 },
+    };
+    const next = applyComunicadoBlockStylePatch(block, { fontSize: 48 });
+    expect(next.style?.fontSize).toBe(48);
+    if (next.type !== "shape") return;
+    expect(next.contentRuns?.some((run) => run.style?.namedStyle != null)).toBe(false);
+  });
 });
