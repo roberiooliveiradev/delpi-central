@@ -735,6 +735,13 @@ export {
   type ContainerTypographyStyleKey,
 } from "./containerTypographyOverride";
 export {
+  applyVisualBoxContainerTypographyPatch,
+  applyVisualBoxContentRunsTypographyOverride,
+  materializeNamedStylesForContainerOverride,
+  resolveVisualBoxEffectiveTextFormatSnapshot,
+  type VisualBoxTextFormatSnapshot,
+} from "./visualBoxTextFormat";
+export {
   groupContentRunsForDisplay,
   hasListContentRuns,
   splitContentRunsIntoLines,
