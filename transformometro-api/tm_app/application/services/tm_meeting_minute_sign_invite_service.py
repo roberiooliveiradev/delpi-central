@@ -88,6 +88,9 @@ class TmMeetingMinuteSignInviteService:
         return path
 
     def issue(self, *, signer: dict[str, Any], minute: dict[str, Any]) -> dict[str, Any]:
+        status = str(signer.get("status") or "")
+        if status not in _ELIGIBLE_SIGNER_STATUSES:
+            raise ValueError(self._message_for_ineligible_signer(status))
         signer_id = str(signer["id"])
         minute_id = str(minute["id"])
         unit_code = str(minute.get("unit_code") or signer.get("unit_code") or "")

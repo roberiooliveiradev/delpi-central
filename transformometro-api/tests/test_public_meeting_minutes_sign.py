@@ -44,12 +44,13 @@ def test_send_for_signature_issues_invites_notifies_and_mails():
         "current_version_id": "v1",
     }
     repo.list_signers.return_value = [
-        {"id": "s1", "user_id": "u1", "display_name": "Ana", "invite_email": None},
+        {"id": "s1", "user_id": "u1", "display_name": "Ana", "invite_email": None, "status": "pending"},
         {
             "id": "s2",
             "user_id": None,
             "display_name": "Ext",
             "invite_email": "e@x.com",
+            "status": "pending",
         },
     ]
     repo.set_status.return_value = {
@@ -99,6 +100,54 @@ def test_send_for_signature_issues_invites_notifies_and_mails():
     assert mail_signers[0]["invite_id"] == "inv1"
     assert mail_signers[1]["invite_email"] == "e@x.com"
     assert repo.update_invite_mail_send_result.call_count == 2
+
+
+def test_send_for_signature_skips_already_signed_signers():
+    repo = MagicMock()
+    repo.get_minute.return_value = {
+        "id": "m1",
+        "unit_code": "01",
+        "status": "in_review",
+        "minute_number": "TM-1",
+        "title": "Ata",
+        "current_version_id": "v1",
+    }
+    repo.list_signers.return_value = [
+        {"id": "s1", "user_id": "u1", "display_name": "Ana", "status": "signed"},
+        {"id": "s2", "user_id": "u2", "display_name": "Bruno", "status": "pending"},
+    ]
+    repo.set_status.return_value = {
+        "id": "m1",
+        "unit_code": "01",
+        "status": "awaiting_signatures",
+        "minute_number": "TM-1",
+        "title": "Ata",
+    }
+    notifications = MagicMock()
+    invites = MagicMock()
+    invites.issue.return_value = {
+        "sign_url": "https://p/p/transformometro/sign/t2",
+        "raw_token": "t2",
+        "invite": {"id": "inv2"},
+    }
+    mail = MagicMock()
+    mail.notify_signers.return_value = _accepted_results("inv2")
+
+    user = MagicMock(id="mgr", is_superadmin=True, permissions=[])
+    svc = MeetingMinutesService(
+        repo,
+        notifications=notifications,
+        sign_invites=invites,
+        sign_pending_mail=mail,
+    )
+    svc.scope_service = MagicMock()
+
+    result = svc.send_for_signature(user, "m1")
+    assert result["minute"]["status"] == "awaiting_signatures"
+    assert [s["id"] for s in result["signers"]] == ["s2"]
+    invites.issue.assert_called_once()
+    mail.notify_signers.assert_called_once()
+    assert len(mail.notify_signers.call_args.kwargs["signers"]) == 1
 
 
 def test_resend_sign_invites_only_pending_and_keeps_minute_status():

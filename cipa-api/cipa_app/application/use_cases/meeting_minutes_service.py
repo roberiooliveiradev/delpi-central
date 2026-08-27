@@ -43,6 +43,7 @@ _TERMS = (
     "Declaro que li o conteúdo desta ata e confirmo a autenticidade "
     "da minha assinatura eletrônica manuscrita."
 )
+_SIGNER_INVITE_ELIGIBLE_STATUSES = frozenset({"pending", "viewed"})
 
 
 class MeetingMinutesService:
@@ -67,6 +68,14 @@ class MeetingMinutesService:
             or minute.get("created_by_user_id")
             or "00000000-0000-0000-0000-000000000001"
         )
+
+    @staticmethod
+    def _signers_eligible_for_invite(signers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [
+            signer
+            for signer in signers
+            if str(signer.get("status") or "") in _SIGNER_INVITE_ELIGIBLE_STATUSES
+        ]
 
     def _confirm_invite_mail_engagement(self, invite: dict[str, Any] | None) -> None:
         invite_id = str((invite or {}).get("id") or "").strip()
@@ -404,14 +413,17 @@ class MeetingMinutesService:
         signers = self.repo.list_signers(minute_id)
         if not signers:
             raise ValueError("Configure ao menos um signatário antes de enviar.")
+        targets = self._signers_eligible_for_invite(signers)
+        if not targets:
+            raise ValueError("Não há signatários pendentes para convidar.")
         updated = self.repo.set_status(
             minute_id=minute_id,
             status="awaiting_signatures",
             actor_user_id=self._user_id(user),
             action="send_for_signature",
         )
-        self._dispatch_sign_invites(updated, signers, template_key="signPending")
-        return {"minute": updated, "signers": signers}
+        self._dispatch_sign_invites(updated, targets, template_key="signPending")
+        return {"minute": updated, "signers": targets}
 
     def resend_sign_invites(self, user, minute_id: str) -> dict[str, Any]:
         minute = self._load_authorized(user, "submit", minute_id)
@@ -421,11 +433,7 @@ class MeetingMinutesService:
                 "Se a ata estiver em revisão, use «Enviar para assinatura»."
             )
         signers = self.repo.list_signers(minute_id)
-        targets = [
-            signer
-            for signer in signers
-            if str(signer.get("status") or "") in {"pending", "viewed"}
-        ]
+        targets = self._signers_eligible_for_invite(signers)
         if not targets:
             raise ValueError("Não há signatários pendentes para reenviar.")
         dispatched = self._dispatch_sign_invites(
@@ -447,13 +455,17 @@ class MeetingMinutesService:
         *,
         template_key: str = "signPending",
     ) -> dict[str, Any]:
+        eligible = self._signers_eligible_for_invite(signers)
+        if not eligible:
+            return {"resent_count": 0, "mail_sent": 0}
+
         mail_signers: list[dict[str, Any]] = []
         minute_id = str(minute["id"])
         minute_number = str(minute.get("minute_number") or "")
         minute_title = str(minute.get("title") or "")
         unit_code = str(minute.get("unit_code") or "")
 
-        for signer in signers:
+        for signer in eligible:
             issued = self.sign_invites.issue(signer=signer, minute=minute)
             invite = issued.get("invite") or {}
             invite_id = str(invite.get("id") or "").strip()

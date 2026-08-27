@@ -723,6 +723,13 @@ function MinuteDetailPage({
     });
   }, [detail?.signers, status]);
 
+  const inviteMailSigners = useMemo(() => {
+    return (detail?.signers ?? []).filter((signer) => {
+      const sig = String(signer.status ?? "");
+      return sig === "pending" || sig === "viewed";
+    });
+  }, [detail?.signers]);
+
   const confirmDelete = async () => {
     setBusy(true);
     setError(null);
@@ -842,10 +849,10 @@ function MinuteDetailPage({
         <>
           {canManage &&
           (status === "awaiting_signatures" || status === "partially_signed") &&
-          (detail.signers?.length ?? 0) > 0 ? (
+          inviteMailSigners.length > 0 ? (
             <CipaSectionCard title="Convites por e-mail">
               <ul className="cipa-signer-mail-list">
-                {(detail.signers || []).map((signer) => {
+                {inviteMailSigners.map((signer) => {
                   const mailBadge = resolveSignInviteMailBadge(
                     signer.last_invite_mail as LastInviteMail | undefined,
                   );
