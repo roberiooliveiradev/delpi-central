@@ -15,6 +15,9 @@ from cipa_app.application.services.cipa_meeting_minute_sign_invite_service impor
 from cipa_app.application.services.portal_notification_service import (
     CipaPortalNotificationService,
 )
+from cipa_app.application.services.sign_invite_mail_presentation_service import (
+    enrich_signers_with_last_invite_mail,
+)
 from cipa_app.application.services.sign_pending_mail_service import (
     CipaSignPendingMailService,
 )
@@ -100,6 +103,11 @@ class MeetingMinutesService:
             raise PermissionError("Sem permissão para visualizar esta ata.")
         version = self.repo.get_version(minute_id)
         signers = self.repo.list_signers(minute_id)
+        signers = enrich_signers_with_last_invite_mail(
+            repo=self.repo,
+            minute_id=minute_id,
+            signers=signers,
+        )
         return {
             "minute": minute,
             "version": version,
