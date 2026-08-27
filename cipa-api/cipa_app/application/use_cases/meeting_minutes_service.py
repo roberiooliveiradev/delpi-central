@@ -439,7 +439,9 @@ class MeetingMinutesService:
             issued = self.sign_invites.issue(signer=signer, minute=minute)
             invite = issued.get("invite") or {}
             invite_id = str(invite.get("id") or "").strip()
-            mail_signers.append({**signer, "sign_url": issued["sign_url"]})
+            mail_signers.append(
+                {**signer, "sign_url": issued["sign_url"], "invite_id": invite_id}
+            )
             user_id = str(signer.get("user_id") or "").strip()
             if user_id:
                 dedupe = (
@@ -455,12 +457,26 @@ class MeetingMinutesService:
                     unit_code=unit_code,
                     dedupe_key=dedupe,
                 )
-        mail_sent = self.sign_pending_mail.notify_signers(
+        mail_results = self.sign_pending_mail.notify_signers(
             signers=mail_signers,
             minute_number=minute_number,
             title=minute_title,
             template_key=template_key,
         )
+        mail_sent = 0
+        for result in mail_results:
+            if not result.invite_id:
+                continue
+            self.repo.update_invite_mail_send_result(
+                invite_id=result.invite_id,
+                mail_template_key=result.mail_template_key,
+                mail_recipient=result.mail_recipient,
+                mail_send_status=result.mail_send_status,
+                mail_delivery_status=result.mail_delivery_status,
+                mail_last_error=result.mail_last_error,
+            )
+            if result.mail_send_status == "accepted":
+                mail_sent += 1
         return {"resent_count": len(mail_signers), "mail_sent": mail_sent}
 
     def sign_context(self, user, minute_id: str) -> dict[str, Any]:

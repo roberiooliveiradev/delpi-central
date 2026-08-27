@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import json
 import logging
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,15 @@ from cipa_app.application.services.email_brand_layout_service import (
     CipaEmailBrandLayoutService,
 )
 from cipa_app.config import settings
+from cipa_app.domain.sign_invite_mail_status import (
+    MAIL_DELIVERY_NOT_APPLICABLE,
+    MAIL_DELIVERY_TRACE_PENDING,
+    MAIL_SEND_ACCEPTED,
+    MAIL_SEND_FAILED,
+    MAIL_SEND_SKIPPED_GRAPH_UNCONFIGURED,
+    MAIL_SEND_SKIPPED_MAIL_DISABLED,
+    MAIL_SEND_SKIPPED_NO_EMAIL,
+)
 from cipa_app.infrastructure.gateways.core_directory_service import CipaCoreDirectoryService
 from cipa_app.infrastructure.providers.microsoft_graph.microsoft_graph_mail_client import (
     GraphMailError,
@@ -21,6 +31,18 @@ from cipa_app.infrastructure.providers.microsoft_graph.microsoft_graph_mail_clie
 )
 
 logger = logging.getLogger("cipa.mail")
+
+
+@dataclass(frozen=True)
+class SignInviteMailResult:
+    invite_id: str
+    signer_id: str | None
+    mail_template_key: str
+    mail_recipient: str | None
+    mail_send_status: str
+    mail_delivery_status: str
+    mail_last_error: str | None = None
+
 
 _CONTENT_PATH = (
     Path(__file__).resolve().parents[2] / "content" / "pt-BR" / "mail.json"
@@ -86,6 +108,7 @@ class CipaSignPendingMailService:
         title: str,
         sign_url: str,
         template_key: str = "signPending",
+        invite_id: str | None = None,
     ) -> str:
         block = self._template_block(template_key)
         greeting = _format_template(
@@ -100,8 +123,15 @@ class CipaSignPendingMailService:
         cta = str(block.get("ctaLabel") or "Assinar ata")
         footer_note = str(block.get("footerNote") or block.get("footer") or "")
 
+        invite_marker = ""
+        if invite_id:
+            invite_marker = (
+                f"<!-- X-Delpi-Invite-Id: {html.escape(str(invite_id).strip())} -->\n"
+            )
+
         body = (
-            f'<p style="margin:0 0 14px 0;font-size:15px;color:#1A202C;">'
+            invite_marker
+            + f'<p style="margin:0 0 14px 0;font-size:15px;color:#1A202C;">'
             f"{html.escape(greeting)}</p>"
             f'<p style="margin:0 0 20px 0;font-size:14px;line-height:1.55;color:#1A202C;">'
             f"{html.escape(intro)}</p>"
@@ -122,6 +152,28 @@ class CipaSignPendingMailService:
             footer_meta=str(block.get("footerMeta") or "Minha DELPI — CIPA"),
         )
 
+    def _result(
+        self,
+        *,
+        signer: dict[str, Any],
+        template_key: str,
+        mail_send_status: str,
+        mail_delivery_status: str,
+        mail_recipient: str | None = None,
+        mail_last_error: str | None = None,
+    ) -> SignInviteMailResult:
+        invite_id = str(signer.get("invite_id") or "").strip()
+        signer_id = str(signer.get("id") or "").strip() or None
+        return SignInviteMailResult(
+            invite_id=invite_id,
+            signer_id=signer_id,
+            mail_template_key=template_key,
+            mail_recipient=mail_recipient,
+            mail_send_status=mail_send_status,
+            mail_delivery_status=mail_delivery_status,
+            mail_last_error=mail_last_error,
+        )
+
     def notify_signers(
         self,
         *,
@@ -129,14 +181,35 @@ class CipaSignPendingMailService:
         minute_number: str,
         title: str,
         template_key: str = "signPending",
-    ) -> int:
+    ) -> list[SignInviteMailResult]:
+        if not signers:
+            return []
+
         if not self.enabled:
-            return 0
+            return [
+                self._result(
+                    signer=signer,
+                    template_key=template_key,
+                    mail_send_status=MAIL_SEND_SKIPPED_MAIL_DISABLED,
+                    mail_delivery_status=MAIL_DELIVERY_NOT_APPLICABLE,
+                )
+                for signer in signers
+            ]
+
         try:
             self.mail.ensure_auth_configured()
-        except GraphMailError:
+        except GraphMailError as exc:
             logger.warning("cipa_mail_skipped_graph_not_configured")
-            return 0
+            return [
+                self._result(
+                    signer=signer,
+                    template_key=template_key,
+                    mail_send_status=MAIL_SEND_SKIPPED_GRAPH_UNCONFIGURED,
+                    mail_delivery_status=MAIL_DELIVERY_NOT_APPLICABLE,
+                    mail_last_error=str(exc)[:480] or None,
+                )
+                for signer in signers
+            ]
 
         user_ids = [
             str(item.get("user_id") or "").strip()
@@ -151,22 +224,40 @@ class CipaSignPendingMailService:
             minute_number=minute_number,
             template_key=template_key,
         )
-        sent = 0
+        results: list[SignInviteMailResult] = []
         for signer in signers:
             user_id = str(signer.get("user_id") or "").strip()
             email = emails_by_user.get(user_id) if user_id else None
             sign_url = str(signer.get("sign_url") or "").strip()
+            invite_id = str(signer.get("invite_id") or "").strip()
             if not email:
                 logger.warning(
                     "cipa_mail_signer_without_email user=%s signer=%s",
                     user_id or "-",
                     signer.get("id"),
                 )
+                results.append(
+                    self._result(
+                        signer=signer,
+                        template_key=template_key,
+                        mail_send_status=MAIL_SEND_SKIPPED_NO_EMAIL,
+                        mail_delivery_status=MAIL_DELIVERY_NOT_APPLICABLE,
+                    )
+                )
                 continue
             if not sign_url:
                 logger.warning(
                     "cipa_mail_signer_without_sign_url signer=%s",
                     signer.get("id"),
+                )
+                results.append(
+                    self._result(
+                        signer=signer,
+                        template_key=template_key,
+                        mail_send_status=MAIL_SEND_FAILED,
+                        mail_delivery_status=MAIL_DELIVERY_NOT_APPLICABLE,
+                        mail_last_error="sign_url ausente",
+                    )
                 )
                 continue
             display_name = str(signer.get("display_name") or "").strip() or "colegado"
@@ -176,6 +267,7 @@ class CipaSignPendingMailService:
                 title=title,
                 sign_url=sign_url,
                 template_key=template_key,
+                invite_id=invite_id or None,
             )
             try:
                 self.mail.send_mail_to(
@@ -183,13 +275,41 @@ class CipaSignPendingMailService:
                     html_body=html_body,
                     to_addresses=[email],
                 )
-                sent += 1
+                results.append(
+                    self._result(
+                        signer=signer,
+                        template_key=template_key,
+                        mail_send_status=MAIL_SEND_ACCEPTED,
+                        mail_delivery_status=MAIL_DELIVERY_TRACE_PENDING,
+                        mail_recipient=email,
+                    )
+                )
             except GraphMailError as exc:
                 logger.warning(
                     "cipa_mail_send_failed user=%s error=%s",
                     user_id,
                     str(exc)[:200],
                 )
-            except Exception:
+                results.append(
+                    self._result(
+                        signer=signer,
+                        template_key=template_key,
+                        mail_send_status=MAIL_SEND_FAILED,
+                        mail_delivery_status=MAIL_DELIVERY_NOT_APPLICABLE,
+                        mail_recipient=email,
+                        mail_last_error=str(exc)[:480] or None,
+                    )
+                )
+            except Exception as exc:
                 logger.exception("cipa_mail_send_unexpected user=%s", user_id)
-        return sent
+                results.append(
+                    self._result(
+                        signer=signer,
+                        template_key=template_key,
+                        mail_send_status=MAIL_SEND_FAILED,
+                        mail_delivery_status=MAIL_DELIVERY_NOT_APPLICABLE,
+                        mail_recipient=email,
+                        mail_last_error=str(exc)[:480] or None,
+                    )
+                )
+        return results
