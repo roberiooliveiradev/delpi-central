@@ -115,6 +115,29 @@ def test_series_by_customer_respects_customer_names_without_top(
 
 @patch(_CACHE_SET)
 @patch(_CACHE_GET, return_value=None)
+def test_series_by_customer_defaults_granularity_to_week(
+    _mock_get, _mock_set
+) -> None:
+    repository = MagicMock()
+    repository.list_sales_order_otd_analysis_by_customer.return_value = [
+        _customer_row(code="A", name="Alpha", total_qty=10.0, otd_pct=50.0),
+    ]
+    use_case = GetSalesOrderOtdSeriesByCustomerUseCase(
+        sales_order_otd_repository=repository
+    )
+    result = use_case.execute(
+        GetSalesOrderOtdSeriesByCustomerRequest(
+            date_start="2026-08-03",
+            date_end="2026-08-09",
+            customer_codes=["A"],
+        )
+    )
+    assert result["granularity"] == "week"
+    assert result["items"]
+
+
+@patch(_CACHE_SET)
+@patch(_CACHE_GET, return_value=None)
 def test_series_by_customer_paginates_flat_items(_mock_get, _mock_set) -> None:
     repository = MagicMock()
     repository.list_sales_order_otd_analysis_by_customer.return_value = [

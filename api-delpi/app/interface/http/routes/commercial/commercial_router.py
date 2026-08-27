@@ -7,6 +7,7 @@ from app.interface.http.query_param_enums import (
     COMMERCIAL_PROPOSAL_STATUS_QUERY,
     CUSTOMER_SEGMENT_QUERY,
     GRANULARITY_QUERY_REQUIRED,
+    GRANULARITY_QUERY_WEEK,
     SORT_DIR_QUERY,
 )
 from typing import Optional
@@ -1092,7 +1093,7 @@ def get_sales_order_otd_series(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_order_otd_series_by_customer(
-    granularity: str = GRANULARITY_QUERY_REQUIRED(),
+    granularity: Optional[str] = GRANULARITY_QUERY_WEEK(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
@@ -1120,7 +1121,7 @@ def get_sales_order_otd_series_by_customer(
 ):
     try:
         request = GetSalesOrderOtdSeriesByCustomerRequest(
-            granularity=granularity,
+            granularity=granularity or "week",
             date_start=start_date,
             date_end=end_date,
             branch=branch,

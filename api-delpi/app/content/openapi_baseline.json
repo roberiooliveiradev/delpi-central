@@ -5666,15 +5666,16 @@
         {
           "name": "granularity",
           "in": "query",
-          "required": true,
+          "required": false,
           "description": "Series bucket size.",
-          "type": "string",
+          "default": "week",
           "enum": [
             "day",
             "week",
             "month",
             "year"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",

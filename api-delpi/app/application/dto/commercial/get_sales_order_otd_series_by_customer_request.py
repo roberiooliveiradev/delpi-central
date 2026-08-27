@@ -9,11 +9,12 @@ from app.application.dto.commercial.sales_order_otd_series_request import (
 
 DEFAULT_TOP_CUSTOMERS = 20
 MAX_TOP_CUSTOMERS = 100
+DEFAULT_GRANULARITY = "week"
 
 
 @dataclass
 class GetSalesOrderOtdSeriesByCustomerRequest:
-    granularity: str
+    granularity: Optional[str] = None
     date_start: Optional[str] = None
     date_end: Optional[str] = None
     branch: Optional[str] = None
@@ -30,7 +31,7 @@ class GetSalesOrderOtdSeriesByCustomerRequest:
         return bool(self.customer_codes) or bool(self.customer_names)
 
     def validate(self) -> None:
-        normalized = (self.granularity or "").strip().lower()
+        normalized = (self.granularity or DEFAULT_GRANULARITY).strip().lower()
         if normalized not in ALLOWED_SALES_ORDER_OTD_SERIES_GRANULARITIES:
             raise ValueError(
                 "granularity inválida. Use day, week, month ou year."

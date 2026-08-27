@@ -22,9 +22,10 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 
 ## Filtros
 
-- **`granularity`**: só nas rotas `*_series*` (obrigatório: `day` \| `week` \| `month` \| `year`) — inclui `get_sales_order_otd_series` e `get_sales_order_otd_series_by_customer`.
+- **`granularity`**: nas rotas `*_series*` (`day` \| `week` \| `month` \| `year`). Em `get_sales_order_otd_series` continua obrigatório; em **`get_sales_order_otd_series_by_customer`** é **opcional** (omitido → `week`).
 - **Carteira** (todas as rotas comerciais acima, exceto SI): `customer_segment`, `customer_codes`, `customer_names`, `exclude_customer_codes`, `exclude_customer_names` — omitidos = sem filtro.
 - **`top_customers`** (só `series-by-customer`): default **20**, max **100**. Aplicado quando **não** há `customer_codes` nem `customer_names`; ranking pelo `total_qty` do intervalo completo antes de expandir os buckets.
+- Em `series-by-customer`, **todos** os filtros de query são opcionais (datas, filial, carteira, granularidade, paginação, top).
 - No editor TV, «Não definido aqui» omite o query param.
 
 ## Payloads (não renomear)
