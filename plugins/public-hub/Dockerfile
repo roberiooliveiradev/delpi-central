@@ -19,6 +19,13 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY transformometro-meeting-minutes-presentation ./transformometro-meeting-minutes-presentation
 
+COPY cipa-meeting-minutes-presentation/package*.json ./cipa-meeting-minutes-presentation/
+COPY cipa-meeting-minutes-presentation/.npmrc ./cipa-meeting-minutes-presentation/
+RUN --mount=type=cache,target=/root/.npm \
+    cd cipa-meeting-minutes-presentation && npm install --omit=peer
+
+COPY cipa-meeting-minutes-presentation ./cipa-meeting-minutes-presentation
+
 COPY public-hub/package*.json ./public-hub/
 RUN --mount=type=cache,target=/root/.npm \
     cd public-hub && npm install

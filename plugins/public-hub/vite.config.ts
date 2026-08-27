@@ -39,6 +39,10 @@ export default defineConfig({
         __dirname,
         "../transformometro-meeting-minutes-presentation/src/index.ts",
       ),
+      "@delpi/cipa-meeting-minutes-presentation": path.resolve(
+        __dirname,
+        "../cipa-meeting-minutes-presentation/src/index.ts",
+      ),
     },
     dedupe: ["react", "react-dom", "lucide-react"],
   },

@@ -1,9 +1,10 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useMemo, useState, type FormEvent } from "react";
 
+import { CipaMeetingMinuteDocumentView } from "@delpi/cipa-meeting-minutes-presentation";
 import { SignatureCapturePanel } from "@delpi/signature-kit";
 
-import { CipaMinuteDocumentPreview } from "./CipaMinuteDocumentPreview";
 import {
+  fetchPublicSignatureImageBlob,
   submitPublicRefuse,
   submitPublicSign,
   type PublicSignContext,
@@ -32,6 +33,11 @@ export function CipaSignPage({ context, token }: Props) {
     const title = context.minute.title || "";
     return [number, title].filter(Boolean).join(" — ");
   }, [context.minute.minute_number, context.minute.title]);
+
+  const getSignatureImage = useCallback(
+    (signatureId: string) => fetchPublicSignatureImageBlob(token, signatureId),
+    [token],
+  );
 
   async function onSign(event: FormEvent) {
     event.preventDefault();
@@ -112,7 +118,15 @@ export function CipaSignPage({ context, token }: Props) {
         </header>
       )}
 
-      <CipaMinuteDocumentPreview context={context} token={token} />
+      <CipaMeetingMinuteDocumentView
+        minute={context.minute}
+        version={context.version}
+        participants={context.participants as never[]}
+        signers={context.signers as never[]}
+        signatures={context.signatures}
+        getSignatureImage={getSignatureImage}
+        ariaLabel="Prévia da ata CIPA"
+      />
 
       {!showSignedBanner ? (
         <form className="cipa-sign__form" onSubmit={onSign}>

@@ -29,6 +29,9 @@
       "@delpi/tv-dashboard-presentation": ["../tv-dashboard-presentation/src/index.ts"],
       "@delpi/transformometro-meeting-minutes-presentation": [
         "../transformometro-meeting-minutes-presentation/src/index.ts"
+      ],
+      "@delpi/cipa-meeting-minutes-presentation": [
+        "../cipa-meeting-minutes-presentation/src/index.ts"
       ]
     }
   },
