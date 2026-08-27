@@ -26,7 +26,7 @@ describe("partial text format (ribbon → contentRuns)", () => {
     expect(typography).toContain("partialTextSelectionActive");
     expect(typography).toMatch(/applyTextFormatStyle\(\s*\{\s*fontFamily/);
     expect(typography).toMatch(/applyTextFormatStyle\(\s*\{\s*fontSize/);
-    expect(typography).toMatch(/applyTextFormatStyle\(\{\s*color/);
+    expect(typography).toMatch(/applyTextFormatStyle\(fillToColorStylePatch/);
     expect(typography).toMatch(/applyTextFormatStyle\(\{\s*textHighlight/);
     expect(typography).toContain("fillToColorStylePatch");
     expect(typography).toContain("onFillChange");
@@ -52,6 +52,8 @@ describe("partial text format (ribbon → contentRuns)", () => {
   it("ribbon tenta bridge (Range vivo) antes de tipografia do bloco inteiro", () => {
     expect(typography).toContain("applyToggleOrContainer");
     expect(typography).toContain("fullContentSelectionActive");
+    expect(typography).toContain("objectSelectionContainerTypographyActive");
+    expect(typography).toContain("containerTypographyActive");
     expect(typography).toContain("isFullContentTextSelection");
     expect(typography).toContain("applyEditingTextRunStylePatch(runPatch)");
   });

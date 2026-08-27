@@ -271,6 +271,15 @@ export function FormatRibbonTypographySections({
         effectivePartialSelection.end,
       ),
   );
+  /** Objeto selecionado sem editar = tipografia de container (paridade PowerPoint). */
+  const objectSelectionContainerTypographyActive = Boolean(
+    !multiVisualBox &&
+      visualBoxBlock &&
+      editingTextId !== visualBoxBlock.id &&
+      !partialTextSelectionActive,
+  );
+  const containerTypographyActive =
+    fullContentSelectionActive || objectSelectionContainerTypographyActive;
   const applyTextFormatStyle = (
     patch: Parameters<typeof updateSelectedTextFormatStyle>[0],
     applyOptions?: Parameters<typeof updateSelectedTextFormatStyle>[1],
@@ -279,7 +288,7 @@ export function FormatRibbonTypographySections({
       updateSelectedTextFormatStyle(patch, applyOptions);
       return;
     }
-    if (fullContentSelectionActive) {
+    if (containerTypographyActive) {
       updateSelectedTextFormatStyle(patch, applyOptions);
       return;
     }
@@ -332,7 +341,7 @@ export function FormatRibbonTypographySections({
     toggleKey: "fontWeight" | "fontStyle" | "underline" | "strikethrough",
     containerPatch: Parameters<typeof updateSelectedTextFormatStyle>[0],
   ) {
-    if (multiVisualBox || fullContentSelectionActive) {
+    if (multiVisualBox || containerTypographyActive) {
       updateSelectedTextFormatStyle(containerPatch);
       return;
     }
