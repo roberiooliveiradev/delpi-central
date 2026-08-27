@@ -1,8 +1,8 @@
 import type { TextFormatStyleSnapshot } from "./selectedTextFormatTarget";
 import { aggregateEqualValues, type AggregatedValue } from "./selectionSectionIntersect";
 import {
-  defaultStyle,
   isComunicadoVisualBoxBlock,
+  resolveVisualBoxEffectiveTextFormatSnapshot,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
 } from "@delpi/tv-dashboard-presentation";
@@ -12,24 +12,7 @@ export { aggregateEqualValues } from "./selectionSectionIntersect";
 
 function snapshotFromVisualBox(block: ComunicadoBlock): TextFormatStyleSnapshot | null {
   if (!isComunicadoVisualBoxBlock(block)) return null;
-  const type = block.type === "heading" || block.type === "text" ? block.type : "shape";
-  const defaults =
-    type === "shape" ? defaultStyle("shape", block.shape) : defaultStyle(type);
-  return {
-    fontFamily: block.style?.fontFamily,
-    fontSize: block.style?.fontSize ?? defaults.fontSize,
-    fontWeight: block.style?.fontWeight,
-    fontStyle: block.style?.fontStyle,
-    color: block.style?.color,
-    textDecoration: block.style?.textDecoration,
-    textHighlight: block.style?.textHighlight,
-    textAlign: block.style?.textAlign,
-    verticalAlign: block.style?.verticalAlign,
-    textShadow: block.style?.textShadow,
-    textStrokeColor: block.style?.textStrokeColor,
-    textStrokeWidth: block.style?.textStrokeWidth,
-    textReflection: block.style?.textReflection,
-  };
+  return resolveVisualBoxEffectiveTextFormatSnapshot(block);
 }
 
 export type AggregatedTextFormatStyle = {

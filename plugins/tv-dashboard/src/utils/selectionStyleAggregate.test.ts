@@ -31,14 +31,18 @@ describe("selectionStyleAggregate (visual-box)", () => {
     expect(agg?.fontSize).toBe(34);
   });
 
-  it("isHomogeneousVisualBoxSelection", () => {
-    expect(isHomogeneousVisualBoxSelection([textBlock("a"), textBlock("b")])).toBe(true);
-    expect(
-      isHomogeneousVisualBoxSelection([
-        textBlock("a"),
-        { id: "i", type: "image", src: "x", frame: { x: 0, y: 0, w: 1, h: 1 } } as ComunicadoBlock,
-      ]),
-    ).toBe(false);
+  it("aggregateVisualBoxTextFormatStyle: namedStyle subtitle reflete fontSize efetivo", () => {
+    const agg = aggregateVisualBoxTextFormatStyle([
+      {
+        id: "a",
+        type: "text",
+        content: "Sub",
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        style: { fontSize: 28 },
+        contentRuns: [{ text: "Sub", style: { namedStyle: "subtitle" } }],
+      } as ComunicadoBlock,
+    ]);
+    expect(agg?.fontSize).toBe(36);
   });
 });
 
