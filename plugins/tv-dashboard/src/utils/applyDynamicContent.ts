@@ -9,6 +9,7 @@ import {
 
 import type { TextEditorBridge } from "../components/comunicadoEditorContextCore";
 import type { ComunicadoCanvasTableCellSelection } from "../components/comunicadoEditorContextCore";
+import { primaryCanvasTableCellRef } from "./canvasTableCellSelection";
 
 export type ApplyDynamicContentContext = {
   blocks: ComunicadoBlock[];
@@ -51,15 +52,15 @@ export function applyDynamicContent(
     return { ok: true, target: "text_run" };
   }
 
-  const cell = ctx.selectedCanvasTableCell;
-  if (cell) {
-    const table = ctx.blocks.find((item) => item.id === cell.blockId);
+  const cellRef = primaryCanvasTableCellRef(ctx.selectedCanvasTableCell);
+  if (cellRef && ctx.selectedCanvasTableCell) {
+    const table = ctx.blocks.find((item) => item.id === ctx.selectedCanvasTableCell!.blockId);
     if (!table || table.type !== "canvas_table") {
       return { ok: false, reason: "no_target" };
     }
     const next = applyCanvasTableDataRef(
       table as ComunicadoCanvasTableBlock,
-      { row: cell.row, col: cell.col },
+      cellRef,
       dataRef,
       "cell",
     );

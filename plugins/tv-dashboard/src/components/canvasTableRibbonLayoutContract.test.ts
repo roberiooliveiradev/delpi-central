@@ -15,4 +15,12 @@ describe("canvas table ribbon layout contract", () => {
     expect(source).not.toContain("DeckRibbonLargeButton");
     expect(source).toMatch(/layout === "ribbon"[\s\S]*DeckRibbonTilePopover[\s\S]*structureFields/);
   });
+
+  it("ribbon Célula compacta com tiles, popover Tipo e multi-seleção", () => {
+    const source = readFileSync(join(here, "selectionSections/CanvasTableSection.tsx"), "utf8");
+    expect(source).toContain("td-canvas-table-cell-ribbon");
+    expect(source).toContain('label="Tipo"');
+    expect(source).toContain("summarizeCanvasTableCellSelection");
+    expect(source).toContain("patchSelectedCellsStyle");
+  });
 });

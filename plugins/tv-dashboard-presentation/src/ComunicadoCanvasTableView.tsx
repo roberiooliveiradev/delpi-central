@@ -18,13 +18,19 @@ import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
 import type { ComunicadoCanvasTableBlock } from "./comunicadoTypes";
 
 export type ComunicadoCanvasTableInteraction = {
+  selectedCells?: CanvasTableCellRef[];
+  /** @deprecated Prefer `selectedCells`. */
   selectedCell?: CanvasTableCellRef | null;
   /**
    * Grade no editor: `false` = 1º clique sobe ao wrap (só container);
    * `true` = permite selecionar/editar célula. Omitido = legado (sempre célula).
    */
   blockSelected?: boolean;
-  onSelectCell?: (cell: CanvasTableCellRef | null) => void;
+  onSelectCell?: (request: {
+    cell: CanvasTableCellRef;
+    additive?: boolean;
+    range?: boolean;
+  }) => void;
   onCellCommit?: (row: number, col: number, cell: CanvasTableCell) => void;
 };
 
@@ -72,7 +78,11 @@ export function ComunicadoCanvasTableView({
 }: Props) {
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const hostStyle = resolveCanvasTableHostStyle(block) as CSSProperties;
-  const selected = interaction?.selectedCell ?? null;
+  const selectedCells =
+    interaction?.selectedCells ??
+    (interaction?.selectedCell ? [interaction.selectedCell] : []);
+  const isCellSelected = (row: number, col: number) =>
+    selectedCells.some((item) => item.row === row && item.col === col);
   const resolvedCells = block.cells.map((row) =>
     row.map((raw) => {
       const cell = normalizeCanvasTableCell(raw);
@@ -108,7 +118,11 @@ export function ComunicadoCanvasTableView({
     /* Container ainda não selecionado: deixa o wrap do bloco receber o gesto. */
     if (!allowCellSelection) return;
     event.stopPropagation();
-    interaction?.onSelectCell?.({ row, col });
+    interaction?.onSelectCell?.({
+      cell: { row, col },
+      additive: event.ctrlKey || event.metaKey,
+      range: event.shiftKey,
+    });
   }
 
   function onCellKeyDown(
@@ -144,7 +158,10 @@ export function ComunicadoCanvasTableView({
       return;
     }
     if (nextRow !== row || nextCol !== col) {
-      interaction.onSelectCell({ row: nextRow, col: nextCol });
+      interaction.onSelectCell({
+        cell: { row: nextRow, col: nextCol },
+        range: event.shiftKey,
+      });
       const el = event.currentTarget
         .closest("table")
         ?.querySelector<HTMLElement>(`[data-cell-row="${nextRow}"][data-cell-col="${nextCol}"]`);
@@ -182,8 +199,7 @@ export function ComunicadoCanvasTableView({
                 const cell = normalizeCanvasTableCell(rawCell);
                 const isHeader = Boolean(block.headerRow && rowIndex === 0);
                 const Cell = isHeader ? "th" : "td";
-                const isSelected =
-                  selected?.row === rowIndex && selected?.col === colIndex;
+                const isSelected = isCellSelected(rowIndex, colIndex);
                 const display = resolveCanvasTableCellDisplay(
                   cell,
                   resolveCanvasTableCellResolved(block, cell),

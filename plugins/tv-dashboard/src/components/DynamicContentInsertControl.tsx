@@ -11,6 +11,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { primaryCanvasTableCellRef } from "../utils/canvasTableCellSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DynamicContentPickerPopover } from "./DynamicContentPickerPopover";
 import { TdRibbonIconButton } from "./tdRibbonUi";
@@ -41,27 +42,30 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<DynamicContentKind>("data_field");
 
+  const primaryCellRef = useMemo(
+    () =>
+      selected?.type === "canvas_table" &&
+      selectedCanvasTableCell?.blockId === selected.id
+        ? primaryCanvasTableCellRef(selectedCanvasTableCell)
+        : null,
+    [selected, selectedCanvasTableCell],
+  );
+
   const targetBlock = useMemo(() => {
     if (editingTextId) {
       return blocks.find((block) => block.id === editingTextId) ?? null;
     }
-    if (
-      selected?.type === "canvas_table" &&
-      selectedCanvasTableCell?.blockId === selected.id
-    ) {
+    if (selected?.type === "canvas_table" && primaryCellRef) {
       return selected;
     }
     return null;
-  }, [blocks, editingTextId, selected, selectedCanvasTableCell]);
+  }, [blocks, editingTextId, primaryCellRef, selected]);
 
   const sourceId = useMemo(() => {
     if (!targetBlock) return "";
-    if (
-      targetBlock.type === "canvas_table" &&
-      selectedCanvasTableCell?.blockId === targetBlock.id
-    ) {
+    if (targetBlock.type === "canvas_table" && primaryCellRef) {
       const cell = normalizeCanvasTableCell(
-        targetBlock.cells[selectedCanvasTableCell.row]?.[selectedCanvasTableCell.col],
+        targetBlock.cells[primaryCellRef.row]?.[primaryCellRef.col],
       );
       return resolveCanvasTableCellSourceId(targetBlock, cell);
     }
@@ -69,16 +73,13 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
       return String(targetBlock.dataSourceId ?? "").trim();
     }
     return "";
-  }, [selectedCanvasTableCell, targetBlock]);
+  }, [primaryCellRef, targetBlock]);
 
   const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
   const resolved = useMemo(() => {
-    if (
-      targetBlock?.type === "canvas_table" &&
-      selectedCanvasTableCell?.blockId === targetBlock.id
-    ) {
+    if (targetBlock?.type === "canvas_table" && primaryCellRef) {
       const cell = normalizeCanvasTableCell(
-        targetBlock.cells[selectedCanvasTableCell.row]?.[selectedCanvasTableCell.col],
+        targetBlock.cells[primaryCellRef.row]?.[primaryCellRef.col],
       );
       const fromMap = resolveCanvasTableCellResolved(targetBlock, cell);
       if (fromMap) return fromMap;
@@ -88,7 +89,7 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
     }
     if (targetBlock && "resolved" in targetBlock) return targetBlock.resolved;
     return undefined;
-  }, [linkedSource, selectedCanvasTableCell, targetBlock]);
+  }, [linkedSource, primaryCellRef, targetBlock]);
   const fieldLabels =
     linkedSource && "fieldLabels" in linkedSource
       ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels

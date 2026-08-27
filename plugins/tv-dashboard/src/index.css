@@ -4513,6 +4513,10 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-ribbon__tiles--compact{
   gap: 0 1px;
 }
+.dashboard-tv-dashboard .td-canvas-table-cell-ribbon{
+  grid-template-rows: auto;
+  grid-auto-flow: column;
+}
 .dashboard-tv-dashboard .td-deck-ribbon__groups--inspector{
   flex: 1 1 auto;
   min-width: 0;

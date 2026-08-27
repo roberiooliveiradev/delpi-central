@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { singleCanvasTableCellSelection } from "./canvasTableCellSelection";
 import { applyDynamicContent, canOpenDynamicContentPicker } from "./applyDynamicContent";
 
 describe("applyDynamicContent", () => {
@@ -41,7 +42,7 @@ describe("applyDynamicContent", () => {
       {
         blocks: [table as never],
         editingTextId: null,
-        selectedCanvasTableCell: { blockId: "g1", row: 0, col: 0 },
+        selectedCanvasTableCell: singleCanvasTableCellSelection("g1", 0, 0),
         getTextEditorBridge: () => null,
         updateBlock,
       },
@@ -81,7 +82,7 @@ describe("canOpenDynamicContentPicker", () => {
       canOpenDynamicContentPicker({
         editingTextId: null,
         selected: { id: "g1", type: "canvas_table" } as never,
-        selectedCanvasTableCell: { blockId: "g1", row: 0, col: 0 },
+        selectedCanvasTableCell: singleCanvasTableCellSelection("g1", 0, 0),
       }),
     ).toBe(true);
     expect(
