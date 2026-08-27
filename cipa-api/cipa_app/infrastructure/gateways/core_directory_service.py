@@ -23,7 +23,7 @@ class CipaCoreDirectoryService:
         self.service_token = (
             service_token
             if service_token is not None
-            else settings.CORE_API_SERVICE_TOKEN
+            else settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN
         )
 
     def configured(self) -> bool:

@@ -34,7 +34,18 @@ class Settings:
     CORE_API_URL: str = _get_env(
         "DELPI_AUTH_CORE_API_URL", "CORE_API_URL", default="http://core-api:8000"
     )
-    CORE_API_SERVICE_TOKEN: str = _get_env("CORE_API_SERVICE_TOKEN", "API_DELPI_INTERNAL_SERVICE_TOKEN", default="")
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str = _get_env(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN",
+        "CORE_API_SERVICE_TOKEN",
+        "API_DELPI_INTERNAL_SERVICE_TOKEN",
+        default="",
+    )
+    # Legado — preferir CORE_API_INTEGRATIONS_SERVICE_TOKEN (mesmo token exigido pelo Core S2S).
+    CORE_API_SERVICE_TOKEN: str = _get_env(
+        "CORE_API_SERVICE_TOKEN",
+        "API_DELPI_INTERNAL_SERVICE_TOKEN",
+        default="",
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")

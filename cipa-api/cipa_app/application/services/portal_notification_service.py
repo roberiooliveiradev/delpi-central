@@ -30,7 +30,7 @@ class CipaPortalNotificationService:
         self.service_token = (
             service_token
             if service_token is not None
-            else settings.CORE_API_SERVICE_TOKEN
+            else settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN
         )
         self.enabled = (
             settings.CIPA_PORTAL_NOTIFICATIONS_ENABLED if enabled is None else enabled
