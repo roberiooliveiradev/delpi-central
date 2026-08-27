@@ -76,10 +76,11 @@ export function overallStageVariant(stage: string | null | undefined): StatusBad
   switch (stage as OverallStage) {
     case "completed":
       return "success";
+    case "awaiting_order":
+      return "info";
     case "partially_received":
     case "partially_ordered":
     case "awaiting_receipt":
-    case "awaiting_order":
       return "warning";
     case "residual_closed":
       return "neutral";

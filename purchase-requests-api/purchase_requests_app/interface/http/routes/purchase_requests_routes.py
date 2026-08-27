@@ -53,11 +53,11 @@ def list_purchase_requests(
     date_to: str | None = Query(None),
     request_number: str | None = Query(None),
     requester_user_id: list[str] | None = Query(None),
-    cost_center: str | None = Query(None),
+    cost_center: list[str] | None = Query(None),
     product_code: str | None = Query(None),
     supplier_code: str | None = Query(None),
     order_number: str | None = Query(None),
-    overall_stage: str | None = Query(None),
+    overall_stage: list[str] | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     user=Depends(_current_user),
@@ -70,11 +70,11 @@ def list_purchase_requests(
             date_to=date_to,
             request_number=request_number,
             requester_user_ids=requester_user_id,
-            cost_center=cost_center,
+            cost_centers=cost_center,
             product_code=product_code,
             supplier_code=supplier_code,
             order_number=order_number,
-            overall_stage=overall_stage,
+            overall_stages=overall_stage,
             page=page,
             page_size=page_size,
         )
@@ -91,7 +91,7 @@ def list_purchase_request_requesters(
     date_from: str | None = Query(None),
     date_to: str | None = Query(None),
     request_number: str | None = Query(None),
-    cost_center: str | None = Query(None),
+    cost_center: list[str] | None = Query(None),
     product_code: str | None = Query(None),
     supplier_code: str | None = Query(None),
     order_number: str | None = Query(None),
@@ -104,7 +104,7 @@ def list_purchase_request_requesters(
             date_from=date_from,
             date_to=date_to,
             request_number=request_number,
-            cost_center=cost_center,
+            cost_centers=cost_center,
             product_code=product_code,
             supplier_code=supplier_code,
             order_number=order_number,
@@ -122,7 +122,7 @@ def get_purchase_request(
     request_number: str,
     date_from: str | None = Query(None),
     date_to: str | None = Query(None),
-    cost_center: str | None = Query(None),
+    cost_center: list[str] | None = Query(None),
     user=Depends(_current_user),
 ):
     try:
@@ -132,7 +132,7 @@ def get_purchase_request(
             request_number=request_number,
             date_from=date_from,
             date_to=date_to,
-            cost_center=cost_center,
+            cost_centers=cost_center,
         )
         return ok(result, message="Detalhe da solicitação carregado com sucesso.")
     except PermissionError as exc:

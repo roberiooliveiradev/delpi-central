@@ -43,6 +43,7 @@ class GetPurchaseRequestUseCase:
         date_from: str | None = None,
         date_to: str | None = None,
         cost_center: str | None = None,
+        cost_centers: list[str] | None = None,
     ) -> dict[str, Any]:
         if not has_access(user):
             raise PermissionError("Sem permissão para acessar solicitações de compra.")
@@ -54,12 +55,14 @@ class GetPurchaseRequestUseCase:
             user=user,
             branch=branch,
             explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
             scope_rows=scope_rows,
         )
         effective_ccs = self._scope_resolver.effective_cost_centers(
             resolution,
             branch=branch,
             explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
         )
         if effective_ccs == []:
             raise LookupError("Solicitação não encontrada.")

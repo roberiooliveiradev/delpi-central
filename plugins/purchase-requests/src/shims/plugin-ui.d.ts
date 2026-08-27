@@ -167,21 +167,33 @@ declare module "@delpi/plugin-ui/index" {
     clear: string;
     emptyOptions: string;
     multipleSelected: (count: number) => string;
+    createOption?: (query: string) => string;
+    searchAriaLabel?: (label: string) => string;
+    selectedCountLabel?: (count: number) => string;
+    emptyOptionsCreatable?: string;
+    removeTagAriaLabel?: (value: string) => string;
   };
 
   export type DashboardMultiSelectFieldProps = {
     label: string;
     selectedValues: string[];
-    options: readonly MultiSelectOption[];
+    options?: readonly MultiSelectOption[];
     onChange: (values: string[]) => void;
     disabled?: boolean;
     searchable?: boolean;
     showBulkActions?: boolean;
+    emptyLabel?: string;
     hint?: string;
     placeholder?: string;
   };
 
+  export type DashboardCreatableMultiSelectFieldProps = Omit<
+    DashboardMultiSelectFieldProps,
+    "searchable" | "showBulkActions"
+  >;
+
   export function multiSelectBemClasses(prefix: string): Record<string, string>;
+  export function multiSelectCreatablePacClasses(prefix: string): Record<string, string>;
 
   export function createDashboardMultiSelectField(config: {
     prefix?: string;
@@ -189,6 +201,13 @@ declare module "@delpi/plugin-ui/index" {
     labels: MultiSelectFieldLabels;
     portalScopeClassName?: string;
   }): ComponentType<DashboardMultiSelectFieldProps>;
+
+  export function createDashboardCreatableMultiSelectField(config: {
+    prefix?: string;
+    classNames?: Record<string, string>;
+    labels: MultiSelectFieldLabels;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardCreatableMultiSelectFieldProps>;
 
   export type DataTableColumn<T> = {
     key: string;

@@ -11,7 +11,7 @@ type DetailTarget = {
 
 export function usePurchaseRequestDetail(
   target: DetailTarget,
-  filters: Pick<PurchaseRequestsQuery, "date_from" | "date_to" | "cost_center">,
+  filters: Pick<PurchaseRequestsQuery, "date_from" | "date_to" | "cost_center_codes">,
 ) {
   const [data, setData] = useState<PurchaseRequestDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ export function usePurchaseRequestDetail(
     } finally {
       setLoading(false);
     }
-  }, [filters.cost_center, filters.date_from, filters.date_to, target]);
+  }, [filters.cost_center_codes, filters.date_from, filters.date_to, target]);
 
   useEffect(() => {
     void reload();
