@@ -1,0 +1,108 @@
+/* Prévia/leitura de ata CIPA — folha sempre clara (papel oficial). */
+
+.cipa-ata-reader {
+  width: 100%;
+}
+
+.cipa-ata-document__logo {
+  display: block;
+  height: auto;
+  max-width: 42mm;
+  max-height: 18mm;
+  object-fit: contain;
+}
+
+.cipa-ata-paper.delpi-ui-document-page,
+.cipa-ata-paper {
+  padding-bottom: 0;
+  color-scheme: light;
+  background: #ffffff;
+  color: #151515;
+  --ds-title: #151515;
+  --ds-text: #151515;
+  --ds-text-muted: rgba(21, 21, 21, 0.62);
+  --ds-card-bg: #ffffff;
+  --ds-card-border: #e6e6e6;
+  --ds-border-subtle: #e8e8e8;
+  --delpi-ui-text: #151515;
+  --delpi-ui-surface: #ffffff;
+  --delpi-ui-muted: rgba(21, 21, 21, 0.62);
+  --delpi-ui-border: #e6e6e6;
+  --delpi-ui-accent: #089bdb;
+}
+
+.cipa-minute-document {
+  font-size: 10.5pt;
+  line-height: 1.5;
+  text-align: justify;
+  color: #151515;
+}
+
+.cipa-minute-document h1 {
+  margin: 0 0 6mm;
+  font-size: 16pt;
+  line-height: 1.25;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.cipa-minute-document h2 {
+  margin: 7mm 0 4mm;
+  font-size: 11pt;
+}
+
+.cipa-minute-document p {
+  margin: 0 0 4mm;
+  text-indent: 0;
+}
+
+.cipa-minute-document__date {
+  margin-bottom: 10mm;
+  text-align: right;
+  text-indent: 0;
+}
+
+.cipa-minute-document__content {
+  margin-bottom: 4mm;
+}
+
+.cipa-minute-document__content p {
+  margin: 0 0 4mm;
+}
+
+.cipa-minute-document__content > p {
+  text-indent: 12mm;
+}
+
+.cipa-minute-document__signatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5mm 8mm;
+}
+
+.cipa-minute-document__validation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8mm;
+  padding-top: 3mm;
+  border-top: 1px solid #d1d5db;
+  font-size: 7.5pt;
+  color: #4b5563;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .cipa-minute-document__signatures {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .cipa-ata-document__logo {
+    max-width: 40mm;
+    max-height: 16mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

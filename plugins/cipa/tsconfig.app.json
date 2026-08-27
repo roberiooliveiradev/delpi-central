@@ -21,7 +21,10 @@
     "paths": {
       "@delpi/plugin-ui": ["../plugin-ui/src/index.ts"],
       "@delpi/plugin-ui/index": ["../plugin-ui/src/index.ts"],
-      "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"]
+      "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"],
+      "@delpi/cipa-meeting-minutes-presentation": [
+        "../cipa-meeting-minutes-presentation/src/index.ts"
+      ]
     }
   },
   "include": ["src"]

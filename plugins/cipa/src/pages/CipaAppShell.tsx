@@ -3,7 +3,6 @@ import {
   ActionButton,
   BackLink,
   DataTable,
-  DocumentReaderToolbar,
   StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
@@ -875,14 +874,7 @@ function MinuteDetailPage({
               </ul>
             </CipaSectionCard>
           ) : null}
-          <MinuteDocumentView
-            detail={detail}
-            toolbar={
-              <DocumentReaderToolbar
-                printTitle={String(minute?.title || minute?.minute_number || "Ata CIPA")}
-              />
-            }
-          />
+          <MinuteDocumentView detail={detail} />
         </>
       ) : (
         <CipaStateBox variant="loading" message="Carregando modo de leitura…" />

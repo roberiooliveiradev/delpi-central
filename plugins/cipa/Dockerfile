@@ -6,6 +6,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+COPY cipa-meeting-minutes-presentation/package*.json ./cipa-meeting-minutes-presentation/
+COPY cipa-meeting-minutes-presentation/.npmrc ./cipa-meeting-minutes-presentation/
+RUN --mount=type=cache,target=/root/.npm \
+    cd cipa-meeting-minutes-presentation && npm install --omit=peer
+
+COPY cipa-meeting-minutes-presentation ./cipa-meeting-minutes-presentation
+
 COPY cipa/package*.json ./cipa/
 RUN --mount=type=cache,target=/root/.npm \
     cd cipa && npm install

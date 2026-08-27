@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
@@ -39,6 +40,13 @@ export default defineConfig(({ mode }) => {
           find,
           replacement,
         })),
+        {
+          find: "@delpi/cipa-meeting-minutes-presentation",
+          replacement: path.resolve(
+            __dirname,
+            "../cipa-meeting-minutes-presentation/src/index.ts",
+          ),
+        },
       ],
       dedupe: ["react", "react-dom"],
     },
