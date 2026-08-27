@@ -302,6 +302,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_sales_order_otd_panel": RouteContract("sales_order_otd_panel", "paged_list"),
     "get_sales_order_otd_series": RouteContract("sales_order_otd_series", "scalar"),
+    "get_sales_order_otd_series_by_customer": RouteContract(
+        "sales_order_otd_series_by_customer", "paged_list"
+    ),
     "get_sales_order_otd_line_detail": RouteContract(
         "sales_order_otd_line", "playbook_report"
     ),

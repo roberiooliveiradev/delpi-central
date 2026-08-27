@@ -45,6 +45,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "sales_order_otd_by_branch": "OTD de pedidos de venda por filial",
     "sales_order_otd_panel": "Painel OTD de pedidos de venda",
     "sales_order_otd_series": "Série temporal OTD de pedidos de venda",
+    "sales_order_otd_series_by_customer": (
+        "Série temporal OTD de pedidos de venda por cliente"
+    ),
     "sales_order_otd_line": "Detalhe de linha OTD de pedido de venda",
     "supplies_purchase_order_otd": "OTD de pedidos de compra (MP)",
     "supplies_purchase_order_otd_panel": "Painel OTD de pedidos de compra (MP)",

@@ -52,6 +52,11 @@ from app.application.dto.commercial.get_sales_order_otd_panel_request import (
 from app.application.dto.commercial.get_sales_order_otd_by_customer_request import (
     GetSalesOrderOtdByCustomerRequest,
 )
+from app.application.dto.commercial.get_sales_order_otd_series_by_customer_request import (
+    DEFAULT_TOP_CUSTOMERS,
+    MAX_TOP_CUSTOMERS,
+    GetSalesOrderOtdSeriesByCustomerRequest,
+)
 from app.application.dto.commercial.get_sales_order_otd_by_branch_request import (
     GetSalesOrderOtdByBranchRequest,
 )
@@ -77,6 +82,7 @@ from app.composition.commercial_composer import (
     build_get_sales_order_otd_use_case,
     build_get_sales_order_otd_panel_use_case,
     build_get_sales_order_otd_series_use_case,
+    build_get_sales_order_otd_series_by_customer_use_case,
     build_get_sales_order_otd_line_detail_use_case,
     build_get_sales_order_otd_by_customer_use_case,
     build_get_sales_order_otd_by_branch_use_case,
@@ -1073,6 +1079,79 @@ def get_sales_order_otd_series(
         log_error(f"Error while fetching sales order OTD series: {exc}")
         return error_response(
             "Internal error while fetching sales order OTD series.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/sales-order-otd/series-by-customer",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_order_otd_series_by_customer",
+        path="/commercial/sales-order-otd/series-by-customer",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_sales_order_otd_series_by_customer(
+    granularity: str = GRANULARITY_QUERY_REQUIRED(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    top_customers: int = Query(
+        DEFAULT_TOP_CUSTOMERS,
+        ge=1,
+        le=MAX_TOP_CUSTOMERS,
+        description="Max customers by total_qty when no customer_codes/names filter.",
+    ),
+):
+    try:
+        request = GetSalesOrderOtdSeriesByCustomerRequest(
+            granularity=granularity,
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            page=page,
+            page_size=page_size,
+            top_customers=top_customers,
+        )
+        result = build_get_sales_order_otd_series_by_customer_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_sales_order_otd_series_by_customer",
+            message="Sales order OTD series by customer fetched successfully.",
+            fields=kpi_fields(
+                COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+                COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
+            ),
+        )
+    except ValueError as exc:
+        log_error(
+            f"Validation error while fetching sales order OTD series by customer: {exc}"
+        )
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching sales order OTD series by customer: {exc}")
+        return error_response(
+            "Internal error while fetching sales order OTD series by customer.",
             status_code=500,
         )
 

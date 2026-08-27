@@ -9,6 +9,9 @@ from app.application.dto.commercial.sales_conversion_rate_series_request import 
 from app.application.dto.commercial.sales_conversion_rate_series_request import (
     SalesConversionRateSeriesRequest,
 )
+from app.application.dto.commercial.get_sales_order_otd_series_by_customer_request import (
+    GetSalesOrderOtdSeriesByCustomerRequest,
+)
 from app.application.dto.commercial.sales_order_otd_series_request import (
     SalesOrderOtdSeriesRequest,
 )
@@ -81,6 +84,26 @@ def commercial_sales_order_otd_series_cache_key(
             ",".join(getattr(request, "customer_names", None) or []),
             ",".join(getattr(request, "exclude_customer_codes", None) or []),
             ",".join(getattr(request, "exclude_customer_names", None) or []),
+        ]
+    )
+
+
+def commercial_sales_order_otd_series_by_customer_cache_key(
+    request: GetSalesOrderOtdSeriesByCustomerRequest,
+) -> str:
+    return "|".join(
+        [
+            "commercial-sales-order-otd-series-by-customer",
+            request.granularity,
+            request.date_start or "",
+            request.date_end or "",
+            request.branch or "",
+            request.customer_segment or "",
+            ",".join(request.customer_codes or []),
+            ",".join(request.customer_names or []),
+            ",".join(request.exclude_customer_codes or []),
+            ",".join(request.exclude_customer_names or []),
+            str(request.top_customers),
         ]
     )
 
