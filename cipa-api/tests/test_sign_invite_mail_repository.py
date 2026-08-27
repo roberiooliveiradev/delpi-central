@@ -42,6 +42,7 @@ def test_repository_exposes_mail_delivery_methods():
     for method in (
         "update_invite_mail_send_result",
         "update_invite_mail_delivery_result",
+        "confirm_invite_mail_delivered_from_engagement",
         "list_invites_pending_trace",
         "get_latest_invite_mail_by_signer_ids",
     ):

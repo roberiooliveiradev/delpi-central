@@ -22,6 +22,7 @@ def _service_with_mocks(*, repo: MagicMock, invites: MagicMock) -> MeetingMinute
     service.notifications = MagicMock()
     service.sign_pending_mail = MagicMock()
     service.signature_storage = MagicMock()
+    service.mail_engagement = MagicMock()
     return service
 
 
@@ -88,6 +89,7 @@ def test_public_sign_context_and_refuse():
     assert ctx["minute"]["id"] == "m1"
     assert ctx["version"]["body_html"] == "<p>corpo</p>"
     repo.mark_signer_viewed.assert_called_once_with("s1")
+    service.mail_engagement.confirm_delivered_if_pending.assert_called_once_with("inv1")
 
     result = service.public_refuse("token-abc", "Não concordo")
     assert result["minute"]["status"] == "in_review"
@@ -117,3 +119,49 @@ def test_public_sign_rejects_already_signed():
             session_id=None,
             idempotency_key=None,
         )
+    service.mail_engagement.confirm_delivered_if_pending.assert_not_called()
+
+
+def test_public_sign_context_confirms_mail_on_already_signed():
+    repo = MagicMock()
+    invites = MagicMock()
+    invites.resolve.return_value = {
+        "invite": {"id": "inv1"},
+        "signer": {
+            "id": "s1",
+            "display_name": "Ana",
+            "status": "signed",
+            "user_id": "u1",
+            "version_id": "v1",
+        },
+        "minute": {
+            "id": "m1",
+            "title": "Reunião",
+            "minute_number": "2026/001",
+            "meeting_date": "2026-01-01",
+            "status": "signed",
+            "unit_code": "01",
+            "responsible_user_id": "r1",
+        },
+        "outcome": "already_signed",
+    }
+    repo.get_signer.return_value = invites.resolve.return_value["signer"]
+    repo.list_participants.return_value = []
+    repo.list_signers.return_value = []
+    repo.list_signatures.return_value = []
+    repo.get_version.return_value = {
+        "id": "v1",
+        "title": "Reunião",
+        "agenda_html": "",
+        "body_html": "<p>corpo</p>",
+        "decisions_html": "",
+        "pending_html": "",
+        "observations_html": "",
+        "content_hash": "h",
+    }
+
+    service = _service_with_mocks(repo=repo, invites=invites)
+    ctx = service.public_sign_context("token-abc")
+    assert ctx["outcome"] == "already_signed"
+    service.mail_engagement.confirm_delivered_if_pending.assert_called_once_with("inv1")
+    repo.mark_signer_viewed.assert_not_called()

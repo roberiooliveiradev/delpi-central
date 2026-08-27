@@ -15,6 +15,9 @@ from cipa_app.application.services.cipa_meeting_minute_sign_invite_service impor
 from cipa_app.application.services.portal_notification_service import (
     CipaPortalNotificationService,
 )
+from cipa_app.application.services.sign_invite_mail_engagement_service import (
+    SignInviteMailEngagementService,
+)
 from cipa_app.application.services.sign_invite_mail_presentation_service import (
     enrich_signers_with_last_invite_mail,
 )
@@ -47,6 +50,7 @@ class MeetingMinutesService:
         self.notifications = CipaPortalNotificationService()
         self.sign_invites = CipaMeetingMinuteSignInviteService(self.repo)
         self.sign_pending_mail = CipaSignPendingMailService()
+        self.mail_engagement = SignInviteMailEngagementService(self.repo)
         self.signature_storage = SignatureStorageService()
         self.attachment_storage = AttachmentStorageService()
         self.pdf_storage = PdfStorageService()
@@ -62,6 +66,11 @@ class MeetingMinutesService:
             or minute.get("created_by_user_id")
             or "00000000-0000-0000-0000-000000000001"
         )
+
+    def _confirm_invite_mail_engagement(self, invite: dict[str, Any] | None) -> None:
+        invite_id = str((invite or {}).get("id") or "").strip()
+        if invite_id:
+            self.mail_engagement.confirm_delivered_if_pending(invite_id)
 
     def _assert(self, user, action: str, unit_code: str) -> None:
         perms.assert_unit_action(user, action, unit_code)
@@ -508,6 +517,7 @@ class MeetingMinutesService:
 
     def public_sign_context(self, raw_token: str) -> dict[str, Any]:
         resolved = self.sign_invites.resolve(raw_token)
+        self._confirm_invite_mail_engagement(resolved.get("invite"))
         minute = resolved["minute"]
         signer = resolved["signer"]
         outcome = str(resolved.get("outcome") or "ready")
@@ -678,6 +688,7 @@ class MeetingMinutesService:
         minute = resolved["minute"]
         signer = resolved["signer"]
         invite = resolved["invite"]
+        self._confirm_invite_mail_engagement(invite)
         if not terms_accepted or not (display_name_confirmed or "").strip():
             raise ValueError("É necessário aceitar o termo e confirmar o nome do signatário.")
         version = self.repo.get_version(str(minute["id"]))
