@@ -827,12 +827,24 @@ export function mergeChartPartsWithOptions(
           projectedState?.content !== undefined ? projectedState.content : prevState.content,
         frame: prevState.frame ?? projectedState?.frame,
       };
-    } else if (prevState.style || prevState.frame || prevState.content !== undefined) {
+    } else if (
+      prevState.style ||
+      prevState.frame ||
+      prevState.content !== undefined ||
+      prevState.contentRuns
+    ) {
       const preserveFrame = !key.startsWith("dataTable");
+      const nextContent =
+        projectedState?.content !== undefined ? projectedState.content : prevState.content;
+      const contentChanged =
+        projectedState?.content !== undefined && projectedState.content !== prevState.content;
       merged[key] = {
         ...projectedState,
         ...prevState,
         visible: projectedState?.visible ?? prevState.visible,
+        content: nextContent,
+        /* Texto flat mudou → invalida runs ricos (evita título “fantasma” antigo). */
+        contentRuns: contentChanged ? undefined : prevState.contentRuns,
         style: { ...projectedState?.style, ...prevState.style },
         frame: preserveFrame ? (prevState.frame ?? projectedState?.frame) : undefined,
       };

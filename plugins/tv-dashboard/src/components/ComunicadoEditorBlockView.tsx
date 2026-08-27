@@ -4,7 +4,7 @@ import {
   ComunicadoBlockView,
   ComunicadoMediaPlaceholder,
   blockCssStyle,
-  chartOptionsToParts,
+  mergeChartPartsWithOptions,
   chartPartAllowsMove,
   chartPartAllowsEdit,
   chartPartAllowsResize,
@@ -93,7 +93,7 @@ import { startLiveBlockPatchGesture } from "../utils/comunicadoLiveBlockGesture"
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
 import { resolveEditorMediaUrl } from "./slideCardPreview";
-import { ensureComunicadoDualClass, type DeckContentRun } from "@delpi/plugin-ui/index";
+import { ensureComunicadoDualClass, shouldPersistDeckContentRuns, type DeckContentRun } from "@delpi/plugin-ui/index";
 import {
   createPartTextEditorBridge,
   parsePartEditorRuns,
@@ -306,7 +306,7 @@ function EditorChartViewBlock({
         nextOptions.showYAxisTitle = true;
       }
       updateBlock(block.id, {
-        chartParts: { ...chartOptionsToParts(nextOptions), ...nextParts },
+        chartParts: mergeChartPartsWithOptions(nextParts, nextOptions),
         chartOptions: nextOptions,
       } as Partial<ComunicadoBlock>);
     },
@@ -328,9 +328,10 @@ function EditorChartViewBlock({
         reportTextEditSelection,
         onRunsCommit: (runs) => {
           const synced = syncPartFieldsFromRuns(runs);
+          const deckRuns = toDeckContentRuns(runs);
           const nextParts = upsertChartPartState(block.chartParts, ref, {
             content: synced.content,
-            contentRuns: toDeckContentRuns(runs),
+            contentRuns: shouldPersistDeckContentRuns(deckRuns) ? deckRuns : undefined,
             visible: true,
           });
           updateBlock(block.id, { chartParts: nextParts } as Partial<ComunicadoBlock>);
@@ -894,9 +895,10 @@ function EditorKpiViewBlock({
         reportTextEditSelection,
         onRunsCommit: (runs) => {
           const synced = syncPartFieldsFromRuns(runs);
+          const deckRuns = toDeckContentRuns(runs);
           const nextParts = upsertKpiPartState(block.kpiParts, part, {
             content: synced.content,
-            contentRuns: toDeckContentRuns(runs),
+            contentRuns: shouldPersistDeckContentRuns(deckRuns) ? deckRuns : undefined,
             visible: true,
           });
           updateBlock(block.id, { kpiParts: nextParts } as Partial<ComunicadoBlock>);

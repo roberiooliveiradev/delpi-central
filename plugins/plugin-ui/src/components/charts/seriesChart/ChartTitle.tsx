@@ -143,34 +143,11 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
     .filter(Boolean)
     .join(" ");
 
-  /* Árvore separada na edição: evita React limpar o contentEditable em re-render. */
-  if (editing) {
-    return (
-      <div
-        ref={editRef}
-        className={className}
-        style={textStyle}
-        {...dom}
-        contentEditable
-        suppressContentEditableWarning
-        role="textbox"
-        aria-label="Editar título do gráfico"
-        onPointerDown={onPointerDown}
-        onDoubleClick={onDoubleClick}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commit();
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            interaction?.onPartEditCancel?.();
-          }
-        }}
-      />
-    );
-  }
-
+  /*
+   * Host estável + contentEditable filho (padrão KPI).
+   * Nunca injetar innerHTML no mesmo nó que depois monta DeckContentRunsView —
+   * o React reaproveita o DOM e deixa texto órfão → título duplicado empilhado.
+   */
   return (
     <div
       ref={hostRef}
@@ -180,7 +157,30 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
       onPointerDown={onPointerDown}
       onDoubleClick={onDoubleClick}
     >
-      <DeckContentRunsView content={display} contentRuns={contentRuns} />
+      {editing ? (
+        <div
+          ref={editRef}
+          className={`${cn.root}__title-edit`}
+          style={{ outline: "none", minWidth: "1ch", width: "100%" }}
+          contentEditable
+          suppressContentEditableWarning
+          role="textbox"
+          aria-label="Editar título do gráfico"
+          onPointerDown={(event) => event.stopPropagation()}
+          onBlur={commit}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commit();
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              interaction?.onPartEditCancel?.();
+            }
+          }}
+        />
+      ) : (
+        <DeckContentRunsView content={display} contentRuns={contentRuns} />
+      )}
       <ChartPartResizeHandles
         visible={showResize}
         onResizePointerDown={(handle, event) => {

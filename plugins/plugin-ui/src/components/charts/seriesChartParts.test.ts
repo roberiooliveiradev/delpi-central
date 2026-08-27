@@ -614,6 +614,43 @@ describe("seriesChartParts", () => {
     ).toMatchObject({ width: "100%", height: "100%" });
   });
 
+  it("mergeChartPartsWithOptions preserva style/frame/contentRuns do title ao sync de options", () => {
+    const options = mergeSeriesChartOptions({ title: "OTD WEG AMAZONIA", showTitle: true });
+    const prev = upsertChartPartState(chartOptionsToParts(options), { kind: "title" }, {
+      content: "OTD WEG AMAZONIA",
+      contentRuns: [{ text: "OTD ", style: { fontWeight: "bold" } }, { text: "WEG AMAZONIA" }],
+      style: { fontSize: 28, color: "#0f172a" },
+      frame: { x: 10, y: 4, w: 80, h: 12 },
+    });
+    const merged = mergeChartPartsWithOptions(prev, {
+      ...options,
+      title: "OTD WEG AMAZONIA",
+    });
+    expect(merged.title?.style?.fontSize).toBe(28);
+    expect(merged.title?.frame).toEqual({ x: 10, y: 4, w: 80, h: 12 });
+    expect(merged.title?.contentRuns).toEqual([
+      { text: "OTD ", style: { fontWeight: "bold" } },
+      { text: "WEG AMAZONIA" },
+    ]);
+    expect(merged.title?.content).toBe("OTD WEG AMAZONIA");
+  });
+
+  it("mergeChartPartsWithOptions atualiza content do title e limpa contentRuns obsoleto", () => {
+    const options = mergeSeriesChartOptions({ title: "Antigo", showTitle: true });
+    const prev = upsertChartPartState(chartOptionsToParts(options), { kind: "title" }, {
+      content: "Antigo",
+      contentRuns: [{ text: "Antigo", style: { fontWeight: "bold" } }],
+      style: { fontSize: 24 },
+    });
+    const merged = mergeChartPartsWithOptions(prev, {
+      ...options,
+      title: "OTD WEG AMAZONIA",
+    });
+    expect(merged.title?.content).toBe("OTD WEG AMAZONIA");
+    expect(merged.title?.contentRuns).toBeUndefined();
+    expect(merged.title?.style?.fontSize).toBe(24);
+  });
+
   it("resolveChartPartFontSize e tipografia usam defaults canônicos (não 16 fantasma)", () => {
     expect(resolveChartPartFontSize("axis")).toBe(14);
     expect(resolveChartPartFontSize("axisTitle")).toBe(14);

@@ -9,9 +9,9 @@ import {
 } from "react";
 
 import {
-  chartOptionsToParts,
   chartPartAllowsDelete,
   chartPartAllowsMove,
+  mergeChartPartsWithOptions,
   createBlock,
   createChartViewBlock,
   createCanvasTableBlock,
@@ -741,9 +741,8 @@ export function useComunicadoEditorBlocks({
         nextOptions.yAxisTitle = content;
         nextOptions.showYAxisTitle = true;
       }
-      const syncedParts = chartOptionsToParts(nextOptions);
       updateBlock(blockId, {
-        chartParts: { ...nextParts, ...syncedParts },
+        chartParts: mergeChartPartsWithOptions(nextParts, nextOptions),
         chartOptions: nextOptions,
       } as Partial<ComunicadoBlock>);
     },
