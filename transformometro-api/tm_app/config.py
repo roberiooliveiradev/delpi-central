@@ -109,6 +109,20 @@ class Settings:
         "GRAPH_HTTP_TIMEOUT_SECONDS",
         default="15",
     )
+    TM_SIGN_INVITE_MAIL_TRACE_ENABLED: bool = (
+        str(
+            _get_env("TM_SIGN_INVITE_MAIL_TRACE_ENABLED", default="false") or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    TM_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES: str = _get_env(
+        "TM_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES",
+        default="15",
+    )
+    TM_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT: str = _get_env(
+        "TM_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT",
+        default="50",
+    )
     CORE_API_BASE_URL: str = _get_env(
         "CORE_API_BASE_URL",
         default="http://core-api:8000",
