@@ -37,7 +37,7 @@ export type RequesterFacetQuery = Pick<
   | "date_from"
   | "date_to"
   | "request_number"
-  | "cost_center"
+  | "cost_center_codes"
   | "product_code"
   | "supplier_code"
   | "order_number"
@@ -50,7 +50,7 @@ export async function listPurchaseRequestRequesters(
   const params = buildListSearchParams({
     ...query,
     requester_user_ids: [],
-    overall_stage: "",
+    overall_stages: [],
     page: 1,
     page_size: 1,
   });
@@ -66,7 +66,7 @@ export async function listPurchaseRequestRequesters(
 export async function getPurchaseRequest(
   branch: string,
   requestNumber: string,
-  filters: Pick<PurchaseRequestsQuery, "date_from" | "date_to" | "cost_center">,
+  filters: Pick<PurchaseRequestsQuery, "date_from" | "date_to" | "cost_center_codes">,
   options?: { signal?: AbortSignal },
 ): Promise<PurchaseRequestDetail> {
   const params = buildListSearchParams({
@@ -74,7 +74,7 @@ export async function getPurchaseRequest(
     branch,
     request_number: requestNumber,
     requester_user_ids: [],
-    overall_stage: "",
+    overall_stages: [],
     product_code: "",
     supplier_code: "",
     order_number: "",
@@ -84,8 +84,9 @@ export async function getPurchaseRequest(
   const detailKeys = ["date_from", "date_to", "cost_center"] as const;
   const searchParams = new URLSearchParams();
   for (const key of detailKeys) {
-    const value = params.get(key);
-    if (value) searchParams.set(key, value);
+    for (const value of params.getAll(key)) {
+      if (value) searchParams.append(key, value);
+    }
   }
   const qs = searchParams.toString();
   const url = `${API_BASE}/purchase-requests/${encodeURIComponent(branch)}/${encodeURIComponent(requestNumber)}${qs ? `?${qs}` : ""}`;

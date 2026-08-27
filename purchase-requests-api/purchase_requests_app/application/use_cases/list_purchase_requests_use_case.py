@@ -44,10 +44,12 @@ class ListPurchaseRequestsUseCase:
         request_number: str | None = None,
         requester_user_ids: list[str] | None = None,
         cost_center: str | None = None,
+        cost_centers: list[str] | None = None,
         product_code: str | None = None,
         supplier_code: str | None = None,
         order_number: str | None = None,
         overall_stage: str | None = None,
+        overall_stages: list[str] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -61,12 +63,14 @@ class ListPurchaseRequestsUseCase:
             user=user,
             branch=branch,
             explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
             scope_rows=scope_rows,
         )
         effective_ccs = self._scope_resolver.effective_cost_centers(
             resolution,
             branch=branch,
             explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
         )
         if effective_ccs == []:
             return {
@@ -101,11 +105,13 @@ class ListPurchaseRequestsUseCase:
             resolution=resolution,
         )
         items = self._aggregation.build_list_line_items(lines)
-        if overall_stage:
+        stages = _normalize_overall_stages(overall_stages, overall_stage)
+        if stages:
+            allowed_stages = set(stages)
             items = [
                 item
                 for item in items
-                if (item.get("derived") or {}).get("overall_stage") == overall_stage
+                if (item.get("derived") or {}).get("overall_stage") in allowed_stages
             ]
         return {
             "items": items,
@@ -114,3 +120,18 @@ class ListPurchaseRequestsUseCase:
             "total": payload.get("total", len(lines)),
             "total_pages": payload.get("total_pages", 0),
         }
+
+
+def _normalize_overall_stages(
+    overall_stages: list[str] | None,
+    overall_stage: str | None,
+) -> list[str]:
+    values: list[str] = []
+    seen: set[str] = set()
+    for raw in [*(overall_stages or []), overall_stage or ""]:
+        for part in str(raw or "").split(","):
+            stage = part.strip()
+            if stage and stage not in seen:
+                seen.add(stage)
+                values.append(stage)
+    return values

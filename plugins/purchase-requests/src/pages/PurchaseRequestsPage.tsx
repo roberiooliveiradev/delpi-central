@@ -13,7 +13,16 @@ import {
   parseUrlState,
   queryFromUrlState,
   replaceUrlState,
+  searchHasExplicitFilters,
 } from "../utils/urlState";
+import {
+  areSavedFiltersEqual,
+  loadSavedFilters,
+  persistSavedFilters,
+  resolveInitialUrlState,
+  snapshotSavedFilters,
+  type SavedPurchaseRequestsFilters,
+} from "../utils/savedFilters";
 import { resolveListSurfaceState } from "../utils/pageState";
 import { PurchaseRequestDetailDrawer } from "../components/PurchaseRequestDetailDrawer";
 import { PurchaseRequestsFilters } from "../components/PurchaseRequestsFilters";
@@ -40,11 +49,15 @@ type PurchaseRequestsPageProps = {
 export function PurchaseRequestsPage({ access, pathname, search }: PurchaseRequestsPageProps) {
   const initialBranch = access.defaultBranch;
   const [urlState, setUrlState] = useState(() =>
-    parseUrlState(search, initialBranch || "01"),
+    resolveInitialUrlState(search, initialBranch || "01"),
+  );
+  const [savedFilters, setSavedFilters] = useState<SavedPurchaseRequestsFilters | null>(() =>
+    loadSavedFilters(),
   );
 
   useEffect(() => {
-    setUrlState(parseUrlState(search, initialBranch || urlState.branch || "01"));
+    if (!searchHasExplicitFilters(search)) return;
+    setUrlState(parseUrlState(search, initialBranch || "01"));
   }, [initialBranch, search]);
 
   useEffect(() => {
@@ -68,14 +81,14 @@ export function PurchaseRequestsPage({ access, pathname, search }: PurchaseReque
       date_from: query.date_from,
       date_to: query.date_to,
       request_number: query.request_number,
-      cost_center: query.cost_center,
+      cost_center_codes: query.cost_center_codes,
       product_code: query.product_code,
       supplier_code: query.supplier_code,
       order_number: query.order_number,
     }),
     [
       query.branch,
-      query.cost_center,
+      query.cost_center_codes,
       query.date_from,
       query.date_to,
       query.order_number,
@@ -95,9 +108,9 @@ export function PurchaseRequestsPage({ access, pathname, search }: PurchaseReque
     () => ({
       date_from: query.date_from,
       date_to: query.date_to,
-      cost_center: query.cost_center,
+      cost_center_codes: query.cost_center_codes,
     }),
-    [query.cost_center, query.date_from, query.date_to],
+    [query.cost_center_codes, query.date_from, query.date_to],
   );
   const {
     data: detail,
@@ -117,6 +130,12 @@ export function PurchaseRequestsPage({ access, pathname, search }: PurchaseReque
   const patchState = useCallback((patch: Partial<typeof urlState>) => {
     setUrlState((current) => ({ ...current, ...patch }));
   }, []);
+
+  const filtersSaved = areSavedFiltersEqual(savedFilters, snapshotSavedFilters(query));
+
+  const saveFilters = useCallback(() => {
+    setSavedFilters(persistSavedFilters(query));
+  }, [query]);
 
   const clearFilters = useCallback(() => {
     const branch = urlState.branch || access.defaultBranch || "01";
@@ -156,8 +175,10 @@ export function PurchaseRequestsPage({ access, pathname, search }: PurchaseReque
         access={access}
         requesterOptions={requesterOptions}
         requestersLoading={requestersLoading}
+        filtersSaved={filtersSaved}
         onChange={patchState}
         onClear={clearFilters}
+        onSave={saveFilters}
       />
 
       {surface === "loading" ? <PurchaseRequestsLoadingState /> : null}

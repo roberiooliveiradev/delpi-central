@@ -9,6 +9,21 @@ from purchase_requests_app.domain.services.purchase_request_domain_service impor
 )
 
 
+def normalize_cost_center_codes(
+    explicit_cost_center: str | None = None,
+    explicit_cost_centers: list[str] | None = None,
+) -> list[str]:
+    codes: list[str] = []
+    seen: set[str] = set()
+    for raw in [*(explicit_cost_centers or []), explicit_cost_center or ""]:
+        for part in str(raw or "").split(","):
+            code = part.strip()
+            if code and code not in seen:
+                seen.add(code)
+                codes.append(code)
+    return codes
+
+
 class PurchaseRequestScopeResolver:
     def resolve(
         self,
@@ -16,6 +31,7 @@ class PurchaseRequestScopeResolver:
         user,
         branch: str,
         explicit_cost_center: str | None = None,
+        explicit_cost_centers: list[str] | None = None,
         scope_rows: list[dict] | None = None,
     ) -> ScopeResolution:
         view_all = has_view_all(user)
@@ -30,8 +46,10 @@ class PurchaseRequestScopeResolver:
             }
             resolution = ScopeResolution(view_all=False, allowed_cost_centers=frozenset(branch_allowed))
 
-        if explicit_cost_center:
-            code = explicit_cost_center.strip()
+        for code in normalize_cost_center_codes(
+            explicit_cost_center=explicit_cost_center,
+            explicit_cost_centers=explicit_cost_centers,
+        ):
             if not resolution.view_all and not resolution.allows(branch, code):
                 raise PermissionError(
                     f"Sem permissão para consultar o centro de custo {code}."
@@ -44,21 +62,24 @@ class PurchaseRequestScopeResolver:
         *,
         branch: str,
         explicit_cost_center: str | None = None,
+        explicit_cost_centers: list[str] | None = None,
     ) -> list[str] | None:
+        codes = normalize_cost_center_codes(
+            explicit_cost_center=explicit_cost_center,
+            explicit_cost_centers=explicit_cost_centers,
+        )
         if resolution.view_all:
-            if explicit_cost_center:
-                return [explicit_cost_center.strip()]
-            return None
+            return codes or None
         allowed_codes = resolution.cost_center_codes_for_branch(branch)
         if not allowed_codes:
             return []
-        if explicit_cost_center:
-            code = explicit_cost_center.strip()
-            if code not in allowed_codes:
+        if codes:
+            forbidden = [code for code in codes if code not in allowed_codes]
+            if forbidden:
                 raise PermissionError(
-                    f"Sem permissão para consultar o centro de custo {code}."
+                    f"Sem permissão para consultar o centro de custo {forbidden[0]}."
                 )
-            return [code]
+            return codes
         return allowed_codes
 
     @staticmethod

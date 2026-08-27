@@ -37,6 +37,7 @@ class ListPurchaseRequestRequestersUseCase:
         date_from: str | None = None,
         date_to: str | None = None,
         cost_center: str | None = None,
+        cost_centers: list[str] | None = None,
         request_number: str | None = None,
         product_code: str | None = None,
         supplier_code: str | None = None,
@@ -52,12 +53,14 @@ class ListPurchaseRequestRequestersUseCase:
             user=user,
             branch=branch,
             explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
             scope_rows=scope_rows,
         )
         effective_ccs = self._scope_resolver.effective_cost_centers(
             resolution,
             branch=branch,
             explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
         )
         if effective_ccs == []:
             return {"items": []}

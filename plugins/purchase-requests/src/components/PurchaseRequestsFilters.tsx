@@ -1,8 +1,11 @@
+import { useMemo } from "react";
+
 import type { PurchaseRequestsAccess } from "../security/purchaseRequestsAccess";
 import type { PurchaseRequestRequesterOption } from "../types/purchaseRequests";
 import { OVERALL_STAGE_VALUES } from "../types/purchaseRequests";
 import type { UrlState } from "../utils/urlState";
 import {
+  PurchaseRequestsFilterCreatableMultiSelectField,
   PurchaseRequestsFilterInputField,
   PurchaseRequestsFilterMultiSelectField,
   PurchaseRequestsFilterSelectField,
@@ -15,8 +18,10 @@ type PurchaseRequestsFiltersProps = {
   access: PurchaseRequestsAccess;
   requesterOptions: PurchaseRequestRequesterOption[];
   requestersLoading?: boolean;
+  filtersSaved?: boolean;
   onChange: (patch: Partial<UrlState>) => void;
   onClear: () => void;
+  onSave: () => void;
 };
 
 export function PurchaseRequestsFilters({
@@ -24,20 +29,39 @@ export function PurchaseRequestsFilters({
   access,
   requesterOptions,
   requestersLoading = false,
+  filtersSaved = false,
   onChange,
   onClear,
+  onSave,
 }: PurchaseRequestsFiltersProps) {
   const requesterSelectOptions = requesterOptions.map((item) => ({
     value: item.protheus_user_id,
     label: formatRequesterOptionLabel(item.name, item.code, item.protheus_user_id),
   }));
+  const costCenterOptions = useMemo(
+    () =>
+      state.cost_center_codes.map((code) => ({
+        value: code,
+        label: code,
+      })),
+    [state.cost_center_codes],
+  );
 
   return (
     <PurchaseRequestsFiltersRow
       trailing={
-        <button type="button" className="pr-btn pr-btn--secondary" onClick={onClear}>
-          Limpar filtros
-        </button>
+        <>
+          <button
+            type="button"
+            className={filtersSaved ? "pr-btn pr-btn--secondary" : "pr-btn pr-btn--primary"}
+            onClick={onSave}
+          >
+            {filtersSaved ? "Filtros salvos" : "Salvar filtros"}
+          </button>
+          <button type="button" className="pr-btn pr-btn--secondary" onClick={onClear}>
+            Limpar filtros
+          </button>
+        </>
       }
     >
       <PurchaseRequestsFilterSelectField
@@ -69,6 +93,8 @@ export function PurchaseRequestsFilters({
         disabled={requestersLoading}
         searchable
         showBulkActions
+        emptyLabel="Todos"
+        placeholder="Buscar solicitante…"
       />
       <PurchaseRequestsFilterInputField
         label="Número da SC"
@@ -77,11 +103,12 @@ export function PurchaseRequestsFilters({
         onChange={(value) => onChange({ request_number: value, page: 1 })}
         placeholder="Ex.: 177030"
       />
-      <PurchaseRequestsFilterInputField
+      <PurchaseRequestsFilterCreatableMultiSelectField
         label="Centro de custo"
-        type="text"
-        value={state.cost_center}
-        onChange={(value) => onChange({ cost_center: value, page: 1 })}
+        selectedValues={state.cost_center_codes}
+        options={costCenterOptions}
+        onChange={(values) => onChange({ cost_center_codes: values, page: 1 })}
+        emptyLabel="Todos"
         placeholder="Código do CC"
       />
       <PurchaseRequestsFilterInputField
@@ -105,22 +132,23 @@ export function PurchaseRequestsFilters({
         onChange={(value) => onChange({ order_number: value, page: 1 })}
         placeholder="Número do PC"
       />
-      <PurchaseRequestsFilterSelectField
+      <PurchaseRequestsFilterMultiSelectField
         label="Situação"
-        value={state.overall_stage}
-        onChange={(value) =>
+        selectedValues={state.overall_stages}
+        options={OVERALL_STAGE_VALUES.map((stage) => ({
+          value: stage,
+          label: labelOverallStage(stage),
+        }))}
+        onChange={(values) =>
           onChange({
-            overall_stage: (value as UrlState["overall_stage"]) || "",
+            overall_stages: values as UrlState["overall_stages"],
             page: 1,
           })
         }
-        options={[
-          { value: "", label: "Todas" },
-          ...OVERALL_STAGE_VALUES.map((stage) => ({
-            value: stage,
-            label: labelOverallStage(stage),
-          })),
-        ]}
+        searchable
+        showBulkActions
+        emptyLabel="Todas"
+        placeholder="Buscar situação…"
       />
     </PurchaseRequestsFiltersRow>
   );

@@ -83,6 +83,46 @@ def test_explicit_cost_center_allowed() -> None:
     ) == ["0413"]
 
 
+def test_explicit_cost_centers_intersect_allowed() -> None:
+    resolver = PurchaseRequestScopeResolver()
+    user = SimpleNamespace(is_superadmin=False, permissions=["purchase-requests.access"])
+    rows = [
+        {"branch": "01", "cost_center_code": "0413"},
+        {"branch": "01", "cost_center_code": "0520"},
+    ]
+    resolution = resolver.resolve(
+        user=user,
+        branch="01",
+        explicit_cost_centers=["0413", "0520"],
+        scope_rows=rows,
+    )
+    assert resolver.effective_cost_centers(
+        resolution,
+        branch="01",
+        explicit_cost_centers=["0520", "0413"],
+    ) == ["0520", "0413"]
+
+
+def test_explicit_cost_centers_split_csv_query() -> None:
+    resolver = PurchaseRequestScopeResolver()
+    user = SimpleNamespace(is_superadmin=False, permissions=["purchase-requests.access"])
+    rows = [
+        {"branch": "01", "cost_center_code": "0413"},
+        {"branch": "01", "cost_center_code": "0520"},
+    ]
+    resolution = resolver.resolve(
+        user=user,
+        branch="01",
+        explicit_cost_centers=["0413,0520"],
+        scope_rows=rows,
+    )
+    assert resolver.effective_cost_centers(
+        resolution,
+        branch="01",
+        explicit_cost_centers=["0413,0520"],
+    ) == ["0413", "0520"]
+
+
 def test_explicit_cost_center_forbidden_raises() -> None:
     resolver = PurchaseRequestScopeResolver()
     user = SimpleNamespace(is_superadmin=False, permissions=["purchase-requests.access"])

@@ -199,3 +199,10 @@ def test_list_filters_by_overall_stage_after_enrichment() -> None:
     )
     assert len(receipt["items"]) == 1
     assert receipt["items"][0]["request_number"] == "200"
+
+    both = ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+        user=user,
+        branch="02",
+        overall_stages=["awaiting_order,awaiting_receipt"],
+    )
+    assert {item["request_number"] for item in both["items"]} == {"100", "200"}

@@ -1,4 +1,5 @@
 import {
+  createDashboardCreatableMultiSelectField,
   createDashboardEmptyState,
   createDashboardFiltersKit,
   createDashboardLoadingState,
@@ -12,6 +13,7 @@ import {
   emptyStateCardBemClasses,
   loadingStateCardBemClasses,
   multiSelectBemClasses,
+  multiSelectCreatablePacClasses,
   sectionCardPacBemClasses,
   stateBannerBemClasses,
   type MultiSelectFieldLabels,
@@ -66,11 +68,22 @@ export const PurchaseRequestsFilterSelectField = filtersKit.FilterSelectField;
 
 const MULTISELECT_LABELS = {
   emptyLabel: "Todos",
-  searchPlaceholder: "Buscar solicitante…",
+  searchPlaceholder: "Buscar…",
   selectVisible: "Marcar visíveis",
   clear: "Limpar",
-  emptyOptions: "Nenhum solicitante encontrado.",
+  emptyOptions: "Nenhuma opção encontrada.",
   multipleSelected: (count: number) => `${count} selecionado(s)`,
+} satisfies MultiSelectFieldLabels;
+
+const CREATABLE_MULTISELECT_LABELS = {
+  ...MULTISELECT_LABELS,
+  emptyLabel: "Todos",
+  searchPlaceholder: "Digite o código do CC…",
+  emptyOptions: "Digite o código e pressione Enter.",
+  emptyOptionsCreatable: "Pressione Enter ou use a opção «Adicionar».",
+  createOption: (query: string) => `Adicionar «${query.trim()}»`,
+  searchAriaLabel: (label: string) => `Buscar ou adicionar em ${label}`,
+  removeTagAriaLabel: (value: string) => `Remover ${value}`,
 } satisfies MultiSelectFieldLabels;
 
 export const PurchaseRequestsFilterMultiSelectField = createDashboardMultiSelectField({
@@ -78,6 +91,16 @@ export const PurchaseRequestsFilterMultiSelectField = createDashboardMultiSelect
   labels: MULTISELECT_LABELS,
   classNames: {
     ...multiSelectBemClasses(PREFIX),
+    root: "pr-field pr-field--multi-select",
+  },
+  portalScopeClassName: "dashboard-purchase-requests",
+});
+
+export const PurchaseRequestsFilterCreatableMultiSelectField = createDashboardCreatableMultiSelectField({
+  prefix: PREFIX,
+  labels: CREATABLE_MULTISELECT_LABELS,
+  classNames: {
+    ...multiSelectCreatablePacClasses(PREFIX),
     root: "pr-field pr-field--multi-select",
   },
   portalScopeClassName: "dashboard-purchase-requests",

@@ -164,11 +164,11 @@ export type PurchaseRequestsQuery = {
   date_to: string;
   request_number: string;
   requester_user_ids: string[];
-  cost_center: string;
+  cost_center_codes: string[];
   product_code: string;
   supplier_code: string;
   order_number: string;
-  overall_stage: OverallStage | "";
+  overall_stages: OverallStage[];
   page: number;
   page_size: number;
 };
@@ -184,6 +184,7 @@ export const DEFAULT_PAGE_SIZE = 50;
 export const OVERALL_STAGE_VALUES = [
   "awaiting_order",
   "partially_ordered",
+  "ordered",
   "awaiting_receipt",
   "partially_received",
   "completed",
@@ -198,11 +199,11 @@ export const EMPTY_QUERY: PurchaseRequestsQuery = {
   date_to: "",
   request_number: "",
   requester_user_ids: [],
-  cost_center: "",
+  cost_center_codes: [],
   product_code: "",
   supplier_code: "",
   order_number: "",
-  overall_stage: "",
+  overall_stages: [],
   page: 1,
   page_size: DEFAULT_PAGE_SIZE,
 };
