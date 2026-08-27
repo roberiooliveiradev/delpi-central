@@ -5,12 +5,19 @@ import {
   formatOrdersSummary,
   labelApprovalStatus,
   labelOverallStage,
+  overallStageVariant,
 } from "./labels";
 
 describe("labels", () => {
   it("translates operational stages without calling residual closed cancelled", () => {
     expect(labelOverallStage("residual_closed")).toBe("Encerrada por resíduo");
     expect(labelOverallStage("awaiting_order")).toBe("Aguardando pedido");
+  });
+
+  it("uses distinct badge variants for awaiting order versus awaiting receipt", () => {
+    expect(overallStageVariant("awaiting_order")).toBe("info");
+    expect(overallStageVariant("awaiting_receipt")).toBe("warning");
+    expect(overallStageVariant("completed")).toBe("success");
   });
 
   it("does not map unknown approval to waiting approval", () => {
