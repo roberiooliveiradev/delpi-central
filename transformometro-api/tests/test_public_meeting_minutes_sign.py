@@ -240,6 +240,8 @@ def test_public_sign_context_and_refuse():
     assert ctx["signer"]["display_name"] == "Ana"
     assert ctx.get("outcome") == "ready"
     assert "body_html" in ctx["version"]
+    repo.confirm_invite_mail_delivered_from_engagement.assert_called_once()
+    assert repo.confirm_invite_mail_delivered_from_engagement.call_args.args[0] == "inv1"
 
     refused = svc.public_refuse("tok", "Ausente")
     assert refused["minute"]["id"] == "m1"
@@ -307,6 +309,8 @@ def test_public_sign_context_already_signed_includes_version_content():
     repo.get_version.assert_called_with("m1", version_id="v1")
     repo.list_signatures.assert_called_with("m1", version_id="v1")
     repo.mark_signer_viewed.assert_not_called()
+    repo.confirm_invite_mail_delivered_from_engagement.assert_called_once()
+    assert repo.confirm_invite_mail_delivered_from_engagement.call_args.args[0] == "inv1"
 
 
 def test_public_signature_image(tmp_path):

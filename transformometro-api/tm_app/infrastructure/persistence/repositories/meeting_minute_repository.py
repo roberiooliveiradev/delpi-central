@@ -346,6 +346,24 @@ class MeetingMinuteRepository(PluginBaseRepository):
             ),
         )
 
+    def confirm_invite_mail_delivered_from_engagement(
+        self,
+        invite_id: str,
+        *,
+        delivered_at: Any,
+    ) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            f"""UPDATE {_S}.tm_meeting_minute_sign_invites
+            SET mail_delivery_status='delivered',
+                mail_delivered_at=COALESCE(mail_delivered_at, %s),
+                mail_last_error=NULL
+            WHERE id=%s::uuid
+              AND mail_send_status='accepted'
+              AND mail_delivery_status='trace_pending'
+            RETURNING *""",
+            (delivered_at, invite_id),
+        )
+
     def list_invites_pending_trace(self, *, since: Any, limit: int = 100) -> list[dict[str, Any]]:
         return self.fetch_all(
             f"""SELECT *

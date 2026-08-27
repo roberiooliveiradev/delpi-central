@@ -15,6 +15,9 @@ from tm_app.application.services.tm_sign_pending_mail_service import TmSignPendi
 from tm_app.application.services.sign_invite_mail_presentation_service import (
     enrich_signers_with_last_invite_mail,
 )
+from tm_app.application.services.sign_invite_mail_engagement_service import (
+    SignInviteMailEngagementService,
+)
 from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
 from tm_app.domain.services.minute_status_transition_service import MinuteStatusTransitionError, MinuteStatusTransitionService
 from tm_app.infrastructure.pdf.minute_pdf_renderer import MinutePdfRenderer
@@ -39,6 +42,7 @@ class MeetingMinutesService:
         self.notifications = notifications or TmPortalNotificationService()
         self.sign_invites = sign_invites or TmMeetingMinuteSignInviteService(self.repo)
         self.sign_pending_mail = sign_pending_mail or TmSignPendingMailService()
+        self.mail_engagement = SignInviteMailEngagementService(self.repo)
         self.signature_storage, self.pdf_storage = SignatureStorageService(), PdfStorageService()
         self.pdf_renderer, self.scope_service = MinutePdfRenderer(), FilialAccessScopeService()
 
@@ -53,6 +57,11 @@ class MeetingMinutesService:
             or minute.get("created_by_user_id")
             or "00000000-0000-0000-0000-000000000001"
         )
+
+    def _confirm_invite_mail_engagement(self, invite: dict[str, Any] | None) -> None:
+        invite_id = str((invite or {}).get("id") or "").strip()
+        if invite_id:
+            self.mail_engagement.confirm_delivered_if_pending(invite_id)
 
     def _permissions(self, user: Any) -> set[str]:
         return set(getattr(user, "permissions", []) or [])
@@ -377,6 +386,7 @@ class MeetingMinutesService:
 
     def public_sign_context(self, raw_token: str) -> dict[str, Any]:
         resolved = self.sign_invites.resolve(raw_token)
+        self._confirm_invite_mail_engagement(resolved.get("invite"))
         minute = resolved["minute"]
         signer = resolved["signer"]
         outcome = str(resolved.get("outcome") or "ready")
@@ -536,6 +546,7 @@ class MeetingMinutesService:
         minute = resolved["minute"]
         signer = resolved["signer"]
         invite = resolved["invite"]
+        self._confirm_invite_mail_engagement(invite)
         if not terms_accepted or not display_name_confirmed.strip():
             raise ValueError("É necessário aceitar o termo e confirmar o nome do signatário.")
         version = self.repo.get_version(str(minute["id"]))
