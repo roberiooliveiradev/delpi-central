@@ -31,6 +31,36 @@ def test_build_sales_order_otd_filters_includes_open_lines_without_invoice_requi
     assert "C6.C6_ENTREG" in where_clause
 
 
+def test_build_sales_order_otd_filters_treats_branch_all_as_consolidated() -> None:
+    where_all, params_all = build_sales_order_otd_filters(
+        branch="all",
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+        customer_segment=None,
+    )
+    where_none, params_none = build_sales_order_otd_filters(
+        branch=None,
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+        customer_segment=None,
+    )
+    assert "C6.C6_FILIAL" not in where_all
+    assert "all" not in where_all
+    assert where_all == where_none
+    assert params_all == params_none
+
+
+def test_build_sales_order_otd_filters_keeps_concrete_branch() -> None:
+    where_clause, params = build_sales_order_otd_filters(
+        branch="01",
+        start_date=None,
+        end_date=None,
+        customer_segment=None,
+    )
+    assert "C6.C6_FILIAL" in where_clause
+    assert "01" in params
+
+
 def test_build_sales_order_otd_sql_classifies_invoiced_and_open_lines() -> None:
     sql, params = build_sales_order_otd_sql(
         where_clause="1=1",

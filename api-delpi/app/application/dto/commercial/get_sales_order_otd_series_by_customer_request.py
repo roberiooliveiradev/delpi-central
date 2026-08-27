@@ -6,6 +6,7 @@ from typing import Optional
 from app.application.dto.commercial.sales_order_otd_series_request import (
     ALLOWED_SALES_ORDER_OTD_SERIES_GRANULARITIES,
 )
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 DEFAULT_TOP_CUSTOMERS = 20
 MAX_TOP_CUSTOMERS = 100
@@ -41,8 +42,7 @@ class GetSalesOrderOtdSeriesByCustomerRequest:
             raise ValueError("page deve ser >= 1.")
         if int(self.page_size) < 1 or int(self.page_size) > 500:
             raise ValueError("page_size deve estar entre 1 e 500.")
-        if self.branch is not None and str(self.branch).strip() not in {"01", "02"}:
-            raise ValueError("branch deve ser 01, 02 ou omitido (consolidado).")
+        self.branch = optional_concrete_branch(self.branch)
         top = int(self.top_customers)
         if top < 1 or top > MAX_TOP_CUSTOMERS:
             raise ValueError(

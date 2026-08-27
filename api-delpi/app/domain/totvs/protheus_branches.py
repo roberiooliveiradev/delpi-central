@@ -25,6 +25,16 @@ def is_all_branches(scope: str) -> bool:
     return str(scope or "").strip().lower() in {"", "all", "todas", "todos"}
 
 
+def optional_concrete_branch(raw: str | None) -> str | None:
+    """None / all / aliases → ``None`` (consolidado); ``01``/``02`` → código.
+
+    Usar em filtros SQL e em use cases que tratam omitido como todas as filiais.
+    """
+    if raw is None or is_all_branches(str(raw)):
+        return None
+    return normalize_branch_code(raw)
+
+
 def normalize_branch_scope(raw: str | None) -> str:
     """Retorna ``all`` | ``01`` | ``02``. Vazio/None/aliases PT → all."""
     normalized = str(raw or "").strip()

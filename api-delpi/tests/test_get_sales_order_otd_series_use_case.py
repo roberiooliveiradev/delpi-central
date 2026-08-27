@@ -109,3 +109,30 @@ def test_sales_order_otd_series_consolidates_qty_and_otd_with_customer_names() -
 
     for call in repository.get_sales_order_otd_analysis_summary.call_args_list:
         assert call.args[0].customer_names == ["WEG Amazonia"]
+
+
+def test_sales_order_otd_series_branch_all_fetches_both_branches() -> None:
+    repository = MagicMock()
+    repository.get_sales_order_otd_analysis_summary.return_value = _summary(
+        total_qty=10.0,
+        fulfilled_qty=8.0,
+        total_lines=4,
+        on_time_lines=3,
+        otd_pct=75.0,
+        fulfillment_pct=80.0,
+    )
+    use_case = GetSalesOrderOtdSeriesUseCase(sales_order_otd_repository=repository)
+    result = use_case.execute(
+        SalesOrderOtdSeriesRequest(
+            granularity="week",
+            date_start="2026-08-03",
+            date_end="2026-08-09",
+            branch="all",
+        )
+    )
+    assert result.branch is None
+    assert result.points
+    assert result.points[0].otd_pct is not None
+    assert result.points[0].total_qty == 20.0  # 01+02
+    branches = {call.args[0].branch for call in repository.get_sales_order_otd_analysis_summary.call_args_list}
+    assert branches == {"01", "02"}

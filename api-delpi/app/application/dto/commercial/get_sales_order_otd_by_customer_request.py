@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
+
 
 @dataclass
 class GetSalesOrderOtdByCustomerRequest:
@@ -22,5 +24,5 @@ class GetSalesOrderOtdByCustomerRequest:
             raise ValueError("page deve ser >= 1.")
         if int(self.page_size) < 1 or int(self.page_size) > 500:
             raise ValueError("page_size deve estar entre 1 e 500.")
-        if self.branch is not None and str(self.branch).strip() not in {"01", "02"}:
-            raise ValueError("branch deve ser 01, 02 ou omitido (consolidado).")
+        # all / omitido → consolidado (None); TV manda branch=all.
+        self.branch = optional_concrete_branch(self.branch)

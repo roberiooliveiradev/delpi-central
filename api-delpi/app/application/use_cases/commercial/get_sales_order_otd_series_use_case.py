@@ -22,6 +22,7 @@ from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.ports.commercial.sales_order_otd_repository_port import (
     SalesOrderOtdRepositoryPort,
 )
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 FILIAL_01 = "01"
 FILIAL_02 = "02"
@@ -33,6 +34,7 @@ class GetSalesOrderOtdSeriesUseCase:
 
     def execute(self, request: SalesOrderOtdSeriesRequest) -> SalesOrderOtdSeriesResponse:
         request.validate()
+        effective_branch = optional_concrete_branch(request.branch)
 
         cache_key = commercial_sales_order_otd_series_cache_key(request)
         cached = get_cached_chart_series(cache_key)
@@ -53,16 +55,16 @@ class GetSalesOrderOtdSeriesUseCase:
                 start_date=bucket.start_date,
                 end_date=bucket.end_date,
                 request=request,
-                include=request.branch in (None, FILIAL_01),
+                include=effective_branch in (None, FILIAL_01),
             )
             metrics_02 = self._fetch_metrics(
                 branch=FILIAL_02,
                 start_date=bucket.start_date,
                 end_date=bucket.end_date,
                 request=request,
-                include=request.branch in (None, FILIAL_02),
+                include=effective_branch in (None, FILIAL_02),
             )
-            consolidated = self._consolidate(metrics_01, metrics_02, request.branch)
+            consolidated = self._consolidate(metrics_01, metrics_02, effective_branch)
 
             points.append(
                 SalesOrderOtdSeriesPointDto(
@@ -91,7 +93,7 @@ class GetSalesOrderOtdSeriesUseCase:
         response = SalesOrderOtdSeriesResponse(
             granularity=request.granularity,
             truncated=buckets_result.truncated,
-            branch=request.branch,
+            branch=effective_branch,
             points=points,
         )
         set_cached_chart_series(cache_key, response.to_dict())

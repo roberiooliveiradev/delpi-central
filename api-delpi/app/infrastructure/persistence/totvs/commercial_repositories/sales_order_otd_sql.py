@@ -102,8 +102,12 @@ def build_sales_order_otd_filters(
     qb.raw("(C6.C6_BLOQUEI IS NULL OR RTRIM(C6.C6_BLOQUEI) = '')")
     qb.raw("(C6.C6_BLQ IS NULL OR RTRIM(C6.C6_BLQ) = '')")
 
-    if branch:
-        qb.eq("C6.C6_FILIAL", branch)
+    # TV wire envia branch=all para «Todas as filiais»; não filtrar literal 'all'.
+    from app.domain.totvs.protheus_branches import optional_concrete_branch
+
+    concrete_branch = optional_concrete_branch(branch)
+    if concrete_branch:
+        qb.eq("C6.C6_FILIAL", concrete_branch)
 
     qb.date_range("C6.C6_ENTREG", start_date, end_date)
 
