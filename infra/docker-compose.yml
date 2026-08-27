@@ -1864,6 +1864,17 @@ services:
       CIPA_PDF_UPLOAD_DIR: /app/data/cipa/pdfs
       CIPA_SIPAT_QR_DIR: /app/data/cipa/sipat-qr
 
+      CIPA_PORTAL_NOTIFICATIONS_ENABLED: ${CIPA_PORTAL_NOTIFICATIONS_ENABLED:-true}
+      CIPA_MAIL_ENABLED: ${CIPA_MAIL_ENABLED:-true}
+      CIPA_ATA_SIGN_INVITE_TTL_DAYS: ${CIPA_ATA_SIGN_INVITE_TTL_DAYS:-30}
+      CIPA_PUBLIC_SIGN_PATH: ${CIPA_PUBLIC_SIGN_PATH:-/p/cipa/sign}
+
+      GRAPH_REPORTS_TENANT_ID: ${GRAPH_REPORTS_TENANT_ID:-}
+      GRAPH_REPORTS_CLIENT_ID: ${GRAPH_REPORTS_CLIENT_ID:-}
+      GRAPH_REPORTS_CLIENT_SECRET: ${GRAPH_REPORTS_CLIENT_SECRET:-}
+      GRAPH_REPORTS_MAIL_SENDER: ${GRAPH_REPORTS_MAIL_SENDER:-minhadelpi@delpi.com.br}
+      GRAPH_HTTP_TIMEOUT_SECONDS: ${GRAPH_HTTP_TIMEOUT_SECONDS:-15}
+
     volumes:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cipa/signatures:/app/data/cipa/signatures
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cipa/attachments:/app/data/cipa/attachments

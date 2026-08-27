@@ -57,6 +57,7 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
     { id: "lancamento_notas_fiscais", label: "Lançamento de Notas Fiscais", notificationLabel: "Pendências e menções de lançamento", icon: "file-text", mutable: true, kind: "app", sourceApps: ["lancamento-notas-fiscais"], pluginId: "lancamento-notas-fiscais" },
     { id: "invoice_issuance", label: "Emissão de Notas Fiscais", notificationLabel: "Solicitações de emissão de NF", icon: "file-text", mutable: true, kind: "app", sourceApps: ["invoice-issuance"], pluginId: "invoice-issuance" },
     { id: "comite_etica_conduta", label: "Comitê de Ética e Conduta", notificationLabel: "Atualizações do comitê", icon: "clipboard-check", mutable: true, kind: "app", sourceApps: ["comite-etica-conduta"], pluginId: "comite-etica-conduta" },
+    { id: "cipa", label: "CIPA", notificationLabel: "Assinaturas e atas da CIPA", icon: "clipboard-check", mutable: true, kind: "app", sourceApps: ["cipa"], pluginId: "cipa" },
     { id: "tv_dashboard", label: "Painéis TV", notificationLabel: "Avisos dos painéis TV", icon: "tv", mutable: true, kind: "app", sourceApps: ["tv-dashboard"], pluginId: "tv-dashboard" },
     { id: "commercial", label: "Portal Comercial", notificationLabel: "Faturar notas fiscais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
     { id: "commercial_tasks", label: "Tarefas", notificationLabel: "Tarefas comerciais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },

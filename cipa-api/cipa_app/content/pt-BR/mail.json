@@ -1,0 +1,13 @@
+{
+  "signPending": {
+    "subject": "Assinatura pendente — Ata {{minuteNumber}} da CIPA",
+    "headerTitle": "CIPA",
+    "headerSubtitle": "Comissão Interna de Prevenção de Acidentes",
+    "greeting": "Olá, {{displayName}}.",
+    "intro": "A ata {{minuteNumber}} — {{title}} — foi enviada para sua assinatura. Use o link abaixo — não é necessário ter acesso ao módulo CIPA.",
+    "ctaLabel": "Assinar ata",
+    "footerSite": "www.delpi.com.br",
+    "footerMeta": "Minha DELPI — CIPA",
+    "footerNote": "Esta mensagem foi enviada automaticamente. O link é pessoal e expira após o prazo configurado."
+  }
+}

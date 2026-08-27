@@ -1,0 +1,241 @@
+.cipa-sign {
+  width: min(52rem, 100%);
+  margin: 0 auto;
+  padding: 0.5rem 0.25rem 2.5rem;
+  color: var(--pub-text-body);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cipa-sign--preview {
+  width: min(56rem, 100%);
+}
+
+.cipa-sign--done {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  box-shadow: var(--pub-card-shadow);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  align-items: center;
+}
+
+.cipa-sign__banner {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  box-shadow: var(--pub-card-shadow);
+  padding: 1.15rem 1.25rem;
+}
+
+.cipa-sign__banner--success .cipa-sign__done-badge {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.cipa-sign__banner h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--pub-text);
+}
+
+.cipa-sign__banner p {
+  margin: 0.35rem 0 0;
+  color: var(--pub-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.cipa-sign__banner-meta {
+  font-weight: 600;
+  color: var(--pub-text) !important;
+}
+
+.cipa-sign__done-badge {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pub-on-brand);
+  background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
+}
+
+.cipa-sign__header {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--pub-card-shadow);
+}
+
+.cipa-sign__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pub-text-muted);
+}
+
+.cipa-sign__header h1,
+.cipa-sign--done h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--pub-text);
+}
+
+.cipa-sign__subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--pub-text-muted);
+}
+
+.cipa-sign__form,
+.cipa-sign__refuse {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.cipa-sign__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--pub-text);
+}
+
+.cipa-sign__input {
+  border: 1px solid var(--pub-input-border, var(--pub-card-border));
+  border-radius: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  color: var(--pub-input-text, var(--pub-text-body));
+  background: var(--pub-input-bg, var(--pub-card-bg, #fff));
+}
+
+.cipa-sign__textarea {
+  resize: vertical;
+}
+
+.cipa-sign__check {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.cipa-sign__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.cipa-sign__primary,
+.cipa-sign__secondary {
+  font: inherit;
+  border-radius: 0.55rem;
+  padding: 0.75rem 1.35rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  min-height: 2.75rem;
+}
+
+.cipa-sign__primary {
+  border: none;
+  background: var(--pub-primary);
+  color: var(--pub-on-brand);
+  font-weight: 700;
+}
+
+.cipa-sign__secondary {
+  border: 1px solid var(--pub-card-border);
+  background: transparent;
+  color: var(--pub-text-body);
+}
+
+.cipa-sign__primary:disabled,
+.cipa-sign__secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cipa-sign__error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.9rem;
+}
+
+.cipa-sign-doc {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 1rem;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--pub-card-shadow);
+}
+
+.cipa-sign-doc__header h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.2rem;
+}
+
+.cipa-sign-doc__number {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pub-text-muted);
+}
+
+.cipa-sign-doc__meta {
+  margin: 0.35rem 0 0;
+  color: var(--pub-text-muted);
+  font-size: 0.9rem;
+}
+
+.cipa-sign-doc__section {
+  margin-top: 1rem;
+}
+
+.cipa-sign-doc__section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.cipa-sign-doc__html {
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.cipa-sign-doc__html p {
+  margin: 0 0 0.65rem;
+}
+
+.cipa-sign-doc__signers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cipa-sign-doc__signers li {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.cipa-sign-doc__signers img {
+  max-width: 12rem;
+  height: auto;
+}

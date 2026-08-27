@@ -9,8 +9,14 @@ from typing import Any
 from cipa_app.application.security import cipa_permissions as perms
 from cipa_app.application.services.content_hash_service import ContentHashService
 from cipa_app.application.services.html_sanitizer import CipaHtmlSanitizer
+from cipa_app.application.services.cipa_meeting_minute_sign_invite_service import (
+    CipaMeetingMinuteSignInviteService,
+)
 from cipa_app.application.services.portal_notification_service import (
     CipaPortalNotificationService,
+)
+from cipa_app.application.services.sign_pending_mail_service import (
+    CipaSignPendingMailService,
 )
 from cipa_app.application.services.storage_services import (
     AttachmentStorageService,
@@ -26,11 +32,18 @@ from cipa_app.infrastructure.persistence.repositories.meeting_minute_repository 
     MeetingMinuteRepository,
 )
 
+_TERMS = (
+    "Declaro que li o conteúdo desta ata e confirmo a autenticidade "
+    "da minha assinatura eletrônica manuscrita."
+)
+
 
 class MeetingMinutesService:
     def __init__(self) -> None:
         self.repo = MeetingMinuteRepository()
         self.notifications = CipaPortalNotificationService()
+        self.sign_invites = CipaMeetingMinuteSignInviteService(self.repo)
+        self.sign_pending_mail = CipaSignPendingMailService()
         self.signature_storage = SignatureStorageService()
         self.attachment_storage = AttachmentStorageService()
         self.pdf_storage = PdfStorageService()
@@ -38,6 +51,14 @@ class MeetingMinutesService:
 
     def _user_id(self, user) -> str:
         return str(getattr(user, "id", None) or getattr(user, "sub", None) or "")
+
+    @staticmethod
+    def _public_actor_id(signer: dict[str, Any], minute: dict[str, Any]) -> str:
+        return str(
+            signer.get("user_id")
+            or minute.get("created_by_user_id")
+            or "00000000-0000-0000-0000-000000000001"
+        )
 
     def _assert(self, user, action: str, unit_code: str) -> None:
         perms.assert_unit_action(user, action, unit_code)
@@ -371,14 +392,45 @@ class MeetingMinutesService:
             actor_user_id=self._user_id(user),
             action="send_for_signature",
         )
-        for signer in signers:
-            self.notifications.send(
-                user_id=str(signer["user_id"]),
-                title="Assinatura de ata CIPA pendente",
-                message=f"A ata {updated['minute_number']} aguarda sua assinatura.",
-                portal_route=f"/apps/cipa/filial-{updated['unit_code']}/minutes/{updated['id']}/sign",
-            )
+        self._dispatch_sign_invites(updated, signers)
         return {"minute": updated, "signers": signers}
+
+    def _dispatch_sign_invites(
+        self,
+        minute: dict[str, Any],
+        signers: list[dict[str, Any]],
+    ) -> None:
+        mail_signers: list[dict[str, Any]] = []
+        minute_id = str(minute["id"])
+        minute_number = str(minute.get("minute_number") or "")
+        minute_title = str(minute.get("title") or "")
+        unit_code = str(minute.get("unit_code") or "")
+
+        for signer in signers:
+            issued = self.sign_invites.issue(signer=signer, minute=minute)
+            invite = issued.get("invite") or {}
+            invite_id = str(invite.get("id") or "").strip()
+            mail_signers.append({**signer, "sign_url": issued["sign_url"]})
+            user_id = str(signer.get("user_id") or "").strip()
+            if user_id:
+                dedupe = (
+                    f"cipa:sign_pending:{minute_id}:{user_id}:{invite_id}"
+                    if invite_id
+                    else None
+                )
+                self.notifications.notify_sign_pending(
+                    user_id=user_id,
+                    minute_id=minute_id,
+                    minute_number=minute_number,
+                    title=minute_title,
+                    unit_code=unit_code,
+                    dedupe_key=dedupe,
+                )
+        self.sign_pending_mail.notify_signers(
+            signers=mail_signers,
+            minute_number=minute_number,
+            title=minute_title,
+        )
 
     def sign_context(self, user, minute_id: str) -> dict[str, Any]:
         minute = self._load_authorized(user, "sign", minute_id)
@@ -396,11 +448,78 @@ class MeetingMinutesService:
             "participants": self.repo.list_participants(minute_id),
             "signers": self.repo.list_signers(minute_id),
             "signatures": self.repo.list_signatures(minute_id),
-            "terms": (
-                "Declaro que li o conteúdo desta ata e confirmo a autenticidade "
-                "da minha assinatura eletrônica manuscrita."
-            ),
+            "terms": _TERMS,
         }
+
+    def public_sign_context(self, raw_token: str) -> dict[str, Any]:
+        resolved = self.sign_invites.resolve(raw_token)
+        minute = resolved["minute"]
+        signer = resolved["signer"]
+        outcome = str(resolved.get("outcome") or "ready")
+        if outcome != "already_signed" and signer.get("status") in {"pending", "viewed"}:
+            self.repo.mark_signer_viewed(str(signer["id"]))
+            signer = self.repo.get_signer(str(signer["id"])) or signer
+        version_id = (
+            str(signer.get("version_id") or "").strip() or None
+            if outcome == "already_signed"
+            else None
+        )
+        version = self.repo.get_version(str(minute["id"]), version_id=version_id)
+        if outcome == "already_signed" and not version:
+            version = self.repo.get_version(str(minute["id"]))
+        minute_id = str(minute["id"])
+        preview_version_id = str(version.get("id") or "").strip() or None if version else None
+        return {
+            "outcome": outcome,
+            "minute": {
+                "id": minute["id"],
+                "title": minute.get("title"),
+                "minute_number": minute.get("minute_number"),
+                "meeting_date": minute.get("meeting_date"),
+                "meeting_type": minute.get("meeting_type"),
+                "location": minute.get("location"),
+                "start_time": minute.get("start_time"),
+                "end_time": minute.get("end_time"),
+                "status": minute.get("status"),
+                "unit_code": minute.get("unit_code"),
+            },
+            "version": {
+                "id": version.get("id") if version else None,
+                "title": version.get("title") if version else None,
+                "agenda_html": version.get("agenda_html") if version else "",
+                "body_html": version.get("body_html") if version else "",
+                "decisions_html": version.get("decisions_html") if version else "",
+                "pending_html": version.get("pending_html") if version else "",
+                "observations_html": version.get("observations_html") if version else "",
+                "content_hash": version.get("content_hash") if version else None,
+            },
+            "signer": {
+                "id": signer["id"],
+                "display_name": signer.get("display_name"),
+                "status": signer.get("status"),
+            },
+            "participants": self.repo.list_participants(minute_id),
+            "signers": self.repo.list_signers(minute_id),
+            "signatures": [
+                {
+                    "id": item.get("id"),
+                    "signer_id": item.get("signer_id"),
+                    "user_id": item.get("user_id"),
+                    "display_name_confirmed": item.get("display_name_confirmed"),
+                    "has_image": bool(str(item.get("image_path") or "").strip()),
+                }
+                for item in self.repo.list_signatures(minute_id, version_id=preview_version_id)
+            ],
+            "terms": _TERMS,
+        }
+
+    def public_signature_image(self, raw_token: str, signature_id: str) -> bytes:
+        resolved = self.sign_invites.resolve(raw_token)
+        minute = resolved["minute"]
+        signature = self.repo.get_signature_for_minute(str(minute["id"]), signature_id)
+        if not signature or not signature.get("image_path"):
+            raise LookupError("Imagem de assinatura não encontrada.")
+        return self.signature_storage.read(str(signature["image_path"]))
 
     def signature_image(self, user, minute_id: str, signature_id: str) -> bytes:
         minute = self.repo.get_minute(minute_id)
@@ -464,6 +583,7 @@ class MeetingMinutesService:
         )
         if result.get("duplicate"):
             return {"signature": result["signature"], "minute": minute, "duplicate": True}
+        self.repo.invalidate_open_invites(signer_id=str(signer["id"]))
         new_status = MinuteStatusTransitionService.status_after_signature_progress(
             signed_count=result["signed_count"],
             required_count=result["required_count"],
@@ -476,11 +596,84 @@ class MeetingMinutesService:
                 action="signature_progress",
             )
             if new_status == "signed" and minute.get("responsible_user_id"):
-                self.notifications.send(
+                self.notifications.notify_minute_signed(
                     user_id=str(minute["responsible_user_id"]),
-                    title="Ata CIPA totalmente assinada",
-                    message=f"A ata {minute['minute_number']} recebeu todas as assinaturas.",
-                    portal_route=f"/apps/cipa/filial-{minute['unit_code']}/minutes/{minute['id']}",
+                    minute_id=str(minute["id"]),
+                    minute_number=str(minute.get("minute_number") or ""),
+                    title=str(minute.get("title") or ""),
+                    unit_code=str(minute.get("unit_code") or ""),
+                )
+        return {"signature": result["signature"], "minute": minute, "duplicate": False}
+
+    def public_sign(
+        self,
+        raw_token: str,
+        *,
+        png_bytes: bytes,
+        display_name_confirmed: str,
+        terms_accepted: bool,
+        client_ip: str | None,
+        user_agent: str | None,
+        session_id: str | None,
+        idempotency_key: str | None,
+    ) -> dict[str, Any]:
+        resolved = self.sign_invites.resolve(raw_token)
+        if resolved.get("outcome") == "already_signed":
+            raise ValueError("Esta assinatura já foi registrada.")
+        minute = resolved["minute"]
+        signer = resolved["signer"]
+        invite = resolved["invite"]
+        if not terms_accepted or not (display_name_confirmed or "").strip():
+            raise ValueError("É necessário aceitar o termo e confirmar o nome do signatário.")
+        version = self.repo.get_version(str(minute["id"]))
+        if not version:
+            raise LookupError("Versão não encontrada.")
+        actor_id = self._public_actor_id(signer, minute)
+        user_id = str(signer.get("user_id") or "").strip()
+        if not user_id:
+            raise ValueError("Signatário sem usuário vinculado.")
+        image_path = self.signature_storage.save_png(
+            unit_code=minute["unit_code"],
+            minute_id=str(minute["id"]),
+            raw=png_bytes,
+        )
+        result = self.repo.register_signature(
+            minute_id=str(minute["id"]),
+            version_id=str(version["id"]),
+            signer_id=str(signer["id"]),
+            unit_code=str(minute["unit_code"]),
+            user_id=user_id,
+            display_name_confirmed=display_name_confirmed.strip(),
+            content_hash=version["content_hash"],
+            image_path=image_path,
+            terms_accepted=True,
+            client_ip=client_ip,
+            user_agent=user_agent,
+            session_id=session_id,
+            idempotency_key=idempotency_key,
+            actor_user_id=actor_id,
+        )
+        self.sign_invites.consume(str(invite["id"]))
+        if result.get("duplicate"):
+            return {"signature": result["signature"], "minute": minute, "duplicate": True}
+        new_status = MinuteStatusTransitionService.status_after_signature_progress(
+            signed_count=result["signed_count"],
+            required_count=result["required_count"],
+        )
+        if new_status != minute["status"]:
+            minute = self.repo.set_status(
+                minute_id=str(minute["id"]),
+                status=new_status,
+                actor_user_id=actor_id,
+                action="signature_progress",
+            )
+            if new_status == "signed" and minute.get("responsible_user_id"):
+                self.notifications.notify_minute_signed(
+                    user_id=str(minute["responsible_user_id"]),
+                    minute_id=str(minute["id"]),
+                    minute_number=str(minute.get("minute_number") or ""),
+                    title=str(minute.get("title") or ""),
+                    unit_code=str(minute.get("unit_code") or ""),
                 )
         return {"signature": result["signature"], "minute": minute, "duplicate": False}
 
@@ -498,6 +691,7 @@ class MeetingMinutesService:
             actor_user_id=self._user_id(user),
             unit_code=minute["unit_code"],
         )
+        self.repo.invalidate_open_invites(signer_id=str(signer["id"]))
         updated = self.repo.set_status(
             minute_id=minute_id,
             status="in_review",
@@ -505,12 +699,50 @@ class MeetingMinutesService:
             action="signature_refused",
         )
         if updated.get("responsible_user_id"):
-            self.notifications.send(
+            self.notifications.notify_minute_refused(
                 user_id=str(updated["responsible_user_id"]),
-                title="Assinatura de ata CIPA recusada",
-                message=f"A ata {updated['minute_number']} foi recusada e voltou para revisão.",
-                portal_route=f"/apps/cipa/filial-{updated['unit_code']}/minutes/{updated['id']}",
-                notification_type="warning",
+                minute_id=str(updated["id"]),
+                minute_number=str(updated.get("minute_number") or ""),
+                title=str(updated.get("title") or ""),
+                unit_code=str(updated.get("unit_code") or ""),
+                actor_name=str(signer.get("display_name") or "Signatário"),
+                reason=reason.strip(),
+            )
+        return {"minute": updated}
+
+    def public_refuse(self, raw_token: str, reason: str) -> dict[str, Any]:
+        if not (reason or "").strip():
+            raise ValueError("Informe a justificativa da recusa.")
+        resolved = self.sign_invites.resolve(raw_token)
+        if resolved.get("outcome") == "already_signed":
+            raise ValueError("Esta assinatura já foi registrada.")
+        minute = resolved["minute"]
+        signer = resolved["signer"]
+        invite = resolved["invite"]
+        actor_id = self._public_actor_id(signer, minute)
+        self.repo.refuse_signature(
+            minute_id=str(minute["id"]),
+            signer_id=str(signer["id"]),
+            reason=reason.strip(),
+            actor_user_id=actor_id,
+            unit_code=str(minute["unit_code"]),
+        )
+        self.sign_invites.consume(str(invite["id"]))
+        updated = self.repo.set_status(
+            minute_id=str(minute["id"]),
+            status="in_review",
+            actor_user_id=actor_id,
+            action="signature_refused",
+        )
+        if updated.get("responsible_user_id"):
+            self.notifications.notify_minute_refused(
+                user_id=str(updated["responsible_user_id"]),
+                minute_id=str(updated["id"]),
+                minute_number=str(updated.get("minute_number") or ""),
+                title=str(updated.get("title") or ""),
+                unit_code=str(updated.get("unit_code") or ""),
+                actor_name=str(signer.get("display_name") or "Signatário"),
+                reason=reason.strip(),
             )
         return {"minute": updated}
 

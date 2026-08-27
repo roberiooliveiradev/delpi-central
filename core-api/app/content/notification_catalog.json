@@ -131,6 +131,15 @@
       "sourceApps": ["comite-etica-conduta"],
       "pluginId": "comite-etica-conduta"
     },
+    "cipa": {
+      "label": "CIPA",
+      "notificationLabel": "Assinaturas e atas da CIPA",
+      "icon": "clipboard-check",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["cipa"],
+      "pluginId": "cipa"
+    },
     "tv_dashboard": {
       "label": "Painéis TV",
       "notificationLabel": "Avisos dos painéis TV",

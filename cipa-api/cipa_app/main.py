@@ -13,6 +13,9 @@ from cipa_app.core.responses import fail
 from cipa_app.interface.http.routes.access_routes import router as access_router
 from cipa_app.interface.http.routes.member_routes import router as member_router
 from cipa_app.interface.http.routes.minutes_routes import router as minutes_router
+from cipa_app.interface.http.routes.public_meeting_minutes_routes import (
+    public_router as public_meeting_minutes_router,
+)
 from cipa_app.interface.http.routes.signature_profile_routes import (
     router as signature_profile_router,
 )
@@ -100,3 +103,7 @@ app.include_router(signature_profile_router)
 app.include_router(member_router)
 app.include_router(sipat_router)
 app.include_router(sipat_public_router)
+app.include_router(
+    public_meeting_minutes_router,
+    prefix="/public/meeting-minutes/sign-invites",
+)
