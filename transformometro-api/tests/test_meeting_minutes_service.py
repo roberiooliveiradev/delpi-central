@@ -5,6 +5,11 @@ import pytest
 
 from tm_app.application.services.content_hash_service import ContentHashService
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
+from tm_app.application.services.tm_sign_pending_mail_service import SignInviteMailResult
+from tm_app.domain.sign_invite_mail_status import (
+    MAIL_DELIVERY_TRACE_PENDING,
+    MAIL_SEND_ACCEPTED,
+)
 
 
 class FakeRepo:
@@ -92,6 +97,9 @@ class FakeRepo:
     def create_invite(self, **kwargs):
         return {"id": "inv1", "consumed_at": None, **kwargs}
 
+    def update_invite_mail_send_result(self, **_kwargs):
+        return {"id": "inv1"}
+
     def get_invite_by_token_hash(self, _token_hash):
         return None
 
@@ -110,7 +118,18 @@ def test_create_send_sign_happy_path_and_invalid_finalize():
         notify_minute_signed=lambda **_: True,
         notify_minute_refused=lambda **_: True,
     )
-    service.sign_pending_mail = SimpleNamespace(notify_signers=lambda **_: 1)
+    service.sign_pending_mail = SimpleNamespace(
+        notify_signers=lambda **_: [
+            SignInviteMailResult(
+                invite_id="inv1",
+                signer_id="s1",
+                mail_template_key="signPending",
+                mail_recipient="a@example.com",
+                mail_send_status=MAIL_SEND_ACCEPTED,
+                mail_delivery_status=MAIL_DELIVERY_TRACE_PENDING,
+            )
+        ]
+    )
     service.signature_storage = SimpleNamespace(save_png=lambda **_: "/tmp/signature.png")
     user = SimpleNamespace(id="u1", is_superadmin=True, permissions=[])
     created = service.create(

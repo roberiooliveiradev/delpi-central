@@ -320,6 +320,7 @@ class MeetingMinutesService:
                 **signer,
                 "sign_url": issued["sign_url"],
                 "raw_token": issued["raw_token"],
+                "invite_id": invite_id,
             }
             mail_signers.append(payload)
             user_id = str(signer.get("user_id") or "").strip()
@@ -336,12 +337,26 @@ class MeetingMinutesService:
                     title=str(minute.get("title") or ""),
                     dedupe_key=dedupe,
                 )
-        mail_sent = self.sign_pending_mail.notify_signers(
+        mail_results = self.sign_pending_mail.notify_signers(
             signers=mail_signers,
             minute_number=str(minute.get("minute_number") or ""),
             title=str(minute.get("title") or ""),
             template_key=mail_template_key,
         )
+        mail_sent = 0
+        for result in mail_results:
+            if not result.invite_id:
+                continue
+            self.repo.update_invite_mail_send_result(
+                invite_id=result.invite_id,
+                mail_template_key=result.mail_template_key,
+                mail_recipient=result.mail_recipient,
+                mail_send_status=result.mail_send_status,
+                mail_delivery_status=result.mail_delivery_status,
+                mail_last_error=result.mail_last_error,
+            )
+            if result.mail_send_status == "accepted":
+                mail_sent += 1
         return {"resent_count": len(mail_signers), "mail_sent": mail_sent}
 
     def sign_context(self,user: Any,minute_id: str) -> dict[str,Any]:

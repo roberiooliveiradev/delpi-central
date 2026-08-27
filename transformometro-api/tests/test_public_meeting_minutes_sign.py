@@ -3,7 +3,26 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
+from tm_app.application.services.tm_sign_pending_mail_service import SignInviteMailResult
+from tm_app.domain.sign_invite_mail_status import (
+    MAIL_DELIVERY_TRACE_PENDING,
+    MAIL_SEND_ACCEPTED,
+)
 from tm_app.middleware.auth_middleware import _is_public
+
+
+def _accepted_results(*invite_ids: str) -> list[SignInviteMailResult]:
+    return [
+        SignInviteMailResult(
+            invite_id=invite_id,
+            signer_id=None,
+            mail_template_key="signPending",
+            mail_recipient="x@example.com",
+            mail_send_status=MAIL_SEND_ACCEPTED,
+            mail_delivery_status=MAIL_DELIVERY_TRACE_PENDING,
+        )
+        for invite_id in invite_ids
+    ]
 
 
 def test_is_public_paths():
@@ -55,7 +74,7 @@ def test_send_for_signature_issues_invites_notifies_and_mails():
         },
     ]
     mail = MagicMock()
-    mail.notify_signers.return_value = 2
+    mail.notify_signers.return_value = _accepted_results("inv1", "inv2")
 
     user = MagicMock(id="mgr", is_superadmin=True, permissions=[])
     svc = MeetingMinutesService(
@@ -77,7 +96,9 @@ def test_send_for_signature_issues_invites_notifies_and_mails():
     assert mail.notify_signers.call_args.kwargs["template_key"] == "signPending"
     mail_signers = mail.notify_signers.call_args.kwargs["signers"]
     assert mail_signers[0]["sign_url"].endswith("/t1")
+    assert mail_signers[0]["invite_id"] == "inv1"
     assert mail_signers[1]["invite_email"] == "e@x.com"
+    assert repo.update_invite_mail_send_result.call_count == 2
 
 
 def test_resend_sign_invites_only_pending_and_keeps_minute_status():
@@ -122,7 +143,7 @@ def test_resend_sign_invites_only_pending_and_keeps_minute_status():
         },
     ]
     mail = MagicMock()
-    mail.notify_signers.return_value = 2
+    mail.notify_signers.return_value = _accepted_results("inv2", "inv3")
     user = MagicMock(id="mgr", is_superadmin=True, permissions=[])
     svc = MeetingMinutesService(
         repo,

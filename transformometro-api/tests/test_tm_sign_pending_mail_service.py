@@ -6,6 +6,12 @@ from tm_app.application.services.tm_sign_pending_mail_service import (
     TmSignPendingMailService,
     _mail_content,
 )
+from tm_app.domain.sign_invite_mail_status import (
+    MAIL_DELIVERY_TRACE_PENDING,
+    MAIL_SEND_ACCEPTED,
+    MAIL_SEND_SKIPPED_GRAPH_UNCONFIGURED,
+    MAIL_SEND_SKIPPED_NO_EMAIL,
+)
 from tm_app.infrastructure.gateways.core_directory_service import TmCoreDirectoryService
 from tm_app.infrastructure.providers.microsoft_graph.microsoft_graph_mail_client import (
     GraphMailError,
@@ -44,12 +50,14 @@ def test_notify_signers_uses_directory_and_invite_email():
             {
                 "id": "s1",
                 "user_id": "u1",
+                "invite_id": "inv-1",
                 "display_name": "Ana",
                 "sign_url": "https://p/p/transformometro/sign/t1",
             },
             {
                 "id": "s2",
                 "user_id": None,
+                "invite_id": "inv-2",
                 "invite_email": "ext@partner.com",
                 "display_name": "Externo",
                 "sign_url": "https://p/p/transformometro/sign/t2",
@@ -57,6 +65,7 @@ def test_notify_signers_uses_directory_and_invite_email():
             {
                 "id": "s3",
                 "user_id": "u3",
+                "invite_id": "inv-3",
                 "display_name": "Sem email",
                 "sign_url": "https://p/p/transformometro/sign/t3",
             },
@@ -65,7 +74,9 @@ def test_notify_signers_uses_directory_and_invite_email():
         title="Reunião",
     )
 
-    assert sent == 2
+    assert len(sent) == 3
+    assert sum(1 for r in sent if r.mail_send_status == MAIL_SEND_ACCEPTED) == 2
+    assert sent[2].mail_send_status == MAIL_SEND_SKIPPED_NO_EMAIL
     assert mail.send_mail_to.call_count == 2
     emails = [c.kwargs["to_addresses"][0] for c in mail.send_mail_to.call_args_list]
     assert emails == ["a@delpi.com.br", "ext@partner.com"]
@@ -77,14 +88,13 @@ def test_notify_signers_skips_when_graph_not_configured():
     mail.ensure_auth_configured.side_effect = GraphMailError("missing")
     directory = MagicMock()
     svc = TmSignPendingMailService(mail_client=mail, directory=directory, enabled=True)
-    assert (
-        svc.notify_signers(
-            signers=[{"user_id": "u1", "sign_url": "x"}],
-            minute_number="1",
-            title="T",
-        )
-        == 0
+    results = svc.notify_signers(
+        signers=[{"user_id": "u1", "sign_url": "x"}],
+        minute_number="1",
+        title="T",
     )
+    assert len(results) == 1
+    assert results[0].mail_send_status == MAIL_SEND_SKIPPED_GRAPH_UNCONFIGURED
     directory.lookup_emails_by_user_ids.assert_not_called()
 
 
