@@ -2353,6 +2353,70 @@ def test_commercial_route_unset_group_by_uses_catalog_default_for_table_field():
     assert _resolve_table_field(route, effective) == "by_customer"
 
 
+def test_build_table_columns_uses_route_and_meta_labels():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _build_table_columns,
+        _extract_table_rows,
+        _flatten_legacy_branch_object_cells,
+    )
+
+    route_info = {
+        "valueFieldLabels": {
+            "fulfilled_qty": "Quantidade atendida",
+            "fulfillment_pct": "% atendimento",
+        }
+    }
+    meta = {
+        "fields": {
+            "start_date": "Data início",
+            "total_qty": "Quantidade total",
+        }
+    }
+    rows = [
+        {
+            "start_date": "2026-08-01",
+            "total_qty": 100.0,
+            "fulfilled_qty": 90.0,
+            "fulfillment_pct": 90.0,
+        }
+    ]
+    columns = _build_table_columns(meta, rows, route_info=route_info)
+    labels = {col["key"]: col["label"] for col in columns}
+    assert labels["start_date"] == "Data início"
+    assert labels["total_qty"] == "Quantidade total"
+    assert labels["fulfilled_qty"] == "Quantidade atendida"
+    assert labels["fulfillment_pct"] == "% atendimento"
+
+    legacy_row = _flatten_legacy_branch_object_cells(
+        {
+            "period_label": "sem 1",
+            "branch_01": {"otd_pct": 91.0, "total_qty": 10.0},
+            "branch_02": {"otd_pct": 88.0},
+        }
+    )
+    assert legacy_row["otd_pct_filial_01"] == 91.0
+    assert legacy_row["otd_pct_filial_02"] == 88.0
+    assert "branch_01" not in legacy_row
+
+    payload = {"series": [legacy_row]}
+    table_rows, table_columns = _extract_table_rows(
+        payload,
+        "series",
+        50,
+        meta=meta,
+        route_info={
+            **route_info,
+            "valueFieldLabels": {
+                **route_info["valueFieldLabels"],
+                "otd_pct_filial_01": "OTD filial 01",
+            },
+        },
+    )
+    assert table_rows[0]["otd_pct_filial_01"] == 91.0
+    col_labels = {col["key"]: col["label"] for col in table_columns}
+    assert col_labels["otd_pct_filial_01"] == "OTD filial 01"
+
+
 def test_otd_series_table_rows_avoid_object_branch_cells():
     from tv_app.application.services.comunicado_data_enrichment_service import (
         _extract_table_rows,

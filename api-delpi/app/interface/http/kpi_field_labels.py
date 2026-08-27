@@ -161,8 +161,8 @@ COMMERCIAL_CONVERSION_FIELD_LABELS: dict[str, str] = {
 
 COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "sales_order_otd_pct": "OTD pedidos (%)",
-    "otd_pct": "OTD pedidos (%)",
-    "fulfillment_pct": "Atendimento (%)",
+    "otd_pct": "OTD (%)",
+    "fulfillment_pct": "% atendimento",
     "total_qty": "Quantidade total",
     "fulfilled_qty": "Quantidade atendida",
     "total_lines": "Total de linhas",
@@ -179,6 +179,23 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "invoice_date": "Data faturamento",
     "status": "Status",
     "days_diff": "Dias (atraso/adianto)",
+}
+
+COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS: dict[str, str] = {
+    "period_label": "Período",
+    "sort_key": "Chave de ordenação",
+    "start_date": "Data início",
+    "end_date": "Data fim",
+    "otd_pct_filial_01": "OTD filial 01",
+    "otd_pct_filial_02": "OTD filial 02",
+    "fulfillment_pct_filial_01": "% atendimento filial 01",
+    "fulfillment_pct_filial_02": "% atendimento filial 02",
+    "total_qty_filial_01": "Quantidade filial 01",
+    "total_qty_filial_02": "Quantidade filial 02",
+    "granularity": "Granularidade",
+    "group_by": "Agrupar por",
+    "customer_store": "Loja cliente",
+    "branch": "Filial",
 }
 
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {

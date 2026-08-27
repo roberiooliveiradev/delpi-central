@@ -95,6 +95,7 @@ from app.interface.http.kpi_field_labels import (
     COMMERCIAL_ROL_FIELD_LABELS,
     COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+    COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
@@ -954,7 +955,10 @@ def get_commercial_sales_order_otd_analysis(
             result,
             operation_id="get_commercial_sales_order_otd_analysis",
             message="Commercial sales order OTD analysis fetched successfully.",
-            fields=kpi_fields(COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS),
+            fields=kpi_fields(
+                COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+                COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
+            ),
         )
     except ValueError as exc:
         log_error(

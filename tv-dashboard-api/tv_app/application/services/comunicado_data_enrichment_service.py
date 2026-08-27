@@ -807,19 +807,40 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
     return []
 
 
-def _build_table_columns(meta: dict[str, Any], rows: list[dict[str, Any]]) -> list[dict[str, str]]:
-    labels = _meta_field_labels(meta)
+def _flatten_legacy_branch_object_cells(row: dict[str, Any]) -> dict[str, Any]:
+    """Expande branch_XX legado (objeto) em métricas escalares por filial."""
+    normalized: dict[str, Any] = {}
+    for key, value in row.items():
+        field = str(key).strip()
+        if isinstance(value, dict) and field.startswith("branch_"):
+            branch_code = field.replace("branch_", "", 1)
+            for metric_key, metric_value in value.items():
+                if isinstance(metric_value, dict):
+                    continue
+                scalar_key = f"{metric_key}_filial_{branch_code}"
+                normalized.setdefault(scalar_key, metric_value)
+            continue
+        normalized[field] = value
+    return normalized
+
+
+def _build_table_columns(
+    meta: dict[str, Any],
+    rows: list[dict[str, Any]],
+    *,
+    route_info: dict[str, Any] | None = None,
+) -> list[dict[str, str]]:
+    labels = _merged_value_field_labels(route_info or {}, meta)
     if rows:
         columns: list[dict[str, str]] = []
         for key in rows[0].keys():
             field = str(key)
-            label = labels.get(field)
-            if not label:
-                for map_key, map_label in labels.items():
-                    if map_key.lower() == field.lower():
-                        label = map_label
-                        break
-            columns.append({"key": field, "label": label or field})
+            columns.append(
+                {
+                    "key": field,
+                    "label": _humanize_value_field(field, labels),
+                }
+            )
         return columns
     fields = meta.get("fields")
     if isinstance(fields, list):
@@ -924,6 +945,7 @@ def _extract_table_rows(
     series_field: str | None = None,
     branch: str | None = None,
     value_label: str | None = None,
+    route_info: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     # Multi-métrica (ex.: economia + investimento): `tableFields` preserva colunas largas.
     # `seriesField` só colapsa para periodo/value quando NÃO há tableFields — evita tabela
@@ -937,10 +959,10 @@ def _extract_table_rows(
         rows: list[dict[str, Any]] = []
         for row in raw_rows[:max_rows]:
             if isinstance(row, dict):
-                rows.append(dict(row))
+                rows.append(_flatten_legacy_branch_object_cells(dict(row)))
             elif isinstance(row, (str, int, float, bool)):
                 rows.append({"value": row})
-        columns = _build_table_columns(meta or {}, rows)
+        columns = _build_table_columns(meta or {}, rows, route_info=route_info)
         if rows:
             return rows, columns
 
@@ -958,10 +980,10 @@ def _extract_table_rows(
     rows = []
     for row in raw_rows[:max_rows]:
         if isinstance(row, dict):
-            rows.append(dict(row))
+            rows.append(_flatten_legacy_branch_object_cells(dict(row)))
         elif isinstance(row, (str, int, float, bool)):
             rows.append({"value": row})
-    columns = _build_table_columns(meta or {}, rows)
+    columns = _build_table_columns(meta or {}, rows, route_info=route_info)
     if rows:
         return rows, columns
 
@@ -1001,6 +1023,7 @@ def _source_table_for_route(
             meta={},
             series_field=None,
             branch=branch,
+            route_info=route_info,
         )
         if rows:
             return {
@@ -1072,6 +1095,7 @@ def _infer_auto_display_mode(
         5,
         meta=meta,
         series_field=route_info.get("seriesField"),
+        route_info=route_info,
     )
     if rows:
         if not _meaningful_kpi_metrics(
@@ -1521,6 +1545,7 @@ class ComunicadoDataEnrichmentService:
                 series_field=route_info.get("seriesField"),
                 branch=branch_str,
                 value_label=label,
+                route_info=route_info,
             )
             if rows and not (
                 metrics
@@ -1559,6 +1584,7 @@ class ComunicadoDataEnrichmentService:
             series_field=route_info.get("seriesField"),
             branch=branch_str,
             value_label=label,
+            route_info=route_info,
         )
         if not rows:
             if metrics:
@@ -1583,7 +1609,7 @@ class ComunicadoDataEnrichmentService:
                     if label:
                         row["label"] = label
                     rows = [row]
-                    columns = _build_table_columns(meta, rows)
+                    columns = _build_table_columns(meta, rows, route_info=route_info)
         return {
             "table": {"rows": rows, "columns": columns},
             "kpiMetrics": metrics,
@@ -1863,9 +1889,17 @@ class ComunicadoDataEnrichmentService:
                 )
             )
 
+        catalog_field_labels = _value_field_labels(
+            route_info if isinstance(route_info, dict) else {}
+        )
+        block_field_labels = block.get("fieldLabels")
+        merged_field_labels = {
+            **catalog_field_labels,
+            **(block_field_labels if isinstance(block_field_labels, dict) else {}),
+        }
         result["resolved"] = apply_field_labels_to_resolved(
             resolved,
-            block.get("fieldLabels"),
+            merged_field_labels or None,
         )
         return result
 

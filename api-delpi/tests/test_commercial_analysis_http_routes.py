@@ -132,6 +132,9 @@ def test_http_otd_analysis_group_by_customer(mock_build, _mock_enrich, commercia
     assert response.status_code == 200
     payload = response.json()
     assert payload["meta"]["operationId"] == "get_commercial_sales_order_otd_analysis"
+    fields = payload["meta"]["fields"]
+    assert fields["fulfilled_qty"] == "Quantidade atendida"
+    assert fields["otd_pct_filial_01"] == "OTD filial 01"
     assert payload["data"]["by_customer"][0]["customer_name"] == "Weg"
 
 
