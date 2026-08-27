@@ -15,14 +15,16 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL por filial | `get_commercial_rol_by_branch` | `/commercial/rol/by-branch` |
 | KPI OTD | `get_sales_order_otd` | `/commercial/sales-order-otd` |
 | Série OTD | `get_sales_order_otd_series` | `/commercial/sales-order-otd/series` |
+| OTD série por cliente | `get_sales_order_otd_series_by_customer` | `/commercial/sales-order-otd/series-by-customer` |
 | OTD por cliente | `get_sales_order_otd_by_customer` | `/commercial/sales-order-otd/by-customer` |
 | OTD por filial | `get_sales_order_otd_by_branch` | `/commercial/sales-order-otd/by-branch` |
 | Painel pedidos | `get_sales_order_otd_panel` | `/commercial/sales-order-otd/panel` |
 
 ## Filtros
 
-- **`granularity`**: só nas rotas `*_series` (obrigatório: `day` \| `week` \| `month` \| `year`).
+- **`granularity`**: só nas rotas `*_series*` (obrigatório: `day` \| `week` \| `month` \| `year`) — inclui `get_sales_order_otd_series` e `get_sales_order_otd_series_by_customer`.
 - **Carteira** (todas as rotas comerciais acima, exceto SI): `customer_segment`, `customer_codes`, `customer_names`, `exclude_customer_codes`, `exclude_customer_names` — omitidos = sem filtro.
+- **`top_customers`** (só `series-by-customer`): default **20**, max **100**. Aplicado quando **não** há `customer_codes` nem `customer_names`; ranking pelo `total_qty` do intervalo completo antes de expandir os buckets.
 - No editor TV, «Não definido aqui» omite o query param.
 
 ## Payloads (não renomear)
@@ -34,6 +36,7 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL filial | `items[]`: `branch`, `rol`, `gross_revenue`, `returns`, `discounts` |
 | OTD KPI | `sales_order_otd_pct` |
 | OTD série | `points[]`: `periodo`, `total_qty`, `fulfilled_qty`, `otd_pct`, `fulfillment_pct`, `total_lines`, `otd_filial_01`, `otd_filial_02` |
+| OTD série por cliente | `items[]` flat (cliente × período) + `pagination` + `summary` (`granularity`, `truncated`, `customers_count`, `buckets_count`); métricas iguais à OTD por cliente |
 | OTD cliente | `items[]` + `pagination` (métricas OTD/fulfillment) |
 | OTD filial | `items[]`: `branch` + métricas |
 
