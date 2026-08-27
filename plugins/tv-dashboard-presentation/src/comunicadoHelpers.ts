@@ -1699,6 +1699,7 @@ export function comunicadoTextInnerStyle(
   if (style.fontWeight) css.fontWeight = style.fontWeight;
   if (style.fontStyle) css.fontStyle = style.fontStyle;
 
+  applyComunicadoTextEffectsToCss(style, css);
   return css;
 }
 
@@ -1817,7 +1818,6 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       if (style.fontWeight) css.fontWeight = style.fontWeight;
       if (style.fontStyle) css.fontStyle = style.fontStyle;
       if (style.lineHeight != null) css.lineHeight = style.lineHeight;
-      applyComunicadoTextEffectsToCss(style, css);
       return css;
     }
 
@@ -1832,7 +1832,6 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       if (style.fontWeight) css.fontWeight = style.fontWeight;
       if (style.fontStyle) css.fontStyle = style.fontStyle;
       if (style.textDecoration) css.textDecoration = style.textDecoration;
-      applyComunicadoTextEffectsToCss(style, css);
     }
     return css;
   }

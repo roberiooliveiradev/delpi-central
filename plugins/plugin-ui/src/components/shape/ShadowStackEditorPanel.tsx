@@ -147,7 +147,7 @@ export function ShadowStackEditorPanel({
   const handleColorChange = (color: string) => {
     const parsed = cssToColorValue(color, model.colorHex);
     if (parsed.alpha >= 1 && !color.trim().toLowerCase().startsWith("rgba")) {
-      applyPatch({ colorHex: parsed.hex });
+      applyPatch({ colorHex: parsed.hex, opacity: parsed.alpha });
       return;
     }
     applyPatch({

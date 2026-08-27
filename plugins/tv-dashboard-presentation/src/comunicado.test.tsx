@@ -354,6 +354,27 @@ describe("comunicadoHelpers", () => {
     });
   });
 
+  it("aplica sombra tipográfica no estilo interno (text-shadow não herda do wrapper)", () => {
+    const block = {
+      id: "1",
+      type: "text" as const,
+      content: "Título",
+      frame: { x: 0, y: 0, w: 50, h: 20 },
+      style: {
+        textShadow: "0 4px 14px rgba(0, 0, 0, 0.28)",
+        textStrokeColor: "#ffffff",
+        textStrokeWidth: 1,
+      },
+    };
+    const inner = comunicadoTextInnerStyle(block);
+    expect(inner.textShadow).toBe("0 4px 14px rgba(0, 0, 0, 0.28)");
+    expect(inner.WebkitTextStroke).toBe("1px #ffffff");
+
+    const wrapper = blockCssStyle(block);
+    expect(wrapper.textShadow).toBeUndefined();
+    expect(wrapper.WebkitTextStroke).toBeUndefined();
+  });
+
   it("limita tamanho da fonte", () => {
     expect(clampFontSize(8)).toBe(12);
     expect(clampFontSize(200)).toBe(200);
