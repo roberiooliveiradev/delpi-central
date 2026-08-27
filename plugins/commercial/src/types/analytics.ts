@@ -311,6 +311,11 @@ export type SalesOrderOtdSeriesPoint = {
   end_date: string;
   otd_filial_01: number | null;
   otd_filial_02: number | null;
+  total_qty?: number | null;
+  fulfilled_qty?: number | null;
+  fulfillment_pct?: number | null;
+  otd_pct?: number | null;
+  total_lines?: number | null;
 };
 
 export type SalesOrderOtdSeriesData = {

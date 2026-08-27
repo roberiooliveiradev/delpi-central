@@ -33,7 +33,7 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL cliente | `items[]`: `customer_*`, `rol`, `share_pct`, `rank` |
 | ROL filial | `items[]`: `branch`, `rol`, `gross_revenue`, `returns`, `discounts` |
 | OTD KPI | `sales_order_otd_pct` |
-| OTD série | `points[]`: `periodo`, `otd_filial_01`, `otd_filial_02` |
+| OTD série | `points[]`: `periodo`, `total_qty`, `fulfilled_qty`, `otd_pct`, `fulfillment_pct`, `total_lines`, `otd_filial_01`, `otd_filial_02` |
 | OTD cliente | `items[]` + `pagination` (métricas OTD/fulfillment) |
 | OTD filial | `items[]`: `branch` + métricas |
 

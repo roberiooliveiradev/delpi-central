@@ -1062,6 +1062,7 @@ def get_sales_order_otd_series(
             result.to_dict(),
             operation_id="get_sales_order_otd_series",
             message="Série temporal de OTD de pedidos de venda carregada com sucesso.",
+            fields=kpi_fields(COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS),
         )
 
     except ValueError as exc:

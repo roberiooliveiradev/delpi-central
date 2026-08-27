@@ -1087,6 +1087,11 @@
         "auto"
       ],
       "valueFields": [
+        "otd_pct",
+        "total_qty",
+        "fulfilled_qty",
+        "fulfillment_pct",
+        "total_lines",
         "otd_filial_01",
         "otd_filial_02"
       ],
@@ -1096,7 +1101,12 @@
         "start_date": "Data início",
         "end_date": "Data fim",
         "otd_filial_01": "OTD filial 01",
-        "otd_filial_02": "OTD filial 02"
+        "otd_filial_02": "OTD filial 02",
+        "otd_pct": "OTD (%)",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "fulfillment_pct": "% atendimento",
+        "total_lines": "Total de itens"
       },
       "valueFieldTypes": {
         "periodo": "string",
@@ -1104,18 +1114,24 @@
         "start_date": "date",
         "end_date": "date",
         "otd_filial_01": "number",
-        "otd_filial_02": "number"
+        "otd_filial_02": "number",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number"
       },
       "label": "Série temporal de OTD de pedidos",
-      "description": "Pontos de OTD por período (filiais 01 e 02).",
-      "whenToUse": "Use em gráfico de linha de OTD.",
+      "description": "Pontos de OTD por período com quantidade, atendimento e % (filiais 01/02 e consolidado).",
+      "whenToUse": "Use em gráfico/tabela temporal de OTD; filtre por customer_names para um cliente.",
       "suggestedTransformSteps": [
         {
           "op": "select",
           "columns": [
             "periodo",
-            "otd_filial_01",
-            "otd_filial_02"
+            "total_qty",
+            "fulfilled_qty",
+            "otd_pct"
           ]
         },
         {

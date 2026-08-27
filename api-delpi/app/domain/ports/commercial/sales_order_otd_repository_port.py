@@ -18,6 +18,11 @@ class SalesOrderOtdRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_sales_order_otd_analysis_summary(self, request: SalesOrderOtdRequest) -> dict:
+        """Métricas de período: qty, linhas, fulfillment_pct, otd_pct."""
+        raise NotImplementedError
+
+    @abstractmethod
     def list_sales_order_otd_lines(
         self,
         request: GetSalesOrderOtdPanelRequest,
