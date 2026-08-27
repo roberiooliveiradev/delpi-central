@@ -3,7 +3,12 @@ import { RefreshCw } from "lucide-react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
-export type PageHeaderLayout = "brand" | "titleRow" | "stack";
+export type PageHeaderLayout = "brand" | "titleRow" | "stack" | "hero";
+
+export type PageHeaderMetaItem = {
+  icon?: ReactNode;
+  label: ReactNode;
+};
 
 export type PageHeaderClassNames = {
   root: string;
@@ -22,6 +27,12 @@ export type PageHeaderClassNames = {
   nav?: string;
   primaryButton?: string;
   spinClass?: string;
+  inner?: string;
+  glow?: string;
+  glowPrimary?: string;
+  glowSecondary?: string;
+  meta?: string;
+  chip?: string;
 };
 
 export type PageHeaderLabels = {
@@ -46,6 +57,8 @@ export type PageHeaderProps = {
    * Útil quando a topbar já identifica a área e o título de página seria redundante.
    */
   hideHeading?: boolean;
+  /** Chips de contexto (filial, período, …) — usado no layout hero. */
+  metaItems?: readonly PageHeaderMetaItem[];
   classNames: PageHeaderClassNames;
   labels: PageHeaderLabels;
 };
@@ -197,6 +210,96 @@ function StackLayout(props: PageHeaderProps) {
   );
 }
 
+function HeroMetaChips({
+  items,
+  classNames,
+}: {
+  items: readonly PageHeaderMetaItem[];
+  classNames: PageHeaderClassNames;
+}) {
+  if (!items.length || !classNames.meta) return null;
+
+  return (
+    <div className={classNames.meta}>
+      {items.map((item, index) => (
+        <span key={index} className={classNames.chip}>
+          {item.icon}
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function HeroLayout(props: PageHeaderProps) {
+  const {
+    classNames,
+    title,
+    subtitle,
+    eyebrow,
+    icon,
+    nav,
+    actions,
+    onRefresh,
+    refreshing,
+    labels,
+    hideHeading = false,
+    metaItems,
+  } = props;
+  const mergedActions =
+    actions || onRefresh ? (
+      <div className={classNames.actions}>
+        {actions}
+        <RefreshButton
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          classNames={classNames}
+          labels={labels}
+        />
+      </div>
+    ) : null;
+
+  return (
+    <>
+      {classNames.glow ? (
+        <>
+          <div
+            className={[classNames.glow, classNames.glowPrimary].filter(Boolean).join(" ")}
+            aria-hidden={true}
+          />
+          <div
+            className={[classNames.glow, classNames.glowSecondary].filter(Boolean).join(" ")}
+            aria-hidden={true}
+          />
+        </>
+      ) : null}
+      <div className={classNames.inner ?? classNames.brand}>
+        <div className={classNames.brand}>
+          {icon && classNames.icon ? (
+            <div className={classNames.icon} aria-hidden={true}>
+              {icon}
+            </div>
+          ) : null}
+          <div className={classNames.content}>
+            {eyebrow && classNames.eyebrow ? <p className={classNames.eyebrow}>{eyebrow}</p> : null}
+            {nav && classNames.nav ? <div className={classNames.nav}>{nav}</div> : nav}
+            {hideHeading ? null : (
+              <>
+                <h1 className={classNames.title}>{title}</h1>
+                {subtitle && classNames.subtitle ? (
+                  <span className={classNames.subtitle}>{subtitle}</span>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+        {mergedActions}
+      </div>
+      {metaItems ? <HeroMetaChips items={metaItems} classNames={classNames} /> : null}
+    </>
+  );
+}
+
 export function pageHeaderBrandBemClasses(prefix: string): PageHeaderClassNames {
   const root = `${prefix}-page-header`;
   const ui = "delpi-ui-page-header";
@@ -266,6 +369,30 @@ export function pageHeaderStackBemClasses(prefix: string): PageHeaderClassNames 
   };
 }
 
+export function pageHeaderHeroBemClasses(prefix: string): PageHeaderClassNames {
+  const root = `${prefix}-page-header`;
+  const ui = "delpi-ui-page-header";
+  return {
+    root: pair(`${root} ${root}--hero`, `${ui} ${ui}--hero`),
+    brand: pair(`${root}__brand`, `${ui}__brand`),
+    icon: pair(`${prefix}-header__icon`, `${ui}__icon`),
+    content: pair(`${root}__content`, `${ui}__content`),
+    eyebrow: pair(`${prefix}-eyebrow`, `${ui}__eyebrow`),
+    title: pair(`${root}__title`, `${ui}__title`),
+    subtitle: pair(`${prefix}-page-subtitle`, `${ui}__subtitle`),
+    inner: pair(`${root}__inner`, `${ui}__inner`),
+    glow: pair(`${root}__glow`, `${ui}__glow`),
+    glowPrimary: pair(`${root}__glow--primary`, `${ui}__glow--primary`),
+    glowSecondary: pair(`${root}__glow--secondary`, `${ui}__glow--secondary`),
+    meta: pair(`${root}__meta`, `${ui}__meta`),
+    chip: pair(`${root}__chip`, `${ui}__chip`),
+    nav: pair(`${root}__nav`, `${ui}__nav`),
+    actions: pair(`${prefix}-header-actions`, `${ui}__actions`),
+    primaryButton: pair(`${root}__refresh`, `${ui}__refresh`),
+    spinClass: pair(`${root}__spin`, `${ui}__spin`),
+  };
+}
+
 function headerAriaLabel(title: ReactNode, hideHeading: boolean | undefined): string | undefined {
   if (!hideHeading) return undefined;
   return typeof title === "string" && title.trim() ? title : undefined;
@@ -285,6 +412,7 @@ export function PageHeader(props: PageHeaderProps) {
       {props.layout === "brand" ? <BrandLayout {...props} /> : null}
       {props.layout === "titleRow" ? <TitleRowLayout {...props} /> : null}
       {props.layout === "stack" ? <StackLayout {...props} /> : null}
+      {props.layout === "hero" ? <HeroLayout {...props} /> : null}
     </header>
   );
 }

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   PageHeader,
   pageHeaderBrandBemClasses,
+  pageHeaderHeroBemClasses,
   pageHeaderTitleRowBemClasses,
 } from "./PageHeader";
 
@@ -51,5 +52,30 @@ describe("PageHeader", () => {
     expect(screen.getByRole("banner", { name: "Dashboard Transformômetro" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Dashboard" })).toBeTruthy();
     expect(screen.getByText("DELPI • Transformômetro")).toBeTruthy();
+  });
+
+  it("layout hero emite dual-class, atualizar e chips de contexto", () => {
+    const { container } = render(
+      <PageHeader
+        layout="hero"
+        classNames={pageHeaderHeroBemClasses("pr")}
+        labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
+        eyebrow="Filial 01 (SC) · Suprimentos"
+        title="Solicitações de Compras"
+        subtitle="Acompanhe solicitações, pedidos de compra e recebimentos em um único lugar."
+        onRefresh={() => undefined}
+        metaItems={[
+          { label: "Filial 01" },
+          { label: "28/05/2026 — 26/08/2026" },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector(".delpi-ui-page-header--hero")).toBeTruthy();
+    expect(container.querySelector(".pr-page-header--hero")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Solicitações de Compras" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Atualizar" })).toBeTruthy();
+    expect(screen.getByText("Filial 01")).toBeTruthy();
+    expect(screen.getByText("28/05/2026 — 26/08/2026")).toBeTruthy();
   });
 });

@@ -106,7 +106,7 @@ Demos: `src/catalog/demos/`. Tabela estilo LMPS: entradas **DataTable** / **Data
 | `createDashboardNativeFormFields` | Factory TextField/SelectField/TextAreaField/FormFieldShell |
 | `formFieldShellKaizenClasses` | BEM shell kaizen (`kz-field`) |
 | `StateBanner` / `createDashboardStateBanner` | Banner de estado (erro/sucesso/info) |
-| `PageHeader` / `createDashboardPageHeader` | Cabeçalho de página (variantes brand/compact) |
+| `PageHeader` / `createDashboardPageHeader` | Cabeçalho de página (variantes brand/titleRow/stack/hero) |
 | `ChartToolbar` / `ChartGranularityToggle` | Barra de gráfico + agrupamento |
 | `chartToolbarBemClasses` / `createDashboardChartToolbarKit` | Helpers BEM + factory |
 | `DetailFieldGrid` | Grade `<dl>` para fichas de detalhe |

@@ -273,6 +273,7 @@ export {
   PageHeader,
   createDashboardPageHeader,
   pageHeaderBrandBemClasses,
+  pageHeaderHeroBemClasses,
   pageHeaderPacBrandBemClasses,
   pageHeaderStackBemClasses,
   pageHeaderTitleRowBemClasses,
@@ -280,6 +281,7 @@ export {
   type PageHeaderClassNames,
   type PageHeaderLabels,
   type PageHeaderLayout,
+  type PageHeaderMetaItem,
   type PageHeaderProps,
 } from "./PageHeader";
 export {

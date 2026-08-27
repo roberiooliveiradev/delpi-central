@@ -1,4 +1,5 @@
-import { CalendarDays, MapPin, RefreshCw, ShoppingCart } from "lucide-react";
+import { CalendarDays, MapPin, ShoppingCart } from "lucide-react";
+import { PageHeader, pageHeaderHeroBemClasses } from "@delpi/plugin-ui/index";
 
 import { formatDatePtBr } from "../utils/formatters";
 
@@ -10,6 +11,9 @@ type PurchaseRequestsPageHeaderProps = {
   onRefresh: () => void;
   refreshing?: boolean;
 };
+
+const HEADER_CLASS_NAMES = pageHeaderHeroBemClasses("pr");
+const HEADER_LABELS = { refresh: "Atualizar", refreshing: "Atualizando…" };
 
 export function PurchaseRequestsPageHeader({
   branchLabel,
@@ -25,47 +29,20 @@ export function PurchaseRequestsPageHeader({
       : "Período não definido";
 
   return (
-    <header className="pr-hero" aria-label="Solicitações de compras">
-      <div className="pr-hero__glow pr-hero__glow--primary" aria-hidden />
-      <div className="pr-hero__glow pr-hero__glow--secondary" aria-hidden />
-
-      <div className="pr-hero__inner">
-        <div className="pr-hero__brand">
-          <div className="pr-hero__icon" aria-hidden>
-            <ShoppingCart size={28} strokeWidth={1.75} />
-          </div>
-          <div className="pr-hero__copy">
-            <p className="pr-hero__eyebrow">{branchLabel} · Suprimentos</p>
-            <h1 className="pr-hero__title">Solicitações de Compras</h1>
-            <p className="pr-hero__subtitle">
-              Acompanhe solicitações, pedidos de compra e recebimentos em um único lugar.
-            </p>
-          </div>
-        </div>
-
-        <div className="pr-hero__actions">
-          <button
-            type="button"
-            className="pr-btn pr-btn--ghost pr-btn--header"
-            onClick={onRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw size={16} className={refreshing ? "pr-spin" : undefined} aria-hidden />
-            {refreshing ? "Atualizando…" : "Atualizar"}
-          </button>
-        </div>
-      </div>
-
-      <div className="pr-hero__meta">
-        <span className="pr-meta-chip">
-          <MapPin size={15} aria-hidden />
-          Filial {branchCode}
-        </span>
-        <span className="pr-meta-chip">
-          <CalendarDays size={15} aria-hidden />
-          {periodLabel}
-        </span>
-      </div>
-    </header>
+    <PageHeader
+      layout="hero"
+      classNames={HEADER_CLASS_NAMES}
+      labels={HEADER_LABELS}
+      icon={<ShoppingCart size={28} strokeWidth={1.75} />}
+      eyebrow={`${branchLabel} · Suprimentos`}
+      title="Solicitações de Compras"
+      subtitle="Acompanhe solicitações, pedidos de compra e recebimentos em um único lugar."
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+      metaItems={[
+        { icon: <MapPin size={15} aria-hidden />, label: `Filial ${branchCode}` },
+        { icon: <CalendarDays size={15} aria-hidden />, label: periodLabel },
+      ]}
+    />
   );
 }

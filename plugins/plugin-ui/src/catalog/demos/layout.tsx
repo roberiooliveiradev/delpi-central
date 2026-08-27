@@ -1,4 +1,4 @@
-import { Activity, Eye, Maximize2, Type } from "lucide-react";
+import { Activity, CalendarDays, Eye, MapPin, Maximize2, ShoppingCart, Type } from "lucide-react";
 import { useState } from "react";
 
 import { PUC_DASHBOARD_ROOT, PUC_PREFIX } from "../../app/bemPrefix";
@@ -41,6 +41,7 @@ import {
   pagePathBemClasses,
   PageHeader,
   pageHeaderBrandBemClasses,
+  pageHeaderHeroBemClasses,
   PanelCard,
   panelCardBemClasses,
   PreviewDetailCard,
@@ -59,6 +60,7 @@ import type { CatalogEntryDraft } from "../types";
 const ribbonGroupsCn = ribbonGroupsRowBemClasses(PUC_PREFIX);
 const ribbonGroupCn = ribbonGroupBemClasses(PUC_PREFIX);
 const pageHeaderCn = pageHeaderBrandBemClasses(PUC_PREFIX);
+const pageHeaderHeroCn = pageHeaderHeroBemClasses(PUC_PREFIX);
 const navCardCn = navigationCardBemClasses(PUC_PREFIX);
 const pagePathCn = pagePathBemClasses(PUC_PREFIX);
 const underlineNavCn = underlineNavBemClasses(PUC_PREFIX);
@@ -375,9 +377,9 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
     family: "layout",
     exportName: "PageHeader",
     title: "PageHeader",
-    description: "Cabeçalho de página (layout brand / titleRow / stack).",
+    description: "Cabeçalho de página (layout brand / titleRow / stack / hero).",
     docAnchor: "pageheader",
-    propsSummary: ["layout", "title", "subtitle", "classNames", "labels"],
+    propsSummary: ["layout", "title", "subtitle", "classNames", "labels", "metaItems"],
     demos: [
       {
         id: "brand",
@@ -392,6 +394,29 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
             classNames={pageHeaderCn}
             labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
             onRefresh={() => undefined}
+          />
+        ),
+      },
+      {
+        id: "hero",
+        label: "Hero",
+        render: () => (
+          <PageHeader
+            layout="hero"
+            title="Solicitações de Compras"
+            subtitle="Acompanhe solicitações, pedidos de compra e recebimentos em um único lugar."
+            eyebrow="Filial 01 (SC) · Suprimentos"
+            icon={<ShoppingCart size={28} strokeWidth={1.75} aria-hidden="true" />}
+            classNames={pageHeaderHeroCn}
+            labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
+            onRefresh={() => undefined}
+            metaItems={[
+              { icon: <MapPin size={15} aria-hidden="true" />, label: "Filial 01" },
+              {
+                icon: <CalendarDays size={15} aria-hidden="true" />,
+                label: "28/05/2026 — 26/08/2026",
+              },
+            ]}
           />
         ),
       },

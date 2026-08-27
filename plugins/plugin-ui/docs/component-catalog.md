@@ -812,7 +812,7 @@ Campos nativos label+controle para plugins que estilizam `<input>`/`<select>`/`<
 
 ### `StateBanner` / `PageHeader`
 
-Feedback inline (`createDashboardStateBanner`) e cabeçalho de página com slots (`createDashboardPageHeader` — variantes brand/compact documentadas no código).
+Feedback inline (`createDashboardStateBanner`) e cabeçalho de página com slots (`createDashboardPageHeader` — variantes `brand` / `titleRow` / `stack` / `hero`; hero usa `metaItems` para chips de contexto).
 
 ### `FloatingNoticeStack` (`createFloatingNoticeStack`)
 
@@ -839,6 +839,8 @@ Barra de gráfico com toggle de agrupamento (segment), export CSV opcional e slo
 Helpers: `chartToolbarBemClasses(prefix)` e `createDashboardChartToolbarKit({ prefix, labels })`.
 
 ### `DataTable` + `DataTableSection`
+
+Cabeçalho operacional (modo claro): navy (`--delpi-ui-title` / `--secundary`) com texto branco, no mesmo padrão do dashboard 5S. `grid-preview` mantém o wash claro.
 
 Tabela genérica com sort, empty/loading e seção completa (busca, page size, paginação, loading cards).
 
