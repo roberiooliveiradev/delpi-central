@@ -3725,6 +3725,10 @@
   font-size: var(--ds-font-xs);
   opacity: 0.85;
 }
+.dashboard-transformometro .tm-atas-view__signer-mail{
+  display: block;
+  margin-top: 6px;
+}
 .dashboard-transformometro .tm-atas-view__empty{
   margin: 8px 0 0;
   font-size: var(--ds-font-sm);
