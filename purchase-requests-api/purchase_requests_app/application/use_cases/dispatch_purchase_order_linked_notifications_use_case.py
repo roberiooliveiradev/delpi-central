@@ -98,7 +98,7 @@ class DispatchPurchaseOrderLinkedNotificationsUseCase:
                 if recno > cursor:
                     cursor = recno
                 continue
-            sent = self._notifications.notify_purchase_order_linked(
+            outcome = self._notifications.notify_purchase_order_linked(
                 user_ids=user_ids,
                 branch=branch,
                 order_number=order_number,
@@ -109,9 +109,15 @@ class DispatchPurchaseOrderLinkedNotificationsUseCase:
                 supplier_name=item.get("supplier_name"),
                 expected_delivery_date=item.get("expected_delivery_date"),
             )
-            if not sent:
+            delivered = bool(outcome)
+            retry = bool(getattr(outcome, "retry", not delivered))
+            if not delivered:
                 skipped += 1
-                break
+                if retry:
+                    break
+                if recno > cursor:
+                    cursor = recno
+                continue
             self._dispatched.mark_dispatched(
                 branch=branch,
                 order_number=order_number,

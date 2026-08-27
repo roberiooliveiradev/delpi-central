@@ -54,6 +54,17 @@ class PurchaseOrderLinkedNotificationContentService:
         return str(_load().get("actionLabel") or "Abrir solicitação").strip()
 
     @classmethod
+    def core_permanent_rejection_substrings(cls) -> tuple[str, ...]:
+        raw = _load().get("corePermanentRejectionSubstrings") or []
+        if not isinstance(raw, list):
+            return ()
+        return tuple(
+            str(item).strip().lower()
+            for item in raw
+            if str(item).strip()
+        )
+
+    @classmethod
     def format_delivery_date(cls, raw: str | None) -> str:
         value = (raw or "").strip()
         if not value:

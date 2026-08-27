@@ -7,5 +7,10 @@
   "emptyValue": "—",
   "eventType": "purchase_order_created",
   "category": "purchase_requests",
-  "sourceApp": "purchase-requests"
+  "sourceApp": "purchase-requests",
+  "corePermanentRejectionSubstrings": [
+    "no recipients have access to the source application",
+    "no recipients accept this notification category",
+    "user not found or inactive"
+  ]
 }

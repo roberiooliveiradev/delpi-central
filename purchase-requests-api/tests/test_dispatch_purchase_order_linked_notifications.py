@@ -168,6 +168,7 @@ def test_second_run_with_mapping_dispatches_once() -> None:
     assert len(posts) == 1
     body = posts[0]["json"]
     assert body["userIds"] == ["portal-1"]
+    assert "permissionCodes" not in body
     assert body["metadata"]["dedupeKey"] == (
         "purchase-requests:purchase_order_created:01:041446:0001"
     )
@@ -210,6 +211,85 @@ def test_unmapped_requester_skips_without_post() -> None:
     ).execute()
     assert result["dispatched"] == 0
     assert posts == []
+
+
+def test_core_no_app_access_skips_and_advances_cursor() -> None:
+    posts: list[dict] = []
+
+    def fake_post(url, **kwargs):
+        posts.append({"url": url, **kwargs})
+        return SimpleNamespace(
+            status_code=400,
+            text=(
+                '{"errors":[{"code":"validation_error",'
+                '"message":"no recipients have access to the source application '
+                '(assign app permission in Minha DELPI RBAC)","path":"_global"}]}'
+            ),
+        )
+
+    notifier = PurchaseRequestsPortalNotificationService(
+        core_api_url="http://core-api:8000",
+        service_token="token",
+        enabled=True,
+        http_post=fake_post,
+    )
+    cursor = _FakeCursorRepo(initial=100)
+    result = _use_case(
+        gateway=_FakeGateway(
+            {
+                "items": [
+                    _linked_item(recno=101),
+                    _linked_item(
+                        recno=102,
+                        order_number="041447",
+                        order_item="0002",
+                    ),
+                ],
+                "max_recno": 102,
+            }
+        ),
+        cursor=cursor,
+        dispatched=_FakeDispatchedRepo(),
+        notifier=notifier,
+    ).execute()
+    assert result["dispatched"] == 0
+    assert result["skipped"] == 2
+    assert cursor.values["purchase_order_linked"] == 102
+    assert len(posts) == 2
+
+
+def test_core_server_error_stops_cursor() -> None:
+    posts: list[dict] = []
+
+    def fake_post(url, **kwargs):
+        posts.append({"url": url, **kwargs})
+        return SimpleNamespace(status_code=503, text="unavailable")
+
+    notifier = PurchaseRequestsPortalNotificationService(
+        core_api_url="http://core-api:8000",
+        service_token="token",
+        enabled=True,
+        http_post=fake_post,
+    )
+    cursor = _FakeCursorRepo(initial=100)
+    result = _use_case(
+        gateway=_FakeGateway(
+            {
+                "items": [
+                    _linked_item(recno=101),
+                    _linked_item(recno=102, order_number="041447"),
+                ],
+                "max_recno": 102,
+            }
+        ),
+        cursor=cursor,
+        dispatched=_FakeDispatchedRepo(),
+        notifier=notifier,
+    ).execute()
+    assert result["dispatched"] == 0
+    assert result["skipped"] == 1
+    assert cursor.values["purchase_order_linked"] == 100
+    assert len(posts) == 1
 
 
 def test_content_deep_link_and_title() -> None:

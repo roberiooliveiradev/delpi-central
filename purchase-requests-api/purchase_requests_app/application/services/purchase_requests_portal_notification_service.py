@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import Any, Sequence
 
 import httpx
@@ -15,6 +16,27 @@ from purchase_requests_app.domain.services.purchase_order_linked_notification_co
 logger = logging.getLogger("purchase_requests.portal_notifications")
 
 EVENT_PURCHASE_ORDER_CREATED = "purchase_order_created"
+
+
+@dataclass(frozen=True)
+class PortalNotifyOutcome:
+    delivered: bool
+    retry: bool
+
+    def __bool__(self) -> bool:
+        return self.delivered
+
+    @classmethod
+    def sent(cls) -> PortalNotifyOutcome:
+        return cls(delivered=True, retry=False)
+
+    @classmethod
+    def skip(cls) -> PortalNotifyOutcome:
+        return cls(delivered=False, retry=False)
+
+    @classmethod
+    def retry_later(cls) -> PortalNotifyOutcome:
+        return cls(delivered=False, retry=True)
 
 
 class PurchaseRequestsPortalNotificationService:
@@ -57,12 +79,12 @@ class PurchaseRequestsPortalNotificationService:
         event_type: str,
         category: str | None = None,
         metadata: dict[str, Any] | None = None,
-    ) -> bool:
+    ) -> PortalNotifyOutcome:
         if not self.enabled:
-            return False
+            return PortalNotifyOutcome.retry_later()
         if not self.service_token:
             logger.warning("purchase_requests_notification_skipped_no_token")
-            return False
+            return PortalNotifyOutcome.retry_later()
 
         recipients = [
             str(uid).strip() for uid in (user_ids or ()) if str(uid).strip()
@@ -73,7 +95,7 @@ class PurchaseRequestsPortalNotificationService:
             if str(code).strip()
         ]
         if not recipients and not codes:
-            return False
+            return PortalNotifyOutcome.skip()
 
         payload: dict[str, Any] = {
             "title": title,
@@ -109,16 +131,19 @@ class PurchaseRequestsPortalNotificationService:
                 timeout=self.timeout,
             )
             if response.status_code >= 400:
+                body = response.text[:300]
                 logger.warning(
                     "purchase_requests_notification_rejected status=%s body=%s",
                     response.status_code,
-                    response.text[:300],
+                    body,
                 )
-                return False
-            return True
+                if _is_permanent_recipient_rejection(response.status_code, body):
+                    return PortalNotifyOutcome.skip()
+                return PortalNotifyOutcome.retry_later()
+            return PortalNotifyOutcome.sent()
         except Exception:
             logger.exception("purchase_requests_notification_failed dedupe=%s", dedupe_key)
-            return False
+            return PortalNotifyOutcome.retry_later()
 
     def notify_purchase_order_linked(
         self,
@@ -132,7 +157,7 @@ class PurchaseRequestsPortalNotificationService:
         product_description: str | None,
         supplier_name: str | None,
         expected_delivery_date: str | None,
-    ) -> bool:
+    ) -> PortalNotifyOutcome:
         title = Content.format_title(
             order_number=order_number,
             request_number=request_number,
@@ -153,7 +178,6 @@ class PurchaseRequestsPortalNotificationService:
         )
         return self.send(
             user_ids=user_ids,
-            permission_codes=["purchase-requests.access"],
             title=title,
             message=message,
             notification_type=Content.notification_type(),
@@ -170,3 +194,12 @@ class PurchaseRequestsPortalNotificationService:
                 "productCode": product_code,
             },
         )
+
+
+def _is_permanent_recipient_rejection(status_code: int, body: str) -> bool:
+    if status_code != 400:
+        return False
+    lowered = (body or "").lower()
+    return any(
+        marker in lowered for marker in Content.core_permanent_rejection_substrings()
+    )
