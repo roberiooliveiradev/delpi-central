@@ -1131,6 +1131,121 @@ class MeetingMinuteRepository:
                 )
                 return cur.fetchone()
 
+    def update_invite_mail_send_result(
+        self,
+        *,
+        invite_id: str,
+        mail_template_key: str | None,
+        mail_recipient: str | None,
+        mail_send_status: str,
+        mail_delivery_status: str,
+        mail_last_error: str | None = None,
+        mail_sent_at: Any | None = None,
+    ) -> dict[str, Any] | None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE cipa.meeting_minute_sign_invites
+                    SET mail_template_key = %s,
+                        mail_recipient = %s,
+                        mail_send_status = %s,
+                        mail_delivery_status = %s,
+                        mail_attempts = mail_attempts + 1,
+                        mail_last_error = %s,
+                        mail_sent_at = COALESCE(%s, mail_sent_at, NOW())
+                    WHERE id = %s
+                    RETURNING *
+                    """,
+                    (
+                        mail_template_key,
+                        mail_recipient,
+                        mail_send_status,
+                        mail_delivery_status,
+                        mail_last_error,
+                        mail_sent_at,
+                        _uuid(invite_id),
+                    ),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return row
+
+    def update_invite_mail_delivery_result(
+        self,
+        *,
+        invite_id: str,
+        mail_delivery_status: str,
+        mail_delivered_at: Any | None = None,
+        mail_trace_id: str | None = None,
+        mail_last_error: str | None = None,
+    ) -> dict[str, Any] | None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE cipa.meeting_minute_sign_invites
+                    SET mail_delivery_status = %s,
+                        mail_delivered_at = COALESCE(%s, mail_delivered_at),
+                        mail_trace_id = COALESCE(%s, mail_trace_id),
+                        mail_last_error = COALESCE(%s, mail_last_error)
+                    WHERE id = %s
+                    RETURNING *
+                    """,
+                    (
+                        mail_delivery_status,
+                        mail_delivered_at,
+                        mail_trace_id,
+                        mail_last_error,
+                        _uuid(invite_id),
+                    ),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return row
+
+    def list_invites_pending_trace(self, *, since: Any, limit: int = 100) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT *
+                    FROM cipa.meeting_minute_sign_invites
+                    WHERE mail_send_status = 'accepted'
+                      AND mail_delivery_status = 'trace_pending'
+                      AND mail_sent_at IS NOT NULL
+                      AND mail_sent_at >= %s
+                    ORDER BY mail_sent_at ASC
+                    LIMIT %s
+                    """,
+                    (since, int(limit)),
+                )
+                return list(cur.fetchall() or [])
+
+    def get_latest_invite_mail_by_signer_ids(
+        self,
+        *,
+        minute_id: str,
+        signer_ids: list[str],
+    ) -> dict[str, dict[str, Any]]:
+        if not signer_ids:
+            return {}
+        uuids = [_uuid(signer_id) for signer_id in signer_ids]
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT DISTINCT ON (signer_id) *
+                    FROM cipa.meeting_minute_sign_invites
+                    WHERE minute_id = %s
+                      AND signer_id = ANY(%s::uuid[])
+                    ORDER BY signer_id, created_at DESC
+                    """,
+                    (_uuid(minute_id), uuids),
+                )
+                rows = cur.fetchall() or []
+        return {str(row["signer_id"]): row for row in rows}
+
     def replace_action_items(
         self, minute_id: str, unit_code: str, items: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
