@@ -6,6 +6,11 @@ import type {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import {
+  shouldApplyCatalogDefaultParam,
+  shouldApplySchemaDefault,
+  type ParamSchemaSpec,
+} from "./paramSchemaDefaults";
 
 /** Aliases legado → canônico HTTP (alinhado à TV API). */
 const PARAM_KEY_REMAP: Record<string, string> = {
@@ -173,7 +178,7 @@ function hydrateBindingParams(
 
   // Defaults do catálogo / schema para chaves ainda vazias (não sobrescreve).
   // Só chaves do schema (ou internas) — evita reintroduzir `branch` fora do contrato.
-  // Select opcional (enum): não pré-preencher — «Não definido aqui» deve persistir.
+  // Filtros opcionais: não pré-preencher — «Não definido aqui» deve persistir (todas as rotas).
   const defaults = route?.defaultParams ?? {};
   for (const [key, value] of Object.entries(defaults)) {
     if (value === undefined || value === null || value === "") continue;
@@ -185,27 +190,16 @@ function hydrateBindingParams(
     ) {
       continue;
     }
-    const spec = schema[key] as
-      | { default?: unknown; optional?: boolean; enum?: unknown[] }
-      | undefined;
-    if (
-      spec &&
-      Array.isArray(spec.enum) &&
-      spec.enum.length > 0 &&
-      spec.optional !== false
-    ) {
-      continue;
-    }
+    const spec = schema[key] as ParamSchemaSpec | undefined;
+    if (!shouldApplyCatalogDefaultParam(key, spec)) continue;
     if (next[key] === undefined) next[key] = value as string | number | boolean;
   }
   for (const [key, spec] of Object.entries(schema)) {
     if (key in fixed) continue;
     if (next[key] !== undefined) continue;
     if (!spec || typeof spec !== "object") continue;
-    const typed = spec as { default?: unknown; optional?: boolean; enum?: unknown[] };
-    const hasEnum = Array.isArray(typed.enum) && typed.enum.length > 0;
-    // Select opcional: limpar não reverte para default OpenAPI.
-    if (hasEnum && typed.optional !== false) continue;
+    const typed = spec as ParamSchemaSpec;
+    if (!shouldApplySchemaDefault(key, typed)) continue;
     const def = typed.default;
     if (def !== undefined && def !== null && def !== "") {
       next[key] = def as string | number | boolean;

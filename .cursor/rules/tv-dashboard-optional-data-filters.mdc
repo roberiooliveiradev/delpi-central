@@ -1,0 +1,45 @@
+---
+description: TV Dashboard — filtros Dados «Não definido aqui» (params opcionais)
+globs: tv-dashboard-api/**/*,plugins/tv-dashboard/**/*
+alwaysApply: false
+---
+
+# TV Dashboard — filtros opcionais em Dados
+
+## Princípio
+
+Em **Dados do elemento**, todo filtro **opcional** do `paramSchema` deve poder ficar em **«Não definido aqui»** (valor vazio). Isso vale para **todas** as rotas do catálogo — não só ROL/OTD.
+
+```
+Bloco Dados (vazio) → wire omite o query param → api-delpi Query(default=…)
+```
+
+A TV **não** reinsere `defaultParams` / `schema.default` em filtros opcionais.
+
+## Módulo canônico
+
+| Camada | Onde |
+|--------|------|
+| Wire / enrichment | `tv_data_param_defaults_service.py` — `is_optional_param_spec`, `should_apply_schema_default`, `apply_catalog_param_defaults` |
+| Apresentação (omitido no wire) | `schema_param_default` + `_resolve_table_field` (ex.: `tableFieldsByParam`) |
+| MFE (bloco / hydrate) | `paramSchemaDefaults.ts` → `buildRouteDefaultParams` + `hydrateComunicadoDataBindings` |
+
+## O que NÃO fazer
+
+- Forçar `group_by` / `granularity` / `sort` / `only_positive` / `status` via `defaultParams` do overlay quando o campo é `optional` no schema.
+- Prefill no hydrate ou `buildRouteDefaultParams` de select/bool/int opcional.
+- Patch só na UI do slide ou `if operationId == …`.
+- Assumir que omitir o param quebra a api-delpi — Query com default é o contrato.
+
+## O que fazer
+
+1. Param opcional novo → só `paramSchema` (+ labels); default fica no OpenAPI/FastAPI.
+2. `defaultParams` do overlay: só knobs **obrigatórios** ou chaves fora do schema (raro).
+3. Apresentação que depende do default omitido → `schema_param_default`, não gravar no bloco.
+4. Teste: `test_tv_data_param_defaults.py`, `buildRouteDefaultParams.test.ts`.
+
+## Checklist
+
+- [ ] `apply_catalog_param_defaults({})` não inclui a chave opcional?
+- [ ] MFE `buildRouteDefaultParams` deixa a chave `undefined`?
+- [ ] api-delpi aceita request sem o query param?

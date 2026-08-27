@@ -144,6 +144,36 @@ describe("buildRouteDefaultParams", () => {
     });
     expect(params.dateRangePreset).toBe("custom");
     expect(params.periodDays).toBeUndefined();
-    expect(params.granularity).toBe("month");
+    // Granularidade opcional: «Não definido aqui» — API aplica default do Query.
+    expect(params.granularity).toBeUndefined();
+  });
+
+  it("não força bool/int/sort opcionais via defaultParams (todas as rotas)", () => {
+    const params = buildRouteDefaultParams({
+      operationId: "get_supplies_stock_items",
+      label: "Estoque",
+      category: "supplies",
+      defaultParams: {
+        page: 1,
+        page_size: 50,
+        only_positive: true,
+        sort: "stock_value_desc",
+      },
+      paramSchema: {
+        only_positive: { type: "boolean", optional: true, default: true },
+        page: { type: "integer", optional: true, default: 1 },
+        page_size: { type: "integer", optional: true, default: 50 },
+        sort: {
+          type: "string",
+          optional: true,
+          default: "stock_value_desc",
+          enum: ["stock_value_desc", "quantity_desc"],
+        },
+      },
+    });
+    expect(params.only_positive).toBeUndefined();
+    expect(params.page).toBeUndefined();
+    expect(params.page_size).toBeUndefined();
+    expect(params.sort).toBeUndefined();
   });
 });

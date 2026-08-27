@@ -28,6 +28,8 @@ alwaysApply: true
 | `plugins-visual-design-system.mdc` | Design system + anti-vazamento |
 | `mfe-modal-host-contained.mdc` | Modais não cobrem sidebar do portal |
 | `mf-federation-patch-safety.mdc` | Patch React MF — sem ReDoS |
+| `tv-dashboard-optional-data-filters.mdc` | Filtros Dados: «Não definido aqui» em params opcionais (todas as rotas) |
+| `tv-dashboard-presentation-parity.mdc` | Editor ≡ apresentação (palco / projeção) |
 
 ## Fluxo rápido (UI flutuante / “cortou na borda”)
 

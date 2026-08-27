@@ -2,6 +2,9 @@
 
 Garante que preview/smoke/blocos sem formulário completo ainda enviem
 obrigatórios convencionais (filial, schema.default, período) nos nomes certos.
+
+Filtros **opcionais** nunca são inventados no wire nem no bloco Dados:
+«Não definido aqui» omite o param; a api-delpi aplica o default do Query.
 """
 
 from __future__ import annotations
@@ -34,16 +37,25 @@ _CATALOG_PERIOD_KEYS = frozenset({PERIOD_DAYS_KEY, DATE_RANGE_PRESET_KEY})
 _NO_SCHEMA_DEFAULT_KEYS = frozenset({"department_id"})
 
 
+def is_optional_param_spec(spec: Mapping[str, Any] | None) -> bool:
+    """True = filtro omitível na UI («Não definido aqui»). Ausência de optional = opcional."""
+    if not isinstance(spec, Mapping):
+        return True
+    return bool(spec.get("optional", True))
+
+
 def should_apply_schema_default(key: str, spec: Mapping[str, Any]) -> bool:
-    """Defaults de catálogo/OpenAPI só quando não sabotam «Limpar filtro» em selects."""
+    """Defaults de catálogo/OpenAPI só para params **obrigatórios**.
+
+    Filtro opcional (qualquer tipo: enum, bool, string, int) permanece vazio no
+    bloco/wire — a api-delpi aplica o default do Query quando o param é omitido.
+    """
     default = spec.get("default")
     if default is None or default == "":
         return False
     if key in _NO_SCHEMA_DEFAULT_KEYS or key in _CATALOG_PERIOD_KEYS:
         return False
-    enum = spec.get("enum")
-    # Select opcional: limpar deve permanecer vazio (não reverter para Todos/comercial/…).
-    if enum and bool(spec.get("optional", True)):
+    if is_optional_param_spec(spec):
         return False
     return True
 
@@ -82,6 +94,9 @@ def apply_catalog_param_defaults(
     Ordem (mais específico ganha): convenient/schema ← route.defaultParams ← params.
     `periodDays` / `dateRangePreset` nunca são injetados automaticamente (nem via
     defaultParams do catálogo nem schema.default) — só entram nos params do caller.
+
+    Params **opcionais** no paramSchema nunca vêm de defaultParams/schema — vale para
+    todas as rotas (group_by, granularity, sort, only_positive, status, …).
     """
     route_map = route if isinstance(route, Mapping) else {}
     schema = route_map.get("paramSchema") if isinstance(route_map.get("paramSchema"), dict) else {}
@@ -96,13 +111,10 @@ def apply_catalog_param_defaults(
             continue
         if value is None or value == "":
             continue
-        # Select opcional (enum): não forçar via defaultParams — «Não definido aqui»
-        # omite o param no wire e a api-delpi aplica o próprio default do Query.
-        spec = schema.get(key_str) if isinstance(schema.get(key_str), dict) else {}
-        if isinstance(spec, dict) and not should_apply_schema_default(key_str, spec):
-            enum = spec.get("enum")
-            if enum:
-                continue
+        spec = schema.get(key_str) if isinstance(schema.get(key_str), dict) else None
+        # Chave conhecida como opcional no schema → não forçar (todas as rotas).
+        if isinstance(spec, dict) and is_optional_param_spec(spec):
+            continue
         merged[key_str] = value
 
     if isinstance(params, Mapping):
@@ -115,24 +127,26 @@ def apply_catalog_param_defaults(
         if not isinstance(spec, dict):
             continue
         if key in _CATALOG_PERIOD_KEYS:
-            # periodDays/dateRangePreset: nunca default mágico via schema — só params do caller.
             continue
         if _has_value(merged, key):
             continue
         if should_apply_schema_default(key, spec):
             merged[str(key)] = spec.get("default")
             continue
-        if not spec.get("optional", True) and key in CONVENIENT_REQUIRED_DEFAULTS:
+        if not is_optional_param_spec(spec) and key in CONVENIENT_REQUIRED_DEFAULTS:
             convenient = _convenient_default(key, route_map)
             if convenient is not None:
                 merged[str(key)] = convenient
 
-    # Sem datas/preset/periodDays explícitos → não injeta janela (histórico completo).
     return merged
 
 
 def schema_param_default(route: Mapping[str, Any] | None, param_name: str) -> str | None:
-    """Default declarativo do paramSchema (contrato OpenAPI / FastAPI Query)."""
+    """Default declarativo do paramSchema (contrato OpenAPI / FastAPI Query).
+
+    Usado na apresentação (ex.: tableFieldsByParam) quando o wire omitiu o param
+    — espelha o default que a api-delpi aplicaria, sem gravar no bloco Dados.
+    """
     if not isinstance(route, Mapping):
         return None
     schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}

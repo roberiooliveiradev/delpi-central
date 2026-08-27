@@ -376,12 +376,6 @@
       "label": "Suprimentos — itens de saldo por armazém",
       "description": "Lista de produtos com quantidade, custo unitário e valor por armazém.",
       "whenToUse": "Tabela ou barras de produtos dentro de um armazém (ex.: 25, 50) ou consolidado.",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 50,
-        "only_positive": true,
-        "sort": "stock_value_desc"
-      },
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -518,10 +512,6 @@
       "label": "Produtos — busca",
       "description": "Lista produtos filtrados por descrição ou grupo (poucas linhas na TV).",
       "whenToUse": "Tabela auxiliar na TV para localizar códigos/descrições. Não é o lugar para um KPI único — prefira filtro de descrição e limite de linhas.",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
       "paramSchema": {
         "description": {
           "type": "string",
@@ -722,9 +712,6 @@
         "kpi",
         "auto"
       ],
-      "defaultParams": {
-        "type": "customer"
-      },
       "paramSchema": {
         "product_prefix": {
           "type": "string",

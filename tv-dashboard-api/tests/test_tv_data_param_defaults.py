@@ -146,6 +146,43 @@ def test_apply_defaults_never_reinjects_department_id():
     assert "department_id" not in apply_catalog_param_defaults({"department_id": ""}, route)
 
 
+def test_apply_defaults_skips_all_optional_filters_not_only_enums():
+    """Bool/int/sort opcionais também respeitam «Não definido aqui» (todas as rotas)."""
+    route = {
+        "defaultParams": {
+            "page": 1,
+            "page_size": 50,
+            "only_positive": True,
+            "sort": "stock_value_desc",
+        },
+        "paramSchema": {
+            "only_positive": {"type": "boolean", "optional": True, "default": True},
+            "page": {"type": "integer", "optional": True, "default": 1},
+            "page_size": {"type": "integer", "optional": True, "default": 50},
+            "sort": {
+                "type": "string",
+                "optional": True,
+                "default": "stock_value_desc",
+                "enum": ["stock_value_desc", "quantity_desc"],
+            },
+            "branch": {"type": "string", "optional": False},
+        },
+    }
+    merged = apply_catalog_param_defaults({}, route)
+    assert "only_positive" not in merged
+    assert "page" not in merged
+    assert "page_size" not in merged
+    assert "sort" not in merged
+    assert merged["branch"] == "01"
+
+    merged_set = apply_catalog_param_defaults(
+        {"sort": "quantity_desc", "only_positive": False},
+        route,
+    )
+    assert merged_set["sort"] == "quantity_desc"
+    assert merged_set["only_positive"] is False
+
+
 def test_apply_defaults_skips_optional_enum_select_defaults():
     route = {
         "paramSchema": {

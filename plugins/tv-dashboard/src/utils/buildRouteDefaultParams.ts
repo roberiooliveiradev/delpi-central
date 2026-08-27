@@ -6,6 +6,11 @@ import {
   PERIOD_DAYS_PARAM,
   findDateRangeKeys,
 } from "./dateRangePresets";
+import {
+  shouldApplyCatalogDefaultParam,
+  shouldApplySchemaDefault,
+  type ParamSchemaSpec,
+} from "./paramSchemaDefaults";
 
 /** Valores seguros para obrigatórios recorrentes quando o schema não traz default. */
 export const CONVENIENT_REQUIRED_DEFAULTS: Record<string, string> = {
@@ -17,23 +22,6 @@ export const CONVENIENT_REQUIRED_DEFAULTS: Record<string, string> = {
 };
 
 type ParamValue = string | number | boolean;
-
-/** Select de identidade: nunca inventar (ex.: department_id → commercial). */
-const NO_SCHEMA_DEFAULT_KEYS = new Set(["department_id"]);
-
-function shouldApplySchemaDefault(
-  key: string,
-  spec: { default?: ParamValue; optional?: boolean; enum?: unknown[] },
-): boolean {
-  if (spec.default === undefined || spec.default === null || spec.default === "") {
-    return false;
-  }
-  if (NO_SCHEMA_DEFAULT_KEYS.has(key) || key === PERIOD_DAYS_PARAM) return false;
-  const hasEnum = Array.isArray(spec.enum) && spec.enum.length > 0;
-  // Select opcional: limpar não reverte para default de catálogo.
-  if (hasEnum && spec.optional !== false) return false;
-  return true;
-}
 
 const BRANCH_DEFAULT_BY_PATH_PREFIX: Array<[string, string]> = [["/scheduling/", "SC"]];
 
@@ -60,7 +48,8 @@ function convenientDefault(key: string, route: TvDataRouteCatalogItem): string |
 
 /**
  * Params iniciais ao escolher/testar uma fonte: defaultParams do catálogo,
- * default do schema, convenções (filial) e preset de período quando houver par de datas.
+ * default do schema (só obrigatórios), convenções (filial) e preset open-ended.
+ * Filtros opcionais ficam vazios («Não definido aqui») em todas as rotas.
  */
 export function buildRouteDefaultParams(
   route: TvDataRouteCatalogItem,
@@ -70,20 +59,13 @@ export function buildRouteDefaultParams(
   const schema = route.paramSchema ?? {};
   for (const [key, value] of Object.entries(catalogDefaults)) {
     if (value === undefined || value === null || value === "") continue;
-    // periodDays nunca como default de catálogo — evita «últimos N dias» implícito.
-    if (key === PERIOD_DAYS_PARAM) continue;
-    const spec = schema[key] as
-      | { default?: ParamValue; optional?: boolean; enum?: unknown[] }
-      | undefined;
-    // Select opcional: «Não definido aqui» — não pré-preencher no bloco.
-    if (spec && !shouldApplySchemaDefault(key, spec) && Array.isArray(spec.enum) && spec.enum.length) {
-      continue;
-    }
+    const spec = schema[key] as ParamSchemaSpec | undefined;
+    if (!shouldApplyCatalogDefaultParam(key, spec)) continue;
     defaults[key] = value as ParamValue;
   }
 
   for (const [key, raw] of Object.entries(schema)) {
-    const spec = raw as { default?: ParamValue; optional?: boolean; enum?: unknown[] };
+    const spec = raw as ParamSchemaSpec;
     if (defaults[key] !== undefined && defaults[key] !== "") continue;
     if (key === PERIOD_DAYS_PARAM) continue;
     if (shouldApplySchemaDefault(key, spec)) {
