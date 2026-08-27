@@ -241,6 +241,14 @@ def send_for_signature(request: Request, minute_id: str):
         return _handle(exc)
 
 
+@router.post("/{minute_id}/resend-sign-invites")
+def resend_sign_invites(request: Request, minute_id: str):
+    try:
+        return ok(service.resend_sign_invites(request.state.user, minute_id))
+    except Exception as exc:
+        return _handle(exc)
+
+
 @router.get("/{minute_id}/sign-context")
 def sign_context(request: Request, minute_id: str):
     try:

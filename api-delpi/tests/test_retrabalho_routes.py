@@ -101,7 +101,7 @@ def test_rework_cost_pct_returns_envelope(
     use_case = MagicMock()
     use_case.execute.return_value = {
         "rework_cost": 1500.0,
-        "rol_with_ipi": 100_000.0,
+        "rol": 100_000.0,
         "rework_cost_pct": 1.5,
     }
     mock_builder.return_value = use_case

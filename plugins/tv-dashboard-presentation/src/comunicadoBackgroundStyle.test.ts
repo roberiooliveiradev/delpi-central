@@ -4,6 +4,7 @@ import {
   comunicadoBackgroundCssProperties,
   comunicadoBackgroundImageUrl,
   comunicadoBackgroundRootStyle,
+  resolveComunicadoBackgroundUnderlay,
 } from "./comunicadoBackgroundStyle";
 
 describe("comunicadoBackgroundStyle", () => {
@@ -41,6 +42,22 @@ describe("comunicadoBackgroundStyle", () => {
     });
     expect(style.backgroundImage).toBeUndefined();
     expect(style.backgroundColor).toBe("#ffffff");
+  });
+
+  it("root com imagem usa underlay explícito", () => {
+    const style = comunicadoBackgroundRootStyle({
+      type: "image",
+      assetId: "bg",
+      underlay: { type: "color", value: "#003866" },
+    });
+    expect(style.backgroundColor).toBe("#003866");
+    expect(style.backgroundImage).toBeUndefined();
+  });
+
+  it("resolveComunicadoBackgroundUnderlay: legado image = branco", () => {
+    expect(
+      resolveComunicadoBackgroundUnderlay({ type: "image", assetId: "a" }),
+    ).toEqual({ type: "color", value: "#ffffff" });
   });
 
   it("cor e gradiente no root", () => {

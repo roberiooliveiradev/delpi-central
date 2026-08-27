@@ -652,7 +652,6 @@
         "scrap_cost_pct": "Custo de refugo / ROL (%)",
         "value": "Valor",
         "scrap_cost": "Custo de refugo (R$)",
-        "rol_with_ipi": "ROL com IPI (R$)",
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
@@ -676,7 +675,6 @@
         "rework_cost_pct": "Custo de retrabalho / ROL (%)",
         "value": "Valor",
         "rework_cost": "Custo de retrabalho (R$)",
-        "rol_with_ipi": "ROL com IPI (R$)",
         "rol": "ROL (R$)",
         "total_hours": "Horas de retrabalho",
         "appointment_count": "Apontamentos",
@@ -746,7 +744,6 @@
         "scrap_cost_pct": "Custo de refugo / ROL (%)",
         "value": "Valor",
         "scrap_cost": "Custo de refugo (R$)",
-        "rol_with_ipi": "ROL com IPI (R$)",
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
@@ -755,6 +752,163 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       }
+    },
+    "get_retrabalhos_rework_cost_pct": {
+      "exposesSiGoal": true,
+      "valueFields": [
+        "rework_cost_pct",
+        "value"
+      ],
+      "valueFieldLabels": {
+        "rework_cost_pct": "Custo de retrabalho / ROL (%)",
+        "value": "Valor",
+        "rework_cost": "Custo de retrabalho (R$)",
+        "rol": "ROL (R$)",
+        "total_hours": "Horas de retrabalho",
+        "appointment_count": "Apontamentos",
+        "average_cost_per_hour": "Custo médio por hora (R$)",
+        "records_without_cost": "Registros sem custo",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ]
+    },
+    "get_commercial_rol": {
+      "seriesField": "series",
+      "tableFields": "series",
+      "tableFieldsByParam": {
+        "group_by": {
+          "customer": "by_customer",
+          "branch": "by_branch",
+          "none": "series"
+        }
+      },
+      "defaultParams": {
+        "group_by": "customer"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "line_chart",
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "returns",
+        "discounts",
+        "rol_filial_01",
+        "rol_filial_02"
+      ],
+      "valueFieldLabels": {
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "returns": "Devoluções",
+        "discounts": "Descontos",
+        "period_label": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "rol_filial_01": "ROL filial 01",
+        "rol_filial_02": "ROL filial 02",
+        "customer_code": "Código cliente",
+        "customer_name": "Cliente",
+        "customer_store": "Loja cliente",
+        "share_pct": "% participação",
+        "rank": "Ranking",
+        "branch": "Filial",
+        "rol_with_ipi": "ROL"
+      },
+      "valueFieldTypes": {
+        "period_label": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "rol": "number",
+        "gross_revenue": "number",
+        "returns": "number",
+        "discounts": "number",
+        "rol_filial_01": "number",
+        "rol_filial_02": "number"
+      },
+      "label": "Análise consolidada de ROL comercial",
+      "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio).",
+      "whenToUse": "Use gráfico de linha ou tabela na série temporal (rol_filial_01/02). KPI usa summary.totals; evite misturar colunas de resumo com linhas da série.",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "period_label",
+            "rol_filial_01",
+            "rol_filial_02"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
+      ]
+    },
+    "get_commercial_sales_order_otd_analysis": {
+      "seriesField": "series",
+      "tableFields": "series",
+      "tableFieldsByParam": {
+        "group_by": {
+          "customer": "by_customer",
+          "branch": "by_branch",
+          "none": "series"
+        }
+      },
+      "defaultParams": {
+        "group_by": "customer"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "line_chart",
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "total_qty",
+        "fulfilled_qty",
+        "fulfillment_pct",
+        "otd_pct",
+        "otd_pct_filial_01",
+        "otd_pct_filial_02",
+        "fulfillment_pct_filial_01",
+        "fulfillment_pct_filial_02",
+        "total_qty_filial_01",
+        "total_qty_filial_02"
+      ],
+      "valueFieldLabels": {
+        "period_label": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)",
+        "otd_pct_filial_01": "OTD filial 01",
+        "otd_pct_filial_02": "OTD filial 02",
+        "fulfillment_pct_filial_01": "% atendimento filial 01",
+        "fulfillment_pct_filial_02": "% atendimento filial 02",
+        "total_qty_filial_01": "Quantidade filial 01",
+        "total_qty_filial_02": "Quantidade filial 02",
+        "customer_code": "Código cliente",
+        "customer_name": "Cliente",
+        "customer_store": "Loja cliente",
+        "branch": "Filial",
+        "total_lines": "Linhas",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas"
+      },
+      "whenToUse": "KPI usa summary.totals; tabela por cliente/filial conforme group_by; série temporal quando group_by=none."
     },
     "get_refugos_rankings": {
       "tableFields": "items",

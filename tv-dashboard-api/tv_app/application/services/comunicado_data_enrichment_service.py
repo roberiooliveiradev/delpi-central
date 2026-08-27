@@ -11,6 +11,9 @@ from tv_app.application.services.comunicado_input_filters_service import (
     merge_filter_layers,
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
+from tv_app.application.services.data.tv_data_param_defaults_service import (
+    apply_catalog_param_defaults,
+)
 from tv_app.application.services.data.tv_data_param_validation_service import (
     assert_merged_route_params,
 )
@@ -66,6 +69,15 @@ _DEFAULT_TABLE_MAX_ROWS = 90
 _DEFAULT_SERIES_TABLE_MAX_ROWS = 366
 # Listagens bulk (apontamentos) usadas em AVG por CT/turno: 90 linhas distorce a média.
 _DEFAULT_BULK_LIST_MAX_ROWS = 10000
+
+LEGACY_VALUE_FIELD_ALIASES: dict[str, str] = {
+    "rol_with_ipi": "rol",
+}
+
+
+def _resolve_legacy_value_field(field: str) -> str:
+    key = str(field or "").strip()
+    return LEGACY_VALUE_FIELD_ALIASES.get(key, key)
 
 
 def _view_filter_params_from_merged(merged: Any) -> dict[str, Any]:
@@ -297,12 +309,16 @@ def _binding_selected_fields(binding: dict[str, Any]) -> list[str] | None:
     """None = todas as métricas; lista = filtro (ordem preservada)."""
     selected = binding.get("selectedValueFields")
     if isinstance(selected, list):
-        fields = [str(item).strip() for item in selected if str(item).strip()]
+        fields = [
+            _resolve_legacy_value_field(str(item).strip())
+            for item in selected
+            if str(item).strip()
+        ]
         if fields:
             return fields
     override = binding.get("valueField")
     if override is not None and str(override).strip():
-        return [str(override).strip()]
+        return [_resolve_legacy_value_field(str(override).strip())]
     return None
 
 
@@ -318,7 +334,7 @@ def _iter_scalar_candidate_keys(value_fields: list[Any]) -> list[str]:
     keys: list[str] = []
     seen: set[str] = set()
     for field in value_fields:
-        key = str(field).strip()
+        key = _resolve_legacy_value_field(str(field).strip())
         if not key or key in seen:
             continue
         seen.add(key)
@@ -672,6 +688,74 @@ _SKIP_GENERIC_LIST_KEYS = frozenset(
 )
 
 
+def _rows_from_branch_map(raw: Any) -> list[dict[str, Any]] | None:
+    if not isinstance(raw, dict):
+        return None
+    rows: list[dict[str, Any]] = []
+    for key, metrics in raw.items():
+        if not isinstance(metrics, dict):
+            continue
+        branch_key = str(key).strip()
+        branch_code = (
+            branch_key.replace("branch_", "", 1)
+            if branch_key.startswith("branch_")
+            else branch_key
+        )
+        rows.append({"branch": branch_code, **metrics})
+    return rows or None
+
+
+def _payload_node(data: Any, path: str | None) -> Any:
+    node = unwrap_operational_data(data)
+    field_path = str(path or "").strip()
+    if not field_path:
+        return node
+    if not isinstance(node, dict):
+        return None
+    for part in field_path.split("."):
+        if not isinstance(node, dict):
+            return None
+        node = node.get(part)
+    return node
+
+
+def _effective_route_params(
+    merged_params: dict[str, Any] | None,
+    route_info: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Params efetivos para apresentação — alinha com gateway (defaultParams do catálogo)."""
+    return apply_catalog_param_defaults(
+        merged_params if isinstance(merged_params, dict) else {},
+        route_info if isinstance(route_info, dict) else {},
+    )
+
+
+def _resolve_table_field(
+    route_info: dict[str, Any] | None,
+    params: dict[str, Any] | None = None,
+) -> str | None:
+    if not isinstance(route_info, dict):
+        return None
+    mapping = route_info.get("tableFieldsByParam")
+    request_params = params if isinstance(params, dict) else {}
+    if isinstance(mapping, dict):
+        for param_name, value_map in mapping.items():
+            if not isinstance(value_map, dict):
+                continue
+            param_value = str(request_params.get(param_name) or "").strip().lower()
+            if not param_value:
+                default_params = route_info.get("defaultParams")
+                if isinstance(default_params, dict):
+                    param_value = str(default_params.get(param_name) or "").strip().lower()
+            if not param_value:
+                continue
+            resolved = value_map.get(param_value)
+            if isinstance(resolved, str) and resolved.strip():
+                return resolved.strip()
+    table_field = route_info.get("tableFields")
+    return str(table_field).strip() if table_field else None
+
+
 def _rows_from_list_or_page(raw: Any) -> list[Any] | None:
     """Lista bare ou envelope Page `{ items|rows: [...] }` (ex.: lines/orders OTD)."""
     if isinstance(raw, list):
@@ -705,9 +789,13 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
             keys.append(key)
 
     for key in keys:
-        rows = _rows_from_list_or_page(data.get(key))
+        raw = _payload_node(data, key)
+        rows = _rows_from_list_or_page(raw)
         if rows:
             return rows
+        branch_rows = _rows_from_branch_map(raw)
+        if branch_rows:
+            return branch_rows
 
     for key, raw in data.items():
         if key in _SKIP_GENERIC_LIST_KEYS:
@@ -719,19 +807,40 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
     return []
 
 
-def _build_table_columns(meta: dict[str, Any], rows: list[dict[str, Any]]) -> list[dict[str, str]]:
-    labels = _meta_field_labels(meta)
+def _flatten_legacy_branch_object_cells(row: dict[str, Any]) -> dict[str, Any]:
+    """Expande branch_XX legado (objeto) em métricas escalares por filial."""
+    normalized: dict[str, Any] = {}
+    for key, value in row.items():
+        field = str(key).strip()
+        if isinstance(value, dict) and field.startswith("branch_"):
+            branch_code = field.replace("branch_", "", 1)
+            for metric_key, metric_value in value.items():
+                if isinstance(metric_value, dict):
+                    continue
+                scalar_key = f"{metric_key}_filial_{branch_code}"
+                normalized.setdefault(scalar_key, metric_value)
+            continue
+        normalized[field] = value
+    return normalized
+
+
+def _build_table_columns(
+    meta: dict[str, Any],
+    rows: list[dict[str, Any]],
+    *,
+    route_info: dict[str, Any] | None = None,
+) -> list[dict[str, str]]:
+    labels = _merged_value_field_labels(route_info or {}, meta)
     if rows:
         columns: list[dict[str, str]] = []
         for key in rows[0].keys():
             field = str(key)
-            label = labels.get(field)
-            if not label:
-                for map_key, map_label in labels.items():
-                    if map_key.lower() == field.lower():
-                        label = map_label
-                        break
-            columns.append({"key": field, "label": label or field})
+            columns.append(
+                {
+                    "key": field,
+                    "label": _humanize_value_field(field, labels),
+                }
+            )
         return columns
     fields = meta.get("fields")
     if isinstance(fields, list):
@@ -836,6 +945,7 @@ def _extract_table_rows(
     series_field: str | None = None,
     branch: str | None = None,
     value_label: str | None = None,
+    route_info: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     # Multi-métrica (ex.: economia + investimento): `tableFields` preserva colunas largas.
     # `seriesField` só colapsa para periodo/value quando NÃO há tableFields — evita tabela
@@ -849,10 +959,10 @@ def _extract_table_rows(
         rows: list[dict[str, Any]] = []
         for row in raw_rows[:max_rows]:
             if isinstance(row, dict):
-                rows.append(dict(row))
+                rows.append(_flatten_legacy_branch_object_cells(dict(row)))
             elif isinstance(row, (str, int, float, bool)):
                 rows.append({"value": row})
-        columns = _build_table_columns(meta or {}, rows)
+        columns = _build_table_columns(meta or {}, rows, route_info=route_info)
         if rows:
             return rows, columns
 
@@ -870,10 +980,10 @@ def _extract_table_rows(
     rows = []
     for row in raw_rows[:max_rows]:
         if isinstance(row, dict):
-            rows.append(dict(row))
+            rows.append(_flatten_legacy_branch_object_cells(dict(row)))
         elif isinstance(row, (str, int, float, bool)):
             rows.append({"value": row})
-    columns = _build_table_columns(meta or {}, rows)
+    columns = _build_table_columns(meta or {}, rows, route_info=route_info)
     if rows:
         return rows, columns
 
@@ -895,6 +1005,7 @@ def _source_table_for_route(
     route_info: dict[str, Any] | None,
     *,
     branch: str | None = None,
+    params: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Tabela-fonte canônica (`Fonte`) para transformações M.
 
@@ -903,7 +1014,7 @@ def _source_table_for_route(
     """
     if not isinstance(route_info, dict):
         return None
-    table_field = route_info.get("tableFields")
+    table_field = _resolve_table_field(route_info, params)
     if table_field and str(table_field).strip():
         rows, columns = _extract_table_rows(
             data,
@@ -912,6 +1023,7 @@ def _source_table_for_route(
             meta={},
             series_field=None,
             branch=branch,
+            route_info=route_info,
         )
         if rows:
             return {
@@ -965,15 +1077,16 @@ def _infer_auto_display_mode(
     meta: dict[str, Any],
     *,
     binding: dict[str, Any] | None = None,
+    params: dict[str, Any] | None = None,
 ) -> str:
     shape = str(meta.get("shape") or route_info.get("metaShape") or "scalar").lower()
-    table_field = route_info.get("tableFields")
+    table_field = _resolve_table_field(route_info, params)
     binding_payload = binding if isinstance(binding, dict) else {}
 
     if shape in {"list", "paged_list", "hierarchy"} and _list_from_data(data, table_field):
         return "table"
 
-    if route_info.get("tableFields") or shape == "paged_list":
+    if table_field or shape == "paged_list":
         return "table"
 
     rows, _ = _extract_table_rows(
@@ -982,6 +1095,7 @@ def _infer_auto_display_mode(
         5,
         meta=meta,
         series_field=route_info.get("seriesField"),
+        route_info=route_info,
     )
     if rows:
         if not _meaningful_kpi_metrics(
@@ -1388,21 +1502,24 @@ class ComunicadoDataEnrichmentService:
     ) -> dict[str, Any]:
         mode = normalize_display_mode(display_mode)
         data = unwrap_operational_data(data)
+        effective_params = _effective_route_params(merged_params, route_info)
         if mode == "auto":
             mode = _infer_auto_display_mode(
                 data,
                 route_info,
                 meta,
                 binding=binding,
+                params=effective_params,
             )
 
         value_fields = _value_fields_for_binding(route_info, binding)
         metrics = _extract_kpi_metrics(
             data, route_info=route_info, binding=binding, meta=meta
         )
-        branch = merged_params.get("branch")
+        branch = effective_params.get("branch")
         branch_str = str(branch).strip() if branch else None
         max_rows = _resolve_table_max_rows(binding, route_info)
+        table_field = _resolve_table_field(route_info, effective_params)
 
         if mode == "kpi":
             primary = metrics[0] if metrics else None
@@ -1422,12 +1539,13 @@ class ComunicadoDataEnrichmentService:
             # kpiMetrics — sombreava o campo `value` no texto dinâmico / tabela fantasma.
             rows, columns = _extract_table_rows(
                 data,
-                route_info.get("tableFields"),
+                table_field,
                 max_rows,
                 meta=meta,
                 series_field=route_info.get("seriesField"),
                 branch=branch_str,
                 value_label=label,
+                route_info=route_info,
             )
             if rows and not (
                 metrics
@@ -1460,12 +1578,13 @@ class ComunicadoDataEnrichmentService:
 
         rows, columns = _extract_table_rows(
             data,
-            route_info.get("tableFields"),
+            table_field,
             max_rows,
             meta=meta,
             series_field=route_info.get("seriesField"),
             branch=branch_str,
             value_label=label,
+            route_info=route_info,
         )
         if not rows:
             if metrics:
@@ -1490,7 +1609,7 @@ class ComunicadoDataEnrichmentService:
                     if label:
                         row["label"] = label
                     rows = [row]
-                    columns = _build_table_columns(meta, rows)
+                    columns = _build_table_columns(meta, rows, route_info=route_info)
         return {
             "table": {"rows": rows, "columns": columns},
             "kpiMetrics": metrics,
@@ -1602,7 +1721,15 @@ class ComunicadoDataEnrichmentService:
                 target_step_name=target_step_name,
                 culture=str(m_query_setting("defaultCulture", "pt-BR")),
                 deadline_ms=deadline_ms,
-                source_table=_source_table_for_route(data, route_info, branch=branch_str),
+                source_table=_source_table_for_route(
+                    data,
+                    route_info,
+                    branch=branch_str,
+                    params=_effective_route_params(
+                        merged_params if isinstance(merged_params, dict) else None,
+                        route_info,
+                    ),
+                ),
             )
             transformed = transform_result["data"]
             server_transform_applied = bool(transform_result["applied"])
@@ -1762,9 +1889,17 @@ class ComunicadoDataEnrichmentService:
                 )
             )
 
+        catalog_field_labels = _value_field_labels(
+            route_info if isinstance(route_info, dict) else {}
+        )
+        block_field_labels = block.get("fieldLabels")
+        merged_field_labels = {
+            **catalog_field_labels,
+            **(block_field_labels if isinstance(block_field_labels, dict) else {}),
+        }
         result["resolved"] = apply_field_labels_to_resolved(
             resolved,
-            block.get("fieldLabels"),
+            merged_field_labels or None,
         )
         return result
 

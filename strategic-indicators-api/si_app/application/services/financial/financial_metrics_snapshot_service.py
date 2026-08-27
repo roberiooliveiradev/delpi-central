@@ -274,7 +274,7 @@ class FinancialMetricsSnapshotService:
         value = self._opt_float(payload.get("rol"))
         if value is not None:
             return value
-        return self._opt_float(payload.get("rol_with_ipi")) or 0.0
+        return self._opt_float(payload.get("rol")) or 0.0
 
     def _opt_float(self, value: object) -> float | None:
         if value is None:

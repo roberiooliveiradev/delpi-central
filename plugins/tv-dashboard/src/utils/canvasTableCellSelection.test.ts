@@ -1,17 +1,99 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveCanvasTableCellPointerAction } from "./canvasTableCellSelection";
+import {
+  applyCanvasTableCellSelectionRequest,
+  canvasTableCellRectangle,
+  isCanvasTableCellSelected,
+  primaryCanvasTableCellRef,
+  summarizeCanvasTableCellSelection,
+  type ComunicadoCanvasTableCellSelection,
+} from "./canvasTableCellSelection";
 
-describe("resolveCanvasTableCellPointerAction", () => {
-  it("primeiro clique (bloco não selecionado) seleciona o container", () => {
-    expect(resolveCanvasTableCellPointerAction({ blockSelected: false })).toBe(
-      "select-block",
-    );
+describe("canvasTableCellSelection", () => {
+  const blockId = "g1";
+
+  it("clique simples substitui seleção", () => {
+    const prev: ComunicadoCanvasTableCellSelection = {
+      blockId,
+      cells: [{ row: 0, col: 0 }],
+      anchor: { row: 0, col: 0 },
+      focus: { row: 0, col: 0 },
+    };
+    const next = applyCanvasTableCellSelectionRequest(prev, blockId, {
+      cell: { row: 1, col: 2 },
+      rowCount: 3,
+      colCount: 3,
+    });
+    expect(next.cells).toEqual([{ row: 1, col: 2 }]);
+    expect(next.anchor).toEqual({ row: 1, col: 2 });
   });
 
-  it("bloco já selecionado seleciona a célula", () => {
-    expect(resolveCanvasTableCellPointerAction({ blockSelected: true })).toBe(
-      "select-cell",
-    );
+  it("Ctrl alterna célula na seleção", () => {
+    const prev: ComunicadoCanvasTableCellSelection = {
+      blockId,
+      cells: [{ row: 0, col: 0 }],
+      anchor: { row: 0, col: 0 },
+      focus: { row: 0, col: 0 },
+    };
+    const added = applyCanvasTableCellSelectionRequest(prev, blockId, {
+      cell: { row: 0, col: 1 },
+      additive: true,
+      rowCount: 3,
+      colCount: 3,
+    });
+    expect(added.cells).toHaveLength(2);
+
+    const removed = applyCanvasTableCellSelectionRequest(added, blockId, {
+      cell: { row: 0, col: 0 },
+      additive: true,
+      rowCount: 3,
+      colCount: 3,
+    });
+    expect(removed.cells).toEqual([{ row: 0, col: 1 }]);
+  });
+
+  it("Shift seleciona retângulo da âncora", () => {
+    const prev: ComunicadoCanvasTableCellSelection = {
+      blockId,
+      cells: [{ row: 0, col: 0 }],
+      anchor: { row: 0, col: 0 },
+      focus: { row: 0, col: 0 },
+    };
+    const next = applyCanvasTableCellSelectionRequest(prev, blockId, {
+      cell: { row: 1, col: 1 },
+      range: true,
+      rowCount: 3,
+      colCount: 3,
+    });
+    expect(next.cells).toHaveLength(4);
+    expect(isCanvasTableCellSelected(next, 0, 0)).toBe(true);
+    expect(isCanvasTableCellSelected(next, 1, 1)).toBe(true);
+  });
+
+  it("retângulo inclusivo", () => {
+    expect(
+      canvasTableCellRectangle({ row: 2, col: 1 }, { row: 0, col: 2 }, 3, 4),
+    ).toEqual([
+      { row: 0, col: 1 },
+      { row: 0, col: 2 },
+      { row: 1, col: 1 },
+      { row: 1, col: 2 },
+      { row: 2, col: 1 },
+      { row: 2, col: 2 },
+    ]);
+  });
+
+  it("primary e rótulo de seleção", () => {
+    const multi: ComunicadoCanvasTableCellSelection = {
+      blockId,
+      cells: [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+      ],
+      anchor: { row: 0, col: 0 },
+      focus: { row: 0, col: 1 },
+    };
+    expect(primaryCanvasTableCellRef(multi)).toEqual({ row: 0, col: 1 });
+    expect(summarizeCanvasTableCellSelection(multi)).toBe("2 células");
   });
 });

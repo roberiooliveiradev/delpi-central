@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 686 · **Gerado em:** 2026-08-26 15:09 UTC
+**Provider:** `api-delpi` · **Rotas:** 691 · **Gerado em:** 2026-08-27 11:38 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -861,11 +861,21 @@
 | `GET` | `/supplies/stock-balances/items` | `get_supplies_stock_balances_items` | Stock balance items by warehouse |
 | `GET` | `/supplies/stock-balances/summary` | `get_supplies_stock_balances_summary` | Stock balances by warehouse |
 
-## Suprimentos — Solicitações de compra (1)
+## Suprimentos — Solicitações de compra (5)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
+| `GET` | `/supplies/purchase-requests/lines` | `list_supplies_purchase_request_lines` | Lista paginada — Supplies purchase request line |
+| `GET` | `/supplies/purchase-requests/lines/{branch}/{request_number}` | `get_supplies_purchase_request_lines` | Lista — Supplies purchase request line |
 | `GET` | `/supplies/purchase-requests/open-coverage` | `get_supplies_purchase_requests_open_coverage` | Open purchase requests with stock, order and commitment coverage |
+| `GET` | `/supplies/purchase-requests/recent-linked-orders` | `list_supplies_purchase_request_recent_linked_orders` | Lista — Pedidos de compra recém-vinculados a solicitações de compra |
+| `GET` | `/supplies/purchase-requests/requesters` | `list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get` | List Supplies Purchase Request Requesters Route |
+
+## Suprimentos — Usuários Protheus (1)
+
+| Método | Path | operationId | Summary |
+|--------|------|-------------|---------|
+| `GET` | `/supplies/protheus-users/by-email` | `get_protheus_user_by_email_route_supplies_protheus_users_by_email_get` | Get Protheus User By Email Route |
 
 ## data (1)
 

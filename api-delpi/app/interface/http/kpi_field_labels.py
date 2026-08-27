@@ -72,7 +72,6 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "ipi_separated": "IPI destacado",
     "rol_taxes": "Impostos sobre ROL",
     "rol": "ROL",
-    "rol_with_ipi": "ROL",
     "financial_titles": "Títulos financeiros",
     "financial_balance": "Saldo financeiro",
 }
@@ -80,13 +79,14 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
 FINANCIAL_EBITDA_FIELD_LABELS: dict[str, str] = {
     "ebitda_value": "EBITDA (valor)",
     "ebitda_over_rol_pct": "EBITDA / ROL (%)",
-    "rol_with_ipi": "ROL",
+    "rol": "ROL",
     "target": "Meta EBITDA",
 }
 
 FINANCIAL_FIXED_COST_FIELD_LABELS: dict[str, str] = {
     "fixed_cost_value": "Custos fixos (valor)",
     "fixed_cost_over_rol_pct": "Custos fixos / ROL (%)",
+    "rol": "ROL (R$)",
     "target": "Meta custo fixo",
 }
 
@@ -98,6 +98,7 @@ FINANCIAL_PMR_FIELD_LABELS: dict[str, str] = {
 SUPPLIES_CPV_FIELD_LABELS: dict[str, str] = {
     "cpv_total": "CPV total",
     "cpv_percentage": "CPV / ROL (%)",
+    "rol": "ROL (R$)",
     "cpv_average_monthly": "CPV médio mensal",
     "total_movements": "Total movimentações",
     "average_cost_per_movement": "Custo médio por movimentação",
@@ -160,8 +161,8 @@ COMMERCIAL_CONVERSION_FIELD_LABELS: dict[str, str] = {
 
 COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "sales_order_otd_pct": "OTD pedidos (%)",
-    "otd_pct": "OTD pedidos (%)",
-    "fulfillment_pct": "Atendimento (%)",
+    "otd_pct": "OTD (%)",
+    "fulfillment_pct": "% atendimento",
     "total_qty": "Quantidade total",
     "fulfilled_qty": "Quantidade atendida",
     "total_lines": "Total de linhas",
@@ -180,8 +181,28 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "days_diff": "Dias (atraso/adianto)",
 }
 
+COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS: dict[str, str] = {
+    "period_label": "Período",
+    "sort_key": "Chave de ordenação",
+    "start_date": "Data início",
+    "end_date": "Data fim",
+    "otd_pct_filial_01": "OTD filial 01",
+    "otd_pct_filial_02": "OTD filial 02",
+    "fulfillment_pct_filial_01": "% atendimento filial 01",
+    "fulfillment_pct_filial_02": "% atendimento filial 02",
+    "total_qty_filial_01": "Quantidade filial 01",
+    "total_qty_filial_02": "Quantidade filial 02",
+    "granularity": "Granularidade",
+    "group_by": "Agrupar por",
+    "customer_store": "Loja cliente",
+    "branch": "Filial",
+}
+
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "rol": "ROL realizado",
+    "gross_revenue": "Receita bruta",
+    "returns": "Devoluções",
+    "discounts": "Descontos",
     "target": "Meta ROL (R$)",
     "total_rol": "ROL total",
     "new_business_rol": "ROL novos negócios",
@@ -195,6 +216,23 @@ COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "total_new_clients": "Total clientes novos",
     "monthly_average": "Média mensal",
     "qtd_months": "Qtd. meses",
+    "share_pct": "% participação",
+    "open_value": "Valor em aberto",
+    "customer_code": "Código cliente",
+    "customer_name": "Cliente",
+}
+
+COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS: dict[str, str] = {
+    "period_label": "Período",
+    "sort_key": "Chave de ordenação",
+    "start_date": "Data início",
+    "end_date": "Data fim",
+    "rol_filial_01": "ROL filial 01",
+    "rol_filial_02": "ROL filial 02",
+    "totals": "Totais",
+    "by_branch": "Por filial",
+    "granularity": "Granularidade",
+    "group_by": "Agrupar por",
 }
 
 PRODUCTION_OEE_FIELD_LABELS: dict[str, str] = {
@@ -281,7 +319,6 @@ QUALITY_RETURNED_QUANTITY_FIELD_LABELS: dict[str, str] = {
 
 REFUGOS_SCRAP_COST_PCT_FIELD_LABELS: dict[str, str] = {
     "scrap_cost": "Custo de refugo (R$)",
-    "rol_with_ipi": "ROL com IPI (R$)",
     "rol": "ROL (R$)",
     "scrap_cost_pct": "Custo de refugo / ROL (%)",
     "occurrences": "Ocorrências de refugo",
@@ -311,7 +348,6 @@ REFUGOS_RANKINGS_FIELD_FORMATS: dict[str, str] = {
 
 RETRABALHO_REWORK_COST_PCT_FIELD_LABELS: dict[str, str] = {
     "rework_cost": "Custo de retrabalho (R$)",
-    "rol_with_ipi": "ROL com IPI (R$)",
     "rol": "ROL (R$)",
     "rework_cost_pct": "Custo de retrabalho / ROL (%)",
     "total_hours": "Horas de retrabalho",

@@ -39,6 +39,10 @@ import {
   type DynamicContentSpec,
 } from "@delpi/tv-dashboard-presentation";
 import { applyDynamicContent } from "../../utils/applyDynamicContent";
+import {
+  applyCanvasTableCellSelectionRequest,
+  type CanvasTableCellSelectionRequest,
+} from "../../utils/canvasTableCellSelection";
 
 import type {
   ComunicadoCanvasTableCellSelection,
@@ -661,7 +665,7 @@ export function useComunicadoEditorSelection({
   }, [setSelectedInputPart]);
 
   const selectCanvasTableCell = useCallback(
-    (blockId: string, cell: { row: number; col: number } | null) => {
+    (blockId: string, request: CanvasTableCellSelectionRequest | null) => {
       flushActiveTextEdit();
       setSelectedIds([blockId]);
       setEditingTextId(null);
@@ -672,8 +676,13 @@ export function useComunicadoEditorSelection({
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
       setSelectedInputPart(null);
-      setSelectedCanvasTableCell(
-        cell ? { blockId, row: cell.row, col: cell.col } : null,
+      if (!request) {
+        setSelectedCanvasTableCell(null);
+        requestRibbonTab("canvasTable", { blockId });
+        return;
+      }
+      setSelectedCanvasTableCell((previous) =>
+        applyCanvasTableCellSelectionRequest(previous, blockId, request),
       );
       requestRibbonTab("canvasTable", { blockId });
     },

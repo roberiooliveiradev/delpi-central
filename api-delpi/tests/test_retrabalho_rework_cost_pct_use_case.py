@@ -26,7 +26,7 @@ def _request(
     )
 
 
-def test_rework_cost_pct_uses_rol_with_ipi() -> None:
+def test_rework_cost_pct_uses_rol() -> None:
     retrabalho_repo = MagicMock()
     retrabalho_repo.get_resumo.return_value = {
         "total_custo": 1500.0,
@@ -37,7 +37,7 @@ def test_rework_cost_pct_uses_rol_with_ipi() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 90_000.0,
-        "rol_with_ipi": 100_000.0,
+        "rol": 100_000.0,
         "gross_revenue": 120_000.0,
         "returns": 5_000.0,
         "discounts": 5_000.0,
@@ -49,7 +49,7 @@ def test_rework_cost_pct_uses_rol_with_ipi() -> None:
     )
 
     assert result["rework_cost"] == 1500.0
-    assert result["rol_with_ipi"] == 100_000.0
+    assert result["rol"] == 100_000.0
     assert result["rework_cost_pct"] == 1.5
     assert result["average_cost_per_hour"] == 50.0
     assert result["summary"]["rework_cost_pct"] == 1.5
@@ -71,7 +71,6 @@ def test_rework_cost_pct_null_when_rol_is_zero() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 0.0,
-        "rol_with_ipi": 0.0,
         "gross_revenue": 0.0,
         "returns": 0.0,
         "discounts": 0.0,
@@ -97,7 +96,6 @@ def test_consolidated_when_filial_omitted() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 100_000.0,
-        "rol_with_ipi": 100_000.0,
         "gross_revenue": 100_000.0,
         "returns": 0.0,
         "discounts": 0.0,
@@ -135,7 +133,6 @@ def test_optional_recurso_filter_forwarded_to_repository() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 1000.0,
-        "rol_with_ipi": 1000.0,
         "gross_revenue": 1000.0,
         "returns": 0.0,
         "discounts": 0.0,

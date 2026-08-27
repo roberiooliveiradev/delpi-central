@@ -17,6 +17,7 @@ import {
   resolveChartPartFontSize,
   resolveInputPartFontSize,
   resolveKpiPartFontSize,
+  resolveVisualBoxEffectiveTextFormatSnapshot,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
   type ComunicadoCanvasTableBlock,
@@ -28,6 +29,7 @@ import {
   type ComunicadoKpiViewBlock,
   type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
+  type VisualBoxTextFormatSnapshot,
 } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -145,6 +147,7 @@ function snapshotFromPartStyle(
     fontWeight?: string | number;
     fontStyle?: string;
     color?: string;
+    colorPaint?: ComunicadoBlockStyle["colorPaint"];
     textDecoration?: string;
     textAlign?: string;
     verticalAlign?: string;
@@ -171,6 +174,26 @@ function snapshotFromPartStyle(
     textStrokeColor: style?.textStrokeColor,
     textStrokeWidth: style?.textStrokeWidth,
     textReflection: style?.textReflection,
+  };
+}
+
+function snapshotFromEffectiveVisualBox(
+  effective: VisualBoxTextFormatSnapshot,
+): TextFormatStyleSnapshot {
+  return { ...effective };
+}
+
+function resolveVisualBoxBlockFormatTarget(
+  block: Extract<ComunicadoBlock, { type: "heading" | "text" | "shape" }>,
+): SelectedTextFormatTarget {
+  const effective = resolveVisualBoxEffectiveTextFormatSnapshot(block);
+  return {
+    mode: "block",
+    blockId: block.id,
+    blockType: block.type === "shape" ? "shape" : block.type,
+    style: snapshotFromEffectiveVisualBox(effective),
+    textAlign: effective.textAlign,
+    verticalAlign: effective.verticalAlign,
   };
 }
 
@@ -240,26 +263,11 @@ export function resolveSelectedTextFormatTarget(params: {
   if (!selected) return null;
 
   if (selected.type === "heading" || selected.type === "text") {
-    const defaultsFont = selected.type === "heading" ? 56 : 28;
-    return {
-      mode: "block",
-      blockId: selected.id,
-      blockType: selected.type,
-      style: snapshotFromPartStyle(selected.style, selected.style?.fontSize ?? defaultsFont),
-      textAlign: selected.style?.textAlign,
-      verticalAlign: selected.style?.verticalAlign,
-    };
+    return resolveVisualBoxBlockFormatTarget(selected);
   }
 
   if (selected.type === "shape") {
-    return {
-      mode: "block",
-      blockId: selected.id,
-      blockType: "shape",
-      style: snapshotFromPartStyle(selected.style, selected.style?.fontSize ?? 18),
-      textAlign: selected.style?.textAlign,
-      verticalAlign: selected.style?.verticalAlign,
-    };
+    return resolveVisualBoxBlockFormatTarget(selected);
   }
 
   if (selected.type === "kpi_view") {

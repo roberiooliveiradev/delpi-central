@@ -63,6 +63,59 @@ class Settings:
         str(_get_env("CIPA_PORTAL_NOTIFICATIONS_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    CIPA_MAIL_ENABLED: bool = (
+        str(_get_env("CIPA_MAIL_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    CIPA_GRAPH_TENANT_ID: str = _get_env(
+        "CIPA_GRAPH_TENANT_ID",
+        "GRAPH_REPORTS_TENANT_ID",
+        "GRAPH_TENANT_ID",
+        default="",
+    )
+    CIPA_GRAPH_CLIENT_ID: str = _get_env(
+        "CIPA_GRAPH_CLIENT_ID",
+        "GRAPH_REPORTS_CLIENT_ID",
+        "GRAPH_CLIENT_ID",
+        default="",
+    )
+    CIPA_GRAPH_CLIENT_SECRET: str = _get_env(
+        "CIPA_GRAPH_CLIENT_SECRET",
+        "GRAPH_REPORTS_CLIENT_SECRET",
+        "GRAPH_CLIENT_SECRET",
+        default="",
+    )
+    CIPA_GRAPH_MAIL_SENDER: str = _get_env(
+        "CIPA_GRAPH_MAIL_SENDER",
+        "GRAPH_REPORTS_MAIL_SENDER",
+        "GRAPH_MAIL_SENDER",
+        default="minhadelpi@delpi.com.br",
+    )
+    CIPA_GRAPH_HTTP_TIMEOUT_SECONDS: str = _get_env(
+        "CIPA_GRAPH_HTTP_TIMEOUT_SECONDS",
+        "GRAPH_HTTP_TIMEOUT_SECONDS",
+        default="15",
+    )
+    CIPA_ATA_SIGN_INVITE_TTL_DAYS: int = int(
+        _get_env("CIPA_ATA_SIGN_INVITE_TTL_DAYS", default="30") or "30"
+    )
+    CIPA_PUBLIC_SIGN_PATH: str = _get_env(
+        "CIPA_PUBLIC_SIGN_PATH", default="/p/cipa/sign"
+    )
+    CIPA_SIGN_INVITE_MAIL_TRACE_ENABLED: bool = (
+        str(
+            _get_env("CIPA_SIGN_INVITE_MAIL_TRACE_ENABLED", default="false") or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    CIPA_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES: str = _get_env(
+        "CIPA_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES",
+        default="15",
+    )
+    CIPA_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT: str = _get_env(
+        "CIPA_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT",
+        default="50",
+    )
     CIPA_SIPAT_QR_DIR: str = _get_env(
         "CIPA_SIPAT_QR_DIR", default="/app/data/cipa/sipat-qr"
     )

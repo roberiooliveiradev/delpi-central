@@ -107,7 +107,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
     () => {
       const dateOpts = { dateStart, dateEnd };
       const cpvRolGoal = buildKpiGoalPresentationWithBranchIdd(
-        `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
+        `ROL ${formatCurrency(cpv?.summary.rol)}`,
         cpv?.summary,
         {
           realizedValue: cpv?.summary.cpv_percentage,
@@ -316,7 +316,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             cpv?.summary,
           )}
           {...buildKpiGoalPresentationWithBranchIdd(
-            `ROL ${formatCurrency(cpv?.summary.rol_with_ipi)}`,
+            `ROL ${formatCurrency(cpv?.summary.rol)}`,
             cpv?.summary,
             {
               realizedValue: cpv?.summary.cpv_percentage,

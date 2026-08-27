@@ -69,12 +69,23 @@ async def lifespan(_app: FastAPI):
     loop = asyncio.get_running_loop()
     transformometro_realtime_hub.bind_loop(loop)
     worker = asyncio.create_task(transformometro_realtime_hub.worker())
+    trace_poller = None
+    if settings.TM_SIGN_INVITE_MAIL_TRACE_ENABLED:
+        from tm_app.startup.sign_invite_mail_trace_job import (
+            run_sign_invite_mail_trace_loop,
+        )
+
+        trace_poller = asyncio.create_task(run_sign_invite_mail_trace_loop())
     try:
         yield
     finally:
         worker.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await worker
+        if trace_poller is not None:
+            trace_poller.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await trace_poller
         from tm_app.infrastructure.providers.database.plugins_postgres_connection import (
             close_plugins_connection,
         )

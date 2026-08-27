@@ -1,7 +1,12 @@
 import type { CSSProperties } from "react";
 import { fillToCssBackground } from "@delpi/plugin-ui/index";
 
-import type { ComunicadoBackground } from "./comunicadoTypes";
+import type { ComunicadoBackground, ComunicadoBackgroundUnderlay } from "./comunicadoTypes";
+
+export const DEFAULT_IMAGE_BACKGROUND_UNDERLAY: ComunicadoBackgroundUnderlay = {
+  type: "color",
+  value: "#ffffff",
+};
 
 /** URL persistida/enriquecida da imagem de fundo do slide. */
 export function comunicadoBackgroundImageUrl(
@@ -16,6 +21,46 @@ export function comunicadoBackgroundImageUrl(
 
 function cssUrl(url: string): string {
   return `url(${JSON.stringify(url)})`;
+}
+
+function underlayCssProperties(underlay: ComunicadoBackgroundUnderlay): CSSProperties {
+  if (underlay.type === "gradient") {
+    const stops =
+      underlay.stops && underlay.stops.length >= 2
+        ? underlay.stops
+        : [
+            { color: underlay.from, position: 0 },
+            { color: underlay.to, position: 100 },
+          ];
+    return {
+      backgroundImage: fillToCssBackground({
+        kind: "gradient",
+        angle: underlay.angle ?? 180,
+        stops,
+      }),
+    };
+  }
+  return { backgroundColor: underlay.value || "#ffffff" };
+}
+
+/** Underlay efetivo: explícito em image ou o próprio background color/gradient. */
+export function resolveComunicadoBackgroundUnderlay(
+  background: ComunicadoBackground | undefined,
+): ComunicadoBackgroundUnderlay {
+  if (!background) return DEFAULT_IMAGE_BACKGROUND_UNDERLAY;
+  if (background.type === "image") {
+    return background.underlay ?? DEFAULT_IMAGE_BACKGROUND_UNDERLAY;
+  }
+  if (background.type === "gradient") {
+    return {
+      type: "gradient",
+      from: background.from,
+      to: background.to,
+      angle: background.angle ?? 180,
+      ...(background.stops && background.stops.length >= 2 ? { stops: background.stops } : {}),
+    };
+  }
+  return { type: "color", value: background.value || "#ffffff" };
 }
 
 /**
@@ -33,7 +78,7 @@ export function comunicadoBackgroundCssProperties(
 
   if (bg.type === "image" && resolvedImage) {
     return {
-      backgroundColor: "#ffffff",
+      ...underlayCssProperties(resolveComunicadoBackgroundUnderlay(bg)),
       backgroundImage: cssUrl(resolvedImage),
       backgroundSize: "cover",
       backgroundPosition: "center center",
@@ -41,36 +86,16 @@ export function comunicadoBackgroundCssProperties(
     };
   }
 
-  if (bg.type === "gradient") {
-    const stops =
-      bg.stops && bg.stops.length >= 2
-        ? bg.stops
-        : [
-            { color: bg.from, position: 0 },
-            { color: bg.to, position: 100 },
-          ];
-    return {
-      backgroundImage: fillToCssBackground({
-        kind: "gradient",
-        angle: bg.angle ?? 180,
-        stops,
-      }),
-    };
+  if (bg.type === "image") {
+    return underlayCssProperties(resolveComunicadoBackgroundUnderlay(bg));
   }
 
-  if (bg.type === "color") {
-    return { backgroundColor: bg.value || "#ffffff" };
-  }
-
-  return { backgroundColor: "#ffffff" };
+  return underlayCssProperties(resolveComunicadoBackgroundUnderlay(bg));
 }
 
 /** Cor/gradiente no root; imagem fica só na camada cover (evita crop duplo). */
 export function comunicadoBackgroundRootStyle(
   background: ComunicadoBackground | undefined,
 ): CSSProperties {
-  if (background?.type === "image") {
-    return { backgroundColor: "#ffffff" };
-  }
-  return comunicadoBackgroundCssProperties(background);
+  return underlayCssProperties(resolveComunicadoBackgroundUnderlay(background));
 }

@@ -16,6 +16,9 @@ from app.application.use_cases.commercial.get_commercial_rol_by_customer_use_cas
 from app.application.use_cases.commercial.get_commercial_rol_series_use_case import (
     GetCommercialRolSeriesUseCase,
 )
+from app.application.use_cases.commercial.commercial_analysis_payload_helpers import (
+    branch_breakdown_rows,
+)
 from app.domain.entities.commercial.weekly_portfolio import (
     WeeklyPortfolioBranchTotals,
     WeeklyPortfolioSnapshot,
@@ -96,6 +99,10 @@ class GetCommercialRolAnalysisUseCase:
             payload["pagination"] = pagination
         if request.include_portfolio:
             payload["portfolio"] = self._build_portfolio(request).to_dict()
+        if request.group_by == "branch":
+            payload["by_branch"] = branch_breakdown_rows(
+                (summary or {}).get("by_branch") if isinstance(summary, dict) else None
+            )
         return payload
 
     def _filter_kwargs(self, request: CommercialAnalysisFilterRequest) -> dict[str, Any]:
@@ -110,7 +117,6 @@ class GetCommercialRolAnalysisUseCase:
     def _rol_metrics(self, rol: dict[str, Any]) -> dict[str, float]:
         return {
             "rol": round(float(rol.get("rol") or 0), 2),
-            "rol_with_ipi": round(float(rol.get("rol_with_ipi") or 0), 2),
             "gross_revenue": round(float(rol.get("gross_revenue") or 0), 2),
             "returns": round(float(rol.get("returns") or 0), 2),
             "discounts": round(float(rol.get("discounts") or 0), 2),
@@ -166,7 +172,6 @@ class GetCommercialRolAnalysisUseCase:
             "customer_segment": request.customer_segment,
             "totals": totals,
             "by_branch": by_branch,
-            **totals,
         }
 
     def _build_series(
@@ -186,22 +191,22 @@ class GetCommercialRolAnalysisUseCase:
         points: list[dict[str, Any]] = []
         for point in response.points:
             if request.branch == HEAD_OFFICE_BRANCH:
-                branch_01 = {"rol_with_ipi": point.rol_matrix}
-                branch_02 = {"rol_with_ipi": None}
+                rol_filial_01 = point.rol_matrix
+                rol_filial_02 = None
             elif request.branch == BRANCH_OFFICE_BRANCH:
-                branch_01 = {"rol_with_ipi": None}
-                branch_02 = {"rol_with_ipi": point.rol_branch}
+                rol_filial_01 = None
+                rol_filial_02 = point.rol_branch
             else:
-                branch_01 = {"rol_with_ipi": point.rol_matrix}
-                branch_02 = {"rol_with_ipi": point.rol_branch}
+                rol_filial_01 = point.rol_matrix
+                rol_filial_02 = point.rol_branch
             points.append(
                 {
                     "period_label": point.periodo,
                     "sort_key": point.sort_key,
                     "start_date": point.start_date,
                     "end_date": point.end_date,
-                    "branch_01": branch_01,
-                    "branch_02": branch_02,
+                    "rol_filial_01": rol_filial_01,
+                    "rol_filial_02": rol_filial_02,
                 }
             )
         return points
@@ -248,7 +253,7 @@ class GetCommercialRolAnalysisUseCase:
                 "customer_store": item.customer_store,
                 "customer_name": item.customer_name,
                 "branch": result.branch,
-                "rol_with_ipi": item.rol_with_ipi,
+                "rol": item.rol,
                 "share_pct": item.share_pct,
                 "rank": item.rank,
             }
@@ -298,7 +303,7 @@ class GetCommercialRolAnalysisUseCase:
                     **filters,
                 )
             )
-            realized_value = round(float(realized.get("rol_with_ipi") or 0), 2)
+            realized_value = round(float(realized.get("rol") or 0), 2)
             previous_totals.append(
                 WeeklyPortfolioBranchTotals(
                     branch=branch or "",

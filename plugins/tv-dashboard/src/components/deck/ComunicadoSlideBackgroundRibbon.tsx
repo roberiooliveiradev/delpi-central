@@ -1,5 +1,6 @@
 import { Upload, ImageOff } from "lucide-react";
 import { solidFromFill } from "@delpi/plugin-ui/index";
+import { removeBackgroundImage } from "@delpi/tv-dashboard-presentation";
 
 import type { Slide } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -8,7 +9,6 @@ import { isCustomMessageSlide } from "../../utils/applySlideBatchPatch";
 import {
   TV_ALLOWED_FILL_KINDS,
   backgroundToFill,
-  fillToBackground,
   shouldApplyBackgroundSolidHex,
 } from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -38,8 +38,9 @@ export function ComunicadoSlideBackgroundRibbon({
     uploading,
     background,
     playlistId,
-    triggerUpload,
+    openMediaLibrary,
     setBackgroundColor,
+    setBackgroundFill,
     setBackground,
   } = useComunicadoEditor();
   const customCount = (selectedSlides ?? []).filter(isCustomMessageSlide).length;
@@ -73,7 +74,7 @@ export function ComunicadoSlideBackgroundRibbon({
             if (!shouldApplyBackgroundSolidHex(background)) return;
             setBackgroundColor(color);
           }}
-          onFillChange={(next) => setBackground(fillToBackground(next))}
+          onFillChange={(next) => setBackgroundFill(next)}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
         />
         <DeckRibbonTile
@@ -81,7 +82,7 @@ export function ComunicadoSlideBackgroundRibbon({
           label={labels.comunicadoUpload ?? "Enviar"}
           hint={E.uploadBackground}
           disabled={uploading}
-          onClick={() => triggerUpload("background")}
+          onClick={() => openMediaLibrary("background")}
         />
         {background?.type === "image" ? (
           <>
@@ -105,7 +106,7 @@ export function ComunicadoSlideBackgroundRibbon({
               icon={ImageOff}
               label="Remover"
               hint={E.clearBackground}
-              onClick={() => setBackgroundColor("#ffffff")}
+              onClick={() => setBackground(removeBackgroundImage(background))}
             />
           </>
         ) : null}

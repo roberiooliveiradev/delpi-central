@@ -26,7 +26,7 @@ def _request(
     )
 
 
-def test_scrap_cost_pct_uses_rol_with_ipi() -> None:
+def test_scrap_cost_pct_uses_rol() -> None:
     refugos_repo = MagicMock()
     refugos_repo.get_resumo.return_value = {
         "total_valor": 2500.0,
@@ -37,7 +37,7 @@ def test_scrap_cost_pct_uses_rol_with_ipi() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 90_000.0,
-        "rol_with_ipi": 100_000.0,
+        "rol": 100_000.0,
         "gross_revenue": 120_000.0,
         "returns": 5_000.0,
         "discounts": 5_000.0,
@@ -49,7 +49,7 @@ def test_scrap_cost_pct_uses_rol_with_ipi() -> None:
     )
 
     assert result["scrap_cost"] == 2500.0
-    assert result["rol_with_ipi"] == 100_000.0
+    assert result["rol"] == 100_000.0
     assert result["scrap_cost_pct"] == 2.5
     assert result["summary"]["scrap_cost_pct"] == 2.5
     assert result["branch"] == "01"
@@ -72,7 +72,6 @@ def test_scrap_cost_pct_null_when_rol_is_zero() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 0.0,
-        "rol_with_ipi": 0.0,
         "gross_revenue": 0.0,
         "returns": 0.0,
         "discounts": 0.0,
@@ -98,7 +97,6 @@ def test_consolidated_when_filial_omitted() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 200_000.0,
-        "rol_with_ipi": 200_000.0,
         "gross_revenue": 200_000.0,
         "returns": 0.0,
         "discounts": 0.0,
@@ -134,7 +132,6 @@ def test_optional_mp_filter_forwarded_to_refugos_repository() -> None:
     financial_repo = MagicMock()
     financial_repo.get_rol.return_value = {
         "rol": 1000.0,
-        "rol_with_ipi": 1000.0,
         "gross_revenue": 1000.0,
         "returns": 0.0,
         "discounts": 0.0,

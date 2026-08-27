@@ -1483,10 +1483,8 @@ function EditorCanvasTableBlock({
   isSelected?: boolean;
 }) {
   const { updateBlock, selectedCanvasTableCell, selectCanvasTableCell } = useComunicadoEditor();
-  const selectedCell =
-    selectedCanvasTableCell?.blockId === block.id
-      ? { row: selectedCanvasTableCell.row, col: selectedCanvasTableCell.col }
-      : null;
+  const cellSelection =
+    selectedCanvasTableCell?.blockId === block.id ? selectedCanvasTableCell : null;
   const blockSelected =
     resolveCanvasTableCellPointerAction({ blockSelected: isSelected }) === "select-cell";
 
@@ -1498,9 +1496,16 @@ function EditorCanvasTableBlock({
       embedded
       className={className}
       canvasTableInteraction={{
-        selectedCell,
+        selectedCells: cellSelection?.cells ?? [],
         blockSelected,
-        onSelectCell: (cell) => selectCanvasTableCell(block.id, cell),
+        onSelectCell: ({ cell, additive, range }) =>
+          selectCanvasTableCell(block.id, {
+            cell,
+            additive,
+            range,
+            rowCount: block.rows,
+            colCount: block.cols,
+          }),
         onCellCommit: (row, col, cell: CanvasTableCell) => {
           const cells = block.cells.map((currentRow) =>
             currentRow.map((item) => normalizeCanvasTableCell(item)),

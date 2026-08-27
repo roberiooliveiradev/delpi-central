@@ -6,7 +6,22 @@ from tv_app.infrastructure.gateways.delpi_operational_gateway import _build_quer
 
 
 
-def test_apply_defaults_never_injects_period_days():
+def test_apply_defaults_uses_route_default_params_for_optional_group_by():
+    route = {
+        "paramSchema": {
+            "group_by": {
+                "type": "string",
+                "optional": True,
+                "default": "customer",
+                "enum": ["none", "customer", "branch"],
+            }
+        },
+        "defaultParams": {"group_by": "customer"},
+    }
+    merged = apply_catalog_param_defaults({}, route)
+    assert merged["group_by"] == "customer"
+    merged_none = apply_catalog_param_defaults({"group_by": "none"}, route)
+    assert merged_none["group_by"] == "none"
     """Sem datas/preset → não inventa periodDays (histórico completo)."""
     route = {
         "paramSchema": {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { singleCanvasTableCellSelection } from "./canvasTableCellSelection";
 import {
   applyDisplayFormatSpecToBlock,
   resolveCurrentDisplayFormatSpec,
@@ -250,14 +251,14 @@ describe("displayFormatSelection", () => {
     expect(
       resolveCurrentDisplayFormatSpec({
         selected: canvas,
-        selectedCanvasTableCell: { blockId: "g1", row: 0, col: 0 },
+        selectedCanvasTableCell: singleCanvasTableCellSelection("g1", 0, 0),
       }).category,
     ).toBe("percent");
 
     const patch = applyDisplayFormatSpecToBlock(
       {
         selected: canvas,
-        selectedCanvasTableCell: { blockId: "g1", row: 0, col: 0 },
+        selectedCanvasTableCell: singleCanvasTableCellSelection("g1", 0, 0),
       },
       { category: "currency", presetId: "currency-brl", currency: "BRL", decimalPlaces: 2 },
     );

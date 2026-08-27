@@ -258,7 +258,7 @@ class CommercialRolByCustomerRepository(
                 customer_code=str(row.get("COD_CLIENTE") or "").strip(),
                 customer_store=str(row.get("LOJA") or "").strip(),
                 customer_name=str(row.get("NOME_CLIENTE") or "").strip(),
-                rol_with_ipi=float(row.get("ROL_CLIENTE") or 0),
+                rol=float(row.get("ROL_CLIENTE") or 0),
                 share_pct=_share(float(row.get("ROL_CLIENTE") or 0)),
                 rank=int(row.get("RNK") or 0),
             )
@@ -272,7 +272,7 @@ class CommercialRolByCustomerRepository(
                 customer_code="",
                 customer_store="",
                 customer_name="Demais",
-                rol_with_ipi=others_value,
+                rol=others_value,
                 share_pct=_share(others_value),
                 rank=limit + 1,
             )

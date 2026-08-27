@@ -41,6 +41,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { ComunicadoCanvasTableCellSelection } from "../components/comunicadoEditorContextCore";
+import { primaryCanvasTableCellRef } from "./canvasTableCellSelection";
 
 export type DisplayFormatTextEditSelection = {
   blockId: string;
@@ -379,27 +380,29 @@ export function applyDisplayFormatSpecToBlock(
   }
 
   if (selected.type === "canvas_table") {
-    const cellRef = ctx.selectedCanvasTableCell;
-    if (!cellRef) return null;
+    const selection = ctx.selectedCanvasTableCell;
+    if (!selection || selection.blockId !== selected.id || !selection.cells.length) return null;
     const cells = selected.cells.map((row) => row.map((cell) => ({ ...cell })));
-    const cell = cells[cellRef.row]?.[cellRef.col];
-    if (!cell) return null;
-    if (cell.dataRef?.field?.trim()) {
-      const textPatch = textPatchFromSpec(spec);
-      const nextRef: ComunicadoTextDataRef = {
-        ...cell.dataRef,
-        displayFormat: textPatch.displayFormat,
-        format: textPatch.format,
-      };
-      if (typeof textPatch.decimalPlaces === "number") {
-        nextRef.decimalPlaces = textPatch.decimalPlaces;
+    for (const { row, col } of selection.cells) {
+      const cell = cells[row]?.[col];
+      if (!cell) continue;
+      if (cell.dataRef?.field?.trim()) {
+        const textPatch = textPatchFromSpec(spec);
+        const nextRef: ComunicadoTextDataRef = {
+          ...cell.dataRef,
+          displayFormat: textPatch.displayFormat,
+          format: textPatch.format,
+        };
+        if (typeof textPatch.decimalPlaces === "number") {
+          nextRef.decimalPlaces = textPatch.decimalPlaces;
+        } else {
+          delete nextRef.decimalPlaces;
+        }
+        cell.dataRef = nextRef;
+        Object.assign(cell, canvasCellPatchFromSpec(spec));
       } else {
-        delete nextRef.decimalPlaces;
+        Object.assign(cell, canvasCellPatchFromSpec(spec));
       }
-      cell.dataRef = nextRef;
-      Object.assign(cell, canvasCellPatchFromSpec(spec));
-    } else {
-      Object.assign(cell, canvasCellPatchFromSpec(spec));
     }
     return { cells } as Partial<ComunicadoCanvasTableBlock>;
   }
@@ -446,6 +449,9 @@ function resolveSelectedCanvasCell(
   block: ComunicadoCanvasTableBlock,
   ref?: ComunicadoCanvasTableCellSelection | null,
 ) {
-  if (!ref || (ref.blockId && ref.blockId !== block.id)) return block.cells[0]?.[0];
-  return block.cells[ref.row]?.[ref.col];
+  const primary = primaryCanvasTableCellRef(
+    ref && (!ref.blockId || ref.blockId === block.id) ? ref : null,
+  );
+  if (!primary) return block.cells[0]?.[0];
+  return block.cells[primary.row]?.[primary.col];
 }

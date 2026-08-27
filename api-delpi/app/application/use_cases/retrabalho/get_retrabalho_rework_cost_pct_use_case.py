@@ -47,10 +47,9 @@ class GetRetrabalhoReworkCostPctUseCase:
 
         rework_cost = round_cost(row.get("total_custo"))
         total_hours = round_hours(row.get("total_horas"))
-        rol_with_ipi = round_cost(rol_data.get("rol_with_ipi"))
         rol = round_cost(rol_data.get("rol"))
         rework_cost_pct = (
-            round((rework_cost / rol_with_ipi) * 100, 4) if rol_with_ipi > 0 else None
+            round((rework_cost / rol) * 100, 4) if rol > 0 else None
         )
         average_cost_per_hour = (
             round(rework_cost / total_hours, 2) if total_hours > 0 else 0.0
@@ -66,7 +65,6 @@ class GetRetrabalhoReworkCostPctUseCase:
             "average_cost_per_hour": average_cost_per_hour,
             "records_without_cost": as_int(row.get("registros_sem_custo")),
             "rol": rol,
-            "rol_with_ipi": rol_with_ipi,
             "rework_cost_pct": rework_cost_pct,
             "filters_applied": {
                 "recurso": request.recurso,
@@ -78,7 +76,6 @@ class GetRetrabalhoReworkCostPctUseCase:
                 "returns": round_cost(rol_data.get("returns")),
                 "discounts": round_cost(rol_data.get("discounts")),
                 "rol": rol,
-                "rol_with_ipi": rol_with_ipi,
                 "ipi_separated": round_cost(rol_data.get("ipi_separated")),
             },
             "summary": {
@@ -87,7 +84,7 @@ class GetRetrabalhoReworkCostPctUseCase:
                 "consolidated_across_branches": consolidated,
                 "period": {"start": start_iso, "end": end_iso},
                 "rework_cost": rework_cost,
-                "rol_with_ipi": rol_with_ipi,
+                "rol": rol,
                 "rework_cost_pct": rework_cost_pct,
                 "is_complete": True,
             },

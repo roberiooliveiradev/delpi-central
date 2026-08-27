@@ -48,6 +48,22 @@ FIELD_KEY_LABELS: dict[str, str] = {
     "total_valor": "Total valor",
     "registros_sem_custo": "Registros sem custo",
     "ocorrencias": "Ocorrências",
+    "period_label": "Período",
+    "sort_key": "Chave de ordenação",
+    "start_date": "Data início",
+    "end_date": "Data fim",
+    "total_qty": "Quantidade total",
+    "fulfilled_qty": "Quantidade atendida",
+    "fulfillment_pct": "% atendimento",
+    "otd_pct": "OTD (%)",
+    "otd_pct_filial_01": "OTD filial 01",
+    "otd_pct_filial_02": "OTD filial 02",
+    "fulfillment_pct_filial_01": "% atendimento filial 01",
+    "fulfillment_pct_filial_02": "% atendimento filial 02",
+    "total_qty_filial_01": "Quantidade filial 01",
+    "total_qty_filial_02": "Quantidade filial 02",
+    "rol_filial_01": "ROL filial 01",
+    "rol_filial_02": "ROL filial 02",
 }
 
 FIELD_TOKEN_LABELS: dict[str, str] = {

@@ -13,7 +13,7 @@ def test_get_rol_applies_weg_segment_to_sales_and_returns() -> None:
     def fake_execute_one(sql, params):
         captured["sql"] = sql
         captured["params"] = params
-        return {"rol_with_ipi": 100.0}
+        return {"rol": 100.0}
 
     with patch.object(FinancialRepository, "__enter__", return_value=repository):
         with patch.object(FinancialRepository, "__exit__", return_value=False):
@@ -31,7 +31,7 @@ def test_get_rol_applies_weg_segment_to_sales_and_returns() -> None:
     assert "D2.D2_CLIENTE" in sql
     assert "D1.D1_FORNECE" in sql
     assert "000001" in sql
-    assert result["rol_with_ipi"] == 100.0
+    assert result["rol"] == 100.0
 
 
 def test_get_rol_without_segment_omits_weg_predicate() -> None:
@@ -40,7 +40,7 @@ def test_get_rol_without_segment_omits_weg_predicate() -> None:
 
     def fake_execute_one(sql, params):
         captured["sql"] = sql
-        return {"rol_with_ipi": 0.0}
+        return {"rol": 0.0}
 
     with patch.object(FinancialRepository, "__enter__", return_value=repository):
         with patch.object(FinancialRepository, "__exit__", return_value=False):

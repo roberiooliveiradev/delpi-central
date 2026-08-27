@@ -383,6 +383,76 @@
         }
       }
     },
+    "customer_codes": {
+      "locale": {
+        "en": {
+          "label": "Customer codes",
+          "description": "Comma-separated TOTVS customer codes to include (portfolio filter)."
+        },
+        "pt-BR": {
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        }
+      }
+    },
+    "customer_names": {
+      "locale": {
+        "en": {
+          "label": "Customer names (include)",
+          "description": "Comma-separated customer names to include (partial match, LIKE)."
+        },
+        "pt-BR": {
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        }
+      }
+    },
+    "exclude_customer_codes": {
+      "locale": {
+        "en": {
+          "label": "Exclude customer codes",
+          "description": "Comma-separated TOTVS customer codes to exclude from the result."
+        },
+        "pt-BR": {
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        }
+      }
+    },
+    "exclude_customer_names": {
+      "locale": {
+        "en": {
+          "label": "Exclude customer names",
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE)."
+        },
+        "pt-BR": {
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        }
+      }
+    },
+    "include": {
+      "locale": {
+        "en": {
+          "label": "Include sections",
+          "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders)."
+        },
+        "pt-BR": {
+          "label": "Seções opcionais",
+          "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal)."
+        }
+      },
+      "enumLabels": {
+        "portfolio": {
+          "en": {
+            "label": "Portfolio"
+          },
+          "pt-BR": {
+            "label": "Carteira semanal"
+          }
+        }
+      }
+    },
     "customer_name": {
       "locale": {
         "en": {
@@ -1228,7 +1298,7 @@
       "locale": {
         "en": {
           "label": "Group by",
-          "description": "Como agregar o resultado (geral, branch, product etc.)."
+          "description": "Breakdown mode: none, customer or branch."
         },
         "pt-BR": {
           "label": "Agrupar por",

@@ -252,4 +252,20 @@ describe("selectedTextFormatTarget", () => {
       expect(target.style.fontSize).toBe(12);
     }
   });
+
+  it("resolve bloco text com namedStyle subtitle → fontSize efetivo 36", () => {
+    const block = {
+      id: "t-sub",
+      type: "text",
+      frame: { x: 0, y: 0, w: 20, h: 10 },
+      content: "Subtítulo",
+      style: { fontSize: 28, color: "#fff" },
+      contentRuns: [{ text: "Subtítulo", style: { namedStyle: "subtitle" } }],
+    } as ComunicadoBlock;
+    const target = resolveSelectedTextFormatTarget({ selected: block });
+    expect(target?.mode).toBe("block");
+    if (target?.mode === "block") {
+      expect(target.style.fontSize).toBe(36);
+    }
+  });
 });

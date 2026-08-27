@@ -300,7 +300,7 @@ Isso comprovou que o `delpi-api-delpi` já consegue acessar o banco `portal_rh` 
 
 Conectar o departamento Financeiro ao Strategic Indicators usando uma fonte híbrida:
 - dados monetários e operacionais vindos de Google Sheets
-- `rol_with_ipi` vindo do módulo financeiro já existente no TOTVS
+- `rol` vindo do módulo financeiro já existente no TOTVS
 
 ## Premissas do Financeiro
 
@@ -349,17 +349,17 @@ As abas definidas para o Financeiro são:
 
 ### TOTVS / módulo financial
 O indicador usa como base de receita o campo:
-- `rol_with_ipi`
+- `rol`
 
 ## Regras de cálculo do Financeiro
 
 ### ROL base
 Foi confirmado que o ROL utilizado será:
-- `rol_with_ipi`
+- `rol`
 
 ### Fórmulas oficiais adotadas
-- **EBITDA / Receita Operacional** = `ebitida / rol_with_ipi`
-- **% Custos Fixos / Receita Operacional** = `custos_fixos / rol_with_ipi`
+- **EBITDA / Receita Operacional** = `ebitida / rol`
+- **% Custos Fixos / Receita Operacional** = `custos_fixos / rol`
 - **Prazo Médio de Recebimento (PMR)** = `prazo_medio_recebimento`
 
 ### Consolidação por filial
@@ -396,15 +396,15 @@ Foram definidos os seguintes componentes para o Financeiro:
 
 ### O que já está resolvido
 - pesos, metas e IDs oficiais do catálogo definidos
-- uso de `rol_with_ipi` confirmado
+- uso de `rol` confirmado
 - fórmulas dos 3 indicadores definidas
 - leitura de Google Sheets alinhada ao `GoogleSheetsClient`
 - consolidação por filial definida
 - provider e snapshot service desenhados
 
 ### Indicadores do Financeiro
-- `financial-ebitda` = `ebitida / rol_with_ipi`
-- `financial-fixed-cost` = `custos_fixos / rol_with_ipi`
+- `financial-ebitda` = `ebitida / rol`
+- `financial-fixed-cost` = `custos_fixos / rol`
 - `financial-pmr` = `prazo_medio_recebimento`
 
 # Padronização universal de datas de planilha
@@ -471,14 +471,14 @@ Com isso, Produção, Financeiro, Auditoria 5S e Kaizen passam a compartilhar a 
 
 A Produção já estava funcionando de forma semelhante ao Financeiro:
 - lê valores monetários da planilha
-- busca `rol_with_ipi`
+- busca `rol`
 - calcula os percentuais por filial
 - consolida matriz e filial por média no provider
 
 ### Indicadores já operando nesse modelo
-- `production-direct-labor` = custo mão de obra direta / `rol_with_ipi`
-- `production-costs` = custo de produção / `rol_with_ipi`
-- `production-depreciation` = depreciação / `rol_with_ipi`
+- `production-direct-labor` = custo mão de obra direta / `rol`
+- `production-costs` = custo de produção / `rol`
+- `production-depreciation` = depreciação / `rol`
 
 ### Fontes dos numeradores
 - `custo_mao_de_obra_direta`

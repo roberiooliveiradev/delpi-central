@@ -8,7 +8,9 @@ import {
   Grid3x3,
   Heading2,
   Minus,
+  MousePointer2,
   Rows3,
+  Settings2,
   Square,
   type LucideIcon,
 } from "lucide-react";
@@ -29,9 +31,14 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import {
+  primaryCanvasTableCellRef,
+  summarizeCanvasTableCellSelection,
+} from "../../utils/canvasTableCellSelection";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { DeckRibbonTilePopover } from "../deck/DeckRibbonTilePopover";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonSelect } from "../tdRibbonUi";
 import { SelectionPaneSection } from "./SelectionPaneSection";
@@ -123,12 +130,45 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
 
   const opts = mergeCanvasTableOptions(table.canvasTableOptions);
   const activePreset = resolveActiveCanvasTablePreset(opts);
-  const cellSel =
+  const cellSelection =
     selectedCanvasTableCell?.blockId === table.id ? selectedCanvasTableCell : null;
+  const primaryCellRef = primaryCanvasTableCellRef(cellSelection);
   const selectedCell =
-    cellSel != null
-      ? normalizeCanvasTableCell(table.cells[cellSel.row]?.[cellSel.col])
+    primaryCellRef != null
+      ? normalizeCanvasTableCell(table.cells[primaryCellRef.row]?.[primaryCellRef.col])
       : null;
+  const multiCell = (cellSelection?.cells.length ?? 0) > 1;
+
+  function patchSelectedCells(updater: (cell: CanvasTableCell) => CanvasTableCell) {
+    if (!cellSelection?.cells.length) return;
+    const cells = table.cells.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
+    for (const { row, col } of cellSelection.cells) {
+      const current = cells[row]?.[col];
+      if (current != null) {
+        cells[row]![col] = updater(normalizeCanvasTableCell(current));
+      }
+    }
+    updateBlock(table.id, { cells });
+  }
+
+  function patchSelectedCellsStyle(
+    stylePatch: NonNullable<CanvasTableCell["style"]>,
+  ) {
+    patchSelectedCells((cell) => ({
+      ...cell,
+      style: { ...(cell.style ?? {}), ...stylePatch },
+    }));
+  }
+
+  function resolveSharedCellTextAlign(): string {
+    if (!cellSelection?.cells.length) return "";
+    const aligns = cellSelection.cells.map(({ row, col }) => {
+      const cell = normalizeCanvasTableCell(table.cells[row]?.[col]);
+      return cell.style?.textAlign ?? "";
+    });
+    const first = aligns[0] ?? "";
+    return aligns.every((align) => align === first) ? first : "mixed";
+  }
 
   function patchOptions(patch: Partial<typeof opts>) {
     updateSelected({
@@ -149,103 +189,121 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
   }
 
   function patchSelectedCell(next: CanvasTableCell) {
-    if (!cellSel) return;
-    const cells = table.cells.map((row) =>
-      row.map((cell) => normalizeCanvasTableCell(cell)),
-    );
-    cells[cellSel.row]![cellSel.col] = next;
-    updateBlock(table.id, { cells });
+    if (!primaryCellRef) return;
+    patchSelectedCells(() => next);
   }
 
-  const structure = (
-    <>
-      <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
-        <label className="td-deck-ribbon__frame-field">
-          <span className="td-deck-ribbon__field-label">Linhas</span>
-          <ComboboxNumberControl
-            className="td-deck-ribbon__number-combobox"
-            compact
-            square={false}
-            min={1}
-            max={20}
-            value={table.rows}
-            options={ROW_PRESETS}
-            clamp={(value) => Math.max(1, Math.min(20, value))}
-            portalScopeClassName="dashboard-tv-dashboard"
-            aria-label="Linhas da Grade"
-            onChange={(value) => {
-              const rows = Math.max(1, Math.min(20, value));
-              updateSelected({
-                rows,
-                cells: normalizeCanvasTableCells(table.cells, rows, table.cols),
-              });
-            }}
-          />
-        </label>
-        <label className="td-deck-ribbon__frame-field">
-          <span className="td-deck-ribbon__field-label">Colunas</span>
-          <ComboboxNumberControl
-            className="td-deck-ribbon__number-combobox"
-            compact
-            square={false}
-            min={1}
-            max={12}
-            value={table.cols}
-            options={COL_PRESETS}
-            clamp={(value) => Math.max(1, Math.min(12, value))}
-            portalScopeClassName="dashboard-tv-dashboard"
-            aria-label="Colunas da Grade"
-            onChange={(value) => {
-              const cols = Math.max(1, Math.min(12, value));
-              updateSelected({
-                cols,
-                cells: normalizeCanvasTableCells(table.cells, table.rows, cols),
-              });
-            }}
-          />
-        </label>
-        <label className="td-deck-ribbon__frame-field">
-          <span className="td-deck-ribbon__field-label">Fonte (px)</span>
-          <ComboboxNumberControl
-            className="td-deck-ribbon__number-combobox"
-            compact
-            square={false}
-            min={8}
-            max={96}
-            value={opts.fontSize}
-            options={FONT_SIZE_PRESETS}
-            clamp={(value) => Math.max(8, Math.min(96, value))}
-            portalScopeClassName="dashboard-tv-dashboard"
-            aria-label="Tamanho da fonte da Grade"
-            onChange={(fontSize) => {
-              updateSelected({
-                canvasTableOptions: {
-                  ...(table.canvasTableOptions ?? {}),
-                  fontSize,
-                },
-                style: { ...(table.style ?? {}), fontSize },
-              });
-            }}
-          />
-        </label>
-      </div>
-      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-        <DeckRibbonTile
-          icon={Heading2}
-          label="Cabeçalho"
-          hint="Usa a primeira linha como cabeçalho da Grade."
-          active={Boolean(table.headerRow)}
-          onClick={() => updateSelected({ headerRow: !table.headerRow })}
+  const structureFields = (
+    <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
+      <label className="td-deck-ribbon__frame-field">
+        <span className="td-deck-ribbon__field-label">Linhas</span>
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
+          min={1}
+          max={20}
+          value={table.rows}
+          options={ROW_PRESETS}
+          clamp={(value) => Math.max(1, Math.min(20, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Linhas da Grade"
+          onChange={(value) => {
+            const rows = Math.max(1, Math.min(20, value));
+            updateSelected({
+              rows,
+              cells: normalizeCanvasTableCells(table.cells, rows, table.cols),
+            });
+          }}
         />
-        <DeckRibbonTile
-          icon={Database}
-          label="Dados"
-          hint={H.openDataPanel}
-          onClick={() => openDataPanel()}
+      </label>
+      <label className="td-deck-ribbon__frame-field">
+        <span className="td-deck-ribbon__field-label">Colunas</span>
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
+          min={1}
+          max={12}
+          value={table.cols}
+          options={COL_PRESETS}
+          clamp={(value) => Math.max(1, Math.min(12, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Colunas da Grade"
+          onChange={(value) => {
+            const cols = Math.max(1, Math.min(12, value));
+            updateSelected({
+              cols,
+              cells: normalizeCanvasTableCells(table.cells, table.rows, cols),
+            });
+          }}
         />
-      </div>
-    </>
+      </label>
+      <label className="td-deck-ribbon__frame-field">
+        <span className="td-deck-ribbon__field-label">Fonte (px)</span>
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
+          min={8}
+          max={96}
+          value={opts.fontSize}
+          options={FONT_SIZE_PRESETS}
+          clamp={(value) => Math.max(8, Math.min(96, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Tamanho da fonte da Grade"
+          onChange={(fontSize) => {
+            updateSelected({
+              canvasTableOptions: {
+                ...(table.canvasTableOptions ?? {}),
+                fontSize,
+              },
+              style: { ...(table.style ?? {}), fontSize },
+            });
+          }}
+        />
+      </label>
+    </div>
   );
+
+  const structureTiles = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      {layout === "ribbon" ? (
+        <DeckRibbonTilePopover
+          icon={Grid3x3}
+          label="Estrutura"
+          hint="Linhas, colunas e tamanho da fonte da Grade."
+          panelLabel="Linhas, colunas e fonte"
+          panelClassName="td-deck-ribbon-tile-popover--wide"
+        >
+          {structureFields}
+        </DeckRibbonTilePopover>
+      ) : null}
+      <DeckRibbonTile
+        icon={Heading2}
+        label="Cabeçalho"
+        hint="Usa a primeira linha como cabeçalho da Grade."
+        active={Boolean(table.headerRow)}
+        onClick={() => updateSelected({ headerRow: !table.headerRow })}
+      />
+      <DeckRibbonTile
+        icon={Database}
+        label="Dados"
+        hint={H.openDataPanel}
+        onClick={() => openDataPanel()}
+      />
+    </div>
+  );
+
+  const structure =
+    layout === "pane" ? (
+      <>
+        {structureFields}
+        {structureTiles}
+      </>
+    ) : (
+      structureTiles
+    );
 
   const design = (
     <>
@@ -320,14 +378,11 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
     </>
   );
 
-  const cellAlign = selectedCell?.style?.textAlign ?? "";
+  const cellAlign = resolveSharedCellTextAlign();
 
-  const cellInspector =
-    cellSel && selectedCell ? (
+  const cellTypeFields =
+    !multiCell && selectedCell ? (
       <>
-        <p className="td-subtitle">
-          Célula {cellSel.row + 1}×{cellSel.col + 1}
-        </p>
         <div className="td-deck-ribbon__border-pen td-deck-ribbon__toolbar-row--dense">
           <label className="td-deck-ribbon__frame-field">
             <span className="td-deck-ribbon__field-label">Tipo</span>
@@ -398,82 +453,99 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
             />
           </label>
         ) : null}
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={AlignLeft}
-            label="Esquerda"
-            active={cellAlign === "left"}
-            onClick={() =>
-              patchSelectedCell({
-                ...selectedCell,
-                style: { ...(selectedCell.style ?? {}), textAlign: "left" },
-              })
-            }
-          />
-          <DeckRibbonTile
-            icon={AlignCenter}
-            label="Centro"
-            active={cellAlign === "center"}
-            onClick={() =>
-              patchSelectedCell({
-                ...selectedCell,
-                style: { ...(selectedCell.style ?? {}), textAlign: "center" },
-              })
-            }
-          />
-          <DeckRibbonTile
-            icon={AlignRight}
-            label="Direita"
-            active={cellAlign === "right"}
-            onClick={() =>
-              patchSelectedCell({
-                ...selectedCell,
-                style: { ...(selectedCell.style ?? {}), textAlign: "right" },
-              })
-            }
-          />
-        </div>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
-          <TvRibbonColorPicker
-            label="Texto"
-            variant="text"
-            showAutomatic
-            value={selectedCell.style?.color}
-            onChange={(color) =>
-              patchSelectedCell({
-                ...selectedCell,
-                style: { ...(selectedCell.style ?? {}), color },
-              })
-            }
-            onAutomatic={(color) =>
-              patchSelectedCell({
-                ...selectedCell,
-                style: { ...(selectedCell.style ?? {}), color },
-              })
-            }
-          />
-          <TvRibbonColorPicker
-            label="Fundo"
-            variant="fill"
-            showNoFill
-            value={selectedCell.style?.backgroundColor}
-            onChange={(color) =>
-              patchSelectedCell({
-                ...selectedCell,
-                style: { ...(selectedCell.style ?? {}), backgroundColor: color },
-              })
-            }
-            onNoFill={() =>
-              patchSelectedCell({
-                ...selectedCell,
-                style: { ...(selectedCell.style ?? {}), backgroundColor: undefined },
-              })
-            }
-          />
-        </div>
+      </>
+    ) : null;
+
+  const cellAlignTiles = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <DeckRibbonTile
+        icon={AlignLeft}
+        label="Esquerda"
+        active={cellAlign === "left"}
+        onClick={() => patchSelectedCellsStyle({ textAlign: "left" })}
+      />
+      <DeckRibbonTile
+        icon={AlignCenter}
+        label="Centro"
+        active={cellAlign === "center"}
+        onClick={() => patchSelectedCellsStyle({ textAlign: "center" })}
+      />
+      <DeckRibbonTile
+        icon={AlignRight}
+        label="Direita"
+        active={cellAlign === "right"}
+        onClick={() => patchSelectedCellsStyle({ textAlign: "right" })}
+      />
+    </div>
+  );
+
+  const cellColorPickers = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
+      <TvRibbonColorPicker
+        label="Texto"
+        variant="text"
+        showAutomatic
+        value={selectedCell?.style?.color}
+        onChange={(color) => patchSelectedCellsStyle({ color })}
+        onAutomatic={(color) => patchSelectedCellsStyle({ color })}
+      />
+      <TvRibbonColorPicker
+        label="Fundo"
+        variant="fill"
+        showNoFill
+        value={selectedCell?.style?.backgroundColor}
+        onChange={(color) => patchSelectedCellsStyle({ backgroundColor: color })}
+        onNoFill={() => patchSelectedCellsStyle({ backgroundColor: undefined })}
+      />
+    </div>
+  );
+
+  const cellRibbon =
+    cellSelection?.cells.length && selectedCell ? (
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-canvas-table-cell-ribbon">
+        {layout === "ribbon" && !multiCell ? (
+          <DeckRibbonTilePopover
+            icon={Settings2}
+            label="Tipo"
+            hint="Tipo de conteúdo da célula (texto, número ou sparkline)."
+            panelLabel="Tipo da célula"
+            panelClassName="td-deck-ribbon-tile-popover--wide"
+          >
+            {cellTypeFields}
+          </DeckRibbonTilePopover>
+        ) : null}
+        {cellAlignTiles}
+        {cellColorPickers}
+      </div>
+    ) : (
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+        <DeckRibbonTile
+          icon={MousePointer2}
+          label="Selecione"
+          hint="Clique nas células. Ctrl alterna; Shift seleciona intervalo."
+          disabled
+        />
+      </div>
+    );
+
+  const cellInspector =
+    layout === "pane" ? (
+      <>
+        <p className="td-subtitle">
+          {cellSelection?.cells.length
+            ? summarizeCanvasTableCellSelection(cellSelection)
+            : "Selecione células na Grade (Ctrl+clique para múltiplas; Shift+clique para intervalo)."}
+        </p>
+        {cellTypeFields}
+        {cellSelection?.cells.length ? (
+          <>
+            {cellAlignTiles}
+            {cellColorPickers}
+          </>
+        ) : null}
       </>
     ) : (
-      <p className="td-subtitle">Selecione uma célula na Grade para editar tipo e estilo.</p>
+      cellRibbon
     );
 
   return (
@@ -486,7 +558,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         "Célula",
         H.canvasTableCell,
         cellInspector,
-        Boolean(cellSel),
+        Boolean(cellSelection?.cells.length),
       )}
     </>
   );

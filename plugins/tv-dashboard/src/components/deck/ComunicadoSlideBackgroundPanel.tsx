@@ -1,12 +1,12 @@
-import { Upload, ImageOff } from "lucide-react";
+import { FolderOpen, Upload, ImageOff } from "lucide-react";
 import { HintAction, solidFromFill } from "@delpi/plugin-ui/index";
+import { removeBackgroundImage } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useAuthenticatedBlobUrl } from "../../hooks/useAuthenticatedBlobUrl";
 import {
   TV_ALLOWED_FILL_KINDS,
   backgroundToFill,
-  fillToBackground,
   shouldApplyBackgroundSolidHex,
 } from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -24,8 +24,10 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
     uploading,
     background,
     playlistId,
+    openMediaLibrary,
     triggerUpload,
     setBackgroundColor,
+    setBackgroundFill,
     setBackground,
   } = useComunicadoEditor();
   const imageApiUrl =
@@ -46,12 +48,22 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
             if (!shouldApplyBackgroundSolidHex(background)) return;
             setBackgroundColor(color);
           }}
-          onFillChange={(next) => setBackground(fillToBackground(next))}
+          onFillChange={(next) => setBackgroundFill(next)}
           allowedFillKinds={TV_ALLOWED_FILL_KINDS}
         />
       </DeckField>
 
       <div className="td-deck-inspector__actions">
+        <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: biblioteca de fundo">
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={() => openMediaLibrary("background")}
+          >
+            <FolderOpen size={15} aria-hidden="true" />
+            Biblioteca
+          </button>
+        </HintAction>
         <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: imagem de fundo">
           <button
             type="button"
@@ -65,7 +77,11 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
         </HintAction>
         {background?.type === "image" ? (
           <HintAction hint={E.clearBackground} ariaLabel="Ajuda: remover fundo">
-            <button type="button" className="td-btn td-btn--sm" onClick={() => setBackgroundColor("#ffffff")}>
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              onClick={() => setBackground(removeBackgroundImage(background))}
+            >
               <ImageOff size={15} aria-hidden="true" />
               Remover imagem
             </button>

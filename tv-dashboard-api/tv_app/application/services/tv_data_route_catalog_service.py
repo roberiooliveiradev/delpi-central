@@ -42,6 +42,7 @@ _RUNTIME_OVERLAY_KEYS = frozenset(
         "valueFieldTypes",
         "seriesField",
         "tableFields",
+        "tableFieldsByParam",
         "allowedDisplayModes",
         "label",
         "description",

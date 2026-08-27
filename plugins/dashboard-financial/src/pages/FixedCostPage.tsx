@@ -84,7 +84,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
         key: "rol",
         header: "ROL",
         className: "ds-table__col--numeric",
-        render: (row) => formatCurrency(row.rol_with_ipi),
+        render: (row) => formatCurrency(row.rol),
       },
       {
         key: "pct",
@@ -153,7 +153,7 @@ export function FixedCostPage({ pathname }: FixedCostPageProps) {
             title="Custos fixos"
             titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.fixedCostValue}
             value={formatCurrency(data.fixed_cost_value)}
-            subtitle={`ROL ${formatCurrency(data.rol_with_ipi)}`}
+            subtitle={`ROL ${formatCurrency(data.rol)}`}
             icon={<Landmark size={22} />}
             loading={isBusy}
           />

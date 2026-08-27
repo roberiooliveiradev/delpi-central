@@ -2,11 +2,16 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import * as httpClient from "../api/httpClient";
+import {
+  getAuthenticatedBlobUrlCacheSizeForTests,
+  resetAuthenticatedBlobUrlCacheForTests,
+} from "./authenticatedBlobUrlCache";
 import { useAuthenticatedBlobUrl } from "./useAuthenticatedBlobUrl";
 
 describe("useAuthenticatedBlobUrl", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    resetAuthenticatedBlobUrlCacheForTests();
   });
 
   it("marca loading assim que há apiUrl (evita placeholder vazio no 1º frame)", () => {
@@ -67,5 +72,26 @@ describe("useAuthenticatedBlobUrl", () => {
       expect(result.current.src).toBe("blob:second");
     });
     expect(getBlob).toHaveBeenCalledTimes(2);
+  });
+
+  it("segunda montagem com mesma URL reutiliza cache sem refetch", async () => {
+    const blob = new Blob(["x"], { type: "image/png" });
+    const getBlob = vi.spyOn(httpClient, "httpGetBlob").mockResolvedValue(blob);
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:cached");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+
+    const url = "/apps/tv-dashboard-api/playlists/p1/media/a1";
+    const { prefetchAuthenticatedBlobUrl } = await import("./authenticatedBlobUrlCache");
+    const releasePrefetch = prefetchAuthenticatedBlobUrl(url);
+
+    const { result } = renderHook(() => useAuthenticatedBlobUrl(url));
+
+    await waitFor(() => {
+      expect(result.current.src).toBe("blob:cached");
+      expect(getBlob).toHaveBeenCalledTimes(1);
+    });
+
+    releasePrefetch();
+    expect(getAuthenticatedBlobUrlCacheSizeForTests()).toBe(1);
   });
 });

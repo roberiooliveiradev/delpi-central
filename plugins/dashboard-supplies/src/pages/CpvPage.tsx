@@ -184,7 +184,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
             data?.summary,
           )}
           {...buildKpiGoalPresentation(
-            `ROL ${formatCurrency(data?.summary.rol_with_ipi)}`,
+            `ROL ${formatCurrency(data?.summary.rol)}`,
             data?.summary,
             undefined,
             {

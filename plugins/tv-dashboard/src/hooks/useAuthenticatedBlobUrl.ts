@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { httpGetBlob } from "../api/httpClient";
+import { acquireAuthenticatedBlobUrl, fetchAuthenticatedBlobUrl } from "./authenticatedBlobUrlCache";
 
 /** Carrega mídia protegida da API e expõe object URL para `<img>` / `<video>`. */
 export function useAuthenticatedBlobUrl(apiUrl: string | undefined): {
@@ -21,21 +21,26 @@ export function useAuthenticatedBlobUrl(apiUrl: string | undefined): {
     }
 
     let cancelled = false;
-    let objectUrl: string | undefined;
+    const reserved = acquireAuthenticatedBlobUrl(apiUrl);
+
+    if (reserved.blobUrl) {
+      setSrc(reserved.blobUrl);
+      setLoading(false);
+      setError(false);
+      return () => {
+        cancelled = true;
+        reserved.release();
+      };
+    }
+
     setLoading(true);
     setError(false);
     setSrc(undefined);
 
-    void httpGetBlob(apiUrl)
-      .then((blob) => {
+    void fetchAuthenticatedBlobUrl(apiUrl)
+      .then((blobUrl) => {
         if (cancelled) return;
-        const next = URL.createObjectURL(blob);
-        if (cancelled) {
-          URL.revokeObjectURL(next);
-          return;
-        }
-        objectUrl = next;
-        setSrc(next);
+        setSrc(blobUrl);
         setLoading(false);
       })
       .catch(() => {
@@ -46,7 +51,7 @@ export function useAuthenticatedBlobUrl(apiUrl: string | undefined): {
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      reserved.release();
     };
   }, [apiUrl]);
 

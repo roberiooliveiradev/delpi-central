@@ -54,7 +54,7 @@ def test_financial_repository_reuses_cached_rol() -> None:
     )
     payload = {
         "branch": "01",
-        "rol_with_ipi": 123.45,
+        "rol": 123.45,
     }
 
     with patch.object(FinancialRepository, "_load_rol", return_value=payload) as loader:
@@ -68,7 +68,7 @@ def test_financial_repository_reuses_cached_rol() -> None:
 
 def test_commercial_rol_series_use_case_caches_full_response() -> None:
     repository = MagicMock()
-    repository.get_rol.return_value = {"rol_with_ipi": 100.0}
+    repository.get_rol.return_value = {"rol": 100.0}
 
     use_case = GetCommercialRolSeriesUseCase(repository)
     request = CommercialRolSeriesRequest(

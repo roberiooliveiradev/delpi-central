@@ -44,4 +44,8 @@ Sombra / stroke / reflexo permanecem no **nível caixa** (`block.style` / `part.
 
 ## Edição
 
-Bridge único: `useVisualBoxTextEditorBridge` (text/heading/shape) e `createPartTextEditorBridge` (KPI/chart). Ribbon: seleção parcial → runs; senão → estilo do alvo (bloco/part).
+Bridge único: `useVisualBoxTextEditorBridge` (text/heading/shape) e `createPartTextEditorBridge` (KPI/chart). Ribbon:
+
+- Seleção parcial em editar → patch nos runs (`applyEditingTextRunStylePatch`).
+- Seleção total do texto ou **objeto selecionado sem editar** → tipografia de container (`updateSelectedTextFormatStyle` + materialização de `namedStyle` via `applyVisualBoxContentRunsTypographyOverride`).
+- Leitura da ribbon → `resolveVisualBoxEffectiveTextFormatSnapshot` (inclui preset `namedStyle`).

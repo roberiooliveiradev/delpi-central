@@ -38,6 +38,10 @@ import {
   formatAtaMeetingDate,
   tmAtaStatusBadgeClassNames,
 } from "../meeting-minutes/meetingMinuteStatusUi";
+import {
+  resolveSignInviteMailBadge,
+  type LastInviteMail,
+} from "../meeting-minutes/signInviteMailBadge";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   ataId: string;
@@ -118,6 +122,9 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
           "Participante",
         status: sigStatus,
         done: signerIsDone(sigStatus),
+        mailBadge: resolveSignInviteMailBadge(
+          signer.last_invite_mail as LastInviteMail | undefined,
+        ),
       };
     });
   }, [detail]);
@@ -326,6 +333,18 @@ export function MeetingMinuteDetailPage({ getAccessToken, ataId, pathname, onNav
                       <span>
                         <strong>{row.name}</strong>
                         <small>{row.role}</small>
+                        {row.mailBadge ? (
+                          <span
+                            className="tm-atas-view__signer-mail"
+                            title={row.mailBadge.title}
+                          >
+                            <StatusBadge
+                              label={row.mailBadge.label}
+                              variant={row.mailBadge.variant}
+                              classNames={tmAtaStatusBadgeClassNames}
+                            />
+                          </span>
+                        ) : null}
                       </span>
                     </li>
                   ))}

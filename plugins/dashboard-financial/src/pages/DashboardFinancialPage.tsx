@@ -151,7 +151,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       return [
         {
           indicador: "ROL",
-          valor: formatCurrency(rol?.rol_with_ipi),
+          valor: formatCurrency(rol?.rol),
           contexto: `${branchLabel} · ${periodLabel}`,
         },
         {
@@ -260,8 +260,8 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
           title="ROL"
-          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolWithIpi}
-          value={formatCurrency(rol?.rol_with_ipi)}
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rol}
+          value={formatCurrency(rol?.rol)}
           subtitle={`${branchLabel} · ${periodLabel}`}
           icon={<TrendingUp size={22} />}
           loading={isBusy}

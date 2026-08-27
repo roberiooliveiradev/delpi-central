@@ -25,8 +25,7 @@ def test_get_commercial_sales_order_otd_analysis_returns_meta(
             "branch": "01",
             "customer_segment": "weg",
             "totals": {"otd_pct": 93.4, "total_qty": 100.0},
-            "otd_pct": 93.4,
-            "total_qty": 100.0,
+            "by_branch": {"branch_01": {"otd_pct": 93.4, "total_qty": 100.0}},
         },
         "series": [],
         "by_customer": [],
@@ -56,7 +55,7 @@ def test_get_commercial_sales_order_otd_analysis_returns_meta(
         operation_id="get_commercial_sales_order_otd_analysis",
         shape="composite_analysis",
     )
-    assert payload["data"]["summary"]["otd_pct"] == 93.4
+    assert payload["data"]["summary"]["totals"]["otd_pct"] == 93.4
 
 
 def test_otd_analysis_use_case_builds_series_and_pagination():
@@ -105,7 +104,7 @@ def test_otd_analysis_use_case_builds_series_and_pagination():
             page_size=50,
         )
     )
-    assert result["summary"]["otd_pct"] == 90.0
+    assert result["summary"]["totals"]["otd_pct"] == 90.0
     assert len(result["by_customer"]) == 1
     assert result["pagination"]["total"] == 1
     assert len(result["series"]) >= 1

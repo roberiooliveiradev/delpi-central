@@ -721,9 +721,27 @@ export type ComunicadoScreenData = {
   customFonts?: ComunicadoCustomFontRef[];
 };
 
+/** Cor ou gradiente sob a camada cover de imagem de fundo. */
+export type ComunicadoBackgroundUnderlay =
+  | { type: "color"; value: string }
+  | {
+      type: "gradient";
+      from: string;
+      to: string;
+      angle?: number;
+      stops?: Array<{ color: string; position: number; opacity?: number }>;
+    };
+
 export type ComunicadoBackground =
   | { type: "color"; value: string }
-  | { type: "image"; assetId?: string; url?: string; value?: string }
+  | {
+      type: "image";
+      assetId?: string;
+      url?: string;
+      value?: string;
+      /** Pintura sob a imagem cover; legado sem chave = `#ffffff`. */
+      underlay?: ComunicadoBackgroundUnderlay;
+    }
   | {
       type: "gradient";
       from: string;

@@ -1,6 +1,8 @@
 import { createContext, useContext, type RefObject } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
+import type { CanvasTableCellSelectionRequest } from "../utils/canvasTableCellSelection";
+
 import type {
   ComunicadoBackground,
   ComunicadoBlock,
@@ -74,12 +76,8 @@ export type ComunicadoRibbonTabRequest =
   | "layers"
   | "view";
 
-/** Célula selecionada na Grade (`canvas_table`) — espelho de parte KPI. */
-export type ComunicadoCanvasTableCellSelection = {
-  blockId: string;
-  row: number;
-  col: number;
-};
+export type { ComunicadoCanvasTableCellSelection } from "../utils/canvasTableCellSelection";
+export type { CanvasTableCellSelectionRequest } from "../utils/canvasTableCellSelection";
 
 /** Abas espelhadas entre top bar contextual e painel lateral. */
 export type SelectionPanelTab =
@@ -205,7 +203,7 @@ export type ComunicadoEditorContextValue = {
   selectedCanvasTableCell: ComunicadoCanvasTableCellSelection | null;
   selectCanvasTableCell: (
     blockId: string,
-    cell: { row: number; col: number } | null,
+    request: CanvasTableCellSelectionRequest | null,
   ) => void;
   clearCanvasTableCellSelection: () => void;
   editingTextId: string | null;
@@ -422,6 +420,7 @@ export type ComunicadoEditorContextValue = {
   /** Troca mídia do bloco selecionado pela imagem do clipboard (mantém frame). */
   replaceSelectedMediaFromClipboard: () => Promise<boolean>;
   setBackgroundColor: (value: string) => void;
+  setBackgroundFill: (fill: import("@delpi/plugin-ui/index").DelpiFill) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
   setBackground: (background: ComunicadoBackground) => void;
   /** Vincula texto/forma selecionado à fonte preferida do slide (ou abre catálogo). */

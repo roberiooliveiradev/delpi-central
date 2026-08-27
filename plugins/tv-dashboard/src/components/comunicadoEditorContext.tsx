@@ -861,6 +861,7 @@ export function ComunicadoEditorProvider({
     probeClipboardHasImage: media.probeClipboardHasImage,
     replaceSelectedMediaFromClipboard: media.replaceSelectedMediaFromClipboard,
     setBackgroundColor: blockActions.setBackgroundColor,
+    setBackgroundFill: blockActions.setBackgroundFill,
     setBackgroundGradient: blockActions.setBackgroundGradient,
     setBackground: blockActions.setBackground,
     bindSelectedVisualBoxToData: blockActions.bindSelectedVisualBoxToData,

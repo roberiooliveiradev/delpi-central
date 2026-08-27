@@ -20,6 +20,11 @@ import { useMemo } from "react";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  isCanvasTableCellSelected,
+  primaryCanvasTableCellRef,
+  summarizeCanvasTableCellSelection,
+} from "../utils/canvasTableCellSelection";
 import { DataSourceLinkSection } from "./DataSourceLinkSection";
 import { DynamicContentInsertControl } from "./DynamicContentInsertControl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -64,9 +69,10 @@ export function CanvasTableDataBindingInspector({
   const table = selected?.type === "canvas_table" ? selected : null;
   const cellSel =
     table && selectedCanvasTableCell?.blockId === table.id ? selectedCanvasTableCell : null;
+  const primaryCellRef = primaryCanvasTableCellRef(cellSel);
   const selectedCell =
-    table && cellSel
-      ? normalizeCanvasTableCell(table.cells[cellSel.row]?.[cellSel.col])
+    table && primaryCellRef
+      ? normalizeCanvasTableCell(table.cells[primaryCellRef.row]?.[primaryCellRef.col])
       : null;
 
   const blockSourceId = table?.dataSourceId?.trim() ?? "";
@@ -136,7 +142,7 @@ export function CanvasTableDataBindingInspector({
       dataSourceId: nextSourceId,
       resolved: sourceResolved,
       catalogFields,
-      targetCell: cellSel,
+      targetCell: primaryCellRef,
       existingCells: table.cells,
     });
     updateSelected(patch);
@@ -144,21 +150,21 @@ export function CanvasTableDataBindingInspector({
 
   /** Célula selecionada: altera só essa célula (não sobrescreve a outra). */
   function linkCellSource(nextSourceId: string) {
-    if (!cellSel) {
+    if (!cellSel || !primaryCellRef) {
       linkBlockSource(nextSourceId);
       return;
     }
     const trimmed = nextSourceId.trim();
     let next = applyCanvasTableCellDataSourceId(
       table,
-      cellSel,
+      primaryCellRef,
       trimmed || null,
     );
     if (trimmed) {
       const source = blocks.find((block) => block.id === trimmed);
       const sourceResolved =
         source && "resolved" in source && source.resolved ? source.resolved : undefined;
-      const cell = normalizeCanvasTableCell(next.cells[cellSel.row]?.[cellSel.col]);
+      const cell = normalizeCanvasTableCell(next.cells[primaryCellRef.row]?.[primaryCellRef.col]);
       if (!cell.dataRef?.field?.trim() && sourceResolved) {
         const suggested = suggestCanvasTableCellDataRef(
           sourceResolved,
@@ -166,7 +172,7 @@ export function CanvasTableDataBindingInspector({
           cell.kind === "sparkline",
         );
         if (suggested) {
-          next = applyCanvasTableDataRef(next, cellSel, suggested, "cell");
+          next = applyCanvasTableDataRef(next, primaryCellRef, suggested, "cell");
         }
       }
     }
@@ -180,13 +186,13 @@ export function CanvasTableDataBindingInspector({
     nextRef: ComunicadoTextDataRef | null,
     scope: ApplyCanvasTableDataRefScope = "cell",
   ) {
-    if (!cellSel) return;
-    const next = applyCanvasTableDataRef(table, cellSel, nextRef, scope);
+    if (!primaryCellRef) return;
+    const next = applyCanvasTableDataRef(table, primaryCellRef, nextRef, scope);
     updateBlock(table.id, { cells: next.cells, dataSourceId: table.dataSourceId });
   }
 
   function ensureFieldOnCell(field: string) {
-    if (!cellSel || !selectedCell) return;
+    if (!primaryCellRef || !selectedCell) return;
     const preferSeries = selectedCell.kind === "sparkline";
     const suggested =
       suggestCanvasTableCellDataRef(resolved, catalogFields, preferSeries) ?? {
@@ -259,8 +265,7 @@ export function CanvasTableDataBindingInspector({
           {bindings.length > 0 ? (
             <ul className="td-canvas-table-bindings" aria-label="Campos vinculados na Grade">
               {bindings.map((entry) => {
-                const active =
-                  cellSel?.row === entry.row && cellSel?.col === entry.col;
+                const active = isCanvasTableCellSelected(cellSel, entry.row, entry.col);
                 const fieldLabel =
                   fieldOptions.find((item) => item.field === entry.field)?.label ??
                   entry.field;
@@ -285,7 +290,11 @@ export function CanvasTableDataBindingInspector({
                         .filter(Boolean)
                         .join(" ")}
                       onClick={() =>
-                        selectCanvasTableCell(table.id, { row: entry.row, col: entry.col })
+                        selectCanvasTableCell(table.id, {
+                          cell: { row: entry.row, col: entry.col },
+                          rowCount: table.rows,
+                          colCount: table.cols,
+                        })
                       }
                     >
                       {sourceBit ? `${baseLabel} · ${sourceBit}` : baseLabel}
@@ -303,12 +312,12 @@ export function CanvasTableDataBindingInspector({
             </p>
           ) : !effectiveSourceId ? (
             <p className="td-subtitle">
-              Célula {cellSel.row + 1}×{cellSel.col + 1}: escolha a fonte acima para esta célula.
+              {summarizeCanvasTableCellSelection(cellSel)}: escolha a fonte acima para esta célula.
             </p>
           ) : (
             <>
               <p className="td-subtitle">
-                Célula {cellSel.row + 1}×{cellSel.col + 1}
+                {summarizeCanvasTableCellSelection(cellSel)}
                 {selectedCell?.kind === "sparkline" ? " (sparkline)" : ""}
               </p>
               <div className="td-dynamic-content-insert--inspector">

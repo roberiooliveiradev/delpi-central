@@ -10,7 +10,7 @@ class RolByCustomerItem:
     customer_code: str
     customer_store: str
     customer_name: str
-    rol_with_ipi: float
+    rol: float
     share_pct: Optional[float]
     rank: int
 
@@ -19,7 +19,7 @@ class RolByCustomerItem:
             "customer_code": self.customer_code,
             "customer_store": self.customer_store,
             "customer_name": self.customer_name,
-            "rol_with_ipi": self.rol_with_ipi,
+            "rol": self.rol,
             "share_pct": self.share_pct,
             "rank": self.rank,
         }

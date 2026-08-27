@@ -3,6 +3,7 @@ import { useCallback, useRef, useState, type MutableRefObject, type RefObject } 
 import {
   createBlock,
   ensureComunicadoCustomFontsLoaded,
+  applyBackgroundImagePreservingUnderlay,
   type ComunicadoBlock,
   type ComunicadoConfig,
 } from "@delpi/tv-dashboard-presentation";
@@ -85,7 +86,10 @@ export function useComunicadoEditorMedia({
       if (resolvedTarget === "background") {
         commitWithHistory({
           ...configRef.current,
-          background: { type: "image", assetId: asset.id, url },
+          background: applyBackgroundImagePreservingUnderlay(configRef.current.background, {
+            assetId: asset.id,
+            url,
+          }),
         });
         return;
       }

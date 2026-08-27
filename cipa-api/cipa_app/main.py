@@ -1,6 +1,7 @@
+import asyncio
 import logging
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -13,6 +14,9 @@ from cipa_app.core.responses import fail
 from cipa_app.interface.http.routes.access_routes import router as access_router
 from cipa_app.interface.http.routes.member_routes import router as member_router
 from cipa_app.interface.http.routes.minutes_routes import router as minutes_router
+from cipa_app.interface.http.routes.public_meeting_minutes_routes import (
+    public_router as public_meeting_minutes_router,
+)
 from cipa_app.interface.http.routes.signature_profile_routes import (
     router as signature_profile_router,
 )
@@ -50,7 +54,20 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    yield
+    trace_poller = None
+    if settings.CIPA_SIGN_INVITE_MAIL_TRACE_ENABLED:
+        from cipa_app.startup.sign_invite_mail_trace_job import (
+            run_sign_invite_mail_trace_loop,
+        )
+
+        trace_poller = asyncio.create_task(run_sign_invite_mail_trace_loop())
+    try:
+        yield
+    finally:
+        if trace_poller is not None:
+            trace_poller.cancel()
+            with suppress(asyncio.CancelledError):
+                await trace_poller
 
 
 app = FastAPI(
@@ -100,3 +117,7 @@ app.include_router(signature_profile_router)
 app.include_router(member_router)
 app.include_router(sipat_router)
 app.include_router(sipat_public_router)
+app.include_router(
+    public_meeting_minutes_router,
+    prefix="/public/meeting-minutes/sign-invites",
+)

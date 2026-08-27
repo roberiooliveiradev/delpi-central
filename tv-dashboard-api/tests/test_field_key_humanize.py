@@ -20,7 +20,10 @@ def test_humanize_field_key_translates_tokens():
     assert humanize_field_key("goal_amount") == "Meta valor"
 
 
-def test_humanize_field_key_splits_camel_case_with_spaces():
+def test_humanize_field_key_commercial_otd_series_fields():
+    assert humanize_field_key("fulfilled_qty") == "Quantidade atendida"
+    assert humanize_field_key("fulfillment_pct") == "% atendimento"
+    assert humanize_field_key("otd_pct_filial_01") == "OTD filial 01"
     assert split_field_key_tokens("valorDia") == ["valor", "dia"]
     assert humanize_field_key("valorDia") == "Valor dia"
     assert humanize_field_key("valor_dia") == "Valor dia"

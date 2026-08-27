@@ -65,6 +65,7 @@ import {
   resolveBlockPasteDataPolicy,
   staticLabelFromTextBoundBlock,
   translateLineEndpoints,
+  patchBackgroundUnderlay,
   type ComunicadoBackground,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
@@ -1456,18 +1457,32 @@ export function useComunicadoEditorBlocks({
     [commitWithHistory, configRef],
   );
 
+  const setBackgroundFill = useCallback(
+    (fill: import("@delpi/plugin-ui/index").DelpiFill) => {
+      setBackground(patchBackgroundUnderlay(configRef.current.background, fill));
+    },
+    [configRef, setBackground],
+  );
+
   const setBackgroundColor = useCallback(
     (color: string) => {
-      setBackground({ type: "color", value: color });
+      setBackgroundFill({ kind: "solid", color });
     },
-    [setBackground],
+    [setBackgroundFill],
   );
 
   const setBackgroundGradient = useCallback(
     (from: string, to: string, angle = 180) => {
-      setBackground({ type: "gradient", from, to, angle });
+      setBackgroundFill({
+        kind: "gradient",
+        angle,
+        stops: [
+          { color: from, position: 0 },
+          { color: to, position: 100 },
+        ],
+      });
     },
-    [setBackground],
+    [setBackgroundFill],
   );
 
   const bindSelectedVisualBoxToData = useCallback(() => {
@@ -1583,6 +1598,7 @@ export function useComunicadoEditorBlocks({
     hideAllBlocks,
     focusFrameRotationField,
     setBackgroundColor,
+    setBackgroundFill,
     setBackgroundGradient,
     setBackground,
     bindSelectedVisualBoxToData,

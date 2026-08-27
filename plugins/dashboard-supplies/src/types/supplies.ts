@@ -10,7 +10,7 @@ export type SuppliesFilterParams = {
 
 export type CpvSummary = DashboardGoalFields & {
   cpv_total: number;
-  rol_with_ipi: number;
+  rol: number;
   cpv_percentage: number;
   total_movements: number;
   total_quantity: number;

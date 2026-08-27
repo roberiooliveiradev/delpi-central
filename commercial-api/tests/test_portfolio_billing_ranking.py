@@ -40,13 +40,13 @@ def test_use_case_ranks_customers_by_delta_pct() -> None:
                             "customer_code": "100",
                             "customer_store": "01",
                             "customer_name": "Alta",
-                            "rol_with_ipi": 200,
+                            "rol": 200,
                         },
                         {
                             "customer_code": "200",
                             "customer_store": "01",
                             "customer_name": "Queda",
-                            "rol_with_ipi": 50,
+                            "rol": 50,
                         },
                     ]
                 }
@@ -58,13 +58,13 @@ def test_use_case_ranks_customers_by_delta_pct() -> None:
                         "customer_code": "100",
                         "customer_store": "01",
                         "customer_name": "Alta",
-                        "rol_with_ipi": 100,
+                        "rol": 100,
                     },
                     {
                         "customer_code": "200",
                         "customer_store": "01",
                         "customer_name": "Queda",
-                        "rol_with_ipi": 100,
+                        "rol": 100,
                     },
                 ]
             }
@@ -104,19 +104,19 @@ def test_use_case_order_decline_puts_worst_delta_first() -> None:
                             "customer_code": "100",
                             "customer_store": "01",
                             "customer_name": "Alta",
-                            "rol_with_ipi": 200,
+                            "rol": 200,
                         },
                         {
                             "customer_code": "200",
                             "customer_store": "01",
                             "customer_name": "Queda",
-                            "rol_with_ipi": 50,
+                            "rol": 50,
                         },
                         {
                             "customer_code": "300",
                             "customer_store": "01",
                             "customer_name": "Pior",
-                            "rol_with_ipi": 10,
+                            "rol": 10,
                         },
                     ]
                 }
@@ -128,19 +128,19 @@ def test_use_case_order_decline_puts_worst_delta_first() -> None:
                         "customer_code": "100",
                         "customer_store": "01",
                         "customer_name": "Alta",
-                        "rol_with_ipi": 100,
+                        "rol": 100,
                     },
                     {
                         "customer_code": "200",
                         "customer_store": "01",
                         "customer_name": "Queda",
-                        "rol_with_ipi": 100,
+                        "rol": 100,
                     },
                     {
                         "customer_code": "300",
                         "customer_store": "01",
                         "customer_name": "Pior",
-                        "rol_with_ipi": 100,
+                        "rol": 100,
                     },
                 ]
             }
@@ -170,13 +170,13 @@ def test_use_case_group_by_seller() -> None:
                     "customer_code": "100",
                     "customer_store": "01",
                     "customer_name": "A",
-                    "rol_with_ipi": 100,
+                    "rol": 100,
                 },
                 {
                     "customer_code": "200",
                     "customer_store": "01",
                     "customer_name": "B",
-                    "rol_with_ipi": 50,
+                    "rol": 50,
                 },
             ]
         }
@@ -240,7 +240,7 @@ def test_portfolio_billing_ranking_route_ok_for_accounts_view() -> None:
                     "customer_code": "100",
                     "customer_store": "01",
                     "customer_name": "Cli",
-                    "rol_with_ipi": 120,
+                    "rol": 120,
                 }
             ]
         }

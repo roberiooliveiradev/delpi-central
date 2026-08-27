@@ -34,6 +34,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Pedido de venda — criador | [pedido-venda-criador.md](./pedido-venda-criador.md) | SC5 sem usuário criador resolvível; `C5_MSUIDT` = UUID técnico |
 | Pedido de venda — postergação | [pedido-venda-postergacao.md](./pedido-venda-postergacao.md) | Sem campo TOTVS; heurística BFF `availability` (entrega após o mês) |
 | Transportadoras | [transportadora.md](./transportadora.md) | `SA4` / `A4_NREDUZ` na emissão de NF |
+| ROL financeiro (receita líquida) | — | Campo HTTP canônico **`rol`** = vendas − devoluções (`VLR_VENDA − VLR_DEVOLUCAO`); identificador legado `rol_with_ipi` removido (breaking) |
 
 ---
 

@@ -93,7 +93,9 @@ from app.interface.http.routes.engineering.lmp_route_helpers import (
 from app.interface.http.kpi_field_labels import (
     COMMERCIAL_CONVERSION_FIELD_LABELS,
     COMMERCIAL_ROL_FIELD_LABELS,
+    COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+    COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
@@ -427,22 +429,22 @@ def get_commercial_rol(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (include)."
+        None, description="Comma-separated TOTVS customer codes (include)."
     ),
     customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (include, LIKE)."
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
     exclude_customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (exclude)."
+        None, description="Comma-separated TOTVS customer codes to exclude."
     ),
     exclude_customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (exclude, NOT LIKE)."
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
     group_by: str = COMMERCIAL_ANALYSIS_GROUP_BY_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     include: Optional[str] = Query(
-        None, description="CSV flags: portfolio (carteira semanal)."
+        None, description="Comma-separated flags for optional sections (e.g. portfolio)."
     ),
 ):
     try:
@@ -469,13 +471,16 @@ def get_commercial_rol(
             end_date=end_date,
             branch=branch,
             summary_key="summary",
-            recompute_target_pct_from="rol_with_ipi",
+            recompute_target_pct_from="rol",
         )
         return api_delpi_success(
             result,
             operation_id="get_commercial_rol",
             message="Commercial ROL analysis fetched successfully.",
-            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+            fields=kpi_fields(
+                COMMERCIAL_ROL_FIELD_LABELS,
+                COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS,
+            ),
         )
     except ValueError as exc:
         log_error(f"Validation error while fetching commercial ROL analysis: {exc}")
@@ -904,16 +909,16 @@ def get_commercial_sales_order_otd_analysis(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (include)."
+        None, description="Comma-separated TOTVS customer codes (include)."
     ),
     customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (include, LIKE)."
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
     exclude_customer_codes: Optional[str] = Query(
-        None, description="CSV de códigos TOTVS (exclude)."
+        None, description="Comma-separated TOTVS customer codes to exclude."
     ),
     exclude_customer_names: Optional[str] = Query(
-        None, description="CSV de nomes de cliente (exclude, NOT LIKE)."
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
     group_by: str = COMMERCIAL_ANALYSIS_GROUP_BY_QUERY(),
     page: int = Query(1, ge=1),
@@ -950,7 +955,10 @@ def get_commercial_sales_order_otd_analysis(
             result,
             operation_id="get_commercial_sales_order_otd_analysis",
             message="Commercial sales order OTD analysis fetched successfully.",
-            fields=kpi_fields(COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS),
+            fields=kpi_fields(
+                COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+                COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
+            ),
         )
     except ValueError as exc:
         log_error(

@@ -104,6 +104,18 @@ export async function sendForSignature(id: string) {
   return unwrap(envelope);
 }
 
+export async function resendSignInvites(id: string) {
+  const envelope = await httpJson<
+    ApiEnvelope<{
+      minute: Record<string, unknown>;
+      signers: Record<string, unknown>[];
+      resent_count: number;
+      mail_sent: number;
+    }>
+  >("POST", `${API}/minutes/${id}/resend-sign-invites`);
+  return unwrap(envelope);
+}
+
 export async function getSignContext(id: string, signal?: AbortSignal) {
   const envelope = await httpGet<ApiEnvelope<Record<string, unknown>>>(
     `${API}/minutes/${id}/sign-context`,

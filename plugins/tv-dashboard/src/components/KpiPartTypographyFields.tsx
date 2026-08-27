@@ -9,14 +9,13 @@ import {
   AlignRight,
   AlignJustify,
 } from "lucide-react";
-import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { NativeTextControl, TextShadowMenu } from "@delpi/plugin-ui/index";
 import {
   COMUNICADO_TEXT_SHADOW_PRESETS,
   KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
   parseTextDecorationFlags,
   resolveKpiPartFontSize,
-  resolveTextShadowPresetId,
   type ComunicadoKpiPartRef,
   type ComunicadoKpiPartStyle,
   type ComunicadoTextDecoration,
@@ -85,7 +84,6 @@ export function KpiPartTypographyFields({
   const deco = parseTextDecorationFlags(style?.textDecoration as ComunicadoTextDecoration | undefined);
   const bold = style?.fontWeight === "bold" || style?.fontWeight === "700";
   const italic = style?.fontStyle === "italic";
-  const shadowPreset = resolveTextShadowPresetId(style?.textShadow);
   const textAlign = style?.textAlign ?? "left";
   const partLabel =
     partKind === "value" ? "Valor" : partKind === "title" ? "Título" : "Subtítulo";
@@ -162,18 +160,15 @@ export function KpiPartTypographyFields({
 
       <p className="td-deck-inspector__hint">Efeitos tipográficos</p>
       <DeckField id={`td-kpi-typo-${partKind}-shadow`} label="Sombra do texto">
-        <FormSelectControl
-          id={`td-kpi-typo-${partKind}-shadow`}
-          ariaLabel="Sombra do texto"
-          value={shadowPreset}
-          onChange={(value) => {
-            const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === value);
-            onPatch({ textShadow: preset?.value ?? "none" });
-          }}
-          options={COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
-            value: preset.id,
+        <TextShadowMenu
+          inline
+          value={style?.textShadow || undefined}
+          presets={COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
+            id: preset.id,
             label: preset.label,
+            value: preset.value,
           }))}
+          onChange={(value) => onPatch({ textShadow: value ?? "" })}
         />
       </DeckField>
       <div className="td-part-inspector-toolbar__fields-row">

@@ -70,7 +70,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     markerRadius: "Raio do marcador (ponto) em pixels.",
     applyMarkerStyleToAll: "Replica o estilo do marcador em todos os pontos da série.",
     tableFrameShadow: "Sombra da moldura da tabela.",
-    textShadow: "Preset de sombra tipográfica no texto selecionado.",
+    textShadow: "Sombra tipográfica — presets e editor completo (paridade forma).",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Camadas, alinhamento, agrupamento e rotação — mesmo padrão Organizar do Excel.",
@@ -212,7 +212,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     canvasTable:
       "Grade estática no palco: linhas, colunas, cabeçalho, presets (Grade/Minimalista/Faixas), bordas e tipografia. Clique na célula para editar tipo, número ou sparkline.",
     canvasTableCell:
-      "Célula selecionada: tipo (texto, número, sparkline), formato pt-BR, série e estilo local.",
+      "Célula(s) selecionada(s): tipo (texto, número, sparkline), formato pt-BR e estilo local. Ctrl+clique para múltiplas; Shift+clique para intervalo.",
     canvasTablePreset: "Aplica um preset visual da Grade (estrutura e bordas) sem alterar o conteúdo.",
   },
   tabs: {

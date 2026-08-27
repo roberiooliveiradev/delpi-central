@@ -1,0 +1,27 @@
+{
+  "sendStatusLabels": {
+    "pending": "Pendente",
+    "skipped_no_email": "Sem e-mail",
+    "skipped_mail_disabled": "E-mail desligado",
+    "skipped_graph_unconfigured": "Graph não configurado",
+    "failed": "Falha no envio",
+    "accepted": "Enviado"
+  },
+  "deliveryStatusLabels": {
+    "not_applicable": "Não aplicável",
+    "trace_pending": "Aguardando confirmação",
+    "delivered": "Entregue",
+    "bounced": "Rejeitado",
+    "unknown": "Indeterminado"
+  },
+  "badgeHints": {
+    "accepted_trace_pending": "Enviado — aguardando confirmação de entrega",
+    "accepted_delivered": "Entrega confirmada",
+    "failed": "Falha ao enviar o convite por e-mail",
+    "skipped_no_email": "Signatário sem endereço de e-mail",
+    "skipped_mail_disabled": "Envio de e-mail desabilitado no ambiente",
+    "skipped_graph_unconfigured": "Microsoft Graph não configurado",
+    "bounced": "E-mail rejeitado ou não entregue",
+    "unknown": "Entrega não confirmada no prazo do Message Trace"
+  }
+}

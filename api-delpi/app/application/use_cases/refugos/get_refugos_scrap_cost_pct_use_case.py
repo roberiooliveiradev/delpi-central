@@ -51,10 +51,9 @@ class GetRefugosScrapCostPctUseCase:
         )
 
         scrap_cost = round_cost(row.get("total_valor"))
-        rol_with_ipi = round_cost(rol_data.get("rol_with_ipi"))
         rol = round_cost(rol_data.get("rol"))
         scrap_cost_pct = (
-            round((scrap_cost / rol_with_ipi) * 100, 4) if rol_with_ipi > 0 else None
+            round((scrap_cost / rol) * 100, 4) if rol > 0 else None
         )
 
         return {
@@ -66,7 +65,6 @@ class GetRefugosScrapCostPctUseCase:
             "occurrences": as_int(row.get("ocorrencias")),
             "records_without_cost": as_int(row.get("registros_sem_custo")),
             "rol": rol,
-            "rol_with_ipi": rol_with_ipi,
             "scrap_cost_pct": scrap_cost_pct,
             "filters_applied": {
                 "mp": request.mp,
@@ -80,7 +78,6 @@ class GetRefugosScrapCostPctUseCase:
                 "returns": round_cost(rol_data.get("returns")),
                 "discounts": round_cost(rol_data.get("discounts")),
                 "rol": rol,
-                "rol_with_ipi": rol_with_ipi,
                 "ipi_separated": round_cost(rol_data.get("ipi_separated")),
             },
             "summary": {
@@ -89,7 +86,7 @@ class GetRefugosScrapCostPctUseCase:
                 "consolidated_across_branches": consolidated,
                 "period": {"start": start_iso, "end": end_iso},
                 "scrap_cost": scrap_cost,
-                "rol_with_ipi": rol_with_ipi,
+                "rol": rol,
                 "scrap_cost_pct": scrap_cost_pct,
                 "is_complete": True,
             },

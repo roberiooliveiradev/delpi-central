@@ -111,4 +111,14 @@ describe("delpiFillAdapter", () => {
     expect(styleToStrokeFill({ stroke: "transparent" })).toEqual({ kind: "none" });
     expect(styleToColorFill({ color: "#0f172a" })).toEqual({ kind: "solid", color: "#0f172a" });
   });
+
+  it("backgroundToFill lê underlay quando há imagem de fundo", () => {
+    expect(
+      backgroundToFill({
+        type: "image",
+        assetId: "bg-1",
+        underlay: { type: "color", value: "#003866" },
+      }),
+    ).toEqual({ kind: "solid", color: "#003866" });
+  });
 });

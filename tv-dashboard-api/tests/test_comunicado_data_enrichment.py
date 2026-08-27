@@ -2028,7 +2028,7 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
             "fields": {
                 "scrap_cost_pct": "Custo de refugo / ROL (%)",
                 "scrap_cost": "Custo de refugo (R$)",
-                "rol_with_ipi": "ROL com IPI (R$)",
+                "rol": "ROL (R$)",
                 "occurrences": "Ocorrências de refugo",
                 "value": "Valor",
             },
@@ -2036,7 +2036,7 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
         "data": {
             "scrap_cost_pct": 0.57,
             "scrap_cost": 1200.0,
-            "rol_with_ipi": 210_000.0,
+            "rol": 210_000.0,
             "occurrences": 3,
             "value": 0.57,
         },
@@ -2069,18 +2069,59 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
     metrics = {item["field"]: item["label"] for item in blocks[0]["resolved"]["kpiMetrics"]}
     assert metrics.get("scrap_cost_pct") == "Custo de refugo / ROL (%)"
     assert metrics.get("scrap_cost") == "Custo de refugo (R$)"
-    assert metrics.get("rol_with_ipi") == "ROL com IPI (R$)"
+    assert metrics.get("rol") == "ROL (R$)"
     assert metrics.get("occurrences") == "Ocorrências de refugo"
     assert metrics.get("value") == "Valor"
     # valueFields do catálogo prioriza ordem — não limita o picker.
     assert set(metrics) >= {
         "scrap_cost_pct",
         "scrap_cost",
-        "rol_with_ipi",
+        "rol",
         "occurrences",
         "value",
     }
     assert blocks[0]["resolved"]["kpi"]["label"] == "Custo de refugo / ROL (%)"
+
+
+def test_enrich_kpi_resolves_legacy_rol_with_ipi_binding():
+    """Bindings antigos com valueField rol_with_ipi leem o campo canônico rol."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_quality_scrap_cost_pct",
+            "shape": "scalar",
+            "fields": {"rol": "ROL (R$)"},
+        },
+        "data": {"rol": 150_000.0, "scrap_cost_pct": 1.2, "value": 1.2},
+        "route": {
+            "label": "Custo de refugo / ROL",
+            "valueFields": ["scrap_cost_pct", "value"],
+            "valueFieldLabels": {"rol": "ROL (R$)"},
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = service.enrich_blocks(
+        [
+            {
+                "id": "src-legacy",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_quality_scrap_cost_pct",
+                    "params": {"dateRangePreset": "this_month"},
+                    "displayMode": "kpi",
+                    "valueField": "rol_with_ipi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    assert blocks[0]["resolved"]["kpi"]["value"] == 150_000.0
 
 
 def test_enrich_sales_order_otd_panel_unwraps_lines_items_page():
@@ -2222,3 +2263,188 @@ def test_enrich_si_meta_partial_keeps_registered_goal_metric(operation_id: str):
     assert by_field.get("goal_value") == 8.0
     assert by_field.get("value") == 4.39
     assert by_field["goal_value"] != by_field["value"]
+
+
+def test_commercial_rol_table_field_switches_with_group_by():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _extract_table_rows,
+        _resolve_table_field,
+    )
+
+    route_info = {
+        "tableFields": "series",
+        "tableFieldsByParam": {
+            "group_by": {
+                "customer": "by_customer",
+                "branch": "by_branch",
+                "none": "series",
+            }
+        },
+        "seriesField": "series",
+    }
+    payload = {
+        "summary": {"totals": {"rol": 100.0}},
+        "series": [
+            {
+                "period_label": "sem 1",
+                "rol_filial_01": 50.0,
+                "rol_filial_02": 60.0,
+            }
+        ],
+        "by_customer": [
+            {
+                "customer_name": "Cliente A",
+                "branch": "01",
+                "rol": 10.0,
+            }
+        ],
+        "by_branch": [
+            {"branch": "01", "rol": 50.0},
+            {"branch": "02", "rol": 60.0},
+        ],
+    }
+
+    assert _resolve_table_field(route_info, {"group_by": "customer"}) == "by_customer"
+    assert _resolve_table_field(route_info, {"group_by": "branch"}) == "by_branch"
+    assert _resolve_table_field(route_info, {"group_by": "none"}) == "series"
+    assert _resolve_table_field(route_info, {}) == "series"
+    route_with_defaults = {
+        **route_info,
+        "defaultParams": {"group_by": "customer"},
+    }
+    assert _resolve_table_field(route_with_defaults, {}) == "by_customer"
+    assert _resolve_table_field(route_with_defaults, None) == "by_customer"
+
+    rows, _ = _extract_table_rows(
+        payload,
+        _resolve_table_field(route_info, {"group_by": "customer"}),
+        50,
+    )
+    assert rows[0]["customer_name"] == "Cliente A"
+
+    rows, _ = _extract_table_rows(
+        payload,
+        _resolve_table_field(route_info, {"group_by": "branch"}),
+        50,
+    )
+    assert {row["branch"] for row in rows} == {"01", "02"}
+
+    rows, _ = _extract_table_rows(
+        payload,
+        _resolve_table_field(route_info, {"group_by": "none"}),
+        50,
+    )
+    assert rows[0]["period_label"] == "sem 1"
+
+
+def test_commercial_route_unset_group_by_uses_catalog_default_for_table_field():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _effective_route_params,
+        _resolve_table_field,
+    )
+    from tv_app.application.services.tv_data_route_catalog_service import (
+        TvDataRouteCatalogService,
+    )
+
+    route = TvDataRouteCatalogService().get_route("get_commercial_sales_order_otd_analysis")
+    assert isinstance(route, dict)
+    effective = _effective_route_params({}, route)
+    assert effective.get("group_by") == "customer"
+    assert _resolve_table_field(route, effective) == "by_customer"
+
+
+def test_build_table_columns_uses_route_and_meta_labels():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _build_table_columns,
+        _extract_table_rows,
+        _flatten_legacy_branch_object_cells,
+    )
+
+    route_info = {
+        "valueFieldLabels": {
+            "fulfilled_qty": "Quantidade atendida",
+            "fulfillment_pct": "% atendimento",
+        }
+    }
+    meta = {
+        "fields": {
+            "start_date": "Data início",
+            "total_qty": "Quantidade total",
+        }
+    }
+    rows = [
+        {
+            "start_date": "2026-08-01",
+            "total_qty": 100.0,
+            "fulfilled_qty": 90.0,
+            "fulfillment_pct": 90.0,
+        }
+    ]
+    columns = _build_table_columns(meta, rows, route_info=route_info)
+    labels = {col["key"]: col["label"] for col in columns}
+    assert labels["start_date"] == "Data início"
+    assert labels["total_qty"] == "Quantidade total"
+    assert labels["fulfilled_qty"] == "Quantidade atendida"
+    assert labels["fulfillment_pct"] == "% atendimento"
+
+    legacy_row = _flatten_legacy_branch_object_cells(
+        {
+            "period_label": "sem 1",
+            "branch_01": {"otd_pct": 91.0, "total_qty": 10.0},
+            "branch_02": {"otd_pct": 88.0},
+        }
+    )
+    assert legacy_row["otd_pct_filial_01"] == 91.0
+    assert legacy_row["otd_pct_filial_02"] == 88.0
+    assert "branch_01" not in legacy_row
+
+    payload = {"series": [legacy_row]}
+    table_rows, table_columns = _extract_table_rows(
+        payload,
+        "series",
+        50,
+        meta=meta,
+        route_info={
+            **route_info,
+            "valueFieldLabels": {
+                **route_info["valueFieldLabels"],
+                "otd_pct_filial_01": "OTD filial 01",
+            },
+        },
+    )
+    assert table_rows[0]["otd_pct_filial_01"] == 91.0
+    col_labels = {col["key"]: col["label"] for col in table_columns}
+    assert col_labels["otd_pct_filial_01"] == "OTD filial 01"
+
+
+def test_otd_series_table_rows_avoid_object_branch_cells():
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        _extract_table_rows,
+        _resolve_table_field,
+    )
+
+    route_info = {
+        "tableFields": "series",
+        "tableFieldsByParam": {
+            "group_by": {
+                "customer": "by_customer",
+                "branch": "by_branch",
+                "none": "series",
+            }
+        },
+        "seriesField": "series",
+    }
+    payload = {
+        "series": [
+            {
+                "period_label": "sem 1",
+                "otd_pct_filial_01": 91.0,
+                "otd_pct_filial_02": 88.0,
+            }
+        ]
+    }
+    table_field = _resolve_table_field(route_info, {"group_by": "none"})
+    rows, columns = _extract_table_rows(payload, table_field, 50, meta={})
+    assert rows[0]["otd_pct_filial_01"] == 91.0
+    assert all(not isinstance(cell, dict) for row in rows for cell in row.values())
+    assert {col["key"] for col in columns} >= {"otd_pct_filial_01", "otd_pct_filial_02"}

@@ -22,7 +22,7 @@ def test_get_commercial_rol_returns_meta(mock_build, _mock_enrich) -> None:
             "end_date": "2026-08-31",
             "branch": None,
             "customer_segment": None,
-            "totals": {"rol_with_ipi": 0.0},
+            "totals": {"rol": 0.0},
             "by_branch": {},
         },
         "series": [],
@@ -54,7 +54,7 @@ def test_get_commercial_rol_returns_meta(mock_build, _mock_enrich) -> None:
         operation_id="get_commercial_rol",
         shape="composite_analysis",
     )
-    assert payload["data"]["summary"]["totals"]["rol_with_ipi"] == 0.0
+    assert payload["data"]["summary"]["totals"]["rol"] == 0.0
 
 
 def test_get_commercial_rol_analysis_use_case_builds_payload():
@@ -73,7 +73,7 @@ def test_get_commercial_rol_analysis_use_case_builds_payload():
     financial = MagicMock()
     financial.get_rol.return_value = {
         "rol": 10.0,
-        "rol_with_ipi": 12.0,
+        "rol": 12.0,
         "gross_revenue": 20.0,
         "returns": 1.0,
         "discounts": 2.0,
@@ -120,7 +120,7 @@ def test_get_commercial_rol_analysis_use_case_builds_payload():
             group_by="customer",
         )
     )
-    assert result["summary"]["totals"]["rol_with_ipi"] == 24.0
+    assert result["summary"]["totals"]["rol"] == 24.0
     assert len(result["series"]) == 1
-    assert result["series"][0]["branch_01"]["rol_with_ipi"] == 5.0
+    assert result["series"][0]["rol_filial_01"] == 5.0
     assert "pagination" in result

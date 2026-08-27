@@ -46,13 +46,13 @@ Janela máxima: **24 meses**. Ranking default: top **10** (`limit` até 50). Det
 
 **`meta.entity`:** `retrabalho_rework_cost_pct`
 
-Combina o custo de retrabalho do período (`/retrabalhos/resumo` → `totalCusto`) com o ROL financeiro da mesma filial/período (`/financial/rol` → `rol_with_ipi`).
+Combina o custo de retrabalho do período (`/retrabalhos/resumo` → `totalCusto`) com o ROL financeiro da mesma filial/período (`/financial/rol` → `rol`).
 
 | Campo | Descrição |
 |---|---|
 | `rework_cost` | Custo de retrabalho (R$) no período |
-| `rol` / `rol_with_ipi` | ROL financeiro do denominador |
-| `rework_cost_pct` | `(rework_cost / rol_with_ipi) * 100` — `null` se ROL = 0 |
+| `rol` / `rol` | ROL financeiro do denominador |
+| `rework_cost_pct` | `(rework_cost / rol) * 100` — `null` se ROL = 0 |
 | `total_hours` / `average_cost_per_hour` | Horas e custo médio/hora do numerador |
 | `filters_applied` | `recurso`, `centro_custo`, `codigo_operador` (afetam só o numerador) |
 | `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
