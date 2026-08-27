@@ -78,6 +78,9 @@ def commercial_sales_order_otd_series_cache_key(
             request.branch or "",
             request.customer_segment or "",
             ",".join(getattr(request, "customer_codes", None) or []),
+            ",".join(getattr(request, "customer_names", None) or []),
+            ",".join(getattr(request, "exclude_customer_codes", None) or []),
+            ",".join(getattr(request, "exclude_customer_names", None) or []),
         ]
     )
 

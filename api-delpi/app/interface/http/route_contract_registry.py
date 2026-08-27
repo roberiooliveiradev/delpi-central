@@ -273,10 +273,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_branch_new_business_rol_target_pct": RouteContract(
         "commercial_rol_new_business_target", "scalar"
     ),
-    "get_commercial_rol": RouteContract("commercial_rol", "composite_analysis"),
     "get_commercial_rol_series": RouteContract("commercial_rol_series", "scalar"),
     "get_commercial_rol_by_customer": RouteContract(
         "commercial_rol_by_customer", "paged_list"
+    ),
+    "get_commercial_rol_by_branch": RouteContract(
+        "commercial_rol_by_branch", "paged_list"
     ),
     "list_commercial_proposals": RouteContract("commercial_proposal", "paged_list"),
     "get_commercial_proposal": RouteContract("commercial_proposal", "product_snapshot"),
@@ -292,8 +294,11 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_new_clients_average": RouteContract("new_clients_average", "scalar"),
     "get_sales_order_otd": RouteContract("sales_order_otd", "scalar"),
-    "get_commercial_sales_order_otd_analysis": RouteContract(
-        "commercial_sales_order_otd", "composite_analysis"
+    "get_sales_order_otd_by_customer": RouteContract(
+        "sales_order_otd_by_customer", "paged_list"
+    ),
+    "get_sales_order_otd_by_branch": RouteContract(
+        "sales_order_otd_by_branch", "paged_list"
     ),
     "get_sales_order_otd_panel": RouteContract("sales_order_otd_panel", "paged_list"),
     "get_sales_order_otd_series": RouteContract("sales_order_otd_series", "scalar"),

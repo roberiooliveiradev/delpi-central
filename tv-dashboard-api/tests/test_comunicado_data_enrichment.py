@@ -2337,7 +2337,7 @@ def test_commercial_rol_table_field_switches_with_group_by():
     assert rows[0]["period_label"] == "sem 1"
 
 
-def test_commercial_route_unset_group_by_uses_catalog_default_for_table_field():
+def test_commercial_simple_route_optional_params_omit_and_table_items():
     from tv_app.application.services.comunicado_data_enrichment_service import (
         _effective_route_params,
         _resolve_table_field,
@@ -2346,15 +2346,17 @@ def test_commercial_route_unset_group_by_uses_catalog_default_for_table_field():
         TvDataRouteCatalogService,
     )
 
-    route = TvDataRouteCatalogService().get_route("get_commercial_sales_order_otd_analysis")
+    route = TvDataRouteCatalogService().get_route("get_sales_order_otd_by_customer")
     assert isinstance(route, dict)
-    # Wire: «Não definido aqui» omite group_by / granularity.
+    # Wire: «Não definido aqui» omite opcionais (ex.: branch).
     effective = _effective_route_params({}, route)
+    assert "branch" not in effective
     assert "group_by" not in effective
-    assert "granularity" not in effective
-    # Apresentação: schema.default (customer) alinha com Query default da api-delpi.
-    assert _resolve_table_field(route, effective) == "by_customer"
-    assert _resolve_table_field(route, {}) == "by_customer"
+    # Overlay canônico: tableFields=items (sem tableFieldsByParam).
+    assert route.get("tableFields") == "items"
+    assert not route.get("tableFieldsByParam")
+    assert _resolve_table_field(route, effective) == "items"
+    assert _resolve_table_field(route, {}) == "items"
 
 
 def test_build_table_columns_uses_route_and_meta_labels():

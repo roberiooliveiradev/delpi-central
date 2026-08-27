@@ -29,14 +29,11 @@ from app.application.use_cases.commercial.get_commercial_rol_series_use_case imp
 from app.application.use_cases.commercial.get_commercial_rol_by_customer_use_case import (
     GetCommercialRolByCustomerUseCase,
 )
-from app.application.use_cases.commercial.get_commercial_rol_analysis_use_case import (
-    GetCommercialRolAnalysisUseCase,
+from app.application.use_cases.commercial.get_commercial_rol_by_branch_use_case import (
+    GetCommercialRolByBranchUseCase,
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.commercial_rol_by_customer_repository import (
     CommercialRolByCustomerRepository,
-)
-from app.infrastructure.persistence.totvs.commercial_repositories.commercial_weekly_portfolio_repository import (
-    CommercialWeeklyPortfolioRepository,
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_rol_pct_repository import NewClientsRolPctRepository
 from app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
@@ -52,8 +49,11 @@ from app.application.use_cases.commercial.get_sales_order_otd_series_use_case im
 from app.application.use_cases.commercial.get_sales_order_otd_line_detail_use_case import (
     GetSalesOrderOtdLineDetailUseCase,
 )
-from app.application.use_cases.commercial.get_commercial_sales_order_otd_analysis_use_case import (
-    GetCommercialSalesOrderOtdAnalysisUseCase,
+from app.application.use_cases.commercial.get_sales_order_otd_by_customer_use_case import (
+    GetSalesOrderOtdByCustomerUseCase,
+)
+from app.application.use_cases.commercial.get_sales_order_otd_by_branch_use_case import (
+    GetSalesOrderOtdByBranchUseCase,
 )
 from app.infrastructure.persistence.totvs.commercial_repositories.new_business_rol_pct_repository import (
     NewBusinessRolPctRepository,
@@ -133,17 +133,9 @@ def build_get_commercial_rol_by_customer_use_case() -> GetCommercialRolByCustome
     )
 
 
-def build_get_commercial_rol_analysis_use_case() -> GetCommercialRolAnalysisUseCase:
-    financial = FinancialRepository()
-    return GetCommercialRolAnalysisUseCase(
-        financial_query_repository=financial,
-        rol_series_use_case=GetCommercialRolSeriesUseCase(
-            financial_query_repository=financial
-        ),
-        rol_by_customer_use_case=GetCommercialRolByCustomerUseCase(
-            repository=CommercialRolByCustomerRepository()
-        ),
-        weekly_portfolio_repository=CommercialWeeklyPortfolioRepository(),
+def build_get_commercial_rol_by_branch_use_case() -> GetCommercialRolByBranchUseCase:
+    return GetCommercialRolByBranchUseCase(
+        financial_query_repository=FinancialRepository()
     )
 
 
@@ -153,10 +145,14 @@ def build_get_sales_order_otd_use_case() -> GetSalesOrderOtdUseCase:
     )
 
 
-def build_get_commercial_sales_order_otd_analysis_use_case() -> (
-    GetCommercialSalesOrderOtdAnalysisUseCase
-):
-    return GetCommercialSalesOrderOtdAnalysisUseCase(
+def build_get_sales_order_otd_by_customer_use_case() -> GetSalesOrderOtdByCustomerUseCase:
+    return GetSalesOrderOtdByCustomerUseCase(
+        sales_order_otd_repository=SalesOrderOtdRepository()
+    )
+
+
+def build_get_sales_order_otd_by_branch_use_case() -> GetSalesOrderOtdByBranchUseCase:
+    return GetSalesOrderOtdByBranchUseCase(
         sales_order_otd_repository=SalesOrderOtdRepository()
     )
 

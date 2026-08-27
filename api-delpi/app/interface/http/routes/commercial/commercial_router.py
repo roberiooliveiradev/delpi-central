@@ -3,12 +3,10 @@ from fastapi import APIRouter, Query
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
-    COMMERCIAL_ANALYSIS_GROUP_BY_QUERY,
     COMMERCIAL_OTD_STATUS_QUERY,
     COMMERCIAL_PROPOSAL_STATUS_QUERY,
     CUSTOMER_SEGMENT_QUERY,
     GRANULARITY_QUERY_REQUIRED,
-    GRANULARITY_QUERY_WEEK,
     SORT_DIR_QUERY,
 )
 from typing import Optional
@@ -43,10 +41,19 @@ from app.application.dto.commercial.commercial_rol_series_request import (
 from app.application.dto.commercial.get_rol_by_customer_request import (
     GetRolByCustomerRequest,
 )
+from app.application.dto.commercial.get_rol_by_branch_request import (
+    GetRolByBranchRequest,
+)
 from app.application.dto.commercial.new_business_rol_pct_request import NewBusinessRolPctRequest
 from app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
 from app.application.dto.commercial.get_sales_order_otd_panel_request import (
     GetSalesOrderOtdPanelRequest,
+)
+from app.application.dto.commercial.get_sales_order_otd_by_customer_request import (
+    GetSalesOrderOtdByCustomerRequest,
+)
+from app.application.dto.commercial.get_sales_order_otd_by_branch_request import (
+    GetSalesOrderOtdByBranchRequest,
 )
 from app.application.dto.commercial.sales_order_otd_series_request import (
     SalesOrderOtdSeriesRequest,
@@ -66,12 +73,13 @@ from app.composition.commercial_composer import (
     build_get_new_clients_rol_pct_use_case,
     build_get_commercial_rol_series_use_case,
     build_get_commercial_rol_by_customer_use_case,
-    build_get_commercial_rol_analysis_use_case,
+    build_get_commercial_rol_by_branch_use_case,
     build_get_sales_order_otd_use_case,
     build_get_sales_order_otd_panel_use_case,
     build_get_sales_order_otd_series_use_case,
     build_get_sales_order_otd_line_detail_use_case,
-    build_get_commercial_sales_order_otd_analysis_use_case,
+    build_get_sales_order_otd_by_customer_use_case,
+    build_get_sales_order_otd_by_branch_use_case,
     build_get_new_business_rol_pct_use_case,
     build_get_head_office_weg_rol_target_use_case,
     build_get_branch_weg_rol_target_use_case,
@@ -82,9 +90,9 @@ from app.composition.engineering_composer import (
     build_engineering_get_lmp_history_events_use_case,
 )
 from app.interface.http.routes.commercial.commercial_route_helpers import (
-    build_commercial_analysis_filter_request,
     build_get_commercial_proposal_request,
     parse_customer_codes,
+    parse_customer_names,
     parse_customer_segment,
 )
 from app.interface.http.routes.engineering.lmp_route_helpers import (
@@ -93,7 +101,6 @@ from app.interface.http.routes.engineering.lmp_route_helpers import (
 from app.interface.http.kpi_field_labels import (
     COMMERCIAL_CONVERSION_FIELD_LABELS,
     COMMERCIAL_ROL_FIELD_LABELS,
-    COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
     kpi_fields,
@@ -415,85 +422,6 @@ def get_branch_new_business_rol_target_pct(
 
 
 @router.get(
-    "/rol",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "get_commercial_rol",
-        path="/commercial/rol",
-    ),
-)
-@require_any_permission(KPI_COMMERCIAL_ACCESS)
-def get_commercial_rol(
-    start_date: Optional[str] = START_DATE_QUERY(),
-    end_date: Optional[str] = END_DATE_QUERY(),
-    granularity: str = GRANULARITY_QUERY_WEEK(),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
-    customer_codes: Optional[str] = Query(
-        None, description="Comma-separated TOTVS customer codes (include)."
-    ),
-    customer_names: Optional[str] = Query(
-        None, description="Comma-separated customer names to include (partial match, LIKE)."
-    ),
-    exclude_customer_codes: Optional[str] = Query(
-        None, description="Comma-separated TOTVS customer codes to exclude."
-    ),
-    exclude_customer_names: Optional[str] = Query(
-        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
-    ),
-    group_by: str = COMMERCIAL_ANALYSIS_GROUP_BY_QUERY(),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    include: Optional[str] = Query(
-        None, description="Comma-separated flags for optional sections (e.g. portfolio)."
-    ),
-):
-    try:
-        request = build_commercial_analysis_filter_request(
-            start_date=start_date,
-            end_date=end_date,
-            granularity=granularity,
-            branch=branch,
-            customer_segment=customer_segment,
-            customer_codes=customer_codes,
-            customer_names=customer_names,
-            exclude_customer_codes=exclude_customer_codes,
-            exclude_customer_names=exclude_customer_names,
-            group_by=group_by,
-            page=page,
-            page_size=page_size,
-            include=include,
-        )
-        result = build_get_commercial_rol_analysis_use_case().execute(request)
-        result = enrich_dashboard_metric(
-            result,
-            source_key=goal_keys.COMMERCIAL_ROL,
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            summary_key="summary",
-            recompute_target_pct_from="rol",
-        )
-        return api_delpi_success(
-            result,
-            operation_id="get_commercial_rol",
-            message="Commercial ROL analysis fetched successfully.",
-            fields=kpi_fields(
-                COMMERCIAL_ROL_FIELD_LABELS,
-                COMMERCIAL_ROL_ANALYSIS_FIELD_LABELS,
-            ),
-        )
-    except ValueError as exc:
-        log_error(f"Validation error while fetching commercial ROL analysis: {exc}")
-        return error_response(str(exc), status_code=400)
-    except Exception as exc:
-        log_error(f"Error while fetching commercial ROL analysis: {exc}")
-        return error_response(
-            "Internal error while fetching commercial ROL analysis.",
-            status_code=500,
-        )
-
-
-@router.get(
     "/rol/series",
     **OpenApiAgentMetadataBuilder.from_contract(
         "get_commercial_rol_series",
@@ -507,6 +435,15 @@ def get_commercial_rol_series(
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
 ):
     try:
         request = CommercialRolSeriesRequest(
@@ -515,6 +452,9 @@ def get_commercial_rol_series(
             date_end=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
         )
 
         request.validate()
@@ -554,6 +494,15 @@ def get_commercial_rol_by_customer(
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
     limit: int = Query(20, ge=1, le=500),
     include_others: bool = Query(True),
 ):
@@ -564,6 +513,9 @@ def get_commercial_rol_by_customer(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
             limit=limit,
             include_others=include_others,
         )
@@ -580,6 +532,59 @@ def get_commercial_rol_by_customer(
         log_error(f"Error while fetching ROL by customer: {exc}")
         return error_response(
             "Internal error while fetching ROL by customer.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/rol/by-branch",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_commercial_rol_by_branch",
+        path="/commercial/rol/by-branch",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_rol_by_branch(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+):
+    try:
+        request = GetRolByBranchRequest(
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+        )
+        result = build_get_commercial_rol_by_branch_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_commercial_rol_by_branch",
+            message="Commercial ROL by branch fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching ROL by branch: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching ROL by branch: {exc}")
+        return error_response(
+            "Internal error while fetching ROL by branch.",
             status_code=500,
         )
 
@@ -895,21 +900,20 @@ def get_new_clients_average(
     
 
 @router.get(
-    "/sales-order-otd/analysis",
+    "/sales-order-otd/by-customer",
     **OpenApiAgentMetadataBuilder.from_contract(
-        "get_commercial_sales_order_otd_analysis",
-        path="/commercial/sales-order-otd/analysis",
+        "get_sales_order_otd_by_customer",
+        path="/commercial/sales-order-otd/by-customer",
     ),
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
-def get_commercial_sales_order_otd_analysis(
-    start_date: Optional[str] = START_DATE_QUERY(),
-    end_date: Optional[str] = END_DATE_QUERY(),
-    granularity: str = GRANULARITY_QUERY_WEEK(),
+def get_sales_order_otd_by_customer(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(
-        None, description="Comma-separated TOTVS customer codes (include)."
+        None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
     ),
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
@@ -920,55 +924,95 @@ def get_commercial_sales_order_otd_analysis(
     exclude_customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
-    group_by: str = COMMERCIAL_ANALYSIS_GROUP_BY_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
 ):
     try:
-        request = build_commercial_analysis_filter_request(
+        request = GetSalesOrderOtdByCustomerRequest(
+            branch=branch,
             start_date=start_date,
             end_date=end_date,
-            granularity=granularity,
-            branch=branch,
-            customer_segment=customer_segment,
-            customer_codes=customer_codes,
-            customer_names=customer_names,
-            exclude_customer_codes=exclude_customer_codes,
-            exclude_customer_names=exclude_customer_names,
-            group_by=group_by,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
             page=page,
             page_size=page_size,
         )
-        result = build_get_commercial_sales_order_otd_analysis_use_case().execute(
-            request
-        )
-        result = enrich_dashboard_metric(
-            result,
-            source_key=goal_keys.COMMERCIAL_SALES_ORDER_OTD,
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            summary_key="summary",
-            recompute_target_pct_from="otd_pct",
-        )
+        result = build_get_sales_order_otd_by_customer_use_case().execute(request)
         return api_delpi_success(
             result,
-            operation_id="get_commercial_sales_order_otd_analysis",
-            message="Commercial sales order OTD analysis fetched successfully.",
+            operation_id="get_sales_order_otd_by_customer",
+            message="Sales order OTD by customer fetched successfully.",
             fields=kpi_fields(
                 COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
                 COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
             ),
         )
     except ValueError as exc:
-        log_error(
-            f"Validation error while fetching commercial sales order OTD analysis: {exc}"
-        )
+        log_error(f"Validation error while fetching sales order OTD by customer: {exc}")
         return error_response(str(exc), status_code=400)
     except Exception as exc:
-        log_error(f"Error while fetching commercial sales order OTD analysis: {exc}")
+        log_error(f"Error while fetching sales order OTD by customer: {exc}")
         return error_response(
-            "Internal error while fetching commercial sales order OTD analysis.",
+            "Internal error while fetching sales order OTD by customer.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/sales-order-otd/by-branch",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_sales_order_otd_by_branch",
+        path="/commercial/sales-order-otd/by-branch",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_sales_order_otd_by_branch(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+):
+    try:
+        request = GetSalesOrderOtdByBranchRequest(
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+        )
+        result = build_get_sales_order_otd_by_branch_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_sales_order_otd_by_branch",
+            message="Sales order OTD by branch fetched successfully.",
+            fields=kpi_fields(
+                COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+                COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
+            ),
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching sales order OTD by branch: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching sales order OTD by branch: {exc}")
+        return error_response(
+            "Internal error while fetching sales order OTD by branch.",
             status_code=500,
         )
 
@@ -988,6 +1032,15 @@ def get_sales_order_otd_series(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
 ):
     try:
         request = SalesOrderOtdSeriesRequest(
@@ -997,6 +1050,9 @@ def get_sales_order_otd_series(
             branch=branch,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
         )
 
         use_case = build_get_sales_order_otd_series_use_case()
@@ -1034,6 +1090,15 @@ def get_sales_order_otd_panel(
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
     status: Optional[str] = COMMERCIAL_OTD_STATUS_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
@@ -1054,6 +1119,9 @@ def get_sales_order_otd_panel(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
             status=status,
             page=page,
             page_size=page_size,
@@ -1156,6 +1224,15 @@ def get_sales_order_otd(
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
 ):
     try:
         use_case = build_get_sales_order_otd_use_case()
@@ -1166,6 +1243,9 @@ def get_sales_order_otd(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
         )
 
         result = enrich_dashboard_metric(

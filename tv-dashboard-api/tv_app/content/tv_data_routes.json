@@ -773,182 +773,6 @@
       ]
     },
     {
-      "operationId": "get_commercial_rol",
-      "httpMethod": "GET",
-      "label": "Análise consolidada de ROL comercial",
-      "category": "commercial",
-      "path": "/commercial/rol",
-      "allowedDisplayModes": [
-        "kpi",
-        "line_chart",
-        "table",
-        "auto"
-      ],
-      "metaShape": "composite_analysis",
-      "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio).",
-      "paramSchema": {
-        "granularity": {
-          "type": "string",
-          "optional": true,
-          "label": "Granularidade",
-          "default": "week",
-          "enum": [
-            "day",
-            "week",
-            "month",
-            "year"
-          ],
-          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
-        },
-        "start_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data início",
-          "format": "date",
-          "description": "Início do período (AAAA-MM-DD)."
-        },
-        "end_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data fim",
-          "format": "date",
-          "description": "Fim do período (AAAA-MM-DD)."
-        },
-        "customer_segment": {
-          "type": "string",
-          "optional": true,
-          "label": "Segmento",
-          "enum": [
-            "weg",
-            "new_business"
-          ],
-          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
-        },
-        "customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes",
-          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
-        },
-        "branch": {
-          "type": "string",
-          "optional": true,
-          "label": "Filial",
-          "enum": [
-            "01",
-            "02"
-          ],
-          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
-        },
-        "customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Nomes de clientes (incluir)",
-          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
-        },
-        "exclude_customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Excluir códigos de clientes",
-          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
-        },
-        "exclude_customer_names": {
-          "type": "string",
-          "optional": true,
-          "label": "Excluir nomes de clientes",
-          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
-        },
-        "group_by": {
-          "type": "string",
-          "optional": true,
-          "label": "Agrupar por",
-          "default": "customer",
-          "enum": [
-            "none",
-            "customer",
-            "branch"
-          ],
-          "description": "Como agregar o resultado (geral, filial, produto etc.)."
-        },
-        "page": {
-          "type": "integer",
-          "optional": true,
-          "label": "Página",
-          "default": 1,
-          "description": "Número da página na listagem paginada."
-        },
-        "page_size": {
-          "type": "integer",
-          "optional": true,
-          "label": "Tamanho da página",
-          "default": 50,
-          "description": "Quantidade de linhas por página."
-        },
-        "include": {
-          "type": "string",
-          "optional": true,
-          "label": "Seções opcionais",
-          "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal)."
-        }
-      },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "seriesField": "series",
-      "tableFields": "series",
-      "valueFields": [
-        "rol",
-        "gross_revenue",
-        "returns",
-        "discounts",
-        "rol_filial_01",
-        "rol_filial_02"
-      ],
-      "valueFieldLabels": {
-        "rol": "ROL",
-        "gross_revenue": "Receita bruta",
-        "returns": "Devoluções",
-        "discounts": "Descontos",
-        "period_label": "Período",
-        "sort_key": "Chave de ordenação",
-        "start_date": "Data início",
-        "end_date": "Data fim",
-        "rol_filial_01": "ROL filial 01",
-        "rol_filial_02": "ROL filial 02",
-        "rol_with_ipi": "ROL"
-      },
-      "valueFieldTypes": {
-        "period_label": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "rol": "number",
-        "gross_revenue": "number",
-        "returns": "number",
-        "discounts": "number",
-        "rol_filial_01": "number",
-        "rol_filial_02": "number"
-      },
-      "whenToUse": "Use gráfico de linha ou tabela na série temporal (rol_filial_01/02). KPI usa summary.totals; evite misturar colunas de resumo com linhas da série.",
-      "suggestedTransformSteps": [
-        {
-          "op": "select",
-          "columns": [
-            "period_label",
-            "rol_filial_01",
-            "rol_filial_02"
-          ]
-        },
-        {
-          "op": "sort",
-          "column": "sort_key",
-          "direction": "asc"
-        }
-      ]
-    },
-    {
       "operationId": "get_commercial_rol_by_customer",
       "httpMethod": "GET",
       "label": "Indicador — ROL por cliente",
@@ -1015,6 +839,21 @@
           "label": "Incluir Demais",
           "default": true,
           "description": "Quando verdadeiro, agrega clientes fora do Top N na linha Demais."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)"
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes (excluir)"
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (excluir)"
         }
       },
       "paramStrategy": "date_range",
@@ -1078,6 +917,21 @@
           "optional": true,
           "label": "Códigos de clientes",
           "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)"
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes (excluir)"
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (excluir)"
         }
       },
       "paramStrategy": "date_range",
@@ -1139,124 +993,21 @@
           "optional": true,
           "label": "Códigos de clientes",
           "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
-        }
-      },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ]
-    },
-    {
-      "operationId": "get_commercial_sales_order_otd_analysis",
-      "httpMethod": "GET",
-      "label": "Análise consolidada de OTD de pedidos",
-      "category": "commercial",
-      "path": "/commercial/sales-order-otd/analysis",
-      "allowedDisplayModes": [
-        "kpi",
-        "auto"
-      ],
-      "metaShape": "composite_analysis",
-      "description": "Pacote com resumo (quantidade e OTD), série temporal e detalhamento por cliente.",
-      "paramSchema": {
-        "granularity": {
-          "type": "string",
-          "optional": true,
-          "label": "Granularidade",
-          "default": "week",
-          "enum": [
-            "day",
-            "week",
-            "month",
-            "year"
-          ],
-          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
-        },
-        "start_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data início",
-          "format": "date",
-          "description": "Início do período (AAAA-MM-DD)."
-        },
-        "end_date": {
-          "type": "string",
-          "optional": true,
-          "label": "Data fim",
-          "format": "date",
-          "description": "Fim do período (AAAA-MM-DD)."
-        },
-        "branch": {
-          "type": "string",
-          "optional": true,
-          "label": "Filial",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
-        },
-        "customer_segment": {
-          "type": "string",
-          "optional": true,
-          "label": "Segmento",
-          "enum": [
-            "weg",
-            "new_business"
-          ],
-          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
-        },
-        "customer_codes": {
-          "type": "string",
-          "optional": true,
-          "label": "Códigos de clientes",
-          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
         },
         "customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Nomes de clientes (incluir)",
-          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+          "label": "Nomes de clientes (incluir)"
         },
         "exclude_customer_codes": {
           "type": "string",
           "optional": true,
-          "label": "Excluir códigos de clientes",
-          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+          "label": "Códigos de clientes (excluir)"
         },
         "exclude_customer_names": {
           "type": "string",
           "optional": true,
-          "label": "Excluir nomes de clientes",
-          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
-        },
-        "group_by": {
-          "type": "string",
-          "optional": true,
-          "label": "Agrupar por",
-          "default": "customer",
-          "enum": [
-            "none",
-            "customer",
-            "branch"
-          ],
-          "description": "Como agregar o resultado (geral, filial, produto etc.)."
-        },
-        "page": {
-          "type": "integer",
-          "optional": true,
-          "label": "Página",
-          "default": 1,
-          "description": "Número da página na listagem paginada."
-        },
-        "page_size": {
-          "type": "integer",
-          "optional": true,
-          "label": "Tamanho da página",
-          "default": 50,
-          "description": "Quantidade de linhas por página."
+          "label": "Nomes de clientes (excluir)"
         }
       },
       "paramStrategy": "date_range",
@@ -1440,6 +1191,21 @@
           "optional": true,
           "label": "Busca",
           "description": "Texto livre de busca."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)"
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes (excluir)"
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (excluir)"
         }
       },
       "paramStrategy": "date_range",
@@ -1534,6 +1300,21 @@
           "optional": true,
           "label": "Códigos de clientes",
           "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)"
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes (excluir)"
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (excluir)"
         }
       },
       "paramStrategy": "date_range",
@@ -24806,6 +24587,217 @@
         }
       },
       "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_commercial_rol_by_branch",
+      "httpMethod": "GET",
+      "label": "Indicador — ROL por filial",
+      "category": "commercial",
+      "path": "/commercial/rol/by-branch",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "ROL das filiais 01 e 02 em lista tabular.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date"
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento de cliente",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes"
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)"
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes (excluir)"
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (excluir)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "whenToUse": "Use em tabela comparativa por filial."
+    },
+    {
+      "operationId": "get_sales_order_otd_by_customer",
+      "httpMethod": "GET",
+      "label": "Indicador — OTD por cliente",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/by-customer",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "OTD agregado por cliente.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página"
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Itens por página"
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)"
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes (excluir)"
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (excluir)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "whenToUse": "Use em tabela de OTD por cliente."
+    },
+    {
+      "operationId": "get_sales_order_otd_by_branch",
+      "httpMethod": "GET",
+      "label": "Indicador — OTD por filial",
+      "category": "commercial",
+      "path": "/commercial/sales-order-otd/by-branch",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "OTD das filiais 01 e 02.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date"
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date"
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento de cliente",
+          "enum": [
+            "weg",
+            "new_business"
+          ]
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes"
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)"
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes (excluir)"
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (excluir)"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "whenToUse": "Use em tabela de OTD por filial."
     }
   ]
 }

@@ -28,6 +28,8 @@ _DOMAIN_LABELS: dict[str, str] = {
 _ENTITY_LABELS: dict[str, str] = {
     "commercial_rol_target": "meta percentual ROL comercial",
     "commercial_rol_series": "série temporal de ROL comercial",
+    "commercial_rol_by_customer": "ranking de ROL comercial por cliente",
+    "commercial_rol_by_branch": "ROL comercial por filial",
     "production_order_detail": "detalhe de ordem de produção por OP",
     "open_sales_order": "pedidos de venda em aberto",
     "open_production_order": "OPs abertas (pedidos de venda)",
@@ -39,6 +41,8 @@ _ENTITY_LABELS: dict[str, str] = {
     "sales_conversion_rate_series": "série temporal da taxa de conversão de vendas",
     "new_clients_average": "média de novos clientes",
     "sales_order_otd": "OTD de pedidos de venda",
+    "sales_order_otd_by_customer": "OTD de pedidos de venda por cliente",
+    "sales_order_otd_by_branch": "OTD de pedidos de venda por filial",
     "sales_order_otd_panel": "Painel OTD de pedidos de venda",
     "sales_order_otd_series": "Série temporal OTD de pedidos de venda",
     "sales_order_otd_line": "Detalhe de linha OTD de pedido de venda",

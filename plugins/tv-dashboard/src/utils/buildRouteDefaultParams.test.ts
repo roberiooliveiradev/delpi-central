@@ -88,10 +88,10 @@ describe("buildRouteDefaultParams", () => {
 
   it("não pré-preenche group_by/granularity opcionais (Não definido aqui)", () => {
     const params = buildRouteDefaultParams({
-      operationId: "get_commercial_rol",
-      label: "ROL",
+      operationId: "get_commercial_rol_series",
+      label: "ROL série",
       category: "commercial",
-      defaultParams: { group_by: "customer" },
+      defaultParams: { group_by: "customer", granularity: "week" },
       paramSchema: {
         group_by: {
           type: "string",

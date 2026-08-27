@@ -764,133 +764,6 @@
         "auto"
       ]
     },
-    "get_commercial_rol": {
-      "seriesField": "series",
-      "tableFields": "series",
-      "tableFieldsByParam": {
-        "group_by": {
-          "customer": "by_customer",
-          "branch": "by_branch",
-          "none": "series"
-        }
-      },
-      "allowedDisplayModes": [
-        "kpi",
-        "line_chart",
-        "table",
-        "auto"
-      ],
-      "valueFields": [
-        "rol",
-        "gross_revenue",
-        "returns",
-        "discounts",
-        "rol_filial_01",
-        "rol_filial_02"
-      ],
-      "valueFieldLabels": {
-        "rol": "ROL",
-        "gross_revenue": "Receita bruta",
-        "returns": "Devoluções",
-        "discounts": "Descontos",
-        "period_label": "Período",
-        "sort_key": "Chave de ordenação",
-        "start_date": "Data início",
-        "end_date": "Data fim",
-        "rol_filial_01": "ROL filial 01",
-        "rol_filial_02": "ROL filial 02",
-        "customer_code": "Código cliente",
-        "customer_name": "Cliente",
-        "customer_store": "Loja cliente",
-        "share_pct": "% participação",
-        "rank": "Ranking",
-        "branch": "Filial",
-        "rol_with_ipi": "ROL"
-      },
-      "valueFieldTypes": {
-        "period_label": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "rol": "number",
-        "gross_revenue": "number",
-        "returns": "number",
-        "discounts": "number",
-        "rol_filial_01": "number",
-        "rol_filial_02": "number"
-      },
-      "label": "Análise consolidada de ROL comercial",
-      "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio).",
-      "whenToUse": "Use gráfico de linha ou tabela na série temporal (rol_filial_01/02). KPI usa summary.totals; evite misturar colunas de resumo com linhas da série.",
-      "suggestedTransformSteps": [
-        {
-          "op": "select",
-          "columns": [
-            "period_label",
-            "rol_filial_01",
-            "rol_filial_02"
-          ]
-        },
-        {
-          "op": "sort",
-          "column": "sort_key",
-          "direction": "asc"
-        }
-      ]
-    },
-    "get_commercial_sales_order_otd_analysis": {
-      "seriesField": "series",
-      "tableFields": "series",
-      "tableFieldsByParam": {
-        "group_by": {
-          "customer": "by_customer",
-          "branch": "by_branch",
-          "none": "series"
-        }
-      },
-      "allowedDisplayModes": [
-        "kpi",
-        "line_chart",
-        "table",
-        "auto"
-      ],
-      "valueFields": [
-        "total_qty",
-        "fulfilled_qty",
-        "fulfillment_pct",
-        "otd_pct",
-        "otd_pct_filial_01",
-        "otd_pct_filial_02",
-        "fulfillment_pct_filial_01",
-        "fulfillment_pct_filial_02",
-        "total_qty_filial_01",
-        "total_qty_filial_02"
-      ],
-      "valueFieldLabels": {
-        "period_label": "Período",
-        "sort_key": "Chave de ordenação",
-        "start_date": "Data início",
-        "end_date": "Data fim",
-        "total_qty": "Quantidade total",
-        "fulfilled_qty": "Quantidade atendida",
-        "fulfillment_pct": "% atendimento",
-        "otd_pct": "OTD (%)",
-        "otd_pct_filial_01": "OTD filial 01",
-        "otd_pct_filial_02": "OTD filial 02",
-        "fulfillment_pct_filial_01": "% atendimento filial 01",
-        "fulfillment_pct_filial_02": "% atendimento filial 02",
-        "total_qty_filial_01": "Quantidade filial 01",
-        "total_qty_filial_02": "Quantidade filial 02",
-        "customer_code": "Código cliente",
-        "customer_name": "Cliente",
-        "customer_store": "Loja cliente",
-        "branch": "Filial",
-        "total_lines": "Linhas",
-        "on_time_lines": "Linhas no prazo",
-        "late_lines": "Linhas atrasadas"
-      },
-      "whenToUse": "KPI usa summary.totals; tabela por cliente/filial conforme group_by; série temporal quando group_by=none."
-    },
     "get_refugos_rankings": {
       "tableFields": "items",
       "valueFields": [
@@ -1090,6 +963,222 @@
         "invoice_issue_date": "date",
         "purchase_order_issue_date": "date"
       }
+    },
+    "get_commercial_rol_series": {
+      "seriesField": "points",
+      "tableFields": "points",
+      "allowedDisplayModes": [
+        "line_chart",
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "rol_matrix",
+        "rol_branch"
+      ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "rol_matrix": "ROL filial 01",
+        "rol_branch": "ROL filial 02"
+      },
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "rol_matrix": "number",
+        "rol_branch": "number"
+      },
+      "label": "Série temporal de ROL comercial",
+      "description": "Pontos de ROL por período (filiais 01 e 02).",
+      "whenToUse": "Use em gráfico de linha ou tabela temporal de ROL.",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "rol_matrix",
+            "rol_branch"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
+      ]
+    },
+    "get_commercial_rol_by_customer": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "rol",
+        "share_pct",
+        "rank"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "rol": "ROL",
+        "share_pct": "% participação",
+        "rank": "Ranking"
+      },
+      "label": "ROL comercial por cliente",
+      "description": "Ranking de clientes por ROL no período.",
+      "whenToUse": "Use em tabela de ranking por cliente."
+    },
+    "get_commercial_rol_by_branch": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "returns",
+        "discounts"
+      ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "returns": "Devoluções",
+        "discounts": "Descontos"
+      },
+      "label": "ROL comercial por filial",
+      "description": "ROL das filiais 01 e 02 em lista tabular.",
+      "whenToUse": "Use em tabela comparativa por filial."
+    },
+    "get_sales_order_otd": {
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "valueFields": [
+        "sales_order_otd_pct"
+      ],
+      "valueFieldLabels": {
+        "sales_order_otd_pct": "OTD pedidos (%)",
+        "total_lines": "Total de linhas",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "label": "OTD de pedidos de venda",
+      "description": "Percentual de entrega no prazo de pedidos de venda.",
+      "whenToUse": "Use em card KPI de OTD."
+    },
+    "get_sales_order_otd_series": {
+      "seriesField": "points",
+      "tableFields": "points",
+      "allowedDisplayModes": [
+        "line_chart",
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "otd_filial_01",
+        "otd_filial_02"
+      ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "otd_filial_01": "OTD filial 01",
+        "otd_filial_02": "OTD filial 02"
+      },
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_filial_01": "number",
+        "otd_filial_02": "number"
+      },
+      "label": "Série temporal de OTD de pedidos",
+      "description": "Pontos de OTD por período (filiais 01 e 02).",
+      "whenToUse": "Use em gráfico de linha de OTD.",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "otd_filial_01",
+            "otd_filial_02"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
+      ]
+    },
+    "get_sales_order_otd_by_customer": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "branch": "Filial",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)"
+      },
+      "label": "OTD de pedidos por cliente",
+      "description": "OTD e atendimento agregados por cliente.",
+      "whenToUse": "Use em tabela de OTD por cliente."
+    },
+    "get_sales_order_otd_by_branch": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty"
+      ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)"
+      },
+      "label": "OTD de pedidos por filial",
+      "description": "OTD das filiais 01 e 02 em lista tabular.",
+      "whenToUse": "Use em tabela comparativa de OTD por filial."
     }
   }
 }

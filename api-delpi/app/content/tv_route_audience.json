@@ -1134,21 +1134,6 @@
       },
       "category": "commercial"
     },
-    "get_commercial_rol": {
-      "locale": {
-        "en": {
-          "summary": "Commercial ROL consolidated analysis",
-          "description": "Composite ROL package with summary, series, optional customer breakdown and weekly portfolio.",
-          "label": "Commercial ROL analysis"
-        },
-        "pt-BR": {
-          "label": "Análise consolidada de ROL comercial",
-          "summary": "Pacote consolidado de ROL comercial",
-          "description": "Pacote com resumo, série temporal, detalhamento por cliente e carteira semanal opcional (include=portfolio)."
-        }
-      },
-      "category": "commercial"
-    },
     "get_commercial_rol_series": {
       "locale": {
         "en": {
@@ -4091,21 +4076,6 @@
           "label": "Indicador — Otd de pedidos de venda",
           "summary": "Indicador — Otd de pedidos de venda",
           "description": "Indicador numérico para «Otd de pedidos de venda»."
-        }
-      },
-      "category": "commercial"
-    },
-    "get_commercial_sales_order_otd_analysis": {
-      "locale": {
-        "en": {
-          "summary": "Sales order OTD consolidated analysis",
-          "description": "Composite OTD package with summary, series and optional customer breakdown including fulfillment qty.",
-          "label": "Sales order OTD analysis"
-        },
-        "pt-BR": {
-          "label": "Análise consolidada de OTD de pedidos",
-          "summary": "Pacote consolidado de OTD e atendimento de pedidos",
-          "description": "Pacote com resumo (quantidade e OTD), série temporal e detalhamento por cliente."
         }
       },
       "category": "commercial"
@@ -8774,5 +8744,50 @@
         }
       }
     }
+  },
+  "get_commercial_rol_by_branch": {
+    "locale": {
+      "en": {
+        "summary": "Commercial ROL by branch",
+        "description": "ROL metrics for branches 01 and 02 in a period, as a short tabular list.",
+        "label": "Commercial ROL by branch"
+      },
+      "pt-BR": {
+        "label": "Indicador — ROL por filial",
+        "summary": "ROL comercial por filial",
+        "description": "Métricas de ROL das filiais 01 e 02 no período, em lista tabular curta."
+      }
+    },
+    "category": "commercial"
+  },
+  "get_sales_order_otd_by_customer": {
+    "locale": {
+      "en": {
+        "summary": "Sales order OTD by customer",
+        "description": "On-time delivery metrics broken down by customer for a period.",
+        "label": "Sales order OTD by customer"
+      },
+      "pt-BR": {
+        "label": "Indicador — OTD por cliente",
+        "summary": "OTD de pedidos por cliente",
+        "description": "Métricas de entrega no prazo agregadas por cliente no período."
+      }
+    },
+    "category": "commercial"
+  },
+  "get_sales_order_otd_by_branch": {
+    "locale": {
+      "en": {
+        "summary": "Sales order OTD by branch",
+        "description": "On-time delivery metrics for branches 01 and 02 as a short tabular list.",
+        "label": "Sales order OTD by branch"
+      },
+      "pt-BR": {
+        "label": "Indicador — OTD por filial",
+        "summary": "OTD de pedidos por filial",
+        "description": "Métricas de entrega no prazo das filiais 01 e 02, em lista tabular curta."
+      }
+    },
+    "category": "commercial"
   }
 }

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-26",
-  "baselineOperationCount": 688,
-  "operationCount": 688,
-  "coveredCount": 616,
+  "generatedAt": "2026-08-27",
+  "baselineOperationCount": 684,
+  "operationCount": 685,
+  "coveredCount": 613,
   "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 22,
-      "covered": 22,
+      "total": 23,
+      "covered": 23,
       "gap": 0,
       "exempt": 0
     },
@@ -194,8 +194,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 28,
-      "covered": 28,
+      "total": 24,
+      "covered": 24,
       "gap": 0,
       "exempt": 0
     },
@@ -343,15 +343,6 @@
       "status": "covered"
     },
     {
-      "operationId": "get_commercial_rol",
-      "method": "GET",
-      "path": "/commercial/rol",
-      "module": "commercial",
-      "entity": "commercial_rol",
-      "shape": "composite_analysis",
-      "status": "covered"
-    },
-    {
       "operationId": "get_commercial_rol_by_customer",
       "method": "GET",
       "path": "/commercial/rol/by-customer",
@@ -376,15 +367,6 @@
       "module": "commercial",
       "entity": "sales_order_otd",
       "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_commercial_sales_order_otd_analysis",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/analysis",
-      "module": "commercial",
-      "entity": "commercial_sales_order_otd",
-      "shape": "composite_analysis",
       "status": "covered"
     },
     {
@@ -6041,42 +6023,6 @@
       "status": "covered"
     },
     {
-      "operationId": "list_supplies_purchase_request_lines",
-      "method": "GET",
-      "path": "/supplies/purchase-requests/lines",
-      "module": "supplies",
-      "entity": "supplies_purchase_request_line",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_supplies_purchase_request_lines",
-      "method": "GET",
-      "path": "/supplies/purchase-requests/lines/{branch}/{request_number}",
-      "module": "supplies",
-      "entity": "supplies_purchase_request_line",
-      "shape": "list",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_supplies_purchase_request_recent_linked_orders",
-      "method": "GET",
-      "path": "/supplies/purchase-requests/recent-linked-orders",
-      "module": "supplies",
-      "entity": "supplies_purchase_request_linked_order",
-      "shape": "list",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_supplies_purchase_request_recent_linked_receipts",
-      "method": "GET",
-      "path": "/supplies/purchase-requests/recent-linked-receipts",
-      "module": "supplies",
-      "entity": "supplies_purchase_request_linked_receipt",
-      "shape": "list",
-      "status": "covered"
-    },
-    {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",
       "method": "GET",
       "path": "/supplies/safety-stock/consumption-analysis/items",
@@ -6398,6 +6344,33 @@
       "module": "system",
       "entity": "protheus_table_schema",
       "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_commercial_rol_by_branch",
+      "method": "GET",
+      "path": "/commercial/rol/by-branch",
+      "module": "commercial",
+      "entity": "commercial_rol_by_customer",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_sales_order_otd_by_customer",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/by-customer",
+      "module": "commercial",
+      "entity": "commercial_rol_by_customer",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_sales_order_otd_by_branch",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/by-branch",
+      "module": "commercial",
+      "entity": "commercial_rol_by_customer",
+      "shape": "paged_list",
       "status": "covered"
     }
   ]
