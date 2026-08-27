@@ -14,7 +14,7 @@ export const FINANCIAL_HELP_TOOLTIPS = {
       "Unidade TOTVS para ROL, EBITDA, custos fixos e PMR. Vazio = consolidado; múltiplas unidades restringem o recorte exibido.",
   },
   kpis: {
-    rolWithIpi:
+    rol:
       "Receita Operacional Líquida no período (vendas SD2 menos devoluções, conforme regra do indicador).",
     ebitdaOverRol:
       "Percentual de EBITDA sobre o ROL. Meta alinhada ao catálogo de Indicadores Estratégicos quando configurada.",
@@ -22,8 +22,7 @@ export const FINANCIAL_HELP_TOOLTIPS = {
       "Peso dos custos fixos sobre o ROL no período. Quanto menor, melhor quando a meta é de redução.",
     pmrDays:
       "Prazo Médio de Recebimento em dias: média ponderada entre emissão e recebimento dos títulos.",
-    rol: "ROL consolidada ou por unidade conforme o filtro aplicado.",
-    rolWithIpiDetail: "ROL líquida no período (vendas menos devoluções).",
+    rolDetail: "ROL líquida no período (vendas menos devoluções).",
     ebitdaValue: "Valor absoluto de EBITDA no período.",
     fixedCostValue: "Valor absoluto de custos fixos no período.",
     pmr: "PMR em dias para o recorte de período e unidade.",

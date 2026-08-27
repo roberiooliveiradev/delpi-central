@@ -22,7 +22,6 @@ export type RolData = {
   ipi_separated: number;
   rol_taxes: number;
   rol: number;
-  rol_with_ipi: number;
   financial_titles: number;
   financial_balance: number;
 };
@@ -33,7 +32,7 @@ export type FinancialBranchMetric = {
 
 export type EbitdaBranchRow = FinancialBranchMetric & {
   ebitda_value: number;
-  rol_with_ipi: number;
+  rol: number;
   ebitda_over_rol_pct: number;
 };
 
@@ -42,14 +41,14 @@ export type EbitdaPctData = DashboardGoalFields & {
   start_date: string;
   end_date: string;
   ebitda_value?: number;
-  rol_with_ipi?: number;
+  rol?: number;
   ebitda_over_rol_pct: number;
   branches?: EbitdaBranchRow[];
 };
 
 export type FixedCostBranchRow = FinancialBranchMetric & {
   fixed_cost_value: number;
-  rol_with_ipi: number;
+  rol: number;
   fixed_cost_over_rol_pct: number;
 };
 
@@ -58,7 +57,7 @@ export type FixedCostPctData = DashboardGoalFields & {
   start_date: string;
   end_date: string;
   fixed_cost_value?: number;
-  rol_with_ipi?: number;
+  rol?: number;
   fixed_cost_over_rol_pct: number;
   branches?: FixedCostBranchRow[];
 };

@@ -3858,12 +3858,12 @@
       "locale": {
         "en": {
           "summary": "Scrap cost / ROL",
-          "description": "Scrap cost over financial ROL (with IPI) for a period. Branch is optional: omit to consolidate all branches. Optional filters (mp, pa, op, reason, work center) apply to the scrap numerator only.",
+          "description": "Scrap cost over financial net ROL for a period. Branch is optional: omit to consolidate all branches. Optional filters (mp, pa, op, reason, work center) apply to the scrap numerator only.",
           "whenToUse": "Use as a KPI card for scrap cost as a percentage of ROL. Same period as /financial/rol; omit filial for company-wide consolidated."
         },
         "pt-BR": {
           "summary": "Custo de refugo / ROL",
-          "description": "Custo de refugo sobre o ROL financeiro (com IPI) no período. Filial opcional: omitida consolida todas. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) só no numerador.",
+          "description": "Custo de refugo sobre o ROL financeiro líquido no período. Filial opcional: omitida consolida todas. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) só no numerador.",
           "whenToUse": "Usar no card KPI de custo de refugo / ROL. Mesmo período de /financial/rol; omita filial para consolidado.",
           "label": "Custo de refugo / ROL"
         }
@@ -3999,12 +3999,12 @@
       "locale": {
         "en": {
           "summary": "Rework cost / ROL",
-          "description": "Rework cost over financial ROL (with IPI) for a period. Branch is optional: omit to consolidate all branches. Optional filters (resource, cost center, operator) apply to the rework numerator only.",
+          "description": "Rework cost over financial net ROL for a period. Branch is optional: omit to consolidate all branches. Optional filters (resource, cost center, operator) apply to the rework numerator only.",
           "whenToUse": "Use as a KPI card for rework cost as a percentage of ROL. Same period as /financial/rol; omit filial for company-wide consolidated."
         },
         "pt-BR": {
           "summary": "Custo de retrabalho / ROL",
-          "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) no período. Filial opcional: omitida consolida todas. Filtros opcionais (recurso, centro de custo, operador) só no numerador.",
+          "description": "Custo de retrabalho sobre o ROL financeiro líquido no período. Filial opcional: omitida consolida todas. Filtros opcionais (recurso, centro de custo, operador) só no numerador.",
           "whenToUse": "Usar no card KPI de custo de retrabalho / ROL. Mesmo período de /financial/rol; omita filial para consolidado.",
           "label": "Custo de retrabalho / ROL"
         }
@@ -7677,12 +7677,12 @@
       "locale": {
         "en": {
           "summary": "Quality scrap cost / ROL",
-          "description": "Scrap cost over financial ROL (with IPI) for the quality dashboard and SI. Branch optional: omit to consolidate. Same calculation as /refugos/scrap_cost_pct; params use branch/date_start/date_end.",
+          "description": "Scrap cost over financial net ROL for the quality dashboard and SI. Branch optional: omit to consolidate. Same calculation as /refugos/scrap_cost_pct; params use branch/date_start/date_end.",
           "whenToUse": "Use as the quality dashboard Perdas KPI and SI source quality_scrap_cost_pct."
         },
         "pt-BR": {
           "summary": "Custo de refugo / ROL (qualidade)",
-          "description": "Custo de refugo sobre o ROL financeiro (com IPI) para o dashboard de qualidade e SI. Filial opcional: omitida consolida. Mesmo cálculo de /refugos/scrap_cost_pct; parâmetros branch/date_start/date_end.",
+          "description": "Custo de refugo sobre o ROL financeiro líquido para o dashboard de qualidade e SI. Filial opcional: omitida consolida. Mesmo cálculo de /refugos/scrap_cost_pct; parâmetros branch/date_start/date_end.",
           "whenToUse": "Usar no KPI da aba Perdas e no indicador SI quality_scrap_cost_pct.",
           "label": "Custo de refugo / ROL"
         }
@@ -7710,12 +7710,12 @@
       "locale": {
         "en": {
           "summary": "Quality rework cost / ROL",
-          "description": "Rework cost over financial ROL (with IPI) for the quality dashboard and SI. Branch optional: omit to consolidate. Same calculation as /retrabalhos/rework_cost_pct; params use branch/date_start/date_end.",
+          "description": "Rework cost over financial net ROL for the quality dashboard and SI. Branch optional: omit to consolidate. Same calculation as /retrabalhos/rework_cost_pct; params use branch/date_start/date_end.",
           "whenToUse": "Use as the quality dashboard Perdas KPI and SI source quality_rework_cost_pct."
         },
         "pt-BR": {
           "summary": "Custo de retrabalho / ROL (qualidade)",
-          "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) para o dashboard de qualidade e SI. Filial opcional: omitida consolida. Mesmo cálculo de /retrabalhos/rework_cost_pct; parâmetros branch/date_start/date_end.",
+          "description": "Custo de retrabalho sobre o ROL financeiro líquido para o dashboard de qualidade e SI. Filial opcional: omitida consolida. Mesmo cálculo de /retrabalhos/rework_cost_pct; parâmetros branch/date_start/date_end.",
           "whenToUse": "Usar no KPI da aba Perdas e no indicador SI quality_rework_cost_pct.",
           "label": "Custo de retrabalho / ROL"
         }

@@ -182,7 +182,7 @@ class ProductionMetricsSnapshotService:
         value = self._to_float(payload.get("rol"))
         if value is not None:
             return value
-        return self._to_float(payload.get("rol_with_ipi")) or 0.0
+        return self._to_float(payload.get("rol")) or 0.0
 
     def _to_float(self, value) -> float | None:
         if value is None:

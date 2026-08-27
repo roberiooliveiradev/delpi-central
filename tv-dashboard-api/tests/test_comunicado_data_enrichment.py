@@ -2028,7 +2028,7 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
             "fields": {
                 "scrap_cost_pct": "Custo de refugo / ROL (%)",
                 "scrap_cost": "Custo de refugo (R$)",
-                "rol_with_ipi": "ROL com IPI (R$)",
+                "rol": "ROL (R$)",
                 "occurrences": "Ocorrências de refugo",
                 "value": "Valor",
             },
@@ -2036,7 +2036,7 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
         "data": {
             "scrap_cost_pct": 0.57,
             "scrap_cost": 1200.0,
-            "rol_with_ipi": 210_000.0,
+            "rol": 210_000.0,
             "occurrences": 3,
             "value": 0.57,
         },
@@ -2069,18 +2069,59 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
     metrics = {item["field"]: item["label"] for item in blocks[0]["resolved"]["kpiMetrics"]}
     assert metrics.get("scrap_cost_pct") == "Custo de refugo / ROL (%)"
     assert metrics.get("scrap_cost") == "Custo de refugo (R$)"
-    assert metrics.get("rol_with_ipi") == "ROL com IPI (R$)"
+    assert metrics.get("rol") == "ROL (R$)"
     assert metrics.get("occurrences") == "Ocorrências de refugo"
     assert metrics.get("value") == "Valor"
     # valueFields do catálogo prioriza ordem — não limita o picker.
     assert set(metrics) >= {
         "scrap_cost_pct",
         "scrap_cost",
-        "rol_with_ipi",
+        "rol",
         "occurrences",
         "value",
     }
     assert blocks[0]["resolved"]["kpi"]["label"] == "Custo de refugo / ROL (%)"
+
+
+def test_enrich_kpi_resolves_legacy_rol_with_ipi_binding():
+    """Bindings antigos com valueField rol_with_ipi leem o campo canônico rol."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_quality_scrap_cost_pct",
+            "shape": "scalar",
+            "fields": {"rol": "ROL (R$)"},
+        },
+        "data": {"rol": 150_000.0, "scrap_cost_pct": 1.2, "value": 1.2},
+        "route": {
+            "label": "Custo de refugo / ROL",
+            "valueFields": ["scrap_cost_pct", "value"],
+            "valueFieldLabels": {"rol": "ROL (R$)"},
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = service.enrich_blocks(
+        [
+            {
+                "id": "src-legacy",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_quality_scrap_cost_pct",
+                    "params": {"dateRangePreset": "this_month"},
+                    "displayMode": "kpi",
+                    "valueField": "rol_with_ipi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    assert blocks[0]["resolved"]["kpi"]["value"] == 150_000.0
 
 
 def test_enrich_sales_order_otd_panel_unwraps_lines_items_page():

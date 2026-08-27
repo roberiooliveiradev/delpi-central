@@ -52,7 +52,7 @@ def test_quality_scrap_cost_pct_returns_envelope(
     use_case.execute.return_value = {
         "branch": "01",
         "scrap_cost": 2500.0,
-        "rol_with_ipi": 100_000.0,
+        "rol": 100_000.0,
         "scrap_cost_pct": 2.5,
     }
     mock_builder.return_value = use_case
@@ -123,7 +123,7 @@ def test_quality_rework_cost_pct_returns_envelope(
     use_case.execute.return_value = {
         "branch": "01",
         "rework_cost": 500.0,
-        "rol_with_ipi": 100_000.0,
+        "rol": 100_000.0,
         "rework_cost_pct": 0.5,
     }
     mock_builder.return_value = use_case

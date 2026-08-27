@@ -54,7 +54,7 @@ def test_compute_share_pct_rounds_one_decimal() -> None:
 
 def test_extract_rol_prefers_rol_field() -> None:
     assert extract_rol_from_target_payload({"success": True, "data": {"rol": 42.5}}) == 42.5
-    assert extract_rol_from_target_payload({"rol_with_ipi": 7}) == 7.0
+    assert extract_rol_from_target_payload({"rol": 7}) == 7.0
     assert extract_rol_from_target_payload(None) == 0.0
 
 

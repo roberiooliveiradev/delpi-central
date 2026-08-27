@@ -123,8 +123,8 @@ export function RolPage({ pathname }: RolPageProps) {
         />
         <KpiCard
           title="ROL"
-          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolWithIpiDetail}
-          value={formatCurrency(data?.rol_with_ipi)}
+          titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolDetail}
+          value={formatCurrency(data?.rol)}
           subtitle={formatBranchFilterLabel(branches)}
           icon={<TrendingUp size={22} />}
           loading={isBusy}

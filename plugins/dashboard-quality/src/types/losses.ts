@@ -9,7 +9,7 @@ export type CostPctSummary = DashboardGoalFields & {
   rework_cost?: number | null;
   rework_cost_pct?: number | null;
   rol?: number | null;
-  rol_with_ipi?: number | null;
+  rol?: number | null;
   quantity?: number | null;
   occurrences?: number | null;
 };

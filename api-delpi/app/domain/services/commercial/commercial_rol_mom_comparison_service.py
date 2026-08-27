@@ -178,7 +178,7 @@ class CommercialRolMomComparisonService:
                 end_date=end_date,
             )
         )
-        return float(result.get("rol_with_ipi") or 0)
+        return float(result.get("rol") or 0)
 
     def _year_evolution(self, report: CalendarMonthWindow) -> list[dict[str, Any]]:
         """ROL consolidado de jan até o mês do relatório (mesmo ano)."""
@@ -229,7 +229,7 @@ class CommercialRolMomComparisonService:
         )
         previous_map = {
             self._customer_key(item.customer_code, item.customer_store): float(
-                item.rol_with_ipi
+                item.rol
             )
             for item in previous.items
         }
@@ -240,7 +240,7 @@ class CommercialRolMomComparisonService:
                 self._customer_key(item.customer_code, item.customer_store),
                 0.0,
             )
-            current_value = float(item.rol_with_ipi)
+            current_value = float(item.rol)
             rows.append(
                 RolMomCustomerRow(
                     customer_code=item.customer_code,
@@ -264,7 +264,7 @@ class CommercialRolMomComparisonService:
                 },
                 previous_total=float(previous.total_rol or 0),
             )
-            others_cur = float(current.others.rol_with_ipi)
+            others_cur = float(current.others.rol)
             rows.append(
                 RolMomCustomerRow(
                     customer_code="",

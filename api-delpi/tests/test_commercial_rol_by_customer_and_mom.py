@@ -56,7 +56,7 @@ def test_get_commercial_rol_by_customer_use_case() -> None:
                 customer_code="000001",
                 customer_store="01",
                 customer_name="WEG",
-                rol_with_ipi=1000.0,
+                rol=1000.0,
                 share_pct=100.0,
                 rank=1,
             ),
@@ -91,18 +91,18 @@ def test_mom_comparison_merges_customers() -> None:
         year = int(start[:4])
         if request.branch is None:
             if year == 2026 and month == 6:
-                return {"rol_with_ipi": 300.0}
+                return {"rol": 300.0}
             if year == 2026 and month == 5:
-                return {"rol_with_ipi": 200.0}
+                return {"rol": 200.0}
             if year == 2026 and 1 <= month <= 4:
-                return {"rol_with_ipi": float(month) * 50.0}
-            return {"rol_with_ipi": 0.0}
+                return {"rol": float(month) * 50.0}
+            return {"rol": 0.0}
         table = {
             "01": {"2026-06": 200.0, "2026-05": 150.0},
             "02": {"2026-06": 100.0, "2026-05": 50.0},
         }
         period = "2026-06" if month == 6 else "2026-05"
-        return {"rol_with_ipi": table[request.branch][period]}
+        return {"rol": table[request.branch][period]}
 
     financial.get_rol.side_effect = _get_rol
 
@@ -119,7 +119,7 @@ def test_mom_comparison_merges_customers() -> None:
                         customer_code="A",
                         customer_store="01",
                         customer_name="Cliente A",
-                        rol_with_ipi=80.0,
+                        rol=80.0,
                         share_pct=80.0,
                         rank=1,
                     ),
@@ -128,7 +128,7 @@ def test_mom_comparison_merges_customers() -> None:
                     customer_code="",
                     customer_store="",
                     customer_name="Demais",
-                    rol_with_ipi=20.0,
+                    rol=20.0,
                     share_pct=20.0,
                     rank=2,
                 ),
@@ -144,7 +144,7 @@ def test_mom_comparison_merges_customers() -> None:
                     customer_code="A",
                     customer_store="01",
                     customer_name="Cliente A",
-                    rol_with_ipi=50.0,
+                    rol=50.0,
                     share_pct=50.0,
                     rank=1,
                 ),
@@ -152,7 +152,7 @@ def test_mom_comparison_merges_customers() -> None:
                     customer_code="B",
                     customer_store="01",
                     customer_name="Cliente B",
-                    rol_with_ipi=50.0,
+                    rol=50.0,
                     share_pct=50.0,
                     rank=2,
                 ),

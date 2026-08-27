@@ -138,7 +138,7 @@ Valores ilustrativos alinhados aos slides atuais do GR. Envelope padrão api-del
 
 | Campo | Filial 01 (SC) | Filial 02 (ES) | Consolidado |
 |-------|----------------|----------------|-------------|
-| `rol_with_ipi` | 576.000,00 | 3.384.000,00 | 3.960.000,00 |
+| `rol` | 576.000,00 | 3.384.000,00 | 3.960.000,00 |
 | `rol` | 512.430,00 | 3.010.200,00 | 3.522.630,00 |
 | `gross_revenue` | 620.100,00 | 3.650.000,00 | 4.270.100,00 |
 | `returns` | 12.400,00 | 68.200,00 | 80.600,00 |
@@ -149,7 +149,7 @@ Valores ilustrativos alinhados aos slides atuais do GR. Envelope padrão api-del
 
 #### `data.by_customer` (quando `group_by=customer&customer_segment=new_business`)
 
-| customer_code | customer_name | branch | rol_with_ipi | goal.value | goal.realized_pct | open_value |
+| customer_code | customer_name | branch | rol | goal.value | goal.realized_pct | open_value |
 |---------------|---------------|--------|--------------|------------|-------------------|------------|
 | 000142 | Buhler | 01 | 6.358,49 | — | — | 12.100,00 |
 | 000089 | Flextronics | 01 | 19.110,00 | — | — | 8.400,00 |
@@ -169,7 +169,7 @@ YoY fica no consumidor — duas chamadas.
 
 #### `data.summary` — comparativo (consumidor junta)
 
-| segmento | branch | ATÉ 07/08/25 `rol_with_ipi` | ATÉ 07/08/26 `rol_with_ipi` | `% ANO` |
+| segmento | branch | ATÉ 07/08/25 `rol` | ATÉ 07/08/26 `rol` | `% ANO` |
 |----------|--------|----------------------------|----------------------------|---------|
 | WEG | 01 | 892.450,00 | 1.045.200,00 | +17,1% |
 | WEG | 02 | 4.210.300,00 | 4.980.100,00 | +18,3% |
@@ -179,7 +179,7 @@ YoY fica no consumidor — duas chamadas.
 
 #### `data.series` — mês cheio (ago/25 vs ago/26)
 
-| period_label | branch | ago/25 `rol_with_ipi` | ago/26 `rol_with_ipi` | `%` |
+| period_label | branch | ago/25 `rol` | ago/26 `rol` | `%` |
 |--------------|--------|----------------------|----------------------|-----|
 | ago/2025 | 01 | 1.120.000,00 | — | — |
 | ago/2026 | 01 | — | 871.310,09 | -22,2% |
@@ -287,7 +287,7 @@ Quando `group_by=none` ou `group_by=branch`: `by_customer` = `[]`, `pagination` 
 
 | Nível | Campos |
 |-------|--------|
-| summary | `rol`, `rol_with_ipi`, `gross_revenue`, `returns`, `discounts`, `goal_*` |
+| summary | `rol`, `rol`, `gross_revenue`, `returns`, `discounts`, `goal_*` |
 | series | por bucket + filial 01/02 |
 | by_customer | ROL por cliente (+ paginação) |
 | portfolio | previsão semana (valor aberto por entrega) + realizado semana anterior (ROL) |

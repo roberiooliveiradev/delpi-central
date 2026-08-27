@@ -204,9 +204,6 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             ISNULL(V.VLR_VENDA, 0)
             - ISNULL(D.VLR_DEVOLUCAO, 0) AS rol,
 
-            ISNULL(V.VLR_VENDA, 0)
-            - ISNULL(D.VLR_DEVOLUCAO, 0) AS rol_with_ipi,
-
             0 AS financial_titles,
             0 AS financial_balance
 
@@ -237,7 +234,6 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             "ipi_separated": 0,
             "rol_taxes": 0,
             "rol": 0,
-            "rol_with_ipi": 0,
             "financial_titles": 0,
             "financial_balance": 0,
         }

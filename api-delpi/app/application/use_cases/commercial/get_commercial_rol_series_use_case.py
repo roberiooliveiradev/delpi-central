@@ -74,8 +74,8 @@ class GetCommercialRolSeriesUseCase:
                     sort_key=bucket.key,
                     start_date=bucket.start_date,
                     end_date=bucket.end_date,
-                    rol_matrix=round(float(matrix_rol.get("rol_with_ipi") or 0), 2),
-                    rol_branch=round(float(branch_rol.get("rol_with_ipi") or 0), 2),
+                    rol_matrix=round(float(matrix_rol.get("rol") or 0), 2),
+                    rol_branch=round(float(branch_rol.get("rol") or 0), 2),
                 )
             )
 

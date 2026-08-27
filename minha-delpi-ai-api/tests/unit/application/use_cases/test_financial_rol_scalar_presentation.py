@@ -33,7 +33,6 @@ def _rol_envelope() -> dict:
             "ipi_separated": 0,
             "rol_taxes": 2032.1,
             "rol": 10995.66,
-            "rol_with_ipi": 10995.66,
             "financial_titles": 0,
             "financial_balance": 0,
         },
@@ -106,20 +105,14 @@ def test_financial_rol_text_presentation_includes_rol_value():
     )
 
 
-def test_financial_rol_dashboard_builds_dashboard_presentation():
+def test_financial_rol_explicit_dashboard_falls_back_to_text_with_kpi_support():
     meta = _build_metadata(session_format="dashboard")
-    dashboard = meta.get("dashboardPresentation") or meta.get("kpiPresentation") or {}
     decision = meta.get("presentationDecision") or {}
-    render_plan = meta.get("renderPlan") or {}
-    segment_kinds = {
-        str(item.get("kind") or "").strip().lower()
-        for item in (render_plan.get("segments") or [])
-        if isinstance(item, dict)
-    }
 
-    assert decision.get("selected") == "dashboard"
-    assert dashboard.get("type") in {"dashboard", "kpi"} or "kpi" in segment_kinds
-    assert "dashboard" in segment_kinds or "kpi" in segment_kinds
+    assert meta.get("explicitSessionFormat") == "dashboard"
+    assert decision.get("selected") == "text"
+    assert "indisponível" in str(decision.get("reason") or "").lower()
+    assert (meta.get("kpiPresentation") or {}).get("type") == "kpi"
     assert "sem dados tabulares" not in str(decision.get("reason") or "").lower()
 
 

@@ -27,7 +27,6 @@ def test_commercial_rol_target_fields_use_humanized_labels():
     fields = kpi_fields(COMMERCIAL_ROL_FIELD_LABELS)
 
     assert fields["rol"] == "ROL realizado"
-    assert fields["rol_with_ipi"] == "ROL com IPI"
     assert fields["gross_revenue"] == "Receita bruta"
     assert fields["target"] == "Meta ROL (R$)"
     assert fields["rol_target_pct"] == "Atingimento da meta ROL (%)"

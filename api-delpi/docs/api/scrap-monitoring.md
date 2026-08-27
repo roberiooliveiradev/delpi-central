@@ -81,13 +81,13 @@ Retorna:
 
 **`meta.entity`:** `refugos_scrap_cost_pct`
 
-Combina o custo de refugo do período (`/refugos/resumo` → `totalValor`) com o ROL financeiro da mesma filial/período (`/financial/rol` → `rol_with_ipi`).
+Combina o custo de refugo do período (`/refugos/resumo` → `totalValor`) com o ROL financeiro da mesma filial/período (`/financial/rol` → `rol`).
 
 | Campo | Significado |
 |---|---|
 | `scrap_cost` | Custo de refugo (R$) no período |
-| `rol` / `rol_with_ipi` | ROL financeiro do denominador |
-| `scrap_cost_pct` | `(scrap_cost / rol_with_ipi) * 100` — `null` se ROL = 0 |
+| `rol` / `rol` | ROL financeiro do denominador |
+| `scrap_cost_pct` | `(scrap_cost / rol) * 100` — `null` se ROL = 0 |
 | `filters_applied` | `mp`, `pa`, `op`, `motivo`, `recurso` (afetam só o numerador) |
 | `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
 

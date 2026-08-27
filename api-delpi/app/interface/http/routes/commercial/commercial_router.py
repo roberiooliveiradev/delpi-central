@@ -469,7 +469,7 @@ def get_commercial_rol(
             end_date=end_date,
             branch=branch,
             summary_key="summary",
-            recompute_target_pct_from="rol_with_ipi",
+            recompute_target_pct_from="rol",
         )
         return api_delpi_success(
             result,

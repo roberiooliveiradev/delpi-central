@@ -30,7 +30,7 @@ from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
 @dataclass(frozen=True)
 class FinancialBranchSnapshot:
     branch: str
-    rol_with_ipi: float
+    rol: float
     ebitda_value: float
     fixed_cost_value: float
     pmr_days: float | None
@@ -201,13 +201,13 @@ class FinancialMetricsSnapshotService:
                     ebitda_rows=ebitda_rows,
                     fixed_cost_rows=fixed_cost_rows,
                     receivables_rows=receivables_rows,
-                    rol_with_ipi=self._sum_rol(rol_by_branch),
+                    rol=self._sum_rol(rol_by_branch),
                 )
             )
 
         for branch_code in branch_codes:
             rol_payload = rol_by_branch.get(branch_code, {})
-            rol_with_ipi = self._utils.to_float(rol_payload.get("rol_with_ipi")) or 0.0
+            rol = self._utils.to_float(rol_payload.get("rol")) or 0.0
 
             snapshots.append(
                 self._build_scope_snapshot(
@@ -216,7 +216,7 @@ class FinancialMetricsSnapshotService:
                     ebitda_rows=ebitda_rows,
                     fixed_cost_rows=fixed_cost_rows,
                     receivables_rows=receivables_rows,
-                    rol_with_ipi=rol_with_ipi,
+                    rol=rol,
                 )
             )
 
@@ -272,7 +272,7 @@ class FinancialMetricsSnapshotService:
         ebitda_rows: list[dict],
         fixed_cost_rows: list[dict],
         receivables_rows: list[dict],
-        rol_with_ipi: float,
+        rol: float,
     ) -> FinancialBranchSnapshot:
         ebitda_pct = self._average_sheet_metric(
             rows=ebitda_rows,
@@ -295,7 +295,7 @@ class FinancialMetricsSnapshotService:
 
         return FinancialBranchSnapshot(
             branch=scope_key,
-            rol_with_ipi=round(rol_with_ipi, 2),
+            rol=round(rol, 2),
             ebitda_value=round(ebitda_pct, 2) if ebitda_pct is not None else 0.0,
             fixed_cost_value=round(fixed_cost_pct, 2)
             if fixed_cost_pct is not None
@@ -310,7 +310,7 @@ class FinancialMetricsSnapshotService:
     def _sum_rol(self, rol_by_branch: dict[str, dict]) -> float:
         total = 0.0
         for payload in rol_by_branch.values():
-            total += self._utils.to_float(payload.get("rol_with_ipi")) or 0.0
+            total += self._utils.to_float(payload.get("rol")) or 0.0
         return total
 
     def _filter_period_rows(

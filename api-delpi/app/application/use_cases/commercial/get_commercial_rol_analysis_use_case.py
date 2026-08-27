@@ -110,7 +110,6 @@ class GetCommercialRolAnalysisUseCase:
     def _rol_metrics(self, rol: dict[str, Any]) -> dict[str, float]:
         return {
             "rol": round(float(rol.get("rol") or 0), 2),
-            "rol_with_ipi": round(float(rol.get("rol_with_ipi") or 0), 2),
             "gross_revenue": round(float(rol.get("gross_revenue") or 0), 2),
             "returns": round(float(rol.get("returns") or 0), 2),
             "discounts": round(float(rol.get("discounts") or 0), 2),
@@ -186,14 +185,14 @@ class GetCommercialRolAnalysisUseCase:
         points: list[dict[str, Any]] = []
         for point in response.points:
             if request.branch == HEAD_OFFICE_BRANCH:
-                branch_01 = {"rol_with_ipi": point.rol_matrix}
-                branch_02 = {"rol_with_ipi": None}
+                branch_01 = {"rol": point.rol_matrix}
+                branch_02 = {"rol": None}
             elif request.branch == BRANCH_OFFICE_BRANCH:
-                branch_01 = {"rol_with_ipi": None}
-                branch_02 = {"rol_with_ipi": point.rol_branch}
+                branch_01 = {"rol": None}
+                branch_02 = {"rol": point.rol_branch}
             else:
-                branch_01 = {"rol_with_ipi": point.rol_matrix}
-                branch_02 = {"rol_with_ipi": point.rol_branch}
+                branch_01 = {"rol": point.rol_matrix}
+                branch_02 = {"rol": point.rol_branch}
             points.append(
                 {
                     "period_label": point.periodo,
@@ -248,7 +247,7 @@ class GetCommercialRolAnalysisUseCase:
                 "customer_store": item.customer_store,
                 "customer_name": item.customer_name,
                 "branch": result.branch,
-                "rol_with_ipi": item.rol_with_ipi,
+                "rol": item.rol,
                 "share_pct": item.share_pct,
                 "rank": item.rank,
             }
@@ -298,7 +297,7 @@ class GetCommercialRolAnalysisUseCase:
                     **filters,
                 )
             )
-            realized_value = round(float(realized.get("rol_with_ipi") or 0), 2)
+            realized_value = round(float(realized.get("rol") or 0), 2)
             previous_totals.append(
                 WeeklyPortfolioBranchTotals(
                     branch=branch or "",

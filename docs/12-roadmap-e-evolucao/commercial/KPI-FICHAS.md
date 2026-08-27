@@ -38,7 +38,7 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | Código | `KPI-ROL` |
 | Nome | ROL |
 | Objetivo | Medir o faturamento líquido do período para gestão comercial |
-| **Fórmula — comportamento atual (código)** | `rol_with_ipi = VLR_VENDA − VLR_DEVOLUCAO` onde `VLR_VENDA = Σ(D2_TOTAL − D2_VALICM − D2_VALIMP5 − D2_VALIMP6)` em SD2 (competência `D2_EMISSAO`) e devoluções em SD1 (`D1_DTDIGIT`; CF `1201`/`2201` ou `D1_TIPO='D'`). `ipi_separated = 0` no SQL atual → `rol` ≡ `rol_with_ipi`. |
+| **Fórmula — comportamento atual (código)** | `rol = VLR_VENDA − VLR_DEVOLUCAO` onde `VLR_VENDA = Σ(D2_TOTAL − D2_VALICM − D2_VALIMP5 − D2_VALIMP6)` em SD2 (competência `D2_EMISSAO`) e devoluções em SD1 (`D1_DTDIGIT`; CF `1201`/`2201` ou `D1_TIPO='D'`). Campo HTTP canônico: **`rol`** (ROL líquido). |
 | **% meta** | `(rol / comparable_goal_SI) × 100` após enrich de metas (`commercial_rol` / goal SI) |
 | **Meta no período (decisão ata alinhamento 2 + correção pós-W0)** | **Currency/count:** soma das metas **proporcionais por dia** no intervalo. **Percent/nível:** média **ponderada por dias** das metas mensais (não somar %). Implementação: `strategic-indicators-api` — ver [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) §5 · [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
 | Analogia de mercado | **Billings / receita faturada** no período (não é backlog; não é book-to-bill) |

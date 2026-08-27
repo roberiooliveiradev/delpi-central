@@ -7,7 +7,7 @@
     "end_date": "20260430",
     "summary": {
       "cpv_total": 1850000.0,
-      "rol_with_ipi": 4200000.0,
+      "rol": 4200000.0,
       "cpv_percentage": 44.05,
       "total_movements": 1280,
       "total_quantity": 54000.0,

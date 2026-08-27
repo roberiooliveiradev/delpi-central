@@ -67,6 +67,15 @@ _DEFAULT_SERIES_TABLE_MAX_ROWS = 366
 # Listagens bulk (apontamentos) usadas em AVG por CT/turno: 90 linhas distorce a média.
 _DEFAULT_BULK_LIST_MAX_ROWS = 10000
 
+LEGACY_VALUE_FIELD_ALIASES: dict[str, str] = {
+    "rol_with_ipi": "rol",
+}
+
+
+def _resolve_legacy_value_field(field: str) -> str:
+    key = str(field or "").strip()
+    return LEGACY_VALUE_FIELD_ALIASES.get(key, key)
+
 
 def _view_filter_params_from_merged(merged: Any) -> dict[str, Any]:
     """Params só de apresentação (cliente aplica no gráfico; não vão na api-delpi)."""
@@ -297,12 +306,16 @@ def _binding_selected_fields(binding: dict[str, Any]) -> list[str] | None:
     """None = todas as métricas; lista = filtro (ordem preservada)."""
     selected = binding.get("selectedValueFields")
     if isinstance(selected, list):
-        fields = [str(item).strip() for item in selected if str(item).strip()]
+        fields = [
+            _resolve_legacy_value_field(str(item).strip())
+            for item in selected
+            if str(item).strip()
+        ]
         if fields:
             return fields
     override = binding.get("valueField")
     if override is not None and str(override).strip():
-        return [str(override).strip()]
+        return [_resolve_legacy_value_field(str(override).strip())]
     return None
 
 
@@ -318,7 +331,7 @@ def _iter_scalar_candidate_keys(value_fields: list[Any]) -> list[str]:
     keys: list[str] = []
     seen: set[str] = set()
     for field in value_fields:
-        key = str(field).strip()
+        key = _resolve_legacy_value_field(str(field).strip())
         if not key or key in seen:
             continue
         seen.add(key)

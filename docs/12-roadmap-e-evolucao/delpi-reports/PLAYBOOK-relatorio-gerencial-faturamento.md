@@ -13,7 +13,7 @@ E-mail mensal à Direção com visão gerencial do **faturamento (ROL com IPI)**
 
 | Termo | Significado |
 |-------|-------------|
-| **ROL (`rol_with_ipi`)** | Receita operacional líquida canônica Delpi (SD2 − devoluções SD1), mesma fórmula do dashboard comercial / financeiro |
+| **ROL (`rol`)** | Receita operacional líquida canônica Delpi (SD2 − devoluções SD1), mesma fórmula do dashboard comercial / financeiro |
 | **Mês do relatório** | Mês civil imediatamente anterior à data de envio (`as_of`) |
 | **Comparativo** | Mês civil imediatamente anterior ao mês do relatório |
 | **Filial 01** | Jaraguá do Sul (SC) |

@@ -72,7 +72,6 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "ipi_separated": "IPI destacado",
     "rol_taxes": "Impostos sobre ROL",
     "rol": "ROL",
-    "rol_with_ipi": "ROL",
     "financial_titles": "Títulos financeiros",
     "financial_balance": "Saldo financeiro",
 }
@@ -80,13 +79,14 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
 FINANCIAL_EBITDA_FIELD_LABELS: dict[str, str] = {
     "ebitda_value": "EBITDA (valor)",
     "ebitda_over_rol_pct": "EBITDA / ROL (%)",
-    "rol_with_ipi": "ROL",
+    "rol": "ROL",
     "target": "Meta EBITDA",
 }
 
 FINANCIAL_FIXED_COST_FIELD_LABELS: dict[str, str] = {
     "fixed_cost_value": "Custos fixos (valor)",
     "fixed_cost_over_rol_pct": "Custos fixos / ROL (%)",
+    "rol": "ROL (R$)",
     "target": "Meta custo fixo",
 }
 
@@ -98,6 +98,7 @@ FINANCIAL_PMR_FIELD_LABELS: dict[str, str] = {
 SUPPLIES_CPV_FIELD_LABELS: dict[str, str] = {
     "cpv_total": "CPV total",
     "cpv_percentage": "CPV / ROL (%)",
+    "rol": "ROL (R$)",
     "cpv_average_monthly": "CPV médio mensal",
     "total_movements": "Total movimentações",
     "average_cost_per_movement": "Custo médio por movimentação",
@@ -182,7 +183,6 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
 
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "rol": "ROL realizado",
-    "rol_with_ipi": "ROL com IPI",
     "gross_revenue": "Receita bruta",
     "returns": "Devoluções",
     "discounts": "Descontos",
@@ -289,7 +289,6 @@ QUALITY_RETURNED_QUANTITY_FIELD_LABELS: dict[str, str] = {
 
 REFUGOS_SCRAP_COST_PCT_FIELD_LABELS: dict[str, str] = {
     "scrap_cost": "Custo de refugo (R$)",
-    "rol_with_ipi": "ROL com IPI (R$)",
     "rol": "ROL (R$)",
     "scrap_cost_pct": "Custo de refugo / ROL (%)",
     "occurrences": "Ocorrências de refugo",
@@ -319,7 +318,6 @@ REFUGOS_RANKINGS_FIELD_FORMATS: dict[str, str] = {
 
 RETRABALHO_REWORK_COST_PCT_FIELD_LABELS: dict[str, str] = {
     "rework_cost": "Custo de retrabalho (R$)",
-    "rol_with_ipi": "ROL com IPI (R$)",
     "rol": "ROL (R$)",
     "rework_cost_pct": "Custo de retrabalho / ROL (%)",
     "total_hours": "Horas de retrabalho",

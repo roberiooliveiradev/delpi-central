@@ -189,8 +189,8 @@ class GetPortfolioBillingRankingUseCase:
         for key in keys:
             cur = current_map.get(key)
             pri = prior_map.get(key)
-            current_rol = _as_float(cur.get("rol_with_ipi") if cur else 0)
-            prior_rol = _as_float(pri.get("rol_with_ipi") if pri else 0)
+            current_rol = _as_float(cur.get("rol") if cur else 0)
+            prior_rol = _as_float(pri.get("rol") if pri else 0)
             name = ""
             if cur and cur.get("customer_name"):
                 name = str(cur.get("customer_name"))
@@ -223,8 +223,8 @@ class GetPortfolioBillingRankingUseCase:
             seller = seller_name_by_customer.get(key) or "Sem vendedor"
             cur = current_map.get(key)
             pri = prior_map.get(key)
-            current_rol = _as_float(cur.get("rol_with_ipi") if cur else 0)
-            prior_rol = _as_float(pri.get("rol_with_ipi") if pri else 0)
+            current_rol = _as_float(cur.get("rol") if cur else 0)
+            prior_rol = _as_float(pri.get("rol") if pri else 0)
             bucket = buckets.setdefault(seller, {"current": 0.0, "prior": 0.0})
             bucket["current"] += current_rol
             bucket["prior"] += prior_rol

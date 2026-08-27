@@ -88,7 +88,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
         key: "rol",
         header: "ROL",
         className: "ds-table__col--numeric",
-        render: (row) => formatCurrency(row.rol_with_ipi),
+        render: (row) => formatCurrency(row.rol),
       },
       {
         key: "pct",
@@ -157,7 +157,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
             title="EBITDA"
             titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.ebitdaValue}
             value={formatCurrency(data.ebitda_value)}
-            subtitle={`ROL ${formatCurrency(data.rol_with_ipi)}`}
+            subtitle={`ROL ${formatCurrency(data.rol)}`}
             icon={<Percent size={22} />}
             loading={isBusy}
           />

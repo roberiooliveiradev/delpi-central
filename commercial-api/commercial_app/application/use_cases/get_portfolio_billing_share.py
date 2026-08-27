@@ -39,9 +39,7 @@ def extract_rol_from_target_payload(raw: Any) -> float:
     data = _unwrap_data(raw)
     if not isinstance(data, dict):
         return 0.0
-    if "rol" in data:
-        return _as_float(data.get("rol"))
-    return _as_float(data.get("rol_with_ipi"))
+    return _as_float(data.get("rol"))
 
 
 def resolve_rol_paths_for_branch(branch: str | None) -> tuple[str, ...]:

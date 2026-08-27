@@ -652,7 +652,6 @@
         "scrap_cost_pct": "Custo de refugo / ROL (%)",
         "value": "Valor",
         "scrap_cost": "Custo de refugo (R$)",
-        "rol_with_ipi": "ROL com IPI (R$)",
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
@@ -676,7 +675,6 @@
         "rework_cost_pct": "Custo de retrabalho / ROL (%)",
         "value": "Valor",
         "rework_cost": "Custo de retrabalho (R$)",
-        "rol_with_ipi": "ROL com IPI (R$)",
         "rol": "ROL (R$)",
         "total_hours": "Horas de retrabalho",
         "appointment_count": "Apontamentos",
@@ -746,7 +744,6 @@
         "scrap_cost_pct": "Custo de refugo / ROL (%)",
         "value": "Valor",
         "scrap_cost": "Custo de refugo (R$)",
-        "rol_with_ipi": "ROL com IPI (R$)",
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
         "records_without_cost": "Registros sem custo",
@@ -755,6 +752,30 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       }
+    },
+    "get_retrabalhos_rework_cost_pct": {
+      "exposesSiGoal": true,
+      "valueFields": [
+        "rework_cost_pct",
+        "value"
+      ],
+      "valueFieldLabels": {
+        "rework_cost_pct": "Custo de retrabalho / ROL (%)",
+        "value": "Valor",
+        "rework_cost": "Custo de retrabalho (R$)",
+        "rol": "ROL (R$)",
+        "total_hours": "Horas de retrabalho",
+        "appointment_count": "Apontamentos",
+        "average_cost_per_hour": "Custo médio por hora (R$)",
+        "records_without_cost": "Registros sem custo",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ]
     },
     "get_refugos_rankings": {
       "tableFields": "items",

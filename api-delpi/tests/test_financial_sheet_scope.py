@@ -25,7 +25,7 @@ def test_build_snapshot_uses_sheet_pct_without_rol_division() -> None:
         financial_query_repository=MagicMock(),
     )
     service._financial_query_repository.get_rol.return_value = {
-        "rol_with_ipi": 1_000_000,
+        "rol": 1_000_000,
     }
 
     snapshot = service._build_snapshot(

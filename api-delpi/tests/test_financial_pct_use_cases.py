@@ -28,7 +28,7 @@ def _empty_snapshot() -> FinancialMetricsSnapshot:
         branches=[
             FinancialBranchSnapshot(
                 branch=CONSOLIDATED_BRANCH_KEY,
-                rol_with_ipi=1_000_000.0,
+                rol=1_000_000.0,
                 ebitda_value=0.0,
                 fixed_cost_value=0.0,
                 pmr_days=None,
@@ -83,7 +83,7 @@ def test_pmr_returns_consolidated_row_when_sheet_has_only_consolidated_data() ->
         branches=[
             FinancialBranchSnapshot(
                 branch=CONSOLIDATED_BRANCH_KEY,
-                rol_with_ipi=0.0,
+                rol=0.0,
                 ebitda_value=0.0,
                 fixed_cost_value=0.0,
                 pmr_days=39.0,
