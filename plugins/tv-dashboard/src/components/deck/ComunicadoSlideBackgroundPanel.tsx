@@ -1,4 +1,4 @@
-import { Upload, ImageOff } from "lucide-react";
+import { FolderOpen, Upload, ImageOff } from "lucide-react";
 import { HintAction, solidFromFill } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -24,6 +24,7 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
     uploading,
     background,
     playlistId,
+    openMediaLibrary,
     triggerUpload,
     setBackgroundColor,
     setBackground,
@@ -52,6 +53,16 @@ export function ComunicadoSlideBackgroundPanel({ labels = {} }: { labels?: Label
       </DeckField>
 
       <div className="td-deck-inspector__actions">
+        <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: biblioteca de fundo">
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={() => openMediaLibrary("background")}
+          >
+            <FolderOpen size={15} aria-hidden="true" />
+            Biblioteca
+          </button>
+        </HintAction>
         <HintAction hint={E.uploadBackground} ariaLabel="Ajuda: imagem de fundo">
           <button
             type="button"

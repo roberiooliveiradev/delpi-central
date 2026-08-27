@@ -38,7 +38,7 @@ export function ComunicadoSlideBackgroundRibbon({
     uploading,
     background,
     playlistId,
-    triggerUpload,
+    openMediaLibrary,
     setBackgroundColor,
     setBackground,
   } = useComunicadoEditor();
@@ -81,7 +81,7 @@ export function ComunicadoSlideBackgroundRibbon({
           label={labels.comunicadoUpload ?? "Enviar"}
           hint={E.uploadBackground}
           disabled={uploading}
-          onClick={() => triggerUpload("background")}
+          onClick={() => openMediaLibrary("background")}
         />
         {background?.type === "image" ? (
           <>

@@ -40,8 +40,8 @@ describe("slide ribbon layout contract", () => {
     expect(background).toContain("backgroundSlides");
     expect(background).toContain("TV_DASHBOARD_HELP_TOOLTIPS.ribbon");
     expect(background).toMatch(/const H = TV_DASHBOARD_HELP_TOOLTIPS\.ribbon/);
-    expect(background).not.toContain('label="Biblioteca"');
-    expect(background).not.toContain("openMediaLibrary");
+    expect(background).toContain('openMediaLibrary("background")');
+    expect(background).not.toContain('triggerUpload("background")');
   });
 
   it("popovers da aba Tela usam chrome canônico do kit", () => {
