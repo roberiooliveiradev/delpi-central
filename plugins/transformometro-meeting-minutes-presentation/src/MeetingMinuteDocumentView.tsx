@@ -5,6 +5,7 @@ import {
   DocumentReader,
   DocumentReaderToolbar,
   DocumentSignatureBlock,
+  normalizeSignatureDisplayPngBlob,
 } from "@delpi/plugin-ui/index";
 
 import { AtaBrandBar, transformaMaisLogoSrc } from "./meetingMinuteBrand";
@@ -109,7 +110,9 @@ export function MeetingMinuteDocumentView({
         try {
           const blob = await getSignatureImage(signatureId);
           if (controller.signal.aborted) return null;
-          const url = URL.createObjectURL(blob);
+          const normalized = await normalizeSignatureDisplayPngBlob(blob);
+          if (controller.signal.aborted) return null;
+          const url = URL.createObjectURL(normalized);
           createdUrls.push(url);
           return [signatureId, url] as const;
         } catch {

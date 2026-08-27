@@ -4,9 +4,9 @@ from PIL import Image as PillowImage
 from reportlab.lib.units import mm
 from reportlab.platypus import Table
 
+from cipa_app.application.services.signature_image_normalizer import transparent_signature_png
 from cipa_app.infrastructure.pdf.minute_pdf_renderer import (
     MinutePdfRenderer,
-    _transparent_signature_png,
     format_date_br,
     format_date_long_pt,
     html_to_paragraphs,
@@ -104,7 +104,7 @@ def test_signature_background_becomes_transparent():
     image.save(raw, format="PNG")
 
     normalized = PillowImage.open(
-        io.BytesIO(_transparent_signature_png(raw.getvalue()))
+        io.BytesIO(transparent_signature_png(raw.getvalue()))
     ).convert("RGBA")
 
     assert normalized.getpixel((0, 0))[3] == 0

@@ -27,6 +27,7 @@ from reportlab.platypus import (
 )
 
 from cipa_app.application.services.html_sanitizer import CipaHtmlSanitizer
+from cipa_app.application.services.signature_image_normalizer import transparent_signature_png
 
 _ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 _LOGO_PATH = _ASSETS_DIR / "logo-cipa.png"
@@ -104,26 +105,6 @@ def _safe_inline_html(raw: str) -> str:
         protocols=["http", "https", "mailto"],
         strip=True,
     )
-
-
-def _transparent_signature_png(raw: bytes) -> bytes:
-    """Remove fundo branco de assinaturas antigas, preservando o traço."""
-    try:
-        with PillowImage.open(io.BytesIO(raw)) as source:
-            image = source.convert("RGBA")
-            pixels = image.load()
-            for y in range(image.height):
-                for x in range(image.width):
-                    red, green, blue, alpha = pixels[x, y]
-                    if red >= 245 and green >= 245 and blue >= 245:
-                        pixels[x, y] = (red, green, blue, 0)
-            output = io.BytesIO()
-            image.save(output, format="PNG")
-            return output.getvalue()
-    except Exception:
-        # Compatibilidade com formatos legados: ReportLab ainda tenta renderizar
-        # o original se o arquivo não puder ser normalizado pelo Pillow.
-        return raw
 
 
 _STYLE_RE = re.compile(
@@ -556,7 +537,7 @@ class MinutePdfRenderer:
             content: list[Flowable] = [Spacer(1, 3 * mm)]
             if isinstance(image_bytes, bytes) and image_bytes:
                 image = Image(
-                    io.BytesIO(_transparent_signature_png(image_bytes)),
+                    io.BytesIO(transparent_signature_png(image_bytes)),
                     width=42 * mm,
                     height=13 * mm,
                 )

@@ -16,3 +16,7 @@ export {
   centerSignaturePngBlob,
   type CenterSignatureOptions,
 } from "./centerSignaturePngBlob";
+export {
+  normalizeSignatureDisplayPngBlob,
+  type NormalizeSignatureDisplayOptions,
+} from "./normalizeSignatureDisplayPngBlob";

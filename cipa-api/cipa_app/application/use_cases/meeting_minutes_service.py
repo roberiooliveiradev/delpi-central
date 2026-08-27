@@ -18,6 +18,7 @@ from cipa_app.application.services.portal_notification_service import (
 from cipa_app.application.services.sign_invite_mail_engagement_service import (
     SignInviteMailEngagementService,
 )
+from cipa_app.application.services.signature_image_normalizer import transparent_signature_png
 from cipa_app.application.services.sign_invite_mail_presentation_service import (
     enrich_signers_with_last_invite_mail,
 )
@@ -584,7 +585,9 @@ class MeetingMinutesService:
         signature = self.repo.get_signature_for_minute(str(minute["id"]), signature_id)
         if not signature or not signature.get("image_path"):
             raise LookupError("Imagem de assinatura não encontrada.")
-        return self.signature_storage.read(str(signature["image_path"]))
+        return transparent_signature_png(
+            self.signature_storage.read(str(signature["image_path"]))
+        )
 
     def signature_image(self, user, minute_id: str, signature_id: str) -> bytes:
         minute = self.repo.get_minute(minute_id)
@@ -595,7 +598,9 @@ class MeetingMinutesService:
         signature = self.repo.get_signature(minute_id, signature_id)
         if not signature or not signature.get("image_path"):
             raise LookupError("Imagem de assinatura não encontrada.")
-        return self.signature_storage.read(str(signature["image_path"]))
+        return transparent_signature_png(
+            self.signature_storage.read(str(signature["image_path"]))
+        )
 
     def sign(
         self,
