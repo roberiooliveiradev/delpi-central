@@ -32,6 +32,10 @@ export { ShapeEffectsMenu } from "./ShapeEffectsMenu";
 export type { ShapeEffectsMenuProps, ShapeEffectItem } from "./ShapeEffectsMenu";
 export { ShapeShadowMenu } from "./ShapeShadowMenu";
 export type { ShapeShadowMenuProps, ShapeShadowPreset } from "./ShapeShadowMenu";
+export { ShadowStackEditorPanel } from "./ShadowStackEditorPanel";
+export type { ShadowStackEditorPanelProps, ShadowStackPreset } from "./ShadowStackEditorPanel";
+export { TextShadowMenu } from "./TextShadowMenu";
+export type { TextShadowMenuProps, TextShadowPreset } from "./TextShadowMenu";
 export {
   DEFAULT_AMBIENT_SHADOW_LAYER,
   DEFAULT_BOX_SHADOW_MODEL,
