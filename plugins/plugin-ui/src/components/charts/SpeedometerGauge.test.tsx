@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SpeedometerGauge } from "./SpeedometerGauge";
 
@@ -97,5 +97,41 @@ describe("SpeedometerGauge", () => {
     const hub = container.querySelector(".delpi-ui-speedometer-gauge__hub");
     expect(needle?.getAttribute("stroke")).toBe("#112233");
     expect(hub?.getAttribute("fill")).toBe("#112233");
+  });
+
+  it("pointerDown/doubleClick nas partes disparam o ChartPartRef correto", () => {
+    const onPartPointerDown = vi.fn();
+    const onPartDoubleClick = vi.fn();
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        label="OTD"
+        interaction={{ onPartPointerDown, onPartDoubleClick }}
+      />,
+    );
+
+    fireEvent.pointerDown(container.querySelector('[data-chart-part="gaugeNeedle"]')!);
+    expect(onPartPointerDown).toHaveBeenCalledWith(
+      { kind: "gaugeNeedle" },
+      expect.anything(),
+    );
+
+    fireEvent.doubleClick(container.querySelector('[data-chart-part="gaugeZone:0"]')!);
+    expect(onPartDoubleClick).toHaveBeenCalledWith(
+      { kind: "gaugeZone", zoneIndex: 0 },
+      expect.anything(),
+    );
+
+    fireEvent.pointerDown(container.querySelector('[data-chart-part="gaugeGoalMarker"]')!);
+    expect(onPartPointerDown).toHaveBeenCalledWith(
+      { kind: "gaugeGoalMarker" },
+      expect.anything(),
+    );
+
+    expect(container.querySelector('[data-interactive="true"]')).toBeTruthy();
+    expect(
+      container.querySelector('[data-chart-part="gaugeNeedle"] line[stroke="transparent"]'),
+    ).toBeTruthy();
   });
 });

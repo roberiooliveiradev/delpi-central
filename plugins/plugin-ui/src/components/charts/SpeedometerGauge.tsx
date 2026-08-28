@@ -87,6 +87,8 @@ const R = 56;
 const START_ANGLE = Math.PI;
 const END_ANGLE = 0;
 const SWEEP = START_ANGLE - END_ANGLE;
+/** Largura mínima do stroke transparente de hit (paridade ChartAxisLines). */
+const GAUGE_HIT_STROKE = 12;
 
 /** Cores sólidas de alerta (não dependem de var() em &lt;stop&gt; SVG). */
 export const SPEEDOMETER_TONE_COLORS: Record<SpeedometerGaugeTone, string> = {
@@ -243,6 +245,9 @@ export function SpeedometerGauge({
   const base = useMemo(() => speedometerGaugeBemClasses(prefix), [prefix]);
   const classNames = { ...base, ...classNamesOverride };
   const explicitTip = typeof tip === "string" && tip.trim() ? tip.trim() : null;
+  const interactive = Boolean(
+    interaction?.onPartPointerDown || interaction?.onPartDoubleClick,
+  );
 
   const trackPart = resolveGaugePartBind({ kind: "gaugeTrack" }, interaction, chartParts);
   const fillPart = resolveGaugePartBind({ kind: "gaugeFill" }, interaction, chartParts);
@@ -341,6 +346,7 @@ export function SpeedometerGauge({
       data-goal={goalNumeric == null ? undefined : String(goalNumeric)}
       data-zone-warning={String(zonesResolved.warningBelow)}
       data-zone-danger={String(zonesResolved.dangerBelow)}
+      data-interactive={interactive ? "true" : undefined}
       tabIndex={0}
       {...tipHandlers}
     >
@@ -361,50 +367,94 @@ export function SpeedometerGauge({
           const part = zoneParts[zoneIndex];
           if (!part.visible || zone.from - zone.to <= 0.001) return null;
           const stroke = part.style?.stroke?.trim() || SPEEDOMETER_TONE_COLORS[zone.tone];
+          const visibleWidth = part.style?.strokeWidth ?? 14;
+          const arc = describeArc(CX, CY, R, zone.from, zone.to);
           return (
-            <path
+            <g
               key={zone.tone}
-              className={withBemModifier(classNames.zone, zone.tone)}
-              d={describeArc(CX, CY, R, zone.from, zone.to)}
-              fill="none"
-              stroke={stroke}
-              strokeWidth={part.style?.strokeWidth ?? 14}
-              strokeLinecap="butt"
-              opacity={part.style?.opacity ?? 0.88}
               {...part.dom}
               onPointerDown={part.onPointerDown}
               onDoubleClick={part.onDoubleClick}
-              style={part.selected ? { outline: "1px solid currentColor" } : undefined}
-            />
+            >
+              {interactive ? (
+                <path
+                  d={arc}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={Math.max(GAUGE_HIT_STROKE, visibleWidth)}
+                  strokeLinecap="butt"
+                  pointerEvents="stroke"
+                />
+              ) : null}
+              <path
+                className={withBemModifier(classNames.zone, zone.tone)}
+                d={arc}
+                fill="none"
+                stroke={stroke}
+                strokeWidth={visibleWidth}
+                strokeLinecap="butt"
+                opacity={part.style?.opacity ?? 0.88}
+                pointerEvents="none"
+                style={part.selected ? { outline: "1px solid currentColor" } : undefined}
+              />
+            </g>
           );
         })}
         {trackPart.visible ? (
-          <path
-            className={classNames.track}
-            d={describeArc(CX, CY, R, START_ANGLE, END_ANGLE)}
-            fill="none"
-            stroke={trackPart.style?.stroke?.trim() || undefined}
-            strokeWidth={trackPart.style?.strokeWidth ?? 2}
-            strokeLinecap="round"
-            opacity={trackPart.style?.opacity ?? 0.35}
+          <g
             {...trackPart.dom}
             onPointerDown={trackPart.onPointerDown}
             onDoubleClick={trackPart.onDoubleClick}
-          />
+          >
+            {interactive ? (
+              <path
+                d={describeArc(CX, CY, R, START_ANGLE, END_ANGLE)}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={GAUGE_HIT_STROKE}
+                strokeLinecap="round"
+                pointerEvents="stroke"
+              />
+            ) : null}
+            <path
+              className={classNames.track}
+              d={describeArc(CX, CY, R, START_ANGLE, END_ANGLE)}
+              fill="none"
+              stroke={trackPart.style?.stroke?.trim() || undefined}
+              strokeWidth={trackPart.style?.strokeWidth ?? 2}
+              strokeLinecap="round"
+              opacity={trackPart.style?.opacity ?? 0.35}
+              pointerEvents="none"
+            />
+          </g>
         ) : null}
         {fillPart.visible && fillPath ? (
-          <path
-            className={classNames.fill}
-            d={fillPath}
-            fill="none"
-            stroke={fillPart.style?.stroke ? fillStroke : `url(#${uid}-fill)`}
-            strokeWidth={fillPart.style?.strokeWidth ?? 6}
-            strokeLinecap="round"
-            opacity={fillPart.style?.opacity ?? 0.9}
+          <g
             {...fillPart.dom}
             onPointerDown={fillPart.onPointerDown}
             onDoubleClick={fillPart.onDoubleClick}
-          />
+          >
+            {interactive ? (
+              <path
+                d={fillPath}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={Math.max(GAUGE_HIT_STROKE, fillPart.style?.strokeWidth ?? 6)}
+                strokeLinecap="round"
+                pointerEvents="stroke"
+              />
+            ) : null}
+            <path
+              className={classNames.fill}
+              d={fillPath}
+              fill="none"
+              stroke={fillPart.style?.stroke ? fillStroke : `url(#${uid}-fill)`}
+              strokeWidth={fillPart.style?.strokeWidth ?? 6}
+              strokeLinecap="round"
+              opacity={fillPart.style?.opacity ?? 0.9}
+              pointerEvents="none"
+            />
+          </g>
         ) : null}
         {goalPart.visible && goalOuter && goalInner ? (
           <g
@@ -413,6 +463,18 @@ export function SpeedometerGauge({
             onPointerDown={goalPart.onPointerDown}
             onDoubleClick={goalPart.onDoubleClick}
           >
+            {interactive ? (
+              <line
+                x1={goalInner.x}
+                y1={goalInner.y}
+                x2={goalOuter.x}
+                y2={goalOuter.y}
+                stroke="transparent"
+                strokeWidth={GAUGE_HIT_STROKE}
+                strokeLinecap="round"
+                pointerEvents="stroke"
+              />
+            ) : null}
             <line
               className={classNames.goalTick}
               x1={goalInner.x}
@@ -422,6 +484,7 @@ export function SpeedometerGauge({
               stroke={goalPart.style?.stroke?.trim() || undefined}
               strokeWidth={goalPart.style?.strokeWidth ?? 2.5}
               strokeLinecap="round"
+              pointerEvents="none"
             />
             <circle
               className={classNames.goalTick}
@@ -429,6 +492,7 @@ export function SpeedometerGauge({
               cy={goalOuter.y}
               r={3}
               fill={goalPart.style?.fill?.trim() || undefined}
+              pointerEvents="none"
             />
           </g>
         ) : null}
@@ -438,6 +502,21 @@ export function SpeedometerGauge({
             onPointerDown={needlePart.onPointerDown}
             onDoubleClick={needlePart.onDoubleClick}
           >
+            {interactive ? (
+              <>
+                <line
+                  x1={CX}
+                  y1={CY}
+                  x2={tipPoint.x}
+                  y2={tipPoint.y}
+                  stroke="transparent"
+                  strokeWidth={GAUGE_HIT_STROKE}
+                  strokeLinecap="round"
+                  pointerEvents="stroke"
+                />
+                <circle cx={CX} cy={CY} r={10} fill="transparent" pointerEvents="fill" />
+              </>
+            ) : null}
             <line
               className={classNames.needle}
               x1={CX}
@@ -447,8 +526,16 @@ export function SpeedometerGauge({
               stroke={needleStroke}
               strokeWidth={needlePart.style?.strokeWidth ?? 3}
               strokeLinecap="round"
+              pointerEvents="none"
             />
-            <circle className={classNames.hub} cx={CX} cy={CY} r={5.5} fill={needleFill} />
+            <circle
+              className={classNames.hub}
+              cx={CX}
+              cy={CY}
+              r={5.5}
+              fill={needleFill}
+              pointerEvents="none"
+            />
           </g>
         ) : null}
         {valuePart.visible ? (

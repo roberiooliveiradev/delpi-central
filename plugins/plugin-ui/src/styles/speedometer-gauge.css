@@ -106,7 +106,11 @@
 }
 
 .delpi-ui-speedometer-gauge__goal-marker {
-  pointer-events: none;
+  /* Hit-test via bindChartPartPointer — não bloquear seleção no editor. */
+}
+
+.delpi-ui-speedometer-gauge[data-interactive="true"] [data-chart-part] {
+  pointer-events: auto;
 }
 
 .delpi-ui-speedometer-gauge__goal-tick {
