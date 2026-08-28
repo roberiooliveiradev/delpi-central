@@ -760,6 +760,16 @@ class ChatTurnPreparationToolRoutingService:
                         workspace_context=workspace_context,
                     )
                     analysis_mode = True
+                elif stage == "grounded_challenge_result":
+                    from app.application.services.chat_follow_up_grounded_answer_service import (
+                        ChatFollowUpGroundedAnswerService,
+                    )
+
+                    tool_context = ChatFollowUpGroundedAnswerService.inject_challenge_prompt_context(
+                        tool_context,
+                        workspace_context=workspace_context,
+                    )
+                    analysis_mode = True
                 else:
                     narrate_applied, tool_context = (
                         ChatConversationContextService.apply_grounded_narrate_mode(

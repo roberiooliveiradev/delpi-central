@@ -129,6 +129,11 @@ class ChatTurnCompletionFinalizeService:
             workspace_context=turn.workspace_context,
             previous_messages=turn.previous_messages,
         )
+        answer = cls._maybe_prepend_revise_ack(
+            answer,
+            workspace_context=turn.workspace_context,
+            tool_context=turn.tool_context if isinstance(turn.tool_context, dict) else None,
+        ) or answer
 
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
@@ -233,6 +238,17 @@ class ChatTurnCompletionFinalizeService:
             from app.application.services.chat_grounded_narrate_answer_service import (
                 ChatGroundedNarrateAnswerService,
             )
+            from app.application.services.chat_follow_up_grounded_answer_service import (
+                ChatFollowUpGroundedAnswerService,
+            )
+
+            if context.get("followUpChallenge"):
+                challenge = ChatFollowUpGroundedAnswerService.build_challenge_answer(
+                    workspace_context=workspace_context,
+                    tool_context=context,
+                )
+                if challenge:
+                    return challenge
 
             template = ChatGroundedNarrateAnswerService.build_answer(
                 str(message or context.get("currentMessage") or ""),
@@ -245,3 +261,44 @@ class ChatTurnCompletionFinalizeService:
                 return template
 
         return guarded
+
+    @classmethod
+    def _maybe_prepend_revise_ack(
+        cls,
+        answer: str,
+        *,
+        workspace_context: dict | None,
+        tool_context: dict | None,
+    ) -> str | None:
+        from app.application.services.chat_follow_up_grounded_answer_service import (
+            ChatFollowUpGroundedAnswerService,
+        )
+
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        context = tool_context if isinstance(tool_context, dict) else {}
+        turn = context.get("turnGrounding") or workspace.get("turnGrounding") or {}
+        if not isinstance(turn, dict):
+            return None
+        if str(turn.get("stage") or "").strip() != "grounded_revise_query":
+            return None
+
+        params: dict = {}
+        for tool_call in reversed(context.get("toolCalls") or []):
+            if not isinstance(tool_call, dict):
+                continue
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+            args = tool_call.get("arguments")
+            if isinstance(args, dict) and isinstance(args.get("parameters"), dict):
+                params = dict(args.get("parameters") or {})
+                break
+
+        ack = ChatFollowUpGroundedAnswerService.build_revise_ack(parameters=params)
+        if not ack:
+            return None
+        text = str(answer or "").strip()
+        if not text:
+            return ack
+        if ack.lower() in text.lower():
+            return text
+        return f"{ack}\n\n{text}"

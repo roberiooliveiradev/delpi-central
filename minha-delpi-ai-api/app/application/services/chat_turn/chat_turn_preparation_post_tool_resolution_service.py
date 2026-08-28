@@ -352,6 +352,9 @@ class ChatTurnPreparationPostToolResolutionService:
             from app.application.services.chat_grounded_narrate_answer_service import (
                 ChatGroundedNarrateAnswerService,
             )
+            from app.application.services.chat_follow_up_grounded_answer_service import (
+                ChatFollowUpGroundedAnswerService,
+            )
 
             stage = str(
                 (tool_context.get("turnGrounding") or workspace_context.get("turnGrounding") or {}).get(
@@ -360,11 +363,40 @@ class ChatTurnPreparationPostToolResolutionService:
                 or ""
             ).strip()
 
-            if stage == "grounded_narrate_recap" or (
-                not stage
-                and ChatGroundedInsightAnswerService.is_recap_stage(
-                    workspace_context,
-                    tool_context,
+            if stage == "grounded_challenge_result":
+                challenged = ChatFollowUpGroundedAnswerService.build_challenge_answer(
+                    workspace_context=workspace_context,
+                    tool_context=tool_context,
+                )
+                if challenged:
+                    direct_answer = challenged
+                    skip_rag = True
+                    suggestions = ChatFollowUpGroundedAnswerService.challenge_suggestion_items()
+                    if suggestions:
+                        tool_context = dict(tool_context)
+                        tool_context["followUpSuggestions"] = suggestions
+                    if "grounded_challenge_direct" not in pipeline_stages:
+                        pipeline_stages.append("grounded_challenge_direct")
+
+            if not direct_answer and stage == "grounded_clarify_slot":
+                clarified = ChatFollowUpGroundedAnswerService.build_clarify_answer(
+                    workspace_context=workspace_context,
+                    tool_context=tool_context,
+                )
+                if clarified:
+                    direct_answer = clarified
+                    skip_rag = True
+                    if "grounded_clarify_slot_direct" not in pipeline_stages:
+                        pipeline_stages.append("grounded_clarify_slot_direct")
+
+            if not direct_answer and (
+                stage == "grounded_narrate_recap"
+                or (
+                    not stage
+                    and ChatGroundedInsightAnswerService.is_recap_stage(
+                        workspace_context,
+                        tool_context,
+                    )
                 )
             ):
                 narrated = ChatGroundedNarrateAnswerService.build_answer(
