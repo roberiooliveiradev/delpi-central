@@ -58,6 +58,25 @@ def test_catalog_lmp_summary_exposes_meta_for_si_goal_picker():
     assert labels.get("reference_goal") == "Meta mês (referência)"
 
 
+def test_catalog_otd_and_rol_summaries_expose_si_goal_and_optional_filters():
+    """Summaries OTD/ROL: realizado + meta SI; branch/carteira omitíveis no wire."""
+    catalog = TvDataRouteCatalogService()
+    cases = (
+        ("get_sales_order_otd_summary", "sales_order_otd_pct"),
+        ("get_commercial_rol_summary", "rol"),
+    )
+    for operation_id, value_field in cases:
+        route = catalog.get_route(operation_id)
+        assert route is not None, operation_id
+        fields = route.get("valueFields") or []
+        assert value_field in fields, (operation_id, value_field)
+        assert "comparable_goal" in fields, operation_id
+        schema = route.get("paramSchema") or {}
+        for key in ("branch", "start_date", "end_date", "customer_codes"):
+            assert key in schema, (operation_id, key)
+            assert schema[key].get("optional") is True, (operation_id, key)
+
+
 def test_catalog_all_exposes_si_goal_hubs_have_triad_labels():
     import json
     from pathlib import Path

@@ -146,6 +146,23 @@ def test_apply_defaults_never_reinjects_department_id():
     assert "department_id" not in apply_catalog_param_defaults({"department_id": ""}, route)
 
 
+def test_otd_rol_summary_optional_filters_omit_when_unset():
+    """Summaries OTD/ROL: branch e carteira opcionais não entram no wire vazios."""
+    from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
+
+    catalog = TvDataRouteCatalogService()
+    for operation_id in ("get_sales_order_otd_summary", "get_commercial_rol_summary"):
+        route = catalog.get_route(operation_id)
+        assert route is not None, operation_id
+        merged = apply_catalog_param_defaults({}, route)
+        assert "branch" not in merged, operation_id
+        assert "customer_codes" not in merged, operation_id
+        query = _build_query_params(route, {"dateRangePreset": "this_month"})
+        assert "branch" not in query, operation_id
+        assert "customer_codes" not in query, operation_id
+        assert "customer_names" not in query, operation_id
+
+
 def test_apply_defaults_skips_all_optional_filters_not_only_enums():
     """Bool/int/sort opcionais também respeitam «Não definido aqui» (todas as rotas)."""
     route = {
