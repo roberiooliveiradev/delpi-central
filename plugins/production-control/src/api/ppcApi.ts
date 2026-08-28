@@ -29,10 +29,14 @@ export async function fetchSubplugins(signal?: AbortSignal): Promise<Subplugin[]
 export async function fetchOverview(params: {
   branch: string;
   volumeView?: "day" | "month_yoy";
+  startDate?: string | null;
+  endDate?: string | null;
   signal?: AbortSignal;
 }): Promise<OverviewPayload> {
   const search = new URLSearchParams({ branch: params.branch });
   if (params.volumeView) search.set("volumeView", params.volumeView);
+  if (params.startDate) search.set("startDate", params.startDate);
+  if (params.endDate) search.set("endDate", params.endDate);
   const envelope = await httpGet<{
     success: boolean;
     message?: string;

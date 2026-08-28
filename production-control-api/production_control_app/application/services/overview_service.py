@@ -16,7 +16,7 @@ from production_control_app.domain.services.billing_due_today_service import (
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 from production_control_app.domain.services.current_month_period import (
-    current_month_bounds,
+    resolve_overview_period,
     today_in_timezone,
 )
 from production_control_app.domain.services.delayed_order_mapper import map_delayed_order
@@ -130,6 +130,8 @@ class OverviewService:
         *,
         branch: str,
         volume_view: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> dict[str, Any]:
         self._branch_access.assert_can_view_branch(user, branch)
         if not can(user, PC_ACCESS):
@@ -146,7 +148,12 @@ class OverviewService:
         view = parse_volume_view(volume_view)
 
         today = today_in_timezone(timezone)
-        otd_start, otd_end = current_month_bounds(timezone=timezone, today=today)
+        otd_start, otd_end = resolve_overview_period(
+            timezone=timezone,
+            today=today,
+            start_date=start_date,
+            end_date=end_date,
+        )
         otd_start_s = otd_start.isoformat()
         otd_end_s = otd_end.isoformat()
 
@@ -170,8 +177,8 @@ class OverviewService:
             production_volume = self._build_production_volume(
                 branch=branch,
                 view=view,
-                today=today,
-                timezone=timezone,
+                period_start=otd_start,
+                period_end=otd_end,
             )
             items_payload = _unwrap_data(
                 self._gateway.fetch_pcp_orders_items(
@@ -260,15 +267,19 @@ class OverviewService:
         *,
         branch: str,
         view: VolumeView,
-        today,
-        timezone: str,
+        period_start,
+        period_end,
     ) -> dict[str, Any]:
         if view == "month_yoy":
-            return self._volume_month_yoy(branch=branch, today=today)
-        return self._volume_day(branch=branch, today=today, timezone=timezone)
+            return self._volume_month_yoy(branch=branch, today=period_end)
+        return self._volume_day(
+            branch=branch,
+            period_start=period_start,
+            period_end=period_end,
+        )
 
-    def _volume_day(self, *, branch: str, today, timezone: str) -> dict[str, Any]:
-        start, end = current_month_bounds(timezone=timezone, today=today)
+    def _volume_day(self, *, branch: str, period_start, period_end) -> dict[str, Any]:
+        start, end = period_start, period_end
         payload = _unwrap_data(
             self._gateway.fetch_production_appointments_series(
                 branch=branch,

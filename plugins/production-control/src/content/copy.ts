@@ -1,6 +1,17 @@
 export const copy = {
   productName: "Portal PCP",
   railAria: "Subplugins do Portal PCP",
+  periodFilter: {
+    title: "Período da consulta",
+    from: "De",
+    to: "Até",
+    apply: "Aplicar",
+    reset: "Mês corrente",
+    openAria: "Alterar período da consulta",
+    closeAria: "Fechar filtro de período",
+    invalid: "Informe datas válidas (AAAA-MM-DD).",
+    inverted: "A data inicial não pode ser depois da final.",
+  },
   home: {
     title: "Gestão à vista",
     kicker: "Portal PCP",

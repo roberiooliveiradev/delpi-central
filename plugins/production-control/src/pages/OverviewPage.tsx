@@ -126,14 +126,20 @@ function BillingCheckMark({ check }: { check: BillingDueTodayCheck }) {
 
 type OverviewPageProps = {
   branch: PpcBranch;
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
-export function OverviewPage({ branch }: OverviewPageProps) {
+export function OverviewPage({
+  branch,
+  startDate = null,
+  endDate = null,
+}: OverviewPageProps) {
   const [volumeView, setVolumeView] = useState<VolumeView>("day");
   const [selectedBillingLine, setSelectedBillingLine] = useState<BillingDueTodayLine | null>(
     null,
   );
-  const { data, loading, error, reload } = useOverview(branch, volumeView);
+  const { data, loading, error, reload } = useOverview(branch, volumeView, startDate, endDate);
 
   /** A fila de atraso leva ao rastreio na Carga máquina, onde a OP pode ser reprogramada. */
   const openIssue = (issue: ProblemIssue) => {
@@ -144,6 +150,17 @@ export function OverviewPage({ branch }: OverviewPageProps) {
         subpluginId: "machine-load",
         branch,
         locateQuery: query,
+      }),
+    );
+  };
+
+  const applyPeriod = (next: { startDate: string; endDate: string } | null) => {
+    navigatePpc(
+      buildPpcHref({
+        subpluginId: "home",
+        branch,
+        startDate: next?.startDate ?? null,
+        endDate: next?.endDate ?? null,
       }),
     );
   };
@@ -225,9 +242,15 @@ export function OverviewPage({ branch }: OverviewPageProps) {
         title={copy.home.title}
         subtitle={copy.home.heroLead}
         period={data ? formatPeriod(data.period) : undefined}
+        periodDefaultStart={data?.period?.start_date ?? null}
+        periodDefaultEnd={data?.period?.end_date ?? null}
+        periodEditable
         titleHint={helpTooltips.home}
         branch={branch}
         subpluginId="home"
+        startDate={startDate}
+        endDate={endDate}
+        onPeriodChange={applyPeriod}
         onRefresh={reload}
       />
 
