@@ -199,12 +199,47 @@ class ChatTurnGroundingService:
         *,
         message: str,
         excerpt: dict[str, Any] | None,
+        last_action: dict[str, Any] | None = None,
+        operational_focus: dict[str, Any] | None = None,
     ) -> str | None:
+        from app.domain.services.chat_follow_up_turn_interpretation_service import (
+            ChatFollowUpTurnInterpretationService,
+        )
+
+        interpretation = ChatFollowUpTurnInterpretationService.interpret(
+            message=message,
+            last_action=last_action,
+            last_result_excerpt=excerpt,
+            operational_focus=operational_focus,
+        )
+        follow_up_stage = ChatFollowUpTurnInterpretationService.grounded_stage_for(
+            interpretation
+        )
+
+        if follow_up_stage in {
+            "grounded_revise_query",
+            "grounded_challenge_result",
+            "grounded_clarify_slot",
+        }:
+            return follow_up_stage
+
+        if interpretation.decision == "narrate_recap" and follow_up_stage:
+            return follow_up_stage
+
+        if interpretation.suppress_broad_narrate and interpretation.decision == "new_intent":
+            if interpretation.reason == "defer_enrich_insight":
+                if cls.should_enrich_before_insight(message, excerpt):
+                    return "grounded_enrich_insight"
+            return None
+
         if cls.should_enrich_before_insight(message, excerpt):
             return "grounded_enrich_insight"
 
         if cls.should_narrate_insight_only(message):
             return "grounded_narrate_insight"
+
+        if interpretation.suppress_broad_narrate:
+            return None
 
         if cls.should_narrate_excerpt(message, excerpt):
             return "grounded_narrate_recap"

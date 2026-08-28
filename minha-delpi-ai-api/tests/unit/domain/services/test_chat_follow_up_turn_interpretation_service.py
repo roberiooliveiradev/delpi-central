@@ -1,0 +1,122 @@
+from app.domain.services.chat_follow_up_turn_interpretation_service import (
+    ChatFollowUpTurnInterpretationService,
+)
+from app.domain.services.chat_turn_grounding_service import ChatTurnGroundingService
+
+_ROL_ACTION = {
+    "name": "financial_rol",
+    "path": "/financial/rol",
+    "params": {"start_date": "2026-08-01", "end_date": "2026-08-28"},
+}
+_EXCERPT = {
+    "title": "ROL do mês",
+    "rowCount": 1,
+    "preview": "ROL consolidado: R$ 1.000.000",
+    "topKeys": [],
+}
+
+
+def test_revise_somente_filial_01():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="somente da filial 01",
+        last_action=_ROL_ACTION,
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("branch") == "01"
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="somente da filial 01",
+            excerpt=_EXCERPT,
+            last_action=_ROL_ACTION,
+        )
+        == "grounded_revise_query"
+    )
+
+
+def test_clarify_branch_without_code():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="somente da filial",
+        last_action=_ROL_ACTION,
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "clarify_slot"
+    assert result.clarify_slot == "branch"
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="somente da filial",
+            excerpt=_EXCERPT,
+            last_action=_ROL_ACTION,
+        )
+        == "grounded_clarify_slot"
+    )
+
+
+def test_challenge_unit_vs_total():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="o rol de uma unidade não pode ser igual ao total",
+        last_action=_ROL_ACTION,
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "challenge_last_result"
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="o rol de uma unidade não pode ser igual ao total",
+            excerpt=_EXCERPT,
+            last_action=_ROL_ACTION,
+        )
+        == "grounded_challenge_result"
+    )
+
+
+def test_topic_switch_estoque_after_rol():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="e o estoque?",
+        last_action=_ROL_ACTION,
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "new_intent"
+    assert result.reason == "topic_switch"
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="e o estoque?",
+            excerpt=_EXCERPT,
+            last_action=_ROL_ACTION,
+        )
+        is None
+    )
+
+
+def test_compound_slot_beats_challenge():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="só filial 01 porque o total não pode ser igual",
+        last_action=_ROL_ACTION,
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("branch") == "01"
+
+
+def test_narrate_resuma_isso():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="resuma isso",
+        last_action=_ROL_ACTION,
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "narrate_recap"
+    stage = ChatTurnGroundingService.resolve_grounded_stage(
+        message="resuma isso",
+        excerpt=_EXCERPT,
+        last_action=_ROL_ACTION,
+    )
+    assert stage in {"grounded_narrate_recap", "grounded_narrate_insight"}
+
+
+def test_revise_does_not_fall_through_to_narrate_without_last_action():
+    stage = ChatTurnGroundingService.resolve_grounded_stage(
+        message="somente da filial 01",
+        excerpt=_EXCERPT,
+        last_action=None,
+    )
+    assert stage != "grounded_narrate_recap"
+    assert stage is None

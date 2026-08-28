@@ -125,13 +125,39 @@ class ChatTurnPreparationPreToolContextService:
             previous_messages=history_source,
         )
         turn_grounding_metadata = turn_grounding.to_metadata()
+        working_last_action = (
+            working_memory_snapshot.get("lastAction")
+            if isinstance(working_memory_snapshot.get("lastAction"), dict)
+            else None
+        )
+        working_focus = (
+            working_memory_snapshot.get("operationalFocus")
+            if isinstance(working_memory_snapshot.get("operationalFocus"), dict)
+            else None
+        )
         grounded_stage = ChatTurnGroundingService.resolve_grounded_stage(
             message=message,
             excerpt=turn_grounding.excerpt if isinstance(turn_grounding.excerpt, dict) else None,
+            last_action=working_last_action,
+            operational_focus=working_focus,
         )
 
         if grounded_stage:
             turn_grounding_metadata["stage"] = grounded_stage
+
+        from app.domain.services.chat_follow_up_turn_interpretation_service import (
+            ChatFollowUpTurnInterpretationService,
+        )
+
+        follow_up = ChatFollowUpTurnInterpretationService.interpret(
+            message=message,
+            last_action=working_last_action,
+            last_result_excerpt=turn_grounding.excerpt
+            if isinstance(turn_grounding.excerpt, dict)
+            else None,
+            operational_focus=working_focus,
+        )
+        turn_grounding_metadata["followUp"] = follow_up.to_metadata()
 
         workspace_context = dict(workspace_context)
         workspace_context["turnGrounding"] = turn_grounding_metadata

@@ -302,8 +302,21 @@ class ChatTurnPreparationToolRoutingService:
             and ChatTurnGroundingService.resolve_grounded_stage(
                 message=message,
                 excerpt=excerpt if isinstance(excerpt, dict) else None,
+                last_action=working_memory.get("lastAction")
+                if isinstance(working_memory, dict)
+                and isinstance(working_memory.get("lastAction"), dict)
+                else None,
+                operational_focus=working_memory.get("operationalFocus")
+                if isinstance(working_memory, dict)
+                and isinstance(working_memory.get("operationalFocus"), dict)
+                else None,
             )
-            in {"grounded_narrate_recap", "grounded_narrate_insight"}
+            in {
+                "grounded_narrate_recap",
+                "grounded_narrate_insight",
+                "grounded_challenge_result",
+                "grounded_clarify_slot",
+            }
         )
 
         skip_tools_for_data_interpretation = (
