@@ -1,12 +1,12 @@
-"""Progresso fabril por conjunto (C2_NUM) a partir das operações alocadas (SH8)."""
+"""Progresso fabril por pacote (C2_NUM+C2_ITEM) a partir das operações SH8."""
 
 from __future__ import annotations
 
 from typing import Any
 
 from production_control_app.domain.services.production_order_key import (
-    conjunto_key_from_order,
-    order_belongs_to_conjunto,
+    order_belongs_to_package,
+    package_key_from_order,
 )
 
 
@@ -62,26 +62,35 @@ def compute_conjunto_progress(operations: list[dict[str, Any]]) -> dict[str, int
     }
 
 
-def filter_operations_for_conjuntos(
+def filter_operations_for_packages(
     operations: list[dict[str, Any]],
-    conjunto_keys: set[str],
+    package_keys: set[str],
 ) -> dict[str, list[dict[str, Any]]]:
-    grouped: dict[str, list[dict[str, Any]]] = {key: [] for key in conjunto_keys}
+    grouped: dict[str, list[dict[str, Any]]] = {key: [] for key in package_keys}
     for item in operations:
         order = str(item.get("production_order") or "").strip()
-        for key in conjunto_keys:
-            if order_belongs_to_conjunto(order, key):
+        for key in package_keys:
+            if order_belongs_to_package(order, key):
                 grouped[key].append(item)
                 break
     return grouped
 
 
-def conjunto_keys_from_orders(production_orders: list[str]) -> dict[str, str]:
-    """Mapa OP mãe → C2_NUM (6 dígitos)."""
+# Alias legado — testes / callers antigos.
+filter_operations_for_conjuntos = filter_operations_for_packages
+
+
+def package_keys_from_orders(production_orders: list[str]) -> dict[str, str]:
+    """Mapa OP mãe → pacote C2_NUM+C2_ITEM (8 dígitos)."""
     mapping: dict[str, str] = {}
     for raw in production_orders:
         order = str(raw or "").strip()
-        key = conjunto_key_from_order(order)
+        key = package_key_from_order(order)
         if order and key:
             mapping[order] = key
     return mapping
+
+
+def conjunto_keys_from_orders(production_orders: list[str]) -> dict[str, str]:
+    """Alias de ``package_keys_from_orders`` (progresso do mapa de entrega)."""
+    return package_keys_from_orders(production_orders)

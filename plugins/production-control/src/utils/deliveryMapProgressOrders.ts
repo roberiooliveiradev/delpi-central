@@ -1,8 +1,12 @@
 import type { DeliveryMapPayload, DeliveryMapSection } from "../types";
 
 export const DELIVERY_MAP_OVERDUE_SECTION_KEY = "overdue_and_today";
-export const DELIVERY_MAP_PROGRESS_HORIZON_DAYS = 5;
+/** Quantas tabelas (seções) do mapa pedem barra de progresso — as primeiras da grade. */
+export const DELIVERY_MAP_PROGRESS_MAX_SECTIONS = 3;
 export const DELIVERY_MAP_PROGRESS_BATCH_SIZE = 40;
+
+/** @deprecated Mantido para testes/legado; elegibilidade atual é por índice de seção. */
+export const DELIVERY_MAP_PROGRESS_HORIZON_DAYS = 5;
 
 function parseIsoDateOnly(value: string): Date {
   const [year, month, day] = value.slice(0, 10).split("-").map(Number);
@@ -20,8 +24,21 @@ function addCalendarDays(base: Date, days: number): Date {
   return next;
 }
 
-/** Seções elegíveis ao progresso: hoje+atrasadas e até N dias à frente. */
+/**
+ * Seção elegível ao progresso: está entre as N primeiras tabelas da grade
+ * (hoje+atrasadas costuma ser a 1ª).
+ */
 export function isDeliveryMapSectionEligibleForProgress(
+  section: DeliveryMapSection,
+  sectionIndex: number,
+  maxSections = DELIVERY_MAP_PROGRESS_MAX_SECTIONS,
+): boolean {
+  void section;
+  return sectionIndex >= 0 && sectionIndex < maxSections;
+}
+
+/** @deprecated Preferir isDeliveryMapSectionEligibleForProgress(section, index). */
+export function isDeliveryMapSectionWithinProgressHorizon(
   section: DeliveryMapSection,
   horizonDays = DELIVERY_MAP_PROGRESS_HORIZON_DAYS,
 ): boolean {
@@ -34,26 +51,26 @@ export function isDeliveryMapSectionEligibleForProgress(
 
 export function collectDeliveryMapProgressOrderBatches(
   payload: DeliveryMapPayload | null,
-  horizonDays = DELIVERY_MAP_PROGRESS_HORIZON_DAYS,
+  maxSections = DELIVERY_MAP_PROGRESS_MAX_SECTIONS,
 ): { priority: string[]; deferred: string[] } {
   if (!payload) return { priority: [], deferred: [] };
 
   const priority = new Set<string>();
   const deferred = new Set<string>();
 
-  for (const section of payload.sections) {
-    if (!isDeliveryMapSectionEligibleForProgress(section, horizonDays)) continue;
+  payload.sections.forEach((section, index) => {
+    if (!isDeliveryMapSectionEligibleForProgress(section, index, maxSections)) return;
 
     const orders = section.rows
       .map((row) => row.production_order)
       .filter((order): order is string => Boolean(order));
 
-    if (section.section_key === DELIVERY_MAP_OVERDUE_SECTION_KEY) {
+    if (section.section_key === DELIVERY_MAP_OVERDUE_SECTION_KEY || index === 0) {
       for (const order of orders) priority.add(order);
     } else {
       for (const order of orders) deferred.add(order);
     }
-  }
+  });
 
   return {
     priority: Array.from(priority),

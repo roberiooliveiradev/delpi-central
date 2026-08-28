@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -15,10 +16,6 @@ from production_control_app.application.services.delivery_map_settings import (
 from production_control_app.application.services.delivery_map_progress_cache import (
     get_delivery_map_progress_cache,
     put_delivery_map_progress_cache,
-)
-from production_control_app.application.services.machine_load_live_status_cache import (
-    get_live_status_cache,
-    put_live_status_cache,
 )
 from production_control_app.core.security import PC_DELIVERY_MAP_VIEW, can
 from production_control_app.domain.errors import DelpiGatewayError, SnapshotNotFound
@@ -35,12 +32,12 @@ from production_control_app.domain.services.delivery_map_merge import (
 )
 from production_control_app.domain.services.conjunto_operation_progress import (
     compute_conjunto_progress,
-    conjunto_keys_from_orders,
-    filter_operations_for_conjuntos,
+    filter_operations_for_packages,
     operation_key,
+    package_keys_from_orders,
 )
 from production_control_app.domain.services.delivery_map_pull import normalize_pcp_order_rows
-from production_control_app.domain.services.production_order_key import order_belongs_to_conjunto
+from production_control_app.domain.services.production_order_key import order_belongs_to_package
 
 _STATUS_FIELDS = (
     "production_status",
@@ -140,13 +137,15 @@ class DeliveryMapService:
         end = today + timedelta(days=days_forward)
         return start.isoformat(), end.isoformat(), end
 
-    def _progress_delivery_window(self, *, today: date) -> tuple[str, str]:
-        """Janela larga de entrega para progresso do conjunto (mãe + intermediários)."""
-        lookback = max(30, delivery_map_setting_int("progressLookbackDays", 730))
+    def _progress_delivery_window(self, *, today: date) -> tuple[str | None, str]:
+        """Janela de entrega para progresso do pacote (mãe + intermediários).
+
+        Início aberto: filhas podem ter ``C2_DATPRF`` fora do lookback da mãe.
+        Fim = hoje + horizonte (evita puxar programação longínqua irrelevante).
+        """
         days_forward = max(1, delivery_map_setting_int("progressHorizonDaysForward", 30))
-        start = today - timedelta(days=lookback)
         end = today + timedelta(days=days_forward)
-        return start.isoformat(), end.isoformat()
+        return None, end.isoformat()
 
     def _pull_orders(self, *, branch: str, today: date) -> tuple[list[dict[str, Any]], date]:
         delivery_start, delivery_end, horizon_end = self._delivery_window(today=today)
@@ -445,8 +444,8 @@ class DeliveryMapService:
         branch: str,
         production_orders: list[str],
     ) -> dict[str, Any]:
-        order_to_conjunto = conjunto_keys_from_orders(production_orders)
-        if not order_to_conjunto:
+        order_to_package = package_keys_from_orders(production_orders)
+        if not order_to_package:
             return {
                 "branch": branch,
                 "items": {},
@@ -455,8 +454,8 @@ class DeliveryMapService:
                 ).isoformat(),
             }
 
-        conjunto_keys = set(order_to_conjunto.values())
-        fingerprint = ",".join(sorted(conjunto_keys))
+        package_keys = set(order_to_package.values())
+        fingerprint = ",".join(sorted(package_keys))
         ttl = max(5, delivery_map_setting_int("progressCacheTtlSeconds", 15))
         cached = get_delivery_map_progress_cache(branch, fingerprint)
         if cached is not None:
@@ -465,24 +464,29 @@ class DeliveryMapService:
         timezone = delivery_map_setting_str("timezone", "America/Sao_Paulo")
         today = today_in_timezone(timezone)
 
-        operations = self._fetch_conjunto_operations(
+        operations = self._fetch_package_operations(
             branch=branch,
-            conjunto_keys=conjunto_keys,
+            package_keys=package_keys,
             today=today,
         )
-        operations = self._enrich_operations_live_status(branch=branch, operations=operations)
+        # Status de apontamento já vem no GET machine-load/operations (join HZA).
+        # Enrich POST extra só sob flag — dobra a latência sem ganho para a barra.
+        if delivery_map_setting_int("progressEnrichLiveStatus", 0):
+            operations = self._enrich_operations_live_status(
+                branch=branch, operations=operations
+            )
 
-        grouped = filter_operations_for_conjuntos(operations, conjunto_keys)
-        progress_by_conjunto = {
+        grouped = filter_operations_for_packages(operations, package_keys)
+        progress_by_package = {
             key: compute_conjunto_progress(grouped.get(key) or [])
-            for key in conjunto_keys
+            for key in package_keys
         }
 
         items: dict[str, Any] = {}
-        for order, conjunto in order_to_conjunto.items():
-            stats = progress_by_conjunto.get(conjunto) or compute_conjunto_progress([])
+        for order, package_key in order_to_package.items():
+            stats = progress_by_package.get(package_key) or compute_conjunto_progress([])
             items[order] = {
-                "conjunto_key": conjunto,
+                "conjunto_key": package_key,
                 **stats,
             }
 
@@ -541,33 +545,60 @@ class DeliveryMapService:
 
         return collected
 
-    def _fetch_conjunto_operations(
+    def _fetch_one_package_operations(
         self,
         *,
         branch: str,
-        conjunto_keys: set[str],
+        package_key: str,
+        delivery_start: str | None,
+        delivery_end: str | None,
+    ) -> list[dict[str, Any]]:
+        collected: list[dict[str, Any]] = []
+        for item in self._paginate_machine_load_operations(
+            branch=branch,
+            production_order=package_key,
+            delivery_start=delivery_start,
+            delivery_end=delivery_end,
+            include_closed=True,
+        ):
+            if order_belongs_to_package(item.get("production_order"), package_key):
+                collected.append(item)
+        return collected
+
+    def _fetch_package_operations(
+        self,
+        *,
+        branch: str,
+        package_keys: set[str],
         today: date,
     ) -> list[dict[str, Any]]:
-        """Operações SH8 do conjunto (PA mãe + intermediários), por C2_NUM.
+        """Operações SH8 do pacote (mãe + intermediários), por C2_NUM+C2_ITEM (8).
 
-        Busca dedicada por prefixo da OP (inclui OPs já encerradas) — não depende
-        da janela curta da grade nem de ``open_only``.
+        Prefixo de 8 dígitos — não C2_NUM sozinho (mistura itens distintos).
+        Inclui OPs encerradas; início de entrega aberto.
+        Pacotes em paralelo (workers configuráveis) — N sequencial era a latência.
         """
-        if not conjunto_keys:
+        if not package_keys:
             return []
 
         delivery_start, delivery_end = self._progress_delivery_window(today=today)
+        keys = sorted(package_keys)
+        workers = max(1, min(delivery_map_setting_int("progressFetchMaxWorkers", 6), len(keys)))
         deduped: dict[tuple[str, str], dict[str, Any]] = {}
 
-        for conjunto_key in sorted(conjunto_keys):
-            for item in self._paginate_machine_load_operations(
-                branch=branch,
-                production_order=conjunto_key,
-                delivery_start=delivery_start,
-                delivery_end=delivery_end,
-                include_closed=True,
-            ):
-                if order_belongs_to_conjunto(item.get("production_order"), conjunto_key):
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [
+                pool.submit(
+                    self._fetch_one_package_operations,
+                    branch=branch,
+                    package_key=package_key,
+                    delivery_start=delivery_start,
+                    delivery_end=delivery_end,
+                )
+                for package_key in keys
+            ]
+            for future in as_completed(futures):
+                for item in future.result():
                     deduped[operation_key(item)] = item
 
         return list(deduped.values())
@@ -578,12 +609,9 @@ class DeliveryMapService:
         branch: str,
         operations: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
+        """Enrich HZA só das OPs do progresso — não reutiliza cache da carga máquina."""
         if not operations:
             return operations
-
-        cached = get_live_status_cache(branch)
-        if cached is not None:
-            return self._apply_status_map(operations, cached)
 
         keys = [
             {"production_order": order, "operation_code": operation}
@@ -606,7 +634,6 @@ class DeliveryMapService:
             return operations
 
         status_by_key = {operation_key(item): item for item in _dict_items(status_payload)}
-        put_live_status_cache(branch, status_by_key)
         return self._apply_status_map(operations, status_by_key)
 
     @staticmethod

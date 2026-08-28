@@ -4,6 +4,7 @@ import type { DeliveryMapSection } from "../types";
 import {
   collectDeliveryMapProgressOrderBatches,
   DELIVERY_MAP_OVERDUE_SECTION_KEY,
+  DELIVERY_MAP_PROGRESS_MAX_SECTIONS,
   isDeliveryMapSectionEligibleForProgress,
 } from "./deliveryMapProgressOrders";
 
@@ -36,57 +37,32 @@ function section(
 }
 
 describe("isDeliveryMapSectionEligibleForProgress", () => {
-  it("inclui hoje+atrasadas e até 5 dias à frente", () => {
-    expect(
-      isDeliveryMapSectionEligibleForProgress(
-        section(DELIVERY_MAP_OVERDUE_SECTION_KEY, [{ production_order: "1" }], null),
-      ),
-    ).toBe(true);
-
-    const today = new Date();
-    const inThreeDays = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3)
-      .toISOString()
-      .slice(0, 10);
-    const inTenDays = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 10)
-      .toISOString()
-      .slice(0, 10);
-
-    expect(
-      isDeliveryMapSectionEligibleForProgress(
-        section("2026-future", [{ production_order: "2" }], inThreeDays),
-      ),
-    ).toBe(true);
-    expect(
-      isDeliveryMapSectionEligibleForProgress(
-        section("2026-far", [{ production_order: "3" }], inTenDays),
-      ),
-    ).toBe(false);
+  it("inclui só as N primeiras seções da grade", () => {
+    const overdue = section(DELIVERY_MAP_OVERDUE_SECTION_KEY, [{ production_order: "1" }], null);
+    expect(isDeliveryMapSectionEligibleForProgress(overdue, 0)).toBe(true);
+    expect(isDeliveryMapSectionEligibleForProgress(overdue, 2)).toBe(true);
+    expect(isDeliveryMapSectionEligibleForProgress(overdue, 3)).toBe(false);
+    expect(DELIVERY_MAP_PROGRESS_MAX_SECTIONS).toBe(3);
   });
 });
 
 describe("collectDeliveryMapProgressOrderBatches", () => {
-  it("prioriza hoje+atrasadas e separa demais elegíveis", () => {
-    const today = new Date();
-    const inTwoDays = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2)
-      .toISOString()
-      .slice(0, 10);
-    const inTenDays = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 10)
-      .toISOString()
-      .slice(0, 10);
-
+  it("prioriza a 1ª tabela e limita às 3 primeiras", () => {
     const batches = collectDeliveryMapProgressOrderBatches({
       branch: "01",
       sections: [
         section(DELIVERY_MAP_OVERDUE_SECTION_KEY, [{ production_order: "OP-A" }], null),
-        section("future", [{ production_order: "OP-B" }], inTwoDays),
-        section("far", [{ production_order: "OP-C" }], inTenDays),
+        section("d1", [{ production_order: "OP-B" }], "2026-08-25"),
+        section("d2", [{ production_order: "OP-C" }], "2026-08-26"),
+        section("d3", [{ production_order: "OP-D" }], "2026-08-27"),
       ],
-      summary: { order_count: 3, section_count: 3 },
+      summary: { order_count: 4, section_count: 4 },
       filters: { search: "" },
       snapshot: { refreshed_at: null, refreshed_by: null, horizon_end: null, seeded: false },
     });
 
     expect(batches.priority).toEqual(["OP-A"]);
-    expect(batches.deferred).toEqual(["OP-B"]);
+    expect(batches.deferred).toEqual(["OP-B", "OP-C"]);
+    expect(batches.deferred).not.toContain("OP-D");
   });
 });

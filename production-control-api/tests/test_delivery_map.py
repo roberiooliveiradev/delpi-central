@@ -307,22 +307,24 @@ def test_build_public_strips_refreshed_by() -> None:
 
 
 def test_conjunto_progress_includes_intermediary_production_orders() -> None:
+    """Intermediários = mesmo NUM+ITEM, SEQUEN 002+ (não outro C2_ITEM)."""
     operations = [
         {"production_order": "10840401001", "operation_code": "10", "production_status": "started"},
-        {"production_order": "10840402001", "operation_code": "05", "production_status": "not_started"},
-        {"production_order": "10840402001", "operation_code": "06", "production_status": "not_started"},
+        {"production_order": "10840401002", "operation_code": "05", "production_status": "not_started"},
+        {"production_order": "10840401002", "operation_code": "06", "production_status": "not_started"},
+        {"production_order": "10840402001", "operation_code": "01", "production_status": "started"},
         {"production_order": "10840501001", "operation_code": "01", "production_status": "started"},
     ]
-    grouped = filter_operations_for_conjuntos(operations, {"108404"})
-    stats = compute_conjunto_progress(grouped["108404"])
+    grouped = filter_operations_for_conjuntos(operations, {"10840401"})
+    stats = compute_conjunto_progress(grouped["10840401"])
 
-    assert len(grouped["108404"]) == 3
+    assert len(grouped["10840401"]) == 3
     assert stats["total"] == 3
     assert stats["completed"] == 1
     assert stats["percent"] == 33
 
 
-def test_build_progress_fetches_ops_by_conjunto_including_closed() -> None:
+def test_build_progress_fetches_ops_by_package_including_closed() -> None:
     from production_control_app.application.services.delivery_map_progress_cache import (
         clear_delivery_map_progress_cache,
     )
@@ -342,14 +344,19 @@ def test_build_progress_fetches_ops_by_conjunto_including_closed() -> None:
                 "production_status": "not_started",
             },
             {
-                "production_order": "10840402001",
+                "production_order": "10840401002",
                 "operation_code": "05",
                 "production_status": "started",
             },
             {
-                "production_order": "10840402001",
+                "production_order": "10840401002",
                 "operation_code": "06",
                 "production_status": "not_started",
+            },
+            {
+                "production_order": "10840402001",
+                "operation_code": "01",
+                "production_status": "started",
             },
             {
                 "production_order": "99999901001",
@@ -367,14 +374,14 @@ def test_build_progress_fetches_ops_by_conjunto_including_closed() -> None:
 
     assert gateway.machine_load_calls
     assert all(call.get("include_closed") is True for call in gateway.machine_load_calls)
-    assert all(call.get("production_order") == "108404" for call in gateway.machine_load_calls)
+    assert all(call.get("production_order") == "10840401" for call in gateway.machine_load_calls)
+    assert all(call.get("delivery_start") is None for call in gateway.machine_load_calls)
 
     item = payload["items"]["10840401001"]
-    assert item["conjunto_key"] == "108404"
+    assert item["conjunto_key"] == "10840401"
     assert item["total"] == 4
     assert item["completed"] == 2
     assert item["percent"] == 50
-
 
 class _FakeDrawingLibrary:
     def __init__(self, *, missing: bool = False) -> None:
