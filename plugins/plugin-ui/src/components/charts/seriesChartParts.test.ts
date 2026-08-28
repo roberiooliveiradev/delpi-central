@@ -676,4 +676,32 @@ describe("seriesChartParts", () => {
     expect(chartPartTypographyStyle({}, { kind: "axis", axis: "y" })).toEqual({ fontSize: "14px" });
     expect(chartPartTypographyStyle({}, { kind: "axis", axis: "x" })).toEqual({ fontSize: "14px" });
   });
+
+  it("chartOptionsToParts projeta showGoalLine em gaugeGoalMarker", () => {
+    const on = chartOptionsToParts(mergeSeriesChartOptions({ showGoalLine: true }));
+    expect(on.gaugeGoalMarker?.visible).toBe(true);
+    expect(on.goalLine?.visible).toBe(true);
+    const off = chartOptionsToParts(mergeSeriesChartOptions({ showGoalLine: false }));
+    expect(off.gaugeGoalMarker?.visible).toBe(false);
+  });
+
+  it("partsToChartOptions lê visible de gaugeGoalMarker para showGoalLine", () => {
+    const parts = upsertChartPartState({}, { kind: "gaugeGoalMarker" }, { visible: false });
+    expect(partsToChartOptions(parts)).toMatchObject({ showGoalLine: false });
+    const shown = upsertChartPartState({}, { kind: "gaugeGoalMarker" }, { visible: true });
+    expect(partsToChartOptions(shown)).toMatchObject({ showGoalLine: true });
+  });
+
+  it("mergeChartPartsWithOptions alinha gaugeGoalMarker.visible a showGoalLine", () => {
+    const options = mergeSeriesChartOptions({ showGoalLine: false });
+    const prev = upsertChartPartState(
+      chartOptionsToParts(mergeSeriesChartOptions({ showGoalLine: true })),
+      { kind: "gaugeGoalMarker" },
+      { style: { stroke: "#f00" }, content: "Meta" },
+    );
+    const merged = mergeChartPartsWithOptions(prev, options);
+    expect(merged.gaugeGoalMarker?.visible).toBe(false);
+    expect(merged.gaugeGoalMarker?.style?.stroke).toBe("#f00");
+    expect(merged.gaugeGoalMarker?.content).toBe("Meta");
+  });
 });

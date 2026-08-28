@@ -789,6 +789,10 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   parts[serializeChartPartRef({ kind: "goalLine" })] = {
     visible: Boolean(config.showGoalLine),
   };
+  /** Gauge: mesmo flag flat da linha de meta da série. */
+  parts[serializeChartPartRef({ kind: "gaugeGoalMarker" })] = {
+    visible: Boolean(config.showGoalLine),
+  };
   parts[serializeChartPartRef({ kind: "dataTable" })] = {
     visible: Boolean(config.showDataTable),
   };
@@ -845,6 +849,19 @@ export function mergeChartPartsWithOptions(
           ...projectedState?.style,
           ...prevState.style,
         },
+      };
+    } else if (key === "gaugeGoalMarker") {
+      merged[key] = {
+        ...projectedState,
+        ...prevState,
+        visible: Boolean(options?.showGoalLine),
+        style: {
+          ...projectedState?.style,
+          ...prevState.style,
+        },
+        content:
+          prevState.content !== undefined ? prevState.content : projectedState?.content,
+        frame: prevState.frame ?? projectedState?.frame,
       };
     } else if (key.startsWith("marker:")) {
       const showMarkers = options?.showMarkers !== false;
@@ -919,6 +936,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   const axisTitleY = getChartPartState(parts, { kind: "axisTitle", axis: "y" });
   const grid = getChartPartState(parts, { kind: "grid" });
   const goalLine = getChartPartState(parts, { kind: "goalLine" });
+  const gaugeGoalMarker = getChartPartState(parts, { kind: "gaugeGoalMarker" });
   const dataTable = getChartPartState(parts, { kind: "dataTable" });
 
   const patch: Partial<SeriesChartOptions> = {};
@@ -972,6 +990,8 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
     patch.showVerticalGrid = false;
   }
   if (goalLine?.visible !== undefined) patch.showGoalLine = goalLine.visible;
+  /* Gauge Del/menu: marcador manda quando presente (mesmo showGoalLine da série). */
+  if (gaugeGoalMarker?.visible !== undefined) patch.showGoalLine = gaugeGoalMarker.visible;
   if (dataTable?.visible !== undefined) patch.showDataTable = dataTable.visible;
 
   const anyMarkerHidden = Object.keys(parts).some((key) => {
