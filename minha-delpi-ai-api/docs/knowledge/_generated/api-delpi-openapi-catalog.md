@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 691 · **Gerado em:** 2026-08-27 11:38 UTC
+**Provider:** `api-delpi` · **Rotas:** 696 · **Gerado em:** 2026-08-28 16:23 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -45,7 +45,7 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (22)
+## Comercial (26)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -63,14 +63,18 @@
 | `GET` | `/commercial/proposals` | `list_commercial_proposals` | Commercial proposals |
 | `GET` | `/commercial/proposals/{proposal_number}` | `get_commercial_proposal` | Commercial proposal detail (sales order) |
 | `GET` | `/commercial/proposals/{proposal_number}/history/events` | `get_commercial_proposal_history_events` | Commercial proposal stage history |
-| `GET` | `/commercial/rol` | `get_commercial_rol` | Commercial ROL consolidated analysis |
+| `GET` | `/commercial/rol/by-branch` | `get_commercial_rol_by_branch` | Lista paginada — Rol comercial por filial |
 | `GET` | `/commercial/rol/by-customer` | `get_commercial_rol_by_customer` | Commercial ROL ranking by customer |
 | `GET` | `/commercial/rol/series` | `get_commercial_rol_series` | Commercial rol series |
+| `GET` | `/commercial/rol/summary` | `get_commercial_rol_summary` | Indicador — Commercial rol summary |
 | `GET` | `/commercial/sales-order-otd` | `get_sales_order_otd` | Sales order otd |
-| `GET` | `/commercial/sales-order-otd/analysis` | `get_commercial_sales_order_otd_analysis` | Sales order OTD consolidated analysis |
+| `GET` | `/commercial/sales-order-otd/by-branch` | `get_sales_order_otd_by_branch` | Lista paginada — Otd de pedidos de venda por filial |
+| `GET` | `/commercial/sales-order-otd/by-customer` | `get_sales_order_otd_by_customer` | Lista paginada — Otd de pedidos de venda por cliente |
 | `GET` | `/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}` | `get_sales_order_otd_line_detail` | Sales order otd line detail |
 | `GET` | `/commercial/sales-order-otd/panel` | `get_sales_order_otd_panel` | Sales order otd panel |
 | `GET` | `/commercial/sales-order-otd/series` | `get_sales_order_otd_series` | Sales order otd series |
+| `GET` | `/commercial/sales-order-otd/series-by-customer` | `get_sales_order_otd_series_by_customer` | Lista paginada — Série temporal otd de pedidos de venda por cliente |
+| `GET` | `/commercial/sales-order-otd/summary` | `get_sales_order_otd_summary` | Indicador — Sales order otd summary |
 
 ## Compras operacionais (1)
 
@@ -861,7 +865,7 @@
 | `GET` | `/supplies/stock-balances/items` | `get_supplies_stock_balances_items` | Stock balance items by warehouse |
 | `GET` | `/supplies/stock-balances/summary` | `get_supplies_stock_balances_summary` | Stock balances by warehouse |
 
-## Suprimentos — Solicitações de compra (5)
+## Suprimentos — Solicitações de compra (6)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -869,6 +873,7 @@
 | `GET` | `/supplies/purchase-requests/lines/{branch}/{request_number}` | `get_supplies_purchase_request_lines` | Lista — Supplies purchase request line |
 | `GET` | `/supplies/purchase-requests/open-coverage` | `get_supplies_purchase_requests_open_coverage` | Open purchase requests with stock, order and commitment coverage |
 | `GET` | `/supplies/purchase-requests/recent-linked-orders` | `list_supplies_purchase_request_recent_linked_orders` | Lista — Pedidos de compra recém-vinculados a solicitações de compra |
+| `GET` | `/supplies/purchase-requests/recent-linked-receipts` | `list_supplies_purchase_request_recent_linked_receipts` | Lista — Recebimentos de nf de entrada recém-vinculados a pedidos e solicitações de compra |
 | `GET` | `/supplies/purchase-requests/requesters` | `list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get` | List Supplies Purchase Request Requesters Route |
 
 ## Suprimentos — Usuários Protheus (1)

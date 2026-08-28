@@ -1,7 +1,7 @@
 # OTD de pedidos de venda — `/commercial/sales-order-otd`
 
-**Última atualização:** 2026-08-13  
-**Operação OpenAPI:** `get_sales_order_otd` (+ `…/panel`, `…/series`, `…/lines/{…}`)  
+**Última atualização:** 2026-08-28  
+**Operação OpenAPI:** `get_sales_order_otd` (+ `…/summary`, `…/panel`, `…/series`, `…/lines/{…}`)  
 **Repositório:** `app/infrastructure/persistence/totvs/commercial_repositories/sales_order_otd_repository.py`  
 **SQL:** `sales_order_otd_sql.py`
 
@@ -13,10 +13,13 @@ Calcular o percentual de linhas de pedido de venda (SC6) atendidas no prazo em r
 
 ```http
 GET /commercial/sales-order-otd?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&branch=02&customer_segment=weg
+GET /commercial/sales-order-otd/summary?...   # realizado + meta SI (TV KPI)
 GET /commercial/sales-order-otd/panel?...&status=late&page=1&page_size=20&sort_by=promised_date&sort_dir=desc&search=WEG
 GET /commercial/sales-order-otd/series?granularity=month&start_date=...&end_date=...
 GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 ```
+
+**Summary (TV):** mesmo realizado de `get_sales_order_otd`, enriquecido com meta SI (`COMMERCIAL_SALES_ORDER_OTD`) — campos `sales_order_otd_pct`, `comparable_goal`, `goal_value`, `reference_goal`. Overlay TV `exposesSiGoal`. Ver [commercial-analysis-routes.md](./commercial-analysis-routes.md).
 
 | Parâmetro | Descrição |
 |-----------|-----------|
@@ -110,12 +113,13 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 - Dashboard Comercial (`plugins/dashboard-commercial`) — KPI na home + painel `/apps/dashboard-commercial/otd`
 - Strategic Indicators API (`commercial-sales-order-otd`)
 - Chat / agente (`get_sales_order_otd`)
-- TV Dashboard — overlay `get_sales_order_otd_panel` (coluna Unidade)
+- TV Dashboard — overlay `get_sales_order_otd_panel` (coluna Unidade); KPI+meta via `get_sales_order_otd_summary` (`exposesSiGoal`)
 
 ## Histórico
 
 | Data | Alteração |
 |------|-----------|
+| 2026-08-28 | Hub `GET /commercial/sales-order-otd/summary` (`get_sales_order_otd_summary`): realizado + meta SI para TV. |
 | 2026-08-28 | Painel/detalhe/insights: campo `unit` (`C6_UM` / fallback `B1_UM`); agregações com `mixed_units` quando UM não homogênea. |
 | 2026-08-13 | Panel: `customer_store` (loja) nas linhas e reincidência agrupada por código+loja. |
 | 2026-08-13 | Panel: `search`, stats de atraso, insights (recorrência + top 10 atrasos/promessas); BFF commercial-api encaminha page/sort/status/search. |

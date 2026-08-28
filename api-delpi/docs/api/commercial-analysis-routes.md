@@ -9,10 +9,12 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 
 | Necessidade | operationId | Path |
 |-------------|-------------|------|
-| KPI ROL | `get_si_indicator_commercial_rol_realized` / `_meta` | `/dashboard/indicators/commercial-rol/*` |
+| KPI ROL + meta SI | `get_commercial_rol_summary` | `/commercial/rol/summary` |
+| KPI ROL (pares SI) | `get_si_indicator_commercial_rol_realized` / `_meta` | `/dashboard/indicators/commercial-rol/*` |
 | Série ROL | `get_commercial_rol_series` | `/commercial/rol/series` |
 | ROL por cliente | `get_commercial_rol_by_customer` | `/commercial/rol/by-customer` |
 | ROL por filial | `get_commercial_rol_by_branch` | `/commercial/rol/by-branch` |
+| KPI OTD + meta SI | `get_sales_order_otd_summary` | `/commercial/sales-order-otd/summary` |
 | KPI OTD | `get_sales_order_otd` | `/commercial/sales-order-otd` |
 | Série OTD | `get_sales_order_otd_series` | `/commercial/sales-order-otd/series` |
 | OTD série por cliente | `get_sales_order_otd_series_by_customer` | `/commercial/sales-order-otd/series-by-customer` |
@@ -32,9 +34,11 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 
 | Rota | Chaves principais |
 |------|-------------------|
+| ROL summary | `rol` (+ `gross_revenue`/`returns`/`discounts`) + tríade meta SI (`comparable_goal`, `goal_value`, `reference_goal`) + `rol_target_pct` |
 | ROL série | `points[]`: `periodo`, `rol_matrix`, `rol_branch` |
 | ROL cliente | `items[]`: `customer_*`, `rol`, `share_pct`, `rank` |
 | ROL filial | `items[]`: `branch`, `rol`, `gross_revenue`, `returns`, `discounts` |
+| OTD summary | `sales_order_otd_pct` + tríade meta SI + contagens |
 | OTD KPI | `sales_order_otd_pct` |
 | OTD série | `points[]`: `periodo`, `total_qty`, `fulfilled_qty`, `otd_pct`, `fulfillment_pct`, `total_lines`, `otd_filial_01`, `otd_filial_02`, `unit`, `mixed_units` |
 | OTD série por cliente | `items[]` flat (cliente × período) + `pagination` + `summary`; métricas iguais à OTD por cliente (+ `unit`/`mixed_units`) |
@@ -60,6 +64,7 @@ Slides legados com as compostas são remapeados no hydrate da tv-dashboard-api (
 
 ## Referências
 
+- `app/application/use_cases/commercial/get_commercial_rol_summary_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_series_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_by_customer_use_case.py`
 - `app/application/use_cases/commercial/get_commercial_rol_by_branch_use_case.py`
