@@ -274,6 +274,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "commercial_rol_new_business_target", "scalar"
     ),
     "get_commercial_rol_series": RouteContract("commercial_rol_series", "scalar"),
+    "get_commercial_rol_summary": RouteContract("commercial_rol_summary", "scalar"),
     "get_commercial_rol_by_customer": RouteContract(
         "commercial_rol_by_customer", "paged_list"
     ),

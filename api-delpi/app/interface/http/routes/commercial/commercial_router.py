@@ -78,6 +78,7 @@ from app.composition.commercial_composer import (
     build_get_new_clients_average_use_case,
     build_get_new_clients_rol_pct_use_case,
     build_get_commercial_rol_series_use_case,
+    build_get_commercial_rol_summary_use_case,
     build_get_commercial_rol_by_customer_use_case,
     build_get_commercial_rol_by_branch_use_case,
     build_get_sales_order_otd_use_case,
@@ -424,6 +425,66 @@ def get_branch_new_business_rol_target_pct(
         log_error(f"Error while fetching branch new business ROL target: {exc}")
         return error_response(
             "Internal error while fetching branch new business ROL target.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/rol/summary",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_commercial_rol_summary",
+        path="/commercial/rol/summary",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_rol_summary(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+):
+    try:
+        use_case = build_get_commercial_rol_summary_use_case()
+        result = enrich_dashboard_metric(
+            use_case.execute(
+                branch=branch,
+                start_date=start_date,
+                end_date=end_date,
+                customer_segment=parse_customer_segment(customer_segment),
+                customer_codes=parse_customer_codes(customer_codes),
+                customer_names=parse_customer_names(customer_names),
+                exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+                exclude_customer_names=parse_customer_names(exclude_customer_names),
+            ),
+            source_key=goal_keys.COMMERCIAL_ROL,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            recompute_target_pct_from="rol",
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_commercial_rol_summary",
+            message="Commercial ROL summary (realized and SI goal) fetched successfully.",
+            fields=kpi_fields(COMMERCIAL_ROL_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching commercial ROL summary: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching commercial ROL summary: {exc}")
+        return error_response(
+            "Internal error while fetching commercial ROL summary.",
             status_code=500,
         )
 

@@ -32,6 +32,9 @@ from app.application.use_cases.commercial.get_commercial_rol_by_customer_use_cas
 from app.application.use_cases.commercial.get_commercial_rol_by_branch_use_case import (
     GetCommercialRolByBranchUseCase,
 )
+from app.application.use_cases.commercial.get_commercial_rol_summary_use_case import (
+    GetCommercialRolSummaryUseCase,
+)
 from app.infrastructure.persistence.totvs.commercial_repositories.commercial_rol_by_customer_repository import (
     CommercialRolByCustomerRepository,
 )
@@ -138,6 +141,12 @@ def build_get_commercial_rol_by_customer_use_case() -> GetCommercialRolByCustome
 
 def build_get_commercial_rol_by_branch_use_case() -> GetCommercialRolByBranchUseCase:
     return GetCommercialRolByBranchUseCase(
+        financial_query_repository=FinancialRepository()
+    )
+
+
+def build_get_commercial_rol_summary_use_case() -> GetCommercialRolSummaryUseCase:
+    return GetCommercialRolSummaryUseCase(
         financial_query_repository=FinancialRepository()
     )
 
