@@ -932,7 +932,30 @@
         "late_lines": "number",
         "total_lines": "number",
         "promised_date": "date",
-        "invoice_date": "date"
+        "invoice_date": "date",
+        "unit": "string",
+        "qty_sold": "number",
+        "qty_delivered": "number",
+        "days_diff": "number"
+      },
+      "valueFieldLabels": {
+        "unit": "Unidade",
+        "qty_sold": "Qtd. vendida",
+        "qty_delivered": "Qtd. entregue",
+        "product_code": "Produto",
+        "product_description": "Descrição",
+        "order_number": "Pedido",
+        "line_item": "Item",
+        "customer_name": "Cliente",
+        "customer_short_name": "Nome reduzido",
+        "promised_date": "Data prometida",
+        "invoice_date": "Data faturamento",
+        "status": "Status",
+        "days_diff": "Dias (atraso/adianto)",
+        "sales_order_otd_pct": "OTD pedidos (%)",
+        "late_percentage": "% atrasadas",
+        "late_lines": "Linhas atrasadas",
+        "total_lines": "Total de itens"
       }
     },
     "get_supplies_purchase_order_otd_panel": {

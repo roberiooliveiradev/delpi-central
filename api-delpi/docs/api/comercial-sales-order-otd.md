@@ -35,8 +35,18 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `SC6010` (C6) | Itens do pedido de venda |
 | `SC5010` (C5) | Cabeçalho do pedido (cliente, segmento) |
 | `SA1010` (A1) | Cliente — `A1_NOME`, `A1_NREDUZ` (nome reduzido) |
+| `SB1010` (B1) | Produto — fallback de UM (`B1_UM`) e descrição |
 
 Leitura analítica com `WITH (NOLOCK)`.
+
+## Unidade de medida (`unit`)
+
+| Superfície | Comportamento |
+|------------|---------------|
+| Painel / detalhe / insights de linha | Sempre expõe `unit` por linha |
+| Fonte | `COALESCE(NULLIF(RTRIM(C6_UM), ''), RTRIM(B1_UM), '')` — UM da **linha** do pedido; cadastro só como fallback |
+| Agregações (série, por cliente, etc.) | `unit` só se todas as linhas do bucket tiverem a mesma UM; senão `unit: null` e `mixed_units: true` |
+| Conversão MI→peça / `B1_CONV` | **Não** — qty permanece na UM nativa (ver `padroes-totvs/unidades-medida.md`) |
 
 ## Linhas elegíveis (denominador)
 
@@ -89,6 +99,7 @@ Painel — campos de linha relevantes:
 | `customer_store` | `C5.C5_LOJACLI` (loja do cliente) |
 | `customer_name` | Preferência `SA1.A1_NREDUZ`; se vazio, `SA1.A1_NOME` |
 | `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
+| `unit` | `C6.C6_UM` com fallback `B1.B1_UM` (sem conversão) |
 | `days_diff` | Dias entre promessa e fatura (ou data de referência se aberta) |
 
 Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
@@ -99,11 +110,13 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 - Dashboard Comercial (`plugins/dashboard-commercial`) — KPI na home + painel `/apps/dashboard-commercial/otd`
 - Strategic Indicators API (`commercial-sales-order-otd`)
 - Chat / agente (`get_sales_order_otd`)
+- TV Dashboard — overlay `get_sales_order_otd_panel` (coluna Unidade)
 
 ## Histórico
 
 | Data | Alteração |
 |------|-----------|
+| 2026-08-28 | Painel/detalhe/insights: campo `unit` (`C6_UM` / fallback `B1_UM`); agregações com `mixed_units` quando UM não homogênea. |
 | 2026-08-13 | Panel: `customer_store` (loja) nas linhas e reincidência agrupada por código+loja. |
 | 2026-08-13 | Panel: `search`, stats de atraso, insights (recorrência + top 10 atrasos/promessas); BFF commercial-api encaminha page/sort/status/search. |
 | 2026-07-09 | Passa a incluir linhas **não faturadas**; atraso de abertas medido por `end_date` vs. `C6_ENTREG`. |
