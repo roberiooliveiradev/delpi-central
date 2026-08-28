@@ -429,9 +429,11 @@ describe("customerSorting e filters", () => {
 });
 
 describe("CustomersPage estrutural", () => {
-  it("usa getOpenOrdersTotvs e nao inventa endpoint", () => {
+  it("usa getCustomersInScope como universo e getOpenOrdersTotvs como overlay", () => {
     const hook = readFileSync(join(__dirname, "../hooks/useCustomersData.ts"), "utf8");
+    assert.match(hook, /getCustomersInScope/);
     assert.match(hook, /getOpenOrdersTotvs/);
+    assert.match(hook, /mergePortfolioCustomersWithOpenOrders/);
     assert.doesNotMatch(hook, /ops-abertas|getOpsAbertas/);
     assert.match(hook, /reloadKey/);
   });

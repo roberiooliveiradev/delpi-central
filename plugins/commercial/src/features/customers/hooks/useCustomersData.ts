@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { enrichPortfolioCustomersBatched } from "../../../api/customerEnrichmentApi";
+import {
+  getCustomersInScope,
+  type CustomerInScopeItem,
+} from "../../../api/customersInScopeApi";
 import { getOpenOrdersTotvs } from "../../../api/openOrdersTotvsApi";
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import type {
@@ -21,6 +25,7 @@ import {
   sortCustomers,
   sortCustomersByAttention,
 } from "../utils/customerSorting";
+import { mergePortfolioCustomersWithOpenOrders } from "../utils/mergePortfolioCustomersWithOpenOrders";
 import type { CustomersListState } from "./useCustomersListState";
 
 const PAGE_SIZE = 20;
@@ -63,6 +68,7 @@ export function useCustomersData(
   const sellerNameByKey = options?.sellerNameByKey;
   const trendWindowDays = options?.trendWindowDays;
   const [items, setItems] = useState<OpenOrdersTotvsItem[]>([]);
+  const [inScopeItems, setInScopeItems] = useState<CustomerInScopeItem[]>([]);
   const [enrichmentByKey, setEnrichmentByKey] = useState<
     Record<
       string,
@@ -117,19 +123,23 @@ export function useCustomersData(
         }
         setError(null);
 
-        const data = await getOpenOrdersTotvs(controller.signal, {
-          sellerId: sellerId || null,
-        });
-        setItems(data.items);
-        setPortfolioEmpty(Boolean(data.portfolio?.empty));
-        setPortfolioMessage(data.portfolio?.message ?? null);
+        const scopeOptions = { sellerId: sellerId || null };
+        const [inScope, openOrders] = await Promise.all([
+          getCustomersInScope(controller.signal, scopeOptions),
+          getOpenOrdersTotvs(controller.signal, scopeOptions).catch(() => null),
+        ]);
+        if (controller.signal.aborted) return;
+
+        setInScopeItems(inScope.items ?? []);
+        setItems(openOrders?.items ?? []);
+        setPortfolioEmpty(Boolean(inScope.empty_portfolio));
+        setPortfolioMessage(inScope.message ?? null);
         hasDataRef.current = true;
         setLastSuccessAt(new Date());
 
-        const aggregated = aggregateCustomers(data.items);
-        const pairs = aggregated.customers.map((customer) => ({
-          customer_code: customer.codigo,
-          customer_store: customer.loja,
+        const pairs = (inScope.items ?? []).map((customer) => ({
+          customer_code: customer.customer_code,
+          customer_store: customer.customer_store,
         }));
         setEnrichmentTotal(pairs.length);
         if (pairs.length > 0) {
@@ -145,7 +155,7 @@ export function useCustomersData(
             for (const item of enriched.items) {
               const key = `${item.customer_code}|${item.customer_store}`;
               knownKeys.add(key);
-              map[`${item.customer_code}|${item.customer_store}`] = {
+              map[key] = {
                 city: item.city,
                 state: item.state,
                 lastPurchaseDate: item.last_purchase_date,
@@ -188,6 +198,7 @@ export function useCustomersData(
         setError(message);
         if (!hasDataRef.current) {
           setItems([]);
+          setInScopeItems([]);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -203,22 +214,21 @@ export function useCustomersData(
 
   const aggregation = useMemo(() => {
     if (!lastSuccessAt) return null;
-    const base = aggregateCustomers(items);
-    return {
-      ...base,
-      customers: base.customers.map((customer) => {
+    const fromOrders = aggregateCustomers(items);
+    const customers = mergePortfolioCustomersWithOpenOrders(inScopeItems, fromOrders.customers).map(
+      (customer) => {
         const enrich = enrichmentByKey[customer.key];
         const withStatus = {
           ...customer,
-          city: enrich?.city ?? null,
-          state: enrich?.state ?? null,
-          lastPurchaseDate: enrich?.lastPurchaseDate ?? null,
-          billed12m: enrich?.billed12m ?? null,
-          hasAvatar: enrich?.hasAvatar ?? false,
-          billingTrend: enrich?.billingTrend ?? null,
-          billingTrendPct: enrich?.billingTrendPct ?? null,
-          coverageKnown: enrichmentKnownKeys.has(customer.key),
-          enrichmentAvailable: Boolean(enrich),
+          city: enrich?.city ?? customer.city ?? null,
+          state: enrich?.state ?? customer.state ?? null,
+          lastPurchaseDate: enrich?.lastPurchaseDate ?? customer.lastPurchaseDate ?? null,
+          billed12m: enrich?.billed12m ?? customer.billed12m ?? null,
+          hasAvatar: enrich?.hasAvatar ?? customer.hasAvatar ?? false,
+          billingTrend: enrich?.billingTrend ?? customer.billingTrend ?? null,
+          billingTrendPct: enrich?.billingTrendPct ?? customer.billingTrendPct ?? null,
+          coverageKnown: enrichmentKnownKeys.has(customer.key) || Boolean(customer.coverageKnown),
+          enrichmentAvailable: Boolean(enrich) || Boolean(customer.enrichmentAvailable),
         };
         return {
           ...withStatus,
@@ -226,9 +236,24 @@ export function useCustomersData(
           status: resolveCustomerStatus(withStatus),
           nextAction: resolveCustomerNextAction(withStatus),
         };
-      }),
+      },
+    );
+
+    const totalValorAberto = customers.reduce((sum, customer) => sum + customer.valorTotalAberto, 0);
+    const totalPedidosAbertos = customers.reduce(
+      (sum, customer) => sum + customer.quantidadePedidosAbertos,
+      0,
+    );
+    const clientesComAtraso = customers.filter((customer) => customer.temAtraso).length;
+
+    return {
+      customers,
+      incompleteLineCount: fromOrders.incompleteLineCount,
+      totalPedidosAbertos,
+      totalValorAberto,
+      clientesComAtraso,
     };
-  }, [items, lastSuccessAt, enrichmentByKey, enrichmentKnownKeys, sellerNameByKey]);
+  }, [items, inScopeItems, lastSuccessAt, enrichmentByKey, enrichmentKnownKeys, sellerNameByKey]);
 
   const filteredCustomers = useMemo(() => {
     if (!aggregation) return [];
