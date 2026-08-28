@@ -3171,6 +3171,150 @@ FLOW_FAMILY_MATRIX_CASES = [
             "unclear_direct": True,
         },
     },
+    {
+        "id": "FF-FOLLOW-REVISE-BRANCH-01",
+        "family": "follow_up_turn",
+        "message": "somente da filial 01",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "rowCount": 1,
+                "preview": "ROL consolidado: R$ 1.000.000",
+            },
+            "lastAction": {
+                "name": "financial_rol",
+                "path": "/financial/rol",
+                "operationId": "get_financial_rol",
+                "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "slot_delta_branch": "01",
+            "grounded_stage": "grounded_revise_query",
+            "should_narrate_excerpt": True,
+        },
+    },
+    {
+        "id": "FF-FOLLOW-CHALLENGE-01",
+        "family": "follow_up_turn",
+        "message": "o rol de uma unidade não pode ser igual ao total",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "rowCount": 1,
+                "preview": "ROL consolidado: R$ 1.000.000",
+            },
+            "lastAction": {
+                "path": "/financial/rol",
+                "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "challenge_last_result",
+            "grounded_stage": "grounded_challenge_result",
+        },
+    },
+    {
+        "id": "FF-FOLLOW-TYPO-FILAIL-01",
+        "family": "follow_up_turn",
+        "message": "rol filail 01 deste mês",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "preview": "ROL consolidado",
+                "rowCount": 1,
+            },
+            "lastAction": {
+                "path": "/financial/rol",
+                "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "slot_delta_branch": "01",
+            "grounded_stage": "grounded_revise_query",
+        },
+    },
+    {
+        "id": "FF-FOLLOW-NARRATE-OK-01",
+        "family": "follow_up_turn",
+        "message": "resuma o resultado",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "preview": "ROL consolidado",
+                "rowCount": 1,
+            },
+            "lastAction": {"path": "/financial/rol"},
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "narrate_recap",
+            "grounded_stage": "grounded_narrate_insight",
+        },
+    },
+    {
+        "id": "FF-FOLLOW-CLARIFY-BRANCH-01",
+        "family": "follow_up_turn",
+        "message": "somente da filial",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "preview": "ROL consolidado",
+                "rowCount": 1,
+            },
+            "lastAction": {"path": "/financial/rol"},
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "clarify_slot",
+            "grounded_stage": "grounded_clarify_slot",
+        },
+    },
+    {
+        "id": "FF-FOLLOW-TOPIC-SWITCH-01",
+        "family": "follow_up_turn",
+        "message": "e o estoque?",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "preview": "ROL consolidado",
+                "rowCount": 1,
+            },
+            "lastAction": {"path": "/financial/rol", "name": "financial_rol"},
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "new_intent",
+            "grounded_stage": None,
+        },
+    },
+    {
+        "id": "FF-FOLLOW-COMPOUND-01",
+        "family": "follow_up_turn",
+        "message": "só filial 01 porque o total não pode ser igual",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "preview": "ROL consolidado",
+                "rowCount": 1,
+            },
+            "lastAction": {
+                "path": "/financial/rol",
+                "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "slot_delta_branch": "01",
+            "grounded_stage": "grounded_revise_query",
+        },
+    },
 ]
 
 GROUNDED_INSIGHT_REGRESSION_CASES = [

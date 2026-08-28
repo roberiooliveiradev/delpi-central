@@ -124,6 +124,40 @@ def test_flow_family_matrix_gates(case: dict):
             is expects["should_enrich_insight"]
         )
 
+    last_action = snapshot.get("lastAction") if isinstance(snapshot.get("lastAction"), dict) else None
+    operational_focus = (
+        snapshot.get("operationalFocus")
+        if isinstance(snapshot.get("operationalFocus"), dict)
+        else None
+    )
+
+    if "follow_up_decision" in expects or "grounded_stage" in expects:
+        from app.domain.services.chat_follow_up_turn_interpretation_service import (
+            ChatFollowUpTurnInterpretationService,
+        )
+
+        interpretation = ChatFollowUpTurnInterpretationService.interpret(
+            message=message,
+            last_action=last_action,
+            last_result_excerpt=excerpt if isinstance(excerpt, dict) else None,
+            operational_focus=operational_focus,
+        )
+
+        if "follow_up_decision" in expects:
+            assert interpretation.decision == expects["follow_up_decision"]
+
+        if "slot_delta_branch" in expects:
+            assert interpretation.slot_delta.get("branch") == expects["slot_delta_branch"]
+
+        if "grounded_stage" in expects:
+            stage = ChatTurnGroundingService.resolve_grounded_stage(
+                message=message,
+                excerpt=excerpt if isinstance(excerpt, dict) else None,
+                last_action=last_action,
+                operational_focus=operational_focus,
+            )
+            assert stage == expects["grounded_stage"]
+
     if "unclear_direct" in expects:
         grounding = ChatTurnGroundingService.evaluate(
             message=message,
@@ -146,3 +180,4 @@ def test_flow_family_matrix_covers_required_families():
     assert "skill_company_knowledge" in families
     assert "message_search" in families
     assert "turn_grounding" in families
+    assert "follow_up_turn" in families
