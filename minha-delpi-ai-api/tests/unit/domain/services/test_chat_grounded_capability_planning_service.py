@@ -157,3 +157,86 @@ def test_plan_stock_mp_referent_without_bucket_does_not_fallback_to_pi():
     )
 
     assert planned == []
+
+
+class _ReviseSelectionStub:
+    def __init__(self):
+        self.repository = self
+
+    def list_actions(self):
+        return [
+            {
+                "actionId": "financial-rol",
+                "operationId": "get_financial_rol",
+                "path": "/financial/rol",
+                "parametersSchema": [
+                    {"name": "branch", "in": "query"},
+                    {"name": "start_date", "in": "query"},
+                    {"name": "end_date", "in": "query"},
+                ],
+            }
+        ]
+
+    def _list_allowed_candidates(self, message, *, allowed_action_ids, limit):
+        return [
+            action
+            for action in self.list_actions()
+            if action["actionId"] in set(allowed_action_ids)
+        ]
+
+
+def test_plan_revise_last_query_reexec_with_branch():
+    selection = _ReviseSelectionStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "grounded",
+            "stage": "grounded_revise_query",
+            "excerpt": {"title": "ROL", "preview": "total"},
+        },
+        "workingMemory": {
+            "lastResultExcerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+            "lastAction": {
+                "name": "financial_rol",
+                "path": "/financial/rol",
+                "operationId": "get_financial_rol",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "28-08-2026",
+                },
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="somente da filial 01",
+        allowed_action_ids=["financial-rol"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["path"] == "/financial/rol"
+    assert planned[0]["parameters"]["branch"] == "01"
+    assert planned[0]["parameters"]["start_date"] == "01-08-2026"
+
+
+def test_plan_revise_without_last_action_returns_empty():
+    selection = _ReviseSelectionStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "grounded",
+            "stage": "grounded_revise_query",
+        },
+        "workingMemory": {
+            "lastResultExcerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="somente da filial 01",
+        allowed_action_ids=["financial-rol"],
+        workspace_context=workspace,
+    )
+
+    assert planned == []

@@ -136,20 +136,44 @@ class ChatConversationMemoryExtractor:
                 inner = args.get("parameters")
 
                 if isinstance(inner, dict):
-                    for key in ("branch", "branch_code", "period"):
+                    for key in (
+                        "branch",
+                        "branch_code",
+                        "filial",
+                        "period",
+                        "start_date",
+                        "end_date",
+                    ):
                         if inner.get(key) not in (None, ""):
-                            params[key if key != "branch_code" else "branch"] = str(
-                                inner[key]
+                            canonical = (
+                                "branch"
+                                if key in {"branch_code", "filial"}
+                                else key
                             )
+                            params[canonical] = str(inner[key])
 
             result_type = cls._result_type_from_metadata(metadata)
+            operation_id = str(
+                metadata.get("operationId") or metadata.get("operation_id") or ""
+            ).strip()
+            action_id = str(
+                tool_call.get("actionId")
+                or metadata.get("actionId")
+                or metadata.get("action_id")
+                or ""
+            ).strip()
 
-            return {
+            payload: dict[str, Any] = {
                 "name": action_name,
                 "params": params,
                 "resultType": result_type,
                 "path": path,
             }
+            if operation_id:
+                payload["operationId"] = operation_id
+            if action_id:
+                payload["actionId"] = action_id
+            return payload
 
         # Fallback: último ok mesmo se só houver enrichment (turno só follow-up).
         for tool_call in reversed(calls):

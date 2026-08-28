@@ -185,3 +185,50 @@ def test_build_date_branch_binds_status_on_time_from_no_prazo():
     )
 
     assert parameters["status"] == "on_time"
+
+
+def test_build_date_branch_merge_inherits_period_and_overrides_branch():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "branch", "in": "query"},
+                {"name": "start_date", "in": "query"},
+                {"name": "end_date", "in": "query"},
+            ],
+        },
+        "somente da filial 01",
+        base_params={
+            "start_date": "01-08-2026",
+            "end_date": "28-08-2026",
+            "branch": "all",
+        },
+    )
+
+    assert parameters["branch"] == "01"
+    assert parameters["start_date"] == "01-08-2026"
+    assert parameters["end_date"] == "28-08-2026"
+
+
+def test_build_date_branch_accepts_filail_typo():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "branch", "in": "query"},
+            ],
+        },
+        "rol filail 01 deste mês",
+    )
+
+    assert parameters["branch"] == "01"
+
+
+def test_merge_last_action_params_immutable():
+    base = {"branch": "all", "start_date": "01-08-2026"}
+    incoming = {"branch": "01"}
+    merged = OperationalApiParameterBuilderService.merge_last_action_params(incoming, base)
+    assert merged == {"branch": "01", "start_date": "01-08-2026"}
+    assert base["branch"] == "all"

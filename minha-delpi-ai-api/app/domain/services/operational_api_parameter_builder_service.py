@@ -68,15 +68,20 @@ class OperationalApiParameterBuilderService:
         message: str,
         *,
         previous_messages: list | None = None,
+        base_params: dict | None = None,
     ) -> dict:
         from app.domain.services.chat_date_range_intent_service import (
             ChatDateRangeIntentService,
         )
+        from app.domain.services.chat_follow_up_turn_content_service import (
+            ChatFollowUpTurnContentService,
+        )
 
         spec = ChatOperationalApiDomainService.parameter_strategy_spec("date_branch")
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        message_for_match = ChatFollowUpTurnContentService.normalize_branch_typos(message)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message_for_match)
         date_range = ChatDateRangeIntentService.resolve(
-            message,
+            message_for_match,
             previous_messages=previous_messages,
         )
         patterns = spec.get("patterns") if isinstance(spec.get("patterns"), dict) else {}
@@ -119,7 +124,32 @@ class OperationalApiParameterBuilderService:
             if isinstance(empty_default, dict):
                 parameters = dict(empty_default)
 
-        return parameters
+        return self.merge_last_action_params(parameters, base_params)
+
+    @classmethod
+    def merge_last_action_params(
+        cls,
+        message_params: dict | None,
+        base_params: dict | None,
+    ) -> dict:
+        """Merge imutável: params da mensagem vencem; herda o restante do lastAction."""
+        merged: dict[str, Any] = {}
+        base = base_params if isinstance(base_params, dict) else {}
+        incoming = message_params if isinstance(message_params, dict) else {}
+
+        for key, value in base.items():
+            if value in (None, ""):
+                continue
+            canonical = "branch" if str(key) in {"branch_code", "filial"} else str(key)
+            merged[canonical] = value
+
+        for key, value in incoming.items():
+            if value in (None, ""):
+                continue
+            canonical = "branch" if str(key) in {"branch_code", "filial"} else str(key)
+            merged[canonical] = value
+
+        return merged
 
     def build_department_idd(
         self,

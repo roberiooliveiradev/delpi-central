@@ -57,6 +57,26 @@ class ChatGroundedCapabilityPlanningService:
         if not isinstance(excerpt, dict):
             return []
 
+        stage = str(turn_grounding.get("stage") or "").strip()
+
+        if stage == "grounded_revise_query":
+            revised = cls._plan_revise_last_query(
+                selection_service,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                working_memory=working if isinstance(working, dict) else {},
+                previous_messages=previous_messages,
+            )
+            return revised
+
+        if stage in {
+            "grounded_challenge_result",
+            "grounded_clarify_slot",
+            "grounded_narrate_recap",
+            "grounded_narrate_insight",
+        }:
+            return []
+
         if ChatTurnGroundingService.should_enrich_before_insight(message, excerpt):
             enrich_plan = ChatGroundedEnrichPlanningService.build_plan(
                 message=message,
@@ -247,6 +267,149 @@ class ChatGroundedCapabilityPlanningService:
                 planned.append(payload)
 
         return planned
+
+    @classmethod
+    def _plan_revise_last_query(
+        cls,
+        selection_service: Any,
+        *,
+        message: str,
+        allowed_action_ids: list[str] | None,
+        working_memory: dict[str, Any],
+        previous_messages: list | None = None,
+    ) -> list[dict]:
+        last_action = working_memory.get("lastAction")
+
+        if not isinstance(last_action, dict) or not last_action:
+            return []
+
+        target_path = str(last_action.get("path") or "").strip()
+        target_operation = str(
+            last_action.get("operationId") or last_action.get("operation_id") or ""
+        ).strip()
+        target_action_id = str(
+            last_action.get("actionId") or last_action.get("action_id") or ""
+        ).strip()
+
+        if not (target_path or target_operation or target_action_id):
+            return []
+
+        matched = cls._resolve_action_from_last(
+            selection_service,
+            message=message,
+            allowed_action_ids=allowed_action_ids or [],
+            target_path=target_path,
+            target_operation=target_operation,
+            target_action_id=target_action_id,
+        )
+
+        if not matched:
+            return []
+
+        from app.domain.services.operational_api_parameter_builder_service import (
+            OperationalApiParameterBuilderService,
+        )
+        from app.domain.services.external_actions.external_action_response_content_service import (
+            ExternalActionResponseContentService,
+        )
+
+        base_params = (
+            dict(last_action.get("params") or {})
+            if isinstance(last_action.get("params"), dict)
+            else {}
+        )
+        builder = OperationalApiParameterBuilderService()
+        merged = builder.build_date_branch(
+            matched,
+            message,
+            previous_messages=previous_messages,
+            base_params=base_params,
+        )
+
+        payload = {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": matched.get("actionId"),
+                "parameters": merged,
+                "body": {"message": message},
+            },
+            "reason": ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "reviseLastQuery",
+                default="Reexecução da última consulta com filtros atualizados.",
+            ),
+            "path": matched.get("path"),
+            "operationId": matched.get("operationId"),
+            "actionId": matched.get("actionId"),
+            "parameters": merged,
+        }
+        return [payload]
+
+    @classmethod
+    def _resolve_action_from_last(
+        cls,
+        selection_service: Any,
+        *,
+        message: str,
+        allowed_action_ids: list[str],
+        target_path: str,
+        target_operation: str,
+        target_action_id: str,
+    ) -> dict | None:
+        if target_action_id and hasattr(selection_service, "select_registry_route_id"):
+            # Preferência por id explícito quando lastAction trouxe actionId de registry.
+            try:
+                selected = selection_service.select_registry_route_id(
+                    target_action_id,
+                    message,
+                    allowed_action_ids=allowed_action_ids,
+                )
+                if isinstance(selected, dict) and selected:
+                    return selected
+            except TypeError:
+                pass
+
+        support = getattr(selection_service, "_support", None)
+        list_candidates = getattr(support, "list_allowed_candidates", None) if support else None
+        if not callable(list_candidates):
+            list_candidates = getattr(selection_service, "_list_allowed_candidates", None)
+
+        candidates: list[dict] = []
+        if callable(list_candidates):
+            candidates = list_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                limit=200,
+            ) or []
+
+        if not candidates:
+            repository = getattr(selection_service, "repository", None)
+            list_actions = getattr(repository, "list_actions", None) if repository else None
+            if callable(list_actions):
+                candidates = [
+                    action
+                    for action in list_actions()
+                    if str(action.get("actionId") or "") in set(allowed_action_ids)
+                ]
+
+        path_norm = target_path.rstrip("/").lower()
+        op_norm = target_operation.lower()
+        id_norm = target_action_id.lower()
+
+        for action in candidates:
+            if not isinstance(action, dict):
+                continue
+            action_id = str(action.get("actionId") or "").strip().lower()
+            operation_id = str(action.get("operationId") or "").strip().lower()
+            path = str(action.get("path") or "").strip().rstrip("/").lower()
+            if id_norm and action_id == id_norm:
+                return action
+            if op_norm and operation_id == op_norm:
+                return action
+            if path_norm and (path == path_norm or path.endswith(path_norm) or path_norm.endswith(path)):
+                return action
+
+        return None
 
     @classmethod
     def _dedupe_codes(cls, codes: list[str]) -> list[str]:
