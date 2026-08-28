@@ -50,6 +50,21 @@ describe("seriesChartParts", () => {
     expect(parseChartPartRef("nope")).toBeNull();
   });
 
+  it("serializa e parseia partes do velocímetro", () => {
+    expect(serializeChartPartRef({ kind: "gaugeNeedle" })).toBe("gaugeNeedle");
+    expect(serializeChartPartRef({ kind: "gaugeZone", zoneIndex: 1 })).toBe("gaugeZone:1");
+    expect(parseChartPartRef("gaugeNeedle")).toEqual({ kind: "gaugeNeedle" });
+    expect(parseChartPartRef("gaugeZone:1")).toEqual({ kind: "gaugeZone", zoneIndex: 1 });
+    expect(parseChartPartRef("gaugeTrack")).toEqual({ kind: "gaugeTrack" });
+    expect(parseChartPartRef("gaugeFill")).toEqual({ kind: "gaugeFill" });
+    expect(parseChartPartRef("gaugeValue")).toEqual({ kind: "gaugeValue" });
+    expect(parseChartPartRef("gaugeLabel")).toEqual({ kind: "gaugeLabel" });
+    expect(parseChartPartRef("gaugeGoalMarker")).toEqual({ kind: "gaugeGoalMarker" });
+    expect(chartPartCapabilities({ kind: "gaugeValue" }).editable).toBe(true);
+    expect(chartPartCapabilities({ kind: "gaugeNeedle" }).movable).toBe(false);
+    expect(chartPartCapabilities({ kind: "gaugeZone", zoneIndex: 0 }).deletable).toBe(true);
+  });
+
   it("round-trip options → parts → options preserva título e cor", () => {
     const options = mergeSeriesChartOptions({
       title: "OEE",

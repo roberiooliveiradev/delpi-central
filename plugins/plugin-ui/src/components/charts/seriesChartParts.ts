@@ -79,7 +79,13 @@ export function chartPartVisualPrimitive(
       return "line";
     case "chartArea":
     case "plotArea":
+    case "gaugeTrack":
+    case "gaugeFill":
+    case "gaugeZone":
       return "area";
+    case "gaugeNeedle":
+    case "gaugeGoalMarker":
+      return "line";
     default:
       return null;
   }
@@ -115,7 +121,21 @@ export type ChartPartRef =
   | { kind: "axisTitle"; axis: "x" | "y" }
   | { kind: "grid" }
   | { kind: "goalLine" }
-  | { kind: "dataTable" };
+  | { kind: "dataTable" }
+  /** Velocímetro — trilha de fundo do arco. */
+  | { kind: "gaugeTrack" }
+  /** Velocímetro — preenchimento até o valor. */
+  | { kind: "gaugeFill" }
+  /** Velocímetro — faixa de alerta (0=danger, 1=warning, 2=success). */
+  | { kind: "gaugeZone"; zoneIndex: number }
+  /** Velocímetro — agulha + hub. */
+  | { kind: "gaugeNeedle" }
+  /** Velocímetro — valor central (+ unidade). */
+  | { kind: "gaugeValue" }
+  /** Velocímetro — rótulo abaixo do arco. */
+  | { kind: "gaugeLabel" }
+  /** Velocímetro — marcador de meta no arco. */
+  | { kind: "gaugeGoalMarker" };
 
 /** Subconjunto de estilo herdável de forma/texto — sem reinventar no chart. */
 export type ChartPartStyle = {
@@ -251,6 +271,20 @@ export function serializeChartPartRef(ref: ChartPartRef): string {
       return `axis:${ref.axis}`;
     case "axisTitle":
       return `axisTitle:${ref.axis}`;
+    case "gaugeTrack":
+      return "gaugeTrack";
+    case "gaugeFill":
+      return "gaugeFill";
+    case "gaugeZone":
+      return `gaugeZone:${ref.zoneIndex}`;
+    case "gaugeNeedle":
+      return "gaugeNeedle";
+    case "gaugeValue":
+      return "gaugeValue";
+    case "gaugeLabel":
+      return "gaugeLabel";
+    case "gaugeGoalMarker":
+      return "gaugeGoalMarker";
     default: {
       const _exhaustive: never = ref;
       return String(_exhaustive);
@@ -297,6 +331,16 @@ export function parseChartPartRef(raw: string | null | undefined): ChartPartRef 
 
   const axisTitle = /^axisTitle:(x|y)$/.exec(value);
   if (axisTitle) return { kind: "axisTitle", axis: axisTitle[1] as "x" | "y" };
+
+  if (value === "gaugeTrack") return { kind: "gaugeTrack" };
+  if (value === "gaugeFill") return { kind: "gaugeFill" };
+  if (value === "gaugeNeedle") return { kind: "gaugeNeedle" };
+  if (value === "gaugeValue") return { kind: "gaugeValue" };
+  if (value === "gaugeLabel") return { kind: "gaugeLabel" };
+  if (value === "gaugeGoalMarker") return { kind: "gaugeGoalMarker" };
+
+  const gaugeZone = /^gaugeZone:(\d+)$/.exec(value);
+  if (gaugeZone) return { kind: "gaugeZone", zoneIndex: Number(gaugeZone[1]) };
 
   return null;
 }
@@ -352,6 +396,13 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   grid: { movable: false, editable: false, deletable: true, resizable: false },
   goalLine: { movable: false, editable: false, deletable: true, resizable: false },
   dataTable: { movable: false, editable: false, deletable: true, resizable: false },
+  gaugeTrack: { movable: false, editable: false, deletable: true, resizable: false },
+  gaugeFill: { movable: false, editable: false, deletable: true, resizable: false },
+  gaugeZone: { movable: false, editable: false, deletable: true, resizable: false },
+  gaugeNeedle: { movable: false, editable: false, deletable: true, resizable: false },
+  gaugeValue: { movable: false, editable: true, deletable: true, resizable: false },
+  gaugeLabel: { movable: false, editable: true, deletable: true, resizable: false },
+  gaugeGoalMarker: { movable: false, editable: false, deletable: true, resizable: false },
 };
 
 export function chartPartCapabilities(ref: ChartPartRef): ChartPartCapabilities {
