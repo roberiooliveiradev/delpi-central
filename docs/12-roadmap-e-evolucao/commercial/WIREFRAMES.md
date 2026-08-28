@@ -624,7 +624,9 @@ Pedido+OP permanece nas páginas nativas WF-02R-D.
 ## WF-03R — Minha Carteira (desktop)
 
 **Rota:** `/apps/commercial/customers`  
-**Papel:** priorizar clientes da(s) carteira(s) com pedidos de venda em aberto; não representa a SA1 completa.
+**Papel:** listar **todos** os clientes vinculados à(s) carteira(s) do escopo
+(membership); métricas de pedido em aberto são overlay. Não é dump SA1.
+**Fonte BFF:** `GET /customers/in-scope` (+ `GET /open-orders/` só para lines/contagens).
 **Estado URL:** somente `q`, `focus`, `trend`, `seller_id`, `sort`, `dir` e
 `page` allowlisted; presets fixos agora, saved views customizadas depois.
 Valores inválidos são normalizados e defaults são omitidos. `focus=growth`
@@ -678,11 +680,13 @@ Em aberto, Atrasos e Próxima entrega. Vendedor é default apenas para escopo de
 equipe; Cidade / UF começa oculta. O usuário pode persistir visibilidade, ordem
 e largura localmente.
 
-**Cobertura:** a lista base de pedidos em aberto não é paginada na origem e
-permanece utilizável se enrichment ou faturamento falhar parcialmente. O MFE
+**Cobertura:** a lista base é o membership do escopo (não paginado na origem).
+Pedidos em aberto enriquecem valor/atraso/linhas quando existirem; a tela permanece
+utilizável se open-orders, enrichment ou faturamento falharem parcialmente. O MFE
 divide enrichment e billing em lotes determinísticos de até 200 clientes e
 agrega a cobertura. Campo derivado sem lote coberto mostra
 `Dado indisponível`; export deixa a célula vazia, sem converter ausência em zero.
+Filtro por produto (ADR-003) continua dependendo das linhas do overlay open-orders.
 
 ### WF-03R-M — Minha Carteira (mobile)
 

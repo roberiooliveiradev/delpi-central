@@ -40,6 +40,7 @@
 | Superfície | Dono do escopo | Quem chama o quê |
 |------------|----------------|------------------|
 | CRUD `/seller-portfolios*` | commercial-api | MFE → commercial-api |
+| `GET /customers/in-scope` | commercial-api (membership + métricas OV por keys) | MFE Minha carteira → commercial-api → api-delpi `open-order-metrics` |
 | `GET …/avatar` (Conta) | commercial-api (`accounts.view`, sem membership) | MFE → commercial-api |
 | `PUT/DELETE …/avatar` | commercial-api (manage) | MFE → commercial-api |
 | `POST /customers/enrichment` | 1 par Conta sem filter; N pares `filter_pairs` → api-delpi | MFE → commercial-api |

@@ -99,15 +99,17 @@ Deep link inverso (produção → comercial): detalhe OTD com pedido preenchido 
 
 ## Minha carteira — WF-03R
 
-A lista representa **clientes da carteira com pedidos de venda em aberto**; não é
-a base SA1 completa. O `PageHero` concentra escopo, recortes e busca. Há dois
-eixos independentes: **Foco** operacional (`focus`) e **Tendência** de NF
-(`trend`). A lista usa `DataTable` no desktop e `DataRecordCard` no mobile, com
-a mesma paginação e ordenação em memória. Colunas, ordem e larguras são
-preferências locais versionadas; o gráfico de faturamento fica acima da lista,
-com presets de calendário **paridade Visão geral** (incl. mês passado),
-`ChartToolbar` (dia/semana/mês/ano) e toggle **Comparar ano anterior** (2ª
-chamada a `customers/billing-series` com datas −1 ano — sem rota nova).
+A lista representa **todos os clientes vinculados à(s) carteira(s) do escopo**
+(membership Postgres via `GET /customers/in-scope`); pedidos em aberto entram
+como overlay de métricas/linhas (`GET /open-orders/`), não como universo.
+Meus pedidos continua sendo a bancada de linhas em aberto. O `PageHero` concentra
+escopo, recortes e busca. Há dois eixos independentes: **Foco** operacional
+(`focus`) e **Tendência** de NF (`trend`). A lista usa `DataTable` no desktop e
+`DataRecordCard` no mobile, com a mesma paginação e ordenação em memória. Colunas,
+ordem e larguras são preferências locais versionadas; o gráfico de faturamento
+fica acima da lista, com presets de calendário **paridade Visão geral** (incl.
+mês passado), `ChartToolbar` (dia/semana/mês/ano) e toggle **Comparar ano anterior**
+(2ª chamada a `customers/billing-series` com datas −1 ano — sem rota nova).
 
 O estado compartilhável é sincronizado na URL por `replaceState`, sem recarregar
 o MFE:
