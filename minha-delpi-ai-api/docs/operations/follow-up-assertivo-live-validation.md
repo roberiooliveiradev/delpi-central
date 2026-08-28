@@ -21,18 +21,19 @@ Thread canônica dos prints:
 
 | Critério | Resultado |
 |----------|-----------|
-| T0 seed ROL | _pendente — `localhost` connection refused (stack chat não respondendo)_ |
-| T1 revise `branch=01` | _pendente live_ |
-| T2 challenge sem missing_date | _pendente live_ |
-| T3 typo filail | _pendente live_ |
-| T4 narrate | _pendente live_ |
-| S1 revise via stream | _pendente live_ |
+| T0 seed ROL | **PASS** — path `/financial/rol` |
+| T1 revise `branch=01` | **PASS** — reexec + `branch=01` + ack «Consulta filtrada pela filial 01» |
+| T2 challenge sem missing_date | **PASS** — sem tool; prosa faithfulness sem pedir período |
+| T3 typo filail | **PASS** — `/financial/rol` + `branch=01` |
+| T4 narrate | **PASS** — sem tool |
+| S1 revise via stream | **PASS** — `/financial/rol` + `branch=01` |
 
-**Ambiente:** Docker daemon up; API em `http://localhost` recusou conexão. Reexecutar:
+**Ambiente (2026-08-28):** rebuild `minha-delpi-ai-api` + gateway/keycloak/postgres-*/api-delpi; smoke via `http://localhost`.
 
 ```bash
 ./infra/scripts/up-dev-sequential.sh --fase core
 ./infra/scripts/up-dev-sequential.sh --fase chat --build minha-delpi-ai-api
+# se preciso: gateway, keycloak, postgres-plugins, postgres-core, api-delpi
 cd minha-delpi-ai-api && PYTHONPATH=. .venv/bin/python -u scripts/smoke_follow_up_assertivo_live.py
 ```
 

@@ -75,6 +75,78 @@ def _request(
         return json.loads(raw) if raw else {}
 
 
+def _parse_sse(raw: str) -> list[tuple[str, dict]]:
+    events: list[tuple[str, dict]] = []
+    current_event = "message"
+    data_lines: list[str] = []
+
+    for line in raw.splitlines():
+        if line.startswith("event:"):
+            current_event = line.split(":", 1)[1].strip()
+        elif line.startswith("data:"):
+            data_lines.append(line.split(":", 1)[1].strip())
+        elif line == "" and data_lines:
+            try:
+                payload = json.loads("\n".join(data_lines))
+            except json.JSONDecodeError:
+                payload = {}
+            if isinstance(payload, dict):
+                events.append((current_event, payload))
+            data_lines = []
+            current_event = "message"
+
+    if data_lines:
+        try:
+            payload = json.loads("\n".join(data_lines))
+        except json.JSONDecodeError:
+            payload = {}
+        if isinstance(payload, dict):
+            events.append((current_event, payload))
+
+    return events
+
+
+def _assistant_from_stream_done(data: dict) -> dict:
+    if isinstance(data.get("assistantMessage"), dict):
+        return data["assistantMessage"]
+    if isinstance(data.get("message"), dict):
+        return data["message"]
+    return {
+        "content": data.get("answer") or data.get("content") or "",
+        "toolCalls": data.get("toolCalls") or [],
+        "adminDebug": data.get("adminDebug") or {},
+        "metadata": data.get("metadata") or {},
+    }
+
+
+def _stream_send(token: str, session_id: str, message: str) -> dict:
+    request = urllib.request.Request(
+        f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages/stream",
+        data=json.dumps(
+            {
+                "message": message,
+                "responseMode": _RESPONSE_MODE,
+            }
+        ).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "text/event-stream",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=420) as response:
+        raw = response.read().decode("utf-8", errors="replace")
+    events = _parse_sse(raw)
+    done = next((payload for name, payload in reversed(events) if name == "done"), {})
+    assistant = _assistant_from_stream_done(done)
+    if not assistant.get("adminDebug") and done.get("adminDebug"):
+        assistant["adminDebug"] = done["adminDebug"]
+    if not assistant.get("metadata") and done.get("metadata"):
+        assistant["metadata"] = done["metadata"]
+    return assistant
+
+
 def _fetch_token() -> str:
     form = urllib.parse.urlencode(
         {
@@ -203,10 +275,11 @@ def _send(
     *,
     stream: bool = False,
 ) -> dict:
-    endpoint = "stream" if stream else "send"
+    if stream:
+        return _stream_send(token, session_id, message)
     return _request(
         "POST",
-        f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/{endpoint}",
+        f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages",
         token=token,
         body={
             "message": message,
