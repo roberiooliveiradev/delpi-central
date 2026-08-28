@@ -20,6 +20,7 @@ from commercial_app.application.use_cases.manage_account_contacts import (
 from commercial_app.application.use_cases.manage_seller_portfolio import parse_customer_assignments
 from commercial_app.composition.commercial_composer import (
     build_delpi_commercial_gateway,
+    build_list_customers_in_scope_use_case,
     build_manage_account_contacts_use_case,
     build_manage_customer_avatar_use_case,
     build_resolve_commercial_customer_scope_service,
@@ -113,6 +114,50 @@ def search_active_customers(
     except Exception:
         logger.exception("search_active_customers_failed")
         return fail("Erro interno ao buscar clientes.", 500)
+
+
+@router.get("/in-scope", operation_id="list_customers_in_scope")
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def list_customers_in_scope(
+    request: Request,
+    seller_id: str | None = Query(
+        default=None,
+        description="PK da carteira. Team/manage: qualquer; membro: só carteira própria. Alias histórico seller_id.",
+    ),
+    portfolio_id: str | None = Query(
+        default=None,
+        description="PK da carteira (preferencial). Se ambos, portfolio_id vence.",
+    ),
+):
+    """Minha carteira: todos os clientes vinculados no escopo + métricas de aberto."""
+    try:
+        user = current_user_from_request(request)
+        unrestricted = can_manage_portfolios(user) or can_use_team_scope(user)
+        user_id = actor_sub_from_request(request) or ""
+        pid = (portfolio_id or seller_id or "").strip() or None
+        # Sem for_open_orders: empty membership permanece empty (não consolida TOTVS).
+        scope = build_resolve_commercial_customer_scope_service().execute(
+            user_id=user_id,
+            unrestricted=unrestricted,
+            portfolio_id=pid,
+        )
+        data = build_list_customers_in_scope_use_case().execute(scope)
+        return ok(data, message="Clientes da carteira carregados.")
+    except PermissionError as exc:
+        return fail(str(exc), 403, operation_id="list_customers_in_scope")
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="list_customers_in_scope")
+    except ValueError as exc:
+        return fail(str(exc), 400, operation_id="list_customers_in_scope")
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id="list_customers_in_scope")
+    except Exception:
+        logger.exception("list_customers_in_scope_failed")
+        return fail(
+            "Erro interno ao carregar clientes da carteira.",
+            500,
+            operation_id="list_customers_in_scope",
+        )
 
 
 @router.post("/enrichment", operation_id="enrich_portfolio_customers")
