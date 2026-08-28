@@ -226,6 +226,49 @@ def test_current_month_bounds_uses_first_day_through_today() -> None:
     assert end.isoformat() == "2026-08-19"
 
 
+def test_resolve_overview_period_uses_explicit_range_or_default() -> None:
+    from production_control_app.domain.services.current_month_period import resolve_overview_period
+
+    start, end = resolve_overview_period(
+        timezone="America/Sao_Paulo",
+        today=date(2026, 8, 28),
+        start_date="2026-07-01",
+        end_date="2026-07-15",
+    )
+    assert start.isoformat() == "2026-07-01"
+    assert end.isoformat() == "2026-07-15"
+
+    fallback_start, fallback_end = resolve_overview_period(
+        timezone="America/Sao_Paulo",
+        today=date(2026, 8, 28),
+        start_date="2026-08-20",
+        end_date="2026-08-10",
+    )
+    assert fallback_start.isoformat() == "2026-08-01"
+    assert fallback_end.isoformat() == "2026-08-28"
+
+
+def test_overview_honors_custom_period_for_otd_and_volume() -> None:
+    gateway = FakeGateway()
+    service = OverviewService(gateway, branch_access=BranchAccessService())
+    payload = service.build(
+        _user(*FULL_PERMS),
+        branch="01",
+        start_date="2026-07-01",
+        end_date="2026-07-31",
+    )
+
+    assert payload["period"]["start_date"] == "2026-07-01"
+    assert payload["period"]["end_date"] == "2026-07-31"
+    otd_call = next(params for name, params in gateway.calls if name == "otd")
+    assert otd_call["start_date"] == "2026-07-01"
+    assert otd_call["end_date"] == "2026-07-31"
+    volume_call = next(params for name, params in gateway.calls if name == "appointments_series")
+    assert volume_call["start_date"] == "2026-07-01"
+    assert volume_call["end_date"] == "2026-07-31"
+    assert payload["production_volume"]["period"]["start_date"] == "2026-07-01"
+
+
 def test_product_code_prefixes_8_and_9() -> None:
     assert product_code_matches_prefixes("90350341", ["8", "9"]) is True
     assert product_code_matches_prefixes("80012849", ["8", "9"]) is True

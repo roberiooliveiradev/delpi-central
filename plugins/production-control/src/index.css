@@ -621,12 +621,159 @@
   max-width: 40rem;
 }
 
+.dashboard-production-control .ppc-header__period-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  max-width: 100%;
+}
+
 .dashboard-production-control .ppc-header__period {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: var(--ppc-font-sm);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.68);
+}
+
+.dashboard-production-control .ppc-period-filter {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.dashboard-production-control .ppc-period-filter__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.72);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.dashboard-production-control .ppc-period-filter__trigger:hover,
+.dashboard-production-control .ppc-period-filter--open .ppc-period-filter__trigger,
+.dashboard-production-control .ppc-period-filter--active .ppc-period-filter__trigger {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.dashboard-production-control .ppc-period-filter__panel {
+  min-width: 16.5rem;
+  max-width: calc(100vw - 1.5rem);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+  color: #0f172a;
+}
+
+.dashboard-production-control .ppc-period-filter__title {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: #0f172a;
+}
+
+.dashboard-production-control .ppc-period-filter__fields {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-period-filter__field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.dashboard-production-control .ppc-period-filter__field input[type="date"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.dashboard-production-control .ppc-period-filter__error {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: #b91c1c;
+}
+
+.dashboard-production-control .ppc-period-filter__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dashboard-production-control .ppc-period-filter__btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-period-filter__btn--ghost {
+  color: #475569;
+  background: transparent;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.dashboard-production-control .ppc-period-filter__btn--primary {
+  color: #ffffff;
+  background: #1e3a5f;
+  border-color: #1e3a5f;
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-period-filter__panel {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #1b2030;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-period-filter__title {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-period-filter__field {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-period-filter__field input[type="date"] {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.06);
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] .dashboard-production-control .ppc-period-filter__btn--ghost {
+  color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .dashboard-production-control .ppc-header__stats {

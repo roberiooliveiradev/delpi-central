@@ -55,7 +55,9 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     }
   }, [items, route.branch, route.subpluginId]);
 
-  let workspace = <OverviewPage branch={route.branch} />;
+      let workspace = (
+        <OverviewPage branch={route.branch} startDate={route.startDate} endDate={route.endDate} />
+      );
   if (route.subpluginId === "demand") {
     workspace = (
       <DemandPage

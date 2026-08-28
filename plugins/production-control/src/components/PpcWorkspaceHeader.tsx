@@ -6,12 +6,18 @@ import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { PpcBranch } from "../types";
 import { buildPpcHref, navigatePpc, storeBranch } from "../utils/routeParser";
+import { PpcPeriodFilterButton } from "./PpcPeriodFilterButton";
 
 type PpcWorkspaceHeaderProps = {
   title: string;
   subtitle?: string;
   /** Período operacional (ex.: datas do overview) — uma linha só no header. */
   period?: string | null;
+  /** ISO YYYY-MM-DD sugeridos no popover quando não há filtro na URL. */
+  periodDefaultStart?: string | null;
+  periodDefaultEnd?: string | null;
+  /** Quando true, exibe botão sutil que abre o filtro de período. */
+  periodEditable?: boolean;
   titleHint?: string;
   /** Código em destaque antes do título (ex.: CT selecionado). */
   badge?: string | null;
@@ -29,12 +35,16 @@ type PpcWorkspaceHeaderProps = {
   endDate?: string | null;
   onRefresh?: () => void;
   refreshBusy?: boolean;
+  onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
 };
 
 export function PpcWorkspaceHeader({
   title,
   subtitle,
   period,
+  periodDefaultStart,
+  periodDefaultEnd,
+  periodEditable = false,
   titleHint,
   badge,
   stats,
@@ -50,6 +60,7 @@ export function PpcWorkspaceHeader({
   endDate,
   onRefresh,
   refreshBusy,
+  onPeriodChange,
 }: PpcWorkspaceHeaderProps) {
   const setBranch = (next: PpcBranch) => {
     storeBranch(next);
@@ -86,7 +97,20 @@ export function PpcWorkspaceHeader({
               </h1>
             </div>
             {subtitle ? <p className="ppc-header__subtitle">{subtitle}</p> : null}
-            {period ? <p className="ppc-header__period">{period}</p> : null}
+            {period ? (
+              <div className="ppc-header__period-row">
+                <p className="ppc-header__period">{period}</p>
+                {periodEditable && onPeriodChange ? (
+                  <PpcPeriodFilterButton
+                    startDate={startDate ?? null}
+                    endDate={endDate ?? null}
+                    defaultStartDate={periodDefaultStart}
+                    defaultEndDate={periodDefaultEnd}
+                    onApply={onPeriodChange}
+                  />
+                ) : null}
+              </div>
+            ) : null}
             {stats ? <div className="ppc-header__stats">{stats}</div> : null}
           </div>
         </div>

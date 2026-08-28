@@ -18,6 +18,14 @@ def get_overview(
         "day",
         description="Visualização do volume: day (mês corrente) ou month_yoy (mês × ano anterior)",
     ),
+    startDate: str | None = Query(
+        None,
+        description="Início do período (YYYY-MM-DD). Omitido = 1º dia do mês corrente.",
+    ),
+    endDate: str | None = Query(
+        None,
+        description="Fim do período (YYYY-MM-DD). Omitido = hoje no fuso operacional.",
+    ),
 ):
     user = resolve_user(request)
     try:
@@ -25,6 +33,8 @@ def get_overview(
             user,
             branch=branch,
             volume_view=volumeView,
+            start_date=startDate,
+            end_date=endDate,
         )
     except InvalidBranch as exc:
         return fail(str(exc), 422)
