@@ -37,6 +37,30 @@ def test_this_month_and_this_week(today_fixed: date | None = None):
     assert compute_preset_range("custom", today=today) is None
 
 
+def test_this_period_full_calendar_ranges():
+    """Período vigente completo (fim civil), distinto dos presets «até hoje»."""
+    today = date(2026, 8, 28)  # sexta
+    assert compute_preset_range("this_week_full", today=today) == (
+        date(2026, 8, 24),  # segunda
+        date(2026, 8, 30),  # domingo
+    )
+    assert compute_preset_range("this_month_full", today=today) == (
+        date(2026, 8, 1),
+        date(2026, 8, 31),
+    )
+    assert compute_preset_range("this_quarter_full", today=today) == (
+        date(2026, 7, 1),
+        date(2026, 9, 30),
+    )
+    assert compute_preset_range("this_year_full", today=today) == (
+        date(2026, 1, 1),
+        date(2026, 12, 31),
+    )
+    # Regressão: «até hoje» não muda.
+    assert compute_preset_range("this_month", today=today) == (date(2026, 8, 1), today)
+    assert compute_preset_range("this_week", today=today) == (date(2026, 8, 24), today)
+
+
 def test_previous_day_skips_weekend_to_friday():
     """Reunião na segunda acompanha a sexta, não o domingo."""
     monday = date(2026, 7, 13)

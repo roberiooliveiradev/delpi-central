@@ -211,7 +211,7 @@ Rotas com vários `valueFields` (ex.: `get_lmps_dashboard_summary`) resolvem `re
 ## Períodos relativos e séries temporais
 
 - `dateRangePreset` é interno ao bloco TV: o gateway o converte para as chaves de data canônicas da rota e não o envia à api-delpi.
-- Presets: `today`, `previous_day` (último dia útil: segunda → sexta), `this_week`, `this_month`, `this_month_until_yesterday` (MTD até o dia útil anterior), `this_quarter`, `this_year`, `previous_week`, `previous_month`, `previous_quarter`, `previous_year`, `last_7_days`, `last_30_days`, `last_90_days`, `last_n_days` e `custom`.
+- Presets: `today`, `previous_day` (último dia útil: segunda → sexta), `this_week` / `this_week_full` (semana civil segunda–domingo), `this_month` / `this_month_full` (mês civil completo), `this_month_until_yesterday` (MTD até o dia útil anterior), `this_quarter` / `this_quarter_full`, `this_year` / `this_year_full`, `previous_week`, `previous_month`, `previous_quarter`, `previous_year`, `last_7_days`, `last_30_days`, `last_90_days`, `last_n_days` e `custom`. Os IDs `*_full` usam o calendário vigente completo (fim pode ser futuro); os sem sufixo cobrem até hoje.
 - Presets relativos são recalculados em cada fetch; `custom` mantém as datas fixas informadas.
 - A granularidade definida pela rota é preservada. Uma rota com `granularity=day` retorna e apresenta um ponto por dia, sem agrupamento automático em semanas ou faixas de datas.
 - Rotas com `seriesField` normalizam `points` para tabela `{ periodo, value }`, sem expor metadados internos (`granularity`, `truncated`, `sort_key`) nem duplicar `label`.

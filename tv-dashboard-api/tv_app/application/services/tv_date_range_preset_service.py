@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import calendar
 from datetime import date, timedelta
 from typing import Any, Mapping, Sequence
 
@@ -135,8 +136,19 @@ def compute_preset_range(
         start = day - timedelta(days=day.weekday())  # segunda
         return start, day
 
+    # Semana civil completa (segunda → domingo), mesmo que o fim seja futuro.
+    if normalized == "this_week_full":
+        start = day - timedelta(days=day.weekday())
+        return start, start + timedelta(days=6)
+
     if normalized == "this_month":
         return day.replace(day=1), day
+
+    # Mês civil completo (1 → último dia), mesmo que o fim seja futuro.
+    if normalized == "this_month_full":
+        start = day.replace(day=1)
+        last_day = calendar.monthrange(day.year, day.month)[1]
+        return start, day.replace(day=last_day)
 
     # MTD sem o dia corrente — fim = dia útil anterior (segunda → sexta).
     if normalized in {
@@ -155,8 +167,20 @@ def compute_preset_range(
         quarter_start_month = ((day.month - 1) // 3) * 3 + 1
         return day.replace(month=quarter_start_month, day=1), day
 
+    # Trimestre civil completo (1º dia → último dia do 3º mês).
+    if normalized == "this_quarter_full":
+        quarter_start_month = ((day.month - 1) // 3) * 3 + 1
+        start = day.replace(month=quarter_start_month, day=1)
+        end_month = quarter_start_month + 2
+        last_day = calendar.monthrange(day.year, end_month)[1]
+        return start, day.replace(month=end_month, day=last_day)
+
     if normalized == "this_year":
         return day.replace(month=1, day=1), day
+
+    # Ano civil completo (01-01 → 12-31).
+    if normalized == "this_year_full":
+        return date(day.year, 1, 1), date(day.year, 12, 31)
 
     if normalized == "previous_week":
         current_week_start = day - timedelta(days=day.weekday())
