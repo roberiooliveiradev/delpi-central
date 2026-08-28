@@ -5,6 +5,7 @@ import {
   SpeedometerGauge,
   chartPartAllowsMove,
   chartPartDomProps,
+  getChartPartState,
   isChartPartRefEqual,
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
@@ -144,6 +145,10 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
         max={model.max}
         min={model.min}
         accentColor={model.accentColor}
+        showZonesLegend={
+          options.showLegend !== false &&
+          getChartPartState(chartParts, { kind: "legend" })?.visible !== false
+        }
         interaction={interactive ? interaction : null}
         chartParts={chartParts}
         aria-label={model.title || model.label}

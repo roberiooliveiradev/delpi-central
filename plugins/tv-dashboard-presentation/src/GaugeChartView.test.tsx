@@ -127,4 +127,27 @@ describe("GaugeChartView chartArea / plotArea", () => {
     const plot = container.querySelector(".tdp-gauge-chart__plot") as HTMLElement;
     expect(plot.style.background).toContain("rgb(1, 2, 3)");
   });
+
+  it("oculta legenda de faixas quando showLegend é false", () => {
+    const { container } = render(
+      <GaugeChartView model={model} options={{ showLegend: false }} />,
+    );
+    expect(container.querySelector(".tdp-speedometer-gauge__legend")).toBeNull();
+  });
+
+  it("oculta legenda quando part legend.visible é false", () => {
+    const { container } = render(
+      <GaugeChartView
+        model={model}
+        options={{ showLegend: true }}
+        chartParts={{ legend: { visible: false } }}
+      />,
+    );
+    expect(container.querySelector(".tdp-speedometer-gauge__legend")).toBeNull();
+  });
+
+  it("mostra legenda de faixas por padrão", () => {
+    const { container } = render(<GaugeChartView model={model} options={{}} />);
+    expect(container.querySelector(".tdp-speedometer-gauge__legend")).toBeTruthy();
+  });
 });
