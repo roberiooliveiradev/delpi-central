@@ -3315,6 +3315,108 @@ FLOW_FAMILY_MATRIX_CASES = [
             "grounded_stage": "grounded_revise_query",
         },
     },
+    {
+        "id": "FF-CONT-INHERIT-MONTH-01",
+        "family": "follow_up_turn",
+        "message": "somente da filial 01",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "rowCount": 1,
+                "preview": "ROL consolidado: R$ 655.120,74",
+            },
+            "lastAction": {
+                "name": "financial_rol",
+                "path": "/financial/rol",
+                "operationId": "get_financial_rol",
+                "parameterStrategy": "date_branch",
+                "apiRouteDomain": "financial_kpi",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                    "branch": "all",
+                },
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "continuity_mode": "consume_last_action",
+            "allows_parallel_discovery": False,
+            "slot_delta_branch": "01",
+            "grounded_stage": "grounded_revise_query",
+        },
+    },
+    {
+        "id": "FF-CONT-YOY-01",
+        "family": "follow_up_turn",
+        "message": "comparar com ano anterior no mesmo periodo",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "rowCount": 1,
+                "preview": "ROL consolidado: R$ 655.120,74",
+            },
+            "lastAction": {
+                "path": "/financial/rol",
+                "apiRouteDomain": "financial_kpi",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "28-08-2026",
+                    "branch": "all",
+                },
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "continuity_mode": "consume_last_action",
+            "allows_parallel_discovery": False,
+            "slot_delta_period": "previous_year_same_range",
+            "slot_delta_start_date": "01-08-2025",
+            "slot_delta_end_date": "28-08-2025",
+            "grounded_stage": "grounded_revise_query",
+            "product_codes": [],
+        },
+    },
+    {
+        "id": "FF-CONT-KPI-TOKEN-AND-01",
+        "family": "follow_up_turn",
+        "message": "qual o percentual de rol de novos negócios da empresa?",
+        "snapshot": {},
+        "expects": {
+            "grounded_status": "ungrounded",
+            "department_kpi_path_token": "new-business-rol-pct",
+        },
+    },
+    {
+        "id": "FF-CONT-CURRENCY-01",
+        "family": "follow_up_turn",
+        "message": "ROL consolidado: R$ 655.120,74 — comparar com ano anterior",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL",
+                "preview": "R$ 655.120,74",
+                "rowCount": 1,
+            },
+            "lastAction": {
+                "path": "/financial/rol",
+                "apiRouteDomain": "financial_kpi",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "28-08-2026",
+                },
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "continuity_mode": "consume_last_action",
+            "allows_parallel_discovery": False,
+            "product_codes": [],
+            "grounded_stage": "grounded_revise_query",
+        },
+    },
 ]
 
 GROUNDED_INSIGHT_REGRESSION_CASES = [

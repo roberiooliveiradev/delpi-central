@@ -146,8 +146,26 @@ def test_flow_family_matrix_gates(case: dict):
         if "follow_up_decision" in expects:
             assert interpretation.decision == expects["follow_up_decision"]
 
+        if "continuity_mode" in expects:
+            assert interpretation.continuity_mode == expects["continuity_mode"]
+
+        if "allows_parallel_discovery" in expects:
+            assert (
+                interpretation.allows_parallel_discovery()
+                is expects["allows_parallel_discovery"]
+            )
+
         if "slot_delta_branch" in expects:
             assert interpretation.slot_delta.get("branch") == expects["slot_delta_branch"]
+
+        if "slot_delta_period" in expects:
+            assert interpretation.slot_delta.get("period") == expects["slot_delta_period"]
+
+        if "slot_delta_start_date" in expects:
+            assert interpretation.slot_delta.get("start_date") == expects["slot_delta_start_date"]
+
+        if "slot_delta_end_date" in expects:
+            assert interpretation.slot_delta.get("end_date") == expects["slot_delta_end_date"]
 
         if "grounded_stage" in expects:
             stage = ChatTurnGroundingService.resolve_grounded_stage(
@@ -157,6 +175,27 @@ def test_flow_family_matrix_gates(case: dict):
                 operational_focus=operational_focus,
             )
             assert stage == expects["grounded_stage"]
+
+    if "product_codes" in expects:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+
+        assert (
+            ChatAnalysisIntentService.extract_all_product_codes(message)
+            == expects["product_codes"]
+        )
+
+    if "department_kpi_path_token" in expects:
+        from app.domain.services.chat_department_kpi_intent_service import (
+            ChatDepartmentKpiIntentService,
+            invalidate_department_kpi_rules_cache,
+        )
+
+        invalidate_department_kpi_rules_cache()
+        match = ChatDepartmentKpiIntentService.resolve(message)
+        assert match is not None
+        assert expects["department_kpi_path_token"] in match.path_token
 
     if "unclear_direct" in expects:
         grounding = ChatTurnGroundingService.evaluate(
