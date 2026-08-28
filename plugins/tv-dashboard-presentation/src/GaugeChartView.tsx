@@ -1,9 +1,11 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import {
   ChartTitle,
   SeriesChartClassesProvider,
   SpeedometerGauge,
-  bindChartPartPointer,
+  chartPartAllowsMove,
+  chartPartDomProps,
+  isChartPartRefEqual,
   resolveChartAreaStyle,
   seriesChartThemeStyle,
 } from "@delpi/plugin-ui/index";
@@ -23,19 +25,41 @@ type Props = {
 
 /**
  * Host do velocímetro com chrome/título alinhados ao bloco gráfico (SeriesChart).
+ * `chartArea` usa o mesmo guard `closest` do SeriesChartPrimitive — não engole subpartes.
  */
 export function GaugeChartView({ model, options, chartParts, interaction }: Props) {
   const chartArea = resolveChartAreaStyle(options, chartParts);
   const interactive = Boolean(interaction);
   const chartAreaRef = { kind: "chartArea" as const };
-  const chartAreaPointer = bindChartPartPointer(chartAreaRef, interactive ? interaction : null);
-  const {
-    selected: chartAreaSelected,
-    editing: _editing,
-    onPointerDown: onChartAreaPointerDown,
-    onDoubleClick: onChartAreaDoubleClick,
-    ...chartAreaDom
-  } = chartAreaPointer;
+  const chartAreaDom = chartPartDomProps(chartAreaRef, interaction?.selectedPart);
+  const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
+
+  const onChartAreaPointerDown = interactive
+    ? (event: ReactPointerEvent<HTMLDivElement>) => {
+        const host = (event.target as HTMLElement).closest("[data-chart-part]");
+        const partId = host?.getAttribute("data-chart-part");
+        if (partId && partId !== "chartArea") return;
+        event.stopPropagation();
+        interaction?.onPartPointerDown?.(chartAreaRef, event);
+        if (
+          isChartPartRefEqual(chartAreaRef, interaction?.selectedPart) &&
+          chartPartAllowsMove(chartAreaRef)
+        ) {
+          interaction?.onPartMovePointerDown?.(chartAreaRef, event);
+        }
+      }
+    : undefined;
+
+  const onChartAreaDoubleClick = interactive
+    ? (event: ReactMouseEvent<HTMLDivElement>) => {
+        const host = (event.target as HTMLElement).closest("[data-chart-part]");
+        const partId = host?.getAttribute("data-chart-part");
+        if (partId && partId !== "chartArea") return;
+        event.stopPropagation();
+        event.preventDefault();
+        interaction?.onPartDoubleClick?.(chartAreaRef, event);
+      }
+    : undefined;
 
   const hostStyle: CSSProperties = {
     ["--delpi-ui-series-chart-radius" as string]: `${chartArea.borderRadius}px`,
@@ -60,7 +84,13 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
   return (
     <SeriesChartClassesProvider prefix={SERIES_CHART_PREFIX}>
       <div
-        className="tdp-gauge-chart"
+        className={[
+          "tdp-gauge-chart",
+          interactive ? "tdp-gauge-chart--interactive" : "",
+          chartAreaSelected ? "tdp-gauge-chart--part-selected" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         style={hostStyle}
         data-chart-type="gauge"
         {...chartAreaDom}
