@@ -13,8 +13,10 @@ describe("resolveChartAddElementMenuRoots", () => {
       "dataLabels",
       "dataTable",
       "gridlines",
+      "goalLine",
       "legend",
       "markers",
+      "smoothLines",
     ]);
     const allIds = roots.flatMap((r) => r.choices.map((c) => c.id));
     expect(allIds).toContain("legend:left");
@@ -37,5 +39,10 @@ describe("resolveChartAddElementMenuRoots", () => {
     expect(resolveChartAddElementMenuRoots("bar").some((r) => r.elementId === "markers")).toBe(
       false,
     );
+  });
+
+  it("gauge só lista título, legenda e meta", () => {
+    const roots = resolveChartAddElementMenuRoots("gauge");
+    expect(roots.map((r) => r.elementId).sort()).toEqual(["chartTitle", "goalLine", "legend"]);
   });
 });

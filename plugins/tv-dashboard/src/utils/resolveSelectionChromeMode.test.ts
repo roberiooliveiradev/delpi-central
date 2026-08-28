@@ -77,4 +77,12 @@ describe("resolveSelectionChromeMode", () => {
     expect(chartPartSelectionLabel({ kind: "grid" })).toBe("Grade");
     expect(chartPartSelectionLabel({ kind: "goalLine" })).toBe("Linha de meta");
   });
+
+  it("chartPartSelectionLabel cobre partes do velocímetro", () => {
+    expect(chartPartSelectionLabel({ kind: "gaugeNeedle" })).toBe("Agulha");
+    expect(chartPartSelectionLabel({ kind: "gaugeValue" })).toBe("Valor");
+    expect(chartPartSelectionLabel({ kind: "gaugeZone", zoneIndex: 0 })).toBe("Faixa vermelha");
+    expect(chartPartSelectionLabel({ kind: "gaugeZone", zoneIndex: 2 })).toBe("Faixa verde");
+    expect(chartPartSelectionLabel({ kind: "gaugeGoalMarker" })).toBe("Marcador de meta");
+  });
 });

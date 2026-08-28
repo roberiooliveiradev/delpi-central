@@ -56,6 +56,23 @@ export function chartPartSelectionLabel(part: ComunicadoChartPartRef): string {
       return "Linha de meta";
     case "dataTable":
       return "Tabela de dados";
+    case "gaugeTrack":
+      return "Trilha";
+    case "gaugeFill":
+      return "Preenchimento";
+    case "gaugeZone":
+      if (part.zoneIndex === 0) return "Faixa vermelha";
+      if (part.zoneIndex === 1) return "Faixa amarela";
+      if (part.zoneIndex === 2) return "Faixa verde";
+      return `Faixa ${part.zoneIndex + 1}`;
+    case "gaugeNeedle":
+      return "Agulha";
+    case "gaugeValue":
+      return "Valor";
+    case "gaugeLabel":
+      return "Rótulo";
+    case "gaugeGoalMarker":
+      return "Marcador de meta";
     default:
       return serializeChartPartRef(part);
   }

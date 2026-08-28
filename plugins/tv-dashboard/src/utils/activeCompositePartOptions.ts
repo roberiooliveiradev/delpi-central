@@ -24,6 +24,39 @@ export type ActivePartOption = {
 
 /** Opções do dropdown «Elemento ativo» (estilo Excel). */
 export function listChartActivePartOptions(block: ComunicadoChartViewBlock): ActivePartOption[] {
+  if (block.chartType === "gauge") {
+    return [
+      { value: "chartArea", label: "Área do gráfico", chartPart: { kind: "chartArea" } },
+      { value: "title", label: "Título", chartPart: { kind: "title" } },
+      { value: "gaugeTrack", label: "Trilha", chartPart: { kind: "gaugeTrack" } },
+      { value: "gaugeFill", label: "Preenchimento", chartPart: { kind: "gaugeFill" } },
+      {
+        value: "gaugeZone:0",
+        label: "Faixa vermelha",
+        chartPart: { kind: "gaugeZone", zoneIndex: 0 },
+      },
+      {
+        value: "gaugeZone:1",
+        label: "Faixa amarela",
+        chartPart: { kind: "gaugeZone", zoneIndex: 1 },
+      },
+      {
+        value: "gaugeZone:2",
+        label: "Faixa verde",
+        chartPart: { kind: "gaugeZone", zoneIndex: 2 },
+      },
+      { value: "gaugeNeedle", label: "Agulha", chartPart: { kind: "gaugeNeedle" } },
+      { value: "gaugeValue", label: "Valor", chartPart: { kind: "gaugeValue" } },
+      { value: "gaugeLabel", label: "Rótulo", chartPart: { kind: "gaugeLabel" } },
+      {
+        value: "gaugeGoalMarker",
+        label: "Marcador de meta",
+        chartPart: { kind: "gaugeGoalMarker" },
+      },
+      { value: "legend", label: "Legenda", chartPart: { kind: "legend" } },
+    ];
+  }
+
   const series = block.chartProjection?.series ?? [];
   const seriesCount = Math.max(series.length, 1);
   const options: ActivePartOption[] = [

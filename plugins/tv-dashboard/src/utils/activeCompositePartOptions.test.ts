@@ -28,6 +28,31 @@ describe("activeCompositePartOptions", () => {
     );
   });
 
+  it("lista partes do velocímetro sem eixos de série", () => {
+    const options = listChartActivePartOptions({
+      id: "g1",
+      type: "chart_view",
+      chartType: "gauge",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+    } as never);
+    expect(options.map((item) => item.value)).toEqual([
+      "chartArea",
+      "title",
+      "gaugeTrack",
+      "gaugeFill",
+      "gaugeZone:0",
+      "gaugeZone:1",
+      "gaugeZone:2",
+      "gaugeNeedle",
+      "gaugeValue",
+      "gaugeLabel",
+      "gaugeGoalMarker",
+      "legend",
+    ]);
+    expect(options.some((item) => item.value === "axis:x")).toBe(false);
+    expect(options.some((item) => item.value === "series:0")).toBe(false);
+  });
+
   it("lista métricas do KPI", () => {
     const options = listKpiActivePartOptions({
       id: "k1",

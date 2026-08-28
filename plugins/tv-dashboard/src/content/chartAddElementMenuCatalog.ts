@@ -133,11 +133,15 @@ const CHOICES_BY_ROOT: Record<keyof typeof ROOT_META, ChartAddElementFlyoutChoic
  * Filtra por tipo de gráfico via `isChartElementApplicable`.
  */
 export function resolveChartAddElementMenuRoots(
-  chartKind: SeriesChartKind,
+  chartKind: SeriesChartKind | "gauge",
 ): ChartAddElementMenuRoot[] {
+  const gaugeAllowed =
+    chartKind === "gauge" ? new Set<ChartElementId>(["chartTitle", "legend", "goalLine"]) : null;
   return ROOT_ORDER.flatMap((elementId) => {
+    if (gaugeAllowed && !gaugeAllowed.has(elementId)) return [];
     const def = CHART_ELEMENT_CATALOG.find((entry) => entry.id === elementId);
-    if (!def || !isChartElementApplicable(def, chartKind)) return [];
+    if (!def) return [];
+    if (!gaugeAllowed && !isChartElementApplicable(def, chartKind)) return [];
     const meta = ROOT_META[elementId];
     return [
       {

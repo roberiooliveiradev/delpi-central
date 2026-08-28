@@ -19,6 +19,7 @@ import {
   isDataSourceBlockType,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
+  OFFICE_CHART_SERIES_COLOR,
   partsToChartOptions,
   patchHostRelativeFramePageBottomLeftPx,
   resolveChartAreaStyle,
@@ -132,6 +133,8 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       markerRadius?: number;
       opacity?: number;
       borderRadius?: number;
+      color?: string;
+      fontSize?: number;
     };
   }) => {
     const nextParts = upsertChartPartState(block.chartParts, selectedChartPart, patch);
@@ -161,6 +164,12 @@ export function ChartPartInspector({ pane = false, block }: Props) {
         ...(appearance.chartProjection ? { chartProjection: appearance.chartProjection } : {}),
       } as Partial<typeof block>);
       return;
+    }
+    if (
+      (selectedChartPart.kind === "gaugeFill" || selectedChartPart.kind === "gaugeNeedle") &&
+      patch.style?.stroke
+    ) {
+      nextOptions.seriesColor = patch.style.stroke;
     }
     updateSelected({
       chartParts: nextParts,
@@ -238,7 +247,9 @@ export function ChartPartInspector({ pane = false, block }: Props) {
         onBack={clearChartPartSelection}
         backLabel="Voltar aos elementos"
         onEditOnStage={
-          selectedChartPart.kind === "title" || selectedChartPart.kind === "axisTitle"
+          selectedChartPart.kind === "title" ||
+          selectedChartPart.kind === "axisTitle" ||
+          selectedChartPart.kind === "gaugeLabel"
             ? () => beginEditChartPart(block.id, selectedChartPart)
             : undefined
         }
@@ -662,6 +673,97 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               }}
             />
           </DeckField>
+        </>
+      ) : null}
+
+      {selectedChartPart.kind === "gaugeFill" ||
+      selectedChartPart.kind === "gaugeNeedle" ||
+      selectedChartPart.kind === "gaugeTrack" ||
+      selectedChartPart.kind === "gaugeZone" ||
+      selectedChartPart.kind === "gaugeGoalMarker"
+        ? (
+        <>
+          {primitive && chartPrimitiveSupportsStroke(primitive) ? (
+            <>
+              <DeckField id="td-chart-part-gauge-stroke" label="Cor do traço">
+                <TvRibbonColorPicker
+                  inline
+                  label="Cor do traço"
+                  value={
+                    partState?.style?.stroke ??
+                    (selectedChartPart.kind === "gaugeFill" ||
+                    selectedChartPart.kind === "gaugeNeedle"
+                      ? (options.seriesColor ?? OFFICE_CHART_SERIES_COLOR)
+                      : "#64748b")
+                  }
+                  onChange={(color) => patchPart({ style: { stroke: color } })}
+                />
+              </DeckField>
+              <DeckField id="td-chart-part-gauge-stroke-width" label="Espessura">
+                <NativeTextControl
+                  id="td-chart-part-gauge-stroke-width"
+                  type="number"
+                  min={1}
+                  max={20}
+                  step={0.5}
+                  value={partState?.style?.strokeWidth ?? (selectedChartPart.kind === "gaugeZone" ? 14 : 3)}
+                  onChange={(value) =>
+                    patchPart({ style: { strokeWidth: Number(value) || 1 } })
+                  }
+                />
+              </DeckField>
+            </>
+          ) : null}
+          {selectedChartPart.kind === "gaugeNeedle" ||
+          selectedChartPart.kind === "gaugeGoalMarker" ? (
+            <DeckField id="td-chart-part-gauge-fill" label="Preenchimento">
+              <TvRibbonColorPicker
+                inline
+                label="Preenchimento"
+                value={
+                  partState?.style?.fill ??
+                  options.seriesColor ??
+                  OFFICE_CHART_SERIES_COLOR
+                }
+                onChange={(color) => patchPart({ style: { fill: color } })}
+              />
+            </DeckField>
+          ) : null}
+        </>
+      ) : null}
+
+      {selectedChartPart.kind === "gaugeValue" || selectedChartPart.kind === "gaugeLabel" ? (
+        <>
+          <DeckField id="td-chart-part-gauge-text-color" label="Cor do texto">
+            <TvRibbonColorPicker
+              inline
+              label="Cor do texto"
+              value={partState?.style?.color ?? "#0f172a"}
+                  onChange={(color) => patchPart({ style: { color } })}
+                />
+              </DeckField>
+              <DeckField id="td-chart-part-gauge-font-size" label="Tamanho (px)">
+                <NativeTextControl
+                  id="td-chart-part-gauge-font-size"
+                  type="number"
+                  min={8}
+                  max={72}
+                  step={1}
+                  value={partState?.style?.fontSize ?? (selectedChartPart.kind === "gaugeValue" ? 22 : 14)}
+                  onChange={(value) =>
+                    patchPart({ style: { fontSize: Number(value) || 14 } })
+                  }
+                />
+              </DeckField>
+          {selectedChartPart.kind === "gaugeLabel" ? (
+            <DeckField id="td-chart-part-gauge-label-content" label="Texto do rótulo">
+              <NativeTextControl
+                id="td-chart-part-gauge-label-content"
+                value={partState?.content ?? block.chartOptions?.seriesName ?? ""}
+                onChange={(value) => patchPart({ content: value })}
+              />
+            </DeckField>
+          ) : null}
         </>
       ) : null}
 

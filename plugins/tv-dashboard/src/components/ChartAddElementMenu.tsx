@@ -12,7 +12,7 @@ import { resolveChartAddElementMenuRoots } from "../content/chartAddElementMenuC
 
 type Props = {
   options: ComunicadoChartOptions;
-  chartKind: SeriesChartKind;
+  chartKind: SeriesChartKind | "gauge";
   onApplyChoice: (choiceId: ChartAddElementChoiceId) => void;
   onMoreOptions: (elementId: ChartElementId) => void;
   className?: string;

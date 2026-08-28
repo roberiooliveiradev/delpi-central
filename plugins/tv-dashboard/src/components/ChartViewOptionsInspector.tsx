@@ -51,7 +51,8 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
   });
-  const chartKind = toSeriesChartKind(block.chartType) ?? "line";
+  const isGauge = block.chartType === "gauge";
+  const chartKind = isGauge ? ("gauge" as const) : (toSeriesChartKind(block.chartType) ?? "line");
   const hasPartSelection = Boolean(selectedChartPart);
 
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {
@@ -89,7 +90,12 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
     }
   };
 
-  const elements = CHART_ELEMENT_CATALOG.filter((entry) => isChartElementApplicable(entry, chartKind));
+  const elements = CHART_ELEMENT_CATALOG.filter((entry) => {
+    if (isGauge) {
+      return entry.id === "chartArea" || entry.id === "chartTitle" || entry.id === "legend" || entry.id === "goalLine";
+    }
+    return isChartElementApplicable(entry, chartKind);
+  });
 
   return (
     <>
@@ -137,6 +143,17 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
               defaultOpen
             >
+              {isGauge ? (
+                <DeckField id="td-chart-gauge-accent" label="Cor de destaque">
+                  <TvRibbonColorPicker
+                    inline
+                    label="Cor de destaque"
+                    value={options.seriesColor ?? OFFICE_CHART_SERIES_COLOR}
+                    onChange={(color) => setOptions({ seriesColor: color })}
+                  />
+                </DeckField>
+              ) : (
+                <>
               <DeckField id="td-chart-category-rotation" label="Rotação dos rótulos (categoria)">
                 <FormSelectControl
                   id="td-chart-category-rotation"
@@ -197,10 +214,12 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
                   }))}
                 />
               </DeckField>
+                </>
+              )}
             </DeckPropertySection>
           </div>
 
-          {!omitSeries ? (
+          {!omitSeries && !isGauge ? (
             <div id="td-chart-pane-series">
               <DeckPropertySection pane={pane} title="Série" defaultOpen={false}>
                 <DeckField id="td-chart-series-color" label="Cor da série">

@@ -103,7 +103,8 @@ function useChartDesignControls() {
   if (!selected || selected.type !== "chart_view") return null;
 
   const block = selected as ComunicadoChartViewBlock;
-  const chartKind = toSeriesChartKind(block.chartType) ?? "line";
+  const isGauge = block.chartType === "gauge";
+  const chartKind = isGauge ? ("gauge" as const) : (toSeriesChartKind(block.chartType) ?? "line");
   const options = mergeComunicadoChartOptions({
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),

@@ -37,7 +37,8 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
   } = useComunicadoEditor();
   const [selectDataOpen, setSelectDataOpen] = useState(false);
 
-  const chartKind = toSeriesChartKind(block.chartType) ?? "line";
+  const isGauge = block.chartType === "gauge";
+  const chartKind = isGauge ? ("gauge" as const) : (toSeriesChartKind(block.chartType) ?? "line");
   const options = mergeComunicadoChartOptions({
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
@@ -149,7 +150,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
               close();
             }}
           >
-            Eixos e séries…
+            {isGauge ? "Valor e meta…" : "Eixos e séries…"}
           </button>
           <button
             type="button"
