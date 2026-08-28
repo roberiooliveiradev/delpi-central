@@ -28,6 +28,8 @@
 | `GET` | `/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` | follow-up read + filial |
 | `GET` | `/providers/management_revenue_monthly/preview` | `preview_report_provider_management_revenue_monthly` | follow-up read |
 | `POST` | `/schedules/process-pending` | `process_pending_report_schedules` | write **ou** service token |
+| `GET` | `/personal-subscriptions/{providerKey}` | `get_personal_report_subscription` | **service token** (Portal PCP) |
+| `PUT` | `/personal-subscriptions/{providerKey}` | `upsert_personal_report_subscription` | **service token** (Portal PCP) |
 | `GET` | `/definitions/{id}/item-notes` | `list_report_shortage_item_notes` | follow-up read + filial |
 | `PUT` | `/definitions/{id}/item-notes/{productCode}` | `upsert_report_shortage_item_note` | `reports.notes.manage` **ou** manage + view filial |
 | `DELETE` | `/definitions/{id}/item-notes/{productCode}` | `delete_report_shortage_item_note` | `reports.notes.manage` **ou** manage + view filial |

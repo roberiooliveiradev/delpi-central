@@ -90,6 +90,31 @@ class PostgresReportsRepository(PluginBaseRepository):
             raise PluginsRepositoryError("Falha ao criar definição de relatório.")
         return self.definition_to_payload(row)
 
+    def find_personal_definition(
+        self,
+        *,
+        provider_key: str,
+        created_by_user_id: str,
+        branch: str,
+    ) -> dict[str, Any] | None:
+        """Definição pessoal: provider + criador + params.branch."""
+        row = self.fetch_one(
+            """
+            SELECT id, name, provider_key, params, active,
+                   created_by_user_id, created_at, updated_at
+              FROM reports.report_definitions
+             WHERE provider_key = %s
+               AND created_by_user_id = %s
+               AND COALESCE(params->>'branch', '') = %s
+             ORDER BY created_at ASC
+             LIMIT 1
+            """,
+            (provider_key, created_by_user_id, branch),
+        )
+        if row is None:
+            return None
+        return self.definition_to_payload(row)
+
     def update_definition(
         self,
         *,

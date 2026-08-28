@@ -668,6 +668,129 @@
   }
 }
 
+.dashboard-production-control .ppc-email-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+}
+
+.dashboard-production-control .ppc-modal .ppc-email-schedule {
+  min-width: min(28rem, 100%);
+}
+
+.dashboard-production-control .ppc-table-toolbar__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--ppc-border, #e6e6e6);
+  border-radius: 10px;
+  background: var(--ppc-surface, #fff);
+  color: var(--ppc-title, #003866);
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-table-toolbar__icon-btn:hover {
+  border-color: var(--ppc-accent, #089bdb);
+  color: var(--ppc-accent, #089bdb);
+}
+
+.dashboard-production-control .ppc-table-toolbar__icon-btn:focus-visible {
+  outline: 2px solid var(--ppc-accent, #089bdb);
+  outline-offset: 2px;
+}
+
+.dashboard-production-control .ppc-email-schedule__header {
+  margin-bottom: 12px;
+}
+
+.dashboard-production-control .ppc-email-schedule__title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--ppc-title, #003866);
+}
+
+.dashboard-production-control .ppc-email-schedule__hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ppc-text-muted, rgba(17, 17, 17, 0.65));
+}
+
+.dashboard-production-control .ppc-email-schedule__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: flex-end;
+}
+
+.dashboard-production-control .ppc-email-schedule__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 10rem;
+}
+
+.dashboard-production-control .ppc-email-schedule__field--toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: auto;
+}
+
+.dashboard-production-control .ppc-email-schedule__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ppc-text-muted, rgba(17, 17, 17, 0.65));
+}
+
+.dashboard-production-control .ppc-email-schedule__value {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dashboard-production-control .ppc-email-schedule__field input[type="time"] {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--ppc-border, #e6e6e6);
+  border-radius: 10px;
+  background: var(--ppc-surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.dashboard-production-control .ppc-email-schedule__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.dashboard-production-control .ppc-email-schedule__meta,
+.dashboard-production-control .ppc-email-schedule__status {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: var(--ppc-text-muted, rgba(17, 17, 17, 0.65));
+}
+
+.dashboard-production-control .ppc-email-schedule__error {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: #b42318;
+}
+
+.dashboard-production-control .ppc-email-schedule__ok {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: #027a48;
+}
+
 .dashboard-production-control .ppc-demand-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
