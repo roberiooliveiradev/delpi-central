@@ -1149,6 +1149,21 @@
       },
       "category": "commercial"
     },
+    "get_commercial_rol_summary": {
+      "locale": {
+        "en": {
+          "summary": "Commercial ROL summary (realized and goal)",
+          "description": "Net operating revenue (ROL) for a period with SI comparable goal fields for TV KPI.",
+          "label": "Commercial ROL summary"
+        },
+        "pt-BR": {
+          "label": "ROL comercial — resumo (realizado e meta)",
+          "summary": "ROL comercial — resumo (realizado e meta)",
+          "description": "Receita operacional líquida do período com meta SI no mesmo payload (hub TV)."
+        }
+      },
+      "category": "commercial"
+    },
     "get_commercial_rol_by_customer": {
       "locale": {
         "en": {
@@ -4076,6 +4091,21 @@
           "label": "Indicador — Otd de pedidos de venda",
           "summary": "Indicador — Otd de pedidos de venda",
           "description": "Indicador numérico para «Otd de pedidos de venda»."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_sales_order_otd_summary": {
+      "locale": {
+        "en": {
+          "summary": "Sales order OTD summary (realized and goal)",
+          "description": "On-time delivery percentage for sales order lines with SI comparable goal fields for TV KPI.",
+          "label": "Sales order OTD summary"
+        },
+        "pt-BR": {
+          "label": "OTD de pedidos — resumo (realizado e meta)",
+          "summary": "OTD de pedidos — resumo (realizado e meta)",
+          "description": "Percentual de entrega no prazo com meta SI no mesmo payload (hub TV)."
         }
       },
       "category": "commercial"

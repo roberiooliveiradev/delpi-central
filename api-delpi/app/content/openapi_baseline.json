@@ -3738,6 +3738,23 @@
             "format": "date"
           }
         },
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial ROL summary (realized and goal)",
+            "description": "Net operating revenue (ROL) for a period with SI comparable goal fields for TV KPI.",
+            "label": "Commercial ROL summary"
+          },
+          "pt-BR": {
+            "summary": "ROL comercial — resumo (realizado e meta)",
+            "description": "Receita operacional líquida do período com meta SI no mesmo payload (hub TV).",
+            "label": "ROL comercial — resumo (realizado e meta)"
+          }
+        },
+        "tv": {
+          "description": "Receita operacional líquida do período com meta SI no mesmo payload (hub TV).",
+          "label": "ROL comercial — resumo (realizado e meta)"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna commercial ROL summary via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -6511,6 +6528,23 @@
             },
             "format": "date"
           }
+        },
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Sales order OTD summary (realized and goal)",
+            "description": "On-time delivery percentage for sales order lines with SI comparable goal fields for TV KPI.",
+            "label": "Sales order OTD summary"
+          },
+          "pt-BR": {
+            "summary": "OTD de pedidos — resumo (realizado e meta)",
+            "description": "Percentual de entrega no prazo com meta SI no mesmo payload (hub TV).",
+            "label": "OTD de pedidos — resumo (realizado e meta)"
+          }
+        },
+        "tv": {
+          "description": "Percentual de entrega no prazo com meta SI no mesmo payload (hub TV).",
+          "label": "OTD de pedidos — resumo (realizado e meta)"
         },
         "presentationStrategy": "as_delivered"
       },

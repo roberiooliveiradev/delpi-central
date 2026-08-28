@@ -1080,6 +1080,46 @@
       "description": "ROL das filiais 01 e 02 em lista tabular.",
       "whenToUse": "Use em tabela comparativa por filial."
     },
+    "get_commercial_rol_summary": {
+      "exposesSiGoal": true,
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "valueFields": [
+        "rol",
+        "comparable_goal",
+        "rol_target_pct"
+      ],
+      "valueFieldLabels": {
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "returns": "Devoluções",
+        "discounts": "Descontos",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)",
+        "target": "Meta",
+        "rol_target_pct": "Atingimento da meta ROL (%)"
+      },
+      "valueFieldTypes": {
+        "rol": "number",
+        "gross_revenue": "number",
+        "returns": "number",
+        "discounts": "number",
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number",
+        "target": "number",
+        "rol_target_pct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "label": "ROL comercial — resumo (realizado e meta)",
+      "description": "ROL do período com meta SI no mesmo payload (hub TV).",
+      "whenToUse": "Use em card KPI/gauge quando precisar de ROL realizado e meta na mesma fonte."
+    },
     "get_sales_order_otd": {
       "allowedDisplayModes": [
         "kpi",
@@ -1100,6 +1140,41 @@
       "label": "OTD de pedidos de venda",
       "description": "Percentual de entrega no prazo de pedidos de venda.",
       "whenToUse": "Use em card KPI de OTD."
+    },
+    "get_sales_order_otd_summary": {
+      "exposesSiGoal": true,
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "valueFields": [
+        "sales_order_otd_pct",
+        "comparable_goal"
+      ],
+      "valueFieldLabels": {
+        "sales_order_otd_pct": "OTD pedidos (%)",
+        "total_lines": "Total de linhas",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "total_lines": "number",
+        "on_time_lines": "number",
+        "late_lines": "number",
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "label": "OTD de pedidos — resumo (realizado e meta)",
+      "description": "OTD% do período com meta SI no mesmo payload (hub TV).",
+      "whenToUse": "Use em card KPI/gauge quando precisar de OTD realizado e meta na mesma fonte."
     },
     "get_sales_order_otd_series": {
       "seriesField": "points",
