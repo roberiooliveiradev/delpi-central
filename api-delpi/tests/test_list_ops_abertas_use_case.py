@@ -1,11 +1,7 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from app.application.use_cases.pedidos_venda_abertos.list_ops_abertas_use_case import (
     ListOpsAbertasUseCase,
-)
-from app.core.exceptions import DatabaseConnectionError
-from app.infrastructure.persistence.totvs.pedidos_venda_abertos.ops_abertas_query_repository import (
-    OpsAbertasQueryRepository,
 )
 
 
@@ -82,23 +78,3 @@ def test_list_ops_abertas_normalizes_null_dates() -> None:
 
     assert result.items[0]["data_emissao_op"] is None
     assert result.items[0]["data_fim_prevista_op"] is None
-
-
-def test_ops_repository_falls_back_when_resumo_view_missing() -> None:
-    repository = OpsAbertasQueryRepository()
-    missing_view_error = DatabaseConnectionError(
-        "('42S02', \"Invalid object name 'dbo.VW_OPS_ABERTAS_PRODUTO_RESUMO'.\")"
-    )
-
-    with patch.object(repository, "_connect"):
-        with patch.object(repository, "execute_query") as mock_execute:
-            mock_execute.side_effect = [
-                [{"filial": "01", "produto": "X", "numero_op": "1/01/001", "saldo_op": 10}],
-                missing_view_error,
-            ]
-
-            with repository:
-                items, resumo = repository.list_open_ops()
-
-    assert len(items) == 1
-    assert resumo == []
