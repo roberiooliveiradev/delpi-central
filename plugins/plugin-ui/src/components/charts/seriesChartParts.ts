@@ -1270,9 +1270,12 @@ export function resolveChartPartFrameRoot(
     );
   }
   if (ref.kind === "plotArea") {
-    return from.closest(".delpi-ui-series-chart__plot-host, .tdp-series-chart__plot-host");
+    return (
+      from.closest(".delpi-ui-series-chart__plot-host, .tdp-series-chart__plot-host") ??
+      from.closest(".tdp-gauge-chart__plot")
+    );
   }
-  return from.closest(".delpi-ui-series-chart, .tdp-series-chart");
+  return from.closest(".delpi-ui-series-chart, .tdp-series-chart, .tdp-gauge-chart");
 }
 
 /** Aplica delta % de resize no frame da parte (igual handles do bloco). */

@@ -473,6 +473,18 @@ describe("seriesChartParts", () => {
     shell.remove();
   });
 
+  it("resolveChartPartFrameRoot encontra host do gauge para título", () => {
+    const host = document.createElement("div");
+    host.className = "tdp-gauge-chart";
+    const title = document.createElement("div");
+    title.className = "delpi-ui-series-chart__title";
+    host.appendChild(title);
+    document.body.appendChild(host);
+    expect(resolveChartPartFrameRoot({ kind: "title" }, title)).toBe(host);
+    expect(resolveChartPartFrameRoot({ kind: "legend" }, title)).toBe(host);
+    host.remove();
+  });
+
   it("resizeChartPartFrame ajusta se e nw com clamp", () => {
     const se = resizeChartPartFrame({ x: 10, y: 10, w: 20, h: 10 }, "se", 5, 4);
     expect(se.w).toBe(25);
