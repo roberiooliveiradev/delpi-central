@@ -159,4 +159,29 @@ describe("SpeedometerGauge", () => {
     );
     expect(container.querySelector(".delpi-ui-speedometer-gauge__legend")).toBeNull();
   });
+
+  it("aplica frame % na legenda e handles quando selecionada", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        interaction={{
+          selectedPart: { kind: "legend" },
+          onPartPointerDown: () => undefined,
+          onPartResizePointerDown: () => undefined,
+        }}
+        chartParts={{
+          legend: { visible: true, frame: { x: 20, y: 40, w: 60, h: 25 } },
+        }}
+      />,
+    );
+    const legend = container.querySelector(".delpi-ui-speedometer-gauge__legend") as HTMLElement;
+    expect(legend.style.left).toBe("20%");
+    expect(legend.style.top).toBe("40%");
+    expect(legend.style.width).toBe("60%");
+    expect(legend.style.position).toBe("absolute");
+    expect(
+      container.querySelector('[aria-label="Redimensionar canto inferior direito"]'),
+    ).toBeTruthy();
+  });
 });

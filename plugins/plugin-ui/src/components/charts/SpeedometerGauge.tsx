@@ -1,15 +1,36 @@
 import { useId, useMemo, useState, type CSSProperties } from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+import { ChartPartResizeHandles } from "./seriesChart/ChartPartResizeHandles";
 import {
   bindChartPartPointer,
+  chartPartAllowsResize,
   chartPartTypographyStyle,
   getChartPartState,
+  looksLikeAutoMaterializedFlowFrame,
   type ChartPartRef,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "./seriesChartParts";
 
+function gaugeLegendFrameStyle(
+  frame: { x: number; y: number; w?: number; h?: number } | undefined,
+  selected: boolean,
+): CSSProperties | undefined {
+  if (!frame) {
+    return selected ? { position: "relative", zIndex: 3 } : undefined;
+  }
+  return {
+    position: "absolute",
+    left: `${frame.x}%`,
+    top: `${frame.y}%`,
+    width: frame.w != null ? `${frame.w}%` : "auto",
+    height: frame.h != null ? `${frame.h}%` : "auto",
+    zIndex: 3,
+    margin: 0,
+    boxSizing: "border-box",
+  };
+}
 export type SpeedometerGaugeTone = "neutral" | "success" | "warning" | "danger";
 
 export type SpeedometerGaugeClassNames = {
@@ -335,6 +356,20 @@ export function SpeedometerGauge({
       }
     : {};
 
+  const legendRef = { kind: "legend" as const };
+  const legendRawFrame = getChartPartState(chartParts, legendRef)?.frame;
+  const legendFrame =
+    legendRawFrame && looksLikeAutoMaterializedFlowFrame("legend", legendRawFrame)
+      ? undefined
+      : legendRawFrame;
+  const legendFrameStyle = gaugeLegendFrameStyle(legendFrame, legendPart.selected);
+  const legendTypography = chartPartTypographyStyle(chartParts, legendRef);
+  const legendShowResize = legendPart.selected && chartPartAllowsResize(legendRef);
+  const legendHostStyle =
+    legendFrameStyle || Object.keys(legendTypography).length > 0
+      ? { ...legendFrameStyle, ...legendTypography }
+      : undefined;
+
   return (
     <div
       className={[withBemModifier(classNames.root, resolvedTone), className]
@@ -348,6 +383,7 @@ export function SpeedometerGauge({
       data-zone-danger={String(zonesResolved.dangerBelow)}
       data-interactive={interactive ? "true" : undefined}
       tabIndex={0}
+      style={legendFrame ? { position: "relative" } : undefined}
       {...tipHandlers}
     >
       <svg
@@ -572,8 +608,16 @@ export function SpeedometerGauge({
       {goalPart.visible && goalCaption ? <p className={classNames.goal}>{goalCaption}</p> : null}
       {legendPart.visible && showZonesLegend ? (
         <ul
-          className={classNames.legend}
+          className={[
+            classNames.legend,
+            legendFrameStyle?.position === "absolute" ? `${classNames.root}__part--framed` : "",
+            legendPart.selected ? `${classNames.root}__part--selected` : "",
+            legendShowResize ? `${classNames.root}__part--resizable` : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           aria-hidden="true"
+          style={legendHostStyle}
           {...legendPart.dom}
           onPointerDown={legendPart.onPointerDown}
           onDoubleClick={legendPart.onDoubleClick}
@@ -591,6 +635,12 @@ export function SpeedometerGauge({
             ≥ {formatLegendPct(zonesResolved.warningBelow)}
             {unit}
           </li>
+          <ChartPartResizeHandles
+            visible={legendShowResize}
+            onResizePointerDown={(handle, event) => {
+              interaction?.onPartResizePointerDown?.(legendRef, event, handle);
+            }}
+          />
         </ul>
       ) : null}
       {explicitTip && active ? (
