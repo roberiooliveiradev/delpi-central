@@ -90,6 +90,16 @@ def configure_domain_infrastructure_ports() -> None:
         InfrastructureLanguageToolSpellCheckAdapter()
     )
     PresentationColumnLabelLlmService.configure(make_llm_gateway())
+    from app.domain.services.chat_follow_up_turn_classifier_service import (
+        ChatFollowUpTurnClassifierService,
+    )
+    from app.infrastructure.llm.follow_up_turn_classifier_adapter import (
+        InfrastructureFollowUpTurnClassifierAdapter,
+    )
+
+    ChatFollowUpTurnClassifierService.configure(
+        InfrastructureFollowUpTurnClassifierAdapter(make_llm_gateway())
+    )
     from app.infrastructure.content.content_service import ContentService
 
     ChatLabelContentService.configure(

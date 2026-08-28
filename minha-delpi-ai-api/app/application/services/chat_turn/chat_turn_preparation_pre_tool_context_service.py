@@ -157,7 +157,41 @@ class ChatTurnPreparationPreToolContextService:
             else None,
             operational_focus=working_focus,
         )
-        turn_grounding_metadata["followUp"] = follow_up.to_metadata()
+        classifier_meta = {"used": False, "label": None}
+        if (
+            follow_up.allows_parallel_discovery()
+            and ChatFollowUpTurnInterpretationService._is_useful_last_action(
+                working_last_action
+            )
+        ):
+            from app.domain.services.chat_follow_up_turn_classifier_service import (
+                ChatFollowUpTurnClassifierService,
+            )
+
+            label = ChatFollowUpTurnClassifierService.classify(
+                message,
+                working_last_action if isinstance(working_last_action, dict) else None,
+            )
+            if label:
+                follow_up = ChatFollowUpTurnInterpretationService.apply_classifier_label(
+                    follow_up,
+                    label,
+                    message=message,
+                    last_action=working_last_action
+                    if isinstance(working_last_action, dict)
+                    else None,
+                )
+                classifier_meta = {"used": True, "label": label}
+
+        follow_up_meta = follow_up.to_metadata()
+        follow_up_meta["classifier"] = classifier_meta
+        # Recompute grounded stage after possible classifier override.
+        grounded_stage = ChatFollowUpTurnInterpretationService.grounded_stage_for(
+            follow_up
+        ) or grounded_stage
+        if grounded_stage:
+            turn_grounding_metadata["stage"] = grounded_stage
+        turn_grounding_metadata["followUp"] = follow_up_meta
 
         workspace_context = dict(workspace_context)
         workspace_context["turnGrounding"] = turn_grounding_metadata

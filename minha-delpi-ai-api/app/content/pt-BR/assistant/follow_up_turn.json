@@ -183,5 +183,9 @@
   "reviseAck": {
     "branchTemplate": "Consulta filtrada pela filial {branch}.",
     "periodTemplate": "Período mantido: {start} a {end}."
+  },
+  "classifierPrompt": {
+    "system": "You classify chat follow-up intent. Reply with exactly one label from the allowed list. No tools. No explanation.",
+    "userTemplate": "Allowed labels: {labels}\nUser message: {message}\nLast action summary: {lastActionSummary}\nLabel:"
   }
 }

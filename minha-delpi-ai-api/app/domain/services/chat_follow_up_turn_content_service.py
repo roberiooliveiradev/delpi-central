@@ -270,6 +270,24 @@ class ChatFollowUpTurnContentService:
         return str(value).strip() or "new_intent"
 
     @classmethod
+    def classifier_prompt_system(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "classifierPrompt", "system") or ""
+        ).strip()
+
+    @classmethod
+    def classifier_prompt_user(cls, *, message: str, last_action_summary: str) -> str:
+        labels = ", ".join(cls.classifier_labels())
+        return ChatAssistantContentService.format(
+            _BUNDLE,
+            "classifierPrompt",
+            "userTemplate",
+            labels=labels,
+            message=str(message or "").strip(),
+            lastActionSummary=str(last_action_summary or "").strip() or "{}",
+        )
+
+    @classmethod
     def entity_families(cls) -> dict[str, tuple[str, ...]]:
         node = ChatAssistantContentService.get_node(_BUNDLE, "entityFamilies") or {}
         if not isinstance(node, dict):

@@ -151,6 +151,75 @@ class ChatFollowUpTurnInterpretationService:
         )
 
     @classmethod
+    def apply_classifier_label(
+        cls,
+        current: ChatFollowUpTurnInterpretation,
+        label: str,
+        *,
+        message: str,
+        last_action: dict[str, Any] | None = None,
+    ) -> ChatFollowUpTurnInterpretation:
+        """Reentra no contrato a partir do label residual (sem tool-pick)."""
+        decision = ChatFollowUpTurnContentService.decision_for_classifier_label(label)
+        if decision == current.decision and current.continuity_mode != "allow_discovery":
+            return current
+
+        typo_fixed = ChatFollowUpTurnContentService.normalize_branch_typos(message)
+        typo_normalized = (
+            ChatMessageNormalizationService.normalize_for_matching(typo_fixed) or ""
+        )
+        action = last_action if isinstance(last_action, dict) else None
+
+        if decision == "revise_last_query":
+            slot_delta = cls._extract_slot_delta(typo_fixed, typo_normalized, action)
+            if label == "revise_period" and "period" not in slot_delta:
+                slot_delta["period"] = "previous_year_same_range"
+                params = action.get("params") if isinstance(action, dict) else {}
+                if isinstance(params, dict):
+                    from app.domain.services.chat_date_range_intent_service import (
+                        ChatDateRangeIntentService,
+                    )
+
+                    shifted = ChatDateRangeIntentService.apply_period_slot(
+                        "previous_year_same_range",
+                        start_date=str(params.get("start_date") or "") or None,
+                        end_date=str(params.get("end_date") or "") or None,
+                    )
+                    if shifted is not None:
+                        slot_delta["start_date"] = shifted.start_date
+                        slot_delta["end_date"] = shifted.end_date
+            if label == "revise_branch" and "branch" not in slot_delta:
+                branch = ChatFollowUpTurnContentService.extract_branch_code(typo_fixed)
+                if branch:
+                    slot_delta["branch"] = branch
+            return cls._build(
+                decision="revise_last_query",
+                reason=f"classifier:{label}",
+                slot_delta=slot_delta,
+                suppress_broad_narrate=True,
+            )
+
+        if decision == "clarify_slot":
+            return cls._build(
+                decision="clarify_slot",
+                reason=f"classifier:{label}",
+                clarify_slot="branch",
+                suppress_broad_narrate=True,
+            )
+
+        if decision == "challenge_last_result":
+            return cls._build(
+                decision="challenge_last_result",
+                reason=f"classifier:{label}",
+                suppress_broad_narrate=True,
+            )
+
+        return cls._build(
+            decision="new_intent",
+            reason=f"classifier:{label}",
+        )
+
+    @classmethod
     def _build(
         cls,
         *,
