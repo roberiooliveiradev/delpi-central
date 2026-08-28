@@ -1,5 +1,5 @@
 {
-  "version": "2026.08.1",
+  "version": "2026.08.2",
   "followUpDecisions": [
     "revise_last_query",
     "challenge_last_result",
@@ -7,11 +7,90 @@
     "clarify_slot",
     "new_intent"
   ],
+  "continuityModes": [
+    "consume_last_action",
+    "answer_without_tools",
+    "allow_discovery"
+  ],
+  "continuityModeByDecision": {
+    "revise_last_query": "consume_last_action",
+    "challenge_last_result": "answer_without_tools",
+    "clarify_slot": "answer_without_tools",
+    "narrate_recap": "answer_without_tools",
+    "new_intent": "allow_discovery"
+  },
   "stages": {
     "revise_last_query": "grounded_revise_query",
     "challenge_last_result": "grounded_challenge_result",
     "clarify_slot": "grounded_clarify_slot",
     "narrate_recap": "grounded_narrate_recap"
+  },
+  "periodReviseTriggers": [
+    "ano anterior",
+    "ano passado",
+    "mesmo periodo",
+    "mesmo período",
+    "mesmo intervalo",
+    "comparar com o periodo",
+    "comparar com o período",
+    "comparar com periodo",
+    "comparar com período",
+    "comparar com ano",
+    "compare com ano",
+    "versus ano",
+    "vs ano",
+    "yoy",
+    "year over year",
+    "periodo anterior",
+    "período anterior"
+  ],
+  "periodSlotKinds": [
+    "previous_year_same_range",
+    "previous_period"
+  ],
+  "periodSlotKindByTriggerGroup": {
+    "previous_year_same_range": [
+      "ano anterior",
+      "ano passado",
+      "comparar com ano",
+      "compare com ano",
+      "versus ano",
+      "vs ano",
+      "yoy",
+      "year over year"
+    ],
+    "previous_period": [
+      "mesmo periodo",
+      "mesmo período",
+      "mesmo intervalo",
+      "comparar com o periodo",
+      "comparar com o período",
+      "comparar com periodo",
+      "comparar com período",
+      "periodo anterior",
+      "período anterior"
+    ]
+  },
+  "classifierLabels": [
+    "revise_period",
+    "revise_branch",
+    "challenge",
+    "clarify",
+    "product_compare",
+    "new_intent"
+  ],
+  "labelToDecision": {
+    "revise_period": "revise_last_query",
+    "revise_branch": "revise_last_query",
+    "challenge": "challenge_last_result",
+    "clarify": "clarify_slot",
+    "product_compare": "new_intent",
+    "new_intent": "new_intent"
+  },
+  "entityFamilies": {
+    "product": ["product", "produto"],
+    "structure": ["structure", "estrutura", "hierarchy", "bom"],
+    "metric": ["department_kpi", "kpi", "scalar", "financial", "commercial"]
   },
   "reviseSlotTriggers": [
     "somente",

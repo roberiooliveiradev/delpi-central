@@ -205,6 +205,13 @@
       "lexicalScoreFloor": 1.01,
       "minTopScorePureSemanticExecute": 0.55
     },
+    "readPolicy": {
+      "blockDestructive": true,
+      "preferSafeMethod": "GET",
+      "blockedSensitivities": ["destructive", "write"],
+      "tieBreak": "next_safe",
+      "clarifyOnNoSafeRival": true
+    },
     "lexicalOverlap": {
       "minTokenLength": 3,
       "stopwords": [

@@ -194,3 +194,34 @@ def test_rag_activity_stream_keys_exist():
         "messageTemplate",
         count=3,
     )
+
+
+def test_action_selection_read_policy_loaded():
+    policy = ExternalActionResponseContentService.get_node(
+        "actionSelection",
+        "readPolicy",
+    )
+    assert isinstance(policy, dict)
+    assert policy.get("blockDestructive") is True
+    assert str(policy.get("preferSafeMethod") or "").upper() == "GET"
+    assert str(policy.get("tieBreak") or "") == "next_safe"
+    blocked = policy.get("blockedSensitivities") or []
+    assert "destructive" in blocked
+
+
+def test_department_kpi_match_mode_and_currency_patterns_loaded():
+    from app.domain.services.chat_department_kpi_intent_service import (
+        ChatDepartmentKpiIntentService,
+    )
+    from app.domain.services.chat_product_query_intent.chat_product_query_intent_content_service import (
+        ChatProductQueryIntentContentService,
+    )
+
+    assert ChatDepartmentKpiIntentService.default_match_mode() == "substring"
+    assert (
+        ChatDepartmentKpiIntentService.rule_match_mode("new-business-rol-pct")
+        == "token_and"
+    )
+    assert ChatProductQueryIntentContentService.currency_like_markers()
+    assert ChatProductQueryIntentContentService.currency_like_token_pattern() is not None
+    assert ChatProductQueryIntentContentService.currency_prefix_before_pattern() is not None

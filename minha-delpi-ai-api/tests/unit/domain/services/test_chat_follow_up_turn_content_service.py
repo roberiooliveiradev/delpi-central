@@ -59,3 +59,35 @@ def test_clarify_and_challenge_content_present():
     assert ChatFollowUpTurnContentService.challenge_faithfulness_instruction()
     assert ChatFollowUpTurnContentService.challenge_suggestions()
     assert "01" in ChatFollowUpTurnContentService.revise_ack_branch("01")
+
+
+def test_continuity_contract_and_period_vocab_loaded():
+    modes = ChatFollowUpTurnContentService.continuity_modes()
+    assert "consume_last_action" in modes
+    assert "answer_without_tools" in modes
+    assert "allow_discovery" in modes
+    assert (
+        ChatFollowUpTurnContentService.continuity_mode_for_decision("revise_last_query")
+        == "consume_last_action"
+    )
+    assert (
+        ChatFollowUpTurnContentService.continuity_mode_for_decision("new_intent")
+        == "allow_discovery"
+    )
+    assert ChatFollowUpTurnContentService.period_revise_triggers()
+    assert "previous_year_same_range" in ChatFollowUpTurnContentService.period_slot_kinds()
+    assert (
+        ChatFollowUpTurnContentService.period_slot_kind_for_message(
+            "comparar com ano anterior no mesmo periodo"
+        )
+        == "previous_year_same_range"
+    )
+    assert "revise_period" in ChatFollowUpTurnContentService.classifier_labels()
+    assert (
+        ChatFollowUpTurnContentService.decision_for_classifier_label("revise_period")
+        == "revise_last_query"
+    )
+    families = ChatFollowUpTurnContentService.entity_families()
+    assert "product" in families
+    assert "metric" in families
+    assert ChatFollowUpTurnContentService.entity_family_for_markers("department_kpi") == "metric"

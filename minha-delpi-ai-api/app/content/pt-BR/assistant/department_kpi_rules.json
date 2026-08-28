@@ -1,5 +1,6 @@
 {
-  "version": "2026.06.1",
+  "version": "2026.08.2",
+  "defaultMatchMode": "substring",
   "rules": [
     {
       "domainPrefix": "/commercial/",
@@ -70,10 +71,12 @@
     {
       "domainPrefix": "/commercial/",
       "pathToken": "new-business-rol-pct",
+      "matchMode": "token_and",
       "keywords": [
-        "rol de novos negocios",
-        "rol de novos negócios",
-        "novos negocios rol"
+        "rol novos negocios",
+        "rol novos negócios",
+        "novos negocios rol",
+        "novos negócios rol"
       ],
       "excludes": [],
       "label": "percentual ROL de novos negócios"

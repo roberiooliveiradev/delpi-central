@@ -67,6 +67,30 @@ class ChatDepartmentKpiIntentService:
     """Mapeia perguntas em português para tokens de path da api-delpi (sem código de produto)."""
 
     @classmethod
+    def default_match_mode(cls) -> str:
+        bundle = ChatAssistantContentService.load_bundle("department_kpi_rules")
+        mode = str(bundle.get("defaultMatchMode") or "substring").strip().lower()
+        return mode or "substring"
+
+    @classmethod
+    def rule_match_mode(cls, path_token: str) -> str:
+        token = str(path_token or "").strip()
+        if not token:
+            return cls.default_match_mode()
+        bundle = ChatAssistantContentService.load_bundle("department_kpi_rules")
+        rules = bundle.get("rules")
+        if not isinstance(rules, list):
+            return cls.default_match_mode()
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            if str(rule.get("pathToken") or "").strip() != token:
+                continue
+            mode = str(rule.get("matchMode") or "").strip().lower()
+            return mode or cls.default_match_mode()
+        return cls.default_match_mode()
+
+    @classmethod
     def _rules(cls) -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str], ...]:
         return _rules_content()
 

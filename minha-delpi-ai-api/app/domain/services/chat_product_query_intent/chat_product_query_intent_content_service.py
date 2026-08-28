@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
+from typing import Any
 
 from app.domain.services.chat_assistant_content_service import (
     ChatAssistantContentService,
@@ -16,6 +17,8 @@ _PATTERN_FLAGS = {
     "specificationToken": re.IGNORECASE,
     "dateToken": re.IGNORECASE,
     "exampleCodePrefix": re.IGNORECASE,
+    "currencyLikeToken": re.IGNORECASE,
+    "currencyPrefixBefore": re.IGNORECASE,
 }
 
 
@@ -32,6 +35,44 @@ class ChatProductQueryIntentContentService:
         if not str(source or "").strip():
             raise KeyError(f"{_INTENT_CONTENT_BUNDLE}.patterns.{key} ausente")
         return re.compile(str(source), _PATTERN_FLAGS.get(key, 0))
+
+    @classmethod
+    def currency_like_config(cls) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(
+            _INTENT_CONTENT_BUNDLE,
+            "currencyLikePatterns",
+        )
+        return dict(node) if isinstance(node, dict) else {}
+
+    @classmethod
+    def currency_like_markers(cls) -> tuple[str, ...]:
+        config = cls.currency_like_config()
+        markers = config.get("markers") or []
+        if not isinstance(markers, list):
+            return ()
+        return tuple(str(item).strip().lower() for item in markers if str(item).strip())
+
+    @classmethod
+    def currency_like_token_pattern(cls) -> re.Pattern[str] | None:
+        config = cls.currency_like_config()
+        key = str(config.get("tokenPatternKey") or "").strip()
+        if not key:
+            return None
+        try:
+            return cls.compile_pattern(key)
+        except KeyError:
+            return None
+
+    @classmethod
+    def currency_prefix_before_pattern(cls) -> re.Pattern[str] | None:
+        config = cls.currency_like_config()
+        key = str(config.get("prefixBeforePatternKey") or "").strip()
+        if not key:
+            return None
+        try:
+            return cls.compile_pattern(key)
+        except KeyError:
+            return None
 
     @classmethod
     def invalidate_cache(cls) -> None:

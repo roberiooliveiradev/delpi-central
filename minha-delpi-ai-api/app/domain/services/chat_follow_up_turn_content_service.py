@@ -195,6 +195,106 @@ class ChatFollowUpTurnContentService:
         )
 
     @classmethod
+    def continuity_modes(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip()
+            for item in ChatAssistantContentService.list(_BUNDLE, "continuityModes")
+            if str(item).strip()
+        )
+
+    @classmethod
+    def continuity_mode_for_decision(cls, decision: str) -> str:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "continuityModeByDecision") or {}
+        if not isinstance(node, dict):
+            return "allow_discovery"
+        value = node.get(str(decision or "").strip())
+        return str(value).strip() or "allow_discovery"
+
+    @classmethod
+    def period_revise_triggers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(_BUNDLE, "periodReviseTriggers")
+            if str(item).strip()
+        )
+
+    @classmethod
+    def period_slot_kinds(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip()
+            for item in ChatAssistantContentService.list(_BUNDLE, "periodSlotKinds")
+            if str(item).strip()
+        )
+
+    @classmethod
+    def period_slot_kind_for_message(cls, normalized: str) -> str | None:
+        haystack = str(normalized or "").strip().lower()
+        if not haystack:
+            return None
+        groups = ChatAssistantContentService.get_node(
+            _BUNDLE, "periodSlotKindByTriggerGroup"
+        ) or {}
+        if not isinstance(groups, dict):
+            return None
+        # Prefer previous_year when both could match (YoY phrases include "comparar").
+        preferred_order = ("previous_year_same_range", "previous_period")
+        for kind in preferred_order:
+            triggers = groups.get(kind) or []
+            if not isinstance(triggers, list):
+                continue
+            if any(str(item).strip().lower() in haystack for item in triggers if str(item).strip()):
+                return kind
+        for kind, triggers in groups.items():
+            if kind in preferred_order or not isinstance(triggers, list):
+                continue
+            if any(str(item).strip().lower() in haystack for item in triggers if str(item).strip()):
+                return str(kind).strip() or None
+        if cls.message_has_any_trigger(haystack, cls.period_revise_triggers()):
+            return "previous_year_same_range"
+        return None
+
+    @classmethod
+    def classifier_labels(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip()
+            for item in ChatAssistantContentService.list(_BUNDLE, "classifierLabels")
+            if str(item).strip()
+        )
+
+    @classmethod
+    def decision_for_classifier_label(cls, label: str) -> str:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "labelToDecision") or {}
+        if not isinstance(node, dict):
+            return "new_intent"
+        value = node.get(str(label or "").strip())
+        return str(value).strip() or "new_intent"
+
+    @classmethod
+    def entity_families(cls) -> dict[str, tuple[str, ...]]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "entityFamilies") or {}
+        if not isinstance(node, dict):
+            return {}
+        resolved: dict[str, tuple[str, ...]] = {}
+        for family, markers in node.items():
+            if not isinstance(markers, list):
+                continue
+            cleaned = tuple(str(item).strip().lower() for item in markers if str(item).strip())
+            if cleaned:
+                resolved[str(family).strip()] = cleaned
+        return resolved
+
+    @classmethod
+    def entity_family_for_markers(cls, *candidates: str | None) -> str | None:
+        families = cls.entity_families()
+        haystack = " ".join(str(item or "").strip().lower() for item in candidates if item)
+        if not haystack:
+            return None
+        for family, markers in families.items():
+            if any(marker in haystack for marker in markers):
+                return family
+        return None
+
+    @classmethod
     def message_has_any_trigger(cls, message: str, triggers: tuple[str, ...]) -> bool:
         haystack = str(message or "").strip().lower()
         if not haystack:
