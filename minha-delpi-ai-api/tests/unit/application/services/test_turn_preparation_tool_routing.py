@@ -346,3 +346,75 @@ def test_resolve_skip_tool_flags_for_project_sources_content_follow_up():
     )
 
     assert flags.skip_tools_for_project_sources_content is True
+
+
+def test_skip_tools_false_for_grounded_revise_query():
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="somente da filial 01",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[],
+        workspace_context={
+            "turnGrounding": {
+                "status": "grounded",
+                "stage": "grounded_revise_query",
+                "excerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+            },
+            "workingMemory": {
+                "lastResultExcerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+                "lastAction": {
+                    "path": "/financial/rol",
+                    "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+                },
+            },
+        },
+    )
+    assert flags.skip_tools_for_grounded_narrate is False
+
+
+def test_skip_tools_true_for_grounded_challenge():
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="o rol de uma unidade não pode ser igual ao total",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[],
+        workspace_context={
+            "turnGrounding": {
+                "status": "grounded",
+                "stage": "grounded_challenge_result",
+                "excerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+            },
+            "workingMemory": {
+                "lastResultExcerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+                "lastAction": {
+                    "path": "/financial/rol",
+                    "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+                },
+            },
+        },
+    )
+    assert flags.skip_tools_for_grounded_narrate is True
+
+
+def test_missing_date_suppressed_for_challenge_follow_up():
+    guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
+        message="o rol de uma unidade não pode ser igual ao total",
+        history_source=[],
+        conversation_context="",
+        working_memory_snapshot={
+            "lastAction": {
+                "path": "/financial/rol",
+                "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+            }
+        },
+        workspace_context={
+            "turnGrounding": {
+                "status": "grounded",
+                "stage": "grounded_challenge_result",
+                "followUp": {"decision": "challenge_last_result"},
+            }
+        },
+        canvas_action=None,
+        pre_capability_answer=None,
+        analysis_mode=False,
+        text_task_pure=False,
+    )
+    assert guards.missing_date_answer is None

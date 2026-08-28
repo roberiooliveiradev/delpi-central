@@ -53,6 +53,36 @@ class ChatTurnPreparationToolPhaseResult:
 
 
 class ChatTurnPreparationToolRoutingService:
+    _FOLLOW_UP_STAGES_SUPPRESS_MISSING_DATE = frozenset(
+        {
+            "grounded_revise_query",
+            "grounded_challenge_result",
+            "grounded_clarify_slot",
+            "grounded_narrate_recap",
+            "grounded_narrate_insight",
+        }
+    )
+
+    @classmethod
+    def _suppress_missing_date_for_follow_up(cls, workspace: dict) -> bool:
+        turn_grounding = workspace.get("turnGrounding") or {}
+        if not isinstance(turn_grounding, dict):
+            return False
+        stage = str(turn_grounding.get("stage") or "").strip()
+        if stage in cls._FOLLOW_UP_STAGES_SUPPRESS_MISSING_DATE:
+            return True
+        follow_up = turn_grounding.get("followUp")
+        if isinstance(follow_up, dict):
+            decision = str(follow_up.get("decision") or "").strip()
+            if decision in {
+                "revise_last_query",
+                "challenge_last_result",
+                "clarify_slot",
+                "narrate_recap",
+            }:
+                return True
+        return False
+
     @classmethod
     def resolve_operational_guards(
         cls,
@@ -147,15 +177,21 @@ class ChatTurnPreparationToolRoutingService:
             )
         )
 
+        if cls._suppress_missing_date_for_follow_up(workspace):
+            ambiguous_period_answer = None
+
         missing_date_answer = None
 
         if not missing_product_code_answer and not ambiguous_period_answer:
-            missing_date_answer = ChatOperationalParameterService.resolve_missing_date_answer(
-                message,
-                conversation_context=conversation_context,
-                previous_messages=history_source,
-                memory_snapshot=working_memory_snapshot,
-            )
+            if not cls._suppress_missing_date_for_follow_up(workspace):
+                missing_date_answer = (
+                    ChatOperationalParameterService.resolve_missing_date_answer(
+                        message,
+                        conversation_context=conversation_context,
+                        previous_messages=history_source,
+                        memory_snapshot=working_memory_snapshot,
+                    )
+                )
 
         from app.application.services.chat_common_chat_operational_guidance_service import (
             ChatCommonChatOperationalGuidanceService,
