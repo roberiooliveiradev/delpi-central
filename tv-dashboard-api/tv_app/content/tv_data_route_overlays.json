@@ -1129,7 +1129,9 @@
         "total_qty": "Quantidade total",
         "fulfilled_qty": "Quantidade atendida",
         "fulfillment_pct": "% atendimento",
-        "total_lines": "Total de itens"
+        "total_lines": "Total de itens",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
       },
       "valueFieldTypes": {
         "periodo": "string",
@@ -1142,10 +1144,12 @@
         "total_qty": "number",
         "fulfilled_qty": "number",
         "fulfillment_pct": "number",
-        "total_lines": "number"
+        "total_lines": "number",
+        "unit": "string",
+        "mixed_units": "boolean"
       },
       "label": "Série temporal de OTD de pedidos",
-      "description": "Pontos de OTD por período com quantidade, atendimento e % (filiais 01/02 e consolidado).",
+      "description": "Pontos de OTD por período com quantidade, atendimento e % (filiais 01/02 e consolidado). unit só se UM homogênea no bucket; senão mixed_units.",
       "whenToUse": "Use em gráfico/tabela temporal de OTD; filtre por customer_names para um cliente.",
       "suggestedTransformSteps": [
         {
@@ -1187,10 +1191,16 @@
         "on_time_lines": "Linhas no prazo",
         "late_lines": "Linhas atrasadas",
         "fulfillment_pct": "% atendimento",
-        "otd_pct": "OTD (%)"
+        "otd_pct": "OTD (%)",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
+      },
+      "valueFieldTypes": {
+        "unit": "string",
+        "mixed_units": "boolean"
       },
       "label": "OTD de pedidos por cliente",
-      "description": "OTD e atendimento agregados por cliente.",
+      "description": "OTD e atendimento agregados por cliente. Quantidades na UM nativa; unit só se homogênea.",
       "whenToUse": "Use em tabela de OTD por cliente."
     },
     "get_sales_order_otd_series_by_customer": {
@@ -1221,7 +1231,9 @@
         "on_time_lines": "Linhas no prazo",
         "late_lines": "Linhas atrasadas",
         "fulfillment_pct": "% atendimento",
-        "otd_pct": "OTD (%)"
+        "otd_pct": "OTD (%)",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
       },
       "valueFieldTypes": {
         "periodo": "string",
@@ -1232,10 +1244,12 @@
         "total_qty": "number",
         "fulfilled_qty": "number",
         "fulfillment_pct": "number",
-        "total_lines": "number"
+        "total_lines": "number",
+        "unit": "string",
+        "mixed_units": "boolean"
       },
       "label": "Série temporal de OTD de pedidos por cliente",
-      "description": "OTD e atendimento por cliente em cada bucket temporal (cliente × período).",
+      "description": "OTD e atendimento por cliente em cada bucket temporal (cliente × período). unit/mixed_units por bucket.",
       "whenToUse": "Use em tabela cliente×semana (ou outra granularidade); filtre por customer_names ou use top_customers."
     },
     "get_sales_order_otd_by_branch": {
@@ -1258,10 +1272,16 @@
         "on_time_lines": "Linhas no prazo",
         "late_lines": "Linhas atrasadas",
         "fulfillment_pct": "% atendimento",
-        "otd_pct": "OTD (%)"
+        "otd_pct": "OTD (%)",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
+      },
+      "valueFieldTypes": {
+        "unit": "string",
+        "mixed_units": "boolean"
       },
       "label": "OTD de pedidos por filial",
-      "description": "OTD das filiais 01 e 02 em lista tabular.",
+      "description": "OTD das filiais 01 e 02 em lista tabular. unit só se UM homogênea na filial.",
       "whenToUse": "Use em tabela comparativa de OTD por filial."
     }
   }

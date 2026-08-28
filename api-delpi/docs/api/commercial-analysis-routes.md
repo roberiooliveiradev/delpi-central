@@ -36,10 +36,12 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | ROL cliente | `items[]`: `customer_*`, `rol`, `share_pct`, `rank` |
 | ROL filial | `items[]`: `branch`, `rol`, `gross_revenue`, `returns`, `discounts` |
 | OTD KPI | `sales_order_otd_pct` |
-| OTD série | `points[]`: `periodo`, `total_qty`, `fulfilled_qty`, `otd_pct`, `fulfillment_pct`, `total_lines`, `otd_filial_01`, `otd_filial_02` |
-| OTD série por cliente | `items[]` flat (cliente × período) + `pagination` + `summary` (`granularity`, `truncated`, `customers_count`, `buckets_count`); métricas iguais à OTD por cliente |
-| OTD cliente | `items[]` + `pagination` (métricas OTD/fulfillment) |
-| OTD filial | `items[]`: `branch` + métricas |
+| OTD série | `points[]`: `periodo`, `total_qty`, `fulfilled_qty`, `otd_pct`, `fulfillment_pct`, `total_lines`, `otd_filial_01`, `otd_filial_02`, `unit`, `mixed_units` |
+| OTD série por cliente | `items[]` flat (cliente × período) + `pagination` + `summary`; métricas iguais à OTD por cliente (+ `unit`/`mixed_units`) |
+| OTD cliente | `items[]` + `pagination` (métricas OTD/fulfillment + `unit`/`mixed_units`) |
+| OTD filial | `items[]`: `branch` + métricas (+ `unit`/`mixed_units`) |
+
+**Unidade de medida:** qty permanece na UM nativa da linha (`C6_UM` / fallback `B1_UM`). Em agregações, `unit` só aparece se o bucket for homogêneo; se houver UMs diferentes, `unit` é `null` e `mixed_units` é `true` (sem conversão MI→peça). Detalhe: `comercial-sales-order-otd.md`.
 
 Slides legados com as compostas são remapeados no hydrate da tv-dashboard-api (`tv_commercial_composite_binding_migration_service`).
 
