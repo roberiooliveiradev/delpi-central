@@ -21,6 +21,26 @@ describe("parsePpcPath", () => {
     expect(route.detectorId).toBe("incomplete-order-sets");
   });
 
+  it("reads report id from the reports deep link", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/reports",
+      "?branch=01&report=stock-balances",
+      "02",
+    );
+    expect(route.subpluginId).toBe("reports");
+    expect(route.branch).toBe("01");
+    expect(route.reportId).toBe("stock-balances");
+  });
+
+  it("ignores unknown report ids", () => {
+    const route = parsePpcPath(
+      "/apps/production-control/reports",
+      "?branch=01&report=unknown",
+      "01",
+    );
+    expect(route.reportId).toBeNull();
+  });
+
   it("reads work center, period and locate query from the deep link", () => {
     const route = parsePpcPath(
       "/apps/production-control/machine-load",
@@ -76,6 +96,16 @@ describe("buildPpcHref", () => {
         detectorId: "incomplete-order-sets",
       }),
     ).toBe("/apps/production-control/problem-analysis?branch=01&detector=incomplete-order-sets");
+  });
+
+  it("serializes the report deep link", () => {
+    expect(
+      buildPpcHref({
+        subpluginId: "reports",
+        branch: "02",
+        reportId: "stock-balances",
+      }),
+    ).toBe("/apps/production-control/reports?branch=02&report=stock-balances");
   });
 
   it("serializes the demand filters", () => {

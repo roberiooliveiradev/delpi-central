@@ -29,6 +29,7 @@ from production_control_app.application.services.public_delivery_map_access_serv
 from production_control_app.application.services.public_machine_load_drawing_service import (
     PublicMachineLoadDrawingService,
 )
+from production_control_app.application.services.reports_service import ReportsService
 from production_control_app.application.services.subplugin_catalog_service import SubpluginCatalogService
 from production_control_app.domain.ports.drawing_library import DrawingLibraryPort
 from production_control_app.domain.ports.problem_detector import ProblemDetector
@@ -119,6 +120,15 @@ def build_materials_service(
     gateway: DelpiProductionGateway | None = None,
 ) -> MaterialsService:
     return MaterialsService(
+        gateway or DelpiProductionGateway(),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_reports_service(
+    gateway: DelpiProductionGateway | None = None,
+) -> ReportsService:
+    return ReportsService(
         gateway or DelpiProductionGateway(),
         branch_access=build_branch_access_service(),
     )

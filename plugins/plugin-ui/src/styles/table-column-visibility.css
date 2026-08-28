@@ -19,19 +19,22 @@
   color: var(--delpi-ui-table-columns-text);
 }
 
-.delpi-ui-table-columns__trigger,
-.delpi-ui-table-columns__reset {
+/* Fallback se o markup ainda não tiver `.delpi-ui-table-toolbar-action`. */
+.delpi-ui-table-columns__trigger:not(.delpi-ui-table-toolbar-action),
+.delpi-ui-table-columns__reset:not(.delpi-ui-table-toolbar-action) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   margin: 0;
   padding: 6px 10px;
+  min-height: 30px;
   border: 1px solid var(--delpi-ui-table-columns-border);
   border-radius: 10px;
   background: var(--delpi-ui-table-columns-bg);
   color: var(--delpi-ui-table-columns-text);
   font: inherit;
   font-size: 13px;
+  font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
 }

@@ -148,6 +148,12 @@ describe("DataTableSection chrome nativo (fonte / cards / excel)", () => {
 
     expect(screen.getByRole("button", { name: "Colunas" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Excel" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Excel" }).className).toContain(
+      "delpi-ui-table-toolbar-action",
+    );
+    expect(screen.getByRole("button", { name: "Colunas" }).className).toContain(
+      "delpi-ui-table-toolbar-action",
+    );
     expect(screen.getByText("Fonte")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Tabela" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cards" })).toBeTruthy();

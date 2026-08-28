@@ -299,6 +299,30 @@ class DelpiProductionGateway:
             params={"days": days},
         )
 
+    def fetch_stock_balances_items(
+        self,
+        *,
+        branch: str,
+        warehouse: str,
+        only_positive: bool = True,
+        page: int = 1,
+        page_size: int = 500,
+        sort: str = "product_code_asc",
+    ) -> dict[str, Any]:
+        """Saldos SB2 por armazém — TOTVS puro (sem filtro de prefixo do PCP)."""
+        return self._request(
+            "GET",
+            "/supplies/stock-balances/items",
+            params={
+                "branch": branch,
+                "warehouse": warehouse,
+                "only_positive": only_positive,
+                "page": page,
+                "page_size": page_size,
+                "sort": sort,
+            },
+        )
+
     def _request(
         self,
         method: str,

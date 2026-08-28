@@ -33,6 +33,7 @@ type PpcWorkspaceHeaderProps = {
   workCenter?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  reportId?: string | null;
   onRefresh?: () => void;
   refreshBusy?: boolean;
   onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
@@ -58,6 +59,7 @@ export function PpcWorkspaceHeader({
   workCenter,
   startDate,
   endDate,
+  reportId,
   onRefresh,
   refreshBusy,
   onPeriodChange,
@@ -76,6 +78,7 @@ export function PpcWorkspaceHeader({
         workCenter,
         startDate,
         endDate,
+        reportId,
       }),
     );
   };

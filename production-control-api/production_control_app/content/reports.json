@@ -1,0 +1,24 @@
+{
+  "warehouse": "01",
+  "productCodePrefixes": ["8", "9"],
+  "productCodePrefixesByBranch": {
+    "01": ["9"],
+    "02": ["8", "9"]
+  },
+  "onlyPositive": true,
+  "defaultSort": "product_code_asc",
+  "defaultPageSize": 50,
+  "maxPageSize": 5000,
+  "fetchPageSize": 500,
+  "maxFetchPages": 40,
+  "cacheTtlSeconds": 120,
+  "reports": [
+    {
+      "id": "stock-balances",
+      "label": "Saldos",
+      "description": "Saldo positivo no armazém 01.",
+      "icon": "warehouse",
+      "eyebrow": "Estoque"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ export type PpcRoute = {
   deliveryMapSearch: string | null;
   requestNumber: string | null;
   requestItem: string | null;
+  reportId: string | null;
   branch: PpcBranch;
   pathname: string;
 };
@@ -24,6 +25,7 @@ export type PpcRoute = {
 const DEMAND_STATUSES = new Set(["late", "at_risk", "covered_by_order", "covered_by_stock"]);
 const MATERIALS_ISSUES = new Set(["excess", "shortage", "pa-shortage"]);
 const MATERIALS_SET_STATUSES = new Set(["shortage", "no_commitment", "ok", "all"]);
+const REPORT_IDS = new Set(["stock-balances"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -61,12 +63,14 @@ function parseSearch(search: string): {
   deliveryMapSearch: string | null;
   requestNumber: string | null;
   requestItem: string | null;
+  reportId: string | null;
   branch: PpcBranch | null;
 } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const branchRaw = params.get("branch");
   const statusRaw = params.get("status")?.trim() || "";
   const issueRaw = params.get("issue")?.trim() || "";
+  const reportRaw = params.get("report")?.trim() || "";
   const sharedSearch = params.get("q")?.trim() || null;
   return {
     detectorId: params.get("detector")?.trim() || null,
@@ -85,6 +89,7 @@ function parseSearch(search: string): {
     deliveryMapSearch: sharedSearch,
     requestNumber: params.get("request")?.trim() || null,
     requestItem: params.get("item")?.trim() || null,
+    reportId: REPORT_IDS.has(reportRaw) ? reportRaw : null,
     branch: isBranch(branchRaw) ? branchRaw : null,
   };
 }
@@ -112,6 +117,7 @@ export function parsePpcPath(pathname: string, search = "", storedBranch: PpcBra
     deliveryMapSearch: query.deliveryMapSearch,
     requestNumber: query.requestNumber,
     requestItem: query.requestItem,
+    reportId: query.reportId,
     branch: query.branch ?? storedBranch,
     pathname: path || PPC_BASE_PATH,
   };
@@ -144,6 +150,7 @@ export function buildPpcHref(input: {
   deliveryMapSearch?: string | null;
   requestNumber?: string | null;
   requestItem?: string | null;
+  reportId?: string | null;
 }): string {
   const path =
     input.subpluginId === DEFAULT_SUBPLUGIN
@@ -166,6 +173,7 @@ export function buildPpcHref(input: {
   if (input.deliveryMapSearch) params.set("q", input.deliveryMapSearch);
   if (input.requestNumber) params.set("request", input.requestNumber);
   if (input.requestItem) params.set("item", input.requestItem);
+  if (input.reportId) params.set("report", input.reportId);
   return `${path}?${params.toString()}`;
 }
 
