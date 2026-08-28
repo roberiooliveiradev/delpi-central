@@ -17,6 +17,11 @@ export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
 }
 
+/** Token atual (JWT) — usado só para UI local (ex.: primeiro nome no loading). */
+export function peekAccessToken(): string | undefined {
+  return accessTokenGetter?.();
+}
+
 export function unwrapEnvelope<T>(response: ApiEnvelope<T>, fallbackMessage: string): T {
   if (response.success === false) {
     throw new Error(response.message?.trim() || fallbackMessage);

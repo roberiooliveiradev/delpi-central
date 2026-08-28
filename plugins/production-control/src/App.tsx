@@ -13,6 +13,7 @@ import { MachineLoadPage } from "./pages/MachineLoadPage";
 import { MaterialsPage } from "./pages/MaterialsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProblemAnalysisPage } from "./pages/ProblemAnalysisPage";
+import { ReportsPage } from "./pages/ReportsPage";
 import {
   buildPpcHref,
   navigatePpc,
@@ -29,6 +30,7 @@ const WORKSPACES = new Set([
   "machine-load",
   "materials",
   "delivery-map",
+  "reports",
 ]);
 
 export type AppProps = {
@@ -93,6 +95,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     workspace = (
       <DeliveryMapPage branch={route.branch} search={route.deliveryMapSearch} />
     );
+  } else if (route.subpluginId === "reports") {
+    workspace = <ReportsPage branch={route.branch} reportId={route.reportId} />;
   }
 
   return (

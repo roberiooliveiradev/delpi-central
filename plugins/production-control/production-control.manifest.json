@@ -47,6 +47,12 @@
       "module": "production-control"
     },
     {
+      "code": "production-control.reports.view",
+      "name": "Relatórios",
+      "description": "Ver relatórios do Portal PCP (saldos de estoque e demais).",
+      "module": "production-control"
+    },
+    {
       "code": "production-control.view.filial-01",
       "name": "Portal PCP — filial 01 (SC)",
       "description": "Consultar dados TOTVS da filial 01.",
@@ -115,6 +121,14 @@
       "permission": "production-control.delivery-map.view",
       "icon": "calendar-clock",
       "order": 40,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/production-control/reports",
+      "label": "Relatórios",
+      "permission": "production-control.reports.view",
+      "icon": "file-spreadsheet",
+      "order": 41,
       "showInMenu": false
     }
   ],

@@ -14,6 +14,8 @@ import type {
   OverviewPayload,
   ProblemDetectorItemsPayload,
   ProblemDetectorsPayload,
+  ReportsCatalogPayload,
+  StockBalancesReportPayload,
   Subplugin,
 } from "../types";
 
@@ -43,6 +45,42 @@ export async function fetchOverview(params: {
     data: OverviewPayload;
   }>(ppcApiUrl(`/overview?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar a gestão à vista.");
+}
+
+export async function fetchReportsCatalog(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<ReportsCatalogPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: ReportsCatalogPayload;
+  }>(ppcApiUrl(`/reports?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar os relatórios.");
+}
+
+export async function fetchStockBalancesReport(params: {
+  branch: string;
+  search?: string;
+  sort?: string | null;
+  page?: number;
+  pageSize?: number;
+  refresh?: boolean;
+  signal?: AbortSignal;
+}): Promise<StockBalancesReportPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.search) search.set("search", params.search);
+  if (params.sort) search.set("sort", params.sort);
+  if (params.page) search.set("page", String(params.page));
+  if (params.pageSize) search.set("pageSize", String(params.pageSize));
+  if (params.refresh) search.set("refresh", "true");
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: StockBalancesReportPayload;
+  }>(ppcApiUrl(`/reports/stock-balances?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar o relatório de saldos.");
 }
 
 export async function fetchDemand(params: {

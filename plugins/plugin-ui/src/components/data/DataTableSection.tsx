@@ -556,6 +556,7 @@ export function DataTableSection<T>({
     <>
       {excelExportEnabled && excelExport ? (
         <ExcelExportButton
+          density="toolbar"
           onExport={excelExport.onExport}
           disabled={excelExport.disabled}
           exporting={excelExport.exporting}

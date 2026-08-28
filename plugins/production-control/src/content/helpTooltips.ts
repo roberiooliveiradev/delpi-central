@@ -15,4 +15,6 @@ export const helpTooltips = {
     "Três recortes de matéria-prima: excesso de SC1 (documento inteiro já coberto depois do ESTSEG), solicitações insuficientes (cobertura + SC1 não chega no estoque de segurança) e consulta de ruptura no conjunto do PA (extrato saldo + pedidos − empenhos). Não elimina no TOTVS.",
   deliveryMap:
     "OPs mãe de PA com saldo em aberto, agrupadas pela data prevista de entrega. O primeiro bloco reúne hoje e atrasadas. Observações vêm do TOTVS (C2_OBS). MP-OK e Feedback são marcações manuais do PCP. A barra de progresso carrega primeiro hoje+atrasadas e, em seguida, OPs com entrega em até 5 dias; demais datas ficam sem barra. Linha riscada só quando o conjunto atinge 100%. A lista congela até clicar em Atualizar.",
+  reports:
+    "Relatórios operacionais do Portal PCP. A entrada lista cards do catálogo; ao abrir um card você entra na página do relatório, com voltar ao catálogo. Na filial 01 o saldo lista só códigos 9…; na 02 códigos 8… e 9….",
 } as const;

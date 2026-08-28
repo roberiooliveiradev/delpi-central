@@ -137,30 +137,45 @@ export type ExcelExportButtonProps = {
   buttonClassName?: string;
   label?: string;
   exportingLabel?: string;
+  /**
+   * `toolbar` — chip compacto alinhado a Colunas / chrome da DataTableSection.
+   * `default` — ghost-btn (páginas e toolbars maiores).
+   */
+  density?: "default" | "toolbar";
 };
 
-/** Botão único Excel — controle-retrabalhos / outliers. */
+/** Botão único Excel — controle-retrabalhos / outliers / DataTableSection. */
 export function ExcelExportButton({
   disabled = false,
   exporting = false,
   onExport,
   className = "delpi-ui-export-actions",
-  buttonClassName = "delpi-ui-ghost-btn",
+  buttonClassName,
   label = "Excel",
   exportingLabel = "Exportando…",
+  density = "default",
 }: ExcelExportButtonProps) {
   const isDisabled = disabled || exporting;
+  const rootClass = ensureDelpiUiClass(className, "delpi-ui-export-actions");
+  const resolvedButtonClass =
+    buttonClassName ??
+    (density === "toolbar" ? "delpi-ui-table-toolbar-action" : "delpi-ui-ghost-btn");
+  const btnClass = ensureDelpiUiClass(
+    resolvedButtonClass,
+    density === "toolbar" ? "delpi-ui-table-toolbar-action" : "delpi-ui-ghost-btn",
+  );
+  const iconSize = density === "toolbar" ? 14 : 16;
 
   return (
-    <div className={className} role="group" aria-label="Exportar Excel">
+    <div className={rootClass} role="group" aria-label="Exportar Excel">
       <button
         type="button"
-        className={buttonClassName}
+        className={btnClass}
         onClick={() => void onExport()}
         disabled={isDisabled}
         aria-busy={exporting || undefined}
       >
-        <FileSpreadsheet size={16} aria-hidden="true" />
+        <FileSpreadsheet size={iconSize} aria-hidden="true" />
         {exporting ? exportingLabel : label}
       </button>
     </div>

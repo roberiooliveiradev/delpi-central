@@ -95,7 +95,7 @@ export function TableColumnVisibilityMenu({
     <div className={rootClass} ref={wrapperRef}>
       <button
         type="button"
-        className="delpi-ui-table-columns__trigger"
+        className="delpi-ui-table-toolbar-action delpi-ui-table-columns__trigger"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
@@ -113,7 +113,11 @@ export function TableColumnVisibilityMenu({
         >
           <div className="delpi-ui-table-columns__header">
             <strong className="delpi-ui-table-columns__title">{labels.panelTitle}</strong>
-            <button type="button" className="delpi-ui-table-columns__reset" onClick={onReset}>
+            <button
+              type="button"
+              className="delpi-ui-table-toolbar-action delpi-ui-table-columns__reset"
+              onClick={onReset}
+            >
               <RotateCcw size={14} aria-hidden="true" />
               {labels.reset}
             </button>

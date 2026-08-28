@@ -80,6 +80,14 @@ describe("ExcelExportButton", () => {
     fireEvent.click(within(group).getByRole("button", { name: /Excel/i }));
     expect(onExport).toHaveBeenCalled();
   });
+
+  it("density toolbar usa chip compacto da DataTableSection", () => {
+    render(<ExcelExportButton density="toolbar" onExport={vi.fn()} />);
+    const group = screen.getByRole("group", { name: "Exportar Excel" });
+    const button = within(group).getByRole("button", { name: /Excel/i });
+    expect(button.className).toContain("delpi-ui-table-toolbar-action");
+    expect(button.className).not.toContain("delpi-ui-ghost-btn");
+  });
 });
 
 describe("tableExportPayloadFromMatrix", () => {

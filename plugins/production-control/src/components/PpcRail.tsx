@@ -1,6 +1,7 @@
 import {
   CalendarClock,
   ClipboardList,
+  FileSpreadsheet,
   Gauge,
   House,
   LayoutGrid,
@@ -19,6 +20,7 @@ const ICONS: Record<string, LucideIcon> = {
   "layout-grid": LayoutGrid,
   "clipboard-list": ClipboardList,
   "calendar-clock": CalendarClock,
+  "file-spreadsheet": FileSpreadsheet,
   gauge: Gauge,
   package: Package,
 };

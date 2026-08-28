@@ -118,3 +118,15 @@ class ProductionOrdersGateway(Protocol):
 
     def fetch_recently_closed_orders(self, *, days: int) -> dict[str, Any]:
         ...
+
+    def fetch_stock_balances_items(
+        self,
+        *,
+        branch: str,
+        warehouse: str,
+        only_positive: bool = True,
+        page: int = 1,
+        page_size: int = 500,
+        sort: str = "product_code_asc",
+    ) -> dict[str, Any]:
+        ...

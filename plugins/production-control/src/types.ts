@@ -697,3 +697,50 @@ export type MachineLoadTransfer = {
 export type MachineLoadTransferPayload = MachineLoadPayload & {
   transfer: MachineLoadTransfer;
 };
+
+export type ReportsCatalogItem = {
+  id: string;
+  label: string;
+  description: string;
+  icon?: string | null;
+  eyebrow?: string | null;
+};
+
+export type ReportsCatalogPayload = {
+  branch: string;
+  reports: ReportsCatalogItem[];
+};
+
+export type StockBalanceLine = {
+  product_code: string;
+  description: string;
+  branch: string;
+  warehouse: string;
+  quantity: number;
+  unit_cost: number;
+  stock_value: number;
+};
+
+export type StockBalancesReportPayload = {
+  branch: string;
+  report_id: string;
+  filters: {
+    warehouse: string;
+    product_code_prefixes: string[];
+    only_positive: boolean;
+    search: string;
+    sort: string;
+  };
+  summary: {
+    product_count: number;
+    total_quantity: number;
+    total_stock_value: number;
+  };
+  items: StockBalanceLine[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+};

@@ -33,6 +33,7 @@ from production_control_app.interface.http.routes.public_delivery_map_routes imp
 from production_control_app.interface.http.routes.problem_analysis_routes import (
     router as problem_analysis_router,
 )
+from production_control_app.interface.http.routes.reports_routes import router as reports_router
 from production_control_app.interface.http.routes.subplugin_routes import router as subplugin_router
 from production_control_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -121,3 +122,4 @@ app.include_router(problem_analysis_router)
 app.include_router(demand_router)
 app.include_router(materials_router)
 app.include_router(delivery_map_router)
+app.include_router(reports_router)
