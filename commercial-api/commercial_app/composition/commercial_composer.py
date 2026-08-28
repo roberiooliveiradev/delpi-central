@@ -222,6 +222,19 @@ def build_resolve_commercial_customer_scope_service():
     return ResolveCommercialCustomerScopeService(build_seller_portfolio_repository())
 
 
+def build_list_customers_in_scope_use_case():
+    from commercial_app.application.use_cases.list_customers_in_scope import (
+        ListCustomersInScopeUseCase,
+    )
+
+    return ListCustomersInScopeUseCase(
+        repository=build_seller_portfolio_repository(),
+        open_orders_metrics=DelpiOpenOrdersMetricsAdapter(
+            gateway=build_delpi_commercial_gateway(),
+        ),
+    )
+
+
 def build_delpi_commercial_gateway() -> DelpiCommercialGateway:
     global _commercial_gateway
     if _commercial_gateway is None:
