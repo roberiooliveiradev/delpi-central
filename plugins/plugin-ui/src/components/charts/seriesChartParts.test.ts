@@ -61,6 +61,7 @@ describe("seriesChartParts", () => {
     expect(parseChartPartRef("gaugeLabel")).toEqual({ kind: "gaugeLabel" });
     expect(parseChartPartRef("gaugeGoalMarker")).toEqual({ kind: "gaugeGoalMarker" });
     expect(chartPartCapabilities({ kind: "gaugeValue" }).editable).toBe(true);
+    expect(chartPartCapabilities({ kind: "gaugeGoalMarker" }).editable).toBe(true);
     expect(chartPartCapabilities({ kind: "gaugeNeedle" }).movable).toBe(false);
     expect(chartPartCapabilities({ kind: "gaugeZone", zoneIndex: 0 }).deletable).toBe(true);
   });

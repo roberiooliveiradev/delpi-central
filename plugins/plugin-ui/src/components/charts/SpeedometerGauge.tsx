@@ -311,8 +311,12 @@ export function SpeedometerGauge({
     ratio <= 0 ? "" : describeArc(CX, CY, R, START_ANGLE, START_ANGLE - ratio * SWEEP);
   const display = numeric == null ? "—" : formatValue(numeric);
   const goalDisplay = goalNumeric == null ? null : formatValue(goalNumeric);
+  const goalCaptionLabel = goalPart.content?.trim() || goalLabel;
   const goalCaption =
-    goalDisplay == null ? null : `${goalLabel}: ${goalDisplay}${unit ? ` ${unit}` : ""}`;
+    goalDisplay == null
+      ? null
+      : `${goalCaptionLabel}: ${goalDisplay}${unit ? ` ${unit}` : ""}`;
+  const goalCaptionStyle = chartPartTypographyStyle(chartParts, { kind: "gaugeGoalMarker" });
   const accessible =
     ariaLabel ||
     [
@@ -605,7 +609,11 @@ export function SpeedometerGauge({
           {labelPart.content?.trim() || label}
         </p>
       ) : null}
-      {goalPart.visible && goalCaption ? <p className={classNames.goal}>{goalCaption}</p> : null}
+      {goalPart.visible && goalCaption ? (
+        <p className={classNames.goal} style={goalCaptionStyle}>
+          {goalCaption}
+        </p>
+      ) : null}
       {legendPart.visible && showZonesLegend ? (
         <ul
           className={[

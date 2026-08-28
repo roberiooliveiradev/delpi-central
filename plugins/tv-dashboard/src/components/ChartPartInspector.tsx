@@ -729,6 +729,38 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               />
             </DeckField>
           ) : null}
+          {selectedChartPart.kind === "gaugeGoalMarker" ? (
+            <>
+              <DeckField id="td-chart-part-gauge-goal-label" label="Texto da meta">
+                <NativeTextControl
+                  id="td-chart-part-gauge-goal-label"
+                  value={partState?.content ?? "Meta"}
+                  onChange={(value) => patchPart({ content: value })}
+                />
+              </DeckField>
+              <DeckField id="td-chart-part-gauge-goal-text-color" label="Cor do texto">
+                <TvRibbonColorPicker
+                  inline
+                  label="Cor do texto"
+                  value={partState?.style?.color ?? "#0f172a"}
+                  onChange={(color) => patchPart({ style: { color } })}
+                />
+              </DeckField>
+              <DeckField id="td-chart-part-gauge-goal-font-size" label="Tamanho (px)">
+                <NativeTextControl
+                  id="td-chart-part-gauge-goal-font-size"
+                  type="number"
+                  min={8}
+                  max={72}
+                  step={1}
+                  value={partState?.style?.fontSize ?? 14}
+                  onChange={(value) =>
+                    patchPart({ style: { fontSize: Number(value) || 14 } })
+                  }
+                />
+              </DeckField>
+            </>
+          ) : null}
         </>
       ) : null}
 

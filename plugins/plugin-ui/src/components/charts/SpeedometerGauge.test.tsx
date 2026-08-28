@@ -75,6 +75,26 @@ describe("SpeedometerGauge", () => {
     expect(container.querySelector(".delpi-ui-speedometer-gauge__goal-marker text")).toBeNull();
   });
 
+  it("caption da meta usa content e tipografia de gaugeGoalMarker", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        chartParts={{
+          gaugeGoalMarker: {
+            visible: true,
+            content: "Alvo",
+            style: { fontSize: 18, color: "rgb(1, 2, 3)" },
+          },
+        }}
+      />,
+    );
+    const caption = container.querySelector(".delpi-ui-speedometer-gauge__goal") as HTMLElement;
+    expect(caption.textContent).toMatch(/Alvo:\s*95/);
+    expect(caption.style.fontSize).toBe("18px");
+    expect(caption.style.color).toBe("rgb(1, 2, 3)");
+  });
+
   it("com meta, faixas usam a meta como limiar de sucesso", () => {
     const { container } = render(<SpeedometerGauge value={96} goal={95} />);
     expect(container.querySelector("[data-zone-warning='0.95']")).toBeTruthy();

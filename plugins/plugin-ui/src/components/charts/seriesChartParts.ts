@@ -402,7 +402,7 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   gaugeNeedle: { movable: false, editable: false, deletable: true, resizable: false },
   gaugeValue: { movable: false, editable: true, deletable: true, resizable: false },
   gaugeLabel: { movable: false, editable: true, deletable: true, resizable: false },
-  gaugeGoalMarker: { movable: false, editable: false, deletable: true, resizable: false },
+  gaugeGoalMarker: { movable: false, editable: true, deletable: true, resizable: false },
 };
 
 export function chartPartCapabilities(ref: ChartPartRef): ChartPartCapabilities {
@@ -565,6 +565,7 @@ export const CHART_PART_FONT_SIZE_DEFAULTS = {
   axisTitle: 14,
   dataLabel: 12,
   dataLabels: 12,
+  gaugeGoalMarker: 14,
 } as const;
 
 export type ChartTextPartKind = keyof typeof CHART_PART_FONT_SIZE_DEFAULTS;
