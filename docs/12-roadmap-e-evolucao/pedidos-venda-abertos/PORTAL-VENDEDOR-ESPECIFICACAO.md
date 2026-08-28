@@ -338,7 +338,7 @@ Evitar barra enorme; não duplicar todos os filtros da tela de linhas.
 
 ## 13. Matriz de dados e cálculos
 
-Fonte base: item de `GET /apps/api-delpi/pedidos-venda-abertos/` (campos abaixo). OPs: `GET .../ops-abertas` — só para modal/previsão já existente nas linhas.
+Fonte base: item de `GET /apps/api-delpi/pedidos-venda-abertos/` (campos abaixo). OPs: `GET .../ops-abertas` — só para modal/previsão já existente nas linhas. Universo de OP = saldo aberto **e** `C2_DATRF` vazio (encerrada parcial fora); ver `api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md`.
 
 | Informação exibida | Campo de origem | Transformação | Regra | Limitação |
 | ------------------ | --------------- | ------------- | ----- | --------- |

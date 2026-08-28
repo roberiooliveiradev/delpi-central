@@ -417,7 +417,7 @@ Leituras TOTVS **via gateway commercial-api** para o Portal (escopo na commercia
 | operationId | Method + path | Uso |
 |-------------|----------------|------|
 | `list_pedidos_venda_abertos` | `GET /pedidos-venda-abertos/` | Gateway commercial BFF + PVA legado (scope JWT só no PVA) |
-| `list_ops_abertas_pedidos_venda` | `GET /pedidos-venda-abertos/ops-abertas` | Gateway commercial BFF |
+| `list_ops_abertas_pedidos_venda` | `GET /pedidos-venda-abertos/ops-abertas` | Gateway commercial BFF — OPs abertas Delpi (`C2_DATRF` vazio + saldo; só PA); PVA herda a mesma rota |
 | `search_active_customers_for_portfolio` | `GET .../customers/search` | commercial-api proxy (sem membership) |
 | `enrich_portfolio_customers` | `POST .../customers/enrichment` | commercial-api (scope) → api-delpi |
 | `list_customer_open_order_metrics` | `POST .../customers/open-order-metrics` | E6 load-summary (service) |
