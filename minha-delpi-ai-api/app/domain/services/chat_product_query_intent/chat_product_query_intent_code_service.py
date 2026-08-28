@@ -106,6 +106,31 @@ class ChatProductQueryIntentCodeService:
         return bool(re.match(r"\s*\.(?:docx|xlsx|pdf|txt|md|csv|pptx)\b", suffix, re.IGNORECASE))
 
     @classmethod
+    def _is_currency_like_token(cls, text: str, match: re.Match[str]) -> bool:
+        token = str(match.group(0) or "").strip()
+        if not token:
+            return False
+
+        pattern = ChatProductQueryIntentContentService.currency_like_token_pattern()
+        prefix_pattern = ChatProductQueryIntentContentService.currency_prefix_before_pattern()
+        markers = ChatProductQueryIntentContentService.currency_like_markers()
+
+        prefix = text[max(0, match.start() - 12) : match.start()]
+        if prefix_pattern and prefix_pattern.search(prefix):
+            return True
+
+        window = text[max(0, match.start() - 16) : min(len(text), match.end() + 8)].lower()
+        if any(marker in window for marker in markers):
+            return True
+
+        # 655.120,74 / 1.234.567 — formato monetário BR sem precisar de R$ no trecho.
+        if pattern and pattern.match(token):
+            if "," in token or re.fullmatch(r"\d{1,3}(?:\.\d{3}){1,}(?:,\d{2})?", token):
+                return True
+
+        return False
+
+    @classmethod
     def extract_product_code(cls, text: str | None) -> str | None:
         if ChatProductQueryIntentCodeService._looks_like_lmp_context(text):
             return None
@@ -137,6 +162,9 @@ class ChatProductQueryIntentCodeService:
                 continue
 
             if ChatProductQueryIntentCodeService._is_file_size_token(raw, match):
+                continue
+
+            if ChatProductQueryIntentCodeService._is_currency_like_token(raw, match):
                 continue
 
             code = intent_service().normalize_product_code(token)

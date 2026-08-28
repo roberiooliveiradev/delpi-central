@@ -23,11 +23,33 @@ class ChatStructureComparisonOrchestrationService:
         conversation_context: str | None = None,
         previous_messages: list | None = None,
         max_calls: int | None = None,
+        last_action: dict | None = None,
     ) -> list[dict]:
         if not ChatAnalysisIntentService.is_comparison_or_insight_request(message):
             return []
 
         if not selection_service or not allowed_action_ids:
+            return []
+
+        from app.domain.services.chat_conversation_memory_extractor import (
+            ChatConversationMemoryExtractor,
+        )
+        from app.domain.services.chat_product_evidence_service import (
+            ChatProductEvidenceService,
+        )
+
+        resolved_last_action = last_action
+        if not isinstance(resolved_last_action, dict):
+            resolved_last_action = ChatConversationMemoryExtractor.enrich_snapshot(
+                {},
+                previous_messages=previous_messages,
+            ).get("lastAction")
+
+        if not ChatProductEvidenceService.has_product_evidence(
+            message,
+            last_action=resolved_last_action if isinstance(resolved_last_action, dict) else None,
+            conversation_context=conversation_context,
+        ):
             return []
 
         limit = max(1, min(int(max_calls or 5), 8))

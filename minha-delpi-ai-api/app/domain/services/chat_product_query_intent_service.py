@@ -427,6 +427,10 @@ class ChatProductQueryIntentService:
         return ChatProductQueryIntentCodeService._is_example_product_code_token(text, match)
 
     @classmethod
+    def _is_currency_like_token(cls, text: str, match) -> bool:
+        return ChatProductQueryIntentCodeService._is_currency_like_token(text, match)
+
+    @classmethod
     def _message_metadata(cls, message: Any) -> dict:
         return ChatProductQueryIntentSupportService._message_metadata(message)
 

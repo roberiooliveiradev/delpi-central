@@ -482,6 +482,9 @@ class ChatAnalysisIntentService:
                 if ChatProductQueryIntentService._is_example_product_code_token(raw, match):
                     continue
 
+                if ChatProductQueryIntentService._is_currency_like_token(raw, match):
+                    continue
+
                 code = ChatProductQueryIntentService.normalize_product_code(match.group(0))
 
                 if not code or code in seen:
