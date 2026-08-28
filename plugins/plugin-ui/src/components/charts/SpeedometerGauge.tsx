@@ -1,6 +1,14 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type CSSProperties } from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+import {
+  bindChartPartPointer,
+  chartPartTypographyStyle,
+  getChartPartState,
+  type ChartPartRef,
+  type ChartPartsMap,
+  type SeriesChartInteraction,
+} from "./seriesChartParts";
 
 export type SpeedometerGaugeTone = "neutral" | "success" | "warning" | "danger";
 
@@ -50,7 +58,10 @@ export type SpeedometerGaugeProps = {
   warningBelow?: number;
   dangerBelow?: number;
   size?: number;
-  /** Texto do tooltip interativo (hover/foco). */
+  /**
+   * Texto do tooltip interativo (hover/foco).
+   * Só exibe card flutuante quando esta prop é uma string não vazia.
+   */
   tip?: string;
   /** Exibe legenda das faixas. Default true. */
   showZonesLegend?: boolean;
@@ -63,6 +74,9 @@ export type SpeedometerGaugeProps = {
    * a cor do tom automático nesses elementos; as faixas R/O/G permanecem semânticas.
    */
   accentColor?: string;
+  /** Hit-test / seleção no editor TV (opcional). */
+  interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
   "aria-label"?: string;
 };
 
@@ -177,8 +191,28 @@ function toneLabel(tone: SpeedometerGaugeTone): string {
   }
 }
 
+function resolveGaugePartBind(
+  ref: ChartPartRef,
+  interaction?: SeriesChartInteraction | null,
+  chartParts?: ChartPartsMap | null,
+) {
+  const state = getChartPartState(chartParts, ref);
+  const pointer = bindChartPartPointer(ref, interaction);
+  const { selected, editing: _editing, onPointerDown, onDoubleClick, ...dom } = pointer;
+  return {
+    visible: state?.visible !== false,
+    style: state?.style,
+    content: state?.content,
+    selected,
+    onPointerDown,
+    onDoubleClick,
+    dom,
+  };
+}
+
 /**
- * Velocímetro semicircular (0–max) para KPIs percentuais — SVG puro, faixas de alerta e tooltip.
+ * Velocímetro semicircular (0–max) para KPIs percentuais — SVG puro, faixas de alerta.
+ * Tooltip só com `tip` explícito (sem auto-card no hover).
  */
 export function SpeedometerGauge({
   value,
@@ -200,12 +234,27 @@ export function SpeedometerGauge({
   classNames: classNamesOverride,
   prefix = "ds",
   accentColor,
+  interaction,
+  chartParts,
   "aria-label": ariaLabel,
 }: SpeedometerGaugeProps) {
   const uid = useId();
   const [active, setActive] = useState(false);
   const base = useMemo(() => speedometerGaugeBemClasses(prefix), [prefix]);
   const classNames = { ...base, ...classNamesOverride };
+  const explicitTip = typeof tip === "string" && tip.trim() ? tip.trim() : null;
+
+  const trackPart = resolveGaugePartBind({ kind: "gaugeTrack" }, interaction, chartParts);
+  const fillPart = resolveGaugePartBind({ kind: "gaugeFill" }, interaction, chartParts);
+  const needlePart = resolveGaugePartBind({ kind: "gaugeNeedle" }, interaction, chartParts);
+  const valuePart = resolveGaugePartBind({ kind: "gaugeValue" }, interaction, chartParts);
+  const labelPart = resolveGaugePartBind({ kind: "gaugeLabel" }, interaction, chartParts);
+  const goalPart = resolveGaugePartBind({ kind: "gaugeGoalMarker" }, interaction, chartParts);
+  const legendPart = resolveGaugePartBind({ kind: "legend" }, interaction, chartParts);
+  const zone0 = resolveGaugePartBind({ kind: "gaugeZone", zoneIndex: 0 }, interaction, chartParts);
+  const zone1 = resolveGaugePartBind({ kind: "gaugeZone", zoneIndex: 1 }, interaction, chartParts);
+  const zone2 = resolveGaugePartBind({ kind: "gaugeZone", zoneIndex: 2 }, interaction, chartParts);
+  const zoneParts = [zone0, zone1, zone2];
 
   const numeric = value == null || Number.isNaN(Number(value)) ? null : Number(value);
   const goalNumeric = goal == null || Number.isNaN(Number(goal)) ? null : Number(goal);
@@ -229,6 +278,9 @@ export function SpeedometerGauge({
   );
   const toneColor = SPEEDOMETER_TONE_COLORS[resolvedTone];
   const accent = accentColor?.trim() || toneColor;
+  const fillStroke = fillPart.style?.stroke?.trim() || accent;
+  const needleStroke = needlePart.style?.stroke?.trim() || accent;
+  const needleFill = needlePart.style?.fill?.trim() || accent;
   const fillPath =
     ratio <= 0 ? "" : describeArc(CX, CY, R, START_ANGLE, START_ANGLE - ratio * SWEEP);
   const display = numeric == null ? "—" : formatValue(numeric);
@@ -245,29 +297,38 @@ export function SpeedometerGauge({
     ]
       .filter(Boolean)
       .join(": ");
-  const tooltipText =
-    tip ||
-    (numeric == null
-      ? "Sem dado no período."
-      : [
-          label ? `${label}: ${display}${unit}` : `${display}${unit}`,
-          goalCaption,
-          toneLabel(resolvedTone),
-        ]
-          .filter(Boolean)
-          .join(" · "));
 
   const dangerEnd = START_ANGLE - zonesResolved.dangerBelow * SWEEP;
   const warningEnd = START_ANGLE - zonesResolved.warningBelow * SWEEP;
   const zones = [
-    { tone: "danger" as const, from: START_ANGLE, to: dangerEnd },
-    { tone: "warning" as const, from: dangerEnd, to: warningEnd },
-    { tone: "success" as const, from: warningEnd, to: END_ANGLE },
+    { tone: "danger" as const, from: START_ANGLE, to: dangerEnd, part: zone0 },
+    { tone: "warning" as const, from: dangerEnd, to: warningEnd, part: zone1 },
+    { tone: "success" as const, from: warningEnd, to: END_ANGLE, part: zone2 },
   ];
 
   const goalAngle = goalRatio == null ? null : START_ANGLE - goalRatio * SWEEP;
   const goalOuter = goalAngle == null ? null : polar(CX, CY, R + 8, goalAngle);
   const goalInner = goalAngle == null ? null : polar(CX, CY, R - 14, goalAngle);
+
+  const valueTypography = chartPartTypographyStyle(chartParts, { kind: "gaugeValue" });
+  const labelTypography = chartPartTypographyStyle(chartParts, { kind: "gaugeLabel" });
+  const valueTextStyle: CSSProperties = {
+    ...valueTypography,
+    ...(valuePart.style?.color ? { fill: valuePart.style.color } : {}),
+  };
+  const labelTextStyle: CSSProperties = {
+    ...labelTypography,
+    ...(labelPart.style?.color ? { color: labelPart.style.color } : {}),
+  };
+
+  const tipHandlers = explicitTip
+    ? {
+        onMouseEnter: () => setActive(true),
+        onMouseLeave: () => setActive(false),
+        onFocus: () => setActive(true),
+        onBlur: () => setActive(false),
+      }
+    : {};
 
   return (
     <div
@@ -281,10 +342,7 @@ export function SpeedometerGauge({
       data-zone-warning={String(zonesResolved.warningBelow)}
       data-zone-danger={String(zonesResolved.dangerBelow)}
       tabIndex={0}
-      onMouseEnter={() => setActive(true)}
-      onMouseLeave={() => setActive(false)}
-      onFocus={() => setActive(true)}
-      onBlur={() => setActive(false)}
+      {...tipHandlers}
     >
       <svg
         className={classNames.svg}
@@ -295,85 +353,144 @@ export function SpeedometerGauge({
       >
         <defs>
           <linearGradient id={`${uid}-fill`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={accent} stopOpacity={0.75} />
+            <stop offset="0%" stopColor={fillStroke} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={fillStroke} stopOpacity={0.75} />
           </linearGradient>
         </defs>
-        {zones.map((zone) =>
-          zone.from - zone.to > 0.001 ? (
+        {zones.map((zone, zoneIndex) => {
+          const part = zoneParts[zoneIndex];
+          if (!part.visible || zone.from - zone.to <= 0.001) return null;
+          const stroke = part.style?.stroke?.trim() || SPEEDOMETER_TONE_COLORS[zone.tone];
+          return (
             <path
               key={zone.tone}
               className={withBemModifier(classNames.zone, zone.tone)}
               d={describeArc(CX, CY, R, zone.from, zone.to)}
               fill="none"
-              stroke={SPEEDOMETER_TONE_COLORS[zone.tone]}
-              strokeWidth={14}
+              stroke={stroke}
+              strokeWidth={part.style?.strokeWidth ?? 14}
               strokeLinecap="butt"
-              opacity={0.88}
+              opacity={part.style?.opacity ?? 0.88}
+              {...part.dom}
+              onPointerDown={part.onPointerDown}
+              onDoubleClick={part.onDoubleClick}
+              style={part.selected ? { outline: "1px solid currentColor" } : undefined}
             />
-          ) : null,
-        )}
-        <path
-          className={classNames.track}
-          d={describeArc(CX, CY, R, START_ANGLE, END_ANGLE)}
-          fill="none"
-          strokeWidth={2}
-          strokeLinecap="round"
-          opacity={0.35}
-        />
-        {fillPath ? (
+          );
+        })}
+        {trackPart.visible ? (
+          <path
+            className={classNames.track}
+            d={describeArc(CX, CY, R, START_ANGLE, END_ANGLE)}
+            fill="none"
+            stroke={trackPart.style?.stroke?.trim() || undefined}
+            strokeWidth={trackPart.style?.strokeWidth ?? 2}
+            strokeLinecap="round"
+            opacity={trackPart.style?.opacity ?? 0.35}
+            {...trackPart.dom}
+            onPointerDown={trackPart.onPointerDown}
+            onDoubleClick={trackPart.onDoubleClick}
+          />
+        ) : null}
+        {fillPart.visible && fillPath ? (
           <path
             className={classNames.fill}
             d={fillPath}
             fill="none"
-            stroke={`url(#${uid}-fill)`}
-            strokeWidth={6}
+            stroke={fillPart.style?.stroke ? fillStroke : `url(#${uid}-fill)`}
+            strokeWidth={fillPart.style?.strokeWidth ?? 6}
             strokeLinecap="round"
-            opacity={0.9}
+            opacity={fillPart.style?.opacity ?? 0.9}
+            {...fillPart.dom}
+            onPointerDown={fillPart.onPointerDown}
+            onDoubleClick={fillPart.onDoubleClick}
           />
         ) : null}
-        {goalOuter && goalInner ? (
-          <g className={classNames.goalMarker}>
+        {goalPart.visible && goalOuter && goalInner ? (
+          <g
+            className={classNames.goalMarker}
+            {...goalPart.dom}
+            onPointerDown={goalPart.onPointerDown}
+            onDoubleClick={goalPart.onDoubleClick}
+          >
             <line
               className={classNames.goalTick}
               x1={goalInner.x}
               y1={goalInner.y}
               x2={goalOuter.x}
               y2={goalOuter.y}
-              strokeWidth={2.5}
+              stroke={goalPart.style?.stroke?.trim() || undefined}
+              strokeWidth={goalPart.style?.strokeWidth ?? 2.5}
               strokeLinecap="round"
             />
-            <circle className={classNames.goalTick} cx={goalOuter.x} cy={goalOuter.y} r={3} />
+            <circle
+              className={classNames.goalTick}
+              cx={goalOuter.x}
+              cy={goalOuter.y}
+              r={3}
+              fill={goalPart.style?.fill?.trim() || undefined}
+            />
           </g>
         ) : null}
-        {numeric != null ? (
-          <>
+        {needlePart.visible && numeric != null ? (
+          <g
+            {...needlePart.dom}
+            onPointerDown={needlePart.onPointerDown}
+            onDoubleClick={needlePart.onDoubleClick}
+          >
             <line
               className={classNames.needle}
               x1={CX}
               y1={CY}
               x2={tipPoint.x}
               y2={tipPoint.y}
-              stroke={accent}
-              strokeWidth={3}
+              stroke={needleStroke}
+              strokeWidth={needlePart.style?.strokeWidth ?? 3}
               strokeLinecap="round"
             />
-            <circle className={classNames.hub} cx={CX} cy={CY} r={5.5} fill={accent} />
-          </>
+            <circle className={classNames.hub} cx={CX} cy={CY} r={5.5} fill={needleFill} />
+          </g>
         ) : null}
-        <text className={classNames.value} x={CX} y={CY - 10} textAnchor="middle">
-          {display}
-          {numeric != null && unit ? (
-            <tspan className={classNames.unit} dx={3}>
-              {unit}
-            </tspan>
-          ) : null}
-        </text>
+        {valuePart.visible ? (
+          <text
+            className={classNames.value}
+            x={CX}
+            y={CY - 10}
+            textAnchor="middle"
+            style={valueTextStyle}
+            {...valuePart.dom}
+            onPointerDown={valuePart.onPointerDown}
+            onDoubleClick={valuePart.onDoubleClick}
+          >
+            {display}
+            {numeric != null && unit ? (
+              <tspan className={classNames.unit} dx={3}>
+                {unit}
+              </tspan>
+            ) : null}
+          </text>
+        ) : null}
       </svg>
-      {label ? <p className={classNames.label}>{label}</p> : null}
-      {goalCaption ? <p className={classNames.goal}>{goalCaption}</p> : null}
-      {showZonesLegend ? (
-        <ul className={classNames.legend} aria-hidden="true">
+      {labelPart.visible && label ? (
+        <p
+          className={classNames.label}
+          style={labelTextStyle}
+          {...labelPart.dom}
+          onPointerDown={labelPart.onPointerDown}
+          onDoubleClick={labelPart.onDoubleClick}
+        >
+          {labelPart.content?.trim() || label}
+        </p>
+      ) : null}
+      {goalPart.visible && goalCaption ? <p className={classNames.goal}>{goalCaption}</p> : null}
+      {legendPart.visible && showZonesLegend ? (
+        <ul
+          className={classNames.legend}
+          aria-hidden="true"
+          {...legendPart.dom}
+          onPointerDown={legendPart.onPointerDown}
+          onDoubleClick={legendPart.onDoubleClick}
+        >
           <li className={classNames.legendItem} data-tone="danger">
             &lt; {formatLegendPct(zonesResolved.dangerBelow)}
             {unit}
@@ -389,9 +506,9 @@ export function SpeedometerGauge({
           </li>
         </ul>
       ) : null}
-      {active ? (
+      {explicitTip && active ? (
         <div className={classNames.tooltip} role="tooltip">
-          {tooltipText}
+          {explicitTip}
         </div>
       ) : null}
     </div>

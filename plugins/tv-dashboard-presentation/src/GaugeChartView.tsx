@@ -3,6 +3,7 @@ import {
   ChartTitle,
   SeriesChartClassesProvider,
   SpeedometerGauge,
+  bindChartPartPointer,
   resolveChartAreaStyle,
   seriesChartThemeStyle,
 } from "@delpi/plugin-ui/index";
@@ -26,6 +27,16 @@ type Props = {
 export function GaugeChartView({ model, options, chartParts, interaction }: Props) {
   const chartArea = resolveChartAreaStyle(options, chartParts);
   const interactive = Boolean(interaction);
+  const chartAreaRef = { kind: "chartArea" as const };
+  const chartAreaPointer = bindChartPartPointer(chartAreaRef, interactive ? interaction : null);
+  const {
+    selected: chartAreaSelected,
+    editing: _editing,
+    onPointerDown: onChartAreaPointerDown,
+    onDoubleClick: onChartAreaDoubleClick,
+    ...chartAreaDom
+  } = chartAreaPointer;
+
   const hostStyle: CSSProperties = {
     ["--delpi-ui-series-chart-radius" as string]: `${chartArea.borderRadius}px`,
     ["--delpi-ui-series-chart-shadow" as string]: chartArea.boxShadow || "none",
@@ -48,7 +59,15 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
 
   return (
     <SeriesChartClassesProvider prefix={SERIES_CHART_PREFIX}>
-      <div className="tdp-gauge-chart" style={hostStyle} data-chart-type="gauge">
+      <div
+        className="tdp-gauge-chart"
+        style={hostStyle}
+        data-chart-type="gauge"
+        {...chartAreaDom}
+        onPointerDown={onChartAreaPointerDown}
+        onDoubleClick={onChartAreaDoubleClick}
+        data-selected={chartAreaSelected ? "true" : undefined}
+      >
         <ChartTitle
           title={model.title}
           visible={model.showTitle}
@@ -69,6 +88,8 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
             max={model.max}
             min={model.min}
             accentColor={model.accentColor}
+            interaction={interactive ? interaction : null}
+            chartParts={chartParts}
             aria-label={model.title || model.label}
           />
         )}

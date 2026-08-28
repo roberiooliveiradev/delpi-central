@@ -1,7 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { SpeedometerGauge } from "./SpeedometerGauge";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("SpeedometerGauge", () => {
   it("renderiza valor formatado e label", () => {
@@ -21,24 +25,50 @@ describe("SpeedometerGauge", () => {
     expect(container.querySelector('[data-tone="danger"]')).toBeTruthy();
   });
 
-  it("mostra tooltip interativo no hover", () => {
-    render(
+  it("mostra tooltip interativo no hover só com tip explícito", () => {
+    const { container } = render(
       <SpeedometerGauge
         value={98.5}
         label="OTD Santa Catarina"
         tip="OTD SC no período"
       />,
     );
-    const gauge = screen.getByRole("img", { name: /OTD Santa Catarina/i });
+    const gauge = container.querySelector('[role="img"]')!;
     fireEvent.mouseEnter(gauge);
     expect(screen.getByRole("tooltip").textContent).toContain("OTD SC no período");
+  });
+
+  it("não mostra tooltip no hover sem tip explícito", () => {
+    const { container } = render(<SpeedometerGauge value={98.5} label="Sem tip hover" />);
+    const gauge = container.querySelector('[role="img"]')!;
+    fireEvent.mouseEnter(gauge);
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  });
+
+  it("expõe data-chart-part nas subpartes do velocímetro", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        label="OTD"
+        interaction={{
+          onPartPointerDown: () => undefined,
+        }}
+      />,
+    );
+    expect(container.querySelector('[data-chart-part="gaugeNeedle"]')).toBeTruthy();
+    expect(container.querySelector('[data-chart-part="gaugeValue"]')).toBeTruthy();
+    expect(container.querySelector('[data-chart-part="gaugeZone:2"]')).toBeTruthy();
+    expect(container.querySelector('[data-chart-part="legend"]')).toBeTruthy();
   });
 
   it("mostra indicador e valor da meta", () => {
     const { container } = render(
       <SpeedometerGauge value={98.5} goal={95} label="OTD SC" />,
     );
-    expect(screen.getByText(/Meta:\s*95/)).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__goal")?.textContent).toMatch(
+      /Meta:\s*95/,
+    );
     expect(container.querySelector("[data-goal='95']")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-speedometer-gauge__goal-marker")).toBeTruthy();
     // texto da meta só no caption — não colado no arco
