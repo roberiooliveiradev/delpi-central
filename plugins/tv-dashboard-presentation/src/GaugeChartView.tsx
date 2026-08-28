@@ -1,12 +1,16 @@
 import type { CSSProperties, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import {
+  ChartPartResizeHandles,
   ChartTitle,
   SeriesChartClassesProvider,
   SpeedometerGauge,
   chartPartAllowsMove,
+  chartPartAllowsResize,
   chartPartDomProps,
+  clampChartPartFrame,
   getChartPartState,
   isChartPartRefEqual,
+  isFullBleedChartAreaFrame,
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
   seriesChartThemeStyle,
@@ -25,6 +29,21 @@ type Props = {
   interaction?: ComunicadoChartInteraction | null;
 };
 
+function frameBoxStyle(
+  frame: { x: number; y: number; w?: number; h?: number } | undefined,
+): CSSProperties | undefined {
+  if (!frame) return undefined;
+  const f = clampChartPartFrame(frame);
+  return {
+    position: "absolute",
+    left: `${f.x}%`,
+    top: `${f.y}%`,
+    width: `${f.w ?? 100}%`,
+    height: `${f.h ?? 100}%`,
+    boxSizing: "border-box",
+  };
+}
+
 /**
  * Host do velocímetro com chrome/título alinhados ao bloco gráfico (SeriesChart).
  * `chartArea` = moldura; `plotArea` = fundo interno ao redor do SVG (paridade série).
@@ -39,6 +58,22 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
   const plotAreaSelected = isChartPartRefEqual(plotAreaRef, interaction?.selectedPart);
   const plotAreaDom = chartPartDomProps(plotAreaRef, interaction?.selectedPart);
+  const chartAreaFrame = getChartPartState(chartParts, chartAreaRef)?.frame;
+  const plotAreaFrame = getChartPartState(chartParts, plotAreaRef)?.frame;
+  const chartAreaFrameCss =
+    chartAreaFrame && !isFullBleedChartAreaFrame(chartAreaFrame)
+      ? frameBoxStyle(chartAreaFrame)
+      : undefined;
+  const plotAreaFrameCss = frameBoxStyle(plotAreaFrame);
+  const showChartAreaResize =
+    chartAreaSelected &&
+    !isFullBleedChartAreaFrame(chartAreaFrame) &&
+    chartPartAllowsResize(chartAreaRef) &&
+    Boolean(interaction?.onPartResizePointerDown);
+  const showPlotAreaResize =
+    plotAreaSelected &&
+    chartPartAllowsResize(plotAreaRef) &&
+    Boolean(interaction?.onPartResizePointerDown);
 
   const onChartAreaPointerDown = interactive
     ? (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -112,11 +147,12 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
     boxSizing: "border-box",
     position: "relative",
     overflow: "hidden",
+    ...chartAreaFrameCss,
   };
 
   const plotStyle: CSSProperties = {
-    flex: 1,
-    alignSelf: "stretch",
+    flex: plotAreaFrameCss ? undefined : 1,
+    alignSelf: plotAreaFrameCss ? undefined : "stretch",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -128,6 +164,7 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
     border: `${Math.max(0, plotArea.strokeWidth)}px solid ${plotArea.stroke}`,
     borderRadius: plotArea.borderRadius,
     ...(plotArea.opacity != null ? { opacity: plotArea.opacity } : {}),
+    ...plotAreaFrameCss,
   };
 
   const plotBody =
@@ -162,6 +199,7 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
           "tdp-gauge-chart",
           interactive ? "tdp-gauge-chart--interactive" : "",
           chartAreaSelected ? "tdp-gauge-chart--part-selected" : "",
+          showChartAreaResize ? "tdp-gauge-chart--resizable" : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -182,6 +220,7 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
           className={[
             "tdp-gauge-chart__plot",
             plotAreaSelected ? "tdp-gauge-chart__plot--selected" : "",
+            showPlotAreaResize ? "tdp-gauge-chart__plot--resizable" : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -192,7 +231,19 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
           data-selected={plotAreaSelected ? "true" : undefined}
         >
           {plotBody}
+          <ChartPartResizeHandles
+            visible={showPlotAreaResize}
+            onResizePointerDown={(handle, event) => {
+              interaction?.onPartResizePointerDown?.(plotAreaRef, event, handle);
+            }}
+          />
         </div>
+        <ChartPartResizeHandles
+          visible={showChartAreaResize}
+          onResizePointerDown={(handle, event) => {
+            interaction?.onPartResizePointerDown?.(chartAreaRef, event, handle);
+          }}
+        />
       </div>
     </SeriesChartClassesProvider>
   );
