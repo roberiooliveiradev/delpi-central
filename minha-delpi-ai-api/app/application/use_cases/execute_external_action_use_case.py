@@ -177,11 +177,32 @@ class ExecuteExternalActionUseCase:
             ChatOperationalApiDomainService,
         )
 
+        api_route_domain = ChatOperationalApiDomainService.classify_path(resolved_path)
+        parameter_strategy = ChatOperationalApiDomainService.parameter_strategy_for_domain(
+            api_route_domain
+        )
+        persisted_request_parameters = {
+            key: value
+            for key, value in dict(gateway_parameters or {}).items()
+            if value not in (None, "")
+            and str(key)
+            not in {
+                "userMessage",
+                "message",
+                "queryText",
+                "query_text",
+                "sessionResponseFormat",
+                "presentationDetailFilter",
+            }
+        }
+
         execution_metadata = {
             "durationMs": result["durationMs"],
             "presentationMs": presentation_ms,
             "sensitivity": action["sensitivity"],
-            "apiRouteDomain": ChatOperationalApiDomainService.classify_path(resolved_path),
+            "apiRouteDomain": api_route_domain,
+            "parameterStrategy": parameter_strategy,
+            "requestParameters": persisted_request_parameters,
             **presentation_metadata,
         }
 

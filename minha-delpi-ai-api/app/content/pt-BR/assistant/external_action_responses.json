@@ -1663,7 +1663,8 @@
     "pointAsRange": "Data {label}.",
     "yearConfirmation": "Mês {month} de {year} (confirmação do usuário).",
     "weekdayReference": "Referência a dia da semana: {label}.",
-    "quarterReference": "Trimestre {quarter} de {year}."
+    "quarterReference": "Trimestre {quarter} de {year}.",
+    "inheritedFromHistory": "Período herdado do histórico da conversa."
   },
   "importJob": {
     "phaseLabels": {

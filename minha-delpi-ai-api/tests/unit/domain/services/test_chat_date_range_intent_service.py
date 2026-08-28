@@ -179,3 +179,47 @@ def test_operational_parameter_skips_clarification_for_year_reply():
     )
 
     assert answer is None
+
+
+def test_resolve_inherits_period_from_previous_user_message():
+    resolved = ChatDateRangeIntentService.resolve(
+        "somente da filial 01",
+        today=date(2026, 8, 28),
+        previous_messages=[
+            {"role": "user", "content": "qual o rol desse mês?"},
+            {"role": "assistant", "content": "Aqui está o ROL."},
+        ],
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-08-2026"
+    assert resolved.end_date == "31-08-2026"
+    assert "histórico" in resolved.reason.lower()
+
+
+def test_build_date_branch_merge_branch_keeps_inherited_august_dates():
+    from app.domain.services.operational_api_parameter_builder_service import (
+        OperationalApiParameterBuilderService,
+    )
+
+    builder = OperationalApiParameterBuilderService()
+    # Período já resolvido (DateRangeIntent/histórico); merge só aplica filial.
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "branch", "in": "query"},
+                {"name": "start_date", "in": "query"},
+                {"name": "end_date", "in": "query"},
+            ],
+        },
+        "somente da filial 01",
+        base_params={
+            "start_date": "01-08-2026",
+            "end_date": "31-08-2026",
+            "branch": "all",
+        },
+    )
+
+    assert parameters["branch"] == "01"
+    assert parameters["start_date"] == "01-08-2026"
+    assert parameters["end_date"] == "31-08-2026"

@@ -207,6 +207,14 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("yearMonthInQuestion"),
             )
 
+        if previous_messages:
+            inherited = cls._inherit_period_from_previous_user_messages(
+                previous_messages,
+                reference=reference,
+            )
+            if inherited:
+                return inherited
+
         return None
 
     @classmethod
@@ -294,6 +302,37 @@ class ChatDateRangeIntentService:
             return True
 
         return any(term in normalized for term in ChatDateRangeVocabularyService.terms("periodMetricTerms"))
+
+    @classmethod
+    def _inherit_period_from_previous_user_messages(
+        cls,
+        previous_messages: list[Any] | None,
+        *,
+        reference: date,
+    ) -> ResolvedDateRange | None:
+        """Herdar período do último user turn com âncora temporal (sem recursão)."""
+        for item in reversed(previous_messages or []):
+            if cls._message_role(item) != "user":
+                continue
+
+            content = cls._message_content(item).strip()
+
+            if not content:
+                continue
+
+            # Resolve pontual: sem previous_messages para não reentrar na herança.
+            resolved = cls.resolve(content, today=reference, previous_messages=None)
+
+            if resolved is None:
+                continue
+
+            return ResolvedDateRange(
+                start_date=resolved.start_date,
+                end_date=resolved.end_date,
+                reason=cls._reason("inheritedFromHistory"),
+            )
+
+        return None
 
     @classmethod
     def _resolve_year_follow_up(

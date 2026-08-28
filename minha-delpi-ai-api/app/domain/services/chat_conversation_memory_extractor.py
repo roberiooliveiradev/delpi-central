@@ -123,34 +123,12 @@ class ChatConversationMemoryExtractor:
 
             path = str(metadata.get("path") or "")
             action_name = cls._action_name_from_path(path)
-            params: dict[str, Any] = {}
+            params = cls._merge_executed_action_params(tool_call, metadata)
 
             code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
 
-            if code:
+            if code and "productCode" not in params:
                 params["productCode"] = code
-
-            args = tool_call.get("arguments")
-
-            if isinstance(args, dict):
-                inner = args.get("parameters")
-
-                if isinstance(inner, dict):
-                    for key in (
-                        "branch",
-                        "branch_code",
-                        "filial",
-                        "period",
-                        "start_date",
-                        "end_date",
-                    ):
-                        if inner.get(key) not in (None, ""):
-                            canonical = (
-                                "branch"
-                                if key in {"branch_code", "filial"}
-                                else key
-                            )
-                            params[canonical] = str(inner[key])
 
             result_type = cls._result_type_from_metadata(metadata)
             operation_id = str(
@@ -173,6 +151,15 @@ class ChatConversationMemoryExtractor:
                 payload["operationId"] = operation_id
             if action_id:
                 payload["actionId"] = action_id
+
+            api_route_domain = str(metadata.get("apiRouteDomain") or "").strip()
+            if api_route_domain:
+                payload["apiRouteDomain"] = api_route_domain
+
+            parameter_strategy = str(metadata.get("parameterStrategy") or "").strip()
+            if parameter_strategy:
+                payload["parameterStrategy"] = parameter_strategy
+
             return payload
 
         # Fallback: último ok mesmo se só houver enrichment (turno só follow-up).
@@ -190,20 +177,90 @@ class ChatConversationMemoryExtractor:
 
             path = str(metadata.get("path") or "")
             action_name = cls._action_name_from_path(path)
-            params: dict[str, Any] = {}
+            params = cls._merge_executed_action_params(tool_call, metadata)
             code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
 
-            if code:
+            if code and "productCode" not in params:
                 params["productCode"] = code
 
-            return {
+            payload: dict[str, Any] = {
                 "name": action_name,
                 "params": params,
                 "resultType": cls._result_type_from_metadata(metadata),
                 "path": path,
             }
+            api_route_domain = str(metadata.get("apiRouteDomain") or "").strip()
+            if api_route_domain:
+                payload["apiRouteDomain"] = api_route_domain
+            parameter_strategy = str(metadata.get("parameterStrategy") or "").strip()
+            if parameter_strategy:
+                payload["parameterStrategy"] = parameter_strategy
+            return payload
 
         return None
+
+    @classmethod
+    def _merge_executed_action_params(
+        cls,
+        tool_call: dict[str, Any],
+        metadata: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Une arguments.parameters com requestParameters efetivos do envelope."""
+        params: dict[str, Any] = {}
+        sources: list[Any] = []
+
+        args = tool_call.get("arguments")
+        if isinstance(args, dict):
+            sources.append(args.get("parameters"))
+
+        sources.append(metadata.get("requestParameters"))
+        sources.append(metadata.get("parameters"))
+
+        continuity_keys = {
+            "branch",
+            "branch_code",
+            "filial",
+            "period",
+            "start_date",
+            "end_date",
+            "productCode",
+            "code",
+            "granularity",
+            "group_by",
+            "limit",
+            "page",
+            "page_size",
+        }
+
+        for source in sources:
+            if not isinstance(source, dict):
+                continue
+            for key, value in source.items():
+                if value in (None, ""):
+                    continue
+                key_str = str(key)
+                if key_str not in continuity_keys and key_str not in params:
+                    # Mantém params HTTP extras já presentes no envelope.
+                    if key_str.startswith("_") or key_str in {
+                        "userMessage",
+                        "message",
+                        "queryText",
+                        "query_text",
+                        "sessionResponseFormat",
+                        "presentationDetailFilter",
+                    }:
+                        continue
+                canonical = (
+                    "branch"
+                    if key_str in {"branch_code", "filial"}
+                    else key_str
+                )
+                if canonical == "code" and "productCode" not in params:
+                    params["productCode"] = str(value)
+                    continue
+                params[canonical] = str(value) if not isinstance(value, (int, float, bool)) else value
+
+        return params
 
     @classmethod
     def _extract_last_presentation(
