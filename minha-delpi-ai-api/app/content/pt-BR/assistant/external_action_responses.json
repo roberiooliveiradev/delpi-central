@@ -1664,7 +1664,9 @@
     "yearConfirmation": "Mês {month} de {year} (confirmação do usuário).",
     "weekdayReference": "Referência a dia da semana: {label}.",
     "quarterReference": "Trimestre {quarter} de {year}.",
-    "inheritedFromHistory": "Período herdado do histórico da conversa."
+    "inheritedFromHistory": "Período herdado do histórico da conversa.",
+    "previousYearSameRange": "Mesmo intervalo no ano anterior.",
+    "previousPeriod": "Período imediatamente anterior de mesma duração."
   },
   "importJob": {
     "phaseLabels": {

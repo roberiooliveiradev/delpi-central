@@ -772,6 +772,67 @@ class ChatDateRangeIntentService:
         )
 
     @classmethod
+    def parse_api_date(cls, value: str | None) -> date | None:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        from datetime import datetime as _dt
+
+        for fmt in ("%d-%m-%Y", "%Y-%m-%d", "%d/%m/%Y"):
+            try:
+                return _dt.strptime(text, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    @classmethod
+    def format_api_date(cls, value: date) -> str:
+        return value.strftime("%d-%m-%Y")
+
+    @classmethod
+    def apply_period_slot(
+        cls,
+        slot_kind: str,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> ResolvedDateRange | None:
+        """Aritmética de período para slotDelta (YoY / período anterior)."""
+        start = cls.parse_api_date(start_date)
+        end = cls.parse_api_date(end_date)
+        if start is None or end is None:
+            return None
+        if end < start:
+            start, end = end, start
+
+        kind = str(slot_kind or "").strip()
+
+        def _shift_year(value: date, *, years: int) -> date:
+            try:
+                return value.replace(year=value.year + years)
+            except ValueError:
+                return date(value.year + years, value.month, 28)
+
+        if kind == "previous_year_same_range":
+            return cls._from_dates(
+                _shift_year(start, years=-1),
+                _shift_year(end, years=-1),
+                reason=cls._reason("previousYearSameRange"),
+            )
+
+        if kind == "previous_period":
+            duration_days = (end - start).days + 1
+            new_end = start - timedelta(days=1)
+            new_start = new_end - timedelta(days=duration_days - 1)
+            return cls._from_dates(
+                new_start,
+                new_end,
+                reason=cls._reason("previousPeriod"),
+            )
+
+        return None
+
+    @classmethod
     def _from_dates(cls, start: date, end: date, *, reason: str) -> ResolvedDateRange:
         return ResolvedDateRange(
             start_date=cls.format_api_date(start),

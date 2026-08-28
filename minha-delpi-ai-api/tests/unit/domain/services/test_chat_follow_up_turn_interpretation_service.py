@@ -104,12 +104,38 @@ def test_narrate_resuma_isso():
         last_result_excerpt=_EXCERPT,
     )
     assert result.decision == "narrate_recap"
+    assert result.continuity_mode == "answer_without_tools"
+    assert not result.allows_parallel_discovery()
     stage = ChatTurnGroundingService.resolve_grounded_stage(
         message="resuma isso",
         excerpt=_EXCERPT,
         last_action=_ROL_ACTION,
     )
     assert stage in {"grounded_narrate_recap", "grounded_narrate_insight"}
+
+
+def test_revise_previous_year_same_range_consumes_last_action():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="comparar com ano anterior no mesmo periodo",
+        last_action={
+            **_ROL_ACTION,
+            "params": {
+                "start_date": "01-08-2026",
+                "end_date": "28-08-2026",
+                "branch": "all",
+            },
+        },
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.continuity_mode == "consume_last_action"
+    assert result.requires_last_action_reexec()
+    assert result.slot_delta.get("period") == "previous_year_same_range"
+    assert result.slot_delta.get("start_date") == "01-08-2025"
+    assert result.slot_delta.get("end_date") == "28-08-2025"
+    meta = result.to_metadata()
+    assert meta["continuityMode"] == "consume_last_action"
+    assert meta["allowsParallelDiscovery"] is False
 
 
 def test_revise_does_not_fall_through_to_narrate_without_last_action():
