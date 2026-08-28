@@ -7,6 +7,7 @@ import {
   chartPartDomProps,
   isChartPartRefEqual,
   resolveChartAreaStyle,
+  resolvePlotAreaStyle,
   seriesChartThemeStyle,
 } from "@delpi/plugin-ui/index";
 
@@ -25,14 +26,18 @@ type Props = {
 
 /**
  * Host do velocímetro com chrome/título alinhados ao bloco gráfico (SeriesChart).
- * `chartArea` usa o mesmo guard `closest` do SeriesChartPrimitive — não engole subpartes.
+ * `chartArea` = moldura; `plotArea` = fundo interno ao redor do SVG (paridade série).
  */
 export function GaugeChartView({ model, options, chartParts, interaction }: Props) {
   const chartArea = resolveChartAreaStyle(options, chartParts);
+  const plotArea = resolvePlotAreaStyle(chartParts);
   const interactive = Boolean(interaction);
   const chartAreaRef = { kind: "chartArea" as const };
+  const plotAreaRef = { kind: "plotArea" as const };
   const chartAreaDom = chartPartDomProps(chartAreaRef, interaction?.selectedPart);
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
+  const plotAreaSelected = isChartPartRefEqual(plotAreaRef, interaction?.selectedPart);
+  const plotAreaDom = chartPartDomProps(plotAreaRef, interaction?.selectedPart);
 
   const onChartAreaPointerDown = interactive
     ? (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -61,6 +66,33 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
       }
     : undefined;
 
+  const onPlotPointerDown = interactive
+    ? (event: ReactPointerEvent<HTMLDivElement>) => {
+        const host = (event.target as HTMLElement).closest("[data-chart-part]");
+        const partId = host?.getAttribute("data-chart-part");
+        if (partId && partId !== "plotArea") return;
+        event.stopPropagation();
+        interaction?.onPartPointerDown?.(plotAreaRef, event);
+        if (
+          isChartPartRefEqual(plotAreaRef, interaction?.selectedPart) &&
+          chartPartAllowsMove(plotAreaRef)
+        ) {
+          interaction?.onPartMovePointerDown?.(plotAreaRef, event);
+        }
+      }
+    : undefined;
+
+  const onPlotDoubleClick = interactive
+    ? (event: ReactMouseEvent<HTMLDivElement>) => {
+        const host = (event.target as HTMLElement).closest("[data-chart-part]");
+        const partId = host?.getAttribute("data-chart-part");
+        if (partId && partId !== "plotArea") return;
+        event.stopPropagation();
+        event.preventDefault();
+        interaction?.onPartDoubleClick?.(plotAreaRef, event);
+      }
+    : undefined;
+
   const hostStyle: CSSProperties = {
     ["--delpi-ui-series-chart-radius" as string]: `${chartArea.borderRadius}px`,
     ["--delpi-ui-series-chart-shadow" as string]: chartArea.boxShadow || "none",
@@ -80,6 +112,43 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
     position: "relative",
     overflow: "hidden",
   };
+
+  const plotStyle: CSSProperties = {
+    flex: 1,
+    alignSelf: "stretch",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
+    position: "relative",
+    minHeight: 0,
+    background: plotArea.fill,
+    border: `${Math.max(0, plotArea.strokeWidth)}px solid ${plotArea.stroke}`,
+    borderRadius: plotArea.borderRadius,
+    ...(plotArea.opacity != null ? { opacity: plotArea.opacity } : {}),
+  };
+
+  const plotBody =
+    model.value == null ? (
+      <div className="tdp-data-chart tdp-data-chart--typed">
+        <span className="tdp-data-chart__hint">Sem dados</span>
+      </div>
+    ) : (
+      <SpeedometerGauge
+        prefix="tdp"
+        value={model.value}
+        goal={model.goal}
+        label={model.label}
+        unit={model.unit}
+        max={model.max}
+        min={model.min}
+        accentColor={model.accentColor}
+        interaction={interactive ? interaction : null}
+        chartParts={chartParts}
+        aria-label={model.title || model.label}
+      />
+    );
 
   return (
     <SeriesChartClassesProvider prefix={SERIES_CHART_PREFIX}>
@@ -104,25 +173,21 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
           interaction={interactive ? interaction : null}
           chartParts={chartParts}
         />
-        {model.value == null ? (
-          <div className="tdp-data-chart tdp-data-chart--typed">
-            <span className="tdp-data-chart__hint">Sem dados</span>
-          </div>
-        ) : (
-          <SpeedometerGauge
-            prefix="tdp"
-            value={model.value}
-            goal={model.goal}
-            label={model.label}
-            unit={model.unit}
-            max={model.max}
-            min={model.min}
-            accentColor={model.accentColor}
-            interaction={interactive ? interaction : null}
-            chartParts={chartParts}
-            aria-label={model.title || model.label}
-          />
-        )}
+        <div
+          className={[
+            "tdp-gauge-chart__plot",
+            plotAreaSelected ? "tdp-gauge-chart__plot--selected" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={plotStyle}
+          {...plotAreaDom}
+          onPointerDown={onPlotPointerDown}
+          onDoubleClick={onPlotDoubleClick}
+          data-selected={plotAreaSelected ? "true" : undefined}
+        >
+          {plotBody}
+        </div>
       </div>
     </SeriesChartClassesProvider>
   );

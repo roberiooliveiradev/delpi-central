@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { GaugeChartView } from "./GaugeChartView";
 
-describe("GaugeChartView chartArea guard", () => {
+describe("GaugeChartView chartArea / plotArea", () => {
   const model = {
     value: 98.4,
     goal: 95,
@@ -14,6 +14,16 @@ describe("GaugeChartView chartArea guard", () => {
     showTitle: false,
     title: "OTD",
   };
+
+  it("expõe data-chart-part plotArea distinto de chartArea", () => {
+    const { container } = render(
+      <GaugeChartView model={model} options={{}} />,
+    );
+    const host = container.querySelector(".tdp-gauge-chart")!;
+    const plot = container.querySelector(".tdp-gauge-chart__plot")!;
+    expect(host.getAttribute("data-chart-part")).toBe("chartArea");
+    expect(plot.getAttribute("data-chart-part")).toBe("plotArea");
+  });
 
   it("não chama chartArea quando o alvo é uma subparte", () => {
     const onPartPointerDown = vi.fn();
@@ -33,8 +43,6 @@ describe("GaugeChartView chartArea guard", () => {
     expect(needle).toBeTruthy();
 
     fireEvent.pointerDown(needle);
-    // Subparte dispara o próprio bind; host não deve receber chartArea por bubble
-    // (needle stopPropagation no bindChartPartPointer).
     const chartAreaCalls = onPartPointerDown.mock.calls.filter(
       (call) => call[0]?.kind === "chartArea",
     );
@@ -47,7 +55,49 @@ describe("GaugeChartView chartArea guard", () => {
     );
   });
 
-  it("duplo clique no fundo vazio seleciona chartArea", () => {
+  it("pointer no plot seleciona plotArea e não chartArea", () => {
+    const onPartPointerDown = vi.fn();
+    const { container } = render(
+      <GaugeChartView
+        model={model}
+        options={{}}
+        interaction={{ onPartPointerDown }}
+      />,
+    );
+    const plot = container.querySelector(".tdp-gauge-chart__plot")!;
+    fireEvent.pointerDown(plot);
+    expect(onPartPointerDown).toHaveBeenCalledWith(
+      { kind: "plotArea" },
+      expect.anything(),
+    );
+    const chartAreaCalls = onPartPointerDown.mock.calls.filter(
+      (call) => call[0]?.kind === "chartArea",
+    );
+    expect(chartAreaCalls).toHaveLength(0);
+  });
+
+  it("pointer no plot não engole subparte do velocímetro", () => {
+    const onPartPointerDown = vi.fn();
+    const { container } = render(
+      <GaugeChartView
+        model={model}
+        options={{}}
+        interaction={{ onPartPointerDown }}
+      />,
+    );
+    const needle = container.querySelector('[data-chart-part="gaugeNeedle"]')!;
+    fireEvent.pointerDown(needle);
+    expect(onPartPointerDown).toHaveBeenCalledWith(
+      { kind: "gaugeNeedle" },
+      expect.anything(),
+    );
+    const plotCalls = onPartPointerDown.mock.calls.filter(
+      (call) => call[0]?.kind === "plotArea",
+    );
+    expect(plotCalls).toHaveLength(0);
+  });
+
+  it("duplo clique no fundo vazio do host seleciona chartArea", () => {
     const onPartDoubleClick = vi.fn();
     const { container } = render(
       <GaugeChartView
@@ -62,5 +112,19 @@ describe("GaugeChartView chartArea guard", () => {
       { kind: "chartArea" },
       expect.anything(),
     );
+  });
+
+  it("aplica fill independente do plotArea via chartParts", () => {
+    const { container } = render(
+      <GaugeChartView
+        model={model}
+        options={{}}
+        chartParts={{
+          plotArea: { style: { fill: "rgb(1, 2, 3)" } },
+        }}
+      />,
+    );
+    const plot = container.querySelector(".tdp-gauge-chart__plot") as HTMLElement;
+    expect(plot.style.background).toContain("rgb(1, 2, 3)");
   });
 });
