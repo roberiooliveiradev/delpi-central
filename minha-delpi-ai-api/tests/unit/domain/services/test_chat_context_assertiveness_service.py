@@ -47,3 +47,45 @@ def test_evaluate_turn_rewards_follow_up_entity_reuse():
 
     assert result["followUpResolved"] is True
     assert result["score"] >= 80
+
+
+def test_evaluate_turn_follow_up_from_continuity_mode():
+    result = ChatContextAssertivenessService.evaluate_turn(
+        message="somente da filial 01",
+        answer="ROL da filial 01.",
+        tool_calls=[],
+        snapshot={
+            "followUpDetected": False,
+            "operationalFocus": {},
+            "turnGrounding": {
+                "followUp": {
+                    "decision": "revise_last_query",
+                    "continuityMode": "consume_last_action",
+                    "allowsParallelDiscovery": False,
+                }
+            },
+        },
+    )
+
+    assert result["followUpDetected"] is True
+
+
+def test_evaluate_turn_allow_discovery_is_not_follow_up():
+    result = ChatContextAssertivenessService.evaluate_turn(
+        message="qual o rol desse mês?",
+        answer="ROL consolidado.",
+        tool_calls=[],
+        snapshot={
+            "followUpDetected": True,
+            "operationalFocus": {},
+            "turnGrounding": {
+                "followUp": {
+                    "decision": "new_intent",
+                    "continuityMode": "allow_discovery",
+                    "allowsParallelDiscovery": True,
+                }
+            },
+        },
+    )
+
+    assert result["followUpDetected"] is False

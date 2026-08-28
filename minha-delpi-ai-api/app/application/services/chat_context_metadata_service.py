@@ -57,6 +57,11 @@ class ChatContextMetadataService:
                 pending_inventory,
             )
 
+        turn_grounding = workspace.get("turnGrounding")
+        if isinstance(turn_grounding, dict) and turn_grounding:
+            snapshot = dict(snapshot)
+            snapshot["turnGrounding"] = turn_grounding
+
         assertiveness = ChatContextAssertivenessService.evaluate_turn(
             message=message,
             answer=answer,

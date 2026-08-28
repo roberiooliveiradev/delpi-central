@@ -25,7 +25,7 @@ class ChatContextAssertivenessService:
         snapshot = snapshot or {}
         entities = snapshot.get("operationalFocus") or {}
         resolved = snapshot.get("resolvedReferences") or []
-        follow_up = bool(snapshot.get("followUpDetected"))
+        follow_up = cls._resolve_follow_up_detected(snapshot)
         product_in_memory = str(entities.get("productCode") or "").strip()
 
         message_codes = cls._extract_product_codes(message)
@@ -69,6 +69,23 @@ class ChatContextAssertivenessService:
             "followUpDetected": follow_up,
             "followUpResolved": "follow_up_entity_reused" in flags,
         }
+
+    @classmethod
+    def _resolve_follow_up_detected(cls, snapshot: dict) -> bool:
+        """Prefer continuityMode do interpretador; fallback no flag legado de produto."""
+        turn = snapshot.get("turnGrounding")
+        if isinstance(turn, dict):
+            follow = turn.get("followUp")
+            if isinstance(follow, dict) and follow:
+                if "allowsParallelDiscovery" in follow:
+                    return follow.get("allowsParallelDiscovery") is False
+                mode = str(follow.get("continuityMode") or "").strip()
+                if mode:
+                    return mode != "allow_discovery"
+                decision = str(follow.get("decision") or "").strip()
+                if decision:
+                    return decision != "new_intent"
+        return bool(snapshot.get("followUpDetected"))
 
     @staticmethod
     def _extract_product_codes(message: str) -> list[str]:
