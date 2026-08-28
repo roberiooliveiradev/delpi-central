@@ -260,6 +260,13 @@ export function applyChartAddElementChoiceWithParts(
       visible: axesOn && nextOptions.showYAxisLabels !== false,
     });
   }
+  /* Gauge: menu Meta liga/desliga o marcador sem depender do default showGoalLine:false. */
+  if (choiceId === "goalLine:none") {
+    nextParts = upsertChartPartState(nextParts, { kind: "gaugeGoalMarker" }, { visible: false });
+  }
+  if (choiceId === "goalLine:show") {
+    nextParts = upsertChartPartState(nextParts, { kind: "gaugeGoalMarker" }, { visible: true });
+  }
   return {
     options: nextOptions,
     parts: nextParts,

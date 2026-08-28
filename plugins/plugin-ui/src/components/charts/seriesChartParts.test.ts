@@ -677,12 +677,13 @@ describe("seriesChartParts", () => {
     expect(chartPartTypographyStyle({}, { kind: "axis", axis: "x" })).toEqual({ fontSize: "14px" });
   });
 
-  it("chartOptionsToParts projeta showGoalLine em gaugeGoalMarker", () => {
+  it("chartOptionsToParts projeta gaugeGoalMarker só com showGoalLine true", () => {
     const on = chartOptionsToParts(mergeSeriesChartOptions({ showGoalLine: true }));
     expect(on.gaugeGoalMarker?.visible).toBe(true);
     expect(on.goalLine?.visible).toBe(true);
     const off = chartOptionsToParts(mergeSeriesChartOptions({ showGoalLine: false }));
-    expect(off.gaugeGoalMarker?.visible).toBe(false);
+    expect(off.gaugeGoalMarker).toBeUndefined();
+    expect(off.goalLine?.visible).toBe(false);
   });
 
   it("partsToChartOptions lê visible de gaugeGoalMarker para showGoalLine", () => {
@@ -692,16 +693,35 @@ describe("seriesChartParts", () => {
     expect(partsToChartOptions(shown)).toMatchObject({ showGoalLine: true });
   });
 
-  it("mergeChartPartsWithOptions alinha gaugeGoalMarker.visible a showGoalLine", () => {
-    const options = mergeSeriesChartOptions({ showGoalLine: false });
-    const prev = upsertChartPartState(
-      chartOptionsToParts(mergeSeriesChartOptions({ showGoalLine: true })),
-      { kind: "gaugeGoalMarker" },
-      { style: { stroke: "#f00" }, content: "Meta" },
+  it("mergeChartPartsWithOptions preserva hide de gaugeGoalMarker e estilo", () => {
+    const prev = upsertChartPartState({}, { kind: "gaugeGoalMarker" }, {
+      visible: false,
+      style: { stroke: "#f00" },
+      content: "Meta",
+    });
+    const merged = mergeChartPartsWithOptions(
+      prev,
+      mergeSeriesChartOptions({ showGoalLine: false, title: "OTD" }),
     );
-    const merged = mergeChartPartsWithOptions(prev, options);
     expect(merged.gaugeGoalMarker?.visible).toBe(false);
     expect(merged.gaugeGoalMarker?.style?.stroke).toBe("#f00");
     expect(merged.gaugeGoalMarker?.content).toBe("Meta");
+  });
+
+  it("deleteChartPart em gaugeGoalMarker desliga showGoalLine e sobrevive ao merge", () => {
+    const options = mergeSeriesChartOptions({ showGoalLine: true, goalLineValue: 95 });
+    const parts = chartOptionsToParts(options);
+    const deleted = deleteChartPart(parts, { kind: "gaugeGoalMarker" }, options);
+    expect(deleted.parts.gaugeGoalMarker?.visible).toBe(false);
+    expect(deleted.options.showGoalLine).toBe(false);
+    const remerged = mergeChartPartsWithOptions(deleted.parts, deleted.options);
+    expect(remerged.gaugeGoalMarker?.visible).toBe(false);
+  });
+
+  it("deleteChartPart em legend desliga showLegend", () => {
+    const options = mergeSeriesChartOptions({ showLegend: true });
+    const result = deleteChartPart(chartOptionsToParts(options), { kind: "legend" }, options);
+    expect(result.parts.legend?.visible).toBe(false);
+    expect(result.options.showLegend).toBe(false);
   });
 });

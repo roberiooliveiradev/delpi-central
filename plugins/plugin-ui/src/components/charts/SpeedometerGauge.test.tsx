@@ -134,4 +134,29 @@ describe("SpeedometerGauge", () => {
       container.querySelector('[data-chart-part="gaugeNeedle"] line[stroke="transparent"]'),
     ).toBeTruthy();
   });
+
+  it("oculta marcador e caption quando gaugeGoalMarker.visible é false", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        label="OTD"
+        chartParts={{ gaugeGoalMarker: { visible: false } }}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__goal")).toBeNull();
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__goal-marker")).toBeNull();
+  });
+
+  it("oculta legenda quando legend.visible é false", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        showZonesLegend
+        chartParts={{ legend: { visible: false } }}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__legend")).toBeNull();
+  });
 });

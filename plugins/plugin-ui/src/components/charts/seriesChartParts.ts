@@ -789,10 +789,16 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   parts[serializeChartPartRef({ kind: "goalLine" })] = {
     visible: Boolean(config.showGoalLine),
   };
-  /** Gauge: mesmo flag flat da linha de meta da série. */
-  parts[serializeChartPartRef({ kind: "gaugeGoalMarker" })] = {
-    visible: Boolean(config.showGoalLine),
-  };
+  /*
+   * Gauge: só projeta marcador quando a meta está ligada.
+   * Default showGoalLine:false das options flat não deve esconder o tick
+   * (paint usa goal + visible!==false). Hide vem de Del / menu goalLine:none.
+   */
+  if (config.showGoalLine) {
+    parts[serializeChartPartRef({ kind: "gaugeGoalMarker" })] = {
+      visible: true,
+    };
+  }
   parts[serializeChartPartRef({ kind: "dataTable" })] = {
     visible: Boolean(config.showDataTable),
   };
@@ -854,7 +860,8 @@ export function mergeChartPartsWithOptions(
       merged[key] = {
         ...projectedState,
         ...prevState,
-        visible: Boolean(options?.showGoalLine),
+        /* showGoalLine true → projected.visible true; Del/menu none → prev.visible false. */
+        visible: projectedState?.visible ?? prevState.visible,
         style: {
           ...projectedState?.style,
           ...prevState.style,

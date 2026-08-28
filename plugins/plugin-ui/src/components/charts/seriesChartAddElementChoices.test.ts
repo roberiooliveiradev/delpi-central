@@ -86,6 +86,19 @@ describe("applyChartAddElementChoice", () => {
     expect(off.showGoalLine).toBe(false);
   });
 
+  it("goalLine:none/show sincroniza gaugeGoalMarker nas parts", () => {
+    const shown = applyChartAddElementChoiceWithParts("goalLine:show", { showGoalLine: false }, null);
+    expect(shown.options.showGoalLine).toBe(true);
+    expect(shown.parts.gaugeGoalMarker?.visible).toBe(true);
+    const hidden = applyChartAddElementChoiceWithParts(
+      "goalLine:none",
+      shown.options,
+      shown.parts,
+    );
+    expect(hidden.options.showGoalLine).toBe(false);
+    expect(hidden.parts.gaugeGoalMarker?.visible).toBe(false);
+  });
+
   it("dataLabels:none desliga rótulos", () => {
     const next = applyChartAddElementChoice("dataLabels:none", { showDataLabels: true });
     expect(next.showDataLabels).toBe(false);
