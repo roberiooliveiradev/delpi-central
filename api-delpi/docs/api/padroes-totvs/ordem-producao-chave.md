@@ -75,12 +75,26 @@ Descrição da operação: junção completa `G2_FILIAL`, `G2_PRODUTO = C2_PRODU
 - OP em aberto → `C2_QUANT > C2_QUJE` **e** `C2_DATRF` vazio (encerrada parcial com saldo residual não conta como aberta).
 - Dado consolidado do PA a partir de OP filha → `mother_order_key_sql(...)`.
 
+### Previsão de atendimento (ops-abertas / Portal / PVA)
+
+`GET /pedidos-venda-abertos/ops-abertas` (`list_ops_abertas_pedidos_venda`) lista OPs para o MFE alocar `previsao_op` nas linhas de pedido em aberto (Portal Comercial via BFF; PVA direto).
+
+| Regra | Valor |
+|-------|--------|
+| Saldo | `C2_QUANT > C2_QUJE` |
+| Encerramento | `C2_DATRF` **vazio** — OP encerrada parcial **não** entra no universo |
+| Tipo | Só produto acabado (`B1_TIPO = PA`), alinhado ao uso em pedido de venda |
+| SQL | `ops_abertas_sql.py` (canônico em SC2+SB1; não usar view opaca como predicado) |
+
+Portal e PVA **herdam** o mesmo universo; a alocação FIFO permanece no MFE.
+
 ## O que NÃO fazer
 
 - Usar `H8_QUANT` como quantidade planejada.
 - Reconstruir `C2_OP` concatenando os três campos quando já existe `H8_OP` / `C2_OP`.
 - Espalhar o literal `'001'` — importar `MOTHER_ORDER_SEQUENCE`.
 - Assumir que a entrega da OP filha é a entrega do PA.
+- Incluir OP com `C2_DATRF` preenchido na previsão de atendimento (saldo residual não será produzido).
 
 ## Onde é usado
 
@@ -88,3 +102,4 @@ Descrição da operação: junção completa `G2_FILIAL`, `G2_PRODUTO = C2_PRODU
 - [production-order-sets-incomplete.md](../production-order-sets-incomplete.md) — conjuntos incompletos (`/production/production-order-sets/incomplete`).
 - OTD e detalhe de OP — `production_pa_sql_filters.py`.
 - Apontamentos de produção — `production_appointments_scope.MOTHER_OP_SUFFIX`.
+- Pedidos em aberto / previsão OP — `ops_abertas_sql.py` → Portal (`GET /open-orders/ops-abertas`) e PVA.
