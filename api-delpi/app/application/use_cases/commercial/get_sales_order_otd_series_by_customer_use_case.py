@@ -101,6 +101,8 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
                             "late_lines": row.get("late_lines"),
                             "fulfillment_pct": row.get("fulfillment_pct"),
                             "otd_pct": row.get("otd_pct"),
+                            "unit": row.get("unit"),
+                            "mixed_units": bool(row.get("mixed_units")),
                         }
                     )
 

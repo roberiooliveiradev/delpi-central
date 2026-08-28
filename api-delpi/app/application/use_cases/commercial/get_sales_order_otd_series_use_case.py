@@ -87,6 +87,8 @@ class GetSalesOrderOtdSeriesUseCase:
                     fulfillment_pct=consolidated.get("fulfillment_pct"),
                     otd_pct=consolidated.get("otd_pct"),
                     total_lines=consolidated.get("total_lines"),
+                    unit=consolidated.get("unit"),
+                    mixed_units=bool(consolidated.get("mixed_units")),
                 )
             )
 
@@ -122,6 +124,12 @@ class GetSalesOrderOtdSeriesUseCase:
                         if point.get("total_lines") is not None
                         else None
                     ),
+                    unit=(
+                        str(point["unit"]).strip() or None
+                        if point.get("unit") is not None
+                        else None
+                    ),
+                    mixed_units=bool(point.get("mixed_units")),
                 )
             )
         return SalesOrderOtdSeriesResponse(
@@ -156,6 +164,34 @@ class GetSalesOrderOtdSeriesUseCase:
         )
 
     @staticmethod
+    def _unit_fields_from_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "unit": metrics.get("unit"),
+            "mixed_units": bool(metrics.get("mixed_units")),
+        }
+
+    @staticmethod
+    def _merge_unit_across_branches(
+        metrics_01: dict[str, Any],
+        metrics_02: dict[str, Any],
+    ) -> dict[str, Any]:
+        lines_01 = int(metrics_01.get("total_lines") or 0)
+        lines_02 = int(metrics_02.get("total_lines") or 0)
+        if lines_01 <= 0 and lines_02 <= 0:
+            return {"unit": None, "mixed_units": False}
+        if lines_01 <= 0:
+            return GetSalesOrderOtdSeriesUseCase._unit_fields_from_metrics(metrics_02)
+        if lines_02 <= 0:
+            return GetSalesOrderOtdSeriesUseCase._unit_fields_from_metrics(metrics_01)
+        if metrics_01.get("mixed_units") or metrics_02.get("mixed_units"):
+            return {"unit": None, "mixed_units": True}
+        unit_01 = metrics_01.get("unit")
+        unit_02 = metrics_02.get("unit")
+        if unit_01 == unit_02:
+            return {"unit": unit_01, "mixed_units": False}
+        return {"unit": None, "mixed_units": True}
+
+    @staticmethod
     def _consolidate(
         metrics_01: dict[str, Any] | None,
         metrics_02: dict[str, Any] | None,
@@ -173,6 +209,7 @@ class GetSalesOrderOtdSeriesUseCase:
                     if primary.get("total_lines") is not None
                     else None
                 ),
+                **GetSalesOrderOtdSeriesUseCase._unit_fields_from_metrics(primary),
             }
         if branch == FILIAL_01:
             primary = metrics_01 or {}
@@ -186,6 +223,7 @@ class GetSalesOrderOtdSeriesUseCase:
                     if primary.get("total_lines") is not None
                     else None
                 ),
+                **GetSalesOrderOtdSeriesUseCase._unit_fields_from_metrics(primary),
             }
 
         m01 = metrics_01 or {}
@@ -210,4 +248,5 @@ class GetSalesOrderOtdSeriesUseCase:
             "fulfillment_pct": fulfillment_pct,
             "otd_pct": otd_pct,
             "total_lines": total_lines,
+            **GetSalesOrderOtdSeriesUseCase._merge_unit_across_branches(m01, m02),
         }

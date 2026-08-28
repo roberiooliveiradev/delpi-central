@@ -14,6 +14,8 @@ class SalesOrderOtdSeriesPointDto:
     fulfillment_pct: float | None = None
     otd_pct: float | None = None
     total_lines: int | None = None
+    unit: str | None = None
+    mixed_units: bool = False
 
 
 @dataclass

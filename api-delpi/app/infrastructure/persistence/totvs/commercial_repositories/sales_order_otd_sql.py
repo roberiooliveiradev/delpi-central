@@ -16,6 +16,33 @@ _SALES_ORDER_OTD_ON_TIME_CASE = """
     END
 """
 
+# UM da linha do pedido (C6); cadastro SB1 só como fallback — sem conversão.
+_LINE_UNIT_SQL = """
+            COALESCE(
+                NULLIF(RTRIM(LTRIM(C6.C6_UM)), ''),
+                RTRIM(LTRIM(B1.B1_UM)),
+                ''
+            )
+""".strip()
+
+_SB1_JOIN_SQL = """
+            LEFT JOIN SB1010 B1 WITH (NOLOCK)
+                ON  B1.B1_COD = C6.C6_PRODUTO
+                AND B1.D_E_L_E_T_ = ''
+""".strip()
+
+_AGG_UNIT_SELECT_SQL = """
+            CASE
+                WHEN COUNT(*) = 0 THEN NULL
+                WHEN COUNT(DISTINCT unit) = 1 THEN MAX(unit)
+                ELSE NULL
+            END AS unit,
+            CASE
+                WHEN COUNT(*) > 0 AND COUNT(DISTINCT unit) > 1 THEN 1
+                ELSE 0
+            END AS mixed_units
+""".strip()
+
 _LIST_LINES_CTE = """
     LINHAS_ELEGIVEIS AS (
         SELECT DISTINCT
@@ -24,11 +51,7 @@ _LIST_LINES_CTE = """
             RTRIM(LTRIM(C6.C6_ITEM)) AS line_item,
             RTRIM(LTRIM(C6.C6_PRODUTO)) AS product_code,
             RTRIM(LTRIM(B1.B1_DESC)) AS product_description,
-            COALESCE(
-                NULLIF(RTRIM(LTRIM(C6.C6_UM)), ''),
-                RTRIM(LTRIM(B1.B1_UM)),
-                ''
-            ) AS unit,
+            {_line_unit} AS unit,
             RTRIM(LTRIM(C5.C5_CLIENTE)) AS customer_code,
             RTRIM(LTRIM(C5.C5_LOJACLI)) AS customer_store,
             COALESCE(
@@ -141,6 +164,7 @@ def _list_cte_sql(*, where_clause: str) -> str:
     return _LIST_LINES_CTE.format(
         where_clause=where_clause,
         _on_time_case=on_time_case,
+        _line_unit=_LINE_UNIT_SQL,
     )
 
 
@@ -206,11 +230,13 @@ def build_sales_order_otd_analysis_summary_sql(
                 C6.C6_DATFAT,
                 CONVERT(FLOAT, ISNULL(C6.C6_QTDVEN, 0)) AS qty_sold,
                 CONVERT(FLOAT, ISNULL(C6.C6_QTDENT, 0)) AS qty_delivered,
+                {_LINE_UNIT_SQL} AS unit,
                 {on_time} AS is_on_time
             FROM SC6010 C6 WITH (NOLOCK)
             INNER JOIN SC5010 C5 WITH (NOLOCK)
                 ON  C5.C5_FILIAL = C6.C6_FILIAL
                 AND C5.C5_NUM = C6.C6_NUM
+            {_SB1_JOIN_SQL}
             LEFT JOIN SA1010 SA1 WITH (NOLOCK)
                 ON  SA1.A1_COD = C5.C5_CLIENTE
                 AND SA1.A1_LOJA = C5.C5_LOJACLI
@@ -234,7 +260,8 @@ def build_sales_order_otd_analysis_summary_sql(
                     WHEN COUNT(*) = 0 THEN NULL
                     ELSE SUM(is_on_time) * 100.0 / COUNT(*)
                 END
-            AS DECIMAL(10, 2)) AS otd_pct
+            AS DECIMAL(10, 2)) AS otd_pct,
+            {_AGG_UNIT_SELECT_SQL}
         FROM linhas_elegiveis
     """
     # on_time case embeds one '?' for reference date
@@ -264,11 +291,13 @@ def build_sales_order_otd_analysis_by_customer_sql(
                 C6.C6_ITEM,
                 CONVERT(FLOAT, ISNULL(C6.C6_QTDVEN, 0)) AS qty_sold,
                 CONVERT(FLOAT, ISNULL(C6.C6_QTDENT, 0)) AS qty_delivered,
+                {_LINE_UNIT_SQL} AS unit,
                 {on_time} AS is_on_time
             FROM SC6010 C6 WITH (NOLOCK)
             INNER JOIN SC5010 C5 WITH (NOLOCK)
                 ON  C5.C5_FILIAL = C6.C6_FILIAL
                 AND C5.C5_NUM = C6.C6_NUM
+            {_SB1_JOIN_SQL}
             LEFT JOIN SA1010 SA1 WITH (NOLOCK)
                 ON  SA1.A1_COD = C5.C5_CLIENTE
                 AND SA1.A1_LOJA = C5.C5_LOJACLI
@@ -296,7 +325,8 @@ def build_sales_order_otd_analysis_by_customer_sql(
                     WHEN COUNT(*) = 0 THEN NULL
                     ELSE SUM(is_on_time) * 100.0 / COUNT(*)
                 END
-            AS DECIMAL(10, 2)) AS otd_pct
+            AS DECIMAL(10, 2)) AS otd_pct,
+            {_AGG_UNIT_SELECT_SQL}
         FROM linhas_elegiveis
         GROUP BY customer_code, customer_store
         ORDER BY total_qty DESC, customer_code ASC

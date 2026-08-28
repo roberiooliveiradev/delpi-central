@@ -16,6 +16,8 @@ def _summary(
     on_time_lines: int,
     otd_pct: float,
     fulfillment_pct: float,
+    unit: str | None = "UN",
+    mixed_units: bool = False,
 ) -> dict:
     return {
         "total_qty": total_qty,
@@ -25,6 +27,8 @@ def _summary(
         "late_lines": max(total_lines - on_time_lines, 0),
         "otd_pct": otd_pct,
         "fulfillment_pct": fulfillment_pct,
+        "unit": unit,
+        "mixed_units": mixed_units,
     }
 
 
@@ -106,9 +110,49 @@ def test_sales_order_otd_series_consolidates_qty_and_otd_with_customer_names() -
     assert point.total_lines == 15
     assert point.fulfillment_pct == round(130.0 * 100.0 / 150.0, 2)
     assert point.otd_pct == round(12 * 100.0 / 15, 2)
+    assert point.unit == "UN"
+    assert point.mixed_units is False
 
     for call in repository.get_sales_order_otd_analysis_summary.call_args_list:
         assert call.args[0].customer_names == ["WEG Amazonia"]
+
+
+def test_sales_order_otd_series_marks_mixed_units_across_branches() -> None:
+    repository = MagicMock()
+
+    def _side_effect(request):
+        if request.branch == "01":
+            return _summary(
+                total_qty=100.0,
+                fulfilled_qty=90.0,
+                total_lines=10,
+                on_time_lines=8,
+                otd_pct=80.0,
+                fulfillment_pct=90.0,
+                unit="UN",
+            )
+        return _summary(
+            total_qty=50.0,
+            fulfilled_qty=40.0,
+            total_lines=5,
+            on_time_lines=4,
+            otd_pct=80.0,
+            fulfillment_pct=80.0,
+            unit="MI",
+        )
+
+    repository.get_sales_order_otd_analysis_summary.side_effect = _side_effect
+    use_case = GetSalesOrderOtdSeriesUseCase(sales_order_otd_repository=repository)
+    result = use_case.execute(
+        SalesOrderOtdSeriesRequest(
+            granularity="week",
+            date_start="2026-08-01",
+            date_end="2026-08-07",
+        )
+    )
+    point = result.points[0]
+    assert point.unit is None
+    assert point.mixed_units is True
 
 
 def test_sales_order_otd_series_branch_all_fetches_both_branches() -> None:

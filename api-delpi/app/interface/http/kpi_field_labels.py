@@ -202,6 +202,8 @@ COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS: dict[str, str] = {
     "group_by": "Agrupar por",
     "customer_store": "Loja cliente",
     "branch": "Filial",
+    "unit": "Unidade",
+    "mixed_units": "UMs mistas",
 }
 
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {

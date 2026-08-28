@@ -54,6 +54,32 @@ def test_list_and_line_detail_sql_expose_unit_from_c6_um() -> None:
         assert " AS unit" in sql
 
 
+def test_analysis_sql_exposes_homogeneous_or_mixed_unit() -> None:
+    from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_otd_sql import (
+        build_sales_order_otd_analysis_by_customer_sql,
+        build_sales_order_otd_analysis_summary_sql,
+    )
+
+    where_clause, _ = build_sales_order_otd_filters(
+        branch="01",
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+        customer_segment=None,
+    )
+    summary_sql, _ = build_sales_order_otd_analysis_summary_sql(
+        where_clause=where_clause,
+        reference_end_date="2026-08-14",
+    )
+    by_customer_sql, _ = build_sales_order_otd_analysis_by_customer_sql(
+        where_clause=where_clause,
+        reference_end_date="2026-08-14",
+    )
+    for sql in (summary_sql, by_customer_sql):
+        assert "C6.C6_UM" in sql
+        assert "COUNT(DISTINCT unit)" in sql
+        assert "mixed_units" in sql
+
+
 def test_build_sales_order_otd_filters_treats_branch_all_as_consolidated() -> None:
     where_all, params_all = build_sales_order_otd_filters(
         branch="all",

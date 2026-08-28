@@ -41,6 +41,18 @@ def _optional_float(value) -> Optional[float]:
         return None
 
 
+def _map_unit_aggregation(row: dict) -> dict:
+    """Homogeneous UM → unit; mixed → unit null + mixed_units true."""
+    mixed = bool(int(row.get("mixed_units") or 0))
+    if mixed:
+        return {"unit": None, "mixed_units": True}
+    raw = row.get("unit")
+    if raw is None:
+        return {"unit": None, "mixed_units": False}
+    unit = str(raw).strip()
+    return {"unit": unit or None, "mixed_units": False}
+
+
 class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
     @staticmethod
     def _filter_kwargs(request) -> dict:
@@ -108,6 +120,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             "late_lines": int(row.get("late_lines") or 0),
             "fulfillment_pct": _optional_float(row.get("fulfillment_pct")),
             "otd_pct": _optional_float(row.get("otd_pct")),
+            **_map_unit_aggregation(row),
         }
 
     def list_sales_order_otd_analysis_by_customer(
@@ -138,6 +151,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
                     "late_lines": int(row.get("late_lines") or 0),
                     "fulfillment_pct": _optional_float(row.get("fulfillment_pct")),
                     "otd_pct": _optional_float(row.get("otd_pct")),
+                    **_map_unit_aggregation(row),
                 }
             )
         return result
