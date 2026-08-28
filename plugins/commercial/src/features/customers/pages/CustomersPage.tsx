@@ -60,7 +60,7 @@ type CustomersPageProps = {
 };
 
 /**
- * Minha carteira — clientes com pedidos em aberto no escopo do vendedor.
+ * Minha carteira — todos os clientes vinculados no escopo do vendedor.
  */
 export function CustomersPage({ basePath }: CustomersPageProps) {
   const {
@@ -306,7 +306,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             hint={CM_HELP.customers.page}
           />
         }
-        description="Clientes da carteira com pedidos de venda em aberto — priorize o atendimento e abra a Conta."
+        description="Clientes vinculados à carteira — priorize o atendimento e abra a Conta."
         highlights={highlights}
         actions={
           <div className="cm-customers-page__actions">
@@ -506,8 +506,8 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
 
           {showEmptyDataset ? (
             <CommercialEmptyState
-              title="Nenhum cliente em aberto"
-              message="Não há pedidos de venda em aberto para os clientes da carteira no momento."
+              title="Nenhum cliente vinculado"
+              message="Não há clientes amarrados a esta carteira no momento. Vincule contas na Administração."
             />
           ) : null}
 

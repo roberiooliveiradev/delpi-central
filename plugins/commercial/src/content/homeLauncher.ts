@@ -91,7 +91,7 @@ export const HOME_LAUNCHER_CARDS: readonly HomeLauncherCard[] = [
   {
     id: "customers",
     title: "Minha Carteira",
-    description: "Clientes da carteira com pedidos em aberto e histórico de faturamento.",
+    description: "Clientes vinculados à carteira, com histórico de faturamento e indicadores de aberto.",
     viewId: "customers",
     requiredCap: "customers",
     tier: "primary",

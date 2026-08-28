@@ -16,7 +16,7 @@ export const CM_HELP = {
     navMyTasks: "Fila de follow-ups e tarefas atribuídas a você (atrasadas, hoje e depois).",
     navOrders: "Itens de pedidos de venda em aberto nas carteiras que você atende.",
     navCustomers:
-      "Clientes das carteiras que você atende, com pedidos em aberto e indicadores comerciais.",
+      "Clientes vinculados às carteiras que você atende, com indicadores comerciais e pedidos em aberto quando houver.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",
   },
   interactionRooms: {
@@ -265,7 +265,7 @@ export const CM_HELP = {
   },
   customers: {
     page:
-      "Clientes da carteira com pedidos de venda em aberto, agrupados por conta.",
+      "Todos os clientes vinculados à carteira, agrupados por conta. Pedidos em aberto aparecem como indicador; a lista de linhas fica em Meus pedidos.",
     kpiActive: "Clientes da carteira que têm pelo menos um pedido em aberto.",
     kpiNoSale60:
       "Clientes cuja última venda (quando disponível) foi há 60 dias ou mais — priorize reativação.",
@@ -288,7 +288,7 @@ export const CM_HELP = {
       "Compara o mesmo período filtrado deslocado −1…−3 anos em colunas agrupadas. Alinhamento por bucket em qualquer granularidade permitida.",
     filterSearch: "Busca por código, loja, nome fantasia/razão ou número de pedido.",
     filterFocus:
-      "Situação do pedido em aberto. Atenção = atraso ou atendimento parcial. Em dia = aberto sem atraso. Sem venda 60d usa a última NF quando o cadastro estiver coberto.",
+      "Recorte operacional. Atenção = atraso ou atendimento parcial. Em dia = com pedido aberto sem atraso. Sem venda 60d usa a última NF quando o cadastro estiver coberto. Todos = membership completo da carteira.",
     lateOrdersShortcut:
       "Abre Meus pedidos já filtrado em linhas com entrega atrasada (focus=late), sem novo dump TOTVS nesta tela.",
     filterTrend:

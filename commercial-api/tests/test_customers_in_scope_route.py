@@ -165,8 +165,6 @@ def test_list_customers_in_scope_empty_portfolio() -> None:
             request, seller_id=None, portfolio_id=None
         )
 
-    import json
-
     payload = json.loads(response.body.decode())
     assert payload["data"]["empty_portfolio"] is True
     assert payload["data"]["items"] == []
