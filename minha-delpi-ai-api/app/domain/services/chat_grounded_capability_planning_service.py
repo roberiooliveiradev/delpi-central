@@ -60,12 +60,19 @@ class ChatGroundedCapabilityPlanningService:
         stage = str(turn_grounding.get("stage") or "").strip()
 
         if stage == "grounded_revise_query":
+            follow_up = turn_grounding.get("followUp") if isinstance(turn_grounding, dict) else None
+            slot_delta = (
+                follow_up.get("slotDelta")
+                if isinstance(follow_up, dict) and isinstance(follow_up.get("slotDelta"), dict)
+                else {}
+            )
             revised = cls._plan_revise_last_query(
                 selection_service,
                 message=message,
                 allowed_action_ids=allowed_action_ids,
                 working_memory=working if isinstance(working, dict) else {},
                 previous_messages=previous_messages,
+                slot_delta=slot_delta,
             )
             return revised
 
@@ -277,6 +284,7 @@ class ChatGroundedCapabilityPlanningService:
         allowed_action_ids: list[str] | None,
         working_memory: dict[str, Any],
         previous_messages: list | None = None,
+        slot_delta: dict[str, Any] | None = None,
     ) -> list[dict]:
         last_action = working_memory.get("lastAction")
 
@@ -325,6 +333,12 @@ class ChatGroundedCapabilityPlanningService:
             previous_messages=previous_messages,
             base_params=base_params,
         )
+
+        delta = slot_delta if isinstance(slot_delta, dict) else {}
+        for key in ("branch", "start_date", "end_date"):
+            value = delta.get(key)
+            if value not in (None, ""):
+                merged[key] = str(value)
 
         payload = {
             "name": "execute_external_action",

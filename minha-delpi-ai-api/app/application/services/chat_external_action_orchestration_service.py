@@ -139,6 +139,12 @@ class ChatExternalActionOrchestrationService:
                 max_calls=max_calls,
             )
 
+            if cls._continuity_blocks_parallel_discovery(workspace_context):
+                return _return_planned(
+                    list(grounded_planned or []),
+                    memory_snapshot=memory_snapshot,
+                )
+
             if grounded_planned:
                 return _return_planned(grounded_planned, memory_snapshot=memory_snapshot)
 
@@ -789,6 +795,43 @@ class ChatExternalActionOrchestrationService:
             existing.add(selected_id)
 
         return merged[:merge_cap]
+
+    @classmethod
+    def _continuity_blocks_parallel_discovery(
+        cls,
+        workspace_context: dict | None,
+    ) -> bool:
+        """Consome o contrato do interpretador — sem enumerar stages."""
+        if not isinstance(workspace_context, dict):
+            return False
+
+        turn_grounding = workspace_context.get("turnGrounding")
+        if not isinstance(turn_grounding, dict):
+            return False
+
+        follow_up = turn_grounding.get("followUp")
+        if not isinstance(follow_up, dict):
+            return False
+
+        if "allowsParallelDiscovery" in follow_up:
+            return follow_up.get("allowsParallelDiscovery") is False
+
+        continuity_mode = str(follow_up.get("continuityMode") or "").strip()
+        if continuity_mode:
+            return continuity_mode != "allow_discovery"
+
+        decision = str(follow_up.get("decision") or "").strip()
+        if not decision:
+            return False
+
+        from app.domain.services.chat_follow_up_turn_content_service import (
+            ChatFollowUpTurnContentService,
+        )
+
+        return (
+            ChatFollowUpTurnContentService.continuity_mode_for_decision(decision)
+            != "allow_discovery"
+        )
 
     @classmethod
     def _resolve_product_intent(cls, message: str, normalized: str) -> str:
