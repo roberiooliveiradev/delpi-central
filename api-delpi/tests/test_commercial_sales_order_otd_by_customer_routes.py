@@ -10,6 +10,43 @@ from tests.support.route_contract_smoke import assert_envelope_meta, body_json
 _COMMERCIAL = "app.interface.http.routes.commercial.commercial_router"
 
 
+@patch(f"{_COMMERCIAL}.enrich_dashboard_metric", side_effect=lambda payload, **_: payload)
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_use_case")
+def test_get_sales_order_otd_summary_returns_meta(mock_build, _mock_enrich) -> None:
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "branch": "01",
+        "start_date": "2026-08-01",
+        "end_date": "2026-08-28",
+        "total_lines": 10,
+        "on_time_lines": 9,
+        "late_lines": 1,
+        "sales_order_otd_pct": 90.0,
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd_summary(
+        branch="01",
+        start_date="2026-08-01",
+        end_date="2026-08-28",
+        customer_segment=None,
+        customer_codes=None,
+        customer_names=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+    )
+    payload = body_json(response)
+    assert_envelope_meta(
+        payload,
+        operation_id="get_sales_order_otd_summary",
+        shape="scalar",
+        entity="sales_order_otd_summary",
+    )
+    assert payload["data"]["sales_order_otd_pct"] == 90.0
+
+
 @patch(f"{_COMMERCIAL}.build_get_sales_order_otd_by_customer_use_case")
 def test_get_sales_order_otd_by_customer_returns_meta(mock_build) -> None:
     import app.interface.http.routes.commercial.commercial_router as router_mod
