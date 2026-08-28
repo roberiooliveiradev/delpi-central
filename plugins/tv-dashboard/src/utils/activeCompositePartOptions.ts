@@ -27,6 +27,7 @@ export function listChartActivePartOptions(block: ComunicadoChartViewBlock): Act
   if (block.chartType === "gauge") {
     return [
       { value: "chartArea", label: "Área do gráfico", chartPart: { kind: "chartArea" } },
+      { value: "plotArea", label: "Área de plotagem", chartPart: { kind: "plotArea" } },
       { value: "title", label: "Título", chartPart: { kind: "title" } },
       { value: "gaugeTrack", label: "Trilha", chartPart: { kind: "gaugeTrack" } },
       { value: "gaugeFill", label: "Preenchimento", chartPart: { kind: "gaugeFill" } },

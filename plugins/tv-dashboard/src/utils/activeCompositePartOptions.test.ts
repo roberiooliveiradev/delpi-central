@@ -37,6 +37,7 @@ describe("activeCompositePartOptions", () => {
     } as never);
     expect(options.map((item) => item.value)).toEqual([
       "chartArea",
+      "plotArea",
       "title",
       "gaugeTrack",
       "gaugeFill",
