@@ -1,0 +1,109 @@
+{
+  "version": "2026.08.1",
+  "followUpDecisions": [
+    "revise_last_query",
+    "challenge_last_result",
+    "narrate_recap",
+    "clarify_slot",
+    "new_intent"
+  ],
+  "stages": {
+    "revise_last_query": "grounded_revise_query",
+    "challenge_last_result": "grounded_challenge_result",
+    "clarify_slot": "grounded_clarify_slot",
+    "narrate_recap": "grounded_narrate_recap"
+  },
+  "reviseSlotTriggers": [
+    "somente",
+    "só da",
+    "so da",
+    "só da filial",
+    "so da filial",
+    "somente da",
+    "somente da filial",
+    "desta filial",
+    "dessa filial",
+    "da filial",
+    "filial",
+    "filail",
+    "filal",
+    "unidade",
+    "branch",
+    "só filial",
+    "so filial"
+  ],
+  "challengeTriggers": [
+    "não pode ser",
+    "nao pode ser",
+    "não pode ser igual",
+    "nao pode ser igual",
+    "igual ao total",
+    "igual ao consolidado",
+    "inconsistente",
+    "parece errado",
+    "não faz sentido",
+    "nao faz sentido",
+    "está errado",
+    "esta errado",
+    "não confere",
+    "nao confere"
+  ],
+  "narrateReferenceTriggers": [
+    "isso",
+    "esse resultado",
+    "este resultado",
+    "o resultado",
+    "resuma isso",
+    "resuma o resultado",
+    "resume isso",
+    "sintetize isso",
+    "com base nisso"
+  ],
+  "branchTypos": {
+    "filail": "filial",
+    "filal": "filial",
+    "filiais": "filiais"
+  },
+  "patterns": {
+    "branchWithCode": "\\b(?:filial|filail|filal|unidade)\\s+(\\d{2})\\b",
+    "branchTriggerWithoutCode": "\\b(?:somente|s[oó]\\s+da|desta|dessa)?\\s*(?:filial|filail|filal|unidade)\\b(?!\\s*\\d{2})",
+    "periodTrigger": "\\b(deste m[eê]s|desse m[eê]s|m[eê]s atual|este m[eê]s|m[eê]s passado|semana|ano)\\b"
+  },
+  "topicSwitchMarkers": {
+    "stock": ["estoque", "saldo", "disponibilidade"],
+    "structure": ["estrutura", "bom", "composição", "composicao", "engenharia"],
+    "product": ["cadastro", "ficha do produto", "dados do produto"],
+    "purchases": ["compras", "fornecedor", "fornecedores"],
+    "quality": ["qualidade", "não conformidade", "nao conformidade", "nc "],
+    "production": ["produção", "producao", "ordem de produção", "ordem de producao", "oee"]
+  },
+  "topicSwitchExcludeWhenLastActionMarkers": {
+    "stock": ["/products/", "/stock", "estoque"],
+    "structure": ["/structure", "estrutura"],
+    "product": ["/products/"],
+    "purchases": ["/purchases", "compras"],
+    "quality": ["/quality", "qualidade"],
+    "production": ["/production", "produção", "producao"]
+  },
+  "clarifySlotPrompts": {
+    "branch": "Qual filial você quer consultar? Informe o código com dois dígitos (ex.: 01 ou 02).",
+    "period": "Qual período você quer usar? Por exemplo: este mês, mês passado ou um intervalo de datas."
+  },
+  "challengeFaithfulness": {
+    "instruction": "Responda em português brasileiro com base apenas nos fatos do último resultado e nos parâmetros da última consulta. Não peça período se já houver datas no último resultado. Se o valor parecer consolidado (sem filial) e o usuário questionar igualdade com uma unidade, explique essa hipótese e sugira filtrar por filial — sem inventar números.",
+    "suggestions": [
+      {
+        "label": "Consultar só a filial 01",
+        "query": "somente da filial 01"
+      },
+      {
+        "label": "Comparar filiais",
+        "query": "compare o rol por filial neste período"
+      }
+    ]
+  },
+  "reviseAck": {
+    "branchTemplate": "Consulta filtrada pela filial {branch}.",
+    "periodTemplate": "Período mantido: {start} a {end}."
+  }
+}

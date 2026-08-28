@@ -168,7 +168,7 @@
     "date_branch": {
       "description": "Filial, intervalo de datas, paginação e granularidade",
       "patterns": {
-        "branch": "\\bfilial\\s+(\\d{2})\\b",
+        "branch": "\\b(?:filial|filail|filal|unidade)\\s+(\\d{2})\\b",
         "all_branches": "\\b(todas as filiais|todas filiais|todas as unidades|consolidado)\\b",
         "work_center": "\\bct\\s+(\\S+)",
         "product_group": "\\bgrupo\\s+(\\d{4})\\b"
@@ -270,7 +270,7 @@
     "department_idd": {
       "description": "Departamento SI (IDD) + filial/datas para metas e realizado",
       "patterns": {
-        "branch": "\\bfilial\\s+(\\d{2})\\b",
+        "branch": "\\b(?:filial|filail|filal|unidade)\\s+(\\d{2})\\b",
         "all_branches": "\\b(todas as filiais|todas filiais|todas as unidades|consolidado)\\b",
         "department_id": "\\b(comercial|commercial|qualidade|quality|producao|produção|production|financeiro|financial|financerio|suprimentos|supplies|engenharia|engineering|egenharia|engenharria|rh|hr|recursos humanos)\\b"
       },
