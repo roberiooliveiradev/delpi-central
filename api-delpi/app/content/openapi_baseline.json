@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 694,
+  "operation_count": 696,
   "operations": [
     {
       "method": "POST",
@@ -3499,6 +3499,251 @@
     },
     {
       "method": "GET",
+      "path": "/commercial/rol/summary",
+      "operationId": "get_commercial_rol_summary",
+      "summary": "Indicador — Commercial rol summary",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_summary",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna commercial ROL summary via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
       "path": "/commercial/sales-order-otd",
       "operationId": "get_sales_order_otd",
       "summary": "Sales order otd",
@@ -6025,6 +6270,251 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna Série temporal OTD de pedidos de venda por cliente via API DELPI. Lista paginada de registros. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/summary",
+      "operationId": "get_sales_order_otd_summary",
+      "summary": "Indicador — Sales order otd summary",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "sales_order_otd_summary",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna sales order OTD summary via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
     },
     {
       "method": "GET",
