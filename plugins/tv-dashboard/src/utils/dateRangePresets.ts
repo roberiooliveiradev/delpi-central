@@ -5,10 +5,14 @@ export const PERIOD_DAYS_PARAM = "periodDays";
 
 export type DateRangePresetId =
   | "this_month"
+  | "this_month_full"
   | "this_month_until_yesterday"
   | "this_week"
+  | "this_week_full"
   | "this_quarter"
+  | "this_quarter_full"
   | "this_year"
+  | "this_year_full"
   | "today"
   | "previous_day"
   | "previous_week"
@@ -25,10 +29,14 @@ export const DATE_RANGE_PRESET_OPTIONS: Array<{ value: DateRangePresetId; label:
   { value: "today", label: "Hoje" },
   { value: "previous_day", label: "Dia anterior" },
   { value: "this_week", label: "Esta semana (até hoje)" },
+  { value: "this_week_full", label: "Esta semana" },
   { value: "this_month", label: "Este mês (até hoje)" },
+  { value: "this_month_full", label: "Este mês" },
   { value: "this_month_until_yesterday", label: "Este mês (até ontem)" },
   { value: "this_quarter", label: "Este trimestre (até hoje)" },
+  { value: "this_quarter_full", label: "Este trimestre" },
   { value: "this_year", label: "Este ano (até hoje)" },
+  { value: "this_year_full", label: "Este ano" },
   { value: "previous_week", label: "Semana passada" },
   { value: "previous_month", label: "Mês passado" },
   { value: "previous_quarter", label: "Trimestre passado" },

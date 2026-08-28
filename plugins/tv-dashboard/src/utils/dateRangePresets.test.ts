@@ -28,10 +28,14 @@ describe("dateRangePresets", () => {
   it("expõe presets relativos e personalizado", () => {
     const values = DATE_RANGE_PRESET_OPTIONS.map((item) => item.value);
     expect(values).toContain("this_month");
+    expect(values).toContain("this_month_full");
     expect(values).toContain("this_month_until_yesterday");
     expect(values).toContain("this_week");
+    expect(values).toContain("this_week_full");
     expect(values).toContain("this_quarter");
+    expect(values).toContain("this_quarter_full");
     expect(values).toContain("this_year");
+    expect(values).toContain("this_year_full");
     expect(values).toContain("previous_day");
     expect(values).toContain("previous_month");
     expect(values).toContain("previous_year");
@@ -44,5 +48,22 @@ describe("dateRangePresets", () => {
     expect(
       DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "this_month_until_yesterday")?.label,
     ).toBe("Este mês (até ontem)");
+    expect(DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "this_month_full")?.label).toBe(
+      "Este mês",
+    );
+    expect(DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "this_week_full")?.label).toBe(
+      "Esta semana",
+    );
+    expect(DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "this_quarter_full")?.label).toBe(
+      "Este trimestre",
+    );
+    expect(DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === "this_year_full")?.label).toBe(
+      "Este ano",
+    );
+    // Full vem logo após o par «até hoje».
+    const weekIdx = values.indexOf("this_week");
+    expect(values[weekIdx + 1]).toBe("this_week_full");
+    const monthIdx = values.indexOf("this_month");
+    expect(values[monthIdx + 1]).toBe("this_month_full");
   });
 });
