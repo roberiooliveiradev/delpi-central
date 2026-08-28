@@ -179,6 +179,8 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "line_item": "Item",
     "product_code": "Produto",
     "product_description": "Descrição",
+    "unit": "Unidade",
+    "mixed_units": "UMs mistas",
     "promised_date": "Data prometida",
     "invoice_date": "Data faturamento",
     "status": "Status",

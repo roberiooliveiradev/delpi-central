@@ -31,6 +31,29 @@ def test_build_sales_order_otd_filters_includes_open_lines_without_invoice_requi
     assert "C6.C6_ENTREG" in where_clause
 
 
+def test_list_and_line_detail_sql_expose_unit_from_c6_um() -> None:
+    where_clause, _ = build_sales_order_otd_filters(
+        branch="01",
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+        customer_segment=None,
+    )
+    list_sql, _ = build_sales_order_otd_lines_list_sql(
+        where_clause=where_clause,
+        request=GetSalesOrderOtdPanelRequest(page=1, page_size=20),
+        reference_end_date="2026-08-14",
+    )
+    detail_sql = build_sales_order_otd_line_detail_sql(where_clause=where_clause)
+    worst_sql, _ = build_sales_order_otd_worst_delays_sql(
+        where_clause=where_clause,
+        reference_end_date="2026-08-14",
+    )
+    for sql in (list_sql, detail_sql, worst_sql):
+        assert "C6.C6_UM" in sql
+        assert "B1.B1_UM" in sql
+        assert " AS unit" in sql
+
+
 def test_build_sales_order_otd_filters_treats_branch_all_as_consolidated() -> None:
     where_all, params_all = build_sales_order_otd_filters(
         branch="all",

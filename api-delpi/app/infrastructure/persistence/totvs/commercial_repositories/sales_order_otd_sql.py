@@ -24,6 +24,11 @@ _LIST_LINES_CTE = """
             RTRIM(LTRIM(C6.C6_ITEM)) AS line_item,
             RTRIM(LTRIM(C6.C6_PRODUTO)) AS product_code,
             RTRIM(LTRIM(B1.B1_DESC)) AS product_description,
+            COALESCE(
+                NULLIF(RTRIM(LTRIM(C6.C6_UM)), ''),
+                RTRIM(LTRIM(B1.B1_UM)),
+                ''
+            ) AS unit,
             RTRIM(LTRIM(C5.C5_CLIENTE)) AS customer_code,
             RTRIM(LTRIM(C5.C5_LOJACLI)) AS customer_store,
             COALESCE(
@@ -354,6 +359,7 @@ def _list_order_clause(request: GetSalesOrderOtdPanelRequest) -> str:
         "line_item": "line_item",
         "product_code": "product_code",
         "product_description": "product_description",
+        "unit": "unit",
         "customer_code": "customer_code",
         "customer_name": "customer_name",
         "customer_short_name": "customer_short_name",
