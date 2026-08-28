@@ -50,6 +50,38 @@ class ExternalActionGenericRouteSelectionService:
         if not ranked:
             return None
 
+        from app.application.services.external_actions.external_action_selection_read_policy_service import (
+            ExternalActionSelectionReadPolicyService,
+        )
+
+        action, ranked, read_policy_reason = ExternalActionSelectionReadPolicyService.apply(
+            ranked
+        )
+
+        if read_policy_reason == "readPolicyClarification":
+            return ExternalActionSelectionDiagnosticsService.annotate(
+                {
+                    "name": ExternalActionScoreGapClarificationService.clarification_tool_name(),
+                    "arguments": {
+                        "message": ExternalActionResponseContentService.get(
+                            "selectionReasons",
+                            "readPolicyClarification",
+                        ),
+                    },
+                    "reason": ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        "readPolicyClarification",
+                    ),
+                    "directAnswer": ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        "readPolicyClarification",
+                    ),
+                },
+                match_source="semanticFallback",
+                ranked=ranked,
+                reason_key="readPolicyClarification",
+            )
+
         clarification = ExternalActionScoreGapClarificationService.maybe_build(ranked)
         if clarification:
             return ExternalActionSelectionDiagnosticsService.annotate(
@@ -59,7 +91,8 @@ class ExternalActionGenericRouteSelectionService:
                 reason_key="scoreGapClarification",
             )
 
-        action = ranked[0]
+        if action is None:
+            return None
 
         if action.get("selectionScore") is None:
             return None
@@ -105,17 +138,27 @@ class ExternalActionGenericRouteSelectionService:
         if parameters:
             arguments["parameters"] = parameters
 
+        reason_key = read_policy_reason or "genericSemanticFallback"
         return ExternalActionSelectionDiagnosticsService.annotate(
             {
                 "name": "execute_external_action",
                 "arguments": arguments,
-                "reason": action.get("selectionReason")
-                or ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "genericSemanticFallback",
+                "reason": (
+                    ExternalActionResponseContentService.get(
+                        "selectionReasons",
+                        reason_key,
+                    )
+                    if read_policy_reason
+                    else (
+                        action.get("selectionReason")
+                        or ExternalActionResponseContentService.get(
+                            "selectionReasons",
+                            "genericSemanticFallback",
+                        )
+                    )
                 ),
             },
             match_source="semanticFallback",
             ranked=ranked,
-            reason_key="genericSemanticFallback",
+            reason_key=reason_key,
         )

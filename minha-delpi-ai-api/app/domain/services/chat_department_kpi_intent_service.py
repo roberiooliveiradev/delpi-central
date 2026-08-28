@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_message_normalization_service import (
@@ -28,14 +27,15 @@ def invalidate_department_kpi_rules_cache() -> None:
 
 
 @lru_cache(maxsize=1)
-def _rules_content() -> list[tuple[str, str, tuple[str, ...], tuple[str, ...], str]]:
+def _rules_content() -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str], ...]:
     bundle = ChatAssistantContentService.load_bundle("department_kpi_rules")
     rules = bundle.get("rules")
+    default_mode = str(bundle.get("defaultMatchMode") or "substring").strip().lower() or "substring"
 
     if not isinstance(rules, list):
         return ()
 
-    normalized_rules: list[tuple[str, str, tuple[str, ...], tuple[str, ...], str]] = []
+    normalized_rules: list[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str]] = []
 
     for rule in rules:
         if not isinstance(rule, dict):
@@ -46,6 +46,7 @@ def _rules_content() -> list[tuple[str, str, tuple[str, ...], tuple[str, ...], s
         label = str(rule.get("label") or "").strip()
         keywords = rule.get("keywords") or []
         excludes = rule.get("excludes") or []
+        match_mode = str(rule.get("matchMode") or default_mode).strip().lower() or default_mode
 
         if not domain_prefix or not path_token or not label:
             continue
@@ -57,6 +58,7 @@ def _rules_content() -> list[tuple[str, str, tuple[str, ...], tuple[str, ...], s
                 tuple(str(item).strip() for item in keywords if str(item).strip()),
                 tuple(str(item).strip() for item in excludes if str(item).strip()),
                 label,
+                match_mode,
             )
         )
 
@@ -77,22 +79,34 @@ class ChatDepartmentKpiIntentService:
         token = str(path_token or "").strip()
         if not token:
             return cls.default_match_mode()
-        bundle = ChatAssistantContentService.load_bundle("department_kpi_rules")
-        rules = bundle.get("rules")
-        if not isinstance(rules, list):
-            return cls.default_match_mode()
-        for rule in rules:
-            if not isinstance(rule, dict):
-                continue
-            if str(rule.get("pathToken") or "").strip() != token:
-                continue
-            mode = str(rule.get("matchMode") or "").strip().lower()
-            return mode or cls.default_match_mode()
+        for _domain, path, _keywords, _excludes, _label, match_mode in cls._rules():
+            if path == token:
+                return match_mode or cls.default_match_mode()
         return cls.default_match_mode()
 
     @classmethod
-    def _rules(cls) -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str], ...]:
+    def _rules(cls) -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str], ...]:
         return _rules_content()
+
+    @classmethod
+    def _keyword_score(cls, normalized: str, keywords: tuple[str, ...], match_mode: str) -> int:
+        if match_mode == "token_and":
+            score = 0
+            for keyword in keywords:
+                tokens = [
+                    ChatMessageNormalizationService.strip_accents(part)
+                    for part in keyword.split()
+                    if part
+                ]
+                if tokens and all(token in normalized for token in tokens):
+                    score += max(2, len(tokens))
+            return score
+
+        return sum(
+            2
+            for keyword in keywords
+            if ChatMessageNormalizationService.strip_accents(keyword) in normalized
+        )
 
     @classmethod
     def resolve(cls, message: str) -> DepartmentKpiMatch | None:
@@ -110,11 +124,11 @@ class ChatDepartmentKpiIntentService:
         best: DepartmentKpiMatch | None = None
         best_score = 0
 
-        for domain_prefix, path_token, keywords, excludes, label in cls._rules():
+        for domain_prefix, path_token, keywords, excludes, label, match_mode in cls._rules():
             if any(exclude in normalized for exclude in excludes):
                 continue
 
-            score = sum(2 for keyword in keywords if keyword in normalized)
+            score = cls._keyword_score(normalized, keywords, match_mode)
 
             if score <= 0:
                 continue
