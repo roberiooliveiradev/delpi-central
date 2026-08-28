@@ -361,6 +361,8 @@ export function SpeedometerGauge({
     : {};
 
   const legendRef = { kind: "legend" as const };
+  const labelRef = { kind: "gaugeLabel" as const };
+  const goalRef = { kind: "gaugeGoalMarker" as const };
   const legendRawFrame = getChartPartState(chartParts, legendRef)?.frame;
   const legendFrame =
     legendRawFrame && looksLikeAutoMaterializedFlowFrame("legend", legendRawFrame)
@@ -373,6 +375,24 @@ export function SpeedometerGauge({
     legendFrameStyle || Object.keys(legendTypography).length > 0
       ? { ...legendFrameStyle, ...legendTypography }
       : undefined;
+
+  const labelFrame = getChartPartState(chartParts, labelRef)?.frame;
+  const labelFrameStyle = gaugeLegendFrameStyle(labelFrame, labelPart.selected);
+  const labelShowResize = labelPart.selected && chartPartAllowsResize(labelRef);
+  const labelHostStyle =
+    labelFrameStyle || Object.keys(labelTextStyle).length > 0
+      ? { ...labelFrameStyle, ...labelTextStyle }
+      : labelTextStyle;
+
+  const goalFrame = getChartPartState(chartParts, goalRef)?.frame;
+  const goalFrameStyle = gaugeLegendFrameStyle(goalFrame, goalPart.selected);
+  const goalShowResize = goalPart.selected && chartPartAllowsResize(goalRef);
+  const goalHostStyle =
+    goalFrameStyle || goalCaptionStyle
+      ? { ...goalFrameStyle, ...goalCaptionStyle }
+      : undefined;
+
+  const needsRelativeHost = Boolean(legendFrame || labelFrame || goalFrame);
 
   return (
     <div
@@ -387,7 +407,7 @@ export function SpeedometerGauge({
       data-zone-danger={String(zonesResolved.dangerBelow)}
       data-interactive={interactive ? "true" : undefined}
       tabIndex={0}
-      style={legendFrame ? { position: "relative" } : undefined}
+      style={needsRelativeHost ? { position: "relative" } : undefined}
       {...tipHandlers}
     >
       <svg
@@ -600,18 +620,50 @@ export function SpeedometerGauge({
       </svg>
       {labelPart.visible && label ? (
         <p
-          className={classNames.label}
-          style={labelTextStyle}
+          className={[
+            classNames.label,
+            labelFrameStyle?.position === "absolute" ? `${classNames.root}__part--framed` : "",
+            labelPart.selected ? `${classNames.root}__part--selected` : "",
+            labelShowResize ? `${classNames.root}__part--resizable` : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={labelHostStyle}
           {...labelPart.dom}
           onPointerDown={labelPart.onPointerDown}
           onDoubleClick={labelPart.onDoubleClick}
         >
           {labelPart.content?.trim() || label}
+          <ChartPartResizeHandles
+            visible={labelShowResize}
+            onResizePointerDown={(handle, event) => {
+              interaction?.onPartResizePointerDown?.(labelRef, event, handle);
+            }}
+          />
         </p>
       ) : null}
       {goalPart.visible && goalCaption ? (
-        <p className={classNames.goal} style={goalCaptionStyle}>
+        <p
+          className={[
+            classNames.goal,
+            goalFrameStyle?.position === "absolute" ? `${classNames.root}__part--framed` : "",
+            goalPart.selected ? `${classNames.root}__part--selected` : "",
+            goalShowResize ? `${classNames.root}__part--resizable` : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={goalHostStyle}
+          {...goalPart.dom}
+          onPointerDown={goalPart.onPointerDown}
+          onDoubleClick={goalPart.onDoubleClick}
+        >
           {goalCaption}
+          <ChartPartResizeHandles
+            visible={goalShowResize}
+            onResizePointerDown={(handle, event) => {
+              interaction?.onPartResizePointerDown?.(goalRef, event, handle);
+            }}
+          />
         </p>
       ) : null}
       {legendPart.visible && showZonesLegend ? (

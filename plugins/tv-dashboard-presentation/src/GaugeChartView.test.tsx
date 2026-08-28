@@ -128,6 +128,30 @@ describe("GaugeChartView chartArea / plotArea", () => {
     expect(plot.style.background).toContain("rgb(1, 2, 3)");
   });
 
+  it("mostra handles de resize no plotArea quando selecionado", () => {
+    const onPartResizePointerDown = vi.fn();
+    const { container } = render(
+      <GaugeChartView
+        model={model}
+        options={{}}
+        chartParts={{
+          plotArea: { frame: { x: 10, y: 10, w: 80, h: 70 } },
+        }}
+        interaction={{
+          selectedPart: { kind: "plotArea" },
+          onPartPointerDown: () => undefined,
+          onPartResizePointerDown,
+        }}
+      />,
+    );
+    const plot = container.querySelector(".tdp-gauge-chart__plot") as HTMLElement;
+    expect(plot.style.left).toBe("10%");
+    expect(plot.style.width).toBe("80%");
+    expect(
+      container.querySelector('[aria-label="Redimensionar canto inferior direito"]'),
+    ).toBeTruthy();
+  });
+
   it("oculta legenda de faixas quando showLegend é false", () => {
     const { container } = render(
       <GaugeChartView model={model} options={{ showLegend: false }} />,

@@ -204,4 +204,35 @@ describe("SpeedometerGauge", () => {
       container.querySelector('[aria-label="Redimensionar canto inferior direito"]'),
     ).toBeTruthy();
   });
+
+  it("aplica frame % no rótulo e na caption da meta", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        label="OTD SC"
+        interaction={{
+          selectedPart: { kind: "gaugeLabel" },
+          onPartPointerDown: () => undefined,
+          onPartResizePointerDown: () => undefined,
+        }}
+        chartParts={{
+          gaugeLabel: { visible: true, frame: { x: 15, y: 55, w: 70, h: 12 } },
+          gaugeGoalMarker: {
+            visible: true,
+            frame: { x: 25, y: 68, w: 50, h: 10 },
+          },
+        }}
+      />,
+    );
+    const label = container.querySelector(".delpi-ui-speedometer-gauge__label") as HTMLElement;
+    expect(label.style.left).toBe("15%");
+    expect(label.style.width).toBe("70%");
+    expect(
+      container.querySelector('[aria-label="Redimensionar canto inferior direito"]'),
+    ).toBeTruthy();
+    const caption = container.querySelector(".delpi-ui-speedometer-gauge__goal") as HTMLElement;
+    expect(caption.style.left).toBe("25%");
+    expect(caption.style.top).toBe("68%");
+  });
 });

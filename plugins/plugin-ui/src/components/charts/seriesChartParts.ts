@@ -401,8 +401,8 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   gaugeZone: { movable: false, editable: false, deletable: true, resizable: false },
   gaugeNeedle: { movable: false, editable: false, deletable: true, resizable: false },
   gaugeValue: { movable: false, editable: true, deletable: true, resizable: false },
-  gaugeLabel: { movable: false, editable: true, deletable: true, resizable: false },
-  gaugeGoalMarker: { movable: false, editable: true, deletable: true, resizable: false },
+  gaugeLabel: { movable: true, editable: true, deletable: true, resizable: true },
+  gaugeGoalMarker: { movable: true, editable: true, deletable: true, resizable: true },
 };
 
 export function chartPartCapabilities(ref: ChartPartRef): ChartPartCapabilities {
