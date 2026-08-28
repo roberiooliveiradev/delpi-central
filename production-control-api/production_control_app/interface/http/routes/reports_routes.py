@@ -83,7 +83,9 @@ def get_stock_balances_email_schedule(
     except PermissionError as exc:
         return fail(str(exc), 403)
     except DelpiGatewayError as exc:
-        return fail(str(exc), 502)
+        upstream = exc.status_code if isinstance(exc.status_code, int) else None
+        status = upstream if upstream and 400 <= upstream < 600 else 502
+        return fail(str(exc), status)
     return ok(data)
 
 
@@ -109,5 +111,7 @@ def put_stock_balances_email_schedule(
     except PermissionError as exc:
         return fail(str(exc), 403)
     except DelpiGatewayError as exc:
-        return fail(str(exc), 502)
+        upstream = exc.status_code if isinstance(exc.status_code, int) else None
+        status = upstream if upstream and 400 <= upstream < 600 else 502
+        return fail(str(exc), status)
     return ok(data)
