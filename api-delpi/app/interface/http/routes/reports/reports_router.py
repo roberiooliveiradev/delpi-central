@@ -21,6 +21,7 @@ from app.composition.reports_composer import (
     build_create_report_definition_use_case,
     build_delete_report_schedule_use_case,
     build_delete_shortage_item_note_use_case,
+    build_get_personal_report_subscription_use_case,
     build_get_report_definition_use_case,
     build_get_report_run_use_case,
     build_get_report_schedule_use_case,
@@ -35,6 +36,7 @@ from app.composition.reports_composer import (
     build_replace_report_recipients_use_case,
     build_run_report_definition_use_case,
     build_update_report_definition_use_case,
+    build_upsert_personal_report_subscription_use_case,
     build_upsert_report_schedule_use_case,
     build_upsert_shortage_item_note_use_case,
 )
@@ -125,6 +127,56 @@ class UpsertScheduleBody(BaseModel):
             raise ValueError(
                 "scheduleKind deve ser daily, weekly, weekdays ou monthly"
             )
+        return text
+
+
+class UpsertPersonalSubscriptionBody(BaseModel):
+    user_id: str = Field(min_length=1, max_length=100, alias="userId")
+    email: str = Field(min_length=3, max_length=320)
+    branch: str = Field(min_length=2, max_length=2)
+    hour: int = Field(ge=0, le=23)
+    minute: int = Field(ge=0, le=59)
+    enabled: bool = True
+    timezone: str = Field(default="America/Sao_Paulo", max_length=64)
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("branch", mode="before")
+    @classmethod
+    def normalize_branch(cls, value: object) -> str:
+        text = str(value or "").strip()
+        if text not in {"01", "02"}:
+            raise ValueError("branch deve ser 01 ou 02")
+        return text
+
+
+class UpsertPersonalSubscriptionBody(BaseModel):
+    user_id: str = Field(min_length=1, max_length=100, alias="userId")
+    email: str = Field(min_length=3, max_length=320)
+    branch: str = Field(min_length=2, max_length=2)
+    hour: int = Field(ge=0, le=23)
+    minute: int = Field(ge=0, le=59)
+    enabled: bool = True
+    timezone: str = Field(default="America/Sao_Paulo", max_length=64)
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("branch", mode="before")
+    @classmethod
+    def normalize_branch(cls, value: object) -> str:
+        text = str(value or "").strip()
+        if text not in {"01", "02"}:
+            raise ValueError("branch deve ser 01 ou 02")
+        return text
+
+    @field_validator("email", "user_id", mode="before")
+    @classmethod
+    def strip_identity(cls, value: object) -> str:
+        if not isinstance(value, str):
+            raise ValueError("deve ser string")
+        text = value.strip()
+        if not text:
+            raise ValueError("não pode ser vazio")
         return text
 
 
@@ -754,6 +806,146 @@ def delete_report_shortage_item_note(
         log_error(f"Erro ao remover item-note Reports: {exc}")
         return error_response(
             "Erro interno ao remover acompanhamento.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/personal-subscriptions/{provider_key}",
+    operation_id="get_personal_report_subscription",
+)
+def get_personal_report_subscription(
+    request: Request,
+    provider_key: Annotated[str, Path(min_length=1, max_length=100)],
+    userId: Annotated[str, Query(min_length=1, max_length=100)],
+    branch: Annotated[str, Query(min_length=2, max_length=2)],
+):
+    if not request_has_valid_internal_service_token(request):
+        return error_response("Token de serviço inválido.", status_code=403)
+    try:
+        data = build_get_personal_report_subscription_use_case().execute(
+            provider_key=provider_key,
+            user_id=userId,
+            branch=branch,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="get_personal_report_subscription",
+            message="Assinatura pessoal recuperada."
+            if data is not None
+            else "Assinatura pessoal não configurada.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao obter assinatura pessoal Reports: {exc}")
+        return error_response("Erro interno ao obter assinatura.", status_code=500)
+
+
+@router.put(
+    "/personal-subscriptions/{provider_key}",
+    operation_id="upsert_personal_report_subscription",
+)
+def upsert_personal_report_subscription(
+    request: Request,
+    provider_key: Annotated[str, Path(min_length=1, max_length=100)],
+    body: Annotated[UpsertPersonalSubscriptionBody, Body(...)],
+):
+    if not request_has_valid_internal_service_token(request):
+        return error_response("Token de serviço inválido.", status_code=403)
+    try:
+        data = build_upsert_personal_report_subscription_use_case().execute(
+            provider_key=provider_key,
+            user_id=body.user_id,
+            email=body.email,
+            branch=body.branch,
+            hour=body.hour,
+            minute=body.minute,
+            enabled=body.enabled,
+            timezone_name=body.timezone,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="upsert_personal_report_subscription",
+            message="Assinatura pessoal gravada com sucesso.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao gravar assinatura pessoal Reports: {exc}")
+        return error_response("Erro interno ao gravar assinatura.", status_code=500)
+
+
+@router.get(
+    "/personal-subscriptions/{provider_key}",
+    operation_id="get_personal_report_subscription",
+)
+def get_personal_report_subscription(
+    request: Request,
+    provider_key: Annotated[str, Path(min_length=1, max_length=100)],
+    userId: Annotated[str, Query(min_length=1, max_length=100)],
+    branch: Annotated[str, Query(min_length=2, max_length=2)],
+):
+    """S2S — Portal PCP lê a agenda pessoal do usuário."""
+    if not request_has_valid_internal_service_token(request):
+        return error_response("Token de serviço interno inválido.", status_code=403)
+    try:
+        data = build_get_personal_report_subscription_use_case().execute(
+            provider_key=provider_key,
+            user_id=userId,
+            branch=branch,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="get_personal_report_subscription",
+            message="Assinatura pessoal recuperada."
+            if data is not None
+            else "Assinatura pessoal não configurada.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao obter assinatura pessoal Reports: {exc}")
+        return error_response(
+            "Erro interno ao obter assinatura pessoal.",
+            status_code=500,
+        )
+
+
+@router.put(
+    "/personal-subscriptions/{provider_key}",
+    operation_id="upsert_personal_report_subscription",
+)
+def upsert_personal_report_subscription(
+    request: Request,
+    provider_key: Annotated[str, Path(min_length=1, max_length=100)],
+    body: Annotated[UpsertPersonalSubscriptionBody, Body(...)],
+):
+    """S2S — Portal PCP cria/atualiza agenda pessoal (weekdays)."""
+    if not request_has_valid_internal_service_token(request):
+        return error_response("Token de serviço interno inválido.", status_code=403)
+    try:
+        data = build_upsert_personal_report_subscription_use_case().execute(
+            provider_key=provider_key,
+            user_id=body.user_id,
+            email=body.email,
+            branch=body.branch,
+            hour=body.hour,
+            minute=body.minute,
+            enabled=body.enabled,
+            timezone_name=body.timezone,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="upsert_personal_report_subscription",
+            message="Assinatura pessoal gravada com sucesso.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao gravar assinatura pessoal Reports: {exc}")
+        return error_response(
+            "Erro interno ao gravar assinatura pessoal.",
             status_code=500,
         )
 

@@ -106,11 +106,44 @@ def test_stock_balances_branch_01_keeps_only_prefix_9() -> None:
     assert codes == ["9001234"]
     assert payload["filters"]["warehouse"] == "01"
     assert payload["filters"]["product_code_prefixes"] == ["9"]
+    assert payload["filters"]["excluded_product_code_prefixes"] == ["9035"]
     assert payload["summary"]["product_count"] == 1
     assert payload["summary"]["total_quantity"] == 10.0
     assert payload["summary"]["total_stock_value"] == 25.0
     assert gateway.calls[0]["warehouse"] == "01"
     assert gateway.calls[0]["branch"] == "01"
+
+
+def test_stock_balances_excludes_9035_prefix() -> None:
+    gateway = FakeGateway(
+        pages=[
+            [
+                {
+                    "product_code": "90350341",
+                    "description": "Família excluída",
+                    "branch": "01",
+                    "warehouse": "01",
+                    "quantity": 7,
+                    "unit_cost": 1,
+                    "stock_value": 7,
+                },
+                {
+                    "product_code": "90260014",
+                    "description": "PA ok",
+                    "branch": "01",
+                    "warehouse": "01",
+                    "quantity": 2,
+                    "unit_cost": 3,
+                    "stock_value": 6,
+                },
+            ]
+        ]
+    )
+    service = _service(gateway)
+    payload = service.stock_balances(_user(*FULL_PERMS), branch="01")
+    codes = [row["product_code"] for row in payload["items"]]
+    assert codes == ["90260014"]
+    assert payload["summary"]["product_count"] == 1
 
 
 def test_stock_balances_branch_02_keeps_prefixes_8_and_9() -> None:
@@ -177,3 +210,51 @@ def test_reports_catalog_lists_stock_balances() -> None:
     assert catalog["reports"][0]["id"] == "stock-balances"
     assert catalog["reports"][0]["icon"] == "warehouse"
     assert catalog["reports"][0]["eyebrow"] == "Estoque"
+
+
+def test_email_schedule_defaults_when_missing() -> None:
+    class Gateway(FakeGateway):
+        def get_personal_stock_balances_subscription(self, **kwargs):
+            return {"success": True, "data": None}
+
+    user = _user(*FULL_PERMS)
+    user.id = "user-1"
+    user.email = "user@delpi.com.br"
+    service = _service(Gateway())
+    payload = service.get_email_schedule(user, branch="01")
+    assert payload["configured"] is False
+    assert payload["hour"] == 7
+    assert payload["scheduleKind"] == "weekdays"
+
+
+def test_upsert_email_schedule_maps_response() -> None:
+    class Gateway(FakeGateway):
+        def upsert_personal_stock_balances_subscription(self, **kwargs):
+            assert kwargs["branch"] == "02"
+            assert kwargs["hour"] == 8
+            return {
+                "success": True,
+                "data": {
+                    "configured": True,
+                    "definition": {"id": "def-1"},
+                    "schedule": {
+                        "scheduleKind": "weekdays",
+                        "enabled": True,
+                        "hour": 8,
+                        "minute": 15,
+                        "timezone": "America/Sao_Paulo",
+                        "nextRunAt": "2026-08-29T11:15:00+00:00",
+                        "cronExpression": "15 8 * * 1-5",
+                    },
+                },
+            }
+
+    user = _user(*FULL_PERMS)
+    user.id = "user-1"
+    user.email = "user@delpi.com.br"
+    service = _service(Gateway())
+    payload = service.upsert_email_schedule(user, branch="02", hour=8, minute=15, enabled=True)
+    assert payload["configured"] is True
+    assert payload["hour"] == 8
+    assert payload["minute"] == 15
+    assert payload["definitionId"] == "def-1"

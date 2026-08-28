@@ -130,3 +130,24 @@ class ProductionOrdersGateway(Protocol):
         sort: str = "product_code_asc",
     ) -> dict[str, Any]:
         ...
+
+    def get_personal_stock_balances_subscription(
+        self,
+        *,
+        user_id: str,
+        branch: str,
+    ) -> dict[str, Any]:
+        ...
+
+    def upsert_personal_stock_balances_subscription(
+        self,
+        *,
+        user_id: str,
+        email: str,
+        branch: str,
+        hour: int,
+        minute: int,
+        enabled: bool,
+        timezone_name: str = "America/Sao_Paulo",
+    ) -> dict[str, Any]:
+        ...

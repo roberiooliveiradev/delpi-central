@@ -1,4 +1,4 @@
-import { httpGet, httpGetBlob, httpPatch, httpPost, ppcApiUrl, unwrapEnvelope } from "./httpClient";
+import { httpGet, httpGetBlob, httpPatch, httpPost, httpPut, ppcApiUrl, unwrapEnvelope } from "./httpClient";
 import type {
   DeliveryMapPayload,
   DeliveryMapProgressPayload,
@@ -81,6 +81,52 @@ export async function fetchStockBalancesReport(params: {
     data: StockBalancesReportPayload;
   }>(ppcApiUrl(`/reports/stock-balances?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar o relatório de saldos.");
+}
+
+export type StockBalancesEmailSchedule = {
+  branch: string;
+  configured: boolean;
+  enabled: boolean;
+  hour: number;
+  minute: number;
+  timezone: string;
+  scheduleKind: string;
+  nextRunAt: string | null;
+  definitionId: string | null;
+};
+
+export async function fetchStockBalancesEmailSchedule(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<StockBalancesEmailSchedule> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: StockBalancesEmailSchedule;
+  }>(ppcApiUrl(`/reports/stock-balances/email-schedule?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível carregar o agendamento de e-mail.");
+}
+
+export async function saveStockBalancesEmailSchedule(params: {
+  branch: string;
+  hour: number;
+  minute: number;
+  enabled: boolean;
+}): Promise<StockBalancesEmailSchedule> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpPut<{
+    success: boolean;
+    message?: string;
+    data: StockBalancesEmailSchedule;
+  }>(ppcApiUrl(`/reports/stock-balances/email-schedule?${search.toString()}`), {
+    hour: params.hour,
+    minute: params.minute,
+    enabled: params.enabled,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível salvar o agendamento de e-mail.");
 }
 
 export async function fetchDemand(params: {

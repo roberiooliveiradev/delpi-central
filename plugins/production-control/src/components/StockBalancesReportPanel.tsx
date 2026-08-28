@@ -1,10 +1,11 @@
 import { createDashboardKpiCard } from "@delpi/plugin-ui/index";
-import { Boxes, Package, Wallet } from "lucide-react";
+import { Boxes, Clock, Package, Wallet } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchStockBalancesReport } from "../api/ppcApi";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 import { PpcLiquidLoading } from "./PpcLiquidLoading";
+import { PpcStockBalancesEmailSchedule } from "./PpcStockBalancesEmailSchedule";
 import { copy } from "../content/copy";
 import {
   STOCK_BALANCES_DEFAULT_FILTERS,
@@ -59,6 +60,7 @@ export function StockBalancesReportPanel({ branch, onRefreshReady }: Props) {
   });
   const [searchDraft, setSearchDraft] = useState(filters.search);
   const [exporting, setExporting] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const { data, loading, refreshing, error, reload } = useStockBalancesReport(branch, filters);
   const reports = copy.reports;
 
@@ -181,7 +183,7 @@ export function StockBalancesReportPanel({ branch, onRefreshReady }: Props) {
 
           <DataTableSection<StockBalanceLine>
             title={reports.stockBalances.tableTitle}
-            hint={reports.stockBalances.tableHint}
+            hideRecordsCount
             columns={columns}
             rows={rows}
             rowKey={(row) => `${row.branch}|${row.warehouse}|${row.product_code}`}
@@ -218,6 +220,23 @@ export function StockBalancesReportPanel({ branch, onRefreshReady }: Props) {
               label: reports.stockBalances.exportLabel,
               exportingLabel: reports.stockBalances.exportExportingLabel,
             }}
+            toolbarExtra={
+              <button
+                type="button"
+                className="ppc-table-toolbar__icon-btn"
+                aria-label={reports.stockBalances.scheduleOpenAria}
+                title={reports.stockBalances.scheduleOpenAria}
+                onClick={() => setScheduleOpen(true)}
+              >
+                <Clock size={18} strokeWidth={1.75} aria-hidden />
+              </button>
+            }
+          />
+
+          <PpcStockBalancesEmailSchedule
+            branch={branch}
+            open={scheduleOpen}
+            onClose={() => setScheduleOpen(false)}
           />
         </>
       ) : null}

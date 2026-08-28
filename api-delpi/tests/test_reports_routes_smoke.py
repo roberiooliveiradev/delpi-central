@@ -10,11 +10,13 @@ from app.interface.http.routes.reports.reports_router import (
     ReplaceRecipientsBody,
     RecipientItemBody,
     UpdateReportDefinitionBody,
+    UpsertPersonalSubscriptionBody,
     UpsertScheduleBody,
     UpsertShortageItemNoteBody,
     create_report_definition,
     delete_report_schedule,
     delete_report_shortage_item_note,
+    get_personal_report_subscription,
     get_report_definition,
     get_report_run,
     get_report_schedule,
@@ -28,6 +30,7 @@ from app.interface.http.routes.reports.reports_router import (
     replace_report_recipients,
     run_report_definition,
     update_report_definition,
+    upsert_personal_report_subscription,
     upsert_report_schedule,
     upsert_report_shortage_item_note,
 )
@@ -461,5 +464,73 @@ def test_delete_report_shortage_item_note_returns_meta(
     assert_envelope_meta(
         body_json(response),
         operation_id="delete_report_shortage_item_note",
+        shape="scalar",
+    )
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router.request_has_valid_internal_service_token",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_get_personal_report_subscription_use_case"
+)
+def test_get_personal_report_subscription_returns_meta(
+    mock_build,
+    _mock_token,
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "definition": _DEFINITION,
+        "schedule": {"scheduleKind": "weekdays", "enabled": True},
+        "configured": True,
+    }
+    mock_build.return_value = use_case
+    response = get_personal_report_subscription(
+        request=MagicMock(),
+        provider_key="stock_balances_pa",
+        userId="user-1",
+        branch="01",
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="get_personal_report_subscription",
+        shape="scalar",
+    )
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router.request_has_valid_internal_service_token",
+    return_value=True,
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_upsert_personal_report_subscription_use_case"
+)
+def test_upsert_personal_report_subscription_returns_meta(
+    mock_build,
+    _mock_token,
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "definition": _DEFINITION,
+        "schedule": {"scheduleKind": "weekdays", "enabled": True},
+        "configured": True,
+    }
+    mock_build.return_value = use_case
+    response = upsert_personal_report_subscription(
+        request=MagicMock(),
+        provider_key="stock_balances_pa",
+        body=UpsertPersonalSubscriptionBody(
+            userId="user-1",
+            email="user@delpi.com.br",
+            branch="01",
+            hour=7,
+            minute=0,
+            enabled=True,
+        ),
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="upsert_personal_report_subscription",
         shape="scalar",
     )

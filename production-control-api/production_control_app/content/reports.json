@@ -5,6 +5,7 @@
     "01": ["9"],
     "02": ["8", "9"]
   },
+  "excludedProductCodePrefixes": ["9035"],
   "onlyPositive": true,
   "defaultSort": "product_code_asc",
   "defaultPageSize": 50,

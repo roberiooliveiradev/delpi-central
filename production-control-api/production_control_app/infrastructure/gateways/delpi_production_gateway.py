@@ -323,6 +323,45 @@ class DelpiProductionGateway:
             },
         )
 
+    def get_personal_stock_balances_subscription(
+        self,
+        *,
+        user_id: str,
+        branch: str,
+    ) -> dict[str, Any]:
+        """Agenda pessoal Delpi Reports (provider stock_balances_pa) — S2S."""
+        return self._request(
+            "GET",
+            "/reports/personal-subscriptions/stock_balances_pa",
+            params={"userId": user_id, "branch": branch},
+        )
+
+    def upsert_personal_stock_balances_subscription(
+        self,
+        *,
+        user_id: str,
+        email: str,
+        branch: str,
+        hour: int,
+        minute: int,
+        enabled: bool,
+        timezone_name: str = "America/Sao_Paulo",
+    ) -> dict[str, Any]:
+        """Cria/atualiza agenda pessoal weekdays no Delpi Reports — S2S."""
+        return self._request(
+            "PUT",
+            "/reports/personal-subscriptions/stock_balances_pa",
+            json_body={
+                "userId": user_id,
+                "email": email,
+                "branch": branch,
+                "hour": hour,
+                "minute": minute,
+                "enabled": enabled,
+                "timezone": timezone_name,
+            },
+        )
+
     def _request(
         self,
         method: str,

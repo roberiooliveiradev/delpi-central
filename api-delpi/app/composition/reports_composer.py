@@ -73,6 +73,19 @@ def build_report_provider_registry() -> ReportProviderRegistry:
             logo_attachment=build_delpi_logo_report_attachment(),
         )
     )
+    from app.domain.services.reports.providers.stock_balances_pa_provider import (
+        StockBalancesPaProvider,
+    )
+    from app.infrastructure.persistence.totvs.supplies_repositories.stock_balances_query_repository import (
+        StockBalancesQueryRepository,
+    )
+
+    registry.register(
+        StockBalancesPaProvider(
+            StockBalancesQueryRepository(),
+            logo_attachment=build_delpi_logo_report_attachment(),
+        )
+    )
     return registry
 
 
@@ -226,6 +239,22 @@ def build_process_due_report_schedules_use_case():
         build_reports_repository(),
         build_run_report_definition_use_case(),
     )
+
+
+def build_get_personal_report_subscription_use_case():
+    from app.application.use_cases.reports.personal_report_subscription_use_cases import (
+        GetPersonalReportSubscriptionUseCase,
+    )
+
+    return GetPersonalReportSubscriptionUseCase(build_reports_repository())
+
+
+def build_upsert_personal_report_subscription_use_case():
+    from app.application.use_cases.reports.personal_report_subscription_use_cases import (
+        UpsertPersonalReportSubscriptionUseCase,
+    )
+
+    return UpsertPersonalReportSubscriptionUseCase(build_reports_repository())
 
 
 def build_list_shortage_item_notes_use_case():

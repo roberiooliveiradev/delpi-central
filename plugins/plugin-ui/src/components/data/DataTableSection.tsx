@@ -138,6 +138,8 @@ export type DataTableSectionProps<T> = {
   title: string;
   titleHint?: string;
   hint?: string;
+  /** Oculta o meta «N registros» no cabeçalho (quando o total já aparece na paginação/KPI). */
+  hideRecordsCount?: boolean;
   columns: DataTableColumn<T>[];
   rows: T[];
   rowKey: (row: T) => string;
@@ -300,6 +302,7 @@ export function DataTableSection<T>({
   title,
   titleHint,
   hint,
+  hideRecordsCount = false,
   columns,
   rows,
   rowKey,
@@ -622,17 +625,23 @@ export function DataTableSection<T>({
           ) : (
             <span />
           )}
-          <div className={sectionClassNames.metaGroup}>
-            {hint ? <span className={sectionClassNames.meta}>{hint}</span> : null}
-            <span className={sectionClassNames.meta}>{labels.recordsCount(paginationTotal)}</span>
-            {headerActions ? (
-              <div
-                className={`${sectionClassNames.actions} ${sectionClassNames.noPrint}`.trim()}
-              >
-                {headerActions}
-              </div>
-            ) : null}
-          </div>
+          {hint || !hideRecordsCount || headerActions ? (
+            <div className={sectionClassNames.metaGroup}>
+              {hint ? <span className={sectionClassNames.meta}>{hint}</span> : null}
+              {hideRecordsCount ? null : (
+                <span className={sectionClassNames.meta}>
+                  {labels.recordsCount(paginationTotal)}
+                </span>
+              )}
+              {headerActions ? (
+                <div
+                  className={`${sectionClassNames.actions} ${sectionClassNames.noPrint}`.trim()}
+                >
+                  {headerActions}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

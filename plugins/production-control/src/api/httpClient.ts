@@ -138,6 +138,32 @@ export async function httpPatch<T>(
   return response.json() as Promise<T>;
 }
 
+export async function httpPut<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      message = formatApiError(await response.json(), response.status);
+    } catch {
+      // keep default
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<T>;
+}
+
 export function ppcApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${PPC_API_BASE}${normalized}`;

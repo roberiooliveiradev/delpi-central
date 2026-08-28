@@ -17,7 +17,10 @@ from production_control_app.core.security import PC_REPORTS_VIEW, can
 from production_control_app.domain.errors import DelpiGatewayError
 from production_control_app.domain.ports.production_orders_gateway import ProductionOrdersGateway
 from production_control_app.domain.services.branch_access_service import BranchAccessService
-from production_control_app.domain.services.product_code_scope import product_code_matches_prefixes
+from production_control_app.domain.services.product_code_scope import (
+    product_code_excluded_by_prefixes,
+    product_code_matches_prefixes,
+)
 
 _CONTENT_PATH = Path(__file__).resolve().parents[2] / "content" / "reports.json"
 
@@ -59,8 +62,10 @@ def _float(value: Any) -> float:
 def _unwrap_data(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return {}
-    data = payload.get("data")
-    return data if isinstance(data, dict) else payload
+    if "data" in payload:
+        data = payload.get("data")
+        return data if isinstance(data, dict) else {}
+    return payload
 
 
 def _unwrap_items(payload: Any) -> list[dict[str, Any]]:
@@ -97,6 +102,40 @@ def _product_code_prefixes_for_branch(cfg: dict[str, Any], branch: str) -> list[
         if _text(item)
     ]
     return fallback or ["8", "9"]
+
+
+def _excluded_product_code_prefixes(cfg: dict[str, Any]) -> list[str]:
+    raw = cfg.get("excludedProductCodePrefixes")
+    if not isinstance(raw, list):
+        return []
+    return [_text(item) for item in raw if _text(item)]
+
+
+def _user_identity(user: object | None) -> tuple[str, str]:
+    if user is None:
+        raise PermissionError("Sessão inválida.")
+    user_id = str(getattr(user, "id", None) or "").strip()
+    email = str(getattr(user, "email", None) or "").strip()
+    if not user_id or not email or "@" not in email:
+        raise PermissionError(
+            "Não foi possível identificar usuário/e-mail para o agendamento."
+        )
+    return user_id, email
+
+
+def _hour_minute_from_cron(cron: str) -> tuple[int, int]:
+    """Cron Reports: ``minute hour …`` (ex.: ``30 7 * * 1-5``)."""
+    parts = str(cron or "").strip().split()
+    if len(parts) < 2:
+        return 7, 0
+    try:
+        minute = int(parts[0])
+        hour = int(parts[1])
+    except ValueError:
+        return 7, 0
+    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+        return 7, 0
+    return hour, minute
 
 
 class _StockBalancesSnapshotCache:
@@ -177,6 +216,7 @@ class ReportsService:
         cfg = _settings()
         warehouse = _text(cfg.get("warehouse")) or "01"
         prefixes = _product_code_prefixes_for_branch(cfg, branch)
+        excluded_prefixes = _excluded_product_code_prefixes(cfg)
         only_positive = bool(cfg.get("onlyPositive", True))
         fetch_page_size = max(1, min(int(cfg.get("fetchPageSize") or 500), 500))
         max_pages = max(1, int(cfg.get("maxFetchPages") or 40))
@@ -206,6 +246,9 @@ class ReportsService:
             item
             for item in raw_items
             if product_code_matches_prefixes(_text(item.get("product_code")), prefixes)
+            and not product_code_excluded_by_prefixes(
+                _text(item.get("product_code")), excluded_prefixes
+            )
         ]
         if needle:
             scoped = [
@@ -229,6 +272,7 @@ class ReportsService:
             "filters": {
                 "warehouse": warehouse,
                 "product_code_prefixes": prefixes,
+                "excluded_product_code_prefixes": excluded_prefixes,
                 "only_positive": only_positive,
                 "search": search.strip(),
                 "sort": resolved_sort,
@@ -256,6 +300,90 @@ class ReportsService:
                 "total": total,
                 "total_pages": max(1, (total + size - 1) // size) if total else 1,
             },
+        }
+
+    def get_email_schedule(self, user: object | None, *, branch: str) -> dict[str, Any]:
+        self._authorize(user, branch=branch)
+        user_id, _email = _user_identity(user)
+        try:
+            payload = self._gateway.get_personal_stock_balances_subscription(
+                user_id=user_id,
+                branch=branch,
+            )
+        except DelpiGatewayError:
+            raise
+        data = _unwrap_data(payload)
+        if not data:
+            return {
+                "branch": branch,
+                "configured": False,
+                "enabled": False,
+                "hour": 7,
+                "minute": 0,
+                "timezone": "America/Sao_Paulo",
+                "scheduleKind": "weekdays",
+                "nextRunAt": None,
+                "definitionId": None,
+            }
+        schedule = data.get("schedule") if isinstance(data.get("schedule"), dict) else {}
+        definition = data.get("definition") if isinstance(data.get("definition"), dict) else {}
+        hour = schedule.get("hour")
+        minute = schedule.get("minute")
+        if hour is None or minute is None:
+            cron = str(schedule.get("cronExpression") or "")
+            hour, minute = _hour_minute_from_cron(cron)
+        return {
+            "branch": branch,
+            "configured": bool(data.get("configured")),
+            "enabled": bool(schedule.get("enabled", False)),
+            "hour": int(hour if hour is not None else 7),
+            "minute": int(minute if minute is not None else 0),
+            "timezone": str(schedule.get("timezone") or "America/Sao_Paulo"),
+            "scheduleKind": str(schedule.get("scheduleKind") or "weekdays"),
+            "nextRunAt": schedule.get("nextRunAt"),
+            "definitionId": definition.get("id"),
+        }
+
+    def upsert_email_schedule(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        hour: int,
+        minute: int,
+        enabled: bool = True,
+    ) -> dict[str, Any]:
+        self._authorize(user, branch=branch)
+        user_id, email = _user_identity(user)
+        try:
+            payload = self._gateway.upsert_personal_stock_balances_subscription(
+                user_id=user_id,
+                email=email,
+                branch=branch,
+                hour=int(hour),
+                minute=int(minute),
+                enabled=bool(enabled),
+            )
+        except DelpiGatewayError:
+            raise
+        data = _unwrap_data(payload)
+        schedule = data.get("schedule") if isinstance(data.get("schedule"), dict) else {}
+        definition = data.get("definition") if isinstance(data.get("definition"), dict) else {}
+        resolved_hour = schedule.get("hour")
+        resolved_minute = schedule.get("minute")
+        if resolved_hour is None or resolved_minute is None:
+            cron = str(schedule.get("cronExpression") or "")
+            resolved_hour, resolved_minute = _hour_minute_from_cron(cron)
+        return {
+            "branch": branch,
+            "configured": True,
+            "enabled": bool(schedule.get("enabled", enabled)),
+            "hour": int(resolved_hour if resolved_hour is not None else hour),
+            "minute": int(resolved_minute if resolved_minute is not None else minute),
+            "timezone": str(schedule.get("timezone") or "America/Sao_Paulo"),
+            "scheduleKind": str(schedule.get("scheduleKind") or "weekdays"),
+            "nextRunAt": schedule.get("nextRunAt"),
+            "definitionId": definition.get("id"),
         }
 
     def _load_balances(

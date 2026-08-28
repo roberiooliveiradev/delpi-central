@@ -23,6 +23,10 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | POST | `/machine-load/transfer?branch=01\|02&productionOrder=&operationCode=&targetWorkCenter=&workCenter=` | JWT + `machine-load.view` + filial |
 | GET | `/problem-analysis?branch=01\|02` | JWT + análise + filial |
 | GET | `/problem-analysis/{detectorId}?branch=01\|02&page=&pageSize=` | JWT + análise + filial |
+| GET | `/reports?branch=01\|02` | JWT + `reports.view` + filial |
+| GET | `/reports/stock-balances?branch=&search=&sort=&page=&pageSize=&refresh=` | JWT + `reports.view` + filial |
+| GET | `/reports/stock-balances/email-schedule?branch=` | JWT + `reports.view` + filial (agenda pessoal Delpi Reports) |
+| PUT | `/reports/stock-balances/email-schedule?branch=` | JWT + `reports.view` + filial (body: hour, minute, enabled) |
 | GET | `/public/machine-load/{token}?branch=01\|02&workCenter=` | público (token do cockpit) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=01\|02` | público (PDF do PA na fila) |
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |

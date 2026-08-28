@@ -26,5 +26,11 @@ describe("Reports workspace", () => {
     assert.match(panel, /stockBalances/);
     assert.match(panel, /excelExport/);
     assert.match(panel, /downloadStockBalancesExcel/);
+    assert.match(panel, /hideRecordsCount/);
+    assert.match(panel, /PpcStockBalancesEmailSchedule/);
+    assert.match(panel, /Clock/);
+    assert.match(panel, /toolbarExtra/);
+    assert.match(panel, /scheduleOpen/);
+    assert.match(panel, /ppc-table-toolbar__icon-btn/);
   });
 });

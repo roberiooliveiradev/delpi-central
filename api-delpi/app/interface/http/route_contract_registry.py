@@ -1009,6 +1009,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "run_report_definition": RouteContract("report_run", "scalar"),
     "get_report_run": RouteContract("report_run", "scalar"),
     "process_pending_report_schedules": RouteContract("report_schedule_batch", "scalar"),
+    "get_personal_report_subscription": RouteContract(
+        "report_personal_subscription", "scalar"
+    ),
+    "upsert_personal_report_subscription": RouteContract(
+        "report_personal_subscription", "scalar"
+    ),
     "list_report_shortage_item_notes": RouteContract(
         "report_shortage_item_note", "paged_list"
     ),
