@@ -163,8 +163,15 @@ class _FakeSnapshots:
 
 
 class _FakeGateway:
-    def __init__(self, items: list[dict[str, Any]]) -> None:
+    def __init__(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        machine_load_ops: list[dict[str, Any]] | None = None,
+    ) -> None:
         self._items = items
+        self._machine_load_ops = machine_load_ops or []
+        self.machine_load_calls: list[dict[str, Any]] = []
 
     def fetch_pcp_orders_items_page(self, **kwargs: Any) -> dict[str, Any]:
         return {
@@ -173,6 +180,31 @@ class _FakeGateway:
                 "pagination": {"is_complete": True, "total_pages": 1},
             }
         }
+
+    def fetch_machine_load_operations(self, **kwargs: Any) -> dict[str, Any]:
+        self.machine_load_calls.append(dict(kwargs))
+        prefix = str(kwargs.get("production_order") or "").strip()
+        items = [
+            item
+            for item in self._machine_load_ops
+            if not prefix or str(item.get("production_order") or "").startswith(prefix)
+        ]
+        return {
+            "success": True,
+            "data": {
+                "items": items,
+                "pagination": {
+                    "page": kwargs.get("page") or 1,
+                    "page_size": kwargs.get("page_size") or 200,
+                    "total": len(items),
+                    "total_pages": 1,
+                    "is_complete": True,
+                },
+            },
+        }
+
+    def fetch_machine_load_appointment_status(self, **kwargs: Any) -> dict[str, Any]:
+        return {"success": True, "data": {"items": []}}
 
 
 def test_service_seeds_and_groups() -> None:
@@ -288,6 +320,60 @@ def test_conjunto_progress_includes_intermediary_production_orders() -> None:
     assert stats["total"] == 3
     assert stats["completed"] == 1
     assert stats["percent"] == 33
+
+
+def test_build_progress_fetches_ops_by_conjunto_including_closed() -> None:
+    from production_control_app.application.services.delivery_map_progress_cache import (
+        clear_delivery_map_progress_cache,
+    )
+
+    clear_delivery_map_progress_cache()
+    gateway = _FakeGateway(
+        [],
+        machine_load_ops=[
+            {
+                "production_order": "10840401001",
+                "operation_code": "01",
+                "production_status": "started",
+            },
+            {
+                "production_order": "10840401001",
+                "operation_code": "02",
+                "production_status": "not_started",
+            },
+            {
+                "production_order": "10840402001",
+                "operation_code": "05",
+                "production_status": "started",
+            },
+            {
+                "production_order": "10840402001",
+                "operation_code": "06",
+                "production_status": "not_started",
+            },
+            {
+                "production_order": "99999901001",
+                "operation_code": "01",
+                "production_status": "started",
+            },
+        ],
+    )
+    service = DeliveryMapService(gateway, _FakeSnapshots(), branch_access=BranchAccessService())
+    payload = service.build_progress(
+        _user(*FULL_PERMS),
+        branch="01",
+        production_orders=["10840401001"],
+    )
+
+    assert gateway.machine_load_calls
+    assert all(call.get("include_closed") is True for call in gateway.machine_load_calls)
+    assert all(call.get("production_order") == "108404" for call in gateway.machine_load_calls)
+
+    item = payload["items"]["10840401001"]
+    assert item["conjunto_key"] == "108404"
+    assert item["total"] == 4
+    assert item["completed"] == 2
+    assert item["percent"] == 50
 
 
 class _FakeDrawingLibrary:

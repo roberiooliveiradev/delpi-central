@@ -45,3 +45,13 @@ def put_delivery_map_progress_cache(
     deadline = time.monotonic() + max(0.0, float(ttl_seconds))
     with _lock:
         _CACHE[key] = (deadline, payload)
+
+
+def clear_delivery_map_progress_cache(branch: str | None = None) -> None:
+    with _lock:
+        if branch is None:
+            _CACHE.clear()
+            return
+        code = str(branch).strip()
+        for key in [item for item in _CACHE if item[0] == code]:
+            _CACHE.pop(key, None)

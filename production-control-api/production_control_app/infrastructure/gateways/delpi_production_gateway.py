@@ -180,16 +180,23 @@ class DelpiProductionGateway:
         scheduled_end: str | None = None,
         production_order: str | None = None,
         work_center: str | None = None,
+        open_only: bool | None = True,
+        include_closed: bool = False,
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
             "branch": branch,
-            "open_only": True,
             "page": page,
             "page_size": page_size,
             "sort": "schedule_asc",
         }
+        if include_closed:
+            params["include_closed"] = True
+        elif open_only is not None:
+            params["open_only"] = open_only
+        else:
+            params["open_only"] = True
         if delivery_start is not None:
             params["delivery_start"] = delivery_start
         if delivery_end is not None:

@@ -214,8 +214,9 @@ def build_base_where(
         clauses.append("LTRIM(RTRIM(OP.C2_PRODUTO)) LIKE ?")
         params.append(f"%{product_code.strip()}%")
     if production_order:
+        # Prefixo da chave H8_OP (C2_NUM / C2_OP) — não substring no meio.
         clauses.append("LTRIM(RTRIM(OA.H8_OP)) LIKE ?")
-        params.append(f"%{production_order.strip()}%")
+        params.append(f"{production_order.strip()}%")
     if tool:
         clauses.append("LTRIM(RTRIM(OA.H8_FERRAM)) = ?")
         params.append(tool.strip())

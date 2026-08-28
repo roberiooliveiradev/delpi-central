@@ -186,8 +186,16 @@ class MachineLoadFilterRequest:
         production_order: str | None = None,
         tool: str | None = None,
         open_only: bool | str | None = None,
+        include_closed: bool | str | None = None,
     ) -> MachineLoadFilterRequest:
         resolved_open = _as_bool(open_only)
+        resolved_include_closed = _as_bool(include_closed) is True
+        if resolved_include_closed:
+            effective_open: bool | None = None
+        elif resolved_open is None:
+            effective_open = True
+        else:
+            effective_open = resolved_open
         return cls(
             window=window,
             work_center=(str(work_center).strip() or None)
@@ -200,7 +208,7 @@ class MachineLoadFilterRequest:
             if production_order is not None
             else None,
             tool=(str(tool).strip() or None) if tool is not None else None,
-            open_only=True if resolved_open is None else resolved_open,
+            open_only=effective_open,
         )
 
     def filter_kwargs(self) -> dict[str, Any]:
@@ -240,6 +248,7 @@ class MachineLoadOperationsRequest(MachineLoadFilterRequest):
         production_order: str | None = None,
         tool: str | None = None,
         open_only: bool | str | None = None,
+        include_closed: bool | str | None = None,
         page: int = 1,
         page_size: int = DEFAULT_PAGE_SIZE,
         sort: str | None = None,
@@ -251,6 +260,7 @@ class MachineLoadOperationsRequest(MachineLoadFilterRequest):
             production_order=production_order,
             tool=tool,
             open_only=open_only,
+            include_closed=include_closed,
         )
         resolved_sort = (sort or DEFAULT_SORT).strip()
         if resolved_sort not in SORT_VALUES:

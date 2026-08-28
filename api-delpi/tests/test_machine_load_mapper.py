@@ -245,6 +245,14 @@ def test_operations_request_defaults_to_open_orders_and_schedule_sort() -> None:
     assert request.offset == 0
 
 
+def test_operations_request_include_closed_clears_open_only_filter() -> None:
+    request = MachineLoadOperationsRequest.from_params(
+        window=MachineLoadWindow.resolve(branch="01", today=date(2026, 8, 19)),
+        include_closed=True,
+    )
+    assert request.open_only is None
+
+
 def test_operations_request_rejects_unknown_sort() -> None:
     with pytest.raises(ValueError):
         MachineLoadOperationsRequest.from_params(

@@ -69,6 +69,8 @@ class ProductionOrdersGateway(Protocol):
         scheduled_end: str | None = None,
         production_order: str | None = None,
         work_center: str | None = None,
+        open_only: bool | None = True,
+        include_closed: bool = False,
         page: int,
         page_size: int,
     ) -> dict[str, Any]:

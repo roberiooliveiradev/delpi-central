@@ -140,10 +140,13 @@ class DeliveryMapService:
         end = today + timedelta(days=days_forward)
         return start.isoformat(), end.isoformat(), end
 
-    def _progress_delivery_window(self, *, today: date) -> tuple[str | None, str]:
-        """Janela curta só para progresso vivo — atrasadas + até N dias à frente."""
-        days_forward = max(1, delivery_map_setting_int("progressHorizonDaysForward", 5))
-        return None, (today + timedelta(days=days_forward)).isoformat()
+    def _progress_delivery_window(self, *, today: date) -> tuple[str, str]:
+        """Janela larga de entrega para progresso do conjunto (mãe + intermediários)."""
+        lookback = max(30, delivery_map_setting_int("progressLookbackDays", 730))
+        days_forward = max(1, delivery_map_setting_int("progressHorizonDaysForward", 30))
+        start = today - timedelta(days=lookback)
+        end = today + timedelta(days=days_forward)
+        return start.isoformat(), end.isoformat()
 
     def _pull_orders(self, *, branch: str, today: date) -> tuple[list[dict[str, Any]], date]:
         delivery_start, delivery_end, horizon_end = self._delivery_window(today=today)
@@ -500,6 +503,7 @@ class DeliveryMapService:
         delivery_end: str | None = None,
         scheduled_start: str | None = None,
         scheduled_end: str | None = None,
+        include_closed: bool = False,
     ) -> list[dict[str, Any]]:
         page_size = max(1, min(delivery_map_setting_int("pageSize", 200), 200))
         page = 1
@@ -515,6 +519,7 @@ class DeliveryMapService:
                     scheduled_end=scheduled_end,
                     production_order=production_order,
                     work_center=None,
+                    include_closed=include_closed,
                     page=page,
                     page_size=page_size,
                 )
@@ -543,23 +548,27 @@ class DeliveryMapService:
         conjunto_keys: set[str],
         today: date,
     ) -> list[dict[str, Any]]:
-        """Operações SH8 do conjunto (PA mãe + intermediários), uma varredura paginada."""
+        """Operações SH8 do conjunto (PA mãe + intermediários), por C2_NUM.
+
+        Busca dedicada por prefixo da OP (inclui OPs já encerradas) — não depende
+        da janela curta da grade nem de ``open_only``.
+        """
         if not conjunto_keys:
             return []
 
         delivery_start, delivery_end = self._progress_delivery_window(today=today)
         deduped: dict[tuple[str, str], dict[str, Any]] = {}
 
-        for item in self._paginate_machine_load_operations(
-            branch=branch,
-            delivery_start=delivery_start,
-            delivery_end=delivery_end,
-        ):
-            order = item.get("production_order")
-            for conjunto_key in conjunto_keys:
-                if order_belongs_to_conjunto(order, conjunto_key):
+        for conjunto_key in sorted(conjunto_keys):
+            for item in self._paginate_machine_load_operations(
+                branch=branch,
+                production_order=conjunto_key,
+                delivery_start=delivery_start,
+                delivery_end=delivery_end,
+                include_closed=True,
+            ):
+                if order_belongs_to_conjunto(item.get("production_order"), conjunto_key):
                     deduped[operation_key(item)] = item
-                    break
 
         return list(deduped.values())
 

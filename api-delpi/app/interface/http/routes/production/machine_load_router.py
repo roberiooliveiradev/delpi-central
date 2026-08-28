@@ -136,6 +136,7 @@ class MachineLoadCommonQuery:
         production_order: str | None = None,
         tool: str | None = None,
         open_only: bool | None = None,
+        include_closed: bool | None = None,
     ) -> None:
         self.branch = branch
         self.scheduled_start = scheduled_start
@@ -147,6 +148,7 @@ class MachineLoadCommonQuery:
         self.production_order = production_order
         self.tool = tool
         self.open_only = open_only
+        self.include_closed = include_closed
 
 
 def machine_load_common_query(
@@ -197,6 +199,13 @@ def machine_load_common_query(
         default=None,
         description="When true (default), only open orders (C2_QUANT > C2_QUJE).",
     ),
+    include_closed: Optional[bool] = Query(
+        default=None,
+        description=(
+            "When true, includes open and closed orders (ignores open_only). "
+            "Used for conjunto progress across intermediary OPs."
+        ),
+    ),
 ) -> MachineLoadCommonQuery:
     return MachineLoadCommonQuery(
         branch=branch,
@@ -209,6 +218,7 @@ def machine_load_common_query(
         production_order=production_order,
         tool=tool,
         open_only=open_only,
+        include_closed=include_closed,
     )
 
 
@@ -255,6 +265,7 @@ def get_production_machine_load_work_centers(
             production_order=common.production_order,
             tool=common.tool,
             open_only=common.open_only,
+            include_closed=common.include_closed,
         )
         result = build_get_production_machine_load_work_centers_use_case().execute(
             request
@@ -300,6 +311,7 @@ def get_production_machine_load_operations(
             production_order=common.production_order,
             tool=common.tool,
             open_only=common.open_only,
+            include_closed=common.include_closed,
             page=page,
             page_size=page_size,
             sort=sort,

@@ -65,6 +65,21 @@ def test_open_only_false_returns_closed_orders() -> None:
     assert "OP.C2_QUANT <= OP.C2_QUJE" in query
 
 
+def test_open_only_none_skips_open_closed_filter() -> None:
+    query, _ = sql.build_operations_count_query(**_filters(open_only=None))
+    assert "OP.C2_QUANT > OP.C2_QUJE" not in query
+    assert "OP.C2_QUANT <= OP.C2_QUJE" not in query
+
+
+def test_production_order_filter_uses_prefix_like() -> None:
+    query, params = sql.build_operations_count_query(
+        **_filters(production_order="108404")
+    )
+    assert "LTRIM(RTRIM(OA.H8_OP)) LIKE ?" in query
+    assert "108404%" in params
+    assert "%108404%" not in params
+
+
 def test_window_filter_uses_h8_dtini() -> None:
     query, params = sql.build_operations_count_query(**_filters(branch=None))
     assert "OA.H8_DTINI >= ?" in query
@@ -216,7 +231,7 @@ def test_optional_filters_append_params_in_order() -> None:
         "01",
         "CT-02",
         "%9026%",
-        "%24640401002%",
+        "24640401002%",
         "23-B31",
     )
 
