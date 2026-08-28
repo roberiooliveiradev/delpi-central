@@ -9,6 +9,9 @@ from app.domain.ports.financial.financial_query_repository_port import Financial
 from app.domain.services.commercial_analysis_filter_service import (
     CommercialAnalysisFilterService,
 )
+from app.domain.services.commercial.commercial_rol_return_sql import (
+    CommercialRolReturnSql,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -132,16 +135,14 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                         AND EXISTS (
                             SELECT 1
                             FROM SD1010 D1X WITH (NOLOCK)
+                            {CommercialRolReturnSql.tes_join(d1_alias="D1X", f4_alias="F4X", with_nolock=True)}
                             WHERE
                                 D1X.D_E_L_E_T_ = ''
                                 AND D1X.D1_FILIAL  = D2.D2_FILIAL
                                 AND D1X.D1_FORNECE = D2.D2_CLIENTE
                                 AND D1X.D1_LOJA    = D2.D2_LOJA
                                 AND {exists_where}
-                                AND (
-                                    D1X.D1_CF IN ('1201', '2201')
-                                    OR D1X.D1_TIPO = 'D'
-                                )
+                                AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1X", f4_alias="F4X")}
                         )
                     )
 
@@ -171,12 +172,10 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 ON  A1D.D_E_L_E_T_ = ''
                 AND A1D.A1_COD  = D1.D1_FORNECE
                 AND A1D.A1_LOJA = D1.D1_LOJA
+            {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
 
             WHERE {dev_where}
-                AND (
-                    D1.D1_CF IN ('1201', '2201')
-                    OR D1.D1_TIPO = 'D'
-                )
+                AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
         )
 
         SELECT

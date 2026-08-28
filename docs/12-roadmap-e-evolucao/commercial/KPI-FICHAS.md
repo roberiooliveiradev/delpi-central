@@ -44,7 +44,7 @@ Legenda de status da ficha: `rascunho` · `em_validacao` · `aprovada` · `bloqu
 | Analogia de mercado | **Billings / receita faturada** no período (não é backlog; não é book-to-bill) |
 | Numerador | Valor líquido de vendas (− impostos listados) menos devoluções no período |
 | Denominador (meta) | Meta SI `comparable_goal` (período) com **proporcional diária**; `goal_value` = cadastrada; `reference_goal` = «Meta mês» (standard = cadastrada; curva = média dos meses do filtro); % em mês incompleto = sum diária; YTD % = average; flags `goal_aggregation` / `goal_period_kind` / `goal_period_partial` via enrich api-delpi |
-| Inclusões / exclusões (SQL) | Inclui TES com `F4_DUPLIC='S'` (padrão); exclui `D2_TIPO='D'`; CF `5911`/`6151` com exceções; remessa especial `5927` conforme regras SF4. Segmento WEG = cliente `000001`; novos negócios = não-WEG |
+| Inclusões / exclusões (SQL) | Inclui TES com `F4_DUPLIC='S'` (padrão); exclui `D2_TIPO='D'`; CF `5911`/`6151` com exceções; remessa especial `5927` conforme regras SF4. **Devolução SD1:** CF `1201`/`2201` **ou** (`D1_TIPO='D'` **e** `F4_DUPLIC='S'`) — exclui entrada de material/beneficiamento sem duplicata (ex.: TES «ENTRADA MAT FALTANTE»). Segmento WEG = cliente `000001`; novos negócios = não-WEG |
 | Fonte | api-delpi `get_financial_rol`, `get_*_rol_target_pct`, `get_commercial_rol_series`; BFF commercial-api `/analytics/*`; SQL: `api-delpi/app/infrastructure/persistence/totvs/financial_repositories/financial_repository.py` |
 | Freshness | Conforme cache/query TOTVS do período filtrado |
 | Filtros válidos | `branch` / unidade, `start_date`, `end_date`, `customer_segment`, escopo carteira (via BFF) |

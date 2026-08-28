@@ -9,6 +9,9 @@ from app.domain.services.commercial_customer_segment_service import (
 from app.domain.services.commercial_customer_codes_filter_service import (
     CommercialCustomerCodesFilterService,
 )
+from app.domain.services.commercial.commercial_rol_return_sql import (
+    CommercialRolReturnSql,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -123,16 +126,14 @@ class NewBusinessRolPctRepository(BaseRepository, NewBusinessRolPctRepositoryPor
                             AND EXISTS (
                                 SELECT 1
                                 FROM SD1010 D1X
+                                {CommercialRolReturnSql.tes_join(d1_alias="D1X", f4_alias="F4X")}
                                 WHERE
                                     D1X.D_E_L_E_T_ = ''
                                     AND D1X.D1_FILIAL  = D2.D2_FILIAL
                                     AND D1X.D1_FORNECE = D2.D2_CLIENTE
                                     AND D1X.D1_LOJA    = D2.D2_LOJA
                                     AND {exists_where}
-                                    AND (
-                                        D1X.D1_CF IN ('1201', '2201')
-                                        OR D1X.D1_TIPO = 'D'
-                                    )
+                                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1X", f4_alias="F4X")}
                             )
                         )
 
@@ -162,12 +163,10 @@ class NewBusinessRolPctRepository(BaseRepository, NewBusinessRolPctRepositoryPor
                     )) AS VLR_DEVOLUCAO
 
                 FROM SD1010 D1
+                {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D")}
 
                 WHERE {dev_where}
-                    AND (
-                        D1.D1_CF IN ('1201', '2201')
-                        OR D1.D1_TIPO = 'D'
-                    )
+                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
 
                 GROUP BY D1.D1_FILIAL, D1.D1_FORNECE, D1.D1_LOJA
             ),
