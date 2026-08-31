@@ -3380,6 +3380,68 @@ FLOW_FAMILY_MATRIX_CASES = [
         },
     },
     {
+        "id": "FF-CONT-PREV-PERIOD-01",
+        "family": "follow_up_turn",
+        "message": "comparar com o período anterior",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "rowCount": 1,
+                "preview": "ROL consolidado: R$ 655.120,74",
+            },
+            "lastAction": {
+                "path": "/financial/rol",
+                "apiRouteDomain": "financial_kpi",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "28-08-2026",
+                    "branch": "all",
+                },
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "continuity_mode": "consume_last_action",
+            "allows_parallel_discovery": False,
+            "slot_delta_period": "previous_period",
+            "grounded_stage": "grounded_revise_query",
+            "product_codes": [],
+        },
+    },
+    {
+        "id": "FF-CONT-BRANCH-COMPARE-01",
+        "family": "follow_up_turn",
+        "message": "comparar filial 01 com filial 02",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "ROL do mês",
+                "rowCount": 1,
+                "preview": "ROL consolidado: R$ 655.120,74",
+            },
+            "lastAction": {
+                "path": "/financial/rol",
+                "apiRouteDomain": "financial_kpi",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "28-08-2026",
+                    "branch": "all",
+                },
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "revise_last_query",
+            "continuity_mode": "consume_last_action",
+            "allows_parallel_discovery": False,
+            "slot_delta_compare_axis": "branch",
+            "slot_delta_baseline_branch": "01",
+            "slot_delta_branch": "02",
+            "grounded_stage": "grounded_revise_query",
+            "product_codes": [],
+        },
+    },
+    {
         "id": "FF-CONT-KPI-TOKEN-AND-01",
         "family": "follow_up_turn",
         "message": "qual o percentual de rol de novos negócios da empresa?",

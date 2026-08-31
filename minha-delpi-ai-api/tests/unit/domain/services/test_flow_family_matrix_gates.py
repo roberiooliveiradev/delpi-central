@@ -161,6 +161,16 @@ def test_flow_family_matrix_gates(case: dict):
         if "slot_delta_period" in expects:
             assert interpretation.slot_delta.get("period") == expects["slot_delta_period"]
 
+        if "slot_delta_compare_axis" in expects:
+            assert interpretation.slot_delta.get("compareAxis") == expects[
+                "slot_delta_compare_axis"
+            ]
+
+        if "slot_delta_baseline_branch" in expects:
+            assert interpretation.slot_delta.get("baseline_branch") == expects[
+                "slot_delta_baseline_branch"
+            ]
+
         if "slot_delta_start_date" in expects:
             assert interpretation.slot_delta.get("start_date") == expects["slot_delta_start_date"]
 
