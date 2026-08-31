@@ -58,13 +58,13 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | P-CART-KPI | Carteira consolidada valor/itens | **Existe** | BFF `GET /analytics/open-portfolio-summary` + card Overview | MAPA · KPI-CARTEIRA |
 | P-CART-ROL | Soma ROL + carteira (uma métrica) | **Bloqueado** | UI/KPI único **proibido**; lado a lado **Existe** | MAPA §5.3 · KPI-ROL-CARTEIRA · § Bloqueado |
 | P-CART-HORIZ | Glossário aberto × faturado | **Existe** | `CM_HELP.*.glossaryOpenVsBilled` + horizon | FOLLOWUP · KPI-CARTEIRA-HORIZON |
-| P-BRUTO-LIQ | Toggle bruto inventado (sem contrato) | **Bloqueado** | Rótulo «ROL líquido» OK; série gross sem BFF = não | MAPA · § Bloqueado |
+| P-BRUTO-LIQ | Toggle bruto/líquido na Minha Carteira | **Entregue** | `nature=gross\|net` (api-delpi + BFF); MFE `?billingNature=` + SegmentToggle; default **gross** | MAPA · KPI-ROL · API-ROUTES |
 | P-POSTERG | UX postergado vs disponível | **Existe** | BFF `availability` + `?postponed=1` · [pedido-venda-postergacao.md](../../../api-delpi/docs/api/padroes-totvs/pedido-venda-postergacao.md) | Playbook #4 |
 | P-CART-PCP | Distinguir carteira × PCP | **Existe** | Copy Overview + `overviewMetricsCatalog` / helps | Playbook #4 |
 | P-PROJ | Projeção / FCT | **Fora** | Não está nas atas como segundo número de meta (metas SI já cobrem). MVP declarado removido. | Forecast F6 (backlog) |
 | P-SHARE | % empresa (carteira ÷ empresa) | **Existe** | BFF `portfolio-billing-share` + cards Overview/Carteira (RBAC) | FOLLOWUP T3 |
 
-**W1:** P-PROJ **Fora** (FCT declarado removido — não estava nas atas). **Bloqueado:** P-CART-ROL, P-BRUTO-LIQ (toggle). P-POSTERG **Existe**.
+**W1:** P-PROJ **Fora** (FCT declarado removido — não estava nas atas). **Bloqueado:** P-CART-ROL. P-BRUTO-LIQ **Entregue**. P-POSTERG **Existe**.
 
 ---
 
@@ -138,7 +138,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | ID | Tema | Motivo (diretriz / doc) | Desbloqueio |
 |----|------|-------------------------|-------------|
 | P-CART-ROL | Soma ROL + carteira (KPI/UI único) | KPI-FICHAS «Proibido somar»; gate ficha; clean-architecture | Ficha `KPI-ROL-CARTEIRA` **aprovada** + base única |
-| P-BRUTO-LIQ | Toggle/série bruto inventada | Sem contrato BFF; totvs-product-patterns / centralized-rules | Rota nature `gross` no commercial-api |
+| ~~P-BRUTO-LIQ~~ | ~~Toggle/série bruto inventada~~ | **Entregue** — contrato `nature` + toggle Minha Carteira | Ver inventário W1 |
 | P-CLI-ATIVO / P-CLI-CLASS | Badges classificação KPI | Playbook P0 até ficha; KPI-FICHAS | Ficha `em_validacao`/`aprovada` |
 | KPI-TICKET | Ticket médio no cockpit | Ficha bloqueada Onda A | Unidade + bruto/líquido homologados |
 | P-HIST-NEG (margem) / rentabilidade | Margem na Conta / relatório | FIN-004; bounded-context | Política + RBAC + auditoria |

@@ -123,12 +123,21 @@ o MFE:
 | `sort` | Ordenação allowlisted da carteira |
 | `dir=asc\|desc` | Direção da ordenação |
 | `page` | Página da lista em memória |
+| `panel=billing\|ranking\|customers` | Painel ativo (Faturamento / Ranking / Clientes) |
+| `billingNature=gross\|net` | Natureza do faturamento (default **gross**, omitido na URL); Fat.12m, tendência, série, ranking e share |
 
-Somente `q`, `focus`, `trend`, `seller_id`, `sort`, `dir` e `page` são
-preservados ao abrir e retornar do detalhe. Valores inválidos são removidos, e
-os defaults `focus=all` / `trend=all` são omitidos da URL. `focus=growth` legado
+Somente `q`, `focus`, `trend`, `seller_id`, `sort`, `dir`, `page`, `panel` e
+`billingNature` são preservados ao abrir e retornar do detalhe. Valores inválidos
+são removidos, e os defaults `focus=all` / `trend=all` / `billingNature=gross` /
+`panel=customers` são omitidos da URL. `focus=growth` legado
 vira `trend=up`; `focus=inactive` vira `all`. O contrato canônico está em
 [`src/utils/customersListDeepLink.ts`](./src/utils/customersListDeepLink.ts).
+
+**Bruto × líquido (P-BRUTO-LIQ):** SegmentToggle «Natureza do faturamento» na
+Minha Carteira. Líquido = fórmula ROL; bruto na série/Fat.12m = valor de NF;
+bruto em share/ranking = `gross_revenue`. O MFE só habilita o toggle quando o
+contrato declara `supportedNatures` com gross e net
+([`src/content/billingNature.ts`](./src/content/billingNature.ts)).
 
 As colunas visíveis por padrão seguem o WF-03R: Cliente, Última venda,
 Fat. 12 meses, Tendência, Status, Em aberto, Atrasos e Próxima entrega.
