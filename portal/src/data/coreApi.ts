@@ -31,6 +31,7 @@ export interface RouteItem {
 
   entry?: string;
   showInMenu?: boolean;
+  openInNewTab?: boolean;
   order?: number;
 }
 

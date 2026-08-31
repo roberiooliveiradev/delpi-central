@@ -1,6 +1,10 @@
 import "./AppLauncherCard.css";
 import { Package, ChevronDown, ChevronUp, Pin } from "lucide-react";
 import { resolveIcon } from "../utils/iconResolver";
+import {
+  openRouteInNewTab,
+  resolveRouteOpenUrl,
+} from "../utils/routeOpenNavigation";
 import { useLocation } from "react-router-dom";
 import { useAppLauncherReorder } from "./AppLauncherReorderList";
 import {
@@ -19,7 +23,9 @@ type RouteItem = {
   path: string;
   label?: string | null;
   icon?: string | null;
+  entry?: string | null;
   showInMenu?: boolean;
+  openInNewTab?: boolean;
 };
 
 type AppItem = {
@@ -182,33 +188,35 @@ export const AppLauncherCard = ({
 
   const activateMain = () => {
     if (isSidebar && hasMultipleRoutes) {
-      const path =
-        defaultPath ??
-        visibleRoutes[0]?.path ??
-        routes[0]?.path ??
+      const route =
+        visibleRoutes[0] ??
+        routes[0] ??
         null;
 
-      if (path) {
+      if (route) {
         if (!isOpen) {
           onToggleOpen?.(app.id);
         }
-        markAppRouteNavigationIntent(app.id, path);
-        onGoToRoute(path);
+        if (route.openInNewTab) {
+          openRouteInNewTab(route);
+          return;
+        }
+        markAppRouteNavigationIntent(app.id, route.path);
+        onGoToRoute(route.path);
       }
 
       return;
     }
 
     if (!hasMultipleRoutes) {
-      if (visibleRoutes[0]) {
-        markAppRouteNavigationIntent(app.id, visibleRoutes[0].path);
-        onGoToRoute(visibleRoutes[0].path);
-        return;
-      }
-
-      if (routes[0]) {
-        markAppRouteNavigationIntent(app.id, routes[0].path);
-        onGoToRoute(routes[0].path);
+      const route = visibleRoutes[0] ?? routes[0] ?? null;
+      if (route) {
+        if (route.openInNewTab) {
+          openRouteInNewTab(route);
+          return;
+        }
+        markAppRouteNavigationIntent(app.id, route.path);
+        onGoToRoute(route.path);
         return;
       }
 
@@ -230,7 +238,7 @@ export const AppLauncherCard = ({
 
   const handleRouteClick = (
     event: React.MouseEvent<HTMLAnchorElement>,
-    path: string,
+    route: RouteItem,
   ) => {
     event.stopPropagation();
 
@@ -239,8 +247,14 @@ export const AppLauncherCard = ({
     }
 
     event.preventDefault();
-    markAppRouteNavigationIntent(app.id, path);
-    onGoToRoute(path);
+
+    if (route.openInNewTab) {
+      openRouteInNewTab(route);
+      return;
+    }
+
+    markAppRouteNavigationIntent(app.id, route.path);
+    onGoToRoute(route.path);
   };
 
   const handleRoutePointerDown = (
@@ -354,11 +368,16 @@ export const AppLauncherCard = ({
         visibleRoutes,
       );
       const isNavigated = routeNavigation.activatedRoutePath === routePath;
+      const href = route.openInNewTab
+        ? resolveRouteOpenUrl(route)
+        : route.path;
 
       return (
         <a
           key={route.path}
-          href={route.path}
+          href={href}
+          target={route.openInNewTab ? "_blank" : undefined}
+          rel={route.openInNewTab ? "noopener noreferrer" : undefined}
           className={[
             isSidebar ? "sidebar-inline-route" : "launcher-inline-route",
             isActive ? "active" : "",
@@ -366,7 +385,7 @@ export const AppLauncherCard = ({
           ]
             .filter(Boolean)
             .join(" ")}
-          onClick={(event) => handleRouteClick(event, route.path)}
+          onClick={(event) => handleRouteClick(event, route)}
           onPointerDown={handleRoutePointerDown}
           aria-current={isActive ? "page" : undefined}
           tabIndex={routesPanelExpanded ? undefined : -1}
@@ -376,6 +395,14 @@ export const AppLauncherCard = ({
         </a>
       );
     });
+
+  const mainOpenRoute =
+    !hasMultipleRoutes ? visibleRoutes[0] ?? routes[0] ?? null : null;
+  const mainHref =
+    mainOpenRoute?.openInNewTab
+      ? resolveRouteOpenUrl(mainOpenRoute)
+      : (defaultPath ?? "#");
+  const mainOpensInNewTab = Boolean(mainOpenRoute?.openInNewTab);
 
   return (
     <div
@@ -421,7 +448,9 @@ export const AppLauncherCard = ({
       ) : null}
 
       <a
-        href={defaultPath ?? "#"}
+        href={mainHref}
+        target={mainOpensInNewTab ? "_blank" : undefined}
+        rel={mainOpensInNewTab ? "noopener noreferrer" : undefined}
         className={mainClassName}
         draggable={isReorderable ? false : undefined}
         onClick={handleMainClick}
