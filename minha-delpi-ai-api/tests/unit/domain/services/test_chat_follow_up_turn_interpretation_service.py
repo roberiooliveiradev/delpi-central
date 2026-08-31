@@ -140,6 +140,47 @@ def test_revise_previous_year_same_range_consumes_last_action():
     assert meta["allowsParallelDiscovery"] is False
 
 
+def test_revise_previous_period_consumes_last_action():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="comparar com o período anterior",
+        last_action={
+            **_ROL_ACTION,
+            "params": {
+                "start_date": "01-08-2026",
+                "end_date": "28-08-2026",
+                "branch": "all",
+            },
+        },
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.continuity_mode == "consume_last_action"
+    assert result.requires_last_action_reexec()
+    assert result.slot_delta.get("period") == "previous_period"
+    assert result.slot_delta.get("baseline_start_date") == "01-08-2026"
+    assert result.slot_delta.get("start_date")
+    assert result.slot_delta.get("end_date")
+
+
+def test_revise_branch_compare_sets_compare_axis():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="comparar filial 01 com filial 02",
+        last_action={
+            **_ROL_ACTION,
+            "params": {
+                "start_date": "01-08-2026",
+                "end_date": "28-08-2026",
+                "branch": "all",
+            },
+        },
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("compareAxis") == "branch"
+    assert result.slot_delta.get("baseline_branch") == "01"
+    assert result.slot_delta.get("branch") == "02"
+
+
 def test_revise_deste_mes_overrides_inherited_yoy_dates():
     """«deste mês» deve resolver calendário da mensagem, não herdar 2025 do lastAction."""
     result = ChatFollowUpTurnInterpretationService.interpret(
