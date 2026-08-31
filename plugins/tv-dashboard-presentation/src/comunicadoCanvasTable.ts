@@ -252,6 +252,41 @@ export function inferCanvasTableCellFromText(text: string): CanvasTableCell {
   return { kind: "text", text };
 }
 
+/**
+ * Commit de texto no blur — infere kind/value mas **preserva** style/binding/format.
+ * Causa raiz: `inferCanvasTableCellFromText` sozinho apagava o fundo ao editar.
+ */
+export function commitCanvasTableCellText(
+  prev: CanvasTableCell | unknown,
+  raw: string,
+): CanvasTableCell {
+  const previous = normalizeCanvasTableCell(prev);
+  const inferred = inferCanvasTableCellFromText(raw);
+  const next: CanvasTableCell = { ...inferred };
+
+  if (previous.style && Object.keys(previous.style).length) {
+    next.style = { ...previous.style };
+  }
+  if (previous.dataRef) next.dataRef = previous.dataRef;
+  if (previous.dataSourceId) next.dataSourceId = previous.dataSourceId;
+  if (previous.displayFormat) next.displayFormat = previous.displayFormat;
+
+  if (inferred.kind === "number") {
+    next.format = previous.format ?? inferred.format ?? "decimal";
+  }
+
+  if (
+    inferred.kind === "text" &&
+    previous.kind === "text" &&
+    previous.contentRuns?.length &&
+    canvasTableCellPlainText(previous) === (inferred.text ?? "")
+  ) {
+    next.contentRuns = previous.contentRuns;
+  }
+
+  return next;
+}
+
 export function mergeCanvasTableOptions(
   options?: CanvasTableOptions | null,
 ): Required<

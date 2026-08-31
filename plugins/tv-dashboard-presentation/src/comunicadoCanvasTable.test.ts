@@ -14,6 +14,7 @@ import {
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
   resolveCanvasTableFontSize,
+  commitCanvasTableCellText,
 } from "./comunicadoCanvasTable";
 import {
   applyComplexBlockFrameWithTypography,
@@ -79,6 +80,40 @@ describe("canvas_table", () => {
     const spark = inferCanvasTableCellFromText("1 2 3 4 5 6");
     expect(spark.kind).toBe("sparkline");
     expect(spark.series?.length).toBe(6);
+  });
+
+  it("commit de texto preserva style, binding e format", () => {
+    const painted = normalizeCanvasTableCell({
+      kind: "text",
+      text: "WEG",
+      style: { backgroundColor: "#003366", color: "#fff", textAlign: "center" },
+      dataRef: { field: "customer_name" },
+      dataSourceId: "src-1",
+    });
+    const next = commitCanvasTableCellText(painted, "META WEG");
+    expect(next.kind).toBe("text");
+    expect(next.text).toBe("META WEG");
+    expect(next.style).toEqual({
+      backgroundColor: "#003366",
+      color: "#fff",
+      textAlign: "center",
+    });
+    expect(next.dataRef).toEqual({ field: "customer_name" });
+    expect(next.dataSourceId).toBe("src-1");
+
+    const numbered = normalizeCanvasTableCell({
+      kind: "number",
+      value: 10,
+      format: "percent",
+      style: { backgroundColor: "#111" },
+      displayFormat: { category: "percent", decimalPlaces: 1 },
+    });
+    const asNumber = commitCanvasTableCellText(numbered, "42,5");
+    expect(asNumber.kind).toBe("number");
+    expect(asNumber.value).toBe(42.5);
+    expect(asNumber.format).toBe("percent");
+    expect(asNumber.style?.backgroundColor).toBe("#111");
+    expect(asNumber.displayFormat).toEqual({ category: "percent", decimalPlaces: 1 });
   });
 
   it("presets de design aplicam banded/header/border", () => {

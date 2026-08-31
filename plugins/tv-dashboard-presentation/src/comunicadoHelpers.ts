@@ -111,6 +111,7 @@ export {
   canvasTableCellsToStringMatrix,
   canvasTableCellPlainText,
   inferCanvasTableCellFromText,
+  commitCanvasTableCellText,
   mergeCanvasTableOptions,
   canvasTablePresetOptions,
   resolveCanvasTableFontSize,

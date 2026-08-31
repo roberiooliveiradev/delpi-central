@@ -17,7 +17,7 @@ import {
   buildCanvasTableSparklinePath,
   canvasTableCellDisplayRuns,
   canvasTableCellPlainText,
-  inferCanvasTableCellFromText,
+  commitCanvasTableCellText,
   mergeCanvasTableOptions,
   normalizeCanvasTableCell,
   resolveCanvasTableHostStyle,
@@ -162,8 +162,8 @@ export function ComunicadoCanvasTableView({
       : { range: null, focus: null };
 
   function commitText(row: number, col: number, raw: string) {
-    const next = inferCanvasTableCellFromText(raw);
     const prev = normalizeCanvasTableCell(block.cells[row]?.[col]);
+    const next = commitCanvasTableCellText(prev, raw);
     if (prev.kind === "number" && next.kind === "text" && next.text === canvasTableCellPlainText(prev)) {
       return;
     }
