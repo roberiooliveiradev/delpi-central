@@ -12,6 +12,7 @@ import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KpiCard } from "../components/KpiCard";
 import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
 import { QUALITY_ROUTES } from "../constants/routes";
+import { QUALITY_SI_INDICATORS } from "../constants/siIndicatorIds";
 import {
   QualityExportButtons,
   buildDashboardExportContext,
@@ -20,6 +21,7 @@ import {
   formatQualityKpiValue,
   formatQualityPercentKpi,
 } from "../export/qualityDashboardSheets";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
@@ -29,6 +31,7 @@ import {
   formatDashboardMetricValue,
   formatKpiGoalExportFragments,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import {
@@ -99,6 +102,13 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
     reload,
   } = useQualityDashboard(apiParams);
 
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("quality", {
+    competence,
+    dateStart,
+    dateEnd,
+    branches: selectedBranches,
+  });
+
   const printDisabled = loading && !ppmInternal;
 
   const periodLabel = useMemo(
@@ -123,6 +133,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           realizedValue: ppmInternal?.ppm,
           activeBranch: activeApiBranch,
           branches: ppmInternalBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            QUALITY_SI_INDICATORS.ppmInternal,
+          ),
           ...dateOpts,
         },
       );
@@ -133,6 +147,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           realizedValue: ppmExternal?.ppm,
           activeBranch: activeApiBranch,
           branches: ppmExternalBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            QUALITY_SI_INDICATORS.ppmExternal,
+          ),
           ...dateOpts,
         },
       );
@@ -143,6 +161,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           realizedValue: kaizen?.total_kaizens,
           activeBranch: activeApiBranch,
           branches: kaizenIdeasBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            QUALITY_SI_INDICATORS.kaizenIdeas,
+          ),
           ...dateOpts,
         },
       );
@@ -153,6 +175,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           realizedValue: audit5s?.average_score,
           activeBranch: activeApiBranch,
           branches: audit5sBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            QUALITY_SI_INDICATORS.audit5s,
+          ),
           ...dateOpts,
         },
       );
@@ -206,6 +232,7 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       ppmExternalBranches,
       ppmInternal,
       ppmInternalBranches,
+      siScoresById,
     ],
   );
 
@@ -298,6 +325,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
                 branches: ppmInternalBranches,
                 dateStart,
                 dateEnd,
+                iddScoreLabel: pickSiIddScoreLabel(
+                  siScoresById,
+                  QUALITY_SI_INDICATORS.ppmInternal,
+                ),
               },
             )}
             icon={<Factory size={22} />}
@@ -316,6 +347,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
                 branches: ppmExternalBranches,
                 dateStart,
                 dateEnd,
+                iddScoreLabel: pickSiIddScoreLabel(
+                  siScoresById,
+                  QUALITY_SI_INDICATORS.ppmExternal,
+                ),
               },
             )}
             icon={<Truck size={22} />}
@@ -341,6 +376,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
               branches: kaizenIdeasBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                QUALITY_SI_INDICATORS.kaizenIdeas,
+              ),
             },
           )}
           icon={<Lightbulb size={22} />}
@@ -356,6 +395,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             branches: kaizenSavingsBranches,
             dateStart,
             dateEnd,
+            iddScoreLabel: pickSiIddScoreLabel(
+              siScoresById,
+              QUALITY_SI_INDICATORS.kaizenFinancial,
+            ),
           })}
           icon={<Wallet size={22} />}
           loading={isBusy}
@@ -370,6 +413,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             branches: audit5sBranches,
             dateStart,
             dateEnd,
+            iddScoreLabel: pickSiIddScoreLabel(
+              siScoresById,
+              QUALITY_SI_INDICATORS.audit5s,
+            ),
           })}
           icon={<ClipboardCheck size={22} />}
           loading={isBusy}

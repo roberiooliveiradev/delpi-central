@@ -39,6 +39,12 @@ Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 - Meta, valor atual e gap exibem `01: … | 02: …`.
 - **Nota IDD da Qualidade** = média entre o IDD da filial `01` e o IDD da filial `02`.
 
+## Cards do MFE (Nota IDD)
+
+O overview e Perdas do `dashboard-quality` exibem **Nota IDD** a partir de
+`GET /dashboard/department-indicators` → `indicators[].score` (Strategic Indicators).
+Não recalculam a fórmula no browser.
+
 ## Deploy
 
 ```bash

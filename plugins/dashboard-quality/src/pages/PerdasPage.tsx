@@ -5,7 +5,9 @@ import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { QUALITY_ROUTES } from "../constants/routes";
+import { QUALITY_SI_INDICATORS } from "../constants/siIndicatorIds";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import { usePerdasPage } from "../hooks/usePerdasPage";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityBranches } from "../hooks/useQualityBranches";
@@ -16,6 +18,7 @@ import { formatDecimal } from "../utils/format";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 
 const SCRAP_MONITORING_HREF = "/apps/scrap-monitoring";
@@ -60,6 +63,13 @@ export function PerdasPage({ pathname }: PerdasPageProps) {
     error,
     reload,
   } = usePerdasPage(apiParams);
+
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("quality", {
+    competence,
+    dateStart,
+    dateEnd,
+    branches: selectedBranches,
+  });
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -140,6 +150,10 @@ export function PerdasPage({ pathname }: PerdasPageProps) {
                 branches: scrapBranches,
                 dateStart,
                 dateEnd,
+                iddScoreLabel: pickSiIddScoreLabel(
+                  siScoresById,
+                  QUALITY_SI_INDICATORS.scrapCostPct,
+                ),
               },
             )}
             icon={<Factory size={22} />}
@@ -158,6 +172,10 @@ export function PerdasPage({ pathname }: PerdasPageProps) {
                 branches: reworkBranches,
                 dateStart,
                 dateEnd,
+                iddScoreLabel: pickSiIddScoreLabel(
+                  siScoresById,
+                  QUALITY_SI_INDICATORS.reworkCostPct,
+                ),
               },
             )}
             icon={<Recycle size={22} />}
