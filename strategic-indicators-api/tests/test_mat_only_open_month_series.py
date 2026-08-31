@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from si_app.application.services.strategic_indicators.period_resolution import (
@@ -23,6 +24,16 @@ def _open_august() -> ResolvedPeriod:
     )
 
 
+def _fresh_entry(snapshot: MagicMock) -> PeriodScoresCacheEntry:
+    return PeriodScoresCacheEntry(
+        snapshot=snapshot,
+        version_number=1,
+        is_clean=True,
+        catalog_inputs_hash="abc123",
+        computed_at=datetime.now(timezone.utc),
+    )
+
+
 def _service_with_entry(entry: PeriodScoresCacheEntry) -> StrategicIndicatorsSnapshotService:
     repo = MagicMock()
     repo.list_period_snapshots.return_value = {"2026-08": entry}
@@ -41,12 +52,7 @@ def test_cache_rejects_open_month_unless_allow_open_month() -> None:
     period = _open_august()
     snapshot = MagicMock()
     snapshot.period = period
-    entry = PeriodScoresCacheEntry(
-        snapshot=snapshot,
-        version_number=1,
-        is_clean=True,
-        catalog_inputs_hash="abc123",
-    )
+    entry = _fresh_entry(snapshot)
     service = _service_with_entry(entry)
 
     with (
@@ -86,12 +92,7 @@ def test_mat_only_series_serves_open_month_from_period_scores() -> None:
     snapshot.period = period
     snapshot.igd = 6.59
     snapshot.measurement_errors = []
-    entry = PeriodScoresCacheEntry(
-        snapshot=snapshot,
-        version_number=1,
-        is_clean=True,
-        catalog_inputs_hash="abc123",
-    )
+    entry = _fresh_entry(snapshot)
     service = _service_with_entry(entry)
 
     with (
@@ -107,6 +108,7 @@ def test_mat_only_series_serves_open_month_from_period_scores() -> None:
         ),
     ):
         settings_mock.SI_PERIOD_SCORES_ENABLED = True
+        settings_mock.SI_PERIOD_SCORES_MAX_AGE_SECONDS = 3600
         result = service.get_series_snapshot_optimized(
             periods=[period],
             prefer_materialized_only=True,

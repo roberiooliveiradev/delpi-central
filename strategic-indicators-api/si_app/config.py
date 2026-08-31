@@ -91,6 +91,11 @@ class Settings:
     SI_PERIOD_SCORES_REFRESH_BRANCHES: str = str(
         _get_env("SI_PERIOD_SCORES_REFRESH_BRANCHES", default="") or ""
     )
+    # Idade máxima do period_scores para hit (medições, não só catalog_hash).
+    # 0 = desliga o gate por idade.
+    SI_PERIOD_SCORES_MAX_AGE_SECONDS: int = int(
+        _get_env("SI_PERIOD_SCORES_MAX_AGE_SECONDS", default="3600") or "3600"
+    )
     SI_CALCULATION_SNAPSHOTS_ENABLED: bool = (
         str(_get_env("SI_CALCULATION_SNAPSHOTS_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
@@ -39,6 +40,7 @@ class PeriodScoresCacheEntry:
     catalog_inputs_hash: str | None = None
     version_number: int = 1
     is_clean: bool = True
+    computed_at: datetime | None = None
 
 
 @dataclass(frozen=True)

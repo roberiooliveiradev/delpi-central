@@ -1051,6 +1051,20 @@ class StrategicIndicatorsSnapshotService:
                     period.end_date,
                 )
                 return False
+            if not self._period_scores_computed_at_is_fresh(entry):
+                logger.info(
+                    (
+                        "si_period_scores_stale max_age "
+                        "competence=%s department_id=%s branch=%s "
+                        "computed_at=%s max_age_seconds=%s"
+                    ),
+                    period.competence,
+                    department_id,
+                    branch,
+                    entry.computed_at,
+                    settings.SI_PERIOD_SCORES_MAX_AGE_SECONDS,
+                )
+                return False
             return True
 
         logger.info(
@@ -1066,6 +1080,21 @@ class StrategicIndicatorsSnapshotService:
             current_hash,
         )
         return False
+
+    @staticmethod
+    def _period_scores_computed_at_is_fresh(entry: PeriodScoresCacheEntry) -> bool:
+        max_age = int(settings.SI_PERIOD_SCORES_MAX_AGE_SECONDS or 0)
+        if max_age <= 0:
+            return True
+        computed_at = entry.computed_at
+        if computed_at is None:
+            return False
+        from datetime import datetime, timezone
+
+        if computed_at.tzinfo is None:
+            computed_at = computed_at.replace(tzinfo=timezone.utc)
+        age_seconds = (datetime.now(timezone.utc) - computed_at).total_seconds()
+        return age_seconds <= max_age
 
     @staticmethod
     def _ensure_catalog_fingerprint_cached(

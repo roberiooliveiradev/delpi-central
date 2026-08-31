@@ -33,7 +33,8 @@ _SELECT_COLUMNS = """
     measurement_errors,
     catalog_inputs_hash,
     version_number,
-    is_clean
+    is_clean,
+    computed_at
 """
 
 
@@ -47,6 +48,7 @@ class PostgresStrategicIndicatorsPeriodScoresRepository(
             catalog_inputs_hash=row.get("catalog_inputs_hash"),
             version_number=int(row.get("version_number") or 1),
             is_clean=bool(row.get("is_clean", True)),
+            computed_at=row.get("computed_at"),
         )
 
     def list_period_snapshot_versions(

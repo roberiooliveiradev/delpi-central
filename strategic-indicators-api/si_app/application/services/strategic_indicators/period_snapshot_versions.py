@@ -44,6 +44,7 @@ def resolve_period_scores_serve(
         catalog_inputs_hash=serving.catalog_inputs_hash,
         version_number=serving.version_number,
         is_clean=serving.is_clean,
+        computed_at=serving.computed_at,
     )
 
 
