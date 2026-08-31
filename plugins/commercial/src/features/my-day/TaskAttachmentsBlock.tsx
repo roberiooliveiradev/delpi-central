@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   deleteAttachment,
@@ -25,6 +25,11 @@ type TaskAttachmentsBlockProps = {
   mode: TaskAttachmentsMode;
   /** Sem SectionCard — corpo do DetailCard da tarefa. */
   embedded?: boolean;
+  /**
+   * IDs presentes como `![](attachment:{id})` no body — ficam só no corpo,
+   * não na lista Anexos (paridade com a Sala).
+   */
+  excludeAttachmentIds?: readonly string[];
   onChanged?: () => void;
   notifyError: (
     message: string,
@@ -53,6 +58,7 @@ export function TaskAttachmentsBlock({
   initialCount = 0,
   mode,
   embedded = false,
+  excludeAttachmentIds,
   onChanged,
   notifyError,
   notifySuccess,
@@ -66,6 +72,20 @@ export function TaskAttachmentsBlock({
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
   const thumbUrlsRef = useRef<Record<string, string>>({});
 
+  const excludeSet = useMemo(
+    () =>
+      new Set(
+        (excludeAttachmentIds ?? [])
+          .map((id) => String(id || "").trim())
+          .filter(Boolean),
+      ),
+    [excludeAttachmentIds],
+  );
+
+  const visibleItems = useMemo(
+    () => items.filter((item) => !excludeSet.has(item.id)),
+    [items, excludeSet],
+  );
   const reload = useCallback(async () => {
     setLoading(true);
     try {
@@ -97,7 +117,7 @@ export function TaskAttachmentsBlock({
       setThumbUrls({});
     };
 
-    if (items.length === 0) {
+    if (visibleItems.length === 0) {
       clearThumbs();
       return () => {
         cancelled = true;
@@ -106,7 +126,7 @@ export function TaskAttachmentsBlock({
 
     void (async () => {
       const next: Record<string, string> = {};
-      for (const item of items) {
+      for (const item of visibleItems) {
         if (!isImageAttachment(item)) continue;
         try {
           const blob = await downloadAttachmentBlob(item.id);
@@ -134,7 +154,7 @@ export function TaskAttachmentsBlock({
       }
       thumbUrlsRef.current = {};
     };
-  }, [items]);
+  }, [visibleItems]);
 
   const onUpload = async (files: File[]) => {
     const file = files[0];
@@ -172,7 +192,7 @@ export function TaskAttachmentsBlock({
   };
 
   const onOpen = (item: { id: string; fileName: string }) => {
-    const full = items.find((row) => row.id === item.id);
+    const full = visibleItems.find((row) => row.id === item.id);
     setPreview({
       kind: "remote",
       id: item.id,
@@ -182,7 +202,7 @@ export function TaskAttachmentsBlock({
     });
   };
 
-  const count = loadedOnce ? items.length : initialCount;
+  const count = loadedOnce ? visibleItems.length : Math.max(0, initialCount);
   const heading =
     mode === "preview"
       ? count > 0
@@ -192,7 +212,7 @@ export function TaskAttachmentsBlock({
         ? `Arquivos anexados (${count})`
         : "Arquivos anexados";
 
-  const stripItems = items.map((item) => ({
+  const stripItems = visibleItems.map((item) => ({
     id: item.id,
     fileName: item.file_name,
     contentType: item.content_type,
@@ -200,6 +220,10 @@ export function TaskAttachmentsBlock({
     previewUrl: thumbUrls[item.id] ?? null,
     busy: busyId === item.id,
   }));
+
+  if (!canManage && loadedOnce && visibleItems.length === 0) {
+    return null;
+  }
 
   return (
     <>

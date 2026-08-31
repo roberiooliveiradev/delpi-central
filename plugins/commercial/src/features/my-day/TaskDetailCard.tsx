@@ -205,14 +205,19 @@ export function TaskDetailCard({
       : []),
   ];
 
+  const clipAttachmentCount = Math.max(
+    0,
+    attachmentCount - inlineAttachmentIds.length,
+  );
+
   const hintParts = [
     readOnly ? `Concluída ${completedLabel}` : formatDue(task.due_at),
     priorityLabel,
     typeLabel,
   ];
-  if (attachmentCount > 0) {
+  if (clipAttachmentCount > 0) {
     hintParts.push(
-      `${attachmentCount} anexo${attachmentCount === 1 ? "" : "s"}`,
+      `${clipAttachmentCount} anexo${clipAttachmentCount === 1 ? "" : "s"}`,
     );
   }
 
@@ -284,9 +289,10 @@ export function TaskDetailCard({
           <CommercialDetailFieldGrid fields={fields} valueFallback="—" wrapLabels />
           <TaskAttachmentsBlock
             taskId={task.id}
-            initialCount={attachmentCount}
+            initialCount={clipAttachmentCount}
             mode="preview"
             embedded
+            excludeAttachmentIds={inlineAttachmentIds}
             onChanged={onAttachmentsChanged}
             notifyError={notifyError}
             notifySuccess={notifySuccess}

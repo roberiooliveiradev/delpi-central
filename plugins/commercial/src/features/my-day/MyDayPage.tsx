@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   StatusBadge,
   UserDirectoryPicker,
+  attachmentIdsInMarkdown,
   type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
 import { X } from "lucide-react";
@@ -1497,6 +1498,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   <TaskAttachmentsBlock
                     taskId={editingTaskId}
                     mode="manage"
+                    excludeAttachmentIds={attachmentIdsInMarkdown(description)}
                     onChanged={() => void reload()}
                     notifyError={notifyError}
                     notifySuccess={notifySuccess}

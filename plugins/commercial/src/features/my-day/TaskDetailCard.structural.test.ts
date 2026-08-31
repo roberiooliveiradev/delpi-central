@@ -12,6 +12,8 @@ describe("TaskDetailCard layout", () => {
     expect(source).toMatch(/source_message_mentions/);
     expect(source).toMatch(/cm-task-detail-card__prose/);
     expect(source).toMatch(/attachmentIdsInMarkdown/);
+    expect(source).toMatch(/excludeAttachmentIds/);
+    expect(source).toMatch(/clipAttachmentCount/);
     expect(source).toMatch(/TaskAttachmentsBlock/);
     expect(source).not.toMatch(/Observação/);
   });
