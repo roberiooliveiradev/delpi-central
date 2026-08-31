@@ -208,6 +208,11 @@ class ChatTurnPreparationToolRoutingService:
         if common_chat_operational_answer and missing_product_code_answer:
             missing_product_code_answer = None
 
+        if common_chat_operational_answer:
+            # Guidance de agente tem prioridade sobre pedir só data/período no chat comum.
+            missing_date_answer = None
+            ambiguous_period_answer = None
+
         return ChatTurnPreparationOperationalGuards(
             missing_product_code_answer=missing_product_code_answer,
             ambiguous_period_answer=ambiguous_period_answer,
@@ -502,14 +507,14 @@ class ChatTurnPreparationToolRoutingService:
                 pipeline_stages.append("onboarding_training")
             else:
                 pipeline_stages.append("capabilities")
+        elif common_chat_operational_answer:
+            pipeline_stages.append("common_chat_operational_guidance")
         elif missing_product_code_answer:
             pipeline_stages.append("operational_parameter")
         elif ambiguous_period_answer:
             pipeline_stages.append("operational_parameter")
         elif missing_date_answer:
             pipeline_stages.append("operational_parameter")
-        elif common_chat_operational_answer:
-            pipeline_stages.append("common_chat_operational_guidance")
         elif learning_term_confirmation_answer:
             pipeline_stages.append("learning_term")
         elif routing_disambiguation_answer:

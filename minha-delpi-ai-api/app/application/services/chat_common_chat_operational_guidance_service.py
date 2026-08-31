@@ -55,11 +55,23 @@ class ChatCommonChatOperationalGuidanceService:
         workspace_context: dict | None,
         previous_messages: list | None = None,
     ) -> str | None:
-        if not cls.requires_agent(message, workspace_context=workspace_context):
+        from app.domain.services.chat_active_query_session_service import (
+            ChatActiveQuerySessionService,
+        )
+
+        evaluation_message = ChatActiveQuerySessionService.compose_selection_message(
+            message,
+            previous_messages=previous_messages,
+        ) or str(message or "").strip()
+
+        if not cls.requires_agent(
+            evaluation_message,
+            workspace_context=workspace_context,
+        ):
             return None
 
         if ChatAnalysisIntentService.is_data_interpretation_request(
-            message,
+            evaluation_message,
             previous_messages,
         ):
             from app.application.services.chat_conversation_context_service import (

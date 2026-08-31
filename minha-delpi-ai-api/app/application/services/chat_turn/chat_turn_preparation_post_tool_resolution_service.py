@@ -323,16 +323,16 @@ class ChatTurnPreparationPostToolResolutionService:
             direct_answer = missing_product_code_answer
             skip_rag = True
 
+        if not direct_answer and common_chat_operational_answer:
+            direct_answer = common_chat_operational_answer
+            skip_rag = True
+
         if not direct_answer and ambiguous_period_answer:
             direct_answer = ambiguous_period_answer
             skip_rag = True
 
         if not direct_answer and missing_date_answer:
             direct_answer = missing_date_answer
-            skip_rag = True
-
-        if not direct_answer and common_chat_operational_answer:
-            direct_answer = common_chat_operational_answer
             skip_rag = True
 
         if not direct_answer and learning_term_confirmation_answer:

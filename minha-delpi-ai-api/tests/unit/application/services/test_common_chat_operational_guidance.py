@@ -84,9 +84,9 @@ def test_resolve_operational_guards_returns_guidance_in_common_chat():
     assert "agente" in guards.common_chat_operational_answer.lower()
 
 
-def test_resolve_operational_guards_returns_guidance_for_production_schedule():
+def test_resolve_operational_guards_guidance_beats_missing_date_for_rol():
     guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
-        message="produtos programados para produzir hoje",
+        message="qual o rol filial 01",
         history_source=[],
         conversation_context="",
         working_memory_snapshot={},
@@ -98,4 +98,36 @@ def test_resolve_operational_guards_returns_guidance_for_production_schedule():
     )
 
     assert guards.common_chat_operational_answer
+    assert guards.missing_date_answer is None
+    assert guards.ambiguous_period_answer is None
     assert "agente" in guards.common_chat_operational_answer.lower()
+
+
+def test_resolve_direct_answer_uses_resume_message_from_pending():
+    previous = [
+        {
+            "role": "user",
+            "content": "qual o rol filial 01",
+        },
+        {
+            "role": "assistant",
+            "content": "informe o período",
+            "metadata": {
+                "activePending": {
+                    "kind": "missing_date",
+                    "context": {"originalMessage": "qual o rol filial 01"},
+                }
+            },
+        },
+    ]
+    workspace = {"userActivatedAgent": False, "actionsEnabled": False}
+
+    answer = ChatCommonChatOperationalGuidanceService.resolve_direct_answer(
+        "agosto de 2026",
+        workspace_context=workspace,
+        previous_messages=previous,
+    )
+
+    assert answer
+    assert "agente" in answer.lower()
+
