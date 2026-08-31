@@ -3,6 +3,7 @@
   "deepLinkPath": "/apps/commercial/open-orders?stage=ready_to_invoice",
   "eventType": "commercial.order.ready_to_invoice",
   "aggregateType": "open_order_line",
+  "recipientMode": "billing_permission_only",
   "billingUserIds": [],
   "billingPermissionCodes": ["commercial.billing.notify"],
   "notification": {

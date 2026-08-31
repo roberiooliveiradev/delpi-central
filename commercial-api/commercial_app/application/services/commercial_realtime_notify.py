@@ -340,10 +340,11 @@ def notify_ready_to_invoice_changed(
             "variant": variant,
         },
     }
-    # Sellers get user rooms; managers on TEAM_ROOM always (billing via permission
-    # codes may have no explicit userIds — toast still reaches gestores).
-    rooms = {user_room(uid) for uid in recipients}
-    rooms.add(TEAM_ROOM)
+    # Fan-out na sala hub (todo cliente Comercial WS). Toast no MFE só se
+    # `canBillingNotify` (`commercial.billing.notify`). Sem TEAM_ROOM / carteira.
+    rooms = {INTERACTION_HUB_ROOM}
+    for uid in recipients:
+        rooms.add(user_room(uid))
     for room in rooms:
         commercial_realtime_hub.schedule_broadcast(room, payload)
 

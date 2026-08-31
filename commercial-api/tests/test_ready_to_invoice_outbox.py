@@ -76,7 +76,7 @@ def test_enqueue_skips_cold_start_without_previous_snapshot() -> None:
                     "filial": "01",
                 },
                 recipients=ReadyToInvoiceRecipients(
-                    seller_user_ids=frozenset({"u1"}),
+                    seller_user_ids=frozenset(),
                     billing_user_ids=frozenset(),
                     billing_permission_codes=("commercial.billing.notify",),
                 ),
@@ -107,7 +107,7 @@ def test_enqueue_writes_outbox_with_deep_link() -> None:
                     "filial": "01",
                 },
                 recipients=ReadyToInvoiceRecipients(
-                    seller_user_ids=frozenset({"u1"}),
+                    seller_user_ids=frozenset(),
                     billing_user_ids=frozenset(),
                     billing_permission_codes=("commercial.billing.notify",),
                 ),
@@ -122,7 +122,7 @@ def test_enqueue_writes_outbox_with_deep_link() -> None:
     assert result.enqueued == 1
     assert len(outbox.rows) == 1
     payload = outbox.rows[0].payload
-    assert payload["userIds"] == ["u1"]
+    assert payload["userIds"] == []
     assert payload["permissionCodes"] == ["commercial.billing.notify"]
     assert "stage=ready_to_invoice" in payload["actionTarget"]
     assert "view=board" not in payload["actionTarget"]

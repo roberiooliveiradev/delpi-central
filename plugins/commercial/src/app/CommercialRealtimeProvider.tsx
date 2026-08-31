@@ -583,7 +583,7 @@ export function useCommercialRealtimeNotices(enabled = true) {
   } = useCommercialRealtime();
   const { notifyInfo, notifySuccess, notifyWarning, notifyError } =
     useCommercialFloatingNotice();
-  const { myPortfolio, currentUserId } = usePortfolioScope();
+  const { myPortfolio, currentUserId, canBillingNotify } = usePortfolioScope();
   const clientId = getCommercialClientId();
   const resolvedUserId = currentUserId ?? myPortfolio?.user_id ?? null;
 
@@ -724,6 +724,10 @@ export function useCommercialRealtimeNotices(enabled = true) {
     });
 
     const unsubReady = subscribeReadyToInvoice((event) => {
+      // Audiência canônica: só quem tem commercial.billing.notify.
+      if (!canBillingNotify) {
+        return;
+      }
       const payload = resolveReadyToInvoiceNotification(event);
       const key = (event.lineKey || `${event.pedido}-${event.linha}` || "r2i").trim();
       publishByVariant(payload, {
@@ -773,6 +777,7 @@ export function useCommercialRealtimeNotices(enabled = true) {
   }, [
     clientId,
     resolvedUserId,
+    canBillingNotify,
     enabled,
     notifyInfo,
     notifySuccess,

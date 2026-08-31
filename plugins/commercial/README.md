@@ -320,7 +320,9 @@ Catálogo condensado — **3 codes**. Detalhe e política para features novas: [
 
 Notificações de **tarefas** usam só envolvidos (`userIds`) + categoria catálogo `commercial_tasks` («Tarefas comerciais») — **sem** permission code novo. Job: `POST /integrations/jobs/task-due-scan` (`manage`). Faturar permanece em categoria `commercial`.
 
-**Scheduler (commercial-api):** a cada ~60s o processo roda `ready-to-invoice-scan` + `task-due-scan` (`COMMERCIAL_INTEGRATION_JOBS_SCHEDULER_ENABLED`, default on). O badge «Meus pedidos» sobe pelo dump ao vivo; **toast** (WS, gestores na sala `team` + vendedores) e **sino Minha Delpi** só disparam no **delta** (linha que acabou de entrar em pronto para faturar). Cold start só grava o checkpoint — não notifica o histórico já faturável.
+**Pronto para faturar — audiência:** **somente** quem tem `commercial.billing.notify` (sino Minha Delpi via `permissionCodes` + toast WS no MFE gated por `canBillingNotify`). Responsável/membros da carteira **não** entram só por membership. Fan-out WS: sala `interaction` (hub); sem sala `team` para este evento.
+
+**Scheduler (commercial-api):** a cada ~60s o processo roda `ready-to-invoice-scan` + `task-due-scan` (`COMMERCIAL_INTEGRATION_JOBS_SCHEDULER_ENABLED`, default on). O badge «Meus pedidos» sobe pelo dump ao vivo; **toast** e **sino** só disparam no **delta** (linha que acabou de entrar em pronto para faturar). Cold start só grava o checkpoint — não notifica o histórico já faturável.
 
 Minha Carteira na topbar: membership **ou** `manage`. Pedidos sem membership: consolidado (todos os clientes).
 

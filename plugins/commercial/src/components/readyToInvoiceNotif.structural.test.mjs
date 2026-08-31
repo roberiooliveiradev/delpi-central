@@ -18,7 +18,7 @@ describe("ready_to_invoice notification wiring", () => {
     assert.match(src, /COMMERCIAL_MANAGE_PERMISSIONS/);
   });
 
-  it("content JSON declares billing lists and deep link without forced board view", () => {
+  it("content JSON declares billing permission audience and deep link without forced board view", () => {
     const raw = readFileSync(
       join(apiRoot, "commercial_app/content/pt-BR/ready_to_invoice_notification.json"),
       "utf8",
@@ -28,8 +28,9 @@ describe("ready_to_invoice notification wiring", () => {
     assert.equal(typeof deepLink, "string");
     assert.ok(!/view=board/.test(deepLink));
     assert.match(deepLink, /ready_to_invoice|open-orders/);
-    assert.ok(Array.isArray(json.billingUserIds));
+    assert.equal(json.recipientMode, "billing_permission_only");
     assert.ok(Array.isArray(json.billingPermissionCodes));
+    assert.ok(json.billingPermissionCodes.includes("commercial.billing.notify"));
   });
 
   it("MFE board deep link helper supports ready_to_invoice", () => {
@@ -48,5 +49,6 @@ describe("ready_to_invoice notification wiring", () => {
     );
     assert.match(provider, /subscribeReadyToInvoice/);
     assert.match(provider, /resolveReadyToInvoiceNotification/);
+    assert.match(provider, /canBillingNotify/);
   });
 });

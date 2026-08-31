@@ -286,8 +286,9 @@ def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
         assert body["notification"]["title"] == "Nova tarefa"
 
 
-def test_notify_ready_to_invoice_changed_schedules_user_and_team(monkeypatch):
+def test_notify_ready_to_invoice_changed_schedules_hub_and_user(monkeypatch):
     from commercial_app.application.services.commercial_realtime_notify import (
+        INTERACTION_HUB_ROOM,
         notify_ready_to_invoice_changed,
     )
 
@@ -314,17 +315,19 @@ def test_notify_ready_to_invoice_changed_schedules_user_and_team(monkeypatch):
 
     by_room = {room: payload for room, payload in scheduled}
     assert user_room("seller-a") in by_room
-    assert TEAM_ROOM in by_room
-    body = by_room[TEAM_ROOM]
+    assert INTERACTION_HUB_ROOM in by_room
+    assert TEAM_ROOM not in by_room
+    body = by_room[INTERACTION_HUB_ROOM]
     assert body["type"] == "orders.ready_to_invoice"
     assert body["pedido"] == "10"
     assert "pronto para faturar" in body["notification"]["title"].lower()
     assert "view=board" not in (body.get("actionTarget") or "")
 
 
-def test_notify_ready_to_invoice_team_room_without_user_ids(monkeypatch):
-    """Billing-only recipients: still toast gestores on TEAM_ROOM."""
+def test_notify_ready_to_invoice_hub_without_user_ids(monkeypatch):
+    """Billing permission audience: hub fan-out; MFE gates by canBillingNotify."""
     from commercial_app.application.services.commercial_realtime_notify import (
+        INTERACTION_HUB_ROOM,
         notify_ready_to_invoice_changed,
     )
 
@@ -346,8 +349,8 @@ def test_notify_ready_to_invoice_team_room_without_user_ids(monkeypatch):
     )
 
     by_room = {room: payload for room, payload in scheduled}
-    assert set(by_room) == {TEAM_ROOM}
-    assert by_room[TEAM_ROOM]["type"] == "orders.ready_to_invoice"
+    assert set(by_room) == {INTERACTION_HUB_ROOM}
+    assert by_room[INTERACTION_HUB_ROOM]["type"] == "orders.ready_to_invoice"
 
 
 def test_notify_reassign_includes_previous_and_new_assignee(monkeypatch):

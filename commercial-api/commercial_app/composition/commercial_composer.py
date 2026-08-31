@@ -508,7 +508,6 @@ def build_detect_ready_to_invoice_entries_use_case():
 
     return DetectReadyToInvoiceEntriesUseCase(
         gateway=build_delpi_commercial_gateway(),
-        portfolios=build_seller_portfolio_repository(),
         checkpoints=build_integration_checkpoint_repository(),
     )
 

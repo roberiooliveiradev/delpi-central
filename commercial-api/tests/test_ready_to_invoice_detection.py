@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from commercial_app.application.use_cases.detect_ready_to_invoice_entries import (
     DetectReadyToInvoiceEntriesUseCase,
-)
-from commercial_app.domain.entities.seller_portfolio import (
-    SellerCustomerAssignment,
-    SellerPortfolio,
-    SellerPortfolioMember,
 )
 from commercial_app.domain.ports.integration_outbox_repository_port import (
     IntegrationCheckpoint,
@@ -100,35 +97,17 @@ def test_delta_applies_fifo_before_ready_classification() -> None:
     assert delta.entered_keys == frozenset({"01|EARLY|01"})
 
 
-def test_recipient_resolver_uses_portfolio_membership() -> None:
+def test_recipient_resolver_uses_billing_permission_only() -> None:
     resolver = ReadyToInvoiceRecipientResolverService(
-        billing_user_ids=["bill-1"],
         billing_permission_codes=["commercial.billing.notify"],
     )
-    portfolios = [
-        SellerPortfolio(
-            id="p1",
-            user_id="owner-1",
-            display_name="Carteira",
-            active=True,
-            customers=(
-                SellerCustomerAssignment(customer_code="100", customer_store="01"),
-            ),
-            members=(
-                SellerPortfolioMember(user_id="owner-1", role="owner"),
-                SellerPortfolioMember(user_id="seller-2", role="member"),
-            ),
-        )
-    ]
-    index = resolver.build_customer_sellers_index(portfolios)
     recipients = resolver.resolve_for_item(
         {"codigo_cadastro": "100", "loja_cadastro": "01"},
-        customer_sellers=index,
     )
-    assert recipients.seller_user_ids == frozenset({"owner-1", "seller-2"})
-    assert recipients.billing_user_ids == frozenset({"bill-1"})
+    assert recipients.seller_user_ids == frozenset()
+    assert recipients.billing_user_ids == frozenset()
+    assert recipients.all_user_ids == frozenset()
     assert recipients.billing_permission_codes == ("commercial.billing.notify",)
-    assert "bill-1" in recipients.all_user_ids
 
 
 class _FakeCheckpointRepo:
@@ -176,31 +155,13 @@ class _FakeGateway:
         }
 
 
-class _FakePortfolios:
-    def list_portfolios(self, *, active_only: bool = False):
-        return [
-            SellerPortfolio(
-                id="p1",
-                user_id="seller-1",
-                display_name="X",
-                active=True,
-                customers=(
-                    SellerCustomerAssignment(customer_code="100", customer_store="01"),
-                ),
-                members=(SellerPortfolioMember(user_id="seller-1", role="owner"),),
-            )
-        ]
-
-
-def test_detect_use_case_persists_snapshot_and_resolves_sellers() -> None:
+def test_detect_use_case_persists_snapshot_and_billing_permission_recipients() -> None:
     checkpoints = _FakeCheckpointRepo()
     uc = DetectReadyToInvoiceEntriesUseCase(
         gateway=_FakeGateway(),
-        portfolios=_FakePortfolios(),
         checkpoints=checkpoints,
         recipient_resolver=ReadyToInvoiceRecipientResolverService(
-            billing_user_ids=[],
-            billing_permission_codes=[],
+            billing_permission_codes=["commercial.billing.notify"],
         ),
     )
     result = uc.execute()
@@ -208,7 +169,11 @@ def test_detect_use_case_persists_snapshot_and_resolves_sellers() -> None:
     assert result.current_key_count == 1
     assert len(result.entered) == 1
     assert result.entered[0].line_key == "01|9|01"
-    assert result.entered[0].recipients.seller_user_ids == frozenset({"seller-1"})
+    assert result.entered[0].recipients.seller_user_ids == frozenset()
+    assert result.entered[0].recipients.all_user_ids == frozenset()
+    assert result.entered[0].recipients.billing_permission_codes == (
+        "commercial.billing.notify",
+    )
     assert checkpoints.saved is not None
     assert checkpoints.saved["metadata"]["keys"] == ["01|9|01"]
     assert "view=board" not in result.board_deep_link_path
@@ -216,8 +181,6 @@ def test_detect_use_case_persists_snapshot_and_resolves_sellers() -> None:
 
 
 def test_v014_migration_defines_outbox_and_checkpoints() -> None:
-    from pathlib import Path
-
     sql = (
         Path(__file__).resolve().parents[1]
         / "migrations"

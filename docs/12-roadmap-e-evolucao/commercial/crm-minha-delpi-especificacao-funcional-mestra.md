@@ -1146,7 +1146,7 @@ A integração deverá suportar, conforme modo de autorização e disponibilidad
 - **CRM-ORDER-006 — Operações de produção:** consultar OPs, marcos e rastreio quando disponíveis por contrato.
 - **CRM-ORDER-007 — Exceções:** atraso, quantidade, alteração de data, falta, bloqueio e risco.
 - **CRM-ORDER-008 — Comunicação:** associar e-mail, Teams, WhatsApp, ligação e tarefa ao pedido.
-- **CRM-ORDER-009 — Notificação de faturamento:** preservar destinatários por carteira e permission code específico.
+- **CRM-ORDER-009 — Notificação de faturamento:** destinatários **somente** via permission code `commercial.billing.notify` (não por membership de carteira).
 - **CRM-ORDER-010 — Ação contextual:** criar tarefa, sala, caso ou reunião a partir de uma exceção.
 - **CRM-ORDER-011 — Freshness:** exibir data/hora da consulta e origem.
 - **CRM-ORDER-012 — Timeline:** mudanças relevantes e comunicações vinculadas.

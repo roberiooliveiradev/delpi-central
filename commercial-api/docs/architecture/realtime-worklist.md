@@ -227,7 +227,13 @@ Lembretes `task.due_soon` / `task.overdue` saem do job de due scan: se o destina
 
 ### `orders.ready_to_invoice`
 
-Emitido no publish da outbox quando uma linha entra em Pronto para faturar e o destinatário está **online** no Comercial (WS). Offline continua no sino Minha Delpi (categoria `commercial`).
+Emitido no publish da outbox quando uma linha entra em Pronto para faturar.
+Audiência canônica: **`commercial.billing.notify`** (`permissionCodes` no payload;
+`recipientMode: billing_permission_only`). Sem `userIds` por carteira.
+
+Fan-out WS: sala hub `interaction` (todos os clientes Comercial conectados). O MFE
+só exibe toast se `canBillingNotify`. Offline / preferências: sino Minha Delpi via
+Core expandindo o permission code (categoria `commercial`).
 
 ```json
 {
@@ -238,7 +244,7 @@ Emitido no publish da outbox quando uma linha entra em Pronto para faturar e o d
   "cliente": "WEG MOTORES",
   "filial": "01",
   "actionTarget": "/apps/commercial/open-orders?stage=ready_to_invoice&q=102655&branch=01",
-  "userIds": ["seller-a"],
+  "userIds": [],
   "notification": {
     "title": "Pedido pronto para faturar",
     "message": "A linha 102655/05 do cliente WEG MOTORES entrou em Pronto para faturar.",

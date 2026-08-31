@@ -8,9 +8,6 @@ from typing import Any, Protocol
 from commercial_app.domain.ports.integration_outbox_repository_port import (
     IntegrationCheckpointRepositoryPort,
 )
-from commercial_app.domain.ports.seller_portfolio_repository_port import (
-    SellerPortfolioRepositoryPort,
-)
 from commercial_app.domain.services.ready_to_invoice_notification_content_service import (
     ReadyToInvoiceNotificationContentService,
 )
@@ -51,14 +48,12 @@ class DetectReadyToInvoiceEntriesUseCase:
         self,
         *,
         gateway: _OpenOrdersGateway,
-        portfolios: SellerPortfolioRepositoryPort,
         checkpoints: IntegrationCheckpointRepositoryPort,
         delta_service: ReadyToInvoiceSnapshotDeltaService | None = None,
         recipient_resolver: ReadyToInvoiceRecipientResolverService | None = None,
         content: type[ReadyToInvoiceNotificationContentService] | None = None,
     ) -> None:
         self._gateway = gateway
-        self._portfolios = portfolios
         self._checkpoints = checkpoints
         self._delta = delta_service or ReadyToInvoiceSnapshotDeltaService()
         self._recipients = recipient_resolver or ReadyToInvoiceRecipientResolverService()
@@ -83,16 +78,11 @@ class DetectReadyToInvoiceEntriesUseCase:
         )
 
         delta = self._delta.compute_delta(items=items, previous_keys=previous_keys)
-        customer_sellers = self._recipients.build_customer_sellers_index(
-            self._portfolios.list_portfolios(active_only=True)
-        )
 
         entered: list[ReadyToInvoiceEntry] = []
         for item in delta.entered_items:
             key = str(item.get("_lineKey") or open_order_line_key(item))
-            recipients = self._recipients.resolve_for_item(
-                item, customer_sellers=customer_sellers
-            )
+            recipients = self._recipients.resolve_for_item(item)
             clean = {k: v for k, v in item.items() if k != "_lineKey"}
             entered.append(
                 ReadyToInvoiceEntry(
