@@ -515,6 +515,7 @@ export type ComunicadoCanvasTableOptions = {
   headerStyle?: "subtle" | "accent" | "none";
   borderStyle?: "all" | "horizontal" | "none";
   columnWidths?: number[];
+  rowHeights?: number[];
 };
 
 export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {

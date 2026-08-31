@@ -13,7 +13,10 @@ import {
   inferCanvasTableCellFromText,
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
+  normalizeCanvasTableTrackSizes,
+  parseCanvasTableOptions,
   resolveCanvasTableFontSize,
+  resolveCanvasTableRowHeightStyles,
   commitCanvasTableCellText,
 } from "./comunicadoCanvasTable";
 import {
@@ -149,5 +152,65 @@ describe("canvas_table", () => {
 
   it("normalizeCanvasTableCell aceita string legado", () => {
     expect(normalizeCanvasTableCell("ok")).toEqual({ kind: "text", text: "ok" });
+  });
+
+  it("parse e serialize preservam rowHeights; slide sem o campo fica inalterado", () => {
+    const created = createCanvasTableBlock(30, 0);
+    const parsedWithHeights = parseComunicadoConfig({
+      blocks: [
+        {
+          ...created,
+          rows: 3,
+          cols: 1,
+          cells: [["A"], ["B"], ["C"]],
+          canvasTableOptions: { rowHeights: [20, 20, 60] },
+        },
+      ],
+    });
+    const withHeights = parsedWithHeights.blocks?.[0];
+    expect(withHeights?.type).toBe("canvas_table");
+    if (withHeights?.type !== "canvas_table") throw new Error("canvas_table");
+    expect(withHeights.canvasTableOptions?.rowHeights).toEqual([20, 20, 60]);
+    const serialized = serializeComunicadoConfig(parsedWithHeights);
+    const serializedBlock = serialized.blocks?.[0] as { canvasTableOptions?: { rowHeights?: number[] } };
+    expect(serializedBlock.canvasTableOptions?.rowHeights).toEqual([20, 20, 60]);
+
+    const parsedPlain = parseComunicadoConfig({
+      blocks: [{ ...created, rows: 2, cols: 1, cells: [["A"], ["B"]] }],
+    });
+    const plain = parsedPlain.blocks?.[0];
+    expect(plain?.type).toBe("canvas_table");
+    if (plain?.type !== "canvas_table") throw new Error("canvas_table");
+    expect(plain.canvasTableOptions?.rowHeights).toBeUndefined();
+    expect(parseCanvasTableOptions({ fontSize: 18 })?.rowHeights).toBeUndefined();
+  });
+
+  it("normalizeCanvasTableTrackSizes soma 100 e aplica mínimo", () => {
+    const even = normalizeCanvasTableTrackSizes(undefined, 4);
+    expect(even).toHaveLength(4);
+    expect(even.reduce((sum, item) => sum + item, 0)).toBeCloseTo(100, 5);
+    even.forEach((item) => expect(item).toBeCloseTo(25, 5));
+
+    const skewed = normalizeCanvasTableTrackSizes([20, 20, 60], 3);
+    expect(skewed).toEqual([20, 20, 60]);
+    expect(skewed.reduce((sum, item) => sum + item, 0)).toBeCloseTo(100, 5);
+
+    const tiny = normalizeCanvasTableTrackSizes([1, 99], 2);
+    expect(tiny[0]).toBeGreaterThanOrEqual(4);
+    expect(tiny.reduce((sum, item) => sum + item, 0)).toBeCloseTo(100, 5);
+  });
+
+  it("resolveCanvasTableRowHeightStyles aplica % só quando o length bate com rows", () => {
+    expect(resolveCanvasTableRowHeightStyles([20, 20, 60], 3)).toEqual([
+      { height: "20%" },
+      { height: "20%" },
+      { height: "60%" },
+    ]);
+    expect(resolveCanvasTableRowHeightStyles([20, 80], 3)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    expect(resolveCanvasTableRowHeightStyles(undefined, 2)).toEqual([undefined, undefined]);
   });
 });

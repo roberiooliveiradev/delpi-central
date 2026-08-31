@@ -620,6 +620,8 @@ export {
   resolveCanvasTableFontSize,
   resolveCanvasTableHostStyle,
   parseCanvasTableOptions,
+  normalizeCanvasTableTrackSizes,
+  resolveCanvasTableRowHeightStyles,
   formatCanvasTableNumber,
   buildCanvasTableSparklinePath,
   resolveColumnSparklineAxis,

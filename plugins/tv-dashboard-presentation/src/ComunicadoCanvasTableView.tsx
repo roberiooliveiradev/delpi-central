@@ -22,6 +22,7 @@ import {
   mergeCanvasTableOptions,
   normalizeCanvasTableCell,
   resolveCanvasTableHostStyle,
+  resolveCanvasTableRowHeightStyles,
   resolveColumnSparklineAxis,
   type CanvasTableCell,
   type CanvasTableCellRef,
@@ -116,6 +117,7 @@ export function ComunicadoCanvasTableView({
   const pendingReplaceRef = useRef<string | null>(null);
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const hostStyle = resolveCanvasTableHostStyle(block) as CSSProperties;
+  const rowHeightStyles = resolveCanvasTableRowHeightStyles(opts.rowHeights, block.rows);
   const selectedCells =
     interaction?.selectedCells ??
     (interaction?.selectedCell ? [interaction.selectedCell] : []);
@@ -153,6 +155,7 @@ export function ComunicadoCanvasTableView({
     block.frame?.w,
     block.frame?.h,
     opts.columnWidths,
+    opts.rowHeights,
   ]);
 
   useLayoutEffect(() => {
@@ -333,7 +336,7 @@ export function ComunicadoCanvasTableView({
         ) : null}
         <tbody>
           {block.cells.map((row, rowIndex) => (
-            <tr key={rowIndex}>
+            <tr key={rowIndex} style={rowHeightStyles[rowIndex]}>
               {row.map((rawCell, colIndex) => {
                 const cell = normalizeCanvasTableCell(rawCell);
                 const isHeader = Boolean(block.headerRow && rowIndex === 0);

@@ -76,6 +76,8 @@ export type CanvasTableOptions = {
   borderStyle?: CanvasTableBorderStyle;
   /** Larguras relativas (%); soma ~100. */
   columnWidths?: number[];
+  /** Alturas relativas (%); soma ~100. */
+  rowHeights?: number[];
 };
 
 export type CanvasTableCellRef = { row: number; col: number };
@@ -303,7 +305,55 @@ export function mergeCanvasTableOptions(
     headerStyle: options?.headerStyle ?? "subtle",
     borderStyle: options?.borderStyle ?? "all",
     columnWidths: options?.columnWidths,
+    rowHeights: options?.rowHeights,
   };
+}
+
+export const CANVAS_TABLE_MIN_TRACK_PCT = 4;
+
+/** Normaliza faixas para `count` itens com soma 100 e mínimo ~4%. */
+export function normalizeCanvasTableTrackSizes(
+  values: unknown,
+  count: number,
+): number[] {
+  const n = Math.max(1, Math.round(Number(count) || 1));
+  const raw = Array.isArray(values) ? values : [];
+  let tracks = Array.from({ length: n }, (_, index) => {
+    const value = Number(raw[index]);
+    return Number.isFinite(value) && value > 0 ? value : 100 / n;
+  });
+  const sum = tracks.reduce((total, item) => total + item, 0) || 1;
+  tracks = tracks.map((item) => (item / sum) * 100);
+  const deficit = tracks.reduce(
+    (total, item) => total + Math.max(0, CANVAS_TABLE_MIN_TRACK_PCT - item),
+    0,
+  );
+  if (deficit > 0) {
+    const surplus = tracks.reduce(
+      (total, item) => total + Math.max(0, item - CANVAS_TABLE_MIN_TRACK_PCT),
+      0,
+    );
+    tracks = tracks.map((item) => {
+      if (item < CANVAS_TABLE_MIN_TRACK_PCT) return CANVAS_TABLE_MIN_TRACK_PCT;
+      if (surplus <= 0) return item;
+      const extra = item - CANVAS_TABLE_MIN_TRACK_PCT;
+      return item - (extra / surplus) * deficit;
+    });
+  }
+  const nextSum = tracks.reduce((total, item) => total + item, 0) || 1;
+  return tracks.map((item) => (item / nextSum) * 100);
+}
+
+/** Estilos de `tr` quando `rowHeights` tem o mesmo length de `rows`. */
+export function resolveCanvasTableRowHeightStyles(
+  rowHeights: number[] | undefined,
+  rows: number,
+): Array<{ height: string } | undefined> {
+  const count = Math.max(0, Math.round(Number(rows) || 0));
+  if (!Array.isArray(rowHeights) || rowHeights.length !== count) {
+    return Array.from({ length: count }, () => undefined);
+  }
+  return rowHeights.map((height) => ({ height: `${height}%` }));
 }
 
 export type CanvasTableStylePresetId = "grid" | "minimal" | "banded";
@@ -470,6 +520,11 @@ export function parseCanvasTableOptions(raw: unknown): CanvasTableOptions | unde
   }
   if (Array.isArray(src.columnWidths)) {
     next.columnWidths = src.columnWidths
+      .map((n) => Number(n))
+      .filter((n) => Number.isFinite(n) && n > 0);
+  }
+  if (Array.isArray(src.rowHeights)) {
+    next.rowHeights = src.rowHeights
       .map((n) => Number(n))
       .filter((n) => Number.isFinite(n) && n > 0);
   }
