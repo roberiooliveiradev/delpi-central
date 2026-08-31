@@ -389,6 +389,8 @@ Campos permitidos:
 | `routes[].icon` | `app_routes.icon` |
 | `routes[].order` | `app_routes.order` |
 | `routes[].showInMenu` | `app_routes.show_in_menu` |
+| `routes[].entry` | Só no JSON do manifesto (merge em `/me/apps`) |
+| `routes[].openInNewTab` | Só no JSON do manifesto (merge em `/me/apps`) |
 
 Não é permitido alterar `routes[].path` como mudança de rota existente. Alteração de path é tratada como remoção de uma rota e criação de outra, portanto exige nova versão.
 
