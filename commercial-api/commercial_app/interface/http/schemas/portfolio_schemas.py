@@ -79,6 +79,11 @@ class EnrichmentBody(BaseModel):
         le=365,
         description="Janela da tendência (dias); presets 7/30/90; default 30 no TOTVS.",
     )
+    nature: str | None = Field(
+        default=None,
+        pattern=r"^(gross|net)$",
+        description="Natureza do faturamento: gross (NF) ou net (ROL). Default gross.",
+    )
 
 
 class BillingSeriesBody(BaseModel):
@@ -94,6 +99,11 @@ class BillingSeriesBody(BaseModel):
     granularity: str | None = Field(
         default=None,
         pattern=r"^(day|week|month|year)$",
+    )
+    nature: str | None = Field(
+        default=None,
+        pattern=r"^(gross|net)$",
+        description="Natureza do faturamento: gross (NF) ou net (ROL). Default gross.",
     )
 
 

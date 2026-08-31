@@ -183,6 +183,8 @@ def enrich_portfolio_customers(request: Request, body: EnrichmentBody = Body(...
         }
         if body.window_days is not None:
             payload["window_days"] = body.window_days
+        if body.nature:
+            payload["nature"] = body.nature
         result = build_delpi_commercial_gateway().enrich_portfolio_customers(payload=payload)
         data = result.get("data", result)
         # api-delpi marca has_avatar pelo schema/arquivo legado PVA; o MFE baixa
@@ -246,6 +248,9 @@ def list_commercial_customer_billing_series(
                         else {}
                     ),
                     **({"granularity": body.granularity} if body.granularity else {}),
+                    "nature": body.nature or "gross",
+                    "billingNature": body.nature or "gross",
+                    "supportedNatures": ["gross", "net"],
                 },
                 message="Faturamento mensal carregado.",
                 operation_id="list_commercial_customer_billing_series",
@@ -262,6 +267,8 @@ def list_commercial_customer_billing_series(
             payload["end_date"] = body.end_date
         if body.granularity:
             payload["granularity"] = body.granularity
+        if body.nature:
+            payload["nature"] = body.nature
         result = build_delpi_commercial_gateway().list_customer_billing_series(
             payload=payload
         )
