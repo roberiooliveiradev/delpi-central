@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildKpiGoalPresentation,
+  buildKpiGoalPresentationWithBranchIdd,
+  buildSiIndicatorScoreMap,
   calculateIndicatorIddScore,
   formatKpiGoalExportFragments,
   isGoalOnTrack,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
   resolveAccumulatedGoalPrefix,
   resolveGoalPeriodPartial,
+  resolveIndicatorIddScoreLabelFromSi,
 } from "./goalDisplay";
 import { formatGoalScopeUnitLabel, formatFilterViewScopeLabel } from "./operationalUnitLabels";
 
@@ -18,6 +22,30 @@ describe("goalDisplay", () => {
       performance_direction: "higher_is_better",
     });
     expect(score).toBe(10);
+  });
+
+  it("formata score SI sem recalcular no MFE", () => {
+    expect(resolveIndicatorIddScoreLabelFromSi(6.57)).toBe("6,57");
+    expect(resolveIndicatorIddScoreLabelFromSi(null)).toBeNull();
+    const map = buildSiIndicatorScoreMap([
+      { indicator_id: "quality-kaizen-financial", score: 6.57 },
+    ]);
+    expect(pickSiIddScoreLabel(map, "quality-kaizen-financial")).toBe("6,57");
+  });
+
+  it("respeita iddScoreLabel do SI em buildKpiGoalPresentationWithBranchIdd", () => {
+    const presentation = buildKpiGoalPresentationWithBranchIdd(
+      "ctx",
+      {
+        comparable_goal: 9000,
+        performance_direction: "higher_is_better",
+      },
+      {
+        realizedValue: 4098,
+        iddScoreLabel: resolveIndicatorIddScoreLabelFromSi(6.57),
+      },
+    );
+    expect(presentation.iddScoreLabel).toBe("6,57");
   });
 
   it("identifica KPI fora da meta", () => {

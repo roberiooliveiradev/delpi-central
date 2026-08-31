@@ -160,6 +160,54 @@ export function resolveIddScoreLabel(
   return formatIndicatorIddScore(score);
 }
 
+/** Formata `indicators[].score` do SI para o rótulo «Nota IDD» do card. */
+export function resolveIndicatorIddScoreLabelFromSi(
+  score: number | null | undefined,
+): string | null {
+  if (score == null || Number.isNaN(Number(score))) {
+    return null;
+  }
+  return formatIndicatorIddScore(Number(score));
+}
+
+export type SiIndicatorScoreItem = {
+  indicator_id?: string | null;
+  score?: number | null;
+};
+
+/** Mapa indicator_id → score a partir do payload department-indicators. */
+export function buildSiIndicatorScoreMap(
+  indicators: SiIndicatorScoreItem[] | null | undefined,
+): Record<string, number | null> {
+  const map: Record<string, number | null> = {};
+  for (const item of indicators ?? []) {
+    const id = String(item.indicator_id ?? "").trim();
+    if (!id) continue;
+    const raw = item.score;
+    map[id] =
+      raw == null || Number.isNaN(Number(raw)) ? null : Number(raw);
+  }
+  return map;
+}
+
+export function pickSiIddScoreLabel(
+  scoresById: Record<string, number | null | undefined> | null | undefined,
+  indicatorId: string,
+): string | null {
+  if (!scoresById) return null;
+  const id = indicatorId.trim();
+  if (!id || !(id in scoresById)) return null;
+  return resolveIndicatorIddScoreLabelFromSi(scoresById[id]);
+}
+
+/** Força Nota IDD canônica do SI no presentation (não recalcula no MFE). */
+export function applySiIddScoreLabel(
+  presentation: KpiGoalPresentation,
+  iddScoreLabel: string | null,
+): KpiGoalPresentation {
+  return { ...presentation, iddScoreLabel };
+}
+
 export function resolveConsolidatedIddScoreLabel(
   entries: Array<{
     realized: number | null | undefined;
@@ -202,8 +250,14 @@ export function applyConsolidatedBranchIddScore(
   options: {
     activeBranch?: string;
     branches?: PerBranchMetricSlices | null;
+    /** Quando definido, usa score SI e não recalcula no MFE. */
+    iddScoreLabel?: string | null;
   },
 ): KpiGoalPresentation {
+  if (options.iddScoreLabel !== undefined) {
+    return applySiIddScoreLabel(presentation, options.iddScoreLabel);
+  }
+
   const branch = (options.activeBranch ?? "").trim();
   if (branch || !options.branches) {
     return presentation;
@@ -233,6 +287,8 @@ export function buildKpiGoalPresentationWithBranchIdd<T extends DashboardGoalFie
     showGoal?: boolean;
     dateStart?: string | null;
     dateEnd?: string | null;
+    /** Nota IDD canônica do SI (`indicators[].score`). */
+    iddScoreLabel?: string | null;
   },
 ): KpiGoalPresentation {
   const base = buildKpiGoalPresentation(
@@ -244,12 +300,14 @@ export function buildKpiGoalPresentationWithBranchIdd<T extends DashboardGoalFie
       realizedValue: options.realizedValue,
       dateStart: options.dateStart,
       dateEnd: options.dateEnd,
+      iddScoreLabel: options.iddScoreLabel,
     },
   );
 
   return applyConsolidatedBranchIddScore(base, {
     activeBranch: options.activeBranch,
     branches: options.branches,
+    iddScoreLabel: options.iddScoreLabel,
   });
 }
 
@@ -523,6 +581,8 @@ export function buildKpiGoalPresentation(
     realizedValue?: number | null;
     dateStart?: string | null;
     dateEnd?: string | null;
+    /** Quando definido, substitui o cálculo local da Nota IDD. */
+    iddScoreLabel?: string | null;
   },
 ): KpiGoalPresentation {
   const showGoal = options?.showGoal ?? true;
@@ -570,6 +630,13 @@ export function buildKpiGoalPresentation(
         })
       : null;
 
+  const iddScoreLabel =
+    options?.iddScoreLabel !== undefined
+      ? options.iddScoreLabel
+      : showGoal
+        ? resolveIddScoreLabel(options?.realizedValue, goal)
+        : null;
+
   return {
     goalLabel,
     goalPrefix,
@@ -582,9 +649,7 @@ export function buildKpiGoalPresentation(
     goalPerformanceBadge: showNumericGoals
       ? resolveGoalPerformanceBadge(options?.realizedValue, goal)
       : null,
-    iddScoreLabel: showGoal
-      ? resolveIddScoreLabel(options?.realizedValue, goal)
-      : null,
+    iddScoreLabel,
     contextLabel,
   };
 }
