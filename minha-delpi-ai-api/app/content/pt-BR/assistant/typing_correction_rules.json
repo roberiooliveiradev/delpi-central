@@ -645,6 +645,22 @@
     {
       "pattern": "\\bdeposito\\b",
       "replacement": "deposito"
+    },
+    {
+      "pattern": "\\bconsollidado\\b",
+      "replacement": "consolidado"
+    },
+    {
+      "pattern": "\\bconsolidaddo\\b",
+      "replacement": "consolidado"
+    },
+    {
+      "pattern": "\\banteriror\\b",
+      "replacement": "anterior"
+    },
+    {
+      "pattern": "\\banteriro\\b",
+      "replacement": "anterior"
     }
   ]
 }

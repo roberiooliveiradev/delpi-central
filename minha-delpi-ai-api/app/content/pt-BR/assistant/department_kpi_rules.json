@@ -186,6 +186,7 @@
         "indicador rol financeiro",
         "rol do mes",
         "rol de ",
+        "rol ",
         "qual o rol",
         "qual foi o rol",
         "quanto foi o rol",
@@ -193,7 +194,9 @@
         " o rol",
         "rol filial",
         "rol da filial",
-        "rol na filial"
+        "rol na filial",
+        "rol consolidado",
+        "rol consollidado"
       ],
       "excludes": [
         "serie",

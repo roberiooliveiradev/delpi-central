@@ -49,6 +49,13 @@
     "previous_period",
     "message_resolved"
   ],
+  "periodTypoReplacements": {
+    "anteriror": "anterior",
+    "anteriro": "anterior",
+    "anterir": "anterior",
+    "perido": "periodo",
+    "perído": "periodo"
+  },
   "periodSlotKindByTriggerGroup": {
     "previous_year_same_range": [
       "ano anterior",

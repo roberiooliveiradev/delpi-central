@@ -332,8 +332,32 @@ class ChatFollowUpTurnContentService:
         )
 
     @classmethod
+    def normalize_period_typos(cls, text: str) -> str:
+        haystack = str(text or "")
+        if not haystack:
+            return haystack
+        mapping = ChatAssistantContentService.get_mapping(
+            _BUNDLE,
+            "periodTypoReplacements",
+        )
+        if not isinstance(mapping, dict) or not mapping:
+            return haystack
+        out = haystack
+        # Longer keys first to avoid partial clobber.
+        for wrong, right in sorted(
+            ((str(k), str(v)) for k, v in mapping.items() if str(k).strip() and str(v).strip()),
+            key=lambda item: len(item[0]),
+            reverse=True,
+        ):
+            out = out.replace(wrong, right)
+            out = out.replace(wrong.upper(), right)
+            # Accented / title variants are uncommon; lowercase path covers normalized haystacks.
+            out = out.replace(wrong.capitalize(), right)
+        return out
+
+    @classmethod
     def period_slot_kind_for_message(cls, normalized: str) -> str | None:
-        haystack = str(normalized or "").strip().lower()
+        haystack = cls.normalize_period_typos(str(normalized or "").strip().lower())
         if not haystack:
             return None
         groups = ChatAssistantContentService.get_node(
