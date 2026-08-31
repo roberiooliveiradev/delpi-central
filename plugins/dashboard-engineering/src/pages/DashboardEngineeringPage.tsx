@@ -7,6 +7,8 @@ import { KpiCard } from "../components/KpiCard";
 import { ModuleShortcut } from "../components/ModuleShortcut";
 import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
 import { ENGINEERING_ROUTES } from "../constants/routes";
+import { ENGINEERING_SI_INDICATORS } from "../constants/siIndicatorIds";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import { useEngineeringDashboard } from "../hooks/useEngineeringDashboard";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { formatPeriodLabel } from "../utils/dates";
@@ -16,6 +18,7 @@ import {
   formatDashboardMetricValue,
   formatKpiGoalExportFragments,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
@@ -73,6 +76,13 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
     reload,
   } = useEngineeringDashboard(apiParams);
 
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("engineering", {
+    competence,
+    dateStart,
+    dateEnd,
+    branches,
+  });
+
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
@@ -92,6 +102,10 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
           realizedValue: lmpSummary?.percent_dentro_prazo,
           activeBranch: activeApiBranch,
           branches: lmpBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            ENGINEERING_SI_INDICATORS.projectsOnTime,
+          ),
           ...dateOpts,
         },
       );
@@ -102,6 +116,10 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
           realizedValue: transforma?.total_gross_savings_in_period,
           activeBranch: activeApiBranch,
           branches: transformaSavingsBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            ENGINEERING_SI_INDICATORS.transformaPlus,
+          ),
           ...dateOpts,
         },
       );
@@ -163,6 +181,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
       periodLabel,
       transforma,
       transformaSavingsBranches,
+      siScoresById,
     ],
   );
 
@@ -238,6 +257,10 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
               branches: lmpBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                ENGINEERING_SI_INDICATORS.projectsOnTime,
+              ),
             },
           )}
           icon={<CircleGauge size={22} />}
@@ -277,6 +300,10 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
               branches: transformaSavingsBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                ENGINEERING_SI_INDICATORS.transformaPlus,
+              ),
             },
           )}
           icon={<Coins size={22} />}

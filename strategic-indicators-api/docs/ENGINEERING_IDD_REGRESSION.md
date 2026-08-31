@@ -6,12 +6,14 @@
 
 ## Causa raiz
 
-Dois caminhos distintos de “nota IDD”:
+Dois caminhos distintos de “nota IDD” (histórico jul/2026):
 
-| Superfície | Fonte | O que o usuário via |
-|------------|-------|---------------------|
-| Cards KPI do MFE | `GET /engineering/...` + cálculo local (`goalDisplay`) | 10,00 |
-| Badge do header | `GET /dashboard/department-idd` → SI | 0.0 Crítico |
+| Superfície | Fonte (antes) | Fonte (atual) |
+|------------|---------------|---------------|
+| Cards KPI do MFE | `GET /engineering/...` + cálculo local (`goalDisplay`) | **`GET /dashboard/department-idd` → SI** (`useDepartmentIndicatorScores` + `pickSiIddScoreLabel`) |
+| Badge do header | `GET /dashboard/department-idd` → SI | SI (inalterado) |
+
+Os cards passaram a ler a **Nota IDD** do Strategic Indicators (mesma fonte do badge), eliminando divergência entre KPI local e pontuação SI.
 
 ### 1) Coleta de medições (causa local confirmada jul/2026)
 
@@ -37,7 +39,7 @@ Preparação (mai/2026): scoring por filial + medição consolidada-only em enge
 
 **Catálogo:** ajustar agregação/`scope_type` só pela aplicação admin SI — **não** migration de dados para “corrigir” IDD.
 
-**Não corrigir no MFE** do dashboard-engineering (badge só exibe `item.score` do SI).
+**Não corrigir no MFE** inventando IDD global a partir de cálculo local — cards e badge devem usar SI (`dashboard-engineering`: `useDepartmentIndicatorScores` + `ENGINEERING_SI_INDICATORS`).
 
 ## Anti-padrões (proibido reintroduzir)
 
@@ -46,7 +48,7 @@ Preparação (mai/2026): scoring por filial + medição consolidada-only em enge
 3. Fazer `_scores_zero_when_unfilled` (ou equivalente) zerar filial `01`/`02` ausente em departamento que só publica `consolidated`.
 4. Assumir que `aggregation_mode` do banco sozinho define o cálculo — departamentos em `CONSOLIDATED_AGGREGATION_DEPARTMENT_IDS` têm medição consolidada por contrato do provider.
 5. Duplicar `01`/`02` em `unit_values` de engenharia “só para o IDD bater” — quebra rótulo/exibição consolidada; o calculador deve respeitar a chave `consolidated`.
-6. Patch só no MFE para inventar IDD global a partir dos cards.
+6. Patch no MFE que recalcula Nota IDD localmente nos cards — usar `pickSiIddScoreLabel` com scores do SI.
 
 ## Testes de regressão (obrigatórios)
 
