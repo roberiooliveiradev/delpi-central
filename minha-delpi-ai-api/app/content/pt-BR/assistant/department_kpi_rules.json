@@ -196,7 +196,11 @@
         "rol da filial",
         "rol na filial",
         "rol consolidado",
-        "rol consollidado"
+        "rol consollidado",
+        "faturamento",
+        "faturamento da filial",
+        "faturamento da unidade",
+        "quanto foi o faturamento"
       ],
       "excludes": [
         "serie",

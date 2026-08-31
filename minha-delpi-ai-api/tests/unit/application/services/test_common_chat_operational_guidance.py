@@ -6,13 +6,30 @@ from app.application.services.chat_turn.chat_turn_preparation_tool_routing_servi
 )
 
 
-def test_requires_agent_for_lmp_list_in_common_chat():
+def test_requires_agent_for_faturamento_in_common_chat():
     workspace = {"userActivatedAgent": False, "actionsEnabled": False}
 
     assert ChatCommonChatOperationalGuidanceService.requires_agent(
-        "listar LMPs desse mês",
+        "quanto foi o faturamento da filial 01?",
         workspace_context=workspace,
     )
+
+
+def test_resolve_operational_guards_returns_guidance_for_faturamento():
+    guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
+        message="quanto foi o faturamento da filial 01?",
+        history_source=[],
+        conversation_context="",
+        working_memory_snapshot={},
+        workspace_context={"userActivatedAgent": False, "actionsEnabled": False},
+        canvas_action=None,
+        pre_capability_answer=None,
+        analysis_mode=False,
+        text_task_pure=False,
+    )
+
+    assert guards.common_chat_operational_answer
+    assert "agente" in guards.common_chat_operational_answer.lower()
 
 
 def test_requires_agent_for_product_query_in_common_chat():
