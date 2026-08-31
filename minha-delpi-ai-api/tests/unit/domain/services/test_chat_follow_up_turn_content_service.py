@@ -61,6 +61,33 @@ def test_clarify_and_challenge_content_present():
     assert "01" in ChatFollowUpTurnContentService.revise_ack_branch("01")
 
 
+def test_previous_period_and_branch_compare_vocab_loaded():
+    assert "previous_period" in ChatFollowUpTurnContentService.period_slot_kinds()
+    assert (
+        ChatFollowUpTurnContentService.period_slot_kind_for_message(
+            "comparar com o periodo anterior"
+        )
+        == "previous_period"
+    )
+    assert "período anterior" in ChatFollowUpTurnContentService.period_compare_prior_label(
+        "previous_period"
+    ).lower()
+    keys = ChatFollowUpTurnContentService.period_compare_preferred_metric_keys()
+    assert "rol" in keys
+    assert ChatFollowUpTurnContentService.extract_branch_codes(
+        "comparar filial 01 com filial 02"
+    ) == ["01", "02"]
+    ack = ChatFollowUpTurnContentService.period_compare_format(
+        "branchCompareAckTemplate",
+        baseline_branch="01",
+        compare_branch="02",
+        start="01-08-2026",
+        end="28-08-2026",
+    )
+    assert "filiais" in ack.lower()
+    assert "01" in ack and "02" in ack
+
+
 def test_continuity_contract_and_period_vocab_loaded():
     modes = ChatFollowUpTurnContentService.continuity_modes()
     assert "consume_last_action" in modes
