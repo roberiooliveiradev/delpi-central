@@ -29,6 +29,10 @@ import {
 import { accountLinkTitle } from "../../../content/entityLinkHints";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
+  appendBillingNatureContext,
+  type PortfolioBillingAmountNature,
+} from "../../../content/billingNature";
+import {
   CUSTOMERS_LIST_COLUMN_HELP,
   withColumnHelp,
 } from "../../../utils/customersColumnHelp";
@@ -70,6 +74,7 @@ type CustomersTableProps = {
   loading?: boolean;
   emptyMessage?: string;
   sharedCoverageByKey?: ReadonlyMap<string, CustomerSharedCoverageItem>;
+  billingNature?: PortfolioBillingAmountNature;
 };
 
 const SORTABLE_COLUMN_KEYS = new Set<CustomerColumnKey>(
@@ -123,6 +128,7 @@ export function CustomersTable({
   loading = false,
   emptyMessage = "Nenhum cliente corresponde aos filtros selecionados.",
   sharedCoverageByKey,
+  billingNature = "gross",
 }: CustomersTableProps) {
   const [exporting, setExporting] = useState(false);
   const { layout, setLayout } = usePersistedViewLayout({
@@ -268,7 +274,7 @@ export function CustomersTable({
     },
     {
       key: "billed12m",
-      header: "Fat. 12 meses",
+      header: appendBillingNatureContext("Fat. 12 meses", billingNature),
       sortable: true,
       align: "right",
       render: (customer) => (
@@ -338,7 +344,7 @@ export function CustomersTable({
     if (exportRows.length === 0 || exporting) return;
     try {
       setExporting(true);
-      await exportCustomersExcel(exportRows, visibleExportColumns);
+      await exportCustomersExcel(exportRows, visibleExportColumns, { billingNature });
     } finally {
       setExporting(false);
     }

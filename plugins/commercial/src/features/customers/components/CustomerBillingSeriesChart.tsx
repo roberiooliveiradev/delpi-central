@@ -27,6 +27,11 @@ import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
+  appendBillingNatureContext,
+  billingNatureShortLabel,
+  type PortfolioBillingAmountNature,
+} from "../../../content/billingNature";
+import {
   PeriodCompareControls,
   type CompareYearsCount,
 } from "../../analytics/components/PeriodCompareControls";
@@ -57,6 +62,7 @@ type CustomerBillingSeriesChartProps = {
   customers: CustomerSummary[];
   /** Quando false, não dispara fetch (painel oculto). Default true. */
   active?: boolean;
+  billingNature?: PortfolioBillingAmountNature;
 };
 
 function formatChartCurrency(value: number): string {
@@ -92,6 +98,7 @@ function billingFilterLabel(
 export function CustomerBillingSeriesChart({
   customers,
   active = true,
+  billingNature = "gross",
 }: CustomerBillingSeriesChartProps) {
   const defaultRange = periodRangeFromBillingPreset(DEFAULT_BILLING_SERIES_PRESET);
   const [preset, setPreset] = useState<BillingSeriesPeriodPreset>(
@@ -175,6 +182,7 @@ export function CustomerBillingSeriesChart({
     endDate: range.endDate,
     granularity: effectiveGrain,
     compareYears: yoyActive ? compareYears : 0,
+    nature: billingNature,
   });
 
   const chartData = useMemo(
@@ -196,7 +204,7 @@ export function CustomerBillingSeriesChart({
     const list: MultiTypeSeriesSpec[] = [
       {
         dataKey: "faturamento",
-        name: "Faturamento",
+        name: appendBillingNatureContext("Faturamento", billingNature),
         fill: SERIES_COLOR,
         trendSource: true,
       },
@@ -223,7 +231,7 @@ export function CustomerBillingSeriesChart({
       });
     }
     return list;
-  }, [compareYears]);
+  }, [billingNature, compareYears]);
 
   const hasValues = chartData.some(
     (point) =>
@@ -235,18 +243,23 @@ export function CustomerBillingSeriesChart({
   );
   const filterLabel = billingFilterLabel(selectedKeys, customerOptions);
   const periodLabel = billingSeriesPresetLabel(preset);
+  const natureLabel = billingNatureShortLabel(billingNature);
+  const chartTitle = appendBillingNatureContext(
+    `Faturamento — ${periodLabel}`,
+    billingNature,
+  );
   const isAllCustomers = selectedKeys.length === 0;
 
   return (
     <div className="cm-billing-series-chart">
       <CommercialSectionCard
-        title={`Faturamento — ${periodLabel}`}
+        title={chartTitle}
         hint={CM_HELP.customers.billingSeries}
         subtitle={
           loading
             ? "Atualizando série…"
             : hasValues
-              ? `Total no período · ${filterLabel}: ${formatCurrency(totalValue)}`
+              ? `Total no período · ${filterLabel}: ${formatCurrency(totalValue)} · ${natureLabel}`
               : undefined
         }
         actions={
@@ -353,7 +366,7 @@ export function CustomerBillingSeriesChart({
                     kind: "table",
                     format,
                     payload: buildBillingSeriesExportPayload(chartData, {
-                      title: `Faturamento — ${periodLabel}`,
+                      title: chartTitle,
                       compareYears,
                     }),
                   });

@@ -511,7 +511,7 @@ describe("CustomersPage estrutural", () => {
     assert.match(table, /<strong className="cm-open-orders-client__name">/);
     assert.match(table, /useCustomerTablePreferences\(canUseTeamScope\)/);
     assert.match(table, /CommercialExcelExportButton/);
-    assert.match(table, /exportCustomersExcel\(exportRows, visibleExportColumns\)/);
+    assert.match(table, /exportCustomersExcel\(exportRows, visibleExportColumns/);
     assert.match(table, /resizableColumns/);
     assert.match(table, /enableColumnReorder/);
     assert.match(table, /CommercialTableColumnVisibilityMenu/);
@@ -531,7 +531,7 @@ describe("CustomersPage estrutural", () => {
       join(__dirname, "../hooks/useCustomerBillingSeries.ts"),
       "utf8",
     );
-    assert.match(page, /exportRows=\{filteredCustomers\}/);
+    assert.match(page, /exportRows=\{productMatchedCustomers\}/);
     assert.match(page, /canUseTeamScope=\{canUseTeamScope\}/);
     assert.match(page, /CommercialSegmentToggle/);
     assert.match(chart, /CommercialSectionCard/);

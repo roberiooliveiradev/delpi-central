@@ -24,6 +24,8 @@ export type AnalyticsFilterParams = {
   product_code?: string;
   /** Família/grupo Protheus (B1_GRUPO) — listagem de OVs. */
   product_group?: string;
+  /** gross | net — faturamento da carteira (share/ranking). */
+  nature?: "gross" | "net";
 };
 
 export type RolTargetData = DashboardGoalFields & {
@@ -63,7 +65,11 @@ export type PortfolioBillingShareData = {
   startDate?: string | null;
   endDate?: string | null;
   branch?: string | null;
-  nature: "portfolio_billing_share";
+  /** gross | net — natureza do valor. */
+  nature: "gross" | "net" | "portfolio_billing_share";
+  /** Tag legada do KPI (quando o BFF ainda envia). */
+  kpiNature?: "portfolio_billing_share";
+  billingNature?: "gross" | "net";
 };
 
 /** Ranking delta % — BFF portfolio-billing-ranking. */
@@ -88,7 +94,9 @@ export type PortfolioBillingRankingData = {
   priorStartDate: string;
   priorEndDate: string;
   branch?: string | null;
-  nature: "portfolio_billing_ranking";
+  nature: "gross" | "net" | "portfolio_billing_ranking";
+  kpiNature?: "portfolio_billing_ranking";
+  billingNature?: "gross" | "net";
 };
 
 export type OpenPortfolioHorizonBucketId =

@@ -33,6 +33,7 @@ describe("customersListDeepLink", () => {
         dir: "desc",
         page: 3,
         panel: "customers",
+        billingNature: "gross",
       },
     );
   });
@@ -49,6 +50,7 @@ describe("customersListDeepLink", () => {
         dir: "asc",
         page: 1,
         panel: "customers",
+        billingNature: "gross",
       },
     );
     assert.equal(
@@ -75,7 +77,36 @@ describe("customersListDeepLink", () => {
         dir: "asc",
         page: 1,
         panel: "customers",
+        billingNature: "gross",
       },
+    );
+  });
+
+  it("persiste billingNature=net na URL e default gross omite o param", () => {
+    assert.deepEqual(
+      parseCustomersListDeepLink("?billingNature=net&panel=billing", TEAM_ACCESS),
+      {
+        q: "",
+        focus: "all",
+        trend: "all",
+        sellerId: null,
+        sort: "attention",
+        dir: "asc",
+        page: 1,
+        panel: "billing",
+        billingNature: "net",
+      },
+    );
+    assert.equal(
+      buildCustomersListSearch(
+        { panel: "billing", billingNature: "net" },
+        TEAM_ACCESS,
+      ),
+      "?panel=billing&billingNature=net",
+    );
+    assert.equal(
+      buildCustomersListSearch({ billingNature: "gross" }, TEAM_ACCESS),
+      "",
     );
   });
 
@@ -91,6 +122,7 @@ describe("customersListDeepLink", () => {
         dir: "asc",
         page: 1,
         panel: "customers",
+        billingNature: "gross",
       },
     );
     assert.equal(sanitizeCustomersListSearch("?focus=growth", TEAM_ACCESS), "?trend=up");
@@ -111,6 +143,7 @@ describe("customersListDeepLink", () => {
       dir: "desc",
       page: 4,
       panel: "customers",
+      billingNature: "gross",
     };
     const search = buildCustomersListSearch(state, TEAM_ACCESS);
     assert.equal(search, "?q=Metal%C3%BArgica+A&focus=attention&trend=down&seller_id=seller-1&sort=lastPurchaseDate&dir=desc&page=4");
@@ -124,7 +157,7 @@ describe("customersListDeepLink", () => {
   it("aplica defaults e remove toda query fora da allowlist", () => {
     assert.deepEqual(
       parseCustomersListDeepLink("?focus=x&sort=__proto__&dir=up&page=-2&unknown=1", TEAM_ACCESS),
-      { q: "", focus: "all", trend: "all", sellerId: null, sort: "attention", dir: "asc", page: 1, panel: "customers" },
+      { q: "", focus: "all", trend: "all", sellerId: null, sort: "attention", dir: "asc", page: 1, panel: "customers", billingNature: "gross" },
     );
     assert.equal(
       sanitizeCustomersListSearch("?q=ACME&focus=all&sort=attention&dir=asc&page=1&unknown=1", TEAM_ACCESS),
@@ -181,6 +214,7 @@ describe("customersListDeepLink", () => {
         dir: "asc",
         page: 2,
         panel: "customers",
+      billingNature: "gross",
       },
     );
   });
@@ -197,6 +231,7 @@ describe("customersListDeepLink", () => {
         dir: "asc",
         page: 1,
         panel: "billing",
+      billingNature: "gross",
       },
     );
     assert.equal(
@@ -210,6 +245,7 @@ describe("customersListDeepLink", () => {
           dir: "asc",
           page: 1,
           panel: "ranking",
+        billingNature: "gross",
         },
         TEAM_ACCESS,
       ),
@@ -230,6 +266,7 @@ describe("updateCustomersListState", () => {
   const state = {
     q: "ACME", focus: "active", trend: "up", sellerId: "seller-1",
     sort: "nome", dir: "asc", page: 7, panel: "customers",
+    billingNature: "gross",
   };
   for (const change of [
     { q: "BETA" },

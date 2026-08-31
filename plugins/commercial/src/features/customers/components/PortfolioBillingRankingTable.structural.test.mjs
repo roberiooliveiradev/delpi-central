@@ -41,8 +41,11 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(page, /CustomerBillingSeriesChart/);
     assert.match(page, /CommercialSegmentToggle/);
     assert.match(page, /customers-workspace-panel/);
+    assert.match(page, /customers-billing-nature/);
+    assert.match(page, /setBillingNature/);
     assert.match(page, /setPanel/);
     assert.match(page, /active=\{panel === "billing"\}/);
     assert.match(page, /active=\{panel === "ranking"\}/);
+    assert.match(page, /billingNature=\{billingNature\}/);
   });
 });

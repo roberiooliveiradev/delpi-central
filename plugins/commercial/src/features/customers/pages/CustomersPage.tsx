@@ -22,6 +22,13 @@ import {
   CommercialSegmentToggle,
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
+import {
+  BILLING_NATURE_CONTENT,
+  PORTFOLIO_SUPPORTED_BILLING_NATURES,
+  appendBillingNatureContext,
+  isPortfolioBillingNatureToggleAvailable,
+  type PortfolioBillingAmountNature,
+} from "../../../content/billingNature";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
 import { PortfolioBillingRankingTable } from "../components/PortfolioBillingRankingTable";
 import { CustomersTable } from "../components/CustomersTable";
@@ -95,6 +102,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     toggleSort,
     setPage,
     setPanel,
+    setBillingNature,
     resetFilters,
     listSearch,
   } = useCustomersListState({
@@ -105,6 +113,16 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     sellerId: canFilterPortfolios ? sellerIdFilter : null,
     setSellerId: setSellerIdFilter,
   });
+  const {
+    q: search,
+    focus: filter,
+    trend,
+    sort: sortKey,
+    dir: sortDirection,
+    page: requestedPage,
+    panel,
+    billingNature,
+  } = listState;
 
   const sellerNameByKey = useMemo(() => {
     if (canUseTeamScope) {
@@ -139,10 +157,12 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     sellerNameByKey,
     listState,
     trendWindowDays,
+    billingNature,
   });
 
   const portfolioShare = usePortfolioBillingShare({
     sellerId: canFilterPortfolios ? sellerIdFilter : null,
+    nature: billingNature,
   });
 
   const [productQuery, setProductQuery] = useState("");
@@ -172,15 +192,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     coverageCustomers,
     scopePortfolioIds,
   );
-  const {
-    q: search,
-    focus: filter,
-    trend,
-    sort: sortKey,
-    dir: sortDirection,
-    page: requestedPage,
-    panel,
-  } = listState;
   const enrichmentIncomplete =
     !enrichment.loading &&
     enrichment.total > 0 &&
@@ -287,7 +298,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
       ? [
           {
             id: "share",
-            label: "Share empresa",
+            label: appendBillingNatureContext("Share empresa", billingNature),
             value: portfolioShare.shareLabel,
             tone: "neutral" as const,
           },
@@ -539,6 +550,34 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                   { value: "customers", label: "Clientes" },
                 ]}
               />
+              {isPortfolioBillingNatureToggleAvailable(PORTFOLIO_SUPPORTED_BILLING_NATURES) ? (
+                <div className="cm-customers-page__billing-nature">
+                  <CommercialSectionHintLabel
+                    label="Natureza do faturamento"
+                    hint={CM_HELP.customers.billingNature}
+                  />
+                  <CommercialSegmentToggle
+                    ariaLabel={CM_HELP.customers.billingNature}
+                    idPrefix="customers-billing-nature"
+                    value={billingNature}
+                    onChange={(value) => {
+                      if (value === "gross" || value === "net") {
+                        setBillingNature(value as PortfolioBillingAmountNature);
+                      }
+                    }}
+                    options={[
+                      {
+                        value: "gross",
+                        label: BILLING_NATURE_CONTENT.gross.shortLabel,
+                      },
+                      {
+                        value: "net",
+                        label: BILLING_NATURE_CONTENT.net.shortLabel,
+                      },
+                    ]}
+                  />
+                </div>
+              ) : null}
 
               <div
                 className="cm-customers-page__panel"
@@ -548,6 +587,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 <CustomerBillingSeriesChart
                   customers={aggregation.customers}
                   active={panel === "billing"}
+                  billingNature={billingNature}
                 />
               </div>
 
@@ -559,6 +599,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 <PortfolioBillingRankingTable
                   sellerId={canFilterPortfolios ? sellerIdFilter : null}
                   active={panel === "ranking"}
+                  billingNature={billingNature}
                 />
               </div>
 
@@ -584,6 +625,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                       sellerAccess={sellerAccess}
                       loading={refreshing}
                       sharedCoverageByKey={sharedCoverage.byKey}
+                      billingNature={billingNature}
                     />
                     {productMatchedCustomers.length > 20 ? (
                       <CommercialPagination

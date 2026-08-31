@@ -275,11 +275,13 @@ export const CM_HELP = {
     glossaryOpenVsBilled:
       "Glossário: «Em aberto / carteira aberta» = pedidos com saldo (backlog). «Faturamento» = notas fiscais / ROL no período. O share empresa e a tendência usam só faturamento — nunca o valor em aberto.",
     portfolioBillingShare:
-      "Share = ROL (ou faturamento agregado) da carteira/escopo ÷ ROL da empresa no mesmo período. Exige permissão de analytics, equipe ou gestão de carteiras.",
+      "Share = faturamento da carteira/escopo ÷ faturamento da empresa no mesmo período (bruto ou líquido conforme a Natureza). Exige permissão de analytics, equipe ou gestão de carteiras.",
     billingRanking:
-      "Ranking de crescimento/queda do faturamento (ROL) versus o mesmo período no ano anterior. Gestores podem agrupar por vendedor.",
+      "Ranking de crescimento/queda do faturamento versus o mesmo período no ano anterior (bruto ou líquido conforme a Natureza). Gestores podem agrupar por vendedor.",
     billingSeries:
-      "Soma das notas fiscais de saída no período escolhido. Selecione um cliente para ver só a série dele. Presets iguais à Visão geral; opcionalmente compare com anos anteriores em colunas agrupadas.",
+      "Soma do faturamento no período escolhido (bruto de nota ou líquido ROL). Selecione um cliente para ver só a série dele. Presets iguais à Visão geral; opcionalmente compare com anos anteriores em colunas agrupadas.",
+    billingNature:
+      "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, ranking e share.",
     billingSeriesPeriod:
       "Recorte do gráfico (paridade Visão geral): hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
     billingSeriesGrain:
@@ -636,9 +638,11 @@ export const CM_HELP = {
     openPortfolio:
       "Carteira comercial em aberto agora (natureza: valor aberto de pedido): valor e linhas. Não é ROL líquido nem bruto, não é PCP, não é forecast e não deve ser somada ao ROL do período.",
     billingNatureNet:
-      "ROL usa natureza líquido (receita operacional líquida). Toggle bruto bloqueado até o BFF expor nature=gross.",
+      "ROL usa natureza líquido (receita operacional líquida). Na Minha Carteira o toggle Bruto/Líquido usa o mesmo contrato de natureza do BFF.",
     billingNatureOpenOrder:
       "Carteira usa natureza valor aberto de pedido (snapshot). Distinta do ROL líquido do período.",
+    billingNatureGross:
+      "Faturamento bruto de nota quando o BFF expõe natureza bruta — disponível na Minha Carteira.",
     gapToTarget:
       "Gap vs meta ROL SI do período filtrado. A carteira «este mês» aparece só como contexto — nunca some gap + carteira.",
     openPortfolioHorizon:

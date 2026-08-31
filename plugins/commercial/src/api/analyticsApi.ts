@@ -55,6 +55,9 @@ function buildQuery(
   if (params.group_by) searchParams.set("group_by", params.group_by);
   if (params.limit != null) searchParams.set("limit", String(params.limit));
   if (params.order) searchParams.set("order", params.order);
+  if (params.nature === "gross" || params.nature === "net") {
+    searchParams.set("nature", params.nature);
+  }
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }

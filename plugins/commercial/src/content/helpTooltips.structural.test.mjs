@@ -56,6 +56,8 @@ describe("CM_HELP matriz (C16)", () => {
       "overview.openPortfolio",
       "overview.billingNatureNet",
       "overview.billingNatureOpenOrder",
+      "overview.billingNatureGross",
+      "customers.billingNature",
       "analytics.portfolioFilter",
       "analytics.filters",
       "analytics.otdPage",

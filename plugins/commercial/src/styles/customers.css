@@ -147,6 +147,13 @@
   min-width: 0;
 }
 
+.dashboard-commercial .cm-customers-page__billing-nature {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-customers-page__panel[hidden] {
   display: none !important;
 }

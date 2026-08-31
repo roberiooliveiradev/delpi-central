@@ -23,6 +23,10 @@ import {
 } from "../../../app/commercialUi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import { CM_HELP } from "../../../content/helpTooltips";
+import {
+  appendBillingNatureContext,
+  billingNatureShortLabel,
+} from "../../../content/billingNature";
 import type { PortfolioBillingRankingItem } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
 import { OtdCustomerIdentityCell } from "../../analytics/components/OtdCustomerIdentityCell";
@@ -37,6 +41,7 @@ type PortfolioBillingRankingTableProps = {
   sellerId?: string | null;
   /** Quando false, não dispara fetch (painel oculto). Default true. */
   active?: boolean;
+  billingNature?: "gross" | "net";
 };
 
 type RankingOrder = "growth" | "decline";
@@ -52,6 +57,7 @@ const RANKING_PERIOD_OPTIONS = BILLING_SERIES_PRESET_OPTIONS.filter(
 export function PortfolioBillingRankingTable({
   sellerId,
   active = true,
+  billingNature = "gross",
 }: PortfolioBillingRankingTableProps) {
   const { canUseTeamScope } = usePortfolioScope();
   const [groupBy, setGroupBy] = useState<"customer" | "seller">("customer");
@@ -75,7 +81,9 @@ export function PortfolioBillingRankingTable({
     RANKING_PERIOD_OPTIONS.find((option) => option.id === periodPreset)?.label ??
     periodPreset;
   const focusLabel = order === "decline" ? "Maiores quedas" : "Maiores altas";
-  const cardSubtitle = `Top ${limit} · ${periodLabel} · ${focusLabel}`;
+  const natureLabel = billingNatureShortLabel(billingNature);
+  const amountHeader = appendBillingNatureContext("Faturamento", billingNature);
+  const cardSubtitle = `Top ${limit} · ${periodLabel} · ${focusLabel} · ${natureLabel}`;
 
   useEffect(() => {
     if (!active) return;
@@ -90,6 +98,7 @@ export function PortfolioBillingRankingTable({
         group_by: effectiveGroupBy,
         limit,
         order,
+        nature: billingNature,
       },
       controller.signal,
     )
@@ -114,6 +123,7 @@ export function PortfolioBillingRankingTable({
     periodRange.endDate,
     periodRange.startDate,
     sellerId,
+    billingNature,
   ]);
 
   const columns = useMemo((): DataTableColumn<PortfolioBillingRankingItem>[] => {
@@ -170,7 +180,7 @@ export function PortfolioBillingRankingTable({
       },
       {
         key: "current",
-        header: "ROL atual",
+        header: `${amountHeader} atual`,
         align: "right",
         className: cmDataTableClassNames.colNumeric,
         render: (row) => (
@@ -179,7 +189,7 @@ export function PortfolioBillingRankingTable({
       },
       {
         key: "prior",
-        header: "ROL ano ant.",
+        header: `${amountHeader} ano ant.`,
         align: "right",
         className: cmDataTableClassNames.colNumeric,
         render: (row) => (
@@ -195,7 +205,7 @@ export function PortfolioBillingRankingTable({
       },
     );
     return base;
-  }, [effectiveGroupBy]);
+  }, [amountHeader, effectiveGroupBy]);
 
   return (
     <CommercialSectionCard
@@ -271,8 +281,8 @@ export function PortfolioBillingRankingTable({
                       ? [
                           { key: "rank", label: "Rank" },
                           { key: "sellerName", label: "Vendedor" },
-                          { key: "currentRol", label: "ROL atual" },
-                          { key: "priorRol", label: "ROL ano ant." },
+                          { key: "currentRol", label: `${amountHeader} atual` },
+                          { key: "priorRol", label: `${amountHeader} ano ant.` },
                           { key: "delta", label: "Delta" },
                           { key: "deltaPct", label: "Delta %" },
                         ]
@@ -281,8 +291,8 @@ export function PortfolioBillingRankingTable({
                           { key: "customerName", label: "Cliente" },
                           { key: "customerCode", label: "Código" },
                           { key: "customerStore", label: "Loja" },
-                          { key: "currentRol", label: "ROL atual" },
-                          { key: "priorRol", label: "ROL ano ant." },
+                          { key: "currentRol", label: `${amountHeader} atual` },
+                          { key: "priorRol", label: `${amountHeader} ano ant.` },
                           { key: "delta", label: "Delta" },
                           { key: "deltaPct", label: "Delta %" },
                         ],

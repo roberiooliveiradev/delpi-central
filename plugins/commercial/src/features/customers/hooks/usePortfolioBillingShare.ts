@@ -31,6 +31,7 @@ export type UsePortfolioBillingShareOptions = {
   startDate?: string;
   endDate?: string;
   branch?: string;
+  nature?: "gross" | "net";
 };
 
 export type UsePortfolioBillingShareResult = {
@@ -45,7 +46,7 @@ export type UsePortfolioBillingShareResult = {
 export function usePortfolioBillingShare(
   options: UsePortfolioBillingShareOptions = {},
 ): UsePortfolioBillingShareResult {
-  const { sellerId, startDate, endDate, branch } = options;
+  const { sellerId, startDate, endDate, branch, nature } = options;
   const { canManagePortfolios } = usePortfolioScope();
   const allowed = canViewPortfolioBillingShare({
     canManagePortfolios,
@@ -70,6 +71,7 @@ export function usePortfolioBillingShare(
         end_date: resolvedEnd,
         branch: branch || undefined,
         seller_id: sellerId?.trim() || undefined,
+        nature: nature || undefined,
       },
       controller.signal,
     )
@@ -86,7 +88,7 @@ export function usePortfolioBillingShare(
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [allowed, resolvedStart, resolvedEnd, branch, sellerId]);
+  }, [allowed, resolvedStart, resolvedEnd, branch, sellerId, nature]);
 
   return {
     allowed,
@@ -98,6 +100,6 @@ export function usePortfolioBillingShare(
       ? error
       : data
         ? `${formatCurrency(data.portfolioRol)} / ${formatCurrency(data.companyRol)} · período filtrado`
-        : "ROL escopo ÷ ROL empresa",
+        : "Faturamento escopo ÷ empresa",
   };
 }

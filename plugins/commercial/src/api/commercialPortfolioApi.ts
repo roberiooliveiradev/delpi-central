@@ -328,15 +328,19 @@ export async function searchActiveCustomers(
 export async function enrichPortfolioCustomers(
   customers: Array<{ customer_code: string; customer_store: string }>,
   signal?: AbortSignal,
-  options?: { windowDays?: number },
+  options?: { windowDays?: number; nature?: "gross" | "net" },
 ): Promise<CustomerEnrichmentItem[]> {
   if (customers.length === 0) return [];
   const body: {
     customers: Array<{ customer_code: string; customer_store: string }>;
     window_days?: number;
+    nature?: "gross" | "net";
   } = { customers };
   if (options?.windowDays != null) {
     body.window_days = options.windowDays;
+  }
+  if (options?.nature) {
+    body.nature = options.nature;
   }
   const response = await httpPost<ApiSuccessResponse<{ items?: CustomerEnrichmentItem[] }>>(
     commercialApiUrl("/customers/enrichment"),

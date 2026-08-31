@@ -79,6 +79,7 @@ export type UseCustomerBillingSeriesOptions = {
   comparePriorYear?: boolean;
   /** Overlays −1a…−3a (0–3). Preferir sobre comparePriorYear. */
   compareYears?: CompareYearsCount;
+  nature?: "gross" | "net";
 };
 
 const PRIOR_VALUE_KEYS = ["value_prior", "value_prior_2", "value_prior_3"] as const;
@@ -94,6 +95,7 @@ export function useCustomerBillingSeries(
   const compareYears = clampCompareYears(
     options?.compareYears ?? (options?.comparePriorYear ? 1 : 0),
   );
+  const nature = options?.nature;
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [points, setPoints] = useState<BillingSeriesChartPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -146,6 +148,7 @@ export function useCustomerBillingSeries(
       startDate,
       endDate,
       granularity,
+      nature,
       signal: controller.signal,
     } as const;
 
@@ -161,6 +164,7 @@ export function useCustomerBillingSeries(
         startDate: range.start_date,
         endDate: range.end_date,
         granularity,
+        nature,
         signal: controller.signal,
       });
     });
@@ -203,6 +207,7 @@ export function useCustomerBillingSeries(
     endDate,
     granularity,
     compareYears,
+    nature,
   ]);
 
   const displayedPoints = useMemo(

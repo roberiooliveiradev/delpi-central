@@ -14,9 +14,23 @@ function buildFilename(): string {
 export async function exportCustomersExcel(
   customers: CustomerSummary[],
   columns: CustomerColumnDef[],
+  options?: { billingNature?: "gross" | "net" },
 ): Promise<void> {
   if (customers.length === 0 || columns.length === 0) return;
-  exportTableFormat(buildCustomersExportPayload(customers, columns), "xlsx", {
+  const nature = options?.billingNature ?? "gross";
+  const labeledColumns =
+    nature === "net"
+      ? columns.map((column) =>
+          column.key === "billed12m"
+            ? { ...column, label: "Fat. 12 meses · Líquido" }
+            : column,
+        )
+      : columns.map((column) =>
+          column.key === "billed12m"
+            ? { ...column, label: "Fat. 12 meses · Bruto" }
+            : column,
+        );
+  exportTableFormat(buildCustomersExportPayload(customers, labeledColumns), "xlsx", {
     filename: buildFilename(),
   });
 }

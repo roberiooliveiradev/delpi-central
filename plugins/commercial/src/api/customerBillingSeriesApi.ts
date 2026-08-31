@@ -19,6 +19,7 @@ export type CustomerBillingSeriesQuery = {
   startDate?: string;
   endDate?: string;
   granularity?: "day" | "week" | "month" | "year";
+  nature?: "gross" | "net";
   signal?: AbortSignal;
 };
 
@@ -40,6 +41,7 @@ function billingSeriesBody(options?: CustomerBillingSeriesQuery) {
       ? { start_date: options.startDate, end_date: options.endDate }
       : {}),
     ...(options?.granularity ? { granularity: options.granularity } : {}),
+    ...(options?.nature ? { nature: options.nature } : {}),
   };
 }
 
@@ -71,6 +73,7 @@ export async function fetchCustomerBillingSeries(
       startDate: options?.startDate,
       endDate: options?.endDate,
       granularity: options?.granularity,
+      nature: options?.nature,
       signal: options?.signal,
     }),
   });

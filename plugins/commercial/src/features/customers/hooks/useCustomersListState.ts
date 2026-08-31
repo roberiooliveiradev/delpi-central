@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  DEFAULT_PORTFOLIO_BILLING_NATURE,
+  type PortfolioBillingAmountNature,
+} from "../../../content/billingNature";
+import {
   buildCustomersListPath,
   buildCustomersListSearch,
   DEFAULT_CUSTOMERS_LIST_DIRECTION,
@@ -42,6 +46,7 @@ const DEFAULT_STATE: CustomersListState = {
   dir: DEFAULT_CUSTOMERS_LIST_DIRECTION,
   page: 1,
   panel: DEFAULT_CUSTOMERS_LIST_PANEL,
+  billingNature: DEFAULT_PORTFOLIO_BILLING_NATURE,
 };
 
 export function useCustomersListState(options: {
@@ -128,6 +133,10 @@ export function useCustomersListState(options: {
     (panel: CustomerListPanel) => mutate({ panel }),
     [mutate],
   );
+  const setBillingNature = useCallback(
+    (billingNature: PortfolioBillingAmountNature) => mutate({ billingNature }),
+    [mutate],
+  );
   const resetFilters = useCallback(() => {
     setScopeSellerId(null);
     setState(DEFAULT_STATE);
@@ -145,6 +154,7 @@ export function useCustomersListState(options: {
     toggleSort,
     setPage,
     setPanel,
+    setBillingNature,
     resetFilters,
     listSearch,
   };
