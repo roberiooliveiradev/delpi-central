@@ -1,6 +1,8 @@
 import type { CSSProperties, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import {
+  ChartContainer,
   ChartPartResizeHandles,
+  ChartPlotAreaChrome,
   ChartTitle,
   SeriesChartClassesProvider,
   SpeedometerGauge,
@@ -14,6 +16,7 @@ import {
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
   seriesChartThemeStyle,
+  useSeriesChartClasses,
 } from "@delpi/plugin-ui/index";
 
 import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comunicadoChartParts";
@@ -22,6 +25,15 @@ import type { GaugeChartModel } from "./gaugeChartModel";
 
 const SERIES_CHART_PREFIX = "delpi-ui-series-chart";
 
+/** Layout full-bleed para ChartPlotAreaChrome (handles em % do plotHost). */
+const GAUGE_FULL_BLEED_PLOT_LAYOUT = {
+  viewW: 100,
+  viewH: 100,
+  plotW: 100,
+  plotH: 100,
+  margin: { top: 0, right: 0, bottom: 0, left: 0 },
+};
+
 type Props = {
   model: GaugeChartModel;
   options: ComunicadoChartOptions;
@@ -29,51 +41,90 @@ type Props = {
   interaction?: ComunicadoChartInteraction | null;
 };
 
-function frameBoxStyle(
-  frame: { x: number; y: number; w?: number; h?: number } | undefined,
-): CSSProperties | undefined {
-  if (!frame) return undefined;
-  const f = clampChartPartFrame(frame);
-  return {
-    position: "absolute",
-    left: `${f.x}%`,
-    top: `${f.y}%`,
-    width: `${f.w ?? 100}%`,
-    height: `${f.h ?? 100}%`,
-    boxSizing: "border-box",
-  };
-}
-
 /**
- * Host do velocímetro com chrome/título alinhados ao bloco gráfico (SeriesChart).
- * `chartArea` = moldura; `plotArea` = fundo interno ao redor do SVG (paridade série).
+ * Host do velocímetro no mesmo chrome da série (shell + ChartContainer + plotHost).
+ * `chartArea` = moldura; `plotArea` = fundo + ChartPlotAreaChrome (paridade série).
  */
 export function GaugeChartView({ model, options, chartParts, interaction }: Props) {
+  return (
+    <SeriesChartClassesProvider prefix={SERIES_CHART_PREFIX}>
+      <GaugeChartViewInner
+        model={model}
+        options={options}
+        chartParts={chartParts}
+        interaction={interaction}
+      />
+    </SeriesChartClassesProvider>
+  );
+}
+
+function GaugeChartViewInner({ model, options, chartParts, interaction }: Props) {
+  const cn = useSeriesChartClasses();
   const chartArea = resolveChartAreaStyle(options, chartParts);
   const plotArea = resolvePlotAreaStyle(chartParts);
   const interactive = Boolean(interaction);
   const chartAreaRef = { kind: "chartArea" as const };
   const plotAreaRef = { kind: "plotArea" as const };
-  const chartAreaDom = chartPartDomProps(chartAreaRef, interaction?.selectedPart);
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
-  const plotAreaSelected = isChartPartRefEqual(plotAreaRef, interaction?.selectedPart);
-  const plotAreaDom = chartPartDomProps(plotAreaRef, interaction?.selectedPart);
   const chartAreaFrame = getChartPartState(chartParts, chartAreaRef)?.frame;
-  const plotAreaFrame = getChartPartState(chartParts, plotAreaRef)?.frame;
-  const chartAreaFrameCss =
-    chartAreaFrame && !isFullBleedChartAreaFrame(chartAreaFrame)
-      ? frameBoxStyle(chartAreaFrame)
-      : undefined;
-  const plotAreaFrameCss = frameBoxStyle(plotAreaFrame);
   const showChartAreaResize =
     chartAreaSelected &&
     !isFullBleedChartAreaFrame(chartAreaFrame) &&
     chartPartAllowsResize(chartAreaRef) &&
     Boolean(interaction?.onPartResizePointerDown);
-  const showPlotAreaResize =
-    plotAreaSelected &&
-    chartPartAllowsResize(plotAreaRef) &&
-    Boolean(interaction?.onPartResizePointerDown);
+
+  const chartAreaFrameCss: CSSProperties = (() => {
+    if (!chartAreaFrame || isFullBleedChartAreaFrame(chartAreaFrame)) {
+      return { width: "100%", height: "100%", boxSizing: "border-box" };
+    }
+    const f = clampChartPartFrame(chartAreaFrame);
+    return {
+      position: "absolute",
+      left: `${f.x}%`,
+      top: `${f.y}%`,
+      width: f.w != null ? `${f.w}%` : "100%",
+      height: f.h != null ? `${f.h}%` : "100%",
+      boxSizing: "border-box",
+    };
+  })();
+
+  const shellStyle: CSSProperties = {
+    ["--delpi-ui-series-chart-radius" as string]: `${chartArea.borderRadius}px`,
+    ["--delpi-ui-series-chart-shadow" as string]: chartArea.boxShadow || "none",
+    boxShadow: chartArea.boxShadow,
+    borderRadius: chartArea.borderRadius,
+  };
+
+  const themeStyle: CSSProperties = {
+    ...seriesChartThemeStyle({ ...options, backgroundColor: chartArea.fill }),
+    background: chartArea.fill,
+    border: `${Math.max(0, chartArea.strokeWidth)}px solid ${chartArea.stroke}`,
+    borderRadius: chartArea.borderRadius,
+    boxShadow: "none",
+    boxSizing: "border-box",
+    overflow: "visible",
+    backgroundClip: "padding-box",
+    display: "flex",
+    flexDirection: "column",
+    ...(chartArea.opacity != null ? { opacity: chartArea.opacity } : {}),
+    ...chartAreaFrameCss,
+  };
+
+  const plotHostStyle: CSSProperties = {
+    flex: 1,
+    minHeight: 0,
+    width: "100%",
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+    justifyContent: "stretch",
+    boxSizing: "border-box",
+    background: plotArea.fill,
+    border: `${Math.max(0, plotArea.strokeWidth)}px solid ${plotArea.stroke}`,
+    borderRadius: plotArea.borderRadius,
+    ...(plotArea.opacity != null ? { opacity: plotArea.opacity } : {}),
+  };
 
   const onChartAreaPointerDown = interactive
     ? (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -129,48 +180,19 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
       }
     : undefined;
 
-  const hostStyle: CSSProperties = {
-    ["--delpi-ui-series-chart-radius" as string]: `${chartArea.borderRadius}px`,
-    ["--delpi-ui-series-chart-shadow" as string]: chartArea.boxShadow || "none",
-    boxShadow: chartArea.boxShadow,
-    borderRadius: chartArea.borderRadius,
-    ...seriesChartThemeStyle({ ...options, backgroundColor: chartArea.fill }),
-    background: chartArea.fill,
-    border: `${Math.max(0, chartArea.strokeWidth)}px solid ${chartArea.stroke}`,
-    ...(chartArea.opacity != null ? { opacity: chartArea.opacity } : {}),
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    boxSizing: "border-box",
-    position: "relative",
-    overflow: "hidden",
-    ...chartAreaFrameCss,
-  };
-
-  const plotStyle: CSSProperties = {
-    flex: plotAreaFrameCss ? undefined : 1,
-    alignSelf: plotAreaFrameCss ? undefined : "stretch",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    boxSizing: "border-box",
-    position: "relative",
-    minHeight: 0,
-    background: plotArea.fill,
-    border: `${Math.max(0, plotArea.strokeWidth)}px solid ${plotArea.stroke}`,
-    borderRadius: plotArea.borderRadius,
-    ...(plotArea.opacity != null ? { opacity: plotArea.opacity } : {}),
-    ...plotAreaFrameCss,
-  };
+  /* ChartContainer já aplica cn.root — aqui só âncora + modificadores. */
+  const rootClass = [
+    "tdp-gauge-chart",
+    interactive ? `${cn.root}--interactive` : "",
+    chartAreaSelected ? `${cn.root}__part--selected` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const plotBody =
     model.value == null ? (
-      <div className="tdp-data-chart tdp-data-chart--typed">
-        <span className="tdp-data-chart__hint">Sem dados</span>
+      <div className={cn.rootEmpty} style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}>
+        Sem dados
       </div>
     ) : (
       <SpeedometerGauge
@@ -182,6 +204,7 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
         max={model.max}
         min={model.min}
         accentColor={model.accentColor}
+        fillHost
         showZonesLegend={
           options.showLegend !== false &&
           getChartPartState(chartParts, { kind: "legend" })?.visible !== false
@@ -193,22 +216,14 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
     );
 
   return (
-    <SeriesChartClassesProvider prefix={SERIES_CHART_PREFIX}>
-      <div
-        className={[
-          "tdp-gauge-chart",
-          interactive ? "tdp-gauge-chart--interactive" : "",
-          chartAreaSelected ? "tdp-gauge-chart--part-selected" : "",
-          showChartAreaResize ? "tdp-gauge-chart--resizable" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        style={hostStyle}
-        data-chart-type="gauge"
-        {...chartAreaDom}
+    <div className="delpi-ui-series-chart-shell" style={shellStyle}>
+      <ChartContainer
+        className={rootClass}
+        style={themeStyle}
         onPointerDown={onChartAreaPointerDown}
         onDoubleClick={onChartAreaDoubleClick}
-        data-selected={chartAreaSelected ? "true" : undefined}
+        {...chartPartDomProps(chartAreaRef, interaction?.selectedPart)}
+        data-chart-type="gauge"
       >
         <ChartTitle
           title={model.title}
@@ -217,25 +232,17 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
           chartParts={chartParts}
         />
         <div
-          className={[
-            "tdp-gauge-chart__plot",
-            plotAreaSelected ? "tdp-gauge-chart__plot--selected" : "",
-            showPlotAreaResize ? "tdp-gauge-chart__plot--resizable" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          style={plotStyle}
-          {...plotAreaDom}
+          className={cn.plotHost}
+          style={plotHostStyle}
+          {...chartPartDomProps(plotAreaRef, interaction?.selectedPart)}
           onPointerDown={onPlotPointerDown}
           onDoubleClick={onPlotDoubleClick}
-          data-selected={plotAreaSelected ? "true" : undefined}
         >
           {plotBody}
-          <ChartPartResizeHandles
-            visible={showPlotAreaResize}
-            onResizePointerDown={(handle, event) => {
-              interaction?.onPartResizePointerDown?.(plotAreaRef, event, handle);
-            }}
+          <ChartPlotAreaChrome
+            layout={GAUGE_FULL_BLEED_PLOT_LAYOUT as import("@delpi/plugin-ui/index").SeriesChartLayout}
+            interaction={interactive ? interaction : null}
+            chartParts={chartParts}
           />
         </div>
         <ChartPartResizeHandles
@@ -244,7 +251,7 @@ export function GaugeChartView({ model, options, chartParts, interaction }: Prop
             interaction?.onPartResizePointerDown?.(chartAreaRef, event, handle);
           }}
         />
-      </div>
-    </SeriesChartClassesProvider>
+      </ChartContainer>
+    </div>
   );
 }

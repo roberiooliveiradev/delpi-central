@@ -11,6 +11,7 @@ export type ChartContainerProps = {
   onPointerDown?: PointerEventHandler<HTMLDivElement>;
   onDoubleClick?: MouseEventHandler<HTMLDivElement>;
   "data-chart-part"?: string;
+  "data-chart-type"?: string;
   "aria-selected"?: boolean;
 };
 
