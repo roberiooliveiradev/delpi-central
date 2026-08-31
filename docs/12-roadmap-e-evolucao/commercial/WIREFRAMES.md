@@ -1305,7 +1305,7 @@ Chrome da inbox: filtros (`ScopeChipBar`) + busca na **toolbar do pane** (não P
 
 Abaixo de 900px: lista **ou** detalhe. Painel Neste chat só com o toggle do header; fechado, o chat ocupa 100% da coluna. Pin → `scrollIntoView`. Sem X no painel.
 
-Clique no card navega `/:roomId` (query `filter`/`q` preservada).
+Clique no card navega `/:roomId` (query `filter`/`q` preservada). Master-detail: inbox permanece montada ao trocar de sala (sem flash «Carregando salas…»); só a coluna da thread remonta/anima.
 
 #### WF-SALA-02 — Mensagens (tipos no thread)
 
