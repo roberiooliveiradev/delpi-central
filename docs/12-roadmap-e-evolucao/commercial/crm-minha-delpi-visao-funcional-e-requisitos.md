@@ -8,7 +8,7 @@
 > **Governança:** Core API + Keycloak + RBAC da Minha DELPI  
 > **Status deste documento:** visão funcional alvo e catálogo mestre de requisitos  
 > **Data-base da análise:** 21 de agosto de 2026  
-> **Atualização:** gaps de rituais e produtividade comercial (benchmark Agendor)
+> **Atualização:** gaps de rituais (Agendor) + funil Kanban omnicanal de conversas (benchmark ChatGuru, adaptado a Teams/Outlook/redes)
 
 ---
 
@@ -91,6 +91,13 @@ A definição foi construída a partir de quatro grupos de fontes:
    - rituais de gestão (sumário semanal, forecast, 1-on-1, alinhamento marketing–vendas);
    - mapa de vendas / saúde do funil, fluxo inteligente de atividades, sumário semanal/mensal;
    - múltiplos funis com handoff, congelamento de negócios, mapa de visitas e rotas.
+
+6. **Benchmark de funil Kanban de conversas (ChatGuru)** — [funil estilo Trello no WhatsApp](https://chatguru.com.br/blog/como-fazer-funil-de-vendas-no-whatsapp-no-estilo-do-trello/)
+   - quadro Kanban em que cada **cartão é uma conversa** (não só a oportunidade);
+   - múltiplos funis (atendimento, vendas, produção/pós-venda) com etapas como colunas;
+   - entrada automática por gatilho/diálogo/chatbot e movimentação por automação;
+   - adição em lote de conversas, tags, anotações de equipe e visibilidade só dos cartões atribuídos;
+   - **adaptação DELPI:** o mesmo padrão vale para Microsoft Teams, Outlook/e-mail, WhatsApp corporativo, web chat e redes sociais autorizadas, com ingestão normalizada no CRM — não amarrar o funil a um único canal.
 
 ### 2.1 Legenda de maturidade
 
@@ -322,6 +329,7 @@ Core API
 | Mapa de territórios, rotação e redistribuição assistida | **B** | Backlog E7 |
 | Marketing, campanhas e automação | **N** | Novo domínio do CRM-alvo |
 | Mensageria omnicanal oficial | **N** | Hoje há apenas dados de contato/deep links, sem inbox corporativa completa |
+| Funil Kanban de conversas (multi-canal) | **N** | Quadro estilo Trello com cartão = conversa; benchmark ChatGuru adaptado a Teams/Outlook/redes |
 | Copiloto de IA comercial | **N** | Novo domínio, com supervisão humana |
 
 ---
@@ -666,6 +674,8 @@ Público segmentado
 | CRM-PIP-013 | **N** | Oferecer visão **mapa de vendas** (saúde do funil): negócios destacados por aging, valor e risco, além de kanban e lista. |
 | CRM-PIP-014 | **N** | Permitir handoff controlado entre funis (pré-venda → venda → pós-venda / reativação), com cópia ou vínculo e histórico preservado. |
 | CRM-PIP-015 | **N** | Exibir coluna ou fila lateral de negócios elegíveis a entrar no funil atual (ex.: ganhos do funil anterior pendentes de pós-venda). |
+| CRM-PIP-016 | **N** | Distinguir **funil de oportunidade** (receita) de **funil de conversa/atendimento** (cartão = thread omnicanal), permitindo handoff entre os dois sem duplicar histórico. |
+| CRM-PIP-017 | **N** | Permitir templates de etapas de atendimento no estilo Kanban (ex.: novos chats, em atendimento, proposta enviada, follow-up, ganho, perdido/postergado), configuráveis por processo. |
 
 ### 10.12 Oportunidades e negociações
 
@@ -955,6 +965,11 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | CRM-MSG-014 | **N** | Criar tarefa, lead ou oportunidade a partir de conversa. |
 | CRM-MSG-015 | **N** | Permitir respostas rápidas e base de conhecimento aprovada. |
 | CRM-MSG-016 | **N** | Auditar envio em massa, exportação e visualização de conteúdo sensível. |
+| CRM-MSG-017 | **N** | Expor conversas no **quadro Kanban de funil** (ver § 10.40), com badge de canal e abertura do thread a partir do cartão. |
+| CRM-MSG-018 | **N** | Permitir mudar etapa do funil de dentro da conversa e arrastar o cartão no quadro, com a mesma validação de backend. |
+| CRM-MSG-019 | **N** | Inserir ou mover conversa no funil por gatilho (primeira mensagem, palavra-chave, bot, formulário, tag ou regra de jornada). |
+| CRM-MSG-020 | **N** | Adicionar conversas em lote ao funil com filtros (canal, status, owner, tag, período, fila). |
+| CRM-MSG-021 | **N** | Aceitar como canal de origem, além de WhatsApp: Teams, Outlook/e-mail, web chat e redes sociais corporativas homologadas (LinkedIn, Instagram, Facebook Messenger e futuras), via conector oficial. |
 
 ### 10.23 Ligações, telefonia e voz
 
@@ -1324,6 +1339,33 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | CRM-RIT-012 | **N** | Configurar quais rituais são recomendados vs. obrigatórios por equipe, sem hardcode de cargo. |
 | CRM-RIT-013 | **N** | Fora de escopo de produto: técnica Pomodoro, pausas de bem-estar e qualquer controle de “tempo de tela” — o CRM não deve cronometrar foco pessoal. |
 
+### 10.40 Funil Kanban omnicanal de conversas
+
+**Objetivo:** oferecer quadro estilo Trello/Kanban em que cada cartão é uma **conversa** (thread) normalizada no CRM, independentemente do canal de origem — inspirado no [funil ChatGuru](https://chatguru.com.br/blog/como-fazer-funil-de-vendas-no-whatsapp-no-estilo-do-trello/), generalizado para Teams, Outlook, WhatsApp, web chat e redes sociais homologadas.
+
+> O funil de **oportunidade** (§ 10.11) continua sendo a visão de receita. O funil de **conversa** governa atendimento e qualificação do contato no canal. Conversão (lead/oportunidade) e handoff entre funis devem preservar histórico e vínculos.
+
+| ID | Status | Requisito funcional |
+|---|---:|---|
+| CRM-FNL-001 | **N** | Criar múltiplos funis de conversa (ex.: atendimento, prospecção, pós-venda/produção) com nome, dono, escopo e status. |
+| CRM-FNL-002 | **N** | Definir etapas como colunas ordenáveis (arrastar para reordenar), com cor, SLA e tipo semântico (entrada, trabalho, ganho, perdido, postergado). |
+| CRM-FNL-003 | **N** | Representar cada cartão como conversa omnicanal vinculável a contato, lead, conta, oportunidade e pedido. |
+| CRM-FNL-004 | **N** | Exibir no cartão: nome/identidade, canal (badge), identificador do canal (telefone, e-mail, Teams, handle social), tags, data de entrada, owner, bot ligado/desligado, etapa, preview da última mensagem e aging. |
+| CRM-FNL-005 | **N** | Mover cartão por drag-and-drop no quadro ou pela troca de etapa dentro da tela da conversa, com validação, concorrência e auditoria no backend. |
+| CRM-FNL-006 | **N** | Inserir conversa automaticamente no funil/etapa por gatilho: primeira mensagem, saudação/palavra-chave, evento de chatbot, formulário, tag, score ou regra de jornada. |
+| CRM-FNL-007 | **N** | Mover conversa entre etapas por automação (bot, cadência, SLA, resposta do cliente, transferência humana) sem perder contexto do thread. |
+| CRM-FNL-008 | **N** | Adicionar conversas existentes ao funil em lote, com filtros por canal, fila, owner, tag, status e período, e prévia antes de confirmar. |
+| CRM-FNL-009 | **N** | Permitir anotações internas no cartão/conversa visíveis à equipe autorizada (não enviadas ao cliente). |
+| CRM-FNL-010 | **N** | Aplicar tags de campanha, qualificação e status no cartão, reutilizáveis em filtros, automações e segmentos. |
+| CRM-FNL-011 | **N** | Restringir visibilidade: usuário sem permissão de “ver todos” enxerga apenas cartões atribuídos a si (ou à sua fila/carteira). |
+| CRM-FNL-012 | **N** | Medir tempo em cada etapa/status, conversão entre colunas, abandono, volume por canal e taxa de handoff para oportunidade. |
+| CRM-FNL-013 | **N** | Converter cartão qualificado em lead e/ou oportunidade nativa, com cópia controlada de contexto, canal de origem e histórico. |
+| CRM-FNL-014 | **N** | Unificar no mesmo quadro conversas de WhatsApp, Teams, Outlook/e-mail, web chat e redes sociais autorizadas, sem funil separado por canal. |
+| CRM-FNL-015 | **N** | Modelar conector de canal como adaptador: ingestão, identidade externa, envio e webhooks — o domínio do funil não conhece detalhes do provedor. |
+| CRM-FNL-016 | **N** | Exigir conector oficial / API homologada; proibir histórico corporativo baseado em dispositivo pessoal ou automação não governada. |
+| CRM-FNL-017 | **N** | Respeitar consentimento, opt-out, janela do canal, classificação sensível e retenção por política ao exibir cartão e conteúdo. |
+| CRM-FNL-018 | **N** | Atualizar o quadro em tempo real (Socket.IO / outbox) quando cartões entrarem, mudarem de etapa ou forem reatribuídos. |
+
 ---
 
 ## 11. Matriz consolidada de gaps
@@ -1341,7 +1383,8 @@ A caixa compartilhada deve ter finalidade, owner, política de retenção e esco
 | Sala de interação | Entregue | Integrada a todas as entidades e decisões | Visibilidade sensível e templates | P2 |
 | Teams | Backlog | Conversas e transcrições seletivas | Consentimento, ingestão e associação | P2 |
 | Outlook/e-mail | Backlog | Histórico, envio e inbox compartilhada | Conector e governança | P2 |
-| Mensageria | Sem inbox oficial | Atendimento, campanhas e handoff | Conector de canal e opt-in | P3 |
+| Mensageria | Sem inbox oficial | Atendimento, campanhas, handoff e **funil Kanban omnicanal** | Conector + quadro de conversas multi-canal | P2 |
+| Funil de conversas | Ausente | Kanban estilo Trello com cartão = thread (Teams/Outlook/WhatsApp/redes) | Entrada por gatilho, lote e handoff para oportunidade | P2 |
 | Voz | Ausente | Metadados, gravação e transcrição controladas | Telefonia e consentimento | P4 |
 | Segmentação | Ausente | Públicos dinâmicos B2B | Motor de consulta e consentimento | P2 |
 | Campanhas | Ausente | E-mail, conteúdo e mensuração | Entregabilidade e serviço de envio | P3 |
@@ -1390,7 +1433,7 @@ Administração†
 | **Meu Dia** | Tarefas, agenda, mensagens pendentes, leads novos, follow-ups, rituais diários e aprovações |
 | **CRM** | Leads, prospects, pipeline, mapa de vendas, oportunidades, propostas, forecast, cadências e campanhas |
 | **Contas** | Carteiras, lista de clientes, Conta 360, planos, contatos e territórios |
-| **Conversas** | Sala interna, e-mail compartilhado, Teams, mensageria e chamadas autorizadas |
+| **Conversas** | Inbox omnicanal, funil Kanban de conversas, sala interna, e-mail compartilhado, Teams, mensageria, redes homologadas e chamadas autorizadas |
 | **Visão geral** | Gestão à vista, funil, mapa de vendas, forecast, marketing, produtividade, SLA, OTD, receita e sumários |
 | **Administração** | Carteiras, membros, grupos, pipelines, scripts, rituais, catálogos, automações, integrações e auditoria |
 
@@ -2101,6 +2144,7 @@ O CRM-alvo deve ser capaz de demonstrar, com dados de homologação, os seguinte
 7. consultar histórico corporativo durante ausência do responsável;
 8. vincular e-mail e conversa autorizada à oportunidade;
 9. importar mensagem e transcrição de reunião do Teams sob política aprovada;
+9a. operar funil Kanban de conversas com cartões de Teams, Outlook, WhatsApp e rede homologada no mesmo quadro, mover por gatilho/lote e converter em lead/oportunidade;
 10. criar proposta, obter aprovação e registrar aceite;
 11. associar a oportunidade ganha ao pedido do ERP;
 12. acompanhar confirmação, produção, faturamento e entrega;
@@ -2128,6 +2172,8 @@ O CRM-alvo deve ser capaz de demonstrar, com dados de homologação, os seguinte
 | Transcrições | Definir ativação, speaker attribution, retenção e acesso |
 | E-mail | Definir caixas pessoais, compartilhadas e pastas excluídas |
 | Mensageria | Escolher conector oficial, números, filas e políticas de opt-in |
+| Funil de conversas | Definir funis iniciais (atendimento/prospecção/pós-venda), canais no quadro unificado e regras de handoff para oportunidade |
+| Redes sociais | Homologar quais redes (LinkedIn, Instagram, Messenger etc.) entram no modelo omnicanal e com qual conector |
 | Telefonia | Definir provedor, consentimento, gravação e retenção |
 | IA | Escolher modelos, hospedagem, contrato, dados permitidos e avaliação |
 | Busca | Escolher motor e estratégia de indexação/segurança |
@@ -2303,6 +2349,22 @@ Fontes usadas para preencher gaps de rituais, produtividade e saúde do funil (a
 
 **Adaptação DELPI:** manter disciplina e rituais no produto; rejeitar vigilância de pausas/Pomodoro; alinhar handoff e forecast aos rituais de gestão sem ranqueamento tóxico.
 
+### 24.6 Benchmark de mercado — funil Kanban de conversas (ChatGuru)
+
+Fonte usada para preencher gaps de quadro de atendimento/vendas por conversa (ago/2026):
+
+- [Como fazer funil de vendas no WhatsApp no estilo do Trello — ChatGuru](https://chatguru.com.br/blog/como-fazer-funil-de-vendas-no-whatsapp-no-estilo-do-trello/)
+
+**Capacidades absorvidas no catálogo (§ 10.40 / CRM-FNL-* e CRM-MSG-017..021):**
+
+- quadro Kanban com etapas como colunas e cartão = chat/conversa;
+- múltiplos funis (atendimento, vendas, produção);
+- gatilho/diálogo/chatbot para inserir ou mover cartão;
+- adição em lote, tags, anotações de equipe e escopo “só meus cartões”;
+- tempo/status por etapa e visão operacional do pipeline de atendimento.
+
+**Adaptação DELPI (obrigatória):** o artigo é centrado em WhatsApp; no CRM Minha DELPI o mesmo modelo alimenta-se de **Teams, Outlook/e-mail, WhatsApp corporativo, web chat e redes sociais homologadas**, com conversa normalizada, conector oficial e handoff para lead/oportunidade — sem amarrar o domínio do funil a um único provedor.
+
 ---
 
 ## 25. Conclusão
@@ -2323,6 +2385,8 @@ oportunidades e propostas
 agenda, cadências e rituais de execução
 +
 histórico omnicanal
++
+funil Kanban de conversas (multi-canal)
 +
 Microsoft 365 e mensageria
 +

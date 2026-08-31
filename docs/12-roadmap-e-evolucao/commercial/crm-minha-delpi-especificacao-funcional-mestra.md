@@ -4,11 +4,12 @@
 > **Módulo:** Portal Comercial / CRM Minha DELPI  
 > **Frontend:** `plugins/commercial`  
 > **Backend de domínio e BFF:** `commercial-api`  
-> **Versão deste documento:** 1.1  
+> **Versão deste documento:** 1.2  
 > **Data de referência:** 21 de agosto de 2026  
 > **Status:** visão funcional alvo e catálogo mestre de capacidades  
+> **Atualização 1.2:** funil Kanban omnicanal de conversas (benchmark ChatGuru, adaptado a Teams/Outlook/redes)  
 > **Atualização 1.1:** gaps de rituais, mapa de vendas, fluxo inteligente e coaching (benchmark Agendor)  
-> **Base analisada:** documentação oficial da Minha DELPI, código e documentação do `commercial-api`, código e documentação do `plugins/commercial`, manifesto vigente do plugin comercial, requisitos levantados com as áreas de negócio e benchmark de CRM B2B (Agendor).
+> **Base analisada:** documentação oficial da Minha DELPI, código e documentação do `commercial-api`, código e documentação do `plugins/commercial`, manifesto vigente do plugin comercial, requisitos levantados com as áreas de negócio, benchmark de CRM B2B (Agendor) e benchmark de funil Kanban de conversas (ChatGuru).
 
 ---
 
@@ -202,6 +203,7 @@ O CRM não deverá:
 9. cadências de prospecção e follow-up;
 10. sincronização corporativa de e-mail, calendário, Teams, mensagens e transcrições;
 11. caixa omnicanal com WhatsApp, web chat e canais futuros;
+11a. funil Kanban de conversas multi-canal (Teams, Outlook, WhatsApp, redes homologadas) com cartão = thread;
 12. telefonia, gravação e transcrição condicionadas a consentimento e suporte do provedor;
 13. previsão de vendas, metas, quotas e cobertura de pipeline;
 14. atribuição, CAC, ROI e receita influenciada;
@@ -220,7 +222,11 @@ O CRM não deverá:
 27. rituais de gestão (sumário semanal/mensal, forecast em reunião, 1-on-1, role-play, SLA marketing–vendas);
 28. mapa de vendas (saúde visual do funil), fluxo inteligente pós-atividade e handoff entre funis;
 29. congelamento de negócios e mapa/rota de visitas sem tracking contínuo;
-30. scripts/roteiros de vendas e playbooks versionados na mesma experiência da atividade.
+30. scripts/roteiros de vendas e playbooks versionados na mesma experiência da atividade;
+31. funil Kanban de **conversas** (cartão = thread), distinto do funil de oportunidade, com etapas configuráveis estilo Trello;
+32. entrada e movimentação automática de conversas no funil por gatilho, diálogo, chatbot ou jornada;
+33. adição em lote de conversas ao funil, tags, anotações de equipe e visibilidade restrita aos cartões atribuídos;
+34. unificação no mesmo quadro de WhatsApp, Teams, Outlook/e-mail, web chat e redes sociais homologadas, com handoff para lead/oportunidade.
 
 ---
 
@@ -759,6 +765,8 @@ Regras:
 - **CRM-PIPE-032 — Congelamento:** ocultar do funil ativo e do forecast operacional, com motivo, data de retorno e filtro congelados.
 - **CRM-PIPE-033 — Handoff entre funis:** pré-venda → venda → pós-venda/reativação com vínculo, fila lateral de elegíveis e histórico preservado.
 - **CRM-PIPE-034 — Ordenação operacional:** maior valor, data prevista, ranking, aging e prioridade configurável.
+- **CRM-PIPE-035 — Funil de conversa vs. oportunidade:** manter pipelines de receita separados dos funis Kanban cujo cartão é a conversa omnicanal; permitir handoff controlado entre os dois.
+- **CRM-PIPE-036 — Templates de atendimento:** etapas prontas no estilo Kanban (novos chats, em atendimento, proposta enviada, follow-up, ganho, perdido/postergado), clonáveis por processo.
 
 
 ### 8.16 Produtos, aplicações e contexto industrial
@@ -1075,6 +1083,36 @@ A integração deverá suportar, conforme modo de autorização e disponibilidad
 - **CRM-WA-022 — Bloqueio:** impedir comunicação após opt-out ou restrição.
 - **CRM-WA-023 — Auditoria:** leitura, envio, transferência, exportação e alteração de vínculo.
 - **CRM-WA-024 — Expansão omnicanal:** modelo de conversa deverá aceitar web chat, SMS e canais futuros sem reescrever o domínio.
+- **CRM-WA-025 — Funil Kanban:** conversas do WhatsApp (e demais canais do modelo omnicanal) deverão aparecer no quadro de funil de conversas (§ 8.24.1).
+- **CRM-WA-026 — Gatilho de funil:** diálogo/bot/primeira mensagem poderá inserir ou mover o chat em etapa configurada.
+- **CRM-WA-027 — Redes sociais homologadas:** LinkedIn, Instagram, Facebook Messenger e canais futuros entram pelo mesmo modelo de conversa + funil, via conector oficial.
+
+#### 8.24.1 Funil Kanban omnicanal de conversas
+
+**Situação atual:** Novo — gap preenchido a partir do benchmark [ChatGuru — funil estilo Trello](https://chatguru.com.br/blog/como-fazer-funil-de-vendas-no-whatsapp-no-estilo-do-trello/), generalizado para Teams, Outlook, WhatsApp e redes homologadas.
+
+**Objetivo:** quadro operacional em que cada cartão é uma conversa normalizada no CRM, permitindo conduzir o lead da esquerda para a direita até a conversão ou encerramento, sem amarrar o domínio a um único canal.
+
+##### Funcionalidades obrigatórias
+
+- **CRM-FNL-001 — Múltiplos funis de conversa:** atendimento, prospecção, pós-venda/produção e processos configuráveis.
+- **CRM-FNL-002 — Etapas como colunas:** nome, ordem (reordenável), cor, SLA e tipo semântico (entrada, trabalho, ganho, perdido, postergado).
+- **CRM-FNL-003 — Cartão = conversa:** vínculo a contato, lead, conta, oportunidade e pedido.
+- **CRM-FNL-004 — Metadados do cartão:** identidade, badge de canal, identificador externo, tags, data de entrada, owner, estado do bot, etapa, preview da última mensagem e aging.
+- **CRM-FNL-005 — Movimentação dual:** drag-and-drop no quadro e troca de etapa de dentro da conversa, com a mesma regra de backend.
+- **CRM-FNL-006 — Entrada por gatilho:** primeira mensagem, palavra-chave/saudação, chatbot, formulário, tag, score ou jornada.
+- **CRM-FNL-007 — Movimentação automática:** bot, cadência, SLA, resposta do cliente ou handoff humano.
+- **CRM-FNL-008 — Adição em lote:** filtros por canal, fila, owner, tag, status e período, com prévia.
+- **CRM-FNL-009 — Anotações internas:** notas de equipe no cartão, não enviadas ao cliente.
+- **CRM-FNL-010 — Tags:** campanha, qualificação e status reutilizáveis em filtros e automações.
+- **CRM-FNL-011 — Escopo de visibilidade:** sem “ver todos”, o usuário vê apenas cartões atribuídos a si/fila/carteira.
+- **CRM-FNL-012 — Métricas:** tempo por etapa, conversão entre colunas, abandono, volume por canal e handoff para oportunidade.
+- **CRM-FNL-013 — Conversão:** cartão qualificado → lead e/ou oportunidade nativa com histórico preservado.
+- **CRM-FNL-014 — Quadro unificado multi-canal:** WhatsApp, Teams, Outlook/e-mail, web chat e redes homologadas no mesmo funil.
+- **CRM-FNL-015 — Adaptador de canal:** ingestão, identidade, envio e webhooks desacoplados do domínio do funil.
+- **CRM-FNL-016 — Conector oficial:** proibir histórico corporativo em dispositivo pessoal.
+- **CRM-FNL-017 — Compliance:** consentimento, opt-out, janela do canal, classificação e retenção.
+- **CRM-FNL-018 — Tempo real:** atualização do quadro via eventos autorizados quando cartões mudarem.
 
 ---
 
@@ -1844,7 +1882,11 @@ O modelo deverá evoluir de forma compatível com as tabelas atuais. Os nomes fi
 
 | Entidade | Responsabilidade |
 |---|---|
-| `conversation` | Thread externa normalizada. |
+| `conversation` | Thread externa normalizada (WhatsApp, Teams, Outlook, web, redes). |
+| `conversation_funnel` | Funil Kanban de conversas (atendimento, prospecção, pós-venda). |
+| `conversation_funnel_stage` | Coluna/etapa do funil de conversa com SLA e tipo semântico. |
+| `conversation_funnel_membership` | Cartão: conversa × funil × etapa × owner × tags × aging. |
+| `conversation_funnel_trigger` | Gatilho de entrada/movimentação (mensagem, bot, formulário, tag, jornada). |
 | `communication` | E-mail, mensagem, ligação ou evento normalizado. |
 | `communication_participant` | Remetente/destinatários/participantes. |
 | `external_message_ref` | ID no sistema de origem. |
@@ -2490,6 +2532,7 @@ O CRM Minha DELPI será considerado funcionalmente completo quando:
 - [ ] conversas e mensagens do Teams puderem ser vinculadas em escopo autorizado, sem leitura global por padrão;
 - [ ] transcrições de reuniões disponíveis puderem gerar rascunho de ata e tarefas com confirmação;
 - [ ] WhatsApp corporativo puder ser sincronizado em caixa compartilhada, com histórico e opt-in;
+- [ ] funil Kanban de conversas puder unificar Threads de WhatsApp, Teams, Outlook e redes homologadas, com gatilho, lote e handoff para lead/oportunidade;
 - [ ] campanhas, segmentos, formulários, scoring e jornadas estiverem operacionais;
 - [ ] site e formulários alimentarem origem e comportamento com consentimento;
 - [ ] pedidos e exceções continuarem sendo exibidos a partir da fonte oficial;
@@ -2538,6 +2581,8 @@ O CRM Minha DELPI será considerado funcionalmente completo quando:
 ### 20.3 Vendas
 
 - pipelines e etapas;
+- distinção e handoff entre funil de oportunidade e funil Kanban de conversas;
+- templates iniciais de etapas de atendimento (estilo Trello);
 - critérios obrigatórios por etapa;
 - motivos de perda/desqualificação;
 - regras de distribuição;
@@ -2551,6 +2596,9 @@ O CRM Minha DELPI será considerado funcionalmente completo quando:
 
 - provedor de WhatsApp;
 - números corporativos e filas;
+- canais no quadro unificado (Teams, Outlook, WhatsApp, web chat, redes homologadas);
+- quais redes sociais entram na primeira entrega e com qual conector oficial;
+- regras de gatilho para entrada/movimentação no funil de conversas;
 - provedor de telefonia;
 - política de gravação/transcrição;
 - modelos de IA autorizados;
@@ -2672,12 +2720,26 @@ Para preencher gaps de rituais, produtividade e saúde do funil (ago/2026), fora
 
 **Adaptação DELPI:** incorporar disciplina, sumários, mapa de vendas, handoff entre funis, scripts e coaching; **não** incorporar Pomodoro/controle de pausas; aderência a rituais serve a qualidade de dados e coaching, não ranking tóxico.
 
+### 21.5 Benchmark de mercado — funil Kanban de conversas (ChatGuru)
+
+Para preencher gaps de quadro de atendimento/vendas por conversa (ago/2026), foi consultado:
+
+- [Como fazer funil de vendas no WhatsApp no estilo do Trello — ChatGuru](https://chatguru.com.br/blog/como-fazer-funil-de-vendas-no-whatsapp-no-estilo-do-trello/)
+
+**Capacidades absorvidas (§ 8.24.1 / CRM-FNL-* / CRM-WA-025..027 / CRM-PIPE-035..036):**
+
+- quadro estilo Trello com cartão = chat/conversa e etapas como colunas;
+- múltiplos funis; gatilho/diálogo/chatbot; adição em lote; tags; anotações; escopo por atribuição;
+- métricas de tempo/status por etapa.
+
+**Adaptação DELPI:** generalizar o padrão WhatsApp para **Teams, Outlook/e-mail, WhatsApp corporativo, web chat e redes sociais homologadas**, com conversa normalizada no CRM, conector oficial e handoff para lead/oportunidade.
+
 ---
 
 ## 22. Conclusão
 
 O CRM Minha DELPI deverá transformar o Portal Comercial atual em uma plataforma completa de relacionamento e execução comercial, sem descartar a base já construída e sem romper as fronteiras arquiteturais da Minha DELPI.
 
-A evolução parte de uma fundação real — Conta 360, carteiras, tarefas, pedidos, propostas, analytics, anexos, auditoria e colaboração interna — e adiciona os domínios hoje ausentes: leads, prospects, scoring, segmentos, campanhas, automações, pipelines nativos com mapa de vendas, propostas governadas, comunicações omnicanal, Microsoft 365, forecast, rituais de execução e gestão, planos de conta, IA e governança de dados.
+A evolução parte de uma fundação real — Conta 360, carteiras, tarefas, pedidos, propostas, analytics, anexos, auditoria e colaboração interna — e adiciona os domínios hoje ausentes: leads, prospects, scoring, segmentos, campanhas, automações, pipelines nativos com mapa de vendas, **funil Kanban omnicanal de conversas** (Teams, Outlook, WhatsApp e redes homologadas), propostas governadas, comunicações omnicanal, Microsoft 365, forecast, rituais de execução e gestão, planos de conta, IA e governança de dados.
 
 O resultado esperado é uma única visão operacional e histórica da relação com cada empresa, conectando aquisição, prospecção, negociação, pedido, entrega, recompra e expansão. O CRM deverá preservar a origem de cada fato, respeitar o sistema de registro adequado, explicar seus indicadores, controlar seus efeitos e permitir que a DELPI evolua o processo comercial com dados próprios, auditáveis e integrados — inclusive a disciplina diária que transforma o CRM em hábito (rituais), e não apenas em repositório.
