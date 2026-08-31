@@ -178,6 +178,11 @@ class ChatFollowUpGroundedAnswerService:
 
         baseline_params = cls._params_from_tool_call(baseline_call)
         prior_params = cls._params_from_tool_call(prior_call)
+        period_kind = cls._period_compare_kind(
+            workspace_context=workspace_context,
+            baseline_params=baseline_params,
+            prior_params=prior_params,
+        )
 
         ack = ChatFollowUpTurnContentService.period_compare_format(
             "ackTemplate",
@@ -199,10 +204,10 @@ class ChatFollowUpGroundedAnswerService:
         prior_line = ChatFollowUpTurnContentService.period_compare_format(
             "lineTemplate",
             label=label,
-            period_label=ChatFollowUpTurnContentService.period_compare_format(
-                "priorPeriodLabel"
+            period_label=ChatFollowUpTurnContentService.period_compare_prior_label(
+                period_kind
             )
-            or "ano anterior",
+            or "período de comparação",
             value=str(prior_metric.get("display") or ""),
         )
 
@@ -394,6 +399,44 @@ class ChatFollowUpGroundedAnswerService:
         if isinstance(meta, dict) and isinstance(meta.get("requestParameters"), dict):
             return dict(meta.get("requestParameters") or {})
         return {}
+
+    @classmethod
+    def _period_compare_kind(
+        cls,
+        *,
+        workspace_context: dict | None,
+        baseline_params: dict[str, Any],
+        prior_params: dict[str, Any],
+    ) -> str | None:
+        if isinstance(workspace_context, dict):
+            grounding = workspace_context.get("turnGrounding")
+            follow_up = (
+                grounding.get("followUp") if isinstance(grounding, dict) else None
+            )
+            delta = (
+                follow_up.get("slotDelta") if isinstance(follow_up, dict) else None
+            )
+            if isinstance(delta, dict):
+                kind = str(delta.get("period") or "").strip()
+                if kind:
+                    return kind
+                if str(delta.get("compareAxis") or "").strip() == "branch":
+                    return "branch"
+
+        baseline_start = str(baseline_params.get("start_date") or "").strip()
+        prior_start = str(prior_params.get("start_date") or "").strip()
+        if len(baseline_start) >= 10 and len(prior_start) >= 10:
+            # DD-MM-YYYY — mesmo mês/dia com ano-1 => YoY
+            if (
+                baseline_start[:5] == prior_start[:5]
+                and baseline_start[6:10].isdigit()
+                and prior_start[6:10].isdigit()
+                and int(baseline_start[6:10]) - int(prior_start[6:10]) == 1
+            ):
+                return "previous_year_same_range"
+            if baseline_start != prior_start:
+                return "previous_period"
+        return None
 
     @classmethod
     def _metric_from_tool_call(cls, tool_call: dict) -> dict[str, Any] | None:

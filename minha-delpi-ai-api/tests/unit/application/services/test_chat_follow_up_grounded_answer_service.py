@@ -247,3 +247,88 @@ def test_period_compare_answer_builds_delta_and_next_steps():
     assert "Variação" in answer or "alta" in answer.lower()
     assert "Próximos passos" in answer
     assert workspace.get("followUpSuggestions")
+
+
+def test_period_compare_prior_label_follows_slot_kind():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "periodCompareRole": "baseline",
+            "arguments": {
+                "parameters": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                    "branch": "01",
+                },
+            },
+            "metadata": {
+                "ok": True,
+                "kpiPresentation": {
+                    "cards": [{"key": "rol", "label": "ROL", "value": 100.0}]
+                },
+            },
+        },
+        {
+            "name": "execute_external_action",
+            "periodCompareRole": "prior",
+            "arguments": {
+                "parameters": {
+                    "start_date": "01-07-2026",
+                    "end_date": "31-07-2026",
+                    "branch": "01",
+                },
+            },
+            "metadata": {
+                "ok": True,
+                "kpiPresentation": {
+                    "cards": [{"key": "rol", "label": "ROL", "value": 80.0}]
+                },
+            },
+        },
+    ]
+    workspace = {
+        "turnGrounding": {
+            "followUp": {"slotDelta": {"period": "previous_period"}},
+        }
+    }
+    answer = ChatFollowUpGroundedAnswerService.build_period_compare_answer(
+        tool_calls=tool_calls,
+        workspace_context=workspace,
+    )
+    assert answer
+    assert "período anterior" in answer.lower()
+    assert "ano anterior" not in answer.lower()
+
+    yoy_workspace = {
+        "turnGrounding": {
+            "followUp": {"slotDelta": {"period": "previous_year_same_range"}},
+        }
+    }
+    yoy_calls = [
+        {
+            **tool_calls[0],
+            "arguments": {
+                "parameters": {
+                    "start_date": "01-08-2026",
+                    "end_date": "28-08-2026",
+                    "branch": "01",
+                }
+            },
+        },
+        {
+            **tool_calls[1],
+            "arguments": {
+                "parameters": {
+                    "start_date": "01-08-2025",
+                    "end_date": "28-08-2025",
+                    "branch": "01",
+                }
+            },
+        },
+    ]
+    yoy = ChatFollowUpGroundedAnswerService.build_period_compare_answer(
+        tool_calls=yoy_calls,
+        workspace_context=yoy_workspace,
+    )
+    assert yoy
+    assert "ano anterior" in yoy.lower()
