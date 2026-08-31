@@ -72,6 +72,22 @@ def test_resolve_financial_rol_qual_foi_da_empresa():
     assert match.path_token == "/financial/rol"
 
 
+def test_resolve_financial_rol_with_explicit_branch():
+    match = ChatDepartmentKpiIntentService.resolve("ROL filial 01 agosto 2026")
+
+    assert match is not None
+    assert match.path_token == "/financial/rol"
+    assert match.domain_prefix == "/financial/"
+
+
+def test_resolve_commercial_rol_by_branch_only_when_breakdown():
+    match = ChatDepartmentKpiIntentService.resolve("rol por filial em agosto")
+
+    assert match is not None
+    assert "rol/by-branch" in match.path_token
+    assert match.domain_prefix == "/commercial/"
+
+
 def test_resolve_rol_series_only_for_explicit_series():
     match = ChatDepartmentKpiIntentService.resolve("serie de rol no tempo")
 

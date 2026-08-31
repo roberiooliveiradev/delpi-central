@@ -190,7 +190,10 @@
         "qual foi o rol",
         "quanto foi o rol",
         " qual rol",
-        " o rol"
+        " o rol",
+        "rol filial",
+        "rol da filial",
+        "rol na filial"
       ],
       "excludes": [
         "serie",
@@ -205,10 +208,28 @@
         "novos negócios",
         "meta rol",
         "rol matriz",
-        "rol filial",
+        "por filial",
+        "por filiais",
         "rolamento"
       ],
       "label": "ROL (receita operacional líquida)"
+    },
+    {
+      "domainPrefix": "/commercial/",
+      "pathToken": "rol/by-branch",
+      "keywords": [
+        "rol por filial",
+        "rol por filiais",
+        "rol detalhado por filial",
+        "detalhar rol por filial",
+        "breakdown de rol por filial"
+      ],
+      "excludes": [
+        "meta rol",
+        "serie",
+        "série"
+      ],
+      "label": "ROL comercial por filial"
     },
     {
       "domainPrefix": "/production/",
