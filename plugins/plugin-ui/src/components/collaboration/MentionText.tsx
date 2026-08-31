@@ -1,6 +1,7 @@
-import type { ElementType, MouseEvent, MouseEventHandler } from "react";
+import type { ElementType, MouseEvent, MouseEventHandler, ReactNode } from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+import { InitialsAvatar, initialsAvatarBemClasses } from "../layout/InitialsAvatar";
 import { isSafeNavigationHref } from "../layout/PagePath";
 import { shouldHandleInlineNavClick } from "../navigation/InlineNavLink";
 import {
@@ -12,6 +13,7 @@ import {
 export type MentionTextClassNames = {
   root: string;
   chip: string;
+  chipAvatar: string;
 };
 
 export type MentionTextProps = {
@@ -24,10 +26,16 @@ export type MentionTextProps = {
   onMentionActivate?: (item: MentionTextItem, event: MouseEvent<HTMLElement>) => void;
 };
 
+const MENTION_AVATAR_CLASSES = initialsAvatarBemClasses("delpi-ui-mention");
+
 export function mentionTextBemClasses(prefix: string): MentionTextClassNames {
   return {
     root: delpiUiClass(`${prefix}-mention-text`, "delpi-ui-mention-text"),
     chip: delpiUiClass(`${prefix}-mention-text__chip`, "delpi-ui-mention-text__chip"),
+    chipAvatar: delpiUiClass(
+      `${prefix}-mention-text__chip-avatar`,
+      "delpi-ui-mention-text__chip-avatar",
+    ),
   };
 }
 
@@ -41,6 +49,37 @@ function resolveHref(item: MentionTextItem | undefined): string | null {
   const href = (item?.href ?? "").trim();
   if (!href) return null;
   return isSafeNavigationHref(href) ? href : null;
+}
+
+function resolveAvatarName(item: MentionTextItem | undefined, shown: string): string {
+  const fromItem = (item?.avatarName ?? "").trim();
+  if (fromItem) return fromItem;
+  return shown;
+}
+
+function hasAvatarChrome(item: MentionTextItem | undefined): boolean {
+  if (!item) return false;
+  return Boolean((item.avatarSrc ?? "").trim() || (item.avatarName ?? "").trim());
+}
+
+function renderChipAvatar(
+  item: MentionTextItem | undefined,
+  shown: string,
+  chipAvatarClass: string,
+): ReactNode {
+  if (!hasAvatarChrome(item)) return null;
+  const name = resolveAvatarName(item, shown);
+  const src = (item?.avatarSrc ?? "").trim() || null;
+  return (
+    <InitialsAvatar
+      name={name}
+      src={src}
+      size="sm"
+      previewable={false}
+      classNames={MENTION_AVATAR_CLASSES}
+      className={chipAvatarClass}
+    />
+  );
 }
 
 /**
@@ -82,10 +121,17 @@ function renderSegment(
   const href = resolveHref(item);
   const title = (item?.title ?? item?.label ?? segment.value).trim();
   const shown = displayLabel(segment.value);
+  const ariaLabel = (item?.title ?? "").trim() || shown;
   const canActivate = Boolean(item && (href || onMentionActivate));
-  const chipClass = canActivate
-    ? withBemModifier(classNames.chip, "interactive")
-    : classNames.chip;
+  const withAvatar = hasAvatarChrome(item);
+  const chipClass = [
+    canActivate ? withBemModifier(classNames.chip, "interactive") : classNames.chip,
+    withAvatar ? withBemModifier(classNames.chip, "with-avatar") : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const avatar = renderChipAvatar(item, shown, classNames.chipAvatar);
+  const label = <span className="delpi-ui-mention-text__chip-label">{shown}</span>;
 
   if (href && item) {
     const onClick: MouseEventHandler<HTMLAnchorElement> = (event) => {
@@ -100,10 +146,12 @@ function renderSegment(
         className={chipClass}
         href={href}
         title={title || undefined}
+        aria-label={ariaLabel}
         data-mention-kind={item.kind || undefined}
         onClick={onMentionActivate ? onClick : undefined}
       >
-        {shown}
+        {avatar}
+        {label}
       </a>
     );
   }
@@ -115,10 +163,12 @@ function renderSegment(
         type="button"
         className={chipClass}
         title={title || undefined}
+        aria-label={ariaLabel}
         data-mention-kind={item.kind || undefined}
         onClick={(event) => onMentionActivate(item, event)}
       >
-        {shown}
+        {avatar}
+        {label}
       </button>
     );
   }
@@ -129,7 +179,8 @@ function renderSegment(
       className={chipClass}
       data-mention-kind={item?.kind || undefined}
     >
-      {shown}
+      {avatar}
+      {label}
     </span>
   );
 }

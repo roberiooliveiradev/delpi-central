@@ -33,9 +33,32 @@ describe("MentionText", () => {
         ]}
       />,
     );
-    const link = screen.getByRole("link", { name: "Ana" });
+    const link = screen.getByRole("link", { name: "Abrir Ana" });
     expect(link.getAttribute("href")).toBe("/apps/commercial/users/u1");
     expect(link.getAttribute("data-mention-kind")).toBe("user");
+  });
+
+  it("renders avatar chrome when avatarName is set", () => {
+    const { container } = render(
+      <MentionText
+        classNames={classNames}
+        text="Ver @Ana Silva"
+        mentions={[
+          {
+            kind: "user",
+            label: "@Ana Silva",
+            href: "/apps/commercial/users/u1",
+            title: "Abrir Ana Silva",
+            avatarName: "Ana Silva",
+            avatarSrc: "https://cdn.example/ana.png",
+          },
+        ]}
+      />,
+    );
+    const link = screen.getByRole("link", { name: "Abrir Ana Silva" });
+    expect(link.className).toContain("with-avatar");
+    const img = link.querySelector("img");
+    expect(img?.getAttribute("src")).toBe("https://cdn.example/ana.png");
   });
 
   it("calls onMentionActivate for button chips", () => {

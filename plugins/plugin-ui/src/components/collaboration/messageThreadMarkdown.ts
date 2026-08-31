@@ -153,11 +153,45 @@ export function enrichMessageHtmlMentions(
           continue;
         }
         const span = doc.createElement("span");
-        span.className = chipClassName;
-        span.textContent = displayMentionLabel(segment.value);
+        const withAvatar = Boolean(
+          (segment.item?.avatarSrc ?? "").trim() ||
+            (segment.item?.avatarName ?? "").trim(),
+        );
+        span.className = withAvatar
+          ? `${chipClassName} ${chipClassName}--with-avatar`.trim()
+          : chipClassName;
         if (segment.item?.kind) {
           span.setAttribute("data-mention-kind", segment.item.kind);
         }
+        const labelText = displayMentionLabel(segment.value);
+        const avatarSrc = (segment.item?.avatarSrc ?? "").trim();
+        const avatarName = (
+          segment.item?.avatarName ??
+          labelText
+        ).trim();
+        if (withAvatar) {
+          if (avatarSrc) {
+            const img = doc.createElement("img");
+            img.className = "delpi-ui-mention-text__chip-avatar";
+            img.src = avatarSrc;
+            img.alt = "";
+            span.appendChild(img);
+          } else if (avatarName) {
+            const av = doc.createElement("span");
+            av.className = "delpi-ui-mention-text__chip-avatar";
+            av.setAttribute("aria-hidden", "true");
+            const parts = avatarName.split(/\s+/).filter(Boolean);
+            av.textContent =
+              parts.length >= 2
+                ? `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase()
+                : (parts[0] ?? "?").slice(0, 2).toUpperCase();
+            span.appendChild(av);
+          }
+        }
+        const label = doc.createElement("span");
+        label.className = "delpi-ui-mention-text__chip-label";
+        label.textContent = labelText;
+        span.appendChild(label);
         frag.appendChild(span);
       }
       parent.replaceChild(frag, node);

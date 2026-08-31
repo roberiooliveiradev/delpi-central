@@ -14,6 +14,10 @@ export type MentionTextItem = {
   /** Native tooltip / default aria when interactive. */
   title?: string;
   id?: string;
+  /** Optional photo URL — kit does not fetch; host resolves blob/CDN. */
+  avatarSrc?: string | null;
+  /** Name for initials when `avatarSrc` is missing; enables avatar chrome. */
+  avatarName?: string | null;
 };
 
 export type MentionTextSegment =

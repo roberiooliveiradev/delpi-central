@@ -18,6 +18,32 @@
   vertical-align: baseline;
 }
 
+.delpi-ui-mention-text__chip--with-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.1em 0.45em 0.1em 0.15em;
+  border-radius: 999px;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.delpi-ui-mention-text__chip-avatar,
+.delpi-ui-mention-avatar,
+.delpi-ui-mention-avatar.delpi-ui-avatar--sm {
+  flex: 0 0 auto;
+  width: 1.15em;
+  height: 1.15em;
+  min-width: 1.15em;
+  font-size: 0.55em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.delpi-ui-mention-text__chip-label {
+  display: inline;
+}
+
 button.delpi-ui-mention-text__chip {
   cursor: default;
 }
