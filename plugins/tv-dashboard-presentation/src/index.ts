@@ -647,6 +647,11 @@ export {
 } from "./comunicadoIconView";
 export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
 export type { ComunicadoCanvasTableInteraction } from "./ComunicadoCanvasTableView";
+export { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
+export type {
+  CanvasTableKeyboardAction,
+  CanvasTableKeyboardMode,
+} from "./canvasTableKeyboard";
 export {
   ComunicadoInputBlockView,
   resolveInputControlKind,

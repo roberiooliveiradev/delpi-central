@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from "./canvasTableProjection";
+import { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
 import {
   resolveCanvasTableSelectionOverlayRects,
   type CanvasTableCellDomRect,
@@ -111,6 +112,8 @@ export function ComunicadoCanvasTableView({
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [cellRects, setCellRects] = useState<CanvasTableCellDomRect[]>([]);
+  const [editingCell, setEditingCell] = useState<CanvasTableCellRef | null>(null);
+  const pendingReplaceRef = useRef<string | null>(null);
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const hostStyle = resolveCanvasTableHostStyle(block) as CSSProperties;
   const selectedCells =
@@ -152,6 +155,28 @@ export function ComunicadoCanvasTableView({
     opts.columnWidths,
   ]);
 
+  useLayoutEffect(() => {
+    if (!editingCell) return;
+    const host = hostRef.current;
+    if (!host) return;
+    const el = host.querySelector<HTMLElement>(
+      `[data-cell-row="${editingCell.row}"][data-cell-col="${editingCell.col}"]`,
+    );
+    if (!el) return;
+    el.focus();
+    const pending = pendingReplaceRef.current;
+    pendingReplaceRef.current = null;
+    if (pending != null) {
+      el.textContent = pending;
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, [editingCell]);
+
   const overlay =
     editable && selectedCells.length
       ? resolveCanvasTableSelectionOverlayRects({
@@ -173,63 +198,112 @@ export function ComunicadoCanvasTableView({
 
   const allowCellSelection = interaction?.blockSelected !== false;
 
+  function isCellEditing(row: number, col: number) {
+    return Boolean(editingCell && editingCell.row === row && editingCell.col === col);
+  }
+
+  function focusCellAt(row: number, col: number) {
+    hostRef.current
+      ?.querySelector<HTMLElement>(`[data-cell-row="${row}"][data-cell-col="${col}"]`)
+      ?.focus();
+  }
+
+  function selectAndMaybeEdit(
+    cell: CanvasTableCellRef,
+    opts: { additive?: boolean; range?: boolean; enterEdit?: boolean },
+  ) {
+    interaction?.onSelectCell?.({
+      cell,
+      additive: opts.additive,
+      range: opts.range,
+    });
+    if (opts.enterEdit) setEditingCell(cell);
+    else setEditingCell(null);
+  }
+
   function onCellPointerDown(
     event: ReactPointerEvent<HTMLTableCellElement>,
     row: number,
     col: number,
+    canEdit: boolean,
   ) {
     if (!editable) return;
     /* Container ainda não selecionado: deixa o wrap do bloco receber o gesto. */
     if (!allowCellSelection) return;
     event.stopPropagation();
-    interaction?.onSelectCell?.({
-      cell: { row, col },
-      additive: event.ctrlKey || event.metaKey,
-      range: event.shiftKey,
-    });
+    const sameFocus =
+      focusCell?.row === row && focusCell?.col === col && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+    const enterEdit = canEdit && sameFocus && !isCellEditing(row, col);
+    selectAndMaybeEdit(
+      { row, col },
+      {
+        additive: event.ctrlKey || event.metaKey,
+        range: event.shiftKey,
+        enterEdit,
+      },
+    );
   }
 
   function onCellKeyDown(
     event: KeyboardEvent<HTMLTableCellElement>,
     row: number,
     col: number,
+    canEdit: boolean,
   ) {
-    if (!editable || !allowCellSelection || !interaction?.onSelectCell) return;
-    const { key } = event;
-    let nextRow = row;
-    let nextCol = col;
-    if (key === "ArrowUp") nextRow = Math.max(0, row - 1);
-    else if (key === "ArrowDown") nextRow = Math.min(block.rows - 1, row + 1);
-    else if (key === "ArrowLeft") nextCol = Math.max(0, col - 1);
-    else if (key === "ArrowRight") nextCol = Math.min(block.cols - 1, col + 1);
-    else if (key === "Tab") {
+    if (!editable || !allowCellSelection) return;
+    const mode = isCellEditing(row, col) ? "edit" : "navigate";
+    const action = resolveCanvasTableKeyboardAction({
+      key: event.key,
+      shift: event.shiftKey,
+      ctrl: event.ctrlKey,
+      alt: event.altKey,
+      meta: event.metaKey,
+      mode,
+      row,
+      col,
+      rows: block.rows,
+      cols: block.cols,
+    });
+
+    if (action.type === "editCaret" || action.type === "ignore") return;
+
+    if (action.type === "enterEdit") {
+      if (!canEdit) return;
       event.preventDefault();
-      if (event.shiftKey) {
-        if (col > 0) nextCol = col - 1;
-        else if (row > 0) {
-          nextRow = row - 1;
-          nextCol = block.cols - 1;
-        }
-      } else if (col < block.cols - 1) nextCol = col + 1;
-      else if (row < block.rows - 1) {
-        nextRow = row + 1;
-        nextCol = 0;
+      if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        pendingReplaceRef.current = event.key;
       }
-    } else if (key === "Enter") {
-      event.preventDefault();
-      nextRow = Math.min(block.rows - 1, row + 1);
-    } else {
+      setEditingCell({ row, col });
+      interaction?.onSelectCell?.({ cell: { row, col } });
       return;
     }
-    if (nextRow !== row || nextCol !== col) {
-      interaction.onSelectCell({
-        cell: { row: nextRow, col: nextCol },
-        range: event.shiftKey,
+
+    if (action.type === "cancelEdit") {
+      event.preventDefault();
+      const prev = normalizeCanvasTableCell(block.cells[row]?.[col]);
+      event.currentTarget.textContent = canvasTableCellPlainText(prev);
+      setEditingCell(null);
+      return;
+    }
+
+    if (action.type === "commitStay") {
+      event.preventDefault();
+      commitText(row, col, event.currentTarget.textContent ?? "");
+      setEditingCell(null);
+      return;
+    }
+
+    if (action.type === "commitMove" || action.type === "navigate") {
+      event.preventDefault();
+      if (action.type === "commitMove") {
+        commitText(row, col, event.currentTarget.textContent ?? "");
+      }
+      setEditingCell(null);
+      interaction?.onSelectCell?.({
+        cell: action.next,
+        range: action.type === "navigate" ? action.range : false,
       });
-      const el = event.currentTarget
-        .closest("table")
-        ?.querySelector<HTMLElement>(`[data-cell-row="${nextRow}"][data-cell-col="${nextCol}"]`);
-      el?.focus();
+      focusCellAt(action.next.row, action.next.col);
     }
   }
 
@@ -291,11 +365,12 @@ export function ComunicadoCanvasTableView({
                 const displayText = display.text;
                 const sparkSeries = display.series ?? cell.series;
                 const bound = display.fromData;
-                const allowEdit =
+                const canEdit =
                   editable &&
                   allowCellSelection &&
                   cell.kind !== "sparkline" &&
                   !bound;
+                const editing = isCellEditing(rowIndex, colIndex);
 
                 return (
                   <Cell
@@ -312,15 +387,20 @@ export function ComunicadoCanvasTableView({
                       .filter(Boolean)
                       .join(" ")}
                     style={cellStyle}
-                    contentEditable={allowEdit}
+                    contentEditable={editing}
                     suppressContentEditableWarning
-                    tabIndex={allowEdit ? 0 : undefined}
-                    onPointerDown={(event) => onCellPointerDown(event, rowIndex, colIndex)}
-                    onKeyDown={(event) => onCellKeyDown(event, rowIndex, colIndex)}
+                    tabIndex={editable && allowCellSelection ? 0 : undefined}
+                    onPointerDown={(event) =>
+                      onCellPointerDown(event, rowIndex, colIndex, canEdit)
+                    }
+                    onKeyDown={(event) =>
+                      onCellKeyDown(event, rowIndex, colIndex, canEdit)
+                    }
                     onBlur={(event: FocusEvent<HTMLTableCellElement>) => {
-                      if (!allowEdit) return;
+                      if (!editing) return;
                       const value = event.currentTarget.textContent ?? "";
                       commitText(rowIndex, colIndex, value);
+                      setEditingCell(null);
                     }}
                   >
                     {cell.kind === "sparkline" ? (
@@ -332,7 +412,7 @@ export function ComunicadoCanvasTableView({
                           <span className="td-canvas-table__sparkline-value">{displayText}</span>
                         ) : null}
                       </span>
-                    ) : !allowEdit &&
+                    ) : !editing &&
                       hasRichTextRuns({ contentRuns: cell.contentRuns }) ? (
                       <ComunicadoTextRunsView
                         block={{
