@@ -1,0 +1,285 @@
+[
+  {
+    "label": "B1-typo-u",
+    "message": "como u posso te chamar?",
+    "expect": "identity_fast",
+    "status": "PASS",
+    "detail": "ok | 583ms | skipRag=True",
+    "ms": 583,
+    "prose": "**Sobre o assistente**\n\nOlá! Sou o assistente da **Minha DELPI** — um chat corporativo em português, integrado à plataforma DELPI.\n\nAjudo com documentação autorizada, conversas do dia a dia e, quando você escolhe um **agente especialista**, ganho consultas e ferramentas extras da",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "B2-typo-vc",
+    "message": "como vc se chama?",
+    "expect": "identity_fast",
+    "status": "PASS",
+    "detail": "ok | 406ms | skipRag=True",
+    "ms": 406,
+    "prose": "**Sobre o assistente**\n\nOlá! Sou o assistente da **Minha DELPI** — um chat corporativo em português, integrado à plataforma DELPI.\n\nAjudo com documentação autorizada, conversas do dia a dia e, quando você escolhe um **agente especialista**, ganho consultas e ferramentas extras da",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "B3-typo-chamo",
+    "message": "como te chamo mesmo?",
+    "expect": "identity_fast",
+    "status": "FAIL",
+    "detail": "lento 44863ms | skipRag=True",
+    "ms": 44863,
+    "prose": "Pode me chamar de **assistente Minha DELPI**",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "B4-canon",
+    "message": "como posso te chamar?",
+    "expect": "identity_fast",
+    "status": "PASS",
+    "detail": "ok | 414ms | skipRag=True",
+    "ms": 414,
+    "prose": "**Sobre o assistente**\n\nOlá! Sou o assistente da **Minha DELPI** — um chat corporativo em português, integrado à plataforma DELPI.\n\nAjudo com documentação autorizada, conversas do dia a dia e, quando você escolhe um **agente especialista**, ganho consultas e ferramentas extras da",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "B5-nome",
+    "message": "qual seu nome?",
+    "expect": "identity_fast",
+    "status": "PASS",
+    "detail": "ok | 367ms | skipRag=True",
+    "ms": 367,
+    "prose": "**Sobre o assistente**\n\nOlá! Sou o assistente da **Minha DELPI** — um chat corporativo em português, integrado à plataforma DELPI.\n\nAjudo com documentação autorizada, conversas do dia a dia e, quando você escolhe um **agente especialista**, ganho consultas e ferramentas extras da",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "A1-rol-comum",
+    "message": "qual o rol filial 01",
+    "expect": "guidance",
+    "status": "PASS",
+    "detail": "ok | 322ms | skipRag=True",
+    "ms": 322,
+    "prose": "**Dados operacionais exigem um agente**",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "A2-typo-filail",
+    "message": "me fala o rol da filail 01",
+    "expect": "guidance",
+    "status": "PASS",
+    "detail": "ok | 353ms",
+    "ms": 353,
+    "prose": "**Dados operacionais exigem um agente**",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "A3-abreviado",
+    "message": "rol 01 agora",
+    "expect": "guidance",
+    "status": "PASS",
+    "detail": "ok | 435ms",
+    "ms": 435,
+    "prose": "**Dados operacionais exigem um agente**",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "A4-faturamento",
+    "message": "quanto foi o faturamento da filial 01?",
+    "expect": "guidance",
+    "status": "PASS",
+    "detail": "ok | 206ms | skipRag=True",
+    "ms": 206,
+    "prose": "**Dados operacionais exigem um agente**\n\nNo **chat comum** não acesso APIs da DELPI (estoque, produtos, OV/LMP, indicadores financeiros, SQL em produção…).\n\n**Neste modo ainda posso:**\n- Responder com **documentação e conhecimento** autorizado (RAG).\n- Ajudar com **textos**, revi",
+    "seed": [],
+    "use_agent": false
+  },
+  {
+    "label": "A5-rol-agente",
+    "message": "ROL filial 01 agosto 2026",
+    "expect": "rol_01",
+    "status": "PASS",
+    "detail": "ok | paths=['/financial/rol'] | br=['01']",
+    "ms": 2203,
+    "prose": "**ROL:** R$ 711.977,25",
+    "seed": [],
+    "use_agent": true
+  },
+  {
+    "label": "A6-typo-filail-ag",
+    "message": "rol da filail 01 em agosto/2026",
+    "expect": "rol_01",
+    "status": "PASS",
+    "detail": "ok | br=['01']",
+    "ms": 2320,
+    "prose": "**ROL:** R$ 711.977,25",
+    "seed": [],
+    "use_agent": true
+  },
+  {
+    "label": "A7-abreviado-ag",
+    "message": "rol 01 ago/26",
+    "expect": "rol_01",
+    "status": "PASS",
+    "detail": "ok | 1599ms | paths=['/financial/rol'] | skipRag=True",
+    "ms": 1599,
+    "prose": "**ROL:** R$ 4.313.597,73\n\n**Receita bruta:** R$ 4.980.568,61\n\n**Próximos passos**\n\n- Comparar com o período anterior",
+    "seed": [],
+    "use_agent": true
+  },
+  {
+    "label": "A8-por-extenso",
+    "message": "me mostra o ROL só da unidade 01 no mês de agosto de 2026",
+    "expect": "rol_01",
+    "status": "PASS",
+    "detail": "ok | br=['01']",
+    "ms": 2616,
+    "prose": "**ROL:** R$ 711.977,25",
+    "seed": [],
+    "use_agent": true
+  },
+  {
+    "label": "C1-consolidado",
+    "message": "qual o rol consolidado em agosto 2026",
+    "expect": "data_answer",
+    "status": "PASS",
+    "detail": "ok | br=['all'] dataAnswer in tools",
+    "ms": 2777,
+    "prose": "**ROL:** R$ 0,00",
+    "seed": [],
+    "use_agent": true
+  },
+  {
+    "label": "C2-typo",
+    "message": "rol consollidado ago 2026",
+    "expect": "data_answer",
+    "status": "PASS",
+    "detail": "ok | 1436ms | paths=['/financial/rol'] | br=['all'] | skipRag=True",
+    "ms": 1436,
+    "prose": "**ROL:** R$ 0,00\n\n**Receita bruta:** R$ 0,00\n\n**Próximos passos**\n\n- Comparar com o período anterior",
+    "seed": [],
+    "use_agent": true
+  },
+  {
+    "label": "D1-periodo-ant",
+    "message": "comparar com o período anterior",
+    "expect": "compare_dual",
+    "status": "PASS",
+    "detail": "ok | 33156ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '01'] | roles=['baseline', 'prior'] | skipRag=True",
+    "ms": 33156,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-07-2026 a 31-07-2026.\n- **Receita bruta (período atual / referência):** R$ 885.743,10\n- **Receita bruta (período anterior):** R$ 819.735,02\n- **Variação:** alta de R$ 66.008,08 (+8.1%)\n**Próximos passos**\n- Voltar a",
+    "seed": [
+      "ROL filial 01 agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "D2-typo-periodo",
+    "message": "compara com o periodo anteriror",
+    "expect": "compare_dual",
+    "status": "PASS",
+    "detail": "ok | 83139ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '01'] | roles=['baseline', 'prior'] | skipRag=True",
+    "ms": 83139,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-07-2026 a 31-07-2026.\n- **Receita bruta (período atual / referência):** R$ 885.743,10\n- **Receita bruta (período anterior):** R$ 819.735,02\n- **Variação:** alta de R$ 66.008,08 (+8.1%)\n**Próximos passos**\n- Voltar a",
+    "seed": [
+      "ROL filial 01 agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "D3-mes-passado",
+    "message": "e no mês passado?",
+    "expect": "soft",
+    "status": "PASS",
+    "detail": "ok | 21272ms | skipRag=True",
+    "ms": 21272,
+    "prose": "Não tenho essa informação disponível no momento. A consulta do ROL de **julho/2026** (filial 01) não retornou dados nesta sessão.\n\nVocê pode tentar novamente informando o período de forma explícita, por exemplo: **\"ROL filial 01 julho 2026\"**. Se preferir, também posso detalhar m",
+    "seed": [
+      "ROL filial 01 agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "D4-filiais",
+    "message": "comparar filial 01 com filial 02",
+    "expect": "branch_dual",
+    "status": "PASS",
+    "detail": "ok | 116303ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '02'] | roles=['baseline', 'prior'] | skipRag=True",
+    "ms": 116303,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-08-2026 a 31-08-2026.\n- **Receita bruta (período atual / referência):** R$ 885.743,10\n- **Receita bruta (ano anterior (mesmo intervalo)):** R$ 4.094.825,51\n- **Variação:** queda de R$ 3.209.082,41 (-78.4%)\n**Próximo",
+    "seed": [
+      "ROL agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "D5-typo-filiais",
+    "message": "compara filail 01 vs filail 02",
+    "expect": "branch_dual",
+    "status": "PASS",
+    "detail": "ok | 19126ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '02'] | roles=['baseline', 'prior'] | skipRag=True",
+    "ms": 19126,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-08-2026 a 31-08-2026.\n- **Receita bruta (período atual / referência):** R$ 872.589,10\n- **Receita bruta (ano anterior (mesmo intervalo)):** R$ 4.092.420,71\n- **Variação:** queda de R$ 3.219.831,61 (-78.7%)\n**Próximo",
+    "seed": [
+      "ROL filial 01 agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "D6-entre-filiais",
+    "message": "compara entre filiais 01 e 02",
+    "expect": "branch_dual",
+    "status": "PASS",
+    "detail": "ok | 29583ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '02'] | roles=['baseline', 'prior'] | skipRag=True",
+    "ms": 29583,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-08-2026 a 31-08-2026.\n- **Receita bruta (período atual / referência):** R$ 885.743,10\n- **Receita bruta (ano anterior (mesmo intervalo)):** R$ 4.094.825,51\n- **Variação:** queda de R$ 3.209.082,41 (-78.4%)\n**Próximo",
+    "seed": [
+      "ROL agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "Y1-yoy",
+    "message": "comparar com ano anterior no mesmo periodo",
+    "expect": "yoy",
+    "status": "PASS",
+    "detail": "ok | 24280ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '01'] | roles=['baseline', 'prior'] | skipRag=True",
+    "ms": 24280,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-08-2025 a 31-08-2025.\n- **Receita bruta (período atual / referência):** R$ 872.589,10\n- **Receita bruta (ano anterior (mesmo intervalo)):** R$ 861.970,16\n- **Variação:** alta de R$ 10.618,94 (+1.2%)\n**Próximos passo",
+    "seed": [
+      "ROL filial 01 agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "Y2-typo-yoy",
+    "message": "compara c ano anteriror mesmo periodo",
+    "expect": "yoy",
+    "status": "PASS",
+    "detail": "ok | 55240ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '01'] | roles=['baseline', 'prior'] | skipRag=True",
+    "ms": 55240,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-08-2025 a 31-08-2025.\n- **Receita bruta (período atual / referência):** R$ 885.743,10\n- **Receita bruta (ano anterior (mesmo intervalo)):** R$ 861.970,16\n- **Variação:** alta de R$ 23.772,94 (+2.8%)\n**Próximos passo",
+    "seed": [
+      "ROL filial 01 agosto 2026"
+    ],
+    "use_agent": true
+  },
+  {
+    "label": "Y3-challenge",
+    "message": "mas a filial 01 não é o consolidado né?",
+    "expect": "soft",
+    "status": "PASS",
+    "detail": "ok | 11255ms | skipRag=True",
+    "ms": 11255,
+    "prose": "Não. Pelo que consta na estrutura da plataforma, **filial 01** e **filial 02** são unidades distintas (01 = ES e 02 = SC, conforme os acessos por filial liberados no seu perfil). O **consolidado** é uma visão à parte, que soma as duas filiais.\n\nEntão, se você quer a ROL de agosto",
+    "seed": [
+      "ROL agosto 2026",
+      "somente da filial 01"
+    ],
+    "use_agent": true
+  }
+]

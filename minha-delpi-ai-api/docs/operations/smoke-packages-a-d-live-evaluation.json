@@ -1,0 +1,114 @@
+[
+  {
+    "criterion": "1 Typo identity rápido sem notice dados",
+    "package": "B",
+    "message": "como u posso te chamar?",
+    "status": "FAIL",
+    "detail": "lento 52444ms",
+    "elapsed_ms": 52444,
+    "prose": "Você pode me chamar de **Minha DELPI**. Sou o assistente da plataforma; por trás uso o modelo Kimi, mas aqui no atendimento pode me tratar como **Minha DELPI**.",
+    "extras": {
+      "tools": 0,
+      "stage": null,
+      "skipRag": null
+    }
+  },
+  {
+    "criterion": "2 Comum operacional → guidance agente",
+    "package": "A",
+    "message": "qual o rol filial 01",
+    "status": "PASS",
+    "detail": "guidance ok; paths=[]",
+    "elapsed_ms": 237,
+    "prose": "**Dados operacionais exigem um agente**\n\nNo **chat comum** não acesso APIs da DELPI (estoque, produtos, OV/LMP, indicadores financeiros, SQL em produção…).\n\n**Neste modo ainda posso:**\n- Responder com **documentação e conhecimento** autoriz",
+    "extras": {}
+  },
+  {
+    "criterion": "2b Resume período → guidance/continuidade",
+    "package": "A",
+    "message": "agosto de 2026",
+    "status": "PASS",
+    "detail": "resposta presente",
+    "elapsed_ms": 17499,
+    "prose": "**Agosto de 2026** — mas o que você quer saber sobre esse período?\n\nPreciso de um esclarecimento objetivo, por exemplo:\n- Apontamentos de produção?\n- Indicadores (LMPs, eficiência fabril, faturamento)?\n- Planos de ação da qualidade?\n- Outro",
+    "extras": {}
+  },
+  {
+    "criterion": "3 Agente ROL filial 01 só 01; título/prosa",
+    "package": "A",
+    "message": "ROL filial 01 agosto 2026",
+    "status": "PASS",
+    "detail": "paths=['/financial/rol', 'branch=01'] branches=['01'] title='' selected=",
+    "elapsed_ms": 3010,
+    "prose": "**ROL:** R$ 711.977,25\n\n**Receita bruta:** R$ 872.589,10\n\n**Próximos passos**\n\n- Comparar com o período anterior",
+    "extras": {
+      "paths": [
+        "/financial/rol",
+        "branch=01"
+      ],
+      "branches": [
+        "01"
+      ],
+      "title": "",
+      "selected": ""
+    }
+  },
+  {
+    "criterion": "4 Prompt contexto; dataAnswer; síntese",
+    "package": "C",
+    "message": "qual o rol consolidado em agosto 2026",
+    "status": "FAIL",
+    "detail": "tools sem dataAnswer/dataCommentary",
+    "elapsed_ms": 2463,
+    "prose": "**ROL:** R$ 0,00\n\n**Receita bruta:** R$ 0,00\n\n**Próximos passos**\n\n- Comparar com o período anterior",
+    "extras": {
+      "dataAnswer": false,
+      "selected": ""
+    }
+  },
+  {
+    "criterion": "5 previous_period dual",
+    "package": "D",
+    "message": "comparar com o período anterior",
+    "status": "PASS",
+    "detail": "tools=2 roles=['baseline', 'baseline', 'prior', 'prior']",
+    "elapsed_ms": 25364,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-07-2026 a 31-07-2026.\n- **Receita bruta (período atual / referência):** R$ 872.589,10\n- **Receita bruta (ano anterior (mesmo intervalo)):** R$ 819.735,02\n- **Variação:** alta ",
+    "extras": {
+      "paths": [
+        "/financial/rol",
+        "branch=01",
+        "/financial/rol",
+        "branch=01"
+      ],
+      "roles": [
+        "baseline",
+        "baseline",
+        "prior",
+        "prior"
+      ]
+    }
+  },
+  {
+    "criterion": "5b filial×filial dual",
+    "package": "D",
+    "message": "comparar filial 01 com filial 02",
+    "status": "PASS",
+    "detail": "branches=[]",
+    "elapsed_ms": 14131,
+    "prose": "Ainda não tenho dados suficientes para fazer essa comparação. Preciso entender melhor o que você deseja:\n\n- **O que é \"ROL\"?** Refere-se a um produto, uma lista de itens (ex.: rolamentos) ou outro documento/relatório?\n- **O que comparar ent",
+    "extras": {
+      "branches": []
+    }
+  },
+  {
+    "criterion": "6 YoY sem regressão",
+    "package": "herança",
+    "message": "comparar com ano anterior no mesmo periodo",
+    "status": "PASS",
+    "detail": "tools=2",
+    "elapsed_ms": 64580,
+    "prose": "Comparação no mesmo intervalo: 01-08-2026 a 31-08-2026 versus 01-08-2025 a 31-08-2025.\n- **Receita bruta (período atual / referência):** R$ 872.589,10\n- **Receita bruta (ano anterior (mesmo intervalo)):** R$ 861.970,16\n- **Variação:** alta ",
+    "extras": {}
+  }
+]
