@@ -342,6 +342,9 @@ def _run_turn(
     expect_path_substr: str | None = None,
     expect_branch: str | None = None,
     expect_start_year: str | None = None,
+    expect_also_start_year: str | None = None,
+    expect_min_tool_calls: int | None = None,
+    expect_prose_contains: list[str] | None = None,
     expect_continuity_mode: str | None = None,
     forbid_product_structure_path: bool = False,
     forbid_missing_period: bool = False,
@@ -390,6 +393,30 @@ def _run_turn(
             result.errors.append(
                 f"start_date ano {expect_start_year!r} ausente; starts={starts}"
             )
+
+    if expect_also_start_year:
+        if not any(expect_also_start_year in start for start in starts):
+            result.errors.append(
+                f"start_date ano {expect_also_start_year!r} (baseline) ausente; starts={starts}"
+            )
+
+    if expect_min_tool_calls is not None:
+        n_tools = sum(
+            1
+            for call in (response.get("toolCalls") or [])
+            if isinstance(call, dict)
+            and str(call.get("name") or "") == "execute_external_action"
+        )
+        if n_tools < expect_min_tool_calls:
+            result.errors.append(
+                f"toolCalls execute_external_action={n_tools} < {expect_min_tool_calls}"
+            )
+
+    if expect_prose_contains:
+        haystack = prose.lower()
+        for needle in expect_prose_contains:
+            if str(needle).lower() not in haystack:
+                result.errors.append(f"prosa sem {needle!r}")
 
     if expect_continuity_mode:
         mode = result.continuity_mode
@@ -482,6 +509,9 @@ def main() -> int:
             session_id=session_id,
             expect_path_substr="/financial/rol",
             expect_start_year="2025",
+            expect_also_start_year="2026",
+            expect_min_tool_calls=2,
+            expect_prose_contains=["comparação", "variação"],
             expect_continuity_mode="consume_last_action",
             forbid_product_structure_path=True,
             forbid_narrate_recap=True,
@@ -496,6 +526,7 @@ def main() -> int:
             expect_stage="grounded_challenge_result",
             expect_no_tools=True,
             forbid_missing_period=True,
+            expect_prose_contains=["consolidado", "filial", "R$"],
         )
     )
     results.append(
@@ -506,6 +537,8 @@ def main() -> int:
             session_id=session_id,
             expect_branch="01",
             expect_path_substr="/financial/rol",
+            expect_start_year="2026",
+            expect_prose_contains=["ajustado"],
         )
     )
     results.append(

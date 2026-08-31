@@ -506,6 +506,11 @@ class ChatToolContextExecutionService:
                     "arguments": selected_tool.get("arguments") or {},
                     "reason": selected_tool.get("reason"),
                     "metadata": safe_metadata,
+                    **(
+                        {"periodCompareRole": selected_tool.get("periodCompareRole")}
+                        if selected_tool.get("periodCompareRole")
+                        else {}
+                    ),
                 }
             )
 

@@ -281,21 +281,33 @@ class ChatFollowUpTurnInterpretationService:
                 delta["branch"] = branch
 
         period_kind = ChatFollowUpTurnContentService.period_slot_kind_for_message(normalized)
-        if period_kind:
-            delta["period"] = period_kind
-            params = (
-                last_action.get("params")
-                if isinstance(last_action, dict) and isinstance(last_action.get("params"), dict)
-                else {}
-            )
-            from app.domain.services.chat_date_range_intent_service import (
-                ChatDateRangeIntentService,
-            )
+        params = (
+            last_action.get("params")
+            if isinstance(last_action, dict) and isinstance(last_action.get("params"), dict)
+            else {}
+        )
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
 
+        if period_kind == "message_resolved":
+            # «deste mês» etc. — resolve pelo calendário da mensagem (sem histórico).
+            delta["period"] = period_kind
+            resolved = ChatDateRangeIntentService.resolve(message)
+            if resolved is not None:
+                delta["start_date"] = resolved.start_date
+                delta["end_date"] = resolved.end_date
+        elif period_kind:
+            delta["period"] = period_kind
+            baseline_start = str(params.get("start_date") or "").strip()
+            baseline_end = str(params.get("end_date") or "").strip()
+            if baseline_start and baseline_end:
+                delta["baseline_start_date"] = baseline_start
+                delta["baseline_end_date"] = baseline_end
             shifted = ChatDateRangeIntentService.apply_period_slot(
                 period_kind,
-                start_date=str(params.get("start_date") or "") or None,
-                end_date=str(params.get("end_date") or "") or None,
+                start_date=baseline_start or None,
+                end_date=baseline_end or None,
             )
             if shifted is not None:
                 delta["start_date"] = shifted.start_date

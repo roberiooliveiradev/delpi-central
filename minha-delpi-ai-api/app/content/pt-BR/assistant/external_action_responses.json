@@ -1458,6 +1458,8 @@
   },
     "selectionReasons": {
     "reviseLastQuery": "Reexecução da última consulta com filtros atualizados (filial/período) a partir do follow-up.",
+    "reviseLastQueryBaseline": "Reexecução do período de referência para comparação YoY.",
+    "reviseLastQueryPriorPeriod": "Consulta do mesmo intervalo no ano anterior (comparação YoY).",
     "inventorySqlFastPath": "Consulta SQL de estoque abaixo do mínimo reconhecida — execução direta via POST /data/sql.",
     "missingRequiredParameter": "Não executei a consulta porque falta o parâmetro obrigatório '{parameter}'. Informe o valor ou confirme o código no contexto da conversa.",
     "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",

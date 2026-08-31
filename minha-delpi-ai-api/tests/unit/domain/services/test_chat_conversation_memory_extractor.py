@@ -3,7 +3,36 @@ from app.domain.services.chat_conversation_memory_extractor import (
 )
 
 
-def test_enrich_snapshot_extracts_last_action():
+def test_enrich_snapshot_extracts_recent_metric_snapshots_from_prose():
+    snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
+        {"operationalFocus": {}},
+        previous_messages=[
+            {
+                "role": "assistant",
+                "content": "**ROL:** R$ 4.229.441,28",
+            },
+            {
+                "role": "assistant",
+                "content": "Consulta filtrada pela filial 01.\n\n**ROL:** R$ 676.062,44",
+                "metadata": {
+                    "toolCalls": [
+                        {
+                            "name": "execute_external_action",
+                            "arguments": {"parameters": {"branch": "01"}},
+                            "metadata": {"ok": True, "path": "/financial/rol"},
+                        }
+                    ]
+                },
+            },
+        ],
+    )
+    snaps = snapshot.get("recentMetricSnapshots") or []
+    assert len(snaps) >= 2
+    assert any(abs(float(s["value"]) - 4229441.28) < 0.01 for s in snaps)
+    assert any(
+        abs(float(s["value"]) - 676062.44) < 0.01 and s.get("branch") == "01"
+        for s in snaps
+    )
     snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
         {"operationalFocus": {}},
         previous_messages=[],

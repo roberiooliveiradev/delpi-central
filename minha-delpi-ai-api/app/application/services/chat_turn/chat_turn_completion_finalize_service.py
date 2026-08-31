@@ -246,6 +246,7 @@ class ChatTurnCompletionFinalizeService:
                 challenge = ChatFollowUpGroundedAnswerService.build_challenge_answer(
                     workspace_context=workspace_context,
                     tool_context=context,
+                    previous_messages=previous_messages,
                 )
                 if challenge:
                     return challenge
@@ -282,8 +283,30 @@ class ChatTurnCompletionFinalizeService:
         if str(turn.get("stage") or "").strip() != "grounded_revise_query":
             return None
 
+        tool_calls = context.get("toolCalls") or []
+        compare = ChatFollowUpGroundedAnswerService.build_period_compare_answer(
+            tool_calls=tool_calls if isinstance(tool_calls, list) else None,
+            workspace_context=workspace,
+        )
+        if compare:
+            suggestions = context.get("followUpSuggestions")
+            if not suggestions and isinstance(workspace.get("followUpSuggestions"), list):
+                context["followUpSuggestions"] = workspace.get("followUpSuggestions")
+            return compare
+
         params: dict = {}
-        for tool_call in reversed(context.get("toolCalls") or []):
+        baseline_params: dict = {}
+        follow_up = turn.get("followUp") if isinstance(turn.get("followUp"), dict) else {}
+        slot_delta = (
+            follow_up.get("slotDelta") if isinstance(follow_up.get("slotDelta"), dict) else {}
+        )
+        if slot_delta.get("baseline_start_date") and slot_delta.get("baseline_end_date"):
+            baseline_params = {
+                "start_date": slot_delta.get("baseline_start_date"),
+                "end_date": slot_delta.get("baseline_end_date"),
+            }
+
+        for tool_call in reversed(tool_calls if isinstance(tool_calls, list) else []):
             if not isinstance(tool_call, dict):
                 continue
             if str(tool_call.get("name") or "") != "execute_external_action":
@@ -293,7 +316,22 @@ class ChatTurnCompletionFinalizeService:
                 params = dict(args.get("parameters") or {})
                 break
 
-        ack = ChatFollowUpGroundedAnswerService.build_revise_ack(parameters=params)
+        if not baseline_params and slot_delta.get("period") == "message_resolved":
+            # «deste mês» vs lastAction herdado — marcar período como alterado.
+            last_action = None
+            working = workspace.get("workingMemory")
+            if isinstance(working, dict):
+                last_action = working.get("lastAction")
+            if isinstance(last_action, dict) and isinstance(last_action.get("params"), dict):
+                baseline_params = {
+                    "start_date": last_action["params"].get("start_date"),
+                    "end_date": last_action["params"].get("end_date"),
+                }
+
+        ack = ChatFollowUpGroundedAnswerService.build_revise_ack(
+            parameters=params,
+            baseline_parameters=baseline_params or None,
+        )
         if not ack:
             return None
         text = str(answer or "").strip()

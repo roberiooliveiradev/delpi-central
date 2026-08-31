@@ -46,7 +46,8 @@
   ],
   "periodSlotKinds": [
     "previous_year_same_range",
-    "previous_period"
+    "previous_period",
+    "message_resolved"
   ],
   "periodSlotKindByTriggerGroup": {
     "previous_year_same_range": [
@@ -69,7 +70,53 @@
       "comparar com período",
       "periodo anterior",
       "período anterior"
+    ],
+    "message_resolved": [
+      "deste mes",
+      "deste mês",
+      "desse mes",
+      "desse mês",
+      "este mes",
+      "este mês",
+      "esse mes",
+      "esse mês",
+      "mes atual",
+      "mês atual",
+      "no mes atual",
+      "no mês atual"
     ]
+  },
+  "periodCompare": {
+    "ackTemplate": "Comparação no mesmo intervalo: {baseline_start} a {baseline_end} versus {prior_start} a {prior_end}.",
+    "lineTemplate": "- **{label} ({period_label}):** {value}",
+    "baselinePeriodLabel": "período atual / referência",
+    "priorPeriodLabel": "ano anterior (mesmo intervalo)",
+    "deltaTemplate": "- **Variação:** {delta} ({pct})",
+    "deltaUp": "alta de {abs_delta}",
+    "deltaDown": "queda de {abs_delta}",
+    "deltaFlat": "estável",
+    "pctTemplate": "{sign}{pct}%",
+    "nextSteps": [
+      {
+        "label": "Voltar ao mês atual",
+        "query": "rol da filial 01 deste mês"
+      },
+      {
+        "label": "Outra filial",
+        "query": "somente da filial 02"
+      }
+    ]
+  },
+  "challengeContrast": {
+    "consolidatedVsBranchTemplate": "Há contraste claro na thread: o **consolidado** ficou em **{consolidated}** e a **filial {branch}** em **{branch_value}** — portanto o valor de uma unidade **não** é igual ao total.",
+    "branchOnlyTemplate": "A última consulta já estava filtrada pela filial **{branch}** (não é o consolidado).",
+    "consolidatedOnlyTemplate": "Os valores acima parecem **consolidados** (sem filtro de uma única filial). Por isso um número de unidade pode parecer igual ao total se a consulta não estiver filtrada — ou se só houver movimento em uma filial no período.",
+    "offerCompare": "Posso reconsultar outra filial ou montar a comparação filial a filial neste período — diga como prefere."
+  },
+  "reviseAck": {
+    "branchTemplate": "Consulta filtrada pela filial {branch}.",
+    "periodKeptTemplate": "Período mantido: {start} a {end}.",
+    "periodChangedTemplate": "Período ajustado: {start} a {end}."
   },
   "classifierLabels": [
     "revise_period",
@@ -143,6 +190,7 @@
     "filiais": "filiais"
   },
   "patterns": {
+    "currencyMetric": "(?P<label>ROL|Receita\\s+bruta)[^\\dR$]{0,40}R\\$\\s*(?P<value>[\\d.]+,\\d{2})",
     "branchWithCode": "\\b(?:filial|filail|filal|unidade)\\s+(\\d{2})\\b",
     "branchTriggerWithoutCode": "\\b(?:somente|s[oó]\\s+da|desta|dessa)?\\s*(?:filial|filail|filal|unidade)\\b(?!\\s*\\d{2})",
     "periodTrigger": "\\b(deste m[eê]s|desse m[eê]s|m[eê]s atual|este m[eê]s|m[eê]s passado|semana|ano)\\b"
@@ -168,7 +216,7 @@
     "period": "Qual período você quer usar? Por exemplo: este mês, mês passado ou um intervalo de datas."
   },
   "challengeFaithfulness": {
-    "instruction": "Responda em português brasileiro com base apenas nos fatos do último resultado e nos parâmetros da última consulta. Não peça período se já houver datas no último resultado. Se o valor parecer consolidado (sem filial) e o usuário questionar igualdade com uma unidade, explique essa hipótese e sugira filtrar por filial — sem inventar números.",
+    "instruction": "Responda em português brasileiro com base apenas nos fatos já obtidos na conversa (consolidados e por filial). Não peça período se já houver datas. Se houver consolidado e filial na thread, contraste os números explicitamente. Não invente valores.",
     "suggestions": [
       {
         "label": "Consultar só a filial 01",
@@ -179,10 +227,6 @@
         "query": "compare o rol por filial neste período"
       }
     ]
-  },
-  "reviseAck": {
-    "branchTemplate": "Consulta filtrada pela filial {branch}.",
-    "periodTemplate": "Período mantido: {start} a {end}."
   },
   "classifierPrompt": {
     "system": "You classify chat follow-up intent. Reply with exactly one label from the allowed list. No tools. No explanation.",

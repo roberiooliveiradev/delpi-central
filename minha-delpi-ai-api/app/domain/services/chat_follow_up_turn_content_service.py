@@ -184,15 +184,79 @@ class ChatFollowUpTurnContentService:
         )
 
     @classmethod
-    def revise_ack_period(cls, *, start: str, end: str) -> str:
+    def revise_ack_period(
+        cls,
+        *,
+        start: str,
+        end: str,
+        changed: bool = False,
+    ) -> str:
+        key = "periodChangedTemplate" if changed else "periodKeptTemplate"
+        default = (
+            "Período ajustado: {start} a {end}."
+            if changed
+            else "Período mantido: {start} a {end}."
+        )
+        # Compat: periodTemplate legado
+        text = ChatAssistantContentService.format(
+            _BUNDLE,
+            "reviseAck",
+            key,
+            default="",
+            start=str(start or "").strip(),
+            end=str(end or "").strip(),
+        )
+        if text:
+            return text
         return ChatAssistantContentService.format(
             _BUNDLE,
             "reviseAck",
             "periodTemplate",
-            default="Período mantido: {start} a {end}.",
+            default=default,
             start=str(start or "").strip(),
             end=str(end or "").strip(),
         )
+
+    @classmethod
+    def period_compare_format(cls, key: str, **values: Any) -> str:
+        return str(
+            ChatAssistantContentService.format(
+                _BUNDLE,
+                "periodCompare",
+                key,
+                default="",
+                **values,
+            )
+            or ""
+        ).strip()
+
+    @classmethod
+    def period_compare_next_steps(cls) -> list[dict[str, str]]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "periodCompare", "nextSteps")
+        out: list[dict[str, str]] = []
+        if not isinstance(node, list):
+            return out
+        for item in node:
+            if not isinstance(item, dict):
+                continue
+            label = str(item.get("label") or "").strip()
+            query = str(item.get("query") or "").strip()
+            if label and query:
+                out.append({"label": label, "query": query})
+        return out
+
+    @classmethod
+    def challenge_contrast_format(cls, key: str, **values: Any) -> str:
+        return str(
+            ChatAssistantContentService.format(
+                _BUNDLE,
+                "challengeContrast",
+                key,
+                default="",
+                **values,
+            )
+            or ""
+        ).strip()
 
     @classmethod
     def continuity_modes(cls) -> tuple[str, ...]:
@@ -237,7 +301,7 @@ class ChatFollowUpTurnContentService:
         if not isinstance(groups, dict):
             return None
         # Prefer previous_year when both could match (YoY phrases include "comparar").
-        preferred_order = ("previous_year_same_range", "previous_period")
+        preferred_order = ("previous_year_same_range", "previous_period", "message_resolved")
         for kind in preferred_order:
             triggers = groups.get(kind) or []
             if not isinstance(triggers, list):

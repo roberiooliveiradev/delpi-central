@@ -367,6 +367,7 @@ class ChatTurnPreparationPostToolResolutionService:
                 challenged = ChatFollowUpGroundedAnswerService.build_challenge_answer(
                     workspace_context=workspace_context,
                     tool_context=tool_context,
+                    previous_messages=history_source,
                 )
                 if challenged:
                     direct_answer = challenged

@@ -316,9 +316,6 @@ class ChatGroundedCapabilityPlanningService:
         from app.domain.services.operational_api_parameter_builder_service import (
             OperationalApiParameterBuilderService,
         )
-        from app.domain.services.external_actions.external_action_response_content_service import (
-            ExternalActionResponseContentService,
-        )
 
         base_params = (
             dict(last_action.get("params") or {})
@@ -338,7 +335,8 @@ class ChatGroundedCapabilityPlanningService:
             if value not in (None, ""):
                 merged[key] = str(value)
 
-        if not any(delta.get(key) not in (None, "") for key in ("branch", "start_date", "end_date")):
+        # Se o delta só trouxe filial, ainda resolva período explícito da mensagem («deste mês»).
+        if delta.get("start_date") in (None, "") or delta.get("end_date") in (None, ""):
             builder = OperationalApiParameterBuilderService()
             built = builder.build_date_branch(
                 {
@@ -349,36 +347,107 @@ class ChatGroundedCapabilityPlanningService:
                     ],
                 },
                 message,
-                previous_messages=previous_messages,
+                previous_messages=None,
                 base_params=None,
             )
-            for key in ("branch", "start_date", "end_date"):
-                value = built.get(key)
-                if value not in (None, ""):
-                    merged[key] = value
+            for key in ("start_date", "end_date"):
+                if delta.get(key) in (None, "") and built.get(key) not in (None, ""):
+                    merged[key] = built[key]
+            if delta.get("branch") in (None, "") and built.get("branch") not in (None, ""):
+                merged["branch"] = built["branch"]
 
         for bad in ("limit", "page", "page_size", "granularity"):
             if bad not in base_params:
                 merged.pop(bad, None)
 
+        period_kind = str(delta.get("period") or "").strip()
+        baseline_start = str(delta.get("baseline_start_date") or "").strip()
+        baseline_end = str(delta.get("baseline_end_date") or "").strip()
+        prior_start = str(merged.get("start_date") or "").strip()
+        prior_end = str(merged.get("end_date") or "").strip()
+
+        payloads: list[dict] = []
+        if (
+            period_kind == "previous_year_same_range"
+            and baseline_start
+            and baseline_end
+            and prior_start
+            and prior_end
+            and (baseline_start, baseline_end) != (prior_start, prior_end)
+        ):
+            baseline_params = dict(merged)
+            baseline_params["start_date"] = baseline_start
+            baseline_params["end_date"] = baseline_end
+            payloads.append(
+                cls._revise_payload(
+                    matched,
+                    parameters=baseline_params,
+                    reason_key="reviseLastQueryBaseline",
+                    compare_role="baseline",
+                )
+            )
+            payloads.append(
+                cls._revise_payload(
+                    matched,
+                    parameters=merged,
+                    reason_key="reviseLastQueryPriorPeriod",
+                    compare_role="prior",
+                )
+            )
+            return payloads
+
+        payloads.append(
+            cls._revise_payload(
+                matched,
+                parameters=merged,
+                reason_key="reviseLastQuery",
+                compare_role=None,
+            )
+        )
+        return payloads
+
+    @classmethod
+    def _revise_payload(
+        cls,
+        matched: dict,
+        *,
+        parameters: dict,
+        reason_key: str,
+        compare_role: str | None,
+    ) -> dict:
+        from app.domain.services.external_actions.external_action_response_content_service import (
+            ExternalActionResponseContentService,
+        )
+
         payload = {
             "name": "execute_external_action",
             "arguments": {
                 "actionId": matched.get("actionId"),
-                "parameters": merged,
-                "body": {"message": message},
+                "parameters": dict(parameters),
+                "body": {"message": ""},
             },
             "reason": ExternalActionResponseContentService.get(
                 "selectionReasons",
-                "reviseLastQuery",
-                default="Reexecução da última consulta com filtros atualizados.",
+                reason_key,
+                default=ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "reviseLastQuery",
+                    default="Reexecução da última consulta com filtros atualizados.",
+                ),
             ),
             "path": matched.get("path"),
             "operationId": matched.get("operationId"),
             "actionId": matched.get("actionId"),
-            "parameters": merged,
+            "parameters": dict(parameters),
         }
-        return [payload]
+        if compare_role:
+            payload["periodCompareRole"] = compare_role
+            args = payload["arguments"]
+            if isinstance(args, dict):
+                meta = dict(args.get("selectionDiagnostics") or {})
+                meta["periodCompareRole"] = compare_role
+                args["selectionDiagnostics"] = meta
+        return payload
 
     @classmethod
     def _prune_params_to_action_schema(

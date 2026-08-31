@@ -54,6 +54,11 @@ class ChatConversationMemoryExtractor:
             previous_messages,
             tool_calls,
         )
+        result["recentMetricSnapshots"] = cls._extract_recent_metric_snapshots(
+            previous_messages,
+            tool_calls,
+        )
+        result = cls._attach_contrast_metrics(result, tool_calls=tool_calls)
         result["canvas"] = cls._extract_canvas_state(previous_messages)
         result["lastAttachment"] = cls._extract_last_attachment(
             previous_messages,
@@ -474,6 +479,200 @@ class ChatConversationMemoryExtractor:
             return "text_block"
 
         return "unknown"
+
+    @classmethod
+    def _attach_contrast_metrics(
+        cls,
+        snapshot: dict[str, Any],
+        *,
+        tool_calls: list | None,
+    ) -> dict[str, Any]:
+        """Mantém consolidado × filial para challenge mesmo se o histórico truncar prosa."""
+        result = dict(snapshot)
+        prior_consolidated = (
+            dict(result["lastConsolidatedMetric"])
+            if isinstance(result.get("lastConsolidatedMetric"), dict)
+            else None
+        )
+        prior_branch = (
+            dict(result["lastBranchMetric"])
+            if isinstance(result.get("lastBranchMetric"), dict)
+            else None
+        )
+        last_action = result.get("lastAction")
+        if not isinstance(last_action, dict):
+            return result
+
+        snaps = result.get("recentMetricSnapshots")
+        if not isinstance(snaps, list) or not snaps:
+            snaps = cls._extract_recent_metric_snapshots(None, tool_calls)
+
+        branch = ""
+        params = last_action.get("params")
+        if isinstance(params, dict):
+            branch = str(params.get("branch") or "").strip()
+
+        def _pick(prefer_branch: bool) -> dict[str, Any] | None:
+            for item in reversed(snaps or []):
+                if not isinstance(item, dict):
+                    continue
+                item_branch = str(item.get("branch") or "").strip()
+                is_branch = bool(item_branch) and item_branch.lower() not in {
+                    "all",
+                    "todas",
+                }
+                if prefer_branch and is_branch:
+                    if branch and item_branch != branch:
+                        continue
+                    return dict(item)
+                if not prefer_branch and not is_branch:
+                    return dict(item)
+            return None
+
+        consolidated = _pick(False)
+        branched = _pick(True) if branch and branch.lower() not in {"all", "todas"} else None
+
+        if consolidated:
+            result["lastConsolidatedMetric"] = consolidated
+        elif prior_consolidated and branch and branch.lower() not in {"all", "todas"}:
+            result["lastConsolidatedMetric"] = prior_consolidated
+        elif not branch and snaps:
+            for item in reversed(snaps):
+                if isinstance(item, dict) and not str(item.get("branch") or "").strip():
+                    result["lastConsolidatedMetric"] = dict(item)
+                    break
+
+        if branched:
+            result["lastBranchMetric"] = branched
+        elif branch and snaps:
+            for item in reversed(snaps):
+                if (
+                    isinstance(item, dict)
+                    and str(item.get("branch") or "").strip() == branch
+                ):
+                    result["lastBranchMetric"] = dict(item)
+                    break
+        elif prior_branch and branch:
+            result["lastBranchMetric"] = prior_branch
+
+        return result
+
+    @classmethod
+    def _extract_recent_metric_snapshots(
+        cls,
+        previous_messages: list[Any] | None,
+        tool_calls: list | None = None,
+        *,
+        limit: int = 12,
+    ) -> list[dict[str, Any]]:
+        """KPI cards / valores em prosa recentes (consolidado × filial) para challenge grounded."""
+        snapshots: list[dict[str, Any]] = []
+        from app.domain.services.chat_follow_up_turn_content_service import (
+            ChatFollowUpTurnContentService,
+        )
+
+        currency_re = ChatFollowUpTurnContentService.compile_pattern("currencyMetric")
+
+        def _parse_brl(raw: str) -> float | None:
+            token = str(raw or "").strip()
+            if not token:
+                return None
+            try:
+                return float(token.replace(".", "").replace(",", "."))
+            except ValueError:
+                return None
+
+        def _consume_tools(calls: list | None) -> None:
+            for tool_call in calls or []:
+                if not isinstance(tool_call, dict):
+                    continue
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+                meta = tool_call.get("metadata")
+                if not isinstance(meta, dict) or not meta.get("ok"):
+                    continue
+                params = cls._merge_executed_action_params(tool_call, meta)
+                branch = str(params.get("branch") or "").strip()
+                kpi = meta.get("kpiPresentation")
+                cards = kpi.get("cards") if isinstance(kpi, dict) else None
+                if not isinstance(cards, list):
+                    continue
+                for card in cards:
+                    if not isinstance(card, dict):
+                        continue
+                    raw = card.get("value")
+                    try:
+                        value = float(raw)
+                    except (TypeError, ValueError):
+                        continue
+                    label = str(card.get("label") or card.get("key") or "Indicador").strip()
+                    snapshots.append(
+                        {
+                            "label": label,
+                            "value": value,
+                            "display": cls._format_brl_display(value),
+                            "branch": branch,
+                        }
+                    )
+
+        for item in previous_messages or []:
+            if cls._message_role(item) != "assistant":
+                continue
+            meta = cls._message_metadata(item)
+            stored = meta.get("toolCalls") if isinstance(meta.get("toolCalls"), list) else None
+            if not stored and isinstance(item, dict):
+                top = item.get("toolCalls")
+                stored = top if isinstance(top, list) else []
+            if not stored:
+                stored = []
+            message_branch = ""
+            if stored:
+                before = len(snapshots)
+                _consume_tools(stored)
+                for snap in snapshots[before:]:
+                    if snap.get("branch"):
+                        message_branch = str(snap.get("branch") or "")
+                        break
+                if not message_branch:
+                    for call in stored:
+                        if not isinstance(call, dict):
+                            continue
+                        call_meta = (
+                            call.get("metadata")
+                            if isinstance(call.get("metadata"), dict)
+                            else {}
+                        )
+                        params = cls._merge_executed_action_params(call, call_meta)
+                        if params.get("branch"):
+                            message_branch = str(params.get("branch") or "")
+                            break
+
+            content = cls._message_content(item)
+            if content:
+                for match in currency_re.finditer(content):
+                    value = _parse_brl(match.group("value"))
+                    if value is None:
+                        continue
+                    snapshots.append(
+                        {
+                            "label": match.group("label").strip(),
+                            "value": value,
+                            "display": f"R$ {match.group('value')}",
+                            "branch": message_branch,
+                        }
+                    )
+
+        if tool_calls:
+            _consume_tools(tool_calls)
+
+        if limit > 0 and len(snapshots) > limit:
+            return snapshots[-limit:]
+        return snapshots
+
+    @staticmethod
+    def _format_brl_display(value: float) -> str:
+        formatted = f"{value:,.2f}"
+        return "R$ " + formatted.replace(",", "X").replace(".", ",").replace("X", ".")
 
     @staticmethod
     def _message_content(message: Any) -> str:

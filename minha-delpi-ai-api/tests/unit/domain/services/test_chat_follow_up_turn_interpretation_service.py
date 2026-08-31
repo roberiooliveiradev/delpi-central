@@ -131,11 +131,37 @@ def test_revise_previous_year_same_range_consumes_last_action():
     assert result.continuity_mode == "consume_last_action"
     assert result.requires_last_action_reexec()
     assert result.slot_delta.get("period") == "previous_year_same_range"
+    assert result.slot_delta.get("baseline_start_date") == "01-08-2026"
+    assert result.slot_delta.get("baseline_end_date") == "28-08-2026"
     assert result.slot_delta.get("start_date") == "01-08-2025"
     assert result.slot_delta.get("end_date") == "28-08-2025"
     meta = result.to_metadata()
     assert meta["continuityMode"] == "consume_last_action"
     assert meta["allowsParallelDiscovery"] is False
+
+
+def test_revise_deste_mes_overrides_inherited_yoy_dates():
+    """«deste mês» deve resolver calendário da mensagem, não herdar 2025 do lastAction."""
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="rol da filial 01 deste mês",
+        last_action={
+            **_ROL_ACTION,
+            "params": {
+                "start_date": "01-08-2025",
+                "end_date": "28-08-2025",
+                "branch": "01",
+            },
+        },
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("period") == "message_resolved"
+    assert result.slot_delta.get("branch") == "01"
+    start = result.slot_delta.get("start_date") or ""
+    end = result.slot_delta.get("end_date") or ""
+    assert start.endswith("-2026") or start.startswith("2026")
+    assert end.endswith("-2026") or end.startswith("2026")
+    assert "2025" not in start and "2025" not in end
 
 
 def test_revise_does_not_fall_through_to_narrate_without_last_action():
