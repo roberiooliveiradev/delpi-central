@@ -19,6 +19,7 @@ import {
   resolveFilialDisplayName,
   setStoredFilial,
 } from "../../utils/maintenanceFilialSelection";
+import { tryOpenManifestPathInNewTab } from "../../utils/manutencaoGeralFormUrl";
 
 type HomePageProps = {
   getAccessToken?: () => string | undefined;
@@ -84,6 +85,9 @@ export function HomePage({
   const handleOpenSubmodule = (entryPath: string) => {
     if (activeFilial) {
       setStoredFilial(activeFilial);
+    }
+    if (tryOpenManifestPathInNewTab(entryPath)) {
+      return;
     }
     onNavigate(entryPath);
   };

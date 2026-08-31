@@ -316,6 +316,11 @@
   color: var(--dm-text-muted);
   font-size: var(--dm-font-sm);
   background: color-mix(in srgb, var(--dm-card-bg) 88%, transparent);
+}.dashboard-maintenance .dm-form-embed__actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
 }.dashboard-maintenance .dm-form-embed__iframe{
   position: absolute;
   inset: 0;

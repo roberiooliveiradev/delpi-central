@@ -1,11 +1,14 @@
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, ExternalLink } from "lucide-react";
 
-import { MaintenancePageHero } from "../../app/maintenanceUi";
+import { MaintenanceActionButton, MaintenancePageHero } from "../../app/maintenanceUi";
 import { MaintenanceScreenLoadingState } from "../../components/MaintenanceLoadingState";
 import { StateBox } from "../../components/data";
 import { ManutencaoGeralFormEmbed } from "../../components/ManutencaoGeralFormEmbed";
 import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
-import { resolveManutencaoGeralFormUrl } from "../../utils/manutencaoGeralFormUrl";
+import {
+  resolveManutencaoGeralFormUrl,
+  shouldOpenManutencaoGeralInNewTab,
+} from "../../utils/manutencaoGeralFormUrl";
 import { resolveMaintenanceHomePath } from "../../utils/routeParser";
 
 type ManutencaoGeralPageProps = {
@@ -47,6 +50,9 @@ export function ManutencaoGeralPage({
   );
   const effectiveFilial = filialScope ?? activeFilial ?? "01";
   const canAccess = submodules.some((item) => item.id === "manutencao-geral");
+  const openInNewTab = shouldOpenManutencaoGeralInNewTab();
+  const formUrl = resolveManutencaoGeralFormUrl(alternateEntry);
+  const homePath = resolveMaintenanceHomePath(filialScope ?? effectiveFilial);
 
   if (scopeLoading) {
     return (
@@ -73,9 +79,6 @@ export function ManutencaoGeralPage({
     );
   }
 
-  const formUrl = resolveManutencaoGeralFormUrl(alternateEntry);
-  const homePath = resolveMaintenanceHomePath(filialScope ?? effectiveFilial);
-
   if (!formUrl) {
     return (
       <>
@@ -84,6 +87,41 @@ export function ManutencaoGeralPage({
           <StateBox variant="error">
             URL do formulário não configurada. Defina <code>routes[].entry</code> no manifesto de
             Manutenção e re-registre o app no portal.
+          </StateBox>
+        </section>
+      </>
+    );
+  }
+
+  if (openInNewTab) {
+    return (
+      <>
+        <ManutencaoGeralHero />
+        <section className="dm-page-stack">
+          <StateBox>
+            <p>
+              O formulário de Manutenção geral abre em uma nova aba do navegador.
+            </p>
+            <p className="dm-home-section__hint">
+              Pelo hub, o atalho já abre a aba externa sem entrar nesta tela.
+            </p>
+            <div className="dm-form-embed__actions">
+              <MaintenanceActionButton
+                type="button"
+                variant="primary"
+                onClick={() => window.open(formUrl, "_blank", "noopener,noreferrer")}
+              >
+                <ExternalLink size={16} aria-hidden />
+                Abrir formulário
+              </MaintenanceActionButton>
+              <MaintenanceActionButton
+                type="button"
+                variant="ghost"
+                onClick={() => onNavigate(homePath)}
+              >
+                Voltar ao início
+              </MaintenanceActionButton>
+            </div>
           </StateBox>
         </section>
       </>
