@@ -214,6 +214,55 @@ Ponto de atenção:
 
 ---
 
+## 8.1. Abrir rota em nova aba (`openInNewTab`)
+
+Campo opcional por rota: `routes[].openInNewTab` (boolean; omitido = `false`).
+
+Quando `true`, o clique no menu do portal **não** navega a aba atual nem monta o `AppHost` nela. Em vez disso:
+
+1. Se `routes[].entry` for URL `http://` ou `https://` → abre essa URL em nova aba.
+2. Caso contrário → abre a URL absoluta do `path` no portal (`origin` + `path`) em nova aba.
+
+Persistência: só no JSON do manifesto (igual a `routes[].entry`). Não há coluna em `app_routes`. Exposto em `GET /me/apps` como `routes[].openInNewTab`.
+
+Exemplo (checklist externo + rota interna no shell):
+
+```json
+{
+  "routes": [
+    {
+      "path": "/apps/manutencao/checklist",
+      "label": "Checklist",
+      "entry": "https://script.google.com/macros/s/…/exec",
+      "permission": "manutencao.checklist",
+      "showInMenu": true,
+      "openInNewTab": true
+    },
+    {
+      "path": "/apps/manutencao",
+      "label": "Início",
+      "permission": "manutencao.access",
+      "showInMenu": true,
+      "openInNewTab": false
+    }
+  ]
+}
+```
+
+Diferença em relação a `ui.renderMode: "external"`:
+
+| | `openInNewTab` (por rota) | `ui.renderMode: "external"` (app inteiro) |
+|---|---|---|
+| Escopo | Uma rota do menu | Todo o app |
+| Gesto | Clique no menu / launcher | Comportamento de host do app |
+| URL | Entry http(s) da rota ou path do portal | Entry / host do app |
+
+`openInNewTab` **não** substitui `routes[].target` da spec 1.1.0 (ainda fora de escopo).
+
+No editor de manifesto (Portal Admin), o toggle **Nova aba** fica ao lado de **Menu** em cada rota.
+
+---
+
 ## 9. Permissões
 
 Plugins iframe devem declarar permissões no manifesto.

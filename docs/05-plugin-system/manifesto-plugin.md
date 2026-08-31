@@ -602,6 +602,7 @@ Campos:
 | `entry` | Não | Entry específico da rota |
 | `permission` | Sim | Permissão exigida |
 | `showInMenu` | Não | Indica se aparece no menu |
+| `openInNewTab` | Não | Se `true`, o menu abre a rota em nova aba (Entry http(s) ou path do portal); omitido = `false` |
 | `order` | Não | Ordem de exibição |
 | `menuGroup` | Não | Agrupamento visual |
 
@@ -1141,7 +1142,7 @@ Portal chama /me/apps
   ↓
 Core API lista apps ativos com rotas
   ↓
-Core API lê manifesto para entry/renderMode/routes[].entry
+Core API lê manifesto para entry/renderMode/routes[].entry/routes[].openInNewTab
   ↓
 Core API filtra por permissão
   ↓
@@ -1166,7 +1167,8 @@ Resposta conceitual:
       "label": "Dashboard LMPs",
       "showInMenu": true,
       "order": 1,
-      "entry": null
+      "entry": null,
+      "openInNewTab": false
     }
   ]
 }
