@@ -51,3 +51,38 @@ export async function fetchDepartmentIdd(
   const data = unwrapApiDelpiEnvelope(response, "Erro ao consultar IDD departamental");
   return data.item ?? null;
 }
+
+export type DepartmentIndicatorScoreItem = {
+  indicator_id?: string | null;
+  score?: number | null;
+  name?: string | null;
+};
+
+export type DepartmentIndicatorsItem = {
+  department_id: string;
+  department_name?: string | null;
+  score?: number | null;
+  idd?: number | null;
+  classification?: string | null;
+  indicators?: DepartmentIndicatorScoreItem[] | null;
+  partial_success?: boolean;
+};
+
+type DepartmentIndicatorsResponse = {
+  item: DepartmentIndicatorsItem | null;
+};
+
+export async function fetchDepartmentIndicators(
+  params: DepartmentIddQuery
+): Promise<DepartmentIndicatorsItem | null> {
+  const response = await httpGet<ApiSuccessResponse<DepartmentIndicatorsResponse>>(
+    `${DEPARTMENT_IDD_API_BASE}/department-indicators${buildDepartmentIddQuery(params)}`,
+    { signal: params.signal }
+  );
+
+  const data = unwrapApiDelpiEnvelope(
+    response,
+    "Erro ao consultar indicadores departamentais"
+  );
+  return data.item ?? null;
+}

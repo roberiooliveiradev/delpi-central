@@ -14,6 +14,8 @@ import { KpiCard } from "../components/KpiCard";
 import { ModuleShortcut } from "../components/ModuleShortcut";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
 import { SUPPLIES_ROUTES } from "../constants/routes";
+import { SUPPLIES_SI_INDICATORS } from "../constants/siIndicatorIds";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import { useSuppliesDashboard } from "../hooks/useSuppliesDashboard";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { formatPeriodLabel } from "../utils/dates";
@@ -23,6 +25,7 @@ import {
   formatDashboardMetricValue,
   formatKpiGoalExportFragments,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
@@ -88,6 +91,13 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
   const { cpv, otd, stockValue, inventoryTurnover, negotiationSavings, cpvBranches, otdBranches, stockValueBranches, inventoryTurnoverBranches, negotiationSavingsBranches, loading, refreshing, requestProgress, error, reload } =
     useSuppliesDashboard({ periodParams, stockParams });
 
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("supplies", {
+    competence,
+    dateStart,
+    dateEnd,
+    branches,
+  });
+
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
@@ -113,6 +123,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           realizedValue: cpv?.summary.cpv_percentage,
           activeBranch: activeApiBranch,
           branches: cpvBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            SUPPLIES_SI_INDICATORS.cpv,
+          ),
           ...dateOpts,
         },
       );
@@ -123,6 +137,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           realizedValue: otd?.summary.otd_percentage,
           activeBranch: activeApiBranch,
           branches: otdBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            SUPPLIES_SI_INDICATORS.otd,
+          ),
           ...dateOpts,
         },
       );
@@ -133,6 +151,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           realizedValue: stockValue?.summary.total_stock_value,
           activeBranch: activeApiBranch,
           branches: stockValueBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            SUPPLIES_SI_INDICATORS.stockValue,
+          ),
           ...dateOpts,
         },
       );
@@ -143,6 +165,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
           realizedValue: inventoryTurnover?.summary.inventory_turnover_times,
           activeBranch: activeApiBranch,
           branches: inventoryTurnoverBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            SUPPLIES_SI_INDICATORS.stockTurnover,
+          ),
           ...dateOpts,
         },
       );
@@ -155,6 +181,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
             negotiationSavings?.total_savings,
           activeBranch: activeApiBranch,
           branches: negotiationSavingsBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            SUPPLIES_SI_INDICATORS.negotiationSavings,
+          ),
           ...dateOpts,
         },
       );
@@ -238,6 +268,7 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
       otd?.summary,
       otdBranches,
       periodLabel,
+      siScoresById,
       stockValue?.summary,
       stockValueBranches,
     ],
@@ -322,6 +353,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: cpv?.summary.cpv_percentage,
               activeBranch: activeApiBranch,
               branches: cpvBranches,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                SUPPLIES_SI_INDICATORS.cpv,
+              ),
               dateStart,
               dateEnd,
             },
@@ -343,6 +378,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: otd?.summary.otd_percentage,
               activeBranch: activeApiBranch,
               branches: otdBranches,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                SUPPLIES_SI_INDICATORS.otd,
+              ),
               dateStart,
               dateEnd,
             },
@@ -364,6 +403,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: stockValue?.summary.total_stock_value,
               activeBranch: activeApiBranch,
               branches: stockValueBranches,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                SUPPLIES_SI_INDICATORS.stockValue,
+              ),
               dateStart,
               dateEnd,
             },
@@ -385,6 +428,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
               realizedValue: inventoryTurnover?.summary.inventory_turnover_times,
               activeBranch: activeApiBranch,
               branches: inventoryTurnoverBranches,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                SUPPLIES_SI_INDICATORS.stockTurnover,
+              ),
               dateStart,
               dateEnd,
             },
@@ -409,6 +456,10 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
                 negotiationSavings?.total_savings,
               activeBranch: activeApiBranch,
               branches: negotiationSavingsBranches,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                SUPPLIES_SI_INDICATORS.negotiationSavings,
+              ),
               dateStart,
               dateEnd,
             },
