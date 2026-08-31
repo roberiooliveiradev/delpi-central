@@ -74,7 +74,8 @@ class CommercialRolByCustomerRepository(
                     D2.D2_FILIAL,
                     D2.D2_CLIENTE,
                     D2.D2_LOJA,
-                    {CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")} AS VLR_VENDA
+                    {CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")} AS VLR_VENDA,
+                    {CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")} AS VLR_BRUTO
                 FROM SD2010 D2 WITH (NOLOCK)
                 LEFT JOIN SA1010 A1 WITH (NOLOCK)
                     ON  A1.D_E_L_E_T_ = ''
@@ -154,7 +155,8 @@ class CommercialRolByCustomerRepository(
                 SELECT
                     RTRIM(ISNULL(V.D2_CLIENTE, D.D1_FORNECE)) AS COD_CLIENTE,
                     RTRIM(ISNULL(V.D2_LOJA, D.D1_LOJA)) AS LOJA,
-                    ISNULL(V.VLR_VENDA, 0) - ISNULL(D.VLR_DEVOLUCAO, 0) AS ROL_CLIENTE
+                    ISNULL(V.VLR_VENDA, 0) - ISNULL(D.VLR_DEVOLUCAO, 0) AS ROL_CLIENTE,
+                    ISNULL(V.VLR_BRUTO, 0) AS GROSS_CLIENTE
                 FROM VENDAS V
                 FULL OUTER JOIN DEVOLUCOES D
                     ON  D.D1_FILIAL  = V.D2_FILIAL
@@ -165,7 +167,8 @@ class CommercialRolByCustomerRepository(
                 SELECT
                     COD_CLIENTE,
                     LOJA,
-                    SUM(ROL_CLIENTE) AS ROL_CLIENTE
+                    SUM(ROL_CLIENTE) AS ROL_CLIENTE,
+                    SUM(GROSS_CLIENTE) AS GROSS_CLIENTE
                 FROM ROL_POR_CLIENTE
                 GROUP BY COD_CLIENTE, LOJA
             ),
@@ -177,17 +180,19 @@ class CommercialRolByCustomerRepository(
                         NULLIF(RTRIM(SA1.A1_NREDUZ), ''),
                         ISNULL(RTRIM(SA1.A1_NOME), RA.COD_CLIENTE)
                     ) AS NOME_CLIENTE,
-                    RA.ROL_CLIENTE
+                    RA.ROL_CLIENTE,
+                    RA.GROSS_CLIENTE
                 FROM ROL_AGREGADO RA
                 LEFT JOIN SA1010 SA1 WITH (NOLOCK)
                     ON  SA1.D_E_L_E_T_ = ''
                     AND SA1.A1_COD  = RA.COD_CLIENTE
                     AND SA1.A1_LOJA = RA.LOJA
-                WHERE RA.ROL_CLIENTE <> 0
+                WHERE RA.ROL_CLIENTE <> 0 OR RA.GROSS_CLIENTE <> 0
             ),
             TOTAIS AS (
                 SELECT
                     ISNULL(SUM(ROL_CLIENTE), 0) AS TOTAL_ROL,
+                    ISNULL(SUM(GROSS_CLIENTE), 0) AS TOTAL_GROSS,
                     COUNT(1) AS CUSTOMERS_COUNT
                 FROM ROL_NOMEADO
             ),
@@ -197,7 +202,9 @@ class CommercialRolByCustomerRepository(
                     RN.LOJA,
                     RN.NOME_CLIENTE,
                     RN.ROL_CLIENTE,
+                    RN.GROSS_CLIENTE,
                     T.TOTAL_ROL,
+                    T.TOTAL_GROSS,
                     T.CUSTOMERS_COUNT,
                     ROW_NUMBER() OVER (ORDER BY RN.ROL_CLIENTE DESC, RN.COD_CLIENTE ASC) AS RNK
                 FROM ROL_NOMEADO RN
@@ -208,7 +215,9 @@ class CommercialRolByCustomerRepository(
                 LOJA,
                 NOME_CLIENTE,
                 ROL_CLIENTE,
+                GROSS_CLIENTE,
                 TOTAL_ROL,
+                TOTAL_GROSS,
                 CUSTOMERS_COUNT,
                 RNK
             FROM RANKED
@@ -248,6 +257,7 @@ class CommercialRolByCustomerRepository(
                 customer_store=str(row.get("LOJA") or "").strip(),
                 customer_name=str(row.get("NOME_CLIENTE") or "").strip(),
                 rol=float(row.get("ROL_CLIENTE") or 0),
+                gross_revenue=float(row.get("GROSS_CLIENTE") or 0),
                 share_pct=_share(float(row.get("ROL_CLIENTE") or 0)),
                 rank=int(row.get("RNK") or 0),
             )
@@ -257,11 +267,13 @@ class CommercialRolByCustomerRepository(
         others: RolByCustomerItem | None = None
         if request.include_others and rest_rows:
             others_value = sum(float(row.get("ROL_CLIENTE") or 0) for row in rest_rows)
+            others_gross = sum(float(row.get("GROSS_CLIENTE") or 0) for row in rest_rows)
             others = RolByCustomerItem(
                 customer_code="",
                 customer_store="",
                 customer_name="Demais",
                 rol=others_value,
+                gross_revenue=others_gross,
                 share_pct=_share(others_value),
                 rank=limit + 1,
             )

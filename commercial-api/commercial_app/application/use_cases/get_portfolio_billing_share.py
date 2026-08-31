@@ -14,6 +14,17 @@ from commercial_app.application.services.resolve_commercial_customer_scope_servi
 HEAD_OFFICE_ROL_PATH = "/head_office_rol_target_pct"
 BRANCH_ROL_PATH = "/branch_rol_target_pct"
 NATURE_PORTFOLIO_BILLING_SHARE = "portfolio_billing_share"
+BILLING_AMOUNT_NATURES = ("gross", "net")
+DEFAULT_BILLING_AMOUNT_NATURE = "gross"
+
+
+def normalize_billing_amount_nature(value: str | None) -> str:
+    if not isinstance(value, str):
+        value = None
+    nature = (value or DEFAULT_BILLING_AMOUNT_NATURE).strip().lower()
+    if nature not in BILLING_AMOUNT_NATURES:
+        raise ValueError("nature inválida. Use gross ou net.")
+    return nature
 
 
 class CommercialAnalyticsGatewayPort(Protocol):
@@ -39,6 +50,18 @@ def extract_rol_from_target_payload(raw: Any) -> float:
     data = _unwrap_data(raw)
     if not isinstance(data, dict):
         return 0.0
+    return _as_float(data.get("rol"))
+
+
+def extract_amount_from_target_payload(raw: Any, *, nature: str) -> float:
+    """net → rol; gross → gross_revenue (fallback rol se ausente)."""
+    data = _unwrap_data(raw)
+    if not isinstance(data, dict):
+        return 0.0
+    nature = normalize_billing_amount_nature(nature)
+    if nature == "gross":
+        if data.get("gross_revenue") is not None:
+            return _as_float(data.get("gross_revenue"))
     return _as_float(data.get("rol"))
 
 
@@ -85,7 +108,9 @@ class GetPortfolioBillingShareUseCase:
         end_date: str | None,
         branch: str | None = None,
         customer_segment: str | None = None,
+        nature: str | None = None,
     ) -> dict[str, Any]:
+        amount_nature = normalize_billing_amount_nature(nature)
         company_scope = CommercialCustomerScope(
             unrestricted=True,
             allowed_customers=None,
@@ -95,8 +120,12 @@ class GetPortfolioBillingShareUseCase:
             "end_date": end_date,
             "customer_segment": customer_segment,
         }
-        portfolio_rol = self._sum_rol(gateway, portfolio_scope, base, branch)
-        company_rol = self._sum_rol(gateway, company_scope, base, branch)
+        portfolio_rol = self._sum_amount(
+            gateway, portfolio_scope, base, branch, amount_nature
+        )
+        company_rol = self._sum_amount(
+            gateway, company_scope, base, branch, amount_nature
+        )
         return {
             "portfolioRol": round(portfolio_rol, 2),
             "companyRol": round(company_rol, 2),
@@ -104,8 +133,26 @@ class GetPortfolioBillingShareUseCase:
             "startDate": start_date,
             "endDate": end_date,
             "branch": branch,
-            "nature": NATURE_PORTFOLIO_BILLING_SHARE,
+            "nature": amount_nature,
+            "billingNature": amount_nature,
+            "kpiNature": NATURE_PORTFOLIO_BILLING_SHARE,
+            "supportedNatures": list(BILLING_AMOUNT_NATURES),
         }
+
+    def _sum_amount(
+        self,
+        gateway: CommercialAnalyticsGatewayPort,
+        scope: CommercialCustomerScope,
+        base: dict[str, object | None],
+        branch: str | None,
+        nature: str,
+    ) -> float:
+        params = _totvs_params(scope, base)
+        total = 0.0
+        for path in resolve_rol_paths_for_branch(branch):
+            payload = gateway.get_commercial_analytics(path, params=params)
+            total += extract_amount_from_target_payload(payload, nature=nature)
+        return total
 
     def _sum_rol(
         self,
@@ -114,9 +161,4 @@ class GetPortfolioBillingShareUseCase:
         base: dict[str, object | None],
         branch: str | None,
     ) -> float:
-        params = _totvs_params(scope, base)
-        total = 0.0
-        for path in resolve_rol_paths_for_branch(branch):
-            payload = gateway.get_commercial_analytics(path, params=params)
-            total += extract_rol_from_target_payload(payload)
-        return total
+        return self._sum_amount(gateway, scope, base, branch, "net")

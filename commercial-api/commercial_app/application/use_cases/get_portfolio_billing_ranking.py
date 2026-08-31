@@ -15,6 +15,17 @@ from commercial_app.application.services.resolve_commercial_customer_scope_servi
 GroupBy = Literal["customer", "seller"]
 RankingOrder = Literal["growth", "decline"]
 NATURE_PORTFOLIO_BILLING_RANKING = "portfolio_billing_ranking"
+BILLING_AMOUNT_NATURES = ("gross", "net")
+DEFAULT_BILLING_AMOUNT_NATURE = "gross"
+
+
+def normalize_billing_amount_nature(value: str | None) -> str:
+    if not isinstance(value, str):
+        value = None
+    nature = (value or DEFAULT_BILLING_AMOUNT_NATURE).strip().lower()
+    if nature not in BILLING_AMOUNT_NATURES:
+        raise ValueError("nature inválida. Use gross ou net.")
+    return nature
 
 
 class CommercialAnalyticsGatewayPort(Protocol):
@@ -33,6 +44,15 @@ def _unwrap_data(payload: Any) -> Any:
     if isinstance(payload, dict) and "data" in payload:
         return payload.get("data")
     return payload
+
+
+def _item_amount(item: dict[str, Any] | None, *, nature: str) -> float:
+    if not item:
+        return 0.0
+    nature = normalize_billing_amount_nature(nature)
+    if nature == "gross" and item.get("gross_revenue") is not None:
+        return _as_float(item.get("gross_revenue"))
+    return _as_float(item.get("rol"))
 
 
 def shift_iso_date_by_years(iso_date: str, years: int) -> str:
@@ -107,9 +127,11 @@ class GetPortfolioBillingRankingUseCase:
         group_by: GroupBy = "customer",
         order: RankingOrder = "growth",
         seller_name_by_customer: dict[tuple[str, str], str] | None = None,
+        nature: str | None = None,
     ) -> dict[str, Any]:
         if not start_date or not end_date:
             raise ValueError("start_date e end_date são obrigatórios.")
+        amount_nature = normalize_billing_amount_nature(nature)
         resolved_order: RankingOrder = "decline" if order == "decline" else "growth"
         prior_start = shift_iso_date_by_years(start_date, -1)
         prior_end = shift_iso_date_by_years(end_date, -1)
@@ -144,9 +166,12 @@ class GetPortfolioBillingRankingUseCase:
                 current_map,
                 prior_map,
                 seller_name_by_customer or {},
+                nature=amount_nature,
             )
         else:
-            rows = self._rank_customers(keys, current_map, prior_map)
+            rows = self._rank_customers(
+                keys, current_map, prior_map, nature=amount_nature
+            )
 
         if resolved_order == "decline":
             rows.sort(
@@ -176,7 +201,10 @@ class GetPortfolioBillingRankingUseCase:
             "priorStartDate": prior_start,
             "priorEndDate": prior_end,
             "branch": branch,
-            "nature": NATURE_PORTFOLIO_BILLING_RANKING,
+            "nature": amount_nature,
+            "billingNature": amount_nature,
+            "kpiNature": NATURE_PORTFOLIO_BILLING_RANKING,
+            "supportedNatures": list(BILLING_AMOUNT_NATURES),
         }
 
     def _rank_customers(
@@ -184,13 +212,15 @@ class GetPortfolioBillingRankingUseCase:
         keys: set[tuple[str, str]],
         current_map: dict[tuple[str, str], dict[str, Any]],
         prior_map: dict[tuple[str, str], dict[str, Any]],
+        *,
+        nature: str,
     ) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         for key in keys:
             cur = current_map.get(key)
             pri = prior_map.get(key)
-            current_rol = _as_float(cur.get("rol") if cur else 0)
-            prior_rol = _as_float(pri.get("rol") if pri else 0)
+            current_rol = _item_amount(cur, nature=nature)
+            prior_rol = _item_amount(pri, nature=nature)
             name = ""
             if cur and cur.get("customer_name"):
                 name = str(cur.get("customer_name"))
@@ -217,14 +247,16 @@ class GetPortfolioBillingRankingUseCase:
         current_map: dict[tuple[str, str], dict[str, Any]],
         prior_map: dict[tuple[str, str], dict[str, Any]],
         seller_name_by_customer: dict[tuple[str, str], str],
+        *,
+        nature: str,
     ) -> list[dict[str, Any]]:
         buckets: dict[str, dict[str, float]] = {}
         for key in keys:
             seller = seller_name_by_customer.get(key) or "Sem vendedor"
             cur = current_map.get(key)
             pri = prior_map.get(key)
-            current_rol = _as_float(cur.get("rol") if cur else 0)
-            prior_rol = _as_float(pri.get("rol") if pri else 0)
+            current_rol = _item_amount(cur, nature=nature)
+            prior_rol = _item_amount(pri, nature=nature)
             bucket = buckets.setdefault(seller, {"current": 0.0, "prior": 0.0})
             bucket["current"] += current_rol
             bucket["prior"] += prior_rol

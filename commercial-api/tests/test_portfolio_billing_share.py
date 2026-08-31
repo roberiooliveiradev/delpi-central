@@ -90,9 +90,47 @@ def test_use_case_share_portfolio_over_company() -> None:
     assert data["portfolioRol"] == 50.0
     assert data["companyRol"] == 250.0
     assert data["sharePct"] == 20.0
-    assert data["nature"] == NATURE_PORTFOLIO_BILLING_SHARE
+    assert data["nature"] == "gross"
+    assert data["billingNature"] == "gross"
+    assert data["kpiNature"] == NATURE_PORTFOLIO_BILLING_SHARE
     assert data["startDate"] == "2026-01-01"
     assert gateway.get_commercial_analytics.call_count == 4
+
+
+def test_use_case_share_net_uses_rol_field() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {
+        "data": {"rol": 80.0, "gross_revenue": 120.0}
+    }
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    data = GetPortfolioBillingShareUseCase().execute(
+        gateway,
+        scope,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        branch="01",
+        nature="net",
+    )
+    assert data["portfolioRol"] == 80.0
+    assert data["nature"] == "net"
+
+
+def test_use_case_share_gross_uses_gross_revenue() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {
+        "data": {"rol": 80.0, "gross_revenue": 120.0}
+    }
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    data = GetPortfolioBillingShareUseCase().execute(
+        gateway,
+        scope,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        branch="01",
+        nature="gross",
+    )
+    assert data["portfolioRol"] == 120.0
+    assert data["nature"] == "gross"
 
 
 def test_use_case_branch_01_only_head_office() -> None:

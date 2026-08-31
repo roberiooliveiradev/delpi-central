@@ -13,6 +13,7 @@ class RolByCustomerItem:
     rol: float
     share_pct: Optional[float]
     rank: int
+    gross_revenue: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -20,6 +21,7 @@ class RolByCustomerItem:
             "customer_store": self.customer_store,
             "customer_name": self.customer_name,
             "rol": self.rol,
+            "gross_revenue": self.gross_revenue,
             "share_pct": self.share_pct,
             "rank": self.rank,
         }

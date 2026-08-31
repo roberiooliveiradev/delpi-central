@@ -82,13 +82,81 @@ def test_use_case_ranks_customers_by_delta_pct() -> None:
         end_date="2026-01-31",
         limit=10,
     )
-    assert data["nature"] == NATURE_PORTFOLIO_BILLING_RANKING
+    assert data["nature"] == "gross"
+    assert data["billingNature"] == "gross"
+    assert data["kpiNature"] == NATURE_PORTFOLIO_BILLING_RANKING
     assert data["groupBy"] == "customer"
     assert data["items"][0]["customerCode"] == "100"
     assert data["items"][0]["deltaPct"] == 100.0
     assert data["items"][1]["customerCode"] == "200"
     assert data["items"][1]["deltaPct"] == -50.0
     assert data["order"] == "growth"
+
+
+def test_use_case_ranks_by_gross_revenue_when_nature_gross() -> None:
+    gateway = MagicMock()
+
+    def _analytics(path: str, *, params=None):
+        start = (params or {}).get("start_date")
+        if str(start).startswith("2026"):
+            return {
+                "data": {
+                    "items": [
+                        {
+                            "customer_code": "100",
+                            "customer_store": "01",
+                            "customer_name": "BrutoAlto",
+                            "rol": 10,
+                            "gross_revenue": 300,
+                        },
+                        {
+                            "customer_code": "200",
+                            "customer_store": "01",
+                            "customer_name": "LiquidoAlto",
+                            "rol": 200,
+                            "gross_revenue": 50,
+                        },
+                    ]
+                }
+            }
+        return {
+            "data": {
+                "items": [
+                    {
+                        "customer_code": "100",
+                        "customer_store": "01",
+                        "customer_name": "BrutoAlto",
+                        "rol": 10,
+                        "gross_revenue": 100,
+                    },
+                    {
+                        "customer_code": "200",
+                        "customer_store": "01",
+                        "customer_name": "LiquidoAlto",
+                        "rol": 100,
+                        "gross_revenue": 50,
+                    },
+                ]
+            }
+        }
+
+    gateway.get_commercial_analytics.side_effect = _analytics
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("100", "01"), ("200", "01")}),
+    )
+    data = GetPortfolioBillingRankingUseCase().execute(
+        gateway,
+        scope,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        limit=10,
+        nature="gross",
+    )
+    assert data["nature"] == "gross"
+    assert data["items"][0]["customerCode"] == "100"
+    assert data["items"][0]["currentRol"] == 300.0
+    assert data["items"][0]["deltaPct"] == 200.0
 
 
 def test_use_case_order_decline_puts_worst_delta_first() -> None:
@@ -276,7 +344,8 @@ def test_portfolio_billing_ranking_route_ok_for_accounts_view() -> None:
     body = json.loads(response.body)
     assert body["success"] is True
     assert body["meta"]["operationId"] == "bff_get_analytics_portfolio_billing_ranking"
-    assert body["data"]["nature"] == NATURE_PORTFOLIO_BILLING_RANKING
+    assert body["data"]["nature"] == "gross"
+    assert body["data"]["kpiNature"] == NATURE_PORTFOLIO_BILLING_RANKING
     assert body["data"]["groupBy"] == "customer"
 
 

@@ -128,6 +128,7 @@ def bff_portfolio_billing_share(
     customer_segment: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    nature: str | None = None,
 ):
     """KPI-PORTFOLIO-SHARE: portfolioRol ÷ companyRol no período filtrado."""
     operation_id = "bff_get_analytics_portfolio_billing_share"
@@ -143,6 +144,7 @@ def bff_portfolio_billing_share(
             end_date=end_date,
             branch=branch,
             customer_segment=customer_segment,
+            nature=nature,
         )
         return ok(
             data,
@@ -183,6 +185,7 @@ def bff_portfolio_billing_ranking(
     group_by: str = Query(default="customer", pattern="^(customer|seller)$"),
     limit: int = Query(default=50, ge=1, le=500),
     order: str = Query(default="growth", pattern="^(growth|decline)$"),
+    nature: str | None = None,
 ):
     """Ranking delta % faturamento vs período −1 ano (cliente; vendedor se team/manage)."""
     operation_id = "bff_get_analytics_portfolio_billing_ranking"
@@ -207,6 +210,7 @@ def bff_portfolio_billing_ranking(
             request, seller_id=seller_id, portfolio_id=portfolio_id
         )
         gateway = build_delpi_commercial_gateway()
+        resolved_limit = limit if isinstance(limit, int) else 50
         data = GetPortfolioBillingRankingUseCase().execute(
             gateway,
             scope,
@@ -214,9 +218,10 @@ def bff_portfolio_billing_ranking(
             end_date=end_date,
             branch=branch,
             customer_segment=customer_segment,
-            limit=limit,
+            limit=resolved_limit,
             group_by=resolved_group,  # type: ignore[arg-type]
             order=resolved_order,  # type: ignore[arg-type]
+            nature=nature if isinstance(nature, str) else None,
         )
         return ok(
             data,
