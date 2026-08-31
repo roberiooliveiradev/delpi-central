@@ -213,6 +213,7 @@
 }
 
 .td-canvas-table {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -266,12 +267,24 @@
   border-color: transparent;
 }
 
-/* Célula com dataRef: sem chrome automático — só seleção explícita (--selected). */
+/* Seleção = overlay irmão da <table> — nunca border/padding/outline no td. */
 
-.td-canvas-table__cell--selected {
-  outline: 2px solid var(--primary, #089bdb);
-  outline-offset: -2px;
-  z-index: 1;
+.td-canvas-table__sel-range,
+.td-canvas-table__sel-focus {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.td-canvas-table__sel-range {
+  border: 2px solid var(--primary, #089bdb);
+  background: color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+}
+
+.td-canvas-table__sel-focus {
+  border: 1px solid var(--primary, #089bdb);
+  background: transparent;
 }
 
 .td-canvas-table__cell--number {
@@ -308,8 +321,7 @@
 }
 
 .td-canvas-table [contenteditable="true"]:focus {
-  outline: 2px solid var(--primary, #089bdb);
-  outline-offset: -2px;
+  outline: none;
 }
 
 .delpi-ui-comunicado__block--heading h1,

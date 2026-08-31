@@ -23,4 +23,17 @@ describe("canvas table ribbon layout contract", () => {
     expect(source).toContain("summarizeCanvasTableCellSelection");
     expect(source).toContain("patchSelectedCellsStyle");
   });
+
+  it("seleção da Grade usa overlay CSS — sem outline no td --selected", () => {
+    const css = readFileSync(
+      join(here, "../../../plugin-ui/src/styles/comunicado-stage.css"),
+      "utf8",
+    );
+    expect(css).toContain(".td-canvas-table__sel-range");
+    expect(css).toContain(".td-canvas-table__sel-focus");
+    expect(css).not.toMatch(/\.td-canvas-table__cell--selected\s*\{[^}]*outline/);
+    expect(css).toMatch(
+      /\.td-canvas-table\s*\{[^}]*position:\s*relative/,
+    );
+  });
 });

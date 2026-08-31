@@ -1,6 +1,18 @@
-import type { CSSProperties, FocusEvent, KeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from "./canvasTableProjection";
+import {
+  resolveCanvasTableSelectionOverlayRects,
+  type CanvasTableCellDomRect,
+} from "./canvasTableSelectionOverlay";
 import {
   buildCanvasTableSparklinePath,
   canvasTableCellDisplayRuns,
@@ -70,19 +82,41 @@ function CanvasSparkline({
   );
 }
 
+function measureCellRects(host: HTMLElement): CanvasTableCellDomRect[] {
+  const hostBox = host.getBoundingClientRect();
+  const nodes = host.querySelectorAll<HTMLElement>("[data-cell-row][data-cell-col]");
+  const rects: CanvasTableCellDomRect[] = [];
+  nodes.forEach((node) => {
+    const row = Number(node.dataset.cellRow);
+    const col = Number(node.dataset.cellCol);
+    if (!Number.isFinite(row) || !Number.isFinite(col)) return;
+    const box = node.getBoundingClientRect();
+    rects.push({
+      row,
+      col,
+      left: box.left - hostBox.left,
+      top: box.top - hostBox.top,
+      width: box.width,
+      height: box.height,
+    });
+  });
+  return rects;
+}
+
 export function ComunicadoCanvasTableView({
   block,
   editable = false,
   onCellChange,
   interaction = null,
 }: Props) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [cellRects, setCellRects] = useState<CanvasTableCellDomRect[]>([]);
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const hostStyle = resolveCanvasTableHostStyle(block) as CSSProperties;
   const selectedCells =
     interaction?.selectedCells ??
     (interaction?.selectedCell ? [interaction.selectedCell] : []);
-  const isCellSelected = (row: number, col: number) =>
-    selectedCells.some((item) => item.row === row && item.col === col);
+  const focusCell = selectedCells[selectedCells.length - 1] ?? null;
   const resolvedCells = block.cells.map((row) =>
     row.map((raw) => {
       const cell = normalizeCanvasTableCell(raw);
@@ -96,6 +130,36 @@ export function ComunicadoCanvasTableView({
       return cell;
     }),
   );
+
+  const selectionKey = selectedCells.map((c) => `${c.row}:${c.col}`).join(",");
+
+  useLayoutEffect(() => {
+    if (!editable || !selectedCells.length) {
+      setCellRects([]);
+      return;
+    }
+    const host = hostRef.current;
+    if (!host) return;
+    setCellRects(measureCellRects(host));
+  }, [
+    editable,
+    selectionKey,
+    selectedCells.length,
+    block.rows,
+    block.cols,
+    block.frame?.w,
+    block.frame?.h,
+    opts.columnWidths,
+  ]);
+
+  const overlay =
+    editable && selectedCells.length
+      ? resolveCanvasTableSelectionOverlayRects({
+          cellRects,
+          selectedCells,
+          focus: focusCell,
+        })
+      : { range: null, focus: null };
 
   function commitText(row: number, col: number, raw: string) {
     const next = inferCanvasTableCellFromText(raw);
@@ -171,6 +235,7 @@ export function ComunicadoCanvasTableView({
 
   return (
     <div
+      ref={hostRef}
       className={[
         "td-canvas-table",
         editable ? "td-canvas-table--editable" : "",
@@ -199,7 +264,6 @@ export function ComunicadoCanvasTableView({
                 const cell = normalizeCanvasTableCell(rawCell);
                 const isHeader = Boolean(block.headerRow && rowIndex === 0);
                 const Cell = isHeader ? "th" : "td";
-                const isSelected = isCellSelected(rowIndex, colIndex);
                 const display = resolveCanvasTableCellDisplay(
                   cell,
                   resolveCanvasTableCellResolved(block, cell),
@@ -241,7 +305,6 @@ export function ComunicadoCanvasTableView({
                     data-cell-kind={cell.kind}
                     data-cell-bound={bound ? "true" : undefined}
                     className={[
-                      isSelected ? "td-canvas-table__cell--selected" : "",
                       cell.kind === "sparkline" ? "td-canvas-table__cell--sparkline" : "",
                       cell.kind === "number" ? "td-canvas-table__cell--number" : "",
                       bound ? "td-canvas-table__cell--bound" : "",
@@ -288,6 +351,36 @@ export function ComunicadoCanvasTableView({
           ))}
         </tbody>
       </table>
+      {overlay.range ? (
+        <div
+          className="td-canvas-table__sel-range"
+          aria-hidden
+          style={{
+            left: overlay.range.left,
+            top: overlay.range.top,
+            width: overlay.range.width,
+            height: overlay.range.height,
+          }}
+        />
+      ) : null}
+      {overlay.focus &&
+      (selectedCells.length > 1 ||
+        (overlay.range &&
+          (overlay.focus.width !== overlay.range.width ||
+            overlay.focus.height !== overlay.range.height ||
+            overlay.focus.left !== overlay.range.left ||
+            overlay.focus.top !== overlay.range.top))) ? (
+        <div
+          className="td-canvas-table__sel-focus"
+          aria-hidden
+          style={{
+            left: overlay.focus.left,
+            top: overlay.focus.top,
+            width: overlay.focus.width,
+            height: overlay.focus.height,
+          }}
+        />
+      ) : null}
     </div>
   );
 }
