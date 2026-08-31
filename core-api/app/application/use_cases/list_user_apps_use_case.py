@@ -56,6 +56,7 @@ class ListUserAppsUseCase:
                             "showInMenu": r.show_in_menu,
                             "order": r.order,
                             "entry": r.entry,
+                            "openInNewTab": r.open_in_new_tab,
                         }
                         for r in app.routes
                     ],

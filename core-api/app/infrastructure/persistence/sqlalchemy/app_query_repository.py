@@ -33,6 +33,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
             entry_url = None
             render_mode = "embedded"
             route_entries: dict[str, str | None] = {}
+            route_open_in_new_tab: dict[str, bool] = {}
 
             if manifest_row and manifest_row.manifest:
                 manifest = manifest_row.manifest
@@ -56,6 +57,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
 
                     if path:
                         route_entries[path] = entry
+                        route_open_in_new_tab[path] = bool(route.get("openInNewTab"))
 
             if app.type == "backend-only":
                 entry_url = None
@@ -82,6 +84,7 @@ class SqlAlchemyAppQueryRepository(AppQueryPort):
                         show_in_menu=bool(r.show_in_menu),
                         order=r.order,
                         entry=route_entries.get(r.path),
+                        open_in_new_tab=route_open_in_new_tab.get(r.path, False),
                     )
                 )
 

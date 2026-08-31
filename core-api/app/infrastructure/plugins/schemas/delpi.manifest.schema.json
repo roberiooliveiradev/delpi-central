@@ -130,6 +130,11 @@
 
           "showInMenu": { "type": "boolean" },
 
+          "openInNewTab": {
+            "type": "boolean",
+            "description": "When true, menu opens this route in a new browser tab (Entry http(s) or portal path)"
+          },
+
           "order": {
             "type": "integer",
             "minimum": 0

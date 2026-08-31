@@ -13,6 +13,7 @@ class RouteDTO:
     show_in_menu: bool
     order: int | None
     entry: str | None
+    open_in_new_tab: bool = False
 
 @dataclass
 class AppDTO:
