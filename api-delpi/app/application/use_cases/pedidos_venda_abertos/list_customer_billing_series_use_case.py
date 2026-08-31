@@ -16,9 +16,14 @@ from app.domain.services.pedidos_venda_abertos.billing_series_service import (
     period_key_from_protheus,
     period_key_to_date,
 )
+from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
+    BILLING_SERIES_GRANULARITIES,
+    DEFAULT_BILLING_NATURE,
+    SUPPORTED_BILLING_NATURES,
+    normalize_billing_nature,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
-BILLING_SERIES_GRANULARITIES = ("day", "week", "month", "year")
 MAX_SPAN_DAYS = {
     "day": 93,
     "week": 366,
@@ -34,6 +39,7 @@ class ListCustomerBillingSeriesRequest:
     start_date: str | None = None
     end_date: str | None = None
     granularity: str | None = None
+    nature: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +50,7 @@ class CustomerBillingSeriesResult:
     granularity: str
     start_date: str
     end_date: str
+    nature: str = DEFAULT_BILLING_NATURE
 
     def to_dict(self) -> dict:
         return {
@@ -52,6 +59,9 @@ class CustomerBillingSeriesResult:
             "granularity": self.granularity,
             "start_date": self.start_date,
             "end_date": self.end_date,
+            "nature": self.nature,
+            "billingNature": self.nature,
+            "supportedNatures": list(SUPPORTED_BILLING_NATURES),
             "points": [point.to_dict() for point in self.points],
         }
 
@@ -142,6 +152,7 @@ class ListCustomerBillingSeriesUseCase:
                 break
 
         start, end, grain, months = self._resolve_window(request)
+        nature = normalize_billing_nature(request.nature)
         buckets = build_period_buckets(
             start_date=start.isoformat(),
             end_date=end.isoformat(),
@@ -158,6 +169,7 @@ class ListCustomerBillingSeriesUseCase:
                 start_date=start_protheus,
                 end_date=end_protheus,
                 granularity=grain,
+                nature=nature,
             )
             for row in rows:
                 period_key = period_key_from_protheus(
@@ -189,4 +201,5 @@ class ListCustomerBillingSeriesUseCase:
             granularity=grain,
             start_date=start.isoformat(),
             end_date=end.isoformat(),
+            nature=nature,
         )

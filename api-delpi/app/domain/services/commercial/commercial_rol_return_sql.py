@@ -57,6 +57,99 @@ class CommercialRolReturnSql:
         return f"SUM(CONVERT(FLOAT, {CommercialRolReturnSql.return_net_line_expr(d1_alias=d1_alias)}))"
 
     @staticmethod
+    def sale_tes_join(
+        *,
+        d2_alias: str = "D2",
+        f4_alias: str = "F4",
+        with_nolock: bool = True,
+    ) -> str:
+        """LEFT JOIN SF4 pelo TES da linha SD2."""
+        lock = " WITH (NOLOCK)" if with_nolock else ""
+        return f"""
+                LEFT JOIN SF4010 {f4_alias}{lock}
+                    ON  {f4_alias}.D_E_L_E_T_ = ''
+                    AND {f4_alias}.F4_CODIGO = {d2_alias}.D2_TES
+                    AND (
+                            {f4_alias}.F4_FILIAL = {d2_alias}.D2_FILIAL
+                         OR {f4_alias}.F4_FILIAL = ''
+                         OR {f4_alias}.F4_FILIAL IS NULL
+                    )
+        """
+
+    @staticmethod
+    def sale_customer_join(
+        *,
+        d2_alias: str = "D2",
+        a1_alias: str = "A1",
+        with_nolock: bool = True,
+    ) -> str:
+        lock = " WITH (NOLOCK)" if with_nolock else ""
+        return f"""
+                LEFT JOIN SA1010 {a1_alias}{lock}
+                    ON  {a1_alias}.D_E_L_E_T_ = ''
+                    AND {a1_alias}.A1_COD  = {d2_alias}.D2_CLIENTE
+                    AND {a1_alias}.A1_LOJA = {d2_alias}.D2_LOJA
+        """
+
+    @staticmethod
+    def sale_eligibility_predicate(
+        *,
+        d2_alias: str = "D2",
+        f4_alias: str = "F4",
+        a1_alias: str = "A1",
+        exists_where: str,
+    ) -> str:
+        """Filtros de linha SD2 alinhados ao FinancialRepository / ROL-by-customer.
+
+        ``exists_where`` deve restringir D1X.D1_DTDIGIT (ex.: período da consulta).
+        """
+        return f"""
+                    ISNULL({a1_alias}.A1_NOME, '') <> ''
+                    AND ISNULL({d2_alias}.D2_TIPO, '') <> 'D'
+                    AND (
+                        {d2_alias}.D2_CF NOT IN ('5911', '6151')
+                        OR (
+                            {d2_alias}.D2_FILIAL = '01'
+                            AND {d2_alias}.D2_CF IN ('5911', '6911')
+                            AND {d2_alias}.D2_COD LIKE '90%'
+                            AND ISNULL({f4_alias}.F4_DUPLIC, '')  = 'N'
+                            AND ISNULL({f4_alias}.F4_ESTOQUE, '') = 'S'
+                            AND {d2_alias}.D2_UM = 'MI'
+                        )
+                    )
+                    AND (
+                        ISNULL({f4_alias}.F4_DUPLIC, '') = 'S'
+                        OR (
+                            ISNULL({f4_alias}.F4_DUPLIC, '')  = 'N'
+                            AND ISNULL({f4_alias}.F4_ESTOQUE, '') = 'S'
+                            AND ISNULL({f4_alias}.F4_FINALID, '') = 'BAIXA ESTOQUE'
+                            AND {d2_alias}.D2_CF  = '5927'
+                            AND {d2_alias}.D2_UM  = 'MI'
+                            AND EXISTS (
+                                SELECT 1
+                                FROM SD1010 D1X WITH (NOLOCK)
+                                {CommercialRolReturnSql.tes_join(d1_alias="D1X", f4_alias="F4X", with_nolock=True)}
+                                WHERE
+                                    D1X.D_E_L_E_T_ = ''
+                                    AND D1X.D1_FILIAL  = {d2_alias}.D2_FILIAL
+                                    AND D1X.D1_FORNECE = {d2_alias}.D2_CLIENTE
+                                    AND D1X.D1_LOJA    = {d2_alias}.D2_LOJA
+                                    AND {exists_where}
+                                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1X", f4_alias="F4X")}
+                            )
+                        )
+                        OR (
+                            {d2_alias}.D2_FILIAL = '01'
+                            AND {d2_alias}.D2_CF IN ('5911', '6911')
+                            AND {d2_alias}.D2_COD LIKE '90%'
+                            AND ISNULL({f4_alias}.F4_DUPLIC, '')  = 'N'
+                            AND ISNULL({f4_alias}.F4_ESTOQUE, '') = 'S'
+                            AND {d2_alias}.D2_UM = 'MI'
+                        )
+                    )
+        """
+
+    @staticmethod
     def tes_join(
         *,
         d1_alias: str = "D1",

@@ -10,7 +10,12 @@ from app.domain.ports.pedidos_venda_abertos.customer_enrichment_repository_port 
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
+    DEFAULT_BILLING_NATURE,
+    billing_12m_params,
+    billing_series_params,
+    build_customer_billing_12m_sql,
     build_customer_billing_series_sql,
+    normalize_billing_nature,
 )
 
 
@@ -92,11 +97,13 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
         start_date: str,
         mid_date: str,
         end_date: str,
+        nature: str = DEFAULT_BILLING_NATURE,
     ) -> list[CustomerBilling12mRow]:
         pairs = [(c.strip(), s.strip()) for c, s in customers if c.strip() and s.strip()]
         if not pairs:
             return []
 
+        nature = normalize_billing_nature(nature)
         clauses: list[str] = []
         pair_params: list[str] = []
         for code, store in pairs:
@@ -104,63 +111,14 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             pair_params.extend([code, store])
         where_pairs = " OR ".join(clauses)
 
-        sql = f"""
-            WITH note_base AS (
-                SELECT
-                    D2.D2_CLIENTE AS customer_code,
-                    D2.D2_LOJA AS customer_store,
-                    D2.D2_FILIAL AS branch,
-                    D2.D2_DOC AS invoice_number,
-                    D2.D2_SERIE AS invoice_series,
-                    MAX(D2.D2_EMISSAO) AS issue_date,
-                    MAX(CONVERT(FLOAT, ISNULL(F2.F2_VALBRUT, 0))) AS note_value,
-                    MAX(ISNULL(F2.F2_TIPO, D2.D2_TIPO)) AS doc_type
-                  FROM SD2010 D2 WITH (NOLOCK)
-                  INNER JOIN SF2010 F2 WITH (NOLOCK)
-                    ON F2.F2_FILIAL = D2.D2_FILIAL
-                   AND F2.F2_DOC = D2.D2_DOC
-                   AND F2.F2_SERIE = D2.D2_SERIE
-                   AND F2.D_E_L_E_T_ = ''
-                 WHERE D2.D_E_L_E_T_ = ''
-                   AND ({where_pairs})
-                   AND D2.D2_EMISSAO >= ?
-                   AND D2.D2_EMISSAO <= ?
-                 GROUP BY
-                    D2.D2_CLIENTE,
-                    D2.D2_LOJA,
-                    D2.D2_FILIAL,
-                    D2.D2_DOC,
-                    D2.D2_SERIE
-            )
-            SELECT
-                customer_code,
-                customer_store,
-                MAX(issue_date) AS last_purchase_date,
-                SUM(
-                    CASE
-                        WHEN ISNULL(doc_type, '') = 'D' THEN 0
-                        ELSE note_value
-                    END
-                ) AS billed_12m,
-                SUM(
-                    CASE
-                        WHEN ISNULL(doc_type, '') = 'D' THEN 0
-                        WHEN issue_date >= ? THEN note_value
-                        ELSE 0
-                    END
-                ) AS billed_recent_6m,
-                SUM(
-                    CASE
-                        WHEN ISNULL(doc_type, '') = 'D' THEN 0
-                        WHEN issue_date < ? THEN note_value
-                        ELSE 0
-                    END
-                ) AS billed_prior_6m
-              FROM note_base
-             GROUP BY customer_code, customer_store
-        """
-        # mid_date: recente = [mid, end]; anterior = [start, mid)
-        params = tuple(pair_params + [start_date, end_date, mid_date, mid_date])
+        sql = build_customer_billing_12m_sql(where_pairs=where_pairs, nature=nature)
+        params = billing_12m_params(
+            pair_params=pair_params,
+            start_date=start_date,
+            mid_date=mid_date,
+            end_date=end_date,
+            nature=nature,
+        )
         with self as repo:
             rows = repo.execute_query(sql, params)
 
@@ -183,11 +141,13 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
         start_date: str,
         end_date: str,
         granularity: str = "month",
+        nature: str = DEFAULT_BILLING_NATURE,
     ) -> list[CustomerBillingMonthRow]:
         pairs = [(c.strip(), s.strip()) for c, s in customers if c.strip() and s.strip()]
         if not pairs:
             return []
 
+        nature = normalize_billing_nature(nature)
         clauses: list[str] = []
         pair_params: list[str] = []
         for code, store in pairs:
@@ -198,8 +158,14 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
         sql = build_customer_billing_series_sql(
             where_pairs=where_pairs,
             granularity=granularity,
+            nature=nature,
         )
-        params = tuple(pair_params + [start_date, end_date])
+        params = billing_series_params(
+            pair_params=pair_params,
+            start_date=start_date,
+            end_date=end_date,
+            nature=nature,
+        )
         with self as repo:
             rows = repo.execute_query(sql, params)
 

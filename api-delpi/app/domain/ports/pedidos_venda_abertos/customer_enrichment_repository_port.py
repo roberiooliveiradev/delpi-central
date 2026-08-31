@@ -51,6 +51,7 @@ class CustomerEnrichmentRepositoryPort(ABC):
         start_date: str,
         mid_date: str,
         end_date: str,
+        nature: str = "gross",
     ) -> list[CustomerBilling12mRow]:
         raise NotImplementedError
 
@@ -62,5 +63,6 @@ class CustomerEnrichmentRepositoryPort(ABC):
         start_date: str,
         end_date: str,
         granularity: str = "month",
+        nature: str = "gross",
     ) -> list[CustomerBillingMonthRow]:
         raise NotImplementedError

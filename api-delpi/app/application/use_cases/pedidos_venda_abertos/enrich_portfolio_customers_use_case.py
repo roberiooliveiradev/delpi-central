@@ -15,6 +15,11 @@ from app.domain.services.pedidos_venda_abertos.billing_trend_service import (
     clamp_billing_trend_window_days,
     resolve_billing_trend,
 )
+from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
+    DEFAULT_BILLING_NATURE,
+    SUPPORTED_BILLING_NATURES,
+    normalize_billing_nature,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
@@ -35,6 +40,7 @@ class CustomerEnrichmentItem:
     phone: str | None = None
     email: str | None = None
     window_days: int = 30
+    nature: str = DEFAULT_BILLING_NATURE
 
     def to_dict(self) -> dict:
         return {
@@ -50,6 +56,9 @@ class CustomerEnrichmentItem:
             "billing_trend_pct": self.billing_trend_pct,
             "has_avatar": self.has_avatar,
             "window_days": self.window_days,
+            "nature": self.nature,
+            "billingNature": self.nature,
+            "supportedNatures": list(SUPPORTED_BILLING_NATURES),
             "avatar_url": (
                 f"/pedidos-venda-abertos/customers/"
                 f"{self.customer_code}/{self.customer_store}/avatar"
@@ -66,6 +75,7 @@ class CustomerEnrichmentItem:
 class EnrichCustomersRequest:
     customers: Sequence[tuple[str, str]]
     window_days: int | None = None
+    nature: str | None = None
 
 
 class EnrichPortfolioCustomersUseCase:
@@ -99,6 +109,7 @@ class EnrichPortfolioCustomersUseCase:
             return []
 
         window_days = clamp_billing_trend_window_days(request.window_days)
+        nature = normalize_billing_nature(request.nature)
         end = date.today()
         mid = end - timedelta(days=window_days)
         start = end - timedelta(days=window_days * 2)
@@ -118,6 +129,7 @@ class EnrichPortfolioCustomersUseCase:
                 start_date=start_protheus,
                 mid_date=mid_protheus,
                 end_date=end_protheus,
+                nature=nature,
             )
         }
         avatars = self._avatar_use_case.list_keys_with_avatar(customers=pairs)
@@ -151,6 +163,7 @@ class EnrichPortfolioCustomersUseCase:
                     phone=geo_item.phone if geo_item else None,
                     email=geo_item.email if geo_item else None,
                     window_days=window_days,
+                    nature=nature,
                 )
             )
         return result

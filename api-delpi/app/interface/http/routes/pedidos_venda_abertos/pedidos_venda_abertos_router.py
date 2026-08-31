@@ -112,6 +112,11 @@ class EnrichCustomersBody(BaseModel):
         le=365,
         description="Billing trend window in days (recent vs prior of same length). Presets 7/30/90; default 30.",
     )
+    nature: Optional[str] = Field(
+        default=None,
+        pattern=r"^(gross|net)$",
+        description="Billing nature: gross (F2_VALBRUT) or net (ROL). Default gross.",
+    )
 
 
 class OpenOrderMetricsBody(BaseModel):
@@ -137,6 +142,11 @@ class BillingSeriesBody(BaseModel):
         default=None,
         pattern=r"^(day|week|month|year)$",
         description="Series bucket size: day, week, month or year.",
+    )
+    nature: Optional[str] = Field(
+        default=None,
+        pattern=r"^(gross|net)$",
+        description="Billing nature: gross (F2_VALBRUT) or net (ROL). Default gross.",
     )
 
 
@@ -390,10 +400,20 @@ def enrich_portfolio_customers_route(body: EnrichCustomersBody = Body(...)):
             (item.customer_code, item.customer_store) for item in (body.customers or [])
         ]
         items = build_enrich_portfolio_customers_use_case().execute(
-            EnrichCustomersRequest(customers=pairs, window_days=body.window_days)
+            EnrichCustomersRequest(
+                customers=pairs,
+                window_days=body.window_days,
+                nature=body.nature,
+            )
         )
+        nature = items[0].nature if items else (body.nature or "gross")
         return api_delpi_success(
-            {"items": [item.to_dict() for item in items]},
+            {
+                "items": [item.to_dict() for item in items],
+                "nature": nature,
+                "billingNature": nature,
+                "supportedNatures": ["gross", "net"],
+            },
             operation_id="enrich_portfolio_customers",
             message="Enriquecimento de clientes carregado.",
         )
@@ -459,6 +479,7 @@ def list_customer_billing_series_route(body: BillingSeriesBody = Body(...)):
                 start_date=body.start_date,
                 end_date=body.end_date,
                 granularity=body.granularity,
+                nature=body.nature,
             )
         )
         return api_delpi_success(
