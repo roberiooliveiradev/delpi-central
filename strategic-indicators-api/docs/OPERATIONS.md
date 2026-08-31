@@ -26,25 +26,21 @@ trends failed competence=2026-05 months=6 duration_ms=4
 
 Arquivo dev (se configurado): `strategic-indicators-api/logs/api_YYYYMMDD.log`.
 
-## Refresh period_scores — Fase A (horário) e Fase B (filiais)
+## Refresh period_scores — consolidado + filiais
 
-| Fase | Escopo | Como |
-|------|--------|------|
-| **A — horário** | Só consolidado | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` (default Compose) |
-| **B — noturna** | Filiais `01` e `02` | CLI abaixo + `--no-invalidate` |
+| Escopo | Como |
+|--------|------|
+| **Job horário / botão Atualizar** | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated,01,02` (default Compose) |
+| **Freshness de leitura** | `SI_PERIOD_SCORES_MAX_AGE_SECONDS=3600` — hit só se `computed_at` dentro da janela (além do `catalog_inputs_hash`) |
 
-Comando Fase B (sem recreate do container):
+Backfill pontual (ex.: competência fechada stale):
 
 ```bash
 docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
   --competence 2026-08 --branches 01,02 --no-invalidate --no-per-department
 ```
 
-Cron sugerido (host): mesmo comando após `git pull` / imagem atualizada, fora do pico.
-
-O botão **Atualizar** do MFE usa o mesmo `SI_PERIOD_SCORES_REFRESH_BRANCHES` do processo: após o default Compose, atualiza o consolidado; a visão por filial pode atrasar até a Fase B.
-
-Visão **filial 01/02** no painel pode ficar stale até o job noturno (ou refresh manual Fase B).
+O MFE e o job usam o mesmo CSV de branches: dashboards filtrados por filial `01`/`02` passam a receber materialização no mesmo ciclo do consolidado.
 
 ## Warm-up
 
