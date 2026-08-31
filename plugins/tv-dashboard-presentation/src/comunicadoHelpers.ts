@@ -118,6 +118,7 @@ export {
   resolveCanvasTableHostStyle,
   parseCanvasTableOptions,
   normalizeCanvasTableTrackSizes,
+  applyCanvasTableTrackDrag,
   resolveCanvasTableRowHeightStyles,
   CANVAS_TABLE_MIN_TRACK_PCT,
   formatCanvasTableNumber,

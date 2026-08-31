@@ -621,6 +621,7 @@ export {
   resolveCanvasTableHostStyle,
   parseCanvasTableOptions,
   normalizeCanvasTableTrackSizes,
+  applyCanvasTableTrackDrag,
   resolveCanvasTableRowHeightStyles,
   formatCanvasTableNumber,
   buildCanvasTableSparklinePath,

@@ -14,6 +14,7 @@ import {
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
   normalizeCanvasTableTrackSizes,
+  applyCanvasTableTrackDrag,
   parseCanvasTableOptions,
   resolveCanvasTableFontSize,
   resolveCanvasTableRowHeightStyles,
@@ -198,6 +199,27 @@ describe("canvas_table", () => {
     const tiny = normalizeCanvasTableTrackSizes([1, 99], 2);
     expect(tiny[0]).toBeGreaterThanOrEqual(4);
     expect(tiny.reduce((sum, item) => sum + item, 0)).toBeCloseTo(100, 5);
+  });
+
+  it("applyCanvasTableTrackDrag transfere delta, clampa e soma 100", () => {
+    const moved = applyCanvasTableTrackDrag({ tracks: [25, 25, 25, 25], index: 0, deltaPct: 10 });
+    expect(moved[0]).toBeCloseTo(35, 5);
+    expect(moved[1]).toBeCloseTo(15, 5);
+    expect(moved[2]).toBeCloseTo(25, 5);
+    expect(moved.reduce((sum, item) => sum + item, 0)).toBeCloseTo(100, 5);
+
+    const clamped = applyCanvasTableTrackDrag({ tracks: [10, 90], index: 0, deltaPct: 100 });
+    expect(clamped[0]).toBeGreaterThanOrEqual(4);
+    expect(clamped[1]).toBeGreaterThanOrEqual(4);
+    expect(clamped.reduce((sum, item) => sum + item, 0)).toBeCloseTo(100, 5);
+
+    const lastAbsorbs = applyCanvasTableTrackDrag({ tracks: [50, 50], index: 0, deltaPct: -20 });
+    expect(lastAbsorbs[0]).toBeCloseTo(30, 5);
+    expect(lastAbsorbs[1]).toBeCloseTo(70, 5);
+
+    expect(applyCanvasTableTrackDrag({ tracks: [40, 60], index: 1, deltaPct: 10 })).toEqual(
+      normalizeCanvasTableTrackSizes([40, 60], 2),
+    );
   });
 
   it("resolveCanvasTableRowHeightStyles aplica % só quando o length bate com rows", () => {

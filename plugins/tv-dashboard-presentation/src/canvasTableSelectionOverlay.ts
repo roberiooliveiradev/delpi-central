@@ -69,3 +69,61 @@ export function resolveCanvasTableSelectionOverlayRects(params: {
 
   return { range, focus };
 }
+
+export type CanvasTableTrackHandleRect = {
+  axis: "col" | "row";
+  index: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+/** Handles nas divisórias internas — hit-area ~6px, coordenadas do host. */
+export function resolveCanvasTableTrackHandles(params: {
+  cellRects: readonly CanvasTableCellDomRect[];
+  rows: number;
+  cols: number;
+}): CanvasTableTrackHandleRect[] {
+  const byKey = new Map(
+    params.cellRects.map((rect) => [`${rect.row}:${rect.col}`, rect] as const),
+  );
+  let tableLeft = Number.POSITIVE_INFINITY;
+  let tableTop = Number.POSITIVE_INFINITY;
+  let tableRight = Number.NEGATIVE_INFINITY;
+  let tableBottom = Number.NEGATIVE_INFINITY;
+  for (const rect of params.cellRects) {
+    tableLeft = Math.min(tableLeft, rect.left);
+    tableTop = Math.min(tableTop, rect.top);
+    tableRight = Math.max(tableRight, rect.left + rect.width);
+    tableBottom = Math.max(tableBottom, rect.top + rect.height);
+  }
+  if (!Number.isFinite(tableLeft)) return [];
+
+  const handles: CanvasTableTrackHandleRect[] = [];
+  for (let col = 0; col < params.cols - 1; col += 1) {
+    const cell = byKey.get(`0:${col}`) ?? params.cellRects.find((rect) => rect.col === col);
+    if (!cell) continue;
+    handles.push({
+      axis: "col",
+      index: col,
+      left: cell.left + cell.width,
+      top: tableTop,
+      width: 6,
+      height: tableBottom - tableTop,
+    });
+  }
+  for (let row = 0; row < params.rows - 1; row += 1) {
+    const cell = byKey.get(`${row}:0`) ?? params.cellRects.find((rect) => rect.row === row);
+    if (!cell) continue;
+    handles.push({
+      axis: "row",
+      index: row,
+      left: tableLeft,
+      top: cell.top + cell.height,
+      width: tableRight - tableLeft,
+      height: 6,
+    });
+  }
+  return handles;
+}

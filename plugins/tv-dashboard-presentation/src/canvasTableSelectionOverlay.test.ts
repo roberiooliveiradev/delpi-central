@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveCanvasTableSelectionOverlayRects } from "./canvasTableSelectionOverlay";
+import {
+  resolveCanvasTableSelectionOverlayRects,
+  resolveCanvasTableTrackHandles,
+} from "./canvasTableSelectionOverlay";
 
 describe("resolveCanvasTableSelectionOverlayRects", () => {
   const cellRects = [
@@ -52,5 +55,26 @@ describe("resolveCanvasTableSelectionOverlayRects", () => {
       ],
     });
     expect(result.range).toEqual({ left: 0, top: 0, width: 40, height: 20 });
+  });
+});
+
+describe("resolveCanvasTableTrackHandles", () => {
+  const cellRects = [
+    { row: 0, col: 0, left: 0, top: 0, width: 40, height: 20 },
+    { row: 0, col: 1, left: 40, top: 0, width: 50, height: 20 },
+    { row: 1, col: 0, left: 0, top: 20, width: 40, height: 24 },
+    { row: 1, col: 1, left: 40, top: 20, width: 50, height: 24 },
+  ];
+
+  it("posiciona divisórias internas de coluna e linha", () => {
+    const handles = resolveCanvasTableTrackHandles({ cellRects, rows: 2, cols: 2 });
+    expect(handles).toEqual([
+      { axis: "col", index: 0, left: 40, top: 0, width: 6, height: 44 },
+      { axis: "row", index: 0, left: 0, top: 20, width: 90, height: 6 },
+    ]);
+  });
+
+  it("não cria handle na última faixa", () => {
+    expect(resolveCanvasTableTrackHandles({ cellRects, rows: 1, cols: 1 })).toEqual([]);
   });
 });

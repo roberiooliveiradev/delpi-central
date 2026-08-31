@@ -344,6 +344,28 @@ export function normalizeCanvasTableTrackSizes(
   return tracks.map((item) => (item / nextSum) * 100);
 }
 
+/** Transfere delta da faixa `index` para `index+1`. Soma permanece 100; mín. ~4%. */
+export function applyCanvasTableTrackDrag(params: {
+  tracks: number[];
+  index: number;
+  deltaPct: number;
+}): number[] {
+  const count = Math.max(1, params.tracks.length);
+  const current = normalizeCanvasTableTrackSizes(params.tracks, count);
+  if (count < 2 || params.index < 0 || params.index >= count - 1) {
+    return current;
+  }
+  const left = current[params.index] ?? CANVAS_TABLE_MIN_TRACK_PCT;
+  const right = current[params.index + 1] ?? CANVAS_TABLE_MIN_TRACK_PCT;
+  const maxGrow = right - CANVAS_TABLE_MIN_TRACK_PCT;
+  const maxShrink = left - CANVAS_TABLE_MIN_TRACK_PCT;
+  const delta = Math.max(-maxShrink, Math.min(maxGrow, Number(params.deltaPct) || 0));
+  const next = current.slice();
+  next[params.index] = left + delta;
+  next[params.index + 1] = right - delta;
+  return normalizeCanvasTableTrackSizes(next, count);
+}
+
 /** Estilos de `tr` quando `rowHeights` tem o mesmo length de `rows`. */
 export function resolveCanvasTableRowHeightStyles(
   rowHeights: number[] | undefined,

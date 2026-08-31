@@ -1515,6 +1515,14 @@ function EditorCanvasTableBlock({
           cells[row]![col] = normalizeCanvasTableCell(cell);
           updateBlock(block.id, { cells });
         },
+        onTracksCommit: (next) => {
+          updateBlock(block.id, {
+            canvasTableOptions: {
+              ...(block.canvasTableOptions ?? {}),
+              ...next,
+            },
+          });
+        },
       }}
     />
   );

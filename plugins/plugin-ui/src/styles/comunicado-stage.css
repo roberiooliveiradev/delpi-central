@@ -287,6 +287,25 @@
   background: transparent;
 }
 
+.td-canvas-table__col-handle,
+.td-canvas-table__row-handle {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  touch-action: none;
+  background: transparent;
+}
+
+.td-canvas-table__col-handle {
+  transform: translateX(-3px);
+  cursor: col-resize;
+}
+
+.td-canvas-table__row-handle {
+  transform: translateY(-3px);
+  cursor: row-resize;
+}
+
 .td-canvas-table__cell--number {
   font-variant-numeric: tabular-nums;
   font-weight: 600;

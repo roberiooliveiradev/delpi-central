@@ -12,6 +12,7 @@ import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from ".
 import { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
 import {
   resolveCanvasTableSelectionOverlayRects,
+  resolveCanvasTableTrackHandles,
   type CanvasTableCellDomRect,
 } from "./canvasTableSelectionOverlay";
 import {
@@ -19,8 +20,10 @@ import {
   canvasTableCellDisplayRuns,
   canvasTableCellPlainText,
   commitCanvasTableCellText,
+  applyCanvasTableTrackDrag,
   mergeCanvasTableOptions,
   normalizeCanvasTableCell,
+  normalizeCanvasTableTrackSizes,
   resolveCanvasTableHostStyle,
   resolveCanvasTableRowHeightStyles,
   resolveColumnSparklineAxis,
@@ -46,6 +49,16 @@ export type ComunicadoCanvasTableInteraction = {
     range?: boolean;
   }) => void;
   onCellCommit?: (row: number, col: number, cell: CanvasTableCell) => void;
+  onTracksCommit?: (next: { columnWidths?: number[]; rowHeights?: number[] }) => void;
+};
+
+type CanvasTableTrackDrag = {
+  axis: "col" | "row";
+  index: number;
+  startClient: number;
+  startTracks: number[];
+  axisSize: number;
+  lastTracks: number[];
 };
 
 type Props = {
@@ -114,10 +127,17 @@ export function ComunicadoCanvasTableView({
   const hostRef = useRef<HTMLDivElement>(null);
   const [cellRects, setCellRects] = useState<CanvasTableCellDomRect[]>([]);
   const [editingCell, setEditingCell] = useState<CanvasTableCellRef | null>(null);
+  const [trackPreview, setTrackPreview] = useState<{
+    columnWidths?: number[];
+    rowHeights?: number[];
+  } | null>(null);
   const pendingReplaceRef = useRef<string | null>(null);
+  const trackDragRef = useRef<CanvasTableTrackDrag | null>(null);
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const hostStyle = resolveCanvasTableHostStyle(block) as CSSProperties;
-  const rowHeightStyles = resolveCanvasTableRowHeightStyles(opts.rowHeights, block.rows);
+  const displayColumnWidths = trackPreview?.columnWidths ?? opts.columnWidths;
+  const displayRowHeights = trackPreview?.rowHeights ?? opts.rowHeights;
+  const rowHeightStyles = resolveCanvasTableRowHeightStyles(displayRowHeights, block.rows);
   const selectedCells =
     interaction?.selectedCells ??
     (interaction?.selectedCell ? [interaction.selectedCell] : []);
@@ -139,7 +159,7 @@ export function ComunicadoCanvasTableView({
   const selectionKey = selectedCells.map((c) => `${c.row}:${c.col}`).join(",");
 
   useLayoutEffect(() => {
-    if (!editable || !selectedCells.length) {
+    if (!editable) {
       setCellRects([]);
       return;
     }
@@ -154,8 +174,8 @@ export function ComunicadoCanvasTableView({
     block.cols,
     block.frame?.w,
     block.frame?.h,
-    opts.columnWidths,
-    opts.rowHeights,
+    displayColumnWidths,
+    displayRowHeights,
   ]);
 
   useLayoutEffect(() => {
@@ -200,6 +220,80 @@ export function ComunicadoCanvasTableView({
   }
 
   const allowCellSelection = interaction?.blockSelected !== false;
+  const showTrackHandles = editable && allowCellSelection;
+  const trackHandles = showTrackHandles
+    ? resolveCanvasTableTrackHandles({
+        cellRects,
+        rows: block.rows,
+        cols: block.cols,
+      })
+    : [];
+
+  function commitTrackDrag() {
+    const drag = trackDragRef.current;
+    trackDragRef.current = null;
+    if (!drag) {
+      setTrackPreview(null);
+      return;
+    }
+    const next = drag.lastTracks;
+    interaction?.onTracksCommit?.(
+      drag.axis === "col" ? { columnWidths: next } : { rowHeights: next },
+    );
+    setTrackPreview(null);
+  }
+
+  function onTrackHandlePointerDown(
+    event: ReactPointerEvent<HTMLDivElement>,
+    axis: "col" | "row",
+    index: number,
+  ) {
+    if (!showTrackHandles) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const host = hostRef.current;
+    if (!host) return;
+    const box = host.getBoundingClientRect();
+    const startTracks =
+      axis === "col"
+        ? normalizeCanvasTableTrackSizes(opts.columnWidths, block.cols)
+        : normalizeCanvasTableTrackSizes(opts.rowHeights, block.rows);
+    trackDragRef.current = {
+      axis,
+      index,
+      startClient: axis === "col" ? event.clientX : event.clientY,
+      startTracks,
+      axisSize: axis === "col" ? box.width : box.height,
+      lastTracks: startTracks,
+    };
+    setTrackPreview(axis === "col" ? { columnWidths: startTracks } : { rowHeights: startTracks });
+  }
+
+  function onTrackHandlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = trackDragRef.current;
+    if (!drag) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const client = drag.axis === "col" ? event.clientX : event.clientY;
+    const deltaPct = drag.axisSize > 0 ? ((client - drag.startClient) / drag.axisSize) * 100 : 0;
+    const next = applyCanvasTableTrackDrag({
+      tracks: drag.startTracks,
+      index: drag.index,
+      deltaPct,
+    });
+    drag.lastTracks = next;
+    setTrackPreview(drag.axis === "col" ? { columnWidths: next } : { rowHeights: next });
+  }
+
+  function onTrackHandlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    commitTrackDrag();
+  }
 
   function isCellEditing(row: number, col: number) {
     return Boolean(editingCell && editingCell.row === row && editingCell.col === col);
@@ -327,9 +421,9 @@ export function ComunicadoCanvasTableView({
       style={hostStyle}
     >
       <table>
-        {opts.columnWidths?.length === block.cols ? (
+        {displayColumnWidths?.length === block.cols ? (
           <colgroup>
-            {opts.columnWidths.map((w, i) => (
+            {displayColumnWidths.map((w, i) => (
               <col key={i} style={{ width: `${w}%` }} />
             ))}
           </colgroup>
@@ -464,6 +558,30 @@ export function ComunicadoCanvasTableView({
           }}
         />
       ) : null}
+      {trackHandles.map((handle) => (
+        <div
+          key={`${handle.axis}-${handle.index}`}
+          className={
+            handle.axis === "col"
+              ? "td-canvas-table__col-handle"
+              : "td-canvas-table__row-handle"
+          }
+          role="separator"
+          aria-orientation={handle.axis === "col" ? "vertical" : "horizontal"}
+          style={{
+            left: handle.left,
+            top: handle.top,
+            width: handle.width,
+            height: handle.height,
+          }}
+          onPointerDown={(event) =>
+            onTrackHandlePointerDown(event, handle.axis, handle.index)
+          }
+          onPointerMove={onTrackHandlePointerMove}
+          onPointerUp={onTrackHandlePointerUp}
+          onPointerCancel={onTrackHandlePointerUp}
+        />
+      ))}
     </div>
   );
 }
