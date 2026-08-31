@@ -50,7 +50,29 @@ def test_capabilities_question_thinker_routes_to_llm_synthesis():
     ]
 
 
-def test_assistant_identity_question_routes_to_llm_synthesis():
+def test_assistant_identity_question_fast_normal_skips_meta_llm():
+    identity = "Olá! Sou o **Assistente Minha DELPI**."
+    for mode in ("fast", "normal"):
+        result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
+            message="quem é você?",
+            workspace_context={},
+            tool_context={},
+            pipeline_stages=[],
+            resolve_profile_facts=lambda _message: None,
+            resolve_capabilities_facts=lambda _message: None,
+            resolve_assistant_identity_facts=lambda _message: identity,
+            response_mode=mode,
+        )
+
+        assert result.active is False
+        assert result.skip_meta_direct_answer is False
+        assert "assistant_identity" in result.pipeline_stages
+        assert not result.tool_context.get(
+            ChatMetaLlmSynthesisService.TOOL_CONTEXT_META_LLM_SYNTHESIS
+        )
+
+
+def test_assistant_identity_question_thinker_routes_to_llm_synthesis():
     identity = "Olá! Sou o **Assistente Minha DELPI**."
     result = ChatMetaLlmTurnPreparationService.apply_meta_llm_route(
         message="quem é você?",
@@ -60,6 +82,7 @@ def test_assistant_identity_question_routes_to_llm_synthesis():
         resolve_profile_facts=lambda _message: None,
         resolve_capabilities_facts=lambda _message: None,
         resolve_assistant_identity_facts=lambda _message: identity,
+        response_mode="thinker",
     )
 
     assert result.active is True

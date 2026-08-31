@@ -71,6 +71,15 @@ class ChatTurnPreparationTurnAnalysisService:
                 dispatch=None,
             )
 
+        # Identity/heurística já skipou tools: não classificar nem chamar analysis LLM.
+        if tools_already_skipped:
+            return ChatTurnPreparationTurnAnalysisOutcome(
+                result=None,
+                direct_answer=None,
+                skip_tools=False,
+                dispatch=None,
+            )
+
         response_mode = ChatResponseModeService.normalize(
             getattr(request, "response_mode", None)
         )

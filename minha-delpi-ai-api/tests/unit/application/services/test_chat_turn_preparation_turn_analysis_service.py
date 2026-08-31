@@ -25,6 +25,33 @@ def test_maybe_analyze_skips_when_direct_answer_already_set():
     assert not ChatTurnPreparationTurnAnalysisService.ran_this_turn()
 
 
+def test_maybe_analyze_skips_when_tools_already_skipped(monkeypatch):
+    ChatTurnPreparationTurnAnalysisService.reset_ran()
+    called = {"classify": False}
+
+    def _fail_classify(*args, **kwargs):
+        called["classify"] = True
+        raise AssertionError("IntentRouter.classify não deve rodar com tools_already_skipped")
+
+    monkeypatch.setattr(
+        "app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service.ChatIntentRouterService.classify",
+        _fail_classify,
+    )
+    outcome = ChatTurnPreparationTurnAnalysisService.maybe_analyze(
+        message="como vc se chama?",
+        request=MagicMock(response_mode="normal", attachment_ids=[]),
+        workspace_context={"allowedActionIds": []},
+        history_source=[],
+        pipeline_stages=["assistant_identity_shortcut"],
+        has_direct_answer=False,
+        tools_already_skipped=True,
+    )
+
+    assert outcome.result is None
+    assert called["classify"] is False
+    assert not ChatTurnPreparationTurnAnalysisService.ran_this_turn()
+
+
 def test_maybe_analyze_clarify_sets_direct_answer(monkeypatch):
     ChatTurnPreparationTurnAnalysisService.reset_ran()
 

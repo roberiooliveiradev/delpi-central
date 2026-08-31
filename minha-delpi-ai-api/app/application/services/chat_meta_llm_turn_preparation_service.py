@@ -77,6 +77,16 @@ class ChatMetaLlmTurnPreparationService:
             "fast",
             "normal",
         }
+        identity_only = bool(
+            intents.assistant_identity
+            and not intents.user_profile
+            and not intents.capabilities
+        )
+        # Fast/normal: resposta canônica direta (evita síntese LLM de 15–45s).
+        prefer_identity_direct = identity_only and normalized_mode in {
+            "fast",
+            "normal",
+        }
 
         if intents.user_profile and ChatUserProfileLlmSynthesisService.should_route_to_llm(
             message
@@ -124,19 +134,23 @@ class ChatMetaLlmTurnPreparationService:
         if intents.assistant_identity and ChatAssistantIdentityService.is_assistant_identity_question(
             message
         ):
-            assistant_facts = str(resolve_assistant_identity_facts(message) or "").strip()
+            if prefer_identity_direct:
+                if "assistant_identity" not in stages:
+                    stages.append("assistant_identity")
+            else:
+                assistant_facts = str(resolve_assistant_identity_facts(message) or "").strip()
 
-            if assistant_facts:
-                sections.append(
-                    MetaLlmSynthesisSection(
-                        section_id=SECTION_ASSISTANT,
-                        title=ChatMetaLlmSynthesisService.section_title(
-                            SECTION_ASSISTANT,
-                            compound=compound,
-                        ),
-                        facts=assistant_facts,
+                if assistant_facts:
+                    sections.append(
+                        MetaLlmSynthesisSection(
+                            section_id=SECTION_ASSISTANT,
+                            title=ChatMetaLlmSynthesisService.section_title(
+                                SECTION_ASSISTANT,
+                                compound=compound,
+                            ),
+                            facts=assistant_facts,
+                        )
                     )
-                )
 
         if not sections:
             return ChatMetaLlmTurnPreparationResult(
