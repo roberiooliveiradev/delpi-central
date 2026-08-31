@@ -933,6 +933,58 @@ def test_enrich_series_route_empty_points_yields_no_metadata_rows():
     assert "granularity" not in serialized and "truncated" not in serialized
 
 
+def test_enrich_list_route_empty_items_skips_coverage_summary_metrics():
+    """items=[] + summary buckets_count não vira kpiMetrics nem barras."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_sales_order_otd_series_by_customer",
+            "shape": "paged_list",
+        },
+        "data": {
+            "items": [],
+            "summary": {
+                "buckets_count": 5,
+                "customers_count": 0,
+                "items_count": 0,
+                "granularity": "week",
+                "truncated": False,
+            },
+            "pagination": {"page": 1, "page_size": 50, "total": 0, "has_more": False},
+        },
+        "route": {
+            "label": "Série temporal de OTD de pedidos por cliente",
+            "tableFields": "items",
+            "valueFields": ["otd_pct", "total_qty"],
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_sales_order_otd_series_by_customer",
+                "params": {"periodDays": 30, "branch": "02"},
+                "displayMode": "bar_chart",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    resolved = enriched[0]["resolved"]
+    metric_fields = {m.get("field") for m in (resolved.get("kpiMetrics") or [])}
+    assert "buckets_count" not in metric_fields
+    assert "customers_count" not in metric_fields
+    assert "items_count" not in metric_fields
+    assert (resolved.get("chart") or {}).get("points") == []
+    table = resolved.get("table") or {}
+    assert table.get("rows") == []
+
+
 def test_source_table_for_series_route_uses_normalized_points():
     """Fonte do M em rota de série = periodo/value (nunca campo/valor de metadados)."""
     data = {

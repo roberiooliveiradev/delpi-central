@@ -362,6 +362,10 @@ _KPI_META_FIELD_KEYS = frozenset(
         "iscomplete",
         "branch_filter_applied",
         "consolidated_across_branches",
+        # Contagens de cobertura do envelope (OTD série vazia, etc.) — não viram série/KPI.
+        "buckets_count",
+        "customers_count",
+        "items_count",
         # Formatação / metadado SI e rotas escalares — não são o número do card KPI.
         "value_decimals",
         "value_unit",
@@ -1561,7 +1565,16 @@ class ComunicadoDataEnrichmentService:
         if mode in {"line_chart", "bar_chart"}:
             points = _extract_series(data, route_info.get("seriesField"), branch=branch_str)
             if not points:
-                if len(metrics) > 1:
+                # Lista de negócio vazia (seriesField / tableFields) ≠ série de métricas do envelope.
+                # Não pintar buckets_count / customers_count como barras.
+                has_list_field = bool(
+                    str(route_info.get("seriesField") or "").strip()
+                    or str(route_info.get("tableFields") or "").strip()
+                    or table_field
+                )
+                if has_list_field:
+                    points = []
+                elif len(metrics) > 1:
                     points = [
                         {"label": metric["label"], "value": metric["value"]} for metric in metrics
                     ]
@@ -1591,7 +1604,15 @@ class ComunicadoDataEnrichmentService:
             route_info=route_info,
         )
         if not rows:
-            if metrics:
+            has_list_field = bool(
+                str(route_info.get("seriesField") or "").strip()
+                or str(route_info.get("tableFields") or "").strip()
+                or table_field
+            )
+            if has_list_field:
+                # Lista vazia: tabela vazia (Sem linhas) — não inventar linhas de cobertura.
+                pass
+            elif metrics:
                 rows = [
                     {
                         "metric": metric["label"],
