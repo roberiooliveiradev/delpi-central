@@ -1,6 +1,7 @@
 import { useMaintenanceRouterPath } from "./hooks/useMaintenanceRouterPath";
 import { parseMaintenancePath } from "./utils/routeParser";
 import { navigateMaintenance } from "./utils/navigation";
+import type { HostAppRoute } from "./utils/manutencaoGeralFormUrl";
 import { PageTransition } from "./components/PageTransition";
 import { MaintenancePluginShell } from "./components/MaintenancePluginShell";
 import { HomePage } from "./ui/pages/HomePage";
@@ -14,14 +15,17 @@ import { RelatorioPage } from "./ui/pages/RelatorioPage";
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
-  /** URL externa declarada em `routes[].entry` do manifesto (portal → `alternateEntry`). */
+  /** URL externa da rota atual (`routes[].entry` → AppHost). */
   alternateEntry?: string;
+  /** Rotas do manifesto vivo (`/me/apps`) — fonte da verdade para Entry / openInNewTab. */
+  appRoutes?: HostAppRoute[];
 };
 
 export default function App({
   getAccessToken,
   pathname: pathnameFromHost,
   alternateEntry,
+  appRoutes,
 }: AppProps) {
   const pathname = useMaintenanceRouterPath(pathnameFromHost);
   const route = parseMaintenancePath(pathname);
@@ -33,6 +37,7 @@ export default function App({
       getAccessToken={getAccessToken}
       pathname={pathname}
       filialScope={route.filialScope}
+      appRoutes={appRoutes}
       onNavigate={onNavigate}
     />
   );
@@ -81,6 +86,7 @@ export default function App({
         pathname={pathname}
         filialScope={route.filialScope}
         alternateEntry={alternateEntry}
+        appRoutes={appRoutes}
         onNavigate={onNavigate}
       />
     );

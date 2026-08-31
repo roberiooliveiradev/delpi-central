@@ -8,6 +8,7 @@ import { useMaintenanceActiveFilial } from "../../hooks/useMaintenanceScope";
 import {
   resolveManutencaoGeralFormUrl,
   shouldOpenManutencaoGeralInNewTab,
+  type HostAppRoute,
 } from "../../utils/manutencaoGeralFormUrl";
 import { resolveMaintenanceHomePath } from "../../utils/routeParser";
 
@@ -16,6 +17,7 @@ type ManutencaoGeralPageProps = {
   pathname?: string;
   filialScope?: string;
   alternateEntry?: string;
+  appRoutes?: HostAppRoute[];
   onNavigate: (path: string) => void;
 };
 
@@ -42,6 +44,7 @@ export function ManutencaoGeralPage({
   pathname,
   filialScope,
   alternateEntry,
+  appRoutes,
   onNavigate,
 }: ManutencaoGeralPageProps) {
   const { submodules, activeFilial, loading: scopeLoading } = useMaintenanceActiveFilial(
@@ -50,8 +53,11 @@ export function ManutencaoGeralPage({
   );
   const effectiveFilial = filialScope ?? activeFilial ?? "01";
   const canAccess = submodules.some((item) => item.id === "manutencao-geral");
-  const openInNewTab = shouldOpenManutencaoGeralInNewTab();
-  const formUrl = resolveManutencaoGeralFormUrl(alternateEntry);
+  const openInNewTab = shouldOpenManutencaoGeralInNewTab(appRoutes);
+  const formUrl = resolveManutencaoGeralFormUrl({
+    alternateEntry,
+    hostRoutes: appRoutes,
+  });
   const homePath = resolveMaintenanceHomePath(filialScope ?? effectiveFilial);
 
   if (scopeLoading) {
@@ -86,7 +92,7 @@ export function ManutencaoGeralPage({
         <section className="dm-page-stack">
           <StateBox variant="error">
             URL do formulário não configurada. Defina <code>routes[].entry</code> no manifesto de
-            Manutenção e re-registre o app no portal.
+            Manutenção (Admin) e salve; o portal envia o link vivo ao módulo.
           </StateBox>
         </section>
       </>
@@ -103,7 +109,7 @@ export function ManutencaoGeralPage({
               O formulário de Manutenção geral abre em uma nova aba do navegador.
             </p>
             <p className="dm-home-section__hint">
-              Pelo hub, o atalho já abre a aba externa sem entrar nesta tela.
+              Pelo hub, o atalho já abre a aba externa com o Entry atual do manifesto.
             </p>
             <div className="dm-form-embed__actions">
               <MaintenanceActionButton

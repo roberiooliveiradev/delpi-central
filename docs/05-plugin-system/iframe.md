@@ -261,7 +261,7 @@ Diferença em relação a `ui.renderMode: "external"`:
 
 No editor de manifesto (Portal Admin), o toggle **Nova aba** fica ao lado de **Menu** em cada rota.
 
-**Hubs MFE (ex.: Manutenção):** rotas com `showInMenu: false` abertas por cards internos do módulo **não** passam pelo `AppLauncherCard` do portal. O MFE deve ler `openInNewTab` (+ Entry) do manifesto local (ou contrato equivalente) ao clicar no atalho — como em `plugins/maintenance` (`tryOpenManifestPathInNewTab`). Apps iframe de app inteiro (`ui.renderMode: external` / Entry global http) continuam no host do portal; não precisam desse padrão de hub.
+**Hubs MFE (ex.: Manutenção):** rotas com `showInMenu: false` abertas por cards internos do módulo **não** passam pelo `AppLauncherCard` do portal. O portal repassa `appRoutes` (`path` / `entry` / `openInNewTab` de `/me/apps`) ao MFE federado; o hub deve abrir Entry **do manifesto vivo**, não do JSON empacotado no build. Apps iframe de app inteiro (`ui.renderMode: external` / Entry global http) continuam no host do portal.
 
 ---
 

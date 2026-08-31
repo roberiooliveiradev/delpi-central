@@ -29,6 +29,7 @@ import {
   resolveHostedEntry,
   resolveMatchingRoute,
   resolveRouteAlternateUrl,
+  toFederatedAppRouteProps,
 } from "./appHostEntry";
 import { ensurePortalFederationShareScope } from "../utils/federationShareScope";
 import { Button } from "../ui-kit";
@@ -106,6 +107,11 @@ export const AppHost = () => {
   const routeAlternateUrl = useMemo(
     () => resolveRouteAlternateUrl(app, route),
     [app, route],
+  );
+
+  const appRoutes = useMemo(
+    () => toFederatedAppRouteProps(app?.routes),
+    [app?.routes],
   );
 
   const hostLoadResetKey = useMemo(() => {
@@ -465,6 +471,7 @@ export const AppHost = () => {
           pathname: location.pathname,
           search: location.search,
           alternateEntry: routeAlternateUrl,
+          appRoutes,
           routeLabel: route?.label,
           permissions: user?.permissions,
           isSuperadmin: user?.is_superadmin,
@@ -526,6 +533,7 @@ export const AppHost = () => {
       pathname: location.pathname,
       search: location.search,
       alternateEntry: routeAlternateUrl,
+      appRoutes,
       routeLabel: route?.label,
       permissions: user?.permissions,
       isSuperadmin: user?.is_superadmin,
@@ -550,6 +558,7 @@ export const AppHost = () => {
     getAccessToken,
     route?.label,
     routeAlternateUrl,
+    appRoutes,
     user?.permissions,
     user?.is_superadmin,
   ]);

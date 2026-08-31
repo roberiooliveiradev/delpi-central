@@ -19,12 +19,16 @@ import {
   resolveFilialDisplayName,
   setStoredFilial,
 } from "../../utils/maintenanceFilialSelection";
-import { tryOpenManifestPathInNewTab } from "../../utils/manutencaoGeralFormUrl";
+import {
+  tryOpenManifestPathInNewTab,
+  type HostAppRoute,
+} from "../../utils/manutencaoGeralFormUrl";
 
 type HomePageProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
   filialScope?: string;
+  appRoutes?: HostAppRoute[];
   onNavigate: (path: string) => void;
 };
 
@@ -42,6 +46,7 @@ function SubmoduleIcon({ icon }: { icon: string }) {
 export function HomePage({
   getAccessToken,
   filialScope,
+  appRoutes,
   onNavigate,
 }: HomePageProps) {
   const {
@@ -86,7 +91,7 @@ export function HomePage({
     if (activeFilial) {
       setStoredFilial(activeFilial);
     }
-    if (tryOpenManifestPathInNewTab(entryPath)) {
+    if (tryOpenManifestPathInNewTab(entryPath, { hostRoutes: appRoutes })) {
       return;
     }
     onNavigate(entryPath);

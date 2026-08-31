@@ -35,7 +35,7 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 |-----------|------|--------|
 | Mini-aplicadores | `/apps/maintenance/mini-aplicadores` | Reposição, golpes, preventiva |
 | Programas de máquina | `/apps/maintenance/programas-maquinas` | Ranking PI (api-delpi) + cadastro Postgres |
-| Manutenção geral | `/apps/maintenance/filial-01/manutencao-geral` | Entry Google Script + `openInNewTab` (só filial 01) |
+| Manutenção geral | `/apps/maintenance/filial-01/manutencao-geral` | Entry do manifesto vivo (`/me/apps` → `appRoutes`); `openInNewTab` (só filial 01) |
 
 ## Primeira funcionalidade
 

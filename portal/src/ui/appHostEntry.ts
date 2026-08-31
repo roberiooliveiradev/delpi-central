@@ -70,3 +70,21 @@ export function resolveRouteAlternateUrl(
 
   return undefined;
 }
+
+/** Recorte de rotas do `/me/apps` para o MFE (Entry / openInNewTab vivos do manifesto). */
+export type FederatedAppRouteProp = {
+  path: string;
+  entry?: string | null;
+  openInNewTab?: boolean;
+};
+
+export function toFederatedAppRouteProps(
+  routes: RouteItem[] | undefined,
+): FederatedAppRouteProp[] {
+  if (!routes?.length) return [];
+  return routes.map((route) => ({
+    path: route.path,
+    entry: route.entry ?? null,
+    openInNewTab: Boolean(route.openInNewTab),
+  }));
+}
