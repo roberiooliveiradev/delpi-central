@@ -81,7 +81,6 @@ import {
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
 import { buildEditComposerBanner, buildReplyComposerBanner } from "./interactionRoomReply";
 import { mapInteractionMentionsToTextItems } from "./mapInteractionMentionToTextItem";
-import { mapInteractionMentionsToTextItems } from "./mapInteractionMentionToTextItem";
 import { resolveRoomEntityHref } from "./resolveInteractionEntityHref";
 import {
   pinTitleFromMessageBody,
