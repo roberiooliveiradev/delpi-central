@@ -18,6 +18,7 @@ export type SeriesChartElementId =
   | "dataTable"
   | "gridlines"
   | "goalLine"
+  | "gaugeLabel"
   | "legend"
   | "markers"
   | "smoothLines"
@@ -27,7 +28,8 @@ export type SeriesChartElementDefinition = {
   id: SeriesChartElementId;
   label: string;
   hint?: string;
-  chartTypes?: SeriesChartKind[];
+  /** Tipos aplicáveis; inclui `gauge` para elementos só do velocímetro. */
+  chartTypes?: Array<SeriesChartKind | "gauge">;
 };
 
 export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
@@ -105,6 +107,12 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
     ],
   },
   {
+    id: "gaugeLabel",
+    label: "Rótulo",
+    hint: "Texto abaixo do valor no velocímetro (nome da medida).",
+    chartTypes: ["gauge"],
+  },
+  {
     id: "markers",
     label: "Marcadores",
     hint: "Pontos sobre a linha do gráfico.",
@@ -122,7 +130,7 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
 
 export function isSeriesChartElementApplicable(
   element: SeriesChartElementDefinition,
-  chartType: SeriesChartKind,
+  chartType: SeriesChartKind | "gauge",
 ): boolean {
   return !element.chartTypes || element.chartTypes.includes(chartType);
 }
@@ -150,6 +158,8 @@ export function isSeriesChartElementEnabled(
       return options.showGrid !== false || Boolean(options.showVerticalGrid);
     case "goalLine":
       return Boolean(options.showGoalLine);
+    case "gaugeLabel":
+      return options.showGaugeLabel !== false;
     case "legend":
       return options.showLegend !== false && options.legendPosition !== "hidden";
     case "markers":
@@ -201,6 +211,8 @@ export function setSeriesChartElementEnabled(
         : { showGrid: false, showVerticalGrid: false };
     case "goalLine":
       return { showGoalLine: enabled };
+    case "gaugeLabel":
+      return { showGaugeLabel: enabled };
     case "legend": {
       if (!enabled) {
         /* Não gravar legendPosition:"hidden" — apagaria left/right/top ao religar. */
@@ -253,6 +265,8 @@ export function chartElementPartRefs(elementId: SeriesChartElementId): ChartPart
       return [{ kind: "grid" }];
     case "goalLine":
       return [{ kind: "goalLine" }];
+    case "gaugeLabel":
+      return [{ kind: "gaugeLabel" }];
     case "dataTable":
       return [{ kind: "dataTable" }];
     case "markers":
@@ -309,6 +323,8 @@ export function chartElementIdForPartRef(ref: ChartPartRef): SeriesChartElementI
       return "gridlines";
     case "goalLine":
       return "goalLine";
+    case "gaugeLabel":
+      return "gaugeLabel";
     case "dataTable":
       return "dataTable";
     case "marker":

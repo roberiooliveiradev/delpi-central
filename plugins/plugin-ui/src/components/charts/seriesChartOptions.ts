@@ -131,6 +131,11 @@ export type SeriesChartOptions = {
   showGoalLine?: boolean;
   /** Valor constante da linha de meta no eixo de valores. */
   goalLineValue?: number | null;
+  /**
+   * Rótulo abaixo do valor no velocímetro (`gaugeLabel`).
+   * Default true — desligar pelo menu «Adicionar elemento» / Del na parte.
+   */
+  showGaugeLabel?: boolean;
   showMarkers?: boolean;
   /**
    * Quais marcadores pintar quando `showMarkers` está ligado.
@@ -257,6 +262,7 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showVerticalGrid: false,
   showGoalLine: false,
   goalLineValue: null,
+  showGaugeLabel: true,
   showMarkers: true,
   markerMode: "all",
   areaFillGradient: false,

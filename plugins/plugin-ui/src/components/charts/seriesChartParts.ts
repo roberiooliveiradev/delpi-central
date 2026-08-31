@@ -800,6 +800,9 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
       visible: true,
     };
   }
+  parts[serializeChartPartRef({ kind: "gaugeLabel" })] = {
+    visible: config.showGaugeLabel !== false,
+  };
   parts[serializeChartPartRef({ kind: "dataTable" })] = {
     visible: Boolean(config.showDataTable),
   };
@@ -945,6 +948,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   const grid = getChartPartState(parts, { kind: "grid" });
   const goalLine = getChartPartState(parts, { kind: "goalLine" });
   const gaugeGoalMarker = getChartPartState(parts, { kind: "gaugeGoalMarker" });
+  const gaugeLabel = getChartPartState(parts, { kind: "gaugeLabel" });
   const dataTable = getChartPartState(parts, { kind: "dataTable" });
 
   const patch: Partial<SeriesChartOptions> = {};
@@ -1000,6 +1004,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   if (goalLine?.visible !== undefined) patch.showGoalLine = goalLine.visible;
   /* Gauge Del/menu: marcador manda quando presente (mesmo showGoalLine da série). */
   if (gaugeGoalMarker?.visible !== undefined) patch.showGoalLine = gaugeGoalMarker.visible;
+  if (gaugeLabel?.visible !== undefined) patch.showGaugeLabel = gaugeLabel.visible;
   if (dataTable?.visible !== undefined) patch.showDataTable = dataTable.visible;
 
   const anyMarkerHidden = Object.keys(parts).some((key) => {

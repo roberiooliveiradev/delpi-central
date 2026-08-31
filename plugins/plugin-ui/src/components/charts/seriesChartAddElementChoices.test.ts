@@ -99,6 +99,21 @@ describe("applyChartAddElementChoice", () => {
     expect(hidden.parts.gaugeGoalMarker?.visible).toBe(false);
   });
 
+  it("gaugeLabel:none/show liga o rótulo do velocímetro", () => {
+    const off = applyChartAddElementChoiceWithParts("gaugeLabel:none", {}, null);
+    expect(off.options.showGaugeLabel).toBe(false);
+    expect(off.parts.gaugeLabel?.visible).toBe(false);
+    expect(isChartAddElementChoiceActive("gaugeLabel:none", off.options)).toBe(true);
+    const on = applyChartAddElementChoiceWithParts(
+      "gaugeLabel:show",
+      { showGaugeLabel: false },
+      null,
+    );
+    expect(on.options.showGaugeLabel).toBe(true);
+    expect(on.parts.gaugeLabel?.visible).toBe(true);
+    expect(isChartAddElementChoiceActive("gaugeLabel:show", on.options)).toBe(true);
+  });
+
   it("dataLabels:none desliga rótulos", () => {
     const next = applyChartAddElementChoice("dataLabels:none", { showDataLabels: true });
     expect(next.showDataLabels).toBe(false);

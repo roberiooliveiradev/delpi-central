@@ -41,6 +41,8 @@ export type ChartAddElementChoiceId =
   | "grid:vertical"
   | "goalLine:none"
   | "goalLine:show"
+  | "gaugeLabel:none"
+  | "gaugeLabel:show"
   | "legend:none"
   | "legend:right"
   | "legend:top"
@@ -73,6 +75,7 @@ export function chartAddElementChoiceRootId(
   const root = choiceId.split(":")[0];
   if (root === "grid") return "gridlines";
   if (root === "goalLine") return "goalLine";
+  if (root === "gaugeLabel") return "gaugeLabel";
   if (root === "markers") return "markers";
   if (root === "smoothLines") return "smoothLines";
   if (root === "axes") return "axes";
@@ -198,6 +201,10 @@ export function applyChartAddElementChoice(
       return mergeSeriesChartOptions({ ...base, showGoalLine: false });
     case "goalLine:show":
       return mergeSeriesChartOptions({ ...base, showGoalLine: true });
+    case "gaugeLabel:none":
+      return mergeSeriesChartOptions({ ...base, showGaugeLabel: false });
+    case "gaugeLabel:show":
+      return mergeSeriesChartOptions({ ...base, showGaugeLabel: true });
     case "legend:none":
       return mergeSeriesChartOptions({
         ...base,
@@ -267,6 +274,12 @@ export function applyChartAddElementChoiceWithParts(
   if (choiceId === "goalLine:show") {
     nextParts = upsertChartPartState(nextParts, { kind: "gaugeGoalMarker" }, { visible: true });
   }
+  if (choiceId === "gaugeLabel:none") {
+    nextParts = upsertChartPartState(nextParts, { kind: "gaugeLabel" }, { visible: false });
+  }
+  if (choiceId === "gaugeLabel:show") {
+    nextParts = upsertChartPartState(nextParts, { kind: "gaugeLabel" }, { visible: true });
+  }
   return {
     options: nextOptions,
     parts: nextParts,
@@ -331,6 +344,10 @@ export function isChartAddElementChoiceActive(
       return !base.showGoalLine;
     case "goalLine:show":
       return Boolean(base.showGoalLine);
+    case "gaugeLabel:none":
+      return base.showGaugeLabel === false;
+    case "gaugeLabel:show":
+      return base.showGaugeLabel !== false;
     case "legend:none":
       return base.showLegend === false || base.legendPosition === "hidden";
     case "legend:right":

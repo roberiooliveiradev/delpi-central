@@ -21,6 +21,7 @@ export type ChartAddElementItem = {
 export const CHART_ADD_ELEMENT_ITEMS: ChartAddElementItem[] = [
   { id: "chartTitle", icon: Heading, label: "Título do gráfico" },
   { id: "axisTitles", icon: Type, label: "Títulos dos eixos" },
+  { id: "gaugeLabel", icon: Type, label: "Rótulo" },
   { id: "legend", icon: ListOrdered, label: "Legenda" },
   { id: "dataLabels", icon: Tags, label: "Rótulos de dados" },
   { id: "dataTable", icon: Table2, label: "Tabela de dados" },

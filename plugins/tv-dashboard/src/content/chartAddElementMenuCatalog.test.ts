@@ -41,8 +41,15 @@ describe("resolveChartAddElementMenuRoots", () => {
     );
   });
 
-  it("gauge só lista título, legenda e meta", () => {
+  it("gauge lista título, rótulo, legenda e meta", () => {
     const roots = resolveChartAddElementMenuRoots("gauge");
-    expect(roots.map((r) => r.elementId).sort()).toEqual(["chartTitle", "goalLine", "legend"]);
+    expect(roots.map((r) => r.elementId).sort()).toEqual([
+      "chartTitle",
+      "gaugeLabel",
+      "goalLine",
+      "legend",
+    ]);
+    const label = roots.find((r) => r.elementId === "gaugeLabel");
+    expect(label?.choices.map((c) => c.id)).toEqual(["gaugeLabel:none", "gaugeLabel:show"]);
   });
 });

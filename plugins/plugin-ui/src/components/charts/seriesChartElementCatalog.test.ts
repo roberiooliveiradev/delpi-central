@@ -43,6 +43,19 @@ describe("seriesChartElementCatalog", () => {
     expect(chartElementIdForPartRef({ kind: "goalLine" })).toBe("goalLine");
   });
 
+  it("rótulo do velocímetro só no gauge e ligado por padrão", () => {
+    const label = SERIES_CHART_ELEMENT_CATALOG.find((entry) => entry.id === "gaugeLabel");
+    expect(label).toBeTruthy();
+    expect(isSeriesChartElementApplicable(label!, "gauge")).toBe(true);
+    expect(isSeriesChartElementApplicable(label!, "line")).toBe(false);
+    expect(isSeriesChartElementEnabled("gaugeLabel", DEFAULT_SERIES_CHART_OPTIONS)).toBe(true);
+    const off = mergeSeriesChartOptions(setSeriesChartElementEnabled("gaugeLabel", false));
+    expect(isSeriesChartElementEnabled("gaugeLabel", off)).toBe(false);
+    expect(off.showGaugeLabel).toBe(false);
+    expect(chartElementPrimaryPartRef("gaugeLabel")).toEqual({ kind: "gaugeLabel" });
+    expect(chartElementIdForPartRef({ kind: "gaugeLabel" })).toBe("gaugeLabel");
+  });
+
   it("marcadores só em gráfico de linhas", () => {
     const markers = SERIES_CHART_ELEMENT_CATALOG.find((entry) => entry.id === "markers");
     expect(markers).toBeTruthy();

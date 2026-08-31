@@ -53,6 +53,7 @@ const ROOT_META: Record<
   dataTable: { icon: Table2, moreOptionsLabel: "Mais opções de tabela de dados…" },
   gridlines: { icon: Grid3x3, moreOptionsLabel: "Mais opções de linhas de grade…" },
   goalLine: { icon: Goal, moreOptionsLabel: "Mais opções de linha de meta…" },
+  gaugeLabel: { icon: Type, moreOptionsLabel: "Mais opções de rótulo…" },
   legend: { icon: ListOrdered, moreOptionsLabel: "Mais opções de legenda…" },
   markers: { icon: CircleDot, moreOptionsLabel: "Mais opções de marcadores…" },
   smoothLines: { icon: Spline, moreOptionsLabel: "Mais opções de linhas suaves…" },
@@ -63,6 +64,7 @@ const ROOT_ORDER: Array<keyof typeof ROOT_META> = [
   "axes",
   "axisTitles",
   "chartTitle",
+  "gaugeLabel",
   "dataLabels",
   "dataTable",
   "gridlines",
@@ -86,6 +88,10 @@ const CHOICES_BY_ROOT: Record<keyof typeof ROOT_META, ChartAddElementFlyoutChoic
   chartTitle: [
     { id: "chartTitle:none", label: "Nenhum", icon: X },
     { id: "chartTitle:show", label: "Mostrar", icon: Heading },
+  ],
+  gaugeLabel: [
+    { id: "gaugeLabel:none", label: "Nenhum", icon: X },
+    { id: "gaugeLabel:show", label: "Mostrar", icon: Type },
   ],
   dataLabels: [
     { id: "dataLabels:none", label: "Nenhum", icon: X },
@@ -136,7 +142,9 @@ export function resolveChartAddElementMenuRoots(
   chartKind: SeriesChartKind | "gauge",
 ): ChartAddElementMenuRoot[] {
   const gaugeAllowed =
-    chartKind === "gauge" ? new Set<ChartElementId>(["chartTitle", "legend", "goalLine"]) : null;
+    chartKind === "gauge"
+      ? new Set<ChartElementId>(["chartTitle", "gaugeLabel", "legend", "goalLine"])
+      : null;
   return ROOT_ORDER.flatMap((elementId) => {
     if (gaugeAllowed && !gaugeAllowed.has(elementId)) return [];
     const def = CHART_ELEMENT_CATALOG.find((entry) => entry.id === elementId);

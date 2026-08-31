@@ -456,10 +456,15 @@ export function ChartLabelsSection({ layout }: { layout: SelectionSectionLayout 
   const ctrl = useChartDesignControls();
   if (!ctrl) return null;
 
+  const isGauge = ctrl.block.chartType === "gauge";
+  const labelIds = isGauge
+    ? (["chartTitle", "gaugeLabel", "legend"] as const)
+    : (["chartTitle", "axisTitles", "legend", "dataLabels", "dataTable"] as const);
+
   const body = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
       {CHART_ADD_ELEMENT_ITEMS.filter((item) =>
-        ["chartTitle", "axisTitles", "legend", "dataLabels", "dataTable"].includes(item.id),
+        (labelIds as readonly string[]).includes(item.id),
       ).map((item) => {
         const enabled = isChartElementEnabled(item.id, ctrl.options);
         const focused = isChartElementOpenForPart(item.id, ctrl.selectedChartPart);
@@ -471,7 +476,9 @@ export function ChartLabelsSection({ layout }: { layout: SelectionSectionLayout 
             hint={
               item.id === "dataLabels"
                 ? "Liga os rótulos e edita tipografia de todos de uma vez."
-                : item.label
+                : item.id === "gaugeLabel"
+                  ? "Texto abaixo do valor no velocímetro."
+                  : item.label
             }
             active={enabled}
             focused={focused}
