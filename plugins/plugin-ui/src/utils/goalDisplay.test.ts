@@ -10,6 +10,7 @@ import {
   joinKpiExportContext,
   pickSiIddScoreLabel,
   resolveAccumulatedGoalPrefix,
+  resolveAverageSiIddScoreLabel,
   resolveGoalPeriodPartial,
   resolveIndicatorIddScoreLabelFromSi,
 } from "./goalDisplay";
@@ -31,6 +32,7 @@ describe("goalDisplay", () => {
       { indicator_id: "quality-kaizen-financial", score: 6.57 },
     ]);
     expect(pickSiIddScoreLabel(map, "quality-kaizen-financial")).toBe("6,57");
+    expect(resolveAverageSiIddScoreLabel([8, 6])).toBe("7,00");
   });
 
   it("respeita iddScoreLabel do SI em buildKpiGoalPresentationWithBranchIdd", () => {

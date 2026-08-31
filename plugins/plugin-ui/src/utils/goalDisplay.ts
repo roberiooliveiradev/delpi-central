@@ -200,6 +200,25 @@ export function pickSiIddScoreLabel(
   return resolveIndicatorIddScoreLabelFromSi(scoresById[id]);
 }
 
+/** Média de notas SI já calculadas (ex.: ROL 01+02) — não recalcula a fórmula local. */
+export function resolveAverageSiIddScoreLabel(
+  scores: Array<number | null | undefined>,
+): string | null {
+  const values = scores
+    .map((score) =>
+      score == null || Number.isNaN(Number(score)) ? null : Number(score),
+    )
+    .filter((score): score is number => score != null);
+  if (values.length === 0) {
+    return null;
+  }
+  const average =
+    Math.round(
+      (values.reduce((sum, score) => sum + score, 0) / values.length) * 100,
+    ) / 100;
+  return formatIndicatorIddScore(average);
+}
+
 /** Força Nota IDD canônica do SI no presentation (não recalcula no MFE). */
 export function applySiIddScoreLabel(
   presentation: KpiGoalPresentation,
