@@ -26,6 +26,8 @@ import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
+import { HR_SI_INDICATORS } from "../constants/siIndicatorIds";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import { useHrDashboard } from "../hooks/useHrDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useHrFilters } from "../hooks/useHrFilters";
@@ -36,6 +38,7 @@ import {
   formatDashboardMetricValue,
   formatKpiGoalExportFragments,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 import {
   buildHrMetricIddSlices,
@@ -96,6 +99,13 @@ export function DashboardHrPage() {
 
   const { snapshot, branchGoalSnapshots, branchOptions, loading, refreshing, requestProgress, error, reload } =
     useHrDashboard(apiParams);
+
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("hr", {
+    competence,
+    dateStart,
+    dateEnd,
+    branches,
+  });
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -281,6 +291,10 @@ export function DashboardHrPage() {
           realizedValue: absenteeism,
           activeBranch: activeApiBranch,
           branches: absenteeismBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            HR_SI_INDICATORS.absenteeism,
+          ),
           ...dateOpts,
         },
       );
@@ -291,6 +305,10 @@ export function DashboardHrPage() {
           realizedValue: turnover,
           activeBranch: activeApiBranch,
           branches: turnoverBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            HR_SI_INDICATORS.turnover,
+          ),
           ...dateOpts,
         },
       );
@@ -301,6 +319,10 @@ export function DashboardHrPage() {
           realizedValue: satisfaction,
           activeBranch: activeApiBranch,
           branches: satisfactionBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            HR_SI_INDICATORS.satisfaction,
+          ),
           ...dateOpts,
         },
       );
@@ -315,6 +337,10 @@ export function DashboardHrPage() {
           realizedValue: activePdiCount,
           activeBranch: activeApiBranch,
           branches: activePdiBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            HR_SI_INDICATORS.pdi,
+          ),
           ...dateOpts,
         },
       );
@@ -329,6 +355,10 @@ export function DashboardHrPage() {
           realizedValue: performanceReviewsCompletion,
           activeBranch: activeApiBranch,
           branches: performanceReviewsBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            HR_SI_INDICATORS.performanceReviews,
+          ),
           ...dateOpts,
         },
       );
@@ -339,6 +369,10 @@ export function DashboardHrPage() {
           realizedValue: trainingHours,
           activeBranch: activeApiBranch,
           branches: trainingHoursBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            HR_SI_INDICATORS.trainingHours,
+          ),
           ...dateOpts,
         },
       );
@@ -409,6 +443,7 @@ export function DashboardHrPage() {
       periodLabel,
       satisfaction,
       satisfactionBranches,
+      siScoresById,
       snapshot?.goals_by_metric,
       trainingHours,
       trainingHoursBranches,
@@ -502,6 +537,10 @@ export function DashboardHrPage() {
               branches: absenteeismBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                HR_SI_INDICATORS.absenteeism,
+              ),
             },
           )}
           icon={<UserMinus size={22} />}
@@ -523,6 +562,10 @@ export function DashboardHrPage() {
               branches: turnoverBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                HR_SI_INDICATORS.turnover,
+              ),
             },
           )}
           icon={<TrendingDown size={22} />}
@@ -544,6 +587,10 @@ export function DashboardHrPage() {
               branches: satisfactionBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                HR_SI_INDICATORS.satisfaction,
+              ),
             },
           )}
           icon={<Smile size={22} />}
@@ -569,6 +616,10 @@ export function DashboardHrPage() {
               branches: activePdiBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                HR_SI_INDICATORS.pdi,
+              ),
             },
           )}
           icon={<Award size={22} />}
@@ -594,6 +645,10 @@ export function DashboardHrPage() {
               branches: performanceReviewsBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                HR_SI_INDICATORS.performanceReviews,
+              ),
             },
           )}
           icon={<ClipboardCheck size={22} />}
@@ -615,6 +670,10 @@ export function DashboardHrPage() {
               branches: trainingHoursBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                HR_SI_INDICATORS.trainingHours,
+              ),
             },
           )}
           icon={<BookOpen size={22} />}
