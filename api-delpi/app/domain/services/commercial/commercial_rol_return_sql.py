@@ -1,4 +1,4 @@
-"""Predicado SQL canônico de devolução no ROL (SD1).
+"""Predicado e expressões SQL canônicas do ROL (SD2 / SD1).
 
 Regra homologada vs resumo de vendas (ago/2026):
 - CFOP de retorno de venda ``1201`` / ``2201``; ou
@@ -6,6 +6,9 @@ Regra homologada vs resumo de vendas (ago/2026):
 
 Exclui movimentos de estoque/beneficiamento (ex.: TES «ENTRADA MAT FALTANTE»
 com ``F4_DUPLIC = N``) que não entram no faturamento comercial.
+
+Expressões de valor (líquido = TOTAL − ICMS − PIS − COFINS) são a fonte única
+para FinancialRepository, ROL-by-customer e faturamento de carteira ``nature=net``.
 """
 
 from __future__ import annotations
@@ -13,6 +16,45 @@ from __future__ import annotations
 
 class CommercialRolReturnSql:
     SALES_RETURN_CFOPS = ("1201", "2201")
+
+    @staticmethod
+    def sale_net_line_expr(*, d2_alias: str = "D2") -> str:
+        """Valor líquido de uma linha SD2 (sem agregação)."""
+        a = d2_alias
+        return (
+            f"(ISNULL({a}.D2_TOTAL, 0)"
+            f" - ISNULL({a}.D2_VALICM, 0)"
+            f" - ISNULL({a}.D2_VALIMP5, 0)"
+            f" - ISNULL({a}.D2_VALIMP6, 0))"
+        )
+
+    @staticmethod
+    def sale_gross_line_expr(*, d2_alias: str = "D2") -> str:
+        """Valor bruto de uma linha SD2 (D2_TOTAL)."""
+        return f"ISNULL({d2_alias}.D2_TOTAL, 0)"
+
+    @staticmethod
+    def return_net_line_expr(*, d1_alias: str = "D1") -> str:
+        """Valor líquido de uma linha SD1 de devolução (sem agregação)."""
+        a = d1_alias
+        return (
+            f"(ISNULL({a}.D1_TOTAL, 0)"
+            f" - ISNULL({a}.D1_VALICM, 0)"
+            f" - ISNULL({a}.D1_VALIMP5, 0)"
+            f" - ISNULL({a}.D1_VALIMP6, 0))"
+        )
+
+    @staticmethod
+    def sale_net_sum_expr(*, d2_alias: str = "D2") -> str:
+        return f"SUM(CONVERT(FLOAT, {CommercialRolReturnSql.sale_net_line_expr(d2_alias=d2_alias)}))"
+
+    @staticmethod
+    def sale_gross_sum_expr(*, d2_alias: str = "D2") -> str:
+        return f"SUM(CONVERT(FLOAT, {CommercialRolReturnSql.sale_gross_line_expr(d2_alias=d2_alias)}))"
+
+    @staticmethod
+    def return_net_sum_expr(*, d1_alias: str = "D1") -> str:
+        return f"SUM(CONVERT(FLOAT, {CommercialRolReturnSql.return_net_line_expr(d1_alias=d1_alias)}))"
 
     @staticmethod
     def tes_join(

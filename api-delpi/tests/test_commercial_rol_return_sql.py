@@ -19,6 +19,19 @@ def test_sales_return_predicate_requires_duplic_for_tipo_d() -> None:
     assert "OR D1.D1_TIPO = 'D')" not in predicate.replace(" ", "")
 
 
+def test_rol_amount_exprs_are_canonical() -> None:
+    sale_net = CommercialRolReturnSql.sale_net_line_expr(d2_alias="D2")
+    assert "D2.D2_TOTAL" in sale_net
+    assert "D2.D2_VALICM" in sale_net
+    assert "D2.D2_VALIMP5" in sale_net
+    assert "D2.D2_VALIMP6" in sale_net
+    assert CommercialRolReturnSql.sale_gross_line_expr() == "ISNULL(D2.D2_TOTAL, 0)"
+    ret = CommercialRolReturnSql.return_net_line_expr(d1_alias="D1")
+    assert "D1.D1_TOTAL" in ret
+    assert "SUM(CONVERT(FLOAT" in CommercialRolReturnSql.sale_net_sum_expr()
+    assert "SUM(CONVERT(FLOAT" in CommercialRolReturnSql.return_net_sum_expr()
+
+
 def test_get_rol_sql_excludes_tipo_d_without_duplicata() -> None:
     repository = FinancialRepository()
     captured: dict[str, object] = {}

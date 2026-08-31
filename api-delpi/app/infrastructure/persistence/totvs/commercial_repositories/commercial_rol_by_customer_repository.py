@@ -74,12 +74,7 @@ class CommercialRolByCustomerRepository(
                     D2.D2_FILIAL,
                     D2.D2_CLIENTE,
                     D2.D2_LOJA,
-                    SUM(CONVERT(FLOAT,
-                        ISNULL(D2.D2_TOTAL, 0)
-                        - ISNULL(D2.D2_VALICM, 0)
-                        - ISNULL(D2.D2_VALIMP5, 0)
-                        - ISNULL(D2.D2_VALIMP6, 0)
-                    )) AS VLR_VENDA
+                    {CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")} AS VLR_VENDA
                 FROM SD2010 D2 WITH (NOLOCK)
                 LEFT JOIN SA1010 A1 WITH (NOLOCK)
                     ON  A1.D_E_L_E_T_ = ''
@@ -144,12 +139,7 @@ class CommercialRolByCustomerRepository(
                     D1.D1_FILIAL,
                     D1.D1_FORNECE,
                     D1.D1_LOJA,
-                    SUM(CONVERT(FLOAT,
-                        ISNULL(D1.D1_TOTAL, 0)
-                        - ISNULL(D1.D1_VALICM, 0)
-                        - ISNULL(D1.D1_VALIMP5, 0)
-                        - ISNULL(D1.D1_VALIMP6, 0)
-                    )) AS VLR_DEVOLUCAO
+                    {CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")} AS VLR_DEVOLUCAO
                 FROM SD1010 D1 WITH (NOLOCK)
                 LEFT JOIN SA1010 A1D WITH (NOLOCK)
                     ON  A1D.D_E_L_E_T_ = ''

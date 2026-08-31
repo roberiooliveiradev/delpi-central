@@ -70,7 +70,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         sql = f"""
         WITH VENDAS AS (
             SELECT
-                SUM(CONVERT(FLOAT, ISNULL(D2.D2_TOTAL, 0))) AS VALOR_BRUTO_VENDA,
+                {CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")} AS VALOR_BRUTO_VENDA,
 
                 SUM(CONVERT(FLOAT,
                     ISNULL(D2.D2_DESCON, 0)
@@ -81,12 +81,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
                 SUM(CONVERT(FLOAT, ISNULL(D2.D2_VALIMP5, 0))) AS VALOR_PIS,
                 SUM(CONVERT(FLOAT, ISNULL(D2.D2_VALIMP6, 0))) AS VALOR_COFINS,
 
-                SUM(CONVERT(FLOAT,
-                    ISNULL(D2.D2_TOTAL, 0)
-                    - ISNULL(D2.D2_VALICM, 0)
-                    - ISNULL(D2.D2_VALIMP5, 0)
-                    - ISNULL(D2.D2_VALIMP6, 0)
-                )) AS VLR_VENDA,
+                {CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")} AS VLR_VENDA,
 
                 MIN(D2.D2_EMISSAO) AS MIN_EMISSAO,
                 MAX(D2.D2_EMISSAO) AS MAX_EMISSAO
@@ -159,12 +154,7 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
 
         DEVOLUCOES AS (
             SELECT
-                SUM(CONVERT(FLOAT,
-                    ISNULL(D1.D1_TOTAL, 0)
-                    - ISNULL(D1.D1_VALICM, 0)
-                    - ISNULL(D1.D1_VALIMP5, 0)
-                    - ISNULL(D1.D1_VALIMP6, 0)
-                )) AS VLR_DEVOLUCAO
+                {CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")} AS VLR_DEVOLUCAO
 
             FROM SD1010 D1 WITH (NOLOCK)
 
