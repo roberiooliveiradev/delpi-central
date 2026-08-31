@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 696 · **Gerado em:** 2026-08-28 16:23 UTC
+**Provider:** `api-delpi` · **Rotas:** 698 · **Gerado em:** 2026-08-31 12:01 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -66,7 +66,7 @@
 | `GET` | `/commercial/rol/by-branch` | `get_commercial_rol_by_branch` | Lista paginada — Rol comercial por filial |
 | `GET` | `/commercial/rol/by-customer` | `get_commercial_rol_by_customer` | Commercial ROL ranking by customer |
 | `GET` | `/commercial/rol/series` | `get_commercial_rol_series` | Commercial rol series |
-| `GET` | `/commercial/rol/summary` | `get_commercial_rol_summary` | Indicador — Commercial rol summary |
+| `GET` | `/commercial/rol/summary` | `get_commercial_rol_summary` | Commercial ROL summary (realized and goal) |
 | `GET` | `/commercial/sales-order-otd` | `get_sales_order_otd` | Sales order otd |
 | `GET` | `/commercial/sales-order-otd/by-branch` | `get_sales_order_otd_by_branch` | Lista paginada — Otd de pedidos de venda por filial |
 | `GET` | `/commercial/sales-order-otd/by-customer` | `get_sales_order_otd_by_customer` | Lista paginada — Otd de pedidos de venda por cliente |
@@ -74,7 +74,7 @@
 | `GET` | `/commercial/sales-order-otd/panel` | `get_sales_order_otd_panel` | Sales order otd panel |
 | `GET` | `/commercial/sales-order-otd/series` | `get_sales_order_otd_series` | Sales order otd series |
 | `GET` | `/commercial/sales-order-otd/series-by-customer` | `get_sales_order_otd_series_by_customer` | Lista paginada — Série temporal otd de pedidos de venda por cliente |
-| `GET` | `/commercial/sales-order-otd/summary` | `get_sales_order_otd_summary` | Indicador — Sales order otd summary |
+| `GET` | `/commercial/sales-order-otd/summary` | `get_sales_order_otd_summary` | Sales order OTD summary (realized and goal) |
 
 ## Compras operacionais (1)
 
@@ -169,7 +169,7 @@
 | `GET` | `/dashboard/indicators/supplies-stock-value/meta` | `get_si_indicator_supplies_stock_value_meta` | Valor Total do Estoque Consolidado — goal |
 | `GET` | `/dashboard/indicators/supplies-stock-value/realized` | `get_si_indicator_supplies_stock_value_realized` | Valor Total do Estoque Consolidado — actual |
 
-## Delpi Reports (19)
+## Delpi Reports (21)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -186,6 +186,8 @@
 | `GET` | `/reports/definitions/{definition_id}/schedule` | `get_report_schedule` | Get Report Schedule |
 | `PUT` | `/reports/definitions/{definition_id}/schedule` | `upsert_report_schedule` | Upsert Report Schedule |
 | `DELETE` | `/reports/definitions/{definition_id}/schedule` | `delete_report_schedule` | Delete Report Schedule |
+| `GET` | `/reports/personal-subscriptions/{provider_key}` | `get_personal_report_subscription` | Get Personal Report Subscription |
+| `PUT` | `/reports/personal-subscriptions/{provider_key}` | `upsert_personal_report_subscription` | Upsert Personal Report Subscription |
 | `GET` | `/reports/providers` | `list_report_providers` | List Report Providers |
 | `GET` | `/reports/providers/management_revenue_monthly/preview` | `preview_report_provider_management_revenue_monthly` | Preview Management Revenue Monthly |
 | `GET` | `/reports/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` | Preview Safety Stock Shortage 30D |
