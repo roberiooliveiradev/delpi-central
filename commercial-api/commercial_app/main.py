@@ -94,9 +94,19 @@ async def lifespan(_app: FastAPI):
     loop = asyncio.get_running_loop()
     commercial_realtime_hub.bind_loop(loop)
     worker = asyncio.create_task(commercial_realtime_hub.worker())
+    from commercial_app.infrastructure.schedulers.integration_jobs_scheduler import (
+        start_integration_jobs_scheduler,
+        stop_integration_jobs_scheduler,
+    )
+
+    start_integration_jobs_scheduler(
+        enabled=settings.COMMERCIAL_INTEGRATION_JOBS_SCHEDULER_ENABLED,
+        poll_seconds=settings.COMMERCIAL_INTEGRATION_JOBS_POLL_SECONDS,
+    )
     try:
         yield
     finally:
+        await stop_integration_jobs_scheduler()
         worker.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await worker

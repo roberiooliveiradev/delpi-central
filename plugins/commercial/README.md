@@ -320,6 +320,8 @@ Catálogo condensado — **3 codes**. Detalhe e política para features novas: [
 
 Notificações de **tarefas** usam só envolvidos (`userIds`) + categoria catálogo `commercial_tasks` («Tarefas comerciais») — **sem** permission code novo. Job: `POST /integrations/jobs/task-due-scan` (`manage`). Faturar permanece em categoria `commercial`.
 
+**Scheduler (commercial-api):** a cada ~60s o processo roda `ready-to-invoice-scan` + `task-due-scan` (`COMMERCIAL_INTEGRATION_JOBS_SCHEDULER_ENABLED`, default on). O badge «Meus pedidos» sobe pelo dump ao vivo; **toast** (WS, gestores na sala `team` + vendedores) e **sino Minha Delpi** só disparam no **delta** (linha que acabou de entrar em pronto para faturar). Cold start só grava o checkpoint — não notifica o histórico já faturável.
+
 Minha Carteira na topbar: membership **ou** `manage`. Pedidos sem membership: consolidado (todos os clientes).
 
 Antes de criar permission nova: preferir `access` ou `manage`; code específico só para efeito estreito (ver PERFIS).

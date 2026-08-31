@@ -307,8 +307,6 @@ def notify_ready_to_invoice_changed(
     )
 
     recipients = [uid.strip() for uid in user_ids if uid and str(uid).strip()]
-    if not recipients:
-        return
     content = ReadyToInvoiceNotificationContentService
     block = content.notification_block()
     title = str(block.get("title") or "Pedido pronto para faturar").strip()
@@ -342,6 +340,8 @@ def notify_ready_to_invoice_changed(
             "variant": variant,
         },
     }
+    # Sellers get user rooms; managers on TEAM_ROOM always (billing via permission
+    # codes may have no explicit userIds — toast still reaches gestores).
     rooms = {user_room(uid) for uid in recipients}
     rooms.add(TEAM_ROOM)
     for room in rooms:

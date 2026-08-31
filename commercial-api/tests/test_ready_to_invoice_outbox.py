@@ -61,11 +61,42 @@ class _DetectStub:
         return self._result
 
 
-def test_enqueue_writes_outbox_with_deep_link() -> None:
+def test_enqueue_skips_cold_start_without_previous_snapshot() -> None:
     outbox = _OutboxMemory()
     detection = DetectReadyToInvoiceResult(
         previous_key_count=0,
         current_key_count=1,
+        entered=(
+            ReadyToInvoiceEntry(
+                line_key="01|10|01",
+                item={
+                    "pedido": "10",
+                    "linha": "01",
+                    "nome_cliente": "ACME",
+                    "filial": "01",
+                },
+                recipients=ReadyToInvoiceRecipients(
+                    seller_user_ids=frozenset({"u1"}),
+                    billing_user_ids=frozenset(),
+                    billing_permission_codes=("commercial.billing.notify",),
+                ),
+            ),
+        ),
+        board_deep_link_path="/apps/commercial/open-orders?stage=ready_to_invoice",
+    )
+    result = EnqueueReadyToInvoiceNotificationsUseCase(
+        detect=_DetectStub(detection),  # type: ignore[arg-type]
+        outbox=outbox,
+    ).execute()
+    assert result.enqueued == 0
+    assert outbox.rows == []
+
+
+def test_enqueue_writes_outbox_with_deep_link() -> None:
+    outbox = _OutboxMemory()
+    detection = DetectReadyToInvoiceResult(
+        previous_key_count=3,
+        current_key_count=4,
         entered=(
             ReadyToInvoiceEntry(
                 line_key="01|10|01",

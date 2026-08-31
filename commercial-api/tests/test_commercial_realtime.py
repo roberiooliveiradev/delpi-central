@@ -318,29 +318,26 @@ def test_notify_ready_to_invoice_changed_schedules_user_and_team(monkeypatch):
     body = by_room[TEAM_ROOM]
     assert body["type"] == "orders.ready_to_invoice"
     assert body["pedido"] == "10"
-    assert "Pronto para faturar" in body["notification"]["title"]
+    assert "pronto para faturar" in body["notification"]["title"].lower()
     assert "view=board" not in (body.get("actionTarget") or "")
 
 
-def test_notify_ready_to_invoice_changed_schedules_user_and_team(monkeypatch):
+def test_notify_ready_to_invoice_team_room_without_user_ids(monkeypatch):
+    """Billing-only recipients: still toast gestores on TEAM_ROOM."""
     from commercial_app.application.services.commercial_realtime_notify import (
         notify_ready_to_invoice_changed,
     )
 
     hub = MagicMock()
     scheduled: list[tuple[str, dict]] = []
-
-    def capture(room: str, payload: dict) -> None:
-        scheduled.append((room, payload))
-
-    hub.schedule_broadcast = capture
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
     monkeypatch.setattr(
         "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
         hub,
     )
 
     notify_ready_to_invoice_changed(
-        user_ids=["seller-a"],
+        user_ids=[],
         line_key="01|10|01",
         pedido="10",
         linha="01",
@@ -349,13 +346,8 @@ def test_notify_ready_to_invoice_changed_schedules_user_and_team(monkeypatch):
     )
 
     by_room = {room: payload for room, payload in scheduled}
-    assert user_room("seller-a") in by_room
-    assert TEAM_ROOM in by_room
-    body = by_room[TEAM_ROOM]
-    assert body["type"] == "orders.ready_to_invoice"
-    assert body["pedido"] == "10"
-    assert "pronto para faturar" in body["notification"]["title"].lower()
-    assert "view=board" not in (body.get("actionTarget") or "")
+    assert set(by_room) == {TEAM_ROOM}
+    assert by_room[TEAM_ROOM]["type"] == "orders.ready_to_invoice"
 
 
 def test_notify_reassign_includes_previous_and_new_assignee(monkeypatch):

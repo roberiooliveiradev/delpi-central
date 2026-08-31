@@ -49,6 +49,10 @@ class EnqueueReadyToInvoiceNotificationsUseCase:
 
     def execute(self) -> EnqueueReadyToInvoiceResult:
         detection = self._detect.execute(persist_snapshot=True)
+        # Cold start: persist snapshot only — do not flood portal/toast with every
+        # line already ready before the scheduler existed.
+        if detection.previous_key_count == 0:
+            return EnqueueReadyToInvoiceResult(detection=detection, enqueued=0)
         event_type = self._content.event_type()
         aggregate_type = self._content.aggregate_type()
         enqueued = 0
@@ -118,7 +122,9 @@ class PublishIntegrationOutboxUseCase:
             all_user_ids = list(payload.get("userIds") or [])
             permission_codes = list(payload.get("permissionCodes") or [])
             online, offline = delivery.split_online_offline(ready_event, all_user_ids)
-            if online:
+            # Toast: online sellers + always TEAM_ROOM (managers). Empty online with
+            # only billing permission codes still fans out to team room.
+            if online or permission_codes or all_user_ids:
                 notify_ready_to_invoice_changed(
                     user_ids=online,
                     line_key=str(payload.get("lineKey") or row.aggregate_id),

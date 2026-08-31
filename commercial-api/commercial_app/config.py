@@ -58,6 +58,19 @@ class Settings:
         ).lower()
         in {"1", "true", "yes", "on"}
     )
+    # Poll ready_to_invoice + task-due scans (portal/toast). Badge does not need this.
+    COMMERCIAL_INTEGRATION_JOBS_SCHEDULER_ENABLED: bool = (
+        str(
+            _get_env(
+                "COMMERCIAL_INTEGRATION_JOBS_SCHEDULER_ENABLED", default="true"
+            )
+            or "true"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    COMMERCIAL_INTEGRATION_JOBS_POLL_SECONDS: float = float(
+        _get_env("COMMERCIAL_INTEGRATION_JOBS_POLL_SECONDS", default="60") or "60"
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
