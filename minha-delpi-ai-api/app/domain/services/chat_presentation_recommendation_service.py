@@ -122,7 +122,9 @@ class ChatPresentationRecommendationService:
             seen.add(token)
 
         if ideal and ideal != selected:
-            add(ideal, cls._reason_for_view(ideal, decision))
+            # Não sugerir gráfico quando a decisão Automático já fixou tabela (ex.: chartPolicy skip).
+            if not (selected == "table" and ideal in _CHART_SELECTED):
+                add(ideal, cls._reason_for_view(ideal, decision))
 
         if message and any(hint in message for hint in cls._efficiency_hints()):
             if selected in {"scatter", "chart", "bar_chart"}:
@@ -132,6 +134,7 @@ class ChatPresentationRecommendationService:
                 )
 
             if selected == "table" and ideal in {"", "table", "horizontal_bar"}:
+                # Só reforça barras se o usuário pediu eficiência/fabril explicitamente.
                 add(
                     "horizontal_bar",
                     reasons.get("efficiencyFactoryBars", ""),

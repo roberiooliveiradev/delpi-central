@@ -38,7 +38,22 @@ def infer_items_title(items: list, path: str) -> str | None:
                 "structure",
             )
 
-        if "branch" in first or "warehouse" in first:
+        if "warehouse" in first:
+            return ChatAssistantContentService.get(
+                "presenter_content",
+                "titlesByItemShape",
+                "stock",
+            )
+
+        stock_qty_keys = (
+            "available",
+            "committed",
+            "current_quantity",
+            "quantity_available",
+            "quantityOnHand",
+            "saldo",
+        )
+        if "branch" in first and any(key in first for key in stock_qty_keys):
             return ChatAssistantContentService.get(
                 "presenter_content",
                 "titlesByItemShape",
