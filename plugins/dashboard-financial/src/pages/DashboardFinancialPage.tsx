@@ -19,6 +19,9 @@ import { FinancialStatusAlerts } from "../components/FinancialStatusAlerts";
 import { ChartCard } from "../components/ChartCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { FINANCIAL_ROUTES } from "../constants/routes";
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
+import { FINANCIAL_SI_INDICATORS } from "../constants/siIndicatorIds";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import { useFinancialDashboard } from "../hooks/useFinancialDashboard";
 import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { formatPeriodLabel } from "../utils/dates";
@@ -27,6 +30,7 @@ import {
   formatDashboardMetricValue,
   formatKpiGoalExportFragments,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 import { formatBranchFilterLabel, resolveApiBranch } from "../utils/branchClientFilters";
 import {
@@ -86,6 +90,16 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
   const { rol, ebitda, fixedCost, pmr, ebitdaBranches, fixedCostBranches, pmrBranches, loading, refreshing, requestProgress, error, reload } =
     useFinancialDashboard(apiParams);
 
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores(
+    DASHBOARD_SI_DEPARTMENT_ID,
+    {
+      competence,
+      dateStart,
+      dateEnd,
+      branches,
+    },
+  );
+
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
@@ -126,6 +140,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
           realizedValue: ebitda?.ebitda_over_rol_pct,
           activeBranch: activeApiBranch,
           branches: ebitdaBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            FINANCIAL_SI_INDICATORS.ebitda,
+          ),
           ...dateOpts,
         },
       );
@@ -138,6 +156,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
           realizedValue: fixedCost?.fixed_cost_over_rol_pct,
           activeBranch: activeApiBranch,
           branches: fixedCostBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            FINANCIAL_SI_INDICATORS.fixedCost,
+          ),
           ...dateOpts,
         },
       );
@@ -145,6 +167,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         realizedValue: pmr?.pmr_days,
         activeBranch: activeApiBranch,
         branches: pmrBranches,
+        iddScoreLabel: pickSiIddScoreLabel(
+          siScoresById,
+          FINANCIAL_SI_INDICATORS.pmr,
+        ),
         ...dateOpts,
       });
 
@@ -199,6 +225,7 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       pmr,
       pmrBranches,
       rol,
+      siScoresById,
     ],
   );
 
@@ -284,6 +311,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
               branches: ebitdaBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                FINANCIAL_SI_INDICATORS.ebitda,
+              ),
             },
           )}
           icon={<Percent size={22} />}
@@ -307,6 +338,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
               branches: fixedCostBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                FINANCIAL_SI_INDICATORS.fixedCost,
+              ),
             },
           )}
           icon={<Landmark size={22} />}
@@ -322,6 +357,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
             branches: pmrBranches,
             dateStart,
             dateEnd,
+            iddScoreLabel: pickSiIddScoreLabel(
+              siScoresById,
+              FINANCIAL_SI_INDICATORS.pmr,
+            ),
           })}
           icon={<Clock size={22} />}
           loading={isBusy}
