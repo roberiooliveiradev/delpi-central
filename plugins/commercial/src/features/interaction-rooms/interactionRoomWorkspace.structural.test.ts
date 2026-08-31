@@ -25,6 +25,10 @@ describe("InteractionRoomWorkspace", () => {
     expect(workspace).toMatch(/roomConnectionErrorBanner/);
     expect(workspace).toMatch(/CommercialStateBanner/);
     expect(workspace).toMatch(/inbox-full/);
+    expect(workspace).toMatch(/transitionKey=\{/);
+    expect(workspace).toMatch(/roomId \? "split" : "inbox-full"/);
+    expect(workspace).not.toMatch(/split-\$\{roomId\}/);
+    expect(workspace).not.toMatch(/split-\$\{/);
     expect(app).toMatch(/InteractionRoomWorkspace/);
     expect(app).toMatch(/interaction_room_detail/);
     expect(thread).toMatch(/CommercialRoomConversationShell/);

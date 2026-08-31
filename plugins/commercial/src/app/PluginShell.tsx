@@ -347,6 +347,11 @@ export function PluginShell({
   /** Fill na lista e na thread — o scroll da inbox fica no painel, não na página. */
   const fillViewport =
     view === "interaction_rooms" || view === "interaction_room_detail";
+  /** Mesma key nas duas URLs da Sala — evita remount inbox↔detalhe. */
+  const contentTransitionKey =
+    view === "interaction_rooms" || view === "interaction_room_detail"
+      ? "interaction_rooms"
+      : view;
 
   return (
     <div
@@ -438,7 +443,7 @@ export function PluginShell({
           </CommercialViewTransition>
         ) : null}
 
-        <CommercialViewTransition transitionKey={view} tone="page">
+        <CommercialViewTransition transitionKey={contentTransitionKey} tone="page">
           {children}
         </CommercialViewTransition>
       </div>

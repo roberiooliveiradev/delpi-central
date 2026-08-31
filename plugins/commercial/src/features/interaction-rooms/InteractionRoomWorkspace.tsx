@@ -102,11 +102,7 @@ export function InteractionRoomWorkspace({
       <div className="cm-room-workspace__grid">
         <CommercialViewTransition
           transitionKey={
-            stacked
-              ? roomId ?? "inbox"
-              : roomId
-                ? `split-${roomId}`
-                : "inbox-full"
+            stacked ? (roomId ? "thread" : "inbox") : roomId ? "split" : "inbox-full"
           }
           tone="page"
         >
