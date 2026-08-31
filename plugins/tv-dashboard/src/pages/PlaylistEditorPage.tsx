@@ -106,6 +106,7 @@ import {
   resolveSelectedSlideId,
   writeSelectedSlideId,
 } from "../utils/deckSelectedSlidePreferences";
+import { resolvePresentationSyncFocusSlideId } from "../utils/presentationSyncFocusSlide";
 import {
   ensureFilmstripSlideInSelection,
   resolveFilmstripSlideSelection,
@@ -672,9 +673,12 @@ export function PlaylistEditorPage({
     onPresenceUpdate: handlePresenceUpdate,
     onSync: (event) => {
       // Sync canônico (WS presentation_updated) — inclui mutações do copiloto via CRUD.
-      void reloadPlaylistFromServer({ focusSlideId: event?.slideId ?? null }).then(() =>
-        deckHistory.handleRemoteUpdate(),
-      );
+      // Foco só em criação/import/duplicação — nunca em slide_updated (autosave do peer).
+      void reloadPlaylistFromServer({
+        focusSlideId: resolvePresentationSyncFocusSlideId(event, {
+          currentSlideId: selectedSlideIdRef.current,
+        }),
+      }).then(() => deckHistory.handleRemoteUpdate());
     },
     onSlideDraft: (event) => {
       applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);

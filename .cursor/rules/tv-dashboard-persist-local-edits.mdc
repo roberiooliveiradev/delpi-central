@@ -19,7 +19,7 @@ load/WS → applyServerPlaylistPreservingLocalEdits(remote + drafts + pending + 
 clear draft → só clearComunicadoSlideDraftIfCoveredBySave(completedVersion)
 ```
 
-Módulos: `comunicadoSlideDraftPreferences.ts`, `comunicadoSlideAutosave.ts`, `PlaylistEditorPage.tsx`.
+Módulos: `comunicadoSlideDraftPreferences.ts`, `comunicadoSlideAutosave.ts`, `presentationSyncFocusSlide.ts`, `PlaylistEditorPage.tsx`.
 
 ## Anti-padrões (proibido)
 
@@ -28,6 +28,7 @@ Módulos: `comunicadoSlideDraftPreferences.ts`, `comunicadoSlideAutosave.ts`, `P
 3. **`setRemoteConfigRevision` / forceAccept remoto** enquanto houver dirty local (`hasLocalComunicadoEdits`).
 4. **Flush no `pagehide`/`beforeunload` sem `keepalive`** — o browser pode matar o PATCH.
 5. **Autosave sem feedback** em falha 422/rede — o usuário acha que salvou; F5 regride.
+6. **`selectSlide` / `focusSlideId` em todo `presentation_updated` com `slideId`** — autosave do peer em outro slide rouba o foco. Usar `resolvePresentationSyncFocusSlideId` (só reasons de criação).
 
 ## O que fazer
 
