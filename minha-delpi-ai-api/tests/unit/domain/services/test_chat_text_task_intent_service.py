@@ -31,6 +31,16 @@ def test_yoy_period_compare_is_not_pure_text_task():
     assert ChatTextTaskIntentService.is_pure_text_task(message) is False
 
 
+def test_branch_compare_is_not_pure_text_task():
+    for message in (
+        "comparar filial 01 com filial 02",
+        "compara filail 01 vs filail 02",
+        "compara entre filiais 01 e 02",
+    ):
+        assert ChatTextTaskIntentService.classify(message) == "compare", message
+        assert ChatTextTaskIntentService.is_pure_text_task(message) is False, message
+
+
 def test_consulte_estoque_e_escreva_email_is_mixed():
     message = "consulte estoque do 10080001 e escreva um e-mail"
 

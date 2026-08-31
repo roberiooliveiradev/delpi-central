@@ -594,6 +594,14 @@ class ChatGroundedCapabilityPlanningService:
             if path_hit:
                 return path_hit
 
+        # Continuity: reexecuta a mesma rota da lastAction mesmo sem match no catálogo.
+        if target_path or target_operation or target_action_id:
+            return {
+                "actionId": target_action_id or None,
+                "path": target_path or None,
+                "operationId": target_operation or None,
+            }
+
         return None
 
     @classmethod

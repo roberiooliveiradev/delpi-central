@@ -159,7 +159,7 @@ class ChatTextTaskIntentService:
         "document": (r"\bcomunicado\b", r"\bprocedimento\b", r"\bmemorando\b"),
         "minutes": (r"\bata\b", r"\bata de reuni", r"\banotações em ata\b", r"\bnotas em ata\b"),
         "announcement": (r"\bcomunicado interno\b", r"\bcrise um comunicado\b", r"\bmonte um comunicado\b"),
-        "compare": (r"\bcompare\b", r"\bcomparar\b", r"\bqual está melhor\b", r"\bo que mudou\b"),
+        "compare": (r"\bcompare\b", r"\bcomparar\b", r"\bcompara\b", r"\bqual está melhor\b", r"\bo que mudou\b"),
         "organize": (r"\borganize\b", r"\borganizar\b", r"\bem tópicos\b", r"\bem topicos\b"),
         "simplify": (r"\bexplique de forma simples\b", r"\bsimplifique\b", r"\bdeixe fácil\b"),
     }
@@ -316,6 +316,7 @@ class ChatTextTaskIntentService:
             return False
 
         # «comparar com ano anterior / mesmo período» é slot operacional, não redação.
+        # «comparar filial 01 com 02» idem (compareAxis branch).
         if category == "compare":
             from app.domain.services.chat_follow_up_turn_content_service import (
                 ChatFollowUpTurnContentService,
@@ -326,6 +327,25 @@ class ChatTextTaskIntentService:
 
             norm = ChatMessageNormalizationService.normalize_for_matching(message) or ""
             if ChatFollowUpTurnContentService.period_slot_kind_for_message(norm):
+                return False
+            branch_codes = ChatFollowUpTurnContentService.extract_branch_codes(message)
+            if len(branch_codes) >= 2:
+                return False
+            hay = f" {norm} "
+            branch_compare_markers = (
+                " vs ",
+                " versus ",
+                " entre filiais",
+                " comparar filial",
+                " comparar filiais",
+                " compara filial",
+                " compara filiais",
+                " com a filial",
+                " com filial",
+            )
+            if any(marker in hay for marker in branch_compare_markers) and (
+                "filial" in norm or "filail" in norm or branch_codes
+            ):
                 return False
 
         if cls._is_linguistic_only_turn(normalized, category):
