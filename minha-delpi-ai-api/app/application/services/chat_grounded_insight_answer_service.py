@@ -103,6 +103,7 @@ class ChatGroundedInsightAnswerService:
             response_mode=response_mode,
             tool_context=tool_context,
             message=message,
+            workspace_context=workspace_context,
         ).strip()
 
         if facts:

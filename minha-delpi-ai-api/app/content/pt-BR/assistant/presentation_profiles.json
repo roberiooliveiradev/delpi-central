@@ -1265,7 +1265,8 @@
       "stackPlan": "default",
       "flags": [
         "sql"
-      ]
+      ],
+      "commentaryProfileKey": "generic_list"
     },
     "system": {
       "defaultViewPolicy": "generic",
@@ -1276,7 +1277,8 @@
       "stackPlan": "default",
       "flags": [
         "system"
-      ]
+      ],
+      "commentaryProfileKey": "generic_list"
     },
     "kpi_series": {
       "defaultViewPolicy": "kpi_when_available",
@@ -1310,7 +1312,8 @@
       "stackPlan": "default",
       "flags": [
         "kpi"
-      ]
+      ],
+      "commentaryProfileKey": "kpi_summary"
     },
     "kpi_dashboard": {
       "defaultViewPolicy": "generic",

@@ -260,11 +260,25 @@ class ChatDataInsightService:
         from app.domain.services.chat_humanized_data_response_content_service import (
             ChatHumanizedDataResponseContentService,
         )
+        from app.domain.services.chat_humanized_data_response_service import (
+            ChatHumanizedDataResponseService,
+        )
 
         rows = cls._resolve_rows(metadata, data)
 
         if rows is None:
-            return None
+            summary_highlights = cls._highlights_from_operational_summary(data)
+            if not summary_highlights:
+                return None
+            commentary = {
+                "profileKey": "kpi_summary",
+                "highlights": summary_highlights,
+                "summaryLines": summary_highlights[:4],
+            }
+            return ChatHumanizedDataResponseService.normalize(
+                commentary,
+                profile_key="kpi_summary",
+            )
 
         shape = ChatPresentationDataShapeAnalyzer.analyze(rows=rows)
         highlights: list[str] = []

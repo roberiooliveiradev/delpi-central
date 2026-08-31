@@ -24,6 +24,7 @@ class ChatOperationalLlmSynthesisContextService:
         response_mode: str | None = None,
         tool_context: dict[str, Any] | None = None,
         message: str | None = None,
+        workspace_context: dict[str, Any] | None = None,
     ) -> str:
         stage = cls._resolve_turn_grounding_stage(tool_context)
         ok_tool_count = cls._ok_external_action_count(tool_calls)
@@ -34,6 +35,12 @@ class ChatOperationalLlmSynthesisContextService:
             tool_calls,
             response_mode=response_mode,
             dedupe_by_product_profile=dedupe_product_profile,
+        )
+
+        session_addon = cls.build_session_context_addon(
+            workspace_context
+            if isinstance(workspace_context, dict)
+            else (tool_context if isinstance(tool_context, dict) else None)
         )
 
         merged_commentary = None
@@ -67,7 +74,7 @@ class ChatOperationalLlmSynthesisContextService:
             )
 
         if not lines:
-            return ""
+            return session_addon
 
         title = ChatOperationalLlmSynthesisContextContentService.title()
         body = "\n".join(f"- {line}" for line in lines)
@@ -85,6 +92,9 @@ class ChatOperationalLlmSynthesisContextService:
         else:
             trimmed = cls._trim_block(block, max_chars)
             result = f"\n\n{trimmed}" if trimmed else ""
+
+        if session_addon:
+            result = f"{session_addon}{result}" if result else session_addon
 
         if isinstance(tool_context, dict):
             tool_context["synthesisFactsBudgetChars"] = max_chars
@@ -391,6 +401,88 @@ class ChatOperationalLlmSynthesisContextService:
                 return metadata
 
         return None
+
+    @classmethod
+    def build_session_context_addon(
+        cls,
+        workspace_context: dict[str, Any] | None,
+    ) -> str:
+        if not isinstance(workspace_context, dict):
+            return ""
+
+        lines: list[str] = []
+        content = ChatOperationalLlmSynthesisContextContentService
+        memory = workspace_context.get("workingMemory")
+        memory = memory if isinstance(memory, dict) else {}
+
+        focus = workspace_context.get("operationalFocus")
+        if not isinstance(focus, dict):
+            focus = memory.get("operationalFocus")
+        if isinstance(focus, dict) and focus:
+            focus_bits = [
+                f"{key}={value}"
+                for key, value in focus.items()
+                if value
+                and key
+                in {
+                    "productCode",
+                    "branch",
+                    "periodLabel",
+                    "metric",
+                    "dateStart",
+                    "dateEnd",
+                }
+            ]
+            if focus_bits:
+                line = content.session_context_line(
+                    "operationalFocus",
+                    focus=", ".join(focus_bits),
+                )
+                if line:
+                    lines.append(line)
+
+        pending = workspace_context.get("activePending") or memory.get("activePending")
+        if isinstance(pending, dict) and pending.get("kind"):
+            line = content.session_context_line(
+                "activePending",
+                pending=str(pending.get("kind")),
+            )
+            if line:
+                lines.append(line)
+
+        last_action = memory.get("lastAction") or workspace_context.get("lastAction")
+        if isinstance(last_action, dict):
+            path = str(
+                last_action.get("path") or last_action.get("operationId") or ""
+            ).strip()
+            if path:
+                line = content.session_context_line("lastAction", lastAction=path)
+                if line:
+                    lines.append(line)
+
+        from app.application.services.chat_workspace_agent_activation_service import (
+            ChatWorkspaceAgentActivationService,
+        )
+
+        if ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            workspace_context
+        ):
+            cap = content.session_context_line("capabilityAgent")
+        else:
+            cap = content.session_context_line("capabilityCommon")
+        if cap:
+            lines.append(cap)
+
+        continuity = content.session_context_line("continuity")
+        if continuity:
+            lines.append(continuity)
+
+        if not lines:
+            return ""
+
+        title = content.session_context_title()
+        body = "\n".join(f"- {item}" for item in lines)
+        return f"\n\n{title}\n{body}"
 
     @classmethod
     def collect_fact_lines(

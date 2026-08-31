@@ -1,4 +1,19 @@
 {
+  "sessionContextTitle": "Contexto desta sessão:",
+  "sessionContextLines": {
+    "operationalFocus": "Foco operacional: {focus}",
+    "activePending": "Pedido pendente: {pending}",
+    "lastAction": "Última consulta: {lastAction}",
+    "capabilityCommon": "Chat comum: sem OpenAPI — oriente agente se faltar action; não invente KPI.",
+    "capabilityAgent": "Agente ativo: use apenas actions autorizadas desta sessão.",
+    "continuity": "Não peça de novo código, filial ou período já presentes no foco, pending ou última action."
+  },
+  "assertivenessDirectives": {
+    "unnecessary_code_request": "Não peça código de produto de novo — reutilize o contexto da sessão.",
+    "follow_up_without_entity_reuse": "Follow-up: reutilize entidades/slots já resolvidos (produto, filial, período).",
+    "period_reask": "Não peça período de novo se já estiver no lastAction ou pending resolvido.",
+    "default_low": "Priorize continuidade: use lastAction e foco operacional antes de pedir esclarecimento."
+  },
   "title": "Fatos já consultados:",
   "leakMarkers": [
     "não peça acesso",

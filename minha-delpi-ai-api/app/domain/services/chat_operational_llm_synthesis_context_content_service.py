@@ -90,6 +90,37 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def session_context_title(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "sessionContextTitle",
+                default="Contexto desta sessão:",
+            )
+            or ""
+        ).strip()
+
+    @classmethod
+    def session_context_line(cls, key: str, **kwargs: Any) -> str:
+        mapping = ChatAssistantContentService.get_mapping(_BUNDLE, "sessionContextLines")
+        template = str(mapping.get(key) or "").strip()
+        if not template:
+            return ""
+        try:
+            return template.format(**kwargs)
+        except (KeyError, ValueError):
+            return template
+
+    @classmethod
+    def assertiveness_directive(cls, flag: str | None) -> str:
+        mapping = ChatAssistantContentService.get_mapping(
+            _BUNDLE,
+            "assertivenessDirectives",
+        )
+        key = str(flag or "").strip() or "default_low"
+        return str(mapping.get(key) or mapping.get("default_low") or "").strip()
+
+    @classmethod
     def max_chars(cls) -> int:
         raw = ChatAssistantContentService.get(_BUNDLE, "maxChars", default="1200")
 

@@ -75,6 +75,16 @@ class ChatTurnPreparationMemoryContextService:
         memory_prompt = ChatConversationMemoryService.format_prompt_block(
             working_memory_snapshot
         )
+        from app.domain.services.chat_context_assertiveness_directive_service import (
+            ChatContextAssertivenessDirectiveService,
+        )
+
+        assertiveness_addon = ChatContextAssertivenessDirectiveService.build_prompt_addon(
+            history_source
+        )
+        if assertiveness_addon:
+            memory_prompt = f"{memory_prompt}{assertiveness_addon}".strip()
+
         base_conversation_context = (
             ChatIntelligencePipelineService.build_conversation_context(history_source)
             if history_source
