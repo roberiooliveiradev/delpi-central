@@ -167,6 +167,22 @@ async def test_suggest_evidence_tags_from_image_returns_meta(mock_ocr) -> None:
 
 
 @patch(f"{_PAC_R}.get_current_user", return_value=MagicMock(id="u1", name="User"))
+@patch(f"{_PAC_R}.build_delete_quality_action_plan_use_case")
+def test_delete_quality_action_plan_returns_meta(mock_build, _user) -> None:
+    from app.interface.http.routes.quality.action_plans_read_router import (
+        delete_action_plan,
+    )
+
+    mock_build.return_value = MagicMock(
+        execute=MagicMock(return_value={"id": "plan-1", "code": "PAC-2026-0001", "deleted": True})
+    )
+    response = delete_action_plan("plan-1")
+    body = body_json(response)
+    assert_envelope_meta(body, operation_id="delete_quality_action_plan")
+    assert body["data"]["deleted"] is True
+
+
+@patch(f"{_PAC_R}.get_current_user", return_value=MagicMock(id="u1", name="User"))
 @patch(f"{_PAC_R}.build_delete_plan_action_use_case")
 def test_delete_plan_action_returns_meta(mock_build, _user) -> None:
     from app.interface.http.routes.quality.action_plans_read_router import (

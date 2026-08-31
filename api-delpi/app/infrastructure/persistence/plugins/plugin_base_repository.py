@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 from contextlib import contextmanager
-from typing import Any, Iterator, Iterable
+from typing import Any, Callable, Iterator, Iterable, TypeVar
 
 from psycopg import Connection
 from psycopg.errors import UndefinedColumn, UndefinedTable
@@ -31,6 +32,31 @@ class PluginsRepositoryError(RuntimeError):
 
 class PluginsSchemaOutdatedError(PluginsRepositoryError):
     """Código espera colunas/tabelas que as migrations ainda não aplicaram."""
+
+
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
+def plugins_unit_of_work(method: _F) -> _F:
+    """Mantém um lease único durante writes multi-statement.
+
+    ``execute(auto_commit=False)`` sem lease externo devolve a conexão ao
+    pool, que faz ``rollback()`` — o ``commit()`` posterior não persiste e a
+    API pode devolver sucesso. O padrão explícito equivalente é
+    ``with self.db():`` (LNF, Auditoria 5S, Kaizen).
+    """
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if getattr(self, "_injected_connection", None) is not None:
+            return method(self, *args, **kwargs)
+        if current_plugins_lease() is not None:
+            return method(self, *args, **kwargs)
+        with self.db():
+            return method(self, *args, **kwargs)
+
+    wrapper.__plugins_unit_of_work__ = True  # type: ignore[attr-defined]
+    return wrapper  # type: ignore[return-value]
 
 
 def wrap_plugins_db_error(operation: str, exc: BaseException) -> PluginsRepositoryError:
@@ -137,6 +163,10 @@ class PluginBaseRepository:
         *,
         auto_commit: bool = True,
     ) -> None:
+        """Executa SQL. ``auto_commit=False`` exige lease externo
+        (``with self.db():`` / ``@plugins_unit_of_work``); sem isso o pool
+        faz rollback ao devolver a conexão.
+        """
         try:
             with self.db() as connection:
                 with connection.cursor() as cursor:

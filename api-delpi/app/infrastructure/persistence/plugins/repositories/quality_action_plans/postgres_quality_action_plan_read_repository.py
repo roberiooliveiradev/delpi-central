@@ -38,6 +38,7 @@ from app.infrastructure.persistence.plugins.repositories.quality_action_plans.qu
 )
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
+    plugins_unit_of_work,
     PluginsRepositoryError,
 )
 
@@ -1680,6 +1681,7 @@ class PostgresQualityActionPlanRepository(
         padded = str(int(row["current_value"])).zfill(int(row["padding_length"]))
         return f"{row['prefix']}-{year}-{padded}"
 
+    @plugins_unit_of_work
     def create_plan(self, fields: dict[str, Any]) -> dict[str, Any]:
         code = self.next_plan_code()
         row = self.execute_returning_one(
@@ -1787,6 +1789,7 @@ class PostgresQualityActionPlanRepository(
             raise PluginsRepositoryError("Plano criado mas não encontrado após persistência.")
         return plan
 
+    @plugins_unit_of_work
     def update_plan(self, plan_id: str, fields: dict[str, Any]) -> dict[str, Any] | None:
         resolved = self._coerce_plan_id(plan_id)
         if not resolved:
@@ -1898,6 +1901,7 @@ class PostgresQualityActionPlanRepository(
         )
         return serialize_plan_row(row) if row else None
 
+    @plugins_unit_of_work
     def update_plan_status(
         self,
         plan_id: str,
@@ -1972,6 +1976,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return self.get_plan_by_id(resolved)
 
+    @plugins_unit_of_work
     def reopen_plan(
         self,
         plan_id: str,
@@ -2048,6 +2053,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return self.get_plan_by_id(resolved)
 
+    @plugins_unit_of_work
     def delete_plan(
         self,
         plan_id: str,
@@ -2066,6 +2072,8 @@ class PostgresQualityActionPlanRepository(
         code = current.get("code")
         title = current.get("title")
 
+        # Lease via @plugins_unit_of_work: sem isso o pool faz rollback entre
+        # cada execute(auto_commit=False) e a API devolve deleted=true sem persistir.
         self.execute(
             """
             UPDATE quality.quality_problem_evidences
@@ -2468,6 +2476,7 @@ class PostgresQualityActionPlanRepository(
             if row
         ]
 
+    @plugins_unit_of_work
     def upsert_ishikawa(
         self,
         plan_id: str,
@@ -2530,6 +2539,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return serialize_ishikawa_row(row)
 
+    @plugins_unit_of_work
     def upsert_five_whys(
         self,
         plan_id: str,
@@ -2598,6 +2608,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return serialize_five_whys_row(row)
 
+    @plugins_unit_of_work
     def create_actions(
         self,
         plan_id: str,
@@ -2685,6 +2696,7 @@ class PostgresQualityActionPlanRepository(
             )
         )
 
+    @plugins_unit_of_work
     def update_action(
         self,
         plan_id: str,
@@ -2797,6 +2809,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return self.get_action(plan_id, action_id)
 
+    @plugins_unit_of_work
     def delete_action(
         self,
         plan_id: str,
@@ -2849,6 +2862,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return {"id": str(action_id), "deleted": True}
 
+    @plugins_unit_of_work
     def submit_effectiveness_review(
         self,
         plan_id: str,
@@ -2924,6 +2938,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return self.get_plan_by_id(plan_id)
 
+    @plugins_unit_of_work
     def approve_effectiveness_review(
         self,
         plan_id: str,
@@ -2993,6 +3008,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return self.get_plan_by_id(plan_id)
 
+    @plugins_unit_of_work
     def reject_effectiveness_review(
         self,
         plan_id: str,
@@ -3104,6 +3120,7 @@ class PostgresQualityActionPlanRepository(
             },
         }
 
+    @plugins_unit_of_work
     def record_effectiveness_review(
         self,
         plan_id: str,
@@ -3169,6 +3186,7 @@ class PostgresQualityActionPlanRepository(
         self.commit()
         return self.get_plan_by_id(plan_id)
 
+    @plugins_unit_of_work
     def upsert_rnc_8d_report(
         self,
         plan_id: str,

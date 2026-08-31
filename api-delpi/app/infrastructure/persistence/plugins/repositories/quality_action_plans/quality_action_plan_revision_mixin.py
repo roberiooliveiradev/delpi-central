@@ -22,7 +22,10 @@ from app.domain.services.quality_action_plans.pac_plan_revision_snapshot_service
     validate_snapshot,
 )
 from app.domain.services.quality_action_plans.quality_action_plan_serialization import serialize_row
-from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
+from app.infrastructure.persistence.plugins.plugin_base_repository import (
+    PluginsRepositoryError,
+    plugins_unit_of_work,
+)
 
 
 class QualityActionPlanRevisionMixin:
@@ -474,6 +477,7 @@ class QualityActionPlanRevisionMixin:
                 auto_commit=auto_commit,
             )
 
+    @plugins_unit_of_work
     def restore_plan_revision(
         self,
         plan_id: str,
