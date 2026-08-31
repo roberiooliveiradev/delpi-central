@@ -395,6 +395,18 @@
         }
       }
     },
+    "customer_code_stores": {
+      "locale": {
+        "en": {
+          "label": "Customer code and store pairs",
+          "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05)."
+        },
+        "pt-BR": {
+          "label": "Pares cliente|loja",
+          "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05)."
+        }
+      }
+    },
     "customer_names": {
       "locale": {
         "en": {

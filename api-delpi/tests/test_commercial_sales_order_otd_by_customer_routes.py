@@ -212,3 +212,38 @@ def test_get_sales_order_otd_series_by_customer_returns_meta(mock_build) -> None
     )
     assert payload["data"]["items"][0]["periodo"]
     assert payload["data"]["items"][0]["otd_pct"] == 50.0
+
+
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_by_customer_use_case")
+def test_get_sales_order_otd_by_customer_parses_code_stores(mock_build) -> None:
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "start_date": "2026-06-01",
+        "end_date": "2026-06-30",
+        "branch": None,
+        "items": [],
+        "pagination": {"page": 1, "page_size": 50, "total": 0, "has_more": False},
+        "summary": {"items_count": 0, "customers_count": 0},
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd_by_customer(
+        branch=None,
+        start_date="2026-06-01",
+        end_date="2026-06-30",
+        customer_segment=None,
+        customer_codes="000001",
+        customer_code_stores="000001|01,000001|05",
+        customer_names=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+        page=1,
+        page_size=50,
+    )
+    payload = body_json(response)
+    assert payload["success"] is True
+    req = use_case.execute.call_args.args[0]
+    assert req.customer_codes == ["000001"]
+    assert req.customer_code_stores == [("000001", "01"), ("000001", "05")]

@@ -113,6 +113,7 @@ def build_sales_order_otd_filters(
     end_date: Optional[str],
     customer_segment: Optional[str],
     customer_codes: Optional[list[str]] = None,
+    customer_code_stores: Optional[list[tuple[str, str]]] = None,
     customer_names: Optional[list[str]] = None,
     exclude_customer_codes: Optional[list[str]] = None,
     exclude_customer_names: Optional[list[str]] = None,
@@ -143,8 +144,10 @@ def build_sales_order_otd_filters(
         qb,
         customer_code_column="C5.C5_CLIENTE",
         customer_name_column="SA1.A1_NOME",
+        customer_store_column="C5.C5_LOJACLI",
         customer_segment=customer_segment,
         customer_codes=customer_codes,
+        customer_code_stores=customer_code_stores,
         customer_names=customer_names,
         exclude_customer_codes=exclude_customer_codes,
         exclude_customer_names=exclude_customer_names,
@@ -575,6 +578,7 @@ def build_sales_order_otd_line_detail_where(
     end_date: Optional[str],
     customer_segment: Optional[str],
     customer_codes: Optional[list[str]] = None,
+    customer_code_stores: Optional[list[tuple[str, str]]] = None,
 ) -> Tuple[str, tuple]:
     where_clause, where_params = build_sales_order_otd_filters(
         branch=branch,
@@ -582,6 +586,7 @@ def build_sales_order_otd_line_detail_where(
         end_date=end_date,
         customer_segment=customer_segment,
         customer_codes=customer_codes,
+        customer_code_stores=customer_code_stores,
     )
     where_clause = (
         f"{where_clause} "

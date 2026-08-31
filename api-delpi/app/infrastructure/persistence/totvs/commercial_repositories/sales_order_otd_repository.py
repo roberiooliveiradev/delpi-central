@@ -62,6 +62,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             "end_date": getattr(request, "end_date", None),
             "customer_segment": getattr(request, "customer_segment", None),
             "customer_codes": getattr(request, "customer_codes", None),
+            "customer_code_stores": getattr(request, "customer_code_stores", None),
             "customer_names": getattr(request, "customer_names", None),
             "exclude_customer_codes": getattr(request, "exclude_customer_codes", None),
             "exclude_customer_names": getattr(request, "exclude_customer_names", None),
@@ -162,14 +163,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
     ) -> Page[dict]:
         paging = paginate(request.page, request.page_size)
         where_clause, where_params = build_sales_order_otd_filters(
-            branch=request.branch,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            customer_segment=request.customer_segment,
-            customer_codes=request.customer_codes,
-            customer_names=getattr(request, "customer_names", None),
-            exclude_customer_codes=getattr(request, "exclude_customer_codes", None),
-            exclude_customer_names=getattr(request, "exclude_customer_names", None),
+            **self._filter_kwargs(request),
         )
         search_params = sales_order_otd_search_params(request.search)
 
@@ -215,14 +209,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
         request: GetSalesOrderOtdPanelRequest,
     ) -> dict:
         where_clause, where_params = build_sales_order_otd_filters(
-            branch=request.branch,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            customer_segment=request.customer_segment,
-            customer_codes=request.customer_codes,
-            customer_names=getattr(request, "customer_names", None),
-            exclude_customer_codes=getattr(request, "exclude_customer_codes", None),
-            exclude_customer_names=getattr(request, "exclude_customer_names", None),
+            **self._filter_kwargs(request),
         )
         sql, _ = build_sales_order_otd_late_days_stats_sql(
             where_clause=where_clause,
@@ -245,14 +232,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
         request: GetSalesOrderOtdPanelRequest,
     ) -> dict:
         where_clause, where_params = build_sales_order_otd_filters(
-            branch=request.branch,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            customer_segment=request.customer_segment,
-            customer_codes=request.customer_codes,
-            customer_names=getattr(request, "customer_names", None),
-            exclude_customer_codes=getattr(request, "exclude_customer_codes", None),
-            exclude_customer_names=getattr(request, "exclude_customer_names", None),
+            **self._filter_kwargs(request),
         )
         params = compose_sales_order_otd_lines_params(
             where_params=where_params,
@@ -292,6 +272,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             end_date=request.end_date,
             customer_segment=request.customer_segment,
             customer_codes=request.customer_codes,
+            customer_code_stores=getattr(request, "customer_code_stores", None),
         )
         sql = build_sales_order_otd_line_detail_sql(where_clause=where_clause)
         params = compose_sales_order_otd_lines_params(

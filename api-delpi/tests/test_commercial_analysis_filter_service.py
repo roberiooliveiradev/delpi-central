@@ -104,6 +104,30 @@ def test_analysis_filter_include_codes_or_names():
     assert list(params) == ["001", "%schulz%"]
 
 
+def test_analysis_filter_codes_and_code_stores():
+    qb = QueryBuilder()
+    CommercialAnalysisFilterService.apply_to_query_builder(
+        qb,
+        customer_code_column="C5.C5_CLIENTE",
+        customer_name_column="A1.A1_NOME",
+        customer_store_column="C5.C5_LOJACLI",
+        customer_codes=["000001"],
+        customer_code_stores=[("000001", "01"), ("000001", "05")],
+    )
+    where, params = qb.build()
+    assert "C5.C5_CLIENTE IN" in where
+    assert "C5.C5_LOJACLI = ?" in where
+    assert " AND " in where
+    assert list(params) == ["000001", "000001", "01", "000001", "05"]
+
+
+def test_analysis_filter_request_has_include_with_code_stores():
+    req = CommercialAnalysisFilterRequest(
+        customer_code_stores=[("000001", "01")],
+    )
+    assert req.has_include_customer_filter() is True
+
+
 def test_analysis_filter_exclude_wins_after_include():
     qb = QueryBuilder()
     CommercialAnalysisFilterService.apply_to_query_builder(

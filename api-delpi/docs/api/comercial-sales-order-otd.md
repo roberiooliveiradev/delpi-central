@@ -26,6 +26,9 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `start_date` / `end_date` | Filtra linhas pela **data prometida** (`C6_ENTREG`). |
 | `branch` | Filial TOTVS (`01`, `02`, …). |
 | `customer_segment` | `weg` (cliente `000001`) ou `new_business` (demais clientes). |
+| `customer_codes` | CSV de códigos TOTVS a incluir (todas as lojas do código). |
+| `customer_code_stores` | CSV de pares `codigo\|loja` (ex.: `000001\|01,000001\|05`). **AND** com `customer_codes` quando ambos vêm. |
+| `customer_names` / `exclude_customer_*` | Include/exclude por nome (LIKE) ou código. |
 | `status` (panel) | `on_time` \| `late` (opcional). |
 | `search` (panel) | Busca em pedido, cliente (código/nome), produto (código/descrição). |
 | `page` / `page_size` | Paginação server-side (default page_size 20, máx. 1000). |

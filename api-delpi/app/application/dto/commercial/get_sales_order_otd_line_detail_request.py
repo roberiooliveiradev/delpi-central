@@ -11,3 +11,4 @@ class GetSalesOrderOtdLineDetailRequest:
     end_date: Optional[str] = None
     customer_segment: Optional[str] = None
     customer_codes: Optional[list[str]] = None
+    customer_code_stores: Optional[list[tuple[str, str]]] = None

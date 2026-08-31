@@ -81,6 +81,10 @@ def commercial_sales_order_otd_series_cache_key(
             request.branch or "",
             request.customer_segment or "",
             ",".join(getattr(request, "customer_codes", None) or []),
+            ",".join(
+                f"{code}|{store}"
+                for code, store in (getattr(request, "customer_code_stores", None) or [])
+            ),
             ",".join(getattr(request, "customer_names", None) or []),
             ",".join(getattr(request, "exclude_customer_codes", None) or []),
             ",".join(getattr(request, "exclude_customer_names", None) or []),
@@ -100,6 +104,9 @@ def commercial_sales_order_otd_series_by_customer_cache_key(
             request.branch or "",
             request.customer_segment or "",
             ",".join(request.customer_codes or []),
+            ",".join(
+                f"{code}|{store}" for code, store in (request.customer_code_stores or [])
+            ),
             ",".join(request.customer_names or []),
             ",".join(request.exclude_customer_codes or []),
             ",".join(request.exclude_customer_names or []),

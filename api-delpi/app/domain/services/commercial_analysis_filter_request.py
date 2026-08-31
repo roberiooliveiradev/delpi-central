@@ -19,6 +19,7 @@ class CommercialAnalysisFilterRequest:
     branch: Optional[str] = None
     customer_segment: Optional[str] = None
     customer_codes: Optional[list[str]] = None
+    customer_code_stores: Optional[list[tuple[str, str]]] = None
     customer_names: Optional[list[str]] = None
     exclude_customer_codes: Optional[list[str]] = None
     exclude_customer_names: Optional[list[str]] = None
@@ -73,4 +74,8 @@ class CommercialAnalysisFilterRequest:
         return bool(self.customer_names) or bool(self.exclude_customer_names)
 
     def has_include_customer_filter(self) -> bool:
-        return self.customer_codes is not None or self.customer_names is not None
+        return (
+            self.customer_codes is not None
+            or self.customer_names is not None
+            or self.customer_code_stores is not None
+        )

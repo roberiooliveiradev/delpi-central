@@ -20,6 +20,10 @@ class GetSalesOrderOtdPanelUseCase:
             end_date=request.end_date,
             customer_segment=request.customer_segment,
             customer_codes=request.customer_codes,
+            customer_code_stores=request.customer_code_stores,
+            customer_names=request.customer_names,
+            exclude_customer_codes=request.exclude_customer_codes,
+            exclude_customer_names=request.exclude_customer_names,
         )
         indicator = self._sales_order_otd_repository.get_sales_order_otd(summary_request)
         lines_page = self._sales_order_otd_repository.list_sales_order_otd_lines(request)

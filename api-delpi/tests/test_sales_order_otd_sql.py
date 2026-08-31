@@ -110,6 +110,33 @@ def test_build_sales_order_otd_filters_keeps_concrete_branch() -> None:
     assert "01" in params
 
 
+def test_build_sales_order_otd_filters_applies_customer_code_stores() -> None:
+    where_clause, params = build_sales_order_otd_filters(
+        branch=None,
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+        customer_segment=None,
+        customer_codes=["000001"],
+        customer_code_stores=[("000001", "01"), ("000001", "05")],
+    )
+    assert "C5.C5_CLIENTE IN" in where_clause
+    assert "C5.C5_LOJACLI = ?" in where_clause
+    assert "01" in params
+    assert "05" in params
+    assert params.count("000001") >= 3
+
+
+def test_build_sales_order_otd_filters_without_pairs_omits_loja_predicate() -> None:
+    where_clause, _ = build_sales_order_otd_filters(
+        branch="02",
+        start_date="2026-08-01",
+        end_date="2026-08-14",
+        customer_segment=None,
+        customer_codes=["000001"],
+    )
+    assert "C5.C5_LOJACLI" not in where_clause
+
+
 def test_build_sales_order_otd_sql_classifies_invoiced_and_open_lines() -> None:
     sql, params = build_sales_order_otd_sql(
         where_clause="1=1",

@@ -99,6 +99,7 @@ from app.composition.engineering_composer import (
 )
 from app.interface.http.routes.commercial.commercial_route_helpers import (
     build_get_commercial_proposal_request,
+    parse_customer_code_stores,
     parse_customer_codes,
     parse_customer_names,
     parse_customer_segment,
@@ -983,6 +984,10 @@ def get_sales_order_otd_by_customer(
     customer_codes: Optional[str] = Query(
         None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
     ),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
@@ -1002,6 +1007,7 @@ def get_sales_order_otd_by_customer(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),
@@ -1044,6 +1050,10 @@ def get_sales_order_otd_by_branch(
     customer_codes: Optional[str] = Query(
         None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
     ),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
@@ -1060,6 +1070,7 @@ def get_sales_order_otd_by_branch(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),
@@ -1103,6 +1114,10 @@ def get_sales_order_otd_series(
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
     exclude_customer_codes: Optional[str] = Query(
         None, description="Comma-separated TOTVS customer codes to exclude."
     ),
@@ -1118,6 +1133,7 @@ def get_sales_order_otd_series(
             branch=branch,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),
@@ -1162,6 +1178,10 @@ def get_sales_order_otd_series_by_customer(
     customer_codes: Optional[str] = Query(
         None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."
     ),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
@@ -1177,7 +1197,7 @@ def get_sales_order_otd_series_by_customer(
         DEFAULT_TOP_CUSTOMERS,
         ge=1,
         le=MAX_TOP_CUSTOMERS,
-        description="Max customers by total_qty when no customer_codes/names filter.",
+        description="Max customers by total_qty when no customer_codes/names/code_stores filter.",
     ),
 ):
     try:
@@ -1188,6 +1208,7 @@ def get_sales_order_otd_series_by_customer(
             branch=branch,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),
@@ -1235,6 +1256,10 @@ def get_sales_order_otd_panel(
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
     exclude_customer_codes: Optional[str] = Query(
         None, description="Comma-separated TOTVS customer codes to exclude."
     ),
@@ -1261,6 +1286,7 @@ def get_sales_order_otd_panel(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),
@@ -1316,6 +1342,10 @@ def get_sales_order_otd_line_detail(
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
 ):
     try:
         use_case = build_get_sales_order_otd_line_detail_use_case()
@@ -1328,6 +1358,7 @@ def get_sales_order_otd_line_detail(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
         )
 
         result = use_case.execute(request)
@@ -1369,6 +1400,10 @@ def get_sales_order_otd_summary(
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
     exclude_customer_codes: Optional[str] = Query(
         None, description="Comma-separated TOTVS customer codes to exclude."
     ),
@@ -1385,6 +1420,7 @@ def get_sales_order_otd_summary(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),
@@ -1434,6 +1470,10 @@ def get_sales_order_otd(
     customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to include (partial match, LIKE)."
     ),
+    customer_code_stores: Optional[str] = Query(
+        None,
+        description="CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+    ),
     exclude_customer_codes: Optional[str] = Query(
         None, description="Comma-separated TOTVS customer codes to exclude."
     ),
@@ -1450,6 +1490,7 @@ def get_sales_order_otd(
             end_date=end_date,
             customer_segment=parse_customer_segment(customer_segment),
             customer_codes=parse_customer_codes(customer_codes),
+            customer_code_stores=parse_customer_code_stores(customer_code_stores),
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),

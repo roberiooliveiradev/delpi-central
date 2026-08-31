@@ -71,6 +71,7 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
                         end_date=bucket.end_date,
                         customer_segment=request.customer_segment,
                         customer_codes=customer_codes,
+                        customer_code_stores=request.customer_code_stores,
                         customer_names=customer_names,
                         exclude_customer_codes=request.exclude_customer_codes,
                         exclude_customer_names=request.exclude_customer_names,
@@ -148,8 +149,11 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
         start_iso: Optional[str],
         end_iso: Optional[str],
     ) -> tuple[Optional[list[str]], Optional[list[str]]]:
-        if request.customer_codes:
-            return list(request.customer_codes), request.customer_names
+        if request.customer_codes or request.customer_code_stores:
+            return (
+                list(request.customer_codes) if request.customer_codes else None,
+                request.customer_names,
+            )
         if request.customer_names:
             return None, list(request.customer_names)
 
@@ -160,6 +164,7 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
                 end_date=end_iso,
                 customer_segment=request.customer_segment,
                 customer_codes=None,
+                customer_code_stores=None,
                 customer_names=None,
                 exclude_customer_codes=request.exclude_customer_codes,
                 exclude_customer_names=request.exclude_customer_names,
