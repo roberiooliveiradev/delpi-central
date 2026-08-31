@@ -337,3 +337,49 @@ export async function fetchDepartmentIdd(params: {
   const data = unwrapEnvelope(response, "Erro ao consultar IDD departamental");
   return data.item ?? null;
 }
+
+export type DepartmentIndicatorScoreItem = {
+  indicator_id?: string | null;
+  score?: number | null;
+  name?: string | null;
+};
+
+export type DepartmentIndicatorsItem = {
+  department_id: string;
+  department_name?: string | null;
+  score?: number | null;
+  idd?: number | null;
+  classification?: string | null;
+  indicators?: DepartmentIndicatorScoreItem[] | null;
+  partial_success?: boolean;
+};
+
+type DepartmentIndicatorsResponse = {
+  item: DepartmentIndicatorsItem | null;
+};
+
+export async function fetchDepartmentIndicators(params: {
+  departmentId?: string;
+  competence?: string;
+  startDate?: string;
+  endDate?: string;
+  branch?: string;
+  signal?: AbortSignal;
+}): Promise<DepartmentIndicatorsItem | null> {
+  const searchParams = new URLSearchParams();
+  searchParams.set("department_id", params.departmentId ?? "commercial");
+  if (params.competence) searchParams.set("competence", params.competence);
+  if (params.startDate) searchParams.set("start_date", params.startDate);
+  if (params.endDate) searchParams.set("end_date", params.endDate);
+  if (params.branch) searchParams.set("branch", params.branch);
+  const query = searchParams.toString();
+  const response = await httpGet<ApiSuccessResponse<DepartmentIndicatorsResponse>>(
+    `${commercialApiUrl(`${ANALYTICS_PATH}/department-indicators`)}?${query}`,
+    { signal: params.signal },
+  );
+  const data = unwrapEnvelope(
+    response,
+    "Erro ao consultar indicadores departamentais",
+  );
+  return data.item ?? null;
+}

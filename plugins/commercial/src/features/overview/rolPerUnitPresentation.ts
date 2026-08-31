@@ -83,10 +83,13 @@ export function buildRolPerUnitKpiView(
     periodKindBadge?: PeriodKindChip | null;
     dateStart?: string | null;
     dateEnd?: string | null;
+    /** Nota IDD canônica do SI (`indicators[].score`). */
+    iddScoreLabel?: string | null;
   },
 ): RolPerUnitKpiView {
   const branch = (activeBranch ?? "").trim();
   const periodKindBadge = options?.periodKindBadge ?? null;
+  const siIddScoreLabel = options?.iddScoreLabel;
 
   if (branch === "01" || branch === "02") {
     const data = branch === "01" ? filial01 : filial02;
@@ -94,6 +97,7 @@ export function buildRolPerUnitKpiView(
       realizedValue: data?.rol,
       dateStart: options?.dateStart,
       dateEnd: options?.dateEnd,
+      iddScoreLabel: siIddScoreLabel,
     });
     return {
       ...single,
@@ -125,10 +129,13 @@ export function buildRolPerUnitKpiView(
     goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
     goalPerformanceBadge: null,
     goalPerformanceBadges: [],
-    iddScoreLabel: resolveConsolidatedIddScoreLabel([
-      { realized: filial01?.rol, goal: filial01 },
-      { realized: filial02?.rol, goal: filial02 },
-    ]),
+    iddScoreLabel:
+      siIddScoreLabel !== undefined
+        ? siIddScoreLabel
+        : resolveConsolidatedIddScoreLabel([
+            { realized: filial01?.rol, goal: filial01 },
+            { realized: filial02?.rol, goal: filial02 },
+          ]),
     periodKindBadge,
   };
 }

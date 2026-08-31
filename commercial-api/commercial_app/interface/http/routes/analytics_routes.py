@@ -530,6 +530,48 @@ def bff_department_idd(
         return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
 
 
+@router.get(
+    "/department-indicators",
+    operation_id="bff_get_dashboard_department_indicators",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_department_indicators(
+    request: Request,
+    department_id: str = Query(default="commercial"),
+    competence: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+):
+    """Indicadores + scores SI — sem filtro de carteira; período/unidade no SI."""
+    operation_id = "bff_get_dashboard_department_indicators"
+    try:
+        params: dict[str, Any] = {"department_id": department_id}
+        if competence:
+            params["competence"] = competence
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+        if branch:
+            params["branch"] = branch
+        payload = (
+            build_delpi_commercial_gateway().get_dashboard_department_indicators(
+                params=params
+            )
+        )
+        return ok(
+            unwrap_gateway_data(payload),
+            message="Indicadores departamentais carregados.",
+            operation_id=operation_id,
+        )
+    except RuntimeError as exc:
+        return fail(str(exc), 502, operation_id=operation_id)
+    except Exception:
+        logger.exception("%s_failed", operation_id)
+        return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
+
+
 @router.get("/closing-rate", operation_id="bff_get_closing_rate")
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
 def bff_closing_rate(

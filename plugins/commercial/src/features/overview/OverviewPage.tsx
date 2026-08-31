@@ -44,8 +44,11 @@ import { resolveOverviewGapToTarget } from "./gapToTarget";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
+  pickSiIddScoreLabel,
 } from "./goalDisplay";
 import { buildRolPerUnitKpiView } from "./rolPerUnitPresentation";
+import { COMMERCIAL_SI_INDICATOR_IDS } from "./siIndicatorIds";
+import { useDepartmentIndicatorScores } from "./useDepartmentIndicatorScores";
 
 const HORIZON_BUCKET_LABELS: Record<string, string> = {
   overdue: "Atrasado",
@@ -76,6 +79,12 @@ type OverviewPageProps = {
 export function OverviewPage({ basePath }: OverviewPageProps) {
   const filters = useAnalyticsFilters();
   const dashboard = useAnalyticsDashboard(filters.apiParams);
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("commercial", {
+    competence: filters.competence,
+    dateStart: filters.dateStart,
+    dateEnd: filters.dateEnd,
+    branches: filters.branches,
+  });
   const copy = ANALYTICS_CONTENT.overview;
   const activeBranch = filters.apiParams.branch;
   const periodLabel = formatPeriodLabel(filters.dateStart, filters.dateEnd);
@@ -126,7 +135,13 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         contextBase,
         formatCurrency,
         activeBranch,
-        rolPresentationOptions,
+        {
+          ...rolPresentationOptions,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.rol,
+          ),
+        },
       ),
     [
       activeBranch,
@@ -134,6 +149,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       dashboard.branchRol,
       dashboard.headOfficeRol,
       rolPresentationOptions,
+      siScoresById,
     ],
   );
 
@@ -145,7 +161,13 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         `${contextBase} · WEG`,
         formatCurrency,
         activeBranch,
-        rolPresentationOptions,
+        {
+          ...rolPresentationOptions,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.rolWeg,
+          ),
+        },
       ),
     [
       activeBranch,
@@ -153,6 +175,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       dashboard.branchWegRol,
       dashboard.headOfficeWegRol,
       rolPresentationOptions,
+      siScoresById,
     ],
   );
 
@@ -164,7 +187,13 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         `${contextBase} · Novos negócios`,
         formatCurrency,
         activeBranch,
-        rolPresentationOptions,
+        {
+          ...rolPresentationOptions,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.rolNewBusiness,
+          ),
+        },
       ),
     [
       activeBranch,
@@ -172,6 +201,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       dashboard.branchNewBusinessRol,
       dashboard.headOfficeNewBusinessRol,
       rolPresentationOptions,
+      siScoresById,
     ],
   );
 
@@ -317,6 +347,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   branches: dashboard.salesOrderOtdBranches,
                   dateStart: filters.dateStart,
                   dateEnd: filters.dateEnd,
+                  iddScoreLabel: pickSiIddScoreLabel(
+                    siScoresById,
+                    COMMERCIAL_SI_INDICATOR_IDS.salesOrderOtd,
+                  ),
                 },
               )}
               periodKindBadge={periodKindBadge}
@@ -397,6 +431,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   branches: dashboard.closingRateBranches,
                   dateStart: filters.dateStart,
                   dateEnd: filters.dateEnd,
+                  iddScoreLabel: pickSiIddScoreLabel(
+                    siScoresById,
+                    COMMERCIAL_SI_INDICATOR_IDS.closingRate,
+                  ),
                 },
               )}
               periodKindBadge={periodKindBadge}
@@ -419,6 +457,10 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   branches: dashboard.newBusinessRolBranches,
                   dateStart: filters.dateStart,
                   dateEnd: filters.dateEnd,
+                  iddScoreLabel: pickSiIddScoreLabel(
+                    siScoresById,
+                    COMMERCIAL_SI_INDICATOR_IDS.newBusinessRol,
+                  ),
                 },
               )}
               periodKindBadge={periodKindBadge}

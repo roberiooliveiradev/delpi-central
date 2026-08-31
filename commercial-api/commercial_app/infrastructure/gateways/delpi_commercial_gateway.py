@@ -186,6 +186,16 @@ class DelpiCommercialGateway:
         """Proxy GET `/dashboard/department-idd` (SI via api-delpi)."""
         return self._request("GET", "/dashboard/department-idd", params=params)
 
+    def get_dashboard_department_indicators(
+        self,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Proxy GET `/dashboard/department-indicators` (SI via api-delpi)."""
+        return self._request(
+            "GET", "/dashboard/department-indicators", params=params
+        )
+
     def get_commercial_proposal_document(
         self,
         path: str = "",

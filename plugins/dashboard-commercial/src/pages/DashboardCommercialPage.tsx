@@ -48,13 +48,16 @@ import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import {
   COMMERCIAL_CONSOLIDATED_BRANCH_LABELS,
   COMMERCIAL_KPI_TITLES,
+  COMMERCIAL_SI_INDICATOR_IDS,
 } from "../constants/commercialIndicators";
 import { COMMERCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import {
   buildKpiGoalPresentationWithBranchIdd,
   formatDashboardMetricValue,
   formatKpiGoalExportFragments,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 import { buildRolPerUnitKpiView } from "../utils/rolPerUnitPresentation";
 import {
@@ -138,6 +141,13 @@ export function DashboardCommercialPage({
     reload,
   } = useCommercialDashboard(apiParams);
 
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("commercial", {
+    competence,
+    dateStart,
+    dateEnd,
+    branches,
+  });
+
   const rolSeries = useCommercialRolSeries({
     filters: {
       start_date: apiParams.start_date,
@@ -209,9 +219,15 @@ export function DashboardCommercialPage({
         rolContextLabel,
         formatCurrency,
         activeApiBranch,
-        rolDateOpts,
+        {
+          ...rolDateOpts,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.rol,
+          ),
+        },
       ),
-    [activeApiBranch, branchRol, headOfficeRol, rolContextLabel, rolDateOpts],
+    [activeApiBranch, branchRol, headOfficeRol, rolContextLabel, rolDateOpts, siScoresById],
   );
 
   const wegRolContextLabel = appendCustomerSegmentToLabel(
@@ -236,13 +252,20 @@ export function DashboardCommercialPage({
         wegRolContextLabel,
         formatCurrency,
         activeApiBranch,
-        rolDateOpts,
+        {
+          ...rolDateOpts,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.rolWeg,
+          ),
+        },
       ),
     [
       activeApiBranch,
       branchWegRol,
       headOfficeWegRol,
       rolDateOpts,
+      siScoresById,
       wegRolContextLabel,
     ],
   );
@@ -255,7 +278,13 @@ export function DashboardCommercialPage({
         newBusinessRolContextLabel,
         formatCurrency,
         activeApiBranch,
-        rolDateOpts,
+        {
+          ...rolDateOpts,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.rolNewBusiness,
+          ),
+        },
       ),
     [
       activeApiBranch,
@@ -263,6 +292,7 @@ export function DashboardCommercialPage({
       headOfficeNewBusinessRol,
       newBusinessRolContextLabel,
       rolDateOpts,
+      siScoresById,
     ],
   );
 
@@ -302,6 +332,10 @@ export function DashboardCommercialPage({
           branches: salesOrderOtdBranches,
           dateStart,
           dateEnd,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.salesOrderOtd,
+          ),
         },
       );
       const closingPresentation = buildKpiGoalPresentationWithBranchIdd(
@@ -313,6 +347,10 @@ export function DashboardCommercialPage({
           branches: closingRateBranches,
           dateStart,
           dateEnd,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.closingRate,
+          ),
         },
       );
       const newBusinessPctPresentation = buildKpiGoalPresentationWithBranchIdd(
@@ -324,6 +362,10 @@ export function DashboardCommercialPage({
           branches: newBusinessRolBranches,
           dateStart,
           dateEnd,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            COMMERCIAL_SI_INDICATOR_IDS.newBusinessRol,
+          ),
         },
       );
 
@@ -764,6 +806,10 @@ export function DashboardCommercialPage({
               branches: salesOrderOtdBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                COMMERCIAL_SI_INDICATOR_IDS.salesOrderOtd,
+              ),
             },
           )}
           icon={<PackageCheck size={22} />}
@@ -785,6 +831,10 @@ export function DashboardCommercialPage({
               branches: closingRateBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                COMMERCIAL_SI_INDICATOR_IDS.closingRate,
+              ),
             },
           )}
           icon={<Percent size={22} />}
@@ -806,6 +856,10 @@ export function DashboardCommercialPage({
               branches: newBusinessRolBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                COMMERCIAL_SI_INDICATOR_IDS.newBusinessRol,
+              ),
             },
           )}
           icon={<TrendingUp size={22} />}
