@@ -436,6 +436,7 @@ export function DashboardCommercialPage({
       salesOrderOtd,
       salesOrderOtdBranches,
       segmentNewBusinessRolKpi,
+      siScoresById,
       wegRolKpi,
     ],
   );

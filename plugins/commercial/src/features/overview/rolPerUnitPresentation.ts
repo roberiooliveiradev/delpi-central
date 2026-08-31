@@ -5,7 +5,6 @@ import type { GoalPerformanceBadge, KpiGoalPresentation } from "./goalDisplay";
 import {
   buildKpiGoalPresentation,
   formatDashboardMetricValue,
-  resolveConsolidatedIddScoreLabel,
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
 
@@ -129,13 +128,7 @@ export function buildRolPerUnitKpiView(
     goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
     goalPerformanceBadge: null,
     goalPerformanceBadges: [],
-    iddScoreLabel:
-      siIddScoreLabel !== undefined
-        ? siIddScoreLabel
-        : resolveConsolidatedIddScoreLabel([
-            { realized: filial01?.rol, goal: filial01 },
-            { realized: filial02?.rol, goal: filial02 },
-          ]),
+    iddScoreLabel: siIddScoreLabel ?? null,
     periodKindBadge,
   };
 }
