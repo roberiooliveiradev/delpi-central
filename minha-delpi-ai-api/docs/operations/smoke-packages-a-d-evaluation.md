@@ -13,6 +13,10 @@ cd minha-delpi-ai-api
   tests/unit/domain/services/test_external_action_result_presenter_infer_title.py \
   tests/unit/domain/services/test_package_c_intelligence.py \
   tests/unit/domain/services/test_chat_grounded_capability_planning_service.py \
+  tests/unit/domain/services/test_chat_follow_up_turn_content_service.py \
+  tests/unit/domain/services/test_chat_follow_up_turn_interpretation_service.py \
+  tests/unit/application/services/test_chat_follow_up_grounded_answer_service.py \
+  tests/unit/domain/services/test_flow_family_matrix_gates.py \
   tests/unit/domain/services/test_chat_presentation_recommendation_service.py \
   -q
 ```
@@ -28,8 +32,9 @@ cd minha-delpi-ai-api
 | 5 | Título ROL ≠ estoque; table sem chip barras indevido | A | PASS |
 | 6 | Contexto sessão + assertividade + commentary KPI | C | PASS |
 | 7 | Dual previous_period + filial×filial no planner | D | PASS |
-| 8 | YoY dual (regressão) | herança | PASS |
+| 8 | Fixtures FF-CONT-PREV-PERIOD / BRANCH-COMPARE | D/E6 | PASS |
+| 9 | YoY dual (regressão) | herança | PASS |
 
 ## Live (manual)
 
-Spot-check no chat: «como u posso te chamar?», ROL comum, ROL com agente filial 01, «comparar com período anterior», «comparar filial 01 com 02».
+Roteiro spot-check: «como u posso te chamar?»; ROL no comum + resume; ROL agente filial 01; dataAnswer; YoY; período anterior; filial 01×02.
