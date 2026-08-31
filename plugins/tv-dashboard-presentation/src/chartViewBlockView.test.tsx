@@ -41,4 +41,32 @@ describe("ChartViewBlockView", () => {
     expect(screen.queryByText(/em breve/i)).toBeNull();
     expect(container.querySelector(".delpi-ui-series-chart")).toBeTruthy();
   });
+
+  it("lista vazia com bake de buckets mostra Sem dados (não card KPI)", () => {
+    const block: ComunicadoChartViewBlock = {
+      id: "c-empty",
+      type: "chart_view",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      style: {},
+      chartType: "bar",
+      dataSourceId: "src-1",
+      chartProjection: {
+        categoryField: "periodo",
+        series: [{ field: "total_qty", label: "Quantidade total", aggregation: "sum" }],
+      },
+      resolved: {
+        serverProjectionApplied: true,
+        kpi: { value: 5, label: "Buckets quantidade" },
+        kpiMetrics: [{ field: "buckets_count", label: "Buckets quantidade", value: 5 }],
+        chart: {
+          points: [{ label: "Buckets quantidade", value: 5 }],
+          chartType: "bar",
+        },
+        table: { columns: [], rows: [] },
+      },
+    };
+    render(<ChartViewBlockView block={block} />);
+    expect(screen.getByText("Sem dados")).toBeTruthy();
+    expect(screen.queryByText("Buckets quantidade")).toBeNull();
+  });
 });

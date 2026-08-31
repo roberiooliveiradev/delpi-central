@@ -647,3 +647,65 @@ describe("maxCategories / Outros", () => {
     expect(next?.chart?.points?.some((point) => point.label === "Outros")).toBe(false);
   });
 });
+
+describe("encoding vazio — não troca coluna por cobertura", () => {
+  it("bar com projection e rows vazias não pinta buckets_count", () => {
+    const next = applyViewProjection(
+      {
+        serverProjectionApplied: true,
+        kpiMetrics: [
+          { field: "buckets_count", label: "Buckets quantidade", value: 5 },
+          { field: "customers_count", label: "Customers quantidade", value: 0 },
+        ],
+        chart: {
+          points: [
+            { label: "Buckets quantidade", value: 5 },
+            { label: "Customers quantidade", value: 0 },
+          ],
+          chartType: "bar",
+        },
+        table: { columns: [], rows: [] },
+      },
+      {
+        chartType: "bar",
+        chartProjection: {
+          categoryField: "periodo",
+          series: [{ field: "total_qty", label: "Quantidade total", aggregation: "sum" }],
+        },
+      },
+    );
+    expect(next?.chart?.points ?? []).toEqual([]);
+    expect(next?.chart?.series ?? []).toEqual([]);
+  });
+
+  it("gauge só usa kpiMetrics do field escolhido", () => {
+    const next = applyViewProjection(
+      {
+        kpi: { value: 5, label: "Buckets quantidade" },
+        kpiMetrics: [{ field: "buckets_count", label: "Buckets quantidade", value: 5 }],
+        table: { columns: [], rows: [] },
+      },
+      {
+        chartType: "gauge",
+        chartProjection: {
+          series: [{ field: "otd_pct", label: "OTD (%)", aggregation: "first" }],
+        },
+      },
+    );
+    expect(next?.chart?.points ?? []).toEqual([]);
+    expect(next?.kpi?.value).toBeNull();
+  });
+
+  it("suggestDefaultProjections ignora buckets_count", () => {
+    const suggested = suggestDefaultProjections({
+      kpiMetrics: [
+        { field: "buckets_count", label: "Buckets quantidade", value: 5 },
+        { field: "otd_pct", label: "OTD (%)", value: 98 },
+      ],
+      table: { columns: [], rows: [] },
+    });
+    const fields = suggested.chartProjection?.series?.map((s) => s.field) ?? [];
+    expect(fields).not.toContain("buckets_count");
+    expect(fields).toContain("otd_pct");
+  });
+});

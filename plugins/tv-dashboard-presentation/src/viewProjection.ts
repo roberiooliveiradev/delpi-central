@@ -678,33 +678,31 @@ function applyChartProjection(
 
   if (chartType === "gauge" && seriesDefs.length > 0) {
     const valueField = seriesDefs[0]!;
+    const matchedMetric = (resolved.kpiMetrics ?? []).find((m) => m.field === valueField.field);
     const value =
       rows.length > 0
         ? aggregateValues(
             columnValuesFromRows(rows, valueField.field).filter((v) => v != null && v !== ""),
             valueField.aggregation ?? policy.defaultAggregation,
           )
-        : asFiniteNumber(
-            (resolved.kpiMetrics ?? []).find((m) => m.field === valueField.field)?.value ??
-              resolved.kpi?.value,
-          );
+        : asFiniteNumber(matchedMetric?.value);
     const label = resolveFieldDisplayLabel({
       field: valueField.field,
       projectionLabel: valueField.label,
-      resolvedLabel: (resolved.kpiMetrics ?? []).find((m) => m.field === valueField.field)?.label,
+      resolvedLabel: matchedMetric?.label,
     });
     const next: ComunicadoDataResolved = {
       ...resolved,
-      kpi: { value: value ?? resolved.kpi?.value, label: label || resolved.kpi?.label },
+      kpi:
+        value != null
+          ? { value, label: label || resolved.kpi?.label }
+          : { value: null, label: label || resolved.kpi?.label },
       chart: {
-        points:
-          value != null
-            ? [{ label, value }]
-            : resolved.chart?.points,
+        points: value != null ? [{ label, value }] : [],
         series:
           value != null
             ? [{ name: label || valueField.field, field: valueField.field, points: [{ label, value }] }]
-            : resolved.chart?.series,
+            : [],
       },
     };
     return withProjectedGoal(next, projection);
@@ -736,6 +734,43 @@ function applyChartProjection(
       projection.maxCategories,
     );
     return withProjectedGoal({ ...resolved, chart }, projection);
+  }
+
+  // Encoding explícito sem linhas: só pinta kpiMetrics cujo field está na projection.
+  // Nunca substitui a coluna escolhida por cobertura (buckets_count, etc.).
+  if (seriesDefs.length > 0 && rows.length === 0) {
+    const byField = new Map((resolved.kpiMetrics ?? []).map((metric) => [metric.field, metric]));
+    const series = seriesDefs
+      .map((def) => {
+        const metric = byField.get(def.field);
+        if (!metric || metric.value == null || metric.value === "") return null;
+        const value = asFiniteNumber(metric.value);
+        if (value == null) return null;
+        const name = resolveFieldDisplayLabel({
+          field: def.field,
+          projectionLabel: def.label,
+          resolvedLabel: metric.label,
+        });
+        return {
+          name,
+          field: def.field,
+          color: def.color,
+          plotOn: def.plotOn,
+          points: [{ label: name, value }],
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item != null);
+    return withProjectedGoal(
+      {
+        ...resolved,
+        chart: {
+          points: series.flatMap((item) => item.points),
+          chartType: series.length > 1 ? (policy.chartType === "line" ? "bar" : policy.chartType) : policy.chartType,
+          series,
+        },
+      },
+      projection,
+    );
   }
 
   if (seriesDefs.length > 1 && (resolved.kpiMetrics?.length ?? 0) > 0) {
@@ -827,21 +862,19 @@ export function applyViewProjection(
   }
 
   // Chart: sempre reaplicar a partir das rows + chartType quando a projeção existe.
-  // Evita TV/prévia travadas no bake rowwise do servidor após mudar pizza/rosca no editor.
+  // Inclusive com rows vazias e bake `serverProjectionApplied` — encoding do editor
+  // vence o summary (buckets_count) do servidor.
   if (
     selection.chartProjection?.series?.length ||
     selection.chartProjection?.categoryField ||
     selection.chartProjection?.goalField
   ) {
-    const rows = next.table?.rows ?? [];
-    if (rows.length > 0 || !resolved.serverProjectionApplied) {
-      next = applyChartProjection(
-        next,
-        selection.chartProjection,
-        fallback,
-        selection.chartType ?? "line",
-      );
-    }
+    next = applyChartProjection(
+      next,
+      selection.chartProjection,
+      fallback,
+      selection.chartType ?? "line",
+    );
   }
 
   if (selection.excludeWeekends && next.chart) {
@@ -924,6 +957,18 @@ export function discoverResolvedFieldOptions(
   }));
 }
 
+/** Contagens de cobertura do envelope — nunca sugerir como série/KPI. */
+const COVERAGE_META_FIELDS = new Set([
+  "total_records",
+  "buckets_count",
+  "customers_count",
+  "items_count",
+]);
+
+function isCoverageMetaField(field: string): boolean {
+  return COVERAGE_META_FIELDS.has(field.trim().toLowerCase());
+}
+
 /** Sugere projeções iniciais ao conectar uma fonte (sem sobrescrever config existente). */
 export function suggestDefaultProjections(
   resolved: ComunicadoDataResolved | undefined,
@@ -941,6 +986,7 @@ export function suggestDefaultProjections(
   const policy = resolveChartDataPolicy(chartType ?? "line");
 
   const numericFields = fields.filter((item) => {
+    if (isCoverageMetaField(item.field)) return false;
     const declared = typeOf(item.field);
     const rows = resolved.table?.rows ?? [];
     const hasFiniteSample = () =>

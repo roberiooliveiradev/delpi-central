@@ -38,7 +38,7 @@ function KpiTypePlaceholder({
   const hint = loading
     ? "Carregando dados…"
     : bound
-      ? "Sem dados numéricos — escolha métricas na conexão do visual"
+      ? "Sem dados"
       : interactive
         ? "Conecte uma fonte de dados"
         : "Sem dados";

@@ -35,24 +35,29 @@ function ChartTypePlaceholder({
   loading,
   interactive,
   bound,
+  emptyData,
 }: {
   chartType: string;
   label: string;
   loading?: boolean;
   interactive?: boolean;
   bound?: boolean;
+  /** Fonte resolveu, mas a coluna/encoding escolhida não tem pontos. */
+  emptyData?: boolean;
 }) {
   const hint = loading
     ? "Carregando dados…"
-    : bound
-      ? chartType === "gauge"
-        ? "Sem valor — escolha a medida na conexão do visual"
-        : chartType === "pie" || chartType === "doughnut"
-          ? "Sem fatias — escolha a categoria (ex.: Tipo) na conexão do visual"
-          : "Sem série ou valor — escolha campos na conexão do visual"
-      : interactive
-        ? "Conecte uma fonte de dados"
-        : label;
+    : bound && emptyData
+      ? "Sem dados"
+      : bound
+        ? chartType === "gauge"
+          ? "Sem valor — escolha a medida na conexão do visual"
+          : chartType === "pie" || chartType === "doughnut"
+            ? "Sem fatias — escolha a categoria (ex.: Tipo) na conexão do visual"
+            : "Sem série ou valor — escolha campos na conexão do visual"
+        : interactive
+          ? "Conecte uma fonte de dados"
+          : label;
   return (
     <div className="tdp-data-chart tdp-data-chart--typed">
       <span className="tdp-data-chart__type">{chartTypeLabel(chartType as ComunicadoChartViewBlock["chartType"])}</span>
@@ -126,6 +131,7 @@ export function ChartViewBlockView({
             loading={loading}
             interactive={interactive}
             bound
+            emptyData
           />
         </div>
       );
@@ -150,7 +156,8 @@ export function ChartViewBlockView({
 
   const points = resolved.chart?.points ?? [];
 
-  if (points.length === 0 && !resolved.kpi?.value) {
+  // Encoding vazio: nunca cair no card KPI com buckets_count / cobertura do envelope.
+  if (points.length === 0) {
     return (
       <div className="tdp-data-block tdp-data-block--chart">
         <ChartTypePlaceholder
@@ -159,18 +166,8 @@ export function ChartViewBlockView({
           loading={loading}
           interactive={interactive}
           bound
+          emptyData
         />
-      </div>
-    );
-  }
-
-  if (points.length === 0) {
-    return (
-      <div className="tdp-data-block tdp-data-block--kpi">
-        <div className="tdp-data-kpi">
-          <span className="tdp-data-kpi__label">{resolved.kpi?.label ?? label}</span>
-          <strong className="tdp-data-kpi__value">{String(resolved.kpi?.value ?? "—")}</strong>
-        </div>
       </div>
     );
   }
