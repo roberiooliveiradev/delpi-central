@@ -244,6 +244,18 @@ describe("dataTransform", () => {
     ]);
   });
 
+  it("coercePayloadToTable com items vazio não vaza envelope em campo/valor", () => {
+    const table = coercePayloadToTable({
+      items: [],
+      start_date: "2024-08-01",
+      end_date: "2024-08-31",
+      branch: "02",
+      granularity: "week",
+      truncated: false,
+    });
+    expect(table).toEqual({ columns: [], rows: [] });
+  });
+
   it("mantém paridade TS com as fixtures v1 e congela drifts conhecidos", () => {
     const fixture = loadSharedFixtures();
     expect(fixture.operations.map((item) => item.name)).toHaveLength(15);

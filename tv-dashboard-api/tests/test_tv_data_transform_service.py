@@ -1,6 +1,7 @@
 from tv_app.application.services.data.tv_data_transform_service import (
     apply_data_transform_steps,
     apply_data_transform_to_payload,
+    coerce_payload_to_table,
     evaluate_safe_arithmetic_expr,
     evaluate_safe_column_expr,
     normalize_data_transform,
@@ -178,3 +179,27 @@ def test_keep_rows_fill_down_change_type():
         {"g": "x", "v": 1.0},
         {"g": "x", "v": 2.0},
     ]
+
+
+def test_coerce_payload_empty_items_does_not_dump_envelope_as_campo_valor():
+    """Lista canônica vazia ≠ objeto escalar — Sem linhas, sem Campo/Valor fantasma."""
+    table = coerce_payload_to_table(
+        {
+            "items": [],
+            "start_date": "2024-08-01",
+            "end_date": "2024-08-31",
+            "branch": "02",
+            "granularity": "week",
+            "truncated": False,
+        }
+    )
+    assert table == {"columns": [], "rows": []}
+    # Escalares genuínos (sem lista) ainda viram campo/valor.
+    scalar = coerce_payload_to_table({"status": "ATIVO", "owner": "Ops"})
+    assert scalar == {
+        "columns": ["campo", "valor"],
+        "rows": [
+            {"campo": "status", "valor": "ATIVO"},
+            {"campo": "owner", "valor": "Ops"},
+        ],
+    }

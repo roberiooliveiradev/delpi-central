@@ -285,10 +285,47 @@ export function coercePayloadToTable(data: unknown): DataTableSnapshot | null {
     if (record.success != null && "data" in record) {
       return coercePayloadToTable(record.data);
     }
-    for (const key of ["items", "rows", "data", "results", "values", "records", "entries", "flow", "history"]) {
-      const inner = record[key];
-      if (Array.isArray(inner)) {
-        const nested = coercePayloadToTable(inner);
+    const listKeys = [
+      "items",
+      "rows",
+      "points",
+      "data",
+      "results",
+      "values",
+      "records",
+      "entries",
+      "flow",
+      "history",
+      "lines",
+      "orders",
+    ] as const;
+    const pageItemsFromValue = (raw: unknown): unknown[] | null => {
+      if (Array.isArray(raw)) return raw;
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+      const nested = raw as Record<string, unknown>;
+      for (const key of ["items", "rows"] as const) {
+        const inner = nested[key];
+        if (Array.isArray(inner)) return inner;
+      }
+      return null;
+    };
+    for (const key of listKeys) {
+      if (!Object.prototype.hasOwnProperty.call(record, key)) continue;
+      const pageItems = pageItemsFromValue(record[key]);
+      if (pageItems != null) {
+        const nested = coercePayloadToTable(pageItems);
+        /* Lista canônica presente (mesmo vazia) — não dump escalar do envelope. */
+        if (nested) return nested;
+      }
+    }
+    for (const [key, value] of Object.entries(record)) {
+      if (["meta", "summary", "pagination", "success", "message", "errors", "error"].includes(key)) {
+        continue;
+      }
+      if ((listKeys as readonly string[]).includes(key)) continue;
+      const pageItems = pageItemsFromValue(value);
+      if (pageItems != null) {
+        const nested = coercePayloadToTable(pageItems);
         if (nested) return nested;
       }
     }

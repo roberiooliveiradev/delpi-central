@@ -366,6 +366,14 @@ _KPI_META_FIELD_KEYS = frozenset(
         "buckets_count",
         "customers_count",
         "items_count",
+        # Envelope de série/lista — não viram dump campo/valor na grade.
+        "granularity",
+        "truncated",
+        "start_date",
+        "end_date",
+        "date_start",
+        "date_end",
+        "sort_key",
         # Formatação / metadado SI e rotas escalares — não são o número do card KPI.
         "value_decimals",
         "value_unit",
@@ -962,6 +970,11 @@ def _extract_table_rows(
     # sobre a série), eles já são a tabela canônica.
     already_tabular = isinstance(unwrap_operational_data(data), list)
     table_key = str(table_field or "").strip()
+    series_key = str(series_field or "").strip()
+    # Rota declara lista/série: lista vazia = Sem linhas — nunca dump campo/valor do envelope
+    # (start_date, granularity, truncated, branch, …) que poluía a grade ao remover filtro.
+    has_declared_list = bool(table_key or series_key) and not already_tabular
+
     if table_key and not already_tabular:
         raw_rows = _list_from_data(data, table_field)
         rows: list[dict[str, Any]] = []
@@ -973,8 +986,19 @@ def _extract_table_rows(
         columns = _build_table_columns(meta or {}, rows, route_info=route_info)
         if rows:
             return rows, columns
+        # tableFields presente e vazio — não cair no fallback escalar.
+        if series_key:
+            series_rows, series_columns = _series_to_table_rows(
+                data,
+                series_field,
+                branch=branch,
+                max_rows=max_rows,
+                value_label=value_label,
+            )
+            return series_rows, series_columns
+        return [], columns
 
-    if series_field and str(series_field).strip() and not already_tabular:
+    if series_key and not already_tabular:
         series_rows, series_columns = _series_to_table_rows(
             data,
             series_field,
@@ -1004,6 +1028,9 @@ def _extract_table_rows(
     )
     if series_rows:
         return series_rows, series_columns
+
+    if has_declared_list:
+        return [], columns
 
     return _scalar_object_as_table_rows(data, max_rows=max_rows)
 
@@ -1038,6 +1065,11 @@ def _source_table_for_route(
                 "columns": [str(col.get("key") or "") for col in columns if col.get("key")],
                 "rows": rows,
             }
+        # tableFields declarado e vazio — não cair em coerce escalar do envelope.
+        return {
+            "columns": [str(col.get("key") or "") for col in columns if col.get("key")],
+            "rows": [],
+        }
     series_field = route_info.get("seriesField")
     if not (series_field and str(series_field).strip()):
         return None

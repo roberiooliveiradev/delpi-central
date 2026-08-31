@@ -91,7 +91,7 @@ def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
                     columns.append(key_s)
         return {"columns": columns, "rows": rows}
     if isinstance(data, dict):
-        for key in (
+        list_keys = (
             "items",
             "rows",
             "points",
@@ -104,19 +104,25 @@ def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
             "history",
             "lines",
             "orders",
-        ):
+        )
+        for key in list_keys:
+            if key not in data:
+                continue
             page_items = _page_items_from_value(data.get(key))
             if page_items is not None:
                 nested = coerce_payload_to_table(page_items)
-                if nested is not None and nested.get("rows"):
+                # Lista canônica presente (mesmo vazia) — não dump escalar do envelope.
+                if nested is not None:
                     return nested
         for key, value in data.items():
             if key in {"meta", "summary", "pagination", "success", "message", "errors", "error"}:
                 continue
+            if key in list_keys:
+                continue
             page_items = _page_items_from_value(value)
-            if page_items:
+            if page_items is not None:
                 nested = coerce_payload_to_table(page_items)
-                if nested is not None and nested.get("rows"):
+                if nested is not None:
                     return nested
         scalar_rows: list[dict[str, Any]] = []
         for key, value in data.items():

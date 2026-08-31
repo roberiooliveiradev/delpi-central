@@ -985,6 +985,53 @@ def test_enrich_list_route_empty_items_skips_coverage_summary_metrics():
     assert table.get("rows") == []
 
 
+def test_enrich_list_route_empty_items_table_no_envelope_campo_valor():
+    """Regressão: items=[] não vira colunas Campo/Valor com start_date/granularity/truncated."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_sales_order_otd_series_by_customer",
+            "shape": "paged_list",
+        },
+        "data": {
+            "items": [],
+            "start_date": "2024-08-01",
+            "end_date": "2024-08-31",
+            "branch": "02",
+            "granularity": "week",
+            "truncated": False,
+            "summary": {"buckets_count": 5, "items_count": 0},
+            "pagination": {"page": 1, "page_size": 50, "total": 0, "has_more": False},
+        },
+        "route": {
+            "label": "Série temporal de OTD de pedidos por cliente",
+            "tableFields": "items",
+            "valueFields": ["otd_pct", "total_qty", "fulfilled_qty"],
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_sales_order_otd_series_by_customer",
+                "params": {"periodDays": 30, "branch": "02"},
+                "displayMode": "table",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    table = enriched[0]["resolved"]["table"]
+    assert table["rows"] == []
+    column_keys = {col["key"] for col in table.get("columns") or []}
+    assert "campo" not in column_keys and "valor" not in column_keys
+
+
 def test_source_table_for_series_route_uses_normalized_points():
     """Fonte do M em rota de série = periodo/value (nunca campo/valor de metadados)."""
     data = {
