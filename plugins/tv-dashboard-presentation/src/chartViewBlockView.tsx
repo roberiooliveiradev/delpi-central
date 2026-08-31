@@ -155,9 +155,21 @@ export function ChartViewBlockView({
   }
 
   const points = resolved.chart?.points ?? [];
+  const hasFinitePoints =
+    points.some((point) => {
+      const n = typeof point.value === "number" ? point.value : Number(point.value);
+      return Number.isFinite(n);
+    }) ||
+    (resolved.chart?.series ?? []).some((entry) =>
+      (entry.points ?? []).some((point) => {
+        const n = typeof point.value === "number" ? point.value : Number(point.value);
+        return Number.isFinite(n);
+      }),
+    );
 
   // Encoding vazio: nunca cair no card KPI com buckets_count / cobertura do envelope.
-  if (points.length === 0) {
+  // Também: pontos só com null (linhas sem medida) → Sem dados, não barra inventada.
+  if (points.length === 0 || !hasFinitePoints) {
     return (
       <div className="tdp-data-block tdp-data-block--chart">
         <ChartTypePlaceholder

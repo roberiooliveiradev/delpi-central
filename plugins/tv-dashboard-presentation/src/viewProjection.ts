@@ -363,18 +363,40 @@ function applyTableProjection(
     }),
   }));
   const keys = new Set(nextColumns.map((col) => col.key));
-  const nextRows = rows.map((row) => {
-    const next: Record<string, unknown> = {};
-    for (const key of keys) {
-      if (key in row) next[key] = row[key];
-    }
-    return next;
-  });
+  const nextRows = rows
+    .map((row) => {
+      const next: Record<string, unknown> = {};
+      for (const key of keys) {
+        if (key in row) next[key] = row[key];
+      }
+      return next;
+    })
+    .filter((row) => rowHasDisplayableCell(row, keys));
 
   return {
     ...resolved,
     table: { rows: nextRows, columns: nextColumns },
   };
+}
+
+/** Linha só com null/""/"—" não entra na grade (evita fantasma «—» sem dados). */
+function rowHasDisplayableCell(
+  row: Record<string, unknown>,
+  keys: Set<string>,
+): boolean {
+  for (const key of keys) {
+    const value = row[key];
+    if (value == null) continue;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed || trimmed === "—") continue;
+      return true;
+    }
+    if (typeof value === "number" && Number.isFinite(value)) return true;
+    if (typeof value === "boolean") return true;
+    if (typeof value === "object") return true;
+  }
+  return false;
 }
 
 function buildSeriesFromTable(
@@ -386,16 +408,38 @@ function buildSeriesFromTable(
 ): NonNullable<ComunicadoDataResolved["chart"]> {
   const chartType = policy.chartType;
 
+  let chart: NonNullable<ComunicadoDataResolved["chart"]>;
   if (policy.rowMode === "groupByCategory" && categoryField) {
-    return buildGroupedSeriesFromTable(
+    chart = buildGroupedSeriesFromTable(
       rows,
       categoryField,
       seriesDefs,
       policy,
       maxCategoriesOverride,
     );
+  } else {
+    chart = buildRowwiseOrSpecialSeriesFromTable(
+      rows,
+      categoryField,
+      seriesDefs,
+      policy,
+    );
   }
 
+  if (seriesDefs.length > 0 && !chartHasFiniteMeasure(chart)) {
+    return emptyChartShell(chartType);
+  }
+  return chart;
+}
+
+/** Scatter/bubble/rowwise — ramo complementar ao groupByCategory. */
+function buildRowwiseOrSpecialSeriesFromTable(
+  rows: Array<Record<string, unknown>>,
+  categoryField: string | undefined,
+  seriesDefs: ChartSeriesProjection[],
+  policy: ChartDataPolicy,
+): NonNullable<ComunicadoDataResolved["chart"]> {
+  const chartType = policy.chartType;
   // scatter/bubble: categoryField guarda a medida X (rótulo numérico).
   // Categoria/legenda = valor cru da coluna escolhida (como veio da API).
   const categories = rows.map((row, index) => {
@@ -617,18 +661,40 @@ function aggregateGroupRows(
   const values = groupRows.map((row) => row[field]);
   const hasFinite = values.some((value) => asFiniteNumber(value) != null);
   if (!hasFinite) {
-    // Part-to-whole / comparação: medida fantasma ou ausente → conta linhas do grupo.
+    /*
+     * Pizza/doughnut: medida fantasma ou ausente → conta linhas do grupo
+     * (encoding «só categoria»). Barras/comparação com sum/média e células
+     * null → null (Sem dados), não o número de linhas vazias («5,00»).
+     */
     if (
       policy.rowMode === "groupByCategory" &&
-      (policy.defaultAggregation === "count" ||
-        policy.family === "distribution" ||
-        policy.family === "comparison")
+      policy.family === "distribution" &&
+      (aggregation == null || aggregation === "first")
     ) {
       return groupRows.length;
     }
     return null;
   }
   return aggregateValues(values, agg);
+}
+
+function chartHasFiniteMeasure(
+  chart: NonNullable<ComunicadoDataResolved["chart"]> | undefined,
+): boolean {
+  if (!chart) return false;
+  const series = chart.series ?? [];
+  if (series.length > 0) {
+    return series.some((entry) =>
+      (entry.points ?? []).some((point) => asFiniteNumber(point.value) != null),
+    );
+  }
+  return (chart.points ?? []).some((point) => asFiniteNumber(point.value) != null);
+}
+
+function emptyChartShell(
+  chartType: ComunicadoChartType,
+): NonNullable<ComunicadoDataResolved["chart"]> {
+  return { points: [], chartType, series: [] };
 }
 
 /** Agrega a coluna de meta da projection → escalar único (não série). */

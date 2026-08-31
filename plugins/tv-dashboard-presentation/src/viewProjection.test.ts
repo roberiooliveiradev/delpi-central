@@ -678,6 +678,70 @@ describe("encoding vazio — não troca coluna por cobertura", () => {
     expect(next?.chart?.series ?? []).toEqual([]);
   });
 
+  it("bar com N linhas sem medida não inventa barras com a contagem", () => {
+    const next = applyViewProjection(
+      {
+        table: {
+          columns: [
+            { key: "periodo", label: "Período" },
+            { key: "total_qty", label: "Quantidade total" },
+            { key: "fulfilled_qty", label: "Quantidade atendida" },
+            { key: "otd_pct", label: "OTD (%)" },
+          ],
+          rows: [
+            { periodo: null, total_qty: null, fulfilled_qty: null, otd_pct: null },
+            { periodo: "", total_qty: null, fulfilled_qty: null, otd_pct: null },
+            { periodo: null, total_qty: null, fulfilled_qty: null, otd_pct: null },
+            { periodo: null, total_qty: null, fulfilled_qty: null, otd_pct: null },
+            { periodo: null, total_qty: null, fulfilled_qty: null, otd_pct: null },
+          ],
+        },
+      },
+      {
+        chartType: "bar",
+        chartProjection: {
+          categoryField: "periodo",
+          series: [
+            { field: "total_qty", label: "Quantidade total", aggregation: "sum" },
+            { field: "fulfilled_qty", label: "Quantidade atendida", aggregation: "sum" },
+          ],
+        },
+      },
+    );
+    expect(next?.chart?.points ?? []).toEqual([]);
+    expect(next?.chart?.series ?? []).toEqual([]);
+  });
+
+  it("tabela descarta linhas só com células vazias", () => {
+    const next = applyViewProjection(
+      {
+        table: {
+          columns: [
+            { key: "periodo", label: "Período" },
+            { key: "cliente", label: "Cliente" },
+            { key: "otd_pct", label: "OTD (%)" },
+          ],
+          rows: [
+            { periodo: null, cliente: null, otd_pct: null },
+            { periodo: "", cliente: "—", otd_pct: null },
+            { periodo: "2026-08", cliente: "WEG", otd_pct: 98.4 },
+          ],
+        },
+      },
+      {
+        tableProjection: {
+          columns: [
+            { key: "periodo", visible: true },
+            { key: "cliente", visible: true },
+            { key: "otd_pct", visible: true },
+          ],
+        },
+      },
+    );
+    expect(next?.table?.rows).toHaveLength(1);
+    expect(next?.table?.rows?.[0]?.cliente).toBe("WEG");
+  });
+
   it("gauge só usa kpiMetrics do field escolhido", () => {
     const next = applyViewProjection(
       {
