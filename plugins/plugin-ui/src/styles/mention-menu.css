@@ -29,11 +29,28 @@
 
 .delpi-ui-mention-menu__option {
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.4rem 0.5rem;
   border-radius: 0.35rem;
   cursor: pointer;
+}
+
+.delpi-ui-mention-menu__option-avatar,
+.delpi-ui-mention-menu-avatar.delpi-ui-avatar--sm {
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.65rem;
+}
+
+.delpi-ui-mention-menu__option-text {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .delpi-ui-mention-menu__option--active,

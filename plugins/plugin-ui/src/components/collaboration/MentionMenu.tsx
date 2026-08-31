@@ -8,7 +8,10 @@ import {
 } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
+import { InitialsAvatar, initialsAvatarBemClasses } from "../layout/InitialsAvatar";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
+
+const MENU_AVATAR_CLASSES = initialsAvatarBemClasses("delpi-ui-mention-menu");
 
 export type MentionMenuHit = {
   id: string;
@@ -16,6 +19,10 @@ export type MentionMenuHit = {
   label: string;
   subtitle?: string;
   groupLabel?: string;
+  /** Optional photo URL — host resolves; kit does not fetch. */
+  avatarSrc?: string | null;
+  /** Name for initials when photo is missing (user hits). */
+  avatarName?: string | null;
 };
 
 export type MentionMenuClassNames = {
@@ -24,6 +31,7 @@ export type MentionMenuClassNames = {
   group: string;
   option: string;
   optionActive: string;
+  optionAvatar: string;
   optionLabel: string;
   optionSubtitle: string;
   empty: string;
@@ -59,6 +67,7 @@ export function mentionMenuBemClasses(prefix: string): MentionMenuClassNames {
       `${base}__option ${base}__option--active`,
       `${ui}__option ${ui}__option--active`,
     ),
+    optionAvatar: pair(`${base}__option-avatar`, `${ui}__option-avatar`),
     optionLabel: pair(`${base}__option-label`, `${ui}__option-label`),
     optionSubtitle: pair(`${base}__option-subtitle`, `${ui}__option-subtitle`),
     empty: pair(`${base}__empty`, `${ui}__empty`),
@@ -213,10 +222,22 @@ export function MentionMenu({
                       onSelect(hit);
                     }}
                   >
-                    <span className={classNames.optionLabel}>{hit.label}</span>
-                    {hit.subtitle ? (
-                      <span className={classNames.optionSubtitle}>{hit.subtitle}</span>
+                    {(hit.avatarSrc || hit.avatarName) ? (
+                      <InitialsAvatar
+                        name={(hit.avatarName || hit.label).trim() || hit.label}
+                        src={(hit.avatarSrc ?? "").trim() || null}
+                        size="sm"
+                        previewable={false}
+                        classNames={MENU_AVATAR_CLASSES}
+                        className={classNames.optionAvatar}
+                      />
                     ) : null}
+                    <span className="delpi-ui-mention-menu__option-text">
+                      <span className={classNames.optionLabel}>{hit.label}</span>
+                      {hit.subtitle ? (
+                        <span className={classNames.optionSubtitle}>{hit.subtitle}</span>
+                      ) : null}
+                    </span>
                   </div>
                 );
               })}

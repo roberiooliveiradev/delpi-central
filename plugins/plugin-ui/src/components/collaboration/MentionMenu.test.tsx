@@ -80,6 +80,25 @@ describe("MentionMenu", () => {
     expect(screen.getByRole("option", { name: /102942/ })).toBeTruthy();
   });
 
+  it("renders avatar when hit provides avatarName", () => {
+    const { container } = render(
+      <Harness
+        items={[
+          {
+            id: "u1",
+            kind: "user",
+            label: "Ana Silva",
+            avatarName: "Ana Silva",
+            avatarSrc: "https://cdn.example/ana.png",
+          },
+        ]}
+      />,
+    );
+    const option = screen.getByRole("option", { name: /Ana Silva/ });
+    const img = option.querySelector("img");
+    expect(img?.getAttribute("src")).toBe("https://cdn.example/ana.png");
+  });
+
   it("shows empty label when there are no hits", () => {
     render(<Harness items={[]} />);
     expect(screen.getByRole("status").textContent).toBe("No results");
