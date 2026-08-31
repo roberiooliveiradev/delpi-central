@@ -300,6 +300,7 @@ export function ManifestEditorPage() {
               entry: r.entry ?? null,
               order: r.order ?? null,
               showInMenu: r.showInMenu ?? true,
+              openInNewTab: r.openInNewTab ?? false,
             };
           });
 

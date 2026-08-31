@@ -17,6 +17,7 @@ export type ManifestRoute = {
   entry?: string | null;
   order?: number | null;
   showInMenu?: boolean | null;
+  openInNewTab?: boolean | null;
 };
 
 export type ManifestUI = {

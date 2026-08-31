@@ -59,6 +59,7 @@ export function ManifestRoutesTable({
           permission: permissions[0]?.code || null,
           icon: "layout-dashboard",
           showInMenu: true,
+          openInNewTab: false,
           order: routes.length + 1,
         },
       ])
@@ -179,6 +180,18 @@ export function ManifestRoutesTable({
                     aria-label="Exibir no menu"
                   />
                 </FormField>
+
+                <FormField label="Nova aba" htmlFor={`route-new-tab-${idx}`}>
+                  <Switch
+                    id={`route-new-tab-${idx}`}
+                    checked={Boolean(r.openInNewTab)}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      updateAt(idx, { openInNewTab: e.target.checked })
+                    }
+                    aria-label="Abrir em nova aba"
+                  />
+                </FormField>
               </div>
 
               <div className="manifest-card__actions">
@@ -236,7 +249,11 @@ export function ManifestRoutesTable({
                 />
               </FormField>
 
-              <FormField label="Entry (opcional)" htmlFor={`route-entry-${idx}`}>
+              <FormField
+                label="Entry (opcional)"
+                htmlFor={`route-entry-${idx}`}
+                hint="Com «Nova aba», Entry http(s) abre o link; sem Entry abre o path."
+              >
                 <Input
                   id={`route-entry-${idx}`}
                   mono
