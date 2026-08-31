@@ -110,7 +110,16 @@ class ChatTurnPreparationPostToolResolutionService:
             resolve_chat_intelligence_runtime,
         )
 
+        shortcut = workspace_context.get("turnAnalysisShortcut")
         if (
+            isinstance(shortcut, dict)
+            and str(shortcut.get("kind") or "").strip() == "identity"
+            and str(shortcut.get("directAnswer") or "").strip()
+            and not profile_prep.skip_compound_direct_answers
+        ):
+            assistant_identity_direct = str(shortcut.get("directAnswer")).strip()
+            assistant_identity_question = True
+        elif (
             assistant_identity_question
             and resolve_chat_intelligence_runtime().assistant_identity_direct_enabled
             and not profile_prep.skip_compound_direct_answers
@@ -132,6 +141,7 @@ class ChatTurnPreparationPostToolResolutionService:
             or bool(web_post_search_direct)
             or bool(attachment_welcome_direct)
             or bool(text_task_pure)
+            or bool(workspace_context.get("turnAnalysisSkipRag"))
             or operational_optimize
             or (
                 analysis_mode

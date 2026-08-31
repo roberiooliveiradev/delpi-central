@@ -9,6 +9,10 @@ from typing import Any
 
 from app.domain.services.chat_intent_router_service import ChatIntentRouterService
 from app.domain.services.chat_response_mode_service import ChatResponseModeService
+from app.domain.services.chat_turn_analysis_dispatch_service import (
+    ChatTurnAnalysisDispatch,
+    ChatTurnAnalysisDispatchService,
+)
 from app.domain.services.chat_turn_analysis_service import (
     ChatTurnAnalysisResult,
     ChatTurnAnalysisService,
@@ -26,6 +30,7 @@ class ChatTurnPreparationTurnAnalysisOutcome:
     result: ChatTurnAnalysisResult | None
     direct_answer: str | None
     skip_tools: bool
+    dispatch: ChatTurnAnalysisDispatch | None = None
 
 
 class ChatTurnPreparationTurnAnalysisService:
@@ -63,6 +68,7 @@ class ChatTurnPreparationTurnAnalysisService:
                 result=None,
                 direct_answer=None,
                 skip_tools=False,
+                dispatch=None,
             )
 
         response_mode = ChatResponseModeService.normalize(
@@ -109,6 +115,7 @@ class ChatTurnPreparationTurnAnalysisService:
                 result=None,
                 direct_answer=None,
                 skip_tools=False,
+                dispatch=None,
             )
 
         if llm_gateway is None:
@@ -117,6 +124,7 @@ class ChatTurnPreparationTurnAnalysisService:
                     result=None,
                     direct_answer=None,
                     skip_tools=False,
+                    dispatch=None,
                 )
             from app.composition.llm_composer import make_llm_gateway
 
@@ -200,7 +208,9 @@ class ChatTurnPreparationTurnAnalysisService:
             else None
         )
         if not isinstance(last_result_excerpt, dict):
-            excerpt_block = turn_grounding.get("excerpt") if isinstance(turn_grounding, dict) else None
+            excerpt_block = (
+                turn_grounding.get("excerpt") if isinstance(turn_grounding, dict) else None
+            )
             last_result_excerpt = excerpt_block if isinstance(excerpt_block, dict) else None
 
         turn_grounding_stage = (
@@ -225,11 +235,33 @@ class ChatTurnPreparationTurnAnalysisService:
             turn_grounding_stage=turn_grounding_stage or None,
         )
 
-        direct = result.direct_answer() if result.decision == "clarify" else None
-        skip_tools = result.decision == "clarify"
+        from app.application.services.chat_workspace_agent_activation_service import (
+            ChatWorkspaceAgentActivationService,
+        )
+
+        operational_tools = ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            workspace_context
+        )
+        dispatch = ChatTurnAnalysisDispatchService.resolve(
+            result,
+            message=message,
+            workspace_context=workspace_context,
+            previous_messages=history_source,
+            operational_tools_enabled=operational_tools,
+        )
+
+        direct = None
+        skip_tools = False
+        if dispatch is not None:
+            direct = dispatch.direct_answer
+            skip_tools = bool(dispatch.skip_tools)
+        elif result.decision == "clarify":
+            direct = result.direct_answer()
+            skip_tools = True
 
         return ChatTurnPreparationTurnAnalysisOutcome(
             result=result,
             direct_answer=direct,
             skip_tools=skip_tools,
+            dispatch=dispatch,
         )

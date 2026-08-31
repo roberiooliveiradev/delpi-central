@@ -127,3 +127,25 @@ class ChatTurnAnalysisContentService:
     def allowed_decisions(cls) -> frozenset[str]:
         raw = ChatAssistantContentService.list(_BUNDLE, "decisions")
         return frozenset(str(item).strip() for item in raw if str(item).strip())
+
+    @classmethod
+    def dispatch_intents(cls) -> frozenset[str]:
+        raw = ChatAssistantContentService.list(_BUNDLE, "dispatchIntents")
+        return frozenset(
+            str(item).strip().lower().replace("-", "_")
+            for item in raw
+            if str(item).strip()
+        )
+
+    @classmethod
+    def dispatch_intent_aliases(cls) -> dict[str, str]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "dispatchIntentAliases")
+        if not isinstance(node, dict):
+            return {}
+        out: dict[str, str] = {}
+        for key, value in node.items():
+            k = str(key or "").strip().lower().replace("-", "_")
+            v = str(value or "").strip().lower().replace("-", "_")
+            if k and v:
+                out[k] = v
+        return out

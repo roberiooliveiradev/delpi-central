@@ -168,17 +168,33 @@ class ChatAssistantIdentityService:
         if not category:
             return None
 
+        return cls.build_direct_answer_for_category(
+            category=category,
+            workspace_context=workspace_context,
+        )
+
+    @classmethod
+    def build_direct_answer_for_category(
+        cls,
+        *,
+        category: str,
+        workspace_context: dict,
+    ) -> str | None:
+        cat = str(category or "").strip()
+        if not cat:
+            return None
+
         profile = ChatAgentProfileService.from_workspace(workspace_context)
 
         if profile.has_agent:
-            custom = ChatAgentProfileService.custom_identity_response(profile, category)
+            custom = ChatAgentProfileService.custom_identity_response(profile, cat)
 
             if custom:
                 return custom
 
-            return cls._build_agent_identity_answer(category, profile)
+            return cls._build_agent_identity_answer(cat, profile)
 
-        return cls._build_platform_identity_answer(category)
+        return cls._build_platform_identity_answer(cat)
 
     @classmethod
     def _build_agent_identity_answer(cls, category: str, profile) -> str:

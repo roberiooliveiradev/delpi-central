@@ -40,6 +40,26 @@ class ChatSmallTalkService:
         if not category:
             return None
 
+        return cls.build_direct_answer_for_category(
+            category=category,
+            message=message,
+            workspace_context=workspace_context,
+            previous_messages=previous_messages,
+        )
+
+    @classmethod
+    def build_direct_answer_for_category(
+        cls,
+        *,
+        category: str,
+        message: str,
+        workspace_context: dict,
+        previous_messages: list | None = None,
+    ) -> str | None:
+        cat = str(category or "").strip()
+        if not cat:
+            return None
+
         content = _small_talk_content()
         profile = ChatAgentProfileService.from_workspace(workspace_context)
         personality = ChatAgentPersonalityService.from_profile(profile)
@@ -47,6 +67,7 @@ class ChatSmallTalkService:
             personality,
             risk_level=0,
         )
+        _ = humor_level
         responses = content.get("responses") or {}
 
         scope = "agent" if profile.has_agent else "platform"
@@ -54,16 +75,16 @@ class ChatSmallTalkService:
         template = ChatPersonalityContentService.pick_variant(
             variants,
             scope=scope,
-            category=category,
+            category=cat,
             seed=message,
             fallback="",
         )
 
         if not template:
-            template = str((responses.get(scope) or {}).get(category) or "").strip()
+            template = str((responses.get(scope) or {}).get(cat) or "").strip()
 
         if not template:
-            template = str((responses.get("platform") or {}).get(category) or "").strip()
+            template = str((responses.get("platform") or {}).get(cat) or "").strip()
 
         if not template:
             return None
@@ -71,7 +92,7 @@ class ChatSmallTalkService:
         answer = ChatAgentProfileService.format_template(template, profile)
         hint = cls._closure_follow_up_hint(previous_messages)
 
-        if category in _CLOSURE_CATEGORIES and hint:
+        if cat in _CLOSURE_CATEGORIES and hint:
             answer = f"{answer}\n\n{hint}"
 
         return answer

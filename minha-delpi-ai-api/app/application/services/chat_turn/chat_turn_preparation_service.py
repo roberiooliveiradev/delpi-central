@@ -6,7 +6,7 @@ em um único serviço, evitando duplicação entre stream/send e simulação.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
@@ -306,18 +306,72 @@ class ChatTurnPreparationService:
         )
         if turn_analysis_outcome.result is not None:
             workspace_context = dict(workspace_context)
-            workspace_context["turnAnalysis"] = turn_analysis_outcome.result.to_metadata()
-            if turn_analysis_outcome.result.action_ids:
+            meta = turn_analysis_outcome.result.to_metadata()
+            dispatch = turn_analysis_outcome.dispatch
+            if dispatch is not None:
+                meta["dispatch"] = {
+                    "kind": dispatch.kind,
+                    "skipRag": dispatch.skip_rag,
+                    "skipTools": dispatch.skip_tools,
+                    "textCorrectionMode": dispatch.text_correction_mode,
+                    "pipelineStage": dispatch.pipeline_stage,
+                    "category": dispatch.category,
+                }
+            workspace_context["turnAnalysis"] = meta
+            if turn_analysis_outcome.result.action_ids and not (
+                dispatch and dispatch.clear_action_ids
+            ):
                 workspace_context["turnAnalysisActionIds"] = list(
                     turn_analysis_outcome.result.action_ids
                 )
+            elif dispatch and dispatch.clear_action_ids:
+                workspace_context.pop("turnAnalysisActionIds", None)
             if turn_analysis_outcome.result.skills_to_load:
                 workspace_context["turnAnalysisSkillsToLoad"] = list(
                     turn_analysis_outcome.result.skills_to_load
                 )
             if "turn_analysis" not in pipeline_stages:
                 pipeline_stages.append("turn_analysis")
-            if turn_analysis_outcome.direct_answer and not unclear_direct:
+
+            if dispatch is not None:
+                if dispatch.pipeline_stage and dispatch.pipeline_stage not in pipeline_stages:
+                    pipeline_stages.append(dispatch.pipeline_stage)
+
+                if dispatch.force_assistant_identity_skip:
+                    skip_tool_flags = replace(
+                        skip_tool_flags,
+                        skip_tools_for_assistant_identity=True,
+                    )
+
+                if dispatch.kind == "clarify" and dispatch.direct_answer and not unclear_direct:
+                    unclear_direct = dispatch.direct_answer
+                    if "unclear_request" not in pipeline_stages:
+                        pipeline_stages.append("unclear_request")
+                elif dispatch.kind == "identity" and dispatch.direct_answer:
+                    workspace_context["turnAnalysisShortcut"] = {
+                        "kind": "identity",
+                        "directAnswer": dispatch.direct_answer,
+                        "skipRag": True,
+                    }
+                elif dispatch.kind == "small_talk" and dispatch.direct_answer:
+                    small_talk_direct = dispatch.direct_answer
+                elif dispatch.kind == "capabilities" and dispatch.direct_answer:
+                    pre_capability_answer = dispatch.direct_answer
+                elif dispatch.force_common_chat_guidance and not common_chat_operational_answer:
+                    from app.application.services.chat_common_chat_operational_guidance_service import (
+                        ChatCommonChatOperationalGuidanceService,
+                    )
+
+                    common_chat_operational_answer = (
+                        ChatCommonChatOperationalGuidanceService.build_direct_answer()
+                    )
+                elif dispatch.text_correction_mode:
+                    workspace_context["textCorrectionMode"] = True
+                    text_task_pure = True
+
+                if dispatch.skip_rag:
+                    workspace_context["turnAnalysisSkipRag"] = True
+            elif turn_analysis_outcome.direct_answer and not unclear_direct:
                 unclear_direct = turn_analysis_outcome.direct_answer
                 if "unclear_request" not in pipeline_stages:
                     pipeline_stages.append("unclear_request")
