@@ -210,6 +210,31 @@ class ChatTurnPreparationService:
             if stage not in pipeline_stages:
                 pipeline_stages.append(stage)
 
+        # Continuity reexec (revise/YoY) vence text_task «comparar» — não é redação pura.
+        turn_grounding = (
+            workspace_context.get("turnGrounding")
+            if isinstance(workspace_context, dict)
+            else None
+        )
+        follow_up = (
+            turn_grounding.get("followUp")
+            if isinstance(turn_grounding, dict)
+            else None
+        )
+        if isinstance(turn_grounding, dict) and (
+            str(turn_grounding.get("stage") or "").strip() == "grounded_revise_query"
+            or (
+                isinstance(follow_up, dict)
+                and (
+                    follow_up.get("requiresLastActionReexec") is True
+                    or str(follow_up.get("continuityMode") or "").strip()
+                    == "consume_last_action"
+                )
+            )
+        ):
+            text_task_pure = False
+            text_task_category = None
+
         operational_guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
             message=message,
             history_source=history_source,

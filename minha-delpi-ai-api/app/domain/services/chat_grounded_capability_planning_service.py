@@ -44,21 +44,10 @@ class ChatGroundedCapabilityPlanningService:
             return []
 
         turn_grounding = workspace_context.get("turnGrounding") or {}
-
-        if turn_grounding.get("status") != "grounded":
-            return []
-
         working = workspace_context.get("workingMemory") or {}
-        excerpt = working.get("lastResultExcerpt") if isinstance(working, dict) else None
-
-        if not isinstance(excerpt, dict):
-            excerpt = turn_grounding.get("excerpt")
-
-        if not isinstance(excerpt, dict):
-            return []
-
         stage = str(turn_grounding.get("stage") or "").strip()
 
+        # Continuity revise/no-tool: lastAction basta — KPI/ROL pode não ter excerpt tipado.
         if stage == "grounded_revise_query":
             follow_up = turn_grounding.get("followUp") if isinstance(turn_grounding, dict) else None
             slot_delta = (
@@ -66,7 +55,7 @@ class ChatGroundedCapabilityPlanningService:
                 if isinstance(follow_up, dict) and isinstance(follow_up.get("slotDelta"), dict)
                 else {}
             )
-            revised = cls._plan_revise_last_query(
+            return cls._plan_revise_last_query(
                 selection_service,
                 message=message,
                 allowed_action_ids=allowed_action_ids,
@@ -74,7 +63,6 @@ class ChatGroundedCapabilityPlanningService:
                 previous_messages=previous_messages,
                 slot_delta=slot_delta,
             )
-            return revised
 
         if stage in {
             "grounded_challenge_result",
@@ -82,6 +70,17 @@ class ChatGroundedCapabilityPlanningService:
             "grounded_narrate_recap",
             "grounded_narrate_insight",
         }:
+            return []
+
+        if turn_grounding.get("status") != "grounded":
+            return []
+
+        excerpt = working.get("lastResultExcerpt") if isinstance(working, dict) else None
+
+        if not isinstance(excerpt, dict):
+            excerpt = turn_grounding.get("excerpt")
+
+        if not isinstance(excerpt, dict):
             return []
 
         if ChatTurnGroundingService.should_enrich_before_insight(message, excerpt):
@@ -326,19 +325,41 @@ class ChatGroundedCapabilityPlanningService:
             if isinstance(last_action.get("params"), dict)
             else {}
         )
-        builder = OperationalApiParameterBuilderService()
-        merged = builder.build_date_branch(
-            matched,
-            message,
-            previous_messages=previous_messages,
-            base_params=base_params,
-        )
-
+        # Reexec continuity: herda params que já funcionaram + slot delta.
+        # Não expandir parametersSchema (limit/granularity inventados quebram KPI scalar).
+        merged = {
+            str(key): value
+            for key, value in base_params.items()
+            if value not in (None, "")
+        }
         delta = slot_delta if isinstance(slot_delta, dict) else {}
         for key in ("branch", "start_date", "end_date"):
             value = delta.get(key)
             if value not in (None, ""):
                 merged[key] = str(value)
+
+        if not any(delta.get(key) not in (None, "") for key in ("branch", "start_date", "end_date")):
+            builder = OperationalApiParameterBuilderService()
+            built = builder.build_date_branch(
+                {
+                    "parametersSchema": [
+                        {"name": "branch", "in": "query"},
+                        {"name": "start_date", "in": "query"},
+                        {"name": "end_date", "in": "query"},
+                    ],
+                },
+                message,
+                previous_messages=previous_messages,
+                base_params=None,
+            )
+            for key in ("branch", "start_date", "end_date"):
+                value = built.get(key)
+                if value not in (None, ""):
+                    merged[key] = value
+
+        for bad in ("limit", "page", "page_size", "granularity"):
+            if bad not in base_params:
+                merged.pop(bad, None)
 
         payload = {
             "name": "execute_external_action",
@@ -358,6 +379,34 @@ class ChatGroundedCapabilityPlanningService:
             "parameters": merged,
         }
         return [payload]
+
+    @classmethod
+    def _prune_params_to_action_schema(
+        cls,
+        action: dict[str, Any],
+        params: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Evita params inventados (ex.: limit do emptyDefault) em rotas scalar sem paginação."""
+        if not isinstance(params, dict) or not params:
+            return {}
+
+        schema = action.get("parametersSchema") if isinstance(action, dict) else None
+        schema_names = {
+            str(item.get("name") or "").strip()
+            for item in (schema or [])
+            if isinstance(item, dict) and item.get("name")
+        }
+        # Continuity: só filial/datas. Nunca inventar granularity/limit/period como query.
+        continuity = {"branch", "start_date", "end_date"}
+        if schema_names:
+            allowed = schema_names | continuity
+        else:
+            allowed = continuity
+        return {
+            key: value
+            for key, value in params.items()
+            if str(key) in allowed and value not in (None, "")
+        }
 
     @classmethod
     def _resolve_action_from_last(
@@ -409,6 +458,8 @@ class ChatGroundedCapabilityPlanningService:
         path_norm = target_path.rstrip("/").lower()
         op_norm = target_operation.lower()
         id_norm = target_action_id.lower()
+        id_leaf = cls._action_id_leaf(target_action_id)
+        op_leaf = cls._action_id_leaf(target_operation) if target_operation else id_leaf
 
         for action in candidates:
             if not isinstance(action, dict):
@@ -420,8 +471,98 @@ class ChatGroundedCapabilityPlanningService:
                 return action
             if op_norm and operation_id == op_norm:
                 return action
-            if path_norm and (path == path_norm or path.endswith(path_norm) or path_norm.endswith(path)):
+            # Alias de provider/locale (ex.: api_delpi.financeiro.* vs api_delpi.financial.*)
+            if id_leaf and cls._action_id_leaf(action_id) == id_leaf:
                 return action
+            if op_leaf and (
+                cls._action_id_leaf(operation_id) == op_leaf
+                or cls._action_id_leaf(action_id) == op_leaf
+            ):
+                return action
+            if path_norm and path and (
+                path == path_norm or path.endswith(path_norm) or path_norm.endswith(path)
+            ):
+                return action
+
+        if path_norm:
+            path_hit = cls._resolve_allowed_action_by_path(
+                selection_service,
+                path_norm=path_norm,
+                allowed_action_ids=allowed_action_ids,
+                message=message,
+            )
+            if path_hit:
+                return path_hit
+
+        return None
+
+    @classmethod
+    def _action_id_leaf(cls, action_id: str) -> str:
+        token = str(action_id or "").strip().lower()
+        if not token:
+            return ""
+        return token.rsplit(".", 1)[-1]
+
+    @classmethod
+    def _resolve_allowed_action_by_path(
+        cls,
+        selection_service: Any,
+        *,
+        path_norm: str,
+        allowed_action_ids: list[str],
+        message: str,
+    ) -> dict | None:
+        """Resolve action permitida pelo path da lastAction quando o catálogo omite path."""
+        if not path_norm or not allowed_action_ids:
+            return None
+
+        try:
+            from app.domain.services.operational_route_registry_service import (
+                OperationalRouteRegistryService,
+            )
+        except Exception:
+            return None
+
+        for action_id in allowed_action_ids:
+            token = str(action_id or "").strip()
+            if not token:
+                continue
+            route = OperationalRouteRegistryService.route_by_id(token)
+            if not isinstance(route, dict):
+                # Tentativa por operationId = folha do actionId (get_financial_rol).
+                route = OperationalRouteRegistryService.route_by_operation_id(
+                    cls._action_id_leaf(token)
+                )
+            if not isinstance(route, dict):
+                continue
+            markers = (
+                ((route.get("route") or {}).get("pathMarkers") or [])
+                if isinstance(route.get("route"), dict)
+                else []
+            )
+            if not any(
+                str(marker).strip().rstrip("/").lower() in path_norm
+                or path_norm.endswith(str(marker).strip().rstrip("/").lower())
+                for marker in markers
+                if str(marker).strip()
+            ):
+                continue
+            if hasattr(selection_service, "select_registry_route_id"):
+                try:
+                    selected = selection_service.select_registry_route_id(
+                        str(route.get("id") or token),
+                        message,
+                        allowed_action_ids=allowed_action_ids,
+                    )
+                    if isinstance(selected, dict) and selected:
+                        return selected
+                except TypeError:
+                    pass
+            return {
+                "actionId": token,
+                "operationId": str(route.get("operationId") or "").strip() or None,
+                "path": path_norm,
+            }
 
         return None
 

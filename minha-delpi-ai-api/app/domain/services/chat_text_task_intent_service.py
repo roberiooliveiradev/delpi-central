@@ -315,6 +315,19 @@ class ChatTextTaskIntentService:
         ):
             return False
 
+        # «comparar com ano anterior / mesmo período» é slot operacional, não redação.
+        if category == "compare":
+            from app.domain.services.chat_follow_up_turn_content_service import (
+                ChatFollowUpTurnContentService,
+            )
+            from app.domain.services.chat_message_normalization_service import (
+                ChatMessageNormalizationService,
+            )
+
+            norm = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+            if ChatFollowUpTurnContentService.period_slot_kind_for_message(norm):
+                return False
+
         if cls._is_linguistic_only_turn(normalized, category):
             return True
 

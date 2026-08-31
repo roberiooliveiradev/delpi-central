@@ -46,6 +46,9 @@ class TurnResult:
     stage: str = ""
     paths: list[str] = field(default_factory=list)
     branches: list[str] = field(default_factory=list)
+    starts: list[str] = field(default_factory=list)
+    ends: list[str] = field(default_factory=list)
+    continuity_mode: str = ""
     prose: str = ""
     errors: list[str] = field(default_factory=list)
 
@@ -187,6 +190,8 @@ def _ensure_financial_actions(token: str, agent_id: str) -> None:
     for action_id in (
         "api_delpi.financial.get_financial_rol",
         "api_delpi.financial.get_rol",
+        "api_delpi.financeiro.get_financial_rol",
+        "api_delpi.commercial.get_new_business_rol_pct",
     ):
         try:
             _request(
@@ -228,6 +233,44 @@ def _assistant_prose(response: dict) -> str:
             if isinstance(value, str) and value.strip():
                 return value.strip()
     return ""
+
+
+def _extract_continuity(response: dict) -> dict:
+    admin = response.get("adminDebug") or {}
+    for source in (
+        admin.get("turnGrounding"),
+        admin.get("intelligence", {}).get("turnGrounding")
+        if isinstance(admin.get("intelligence"), dict)
+        else None,
+        (response.get("metadata") or {}).get("turnGrounding")
+        if isinstance(response.get("metadata"), dict)
+        else None,
+    ):
+        if isinstance(source, dict):
+            follow = source.get("followUp")
+            if isinstance(follow, dict):
+                return follow
+    return {}
+
+
+def _extract_dates(response: dict) -> tuple[list[str], list[str]]:
+    starts: list[str] = []
+    ends: list[str] = []
+    for call in response.get("toolCalls") or []:
+        if not isinstance(call, dict):
+            continue
+        args = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
+        params = args.get("parameters") if isinstance(args.get("parameters"), dict) else {}
+        meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
+        req = meta.get("requestParameters") if isinstance(meta.get("requestParameters"), dict) else {}
+        for source in (params, req):
+            start = str(source.get("start_date") or "").strip()
+            end = str(source.get("end_date") or "").strip()
+            if start:
+                starts.append(start)
+            if end:
+                ends.append(end)
+    return starts, ends
 
 
 def _extract_stage(response: dict) -> str:
@@ -298,6 +341,9 @@ def _run_turn(
     expect_stage: str | None = None,
     expect_path_substr: str | None = None,
     expect_branch: str | None = None,
+    expect_start_year: str | None = None,
+    expect_continuity_mode: str | None = None,
+    forbid_product_structure_path: bool = False,
     forbid_missing_period: bool = False,
     forbid_narrate_recap: bool = False,
     expect_no_tools: bool = False,
@@ -306,6 +352,8 @@ def _run_turn(
     response = _send(token, session_id, message, stream=stream)
     stage = _extract_stage(response)
     paths, branches = _extract_paths_and_branches(response)
+    starts, ends = _extract_dates(response)
+    follow = _extract_continuity(response)
     prose = _assistant_prose(response)
     result = TurnResult(
         label=label,
@@ -314,6 +362,9 @@ def _run_turn(
         stage=stage,
         paths=paths,
         branches=branches,
+        starts=starts,
+        ends=ends,
+        continuity_mode=str(follow.get("continuityMode") or ""),
         prose=prose,
     )
 
@@ -334,6 +385,22 @@ def _run_turn(
                 f"branch={expect_branch!r} ausente; branches={branches}"
             )
 
+    if expect_start_year:
+        if not any(expect_start_year in start for start in starts):
+            result.errors.append(
+                f"start_date ano {expect_start_year!r} ausente; starts={starts}"
+            )
+
+    if expect_continuity_mode:
+        mode = result.continuity_mode
+        if mode and mode != expect_continuity_mode:
+            result.errors.append(
+                f"continuityMode={mode!r} esperado={expect_continuity_mode!r}"
+            )
+
+    if forbid_product_structure_path and any("/structure" in path for path in paths):
+        result.errors.append(f"BOM/structure indevido; paths={paths}")
+
     if expect_no_tools and paths:
         result.errors.append(f"esperava sem tools; paths={paths}")
 
@@ -350,10 +417,12 @@ def _print_offline_plan() -> None:
     print("SMOKE_OFFLINE=1 — roteiro da thread (sem HTTP):\n")
     turns = [
         ("T0", "qual o rol desse mês?", "seed ROL"),
-        ("T1", "somente da filial 01", "revise → /financial/rol + branch=01"),
+        ("T1", "somente da filial 01", "revise → /financial/rol + branch=01 + consume_last_action"),
+        ("T1b", "comparar com ano anterior no mesmo periodo", "YoY → start 2025; sem BOM"),
         ("T2", "o rol de uma unidade não pode ser igual ao total", "challenge sem missing_date"),
         ("T3", "rol filail 01 deste mês", "typo → branch=01"),
         ("T4", "resuma o resultado", "narrate sem tool"),
+        ("K1", "qual o percentual de rol de novos negócios…", "KPI token_and → new-business"),
     ]
     for label, message, expect in turns:
         print(f"  {label}: {message!r}")
@@ -401,6 +470,20 @@ def main() -> int:
             expect_stage="grounded_revise_query",
             expect_path_substr="/financial/rol",
             expect_branch="01",
+            expect_continuity_mode="consume_last_action",
+            forbid_narrate_recap=True,
+        )
+    )
+    results.append(
+        _run_turn(
+            label="T1b-yoy",
+            message="comparar com ano anterior no mesmo periodo",
+            token=token,
+            session_id=session_id,
+            expect_path_substr="/financial/rol",
+            expect_start_year="2025",
+            expect_continuity_mode="consume_last_action",
+            forbid_product_structure_path=True,
             forbid_narrate_recap=True,
         )
     )
@@ -456,6 +539,18 @@ def main() -> int:
         )
     )
 
+    # KPI token_and (sessão nova)
+    session_kpi = _create_session(token, agent_id)
+    results.append(
+        _run_turn(
+            label="K1-new-business",
+            message="qual o percentual de rol de novos negócios da empresa deste mês?",
+            token=token,
+            session_id=session_kpi,
+            expect_path_substr="new-business",
+        )
+    )
+
     print("\n== Resultados ==")
     failed = 0
     for item in results:
@@ -464,7 +559,8 @@ def main() -> int:
             failed += 1
         print(
             f"{status} {item.label}: stage={item.stage!r} "
-            f"paths={item.paths} branches={item.branches}"
+            f"mode={item.continuity_mode!r} paths={item.paths} "
+            f"branches={item.branches} starts={item.starts}"
         )
         for err in item.errors:
             print(f"       ! {err}")
@@ -476,7 +572,7 @@ def main() -> int:
         print(f"\nFAIL — {failed} turno(s)")
         return 1
 
-    print("\nOK — follow-up assertivo live")
+    print("\nOK — follow-up assertivo + continuidade live")
     return 0
 
 

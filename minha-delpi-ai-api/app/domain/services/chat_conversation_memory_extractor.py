@@ -131,9 +131,7 @@ class ChatConversationMemoryExtractor:
                 params["productCode"] = code
 
             result_type = cls._result_type_from_metadata(metadata)
-            operation_id = str(
-                metadata.get("operationId") or metadata.get("operation_id") or ""
-            ).strip()
+            operation_id = cls._operation_id_from_metadata(metadata)
             action_id = str(
                 tool_call.get("actionId")
                 or metadata.get("actionId")
@@ -162,6 +160,12 @@ class ChatConversationMemoryExtractor:
 
             return payload
 
+        # Turno atual falhou (ex.: param inválido): preserva lastAction útil do histórico.
+        if tool_calls:
+            prior = cls._extract_last_action(previous_messages, tool_calls=None)
+            if prior:
+                return prior
+
         # Fallback: último ok mesmo se só houver enrichment (turno só follow-up).
         for tool_call in reversed(calls):
             if not isinstance(tool_call, dict):
@@ -189,6 +193,17 @@ class ChatConversationMemoryExtractor:
                 "resultType": cls._result_type_from_metadata(metadata),
                 "path": path,
             }
+            operation_id = cls._operation_id_from_metadata(metadata)
+            action_id = str(
+                tool_call.get("actionId")
+                or metadata.get("actionId")
+                or metadata.get("action_id")
+                or ""
+            ).strip()
+            if operation_id:
+                payload["operationId"] = operation_id
+            if action_id:
+                payload["actionId"] = action_id
             api_route_domain = str(metadata.get("apiRouteDomain") or "").strip()
             if api_route_domain:
                 payload["apiRouteDomain"] = api_route_domain
@@ -198,6 +213,20 @@ class ChatConversationMemoryExtractor:
             return payload
 
         return None
+
+    @classmethod
+    def _operation_id_from_metadata(cls, metadata: dict[str, Any]) -> str:
+        operation_id = str(
+            metadata.get("operationId") or metadata.get("operation_id") or ""
+        ).strip()
+        if operation_id:
+            return operation_id
+        api_meta = metadata.get("apiDelpiResponseMeta")
+        if isinstance(api_meta, dict):
+            return str(
+                api_meta.get("operationId") or api_meta.get("operation_id") or ""
+            ).strip()
+        return ""
 
     @classmethod
     def _merge_executed_action_params(

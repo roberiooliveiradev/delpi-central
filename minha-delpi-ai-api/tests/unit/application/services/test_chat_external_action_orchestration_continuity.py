@@ -78,6 +78,80 @@ def test_continuity_consume_skips_parallel_discovery(monkeypatch):
     selection.select_action.assert_not_called()
 
 
+def test_yoy_revise_not_blocked_by_data_interpretation_heuristic(monkeypatch):
+    """«comparar com ano anterior» parece interpretação, mas continuity exige reexec."""
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+        raising=False,
+    )
+
+    def _fake_grounded_plan(*_args, **_kwargs):
+        return [
+            {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": "financial-rol",
+                    "parameters": {
+                        "branch": "01",
+                        "start_date": "01-08-2025",
+                        "end_date": "31-08-2025",
+                    },
+                },
+                "actionId": "financial-rol",
+            }
+        ]
+
+    monkeypatch.setattr(
+        "app.domain.services.chat_grounded_capability_planning_service."
+        "ChatGroundedCapabilityPlanningService.plan_actions",
+        _fake_grounded_plan,
+    )
+    monkeypatch.setattr(
+        "app.domain.services.chat_analysis_intent_service."
+        "ChatAnalysisIntentService.is_data_interpretation_request",
+        lambda *_a, **_k: True,
+    )
+    monkeypatch.setattr(
+        "app.application.services.chat_conversation_context_service."
+        "ChatConversationContextService.has_recent_tool_data",
+        lambda *_a, **_k: True,
+    )
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        MagicMock(),
+        message="comparar com ano anterior no mesmo periodo",
+        allowed_action_ids=["financial-rol"],
+        previous_messages=[{"role": "assistant", "toolCalls": [{"name": "x"}]}],
+        workspace_context={
+            "workingMemory": {
+                "lastAction": {
+                    "path": "/financial/rol",
+                    "params": {"branch": "01", "start_date": "01-08-2026"},
+                },
+                "lastResultExcerpt": {"title": "ROL"},
+            },
+            "turnGrounding": {
+                "status": "grounded",
+                "stage": "grounded_revise_query",
+                "followUp": {
+                    "decision": "revise_last_query",
+                    "continuityMode": "consume_last_action",
+                    "requiresLastActionReexec": True,
+                    "slotDelta": {
+                        "period": "previous_year_same_range",
+                        "start_date": "01-08-2025",
+                        "end_date": "31-08-2025",
+                    },
+                },
+            },
+        },
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["arguments"]["parameters"]["start_date"] == "01-08-2025"
+
+
 def test_continuity_challenge_returns_empty_without_bom(monkeypatch):
     monkeypatch.setattr(
         "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",

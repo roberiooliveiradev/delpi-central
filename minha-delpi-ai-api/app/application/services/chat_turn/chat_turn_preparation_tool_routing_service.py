@@ -355,8 +355,22 @@ class ChatTurnPreparationToolRoutingService:
             }
         )
 
+        follow_up = turn_grounding.get("followUp") if isinstance(turn_grounding, dict) else None
+        requires_last_action_reexec = (
+            str(turn_grounding.get("stage") or "").strip() == "grounded_revise_query"
+            or (
+                isinstance(follow_up, dict)
+                and (
+                    follow_up.get("requiresLastActionReexec") is True
+                    or str(follow_up.get("continuityMode") or "").strip()
+                    == "consume_last_action"
+                )
+            )
+        )
+
         skip_tools_for_data_interpretation = (
             not skip_tools_for_grounded_narrate
+            and not requires_last_action_reexec
             and not ChatTurnGroundingService.should_enrich_before_insight(
                 message,
                 excerpt if isinstance(excerpt, dict) else None,

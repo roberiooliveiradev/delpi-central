@@ -71,7 +71,7 @@ def test_build_date_branch_does_not_bind_limit_from_pagination_page_size() -> No
     assert "limit" not in parameters
 
 
-def test_build_date_branch_empty_default_limit():
+def test_build_date_branch_empty_default_does_not_invent_limit_without_schema():
     builder = OperationalApiParameterBuilderService()
 
     parameters = builder.build_date_branch(
@@ -79,7 +79,7 @@ def test_build_date_branch_empty_default_limit():
         "qual o cpv",
     )
 
-    assert parameters["limit"] == 10
+    assert "limit" not in parameters
 
 
 def test_build_department_idd_extracts_department_and_branch():

@@ -29,6 +29,41 @@ def test_resolve_skip_tool_flags_for_assistant_identity_question():
     assert flags.skip_tools_for_user_identity is False
 
 
+def test_yoy_revise_does_not_skip_tools_for_data_interpretation(monkeypatch):
+    monkeypatch.setattr(
+        "app.domain.services.chat_analysis_intent_service."
+        "ChatAnalysisIntentService.is_data_interpretation_request",
+        lambda *_a, **_k: True,
+    )
+    monkeypatch.setattr(
+        "app.application.services.chat_conversation_context_service."
+        "ChatConversationContextService.has_recent_tool_data",
+        lambda *_a, **_k: True,
+    )
+
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="comparar com ano anterior no mesmo periodo",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[{"role": "assistant", "content": "ROL"}],
+        workspace_context={
+            "workingMemory": {
+                "lastAction": {"path": "/financial/rol"},
+                "lastResultExcerpt": {"title": "ROL"},
+            },
+            "turnGrounding": {
+                "status": "grounded",
+                "stage": "grounded_revise_query",
+                "followUp": {
+                    "continuityMode": "consume_last_action",
+                    "requiresLastActionReexec": True,
+                },
+            },
+        },
+    )
+
+    assert flags.skip_tools_for_data_interpretation is False
+
+
 def test_resolve_skip_tool_flags_for_session_review():
     flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
         message="o que me diz sobre a conversa?",

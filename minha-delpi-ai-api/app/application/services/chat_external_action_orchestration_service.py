@@ -76,6 +76,7 @@ class ChatExternalActionOrchestrationService:
                 previous_messages,
             )
             and ChatConversationContextService.has_recent_tool_data(previous_messages)
+            and not cls._continuity_blocks_parallel_discovery(workspace_context)
         ):
             return []
 

@@ -68,16 +68,27 @@ def main() -> None:
         ],
     )
     _run(
-        "Fixtures FF-FOLLOW-*",
+        "Fixtures FF-FOLLOW-* + FF-CONT-*",
         [
             *pytest,
             "tests/unit/domain/services/test_flow_family_matrix_gates.py",
             "-k",
-            "FF-FOLLOW",
+            "FF-FOLLOW or FF-CONT",
+        ],
+    )
+    _run(
+        "Continuidade (orchestration + evidence + readPolicy + classifier)",
+        [
+            *pytest,
+            "tests/unit/application/services/test_chat_external_action_orchestration_continuity.py",
+            "tests/unit/domain/services/test_chat_product_evidence_service.py",
+            "tests/unit/application/services/test_external_action_selection_read_policy_service.py",
+            "tests/unit/domain/services/test_chat_follow_up_turn_classifier_service.py",
+            "tests/unit/domain/services/test_chat_context_assertiveness_service.py",
         ],
     )
 
-    print("\nOK — gates offline do follow-up assertivo.")
+    print("\nOK — gates offline do follow-up assertivo + continuidade grounded.")
 
 
 if __name__ == "__main__":

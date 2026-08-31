@@ -263,9 +263,7 @@
         ]
       },
       "granularityDefault": "month",
-      "emptyDefault": {
-        "limit": 10
-      }
+      "emptyDefault": {}
     },
     "department_idd": {
       "description": "Departamento SI (IDD) + filial/datas para metas e realizado",

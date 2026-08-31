@@ -265,6 +265,142 @@ def test_plan_revise_applies_period_slot_delta_dates():
     assert planned[0]["parameters"]["branch"] == "all"
 
 
+def test_plan_revise_matches_action_id_leaf_across_locale_prefix():
+    """lastAction pode vir com prefixo de catálogo legado (financeiro) ≠ action permitida (financial)."""
+
+    class _LocaleStub(_ReviseSelectionStub):
+        def list_actions(self):
+            return [
+                {
+                    "actionId": "api_delpi.financial.get_financial_rol",
+                    "operationId": None,
+                    "path": "",
+                    "parametersSchema": [
+                        {"name": "branch", "in": "query"},
+                        {"name": "start_date", "in": "query"},
+                        {"name": "end_date", "in": "query"},
+                    ],
+                }
+            ]
+
+    selection = _LocaleStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "grounded",
+            "stage": "grounded_revise_query",
+            "followUp": {
+                "decision": "revise_last_query",
+                "continuityMode": "consume_last_action",
+                "slotDelta": {"branch": "01"},
+            },
+        },
+        "workingMemory": {
+            "lastAction": {
+                "name": "external_action",
+                "path": "/financial/rol",
+                "actionId": "api_delpi.financeiro.get_financial_rol",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                },
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="somente da filial 01",
+        allowed_action_ids=["api_delpi.financial.get_financial_rol"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["actionId"] == "api_delpi.financial.get_financial_rol"
+    assert planned[0]["parameters"]["branch"] == "01"
+    assert planned[0]["parameters"]["start_date"] == "01-08-2026"
+
+
+def test_plan_revise_without_excerpt_still_reexecs():
+    selection = _ReviseSelectionStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "ungrounded",
+            "stage": "grounded_revise_query",
+            "followUp": {
+                "decision": "revise_last_query",
+                "continuityMode": "consume_last_action",
+                "slotDelta": {"branch": "01"},
+            },
+        },
+        "workingMemory": {
+            "lastAction": {
+                "name": "financial_rol",
+                "path": "/financial/rol",
+                "operationId": "get_financial_rol",
+                "params": {"start_date": "01-08-2026", "end_date": "28-08-2026"},
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="somente da filial 01",
+        allowed_action_ids=["financial-rol"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["parameters"]["branch"] == "01"
+
+
+def test_plan_revise_strips_invented_limit_without_schema():
+    class _NoSchemaStub(_ReviseSelectionStub):
+        def list_actions(self):
+            return [
+                {
+                    "actionId": "api_delpi.financial.get_financial_rol",
+                    "path": "",
+                    "parametersSchema": [],
+                }
+            ]
+
+    selection = _NoSchemaStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "grounded",
+            "stage": "grounded_revise_query",
+            "followUp": {
+                "decision": "revise_last_query",
+                "continuityMode": "consume_last_action",
+                "slotDelta": {"branch": "01"},
+            },
+        },
+        "workingMemory": {
+            "lastAction": {
+                "path": "/financial/rol",
+                "actionId": "api_delpi.financeiro.get_financial_rol",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                },
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="somente da filial 01",
+        allowed_action_ids=["api_delpi.financial.get_financial_rol"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["parameters"]["branch"] == "01"
+    assert planned[0]["parameters"]["start_date"] == "01-08-2026"
+    assert "limit" not in planned[0]["parameters"]
+    assert "granularity" not in planned[0]["parameters"]
+
+
 def test_plan_revise_without_last_action_returns_empty():
     selection = _ReviseSelectionStub()
     workspace = {

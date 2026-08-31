@@ -105,6 +105,13 @@ class OperationalApiParameterBuilderService:
         }
         parameters = self._apply_bindings(action, spec, context)
 
+        # Catálogo do agente às vezes omite parametersSchema — ainda resolve filial/datas.
+        if not parameters and not (action.get("parametersSchema") or []):
+            for name in ("branch", "start_date", "end_date"):
+                value = self._resolve_binding_value(name, spec, context)
+                if value is not None:
+                    parameters[name] = value
+
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
 
@@ -122,7 +129,20 @@ class OperationalApiParameterBuilderService:
             empty_default = spec.get("emptyDefault")
 
             if isinstance(empty_default, dict):
-                parameters = dict(empty_default)
+                schema_names = {
+                    str(item.get("name") or "").strip()
+                    for item in (action.get("parametersSchema") or [])
+                    if isinstance(item, dict) and item.get("name")
+                }
+                if schema_names:
+                    parameters = {
+                        key: value
+                        for key, value in empty_default.items()
+                        if str(key) in schema_names
+                    }
+                else:
+                    # Sem schema: não inventar paginação (quebra KPI scalar como /financial/rol).
+                    parameters = {}
 
         return self.merge_last_action_params(parameters, base_params)
 

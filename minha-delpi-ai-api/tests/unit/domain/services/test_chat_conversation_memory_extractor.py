@@ -52,6 +52,74 @@ def test_enrich_snapshot_merges_request_parameters_from_metadata():
     assert last_action["parameterStrategy"] == "date_branch"
 
 
+def test_enrich_snapshot_keeps_prior_last_action_when_current_tool_fails():
+    prior_messages = [
+        {
+            "role": "assistant",
+            "id": "m0",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/financial/rol",
+                            "actionId": "api_delpi.financial.get_financial_rol",
+                            "apiDelpiResponseMeta": {"operationId": "get_financial_rol"},
+                            "requestParameters": {
+                                "start_date": "01-08-2026",
+                                "end_date": "31-08-2026",
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+    snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
+        {"operationalFocus": {}},
+        previous_messages=prior_messages,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "arguments": {"parameters": {"branch": "01", "limit": 10}},
+                "metadata": {
+                    "ok": False,
+                    "path": "/financial/rol",
+                    "error": "Unknown parameter: limit",
+                },
+            }
+        ],
+    )
+
+    last_action = snapshot["lastAction"]
+    assert last_action["path"] == "/financial/rol"
+    assert last_action["params"]["start_date"] == "01-08-2026"
+    assert "limit" not in last_action["params"]
+
+
+def test_enrich_snapshot_operation_id_from_api_delpi_response_meta():
+    snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
+        {"operationalFocus": {}},
+        previous_messages=[],
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/financial/rol",
+                    "actionId": "api_delpi.financeiro.get_financial_rol",
+                    "apiDelpiResponseMeta": {"operationId": "get_financial_rol"},
+                },
+            }
+        ],
+    )
+
+    last_action = snapshot["lastAction"]
+    assert last_action["operationId"] == "get_financial_rol"
+    assert last_action["actionId"] == "api_delpi.financeiro.get_financial_rol"
+
+
 def test_enrich_snapshot_extracts_last_result_excerpt():
     snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
         {"operationalFocus": {}},
