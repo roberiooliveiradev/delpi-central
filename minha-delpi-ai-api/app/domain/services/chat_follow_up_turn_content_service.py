@@ -92,11 +92,26 @@ class ChatFollowUpTurnContentService:
 
     @classmethod
     def extract_branch_code(cls, text: str) -> str | None:
+        codes = cls.extract_branch_codes(text)
+        return codes[0] if codes else None
+
+    @classmethod
+    def extract_branch_codes(cls, text: str) -> list[str]:
         candidate = cls.normalize_branch_typos(text)
-        match = cls.compile_pattern("branchWithCode").search(candidate)
-        if not match:
-            return None
-        return str(match.group(1)).zfill(2)
+        pattern = cls.compile_pattern("branchWithCode")
+        found: list[str] = []
+        for match in pattern.finditer(candidate):
+            code = str(match.group(1)).zfill(2)
+            if code not in found:
+                found.append(code)
+        if len(found) >= 2:
+            return found
+        # «01 vs 02» / «01 e 02» sem palavra filial
+        for match in re.finditer(r"\b(\d{1,2})\b", candidate):
+            code = str(match.group(1)).zfill(2)
+            if code not in found and code in {"01", "02", "03", "04"}:
+                found.append(code)
+        return found
 
     @classmethod
     def has_branch_trigger_without_code(cls, text: str) -> bool:
@@ -244,6 +259,32 @@ class ChatFollowUpTurnContentService:
             if label and query:
                 out.append({"label": label, "query": query})
         return out
+
+    @classmethod
+    def period_compare_preferred_metric_keys(cls) -> tuple[str, ...]:
+        raw = ChatAssistantContentService.list(
+            _BUNDLE,
+            "periodCompare",
+            "preferredMetricKeys",
+        )
+        keys = tuple(
+            str(item).strip().lower()
+            for item in raw
+            if str(item).strip()
+        )
+        return keys or ("rol", "value", "total", "gross_revenue")
+
+    @classmethod
+    def period_compare_prior_label(cls, period_kind: str | None) -> str:
+        kind = str(period_kind or "").strip()
+        mapping = ChatAssistantContentService.get_mapping(
+            _BUNDLE,
+            "periodCompare",
+            "priorPeriodLabelByKind",
+        )
+        if kind and isinstance(mapping, dict) and mapping.get(kind):
+            return str(mapping.get(kind)).strip()
+        return cls.period_compare_format("priorPeriodLabel") or "período de comparação"
 
     @classmethod
     def challenge_contrast_format(cls, key: str, **values: Any) -> str:

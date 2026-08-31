@@ -270,11 +270,41 @@ class ChatFollowUpTurnInterpretationService:
         last_action: dict[str, Any] | None,
     ) -> dict[str, str]:
         delta: dict[str, str] = {}
-        branch = ChatFollowUpTurnContentService.extract_branch_code(message)
-        if branch and cls._has_revise_slot_trigger(normalized):
+        branch_codes = ChatFollowUpTurnContentService.extract_branch_codes(message)
+        compare_markers = (
+            " vs ",
+            " versus ",
+            " com a filial",
+            " com filial",
+            " entre filiais",
+            " comparar filial",
+            " comparar filiais",
+        )
+        wants_branch_compare = any(marker in f" {normalized} " for marker in compare_markers) or (
+            "comparar" in normalized and "filial" in normalized
+        )
+        if wants_branch_compare and len(branch_codes) >= 2:
+            delta["compareAxis"] = "branch"
+            delta["baseline_branch"] = branch_codes[0]
+            delta["branch"] = branch_codes[1]
+        elif wants_branch_compare and len(branch_codes) == 1:
+            last_branch = ""
+            if isinstance(last_action, dict) and isinstance(last_action.get("params"), dict):
+                last_branch = str(last_action["params"].get("branch") or "").strip().zfill(2)
+            if last_branch and last_branch != branch_codes[0]:
+                delta["compareAxis"] = "branch"
+                delta["baseline_branch"] = last_branch
+                delta["branch"] = branch_codes[0]
+
+        branch = branch_codes[0] if branch_codes else None
+        if branch and "compareAxis" not in delta and cls._has_revise_slot_trigger(normalized):
             delta["branch"] = branch
-        elif branch and ChatFollowUpTurnContentService.compile_pattern("branchWithCode").search(
-            ChatFollowUpTurnContentService.normalize_branch_typos(message)
+        elif (
+            branch
+            and "compareAxis" not in delta
+            and ChatFollowUpTurnContentService.compile_pattern("branchWithCode").search(
+                ChatFollowUpTurnContentService.normalize_branch_typos(message)
+            )
         ):
             # «rol filail 01 deste mês» — branch explícito mesmo sem «somente»
             if "filial" in normalized or "filail" in normalized or "unidade" in normalized:

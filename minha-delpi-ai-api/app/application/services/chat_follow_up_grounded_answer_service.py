@@ -400,7 +400,7 @@ class ChatFollowUpGroundedAnswerService:
         meta = tool_call.get("metadata") if isinstance(tool_call.get("metadata"), dict) else {}
         kpi = meta.get("kpiPresentation") if isinstance(meta.get("kpiPresentation"), dict) else {}
         cards = kpi.get("cards") if isinstance(kpi.get("cards"), list) else []
-        preferred = ("rol", "value", "total", "gross_revenue")
+        preferred = ChatFollowUpTurnContentService.period_compare_preferred_metric_keys()
         chosen = None
         for key in preferred:
             for card in cards:

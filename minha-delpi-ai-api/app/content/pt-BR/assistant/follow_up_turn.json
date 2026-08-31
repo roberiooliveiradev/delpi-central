@@ -91,6 +91,19 @@
     "lineTemplate": "- **{label} ({period_label}):** {value}",
     "baselinePeriodLabel": "período atual / referência",
     "priorPeriodLabel": "ano anterior (mesmo intervalo)",
+    "priorPeriodLabelByKind": {
+      "previous_year_same_range": "ano anterior (mesmo intervalo)",
+      "previous_period": "período anterior"
+    },
+    "preferredMetricKeys": [
+      "rol",
+      "value",
+      "total",
+      "gross_revenue",
+      "amount",
+      "net_revenue"
+    ],
+    "branchCompareAckTemplate": "Comparação entre filiais {baseline_branch} e {compare_branch} no período {start} a {end}.",
     "deltaTemplate": "- **Variação:** {delta} ({pct})",
     "deltaUp": "alta de {abs_delta}",
     "deltaDown": "queda de {abs_delta}",
@@ -104,6 +117,10 @@
       {
         "label": "Outra filial",
         "query": "somente da filial 02"
+      },
+      {
+        "label": "Comparar filiais 01 e 02",
+        "query": "comparar filial 01 com filial 02"
       }
     ]
   },

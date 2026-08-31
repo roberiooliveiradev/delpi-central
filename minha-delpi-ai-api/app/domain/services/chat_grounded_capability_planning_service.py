@@ -367,8 +367,39 @@ class ChatGroundedCapabilityPlanningService:
         prior_end = str(merged.get("end_date") or "").strip()
 
         payloads: list[dict] = []
+        compare_axis = str(delta.get("compareAxis") or "").strip()
+        baseline_branch = str(delta.get("baseline_branch") or "").strip().zfill(2)
+        compare_branch = str(delta.get("branch") or "").strip().zfill(2)
         if (
-            period_kind == "previous_year_same_range"
+            compare_axis == "branch"
+            and baseline_branch
+            and compare_branch
+            and baseline_branch != compare_branch
+        ):
+            left = dict(merged)
+            left["branch"] = baseline_branch
+            right = dict(merged)
+            right["branch"] = compare_branch
+            payloads.append(
+                cls._revise_payload(
+                    matched,
+                    parameters=left,
+                    reason_key="reviseLastQueryBaseline",
+                    compare_role="baseline",
+                )
+            )
+            payloads.append(
+                cls._revise_payload(
+                    matched,
+                    parameters=right,
+                    reason_key="reviseLastQueryPriorPeriod",
+                    compare_role="prior",
+                )
+            )
+            return payloads
+
+        if (
+            period_kind in {"previous_year_same_range", "previous_period"}
             and baseline_start
             and baseline_end
             and prior_start

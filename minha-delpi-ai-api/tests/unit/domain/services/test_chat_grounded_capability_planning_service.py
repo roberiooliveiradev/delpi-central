@@ -220,6 +220,99 @@ def test_plan_revise_last_query_reexec_with_branch():
     assert planned[0]["parameters"]["start_date"] == "01-08-2026"
 
 
+def test_plan_revise_applies_previous_period_dual():
+    selection = _ReviseSelectionStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "grounded",
+            "stage": "grounded_revise_query",
+            "followUp": {
+                "decision": "revise_last_query",
+                "continuityMode": "consume_last_action",
+                "slotDelta": {
+                    "period": "previous_period",
+                    "baseline_start_date": "01-08-2026",
+                    "baseline_end_date": "31-08-2026",
+                    "start_date": "01-07-2026",
+                    "end_date": "31-07-2026",
+                },
+            },
+            "excerpt": {"title": "ROL", "preview": "total"},
+        },
+        "workingMemory": {
+            "lastResultExcerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+            "lastAction": {
+                "name": "financial_rol",
+                "path": "/financial/rol",
+                "operationId": "get_financial_rol",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                },
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="comparar com o periodo anterior",
+        allowed_action_ids=["financial-rol"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 2
+    assert planned[0]["periodCompareRole"] == "baseline"
+    assert planned[1]["periodCompareRole"] == "prior"
+    assert planned[0]["parameters"]["start_date"] == "01-08-2026"
+    assert planned[1]["parameters"]["start_date"] == "01-07-2026"
+
+
+def test_plan_revise_branch_compare_dual():
+    selection = _ReviseSelectionStub()
+    workspace = {
+        "turnGrounding": {
+            "status": "grounded",
+            "stage": "grounded_revise_query",
+            "followUp": {
+                "decision": "revise_last_query",
+                "continuityMode": "consume_last_action",
+                "slotDelta": {
+                    "compareAxis": "branch",
+                    "baseline_branch": "01",
+                    "branch": "02",
+                },
+            },
+            "excerpt": {"title": "ROL", "preview": "total"},
+        },
+        "workingMemory": {
+            "lastResultExcerpt": {"title": "ROL", "preview": "total", "rowCount": 1},
+            "lastAction": {
+                "name": "financial_rol",
+                "path": "/financial/rol",
+                "operationId": "get_financial_rol",
+                "params": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                    "branch": "01",
+                },
+            },
+        },
+    }
+
+    planned = ChatGroundedCapabilityPlanningService.plan_actions(
+        selection,
+        message="comparar filial 01 com filial 02",
+        allowed_action_ids=["financial-rol"],
+        workspace_context=workspace,
+    )
+
+    assert len(planned) == 2
+    assert planned[0]["parameters"]["branch"] == "01"
+    assert planned[1]["parameters"]["branch"] == "02"
+    assert planned[0]["periodCompareRole"] == "baseline"
+    assert planned[1]["periodCompareRole"] == "prior"
+
+
 def test_plan_revise_applies_period_slot_delta_dates():
     selection = _ReviseSelectionStub()
     workspace = {
