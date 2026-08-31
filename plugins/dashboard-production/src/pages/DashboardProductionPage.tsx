@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { PRODUCTION_ROUTES } from "../constants/routes";
+import { PRODUCTION_SI_INDICATORS } from "../constants/siIndicatorIds";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   ProductionExportButtons,
@@ -37,6 +38,7 @@ import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
+import { useDepartmentIndicatorScores } from "../hooks/useDepartmentIndicatorScores";
 import { useProductionDashboard } from "../hooks/useProductionDashboard";
 import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
@@ -51,6 +53,7 @@ import {
   formatDashboardMetricValue,
   formatKpiGoalExportFragments,
   joinKpiExportContext,
+  pickSiIddScoreLabel,
 } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
 import { resolveApiBranch } from "../utils/branchClientFilters";
@@ -96,6 +99,13 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
     sectionErrors,
     reload,
   } = useProductionDashboard(apiParams);
+
+  const { scoresById: siScoresById } = useDepartmentIndicatorScores("production", {
+    competence,
+    dateStart,
+    dateEnd,
+    branches,
+  });
 
   const oeeSeries = useProductionOeeSeries({
     filters: apiParams,
@@ -213,6 +223,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
           realizedValue: directLabor?.direct_labor_cost_pct,
           activeBranch: selectedBranch,
           branches: directLaborBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            PRODUCTION_SI_INDICATORS.directLabor,
+          ),
           ...dateOpts,
         },
       );
@@ -223,6 +237,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
           realizedValue: productionCost?.production_cost_pct,
           activeBranch: selectedBranch,
           branches: productionCostBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            PRODUCTION_SI_INDICATORS.productionCosts,
+          ),
           ...dateOpts,
         },
       );
@@ -233,6 +251,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
           realizedValue: depreciation?.depreciation_pct,
           activeBranch: selectedBranch,
           branches: depreciationBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            PRODUCTION_SI_INDICATORS.depreciation,
+          ),
           ...dateOpts,
         },
       );
@@ -243,6 +265,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
           realizedValue: oee?.overall_equipment_effectiveness_pct,
           activeBranch: selectedBranch,
           branches: oeeBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            PRODUCTION_SI_INDICATORS.oee,
+          ),
           ...dateOpts,
         },
       );
@@ -253,6 +279,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
           realizedValue: otd?.on_time_delivery_pct,
           activeBranch: selectedBranch,
           branches: otdBranches,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            PRODUCTION_SI_INDICATORS.otd,
+          ),
           ...dateOpts,
         },
       );
@@ -328,6 +358,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
       productionCost,
       productionCostBranches,
       selectedBranch,
+      siScoresById,
     ],
   );
 
@@ -432,6 +463,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               branches: directLaborBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                PRODUCTION_SI_INDICATORS.directLabor,
+              ),
             },
           )}
           icon={<Users size={22} />}
@@ -453,6 +488,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               branches: productionCostBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                PRODUCTION_SI_INDICATORS.productionCosts,
+              ),
             },
           )}
           icon={<Coins size={22} />}
@@ -474,6 +513,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               branches: depreciationBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                PRODUCTION_SI_INDICATORS.depreciation,
+              ),
             },
           )}
           icon={<Percent size={22} />}
@@ -495,6 +538,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               branches: oeeBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                PRODUCTION_SI_INDICATORS.oee,
+              ),
             },
           )}
           icon={<CircleGauge size={22} />}
@@ -516,6 +563,10 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               branches: otdBranches,
               dateStart,
               dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                PRODUCTION_SI_INDICATORS.otd,
+              ),
             },
           )}
           icon={<Truck size={22} />}
