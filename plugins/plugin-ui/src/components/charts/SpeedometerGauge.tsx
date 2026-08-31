@@ -2,6 +2,7 @@ import { useId, useMemo, useState, type CSSProperties } from "react";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import { ChartPartResizeHandles } from "./seriesChart/ChartPartResizeHandles";
+import { useSeriesChartClasses } from "./seriesChartClasses";
 import {
   bindChartPartPointer,
   chartPartAllowsResize,
@@ -79,6 +80,11 @@ export type SpeedometerGaugeProps = {
   warningBelow?: number;
   dangerBelow?: number;
   size?: number;
+  /**
+   * Preenche o plotHost (SVG 100% × 100%). Usado no TV dashboard —
+   * paridade com SeriesChartPrimitive.
+   */
+  fillHost?: boolean;
   /**
    * Texto do tooltip interativo (hover/foco).
    * Só exibe card flutuante quando esta prop é uma string não vazia.
@@ -251,6 +257,7 @@ export function SpeedometerGauge({
   warningBelow = 0.95,
   dangerBelow = 0.9,
   size = 260,
+  fillHost = false,
   tip,
   showZonesLegend = true,
   className,
@@ -263,12 +270,18 @@ export function SpeedometerGauge({
 }: SpeedometerGaugeProps) {
   const uid = useId();
   const [active, setActive] = useState(false);
+  const seriesCn = useSeriesChartClasses();
   const base = useMemo(() => speedometerGaugeBemClasses(prefix), [prefix]);
   const classNames = { ...base, ...classNamesOverride };
   const explicitTip = typeof tip === "string" && tip.trim() ? tip.trim() : null;
   const interactive = Boolean(
     interaction?.onPartPointerDown || interaction?.onPartDoubleClick,
   );
+  const htmlPartSelectedClass = `${seriesCn.root}__part--selected`;
+  const htmlPartFramedClass = `${seriesCn.root}__part--framed`;
+  const htmlPartResizableClass = `${seriesCn.root}__part--resizable`;
+  const svgWidth = fillHost ? "100%" : size;
+  const svgHeight = fillHost ? "100%" : size * 0.72;
 
   const trackPart = resolveGaugePartBind({ kind: "gaugeTrack" }, interaction, chartParts);
   const fillPart = resolveGaugePartBind({ kind: "gaugeFill" }, interaction, chartParts);
@@ -406,15 +419,32 @@ export function SpeedometerGauge({
       data-zone-warning={String(zonesResolved.warningBelow)}
       data-zone-danger={String(zonesResolved.dangerBelow)}
       data-interactive={interactive ? "true" : undefined}
+      data-fill-host={fillHost ? "true" : undefined}
       tabIndex={0}
-      style={needsRelativeHost ? { position: "relative" } : undefined}
+      style={
+        fillHost || needsRelativeHost
+          ? {
+              ...(fillHost
+                ? {
+                    flex: 1,
+                    minHeight: 0,
+                    width: "100%",
+                    height: "100%",
+                    alignSelf: "stretch",
+                  }
+                : {}),
+              ...(needsRelativeHost ? { position: "relative" } : {}),
+            }
+          : undefined
+      }
       {...tipHandlers}
     >
       <svg
         className={classNames.svg}
         viewBox={`0 0 ${VIEW} ${VIEW * 0.72}`}
-        width={size}
-        height={size * 0.72}
+        width={svgWidth}
+        height={svgHeight}
+        preserveAspectRatio="xMidYMid meet"
         aria-hidden="true"
       >
         <defs>
@@ -455,7 +485,6 @@ export function SpeedometerGauge({
                 strokeLinecap="butt"
                 opacity={part.style?.opacity ?? 0.88}
                 pointerEvents="none"
-                style={part.selected ? { outline: "1px solid currentColor" } : undefined}
               />
             </g>
           );
@@ -622,9 +651,9 @@ export function SpeedometerGauge({
         <p
           className={[
             classNames.label,
-            labelFrameStyle?.position === "absolute" ? `${classNames.root}__part--framed` : "",
-            labelPart.selected ? `${classNames.root}__part--selected` : "",
-            labelShowResize ? `${classNames.root}__part--resizable` : "",
+            labelFrameStyle?.position === "absolute" ? htmlPartFramedClass : "",
+            labelPart.selected ? htmlPartSelectedClass : "",
+            labelShowResize ? htmlPartResizableClass : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -646,9 +675,9 @@ export function SpeedometerGauge({
         <p
           className={[
             classNames.goal,
-            goalFrameStyle?.position === "absolute" ? `${classNames.root}__part--framed` : "",
-            goalPart.selected ? `${classNames.root}__part--selected` : "",
-            goalShowResize ? `${classNames.root}__part--resizable` : "",
+            goalFrameStyle?.position === "absolute" ? htmlPartFramedClass : "",
+            goalPart.selected ? htmlPartSelectedClass : "",
+            goalShowResize ? htmlPartResizableClass : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -670,9 +699,9 @@ export function SpeedometerGauge({
         <ul
           className={[
             classNames.legend,
-            legendFrameStyle?.position === "absolute" ? `${classNames.root}__part--framed` : "",
-            legendPart.selected ? `${classNames.root}__part--selected` : "",
-            legendShowResize ? `${classNames.root}__part--resizable` : "",
+            legendFrameStyle?.position === "absolute" ? htmlPartFramedClass : "",
+            legendPart.selected ? htmlPartSelectedClass : "",
+            legendShowResize ? htmlPartResizableClass : "",
           ]
             .filter(Boolean)
             .join(" ")}

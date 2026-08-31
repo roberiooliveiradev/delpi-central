@@ -439,3 +439,30 @@
   stroke: var(--primary, #089bdb);
   stroke-width: 2;
 }
+
+/* Velocímetro — seleção SVG com os mesmos tokens da série (sem outline inline). */
+.delpi-ui-series-chart [data-chart-part^="gauge"][aria-selected="true"],
+.delpi-ui-series-chart [data-chart-part="gaugeTrack"][aria-selected="true"],
+.delpi-ui-series-chart [data-chart-part="gaugeFill"][aria-selected="true"],
+.delpi-ui-series-chart [data-chart-part="gaugeNeedle"][aria-selected="true"],
+.delpi-ui-series-chart [data-chart-part="gaugeValue"][aria-selected="true"],
+.delpi-ui-series-chart [data-chart-part="gaugeGoalMarker"][aria-selected="true"] {
+  filter: drop-shadow(0 0 2px var(--primary, #089bdb));
+}
+
+.delpi-ui-series-chart [data-chart-part^="gaugeZone"][aria-selected="true"] path:not([stroke="transparent"]) {
+  filter: drop-shadow(0 0 2px var(--primary, #089bdb));
+  stroke-opacity: 1;
+}
+
+/* Velocímetro — seleção SVG com o mesmo token da série (sem outline inline). */
+.delpi-ui-series-chart [data-chart-part^="gauge"][aria-selected="true"] {
+  filter: drop-shadow(0 0 2px var(--primary, #089bdb));
+}
+
+.delpi-ui-series-chart [data-chart-part^="gauge"][aria-selected="true"] > path,
+.delpi-ui-series-chart [data-chart-part^="gauge"][aria-selected="true"] > line,
+.delpi-ui-series-chart [data-chart-part^="gauge"][aria-selected="true"] > circle,
+.delpi-ui-series-chart [data-chart-part^="gauge"][aria-selected="true"] > text {
+  filter: drop-shadow(0 0 2px var(--primary, #089bdb));
+}

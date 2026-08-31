@@ -235,4 +235,32 @@ describe("SpeedometerGauge", () => {
     expect(caption.style.left).toBe("25%");
     expect(caption.style.top).toBe("68%");
   });
+
+  it("seleção HTML usa tokens da série (sem outline inline nas zonas)", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={98.5}
+        goal={95}
+        label="OTD"
+        interaction={{
+          selectedPart: { kind: "gaugeNeedle" },
+          onPartPointerDown: () => undefined,
+        }}
+      />,
+    );
+    const needle = container.querySelector('[data-chart-part="gaugeNeedle"]')!;
+    expect(needle.getAttribute("aria-selected")).toBe("true");
+    const outlined = container.querySelector('[style*="outline"]');
+    expect(outlined).toBeNull();
+  });
+
+  it("fillHost usa SVG 100%", () => {
+    const { container } = render(
+      <SpeedometerGauge value={90} label="Fluid" fillHost />,
+    );
+    const svg = container.querySelector(".delpi-ui-speedometer-gauge__svg");
+    expect(svg?.getAttribute("width")).toBe("100%");
+    expect(svg?.getAttribute("height")).toBe("100%");
+    expect(container.querySelector('[data-fill-host="true"]')).toBeTruthy();
+  });
 });
