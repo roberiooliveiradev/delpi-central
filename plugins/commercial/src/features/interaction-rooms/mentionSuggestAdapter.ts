@@ -54,7 +54,30 @@ export function mapSuggestItemToMentionHit(
     subtitle: item.subtitle ? String(item.subtitle) : undefined,
     groupLabel: mentionGroupLabelForKind(kind),
     ref,
+    ...(kind === "user"
+      ? {
+          avatarName: label.replace(/^@/, "").trim() || label,
+        }
+      : {}),
   };
+}
+
+/** Anexa foto resolvida pelo host (blob/CDN) nos hits de usuário. */
+export function enrichMentionHitsWithAvatars(
+  hits: readonly InteractionMentionHit[],
+  photoByUserId?: ReadonlyMap<string, string> | null,
+): InteractionMentionHit[] {
+  if (!photoByUserId || photoByUserId.size === 0) {
+    return [...hits];
+  }
+  return hits.map((hit) => {
+    if (hit.kind !== "user") return hit;
+    const userId = String(hit.ref.user_id ?? hit.ref.id ?? "").trim();
+    if (!userId) return hit;
+    const src = (photoByUserId.get(userId) ?? "").trim();
+    if (!src) return hit;
+    return { ...hit, avatarSrc: src };
+  });
 }
 
 export function mapSuggestItemsToMentionHits(

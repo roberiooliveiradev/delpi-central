@@ -24,6 +24,7 @@ describe("mentionSuggestAdapter", () => {
     expect(hit.subtitle).toBe("ana@delpi.com");
     expect(hit.groupLabel).toBe("Pessoas");
     expect(hit.ref).toEqual({ user_id: "u1" });
+    expect(hit.avatarName).toBe("Ana Silva");
   });
 
   it("preserva id estável quando a API envia id", () => {

@@ -85,6 +85,36 @@ describe("MessageThread", () => {
     expect(container.querySelector(".delpi-ui-mention-text__chip")).not.toBeNull();
   });
 
+  it("renders mentions inside system lines", () => {
+    render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "sys-1",
+            kind: "system",
+            bodyText: "Tarefa criada: @Ana",
+            createdAtLabel: "10:01",
+            mentions: [
+              {
+                kind: "user",
+                label: "@Ana",
+                href: "/apps/commercial/users/u1",
+                title: "Abrir Ana",
+                avatarName: "Ana",
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+    const link = screen.getByRole("link", { name: "Abrir Ana" });
+    expect(link.getAttribute("href")).toBe("/apps/commercial/users/u1");
+    expect(link.className).toContain("with-avatar");
+  });
+
   it("aligns mine bubbles to the right without system avatar", () => {
     const { container } = render(
       <MessageThread

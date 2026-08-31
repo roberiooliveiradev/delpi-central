@@ -80,6 +80,8 @@ import {
 } from "./interactionRoomUserLink";
 import { resolveInteractionMessageActions } from "./messageThreadTaskAction";
 import { buildEditComposerBanner, buildReplyComposerBanner } from "./interactionRoomReply";
+import { mapInteractionMentionsToTextItems } from "./mapInteractionMentionToTextItem";
+import { mapInteractionMentionsToTextItems } from "./mapInteractionMentionToTextItem";
 import { resolveRoomEntityHref } from "./resolveInteractionEntityHref";
 import {
   pinTitleFromMessageBody,
@@ -649,11 +651,10 @@ export function InteractionRoomPage({
           mine: isOwnInteractionAuthor(message.author_user_id, sessionUserId),
           parentId: message.parent_id,
           deleted: Boolean(message.deleted_at),
-          mentions: mentionDtos.map((mention) => ({
-            kind: mention.mention_kind,
-            label: mention.label,
-            ref: mention.ref,
-          })),
+          mentions: mapInteractionMentionsToTextItems(mentionDtos, {
+            basePath,
+            photoByUserId,
+          }),
           belowBody:
             message.deleted_at != null ? null : (
               <>
@@ -1125,6 +1126,12 @@ export function InteractionRoomPage({
                       resolveActions={resolveActions}
                       resolveActionExtras={resolveActionExtras}
                       onParentQuoteClick={onParentQuoteClick}
+                      onMentionActivate={(item, event) => {
+                        const href = (item.href ?? "").trim();
+                        if (!href) return;
+                        event.preventDefault();
+                        navigatePluginPath(href);
+                      }}
                       portalScopeClassName={CM_PORTAL_SCOPE}
                       actionsToolbarAriaLabel={
                         content.messageActionsToolbarAriaLabel

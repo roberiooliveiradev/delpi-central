@@ -54,6 +54,8 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/InteractionRoomMessageComposer/);
     expect(source).toMatch(/useDirectoryUserLabels/);
     expect(source).toMatch(/useUserProfilePhotoUrls/);
+    expect(source).toMatch(/mapInteractionMentionsToTextItems/);
+    expect(source).toMatch(/onMentionActivate/);
     expect(source).toMatch(/photoByUserId/);
     expect(source).toMatch(/nameFor/);
     expect(source).toMatch(/usePortfolioScope/);

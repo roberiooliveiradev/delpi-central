@@ -304,7 +304,7 @@ export function MessageThread({
             Boolean(activeEditingId) &&
             message.id === activeEditingId &&
             Boolean(renderEditSlot);
-          if (isSystemKind(message.kind)) {
+              if (isSystemKind(message.kind)) {
             return (
               <li
                 key={message.id}
@@ -312,7 +312,17 @@ export function MessageThread({
                 data-message-id={message.id}
               >
                 <div className={classNames.system} data-message-kind={message.kind}>
-                  <span className={classNames.body}>{message.bodyText}</span>
+                  {message.mentions && message.mentions.length > 0 ? (
+                    <MentionText
+                      classNames={classNames.mention}
+                      className={classNames.body}
+                      text={message.bodyText}
+                      mentions={message.mentions}
+                      onMentionActivate={onMentionActivate}
+                    />
+                  ) : (
+                    <span className={classNames.body}>{message.bodyText}</span>
+                  )}
                   {message.createdAtLabel ? (
                     <time className={classNames.time}>{message.createdAtLabel}</time>
                   ) : null}
