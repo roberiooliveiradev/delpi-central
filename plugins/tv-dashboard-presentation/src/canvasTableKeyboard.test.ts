@@ -84,4 +84,37 @@ describe("resolveCanvasTableKeyboardAction", () => {
       }),
     ).toEqual({ type: "navigate", next: { row: 1, col: 1 }, range: false });
   });
+
+  it("navegar: Delete limpa; Alt+Enter em editar insere newline", () => {
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "Delete",
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "clearContent" });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "Backspace",
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "clearContent" });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "Enter",
+        alt: true,
+        mode: "edit",
+      }),
+    ).toEqual({ type: "insertNewline" });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "c",
+        ctrl: true,
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "clipboard", op: "copy" });
+  });
 });

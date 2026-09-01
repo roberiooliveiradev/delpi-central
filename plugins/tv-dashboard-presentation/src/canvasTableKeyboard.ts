@@ -14,6 +14,9 @@ export type CanvasTableKeyboardAction =
   | { type: "commitStay" }
   | { type: "cancelEdit" }
   | { type: "enterEdit" }
+  | { type: "clearContent" }
+  | { type: "insertNewline" }
+  | { type: "clipboard"; op: "copy" | "cut" | "paste" }
   | { type: "ignore" };
 
 export type ResolveCanvasTableKeyboardParams = {
@@ -89,7 +92,7 @@ export function resolveCanvasTableKeyboardAction(
   if (mode === "edit") {
     if (key === "Escape") return { type: "cancelEdit" };
     if (key === "Enter") {
-      if (alt) return { type: "ignore" }; // Alt+Enter = newline (E7)
+      if (alt) return { type: "insertNewline" };
       if (mod) return { type: "commitStay" };
       const next = clampCell(row + (shift ? -1 : 1), col, rows, cols);
       return { type: "commitMove", next };
@@ -114,6 +117,12 @@ export function resolveCanvasTableKeyboardAction(
   // navigate
   if (key === "F2") return { type: "enterEdit" };
   if (key === "Escape") return { type: "ignore" };
+
+  if (mod && (key === "c" || key === "C")) return { type: "clipboard", op: "copy" };
+  if (mod && (key === "x" || key === "X")) return { type: "clipboard", op: "cut" };
+  if (mod && (key === "v" || key === "V")) return { type: "clipboard", op: "paste" };
+
+  if (key === "Delete" || key === "Backspace") return { type: "clearContent" };
 
   if (key === "Tab") {
     const next = moveInRow(row, col, shift ? -1 : 1, rows, cols);

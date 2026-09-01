@@ -8,6 +8,14 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import {
+  canvasTableClipboardToTsv,
+  clearCanvasTableCellsContent,
+  parseCanvasTableClipboardTsv,
+  pasteCanvasTableClipboard,
+  serializeCanvasTableClipboard,
+  type CanvasTableClipboardPayload,
+} from "./canvasTableClipboard";
 import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from "./canvasTableProjection";
 import { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
 import {
@@ -54,6 +62,7 @@ export type ComunicadoCanvasTableInteraction = {
     range?: boolean;
   }) => void;
   onCellCommit?: (row: number, col: number, cell: CanvasTableCell) => void;
+  onCellsCommit?: (cells: CanvasTableCell[][]) => void;
   onTracksCommit?: (next: { columnWidths?: number[]; rowHeights?: number[] }) => void;
 };
 
@@ -122,6 +131,9 @@ function measureCellRects(host: HTMLElement): CanvasTableCellDomRect[] {
   });
   return rects;
 }
+
+/** Clipboard interno da Grade (intervalo) — não cria bloco novo no Ctrl+V. */
+let canvasTableSessionClipboard: CanvasTableClipboardPayload | null = null;
 
 export function ComunicadoCanvasTableView({
   block,
@@ -393,6 +405,62 @@ export function ComunicadoCanvasTableView({
       event.preventDefault();
       commitText(row, col, event.currentTarget.textContent ?? "");
       setEditingCell(null);
+      return;
+    }
+
+    if (action.type === "insertNewline") {
+      event.preventDefault();
+      document.execCommand("insertLineBreak");
+      return;
+    }
+
+    if (action.type === "clearContent") {
+      event.preventDefault();
+      event.stopPropagation();
+      const targets = selectedCells.length ? selectedCells : [{ row, col }];
+      const next = clearCanvasTableCellsContent(block.cells, targets);
+      interaction?.onCellsCommit?.(next);
+      return;
+    }
+
+    if (action.type === "clipboard") {
+      event.preventDefault();
+      event.stopPropagation();
+      const targets = selectedCells.length ? selectedCells : [{ row, col }];
+      if (action.op === "copy" || action.op === "cut") {
+        const payload = serializeCanvasTableClipboard({
+          cells: block.cells,
+          selected: targets,
+          merges: block.merges,
+        });
+        if (!payload) return;
+        canvasTableSessionClipboard = payload;
+        const tsv = canvasTableClipboardToTsv(payload);
+        void navigator.clipboard?.writeText?.(tsv);
+        if (action.op === "cut") {
+          interaction?.onCellsCommit?.(clearCanvasTableCellsContent(block.cells, targets));
+        }
+        return;
+      }
+      const origin = focusCell ?? { row, col };
+      const applyPayload = (payload: CanvasTableClipboardPayload) => {
+        const pasted = pasteCanvasTableClipboard({
+          cells: block.cells,
+          payload,
+          origin,
+          rows: block.rows,
+          cols: block.cols,
+        });
+        interaction?.onCellsCommit?.(pasted.cells);
+      };
+      if (canvasTableSessionClipboard) {
+        applyPayload(canvasTableSessionClipboard);
+        return;
+      }
+      void navigator.clipboard?.readText?.().then((text) => {
+        const payload = parseCanvasTableClipboardTsv(text);
+        if (payload) applyPayload(payload);
+      });
       return;
     }
 

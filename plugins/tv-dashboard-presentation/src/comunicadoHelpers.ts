@@ -139,6 +139,14 @@ export {
   remapCanvasTableMerges,
   canvasTableCellHtmlSpan,
 } from "./canvasTableMerge";
+export {
+  clearCanvasTableCellContent,
+  clearCanvasTableCellsContent,
+  serializeCanvasTableClipboard,
+  pasteCanvasTableClipboard,
+  parseCanvasTableClipboardTsv,
+  canvasTableClipboardToTsv,
+} from "./canvasTableClipboard";
 export type { CanvasTableMerge } from "./comunicadoCanvasTable";
 export type {
   CanvasTableCell,

@@ -150,16 +150,19 @@ export function useComunicadoEditorKeyboard({
       }
 
       if (mod && key === "x" && hasSelection) {
+        if (hasPartSelection) return;
         cutSelected();
         return { handled: true };
       }
 
       if (mod && key === "c" && hasSelection) {
+        if (hasPartSelection) return;
         copySelected();
         return { handled: true };
       }
 
       if (mod && key === "v") {
+        if (hasPartSelection) return;
         // Colar é tratado pelo listener `paste` (SO + clipboard interno).
         return;
       }
@@ -202,6 +205,8 @@ export function useComunicadoEditorKeyboard({
       }
 
       if ((event.key === "Delete" || event.key === "Backspace") && hasSelection) {
+        /* Célula da Grade: limpa conteúdo no view — não apaga o bloco. */
+        if (hasPartSelection) return;
         removeSelected();
         return { handled: true };
       }
