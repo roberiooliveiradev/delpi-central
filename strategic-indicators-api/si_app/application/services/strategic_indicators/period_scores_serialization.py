@@ -15,6 +15,7 @@ from si_app.application.services.strategic_indicators.period_resolution import (
 )
 from si_app.shared.branch_filter import effective_query_branch
 from si_app.shared.json_encoding import to_json_safe
+from si_app.shared.numeric_parsing import to_optional_float
 
 
 def normalize_scope_branch(branch: str | None) -> str:
@@ -29,10 +30,7 @@ def normalize_scope_department_id(department_id: str | None) -> str:
 
 
 def _optional_float(value: Any) -> float | None:
-    if value is None:
-        return None
-
-    return float(value)
+    return to_optional_float(value)
 
 
 def serialize_period_snapshot(

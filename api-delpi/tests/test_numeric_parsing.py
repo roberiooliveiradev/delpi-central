@@ -1,6 +1,6 @@
 """Regressão do parser numérico canônico (blank ≠ float)."""
 
-from app.application.shared.numeric_parsing import to_optional_float
+from app.domain.shared.numeric_parsing import to_optional_float
 
 
 def test_to_optional_float_treats_blank_as_none() -> None:

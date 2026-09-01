@@ -10,7 +10,7 @@ from si_app.domain.ports.strategic_indicators.supplies_indicators_snapshot_port 
     StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
 )
 from si_app.shared.goal_scope import BRANCH_UNIT_CODES
-
+from si_app.shared.numeric_parsing import to_optional_float
 
 class SuppliesIndicatorsSnapshotProvider(
     StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
@@ -193,7 +193,7 @@ class SuppliesIndicatorsSnapshotProvider(
                 )
                 branch_value = getattr(unit_snapshot, value_attr, None)
                 unit_values[branch_code] = (
-                    float(branch_value) if branch_value is not None else None
+                    to_optional_float(branch_value)
                 )
             except Exception:
                 unit_values[branch_code] = None

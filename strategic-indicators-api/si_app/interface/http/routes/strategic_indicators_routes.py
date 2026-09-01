@@ -11,6 +11,7 @@ from si_app.application.services.strategic_indicators.tree_load_jobs_service imp
     get_tree_load_jobs_service,
 )
 from si_app.interface.http.si_read_route_support import run_logged_read_route
+from si_app.shared.numeric_parsing import to_optional_float
 
 logger = logging.getLogger("strategic_indicators.http")
 
@@ -1405,19 +1406,19 @@ def get_strategic_indicators(
                         "performance_direction",
                         "higher_is_better",
                     ),
-                    "value": float(item.value) if item.value is not None else None,
+                    "value": to_optional_float(item.value),
                     "realized": {
-                        key: float(value) if value is not None else None
+                        key: to_optional_float(value)
                         for key, value in (item.realized or {}).items()
                     },
-                    "score": float(item.score) if item.score is not None else None,
-                    "gap": float(item.gap) if item.gap is not None else None,
+                    "score": to_optional_float(item.score),
+                    "gap": to_optional_float(item.gap),
                     "gaps": {
-                        key: float(value) if value is not None else None
+                        key: to_optional_float(value)
                         for key, value in (item.gaps or {}).items()
                     },
                     "goals": {
-                        key: float(value) if value is not None else None
+                        key: to_optional_float(value)
                         for key, value in (getattr(item, "goals", None) or {}).items()
                     },
                     "trend": item.trend,

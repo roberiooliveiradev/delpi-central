@@ -1,14 +1,7 @@
+"""Reexport — prefer ``app.domain.shared.numeric_parsing`` em código novo."""
+
 from __future__ import annotations
 
+from app.domain.shared.numeric_parsing import to_optional_float
 
-def to_optional_float(value: object) -> float | None:
-    if value is None:
-        return None
-
-    if isinstance(value, str) and not value.strip():
-        return None
-
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+__all__ = ["to_optional_float"]

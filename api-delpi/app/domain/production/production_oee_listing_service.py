@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.domain.shared.numeric_parsing import to_optional_float
 from app.domain.production.production_efficiency_valid_range import (
     EFFICIENCY_BAND_VERIFY,
     PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
@@ -60,10 +61,8 @@ def filter_production_appointment_rows(
 def _sort_key(row: dict, column: str):
     value = row.get(column)
     if column == "oee_pct":
-        try:
-            return float(value) if value is not None else float("-inf")
-        except (TypeError, ValueError):
-            return float("-inf")
+        parsed = to_optional_float(value)
+        return parsed if parsed is not None else float("-inf")
     if value is None:
         return ""
     return value

@@ -3,6 +3,7 @@ from app.application.dto.production.get_production_oee_request import (
 )
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.models.page import Page
+from app.application.shared.numeric_parsing import to_optional_float
 from app.application.services.production.production_kpi_cache import (
     get_cached_production_oee,
     get_cached_production_oee_appointments_bundle,
@@ -132,8 +133,7 @@ class OverallEquipmentEffectivenessRepository(
 
         for row in rows:
             if str(row.get("branch") or "").strip() == target_branch:
-                value = row.get("oee_pct")
-                return float(value) if value is not None else None
+                return to_optional_float(row.get("oee_pct"))
 
         return None
 

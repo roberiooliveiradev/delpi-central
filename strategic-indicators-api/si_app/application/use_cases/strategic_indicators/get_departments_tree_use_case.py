@@ -22,6 +22,7 @@ from si_app.application.use_cases.strategic_indicators.get_trends_real_use_case 
     GetStrategicIndicatorsTrendsRealUseCase,
 )
 from si_app.shared.goal_scope import BRANCH_UNIT_CODES, is_branch_unit_scope
+from si_app.shared.numeric_parsing import to_optional_float
 
 
 @dataclass(frozen=True)
@@ -250,19 +251,19 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
                         "performance_direction",
                         "higher_is_better",
                     ),
-                    "value": float(item.value) if item.value is not None else None,
+                    "value": to_optional_float(item.value),
                     "realized": {
-                        key: float(value) if value is not None else None
+                        key: to_optional_float(value)
                         for key, value in (item.realized or {}).items()
                     },
-                    "score": float(item.score) if item.score is not None else None,
-                    "gap": float(item.gap) if item.gap is not None else None,
+                    "score": to_optional_float(item.score),
+                    "gap": to_optional_float(item.gap),
                     "gaps": {
-                        key: float(value) if value is not None else None
+                        key: to_optional_float(value)
                         for key, value in (item.gaps or {}).items()
                     },
                     "goals": {
-                        key: float(value) if value is not None else None
+                        key: to_optional_float(value)
                         for key, value in (getattr(item, "goals", None) or {}).items()
                     },
                     "has_value": item.has_value,

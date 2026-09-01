@@ -12,6 +12,7 @@ from si_app.domain.ports.strategic_indicators.commercial_indicators_snapshot_por
 from si_app.shared.branch_filter import effective_query_branch
 from si_app.shared.consolidated_value_aggregation import aggregate_unit_branch_values
 from si_app.shared.goal_scope import BRANCH_UNIT_CODES
+from si_app.shared.numeric_parsing import to_optional_float
 
 MATRIX_BRANCH_CODE = "01"
 BRANCH_BRANCH_CODE = "02"
@@ -260,7 +261,7 @@ class CommercialIndicatorsSnapshotProvider(
                 branch=active_branch,
             )
             raw = value_getter(branch_snapshot)
-            normalized = float(raw) if raw is not None else None
+            normalized = to_optional_float(raw)
             unit_values[active_branch] = normalized
             return self._build_measurement(
                 indicator_id=indicator_id,
@@ -277,7 +278,7 @@ class CommercialIndicatorsSnapshotProvider(
                     branch=branch_code,
                 )
                 raw = value_getter(branch_snapshot)
-                unit_values[branch_code] = float(raw) if raw is not None else None
+                unit_values[branch_code] = to_optional_float(raw)
             except Exception:
                 unit_values[branch_code] = None
 

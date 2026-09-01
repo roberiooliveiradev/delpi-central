@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.application.services.product.protheus_field_normalizer import protheus_date_to_iso
+from app.application.shared.numeric_parsing import to_optional_float
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_linked_orders_sql import (
     clamp_linked_orders_limit,
@@ -17,11 +18,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
 
 
 def _normalize_linked_receipt_row(row: dict[str, Any]) -> dict[str, Any]:
-    quantity = row.get("quantity")
-    try:
-        quantity_value = float(quantity) if quantity is not None else None
-    except (TypeError, ValueError):
-        quantity_value = None
+    quantity_value = to_optional_float(row.get("quantity"))
     return {
         "recno": int(row.get("recno") or 0),
         "branch": (row.get("branch") or "").strip(),

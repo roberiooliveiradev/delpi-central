@@ -11,7 +11,7 @@ from si_app.domain.ports.strategic_indicators.production_indicators_snapshot_por
 )
 from si_app.shared.branch_filter import effective_query_branch
 from si_app.shared.goal_scope import BRANCH_UNIT_CODES
-
+from si_app.shared.numeric_parsing import to_optional_float
 
 class ProductionIndicatorsSnapshotProvider(
     StrategicIndicatorsProductionIndicatorsSnapshotPort,
@@ -284,7 +284,7 @@ class ProductionIndicatorsSnapshotProvider(
         value_getter,
     ) -> dict:
         value = value_getter(snapshot)
-        normalized_value = float(value) if value is not None else None
+        normalized_value = to_optional_float(value)
 
         return {
             "department_id": "production",
@@ -325,7 +325,7 @@ class ProductionIndicatorsSnapshotProvider(
                 )
                 branch_raw = value_getter(unit_snapshot)
                 unit_values[branch_code] = (
-                    float(branch_raw) if branch_raw is not None else None
+                    to_optional_float(branch_raw)
                 )
             except Exception:
                 unit_values[branch_code] = None

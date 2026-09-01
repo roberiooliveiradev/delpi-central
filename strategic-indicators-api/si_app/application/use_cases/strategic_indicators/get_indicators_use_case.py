@@ -14,7 +14,7 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
-
+from si_app.shared.numeric_parsing import to_optional_float
 
 class GetStrategicIndicatorsUseCase:
     def __init__(
@@ -79,7 +79,7 @@ class GetStrategicIndicatorsUseCase:
                     indicator_name=item.indicator_name,
                     weight_pct=int(item.weight_pct),
                     goal_label=item.goal_label,
-                    goal_value=float(item.goal_value) if item.goal_value is not None else 0.0,
+                    goal_value=to_optional_float(item.goal_value) or 0.0,
                     goal_periodicity=item.goal_periodicity,
                     goal_mode=getattr(item, "goal_mode", "standard"),
                     monthly_targets=[]

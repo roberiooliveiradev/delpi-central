@@ -8,6 +8,7 @@ from si_app.application.services.strategic_indicators.period_resolution import (
     _parse_dashboard_date_parts,
 )
 from si_app.infrastructure.gateways.delpi_quality_gateway import DelpiQualityGateway
+from si_app.shared.numeric_parsing import to_optional_float
 
 PLUGS_FINISHED_PRODUCT_PREFIX = "9048"
 COMPONENTS_FINISHED_PRODUCT_PREFIX = "9026"
@@ -241,7 +242,7 @@ class QualityMetricsSnapshotService:
                 metrics = point.get("metrics") or {}
                 raw = metrics.get("scrap_cost_pct")
                 lookup[("scrap", scope, competence)] = (
-                    float(raw) if raw is not None else None
+                    to_optional_float(raw)
                 )
             for point in self._iter_ppm_series_points(rework):
                 competence = self._competence_from_ppm_point(point)
@@ -250,7 +251,7 @@ class QualityMetricsSnapshotService:
                 metrics = point.get("metrics") or {}
                 raw = metrics.get("rework_cost_pct")
                 lookup[("rework", scope, competence)] = (
-                    float(raw) if raw is not None else None
+                    to_optional_float(raw)
                 )
         return lookup
 
@@ -318,7 +319,7 @@ class QualityMetricsSnapshotService:
                 metrics = point.get("metrics") or {}
                 raw = metrics.get("average_score")
                 lookup[(scope, competence)] = (
-                    float(raw) if raw is not None else None
+                    to_optional_float(raw)
                 )
         return lookup
 
@@ -758,7 +759,7 @@ class QualityMetricsSnapshotService:
             end_date=end_date,
         )
         raw = audit_summary.get("average_score")
-        return float(raw) if raw is not None else None
+        return to_optional_float(raw)
 
     def _resolve_branches_from_ppm(
         self,

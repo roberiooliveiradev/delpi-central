@@ -7,6 +7,7 @@ from datetime import date, datetime
 from typing import Any, Mapping, Protocol
 from zoneinfo import ZoneInfo
 
+from app.domain.shared.numeric_parsing import to_optional_float
 from app.domain.services.commercial.commercial_rol_mom_comparison_service import (
     BRANCH_LABELS_PT,
     CommercialRolMomComparisonService,
@@ -296,10 +297,7 @@ class ManagementRevenueMonthlyProvider:
         score = item.get("idd")
         if score is None:
             score = item.get("score")
-        try:
-            score_num = float(score) if score is not None else None
-        except (TypeError, ValueError):
-            score_num = None
+        score_num = to_optional_float(score)
         name = (
             item.get("department_name")
             or item.get("name")

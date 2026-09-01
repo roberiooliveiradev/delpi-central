@@ -8,6 +8,7 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+from si_app.shared.numeric_parsing import to_optional_float
 
 MetricKind = Literal["realized", "meta"]
 
@@ -174,7 +175,7 @@ class GetDashboardIndicatorMetricUseCase:
             catalog_periodicity = getattr(catalog_item, "goal_periodicity", None) or "monthly"
             catalog_targets = getattr(catalog_item, "monthly_targets", None) or []
             reference_goal = self._calculator.resolve_reference_goal(
-                goal_value=float(goal_value) if goal_value is not None else None,
+                goal_value=to_optional_float(goal_value),
                 goal_periodicity=catalog_periodicity,
                 goal_mode=catalog_mode,
                 monthly_targets=catalog_targets,
