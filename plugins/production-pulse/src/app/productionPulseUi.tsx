@@ -1,11 +1,19 @@
 import type { ComponentProps } from "react";
 import {
   ActionButton,
+  BackLink,
+  createDashboardFormActions,
+  createDashboardFormGrid,
+  createDashboardSectionCard,
   createDashboardSegmentToggle,
   createSimpleKpiCard,
   createStateBoxPanel,
+  FieldLabel,
   PageHero,
   pageHeroBemClasses,
+  sectionCardPacBemClasses,
+  formActionsBemClasses,
+  formGridBemClasses,
   type StateBoxVariant,
 } from "@delpi/plugin-ui/index";
 import { Activity, AlertTriangle, FileQuestion, Loader2 } from "lucide-react";
@@ -26,7 +34,15 @@ export const PpStateBox = createStateBoxPanel({
 });
 
 export const PpActionButton = ActionButton;
+export const PpBackLink = BackLink;
+export const PpFieldLabel = FieldLabel;
 export const PpSimpleKpiCard = createSimpleKpiCard(PREFIX, { withBody: true, withSubtitle: true });
 export const PpSegmentToggle = createDashboardSegmentToggle(PREFIX);
+export const PpSectionCard = createDashboardSectionCard({
+  classNames: sectionCardPacBemClasses(PREFIX),
+  labels: { titleHelpAriaLabel: (title: string) => `Ajuda: ${title}` },
+});
+export const PpFormGrid = createDashboardFormGrid({ classNames: formGridBemClasses(PREFIX) });
+export const PpFormActions = createDashboardFormActions({ classNames: formActionsBemClasses(PREFIX) });
 
 export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;

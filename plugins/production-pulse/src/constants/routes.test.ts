@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { parseProductionPulseRoute } from "./routes";
+import {
+  parseProductionPulseRoute,
+  productionPulseDeviceNewPath,
+} from "./routes";
 
 describe("parseProductionPulseRoute", () => {
   it("maps panel root", () => {
@@ -12,6 +15,23 @@ describe("parseProductionPulseRoute", () => {
     expect(parseProductionPulseRoute("/apps/production-pulse/operator/placements/wc:01:CT-1").kind).toBe(
       "operator",
     );
+  });
+
+  it("maps device create and edit routes", () => {
+    expect(parseProductionPulseRoute("/apps/production-pulse/devices/new", "?branch=02")).toEqual({
+      kind: "deviceNew",
+      branch: "02",
+    });
+    expect(parseProductionPulseRoute("/apps/production-pulse/devices/abc-123/edit").kind).toBe(
+      "deviceEdit",
+    );
+    expect(parseProductionPulseRoute("/apps/production-pulse/devices/abc-123").kind).toBe(
+      "deviceDetail",
+    );
+  });
+
+  it("builds new device path with branch", () => {
+    expect(productionPulseDeviceNewPath("01")).toBe("/apps/production-pulse/devices/new?branch=01");
   });
 
   it("returns unknown for foreign paths", () => {

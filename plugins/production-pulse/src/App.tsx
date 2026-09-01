@@ -4,6 +4,7 @@ import { parseProductionPulseRoute } from "./constants/routes";
 import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPath";
 import { ScaffoldPage } from "./pages/ScaffoldPage";
 import { PanelPage } from "./pages/PanelPage";
+import { DeviceFormPage } from "./pages/DeviceFormPage";
 import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
 
 export type AppProps = {
@@ -21,7 +22,7 @@ export default function App({
 }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
   const { pathname, search } = useProductionPulseRouterPath(pathnameFromHost);
-  const route = parseProductionPulseRoute(pathname);
+  const route = parseProductionPulseRoute(pathname, search);
   const permissionFlags = resolveProductionPulsePermissions(permissions, isSuperadmin);
 
   if (route.kind === "unknown") {
@@ -43,6 +44,23 @@ export default function App({
     <div className="dashboard-production-pulse dashboard-page">
       {route.kind === "panel" ? (
         <PanelPage search={search} permissions={permissionFlags} />
+      ) : route.kind === "deviceNew" ? (
+        <DeviceFormPage
+          mode="create"
+          initialBranch={route.branch}
+          permissions={permissionFlags}
+        />
+      ) : route.kind === "deviceEdit" ? (
+        <DeviceFormPage mode="edit" deviceId={route.deviceId} permissions={permissionFlags} />
+      ) : route.kind === "deviceDetail" ? (
+        <div className="pp-page-stack">
+          <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} />
+          <PpStateBox
+            variant="empty"
+            title="Detalhe em construção"
+            message="A tela de detalhe com histórico e comandos será entregue na próxima etapa (E5.S4)."
+          />
+        </div>
       ) : (
         <ScaffoldPage mode="operator" />
       )}

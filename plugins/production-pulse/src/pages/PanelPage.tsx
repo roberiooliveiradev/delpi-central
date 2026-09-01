@@ -1,5 +1,8 @@
 import { useMemo } from "react";
 
+import { productionPulseDeviceNewPath } from "../constants/routes";
+import { navigateProductionPulse } from "../utils/navigation";
+
 import { resolveBranchOptions } from "../constants/branches";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
@@ -60,13 +63,11 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
   const pageCount = totalPages(filteredDevices.length, PAGE_SIZE);
 
   const openDevice = (deviceId: string) => {
-    window.history.pushState({}, "", `/apps/production-pulse/devices/${deviceId}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    navigateProductionPulse(`/apps/production-pulse/devices/${deviceId}`);
   };
 
   const openCreate = () => {
-    window.history.pushState({}, "", `/apps/production-pulse/devices/new?branch=${filters.branch}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    navigateProductionPulse(productionPulseDeviceNewPath(filters.branch));
   };
 
   if (!permissions.canViewDevices) {
