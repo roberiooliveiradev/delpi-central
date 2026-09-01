@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -282,3 +283,86 @@ class PostgresDeviceRepository:
         if row is None:
             raise DeviceNotFoundError(str(device_id))
         return dict(row)
+
+    def update_next_poll_at(self, device_id: UUID, *, next_poll_at: datetime) -> None:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE production_pulse.devices
+                    SET next_poll_at = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    """,
+                    (next_poll_at, device_id),
+                )
+            conn.commit()
+
+    def initialize_missing_next_poll_at(self) -> int:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_DEVICE_COLUMNS}
+                    FROM production_pulse.devices d
+                    WHERE d.enabled = TRUE
+                      AND d.next_poll_at IS NULL
+                      AND EXISTS (
+                          SELECT 1
+                          FROM production_pulse.device_bindings b
+                          WHERE b.device_id = d.id
+                            AND b.effective_to IS NULL
+                      )
+                    """
+                )
+                rows = list(cur.fetchall())
+            conn.commit()
+
+        updated = 0
+        for row in rows:
+            from production_pulse_app.domain.services.device_poll_schedule_service import (
+                compute_initial_poll_at,
+            )
+
+            self.update_next_poll_at(
+                row["id"],
+                next_poll_at=compute_initial_poll_at(int(row["poll_interval_seconds"])),
+            )
+            updated += 1
+        return updated
+
+    def list_due_for_scheduled_poll(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_DEVICE_COLUMNS}
+                    FROM production_pulse.devices d
+                    WHERE d.enabled = TRUE
+                      AND d.next_poll_at IS NOT NULL
+                      AND d.next_poll_at <= NOW()
+                      AND EXISTS (
+                          SELECT 1
+                          FROM production_pulse.device_bindings b
+                          WHERE b.device_id = d.id
+                            AND b.effective_to IS NULL
+                      )
+                    ORDER BY d.next_poll_at ASC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+                return list(cur.fetchall())
+
+    def ensure_next_poll_at(self, device_id: UUID) -> None:
+        device = self.get_by_id(device_id)
+        if device is None or not device.get("enabled") or device.get("next_poll_at") is not None:
+            return
+        from production_pulse_app.domain.services.device_poll_schedule_service import (
+            compute_initial_poll_at,
+        )
+
+        self.update_next_poll_at(
+            device_id,
+            next_poll_at=compute_initial_poll_at(int(device["poll_interval_seconds"])),
+        )

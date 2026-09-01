@@ -85,6 +85,7 @@ class DeviceBindingService:
             placement_key=placement_key,
             actor_sub=actor_sub,
         )
+        self._devices.ensure_next_poll_at(device_id)
         return binding_row_to_api(row)
 
     def delete_active_binding(self, device_id: UUID, *, actor_sub: str | None) -> None:

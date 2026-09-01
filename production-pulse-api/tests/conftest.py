@@ -80,6 +80,7 @@ def client(monkeypatch, plugins_db_env):
     )
 
     get_test_probe_rate_limiter().reset_for_tests()
+    monkeypatch.setenv("PP_POLL_SCHEDULER_ENABLED", "false")
 
     async def _fake_jwt(request, call_next):
         request.state.user = SimpleNamespace(sub="test-user", id="test-user")

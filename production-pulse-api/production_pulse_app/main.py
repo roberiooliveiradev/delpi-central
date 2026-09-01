@@ -13,6 +13,10 @@ from production_pulse_app.core.responses import error, success
 from production_pulse_app.interface.http.routes.catalog_routes import router as catalog_router
 from production_pulse_app.interface.http.routes.device_routes import router as devices_router
 from production_pulse_app.middleware.auth_middleware import jwt_middleware
+from production_pulse_app.application.services.device_poll_scheduler_service import (
+    get_device_poll_scheduler,
+    reset_device_poll_scheduler_for_tests,
+)
 from production_pulse_app.startup.register_device_drivers import register_device_drivers
 from production_pulse_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -23,7 +27,14 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     run_migrations_on_startup()
     register_device_drivers()
+    scheduler = None
+    if settings.PP_POLL_SCHEDULER_ENABLED:
+        scheduler = get_device_poll_scheduler()
+        await scheduler.start()
     yield
+    if scheduler is not None:
+        await scheduler.stop()
+        reset_device_poll_scheduler_for_tests()
     from production_pulse_app.infrastructure.persistence.plugins_postgres_connection import (
         close_plugins_connection,
     )

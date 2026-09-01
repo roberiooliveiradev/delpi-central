@@ -72,5 +72,10 @@ class Settings:
         _get_env("PP_WORK_CENTER_CACHE_TTL_SECONDS", default="300") or "300"
     )
 
+    PP_POLL_SCHEDULER_ENABLED: bool = (
+        str(_get_env("PP_POLL_SCHEDULER_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+
 
 settings = Settings()

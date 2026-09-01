@@ -13,6 +13,10 @@ from production_pulse_app.application.services.device_binding_service import (
     BindingValidationError,
     DeviceBindingService,
 )
+from production_pulse_app.application.services.device_command_service import (
+    CommandNotSupportedError,
+    DeviceCommandService,
+)
 from production_pulse_app.application.services.device_poll_service import (
     DevicePollFailedError,
     DevicePollService,
@@ -43,6 +47,7 @@ _service = DeviceService()
 _binding_service = DeviceBindingService()
 _poll_service = DevicePollService()
 _probe_service = DeviceProbeService()
+_command_service = DeviceCommandService()
 
 
 def _actor_sub(request: Request) -> str | None:
@@ -60,7 +65,7 @@ def _authorization_header(request: Request) -> str | None:
 
 
 def _handle_domain_errors(exc: Exception):
-    if isinstance(exc, (DeviceValidationError, BindingValidationError)):
+    if isinstance(exc, (DeviceValidationError, BindingValidationError, CommandNotSupportedError)):
         return error(str(exc), code="validation_error", status_code=422)
     if isinstance(exc, WorkCenterCatalogUnavailableError):
         return error(str(exc), code="upstream_unavailable", status_code=503)
@@ -107,6 +112,36 @@ async def test_probe(request: Request, body: DeviceTestProbeBody):
             branch=body.branch,
             ip_address=body.ip_address,
             driver_key=body.driver_key,
+            actor_sub=_actor_sub(request),
+        )
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.get("/{device_id}/commands")
+async def list_device_commands(
+    device_id: UUID,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
+):
+    try:
+        data = _command_service.list_commands(
+            parse_device_id(str(device_id)),
+            page=page,
+            page_size=page_size,
+        )
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.post("/{device_id}/commands/{command_key}")
+async def execute_device_command(request: Request, device_id: UUID, command_key: str):
+    try:
+        data = _command_service.execute_command(
+            parse_device_id(str(device_id)),
+            command_key,
             actor_sub=_actor_sub(request),
         )
         return success(data)
