@@ -1,6 +1,16 @@
 import { RefreshCw } from "lucide-react";
 
 import { DataTable, dataTableBemClasses, type DataTableColumn } from "@delpi/plugin-ui/index";
+import { PP_HELP } from "../content/helpTooltips";
+import type { DeviceListItem } from "../types/device";
+import {
+  formatPrimaryMetric,
+  formatRelativeTime,
+  placementLabel,
+  roleLabel,
+} from "../utils/deviceDisplay";
+import { AnchorTypeBadge } from "./AnchorTypeBadge";
+import { DeviceStatusBadge } from "./DeviceStatusBadge";
 
 type DeviceTableProps = {
   devices: DeviceListItem[];

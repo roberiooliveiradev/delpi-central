@@ -10,9 +10,10 @@ export type DeviceBinding = {
   machineLabel: string | null;
   equipmentLabel: string | null;
   areaLabel: string | null;
+  resourceCode: string | null;
+  toolCode: string | null;
+  notes: string | null;
 };
-
-export type DeviceCapabilities = {
   metrics: string[];
   commands: string[];
   operatorSurface: string;
