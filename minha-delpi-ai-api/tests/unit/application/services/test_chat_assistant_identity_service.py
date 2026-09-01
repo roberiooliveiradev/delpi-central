@@ -14,6 +14,7 @@ _SHOULD_DETECT = (
     ("como posso te chamar?", "who"),
     ("como u posso te chamar?", "who"),
     ("como vc se chama?", "who"),
+    ("como te chamo mesmo?", "who"),
     ("qual seu nome?", "who"),
     ("para que serve", "role"),
     ("o que você não faz", "limits"),
