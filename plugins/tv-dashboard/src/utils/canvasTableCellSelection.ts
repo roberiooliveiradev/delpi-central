@@ -14,6 +14,7 @@
 import {
   expandSelectionToMerges,
   mergeAt,
+  canvasTableBandSelection,
   type CanvasTableCellRef,
   type CanvasTableMerge,
 } from "@delpi/tv-dashboard-presentation";
@@ -30,6 +31,8 @@ export type CanvasTableCellSelectionRequest = {
   cell: CanvasTableCellRef;
   additive?: boolean;
   range?: boolean;
+  /** Seleciona linha/coluna inteira (gutter / Shift+Space / Ctrl+Space). */
+  band?: "row" | "col";
   rowCount: number;
   colCount: number;
   merges?: readonly CanvasTableMerge[];
@@ -113,6 +116,23 @@ export function applyCanvasTableCellSelectionRequest(
 ): ComunicadoCanvasTableCellSelection {
   const cell = clampCell(request.cell, request.rowCount, request.colCount);
   const focus = focusForMerge(cell, request.merges);
+
+  if (request.band) {
+    const bandCells = canvasTableBandSelection({
+      axis: request.band,
+      index: request.band === "row" ? cell.row : cell.col,
+      rows: request.rowCount,
+      cols: request.colCount,
+    });
+    const cells = expandSelectionToMerges(bandCells, request.merges);
+    return {
+      blockId,
+      cells,
+      anchor: cells[0] ?? focus,
+      focus,
+    };
+  }
+
   if (!request.additive && !request.range) {
     return {
       blockId,

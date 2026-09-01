@@ -28,6 +28,31 @@ describe("canvasTableCellSelection", () => {
     expect(next.anchor).toEqual({ row: 1, col: 2 });
   });
 
+  it("band seleciona linha ou coluna inteira", () => {
+    const rowBand = applyCanvasTableCellSelectionRequest(null, blockId, {
+      cell: { row: 1, col: 0 },
+      band: "row",
+      rowCount: 3,
+      colCount: 2,
+    });
+    expect(rowBand.cells).toEqual([
+      { row: 1, col: 0 },
+      { row: 1, col: 1 },
+    ]);
+    expect(rowBand.focus).toEqual({ row: 1, col: 0 });
+
+    const colBand = applyCanvasTableCellSelectionRequest(null, blockId, {
+      cell: { row: 0, col: 1 },
+      band: "col",
+      rowCount: 2,
+      colCount: 2,
+    });
+    expect(colBand.cells).toEqual([
+      { row: 0, col: 1 },
+      { row: 1, col: 1 },
+    ]);
+  });
+
   it("Ctrl alterna célula na seleção", () => {
     const prev: ComunicadoCanvasTableCellSelection = {
       blockId,

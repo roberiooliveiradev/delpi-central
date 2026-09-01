@@ -674,6 +674,20 @@ export type {
   CanvasTableKeyboardMode,
 } from "./canvasTableKeyboard";
 export {
+  insertCanvasTableRow,
+  insertCanvasTableCol,
+  autoFitCanvasTableTrack,
+  canvasTableBandSelection,
+  canvasTableTrackContentWeights,
+} from "./canvasTableStructure";
+export type { CanvasTableInsertPlacement } from "./canvasTableStructure";
+export {
+  mapViewportRectToHostLocal,
+  resolveCanvasTableSelectionOverlayRects,
+  resolveCanvasTableTrackHandles,
+  resolveCanvasTableGutterHandles,
+} from "./canvasTableSelectionOverlay";
+export {
   ComunicadoInputBlockView,
   resolveInputControlKind,
 } from "./ComunicadoInputBlockView";

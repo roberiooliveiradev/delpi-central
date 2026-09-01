@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   mapViewportRectToHostLocal,
+  resolveCanvasTableGutterHandles,
   resolveCanvasTableSelectionOverlayRects,
   resolveCanvasTableTrackHandles,
 } from "./canvasTableSelectionOverlay";
@@ -96,6 +97,27 @@ describe("resolveCanvasTableTrackHandles", () => {
 
   it("não cria handle na última faixa", () => {
     expect(resolveCanvasTableTrackHandles({ cellRects, rows: 1, cols: 1 })).toEqual([]);
+  });
+});
+
+describe("resolveCanvasTableGutterHandles", () => {
+  const cellRects = [
+    { row: 0, col: 0, left: 0, top: 0, width: 40, height: 20 },
+    { row: 0, col: 1, left: 40, top: 0, width: 50, height: 20 },
+    { row: 1, col: 0, left: 0, top: 20, width: 40, height: 24 },
+    { row: 1, col: 1, left: 40, top: 20, width: 50, height: 24 },
+  ];
+
+  it("cria gutter por linha e coluna", () => {
+    const gutters = resolveCanvasTableGutterHandles({ cellRects, rows: 2, cols: 2 });
+    expect(gutters.filter((g) => g.axis === "row")).toHaveLength(2);
+    expect(gutters.filter((g) => g.axis === "col")).toHaveLength(2);
+    expect(gutters.find((g) => g.axis === "row" && g.index === 1)).toMatchObject({
+      left: 0,
+      top: 20,
+      height: 24,
+      width: 14,
+    });
   });
 });
 

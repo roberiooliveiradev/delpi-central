@@ -346,6 +346,41 @@
   background: var(--primary, #089bdb);
 }
 
+.td-canvas-table__gutter {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  display: none;
+  touch-action: none;
+  background: transparent;
+}
+
+.td-canvas-table--editable .td-canvas-table__gutter {
+  display: block;
+}
+
+.td-canvas-table__gutter--row {
+  cursor: pointer;
+  border-right: 2px solid transparent;
+}
+
+.td-canvas-table__gutter--col {
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.td-canvas-table--editable .td-canvas-table__gutter:hover {
+  background: color-mix(in srgb, var(--primary, #089bdb) 14%, transparent);
+}
+
+.td-canvas-table--editable .td-canvas-table__gutter--row:hover {
+  border-right-color: var(--primary, #089bdb);
+}
+
+.td-canvas-table--editable .td-canvas-table__gutter--col:hover {
+  border-bottom-color: var(--primary, #089bdb);
+}
+
 .td-canvas-table__cell--number {
   font-variant-numeric: tabular-nums;
   font-weight: 600;

@@ -20,10 +20,15 @@ import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from ".
 import { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
 import {
   mapViewportRectToHostLocal,
+  resolveCanvasTableGutterHandles,
   resolveCanvasTableSelectionOverlayRects,
   resolveCanvasTableTrackHandles,
   type CanvasTableCellDomRect,
 } from "./canvasTableSelectionOverlay";
+import {
+  autoFitCanvasTableTrack,
+  canvasTableTrackContentWeights,
+} from "./canvasTableStructure";
 import {
   canvasTableCellHtmlSpan,
   isCoveredCell,
@@ -63,6 +68,7 @@ export type ComunicadoCanvasTableInteraction = {
     cell: CanvasTableCellRef;
     additive?: boolean;
     range?: boolean;
+    band?: "row" | "col";
   }) => void;
   onCellCommit?: (row: number, col: number, cell: CanvasTableCell) => void;
   onCellsCommit?: (cells: CanvasTableCell[][]) => void;
@@ -276,6 +282,13 @@ export function ComunicadoCanvasTableView({
         cols: block.cols,
       })
     : [];
+  const gutterHandles = showTrackHandles
+    ? resolveCanvasTableGutterHandles({
+        cellRects,
+        rows: block.rows,
+        cols: block.cols,
+      })
+    : [];
 
   function commitTrackDrag() {
     const drag = trackDragRef.current;
@@ -341,6 +354,46 @@ export function ComunicadoCanvasTableView({
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
     commitTrackDrag();
+  }
+
+  function onTrackHandleDoubleClick(
+    event: React.MouseEvent<HTMLDivElement>,
+    axis: "col" | "row",
+    index: number,
+  ) {
+    if (!showTrackHandles) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const tracks =
+      axis === "col"
+        ? normalizeCanvasTableTrackSizes(opts.columnWidths, block.cols)
+        : normalizeCanvasTableTrackSizes(opts.rowHeights, block.rows);
+    const contentWeights = canvasTableTrackContentWeights({
+      axis,
+      cells: block.cells,
+      rows: block.rows,
+      cols: block.cols,
+    });
+    const next = autoFitCanvasTableTrack({ tracks, index, contentWeights });
+    interaction?.onTracksCommit?.(
+      axis === "col" ? { columnWidths: next } : { rowHeights: next },
+    );
+  }
+
+  function onGutterPointerDown(
+    event: ReactPointerEvent<HTMLDivElement>,
+    axis: "row" | "col",
+    index: number,
+  ) {
+    if (!showTrackHandles) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setEditingCell(null);
+    const cell =
+      axis === "row"
+        ? { row: index, col: focusCell?.col ?? 0 }
+        : { row: focusCell?.row ?? 0, col: index };
+    interaction?.onSelectCell?.({ cell, band: axis });
   }
 
   function isCellEditing(row: number, col: number) {
@@ -498,6 +551,14 @@ export function ComunicadoCanvasTableView({
         const payload = parseCanvasTableClipboardTsv(text);
         if (payload) applyPayload(payload);
       });
+      return;
+    }
+
+    if (action.type === "selectBand") {
+      event.preventDefault();
+      event.stopPropagation();
+      setEditingCell(null);
+      interaction?.onSelectCell?.({ cell: { row, col }, band: action.axis });
       return;
     }
 
@@ -677,9 +738,38 @@ export function ComunicadoCanvasTableView({
           onPointerDown={(event) =>
             onTrackHandlePointerDown(event, handle.axis, handle.index)
           }
+          onDoubleClick={(event) =>
+            onTrackHandleDoubleClick(event, handle.axis, handle.index)
+          }
           onPointerMove={onTrackHandlePointerMove}
           onPointerUp={onTrackHandlePointerUp}
           onPointerCancel={onTrackHandlePointerUp}
+        />
+      ))}
+      {gutterHandles.map((gutter) => (
+        <div
+          key={`gutter-${gutter.axis}-${gutter.index}`}
+          className={
+            gutter.axis === "row"
+              ? "td-canvas-table__gutter td-canvas-table__gutter--row"
+              : "td-canvas-table__gutter td-canvas-table__gutter--col"
+          }
+          role="button"
+          tabIndex={-1}
+          aria-label={
+            gutter.axis === "row"
+              ? `Selecionar linha ${gutter.index + 1}`
+              : `Selecionar coluna ${gutter.index + 1}`
+          }
+          style={{
+            left: gutter.left,
+            top: gutter.top,
+            width: gutter.width,
+            height: gutter.height,
+          }}
+          onPointerDown={(event) =>
+            onGutterPointerDown(event, gutter.axis, gutter.index)
+          }
         />
       ))}
     </div>

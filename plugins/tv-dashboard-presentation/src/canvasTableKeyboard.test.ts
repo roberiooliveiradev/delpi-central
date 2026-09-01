@@ -117,4 +117,23 @@ describe("resolveCanvasTableKeyboardAction", () => {
       }),
     ).toEqual({ type: "clipboard", op: "copy" });
   });
+
+  it("em navegar: Shift+Space seleciona linha; Ctrl+Space seleciona coluna", () => {
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: " ",
+        shift: true,
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "selectBand", axis: "row" });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: " ",
+        ctrl: true,
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "selectBand", axis: "col" });
+  });
 });

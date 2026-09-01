@@ -1501,11 +1501,12 @@ function EditorCanvasTableBlock({
         selectedCells: cellSelection?.cells ?? [],
         focusCell: cellSelection?.focus ?? null,
         blockSelected,
-        onSelectCell: ({ cell, additive, range }) =>
+        onSelectCell: ({ cell, additive, range, band }) =>
           selectCanvasTableCell(block.id, {
             cell,
             additive,
             range,
+            band,
             rowCount: block.rows,
             colCount: block.cols,
             merges: block.merges,

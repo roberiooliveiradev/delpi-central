@@ -43,6 +43,7 @@ import {
   canUnmergeCanvasTableSelection,
   resolveCanvasTableMergeCommand,
 } from "../../utils/canvasTableMergeCommands";
+import { buildCanvasTableInsertPatch } from "../../utils/canvasTableStructureCommands";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
@@ -294,6 +295,38 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
           }}
         />
       </label>
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+        <DeckRibbonTile
+          icon={Rows3}
+          label="Linha +"
+          hint="Insere linha abaixo da célula de foco (Shift+clique = acima)."
+          onClick={(event) => {
+            updateSelected(
+              buildCanvasTableInsertPatch({
+                block: table,
+                axis: "row",
+                placement: event.shiftKey ? "before" : "after",
+                focus: primaryCellRef,
+              }),
+            );
+          }}
+        />
+        <DeckRibbonTile
+          icon={Columns3}
+          label="Coluna +"
+          hint="Insere coluna à direita do foco (Shift+clique = à esquerda)."
+          onClick={(event) => {
+            updateSelected(
+              buildCanvasTableInsertPatch({
+                block: table,
+                axis: "col",
+                placement: event.shiftKey ? "before" : "after",
+                focus: primaryCellRef,
+              }),
+            );
+          }}
+        />
+      </div>
     </div>
   );
 

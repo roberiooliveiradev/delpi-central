@@ -162,3 +162,64 @@ export function resolveCanvasTableTrackHandles(params: {
   }
   return handles;
 }
+
+export type CanvasTableGutterHandleRect = {
+  axis: "row" | "col";
+  index: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+const GUTTER_HIT_PX = 14;
+
+/** Gutter de faixa (linha à esquerda / coluna no topo) — só chrome do editor. */
+export function resolveCanvasTableGutterHandles(params: {
+  cellRects: readonly CanvasTableCellDomRect[];
+  rows: number;
+  cols: number;
+}): CanvasTableGutterHandleRect[] {
+  const byKey = new Map(
+    params.cellRects.map((rect) => [`${rect.row}:${rect.col}`, rect] as const),
+  );
+  let tableLeft = Number.POSITIVE_INFINITY;
+  let tableTop = Number.POSITIVE_INFINITY;
+  let tableRight = Number.NEGATIVE_INFINITY;
+  let tableBottom = Number.NEGATIVE_INFINITY;
+  for (const rect of params.cellRects) {
+    tableLeft = Math.min(tableLeft, rect.left);
+    tableTop = Math.min(tableTop, rect.top);
+    tableRight = Math.max(tableRight, rect.left + rect.width);
+    tableBottom = Math.max(tableBottom, rect.top + rect.height);
+  }
+  if (!Number.isFinite(tableLeft)) return [];
+
+  const gutters: CanvasTableGutterHandleRect[] = [];
+  for (let row = 0; row < params.rows; row += 1) {
+    const cell = byKey.get(`${row}:0`) ?? params.cellRects.find((rect) => rect.row === row);
+    if (!cell) continue;
+    gutters.push({
+      axis: "row",
+      index: row,
+      left: tableLeft,
+      top: cell.top,
+      width: GUTTER_HIT_PX,
+      height: cell.height,
+    });
+  }
+  for (let col = 0; col < params.cols; col += 1) {
+    const cell = byKey.get(`0:${col}`) ?? params.cellRects.find((rect) => rect.col === col);
+    if (!cell) continue;
+    gutters.push({
+      axis: "col",
+      index: col,
+      left: cell.left,
+      top: tableTop,
+      width: cell.width,
+      height: GUTTER_HIT_PX,
+    });
+  }
+  return gutters;
+}
+

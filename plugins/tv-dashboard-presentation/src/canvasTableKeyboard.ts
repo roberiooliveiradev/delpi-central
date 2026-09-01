@@ -17,6 +17,7 @@ export type CanvasTableKeyboardAction =
   | { type: "clearContent" }
   | { type: "insertNewline" }
   | { type: "clipboard"; op: "copy" | "cut" | "paste" }
+  | { type: "selectBand"; axis: "row" | "col" }
   | { type: "ignore" };
 
 export type ResolveCanvasTableKeyboardParams = {
@@ -117,6 +118,12 @@ export function resolveCanvasTableKeyboardAction(
   // navigate
   if (key === "F2") return { type: "enterEdit" };
   if (key === "Escape") return { type: "ignore" };
+
+  /* Shift+Space = linha; Ctrl/Cmd+Space = coluna (Excel). */
+  if (key === " " || key === "Spacebar" || key === "Space") {
+    if (shift && !mod) return { type: "selectBand", axis: "row" };
+    if (mod && !shift) return { type: "selectBand", axis: "col" };
+  }
 
   if (mod && (key === "c" || key === "C")) return { type: "clipboard", op: "copy" };
   if (mod && (key === "x" || key === "X")) return { type: "clipboard", op: "cut" };

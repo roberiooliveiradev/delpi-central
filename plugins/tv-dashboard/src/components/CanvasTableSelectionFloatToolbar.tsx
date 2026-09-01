@@ -1,9 +1,6 @@
 import {
   canMergeRect,
   normalizeCanvasTableCell,
-  normalizeCanvasTableCells,
-  remapCanvasTableMerges,
-  type ComunicadoBlock,
   type ComunicadoCanvasTableBlock,
   type CanvasTableCell,
 } from "@delpi/tv-dashboard-presentation";
@@ -16,6 +13,7 @@ import {
   canUnmergeCanvasTableSelection,
   resolveCanvasTableMergeCommand,
 } from "../utils/canvasTableMergeCommands";
+import { buildCanvasTableInsertPatch } from "../utils/canvasTableStructureCommands";
 
 type Props = {
   block: ComunicadoCanvasTableBlock;
@@ -28,7 +26,6 @@ type Props = {
 export function CanvasTableSelectionFloatToolbar({ block }: Props) {
   const {
     updateBlock,
-    updateSelected,
     openDataPanel,
     setSelectionPanelTab,
     selectedCanvasTableCell,
@@ -37,21 +34,17 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
   const cellSelection =
     selectedCanvasTableCell?.blockId === block.id ? selectedCanvasTableCell : null;
   const cells = cellSelection?.cells ?? [];
+  const focus = cellSelection?.focus ?? null;
   const canMerge = Boolean(cells.length && canMergeRect(cells, block.merges));
   const canUnmerge = Boolean(
     cells.length && canUnmergeCanvasTableSelection(block.merges, cells),
   );
 
-  function patchDimensions(rows: number, cols: number) {
-    const nextRows = Math.max(1, Math.min(20, rows));
-    const nextCols = Math.max(1, Math.min(12, cols));
-    const merges = remapCanvasTableMerges(block.merges, nextRows, nextCols);
-    updateSelected({
-      rows: nextRows,
-      cols: nextCols,
-      cells: normalizeCanvasTableCells(block.cells, nextRows, nextCols),
-      merges: merges.length ? merges : undefined,
-    } as Partial<ComunicadoBlock>);
+  function insert(axis: "row" | "col", placement: "before" | "after") {
+    updateBlock(
+      block.id,
+      buildCanvasTableInsertPatch({ block, axis, placement, focus }),
+    );
   }
 
   function applyMerge(mode: "merge" | "unmerge") {
@@ -91,18 +84,34 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
       renderElements={(close) => (
         <FloatChecklist aria-label="Estrutura da Grade">
           <FloatChecklistItem
-            label="Inserir linha"
-            title="Adiciona uma linha no final da Grade."
+            label="Inserir linha acima"
+            title="Insere uma linha acima da célula de foco (remap de merges e alturas)."
             onClick={() => {
-              patchDimensions(block.rows + 1, block.cols);
+              insert("row", "before");
               close();
             }}
           />
           <FloatChecklistItem
-            label="Inserir coluna"
-            title="Adiciona uma coluna no final da Grade."
+            label="Inserir linha abaixo"
+            title="Insere uma linha abaixo da célula de foco (remap de merges e alturas)."
             onClick={() => {
-              patchDimensions(block.rows, block.cols + 1);
+              insert("row", "after");
+              close();
+            }}
+          />
+          <FloatChecklistItem
+            label="Inserir coluna à esquerda"
+            title="Insere uma coluna à esquerda do foco (remap de merges e larguras)."
+            onClick={() => {
+              insert("col", "before");
+              close();
+            }}
+          />
+          <FloatChecklistItem
+            label="Inserir coluna à direita"
+            title="Insere uma coluna à direita do foco (remap de merges e larguras)."
+            onClick={() => {
+              insert("col", "after");
               close();
             }}
           />
