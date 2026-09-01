@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { SectionBlock } from "./SectionBlock";
 import { InfoState } from "./InfoState";
-import { Modal } from "./Modal";
 import { ActionButtons } from "./ActionButtons";
 import { IndicatorGoalForm } from "./IndicatorGoalForm";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
@@ -45,7 +44,7 @@ export function DepartmentGoalsPanel({
     initialGoalYear: new Date().getFullYear(),
   });
 
-  const [goalFormOpen, setGoalFormOpen] = useState(false);
+  const [goalFormMode, setGoalFormMode] = useState<"create" | "edit" | null>(null);
   const [editingGoal, setEditingGoal] =
     useState<StrategicIndicatorGoalItem | null>(null);
 
@@ -70,24 +69,38 @@ export function DepartmentGoalsPanel({
 
   function openCreateGoalForm() {
     setEditingGoal(null);
-    setGoalFormOpen(true);
+    setGoalFormMode("create");
   }
 
   function openEditGoalForm(item: StrategicIndicatorGoalItem) {
     setEditingGoal(item);
-    setGoalFormOpen(true);
+    setGoalFormMode("edit");
   }
 
-  async function handleCreate(payload: any) {
-    await goals.createGoal(payload);
-    setGoalFormOpen(false);
-  }
-
-  async function handleUpdate(goalId: string, payload: any) {
-    await goals.updateGoal(goalId, payload);
-    setGoalFormOpen(false);
+  function closeGoalForm() {
+    setGoalFormMode(null);
     setEditingGoal(null);
   }
+
+  async function handleCreate(payload: Parameters<typeof goals.createGoal>[0]) {
+    await goals.createGoal(payload);
+    closeGoalForm();
+  }
+
+  async function handleUpdate(
+    goalId: string,
+    payload: Parameters<typeof goals.updateGoal>[1],
+  ) {
+    await goals.updateGoal(goalId, payload);
+    closeGoalForm();
+  }
+
+  const resolvedGoalYear =
+    typeof goals.selectedGoalYear === "number"
+      ? goals.selectedGoalYear
+      : new Date().getFullYear();
+  const goalFormTitle =
+    goalFormMode === "edit" ? "Editar meta analítica" : "Nova meta analítica";
 
   return (
     <>
@@ -113,13 +126,36 @@ export function DepartmentGoalsPanel({
               type="button"
               className="si-settings-editor__button"
               onClick={openCreateGoalForm}
-              disabled={activeIndicators.length === 0}
+              disabled={activeIndicators.length === 0 || !!goalFormMode}
             >
               Nova meta
             </button>
           </div>
         }
       >
+        {goalFormMode ? (
+          <IndicatorGoalForm
+            saving={goals.saving}
+            initialValue={editingGoal}
+            indicatorOptions={indicatorOptions}
+            defaultGoalYear={resolvedGoalYear}
+            lockGoalYear={goalFormMode === "create"}
+            layout={goalFormMode === "edit" ? "compact" : "wizard"}
+            panelShell={{
+              title: goalFormTitle,
+              cycleYear: resolvedGoalYear,
+              onBack: closeGoalForm,
+              versionLabel:
+                goalFormMode === "edit" && editingGoal
+                  ? `Ativa v${editingGoal.version}`
+                  : undefined,
+            }}
+            onCreate={handleCreate}
+            onUpdate={handleUpdate}
+            onCancel={closeGoalForm}
+          />
+        ) : (
+          <>
         {!!goals.successMessage ? (
           <div className="si-settings-editor__alert si-settings-editor__alert--success">
             {goals.successMessage}
@@ -210,31 +246,9 @@ export function DepartmentGoalsPanel({
             </div>
           </div>
         ) : null}
+          </>
+        )}
       </SectionBlock>
-
-      <Modal
-        open={goalFormOpen}
-        onClose={() => {
-          setGoalFormOpen(false);
-          setEditingGoal(null);
-        }}
-        title={editingGoal ? "Editar meta analítica" : "Nova meta analítica"}
-        description="Cadastre ou ajuste a meta do indicador para o ano selecionado."
-        size="lg"
-        initialFocusSelector="select, input, textarea"
-      >
-        <IndicatorGoalForm
-          saving={goals.saving}
-          initialValue={editingGoal}
-          indicatorOptions={indicatorOptions}
-          onCreate={handleCreate}
-          onUpdate={handleUpdate}
-          onCancel={() => {
-            setGoalFormOpen(false);
-            setEditingGoal(null);
-          }}
-        />
-      </Modal>
     </>
   );
 }

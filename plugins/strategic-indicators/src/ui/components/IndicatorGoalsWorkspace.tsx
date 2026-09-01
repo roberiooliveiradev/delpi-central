@@ -47,7 +47,7 @@ export function IndicatorGoalsWorkspace({
     initialGoalYear: new Date().getFullYear(),
   });
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [goalFormMode, setGoalFormMode] = useState<"create" | "edit" | null>(null);
   const [editingItem, setEditingItem] = useState<StrategicIndicatorGoalItem | null>(null);
   const [historyContext, setHistoryContext] = useState<{
     indicatorId: string;
@@ -113,7 +113,7 @@ export function IndicatorGoalsWorkspace({
         render: (row: StrategicIndicatorGoalItem) => (
           <ActionButtons
             disabled={saving}
-            onEdit={() => setEditingItem(row)}
+            onEdit={() => openEditGoalForm(row)}
             onHistory={() => void handleOpenHistory(row.indicator_id, row.goal_year)}
             onActivate={!row.is_active ? () => void activateGoal(row.id) : undefined}
             onDeactivate={row.is_active ? () => void deactivateGoal(row.id) : undefined}
@@ -129,15 +129,36 @@ export function IndicatorGoalsWorkspace({
     await loadHistory(indicatorId, goalYear);
   }
 
-  async function handleCreate(payload: any) {
-    await createGoal(payload);
-    setIsCreateModalOpen(false);
-  }
-
-  async function handleUpdate(goalId: string, payload: any) {
-    await updateGoal(goalId, payload);
+  function closeGoalForm() {
+    setGoalFormMode(null);
     setEditingItem(null);
   }
+
+  function openCreateGoalForm() {
+    setEditingItem(null);
+    setGoalFormMode("create");
+  }
+
+  function openEditGoalForm(item: StrategicIndicatorGoalItem) {
+    setEditingItem(item);
+    setGoalFormMode("edit");
+  }
+
+  async function handleCreate(payload: Parameters<typeof createGoal>[0]) {
+    await createGoal(payload);
+    closeGoalForm();
+  }
+
+  async function handleUpdate(goalId: string, payload: Parameters<typeof updateGoal>[1]) {
+    await updateGoal(goalId, payload);
+    closeGoalForm();
+  }
+
+  const resolvedGoalYear =
+    typeof selectedGoalYear === "number" ? selectedGoalYear : new Date().getFullYear();
+
+  const goalFormTitle =
+    goalFormMode === "edit" ? "Editar meta analítica" : "Nova meta analítica";
 
   return (
     <section className="si-settings-goals-shell" aria-label="Metas analíticas">
@@ -198,7 +219,8 @@ export function IndicatorGoalsWorkspace({
           <button
             type="button"
             className="si-settings-editor__button"
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={openCreateGoalForm}
+            disabled={!!goalFormMode}
           >
             Nova meta
           </button>
@@ -212,46 +234,38 @@ export function IndicatorGoalsWorkspace({
         />
       ) : null}
 
-      <DataTable
-        columns={columns}
-        rows={items}
-        loading={loading}
-        emptyText="Nenhuma meta analítica encontrada para os filtros selecionados."
-        getRowKey={(row) => row.id}
-      />
-
-      <Modal
-        open={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="Criar meta analítica"
-        description="Cadastre uma nova meta versionada por indicador e ano."
-        size="lg"
-        initialFocusSelector="select, input"
-      >
+      {goalFormMode ? (
         <IndicatorGoalForm
           saving={saving}
+          initialValue={goalFormMode === "edit" ? editingItem : null}
           indicatorOptions={indicatorOptions}
+          defaultGoalYear={resolvedGoalYear}
+          lockGoalYear={
+            goalFormMode === "create" && typeof selectedGoalYear === "number"
+          }
+          layout={goalFormMode === "edit" ? "compact" : "wizard"}
+          panelShell={{
+            title: goalFormTitle,
+            cycleYear: resolvedGoalYear,
+            onBack: closeGoalForm,
+            versionLabel:
+              goalFormMode === "edit" && editingItem
+                ? `Ativa v${editingItem.version}`
+                : undefined,
+          }}
           onCreate={handleCreate}
-          onCancel={() => setIsCreateModalOpen(false)}
-        />
-      </Modal>
-
-      <Modal
-        open={!!editingItem}
-        onClose={() => setEditingItem(null)}
-        title="Editar meta analítica"
-        description="Atualize os dados da versão selecionada."
-        size="lg"
-        initialFocusSelector="input, select, textarea"
-      >
-        <IndicatorGoalForm
-          saving={saving}
-          initialValue={editingItem}
-          indicatorOptions={indicatorOptions}
           onUpdate={handleUpdate}
-          onCancel={() => setEditingItem(null)}
+          onCancel={closeGoalForm}
         />
-      </Modal>
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={items}
+          loading={loading}
+          emptyText="Nenhuma meta analítica encontrada para os filtros selecionados."
+          getRowKey={(row) => row.id}
+        />
+      )}
 
       <Modal
         open={!!historyContext}

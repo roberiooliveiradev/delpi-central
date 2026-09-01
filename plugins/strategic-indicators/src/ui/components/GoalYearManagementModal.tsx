@@ -40,7 +40,7 @@ export function GoalYearManagementModal({
 
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [fillMissingModalOpen, setFillMissingModalOpen] = useState(false);
-  const [goalFormOpen, setGoalFormOpen] = useState(false);
+  const [goalFormMode, setGoalFormMode] = useState<"create" | "edit" | null>(null);
   const [editingGoal, setEditingGoal] =
     useState<StrategicIndicatorGoalItem | null>(null);
 
@@ -96,16 +96,37 @@ export function GoalYearManagementModal({
     setFillMissingModalOpen(false);
   }
 
-  async function handleCreate(payload: any) {
+  async function handleCreate(payload: Parameters<typeof goals.createGoal>[0]) {
     await goals.createGoal(payload);
-    setGoalFormOpen(false);
+    closeGoalForm();
   }
 
-  async function handleUpdate(goalId: string, payload: any) {
+  async function handleUpdate(
+    goalId: string,
+    payload: Parameters<typeof goals.updateGoal>[1],
+  ) {
     await goals.updateGoal(goalId, payload);
-    setGoalFormOpen(false);
+    closeGoalForm();
+  }
+
+  function closeGoalForm() {
+    setGoalFormMode(null);
     setEditingGoal(null);
   }
+
+  function openCreateGoalForm() {
+    setEditingGoal(null);
+    setGoalFormMode("create");
+  }
+
+  function openEditGoalForm(item: StrategicIndicatorGoalItem) {
+    setEditingGoal(item);
+    setGoalFormMode("edit");
+  }
+
+  const resolvedGoalYear = goalYear ?? new Date().getFullYear();
+  const goalFormTitle =
+    goalFormMode === "edit" ? "Editar meta analítica" : "Nova meta analítica";
 
   return (
     <>
@@ -117,6 +138,29 @@ export function GoalYearManagementModal({
         size="xl"
       >
         <div className="si-goal-year-workspace">
+          {goalFormMode ? (
+            <IndicatorGoalForm
+              saving={goals.saving}
+              initialValue={editingGoal}
+              indicatorOptions={indicatorOptions}
+              defaultGoalYear={resolvedGoalYear}
+              lockGoalYear={goalFormMode === "create" && typeof goalYear === "number"}
+              layout={goalFormMode === "edit" ? "compact" : "wizard"}
+              panelShell={{
+                title: goalFormTitle,
+                cycleYear: resolvedGoalYear,
+                onBack: closeGoalForm,
+                versionLabel:
+                  goalFormMode === "edit" && editingGoal
+                    ? `Ativa v${editingGoal.version}`
+                    : undefined,
+              }}
+              onCreate={handleCreate}
+              onUpdate={handleUpdate}
+              onCancel={closeGoalForm}
+            />
+          ) : (
+            <>
           <SectionBlock
             title={`Ano ${goalYear ?? "—"}`}
             description="Visão consolidada das metas do ciclo anual."
@@ -125,10 +169,7 @@ export function GoalYearManagementModal({
                 <button
                   type="button"
                   className="si-settings-editor__button"
-                  onClick={() => {
-                    setEditingGoal(null);
-                    setGoalFormOpen(true);
-                  }}
+                  onClick={openCreateGoalForm}
                 >
                   Nova meta
                 </button>
@@ -226,10 +267,7 @@ export function GoalYearManagementModal({
                     </div>
 
                     <ActionButtons
-                      onEdit={() => {
-                        setEditingGoal(item);
-                        setGoalFormOpen(true);
-                      }}
+                      onEdit={() => openEditGoalForm(item)}
                       onHistory={() =>
                         void goals.loadHistory(item.indicator_id, item.goal_year)
                       }
@@ -269,31 +307,9 @@ export function GoalYearManagementModal({
               </div>
             ) : null}
           </SectionBlock>
+            </>
+          )}
         </div>
-      </Modal>
-
-      <Modal
-        open={goalFormOpen}
-        onClose={() => {
-          setGoalFormOpen(false);
-          setEditingGoal(null);
-        }}
-        title={editingGoal ? "Editar meta analítica" : "Criar meta analítica"}
-        description="Cadastre ou ajuste uma meta versionada por indicador e ano."
-        size="lg"
-        initialFocusSelector="select, input, textarea"
-      >
-        <IndicatorGoalForm
-          saving={goals.saving}
-          initialValue={editingGoal}
-          indicatorOptions={indicatorOptions}
-          onCreate={handleCreate}
-          onUpdate={handleUpdate}
-          onCancel={() => {
-            setGoalFormOpen(false);
-            setEditingGoal(null);
-          }}
-        />
       </Modal>
 
       <Modal
