@@ -548,6 +548,19 @@
 
 /* ------------------------------------------- detalhamento do mês de despesas */
 
+/* Seis indicadores no mês — uma única faixa, sem card órfão na segunda linha. */
+.dashboard-financial .fin-kpi-grid--month {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Abaixo da largura de seis cards, cai para trios antes do fallback de 2. */
+@media (max-width: 1240px) {
+  .dashboard-financial .fin-kpi-grid--month {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .dashboard-financial .fin-month-chip {
   display: inline-flex;
   align-items: center;

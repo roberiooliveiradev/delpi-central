@@ -424,7 +424,10 @@ export function CostCenterMonthPage({
             )}
           </section>
 
-          <div className="fin-kpi-grid" aria-label={copy.costCenters.monthDetail.kpiAria}>
+          <div
+            className="fin-kpi-grid fin-kpi-grid--month"
+            aria-label={copy.costCenters.monthDetail.kpiAria}
+          >
             {kpis.map((kpi) => (
               <FinKpiCard
                 key={kpi.key}
