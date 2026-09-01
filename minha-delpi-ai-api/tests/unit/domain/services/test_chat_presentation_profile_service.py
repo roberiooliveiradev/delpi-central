@@ -104,7 +104,7 @@ def test_resolve_entity_from_path_json_hints_and_fallbacks() -> None:
     )
     assert (
         ChatPresentationProfileService.resolve_entity_from_path(
-            "/commercial/branch_rol_target_pct"
+            "/commercial/rol/summary"
         )
         == "commercial_rol_target"
     )
@@ -148,7 +148,7 @@ def test_path_lowered_normalizes_finacial_typo() -> None:
 def test_entity_path_hint_aliases_resolve_branch_rol_target() -> None:
     assert (
         ChatPresentationProfileService.resolve_entity_from_path(
-            "/commercial/branch_rol_target_pct"
+            "/commercial/rol/summary"
         )
         == "commercial_rol_target"
     )

@@ -502,7 +502,7 @@ def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()
     gateway.fetch_by_operation_id.return_value = {
-        "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+        "meta": {"operationId": "get_commercial_rol_summary", "shape": "scalar"},
         "data": {
             "branch": "02",
             "rol": 1000.0,
@@ -511,7 +511,7 @@ def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
         },
         "route": {
             "label": "Meta ROL",
-            "valueFields": ["branch_rol_target_pct", "value"],
+            "valueFields": ["rol_target_pct", "value"],
             "tvConstraints": {},
         },
     }
@@ -525,7 +525,7 @@ def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
                 "id": "kpi-1",
                 "type": "data_source",
                 "dataBinding": {
-                    "operationId": "get_branch_rol_target_pct",
+                    "operationId": "get_commercial_rol_summary",
                 "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
@@ -1973,7 +1973,7 @@ def test_enrich_links_text_block_to_data_source_resolved():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()
     gateway.fetch_by_operation_id.return_value = {
-        "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+        "meta": {"operationId": "get_commercial_rol_summary", "shape": "scalar"},
         "data": {
             "branch": "02",
             "rol_target_pct": 111.1,
@@ -1994,7 +1994,7 @@ def test_enrich_links_text_block_to_data_source_resolved():
                 "id": "src-1",
                 "type": "data_source",
                 "dataBinding": {
-                    "operationId": "get_branch_rol_target_pct",
+                    "operationId": "get_commercial_rol_summary",
                 "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
@@ -2035,7 +2035,7 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
                 },
             }
         return {
-            "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+            "meta": {"operationId": "get_commercial_rol_summary", "shape": "scalar"},
             "data": {
                 "branch": "02",
                 "rol_target_pct": 111.1,
@@ -2059,7 +2059,7 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
                 "id": "src-1",
                 "type": "data_source",
                 "dataBinding": {
-                    "operationId": "get_branch_rol_target_pct",
+                    "operationId": "get_commercial_rol_summary",
                 "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },

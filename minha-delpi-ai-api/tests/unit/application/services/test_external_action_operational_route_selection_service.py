@@ -421,15 +421,15 @@ def test_operational_route_selection_department_kpi_branch_not_head_office() -> 
             {
                 "actionId": "commercial-head-office-rol-target",
                 "method": "GET",
-                "path": "/commercial/head_office_rol_target_pct",
-                "operationId": "get_head_office_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "parametersSchema": [],
             },
             {
                 "actionId": "commercial-branch-rol-target",
                 "method": "GET",
-                "path": "/commercial/branch_rol_target_pct",
-                "operationId": "get_branch_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "parametersSchema": [
                     {"name": "branch", "in": "query", "required": False},
                     {"name": "start_date", "in": "query", "required": False},
@@ -439,8 +439,8 @@ def test_operational_route_selection_department_kpi_branch_not_head_office() -> 
             {
                 "actionId": "commercial-branch-new-business-rol-target",
                 "method": "GET",
-                "path": "/commercial/branch_new_business_rol_target_pct",
-                "operationId": "get_branch_new_business_rol_target_pct",
+                "path": "/commercial/new-business-rol-target-pct",
+                "operationId": "get_new_business_rol_target_pct",
                 "parametersSchema": [
                     {"name": "branch", "in": "query", "required": False},
                     {"name": "start_date", "in": "query", "required": False},

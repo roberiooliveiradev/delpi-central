@@ -134,8 +134,8 @@ def test_suggest_ops_em_atraso_beats_commercial_path_order():
         [
             {
                 "actionId": "c1",
-                "operationId": "get_commercial_branch_rol_target_pct",
-                "path": "/commercial/branch_rol_target_pct",
+                "operationId": "get_commercial_rol_summary",
+                "path": "/commercial/rol/summary",
                 "method": "GET",
                 "summary": "Indicador — Meta percentual rol comercial",
             },

@@ -23,11 +23,17 @@ class OperationalApiRouteSpec:
     entity_code: str | None = None
     route_segment: str | None = None
     prioritize: str | None = None
+    branch_default: str | None = None
+
+    branch_default: str | None = None
 
     @classmethod
     def from_department_kpi(cls, match) -> OperationalApiRouteSpec:
         path_token = str(getattr(match, "path_token", "") or "").lower()
         domain_prefix = str(getattr(match, "domain_prefix", "") or "").lower()
+        branch_default = getattr(match, "branch_default", None)
+        if branch_default is not None:
+            branch_default = str(branch_default).strip() or None
         # Markers de operationId devem espelhar o path token (ex.: branch_rol_target),
         # nunca o rótulo PT da intenção — senão o catálogo nunca casa a action.
         operation_token = path_token.rsplit("/", maxsplit=1)[-1].replace("-", "_")
@@ -43,6 +49,7 @@ class OperationalApiRouteSpec:
             path_prefixes=(domain_prefix,) if domain_prefix else (),
             operation_tokens=(operation_token,) if operation_token else (),
             parameter_strategy="date_branch",
+            branch_default=branch_default,
         )
 
     @classmethod

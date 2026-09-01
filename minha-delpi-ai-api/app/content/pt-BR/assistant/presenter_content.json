@@ -186,11 +186,11 @@
       "titleKey": "supplies"
     },
     {
-      "fragment": "branch_rol_target_pct",
+      "fragment": "rol/summary",
       "titleKey": "commercial_rol_target_branch"
     },
     {
-      "fragment": "head_office_rol_target_pct",
+      "fragment": "rol/summary",
       "titleKey": "commercial_rol_target_head_office"
     },
     {

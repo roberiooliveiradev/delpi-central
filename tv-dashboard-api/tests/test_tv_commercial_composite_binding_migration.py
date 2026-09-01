@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from tv_app.application.services.data.tv_commercial_composite_binding_migration_service import (
     migrate_composite_commercial_binding,
+    migrate_dual_commercial_rol_binding,
     resolve_simple_commercial_operation_id,
 )
 from tv_app.application.services.data.tv_data_binding_hydrate_service import (
@@ -67,6 +68,18 @@ def test_resolve_otd_by_display_mode_and_group_by():
         )
         == "get_sales_order_otd_by_branch"
     )
+
+
+def test_migrate_dual_commercial_rol_binding_maps_branch():
+    migrated = migrate_dual_commercial_rol_binding(
+        {
+            "operationId": "get_branch_rol_target_pct",
+            "params": {"dateRangePreset": "this_month"},
+        }
+    )
+    assert migrated["operationId"] == "get_commercial_rol_summary"
+    assert migrated["params"]["branch"] == "02"
+    assert migrated["params"]["dateRangePreset"] == "this_month"
 
 
 def test_migrate_binding_strips_group_by_and_remaps_fields():

@@ -99,7 +99,14 @@ class OperationalRouteDomainSelectionService:
 
         return {
             "presentation": {"reasonKey": "departmentKpi"},
-            "parameters": {"strategy": spec.parameter_strategy},
+            "parameters": {
+                "strategy": spec.parameter_strategy,
+                **(
+                    {"branchDefault": spec.branch_default}
+                    if getattr(spec, "branch_default", None)
+                    else {}
+                ),
+            },
             "route": {
                 "pathMarkers": path_markers or list(spec.path_prefixes),
                 "operationIdMarkers": list(spec.operation_tokens),

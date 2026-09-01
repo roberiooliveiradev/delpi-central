@@ -21,7 +21,7 @@ AUTH=(-H "Authorization: Bearer $TOKEN")
 QUERY="?start_date=$START_DATE&end_date=$END_DATE"
 
 echo "[2/4] Meta ROL matriz"
-curl -fsS "${AUTH[@]}" "$API_PREFIX/head_office_rol_target_pct$QUERY" | python3 -m json.tool
+curl -fsS "${AUTH[@]}" "$API_PREFIX/rol/summary?branch=01$QUERY" | python3 -m json.tool
 
 echo "[3/4] Taxa de conversão"
 curl -fsS "${AUTH[@]}" "$API_PREFIX/closing-rate$QUERY" | python3 -m json.tool

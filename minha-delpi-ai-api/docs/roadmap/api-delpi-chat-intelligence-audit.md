@@ -123,8 +123,8 @@
 | `GET /new-clients-average` | média de novos clientes | | OK |
 | `GET /new-clients-rol-pct` | rol clientes novos | | OK |
 | `GET /new-business-rol-pct` | rol novos negócios | | OK |
-| `GET /head_office_rol_target_pct` | meta rol matriz | | OK |
-| `GET /branch_rol_target_pct` | meta rol filial | | OK |
+| `GET /head_office_rol_target_pct` | meta rol matriz | removido — usar `GET /commercial/rol/summary?branch=01` | OK |
+| `GET /branch_rol_target_pct` | meta rol filial | removido — usar `GET /commercial/rol/summary?branch=02` | OK |
 | `GET /proposals` | propostas comerciais ganhas | propostas | OK |
 
 ---

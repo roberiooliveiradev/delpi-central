@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 697,
+  "operation_count": 693,
   "operations": [
     {
       "method": "POST",
@@ -40,303 +40,6 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Create Anonymous Denuncia."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/branch_new_business_rol_target_pct",
-      "operationId": "get_branch_new_business_rol_target_pct",
-      "summary": "Indicator — Commercial rol new business target",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_new_business_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Indicator — Commercial rol new business target",
-            "description": "Branch new business rol target pct.",
-            "label": "Indicator — Commercial rol new business target"
-          },
-          "pt-BR": {
-            "summary": "Indicador — Commercial rol new business target",
-            "description": "Indicador numérico para «Commercial rol new business target».",
-            "label": "Indicador — Commercial rol new business target"
-          }
-        },
-        "params": {
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Indicador numérico para «Commercial rol new business target».",
-          "label": "Indicador — Commercial rol new business target"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Branch new business rol target pct."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/branch_rol_target_pct",
-      "operationId": "get_branch_rol_target_pct",
-      "summary": "Indicator — Meta percentage rol comercial",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "customer_segment",
-          "in": "query",
-          "required": false,
-          "description": "Customer segment: weg or new_business.",
-          "enum": [
-            "weg",
-            "new_business"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "customer_codes",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Indicator — Meta percentage rol comercial",
-            "description": "Branch rol target pct.",
-            "label": "Indicator — Meta percentage rol comercial"
-          },
-          "pt-BR": {
-            "summary": "Indicador — Meta percentual rol comercial",
-            "description": "Indicador numérico para «Meta percentual rol comercial».",
-            "label": "Indicador — Meta percentual rol comercial"
-          }
-        },
-        "params": {
-          "customer_codes": {
-            "locale": {
-              "en": {
-                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
-                "label": "Customer codes"
-              },
-              "pt-BR": {
-                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
-                "label": "Códigos de clientes"
-              }
-            }
-          },
-          "customer_segment": {
-            "locale": {
-              "en": {
-                "description": "Filter: weg or new_business. Empty = all segments.",
-                "label": "Segment"
-              },
-              "pt-BR": {
-                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
-                "label": "Segmento"
-              }
-            },
-            "enumLabels": {
-              "new_business": {
-                "en": {
-                  "label": "New business"
-                },
-                "pt-BR": {
-                  "label": "Novos negócios"
-                }
-              },
-              "weg": {
-                "en": {
-                  "label": "WEG"
-                },
-                "pt-BR": {
-                  "label": "WEG"
-                }
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Indicador numérico para «Meta percentual rol comercial».",
-          "label": "Indicador — Meta percentual rol comercial"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Branch rol target pct."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/branch_weg_rol_target_pct",
-      "operationId": "get_branch_weg_rol_target_pct",
-      "summary": "Indicator — Commercial rol weg target",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_weg_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Indicator — Commercial rol weg target",
-            "description": "Branch weg rol target pct.",
-            "label": "Indicator — Commercial rol weg target"
-          },
-          "pt-BR": {
-            "summary": "Indicador — Commercial rol weg target",
-            "description": "Indicador numérico para «Commercial rol weg target».",
-            "label": "Indicador — Commercial rol weg target"
-          }
-        },
-        "params": {
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Indicador numérico para «Commercial rol weg target».",
-          "label": "Indicador — Commercial rol weg target"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Branch weg rol target pct."
     },
     {
       "method": "GET",
@@ -750,303 +453,6 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Hit rate (conversion %) over time for Santa Catarina and Espírito Santo."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/head_office_new_business_rol_target_pct",
-      "operationId": "get_head_office_new_business_rol_target_pct",
-      "summary": "Indicator — Commercial rol new business target",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_new_business_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Indicator — Commercial rol new business target",
-            "description": "Head office new business rol target pct.",
-            "label": "Indicator — Commercial rol new business target"
-          },
-          "pt-BR": {
-            "summary": "Indicador — Commercial rol new business target",
-            "description": "Indicador numérico para «Commercial rol new business target».",
-            "label": "Indicador — Commercial rol new business target"
-          }
-        },
-        "params": {
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Indicador numérico para «Commercial rol new business target».",
-          "label": "Indicador — Commercial rol new business target"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Head office new business rol target pct."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/head_office_rol_target_pct",
-      "operationId": "get_head_office_rol_target_pct",
-      "summary": "Indicator — Meta percentage rol comercial",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "customer_segment",
-          "in": "query",
-          "required": false,
-          "description": "Customer segment: weg or new_business.",
-          "enum": [
-            "weg",
-            "new_business"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "customer_codes",
-          "in": "query",
-          "required": false,
-          "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Indicator — Meta percentage rol comercial",
-            "description": "Head office rol target pct.",
-            "label": "Indicator — Meta percentage rol comercial"
-          },
-          "pt-BR": {
-            "summary": "Indicador — Meta percentual rol comercial",
-            "description": "Indicador numérico para «Meta percentual rol comercial».",
-            "label": "Indicador — Meta percentual rol comercial"
-          }
-        },
-        "params": {
-          "customer_codes": {
-            "locale": {
-              "en": {
-                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
-                "label": "Customer codes"
-              },
-              "pt-BR": {
-                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
-                "label": "Códigos de clientes"
-              }
-            }
-          },
-          "customer_segment": {
-            "locale": {
-              "en": {
-                "description": "Filter: weg or new_business. Empty = all segments.",
-                "label": "Segment"
-              },
-              "pt-BR": {
-                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
-                "label": "Segmento"
-              }
-            },
-            "enumLabels": {
-              "new_business": {
-                "en": {
-                  "label": "New business"
-                },
-                "pt-BR": {
-                  "label": "Novos negócios"
-                }
-              },
-              "weg": {
-                "en": {
-                  "label": "WEG"
-                },
-                "pt-BR": {
-                  "label": "WEG"
-                }
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Indicador numérico para «Meta percentual rol comercial».",
-          "label": "Indicador — Meta percentual rol comercial"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Head office rol target pct."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/head_office_weg_rol_target_pct",
-      "operationId": "get_head_office_weg_rol_target_pct",
-      "summary": "Indicator — Commercial rol weg target",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_weg_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Indicator — Commercial rol weg target",
-            "description": "Head office weg rol target pct.",
-            "label": "Indicator — Commercial rol weg target"
-          },
-          "pt-BR": {
-            "summary": "Indicador — Commercial rol weg target",
-            "description": "Indicador numérico para «Commercial rol weg target».",
-            "label": "Indicador — Commercial rol weg target"
-          }
-        },
-        "params": {
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Indicador numérico para «Commercial rol weg target».",
-          "label": "Indicador — Commercial rol weg target"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Head office weg rol target pct."
     },
     {
       "method": "GET",
@@ -3758,6 +3164,296 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna commercial ROL summary via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/weg-rol-target-pct",
+      "operationId": "get_weg_rol_target_pct",
+      "summary": "Commercial WEG ROL target (realized and goal)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_weg_target",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial WEG ROL target (realized and goal)",
+            "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+            "label": "Commercial WEG ROL target (realized and goal)"
+          },
+          "pt-BR": {
+            "summary": "Meta ROL WEG comercial (realizado e meta SI)",
+            "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+            "label": "Meta ROL WEG comercial"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+          "label": "Meta ROL WEG comercial"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-business-rol-target-pct",
+      "operationId": "get_new_business_rol_target_pct",
+      "summary": "Commercial new business ROL target (realized and goal)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_new_business_target",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial new business ROL target (realized and goal)",
+            "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+            "label": "Commercial new business ROL target (realized and goal)"
+          },
+          "pt-BR": {
+            "summary": "Meta ROL novos negócios comercial (realizado e meta SI)",
+            "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+            "label": "Meta ROL novos negócios comercial"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+          "label": "Meta ROL novos negócios comercial"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02."
     },
     {
       "method": "GET",

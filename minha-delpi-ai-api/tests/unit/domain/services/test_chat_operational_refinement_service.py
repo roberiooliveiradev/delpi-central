@@ -337,7 +337,7 @@ def test_plan_metric_follow_up_skips_when_fresh_kpi_differs_from_sticky():
                         "name": "execute_external_action",
                         "metadata": {
                             "ok": True,
-                            "path": "/commercial/branch_new_business_rol_target_pct",
+                            "path": "/commercial/new-business-rol-target-pct",
                         },
                     }
                 ]
@@ -371,7 +371,7 @@ def test_plan_metric_follow_up_skips_when_other_department_mentioned():
                         "name": "execute_external_action",
                         "metadata": {
                             "ok": True,
-                            "path": "/commercial/branch_rol_target_pct",
+                            "path": "/commercial/rol/summary",
                         },
                     }
                 ]
@@ -402,7 +402,7 @@ def test_plan_metric_follow_up_keeps_sticky_when_scope_only_after_same_kpi():
                         "name": "execute_external_action",
                         "metadata": {
                             "ok": True,
-                            "path": "/commercial/branch_rol_target_pct",
+                            "path": "/commercial/rol/summary",
                         },
                     }
                 ]
@@ -417,7 +417,7 @@ def test_plan_metric_follow_up_keeps_sticky_when_scope_only_after_same_kpi():
 
     assert len(planned) == 1
     assert planned[0].kind == "metric_refinement"
-    assert planned[0].metric_path_token == "branch_rol_target_pct"
+    assert planned[0].metric_path_token == "rol/summary"
     assert planned[0].branch == "02"
 
 

@@ -78,8 +78,8 @@ def test_presenter_kpi_title_commercial_rol_target_not_generic():
 
     presenter = ExternalActionResultPresenter()
 
-    branch_title = presenter._kpi_title("/commercial/branch_rol_target_pct")
-    head_title = presenter._kpi_title("/commercial/head_office_rol_target_pct")
+    branch_title = presenter._kpi_title("/commercial/rol/summary")
+    head_title = presenter._kpi_title("/commercial/rol/summary")
 
     assert branch_title == "Meta % ROL comercial — filial"
     assert head_title == "Meta % ROL comercial — matriz"

@@ -45,8 +45,8 @@ def test_production_late_ops_prioritizes_catalog_over_commercial():
     candidates = [
         {
             "actionId": "commercial-rol",
-            "path": "/commercial/branch_rol_target_pct",
-            "operationId": "get_commercial_branch_rol_target_pct",
+            "path": "/commercial/rol/summary",
+            "operationId": "get_commercial_rol_summary",
             "summary": "Indicador — Meta percentual rol comercial",
         },
         {

@@ -11,8 +11,7 @@ from commercial_app.application.services.resolve_commercial_customer_scope_servi
     CommercialCustomerScope,
 )
 
-HEAD_OFFICE_ROL_PATH = "/head_office_rol_target_pct"
-BRANCH_ROL_PATH = "/branch_rol_target_pct"
+ROL_SUMMARY_PATH = "/rol/summary"
 NATURE_PORTFOLIO_BILLING_SHARE = "portfolio_billing_share"
 BILLING_AMOUNT_NATURES = ("gross", "net")
 DEFAULT_BILLING_AMOUNT_NATURE = "gross"
@@ -65,14 +64,14 @@ def extract_amount_from_target_payload(raw: Any, *, nature: str) -> float:
     return _as_float(data.get("rol"))
 
 
-def resolve_rol_paths_for_branch(branch: str | None) -> tuple[str, ...]:
-    """Paridade Overview: unidade 01 = matriz; 02 = filial; vazio = soma das duas."""
+def resolve_rol_branches_for_branch(branch: str | None) -> tuple[str, ...]:
+    """Paridade Overview: unidade 01 ou 02; vazio = soma das duas."""
     code = (branch or "").strip()
     if code == "01":
-        return (HEAD_OFFICE_ROL_PATH,)
+        return ("01",)
     if code == "02":
-        return (BRANCH_ROL_PATH,)
-    return (HEAD_OFFICE_ROL_PATH, BRANCH_ROL_PATH)
+        return ("02",)
+    return ("01", "02")
 
 
 def compute_share_pct(portfolio_rol: float, company_rol: float) -> float | None:
@@ -149,8 +148,9 @@ class GetPortfolioBillingShareUseCase:
     ) -> float:
         params = _totvs_params(scope, base)
         total = 0.0
-        for path in resolve_rol_paths_for_branch(branch):
-            payload = gateway.get_commercial_analytics(path, params=params)
+        for branch_code in resolve_rol_branches_for_branch(branch):
+            call_params = {**params, "branch": branch_code}
+            payload = gateway.get_commercial_analytics(ROL_SUMMARY_PATH, params=call_params)
             total += extract_amount_from_target_payload(payload, nature=nature)
         return total
 

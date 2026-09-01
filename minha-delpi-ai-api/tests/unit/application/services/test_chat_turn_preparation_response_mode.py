@@ -241,7 +241,7 @@ def test_post_tool_rol_target_normal_uses_commentary_direct_when_decoupled():
                 "metadata": {
                     "ok": True,
                     "llmProseDecoupled": True,
-                    "path": "/commercial/branch_rol_target_pct",
+                    "path": "/commercial/rol/summary",
                     "dataCommentary": {
                         "highlights": [
                             "**rol:** R$ 3.717.926,47",

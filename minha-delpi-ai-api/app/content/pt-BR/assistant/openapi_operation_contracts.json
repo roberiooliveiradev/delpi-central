@@ -351,30 +351,6 @@
     "entity": "financial_pmr",
     "shape": "scalar"
   },
-  "get_head_office_rol_target_pct": {
-    "entity": "commercial_rol_target",
-    "shape": "scalar"
-  },
-  "get_branch_rol_target_pct": {
-    "entity": "commercial_rol_target",
-    "shape": "scalar"
-  },
-  "get_head_office_weg_rol_target_pct": {
-    "entity": "commercial_rol_weg_target",
-    "shape": "scalar"
-  },
-  "get_branch_weg_rol_target_pct": {
-    "entity": "commercial_rol_weg_target",
-    "shape": "scalar"
-  },
-  "get_head_office_new_business_rol_target_pct": {
-    "entity": "commercial_rol_new_business_target",
-    "shape": "scalar"
-  },
-  "get_branch_new_business_rol_target_pct": {
-    "entity": "commercial_rol_new_business_target",
-    "shape": "scalar"
-  },
   "get_commercial_rol_series": {
     "entity": "commercial_rol_series",
     "shape": "scalar"
@@ -2165,6 +2141,14 @@
   },
   "approve_planejamento_orcamentario_personnel_plan": {
     "entity": "personnel_plan",
+    "shape": "scalar"
+  },
+  "get_weg_rol_target_pct": {
+    "entity": "commercial_rol_weg_target",
+    "shape": "scalar"
+  },
+  "get_new_business_rol_target_pct": {
+    "entity": "commercial_rol_new_business_target",
     "shape": "scalar"
   }
 }

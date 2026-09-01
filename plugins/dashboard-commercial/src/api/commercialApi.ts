@@ -71,67 +71,30 @@ async function fetchCommercialData<T>(
   return unwrapApiDelpiEnvelope(response, "Erro na API comercial");
 }
 
-export function getHeadOfficeRolTarget(
+export function getRolSummary(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<RolTargetData>("/rol/summary", params, signal);
+}
+
+export function getWegRolTarget(
   params: CommercialFilterParams,
   signal?: AbortSignal
 ) {
   return fetchCommercialData<RolTargetData>(
-    "/head_office_rol_target_pct",
+    "/weg-rol-target-pct",
     params,
     signal
   );
 }
 
-export function getBranchRolTarget(
+export function getNewBusinessRolTarget(
   params: CommercialFilterParams,
   signal?: AbortSignal
 ) {
   return fetchCommercialData<RolTargetData>(
-    "/branch_rol_target_pct",
-    params,
-    signal
-  );
-}
-
-export function getHeadOfficeWegRolTarget(
-  params: CommercialFilterParams,
-  signal?: AbortSignal
-) {
-  return fetchCommercialData<RolTargetData>(
-    "/head_office_weg_rol_target_pct",
-    params,
-    signal
-  );
-}
-
-export function getBranchWegRolTarget(
-  params: CommercialFilterParams,
-  signal?: AbortSignal
-) {
-  return fetchCommercialData<RolTargetData>(
-    "/branch_weg_rol_target_pct",
-    params,
-    signal
-  );
-}
-
-export function getHeadOfficeNewBusinessRolTarget(
-  params: CommercialFilterParams,
-  signal?: AbortSignal
-) {
-  return fetchCommercialData<RolTargetData>(
-    "/head_office_new_business_rol_target_pct",
-    params,
-    signal
-  );
-}
-
-export function getBranchNewBusinessRolTarget(
-  params: CommercialFilterParams,
-  signal?: AbortSignal
-) {
-  return fetchCommercialData<RolTargetData>(
-    "/branch_new_business_rol_target_pct",
+    "/new-business-rol-target-pct",
     params,
     signal
   );

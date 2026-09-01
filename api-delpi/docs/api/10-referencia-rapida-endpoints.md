@@ -164,8 +164,9 @@ Legenda de permissões:
 
 | Método | Endpoint | Perm. |
 |---|---|---|
-| GET | `/commercial/head_office_rol_target_pct` | A |
-| GET | `/commercial/branch_rol_target_pct` | A |
+| GET | `/commercial/rol/summary` | A |
+| GET | `/commercial/weg-rol-target-pct` | A |
+| GET | `/commercial/new-business-rol-target-pct` | A |
 | GET | `/commercial/closing-rate` | A |
 | GET | `/commercial/sales-order-otd` | A |
 | GET | `/commercial/new-business-rol-pct` | A |

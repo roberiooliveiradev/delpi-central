@@ -15,37 +15,17 @@ _INSPECOES = "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_rout
 
 
 @pytest.mark.parametrize(
-    ("handler_name", "builder_name", "operation_id", "with_segment"),
+    ("handler_name", "builder_name", "operation_id"),
     [
         (
-            "get_branch_rol_target_pct",
-            "build_get_branch_rol_target_pct_use_case",
-            "get_branch_rol_target_pct",
-            True,
+            "get_weg_rol_target_pct",
+            "build_get_weg_rol_target_use_case",
+            "get_weg_rol_target_pct",
         ),
         (
-            "get_branch_weg_rol_target_pct",
-            "build_get_branch_weg_rol_target_use_case",
-            "get_branch_weg_rol_target_pct",
-            False,
-        ),
-        (
-            "get_branch_new_business_rol_target_pct",
-            "build_get_branch_new_business_rol_target_use_case",
-            "get_branch_new_business_rol_target_pct",
-            False,
-        ),
-        (
-            "get_head_office_weg_rol_target_pct",
-            "build_get_head_office_weg_rol_target_use_case",
-            "get_head_office_weg_rol_target_pct",
-            False,
-        ),
-        (
-            "get_head_office_new_business_rol_target_pct",
-            "build_get_head_office_new_business_rol_target_use_case",
-            "get_head_office_new_business_rol_target_pct",
-            False,
+            "get_new_business_rol_target_pct",
+            "build_get_new_business_rol_target_use_case",
+            "get_new_business_rol_target_pct",
         ),
     ],
 )
@@ -53,7 +33,6 @@ def test_commercial_rol_target_kpis_return_meta(
     handler_name: str,
     builder_name: str,
     operation_id: str,
-    with_segment: bool,
 ) -> None:
     import app.interface.http.routes.commercial.commercial_router as router_mod
 
@@ -65,10 +44,7 @@ def test_commercial_rol_target_kpis_return_meta(
         mock_build.return_value = MagicMock(
             execute=MagicMock(return_value={"rol": 1.0, "target_pct": 10.0})
         )
-        kwargs = {"start_date": None, "end_date": None}
-        if with_segment:
-            kwargs["customer_segment"] = None
-        response = handler(**kwargs)
+        response = handler(branch=None, start_date=None, end_date=None)
     assert_envelope_meta(body_json(response), operation_id=operation_id, shape="scalar")
 
 

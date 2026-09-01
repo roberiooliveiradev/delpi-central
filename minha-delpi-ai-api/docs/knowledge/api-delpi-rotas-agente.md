@@ -222,8 +222,9 @@ Não confundir com detalhe de LMP (`/engineering/lmps/{sale_number}`) nem vendas
 | Média de novos clientes | `GET /commercial/new-clients-average` | `get_new_clients_average` |
 | % ROL de clientes novos | `GET /commercial/new-clients-rol-pct` | `get_new_clients_rol_pct` |
 | % ROL de novos negócios | `GET /commercial/new-business-rol-pct` | `get_new_business_rol_pct` |
-| Meta % ROL matriz | `GET /commercial/head_office_rol_target_pct` | path `head_office_rol` |
-| Meta % ROL filial | `GET /commercial/branch_rol_target_pct` | path `branch_rol_target` |
+| Meta % ROL (matriz/filial/consolidado) | `GET /commercial/rol/summary` | query `branch`: `01` matriz, `02` filial |
+| Meta % ROL WEG | `GET /commercial/weg-rol-target-pct` | query `branch` |
+| Meta R$ ROL novos negócios | `GET /commercial/new-business-rol-target-pct` | query `branch` |
 | Propostas comerciais (listagem) | `GET /commercial/proposals` | path `commercial/proposals` |
 | Detalhe de proposta comercial | `GET /commercial/proposals/{proposal_number}` | `get_commercial_proposal` |
 | Histórico AIJ010 da proposta | `GET /commercial/proposals/{proposal_number}/history/events` | `get_commercial_proposal_history_events` — mesmo pipeline lite que LMP `/history/events` |
@@ -236,7 +237,7 @@ Não confundir com detalhe de LMP (`/engineering/lmps/{sale_number}`) nem vendas
 |-------------------|------|------------|
 | «rol do mês de março», «qual o rol», KPI financeiro agregado | `GET /financial/rol` | Período via `start_date`/`end_date` |
 | «série de rol», evolução temporal comercial / gráfico | `GET /commercial/rol/series` | Obrigatório `granularity` |
-| Metas % ROL matriz/filial | `GET /commercial/head_office_rol_target_pct` / `branch_rol_target_pct` | Metas, não valor realizado |
+| Metas % ROL matriz/filial | `GET /commercial/rol/summary` com `branch=01` ou `branch=02` | Metas, não valor realizado |
 
 ---
 

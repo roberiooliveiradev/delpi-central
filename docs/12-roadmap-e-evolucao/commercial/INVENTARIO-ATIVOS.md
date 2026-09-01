@@ -50,12 +50,9 @@ Permissão típica: `api-delpi.access` **ou** `dashboard-commercial.view`.
 
 | operationId | Method + path | Tipo |
 |---|---|---|
-| `get_head_office_rol_target_pct` | `GET /commercial/head_office_rol_target_pct` | KPI |
-| `get_branch_rol_target_pct` | `GET /commercial/branch_rol_target_pct` | KPI |
-| `get_head_office_weg_rol_target_pct` | `GET /commercial/head_office_weg_rol_target_pct` | KPI |
-| `get_branch_weg_rol_target_pct` | `GET /commercial/branch_weg_rol_target_pct` | KPI |
-| `get_head_office_new_business_rol_target_pct` | `GET /commercial/head_office_new_business_rol_target_pct` | KPI |
-| `get_branch_new_business_rol_target_pct` | `GET /commercial/branch_new_business_rol_target_pct` | KPI |
+| `get_commercial_rol_summary` | `GET /commercial/rol/summary` (`branch` opcional) | KPI |
+| `get_weg_rol_target_pct` | `GET /commercial/weg-rol-target-pct` (`branch` opcional) | KPI |
+| `get_new_business_rol_target_pct` | `GET /commercial/new-business-rol-target-pct` (`branch` opcional) | KPI |
 | `get_commercial_rol_series` | `GET /commercial/rol/series` | Série |
 | `get_commercial_rol_by_customer` | `GET /commercial/rol/by-customer` | Ranking |
 | `list_commercial_proposals` | `GET /commercial/proposals` | Listagem OV |
