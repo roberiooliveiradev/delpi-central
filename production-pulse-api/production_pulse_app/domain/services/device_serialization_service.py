@@ -1,0 +1,30 @@
+from __future__ import annotations
+
+from typing import Any
+from uuid import UUID
+
+
+def device_row_to_api(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": str(row["id"]),
+        "branch": row["branch"],
+        "name": row["name"],
+        "ipAddress": str(row["ip_address"]),
+        "driverKey": row["driver_key"],
+        "roleKey": row["role_key"],
+        "enabled": row["enabled"],
+        "pollIntervalSeconds": row["poll_interval_seconds"],
+        "lastSeenAt": row.get("last_seen_at"),
+        "lastPollAttemptAt": row.get("last_poll_attempt_at"),
+        "nextPollAt": row.get("next_poll_at"),
+        "lastMetrics": row.get("last_metrics") or {},
+        "lastError": row.get("last_error"),
+        "createdAt": row.get("created_at"),
+        "updatedAt": row.get("updated_at"),
+        "createdBy": row.get("created_by"),
+        "updatedBy": row.get("updated_by"),
+    }
+
+
+def parse_device_id(device_id: str) -> UUID:
+    return UUID(str(device_id))

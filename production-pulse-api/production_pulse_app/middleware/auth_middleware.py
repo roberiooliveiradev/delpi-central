@@ -1,38 +1,32 @@
-from __future__ import annotations
+from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middleware
+from fastapi import Request
 
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
-
-from production_pulse_app.config import settings
-from production_pulse_app.core.responses import error
-
-PUBLIC_PATHS = frozenset({"/health"})
+PUBLIC_EXACT: frozenset[str] = frozenset({"/health"})
+PUBLIC_PREFIXES: tuple[str, ...] = ()
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next) -> Response:
-        path = request.url.path.rstrip("/") or "/"
-        root = (settings.PRODUCTION_PULSE_API_ROOT_PATH or "").rstrip("/")
-        if root and path.startswith(root):
-            path = path[len(root) :] or "/"
+def _strip_root_path(request: Request) -> str:
+    path = request.url.path
+    root_path = (request.scope.get("root_path") or "").rstrip("/")
+    if root_path and path.startswith(root_path):
+        return path[len(root_path) :] or "/"
+    return path
 
-        if path in PUBLIC_PATHS:
-            return await call_next(request)
 
-        if not settings.JWT_SECRET and not settings.KEYCLOAK_JWKS_URL:
-            payload = error(
-                "Autenticação não configurada.",
-                code="auth_not_configured",
-                status_code=503,
-            )
-            status_code = payload.pop("_status_code", 503)
-            return JSONResponse(status_code=status_code, content=payload)
+def _is_public(path: str) -> bool:
+    if path in PUBLIC_EXACT:
+        return True
+    return any(path.startswith(prefix) for prefix in PUBLIC_PREFIXES)
 
-        authorization = request.headers.get("Authorization", "")
-        if not authorization.startswith("Bearer "):
-            payload = error("Token ausente.", code="unauthorized", status_code=401)
-            status_code = payload.pop("_status_code", 401)
-            return JSONResponse(status_code=status_code, content=payload)
 
+async def jwt_middleware(request: Request, call_next):
+    if _is_public(_strip_root_path(request)):
         return await call_next(request)
+    return await _base_jwt_middleware(request, call_next)
+
+
+class AuthMiddleware:
+    """Compat wrapper — prefer ``app.middleware('http')(jwt_middleware)``."""
+
+    async def __call__(self, request: Request, call_next):
+        return await jwt_middleware(request, call_next)
