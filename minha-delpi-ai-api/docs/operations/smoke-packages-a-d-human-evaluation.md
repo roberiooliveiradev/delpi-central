@@ -112,9 +112,26 @@ Subset live (`SMOKE_ONLY`): B1,B2,B4,B5,A4,A7,C2,D1,D2,D4,D6,Y2.
 - Filial×filial («comparar» / «entre filiais») dual `/financial/rol`
 
 **Aberto / residual**
-- B3 não re-smokeado
-- Label de slot prior em compare **branch** ainda usa texto YoY
+- B3 não re-smokeado nesta onda (eval stale)
 - Latência dual compare ainda alta (30–120s) — esperado (2× API + síntese), não regressão do shortcut
+
+## 6. Qualidade pós-hotfix (E8) — 2026-09-01
+
+Hotfixes adicionais: labels compare por eixo branch; bare `01` em date_branch; consolidado omite `branch`; «mês passado» → `previous_period`.
+
+### Consolidado R$ 0 — causa raiz (E3)
+
+**Param, não dado TOTVS.** O builder enviava `branch=all` quando a mensagem continha «consolidado». A api-delpi filtra `D2_FILIAL = 'all'` (valor inexistente) → ROL zerado. Sem `branch` no query, a API soma todas as filiais (~R$ 4,3M em ago/2026 no dev). Fix: omitir `branch` para consolidado/todas as filiais.
+
+### Critérios verify-final (E6)
+
+| Caso | Alvo |
+|------|------|
+| B3 | identity &lt;2s |
+| A7 | `branch=01`, valor ~filial 01 |
+| C1 | consolidado ≠ 0 (params sem branch) |
+| D3 | dual ago×jul, label período anterior |
+| D4/D5/D6 | prosa «filial 01/02», sem «ano anterior» |
 
 ## 5. Hotfixes aplicados (E7)
 
