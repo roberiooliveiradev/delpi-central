@@ -31,6 +31,7 @@ Plataforma de **dispositivos IoT** na rede industrial: contadores de golpe, rota
 | [content/helpTooltips.ts](./content/helpTooltips.ts) | Fonte `PP_HELP` (copiar no scaffold MFE) |
 | [content/sectionIntros.ts](./content/sectionIntros.ts) | Copy visível abaixo dos títulos de seção |
 | [WIREFRAMES.md](./WIREFRAMES.md) | Wireframes ASCII |
+| [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md) | Checklist verify live ESP8266 (UI + smoke) |
 | [MANIFEST-DRAFT.md](./MANIFEST-DRAFT.md) | Rotas menu e permissões (rascunho) |
 
 ---

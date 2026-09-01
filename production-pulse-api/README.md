@@ -118,6 +118,8 @@ PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-produ
 PP_LIVE_ESP=1 pytest tests/test_esp8266_counter_driver_live.py -q
 ```
 
+Checklist UI completo: [HOMOLOGACAO-E6-S2.md](../docs/12-roadmap-e-evolucao/production-pulse/HOMOLOGACAO-E6-S2.md).
+
 ## Documentação
 
 - [Roadmap](../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md)

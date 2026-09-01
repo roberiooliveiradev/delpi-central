@@ -271,7 +271,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 | Portal Financeiro | [Plugin README](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [Spec](../12-roadmap-e-evolucao/financial/README.md) |
 | Despesas de Viagem | [Plugin README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [Playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md) · [Wireframes](../12-roadmap-e-evolucao/travel-expenses/WIREFRAMES.md) |
-| Pulso de Produção | [Plugin README](../../plugins/production-pulse/README.md) · [API](../../production-pulse-api/README.md) · [Roadmap](../12-roadmap-e-evolucao/production-pulse/ROADMAP.md) · [Wireframes](../12-roadmap-e-evolucao/production-pulse/WIREFRAMES.md) |
+| Pulso de Produção | [Plugin README](../../plugins/production-pulse/README.md) · [API](../../production-pulse-api/README.md) · [Roadmap](../12-roadmap-e-evolucao/production-pulse/ROADMAP.md) · [Homologação ESP](../12-roadmap-e-evolucao/production-pulse/HOMOLOGACAO-E6-S2.md) · [Wireframes](../12-roadmap-e-evolucao/production-pulse/WIREFRAMES.md) |
 
 ---
 

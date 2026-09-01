@@ -93,7 +93,7 @@ export PP_LIVE_ESP_IP=192.168.20.2
 bash ./scripts/homologacao/check-production-pulse.sh
 ```
 
-Verify live ESP8266 piloto: [ROADMAP E6.S2](../../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
+Verify live ESP8266 piloto: [HOMOLOGACAO-E6-S2.md](../../docs/12-roadmap-e-evolucao/production-pulse/HOMOLOGACAO-E6-S2.md) · [ROADMAP E6.S2](../../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
 
 ## Contratos do kit (regressão)
 

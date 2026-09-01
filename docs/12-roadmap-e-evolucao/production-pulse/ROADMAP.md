@@ -268,8 +268,9 @@ flowchart TB
 #### E6.S2 — Verify live com ESP8266 piloto
 
 - **Objetivo:** Fluxo ponta a ponta com `192.168.20.2`.
-- **Fazer:** rebuild sequencial plugin-ui → api → mfe; cadastro manual; poll; histórico
-- **Pronto quando:** contador do device aparece no painel após poll.
+- **Checklist:** [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md) — smoke `PP_LIVE_ESP=1`, cadastro UI, poll, histórico, operador.
+- **Fazer:** rebuild sequencial plugin-ui → api → mfe; seguir checklist §3–5.
+- **Pronto quando:** contador do device aparece no painel após poll; operador abre superfície contador.
 - **Commit:** só se fix de regressão.
 
 ---
