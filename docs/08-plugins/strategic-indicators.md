@@ -47,6 +47,8 @@ plugins/strategic-indicators
 
 O `strategic-indicators` é tratado na stack como plugin frontend/microfrontend.
 
+**Admin (2026):** indicadores `per_unit` expõem `branch_value_aggregation` (agregação entre filiais SC/ES) — ver [INDICATOR_GOALS_SCOPE.md](../../strategic-indicators-api/docs/INDICATOR_GOALS_SCOPE.md).
+
 Build no Compose:
 
 ```yaml

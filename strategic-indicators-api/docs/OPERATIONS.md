@@ -28,6 +28,15 @@ Arquivo dev (se configurado): `strategic-indicators-api/logs/api_YYYYMMDD.log`.
 
 ## Refresh period_scores — consolidado + filiais
 
+Após migration **V034** (`branch_value_aggregation`) ou alteração de agregação no admin, recalcule a competência atual para o cache refletir realizado/meta consolidados:
+
+```bash
+docker exec delpi-strategic-indicators-api python3 -u scripts/refresh_period_scores.py \
+  --competence $(date +%Y-%m) --branches consolidated,01,02
+```
+
+O `catalog_inputs_hash` invalida materialização quando o catálogo estrutural muda; o refresh garante scores coerentes imediatamente após deploy.
+
 | Escopo | Como |
 |--------|------|
 | **Job horário / botão Atualizar** | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated,01,02` (default Compose) |

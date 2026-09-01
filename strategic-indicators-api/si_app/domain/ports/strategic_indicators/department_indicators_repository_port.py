@@ -28,6 +28,7 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         value_prefix: str | None,
         value_suffix: str | None,
         value_decimals: int,
+        branch_value_aggregation: str = "auto",
         display_order: int,
         actor_user_id: str | None,
     ) -> dict:
@@ -48,6 +49,7 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         value_prefix: str | None,
         value_suffix: str | None,
         value_decimals: int,
+        branch_value_aggregation: str = "auto",
         is_active: bool,
         display_order: int,
         actor_user_id: str | None,

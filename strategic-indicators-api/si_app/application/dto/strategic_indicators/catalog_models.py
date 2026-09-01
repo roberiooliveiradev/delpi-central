@@ -22,6 +22,7 @@ class StrategicIndicatorCatalogItem:
     value_prefix: str | None = None
     value_suffix: str | None = None
     value_decimals: int = 2
+    branch_value_aggregation: str = "auto"
     branch_goals: dict[str, dict] = field(default_factory=dict)
     resolved_goal_scope_branch: str = ""
     has_resolved_goal: bool = True
@@ -73,6 +74,7 @@ class StrategicIndicatorCalculatedValue:
     value_prefix: str | None = None
     value_suffix: str | None = None
     value_decimals: int = 2
+    branch_value_aggregation: str = "auto"
 
 
 @dataclass(frozen=True)

@@ -37,6 +37,40 @@ export function getAggregationModeLabel(value: string | null | undefined): strin
   }
 }
 
+export function getBranchValueAggregationLabel(
+  value: string | null | undefined,
+): string {
+  switch (value) {
+    case "auto":
+      return "Automático (por unidade)";
+    case "sum":
+      return "Soma entre filiais";
+    case "average":
+      return "Média entre filiais";
+    case "source_consolidated":
+      return "Valor da fonte (consolidado)";
+    default:
+      return value ?? "—";
+  }
+}
+
+export function getBranchValueAggregationHint(
+  value: string | null | undefined,
+): string {
+  switch (value) {
+    case "auto":
+      return "Moeda e contagem somam; percentual, PPM e demais usam média.";
+    case "sum":
+      return "Realizado e meta consolidados = soma das filiais 01 + 02.";
+    case "average":
+      return "Realizado e meta consolidados = média das filiais 01 e 02.";
+    case "source_consolidated":
+      return "Realizado vem da API consolidada; meta só com escopo Consolidado cadastrado.";
+    default:
+      return "";
+  }
+}
+
 export function getScopeTypeLabel(value: string | null | undefined): string {
   switch (value) {
     case "consolidated":

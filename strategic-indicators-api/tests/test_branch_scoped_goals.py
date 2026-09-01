@@ -253,7 +253,11 @@ def test_unit_goals_for_per_unit_monthly_curve() -> None:
         end_date="27-05-2026",
         competence="2026-05",
     )
-    assert goals_payload == {"01": expected_01, "02": expected_02}
+    assert goals_payload == {
+        "01": expected_01,
+        "02": expected_02,
+        "consolidated": round(expected_01 + expected_02, 2),
+    }
 
     stale = StrategicIndicatorCalculatedValue(
         indicator_id=calculated[0].indicator_id,
@@ -283,7 +287,11 @@ def test_unit_goals_for_per_unit_monthly_curve() -> None:
         end_date="27-05-2026",
         competence="2026-05",
     )
-    assert recomputed == {"01": expected_01, "02": expected_02}
+    assert recomputed == {
+        "01": expected_01,
+        "02": expected_02,
+        "consolidated": round(expected_01 + expected_02, 2),
+    }
 
 
 def test_resolve_unit_goals_ignores_stale_consolidated_cache() -> None:

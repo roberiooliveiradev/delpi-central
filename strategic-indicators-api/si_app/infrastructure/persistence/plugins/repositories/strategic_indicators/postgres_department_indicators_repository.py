@@ -35,6 +35,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                branch_value_aggregation,
                 is_active,
                 display_order,
                 created_at,
@@ -78,6 +79,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                branch_value_aggregation,
                 is_active,
                 display_order
             FROM strategic_indicators.department_indicators
@@ -107,6 +109,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         value_prefix: str | None,
         value_suffix: str | None,
         value_decimals: int,
+        branch_value_aggregation: str = "auto",
         display_order: int,
         actor_user_id: str | None,
     ) -> dict:
@@ -124,6 +127,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                branch_value_aggregation,
                 supports_branch_goals,
                 is_active,
                 display_order,
@@ -135,7 +139,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
             VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s,
-                %s,
+                %s, %s,
                 TRUE, %s, %s, %s, %s, %s
             )
             RETURNING *
@@ -155,6 +159,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                (branch_value_aggregation or "auto").strip().lower(),
                 supports_branch_goals_for_scope_type(scope_type),
                 display_order,
                 actor_user_id,
@@ -179,6 +184,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         value_prefix: str | None,
         value_suffix: str | None,
         value_decimals: int,
+        branch_value_aggregation: str = "auto",
         is_active: bool,
         display_order: int,
         actor_user_id: str | None,
@@ -230,6 +236,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                         value_prefix,
                         value_suffix,
                         value_decimals,
+                        branch_value_aggregation,
                         supports_branch_goals,
                         is_active,
                         display_order,
@@ -241,7 +248,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                     VALUES (
                         %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s,
-                        %s,
+                        %s, %s,
                         %s, %s, %s, %s, %s, %s
                     )
                     """,
@@ -258,6 +265,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                         value_prefix,
                         value_suffix,
                         value_decimals,
+                        (branch_value_aggregation or "auto").strip().lower(),
                         supports_branch_goals_for_scope_type(scope_type),
                         is_active,
                         display_order,
@@ -301,6 +309,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix = %s,
                 value_suffix = %s,
                 value_decimals = %s,
+                branch_value_aggregation = %s,
                 supports_branch_goals = %s,
                 is_active = %s,
                 display_order = %s,
@@ -323,6 +332,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                (branch_value_aggregation or "auto").strip().lower(),
                 supports_branch_goals_for_scope_type(scope_type),
                 is_active,
                 display_order,

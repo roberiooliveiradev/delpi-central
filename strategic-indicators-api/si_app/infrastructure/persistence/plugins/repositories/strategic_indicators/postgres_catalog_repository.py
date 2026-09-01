@@ -68,7 +68,8 @@ class PostgresStrategicIndicatorsCatalogRepository(
                 di.value_unit,
                 di.value_prefix,
                 di.value_suffix,
-                di.value_decimals
+                di.value_decimals,
+                di.branch_value_aggregation
             FROM strategic_indicators.department_indicators di
             INNER JOIN strategic_indicators.departments d
                 ON d.department_id = di.department_id
@@ -109,6 +110,9 @@ class PostgresStrategicIndicatorsCatalogRepository(
                 value_prefix=row.get("value_prefix"),
                 value_suffix=row.get("value_suffix"),
                 value_decimals=int(row.get("value_decimals") or 2),
+                branch_value_aggregation=(
+                    row.get("branch_value_aggregation") or "auto"
+                ),
             )
             for row in rows
         ]

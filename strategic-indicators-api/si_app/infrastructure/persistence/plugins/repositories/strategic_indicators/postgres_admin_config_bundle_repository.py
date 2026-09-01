@@ -64,6 +64,7 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                branch_value_aggregation,
                 is_active,
                 display_order
             FROM strategic_indicators.department_indicators
@@ -412,13 +413,14 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
                 value_prefix,
                 value_suffix,
                 value_decimals,
+                branch_value_aggregation,
                 supports_branch_goals,
                 is_active,
                 display_order,
                 created_by_user_id,
                 updated_by_user_id
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (indicator_id) DO UPDATE SET
                 department_id = EXCLUDED.department_id,
                 indicator_name = EXCLUDED.indicator_name,
@@ -431,6 +433,7 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
                 value_prefix = EXCLUDED.value_prefix,
                 value_suffix = EXCLUDED.value_suffix,
                 value_decimals = EXCLUDED.value_decimals,
+                branch_value_aggregation = EXCLUDED.branch_value_aggregation,
                 supports_branch_goals = EXCLUDED.supports_branch_goals,
                 is_active = EXCLUDED.is_active,
                 display_order = EXCLUDED.display_order,
@@ -450,6 +453,7 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
                 row.get("value_prefix"),
                 row.get("value_suffix"),
                 int(row.get("value_decimals") or 2),
+                (row.get("branch_value_aggregation") or "auto").strip().lower(),
                 supports_branch_goals,
                 bool(row.get("is_active", True)),
                 int(row.get("display_order") or 0),

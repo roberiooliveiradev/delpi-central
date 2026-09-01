@@ -4,6 +4,8 @@
 
 Indicadores permanecem `scope_type = consolidated` (medição consolidada no painel), com **metas distintas por filial** (`goal_scope_branch` `01` e `02`), exceto indicadores cadastrados como `per_unit` (ex.: plugues e custo de refugo × ROL).
 
+**PPM (V034):** indicadores ativos com `value_unit = ppm` recebem `branch_value_aggregation = source_consolidated` — realizado consolidado vem da api-delpi sem filial; meta consolidada exige cadastro com escopo **Consolidado** (`goal_scope_branch = ''`). Alternativa no admin: `average` para média 01+02 (realizado e meta).
+
 ## Perdas — custo × ROL (admin + código)
 
 | `indicator_id` | `source_key` | Fonte HTTP | Escopo típico |

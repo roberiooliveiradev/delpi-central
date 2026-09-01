@@ -10,7 +10,6 @@ from si_app.domain.ports.strategic_indicators.commercial_indicators_snapshot_por
     StrategicIndicatorsCommercialIndicatorsSnapshotPort,
 )
 from si_app.shared.branch_filter import effective_query_branch
-from si_app.shared.consolidated_value_aggregation import aggregate_unit_branch_values
 from si_app.shared.goal_scope import BRANCH_UNIT_CODES
 from si_app.shared.numeric_parsing import to_optional_float
 
@@ -222,21 +221,17 @@ class CommercialIndicatorsSnapshotProvider(
         active_branch = effective_query_branch(view_branch)
         if active_branch:
             consolidated_value = unit_values.get(active_branch)
-        else:
-            branch_amounts = [
-                float(value)
-                for value in unit_values.values()
-                if value is not None
-            ]
-            consolidated_value = aggregate_unit_branch_values(
-                branch_amounts,
-                aggregation="sum",
+            return self._build_measurement(
+                indicator_id=indicator_id,
+                source=source,
+                value=consolidated_value,
+                unit_values=unit_values,
             )
 
         return self._build_measurement(
             indicator_id=indicator_id,
             source=source,
-            value=consolidated_value,
+            value=None,
             unit_values=unit_values,
         )
 

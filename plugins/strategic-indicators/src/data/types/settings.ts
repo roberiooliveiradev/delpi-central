@@ -76,6 +76,12 @@ export type IndicatorValueUnit =
   | "months"
   | string;
 
+export type BranchValueAggregation =
+  | "auto"
+  | "sum"
+  | "average"
+  | "source_consolidated";
+
 export type AdminDepartmentItem = {
   department_id: string;
   department_name: string;
@@ -136,6 +142,7 @@ export type AdminDepartmentIndicatorItem = {
   value_prefix: string | null;
   value_suffix: string | null;
   value_decimals: number;
+  branch_value_aggregation?: BranchValueAggregation;
 
   is_active: boolean;
   display_order: number;
@@ -162,6 +169,7 @@ export type CreateAdminDepartmentIndicatorRequest = {
   value_prefix?: string | null;
   value_suffix?: string | null;
   value_decimals?: number;
+  branch_value_aggregation?: BranchValueAggregation;
 
   display_order?: number;
 };
@@ -179,6 +187,7 @@ export type UpdateAdminDepartmentIndicatorRequest = {
   value_prefix?: string | null;
   value_suffix?: string | null;
   value_decimals?: number;
+  branch_value_aggregation?: BranchValueAggregation;
 
   is_active?: boolean;
   display_order?: number;

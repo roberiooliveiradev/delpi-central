@@ -63,6 +63,10 @@ Regras de implementação (`goal_scope.py`, `StrategicIndicatorsCalculator`):
 
 ### Sem `branch` (visão Consolidado)
 
+- **`branch_value_aggregation`** (coluna em `department_indicators`, admin SI): define rollup do **mesmo indicador** entre filiais 01/02 — não confundir com `departments.aggregation_mode` (IDD do departamento).
+  - `auto`: `currency`/`count` → soma; demais → média
+  - `sum` / `average`: realizado e `goals.consolidated` agregam metas comparáveis 01+02
+  - `source_consolidated`: realizado da fonte consolidada (ex.: PPM api-delpi); meta consolidada **somente** com `goal_scope_branch = ''` cadastrada — não agrega metas filiais
 - Departamentos `average_of_units` (RH, Qualidade, Produção, Suprimentos):
   - **Cada indicador:** nota = média das notas das filiais 01 e 02 (realizado da unidade × meta da unidade)
   - **IDD do departamento:** média aritmética do IDD calculado separadamente para filial 01 e filial 02

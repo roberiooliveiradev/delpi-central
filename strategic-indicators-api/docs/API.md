@@ -276,6 +276,8 @@ O MFE costuma chamar primeiro com subset (overview) e depois trends em request s
 | POST | `/admin/indicators/{indicator_id}/activate` \| `/deactivate` |
 | DELETE | `/admin/indicators/{indicator_id}` |
 
+Indicadores (`POST`/`PUT`): campo **`branch_value_aggregation`** (`auto` \| `sum` \| `average` \| `source_consolidated`) quando `scope_type=per_unit`. Define rollup entre filiais 01/02 na visão consolidado (realizado + `goals.consolidated`). Engenharia/Financeiro ignoram na prática (medição só `consolidated`).
+
 ---
 
 ## Metas analíticas (`indicator-goals`)

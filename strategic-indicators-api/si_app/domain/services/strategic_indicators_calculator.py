@@ -16,7 +16,10 @@ from si_app.shared.branch_filter import (
     is_consolidated_aggregation_department,
 )
 from si_app.shared.consolidated_value_aggregation import (
+    aggregate_branch_goal_values,
     aggregate_unit_branch_values,
+    is_source_consolidated_mode,
+    normalize_branch_value_aggregation,
     resolve_consolidated_value_aggregation,
 )
 from si_app.shared.goal_scope import (
@@ -263,6 +266,7 @@ class StrategicIndicatorsCalculator:
                             value_prefix=indicator.value_prefix,
                             value_suffix=indicator.value_suffix,
                             value_decimals=indicator.value_decimals,
+                            branch_value_aggregation=indicator.branch_value_aggregation,
                         )
                     )
                     continue
@@ -369,6 +373,7 @@ class StrategicIndicatorsCalculator:
                     value_prefix=indicator.value_prefix,
                     value_suffix=indicator.value_suffix,
                     value_decimals=indicator.value_decimals,
+                    branch_value_aggregation=indicator.branch_value_aggregation,
                 )
             )
 
@@ -477,8 +482,10 @@ class StrategicIndicatorsCalculator:
         competence: str | None = None,
         value_unit: str | None = None,
         indicator_id: str | None = None,
+        branch_value_aggregation: str | None = None,
     ) -> float:
         base_aggregation = resolve_consolidated_value_aggregation(
+            branch_value_aggregation=branch_value_aggregation,
             indicator_id=(indicator_id or "").strip(),
             value_unit=value_unit,
         )
@@ -592,9 +599,11 @@ class StrategicIndicatorsCalculator:
         competence: str | None = None,
         value_unit: str | None = None,
         indicator_id: str | None = None,
+        branch_value_aggregation: str | None = None,
     ) -> dict[str, str | bool]:
         """Flags: goal_aggregation efetiva; kind exact|partial|accumulated."""
         base_aggregation = resolve_consolidated_value_aggregation(
+            branch_value_aggregation=branch_value_aggregation,
             indicator_id=(indicator_id or "").strip(),
             value_unit=value_unit,
         )
@@ -949,6 +958,11 @@ class StrategicIndicatorsCalculator:
                 competence=competence,
                 value_unit=getattr(indicator, "value_unit", None),
                 indicator_id=indicator.indicator_id,
+                branch_value_aggregation=getattr(
+                    indicator,
+                    "branch_value_aggregation",
+                    None,
+                ),
             )
             branch_scores.append(
                 self.calculate_indicator_score(
@@ -976,13 +990,26 @@ class StrategicIndicatorsCalculator:
             else None
         )
         aggregation = resolve_consolidated_value_aggregation(
+            branch_value_aggregation=getattr(
+                indicator,
+                "branch_value_aggregation",
+                None,
+            ),
             indicator_id=indicator.indicator_id,
             value_unit=getattr(indicator, "value_unit", None),
         )
-        realized_value = aggregate_unit_branch_values(
-            branch_values,
-            aggregation=aggregation,
-        )
+        if is_source_consolidated_mode(
+            getattr(indicator, "branch_value_aggregation", None),
+        ):
+            realized_value = consolidated_measurement_value(
+                value=measurement.value,
+                unit_values=unit_values,
+            )
+        else:
+            realized_value = aggregate_unit_branch_values(
+                branch_values,
+                aggregation=aggregation,
+            )
         return score, gap, realized_value
 
     def _score_indicator_for_branch(
@@ -1558,7 +1585,63 @@ class StrategicIndicatorsCalculator:
             unit_goals=unit_goals,
             goal_value=period_goal,
             department_id=calculated.department_id,
+            branch_value_aggregation=(
+                getattr(calculated, "branch_value_aggregation", None)
+                or (
+                    getattr(catalog_item, "branch_value_aggregation", None)
+                    if catalog_item is not None
+                    else None
+                )
+            ),
+            value_unit=(
+                getattr(calculated, "value_unit", None)
+                or (
+                    getattr(catalog_item, "value_unit", None)
+                    if catalog_item is not None
+                    else None
+                )
+            ),
+            consolidated_scope_goal=self._consolidated_scope_goal_for_payload(
+                catalog_item=catalog_item,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            ),
         )
+
+    def _consolidated_scope_goal_for_payload(
+        self,
+        *,
+        catalog_item: StrategicIndicatorCatalogItem | None,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> float | None:
+        if catalog_item is None:
+            return None
+        if not is_source_consolidated_mode(
+            getattr(catalog_item, "branch_value_aggregation", None),
+        ):
+            return None
+        if normalize_goal_scope_branch(
+            getattr(catalog_item, "resolved_goal_scope_branch", ""),
+        ):
+            return None
+        if not getattr(catalog_item, "has_resolved_goal", True):
+            return None
+        comparable = self.calculate_comparable_goal(
+            goal_value=float(catalog_item.goal_value),
+            goal_periodicity=catalog_item.goal_periodicity,
+            goal_mode=getattr(catalog_item, "goal_mode", "standard"),
+            monthly_targets=getattr(catalog_item, "monthly_targets", None),
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+            value_unit=getattr(catalog_item, "value_unit", None),
+            indicator_id=catalog_item.indicator_id,
+            branch_value_aggregation=catalog_item.branch_value_aggregation,
+        )
+        return round(float(comparable), 2)
 
     def build_goals_payload(
         self,
@@ -1566,6 +1649,9 @@ class StrategicIndicatorsCalculator:
         unit_goals: dict[str, float | None] | None,
         goal_value: float | None,
         department_id: str | None = None,
+        branch_value_aggregation: str | None = None,
+        value_unit: str | None = None,
+        consolidated_scope_goal: float | None = None,
     ) -> dict[str, float | None]:
         """Monta o mapa goals.* com meta do período (comparable), não a cadastrada."""
         if is_consolidated_aggregation_department(department_id):
@@ -1573,13 +1659,33 @@ class StrategicIndicatorsCalculator:
                 return {}
             return {"consolidated": goal_value}
 
-        if unit_goals:
-            return dict(unit_goals)
+        mode = normalize_branch_value_aggregation(branch_value_aggregation)
+        payload: dict[str, float | None] = dict(unit_goals or {})
 
-        if goal_value is None:
-            return {}
+        if mode == "source_consolidated":
+            if consolidated_scope_goal is not None:
+                payload["consolidated"] = consolidated_scope_goal
+            return payload
 
-        return {"consolidated": goal_value}
+        branch_goal_values = [
+            float(value)
+            for key, value in (unit_goals or {}).items()
+            if key in BRANCH_UNIT_CODES and value is not None
+        ]
+        if len(branch_goal_values) >= 2:
+            aggregated = aggregate_branch_goal_values(
+                branch_goal_values,
+                branch_value_aggregation=branch_value_aggregation,
+                value_unit=value_unit,
+            )
+            if aggregated is not None:
+                payload["consolidated"] = aggregated
+            return payload
+
+        if not unit_goals and goal_value is not None:
+            payload["consolidated"] = goal_value
+
+        return payload
 
     def indicator_has_value(self, value: float | None) -> bool:
         return value is not None
@@ -1720,6 +1826,7 @@ class StrategicIndicatorsCalculator:
             value_prefix=indicator.value_prefix,
             value_suffix=indicator.value_suffix,
             value_decimals=indicator.value_decimals,
+            branch_value_aggregation=indicator.branch_value_aggregation,
         )
 
     def _uses_average_of_units_aggregation(
@@ -1775,6 +1882,7 @@ class StrategicIndicatorsCalculator:
             value_prefix=indicator.value_prefix,
             value_suffix=indicator.value_suffix,
             value_decimals=indicator.value_decimals,
+            branch_value_aggregation=indicator.branch_value_aggregation,
         )
 
     def _calculate_monthly_curve_goal(

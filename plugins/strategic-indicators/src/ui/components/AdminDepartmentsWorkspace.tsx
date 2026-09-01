@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type {
   AdminDepartmentIndicatorItem,
   AdminDepartmentItem,
+  BranchValueAggregation,
   CreateAdminDepartmentIndicatorRequest,
   CreateAdminDepartmentRequest,
   UpdateAdminDepartmentIndicatorRequest,
@@ -15,6 +16,8 @@ import { SectionBlock } from "./SectionBlock";
 import { ActiveToggle } from "./ActiveToggle";
 import {
   getAggregationModeLabel,
+  getBranchValueAggregationHint,
+  getBranchValueAggregationLabel,
   getPerformanceDirectionLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
@@ -52,6 +55,7 @@ type IndicatorFormState = {
   value_prefix: string;
   value_suffix: string;
   value_decimals: number;
+  branch_value_aggregation: BranchValueAggregation;
   display_order: number;
   is_active: boolean;
 };
@@ -81,6 +85,7 @@ const emptyIndicatorForm: IndicatorFormState = {
   value_prefix: "",
   value_suffix: "",
   value_decimals: 2,
+  branch_value_aggregation: "auto",
   display_order: 0,
   is_active: true,
 };
@@ -174,6 +179,7 @@ export function AdminDepartmentsWorkspace({
       value_prefix: item.value_prefix ?? "",
       value_suffix: item.value_suffix ?? "",
       value_decimals: Number(item.value_decimals ?? 2),
+      branch_value_aggregation: item.branch_value_aggregation ?? "auto",
       display_order: item.display_order,
       is_active: item.is_active,
     });
@@ -249,6 +255,7 @@ export function AdminDepartmentsWorkspace({
         value_prefix: indicatorForm.value_prefix.trim() || null,
         value_suffix: indicatorForm.value_suffix.trim() || null,
         value_decimals: Number(indicatorForm.value_decimals ?? 2),
+        branch_value_aggregation: indicatorForm.branch_value_aggregation,
         display_order: Number(indicatorForm.display_order || 0),
       };
 
@@ -266,6 +273,7 @@ export function AdminDepartmentsWorkspace({
         value_prefix: indicatorForm.value_prefix.trim() || null,
         value_suffix: indicatorForm.value_suffix.trim() || null,
         value_decimals: Number(indicatorForm.value_decimals ?? 2),
+        branch_value_aggregation: indicatorForm.branch_value_aggregation,
         display_order: Number(indicatorForm.display_order || 0),
         is_active: indicatorForm.is_active,
       };
@@ -801,6 +809,36 @@ export function AdminDepartmentsWorkspace({
               ]}
             />
           </label>
+
+          {indicatorForm.scope_type === "per_unit" ? (
+            <label className="si-admin-form-field">
+              <span>Agregação entre filiais</span>
+              <SiSelectControl
+                value={indicatorForm.branch_value_aggregation}
+                onChange={(value) =>
+                  setIndicatorForm((current) => ({
+                    ...current,
+                    branch_value_aggregation: value as BranchValueAggregation,
+                  }))
+                }
+                options={[
+                  { value: "auto", label: getBranchValueAggregationLabel("auto") },
+                  { value: "sum", label: getBranchValueAggregationLabel("sum") },
+                  {
+                    value: "average",
+                    label: getBranchValueAggregationLabel("average"),
+                  },
+                  {
+                    value: "source_consolidated",
+                    label: getBranchValueAggregationLabel("source_consolidated"),
+                  },
+                ]}
+              />
+              <small className="si-admin-form-field__hint">
+                {getBranchValueAggregationHint(indicatorForm.branch_value_aggregation)}
+              </small>
+            </label>
+          ) : null}
 
           <label className="si-admin-form-field">
             <span>Direção de performance</span>

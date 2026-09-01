@@ -9,11 +9,22 @@ from si_app.domain.ports.strategic_indicators.department_indicators_repository_p
 )
 
 
+from si_app.shared.consolidated_value_aggregation import (
+    normalize_branch_value_aggregation,
+)
+
+
 class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
     VALID_SCOPE_TYPES = {"consolidated", "per_unit"}
     VALID_PERFORMANCE_DIRECTIONS = {
         "higher_is_better",
         "lower_is_better",
+    }
+    VALID_BRANCH_VALUE_AGGREGATIONS = {
+        "auto",
+        "sum",
+        "average",
+        "source_consolidated",
     }
 
     def __init__(
@@ -58,6 +69,12 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         source_key = normalize_indicator_source_key(body.get("source_key"))
         validate_indicator_source_key(source_key, is_active=is_active)
 
+        branch_value_aggregation = normalize_branch_value_aggregation(
+            body.get("branch_value_aggregation"),
+        )
+        if branch_value_aggregation not in self.VALID_BRANCH_VALUE_AGGREGATIONS:
+            raise ValueError("branch_value_aggregation inválido.")
+
         return self._repository.update_department_indicator(
             indicator_id=indicator_id.strip(),
             new_indicator_id=new_indicator_id,
@@ -71,6 +88,7 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             value_prefix=(body.get("value_prefix") or None),
             value_suffix=(body.get("value_suffix") or None),
             value_decimals=value_decimals,
+            branch_value_aggregation=branch_value_aggregation,
             is_active=is_active,
             display_order=int(body.get("display_order") or 0),
             actor_user_id=actor_user_id,

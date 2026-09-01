@@ -2,35 +2,55 @@ from __future__ import annotations
 
 from typing import Literal
 
+BranchValueAggregationMode = Literal[
+    "auto",
+    "sum",
+    "average",
+    "source_consolidated",
+]
 ConsolidatedValueAggregation = Literal["sum", "average"]
 
-# Visão consolidada do realizado (quando há unit_values 01/02).
-# A nota do indicador no SI continua sendo a média das notas por filial
-# (departamento comercial: average_of_units).
-INDICATOR_CONSOLIDATED_VALUE_AGGREGATION: dict[str, ConsolidatedValueAggregation] = {
-    "supplies-negotiation-savings": "sum",
-    "commercial-rol": "sum",
-    "commercial-rol-weg": "sum",
-    "commercial-rol-new-business": "sum",
-    "commercial-closing-rate": "average",
-    "commercial-sales-order-otd": "average",
-    "commercial-new-business-rol-pct": "average",
-}
+_BRANCH_VALUE_AGGREGATION_VALUES = frozenset(
+    {"auto", "sum", "average", "source_consolidated"},
+)
 
 _VALUE_UNIT_DEFAULT: dict[str, ConsolidatedValueAggregation] = {
     "currency": "sum",
     "count": "sum",
 }
 
+_NON_SUMMABLE_VALUE_UNITS = frozenset({"percent", "ppm", "ratio"})
+
+
+def normalize_branch_value_aggregation(
+    value: str | None,
+) -> BranchValueAggregationMode:
+    normalized = (value or "auto").strip().lower()
+    if normalized in _BRANCH_VALUE_AGGREGATION_VALUES:
+        return normalized  # type: ignore[return-value]
+    return "auto"
+
+
+def is_source_consolidated_mode(
+    branch_value_aggregation: str | None,
+) -> bool:
+    return normalize_branch_value_aggregation(branch_value_aggregation) == "source_consolidated"
+
 
 def resolve_consolidated_value_aggregation(
     *,
-    indicator_id: str,
+    branch_value_aggregation: str | None = None,
+    indicator_id: str | None = None,
     value_unit: str | None = None,
 ) -> ConsolidatedValueAggregation:
-    explicit = INDICATOR_CONSOLIDATED_VALUE_AGGREGATION.get(indicator_id.strip())
-    if explicit:
-        return explicit
+    _ = indicator_id
+    mode = normalize_branch_value_aggregation(branch_value_aggregation)
+    if mode == "sum":
+        return "sum"
+    if mode == "average":
+        return "average"
+    if mode == "source_consolidated":
+        return "average"
 
     unit = (value_unit or "").strip().lower()
     return _VALUE_UNIT_DEFAULT.get(unit, "average")
@@ -46,3 +66,20 @@ def aggregate_unit_branch_values(
     if aggregation == "sum":
         return round(sum(values), 2)
     return round(sum(values) / len(values), 2)
+
+
+def aggregate_branch_goal_values(
+    values: list[float],
+    *,
+    branch_value_aggregation: str | None,
+    value_unit: str | None = None,
+) -> float | None:
+    unit = (value_unit or "").strip().lower()
+    if unit in _NON_SUMMABLE_VALUE_UNITS:
+        return aggregate_unit_branch_values(values, aggregation="average")
+
+    aggregation = resolve_consolidated_value_aggregation(
+        branch_value_aggregation=branch_value_aggregation,
+        value_unit=value_unit,
+    )
+    return aggregate_unit_branch_values(values, aggregation=aggregation)

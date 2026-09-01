@@ -24,6 +24,10 @@ from si_app.shared.goal_scope import (
     normalize_goal_scope_branch,
 )
 
+from si_app.shared.consolidated_value_aggregation import (
+    is_source_consolidated_mode,
+)
+
 logger = logging.getLogger("strategic_indicators.catalog")
 
 
@@ -212,6 +216,15 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                 continue
 
             if branch_goals and scope_type == "per_unit":
+                if is_source_consolidated_mode(item.branch_value_aggregation) and goal:
+                    resolved.append(
+                        self._catalog_item_from_goal(
+                            item,
+                            goal,
+                            branch_goals=branch_goals,
+                        )
+                    )
+                    continue
                 resolved.append(self._catalog_item_from_branch_goals(item, branch_goals))
                 continue
 
@@ -339,6 +352,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             value_prefix=item.value_prefix,
             value_suffix=item.value_suffix,
             value_decimals=item.value_decimals,
+            branch_value_aggregation=item.branch_value_aggregation,
             branch_goals=branch_goals,
             resolved_goal_scope_branch=normalize_goal_scope_branch(
                 goal.get("goal_scope_branch"),
@@ -372,6 +386,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             value_prefix=item.value_prefix,
             value_suffix=item.value_suffix,
             value_decimals=item.value_decimals,
+            branch_value_aggregation=item.branch_value_aggregation,
             branch_goals={},
             resolved_goal_scope_branch="",
             has_resolved_goal=False,
@@ -405,6 +420,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             value_prefix=item.value_prefix,
             value_suffix=item.value_suffix,
             value_decimals=item.value_decimals,
+            branch_value_aggregation=item.branch_value_aggregation,
             branch_goals={},
             resolved_goal_scope_branch="",
             has_resolved_goal=False,
@@ -438,6 +454,7 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             value_prefix=item.value_prefix,
             value_suffix=item.value_suffix,
             value_decimals=item.value_decimals,
+            branch_value_aggregation=item.branch_value_aggregation,
             branch_goals=branch_goals,
             resolved_goal_scope_branch="",
             has_resolved_goal=True,

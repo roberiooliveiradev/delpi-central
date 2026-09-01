@@ -100,7 +100,7 @@ Body de preview/apply: envelope `schema_version: 1` + `mode` (`merge` \| `replac
 | Chave | Conteúdo |
 |-------|----------|
 | `departments` | Departamentos |
-| `department_indicators` | Indicadores estruturais |
+| `department_indicators` | Indicadores estruturais (`branch_value_aggregation` para `scope_type=per_unit`) |
 | `indicator_goals` | Metas **ativas** + `monthly_targets` |
 | `module_settings` | `parameters.global`, `governance.notes` |
 

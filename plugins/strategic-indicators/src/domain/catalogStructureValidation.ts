@@ -210,6 +210,37 @@ export function validateCatalogRow(input: {
     });
   }
 
+  const branchAggregation = (indicator.branch_value_aggregation ?? "auto").trim();
+  const valueUnit = (indicator.value_unit ?? "").trim().toLowerCase();
+
+  if (
+    indicator.is_active &&
+    scopeType === "per_unit" &&
+    branchAggregation === "sum" &&
+    (valueUnit === "ppm" || valueUnit === "percent" || valueUnit === "ratio")
+  ) {
+    issues.push({
+      code: "ppm_percent_sum_aggregation",
+      severity: "warning",
+      message:
+        "Soma entre filiais não se aplica a PPM/percentual; use média ou valor da fonte.",
+    });
+  }
+
+  if (
+    indicator.is_active &&
+    scopeType === "per_unit" &&
+    branchAggregation === "source_consolidated" &&
+    !coverage.consolidated
+  ) {
+    issues.push({
+      code: "source_consolidated_without_consolidated_goal",
+      severity: "warning",
+      message:
+        "Agregação «valor da fonte» exige meta ativa com escopo Consolidado.",
+    });
+  }
+
   return issues;
 }
 

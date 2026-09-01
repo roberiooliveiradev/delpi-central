@@ -38,6 +38,7 @@ def build_catalog_inputs_fingerprint(
                         "monthly_targets": item.monthly_targets,
                         "scope_type": item.scope_type,
                         "performance_direction": item.performance_direction,
+                        "branch_value_aggregation": item.branch_value_aggregation,
                         "branch_goals": item.branch_goals,
                         "resolved_goal_scope_branch": item.resolved_goal_scope_branch,
                         "has_resolved_goal": item.has_resolved_goal,
