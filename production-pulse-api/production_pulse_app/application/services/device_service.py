@@ -7,6 +7,9 @@ from production_pulse_app.application.services.device_driver_registry_service im
     get_device_driver_registry,
 )
 from production_pulse_app.core.serialize import json_safe
+from production_pulse_app.domain.services.device_connectivity_status_service import (
+    resolve_connectivity_status,
+)
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
 from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.domain.services.device_validation_service import (
@@ -44,6 +47,19 @@ class DeviceService:
     def _capabilities_for(self, driver_key: str) -> dict[str, Any]:
         return self._driver_registry.build_capabilities(driver_key)
 
+    def _enrich_connectivity(self, row: dict[str, Any], *, has_binding: bool) -> dict[str, Any]:
+        payload = json_safe(
+            device_row_to_api(
+                row,
+                capabilities=self._capabilities_for(row["driver_key"]),
+            )
+        )
+        connectivity = resolve_connectivity_status(row, has_binding=has_binding)
+        payload["status"] = connectivity["status"]
+        payload["online"] = connectivity["online"]
+        payload["graceSeconds"] = connectivity["graceSeconds"]
+        return payload
+
     def list_devices(
         self,
         *,
@@ -60,20 +76,28 @@ class DeviceService:
             enabled=enabled,
             search=search,
         )
-        return {"items": [json_safe(device_row_to_api(row)) for row in rows]}
+        device_ids = [row["id"] for row in rows]
+        bound_ids = self._binding_repository.active_device_ids_among(device_ids)
+        items = [
+            self._enrich_connectivity(row, has_binding=row["id"] in bound_ids)
+            for row in rows
+        ]
+        return {"items": items}
 
     def get_device(self, device_id: UUID) -> dict[str, Any]:
         row = self._repository.get_by_id(device_id)
         if row is None:
             raise DeviceNotFoundError(str(device_id))
-        payload = json_safe(
-            device_row_to_api(
-                row,
-                capabilities=self._capabilities_for(row["driver_key"]),
-            )
-        )
+        has_binding = self._binding_repository.get_active(device_id) is not None
+        payload = self._enrich_connectivity(row, has_binding=has_binding)
         payload["binding"] = self._binding_service.get_active_binding(device_id)
         return payload
+
+    def get_device_record(self, device_id: UUID) -> dict[str, Any]:
+        row = self._repository.get_by_id(device_id)
+        if row is None:
+            raise DeviceNotFoundError(str(device_id))
+        return row
 
     def create_device(self, payload: dict[str, Any], *, actor_sub: str | None) -> dict[str, Any]:
         branch = validate_branch(payload.get("branch", ""))

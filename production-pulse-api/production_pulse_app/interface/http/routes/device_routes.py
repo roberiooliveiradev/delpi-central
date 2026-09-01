@@ -13,6 +13,14 @@ from production_pulse_app.application.services.device_binding_service import (
     BindingValidationError,
     DeviceBindingService,
 )
+from production_pulse_app.application.services.device_poll_service import (
+    DevicePollFailedError,
+    DevicePollService,
+)
+from production_pulse_app.application.services.device_probe_service import (
+    DeviceProbeService,
+    TestProbeRateLimitError,
+)
 from production_pulse_app.application.services.device_service import (
     DeviceConflictError,
     DeviceNotFoundError,
@@ -26,12 +34,15 @@ from production_pulse_app.interface.http.schemas.device_schemas import (
     DeviceCreateBody,
     DevicePatchBody,
     DeviceReplaceBody,
+    DeviceTestProbeBody,
     body_to_dict,
 )
 
 router = APIRouter(prefix="/devices", tags=["Devices"])
 _service = DeviceService()
 _binding_service = DeviceBindingService()
+_poll_service = DevicePollService()
+_probe_service = DeviceProbeService()
 
 
 def _actor_sub(request: Request) -> str | None:
@@ -62,6 +73,8 @@ def _handle_domain_errors(exc: Exception):
         return error(message, code="not_found", status_code=404)
     if isinstance(exc, DeviceConflictError):
         return error(str(exc), code="conflict", status_code=409)
+    if isinstance(exc, TestProbeRateLimitError):
+        return error(str(exc), code="rate_limit_exceeded", status_code=429)
     raise exc
 
 
@@ -82,6 +95,89 @@ async def list_devices(
 ):
     try:
         data = _service.list_devices(branch=branch, role=role, enabled=enabled, search=search)
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.post("/test-probe")
+async def test_probe(request: Request, body: DeviceTestProbeBody):
+    try:
+        data = _probe_service.probe_device(
+            branch=body.branch,
+            ip_address=body.ip_address,
+            driver_key=body.driver_key,
+            actor_sub=_actor_sub(request),
+        )
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.get("/{device_id}/live")
+async def get_device_live(device_id: UUID):
+    try:
+        return success(_poll_service.read_live(parse_device_id(str(device_id))))
+    except DevicePollFailedError as exc:
+        payload = error(str(exc), code=exc.code, status_code=502, details=exc.connectivity)
+        status_code = payload.pop("_status_code", 502)
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(status_code=status_code, content=payload)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.post("/{device_id}/poll")
+async def poll_device(device_id: UUID):
+    try:
+        return success(_poll_service.poll_and_persist(parse_device_id(str(device_id)), source="manual"))
+    except DevicePollFailedError as exc:
+        payload = error(str(exc), code=exc.code, status_code=502, details=exc.connectivity)
+        status_code = payload.pop("_status_code", 502)
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(status_code=status_code, content=payload)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.get("/{device_id}/readings")
+async def list_device_readings(
+    device_id: UUID,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
+    recorded_from: str | None = Query(default=None, alias="from"),
+    recorded_to: str | None = Query(default=None, alias="to"),
+    metric: str | None = Query(default=None),
+):
+    try:
+        from datetime import datetime
+
+        def _parse_dt(value: str | None) -> datetime | None:
+            if not value:
+                return None
+            normalized = value.replace("Z", "+00:00")
+            return datetime.fromisoformat(normalized)
+
+        data = _poll_service.list_readings(
+            parse_device_id(str(device_id)),
+            page=page,
+            page_size=page_size,
+            recorded_from=_parse_dt(recorded_from),
+            recorded_to=_parse_dt(recorded_to),
+            metric_key=metric,
+        )
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.post("/{device_id}/test")
+async def test_existing_device(request: Request, device_id: UUID):
+    try:
+        device = _service.get_device_record(parse_device_id(str(device_id)))
+        data = _probe_service.probe_existing_device(device, actor_sub=_actor_sub(request))
         return success(data)
     except Exception as exc:
         return _json_error(exc)

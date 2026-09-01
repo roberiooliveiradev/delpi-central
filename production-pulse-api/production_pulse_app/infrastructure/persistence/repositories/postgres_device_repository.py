@@ -4,6 +4,7 @@ from typing import Any
 from uuid import UUID
 
 import psycopg.errors
+from psycopg.types.json import Json
 
 from production_pulse_app.infrastructure.persistence.plugins_postgres_connection import (
     plugins_connection,
@@ -229,3 +230,55 @@ class PostgresDeviceRepository:
 
     def soft_delete(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
         return self.patch(device_id, updates={"enabled": False}, actor_sub=actor_sub)
+
+    def record_poll_success(
+        self,
+        device_id: UUID,
+        *,
+        metrics: dict[str, Any],
+    ) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.devices
+                    SET last_seen_at = NOW(),
+                        last_poll_attempt_at = NOW(),
+                        last_metrics = %s,
+                        last_error = NULL,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    RETURNING {_DEVICE_COLUMNS}
+                    """,
+                    (Json(metrics), device_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        if row is None:
+            raise DeviceNotFoundError(str(device_id))
+        return dict(row)
+
+    def record_poll_failure(
+        self,
+        device_id: UUID,
+        *,
+        error_message: str,
+    ) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.devices
+                    SET last_poll_attempt_at = NOW(),
+                        last_error = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    RETURNING {_DEVICE_COLUMNS}
+                    """,
+                    (error_message[:2000], device_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        if row is None:
+            raise DeviceNotFoundError(str(device_id))
+        return dict(row)

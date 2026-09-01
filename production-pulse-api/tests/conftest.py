@@ -75,6 +75,11 @@ def client(monkeypatch, plugins_db_env):
     from fastapi.testclient import TestClient
 
     import production_pulse_app.main as main_module
+    from production_pulse_app.application.services.test_probe_rate_limiter import (
+        get_test_probe_rate_limiter,
+    )
+
+    get_test_probe_rate_limiter().reset_for_tests()
 
     async def _fake_jwt(request, call_next):
         request.state.user = SimpleNamespace(sub="test-user", id="test-user")

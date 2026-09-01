@@ -59,6 +59,22 @@ class PostgresDeviceBindingRepository:
                     )
                 return cur.fetchone() is not None
 
+    def active_device_ids_among(self, device_ids: list[UUID]) -> set[UUID]:
+        if not device_ids:
+            return set()
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT device_id
+                    FROM production_pulse.device_bindings
+                    WHERE device_id = ANY(%s::uuid[])
+                      AND effective_to IS NULL
+                    """,
+                    (device_ids,),
+                )
+                return {row["device_id"] for row in cur.fetchall()}
+
     def resolve_unique_placement_key(self, base_key: str, device_id: UUID) -> str:
         # Vários devices podem compartilhar a mesma âncora (mesmo placement_key).
         # Colisão de slug entre rótulos distintos fica para evolução futura (E5+).

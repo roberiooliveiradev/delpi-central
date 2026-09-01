@@ -33,3 +33,11 @@ class DevicePatchBody(BaseModel):
 
 def body_to_dict(model: BaseModel) -> dict[str, Any]:
     return model.model_dump(by_alias=False, exclude_none=True)
+
+
+class DeviceTestProbeBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    branch: str
+    ip_address: str = Field(alias="ipAddress")
+    driver_key: str = Field(alias="driverKey")
