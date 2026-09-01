@@ -207,18 +207,14 @@
   box-shadow: inset 3px 0 0 var(--primary);
 }
 
-.consent-item input[type="checkbox"] {
-  margin-top: 3px;
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
+.consent-item .portal-ui-checkbox {
   flex-shrink: 0;
-  cursor: pointer;
+  margin-top: 2px;
 }
 
-.consent-item input[type="checkbox"]:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
+.consent-item__checkbox {
+  flex-shrink: 0;
+  display: inline-flex;
 }
 
 .consent-item__text {

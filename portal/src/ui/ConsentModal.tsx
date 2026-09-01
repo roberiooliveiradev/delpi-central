@@ -325,12 +325,31 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
                 const checked = selected.has(purpose);
 
                 return (
-                  <label key={purpose} className={`consent-item ${isRequired ? "consent-item--required" : ""}`}>
-                    <Checkbox
-                      checked={checked}
-                      disabled={isRequired}
-                      onChange={() => toggle(purpose)}
-                    />
+                  <div
+                    key={purpose}
+                    className={`consent-item ${isRequired ? "consent-item--required" : ""}`}
+                    onClick={() => !isRequired && toggle(purpose)}
+                    onKeyDown={(event) => {
+                      if (isRequired) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        toggle(purpose);
+                      }
+                    }}
+                    role={isRequired ? undefined : "button"}
+                    tabIndex={isRequired ? undefined : 0}
+                  >
+                    <span
+                      className="consent-item__checkbox"
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        disabled={isRequired}
+                        onChange={() => toggle(purpose)}
+                      />
+                    </span>
                     <div className="consent-item__text">
                       <strong>
                         {info.label}
@@ -338,7 +357,7 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
                       </strong>
                       <span>{info.description}</span>
                     </div>
-                  </label>
+                  </div>
                 );
               })}
             </div>
