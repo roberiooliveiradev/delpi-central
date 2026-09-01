@@ -1,4 +1,3 @@
-from app.application.use_cases.commercial.get_rol_target_pct_use_case import GetRolTargetPctUseCase
 from app.application.use_cases.commercial.get_segment_rol_target_use_case import (
     GetSegmentRolTargetUseCase,
 )
@@ -70,26 +69,6 @@ from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_ot
 from app.infrastructure.persistence.totvs.lmp_repositories.lmp_query_repository import (
     LMPQueryRepository,
 )
-DEFAULT_HEAD_OFFICE_TARGET = 1.0
-DEFAULT_BRANCH_TARGET = 1.0
-
-
-def build_get_head_office_rol_target_pct_use_case() -> GetRolTargetPctUseCase:
-    financial_query_repository = FinancialRepository()
-    return GetRolTargetPctUseCase(
-        financial_query_repository=financial_query_repository,
-        target_value=DEFAULT_HEAD_OFFICE_TARGET,
-    )
-
-
-def build_get_branch_rol_target_pct_use_case() -> GetRolTargetPctUseCase:
-    financial_query_repository = FinancialRepository()
-    return GetRolTargetPctUseCase(
-        financial_query_repository=financial_query_repository,
-        target_value=DEFAULT_BRANCH_TARGET,
-    )
-
-
 def build_get_sales_conversion_rate_use_case() -> GetSalesConversionRateUseCase:
     return GetSalesConversionRateUseCase(
         sales_conversion_rate_repository=SalesConversionRateRepository()
@@ -211,19 +190,9 @@ def _build_segment_rol_target_use_case(
     )
 
 
-def build_get_head_office_weg_rol_target_use_case() -> GetSegmentRolTargetUseCase:
+def build_get_weg_rol_target_use_case() -> GetSegmentRolTargetUseCase:
     return _build_segment_rol_target_use_case(segment_kind="weg")
 
 
-def build_get_branch_weg_rol_target_use_case() -> GetSegmentRolTargetUseCase:
-    return _build_segment_rol_target_use_case(segment_kind="weg")
-
-
-def build_get_head_office_new_business_rol_target_use_case() -> (
-    GetSegmentRolTargetUseCase
-):
-    return _build_segment_rol_target_use_case(segment_kind="new_business")
-
-
-def build_get_branch_new_business_rol_target_use_case() -> GetSegmentRolTargetUseCase:
+def build_get_new_business_rol_target_use_case() -> GetSegmentRolTargetUseCase:
     return _build_segment_rol_target_use_case(segment_kind="new_business")

@@ -1029,51 +1029,6 @@
         }
       }
     },
-    "get_branch_new_business_rol_target_pct": {
-      "locale": {
-        "en": {
-          "summary": "Indicator — Commercial rol new business target",
-          "description": "Branch new business rol target pct.",
-          "label": "Indicator — Commercial rol new business target"
-        },
-        "pt-BR": {
-          "label": "Indicador — Commercial rol new business target",
-          "summary": "Indicador — Commercial rol new business target",
-          "description": "Indicador numérico para «Commercial rol new business target»."
-        }
-      },
-      "category": "commercial"
-    },
-    "get_branch_rol_target_pct": {
-      "locale": {
-        "en": {
-          "summary": "Indicator — Meta percentage rol comercial",
-          "description": "Branch rol target pct.",
-          "label": "Indicator — Meta percentage rol comercial"
-        },
-        "pt-BR": {
-          "label": "Indicador — Meta percentual rol comercial",
-          "summary": "Indicador — Meta percentual rol comercial",
-          "description": "Indicador numérico para «Meta percentual rol comercial»."
-        }
-      },
-      "category": "commercial"
-    },
-    "get_branch_weg_rol_target_pct": {
-      "locale": {
-        "en": {
-          "summary": "Indicator — Commercial rol weg target",
-          "description": "Branch weg rol target pct.",
-          "label": "Indicator — Commercial rol weg target"
-        },
-        "pt-BR": {
-          "label": "Indicador — Commercial rol weg target",
-          "summary": "Indicador — Commercial rol weg target",
-          "description": "Indicador numérico para «Commercial rol weg target»."
-        }
-      },
-      "category": "commercial"
-    },
     "get_caller_stats": {
       "locale": {
         "en": {
@@ -1644,51 +1599,6 @@
           "label": "Get Guias Procedure"
         }
       }
-    },
-    "get_head_office_new_business_rol_target_pct": {
-      "locale": {
-        "en": {
-          "summary": "Indicator — Commercial rol new business target",
-          "description": "Head office new business rol target pct.",
-          "label": "Indicator — Commercial rol new business target"
-        },
-        "pt-BR": {
-          "label": "Indicador — Commercial rol new business target",
-          "summary": "Indicador — Commercial rol new business target",
-          "description": "Indicador numérico para «Commercial rol new business target»."
-        }
-      },
-      "category": "commercial"
-    },
-    "get_head_office_rol_target_pct": {
-      "locale": {
-        "en": {
-          "summary": "Indicator — Meta percentage rol comercial",
-          "description": "Head office rol target pct.",
-          "label": "Indicator — Meta percentage rol comercial"
-        },
-        "pt-BR": {
-          "label": "Indicador — Meta percentual rol comercial",
-          "summary": "Indicador — Meta percentual rol comercial",
-          "description": "Indicador numérico para «Meta percentual rol comercial»."
-        }
-      },
-      "category": "commercial"
-    },
-    "get_head_office_weg_rol_target_pct": {
-      "locale": {
-        "en": {
-          "summary": "Indicator — Commercial rol weg target",
-          "description": "Head office weg rol target pct.",
-          "label": "Indicator — Commercial rol weg target"
-        },
-        "pt-BR": {
-          "label": "Indicador — Commercial rol weg target",
-          "summary": "Indicador — Commercial rol weg target",
-          "description": "Indicador numérico para «Commercial rol weg target»."
-        }
-      },
-      "category": "commercial"
     },
     "get_health": {
       "locale": {
@@ -8773,6 +8683,36 @@
           "label": "PPM Externo Chicotes — meta"
         }
       }
+    },
+    "get_weg_rol_target_pct": {
+      "locale": {
+        "en": {
+          "summary": "Commercial WEG ROL target (realized and goal)",
+          "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+          "label": "Commercial WEG ROL target"
+        },
+        "pt-BR": {
+          "label": "Meta ROL WEG comercial",
+          "summary": "Meta ROL WEG comercial (realizado e meta SI)",
+          "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial)."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_new_business_rol_target_pct": {
+      "locale": {
+        "en": {
+          "summary": "Commercial new business ROL target (realized and goal)",
+          "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+          "label": "Commercial new business ROL target"
+        },
+        "pt-BR": {
+          "label": "Meta ROL novos negócios comercial",
+          "summary": "Meta ROL novos negócios comercial (realizado e meta SI)",
+          "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial)."
+        }
+      },
+      "category": "commercial"
     }
   },
   "get_commercial_rol_by_branch": {
@@ -8831,6 +8771,36 @@
         "label": "Indicador — OTD por filial",
         "summary": "OTD de pedidos por filial",
         "description": "Métricas de entrega no prazo das filiais 01 e 02, em lista tabular curta."
+      }
+    },
+    "category": "commercial"
+  },
+  "get_weg_rol_target_pct": {
+    "locale": {
+      "en": {
+        "summary": "Commercial WEG ROL target (realized and goal)",
+        "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+        "label": "Commercial WEG ROL target"
+      },
+      "pt-BR": {
+        "label": "Meta ROL WEG comercial",
+        "summary": "Meta ROL WEG comercial (realizado e meta SI)",
+        "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial)."
+      }
+    },
+    "category": "commercial"
+  },
+  "get_new_business_rol_target_pct": {
+    "locale": {
+      "en": {
+        "summary": "Commercial new business ROL target (realized and goal)",
+        "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+        "label": "Commercial new business ROL target"
+      },
+      "pt-BR": {
+        "label": "Meta ROL novos negócios comercial",
+        "summary": "Meta ROL novos negócios comercial (realizado e meta SI)",
+        "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial)."
       }
     },
     "category": "commercial"

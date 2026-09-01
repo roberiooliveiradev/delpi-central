@@ -257,20 +257,8 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_financial_fixed_cost_pct": RouteContract("financial_fixed_cost_pct", "scalar"),
     "get_financial_pmr": RouteContract("financial_pmr", "scalar"),
     # Comercial
-    "get_head_office_rol_target_pct": RouteContract(
-        "commercial_rol_target", "scalar"
-    ),
-    "get_branch_rol_target_pct": RouteContract("commercial_rol_target", "scalar"),
-    "get_head_office_weg_rol_target_pct": RouteContract(
-        "commercial_rol_weg_target", "scalar"
-    ),
-    "get_branch_weg_rol_target_pct": RouteContract(
-        "commercial_rol_weg_target", "scalar"
-    ),
-    "get_head_office_new_business_rol_target_pct": RouteContract(
-        "commercial_rol_new_business_target", "scalar"
-    ),
-    "get_branch_new_business_rol_target_pct": RouteContract(
+    "get_weg_rol_target_pct": RouteContract("commercial_rol_weg_target", "scalar"),
+    "get_new_business_rol_target_pct": RouteContract(
         "commercial_rol_new_business_target", "scalar"
     ),
     "get_commercial_rol_series": RouteContract("commercial_rol_series", "scalar"),
