@@ -1,0 +1,70 @@
+.si-dept-form-drawer__error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--danger, #c0392b) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger, #c0392b) 8%, var(--surface));
+  color: var(--danger, #c0392b);
+  font-size: 14px;
+}
+
+.si-dept-form-drawer__accordion {
+  display: grid;
+  gap: 10px;
+}
+
+.si-dept-form-drawer__panel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.si-dept-form-drawer__panel-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.si-dept-form-drawer__panel-trigger:hover {
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+}
+
+.si-dept-form-drawer__panel-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.si-dept-form-drawer__panel-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.si-dept-form-drawer__active {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-dept-form-drawer__active .si-admin-form-field__label {
+  margin: 0;
+}

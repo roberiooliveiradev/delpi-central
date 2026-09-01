@@ -10,55 +10,31 @@ import type {
 import { useStrategicIndicatorsAdminDepartments } from "../../state/hooks/useStrategicIndicatorsAdminDepartments";
 import { useStrategicIndicatorsDepartmentIndicators } from "../../state/hooks/useStrategicIndicatorsDepartmentIndicators";
 import { InfoState } from "./InfoState";
-import { DrawerPanel } from "./DrawerPanel";
-import { SectionBlock } from "./SectionBlock";
-import { ActiveToggle } from "./ActiveToggle";
+import {
+  AdminDepartmentFormDrawer,
+  departmentFormFromItem,
+  emptyDepartmentForm,
+  type DepartmentFormState,
+} from "./AdminDepartmentFormDrawer";
 import {
   AdminIndicatorFormDrawer,
   emptyIndicatorForm,
   indicatorFormFromItem,
   type IndicatorFormState,
 } from "./AdminIndicatorFormDrawer";
+import { SectionBlock } from "./SectionBlock";
+import { ActiveToggle } from "./ActiveToggle";
 import {
   getAggregationModeLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
 import { SI_HELP } from "../../content/helpTooltips";
 import "./AdminDepartmentsWorkspace.css";
-import { SiSelectControl } from "./siFiltersUi";
-import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
-import { SiAdminFormField } from "./SiAdminFormField";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
   structureFocus?: { departmentId: string; indicatorId: string } | null;
   onStructureFocusConsumed?: () => void;
-};
-
-type DepartmentFormState = {
-  department_id: string;
-  department_name: string;
-  short_name: string;
-  strategic_summary: string;
-  headline_goal: string;
-  supporting_focus: string;
-  weight_pct: number;
-  aggregation_mode: "consolidated" | "average_of_units";
-  display_order: number;
-  is_active: boolean;
-};
-
-const emptyDepartmentForm: DepartmentFormState = {
-  department_id: "",
-  department_name: "",
-  short_name: "",
-  strategic_summary: "",
-  headline_goal: "",
-  supporting_focus: "",
-  weight_pct: 0,
-  aggregation_mode: "consolidated",
-  display_order: 0,
-  is_active: true,
 };
 
 function getIndicatorFormatLabel(item: AdminDepartmentIndicatorItem) {
@@ -141,18 +117,7 @@ export function AdminDepartmentsWorkspace({
   function openEditDepartmentDrawer(item: AdminDepartmentItem) {
     setDepartmentMode("edit");
     setEditingDepartmentId(item.department_id);
-    setDepartmentForm({
-      department_id: item.department_id,
-      department_name: item.department_name,
-      short_name: item.short_name,
-      strategic_summary: item.strategic_summary,
-      headline_goal: item.headline_goal,
-      supporting_focus: item.supporting_focus,
-      weight_pct: item.weight_pct,
-      aggregation_mode: item.aggregation_mode,
-      display_order: item.display_order,
-      is_active: item.is_active,
-    });
+    setDepartmentForm(departmentFormFromItem(item));
     setDepartmentDrawerOpen(true);
   }
 
@@ -538,158 +503,15 @@ export function AdminDepartmentsWorkspace({
         </div>
       </SectionBlock>
 
-      <DrawerPanel
+      <AdminDepartmentFormDrawer
         open={departmentDrawerOpen}
+        mode={departmentMode}
+        saving={departments.saving}
+        form={departmentForm}
         onClose={() => setDepartmentDrawerOpen(false)}
-        title={departmentMode === "create" ? "Novo departamento" : "Editar departamento"}
-        description="Defina a base executiva e estrutural do departamento."
-        size="lg"
-        footer={
-          <>
-            <button
-              type="button"
-              className="si-settings-editor__button si-settings-editor__button--secondary"
-              onClick={() => setDepartmentDrawerOpen(false)}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="si-settings-editor__button"
-              onClick={() => void handleSubmitDepartment()}
-              disabled={departments.saving}
-            >
-              {departments.saving ? "Salvando..." : "Salvar"}
-            </button>
-          </>
-        }
-      >
-        <div className="si-admin-form-grid">
-          <SiAdminFormField label="ID" hint={SI_HELP.department.departmentId}>
-            <SiNativeTextControl
-              value={departmentForm.department_id}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  department_id: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Nome" hint={SI_HELP.department.departmentName}>
-            <SiNativeTextControl
-              value={departmentForm.department_name}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  department_name: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Sigla" hint={SI_HELP.department.shortName}>
-            <SiNativeTextControl
-              value={departmentForm.short_name}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  short_name: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Peso" hint={SI_HELP.department.weightPct}>
-            <SiNativeTextControl
-              type="number"
-              value={departmentForm.weight_pct}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  weight_pct: Number(value || 0),
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Agregação" hint={SI_HELP.department.aggregationMode}>
-            <SiSelectControl
-              value={departmentForm.aggregation_mode}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  aggregation_mode: value as "consolidated" | "average_of_units",
-                }))
-              }
-              options={[
-                { value: "consolidated", label: getAggregationModeLabel("consolidated") },
-                {
-                  value: "average_of_units",
-                  label: getAggregationModeLabel("average_of_units"),
-                },
-              ]}
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Ordem" hint={SI_HELP.department.displayOrder}>
-            <SiNativeTextControl
-              type="number"
-              value={departmentForm.display_order}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  display_order: Number(value || 0),
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField
-            label="Resumo estratégico"
-            hint={SI_HELP.department.strategicSummary}
-            fullWidth
-          >
-            <SiNativeTextAreaControl
-              rows={3}
-              value={departmentForm.strategic_summary}
-              aria-label="Resumo estratégico"
-              onChange={(strategic_summary) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  strategic_summary,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Meta principal" hint={SI_HELP.department.headlineGoal}>
-            <SiNativeTextControl
-              value={departmentForm.headline_goal}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  headline_goal: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Foco complementar" hint={SI_HELP.department.supportingFocus}>
-            <SiNativeTextControl
-              value={departmentForm.supporting_focus}
-              onChange={(value) =>
-                setDepartmentForm((current) => ({
-                  ...current,
-                  supporting_focus: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-        </div>
-
-      </DrawerPanel>
+        onChange={setDepartmentForm}
+        onSubmit={handleSubmitDepartment}
+      />
 
       <AdminIndicatorFormDrawer
         open={indicatorDrawerOpen}
