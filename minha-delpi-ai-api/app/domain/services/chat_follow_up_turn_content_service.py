@@ -283,8 +283,51 @@ class ChatFollowUpTurnContentService:
             "priorPeriodLabelByKind",
         )
         if kind and isinstance(mapping, dict) and mapping.get(kind):
-            return str(mapping.get(kind)).strip()
+            template = str(mapping.get(kind)).strip()
+            if "{branch}" not in template:
+                return template
         return cls.period_compare_format("priorPeriodLabel") or "período de comparação"
+
+    @classmethod
+    def period_compare_slot_label(
+        cls,
+        period_kind: str | None,
+        role: str,
+        *,
+        branch: str | None = None,
+    ) -> str:
+        kind = str(period_kind or "").strip()
+        branch_code = str(branch or "").strip()
+
+        if kind == "branch" and branch_code:
+            labeled = cls.period_compare_format(
+                "branchSlotLabelTemplate",
+                branch=branch_code,
+            )
+            if labeled:
+                return labeled
+
+        if str(role or "").strip().lower() == "baseline":
+            return cls.period_compare_format("baselinePeriodLabel") or "referência"
+
+        return cls.period_compare_prior_label(kind)
+
+    @classmethod
+    def period_compare_branch_ack(
+        cls,
+        *,
+        baseline_branch: str,
+        compare_branch: str,
+        start: str,
+        end: str,
+    ) -> str:
+        return cls.period_compare_format(
+            "branchCompareAckTemplate",
+            baseline_branch=str(baseline_branch or "").strip(),
+            compare_branch=str(compare_branch or "").strip(),
+            start=str(start or "").strip(),
+            end=str(end or "").strip(),
+        )
 
     @classmethod
     def challenge_contrast_format(cls, key: str, **values: Any) -> str:

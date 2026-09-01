@@ -100,6 +100,30 @@ def test_previous_period_and_branch_compare_vocab_loaded():
     assert "01" in ack and "02" in ack
 
 
+def test_period_compare_branch_slot_labels_and_ack():
+    assert (
+        ChatFollowUpTurnContentService.period_compare_slot_label(
+            "branch", "baseline", branch="01"
+        )
+        == "filial 01"
+    )
+    assert (
+        ChatFollowUpTurnContentService.period_compare_slot_label(
+            "branch", "prior", branch="02"
+        )
+        == "filial 02"
+    )
+    ack = ChatFollowUpTurnContentService.period_compare_branch_ack(
+        baseline_branch="01",
+        compare_branch="02",
+        start="01-08-2026",
+        end="31-08-2026",
+    )
+    assert "filiais" in ack.lower()
+    assert "01" in ack and "02" in ack
+    assert "31-08-2026" in ack
+
+
 def test_continuity_contract_and_period_vocab_loaded():
     modes = ChatFollowUpTurnContentService.continuity_modes()
     assert "consume_last_action" in modes

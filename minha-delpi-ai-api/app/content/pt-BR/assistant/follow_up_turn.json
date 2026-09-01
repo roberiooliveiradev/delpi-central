@@ -102,6 +102,7 @@
       "previous_year_same_range": "ano anterior (mesmo intervalo)",
       "previous_period": "período anterior"
     },
+    "branchSlotLabelTemplate": "filial {branch}",
     "preferredMetricKeys": [
       "rol",
       "value",
