@@ -26,6 +26,13 @@ const SEVERITY_LABEL: Record<ValidationSeverity, string> = {
   error: "Erro",
 };
 
+const SEVERITY_HELP: Record<ValidationSeverity, string> = {
+  ok: SI_HELP.badges.severityOk,
+  info: SI_HELP.badges.severityInfo,
+  warning: SI_HELP.badges.severityWarning,
+  error: SI_HELP.badges.severityError,
+};
+
 function validationRowKey(row: CatalogValidationRow): string {
   return row.indicatorId === "—"
     ? `dept-${row.departmentId}`
@@ -79,7 +86,10 @@ function ValidationRowDetail({
             {canOpenIndicator ? ` · ${row.indicatorId}` : ""}
           </p>
         </div>
-        <span className={`si-catalog-validation__badge severity-${row.worstSeverity}`}>
+        <span
+          className={`si-catalog-validation__badge severity-${row.worstSeverity}`}
+          title={SEVERITY_HELP[row.worstSeverity]}
+        >
           {SEVERITY_LABEL[row.worstSeverity]}
         </span>
       </header>
@@ -308,6 +318,7 @@ export function CatalogStructureValidationWorkspace({
           checked={onlyIssues}
           onChange={setOnlyIssues}
           label="Mostrar só linhas com apontamento"
+          title={SI_HELP.catalog.validationOnlyIssues}
         />
       </div>
 
@@ -321,7 +332,35 @@ export function CatalogStructureValidationWorkspace({
           }
         />
       ) : (
-        <div className="si-catalog-validation__split">
+        <>
+          <div className="si-catalog-validation__columns" aria-hidden="true">
+            <SectionHintLabel
+              label="Dept"
+              hint={SI_HELP.catalog.validationColDepartment}
+            />
+            <SectionHintLabel
+              label="Agreg."
+              hint={SI_HELP.catalog.validationColAggregation}
+            />
+            <SectionHintLabel
+              label="Indicador"
+              hint={SI_HELP.catalog.validationColIndicator}
+            />
+            <SectionHintLabel
+              label="Escopo"
+              hint={SI_HELP.catalog.validationColScope}
+            />
+            <SectionHintLabel
+              label="Metas"
+              hint={SI_HELP.catalog.validationColGoals}
+            />
+            <SectionHintLabel
+              label="Status"
+              hint={SI_HELP.catalog.validationColStatus}
+            />
+          </div>
+
+          <div className="si-catalog-validation__split">
           <div className="si-catalog-validation__list" role="listbox" aria-label="Linhas de validação">
             {filteredRows.map((row) => {
               const key = validationRowKey(row);
@@ -346,7 +385,10 @@ export function CatalogStructureValidationWorkspace({
                       {row.departmentShortName || row.departmentName}
                       {row.indicatorId !== "—" ? ` › ${row.indicatorName}` : ""}
                     </strong>
-                    <span className={`si-catalog-validation__badge severity-${row.worstSeverity}`}>
+                    <span
+                      className={`si-catalog-validation__badge severity-${row.worstSeverity}`}
+                      title={SEVERITY_HELP[row.worstSeverity]}
+                    >
                       {SEVERITY_LABEL[row.worstSeverity]}
                     </span>
                   </div>
@@ -366,7 +408,8 @@ export function CatalogStructureValidationWorkspace({
               />
             </div>
           ) : null}
-        </div>
+          </div>
+        </>
       )}
 
       {selectedRow ? (

@@ -8,3 +8,24 @@
 .si-indicator-form-drawer__active .si-admin-form-field__label {
   margin: 0;
 }
+
+.si-admin-form-grid__section-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.si-admin-form-grid__section-title--full {
+  grid-column: 1 / -1;
+}
+
+.si-indicator-form-drawer__aggregation-hints {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--si-text-muted, var(--text-muted));
+}
+
+.si-indicator-form-drawer__aggregation-hints span {
+  cursor: help;
+  text-decoration: underline dotted;
+}

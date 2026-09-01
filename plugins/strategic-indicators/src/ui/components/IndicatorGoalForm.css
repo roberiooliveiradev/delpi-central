@@ -10,6 +10,16 @@
   gap: 14px;
 }
 
+.si-modal-form__section-title {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.si-modal-form__section-title--full {
+  grid-column: 1 / -1;
+}
+
 .si-modal-form__actions {
   display: flex;
   justify-content: flex-end;

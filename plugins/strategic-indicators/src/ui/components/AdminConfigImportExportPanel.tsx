@@ -15,6 +15,7 @@ import type {
 import { DataTable } from "./DataTable";
 import { InfoState } from "./InfoState";
 import { SiConfirmModal } from "./SiConfirmModal";
+import { SiHelpActionButton } from "./SiHelpActionButton";
 import { SiNativeCheckboxControl } from "./siNativeFormFields";
 import { SI_HELP } from "../../content/helpTooltips";
 import "./AdminConfigImportExportPanel.css";
@@ -291,14 +292,14 @@ export function AdminConfigImportExportPanel({
       ) : null}
 
       <div className="si-config-io-panel__actions">
-        <button
-          type="button"
+        <SiHelpActionButton
           className="si-settings-editor__button"
           disabled={busy}
+          helpHint={SI_HELP.system.exportJson}
           onClick={() => void handleExport()}
         >
           {busy ? "Processando..." : "Exportar JSON"}
-        </button>
+        </SiHelpActionButton>
       </div>
 
       <div className="si-config-io-panel__import-block">
@@ -306,7 +307,10 @@ export function AdminConfigImportExportPanel({
         <p className="si-config-io-panel__file-name">
           Arquivo: {fileName ?? "nenhum selecionado"}
         </p>
-        <label className="si-config-io-panel__import">
+        <label
+          className="si-config-io-panel__import"
+          title={SI_HELP.system.importFile}
+        >
           <input
             ref={fileInputRef}
             type="file"
@@ -361,26 +365,27 @@ export function AdminConfigImportExportPanel({
           }}
           disabled={busy}
           label="Incluir metas analíticas (somente cria as que ainda não existem)"
+          title={SI_HELP.system.importIncludeGoals}
         />
       ) : null}
 
       <div className="si-config-io-panel__actions">
-        <button
-          type="button"
+        <SiHelpActionButton
           className="si-settings-editor__button si-settings-editor__button--secondary"
           disabled={!canPreview}
+          helpHint={SI_HELP.system.importPreview}
           onClick={() => void handlePreview()}
         >
           {preview ? "Pré-visualizar de novo" : "Pré-visualizar"}
-        </button>
-        <button
-          type="button"
+        </SiHelpActionButton>
+        <SiHelpActionButton
           className="si-settings-editor__button"
           disabled={!canApply}
+          helpHint={SI_HELP.system.importApply}
           onClick={() => void handleApply()}
         >
           Aplicar
-        </button>
+        </SiHelpActionButton>
       </div>
 
       {preview?.valid ? (

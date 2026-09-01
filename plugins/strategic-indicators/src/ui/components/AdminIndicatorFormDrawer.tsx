@@ -1,3 +1,4 @@
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useEffect, useState } from "react";
 import type {
   AdminDepartmentIndicatorItem,
@@ -18,6 +19,13 @@ import { SiAdminFormField } from "./SiAdminFormField";
 import { SI_VALUE_UNIT_OPTIONS, SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 import "./AdminIndicatorFormDrawer.css";
+
+const BRANCH_AGGREGATION_HELP = {
+  auto: SI_HELP.badges.branchAggregationAuto,
+  sum: SI_HELP.badges.branchAggregationSum,
+  average: SI_HELP.badges.branchAggregationAverage,
+  source_consolidated: SI_HELP.badges.branchAggregationSource,
+} as const;
 
 export type IndicatorFormState = {
   indicator_id: string;
@@ -205,6 +213,12 @@ export function AdminIndicatorFormDrawer({
 
       {step === 1 ? (
         <div className="si-admin-form-grid">
+          <SectionHintLabel
+            label="Essencial"
+            hint={SI_HELP.indicator.sectionEssential}
+            className="si-admin-form-grid__section-title si-admin-form-grid__section-title--full"
+          />
+
           <SiAdminFormField label="Nome" hint={SI_HELP.indicator.indicatorName}>
             <SiNativeTextControl
               value={form.indicator_name}
@@ -263,6 +277,15 @@ export function AdminIndicatorFormDrawer({
                   },
                 ]}
               />
+              <p className="si-indicator-form-drawer__aggregation-hints">
+                <span title={BRANCH_AGGREGATION_HELP.auto}>Automático</span>
+                {" · "}
+                <span title={BRANCH_AGGREGATION_HELP.sum}>Soma</span>
+                {" · "}
+                <span title={BRANCH_AGGREGATION_HELP.average}>Média</span>
+                {" · "}
+                <span title={BRANCH_AGGREGATION_HELP.source_consolidated}>Fonte</span>
+              </p>
             </SiAdminFormField>
           ) : null}
 
@@ -302,19 +325,25 @@ export function AdminIndicatorFormDrawer({
           </SiAdminFormField>
 
           {mode === "edit" ? (
-            <div className="si-admin-form-field si-indicator-form-drawer__active">
-              <span className="si-admin-form-field__label">Ativo</span>
+            <SiAdminFormField label="Ativo" hint={SI_HELP.indicator.isActive}>
               <ActiveToggle
                 active={form.is_active}
                 disabled={saving}
+                helpHint={SI_HELP.indicator.isActive}
                 ariaLabel="Indicador ativo"
                 onToggle={(is_active) => patchForm({ is_active })}
               />
-            </div>
+            </SiAdminFormField>
           ) : null}
         </div>
       ) : (
         <div className="si-admin-form-grid">
+          <SectionHintLabel
+            label="Formato e avançado"
+            hint={SI_HELP.indicator.sectionFormat}
+            className="si-admin-form-grid__section-title si-admin-form-grid__section-title--full"
+          />
+
           <SiAdminFormField label="Unidade" hint={SI_HELP.indicator.valueUnit}>
             <SiSelectControl
               value={form.value_unit}

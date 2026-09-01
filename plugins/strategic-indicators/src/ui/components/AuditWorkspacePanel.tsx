@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { StrategicIndicatorsAuditEntityKey } from "../../data/types/settingsAudit";
+import { SI_HELP } from "../../content/helpTooltips";
 import { useStrategicIndicatorsSettingsAudit } from "../../state/hooks/useStrategicIndicatorsSettingsAudit";
 import { SectionBlock } from "./SectionBlock";
 import { AuditSummaryPanel } from "./AuditSummaryPanel";
@@ -40,7 +41,7 @@ export function AuditWorkspacePanel({
     <>
       <SectionBlock
         title="Resumo da auditoria"
-        description="Visão rápida da distribuição dos eventos administrativos recentes."
+        description={SI_HELP.system.auditSummary}
       >
         <AuditSummaryPanel
           items={audit.items}
@@ -51,7 +52,7 @@ export function AuditWorkspacePanel({
 
       <SectionBlock
         title="Última alteração por bloco"
-        description="Leitura rápida da alteração mais recente registrada para cada grupo administrativo."
+        description={SI_HELP.system.auditLatestByEntity}
       >
         <AuditLatestByEntityPanel
           items={audit.items}
@@ -63,7 +64,7 @@ export function AuditWorkspacePanel({
       <div ref={auditSectionRef}>
         <SectionBlock
           title="Auditoria administrativa"
-          description="Histórico consultável das alterações do módulo, com filtros, busca e navegação contextual."
+          description={SI_HELP.system.auditTimeline}
         >
           <AuditTimelinePanel
             items={audit.items}
@@ -77,7 +78,7 @@ export function AuditWorkspacePanel({
       </div>
       <SectionBlock
         title="Solicitações administrativas"
-        description="Camada preparatória para futuros workflows de aprovação, mantendo a governança do módulo sem abrir o workflow completo ainda."
+        description={SI_HELP.system.changeRequests}
       >
         <ChangeRequestsWorkspacePanel getAccessToken={getAccessToken} />
       </SectionBlock>

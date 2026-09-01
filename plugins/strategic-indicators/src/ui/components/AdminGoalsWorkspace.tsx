@@ -33,6 +33,7 @@ import type { GoalsAdminAction } from "../settings/settingsAdminTabs";
 import { SI_HELP } from "../../content/helpTooltips";
 import { useSiPhoneViewport } from "../hooks/useSiPhoneViewport";
 import "./AdminGoalsWorkspace.css";
+import { SiHelpActionButton } from "./SiHelpActionButton";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeCheckboxControl } from "./siNativeFormFields";
 import { SiAdminFormField } from "./SiAdminFormField";
@@ -373,16 +374,16 @@ export function AdminGoalsWorkspace({
               label="Ciclos anuais"
               hint={SI_HELP.goals.yearList}
             />
-            <button
-              type="button"
+            <SiHelpActionButton
               className="si-settings-editor__button"
+              helpHint={SI_HELP.goals.newYear}
               onClick={() => {
                 setBulkTool("create_year");
                 setSelectedYear(null);
               }}
             >
               Novo ano
-            </button>
+            </SiHelpActionButton>
           </div>
 
           {yearsOverview.loading ? (
@@ -431,11 +432,24 @@ export function AdminGoalsWorkspace({
                   <div>
                     <h3>Ciclo {selectedYear}</h3>
                     <p className="si-admin-goals-detail-card__summary">
-                      {goals.items.length} metas carregadas ·{" "}
-                      {selectedYearOverview?.total_active_indicators ?? "—"} indicadores ativos
-                      {selectedYearOverview
-                        ? ` · ${selectedYearOverview.total_active_versions} versões ativas`
-                        : ""}
+                      <SectionHintLabel
+                        label={`${selectedYearOverview?.total_active_indicators ?? "—"} indicadores ativos`}
+                        hint={SI_HELP.goals.yearSummaryIndicators}
+                      />
+                      {" · "}
+                      <SectionHintLabel
+                        label={`${goals.items.length} metas carregadas`}
+                        hint={SI_HELP.goals.yearSummaryGoals}
+                      />
+                      {selectedYearOverview ? (
+                        <>
+                          {" · "}
+                          <SectionHintLabel
+                            label={`${selectedYearOverview.total_active_versions} versões ativas`}
+                            hint={SI_HELP.goals.yearSummaryWarnings}
+                          />
+                        </>
+                      ) : null}
                     </p>
                   </div>
 
@@ -451,20 +465,20 @@ export function AdminGoalsWorkspace({
                     >
                       Nova meta
                     </button>
-                    <button
-                      type="button"
+                    <SiHelpActionButton
                       className="si-settings-editor__button si-settings-editor__button--secondary"
+                      helpHint={SI_HELP.goals.duplicateYear}
                       onClick={() => setBulkTool("duplicate")}
                     >
                       Duplicar ano
-                    </button>
-                    <button
-                      type="button"
+                    </SiHelpActionButton>
+                    <SiHelpActionButton
                       className="si-settings-editor__button si-settings-editor__button--secondary"
+                      helpHint={SI_HELP.goals.fillMissing}
                       onClick={() => setBulkTool("fill")}
                     >
                       Preencher faltantes
-                    </button>
+                    </SiHelpActionButton>
                   </div>
                 </div>
               </div>

@@ -261,15 +261,15 @@ export function AdminDepartmentFormDrawer({
             </SiAdminFormField>
 
             {mode === "edit" ? (
-              <div className="si-dept-form-drawer__active">
-                <span className="si-admin-form-field__label">Ativo</span>
+              <SiAdminFormField label="Ativo" hint={SI_HELP.department.isActive}>
                 <ActiveToggle
                   active={form.is_active}
                   disabled={saving}
+                  helpHint={SI_HELP.department.isActive}
                   ariaLabel="Departamento ativo"
                   onToggle={(is_active) => patchForm({ is_active })}
                 />
-              </div>
+              </SiAdminFormField>
             ) : null}
           </div>
         </AccordionPanel>

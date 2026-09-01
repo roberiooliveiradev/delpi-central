@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { SI_HELP } from "../../content/helpTooltips";
 import { AdminDepartmentsWorkspace } from "./AdminDepartmentsWorkspace";
 import { CatalogStructureValidationWorkspace } from "./CatalogStructureValidationWorkspace";
 import { SiUnderlineNav } from "./siLayoutUi";
@@ -68,11 +69,13 @@ export function CatalogAdminWorkspace({
           {
             id: "structure",
             label: "Estrutura",
+            title: SI_HELP.nav.tabStructure,
             onSelect: () => selectView("structure"),
           },
           {
             id: "validation",
             label: "Validação",
+            title: SI_HELP.nav.tabValidation,
             count: issueBadge,
             onSelect: () => selectView("validation"),
           },

@@ -1,4 +1,6 @@
 import type { SettingsGovernanceItem } from "../../data/types/settings";
+import { SI_HELP } from "../../content/helpTooltips";
+import { SiAdminFormField } from "./SiAdminFormField";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 import "./SettingsGovernanceForm.css";
 
@@ -29,51 +31,41 @@ export function SettingsGovernanceForm({
       {items.map((item, index) => (
         <article key={item.key} className="si-settings-governance-form__card">
           <div className="si-settings-governance-form__grid">
-            <Field label="Chave">
+            <SiAdminFormField label="Chave">
               <SiNativeTextControl
                 value={item.key}
                 onChange={(value) => updateItem(index, "key", value)}
               />
-            </Field>
+            </SiAdminFormField>
 
-            <Field label="Rótulo">
+            <SiAdminFormField label="Rótulo" hint={SI_HELP.system.governanceLabel}>
               <SiNativeTextControl
                 value={item.label}
                 onChange={(value) => updateItem(index, "label", value)}
               />
-            </Field>
+            </SiAdminFormField>
 
-            <Field label="Valor">
+            <SiAdminFormField label="Valor" hint={SI_HELP.system.governanceValue}>
               <SiNativeTextControl
                 value={item.value}
                 onChange={(value) => updateItem(index, "value", value)}
               />
-            </Field>
+            </SiAdminFormField>
 
-            <Field label="Observação">
+            <SiAdminFormField
+              label="Observação"
+              hint={SI_HELP.system.governanceObservation}
+              fullWidth
+            >
               <SiNativeTextAreaControl
                 value={item.observation}
                 aria-label="Observação"
                 onChange={(observation) => updateItem(index, "observation", observation)}
               />
-            </Field>
+            </SiAdminFormField>
           </div>
         </article>
       ))}
     </div>
-  );
-}
-
-type FieldProps = {
-  label: string;
-  children: React.ReactNode;
-};
-
-function Field({ label, children }: FieldProps) {
-  return (
-    <label className="si-settings-governance-form__field">
-      <span className="si-settings-governance-form__label">{label}</span>
-      {children}
-    </label>
   );
 }

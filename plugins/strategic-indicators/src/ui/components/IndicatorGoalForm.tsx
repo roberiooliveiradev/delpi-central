@@ -33,7 +33,7 @@ import { SI_HELP } from "../../content/helpTooltips";
 import "./IndicatorGoalForm.css";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
 
 type IndicatorOption = {
   value: string;
@@ -240,6 +240,12 @@ export function IndicatorGoalForm({
       ) : null}
 
       <div className="si-modal-form__grid">
+        <SectionHintLabel
+          label="Destino"
+          hint={SI_HELP.goalForm.sectionTarget}
+          className="si-modal-form__section-title si-modal-form__section-title--full"
+        />
+
         <Field label="Indicador" hint={SI_HELP.goalForm.indicatorId}>
           {normalizedIndicatorOptions.length > 0 ? (
             <SiSelectControl
@@ -285,6 +291,12 @@ export function IndicatorGoalForm({
             onChange={setGoalLabel}
           />
         </Field>
+
+        <SectionHintLabel
+          label="Valor e periodicidade"
+          hint={SI_HELP.goalForm.sectionValue}
+          className="si-modal-form__section-title si-modal-form__section-title--full"
+        />
 
         <Field label="Modo da meta" hint={SI_HELP.goalForm.goalMode}>
           <SiSelectControl
@@ -347,6 +359,12 @@ export function IndicatorGoalForm({
             />
           </Field>
         ) : null}
+
+        <SectionHintLabel
+          label="Vigência"
+          hint={SI_HELP.goalForm.sectionValidity}
+          className="si-modal-form__section-title si-modal-form__section-title--full"
+        />
 
         <Field label="Vigência inicial" hint={SI_HELP.goalForm.validFrom}>
           <SiNativeTextControl

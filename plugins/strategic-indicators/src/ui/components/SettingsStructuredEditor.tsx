@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import type {
   StrategicIndicatorsSettingsResponse,
   StrategicIndicatorsSettingsUpdateRequest,
@@ -6,6 +7,7 @@ import type {
 import { useSettingsDraft } from "../../state/hooks/useSettingsDraft";
 import { SettingsParametersForm } from "./SettingsParametersForm";
 import { SettingsGovernanceForm } from "./SettingsGovernanceForm";
+import { SI_HELP } from "../../content/helpTooltips";
 import "./SettingsStructuredEditor.css";
 
 type SettingsStructuredEditorProps = {
@@ -73,6 +75,7 @@ export function SettingsStructuredEditor({
       <div className="si-settings-global-editor">
         <AdminExpandCard
           title="Parâmetros globais"
+          hint={SI_HELP.system.sectionParameters}
           description="Convenções e parâmetros centrais do módulo."
           meta={`${summary.parametersCount} parâmetros`}
           expanded={openSection === "parameters"}
@@ -90,6 +93,7 @@ export function SettingsStructuredEditor({
 
         <AdminExpandCard
           title="Governança"
+          hint={SI_HELP.system.sectionGovernance}
           description="Regras administrativas e observações estruturais."
           meta={`${summary.governanceCount} itens`}
           expanded={openSection === "governance"}
@@ -134,6 +138,7 @@ export function SettingsStructuredEditor({
 
 function AdminExpandCard({
   title,
+  hint,
   description,
   meta,
   expanded,
@@ -141,6 +146,7 @@ function AdminExpandCard({
   children,
 }: {
   title: string;
+  hint?: string;
   description: string;
   meta: string;
   expanded: boolean;
@@ -156,7 +162,11 @@ function AdminExpandCard({
         aria-expanded={expanded}
       >
         <div className="si-settings-expand-card__text">
-          <strong>{title}</strong>
+          {hint ? (
+            <SectionHintLabel label={title} hint={hint} />
+          ) : (
+            <strong>{title}</strong>
+          )}
           <span>{description}</span>
           <small>{meta}</small>
         </div>

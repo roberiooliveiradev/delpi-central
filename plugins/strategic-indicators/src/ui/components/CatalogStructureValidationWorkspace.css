@@ -87,6 +87,15 @@
   min-height: 42px;
 }
 
+.si-catalog-validation__columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: var(--si-text-muted, var(--text-muted));
+}
+
 .si-catalog-validation__split {
   display: grid;
   grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1.05fr);

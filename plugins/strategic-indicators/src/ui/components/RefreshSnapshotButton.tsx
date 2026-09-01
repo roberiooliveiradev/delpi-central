@@ -11,6 +11,8 @@ type RefreshSnapshotButtonProps = {
   onRefreshed: () => void;
   getAccessToken?: () => string | undefined;
   disabled?: boolean;
+  /** Texto de help (`SI_HELP.shell.refreshSnapshots` na config admin). */
+  helpHint?: string;
   /** Competência YYYY-MM dos filtros da página (opcional). */
   competence?: string;
   /**
@@ -24,6 +26,7 @@ export function RefreshSnapshotButton({
   onRefreshed,
   getAccessToken,
   disabled = false,
+  helpHint,
   competence,
   trendsMonths,
 }: RefreshSnapshotButtonProps) {
@@ -83,7 +86,7 @@ export function RefreshSnapshotButton({
         className="si-refresh-snapshot__button"
         onClick={() => void handleClick()}
         disabled={disabled || busy}
-        title="Buscar nova versão dos dados. A versão atual permanece até a nova estar pronta."
+        title={helpHint ?? "Buscar nova versão dos dados. A versão atual permanece até a nova estar pronta."}
         aria-label="Atualizar snapshot"
       >
         <svg

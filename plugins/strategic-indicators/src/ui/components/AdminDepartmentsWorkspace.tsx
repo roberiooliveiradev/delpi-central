@@ -24,6 +24,7 @@ import {
   type IndicatorFormState,
 } from "./AdminIndicatorFormDrawer";
 import { ActiveToggle } from "./ActiveToggle";
+import { SiAdminFormField } from "./SiAdminFormField";
 import { useSiPhoneViewport } from "../hooks/useSiPhoneViewport";
 import {
   getAggregationModeLabel,
@@ -31,6 +32,8 @@ import {
 } from "../presentation/labels";
 import { SI_HELP } from "../../content/helpTooltips";
 import type { CatalogAdminAction } from "../settings/settingsAdminTabs";
+import { SiHelpActionButton } from "./SiHelpActionButton";
+import { SiNativeTextControl } from "./siNativeFormFields";
 import "./AdminDepartmentsWorkspace.css";
 
 type AdminDepartmentsWorkspaceProps = {
@@ -76,6 +79,8 @@ export function AdminDepartmentsWorkspace({
   const [editingIndicatorId, setEditingIndicatorId] = useState<string | null>(null);
   const [indicatorForm, setIndicatorForm] =
     useState<IndicatorFormState>(emptyIndicatorForm);
+  const [departmentSearch, setDepartmentSearch] = useState("");
+  const [indicatorSearch, setIndicatorSearch] = useState("");
 
   const departmentIndicators = useStrategicIndicatorsDepartmentIndicators({
     departmentId: selectedDepartmentId,
@@ -87,6 +92,32 @@ export function AdminDepartmentsWorkspace({
       departments.items.find((item) => item.department_id === selectedDepartmentId) ?? null,
     [departments.items, selectedDepartmentId],
   );
+
+  const filteredDepartments = useMemo(() => {
+    const query = departmentSearch.trim().toLowerCase();
+    if (!query) return departments.items;
+
+    return departments.items.filter((item) => {
+      const haystack = [
+        item.department_id,
+        item.department_name,
+        item.short_name,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [departments.items, departmentSearch]);
+
+  const filteredIndicators = useMemo(() => {
+    const query = indicatorSearch.trim().toLowerCase();
+    if (!query) return departmentIndicators.items;
+
+    return departmentIndicators.items.filter((item) => {
+      const haystack = [item.indicator_id, item.indicator_name].join(" ").toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [departmentIndicators.items, indicatorSearch]);
 
   useEffect(() => {
     if (!structureFocus) return;
@@ -296,14 +327,28 @@ export function AdminDepartmentsWorkspace({
               label="Departamentos"
               hint={SI_HELP.catalog.departmentList}
             />
-            <button
-              type="button"
+            <SiHelpActionButton
               className="si-settings-editor__button"
+              helpHint={SI_HELP.catalog.newDepartment}
               onClick={openCreateDepartmentDrawer}
             >
               Novo departamento
-            </button>
+            </SiHelpActionButton>
           </div>
+
+          {departments.items.length > 0 ? (
+            <SiAdminFormField
+              label="Buscar departamentos"
+              hint={SI_HELP.catalog.searchDepartments}
+              compact
+            >
+              <SiNativeTextControl
+                value={departmentSearch}
+                placeholder="Nome, sigla ou ID"
+                onChange={setDepartmentSearch}
+              />
+            </SiAdminFormField>
+          ) : null}
 
           {departments.loading ? (
             <div className="si-admin-placeholder">Carregando departamentos...</div>
@@ -316,7 +361,7 @@ export function AdminDepartmentsWorkspace({
             />
           ) : (
             <div className="si-admin-list">
-              {departments.items.map((item) => {
+              {filteredDepartments.map((item) => {
                 const isSelected = item.department_id === selectedDepartmentId;
 
                 return (
@@ -379,6 +424,7 @@ export function AdminDepartmentsWorkspace({
                       <ActiveToggle
                         active={selectedDepartment.is_active}
                         disabled={departments.saving}
+                        helpHint={SI_HELP.department.isActive}
                         ariaLabel={`Situação do departamento ${selectedDepartment.department_name}`}
                         onToggle={(nextActive) => {
                           if (nextActive) {
@@ -417,12 +463,20 @@ export function AdminDepartmentsWorkspace({
                     </div>
 
                     <div>
-                      <span className="si-admin-detail-card__label">Peso no IGD</span>
+                      <SectionHintLabel
+                        label="Peso no IGD"
+                        hint={SI_HELP.catalog.departmentWeight}
+                        className="si-admin-detail-card__label"
+                      />
                       <strong>{selectedDepartment.weight_pct}%</strong>
                     </div>
 
                     <div>
-                      <span className="si-admin-detail-card__label">Agregação</span>
+                      <SectionHintLabel
+                        label="Agregação"
+                        hint={SI_HELP.catalog.departmentAggregation}
+                        className="si-admin-detail-card__label"
+                      />
                       <strong>{getAggregationModeLabel(selectedDepartment.aggregation_mode)}</strong>
                     </div>
                   </div>
@@ -434,14 +488,28 @@ export function AdminDepartmentsWorkspace({
                       label="Indicadores estruturais"
                       hint={SI_HELP.catalog.indicatorList}
                     />
-                    <button
-                      type="button"
+                    <SiHelpActionButton
                       className="si-settings-editor__button"
+                      helpHint={SI_HELP.catalog.newIndicator}
                       onClick={openCreateIndicatorDrawer}
                     >
                       Novo indicador
-                    </button>
+                    </SiHelpActionButton>
                   </header>
+
+                  {departmentIndicators.items.length > 0 ? (
+                    <SiAdminFormField
+                      label="Buscar indicadores"
+                      hint={SI_HELP.catalog.searchIndicators}
+                      compact
+                    >
+                      <SiNativeTextControl
+                        value={indicatorSearch}
+                        placeholder="Nome ou ID do indicador"
+                        onChange={setIndicatorSearch}
+                      />
+                    </SiAdminFormField>
+                  ) : null}
 
                   {departmentIndicators.successMessage ? (
                     <div className="si-settings-editor__alert si-settings-editor__alert--success">
@@ -469,7 +537,7 @@ export function AdminDepartmentsWorkspace({
                     />
                   ) : (
                     <div className="si-admin-indicators-table">
-                      {departmentIndicators.items.map((item) => (
+                      {filteredIndicators.map((item) => (
                         <article
                           key={item.indicator_id}
                           className={`si-admin-indicators-table__row ${
@@ -517,6 +585,7 @@ export function AdminDepartmentsWorkspace({
                             <ActiveToggle
                               active={item.is_active}
                               disabled={departmentIndicators.saving}
+                              helpHint={SI_HELP.indicator.isActive}
                               ariaLabel={`Situação do indicador ${item.indicator_name}`}
                               onToggle={(nextActive) => {
                                 if (nextActive) {

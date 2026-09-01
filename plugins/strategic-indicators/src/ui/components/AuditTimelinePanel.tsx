@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import type {
   StrategicIndicatorsAuditEntityKey,
   StrategicIndicatorsSettingsAuditItem,
@@ -6,6 +7,8 @@ import type {
 import "./AuditTimelinePanel.css";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextControl } from "./siNativeFormFields";
+import { SiAdminFormField } from "./SiAdminFormField";
+import { SI_HELP } from "../../content/helpTooltips";
 
 type AuditTimelinePanelProps = {
   items: StrategicIndicatorsSettingsAuditItem[];
@@ -129,15 +132,18 @@ export function AuditTimelinePanel({
     <section className="si-audit-panel">
       <div className="si-audit-panel__header">
         <div>
-          <h3 className="si-audit-panel__title">Trilha de auditoria</h3>
+          <SectionHintLabel
+            label="Trilha de auditoria"
+            hint={SI_HELP.system.auditTimeline}
+            className="si-audit-panel__title"
+          />
           <p className="si-audit-panel__subtitle">
             Histórico administrativo recente das alterações do módulo.
           </p>
         </div>
 
         <div className="si-audit-panel__controls">
-          <label className="si-audit-panel__filter">
-            <span>Filtrar bloco</span>
+          <SiAdminFormField label="Filtrar bloco" hint={SI_HELP.system.auditEntityFilter}>
             <SiSelectControl
               value={filter}
               onChange={(next) => {
@@ -150,7 +156,7 @@ export function AuditTimelinePanel({
                 label: option.label,
               }))}
             />
-          </label>
+          </SiAdminFormField>
 
           <label className="si-audit-panel__filter">
             <span>Quantidade</span>

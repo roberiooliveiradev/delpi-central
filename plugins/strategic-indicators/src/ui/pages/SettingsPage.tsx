@@ -1,3 +1,4 @@
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
 import { AdminConfigImportExportPanel } from "../components/AdminConfigImportExportPanel";
@@ -29,12 +30,38 @@ type SettingsPageProps = {
 
 const SETTINGS_LAYOUT_CLASS = "si-settings-active";
 
-function formatSyncLine(updatedAt: string | null, updatedByEmail: string | null): string {
-  if (!updatedAt) return "Sem registro de sincronização administrativa.";
+function SettingsSyncStatus({
+  updatedAt,
+  updatedByEmail,
+}: {
+  updatedAt: string | null;
+  updatedByEmail: string | null;
+}) {
+  if (!updatedAt) {
+    return (
+      <SectionHintLabel
+        label="Sem registro de sincronização administrativa."
+        hint={SI_HELP.shell.lastSync}
+      />
+    );
+  }
+
   const when = new Date(updatedAt).toLocaleString("pt-BR");
-  return updatedByEmail
-    ? `Sync ${when} · por ${updatedByEmail}`
-    : `Sync ${when}`;
+
+  return (
+    <span className="si-settings-page__sync-line">
+      <SectionHintLabel label={`Sync ${when}`} hint={SI_HELP.shell.lastSync} />
+      {updatedByEmail ? (
+        <>
+          {" · "}
+          <SectionHintLabel
+            label={`por ${updatedByEmail}`}
+            hint={SI_HELP.shell.updatedBy}
+          />
+        </>
+      ) : null}
+    </span>
+  );
 }
 
 export function SettingsPage({ getAccessToken }: SettingsPageProps) {
@@ -114,9 +141,11 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
     validation.summary.warnings +
     validation.summary.infos;
 
-  const syncDescription = formatSyncLine(
-    settings.data?.meta.updated_at ?? null,
-    settings.data?.meta.updated_by_email ?? null,
+  const syncDescription = (
+    <SettingsSyncStatus
+      updatedAt={settings.data?.meta.updated_at ?? null}
+      updatedByEmail={settings.data?.meta.updated_by_email ?? null}
+    />
   );
 
   const navItems = useMemo(
@@ -155,11 +184,14 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
       <SiPageHero
         density="compact"
         eyebrow="Indicadores Estratégicos"
-        title="Administração"
+        title={
+          <SectionHintLabel label="Administração" hint={SI_HELP.shell.pageTitle} />
+        }
         description={syncDescription}
         actions={
           <RefreshSnapshotButton
             getAccessToken={getAccessToken}
+            helpHint={SI_HELP.shell.refreshSnapshots}
             onRefreshed={() => {
               void settings.reload();
               void validation.reload();

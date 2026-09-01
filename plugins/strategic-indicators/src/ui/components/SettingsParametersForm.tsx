@@ -1,4 +1,6 @@
 import type { SettingsParameterItem } from "../../data/types/settings";
+import { SI_HELP } from "../../content/helpTooltips";
+import { SiAdminFormField } from "./SiAdminFormField";
 import { SiNativeTextControl } from "./siNativeFormFields";
 import "./SettingsParametersForm.css";
 
@@ -29,43 +31,29 @@ export function SettingsParametersForm({
       {items.map((item, index) => (
         <article key={item.key} className="si-settings-parameters-form__card">
           <div className="si-settings-parameters-form__grid">
-            <Field label="Chave">
+            <SiAdminFormField label="Chave" hint={SI_HELP.system.parameterKey}>
               <SiNativeTextControl
                 value={item.key}
                 onChange={(value) => updateItem(index, "key", value)}
               />
-            </Field>
+            </SiAdminFormField>
 
-            <Field label="Rótulo">
+            <SiAdminFormField label="Rótulo" hint={SI_HELP.system.parameterLabel}>
               <SiNativeTextControl
                 value={item.label}
                 onChange={(value) => updateItem(index, "label", value)}
               />
-            </Field>
+            </SiAdminFormField>
 
-            <Field label="Valor">
+            <SiAdminFormField label="Valor" hint={SI_HELP.system.parameterValue}>
               <SiNativeTextControl
                 value={item.value}
                 onChange={(value) => updateItem(index, "value", value)}
               />
-            </Field>
+            </SiAdminFormField>
           </div>
         </article>
       ))}
     </div>
-  );
-}
-
-type FieldProps = {
-  label: string;
-  children: React.ReactNode;
-};
-
-function Field({ label, children }: FieldProps) {
-  return (
-    <label className="si-settings-parameters-form__field">
-      <span className="si-settings-parameters-form__label">{label}</span>
-      {children}
-    </label>
   );
 }
