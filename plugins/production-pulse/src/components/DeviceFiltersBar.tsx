@@ -53,16 +53,7 @@ export function DeviceFiltersBar({
   onCreateDevice,
 }: DeviceFiltersBarProps) {
   return (
-    <PpFiltersRow
-      trailing={
-        canManage ? (
-          <PpActionButton variant="primary" onClick={onCreateDevice} className="pp-filter-new-device">
-            <Plus size={16} aria-hidden="true" />
-            <span className="pp-filter-new-device__label">Novo dispositivo</span>
-          </PpActionButton>
-        ) : undefined
-      }
-    >
+    <PpFiltersRow>
       <PpFilterSelectField
         id="pp-filter-anchor-type"
         label="Tipo"
@@ -70,15 +61,6 @@ export function DeviceFiltersBar({
         value={filters.anchorType}
         onChange={(value) => onChange({ anchorType: value as PanelFilters["anchorType"] })}
         options={ANCHOR_OPTIONS}
-        placeholderOption="Todos"
-      />
-      <PpFilterSelectField
-        id="pp-filter-role"
-        label="Papel"
-        hint={PP_HELP.panel.filterRole}
-        value={filters.role}
-        onChange={(value) => onChange({ role: value })}
-        options={ROLE_OPTIONS}
         placeholderOption="Todos"
       />
       <PpFilterSelectField
@@ -90,6 +72,15 @@ export function DeviceFiltersBar({
         options={STATUS_OPTIONS}
         placeholderOption="Todos"
       />
+      <PpFilterSelectField
+        id="pp-filter-role"
+        label="Papel"
+        hint={PP_HELP.panel.filterRole}
+        value={filters.role}
+        onChange={(value) => onChange({ role: value })}
+        options={ROLE_OPTIONS}
+        placeholderOption="Todos"
+      />
       <PpFilterInputField
         id="pp-filter-search"
         label="Busca"
@@ -99,25 +90,34 @@ export function DeviceFiltersBar({
         onChange={(value) => onChange({ search: value })}
         placeholder="Nome, objeto ou IP…"
       />
-      <div className="pp-filter-view-row">
-        <PpSegmentToggle
-          ariaLabel="Modo de visualização"
-          value={filters.view}
-          onChange={(value) => onChange({ view: value as PanelFilters["view"] })}
-          options={[
-            { value: "list", label: "Lista" },
-            { value: "grouped", label: "Agrupado" },
-          ]}
-        />
-        {filters.view === "grouped" ? (
-          <PpFilterSelectField
-            id="pp-filter-group-by"
-            label="Agrupar por"
-            hint={PP_HELP.panel.filterGroupBy}
-            value={filters.groupBy}
-            onChange={(value) => onChange({ groupBy: value as PanelGroupBy })}
-            options={GROUP_BY_OPTIONS}
+      <div className="pp-filter-toolbar-row">
+        <div className="pp-filter-toolbar-row__views">
+          <PpSegmentToggle
+            ariaLabel="Modo de visualização"
+            size="sm"
+            value={filters.view}
+            onChange={(value) => onChange({ view: value as PanelFilters["view"] })}
+            options={[
+              { value: "list", label: "Lista" },
+              { value: "grouped", label: "Agrupado" },
+            ]}
           />
+          {filters.view === "grouped" ? (
+            <PpFilterSelectField
+              id="pp-filter-group-by"
+              label="Agrupar por"
+              hint={PP_HELP.panel.filterGroupBy}
+              value={filters.groupBy}
+              onChange={(value) => onChange({ groupBy: value as PanelGroupBy })}
+              options={GROUP_BY_OPTIONS}
+            />
+          ) : null}
+        </div>
+        {canManage ? (
+          <PpActionButton variant="primary" onClick={onCreateDevice} className="pp-filter-new-device">
+            <Plus size={16} aria-hidden="true" />
+            <span className="pp-filter-new-device__label">Novo dispositivo</span>
+          </PpActionButton>
         ) : null}
       </div>
     </PpFiltersRow>

@@ -48,7 +48,7 @@ curl -sI http://localhost/apps/production-pulse/assets/remoteEntry.js | head -3
 `src/app/productionPulseKit.structural.test.ts` impede:
 
 - `DataTable` cru sem `labels` — usar `PpDataTable` (`components/data/dataTableUi.tsx`)
-- `FilterBarShell` + flex externo (`pp-filters-wrap`) — usar `PpFiltersRow` + `trailing`
+- `FilterBarShell` + flex externo (`pp-filters-wrap`) — usar `PpFiltersRow` + `pp-filter-toolbar-row` (toggle + CTA na mesma linha)
 - `PpStateBox` com prop `actions` — canônico é `action`
 - `FilterInputField` sem `type` explícito
 

@@ -139,12 +139,34 @@
   color: var(--pp-title);
 }
 
-.pp-filter-view-row {
+.pp-filter-toolbar-row {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 12px;
-  align-items: end;
-  grid-column: 1 / -1;
+}
+
+.pp-filter-toolbar-row__views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* WF-PP-01: toggle compacto na linha de ações — não esticar como célula de filtro. */
+.pp-filter-toolbar-row__views .delpi-ui-segment-toggle,
+.pp-filter-toolbar-row__views .pp-segment-toggle {
+  width: max-content;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.pp-filter-toolbar-row__views .delpi-ui-segment-toggle__btn,
+.pp-filter-toolbar-row__views .pp-segment-toggle__btn {
+  flex: 0 1 auto;
 }
 
 .pp-filter-new-device__label {

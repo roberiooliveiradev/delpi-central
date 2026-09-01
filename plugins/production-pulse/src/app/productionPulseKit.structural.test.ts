@@ -50,7 +50,8 @@ describe("production-pulse kit contracts", () => {
     }
     const filtersBar = readRelative("components/DeviceFiltersBar.tsx");
     expect(filtersBar).toMatch(/PpFiltersRow/);
-    expect(filtersBar).toMatch(/trailing=/);
+    expect(filtersBar).toMatch(/pp-filter-toolbar-row/);
+    expect(filtersBar).not.toMatch(/pp-filters-wrap/);
     expect(filtersBar).not.toMatch(/PpFilterBarShell/);
     expect(readRelative("components/data/filtersUi.tsx")).toMatch(/PpFiltersRow/);
   });
