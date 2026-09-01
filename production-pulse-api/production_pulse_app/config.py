@@ -61,5 +61,16 @@ class Settings:
         _get_env("PP_ONLINE_GRACE_MULTIPLIER", default="2") or "2"
     )
 
+    DELPI_API_URL: str = _get_env(
+        "DELPI_API_URL", default="http://delpi-api-delpi:8000"
+    )
+    DELPI_API_TIMEOUT: float = float(_get_env("DELPI_API_TIMEOUT", default="30") or "30")
+    DELPI_API_CALLER_APP: str = _get_env(
+        "DELPI_API_CALLER_APP", default="production-pulse-api"
+    )
+    PP_WORK_CENTER_CACHE_TTL_SECONDS: int = int(
+        _get_env("PP_WORK_CENTER_CACHE_TTL_SECONDS", default="300") or "300"
+    )
+
 
 settings = Settings()

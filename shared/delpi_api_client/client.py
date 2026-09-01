@@ -491,6 +491,18 @@ class DelpiApiClient:
             authorization=authorization,
         )
 
+    def list_production_appointment_work_centers(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/production/appointments/work-centers",
+            params=params,
+            authorization=authorization,
+        )
+
     def get_product_parents(
         self,
         code: str,

@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from production_pulse_app.config import settings
 from production_pulse_app.core.responses import error, success
+from production_pulse_app.interface.http.routes.catalog_routes import router as catalog_router
 from production_pulse_app.interface.http.routes.device_routes import router as devices_router
 from production_pulse_app.middleware.auth_middleware import jwt_middleware
 from production_pulse_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(devices_router)
+    app.include_router(catalog_router)
     return app
 
 

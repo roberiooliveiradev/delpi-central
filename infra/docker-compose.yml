@@ -2013,6 +2013,11 @@ services:
       PP_ONLINE_GRACE_MAX_SECONDS: ${PP_ONLINE_GRACE_MAX_SECONDS:-600}
       PP_ONLINE_GRACE_MULTIPLIER: ${PP_ONLINE_GRACE_MULTIPLIER:-2}
 
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: production-pulse-api
+      PP_WORK_CENTER_CACHE_TTL_SECONDS: ${PP_WORK_CENTER_CACHE_TTL_SECONDS:-300}
+
     depends_on:
       keycloak:
         condition: service_started

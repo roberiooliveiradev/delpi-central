@@ -3,6 +3,9 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from production_pulse_app.application.services.work_center_catalog_service import (
+    WorkCenterCatalogService,
+)
 from production_pulse_app.domain.services.binding_serialization_service import binding_row_to_api
 from production_pulse_app.domain.services.binding_validation_service import (
     BindingValidationError,
@@ -25,9 +28,11 @@ class DeviceBindingService:
         self,
         device_repository: PostgresDeviceRepository | None = None,
         binding_repository: PostgresDeviceBindingRepository | None = None,
+        work_center_catalog: WorkCenterCatalogService | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._bindings = binding_repository or PostgresDeviceBindingRepository()
+        self._work_centers = work_center_catalog or WorkCenterCatalogService()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
         device = self._devices.get_by_id(device_id)
@@ -48,9 +53,16 @@ class DeviceBindingService:
         payload: dict[str, Any],
         *,
         actor_sub: str | None,
+        authorization: str | None = None,
     ) -> dict[str, Any]:
         device = self._require_device(device_id)
         binding_input = normalize_binding_input(payload)
+        if binding_input.work_center_code:
+            self._work_centers.validate_work_center_code(
+                branch=device["branch"],
+                work_center_code=binding_input.work_center_code,
+                authorization=authorization,
+            )
         placement_label = compose_placement_label(
             binding_input,
             device_name=device["name"],

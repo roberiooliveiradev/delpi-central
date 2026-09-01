@@ -5,6 +5,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
 
+from production_pulse_app.application.services.work_center_catalog_service import (
+    WorkCenterCatalogUnavailableError,
+)
 from production_pulse_app.application.services.device_binding_service import (
     BindingNotFoundError,
     BindingValidationError,
@@ -38,9 +41,18 @@ def _actor_sub(request: Request) -> str | None:
     return getattr(user, "sub", None) or getattr(user, "id", None)
 
 
+def _authorization_header(request: Request) -> str | None:
+    raw = request.headers.get("Authorization")
+    if raw and raw.strip():
+        return raw.strip()
+    return None
+
+
 def _handle_domain_errors(exc: Exception):
     if isinstance(exc, (DeviceValidationError, BindingValidationError)):
         return error(str(exc), code="validation_error", status_code=422)
+    if isinstance(exc, WorkCenterCatalogUnavailableError):
+        return error(str(exc), code="upstream_unavailable", status_code=503)
     if isinstance(exc, (DeviceNotFoundError, BindingNotFoundError)):
         message = (
             "Amarração não encontrada."
@@ -143,6 +155,7 @@ async def upsert_device_binding(request: Request, device_id: UUID, body: DeviceB
             parse_device_id(str(device_id)),
             body.model_dump(by_alias=False, exclude_none=True),
             actor_sub=_actor_sub(request),
+            authorization=_authorization_header(request),
         )
         return success(data)
     except Exception as exc:
