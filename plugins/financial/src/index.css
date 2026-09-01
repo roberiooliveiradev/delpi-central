@@ -632,6 +632,41 @@
   font-weight: 600;
 }
 
+/* Recorte sem MP vive nas ações do cabeçalho, junto do seletor de filial. */
+.dashboard-financial .fin-month-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: var(--fin-font-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dashboard-financial .fin-month-toggle:hover {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.dashboard-financial .fin-month-toggle--on {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.dashboard-financial .fin-month-toggle input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--fin-accent);
+  cursor: pointer;
+}
+
 .dashboard-financial .fin-month-search {
   display: flex;
   align-items: center;

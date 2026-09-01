@@ -345,6 +345,17 @@ export function CostCenterMonthPage({
         }
         actions={
           <>
+            <label
+              className={`fin-month-toggle${excludeMp ? " fin-month-toggle--on" : ""}`}
+              title={helpTooltips.excludeMpProducts}
+            >
+              <input
+                type="checkbox"
+                checked={excludeMp}
+                onChange={(event) => syncQuery({ excludeMp: event.target.checked, page: 1 })}
+              />
+              <span>{copy.costCenters.excludeMpLabel}</span>
+            </label>
             <button
               type="button"
               className="fin-icon-btn fin-month-back"
@@ -368,17 +379,6 @@ export function CostCenterMonthPage({
           </>
         }
       />
-
-      <div className="fin-filters" aria-label={copy.costCenters.filtersAria}>
-        <label className="fin-check" title={helpTooltips.excludeMpProducts}>
-          <input
-            type="checkbox"
-            checked={excludeMp}
-            onChange={(event) => syncQuery({ excludeMp: event.target.checked, page: 1 })}
-          />
-          <span className="fin-check__label">{copy.costCenters.excludeMpLabel}</span>
-        </label>
-      </div>
 
       {loading && !data ? <FinLoadingCard title={copy.costCenters.monthDetail.loading} /> : null}
       {error ? (
