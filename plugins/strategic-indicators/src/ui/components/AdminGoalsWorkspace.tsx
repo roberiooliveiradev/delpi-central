@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchAdminDepartmentIndicators } from "../../data/api/strategicIndicatorsSettingsApi";
 import { InfoState } from "./InfoState";
 import { IndicatorGoalForm } from "./IndicatorGoalForm";
-import { DrawerPanel } from "./DrawerPanel";
 import { AdminInlineToolPanel } from "./AdminInlineToolPanel";
 import { ActiveToggle } from "./ActiveToggle";
 import { AnnualGoalsWorkspace } from "./AnnualGoalsWorkspace";
@@ -46,6 +45,8 @@ type AdminGoalsWorkspaceProps = {
 
 type BulkToolMode = "create_year" | "duplicate" | "fill" | null;
 
+type GoalFormMode = "create" | "edit" | "duplicate" | null;
+
 type CatalogIndicatorOption = {
   indicatorId: string;
   indicatorName: string;
@@ -74,7 +75,7 @@ export function AdminGoalsWorkspace({
   });
 
   const [bulkTool, setBulkTool] = useState<BulkToolMode>(null);
-  const [goalDrawerOpen, setGoalDrawerOpen] = useState(false);
+  const [goalFormMode, setGoalFormMode] = useState<GoalFormMode>(null);
   const [editingGoal, setEditingGoal] = useState<StrategicIndicatorGoalItem | null>(null);
   const [duplicatingGoal, setDuplicatingGoal] =
     useState<StrategicIndicatorGoalItem | null>(null);
@@ -270,13 +271,38 @@ export function AdminGoalsWorkspace({
     setSourceYear(pickSourceYearForTarget(catalogYears, preferredTarget));
   }, [bulkTool, selectedYear, catalogYears, suggestedDuplicateTarget]);
 
+  function closeGoalForm() {
+    setGoalFormMode(null);
+    setEditingGoal(null);
+    setDuplicatingGoal(null);
+  }
+
+  function openCreateGoalForm() {
+    setEditingGoal(null);
+    setDuplicatingGoal(null);
+    setGoalFormMode("create");
+    setShowHistory(false);
+  }
+
+  function openEditGoalForm(item: StrategicIndicatorGoalItem) {
+    setDuplicatingGoal(null);
+    setEditingGoal(item);
+    setGoalFormMode("edit");
+    setShowHistory(false);
+  }
+
+  function openDuplicateGoalForm(item: StrategicIndicatorGoalItem) {
+    setEditingGoal(null);
+    setDuplicatingGoal(buildGoalDuplicateSeed(item));
+    setGoalFormMode("duplicate");
+    setShowHistory(false);
+  }
+
   function selectYear(year: number) {
     setSelectedYear(year);
     setBulkTool(null);
     setShowHistory(false);
-    setEditingGoal(null);
-    setDuplicatingGoal(null);
-    setGoalDrawerOpen(false);
+    closeGoalForm();
   }
 
   async function handleDuplicateYear() {
@@ -309,9 +335,7 @@ export function AdminGoalsWorkspace({
 
   async function handleCreate(payload: Parameters<typeof goals.createGoal>[0]) {
     await goals.createGoal(payload);
-    setGoalDrawerOpen(false);
-    setEditingGoal(null);
-    setDuplicatingGoal(null);
+    closeGoalForm();
   }
 
   async function handleUpdate(
@@ -319,9 +343,15 @@ export function AdminGoalsWorkspace({
     payload: Parameters<typeof goals.updateGoal>[1],
   ) {
     await goals.updateGoal(goalId, payload);
-    setGoalDrawerOpen(false);
-    setEditingGoal(null);
+    closeGoalForm();
   }
+
+  const goalFormTitle =
+    goalFormMode === "edit"
+      ? "Editar meta analítica"
+      : goalFormMode === "duplicate"
+        ? "Duplicar meta analítica"
+        : "Nova meta analítica";
 
   return (
     <div className="si-admin-workspace si-admin-goals-workspace">
@@ -366,7 +396,7 @@ export function AdminGoalsWorkspace({
       <div
         className={`si-admin-master-detail si-admin-goals-master-detail ${
           isPhone && typeof selectedYear === "number" ? "is-mobile-detail-open" : ""
-        }`}
+        } ${goalFormMode ? "is-goal-form-open" : ""}`}
       >
         <div className="si-admin-master-detail__master">
           <div className="si-admin-goals-master__header">
@@ -409,8 +439,12 @@ export function AdminGoalsWorkspace({
           )}
         </div>
 
-        <div className="si-admin-master-detail__detail">
-          {isPhone && typeof selectedYear === "number" ? (
+        <div
+          className={`si-admin-master-detail__detail ${
+            goalFormMode ? "si-admin-goals-detail--form" : ""
+          }`}
+        >
+          {isPhone && typeof selectedYear === "number" && !goalFormMode ? (
             <button
               type="button"
               className="si-admin-master-detail__back"
@@ -424,6 +458,32 @@ export function AdminGoalsWorkspace({
             <InfoState
               title="Selecione um ano"
               description="Escolha um ciclo na lista para ver e editar as metas analíticas."
+            />
+          ) : goalFormMode ? (
+            <IndicatorGoalForm
+              saving={goals.saving}
+              initialValue={editingGoal}
+              duplicateFrom={duplicatingGoal}
+              indicatorOptions={indicatorOptions}
+              indicatorCatalog={indicatorCatalog}
+              defaultGoalYear={selectedYear ?? undefined}
+              lockGoalYear={
+                typeof selectedYear === "number" &&
+                goalFormMode === "create"
+              }
+              layout={goalFormMode === "edit" ? "compact" : "wizard"}
+              panelShell={{
+                title: goalFormTitle,
+                cycleYear: selectedYear ?? undefined,
+                onBack: closeGoalForm,
+                versionLabel:
+                  goalFormMode === "edit" && editingGoal
+                    ? `Ativa v${editingGoal.version}`
+                    : undefined,
+              }}
+              onCreate={handleCreate}
+              onUpdate={handleUpdate}
+              onCancel={closeGoalForm}
             />
           ) : (
             <>
@@ -457,11 +517,7 @@ export function AdminGoalsWorkspace({
                     <button
                       type="button"
                       className="si-settings-editor__button"
-                      onClick={() => {
-                        setEditingGoal(null);
-                        setDuplicatingGoal(null);
-                        setGoalDrawerOpen(true);
-                      }}
+                      onClick={openCreateGoalForm}
                     >
                       Nova meta
                     </button>
@@ -642,11 +698,7 @@ export function AdminGoalsWorkspace({
                   title="Nenhuma meta neste ano"
                   description="Cadastre a primeira meta para o ciclo selecionado."
                   actionLabel="Nova meta"
-                  onAction={() => {
-                    setEditingGoal(null);
-                    setDuplicatingGoal(null);
-                    setGoalDrawerOpen(true);
-                  }}
+                  onAction={openCreateGoalForm}
                 />
               ) : (
                 <div className="si-admin-goals-table-scroll">
@@ -699,22 +751,14 @@ export function AdminGoalsWorkspace({
                         <button
                           type="button"
                           className="si-settings-editor__button si-settings-editor__button--secondary"
-                          onClick={() => {
-                            setDuplicatingGoal(null);
-                            setEditingGoal(item);
-                            setGoalDrawerOpen(true);
-                          }}
+                          onClick={() => openEditGoalForm(item)}
                         >
                           Editar
                         </button>
                         <button
                           type="button"
                           className="si-settings-editor__button si-settings-editor__button--secondary"
-                          onClick={() => {
-                            setEditingGoal(null);
-                            setDuplicatingGoal(buildGoalDuplicateSeed(item));
-                            setGoalDrawerOpen(true);
-                          }}
+                          onClick={() => openDuplicateGoalForm(item)}
                           disabled={goals.saving}
                         >
                           Duplicar
@@ -796,47 +840,6 @@ export function AdminGoalsWorkspace({
           )}
         </div>
       </div>
-
-      <DrawerPanel
-        open={goalDrawerOpen}
-        onClose={() => {
-          setGoalDrawerOpen(false);
-          setEditingGoal(null);
-          setDuplicatingGoal(null);
-        }}
-        title={
-          editingGoal
-            ? "Editar meta analítica"
-            : duplicatingGoal
-              ? "Duplicar meta analítica"
-              : "Nova meta analítica"
-        }
-        description={
-          duplicatingGoal
-            ? "Revise os dados e salve. Mesmo indicador, ano e escopo substituem a meta ativa anterior por uma nova versão."
-            : "Meta por indicador, ano e escopo (consolidado ou unidade Santa Catarina / Espírito Santo)."
-        }
-        size="xl"
-      >
-        <IndicatorGoalForm
-          saving={goals.saving}
-          initialValue={editingGoal}
-          duplicateFrom={duplicatingGoal}
-          indicatorOptions={indicatorOptions}
-          indicatorCatalog={indicatorCatalog}
-          defaultGoalYear={selectedYear ?? undefined}
-          lockGoalYear={
-            typeof selectedYear === "number" && !editingGoal && !duplicatingGoal
-          }
-          onCreate={handleCreate}
-          onUpdate={handleUpdate}
-          onCancel={() => {
-            setGoalDrawerOpen(false);
-            setEditingGoal(null);
-            setDuplicatingGoal(null);
-          }}
-        />
-      </DrawerPanel>
     </div>
   );
 }

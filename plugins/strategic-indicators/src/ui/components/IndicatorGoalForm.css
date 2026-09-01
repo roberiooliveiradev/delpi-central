@@ -20,6 +20,165 @@
   grid-column: 1 / -1;
 }
 
+/* Form-as-detail — metas analíticas (admin) */
+.si-goal-form-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.si-goal-form-panel__header {
+  display: grid;
+  gap: 8px;
+}
+
+.si-goal-form-panel__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.si-goal-form-panel__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.si-goal-form-panel__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.si-goal-form-panel__cycle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.si-goal-form-panel__stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.si-goal-form-panel__step {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.si-goal-form-panel__step.is-active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+
+.si-goal-form-panel__step.is-done {
+  color: var(--text);
+}
+
+.si-goal-form-panel__body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.si-goal-form-panel__body--compact {
+  gap: 14px;
+}
+
+.si-goal-form-panel__compact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.si-goal-form-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.si-goal-form-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 0;
+}
+
+.si-goal-form-card__step-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.si-goal-form-card__body {
+  padding: 10px 14px 14px;
+}
+
+.si-goal-form-panel__validity {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 10px 14px 14px;
+}
+
+.si-goal-form-panel__validity summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.si-goal-form-panel__validity summary::-webkit-details-marker {
+  display: none;
+}
+
+.si-goal-form-panel__validity-grid {
+  margin-top: 12px;
+}
+
+.si-goal-form-panel__footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--background, var(--surface));
+}
+
+@media (max-width: 900px) {
+  .si-goal-form-panel__compact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .si-modal-form__actions {
   display: flex;
   justify-content: flex-end;

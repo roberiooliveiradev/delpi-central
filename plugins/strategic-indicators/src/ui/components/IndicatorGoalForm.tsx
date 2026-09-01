@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type {
   CreateStrategicIndicatorGoalRequest,
   GoalMode,
@@ -8,6 +9,7 @@ import type {
   StrategicIndicatorGoalItem,
   UpdateStrategicIndicatorGoalRequest,
 } from "../../data/types/indicatorGoals";
+import { SI_HELP } from "../../content/helpTooltips";
 import {
   getGoalModeLabel,
   getGoalPeriodicityLabel,
@@ -23,32 +25,44 @@ import {
 } from "../utils/curveTargets";
 import {
   validateIndicatorGoalForm,
+  validateIndicatorGoalFormTargetStep,
+  validateIndicatorGoalFormValueStep,
   type IndicatorGoalCatalogEntry,
 } from "../utils/goalFormValidation";
 import {
   expectedMonthlyCurvePointCount,
   resolveGoalValueForApi,
 } from "../utils/goalValuePolicy";
-import { SI_HELP } from "../../content/helpTooltips";
+import { GoalScopeBadges } from "./GoalScopeBadges";
 import "./IndicatorGoalForm.css";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
-import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
 
 type IndicatorOption = {
   value: string;
   label: string;
 };
 
+export type IndicatorGoalFormLayout = "flat" | "wizard" | "compact";
+
+export type IndicatorGoalFormPanelShell = {
+  title: string;
+  cycleYear?: number;
+  onBack?: () => void;
+  versionLabel?: string;
+};
+
 type IndicatorGoalFormProps = {
   saving: boolean;
   initialValue?: StrategicIndicatorGoalItem | null;
-  /** Pré-preenche o formulário para criar uma cópia (não edita o registro de origem). */
   duplicateFrom?: StrategicIndicatorGoalItem | null;
   indicatorOptions?: Array<string | IndicatorOption>;
   indicatorCatalog?: IndicatorGoalCatalogEntry[];
   defaultGoalYear?: number;
   lockGoalYear?: boolean;
+  /** flat = legado (modais); wizard = criar/duplicar no detail; compact = editar no detail. */
+  layout?: IndicatorGoalFormLayout;
+  panelShell?: IndicatorGoalFormPanelShell;
   onCreate?: (payload: CreateStrategicIndicatorGoalRequest) => Promise<void>;
   onUpdate?: (
     goalId: string,
@@ -57,13 +71,13 @@ type IndicatorGoalFormProps = {
   onCancel?: () => void;
 };
 
+type WizardStep = 1 | 2 | 3;
+
 function normalizeIndicatorOptions(
   options: Array<string | IndicatorOption>,
 ): IndicatorOption[] {
   return options.map((option) =>
-    typeof option === "string"
-      ? { value: option, label: option }
-      : option,
+    typeof option === "string" ? { value: option, label: option } : option,
   );
 }
 
@@ -75,6 +89,8 @@ export function IndicatorGoalForm({
   indicatorCatalog = [],
   defaultGoalYear,
   lockGoalYear = false,
+  layout = "flat",
+  panelShell,
   onCreate,
   onUpdate,
   onCancel,
@@ -94,6 +110,8 @@ export function IndicatorGoalForm({
   const [validTo, setValidTo] = useState("");
   const [notes, setNotes] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [wizardStep, setWizardStep] = useState<WizardStep>(1);
+  const [validityOpen, setValidityOpen] = useState(false);
 
   const formSeed = duplicateFrom ?? initialValue;
   const isEditing = useMemo(
@@ -108,13 +126,12 @@ export function IndicatorGoalForm({
     () => getCurvePointLabels(goalPeriodicity),
     [goalPeriodicity],
   );
+  const effectiveLayout: IndicatorGoalFormLayout = isEditing ? "compact" : layout;
 
   useEffect(() => {
     if (!formSeed) {
       setIndicatorId("");
-      setGoalYear(
-        clampGoalYear(defaultGoalYear ?? new Date().getFullYear()),
-      );
+      setGoalYear(clampGoalYear(defaultGoalYear ?? new Date().getFullYear()));
       setGoalLabel("");
       setGoalValue(0);
       setGoalPeriodicity("monthly");
@@ -125,6 +142,8 @@ export function IndicatorGoalForm({
       setValidTo("");
       setNotes("");
       setLocalError(null);
+      setWizardStep(1);
+      setValidityOpen(false);
       return;
     }
 
@@ -136,15 +155,14 @@ export function IndicatorGoalForm({
     setGoalMode(formSeed.goal_mode);
     setGoalScopeBranch(formSeed.goal_scope_branch ?? "");
     setMonthlyTargets(
-      normalizeCurveTargets(
-        formSeed.monthly_targets,
-        formSeed.goal_periodicity,
-      ),
+      normalizeCurveTargets(formSeed.monthly_targets, formSeed.goal_periodicity),
     );
     setValidFrom(formSeed.valid_from ?? "");
     setValidTo(formSeed.valid_to ?? "");
     setNotes(formSeed.notes ?? "");
     setLocalError(null);
+    setWizardStep(1);
+    setValidityOpen(Boolean(formSeed.valid_from || formSeed.valid_to || formSeed.notes));
   }, [formSeed, defaultGoalYear]);
 
   function updateMonthlyTarget(monthNumber: number, targetValue: number) {
@@ -157,10 +175,8 @@ export function IndicatorGoalForm({
     );
   }
 
-  async function handleSubmit() {
-    setLocalError(null);
-
-    const validationError = validateIndicatorGoalForm({
+  function validationInput() {
+    return {
       indicatorId,
       goalYear,
       goalLabel,
@@ -172,7 +188,13 @@ export function IndicatorGoalForm({
       indicatorOptions: normalizedIndicatorOptions,
       indicatorCatalog,
       isEditing,
-    });
+    };
+  }
+
+  async function handleSubmit() {
+    setLocalError(null);
+
+    const validationError = validateIndicatorGoalForm(validationInput());
     if (validationError) {
       setLocalError(validationError);
       return;
@@ -184,8 +206,7 @@ export function IndicatorGoalForm({
     }
 
     const resolvedGoalValue = resolveGoalValueForApi(goalMode, goalValue);
-    const resolvedMonthlyTargets =
-      goalMode === "monthly_curve" ? monthlyTargets : [];
+    const resolvedMonthlyTargets = goalMode === "monthly_curve" ? monthlyTargets : [];
 
     if (isEditing && initialValue && onUpdate) {
       const payload: UpdateStrategicIndicatorGoalRequest = {
@@ -231,47 +252,68 @@ export function IndicatorGoalForm({
     }
   }
 
-  return (
-    <div className="si-modal-form">
-      {localError ? (
-        <div className="si-settings-editor__alert si-settings-editor__alert--error">
-          {localError}
-        </div>
-      ) : null}
+  function handleWizardContinue() {
+    setLocalError(null);
+    if (wizardStep === 1) {
+      const error = validateIndicatorGoalFormTargetStep(validationInput());
+      if (error) {
+        setLocalError(error);
+        return;
+      }
+      setWizardStep(2);
+      return;
+    }
+    if (wizardStep === 2) {
+      const error = validateIndicatorGoalFormValueStep(validationInput());
+      if (error) {
+        setLocalError(error);
+        return;
+      }
+      setWizardStep(3);
+    }
+  }
 
-      <div className="si-modal-form__grid">
-        <SectionHintLabel
-          label="Destino"
-          hint={SI_HELP.goalForm.sectionTarget}
-          className="si-modal-form__section-title si-modal-form__section-title--full"
+  function renderIndicatorField(disabled = false) {
+    if (normalizedIndicatorOptions.length > 0) {
+      return (
+        <SiSelectControl
+          value={indicatorId}
+          disabled={disabled}
+          onChange={(nextId) => {
+            setIndicatorId(nextId);
+            if (!isEditing && !goalLabel.trim()) {
+              const match = normalizedIndicatorOptions.find(
+                (option) => option.value === nextId,
+              );
+              if (match) {
+                const [name] = match.label.split(" · ");
+                setGoalLabel(name?.trim() ?? match.label);
+              }
+            }
+          }}
+          allowEmpty
+          emptyLabel="Selecione"
+          options={normalizedIndicatorOptions}
         />
+      );
+    }
 
+    return (
+      <SiNativeTextControl
+        value={indicatorId}
+        disabled={disabled}
+        onChange={setIndicatorId}
+      />
+    );
+  }
+
+  function renderTargetFields(options?: { showScopeInTarget?: boolean }) {
+    const showScope = options?.showScopeInTarget ?? effectiveLayout !== "wizard";
+
+    return (
+      <>
         <Field label="Indicador" hint={SI_HELP.goalForm.indicatorId}>
-          {normalizedIndicatorOptions.length > 0 ? (
-            <SiSelectControl
-              value={indicatorId}
-              onChange={(nextId) => {
-                setIndicatorId(nextId);
-                if (!isEditing && !goalLabel.trim()) {
-                  const match = normalizedIndicatorOptions.find(
-                    (option) => option.value === nextId,
-                  );
-                  if (match) {
-                    const [name] = match.label.split(" · ");
-                    setGoalLabel(name?.trim() ?? match.label);
-                  }
-                }
-              }}
-              allowEmpty
-              emptyLabel="Selecione"
-              options={normalizedIndicatorOptions}
-            />
-          ) : (
-            <SiNativeTextControl
-              value={indicatorId}
-              onChange={setIndicatorId}
-            />
-          )}
+          {renderIndicatorField(isEditing && effectiveLayout === "compact")}
         </Field>
 
         <Field label="Ano da meta" hint={SI_HELP.goalForm.goalYear}>
@@ -285,19 +327,31 @@ export function IndicatorGoalForm({
           />
         </Field>
 
+        {showScope ? (
+          <Field label="Escopo da meta" hint={SI_HELP.goalForm.goalScopeBranch}>
+            <SiSelectControl
+              value={goalScopeBranch}
+              onChange={setGoalScopeBranch}
+              allowEmpty
+              emptyLabel={getGoalScopeBranchLabel("")}
+              options={[
+                { value: "01", label: getGoalScopeBranchLabel("01") },
+                { value: "02", label: getGoalScopeBranchLabel("02") },
+              ]}
+            />
+          </Field>
+        ) : null}
+
         <Field label="Nome da meta" hint={SI_HELP.goalForm.goalLabel} fullWidth>
-          <SiNativeTextControl
-            value={goalLabel}
-            onChange={setGoalLabel}
-          />
+          <SiNativeTextControl value={goalLabel} onChange={setGoalLabel} />
         </Field>
+      </>
+    );
+  }
 
-        <SectionHintLabel
-          label="Valor e periodicidade"
-          hint={SI_HELP.goalForm.sectionValue}
-          className="si-modal-form__section-title si-modal-form__section-title--full"
-        />
-
+  function renderValueFields() {
+    return (
+      <>
         <Field label="Modo da meta" hint={SI_HELP.goalForm.goalMode}>
           <SiSelectControl
             value={goalMode}
@@ -315,18 +369,20 @@ export function IndicatorGoalForm({
           />
         </Field>
 
-        <Field label="Escopo da meta" hint={SI_HELP.goalForm.goalScopeBranch}>
-          <SiSelectControl
-            value={goalScopeBranch}
-            onChange={setGoalScopeBranch}
-            allowEmpty
-            emptyLabel={getGoalScopeBranchLabel("")}
-            options={[
-              { value: "01", label: getGoalScopeBranchLabel("01") },
-              { value: "02", label: getGoalScopeBranchLabel("02") },
-            ]}
-          />
-        </Field>
+        {effectiveLayout === "wizard" ? (
+          <Field label="Escopo da meta" hint={SI_HELP.goalForm.goalScopeBranch}>
+            <SiSelectControl
+              value={goalScopeBranch}
+              onChange={setGoalScopeBranch}
+              allowEmpty
+              emptyLabel={getGoalScopeBranchLabel("")}
+              options={[
+                { value: "01", label: getGoalScopeBranchLabel("01") },
+                { value: "02", label: getGoalScopeBranchLabel("02") },
+              ]}
+            />
+          </Field>
+        ) : null}
 
         <Field label="Periodicidade" hint={SI_HELP.goalForm.goalPeriodicity}>
           <SiSelectControl
@@ -360,76 +416,21 @@ export function IndicatorGoalForm({
           </Field>
         ) : null}
 
-        <SectionHintLabel
-          label="Vigência"
-          hint={SI_HELP.goalForm.sectionValidity}
-          className="si-modal-form__section-title si-modal-form__section-title--full"
-        />
+        {renderCurveGrid()}
+      </>
+    );
+  }
 
+  function renderValidityFields() {
+    return (
+      <>
         <Field label="Vigência inicial" hint={SI_HELP.goalForm.validFrom}>
-          <SiNativeTextControl
-            type="date"
-            value={validFrom}
-            onChange={setValidFrom}
-          />
+          <SiNativeTextControl type="date" value={validFrom} onChange={setValidFrom} />
         </Field>
 
         <Field label="Vigência final" hint={SI_HELP.goalForm.validTo}>
-          <SiNativeTextControl
-            type="date"
-            value={validTo}
-            onChange={setValidTo}
-          />
+          <SiNativeTextControl type="date" value={validTo} onChange={setValidTo} />
         </Field>
-
-        {goalMode === "monthly_curve" ? (
-          <div className="si-settings-form-field si-settings-form-field--full">
-            <FieldLabel
-              label={getCurveSectionTitle(goalPeriodicity)}
-              hint={SI_HELP.goalForm.monthlyTargets}
-              className="si-settings-form-field__label"
-            />
-
-            <div className="si-monthly-targets-toolbar">
-              <span className="si-monthly-targets-toolbar__badge">
-                {getGoalModeLabel(goalMode)}
-              </span>
-              <span className="si-monthly-targets-toolbar__summary">
-                {expectedMonthlyCurvePointCount(goalPeriodicity)} pontos ·{" "}
-                {getGoalPeriodicityLabel(goalPeriodicity)}
-              </span>
-            </div>
-            <p className="si-monthly-targets-hint">{getCurveHintText(goalPeriodicity)}</p>
-
-            <div
-              className={`si-monthly-targets-grid ${
-                goalPeriodicity === "weekly"
-                  ? "si-monthly-targets-grid--weekly"
-                  : ""
-              }`}
-            >
-              {monthlyTargets.map((item, index) => (
-                <label
-                  key={item.month_number}
-                  className="si-monthly-targets-grid__item"
-                >
-                  <span>{curvePointLabels[index] ?? `#${item.month_number}`}</span>
-                  <SiNativeTextControl
-                    type="number"
-                    step="0.0001"
-                    value={item.target_value}
-                    onChange={(value) =>
-                      updateMonthlyTarget(
-                        item.month_number,
-                        Number(value || 0),
-                      )
-                    }
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-        ) : null}
 
         <Field label="Observações" hint={SI_HELP.goalForm.notes} fullWidth>
           <SiNativeTextAreaControl
@@ -438,9 +439,259 @@ export function IndicatorGoalForm({
             onChange={setNotes}
           />
         </Field>
-      </div>
+      </>
+    );
+  }
 
-      <div className="si-modal-form__actions">
+  function renderCurveGrid() {
+    if (goalMode !== "monthly_curve") return null;
+
+    return (
+      <div className="si-settings-form-field si-settings-form-field--full">
+        <FieldLabel
+          label={getCurveSectionTitle(goalPeriodicity)}
+          hint={SI_HELP.goalForm.monthlyTargets}
+          className="si-settings-form-field__label"
+        />
+
+        <div className="si-monthly-targets-toolbar">
+          <span className="si-monthly-targets-toolbar__badge">
+            {getGoalModeLabel(goalMode)}
+          </span>
+          <span className="si-monthly-targets-toolbar__summary">
+            {expectedMonthlyCurvePointCount(goalPeriodicity)} pontos ·{" "}
+            {getGoalPeriodicityLabel(goalPeriodicity)}
+          </span>
+        </div>
+        <p className="si-monthly-targets-hint">{getCurveHintText(goalPeriodicity)}</p>
+
+        <div
+          className={`si-monthly-targets-grid ${
+            goalPeriodicity === "weekly" ? "si-monthly-targets-grid--weekly" : ""
+          }`}
+        >
+          {monthlyTargets.map((item, index) => (
+            <label key={item.month_number} className="si-monthly-targets-grid__item">
+              <span>{curvePointLabels[index] ?? `#${item.month_number}`}</span>
+              <SiNativeTextControl
+                type="number"
+                step="0.0001"
+                value={item.target_value}
+                onChange={(value) =>
+                  updateMonthlyTarget(item.month_number, Number(value || 0))
+                }
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderWizardStepper() {
+    const steps: Array<{ id: WizardStep; label: string }> = [
+      { id: 1, label: "Destino" },
+      { id: 2, label: "Valor" },
+      { id: 3, label: "Vigência" },
+    ];
+
+    return (
+      <div className="si-goal-form-panel__stepper" role="tablist" aria-label="Passos do formulário">
+        {steps.map((step) => (
+          <button
+            key={step.id}
+            type="button"
+            role="tab"
+            aria-selected={wizardStep === step.id}
+            className={`si-goal-form-panel__step ${
+              wizardStep === step.id ? "is-active" : wizardStep > step.id ? "is-done" : ""
+            }`}
+            onClick={() => {
+              if (step.id < wizardStep) {
+                setLocalError(null);
+                setWizardStep(step.id);
+              }
+            }}
+          >
+            {step.id}. {step.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  function renderFormCard(
+    title: string,
+    hint: string,
+    stepBadge: string | null,
+    children: ReactNode,
+  ) {
+    return (
+      <section className="si-goal-form-card">
+        <header className="si-goal-form-card__header">
+          <SectionHintLabel label={title} hint={hint} />
+          {stepBadge ? (
+            <span className="si-goal-form-card__step-badge">{stepBadge}</span>
+          ) : null}
+        </header>
+        <div className="si-goal-form-card__body si-admin-form-grid">{children}</div>
+      </section>
+    );
+  }
+
+  function renderBody() {
+    if (effectiveLayout === "flat") {
+      return (
+        <div className="si-modal-form__grid">
+          <SectionHintLabel
+            label="Destino"
+            hint={SI_HELP.goalForm.sectionTarget}
+            className="si-modal-form__section-title si-modal-form__section-title--full"
+          />
+          {renderTargetFields()}
+          <SectionHintLabel
+            label="Valor e periodicidade"
+            hint={SI_HELP.goalForm.sectionValue}
+            className="si-modal-form__section-title si-modal-form__section-title--full"
+          />
+          {renderValueFields()}
+          <SectionHintLabel
+            label="Vigência"
+            hint={SI_HELP.goalForm.sectionValidity}
+            className="si-modal-form__section-title si-modal-form__section-title--full"
+          />
+          {renderValidityFields()}
+        </div>
+      );
+    }
+
+    if (effectiveLayout === "wizard") {
+      return (
+        <div className="si-goal-form-panel__body">
+          {renderWizardStepper()}
+          {wizardStep === 1
+            ? renderFormCard(
+                "Destino",
+                SI_HELP.goalForm.sectionTarget,
+                "passo 1/3",
+                renderTargetFields({ showScopeInTarget: false }),
+              )
+            : null}
+          {wizardStep === 2
+            ? renderFormCard(
+                "Valor e periodicidade",
+                SI_HELP.goalForm.sectionValue,
+                "passo 2/3",
+                renderValueFields(),
+              )
+            : null}
+          {wizardStep === 3
+            ? renderFormCard(
+                "Vigência e observações",
+                SI_HELP.goalForm.sectionValidity,
+                "passo 3/3",
+                renderValidityFields(),
+              )
+            : null}
+        </div>
+      );
+    }
+
+    return (
+      <div className="si-goal-form-panel__body si-goal-form-panel__body--compact">
+        <div className="si-goal-form-panel__compact-grid">
+          {renderFormCard(
+            "Destino",
+            SI_HELP.goalForm.sectionTarget,
+            null,
+            renderTargetFields(),
+          )}
+          {renderFormCard(
+            "Valor e periodicidade",
+            SI_HELP.goalForm.sectionValue,
+            panelShell?.versionLabel ?? null,
+            renderValueFields(),
+          )}
+        </div>
+        <details
+          className="si-goal-form-panel__validity"
+          open={validityOpen}
+          onToggle={(event) => setValidityOpen(event.currentTarget.open)}
+        >
+          <summary>
+            <SectionHintLabel
+              label="Vigência e observações"
+              hint={SI_HELP.goalForm.sectionValidity}
+            />
+          </summary>
+          <div className="si-admin-form-grid si-goal-form-panel__validity-grid">
+            {renderValidityFields()}
+          </div>
+        </details>
+      </div>
+    );
+  }
+
+  function renderFooter() {
+    if (effectiveLayout === "wizard") {
+      return (
+        <div className="si-goal-form-panel__footer">
+          {onCancel ? (
+            <button
+              type="button"
+              className="si-settings-editor__button si-settings-editor__button--secondary"
+              onClick={onCancel}
+              disabled={saving}
+            >
+              Cancelar
+            </button>
+          ) : null}
+          {wizardStep > 1 ? (
+            <button
+              type="button"
+              className="si-settings-editor__button si-settings-editor__button--secondary"
+              onClick={() => {
+                setLocalError(null);
+                setWizardStep((current) => (current > 1 ? ((current - 1) as WizardStep) : current));
+              }}
+              disabled={saving}
+            >
+              ← Voltar
+            </button>
+          ) : null}
+          {wizardStep < 3 ? (
+            <button
+              type="button"
+              className="si-settings-editor__button"
+              onClick={handleWizardContinue}
+              disabled={saving}
+            >
+              Continuar →
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="si-settings-editor__button"
+              onClick={() => void handleSubmit()}
+              disabled={saving}
+            >
+              {saving
+                ? "Salvando..."
+                : duplicateFrom
+                  ? "Salvar cópia"
+                  : "Criar meta"}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={
+          panelShell ? "si-goal-form-panel__footer" : "si-modal-form__actions"
+        }
+      >
         {onCancel ? (
           <button
             type="button"
@@ -448,7 +699,7 @@ export function IndicatorGoalForm({
             onClick={onCancel}
             disabled={saving}
           >
-            Cancelar
+            {panelShell ? "Descartar" : "Cancelar"}
           </button>
         ) : null}
 
@@ -467,6 +718,48 @@ export function IndicatorGoalForm({
                 : "Criar meta"}
         </button>
       </div>
+    );
+  }
+
+  const formContent = (
+    <>
+      {localError ? (
+        <div className="si-settings-editor__alert si-settings-editor__alert--error">
+          {localError}
+        </div>
+      ) : null}
+      {renderBody()}
+      {renderFooter()}
+    </>
+  );
+
+  if (!panelShell) {
+    return <div className="si-modal-form">{formContent}</div>;
+  }
+
+  return (
+    <div className="si-goal-form-panel">
+      <header className="si-goal-form-panel__header">
+        <div className="si-goal-form-panel__header-main">
+          {panelShell.onBack ? (
+            <button
+              type="button"
+              className="si-goal-form-panel__back"
+              onClick={panelShell.onBack}
+            >
+              ← Voltar à lista
+            </button>
+          ) : null}
+          <div className="si-goal-form-panel__title-row">
+            <h3 className="si-goal-form-panel__title">{panelShell.title}</h3>
+            {typeof panelShell.cycleYear === "number" ? (
+              <span className="si-goal-form-panel__cycle">Ciclo {panelShell.cycleYear}</span>
+            ) : null}
+            <GoalScopeBadges selectedScope={goalScopeBranch} />
+          </div>
+        </div>
+      </header>
+      {formContent}
     </div>
   );
 }
@@ -479,7 +772,7 @@ function Field({
 }: {
   label: string;
   hint?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   fullWidth?: boolean;
 }) {
   return (

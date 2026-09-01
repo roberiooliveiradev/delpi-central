@@ -120,6 +120,20 @@
   color: var(--text-muted);
 }
 
+.si-admin-goals-detail--form {
+  min-width: 0;
+}
+
+.si-admin-goals-master-detail.is-goal-form-open .si-admin-master-detail__master {
+  opacity: 1;
+}
+
+@media (min-width: 769px) {
+  .si-admin-goals-master-detail.is-goal-form-open {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
 .si-admin-goals-table__head .delpi-ui-section-hint-label {
   font-size: 12px;
   text-transform: uppercase;

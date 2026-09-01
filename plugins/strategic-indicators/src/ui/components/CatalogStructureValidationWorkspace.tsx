@@ -5,6 +5,7 @@ import type { ValidationSeverity } from "../../domain/catalogStructureValidation
 import { InfoState } from "./InfoState";
 import { LoadingActivityInline } from "./LoadingActivityInline";
 import { DrawerPanel } from "./DrawerPanel";
+import { GoalScopeCoverageBadges } from "./GoalScopeBadges";
 import { useCatalogStructureValidation } from "../../state/hooks/useCatalogStructureValidation";
 import { getAggregationModeLabel, getScopeTypeLabel } from "../presentation/labels";
 import { SI_HELP } from "../../content/helpTooltips";
@@ -37,30 +38,6 @@ function validationRowKey(row: CatalogValidationRow): string {
   return row.indicatorId === "—"
     ? `dept-${row.departmentId}`
     : `${row.departmentId}-${row.indicatorId}`;
-}
-
-function GoalScopeBadges({
-  consolidated,
-  branch01,
-  branch02,
-}: {
-  consolidated: boolean;
-  branch01: boolean;
-  branch02: boolean;
-}) {
-  return (
-    <span className="si-catalog-validation__scopes">
-      <span className={consolidated ? "is-on" : "is-off"} title={SI_HELP.badges.goalScopeConsolidated}>
-        C
-      </span>
-      <span className={branch01 ? "is-on" : "is-off"} title={SI_HELP.badges.goalScope01}>
-        01
-      </span>
-      <span className={branch02 ? "is-on" : "is-off"} title={SI_HELP.badges.goalScope02}>
-        02
-      </span>
-    </span>
-  );
 }
 
 function ValidationRowDetail({
@@ -108,7 +85,7 @@ function ValidationRowDetail({
             <div>
               <dt>Metas {goalYear}</dt>
               <dd>
-                <GoalScopeBadges
+                <GoalScopeCoverageBadges
                   consolidated={row.goalCoverage.consolidated}
                   branch01={row.goalCoverage.branch01}
                   branch02={row.goalCoverage.branch02}

@@ -69,3 +69,68 @@ export function validateIndicatorGoalForm(input: {
 
   return null;
 }
+
+type GoalFormValidationInput = Parameters<typeof validateIndicatorGoalForm>[0];
+
+/** Validação parcial — passo 1 do wizard (destino). */
+export function validateIndicatorGoalFormTargetStep(
+  input: Pick<
+    GoalFormValidationInput,
+    "indicatorId" | "goalYear" | "goalLabel" | "goalScopeBranch" | "indicatorOptions" | "isEditing"
+  >,
+): string | null {
+  const label = input.goalLabel.trim();
+  if (!label) {
+    return "O nome da meta é obrigatório.";
+  }
+
+  if (!input.isEditing && !input.indicatorId.trim()) {
+    return "Selecione um indicador.";
+  }
+
+  if (input.indicatorOptions?.length) {
+    const allowed = new Set(input.indicatorOptions.map((option) => option.value));
+    if (input.indicatorId.trim() && !allowed.has(input.indicatorId.trim())) {
+      return "Indicador inválido ou inativo no catálogo.";
+    }
+  }
+
+  const year = clampGoalYear(Number(input.goalYear));
+  if (year < MIN_GOAL_YEAR || year > MAX_GOAL_YEAR) {
+    return `O ano da meta deve estar entre ${MIN_GOAL_YEAR} e ${MAX_GOAL_YEAR}.`;
+  }
+
+  const scope = (input.goalScopeBranch ?? "").trim();
+  if (!VALID_SCOPE_BRANCHES.has(scope as GoalScopeBranch | "")) {
+    return "Escopo inválido: use consolidado ou unidade (Santa Catarina / Espírito Santo).";
+  }
+
+  return null;
+}
+
+/** Validação parcial — passo 2 do wizard (valor / curva). */
+export function validateIndicatorGoalFormValueStep(
+  input: Pick<
+    GoalFormValidationInput,
+    "goalMode" | "goalPeriodicity" | "goalValue" | "monthlyTargets"
+  >,
+): string | null {
+  if (input.goalMode === "standard" && input.goalValue < 0) {
+    return "O valor da meta não pode ser negativo.";
+  }
+
+  if (input.goalMode === "monthly_curve") {
+    const expectedPoints = expectedMonthlyCurvePointCount(input.goalPeriodicity);
+    if (input.monthlyTargets.length !== expectedPoints) {
+      return `A curva deve ter ${expectedPoints} ponto(s) para a periodicidade selecionada.`;
+    }
+    const hasInvalidMonthlyValue = input.monthlyTargets.some(
+      (item) => Number(item.target_value) < 0,
+    );
+    if (hasInvalidMonthlyValue) {
+      return "Os valores da curva não podem ser negativos.";
+    }
+  }
+
+  return null;
+}

@@ -20,6 +20,7 @@ const ADMIN_UI_FILES = [
   "components/AdminDepartmentFormDrawer.tsx",
   "components/AdminIndicatorFormDrawer.tsx",
   "components/AdminGoalsWorkspace.tsx",
+  "components/GoalScopeBadges.tsx",
   "components/IndicatorGoalForm.tsx",
   "components/SettingsStructuredEditor.tsx",
   "components/SettingsParametersForm.tsx",
