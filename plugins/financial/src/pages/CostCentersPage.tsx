@@ -31,9 +31,13 @@ import { useCostCenters } from "../hooks/useCostCenters";
 import { useSubplugins } from "../hooks/useSubplugins";
 import type { CostCenterEntry, FinancialBranch } from "../types";
 import { downloadExcel } from "../utils/exportExcel";
-import { formatIsoDate, formatIssueDate, formatPeriodRange, formatYearMonth } from "../utils/formatDates";
+import { formatIssueDate, formatPeriodRange, formatYearMonth } from "../utils/formatDates";
 import { formatCompactCurrency, formatCurrency, formatInteger } from "../utils/formatNumbers";
-import { buildFinancialHref, replaceFinancialQuery } from "../utils/routeParser";
+import {
+  buildFinancialHref,
+  navigateFinancial,
+  replaceFinancialQuery,
+} from "../utils/routeParser";
 
 const SERIES_HEIGHT = 280;
 
@@ -107,6 +111,34 @@ export function CostCentersPage({
         valor: point.totalAmount,
       })),
     [data?.series],
+  );
+
+  /** O gráfico devolve o rótulo pt-BR; o mapa evita reinterpretar `Ago/2026`. */
+  const monthByLabel = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const point of data?.series ?? []) {
+      map.set(formatYearMonth(point.yearMonth), point.yearMonth);
+    }
+    return map;
+  }, [data?.series]);
+
+  const openMonth = useCallback(
+    (label: string) => {
+      const month = monthByLabel.get(label);
+      if (!month) return;
+      navigateFinancial(
+        buildFinancialHref({
+          subpluginId: "cost-centers",
+          branch,
+          month,
+          costCenter,
+          supplierCode,
+          supplierStore,
+          excludeMp,
+        }),
+      );
+    },
+    [monthByLabel, branch, costCenter, supplierCode, supplierStore, excludeMp],
   );
 
   const rankingQuery = useMemo(
@@ -337,7 +369,7 @@ export function CostCentersPage({
           <div className="fin-chart-section fin-chart-section--full">
             <FinChartCard
               title={copy.costCenters.seriesTitle}
-              titleHint={helpTooltips.costCenters}
+              titleHint={helpTooltips.costCenterSeries}
               hint={copy.costCenters.seriesHint}
             >
               {data?.sectionErrors.series ? (
@@ -363,6 +395,7 @@ export function CostCentersPage({
                   showValueLabels
                   formatY={formatCompactCurrency}
                   formatTooltipValue={formatCurrency}
+                  onCategoryClick={openMonth}
                 />
               )}
             </FinChartCard>

@@ -219,7 +219,8 @@ export const copy = {
     averageTicketLabel: "Ticket médio",
     largestEntryLabel: "Maior lançamento",
     seriesTitle: "Despesa por mês",
-    seriesHint: "Últimos 12 meses, respeitando filial, centro de custo e fornecedor selecionados.",
+    seriesHint:
+      "Últimos 12 meses, respeitando filial, centro de custo e fornecedor selecionados. Clique no mês para ver o detalhamento.",
     seriesEmpty: "Sem lançamentos no período.",
     rankingCentersTitle: "Centros de custo",
     rankingSuppliersTitle: "Fornecedores",

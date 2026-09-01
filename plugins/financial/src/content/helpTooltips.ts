@@ -23,6 +23,8 @@ export const helpTooltips = {
     "Despesa apropriada por centro de custo, a partir das notas de entrada. Use os filtros para isolar um centro ou um fornecedor.",
   excludeMpProducts:
     "Remove lançamentos cujo tipo de produto é MP (matéria-prima), para enxergar despesas fora de suprimentos.",
+  costCenterSeries:
+    "Despesa apropriada mês a mês nos últimos 12 meses, com os filtros da tela. Clique na coluna do mês para abrir o detalhamento com KPIs, rankings e cada lançamento.",
   costCenterEntries:
     "Cada linha é um item de nota de entrada com centro de custo apropriado. Abra a linha para ver pedido, conta contábil e rateio.",
   indicators:
