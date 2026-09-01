@@ -5,6 +5,8 @@ import {
   ChartCard,
   chartCardBemClasses,
   createCompactPagination,
+  catalogSearchBarBemClasses,
+  createDashboardCatalogSearchBar,
   createDashboardFormActions,
   createDashboardFormGrid,
   createDashboardSectionCard,
@@ -42,6 +44,9 @@ export const PpBackLink = BackLink;
 export const PpFieldLabel = FieldLabel;
 export const PpSimpleKpiCard = createSimpleKpiCard(PREFIX, { withBody: true, withSubtitle: true });
 export const PpSegmentToggle = createDashboardSegmentToggle(PREFIX);
+export const PpCatalogSearchBar = createDashboardCatalogSearchBar({
+  classNames: catalogSearchBarBemClasses(PREFIX),
+});
 export const PpSectionCard = createDashboardSectionCard({
   classNames: sectionCardPacBemClasses(PREFIX),
   labels: { titleHelpAriaLabel: (title: string) => `Ajuda: ${title}` },

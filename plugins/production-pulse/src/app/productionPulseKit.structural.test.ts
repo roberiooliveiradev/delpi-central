@@ -56,6 +56,13 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/data/filtersUi.tsx")).toMatch(/PpFiltersRow/);
   });
 
+  it("hub operador usa busca automática do kit — sem botão Buscar", () => {
+    const hub = readRelative("pages/operator/OperatorPlacementHub.tsx");
+    expect(hub).toMatch(/PpCatalogSearchBar/);
+    expect(hub).not.toMatch(/Buscar/);
+    expect(hub).not.toMatch(/pp-operator-hub__search-actions/);
+  });
+
   it("FilterInputField declara type explícito no painel", () => {
     const filtersBar = readRelative("components/DeviceFiltersBar.tsx");
     expect(filtersBar).toMatch(/type="search"/);

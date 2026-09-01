@@ -4,10 +4,14 @@ import {
   fetchOperatorPlacementDevices,
   fetchOperatorPlacements,
 } from "../../api/productionPulseApi";
-import { PpActionButton, PpSegmentToggle, PpStateBox } from "../../app/productionPulseUi";
+import {
+  PpCatalogSearchBar,
+  PpFieldLabel,
+  PpSegmentToggle,
+  PpStateBox,
+} from "../../app/productionPulseUi";
 import { OperatorBrandBar } from "../../components/operator/OperatorBrandBar";
 import { OperatorPlacementCard } from "../../components/operator/OperatorPlacementCard";
-import { PpFilterInputField, PpFiltersRow } from "../../components/data/filtersUi";
 import { resolveBranchOptions } from "../../constants/branches";
 import type { ProductionPulsePermissionFlags } from "../../constants/permissions";
 import {
@@ -20,6 +24,8 @@ import { PP_HELP } from "../../content/helpTooltips";
 import type { OperatorPlacement } from "../../types/operator";
 import { navigateProductionPulse, replaceProductionPulse } from "../../utils/navigation";
 import { readLastPlacementKey, writeLastPlacementKey } from "../../utils/operatorStorage";
+
+const OPERATOR_SEARCH_DEBOUNCE_MS = 300;
 
 type OperatorPlacementHubProps = {
   branch: string;
@@ -37,11 +43,13 @@ export function OperatorPlacementHub({
   const [placements, setPlacements] = useState<OperatorPlacement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [localSearch, setLocalSearch] = useState(search);
+  const [inputSearch, setInputSearch] = useState(search);
+  const [appliedSearch, setAppliedSearch] = useState(search);
   const lastPlacementKey = readLastPlacementKey();
 
   useEffect(() => {
-    setLocalSearch(search);
+    setInputSearch(search);
+    setAppliedSearch(search);
   }, [search]);
 
   const branchOptions = useMemo(
@@ -51,6 +59,21 @@ export function OperatorPlacementHub({
   const activeBranch =
     branchOptions.find((item) => item.id === branch)?.id ?? branchOptions[0]?.id ?? branch;
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setAppliedSearch(inputSearch);
+      if (inputSearch !== search) {
+        replaceProductionPulse(
+          productionPulseOperatorPath(activeBranch, {
+            anchorType,
+            search: inputSearch,
+          }),
+        );
+      }
+    }, OPERATOR_SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [activeBranch, anchorType, inputSearch, search]);
+
   const reload = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
@@ -58,7 +81,7 @@ export function OperatorPlacementHub({
       const items = await fetchOperatorPlacements({
         branch: activeBranch,
         anchorType: anchorType || undefined,
-        search: localSearch || undefined,
+        search: appliedSearch || undefined,
         signal,
       });
       setPlacements(items);
@@ -68,7 +91,7 @@ export function OperatorPlacementHub({
       setError(err instanceof Error ? err.message : "Erro ao carregar locais.");
       setLoading(false);
     }
-  }, [activeBranch, anchorType, localSearch]);
+  }, [activeBranch, anchorType, appliedSearch]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -76,11 +99,15 @@ export function OperatorPlacementHub({
     return () => controller.abort();
   }, [reload]);
 
-  const updateFilters = (patch: { anchorType?: OperatorAnchorFilter; search?: string; branch?: string }) => {
+  const updateFilters = (patch: {
+    anchorType?: OperatorAnchorFilter;
+    search?: string;
+    branch?: string;
+  }) => {
     replaceProductionPulse(
       productionPulseOperatorPath(patch.branch ?? activeBranch, {
         anchorType: patch.anchorType ?? anchorType,
-        search: patch.search ?? localSearch,
+        search: patch.search ?? inputSearch,
       }),
     );
   };
@@ -126,8 +153,8 @@ export function OperatorPlacementHub({
         showAdminLink={permissions.canViewDevices}
       />
 
-      {branchOptions.length > 1 ? (
-        <div className="pp-operator-hub__filters">
+      <div className="pp-operator-hub__filters">
+        {branchOptions.length > 1 ? (
           <PpSegmentToggle
             ariaLabel="Filial"
             size="sm"
@@ -135,10 +162,7 @@ export function OperatorPlacementHub({
             onChange={(value) => updateFilters({ branch: value })}
             options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
           />
-        </div>
-      ) : null}
-
-      <div className="pp-operator-hub__filters">
+        ) : null}
         <PpSegmentToggle
           ariaLabel="Filtro de tipo de local"
           size="sm"
@@ -153,26 +177,21 @@ export function OperatorPlacementHub({
         />
       </div>
 
-      <PpFiltersRow>
-        <PpFilterInputField
-          id="pp-operator-hub-search"
+      <div className="pp-operator-hub__search">
+        <PpFieldLabel
           label="Busca"
-          type="search"
           hint={PP_HELP.operator.hubSearch}
-          value={localSearch}
-          onChange={setLocalSearch}
-          placeholder="Ventilador, CT-53…"
+          className="pp-field__label"
         />
-        <div className="pp-filter-toolbar-row pp-operator-hub__search-actions">
-          <PpActionButton
-            variant="ghost"
-            className="pp-operator-hub__search-btn"
-            onClick={() => updateFilters({ search: localSearch })}
-          >
-            Buscar
-          </PpActionButton>
-        </div>
-      </PpFiltersRow>
+        <PpCatalogSearchBar
+          value={inputSearch}
+          onChange={setInputSearch}
+          placeholder="Ventilador, CT-53…"
+          clearLabel={PP_HELP.operator.hubSearchClear}
+          aria-label={PP_HELP.operator.hubSearchAria}
+          className="pp-operator-hub__search-bar"
+        />
+      </div>
 
       {error ? <p className="pp-detail-error">{error}</p> : null}
 
@@ -187,7 +206,7 @@ export function OperatorPlacementHub({
           variant="empty"
           title="Nenhum local encontrado"
           message={
-            localSearch.trim()
+            appliedSearch.trim()
               ? "Nenhum local corresponde à busca — limpe o filtro e tente novamente."
               : "Nenhum posto, máquina ou equipamento com sensor operável nesta filial."
           }

@@ -821,8 +821,9 @@
   --pp-operator-brand-fg-muted: rgba(255, 255, 255, 0.82);
   --pp-operator-brand-btn-bg: rgba(255, 255, 255, 0.1);
   --pp-operator-brand-btn-border: rgba(255, 255, 255, 0.55);
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 :root[data-theme="dark"] .dashboard-production-pulse--operator {
@@ -838,6 +839,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--pp-section-gap);
+  width: 100%;
 }
 
 .pp-operator-brand-bar {
@@ -917,8 +919,9 @@
 .pp-operator-hub__filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 10px 16px;
   align-items: center;
+  width: 100%;
 }
 
 .pp-operator-hub__filters .delpi-ui-segment-toggle,
@@ -927,17 +930,25 @@
   max-width: 100%;
 }
 
-.pp-operator-hub__search-actions {
-  justify-content: flex-end;
+.pp-operator-hub__search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--pp-card-radius);
+  border: 1px solid var(--pp-border);
+  background: var(--pp-surface);
+  box-sizing: border-box;
 }
 
-.dashboard-production-pulse--operator .pp-operator-hub__search-btn.delpi-ui-action-btn {
-  min-height: var(--pp-operator-control-height);
-  height: var(--pp-operator-control-height);
-  padding-inline: 16px;
+.pp-operator-hub__search-bar,
+.pp-operator-hub__search .delpi-ui-catalog-search-bar,
+.pp-operator-hub__search .pp-catalog-search-bar {
+  width: 100%;
 }
 
-.dashboard-production-pulse--operator .delpi-ui-filters-row [class$="-field"] input {
+.dashboard-production-pulse--operator .pp-operator-hub__search .delpi-ui-catalog-search-bar__field {
   min-height: var(--pp-operator-control-height);
 }
 
@@ -957,6 +968,18 @@
   .pp-operator-hub__grid {
     grid-template-columns: repeat(3, minmax(220px, 1fr));
     gap: 20px;
+  }
+}
+
+@media (min-width: 1201px) {
+  .pp-operator-hub__grid {
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+  }
+}
+
+@media (min-width: 1601px) {
+  .pp-operator-hub__grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
 
@@ -1069,6 +1092,18 @@
 @media (min-width: 901px) {
   .pp-operator-picker__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1201px) {
+  .pp-operator-picker__grid {
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+  }
+}
+
+@media (min-width: 1601px) {
+  .pp-operator-picker__grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
 

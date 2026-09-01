@@ -144,6 +144,8 @@ export const PP_HELP = {
     hubFilterEquipment: "Somente equipamentos (ventilador, motor, bomba…).",
     hubSearch:
       "Busca por nome do posto, máquina, equipamento ou código CT.",
+    hubSearchClear: "Limpar busca",
+    hubSearchAria: "Busca por posto, máquina ou equipamento",
     hubCardMeta:
       "Quantidade de sensores/contadores no local e quantos estão online.",
     pickerTitle: "Este local tem mais de um device — escolha qual usar.",
