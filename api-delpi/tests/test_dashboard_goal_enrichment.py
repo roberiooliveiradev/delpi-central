@@ -199,3 +199,36 @@ def test_enrich_dashboard_metric_leaves_payload_when_goal_missing() -> None:
         )
 
     assert result == payload
+
+
+def test_enrich_dashboard_metric_tolerates_empty_comparable_goal_string() -> None:
+    """SI às vezes devolve comparable_goal='' — não pode estourar float('')."""
+    service = DashboardGoalsService()
+    goal = {
+        **_sample_goal(),
+        "comparable_goal": "",
+        "goal_value": "",
+        "reference_goal": "",
+        "has_goal": True,
+    }
+    with (
+        patch.object(service, "get_goal", return_value=goal),
+        patch(
+            "app.application.services.strategic_indicators.dashboard_goals_service.get_dashboard_goals_service",
+            return_value=service,
+        ),
+    ):
+        result = enrich_dashboard_metric(
+            {"new_business_rol": 10.0, "new_business_rol_pct": 12.5},
+            source_key="commercial_new_business_rol_pct",
+            start_date="2026-09-01",
+            end_date="2026-09-01",
+            recompute_target_pct_from="new_business_rol",
+        )
+
+    assert result["new_business_rol"] == 10.0
+    assert result["new_business_rol_pct"] == 12.5
+    assert result["comparable_goal"] is None
+    assert result["goal_value"] is None
+    assert result["reference_goal"] is None
+    assert "new_business_rol_target_pct" not in result

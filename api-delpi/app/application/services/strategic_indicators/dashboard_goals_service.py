@@ -5,6 +5,7 @@ from typing import Any
 
 from strategic_indicators_client import StrategicIndicatorsApiClient, StrategicIndicatorsApiError
 
+from app.application.shared.numeric_parsing import to_optional_float
 from app.application.services.strategic_indicators.dashboard_goal_dates import (
     normalize_si_branch,
     normalize_si_period_date,
@@ -77,10 +78,7 @@ class DashboardGoalsService:
         if summary_key and isinstance(payload.get(summary_key), dict):
             target_block = payload[summary_key]
             enriched_block = {**target_block, **goal_fields}
-            comparable_raw = goal_fields.get("comparable_goal")
-            comparable = (
-                float(comparable_raw) if comparable_raw is not None else None
-            )
+            comparable = to_optional_float(goal_fields.get("comparable_goal"))
             if comparable is not None and comparable > 0 and recompute_target_pct_from:
                 realized = self._resolve_realized_value(
                     enriched_block,
@@ -95,8 +93,7 @@ class DashboardGoalsService:
             return {**payload, summary_key: enriched_block}
 
         enriched = {**payload, **goal_fields}
-        comparable_raw = goal_fields.get("comparable_goal")
-        comparable = float(comparable_raw) if comparable_raw is not None else None
+        comparable = to_optional_float(goal_fields.get("comparable_goal"))
         if comparable is not None and comparable > 0 and recompute_target_pct_from:
             realized = self._resolve_realized_value(
                 enriched,
@@ -117,13 +114,7 @@ class DashboardGoalsService:
         *,
         recompute_target_pct_from: str,
     ) -> float | None:
-        realized = block.get(recompute_target_pct_from)
-        if realized is None:
-            return None
-        try:
-            return float(realized)
-        except (TypeError, ValueError):
-            return None
+        return to_optional_float(block.get(recompute_target_pct_from))
 
     def attach_goals_index(
         self,
@@ -241,13 +232,13 @@ class DashboardGoalsService:
                 "has_goal": False,
             }
 
-        comparable = goal.get("comparable_goal")
+        comparable = to_optional_float(goal.get("comparable_goal"))
         return {
             "goal": goal,
             "goal_label": goal.get("goal_label"),
-            "goal_value": goal.get("goal_value"),
+            "goal_value": to_optional_float(goal.get("goal_value")),
             "comparable_goal": comparable,
-            "reference_goal": goal.get("reference_goal"),
+            "reference_goal": to_optional_float(goal.get("reference_goal")),
             "target": comparable,
             "goal_periodicity": goal.get("goal_periodicity"),
             "goal_mode": goal.get("goal_mode"),

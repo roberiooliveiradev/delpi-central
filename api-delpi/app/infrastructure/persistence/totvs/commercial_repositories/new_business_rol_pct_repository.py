@@ -1,4 +1,5 @@
 from app.application.dto.commercial.new_business_rol_pct_request import NewBusinessRolPctRequest
+from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.entities.commercial.new_business_rol_pct import NewBusinessRolPct
 from app.domain.ports.commercial.new_business_rol_pct_repository_port import (
     NewBusinessRolPctRepositoryPort,
@@ -227,8 +228,7 @@ class NewBusinessRolPctRepository(BaseRepository, NewBusinessRolPctRepositoryPor
         total_rol = float((row or {}).get("total_rol") or 0)
         new_business_rol = float((row or {}).get("new_business_rol") or 0)
         weg_rol = float((row or {}).get("weg_rol") or 0)
-        pct_raw = (row or {}).get("new_business_rol_pct")
-        new_business_rol_pct = float(pct_raw) if pct_raw is not None else None
+        new_business_rol_pct = to_optional_float((row or {}).get("new_business_rol_pct"))
 
         return NewBusinessRolPct(
             branch=(row or {}).get("branch") or request.branch,
