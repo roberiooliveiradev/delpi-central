@@ -80,13 +80,20 @@ cd production-pulse-api && pytest tests -q
 ## Homologação HTTP
 
 ```bash
+# Parcial ou completo — usa TOKEN ou API_DELPI_INTERNAL_SERVICE_TOKEN (infra/.env)
+bash ./scripts/homologacao/check-production-pulse.sh
+
+# JWT portal (opcional)
 export TOKEN="<jwt sem Bearer>"
+bash ./scripts/homologacao/check-production-pulse.sh
+
+# E6.S2 — ESP piloto na LAN (requer 192.168.20.2 alcançável; dev: network_mode: host)
+export PP_LIVE_ESP=1
+export PP_LIVE_ESP_IP=192.168.20.2
 bash ./scripts/homologacao/check-production-pulse.sh
 ```
 
-Parcial (sem JWT): valida `remoteEntry.js` + `/health`.
-
-Verify live ESP8266 piloto (`192.168.20.2`): [ROADMAP E6.S2](../../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
+Verify live ESP8266 piloto: [ROADMAP E6.S2](../../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
 
 ## Contratos do kit (regressão)
 

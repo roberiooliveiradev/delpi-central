@@ -108,8 +108,14 @@ Teste live opcional (rede com ESP): `pytest tests/test_esp8266_counter_driver_li
 ## Homologação
 
 ```bash
-export TOKEN="<jwt>"
+# Automático — TOKEN ou API_DELPI_INTERNAL_SERVICE_TOKEN (infra/.env)
 bash ./scripts/homologacao/check-production-pulse.sh
+
+# Live ESP piloto (opcional)
+PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh
+
+# Pytest live (mesma rede que o container/host com network_mode: host)
+PP_LIVE_ESP=1 pytest tests/test_esp8266_counter_driver_live.py -q
 ```
 
 ## Documentação

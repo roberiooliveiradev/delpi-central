@@ -3,7 +3,7 @@
 > **Produto:** Minha DELPI  
 > **Plugin:** `production-pulse`  
 > **API:** `production-pulse-api`  
-> **Status:** planejamento (set/2026)
+> **Status:** MVP implementado — homologação (set/2026)
 
 Plataforma de **dispositivos IoT** na rede industrial: contadores de golpe, rotação de ventilador, temperatura de motor, pressão, etc. Cada **hardware** (IP + driver) amarra-se a um **objeto operacional** — centro de trabalho (atalho TOTVS), **máquina**, **equipamento**, área ou avulso.
 
