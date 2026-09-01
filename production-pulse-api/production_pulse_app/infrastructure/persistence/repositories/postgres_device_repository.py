@@ -32,6 +32,7 @@ class PostgresDeviceRepository:
         self,
         *,
         branch: str | None = None,
+        branches: list[str] | None = None,
         role_key: str | None = None,
         enabled: bool | None = None,
         search: str | None = None,
@@ -41,6 +42,9 @@ class PostgresDeviceRepository:
         if branch:
             clauses.append("branch = %s")
             params.append(branch)
+        elif branches:
+            clauses.append("branch = ANY(%s)")
+            params.append(branches)
         if role_key:
             clauses.append("role_key = %s")
             params.append(role_key)

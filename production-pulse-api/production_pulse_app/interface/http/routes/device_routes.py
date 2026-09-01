@@ -33,6 +33,14 @@ from production_pulse_app.application.services.device_service import (
 )
 from production_pulse_app.core.responses import error, success
 from production_pulse_app.domain.services.device_serialization_service import parse_device_id
+from production_pulse_app.interface.http.rbac_http import (
+    guard_admin_command,
+    guard_branch_access,
+    guard_device_branch_access,
+    guard_manage_devices,
+    guard_view_devices,
+    resolve_list_branches,
+)
 from production_pulse_app.interface.http.schemas.binding_schemas import DeviceBindingBody
 from production_pulse_app.interface.http.schemas.device_schemas import (
     DeviceCreateBody,
@@ -65,6 +73,8 @@ def _authorization_header(request: Request) -> str | None:
 
 
 def _handle_domain_errors(exc: Exception):
+    if isinstance(exc, PermissionError):
+        return error(str(exc), code="forbidden", status_code=403)
     if isinstance(exc, (DeviceValidationError, BindingValidationError, CommandNotSupportedError)):
         return error(str(exc), code="validation_error", status_code=422)
     if isinstance(exc, WorkCenterCatalogUnavailableError):
@@ -91,15 +101,57 @@ def _json_error(exc: Exception):
     return JSONResponse(status_code=status_code, content=payload)
 
 
+def _load_device_for_request(
+    request: Request,
+    device_id: UUID,
+    *,
+    action: str,
+) -> tuple[dict[str, Any] | None, Any | None]:
+    if action == "view":
+        denied = guard_view_devices(request)
+    elif action == "manage":
+        denied = guard_manage_devices(request)
+    elif action == "command":
+        denied = guard_admin_command(request)
+    else:
+        raise ValueError(f"Unsupported RBAC action: {action}")
+
+    if denied is not None:
+        return None, denied
+
+    try:
+        device = _service.get_device_record(parse_device_id(str(device_id)))
+    except Exception as exc:
+        return None, _json_error(exc)
+
+    denied = guard_device_branch_access(request, device)
+    if denied is not None:
+        return None, denied
+    return device, None
+
+
 @router.get("")
 async def list_devices(
+    request: Request,
     branch: str | None = Query(default=None),
     role: str | None = Query(default=None),
     enabled: bool | None = Query(default=None),
     search: str | None = Query(default=None),
 ):
+    denied = guard_view_devices(request)
+    if denied is not None:
+        return denied
+    branches, denied = resolve_list_branches(request, branch)
+    if denied is not None:
+        return denied
     try:
-        data = _service.list_devices(branch=branch, role=role, enabled=enabled, search=search)
+        data = _service.list_devices(
+            branch=branch,
+            branches=branches,
+            role=role,
+            enabled=enabled,
+            search=search,
+        )
         return success(data)
     except Exception as exc:
         return _json_error(exc)
@@ -107,6 +159,9 @@ async def list_devices(
 
 @router.post("/test-probe")
 async def test_probe(request: Request, body: DeviceTestProbeBody):
+    denied = guard_manage_devices(request) or guard_branch_access(request, body.branch)
+    if denied is not None:
+        return denied
     try:
         data = _probe_service.probe_device(
             branch=body.branch,
@@ -121,10 +176,14 @@ async def test_probe(request: Request, body: DeviceTestProbeBody):
 
 @router.get("/{device_id}/commands")
 async def list_device_commands(
+    request: Request,
     device_id: UUID,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
 ):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
     try:
         data = _command_service.list_commands(
             parse_device_id(str(device_id)),
@@ -138,6 +197,9 @@ async def list_device_commands(
 
 @router.post("/{device_id}/commands/{command_key}")
 async def execute_device_command(request: Request, device_id: UUID, command_key: str):
+    _, denied = _load_device_for_request(request, device_id, action="command")
+    if denied is not None:
+        return denied
     try:
         data = _command_service.execute_command(
             parse_device_id(str(device_id)),
@@ -150,7 +212,10 @@ async def execute_device_command(request: Request, device_id: UUID, command_key:
 
 
 @router.get("/{device_id}/live")
-async def get_device_live(device_id: UUID):
+async def get_device_live(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
     try:
         return success(_poll_service.read_live(parse_device_id(str(device_id))))
     except DevicePollFailedError as exc:
@@ -164,7 +229,10 @@ async def get_device_live(device_id: UUID):
 
 
 @router.post("/{device_id}/poll")
-async def poll_device(device_id: UUID):
+async def poll_device(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
     try:
         return success(_poll_service.poll_and_persist(parse_device_id(str(device_id)), source="manual"))
     except DevicePollFailedError as exc:
@@ -179,6 +247,7 @@ async def poll_device(device_id: UUID):
 
 @router.get("/{device_id}/readings")
 async def list_device_readings(
+    request: Request,
     device_id: UUID,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
@@ -186,6 +255,9 @@ async def list_device_readings(
     recorded_to: str | None = Query(default=None, alias="to"),
     metric: str | None = Query(default=None),
 ):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
     try:
         from datetime import datetime
 
@@ -210,6 +282,9 @@ async def list_device_readings(
 
 @router.post("/{device_id}/test")
 async def test_existing_device(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
     try:
         device = _service.get_device_record(parse_device_id(str(device_id)))
         data = _probe_service.probe_existing_device(device, actor_sub=_actor_sub(request))
@@ -219,7 +294,10 @@ async def test_existing_device(request: Request, device_id: UUID):
 
 
 @router.get("/{device_id}")
-async def get_device(device_id: UUID):
+async def get_device(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
     try:
         return success(_service.get_device(device_id))
     except Exception as exc:
@@ -228,6 +306,9 @@ async def get_device(device_id: UUID):
 
 @router.post("", status_code=201)
 async def create_device(request: Request, body: DeviceCreateBody):
+    denied = guard_manage_devices(request) or guard_branch_access(request, body.branch)
+    if denied is not None:
+        return denied
     try:
         data = _service.create_device(body_to_dict(body), actor_sub=_actor_sub(request))
         return success(data)
@@ -237,6 +318,12 @@ async def create_device(request: Request, body: DeviceCreateBody):
 
 @router.put("/{device_id}")
 async def replace_device(request: Request, device_id: UUID, body: DeviceReplaceBody):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    denied = guard_branch_access(request, body.branch)
+    if denied is not None:
+        return denied
     try:
         data = _service.replace_device(
             parse_device_id(str(device_id)),
@@ -250,10 +337,18 @@ async def replace_device(request: Request, device_id: UUID, body: DeviceReplaceB
 
 @router.patch("/{device_id}")
 async def patch_device(request: Request, device_id: UUID, body: DevicePatchBody):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    patch_data = body.model_dump(by_alias=False, exclude_none=True)
+    if "branch" in patch_data:
+        denied = guard_branch_access(request, patch_data["branch"])
+        if denied is not None:
+            return denied
     try:
         data = _service.patch_device(
             parse_device_id(str(device_id)),
-            body.model_dump(by_alias=False, exclude_none=True),
+            patch_data,
             actor_sub=_actor_sub(request),
         )
         return success(data)
@@ -263,6 +358,9 @@ async def patch_device(request: Request, device_id: UUID, body: DevicePatchBody)
 
 @router.delete("/{device_id}")
 async def delete_device(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
     try:
         data = _service.delete_device(parse_device_id(str(device_id)), actor_sub=_actor_sub(request))
         return success(data)
@@ -271,7 +369,10 @@ async def delete_device(request: Request, device_id: UUID):
 
 
 @router.get("/{device_id}/binding")
-async def get_device_binding(device_id: UUID):
+async def get_device_binding(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
     try:
         binding = _binding_service.get_active_binding(parse_device_id(str(device_id)))
         return success(binding)
@@ -281,6 +382,9 @@ async def get_device_binding(device_id: UUID):
 
 @router.put("/{device_id}/binding")
 async def upsert_device_binding(request: Request, device_id: UUID, body: DeviceBindingBody):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
     try:
         data = _binding_service.upsert_binding(
             parse_device_id(str(device_id)),
@@ -295,6 +399,9 @@ async def upsert_device_binding(request: Request, device_id: UUID, body: DeviceB
 
 @router.delete("/{device_id}/binding")
 async def delete_device_binding(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
     try:
         _binding_service.delete_active_binding(
             parse_device_id(str(device_id)),
@@ -307,10 +414,14 @@ async def delete_device_binding(request: Request, device_id: UUID):
 
 @router.get("/{device_id}/bindings/history")
 async def list_binding_history(
+    request: Request,
     device_id: UUID,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
 ):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
     try:
         data = _binding_service.list_binding_history(
             parse_device_id(str(device_id)),

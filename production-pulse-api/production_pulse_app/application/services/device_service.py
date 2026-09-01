@@ -64,6 +64,7 @@ class DeviceService:
         self,
         *,
         branch: str | None = None,
+        branches: list[str] | None = None,
         role: str | None = None,
         enabled: bool | None = None,
         search: str | None = None,
@@ -72,6 +73,7 @@ class DeviceService:
             validate_branch(branch)
         rows = self._repository.list_devices(
             branch=branch,
+            branches=branches,
             role_key=role,
             enabled=enabled,
             search=search,

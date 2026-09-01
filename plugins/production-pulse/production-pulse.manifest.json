@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "production-pulse",
+  "name": "Pulso de Produção",
+  "description": "Cadastro de dispositivos IoT, leituras em tempo real e modo operador para chão de fábrica.",
+  "category": "producao",
+  "icon": "activity",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/production-pulse",
+  "entry": "/apps/production-pulse/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "production-pulse.access",
+      "name": "Acessar Pulso de Produção",
+      "description": "Abrir o plugin no portal.",
+      "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.devices.view",
+      "name": "Visualizar dispositivos",
+      "description": "Painel administrativo, detalhe, histórico e poll manual.",
+      "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.devices.manage",
+      "name": "Gerenciar dispositivos",
+      "description": "CRUD, binding, test-probe e poll em lote.",
+      "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.devices.command",
+      "name": "Comandos no painel admin",
+      "description": "Reset e incremento/decremento no detalhe administrativo.",
+      "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.operator",
+      "name": "Modo operador",
+      "description": "Hub de placements, picker e comandos na superfície operador.",
+      "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.view.filial-01",
+      "name": "Pulso de Produção — Filial SC",
+      "description": "Escopo de dados da filial 01 (SC).",
+      "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.view.filial-02",
+      "name": "Pulso de Produção — Filial ES",
+      "description": "Escopo de dados da filial 02 (ES).",
+      "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.admin",
+      "name": "Administrar Pulso de Produção",
+      "description": "Acesso total em todas as filiais.",
+      "module": "production-pulse"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/production-pulse",
+      "label": "Pulso de Produção",
+      "permission": "production-pulse.access",
+      "icon": "activity",
+      "order": 52,
+      "showInMenu": true,
+      "menuGroup": "Produção"
+    },
+    {
+      "path": "/apps/production-pulse/operator",
+      "label": "Operador · Pulso",
+      "permission": "production-pulse.operator",
+      "icon": "activity",
+      "order": 53,
+      "showInMenu": true,
+      "menuGroup": "Produção"
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

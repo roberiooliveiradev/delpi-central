@@ -71,7 +71,7 @@ def plugins_db_env(monkeypatch, ensure_migrations):
 
 
 @pytest.fixture
-def client(monkeypatch, plugins_db_env):
+def client_factory(monkeypatch, plugins_db_env):
     from fastapi.testclient import TestClient
 
     import production_pulse_app.main as main_module
@@ -82,12 +82,32 @@ def client(monkeypatch, plugins_db_env):
     get_test_probe_rate_limiter().reset_for_tests()
     monkeypatch.setenv("PP_POLL_SCHEDULER_ENABLED", "false")
 
-    async def _fake_jwt(request, call_next):
-        request.state.user = SimpleNamespace(sub="test-user", id="test-user")
-        return await call_next(request)
+    def _factory(
+        permissions: list[str] | None = None,
+        *,
+        is_superadmin: bool = False,
+        user_id: str = "test-user",
+    ):
+        perms = permissions if permissions is not None else ["production-pulse.admin"]
 
-    monkeypatch.setattr(main_module, "jwt_middleware", _fake_jwt)
-    return TestClient(main_module.create_app())
+        async def _fake_jwt(request, call_next):
+            request.state.user = SimpleNamespace(
+                sub=user_id,
+                id=user_id,
+                permissions=list(perms),
+                is_superadmin=is_superadmin,
+            )
+            return await call_next(request)
+
+        monkeypatch.setattr(main_module, "jwt_middleware", _fake_jwt)
+        return TestClient(main_module.create_app())
+
+    return _factory
+
+
+@pytest.fixture
+def client(client_factory):
+    return client_factory()
 
 
 @pytest.fixture
