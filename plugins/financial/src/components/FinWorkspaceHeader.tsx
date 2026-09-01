@@ -28,6 +28,7 @@ type FinWorkspaceHeaderProps = {
   showBranchSelector?: boolean;
   startDate?: string | null;
   endDate?: string | null;
+  granularity?: string | null;
   onRefresh?: () => void;
   refreshBusy?: boolean;
   onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
@@ -48,6 +49,7 @@ export function FinWorkspaceHeader({
   showBranchSelector = true,
   startDate,
   endDate,
+  granularity = null,
   onRefresh,
   refreshBusy,
   onPeriodChange,
@@ -55,7 +57,7 @@ export function FinWorkspaceHeader({
   const setBranch = (next: FinancialBranch) => {
     storeBranch(next);
     navigateFinancial(
-      buildFinancialHref({ subpluginId, branch: next, startDate, endDate }),
+      buildFinancialHref({ subpluginId, branch: next, startDate, endDate, granularity }),
     );
   };
 

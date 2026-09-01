@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { KpiCard, kpiCardBemClasses } from "./KpiCard";
 
@@ -92,6 +92,48 @@ describe("KpiCard", () => {
     ).toBeTruthy();
     expect(screen.queryByText("Meta mês")).toBeNull();
     expect(screen.queryByText("Goal")).toBeNull();
+  });
+
+  it("aplica tom comparativo no card", () => {
+    const { container } = render(
+      <KpiCard
+        title="ROL"
+        value="R$ 10"
+        goalLabel="R$ 20"
+        comparisonTone="negative"
+        icon={<span />}
+        classNames={kpiCardBemClasses("fin")}
+        labels={LABELS}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-kpi-card--negative")).toBeTruthy();
+  });
+
+  it("dispara onClick quando interativo e ignora clique no help", () => {
+    const onClick = vi.fn();
+    render(
+      <KpiCard
+        title="ROL"
+        titleHint="Receita operacional líquida"
+        value="R$ 10"
+        icon={<span />}
+        classNames={kpiCardBemClasses("fin")}
+        labels={LABELS}
+        onClick={onClick}
+      />,
+    );
+    const card = screen.getByRole("button", { name: /Abrir detalhes: ROL/i });
+    expect(card.tagName).toBe("ARTICLE");
+    expect(card.className).toContain("delpi-ui-kpi-card--interactive");
+    fireEvent.click(card);
+    expect(onClick).toHaveBeenCalledTimes(1);
+
+    const help = card.querySelector("button.delpi-ui-help-tooltip__trigger");
+    expect(help).toBeTruthy();
+    expect(card.querySelector("button button")).toBeNull();
+    onClick.mockClear();
+    fireEvent.click(help as HTMLElement);
+    expect(onClick).not.toHaveBeenCalled();
   });
 
   it("mostra placeholder quando loading", () => {

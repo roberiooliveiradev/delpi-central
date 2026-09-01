@@ -1,6 +1,7 @@
 import {
   ChartCard as DelpiChartCard,
   chartCardBemClasses,
+  createDashboardChartToolbarKit,
   createDashboardKpiCard,
   createDashboardLoadingActivityCard,
   type ChartCardProps as DelpiChartCardProps,
@@ -38,3 +39,13 @@ export type FinChartCardProps = Omit<DelpiChartCardProps, "classNames">;
 export function FinChartCard(props: FinChartCardProps) {
   return <DelpiChartCard classNames={CHART_CARD_CLASSES} {...props} />;
 }
+
+export const { ChartGranularityToggle: FinChartGranularityToggle } =
+  createDashboardChartToolbarKit({
+    prefix: "fin",
+    labels: {
+      exportSeries: copy.billing.exportLabel,
+      exportSeriesAriaLabel: copy.billing.exportLabel,
+      groupAriaLabel: copy.billing.granularityAria,
+    },
+  });

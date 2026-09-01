@@ -10,6 +10,15 @@
       "permission": "financial.access"
     },
     {
+      "id": "billing",
+      "label": "Faturamento",
+      "description": "Receita operacional líquida: composição, evolução, unidades e ranking de clientes.",
+      "icon": "banknote",
+      "route": "/billing",
+      "status": "active",
+      "permission": "financial.access"
+    },
+    {
       "id": "delinquency",
       "label": "Inadimplência",
       "description": "Pontualidade de pagamento dos clientes: faixas de atraso, ranking e títulos.",

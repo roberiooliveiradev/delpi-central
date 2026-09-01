@@ -6,6 +6,7 @@ import { copy } from "./content/copy";
 import { DEFAULT_SUBPLUGIN } from "./constants/routes";
 import { useFinancialRouterPath } from "./hooks/useFinancialRouterPath";
 import { useSubplugins } from "./hooks/useSubplugins";
+import { BillingPage } from "./pages/BillingPage";
 import { CostCentersPage } from "./pages/CostCentersPage";
 import { DelinquencyPage } from "./pages/DelinquencyPage";
 import { IndicatorsPage } from "./pages/IndicatorsPage";
@@ -19,7 +20,7 @@ import {
 } from "./utils/routeParser";
 
 /** Subplugins com página própria — os demais voltam para a gestão à vista. */
-const WORKSPACES = new Set([DEFAULT_SUBPLUGIN, "delinquency", "cost-centers", "indicators"]);
+const WORKSPACES = new Set([DEFAULT_SUBPLUGIN, "billing", "delinquency", "cost-centers", "indicators"]);
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -54,7 +55,16 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
       endDate={route.endDate}
     />
   );
-  if (route.subpluginId === "delinquency") {
+  if (route.subpluginId === "billing") {
+    workspace = (
+      <BillingPage
+        branch={route.branch}
+        startDate={route.startDate}
+        endDate={route.endDate}
+        granularity={route.granularity}
+      />
+    );
+  } else if (route.subpluginId === "delinquency") {
     workspace = (
       <DelinquencyPage
         branch={route.branch}

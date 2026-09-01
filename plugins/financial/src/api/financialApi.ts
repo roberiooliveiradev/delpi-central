@@ -15,6 +15,7 @@ import type {
   DepartmentIndicators,
   FinancialBranch,
   GlobalIndicators,
+  BillingDashboard,
   OverviewPayload,
   Period,
   SubpluginsPayload,
@@ -56,6 +57,28 @@ export function fetchOverview(params: {
   return get<OverviewPayload>(
     `/overview${query}`,
     "Não foi possível carregar a gestão à vista.",
+    params.signal,
+  );
+}
+
+export function fetchBillingDashboard(params: {
+  branch: FinancialBranch;
+  startDate?: string | null;
+  endDate?: string | null;
+  granularity?: string | null;
+  refresh?: boolean;
+  signal?: AbortSignal;
+}): Promise<BillingDashboard> {
+  const query = buildQuery({
+    branch: branchParam(params.branch),
+    startDate: params.startDate,
+    endDate: params.endDate,
+    granularity: params.granularity,
+    refresh: params.refresh ? "true" : null,
+  });
+  return get<BillingDashboard>(
+    `/billing/dashboard${query}`,
+    "Não foi possível carregar o faturamento.",
     params.signal,
   );
 }

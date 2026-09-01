@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from financial_app.application.services.cost_center_service import CostCenterService
@@ -117,3 +119,32 @@ def test_access_permission_is_required() -> None:
     service, _ = build()
     with pytest.raises(PermissionError):
         service.build(user(), branch="01")
+
+
+def test_overview_loads_independent_gateway_calls_in_parallel() -> None:
+    service, gateway = build()
+    sleep_s = 0.05
+    original_record = gateway._record
+
+    def slow_record(name: str, **kwargs: object) -> None:
+        time.sleep(sleep_s)
+        original_record(name, **kwargs)
+
+    gateway._record = slow_record  # type: ignore[method-assign]
+
+    started = time.monotonic()
+    result = service.build(full_user(), branch="01")
+    elapsed = time.monotonic() - started
+
+    assert result["blocks"]["rol"]["available"] is True
+    assert result["blocks"]["delinquency"]["available"] is True
+    # 8 chamadas ao gateway financeiro; em série passaria de 0,40 s.
+    assert elapsed < 0.32
+    assert {name for name, _ in gateway.calls} >= {
+        "fetch_rol",
+        "fetch_ebitda_pct",
+        "fetch_fixed_cost_pct",
+        "fetch_pmr",
+        "fetch_delinquency_summary",
+        "fetch_delinquency_monthly",
+    }

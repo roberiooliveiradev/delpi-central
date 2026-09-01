@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from financial_app.application.services.billing_service import BillingService
 from financial_app.application.services.cost_center_service import CostCenterService
 from financial_app.application.services.delinquency_service import DelinquencyService
 from financial_app.application.services.indicators_service import IndicatorsService
@@ -26,6 +27,15 @@ def build_financial_gateway() -> DelpiFinancialGateway:
 
 def build_strategic_indicators_gateway() -> StrategicIndicatorsGateway:
     return StrategicIndicatorsGateway()
+
+
+def build_billing_service(
+    gateway: DelpiFinancialGateway | None = None,
+) -> BillingService:
+    return BillingService(
+        gateway or build_financial_gateway(),
+        branch_access=build_branch_access_service(),
+    )
 
 
 def build_delinquency_service(

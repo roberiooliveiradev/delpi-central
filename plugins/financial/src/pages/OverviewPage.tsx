@@ -18,6 +18,7 @@ import {
   formatScore,
 } from "../utils/formatNumbers";
 import { buildFinancialHref, navigateFinancial } from "../utils/routeParser";
+import { resolveKpiComparisonTone } from "../utils/kpiComparisonTone";
 
 const SERIES_HEIGHT = 208;
 
@@ -122,15 +123,19 @@ export function OverviewPage({
               titleHint={helpTooltips.rol}
               value={kpiValue(blocks.rol, "currency")}
               goalLabel={kpiGoal(blocks.rol, "currency")}
+              comparisonTone={resolveKpiComparisonTone(blocks.rol, "higher_is_better")}
               subtitle={copy.branch[branch]}
               icon={<Wallet size={22} strokeWidth={1.75} />}
               footer={<FinBlockState block={blocks.rol} />}
+              onClick={() => openSubplugin("billing")}
+              aria-label={`${copy.home.openBilling}: ${blocks.rol.label ?? "ROL"}`}
             />
             <FinKpiCard
               title={blocks.ebitda.label ?? "EBITDA"}
               titleHint={helpTooltips.ebitda}
               value={kpiValue(blocks.ebitda, "percent")}
               goalLabel={kpiGoal(blocks.ebitda, "percent")}
+              comparisonTone={resolveKpiComparisonTone(blocks.ebitda, "higher_is_better")}
               subtitle={formatCurrency(blocks.ebitda.amount)}
               icon={<PiggyBank size={22} strokeWidth={1.75} />}
               footer={<FinBlockState block={blocks.ebitda} />}
@@ -140,6 +145,7 @@ export function OverviewPage({
               titleHint={helpTooltips.fixedCost}
               value={kpiValue(blocks.fixedCost, "percent")}
               goalLabel={kpiGoal(blocks.fixedCost, "percent")}
+              comparisonTone={resolveKpiComparisonTone(blocks.fixedCost, "lower_is_better")}
               subtitle={formatCurrency(blocks.fixedCost.amount)}
               icon={<HandCoins size={22} strokeWidth={1.75} />}
               footer={<FinBlockState block={blocks.fixedCost} />}
@@ -149,6 +155,7 @@ export function OverviewPage({
               titleHint={helpTooltips.pmr}
               value={kpiValue(blocks.pmr, "days")}
               goalLabel={kpiGoal(blocks.pmr, "days")}
+              comparisonTone={resolveKpiComparisonTone(blocks.pmr, "lower_is_better")}
               subtitle={copy.branch[branch]}
               icon={<CalendarClock size={22} strokeWidth={1.75} />}
               footer={<FinBlockState block={blocks.pmr} />}

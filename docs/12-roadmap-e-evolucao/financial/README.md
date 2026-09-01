@@ -11,7 +11,7 @@ Um MFE federado com rail de subplugins e um BFF próprio, no mesmo padrão do Po
 
 | Plugin legado | Continua no P0? | Superfície no Portal Financeiro | Observação |
 |---|---|---|---|
-| `dashboard-financial` | Sim | Gestão à vista (`/apps/financial`) | ROL, EBITDA, custo fixo, PMR + IDD |
+| `dashboard-financial` | Sim | Gestão à vista (`/apps/financial`) + Faturamento (`/apps/financial/billing`) | ROL, composição, série, ranking de clientes, EBITDA, custo fixo, PMR + IDD |
 | `financeiro-inadimplencia` | Sim | Inadimplência (`/apps/financial/delinquency`) | Mesmos paths `/financeiro/inadimplencia/*` |
 | `financeiro-centro-custo` | Sim | Despesas por CC (`/apps/financial/cost-centers`) | Mesmos paths `/financeiro/despesas-centro-custo/*` |
 | `planejamento-orcamentario` | Fora | Rail `budget` (`coming_soon`) | Permanece no plugin próprio |
@@ -29,5 +29,5 @@ Desativar os três plugins legados é decisão operacional futura — o portal n
 
 ## Fontes
 
-- api-delpi: `/financeiro/inadimplencia/*`, `/financeiro/despesas-centro-custo/*`, `/financial/{rol,ebitda_pct,fixed_cost_pct,pmr}`
+- api-delpi: `/financeiro/inadimplencia/*`, `/financeiro/despesas-centro-custo/*`, `/financial/{rol,ebitda_pct,fixed_cost_pct,pmr}`, `/commercial/rol/{series,by-customer,by-branch}`
 - strategic-indicators-api: `/integrations/dashboard-department-indicators?department_id=financial`

@@ -1082,7 +1082,172 @@
   gap: 8px;
 }
 
+.dashboard-financial .fin-billing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.75fr);
+  gap: 20px 28px;
+  align-items: center;
+  padding: 22px 24px;
+  border: 1px solid var(--fin-border);
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      125deg,
+      color-mix(in srgb, var(--fin-accent) 14%, var(--fin-surface)) 0%,
+      var(--fin-surface) 58%
+    );
+}
+
+.dashboard-financial .fin-billing-hero__goal {
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--fin-border) 80%, transparent);
+  background: color-mix(in srgb, var(--fin-surface) 88%, var(--fin-title));
+}
+
+.dashboard-financial .fin-billing-hero__eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fin-accent);
+}
+
+.dashboard-financial .fin-billing-hero__value {
+  margin: 0;
+  font-size: clamp(1.85rem, 3.4vw, 2.7rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fin-title);
+  line-height: 1.1;
+}
+
+.dashboard-financial .fin-billing-hero__meta,
+.dashboard-financial .fin-billing-hero__goal-label,
+.dashboard-financial .fin-billing-hero__goal-meta,
+.dashboard-financial .fin-billing-hero__status {
+  margin: 8px 0 0;
+  font-size: var(--fin-font-sm);
+  color: var(--fin-text-muted);
+}
+
+.dashboard-financial .fin-billing-hero__goal-label {
+  margin: 0 0 10px;
+  font-weight: 650;
+  color: var(--fin-title);
+}
+
+.dashboard-financial .fin-billing-hero__meter {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fin-border) 70%, var(--fin-surface));
+  overflow: hidden;
+}
+
+.dashboard-financial .fin-billing-hero__meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--fin-ok, #12a150);
+}
+
+.dashboard-financial .fin-billing-hero__meter-fill--behind {
+  background: var(--fin-critical, #e5484d);
+}
+
+.dashboard-financial .fin-billing-hero__status {
+  font-weight: 650;
+  color: var(--fin-ok, #12a150);
+}
+
+.dashboard-financial .fin-billing-hero__status--behind {
+  color: var(--fin-critical, #e5484d);
+}
+
+.dashboard-financial .fin-waterfall {
+  list-style: none;
+  margin: 0;
+  padding: 10px 14px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-financial .fin-waterfall__head,
+.dashboard-financial .fin-tax-mix__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--fin-font-sm);
+}
+
+.dashboard-financial .fin-waterfall__head strong,
+.dashboard-financial .fin-tax-mix__list strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--fin-title);
+}
+
+.dashboard-financial .fin-waterfall__track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fin-border) 65%, var(--fin-surface));
+  overflow: hidden;
+}
+
+.dashboard-financial .fin-waterfall__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.dashboard-financial .fin-waterfall__fill--add {
+  background: var(--fin-accent);
+}
+
+.dashboard-financial .fin-waterfall__fill--subtract {
+  background: color-mix(in srgb, var(--fin-critical, #e5484d) 78%, var(--fin-accent));
+}
+
+.dashboard-financial .fin-waterfall__fill--result {
+  background: var(--fin-title);
+}
+
+.dashboard-financial .fin-waterfall__row--result .fin-waterfall__head {
+  font-weight: 700;
+  color: var(--fin-title);
+}
+
+.dashboard-financial .fin-tax-mix {
+  margin: 4px 14px 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--fin-border);
+}
+
+.dashboard-financial .fin-tax-mix__title {
+  margin: 0 0 8px;
+  font-size: var(--fin-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fin-text-muted);
+}
+
+.dashboard-financial .fin-tax-mix__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 @media (max-width: 1100px) {
+  .dashboard-financial .fin-billing-hero {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-financial .fin-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

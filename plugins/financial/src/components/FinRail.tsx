@@ -1,4 +1,5 @@
 import {
+  Banknote,
   Gauge,
   HandCoins,
   House,
@@ -15,6 +16,7 @@ import { buildFinancialHref, navigateFinancial } from "../utils/routeParser";
 
 const ICONS: Record<string, LucideIcon> = {
   house: House,
+  banknote: Banknote,
   "hand-coins": HandCoins,
   receipt: Receipt,
   gauge: Gauge,

@@ -1,6 +1,15 @@
 export const helpTooltips = {
   home: "Painel inicial do Financeiro: receita líquida, margem EBITDA, custo fixo, prazo médio de recebimento, pontualidade de pagamento dos clientes e as maiores despesas do período.",
-  rol: "Receita operacional líquida do período — faturamento menos os impostos sobre venda.",
+  rol: "Receita operacional líquida do período — faturamento menos os impostos sobre venda. Clique para abrir a composição, a evolução e o ranking de clientes.",
+  billing:
+    "Faturamento operacional do período: receita bruta, descontos, devoluções e impostos até chegar na ROL. A série e o ranking de clientes usam a mesma base TOTVS do dashboard comercial.",
+  billingSeries:
+    "Evolução da ROL no recorte. Com consolidado, compara Santa Catarina e Espírito Santo; com uma unidade, mostra só essa série.",
+  billingWaterfall:
+    "Como a receita bruta vira ROL: descontos, devoluções e impostos sobre venda saem do bruto.",
+  billingCustomers:
+    "Clientes com maior ROL no período e a fatia de cada um sobre o total filtrado.",
+  billingUnits: "ROL por unidade operacional no mesmo recorte de datas.",
   ebitda: "Resultado operacional antes de juros, impostos, depreciação e amortização, sobre a receita líquida.",
   fixedCost: "Peso do custo fixo sobre a receita líquida. Quanto menor, mais folga a operação tem para oscilação de volume.",
   pmr: "Prazo médio de recebimento: quantos dias, em média, o dinheiro leva para entrar depois da venda.",

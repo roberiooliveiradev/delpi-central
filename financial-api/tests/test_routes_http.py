@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from financial_app.composition import financial_composer
+from financial_app.interface.http.routes.billing_routes import router as billing_router
 from financial_app.interface.http.routes.cost_center_routes import router as cost_center_router
 from financial_app.interface.http.routes.delinquency_routes import router as delinquency_router
 from financial_app.interface.http.routes.indicators_routes import router as indicators_router
@@ -36,7 +37,13 @@ def client(monkeypatch: pytest.MonkeyPatch):
         request.state.user = state["user"]
         return await call_next(request)
 
-    for router in (delinquency_router, cost_center_router, indicators_router, overview_router):
+    for router in (
+        delinquency_router,
+        cost_center_router,
+        indicators_router,
+        overview_router,
+        billing_router,
+    ):
         app.include_router(router)
 
     test_client = TestClient(app)
@@ -63,6 +70,7 @@ def client(monkeypatch: pytest.MonkeyPatch):
         "/indicators/department",
         "/indicators/global",
         "/overview?branch=01",
+        "/billing/dashboard?branch=01",
     ],
 )
 def test_every_route_family_answers_with_the_envelope(client, path: str) -> None:
@@ -92,6 +100,13 @@ def test_missing_module_permission_returns_403(client) -> None:
     client.state["user"] = user("financial.access")
     assert client.get("/delinquency/summary").status_code == 403
     assert client.get("/indicators/department").status_code == 403
+
+
+def test_invalid_billing_granularity_returns_400(client) -> None:
+    response = client.get("/billing/dashboard?branch=01&granularity=quarter")
+
+    assert response.status_code == 400
+    assert response.json()["success"] is False
 
 
 def test_invalid_branch_returns_400(client) -> None:

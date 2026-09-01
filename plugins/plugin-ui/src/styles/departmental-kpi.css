@@ -156,9 +156,9 @@ button.delpi-ui-kpi-card--interactive:active,
    * grids com 4–5 KPIs (~160–220px) ainda mostram «R$ 122.600,00» inteiro.
    * Ellipsis em valor monetário engana — em card estreito preferir quebra.
    */
-  font-size: var(--delpi-ui-font-kpi, clamp(0.95rem, 7.5cqi, 2rem));
+  font-size: var(--delpi-ui-font-kpi, clamp(1.125rem, 8cqi, 2.25rem));
   line-height: 1.15;
-  font-weight: 700;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   white-space: nowrap;
@@ -177,7 +177,7 @@ button.delpi-ui-kpi-card--interactive:active,
 
 @supports not (font-size: 1cqi) {
   .delpi-ui-kpi-value {
-    font-size: var(--delpi-ui-font-kpi, clamp(0.95rem, 1.5vw, 1.85rem));
+    font-size: var(--delpi-ui-font-kpi, clamp(1.125rem, 1.65vw, 2rem));
   }
 }
 
@@ -233,15 +233,15 @@ button.delpi-ui-kpi-card--interactive:active,
 
 .delpi-ui-kpi-goal {
   margin: 0 0 6px;
-  font-size: clamp(18px, 1.55vw, 28px);
-  font-weight: 700;
-  line-height: 1.15;
+  font-size: clamp(0.8125rem, 1.05vw, 1rem);
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .delpi-ui-kpi-goal--per-unit {
-  font-size: clamp(16px, 1.35vw, 22px);
+  font-size: clamp(0.75rem, 0.95vw, 0.9375rem);
 }
 
 .delpi-ui-kpi-goal-prefix {

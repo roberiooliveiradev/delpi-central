@@ -541,6 +541,7 @@ Cartão KPI departamental com valor, meta do período, opcional **Meta mês** (`
 | badges / `iddScoreLabel` | ver tipos `KpiScopeBadge`, `KpiPerformanceBadge` | Escopo e IDD |
 | `icon` | `ReactNode` | Ícone à direita |
 | `footer` | `ReactNode?` | Slot inferior |
+| `onClick` / `aria-label` | `() => void` / `string` | Torna o `<article>` acionável (`role="button"`) para drill-down; cliques em help/`a`/`button` internos são ignorados |
 | `loading` | `boolean?` | Placeholder `…` |
 | `classNames` | `KpiCardClassNames` | BEM do plugin (incl. `goalHelp` / `goalMonthly`) |
 | `labels` | `KpiCardLabels` | Textos PT do plugin |

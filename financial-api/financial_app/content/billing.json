@@ -1,0 +1,46 @@
+{
+  "cacheTtlSeconds": {
+    "summary": 300,
+    "series": 300,
+    "customers": 300,
+    "branches": 300
+  },
+  "maxParallelBlocks": 4,
+  "customerLimit": 12,
+  "defaultGranularity": "month",
+  "allowedGranularities": ["day", "week", "month", "year"],
+  "messages": {
+    "invalidGranularity": "Granularidade inválida. Use day, week, month ou year.",
+    "blockFailed": "Não foi possível carregar este recorte agora."
+  },
+  "composition": [
+    { "key": "grossRevenue", "source": "gross_revenue", "role": "add", "label": "Receita bruta" },
+    { "key": "discounts", "source": "discounts", "role": "subtract", "label": "Descontos" },
+    { "key": "returns", "source": "returns", "role": "subtract", "label": "Devoluções" },
+    { "key": "taxes", "source": "rol_taxes", "role": "subtract", "label": "Impostos sobre venda" },
+    { "key": "rol", "source": "rol", "role": "result", "label": "ROL" }
+  ],
+  "taxMix": [
+    { "key": "icms", "source": "icms", "label": "ICMS" },
+    { "key": "pis", "source": "pis", "label": "PIS" },
+    { "key": "cofins", "source": "cofins", "label": "COFINS" },
+    { "key": "iss", "source": "iss", "label": "ISS" },
+    { "key": "ipi", "source": "ipi_separated", "label": "IPI destacado" }
+  ],
+  "detailLines": [
+    { "key": "grossRevenue", "source": "gross_revenue", "label": "Faturamento bruto" },
+    { "key": "otherValues", "source": "other_values", "label": "Outros valores" },
+    { "key": "itemsWithoutTes", "source": "items_without_tes", "label": "Itens sem TES" },
+    { "key": "returns", "source": "returns", "label": "Devoluções" },
+    { "key": "discounts", "source": "discounts", "label": "Descontos" },
+    { "key": "icms", "source": "icms", "label": "ICMS" },
+    { "key": "iss", "source": "iss", "label": "ISS" },
+    { "key": "pis", "source": "pis", "label": "PIS" },
+    { "key": "cofins", "source": "cofins", "label": "COFINS" },
+    { "key": "ipiSeparated", "source": "ipi_separated", "label": "IPI destacado" },
+    { "key": "taxes", "source": "rol_taxes", "label": "Impostos ROL" },
+    { "key": "rol", "source": "rol", "label": "ROL" },
+    { "key": "financialTitles", "source": "financial_titles", "label": "Títulos financeiros" },
+    { "key": "financialBalance", "source": "financial_balance", "label": "Saldo financeiro" }
+  ]
+}

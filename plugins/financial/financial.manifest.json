@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "financial",
   "name": "Portal Financeiro",
-  "description": "Gestão à vista financeira, inadimplência de clientes, despesas por centro de custo e indicadores IDD/IGD.",
+  "description": "Gestão à vista financeira, faturamento (ROL), inadimplência de clientes, despesas por centro de custo e indicadores IDD/IGD.",
   "category": "financeiro",
   "icon": "wallet",
   "version": "0.1.0",
@@ -37,7 +37,7 @@
     {
       "code": "financial.export",
       "name": "Exportar Excel",
-      "description": "Baixar recortes de clientes inadimplentes e lançamentos em Excel.",
+      "description": "Baixar recortes de faturamento, clientes inadimplentes e lançamentos em Excel.",
       "module": "financial"
     },
     {
@@ -68,6 +68,14 @@
       "label": "Gestão à vista",
       "permission": "financial.access",
       "icon": "layout-dashboard",
+      "order": 40,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/financial/billing",
+      "label": "Faturamento",
+      "permission": "financial.access",
+      "icon": "banknote",
       "order": 40,
       "showInMenu": false
     },

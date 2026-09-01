@@ -27,6 +27,16 @@ describe("parseFinancialPath", () => {
     expect(route.page).toBe(3);
   });
 
+  it("reads billing granularity from the shareable URL", () => {
+    const route = parseFinancialPath(
+      "/apps/financial/billing",
+      "?branch=01&startDate=2026-08-01&endDate=2026-08-31&granularity=week",
+      "02",
+    );
+    expect(route.subpluginId).toBe("billing");
+    expect(route.granularity).toBe("week");
+  });
+
   it("drops an invalid title status instead of forwarding it to the API", () => {
     const route = parseFinancialPath("/apps/financial/delinquency", "?status=pendente", "01");
     expect(route.status).toBeNull();
@@ -58,6 +68,16 @@ describe("buildFinancialHref", () => {
         clientKey: "000001|01",
       }),
     ).toBe("/apps/financial/delinquency?branch=all&client=000001%7C01");
+  });
+
+  it("serializes billing granularity", () => {
+    expect(
+      buildFinancialHref({
+        subpluginId: "billing",
+        branch: "01",
+        granularity: "week",
+      }),
+    ).toBe("/apps/financial/billing?branch=01&granularity=week");
   });
 
   it("serializes cost-center filters", () => {

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
@@ -39,11 +39,15 @@ export type KpiCardLabels = {
   badgesStatus: string;
 };
 
+export type KpiComparisonTone = "positive" | "negative" | "warning";
+
 export type KpiCardProps = {
   title: string;
   titleHint?: string;
   value: string;
   valueVariant?: "default" | "per-unit";
+  /** Cor do valor vs meta (verde/vermelho/amarelo) — aplica `.delpi-ui-kpi-card--*`. */
+  comparisonTone?: KpiComparisonTone | null;
   contextLabel?: string;
   goalLabel?: string | null;
   /** Sobrescreve `labels.goalPrefix` (ex.: Meta parcial / Meta acumulada). */
@@ -69,6 +73,10 @@ export type KpiCardProps = {
   classNames: KpiCardClassNames;
   labels: KpiCardLabels;
   className?: string;
+  /** Torna o card acionável (deep link / drill-down). */
+  onClick?: () => void;
+  /** Rótulo acessível quando `onClick` está definido. */
+  "aria-label"?: string;
 };
 
 /** Monta classNames BEM `{prefix}-kpi-*` + `.delpi-ui-kpi-*`. */
@@ -116,6 +124,7 @@ export function KpiCard({
   titleHint,
   value,
   valueVariant = "default",
+  comparisonTone = null,
   contextLabel,
   goalLabel = null,
   goalPrefix = null,
@@ -137,6 +146,8 @@ export function KpiCard({
   classNames,
   labels,
   className,
+  onClick,
+  "aria-label": ariaLabel,
 }: KpiCardProps) {
   const showMeta = !loading;
   const resolvedGoal = showMeta ? goalLabel ?? null : null;
@@ -167,10 +178,46 @@ export function KpiCard({
     valueVariant === "per-unit" ? classNames.valuePerUnit : classNames.value;
   const goalClassName = goalVariant === "per-unit" ? classNames.goalPerUnit : classNames.goal;
   const monthlyClassName = classNames.goalMonthly ?? goalClassName;
-  const articleClass = [classNames.article, className].filter(Boolean).join(" ");
+  const interactive = typeof onClick === "function";
+  const articleClass = [
+    classNames.article,
+    comparisonTone ? `delpi-ui-kpi-card--${comparisonTone}` : null,
+    interactive ? "delpi-ui-kpi-card--interactive" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const activate = () => {
+    onClick?.();
+  };
+
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("button, a")) return;
+    activate();
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      activate();
+    }
+  };
 
   return (
-    <article className={articleClass}>
+    <article
+      className={articleClass}
+      {...(interactive
+        ? {
+            role: "button" as const,
+            tabIndex: 0,
+            onClick: handleClick,
+            onKeyDown: handleKeyDown,
+            "aria-label": ariaLabel ?? `Abrir detalhes: ${title}`,
+          }
+        : {})}
+    >
       <div className={classNames.header}>
         <div>
           <p className={classNames.title}>

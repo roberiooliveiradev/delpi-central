@@ -7,6 +7,7 @@ from financial_app.application.services.content_loader import load_content
 from financial_app.application.services.cost_center_service import CostCenterService
 from financial_app.application.services.delinquency_service import DelinquencyService
 from financial_app.application.services.indicators_service import IndicatorsService
+from financial_app.application.services.parallel_block_runner import run_named_callables
 from financial_app.application.services.payload_mapping import (
     as_float,
     as_int,
@@ -62,11 +63,10 @@ class OverviewService:
         start, end = resolve_inclusive_period_or_default(start_date, end_date)
 
         kpi_cfg = _settings().get("kpis") or {}
-        return {
-            "branch": scope,
-            "period": {"startDate": start, "endDate": end},
-            "blocks": {
-                "rol": self._kpi_block(
+        workers = self._max_parallel_blocks()
+        blocks = run_named_callables(
+            {
+                "rol": lambda: self._kpi_block(
                     user,
                     label_key="rol",
                     cfg=kpi_cfg,
@@ -80,7 +80,7 @@ class OverviewService:
                         "taxes": as_opt_float(data.get("rol_taxes")),
                     },
                 ),
-                "ebitda": self._kpi_block(
+                "ebitda": lambda: self._kpi_block(
                     user,
                     label_key="ebitda",
                     cfg=kpi_cfg,
@@ -92,7 +92,7 @@ class OverviewService:
                     value_keys=("ebitda_over_rol_pct",),
                     amount_key="ebitda_value",
                 ),
-                "fixedCost": self._kpi_block(
+                "fixedCost": lambda: self._kpi_block(
                     user,
                     label_key="fixedCost",
                     cfg=kpi_cfg,
@@ -104,7 +104,7 @@ class OverviewService:
                     value_keys=("fixed_cost_over_rol_pct",),
                     amount_key="fixed_cost_value",
                 ),
-                "pmr": self._kpi_block(
+                "pmr": lambda: self._kpi_block(
                     user,
                     label_key="pmr",
                     cfg=kpi_cfg,
@@ -114,23 +114,33 @@ class OverviewService:
                     value_keys=("pmr_days",),
                     amount_key=None,
                 ),
-                "delinquency": self._safe_block(
+                "delinquency": lambda: self._safe_block(
                     user,
                     FIN_DELINQUENCY_VIEW,
                     lambda: self._delinquency_block(user, start, end, refresh),
                 ),
-                "costCenters": self._safe_block(
+                "costCenters": lambda: self._safe_block(
                     user,
                     FIN_COST_CENTERS_VIEW,
                     lambda: self._cost_centers_block(user, scope, start, end, refresh),
                 ),
-                "indicators": self._safe_block(
+                "indicators": lambda: self._safe_block(
                     user,
                     FIN_INDICATORS_VIEW,
                     lambda: self._indicators_block(user, scope, refresh),
                 ),
             },
+            max_workers=workers,
+        )
+        return {
+            "branch": scope,
+            "period": {"startDate": start, "endDate": end},
+            "blocks": blocks,
         }
+
+    @staticmethod
+    def _max_parallel_blocks() -> int:
+        return max(1, as_int(_settings().get("maxParallelBlocks"), 6))
 
     def _kpi_block(
         self,
@@ -174,12 +184,19 @@ class OverviewService:
         end: str,
         refresh: bool,
     ) -> dict[str, Any]:
-        summary = self._delinquency.summary(
-            user, start_date=start, end_date=end, refresh=refresh
+        loaded = run_named_callables(
+            {
+                "summary": lambda: self._delinquency.summary(
+                    user, start_date=start, end_date=end, refresh=refresh
+                ),
+                "monthly": lambda: self._delinquency.monthly(
+                    user, start_date=start, end_date=end, refresh=refresh
+                ),
+            },
+            max_workers=self._max_parallel_blocks(),
         )
-        monthly = self._delinquency.monthly(
-            user, start_date=start, end_date=end, refresh=refresh
-        )
+        summary = loaded["summary"]
+        monthly = loaded["monthly"]
         return {
             "available": True,
             "error": None,
@@ -199,26 +216,33 @@ class OverviewService:
         refresh: bool,
     ) -> dict[str, Any]:
         limit = as_int(_settings().get("topCostCentersLimit"), 5)
-        summary = self._cost_centers.summary(
-            user,
-            branch=branch,
-            start_date=start,
-            end_date=end,
-            cost_center=None,
-            supplier_code=None,
-            supplier_store=None,
-            refresh=refresh,
+        loaded = run_named_callables(
+            {
+                "summary": lambda: self._cost_centers.summary(
+                    user,
+                    branch=branch,
+                    start_date=start,
+                    end_date=end,
+                    cost_center=None,
+                    supplier_code=None,
+                    supplier_store=None,
+                    refresh=refresh,
+                ),
+                "ranking": lambda: self._cost_centers.ranking_cost_centers(
+                    user,
+                    branch=branch,
+                    start_date=start,
+                    end_date=end,
+                    supplier_code=None,
+                    supplier_store=None,
+                    limit=limit,
+                    refresh=refresh,
+                ),
+            },
+            max_workers=self._max_parallel_blocks(),
         )
-        ranking = self._cost_centers.ranking_cost_centers(
-            user,
-            branch=branch,
-            start_date=start,
-            end_date=end,
-            supplier_code=None,
-            supplier_store=None,
-            limit=limit,
-            refresh=refresh,
-        )
+        summary = loaded["summary"]
+        ranking = loaded["ranking"]
         return {
             "available": True,
             "error": None,

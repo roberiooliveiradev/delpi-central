@@ -313,7 +313,109 @@ class FakeFinancialGateway:
 
     def fetch_rol(self, **kwargs: Any) -> dict[str, Any]:
         self._record("fetch_rol", **kwargs)
-        return envelope({"rol": 5_000_000.0, "gross_revenue": 6_200_000.0, "rol_taxes": 1_200_000.0})
+        return envelope(
+            {
+                "rol": 5_000_000.0,
+                "gross_revenue": 6_200_000.0,
+                "other_values": 0.0,
+                "items_without_tes": 0.0,
+                "returns": 180_000.0,
+                "discounts": 90_000.0,
+                "icms": 720_000.0,
+                "iss": 0.0,
+                "pis": 80_000.0,
+                "cofins": 370_000.0,
+                "ipi_separated": 0.0,
+                "rol_taxes": 1_200_000.0,
+                "financial_titles": 0.0,
+                "financial_balance": 0.0,
+                "target": 5_500_000.0,
+                "rol_target_pct": 90.91,
+                "goal_label": "Meta SI",
+            }
+        )
+
+    def fetch_rol_series(self, **kwargs: Any) -> dict[str, Any]:
+        self._record("fetch_rol_series", **kwargs)
+        return envelope(
+            {
+                "granularity": kwargs.get("granularity") or "month",
+                "truncated": False,
+                "points": [
+                    {
+                        "periodo": "2026-08",
+                        "sort_key": "2026-08",
+                        "start_date": "2026-08-01",
+                        "end_date": "2026-08-31",
+                        "rol_matrix": 3_200_000.0,
+                        "rol_branch": 1_800_000.0,
+                    },
+                    {
+                        "periodo": "2026-09",
+                        "sort_key": "2026-09",
+                        "start_date": "2026-09-01",
+                        "end_date": "2026-09-30",
+                        "rol_matrix": 2_900_000.0,
+                        "rol_branch": 1_500_000.0,
+                    },
+                ],
+            }
+        )
+
+    def fetch_rol_by_customer(self, **kwargs: Any) -> dict[str, Any]:
+        self._record("fetch_rol_by_customer", **kwargs)
+        return envelope(
+            {
+                "branch": kwargs.get("branch") or "",
+                "start_date": kwargs.get("start_date"),
+                "end_date": kwargs.get("end_date"),
+                "items": [
+                    {
+                        "customer_code": "000001",
+                        "customer_store": "01",
+                        "customer_name": "WEG EQUIPAMENTOS ELETRICOS SA",
+                        "rol": 1_250_000.0,
+                        "gross_revenue": 1_480_000.0,
+                        "share_pct": 25.0,
+                        "rank": 1,
+                    }
+                ],
+                "others": {
+                    "customer_code": "",
+                    "customer_store": "",
+                    "customer_name": "Demais clientes",
+                    "rol": 3_750_000.0,
+                    "gross_revenue": 4_720_000.0,
+                    "share_pct": 75.0,
+                    "rank": 0,
+                },
+                "summary": {"total_rol": 5_000_000.0, "customers_count": 48, "items_count": 1},
+            }
+        )
+
+    def fetch_rol_by_branch(self, **kwargs: Any) -> dict[str, Any]:
+        self._record("fetch_rol_by_branch", **kwargs)
+        return envelope(
+            {
+                "items": [
+                    {
+                        "branch": "01",
+                        "rol": 3_200_000.0,
+                        "gross_revenue": 3_900_000.0,
+                        "returns": 110_000.0,
+                        "discounts": 50_000.0,
+                    },
+                    {
+                        "branch": "02",
+                        "rol": 1_800_000.0,
+                        "gross_revenue": 2_300_000.0,
+                        "returns": 70_000.0,
+                        "discounts": 40_000.0,
+                    },
+                ],
+                "summary": {"items_count": 2, "total_rol": 5_000_000.0},
+            }
+        )
 
     def fetch_ebitda_pct(self, **kwargs: Any) -> dict[str, Any]:
         self._record("fetch_ebitda_pct", **kwargs)

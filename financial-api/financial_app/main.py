@@ -9,6 +9,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from financial_app.config import settings
 from financial_app.core.responses import fail
+from financial_app.interface.http.routes.billing_routes import router as billing_router
 from financial_app.interface.http.routes.cost_center_routes import router as cost_center_router
 from financial_app.interface.http.routes.delinquency_routes import router as delinquency_router
 from financial_app.interface.http.routes.indicators_routes import router as indicators_router
@@ -50,7 +51,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="Portal Financeiro API",
     description=(
-        "BFF do Portal Financeiro — gestão à vista, inadimplência, despesas por centro "
+        "BFF do Portal Financeiro — gestão à vista, faturamento, inadimplência, despesas por centro "
         "de custo e indicadores estratégicos do departamento Financeiro."
     ),
     version="0.1.0",
@@ -93,6 +94,7 @@ def health():
 
 app.include_router(subplugin_router)
 app.include_router(overview_router)
+app.include_router(billing_router)
 app.include_router(delinquency_router)
 app.include_router(cost_center_router)
 app.include_router(indicators_router)

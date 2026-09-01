@@ -9,5 +9,6 @@ export const FINANCIAL_ROUTES = {
   home: FINANCIAL_BASE_PATH,
   delinquency: `${FINANCIAL_BASE_PATH}/delinquency`,
   costCenters: `${FINANCIAL_BASE_PATH}/cost-centers`,
+  billing: `${FINANCIAL_BASE_PATH}/billing`,
   indicators: `${FINANCIAL_BASE_PATH}/indicators`,
 } as const;

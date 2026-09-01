@@ -1,6 +1,6 @@
 # Portal Financeiro (MFE)
 
-Microfrontend federado do **Portal Financeiro** (`id`: `financial`): shell com rail de subplugins — gestão à vista, inadimplência, despesas por centro de custo e indicadores IDD/IGD.
+Microfrontend federado do **Portal Financeiro** (`id`: `financial`): shell com rail de subplugins — gestão à vista, faturamento (ROL), inadimplência, despesas por centro de custo e indicadores IDD/IGD.
 
 ## Fluxo técnico
 
@@ -17,7 +17,8 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: financial`.
 
 | Rota | Tela |
 |------|------|
-| `/apps/financial?branch=` | Gestão à vista (ROL, EBITDA, custo fixo, PMR, inadimplência, top CC, IDD) |
+| `/apps/financial?branch=` | Gestão à vista (ROL, EBITDA, custo fixo, PMR, inadimplência, top CC, IDD). Clique no card de ROL para o faturamento. |
+| `…/billing?branch=&startDate=&endDate=&granularity=` | Faturamento: composição da ROL, evolução, unidades e ranking de clientes |
 | `…/delinquency?startDate=&endDate=&q=&customer=&status=` | Inadimplência (consolidada na origem — sem seletor de filial) |
 | `…/cost-centers?branch=&startDate=&endDate=&costCenter=&supplier=` | Despesas por centro de custo |
 | `…/indicators?branch=` | IDD do Financeiro e IGD da Delpi |
@@ -35,6 +36,7 @@ Base: `/apps/financial-api`
 | GET | `/health` | Liveness |
 | GET | `/subplugins` | Catálogo filtrado por permissão + `capabilities.export` |
 | GET | `/overview?branch=&startDate=&endDate=` | Gestão à vista (blocos isolados) |
+| GET | `/billing/dashboard?branch=&startDate=&endDate=&granularity=` | Faturamento (ROL + série + clientes + unidades) |
 | GET | `/delinquency/{summary,monthly,aging,customers,titles}` | Inadimplência |
 | GET | `/cost-centers/{filters,summary,series,ranking-cost-centers,ranking-suppliers,entries}` | Despesas por CC |
 | GET | `/indicators/{department,global}` | IDD / IGD |
@@ -74,6 +76,6 @@ src/
   components/    shell, rail, header, dialog host-contained
   content/       copy + helpTooltips (sem path de API)
   hooks/         overview, delinquency, cost-centers, indicators
-  pages/         quatro telas do P0
+  pages/         gestão à vista, faturamento, inadimplência, centros de custo, indicadores
   utils/         rota, query, formatação, Excel
 ```

@@ -293,6 +293,95 @@ export type KpiBlock = BlockState & {
   taxes?: number;
 };
 
+export type BillingLine = {
+  key: string;
+  label: string;
+  value: number;
+  role?: string | null;
+};
+
+export type BillingSummary = {
+  period: Period;
+  branch: string | null;
+  rol: number;
+  target: number | null;
+  targetPct: number | null;
+  gap: number | null;
+  goalLabel: string | null;
+  grossRevenue: number;
+  otherValues: number;
+  itemsWithoutTes: number;
+  returns: number;
+  discounts: number;
+  icms: number;
+  iss: number;
+  pis: number;
+  cofins: number;
+  ipiSeparated: number;
+  taxes: number;
+  financialTitles: number;
+  financialBalance: number;
+  composition: BillingLine[];
+  taxMix: BillingLine[];
+  detail: BillingLine[];
+};
+
+export type BillingSeriesPoint = {
+  period: string;
+  sortKey: string;
+  startDate: string;
+  endDate: string;
+  rol01: number;
+  rol02: number;
+};
+
+export type BillingSeriesBlock = BlockState & {
+  granularity?: string;
+  truncated?: boolean;
+  items?: BillingSeriesPoint[];
+};
+
+export type BillingCustomer = {
+  customerCode: string;
+  customerStore: string;
+  customerName: string;
+  rol: number;
+  grossRevenue: number;
+  sharePct: number | null;
+  rank: number;
+};
+
+export type BillingCustomersBlock = BlockState & {
+  branch?: string | null;
+  items?: BillingCustomer[];
+  others?: BillingCustomer | null;
+  totalRol?: number;
+  customersCount?: number;
+};
+
+export type BillingBranchItem = {
+  branch: string;
+  rol: number;
+  grossRevenue: number;
+  returns: number;
+  discounts: number;
+};
+
+export type BillingBranchesBlock = BlockState & {
+  items?: BillingBranchItem[];
+  totalRol?: number;
+};
+
+export type BillingDashboard = {
+  branch: string | null;
+  period: { startDate: string; endDate: string };
+  granularity: string;
+  summary: BillingSummary;
+  series: BillingSeriesBlock;
+  customers: BillingCustomersBlock;
+  branches: BillingBranchesBlock;
+};
+
 export type OverviewDelinquencyBlock = BlockState & {
   period?: Period;
   scopeNotice?: string;

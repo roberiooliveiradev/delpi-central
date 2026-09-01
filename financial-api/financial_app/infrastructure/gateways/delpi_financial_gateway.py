@@ -329,6 +329,53 @@ class DelpiFinancialGateway:
     ) -> dict[str, Any]:
         return self._request("GET", "/financial/rol", params=self._kpi_params(branch, start_date, end_date))
 
+    def fetch_rol_series(
+        self,
+        *,
+        granularity: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/commercial/rol/series",
+            params={
+                "granularity": granularity,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
+
+    def fetch_rol_by_customer(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+        limit: int,
+        include_others: bool = True,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/commercial/rol/by-customer",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "limit": limit,
+                "include_others": include_others,
+            },
+        )
+
+    def fetch_rol_by_branch(
+        self, *, start_date: str | None, end_date: str | None
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/commercial/rol/by-branch",
+            params={"start_date": start_date, "end_date": end_date},
+        )
+
     def fetch_ebitda_pct(
         self, *, branch: str | None, start_date: str | None, end_date: str | None
     ) -> dict[str, Any]:

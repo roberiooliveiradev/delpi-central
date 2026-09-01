@@ -135,6 +135,28 @@ class FinancialDataGateway(Protocol):
         self, *, branch: str | None, start_date: str | None, end_date: str | None
     ) -> dict[str, Any]: ...
 
+    def fetch_rol_series(
+        self,
+        *,
+        granularity: str,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, Any]: ...
+
+    def fetch_rol_by_customer(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+        limit: int,
+        include_others: bool = True,
+    ) -> dict[str, Any]: ...
+
+    def fetch_rol_by_branch(
+        self, *, start_date: str | None, end_date: str | None
+    ) -> dict[str, Any]: ...
+
     def fetch_ebitda_pct(
         self, *, branch: str | None, start_date: str | None, end_date: str | None
     ) -> dict[str, Any]: ...
