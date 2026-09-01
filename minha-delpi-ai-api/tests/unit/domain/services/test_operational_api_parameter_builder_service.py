@@ -34,7 +34,45 @@ def test_build_date_branch_maps_todas_as_filiais_to_todas():
         "rol de todas as filiais",
     )
 
-    assert parameters["branch"] == "all"
+    assert "branch" not in parameters
+
+
+def test_build_date_branch_extracts_bare_branch_code_after_rol():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "branch", "in": "query"},
+                {"name": "start_date", "in": "query"},
+                {"name": "end_date", "in": "query"},
+            ],
+        },
+        "rol 01 ago/26",
+    )
+
+    assert parameters["branch"] == "01"
+    assert parameters["start_date"] == "01-08-2026"
+    assert parameters["end_date"] == "31-08-2026"
+
+
+def test_build_date_branch_omits_branch_for_consolidado():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "branch", "in": "query"},
+                {"name": "start_date", "in": "query"},
+                {"name": "end_date", "in": "query"},
+            ],
+        },
+        "qual o rol consolidado em agosto 2026",
+    )
+
+    assert "branch" not in parameters
+    assert parameters["start_date"] == "01-08-2026"
+    assert parameters["end_date"] == "31-08-2026"
 
 
 def test_build_date_branch_infers_granularity_for_series():

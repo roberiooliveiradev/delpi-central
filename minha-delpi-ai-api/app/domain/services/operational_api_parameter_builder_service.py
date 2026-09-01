@@ -94,9 +94,11 @@ class OperationalApiParameterBuilderService:
         )
         branch_match = re.search(str(patterns.get("branch") or r"\bfilial\s+(\d{2})\b"), normalized)
         if all_branches_match:
-            branch = str(spec.get("allBranchesValue") or "all")
+            branch = None
         else:
             branch = branch_match.group(1) if branch_match else None
+            if branch is None:
+                branch = ChatFollowUpTurnContentService.extract_branch_code(message_for_match)
         route_parameters = action.get("parameters") if isinstance(action.get("parameters"), dict) else {}
         branch_default = route_parameters.get("branchDefault")
         if branch is None and branch_default:
