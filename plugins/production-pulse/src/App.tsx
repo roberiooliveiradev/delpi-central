@@ -1,7 +1,9 @@
 import { configureHttpClient } from "./api/httpClient";
+import { resolveProductionPulsePermissions } from "./constants/permissions";
 import { parseProductionPulseRoute } from "./constants/routes";
 import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPath";
 import { ScaffoldPage } from "./pages/ScaffoldPage";
+import { PanelPage } from "./pages/PanelPage";
 import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
 
 export type AppProps = {
@@ -14,10 +16,13 @@ export type AppProps = {
 export default function App({
   getAccessToken,
   pathname: pathnameFromHost,
+  permissions,
+  isSuperadmin,
 }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
-  const pathname = useProductionPulseRouterPath(pathnameFromHost);
+  const { pathname, search } = useProductionPulseRouterPath(pathnameFromHost);
   const route = parseProductionPulseRoute(pathname);
+  const permissionFlags = resolveProductionPulsePermissions(permissions, isSuperadmin);
 
   if (route.kind === "unknown") {
     return (
@@ -36,7 +41,11 @@ export default function App({
 
   return (
     <div className="dashboard-production-pulse dashboard-page">
-      <ScaffoldPage mode={route.kind === "operator" ? "operator" : "panel"} />
+      {route.kind === "panel" ? (
+        <PanelPage search={search} permissions={permissionFlags} />
+      ) : (
+        <ScaffoldPage mode="operator" />
+      )}
     </div>
   );
 }

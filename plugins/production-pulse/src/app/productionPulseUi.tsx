@@ -1,5 +1,8 @@
 import type { ComponentProps } from "react";
 import {
+  ActionButton,
+  createDashboardSegmentToggle,
+  createSimpleKpiCard,
   createStateBoxPanel,
   PageHero,
   pageHeroBemClasses,
@@ -21,5 +24,9 @@ export const PpStateBox = createStateBoxPanel({
     return <Loader2 size={22} />;
   },
 });
+
+export const PpActionButton = ActionButton;
+export const PpSimpleKpiCard = createSimpleKpiCard(PREFIX, { withBody: true, withSubtitle: true });
+export const PpSegmentToggle = createDashboardSegmentToggle(PREFIX);
 
 export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;

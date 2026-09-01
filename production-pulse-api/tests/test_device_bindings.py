@@ -99,3 +99,19 @@ def test_delete_binding(client, unique_ip):
     active = client.get(f"/devices/{device['id']}/binding")
     assert active.status_code == 200
     assert active.json()["data"] is None
+
+
+def test_list_devices_includes_active_binding_summary(client, unique_ip):
+    device = _create_device(client, unique_ip, "ESP list binding")
+    client.put(
+        f"/devices/{device['id']}/binding",
+        json={"anchorType": "equipment", "equipmentLabel": "Ventilador A"},
+    )
+
+    listed = client.get("/devices", params={"branch": "01"})
+    assert listed.status_code == 200
+    items = listed.json()["data"]["items"]
+    row = next(item for item in items if item["id"] == device["id"])
+    assert row["binding"] is not None
+    assert row["binding"]["anchorType"] == "equipment"
+    assert row["binding"]["placementLabel"] == "Ventilador A"

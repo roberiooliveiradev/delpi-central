@@ -10,6 +10,7 @@ from production_pulse_app.core.serialize import json_safe
 from production_pulse_app.domain.services.device_connectivity_status_service import (
     resolve_connectivity_status,
 )
+from production_pulse_app.domain.services.binding_serialization_service import binding_row_to_api
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
 from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.domain.services.device_validation_service import (
@@ -79,11 +80,13 @@ class DeviceService:
             search=search,
         )
         device_ids = [row["id"] for row in rows]
-        bound_ids = self._binding_repository.active_device_ids_among(device_ids)
-        items = [
-            self._enrich_connectivity(row, has_binding=row["id"] in bound_ids)
-            for row in rows
-        ]
+        bindings_by_device = self._binding_repository.list_active_for_device_ids(device_ids)
+        items = []
+        for row in rows:
+            binding_row = bindings_by_device.get(row["id"])
+            payload = self._enrich_connectivity(row, has_binding=binding_row is not None)
+            payload["binding"] = binding_row_to_api(binding_row) if binding_row else None
+            items.append(payload)
         return {"items": items}
 
     def get_device(self, device_id: UUID) -> dict[str, Any]:

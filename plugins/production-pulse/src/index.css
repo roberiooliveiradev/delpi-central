@@ -78,3 +78,336 @@
 #root:has(> .dashboard-production-pulse) {
   min-height: 100%;
 }
+
+.pp-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--pp-grid-gap);
+}
+
+.pp-kpi-skeleton {
+  min-height: 96px;
+  border-radius: var(--pp-card-radius);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--pp-border) 60%, transparent),
+    color-mix(in srgb, var(--pp-surface) 80%, transparent),
+    color-mix(in srgb, var(--pp-border) 60%, transparent)
+  );
+  background-size: 200% 100%;
+  animation: pp-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes pp-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.pp-filial-switcher--compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-filial-switcher__label {
+  margin: 0;
+  font-size: var(--pp-font-xs);
+  color: var(--pp-text-muted);
+}
+
+.pp-filial-switcher__options {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.pp-filial-switcher__option {
+  border: 1px solid var(--pp-border);
+  background: var(--pp-surface);
+  color: var(--pp-text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.pp-filial-switcher__option.is-active {
+  border-color: var(--pp-accent);
+  background: var(--pp-accent-soft);
+  color: var(--pp-title);
+}
+
+.pp-filter-view-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  grid-column: 1 / -1;
+}
+
+.pp-filters-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.pp-filters-wrap__actions {
+  margin-left: auto;
+}
+
+.pp-filter-new-device__label {
+  white-space: nowrap;
+}
+
+.pp-device-link {
+  border: 0;
+  background: transparent;
+  color: var(--pp-accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.pp-device-placement {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pp-anchor-type-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: var(--pp-font-xs);
+  background: color-mix(in srgb, var(--pp-accent) 10%, var(--pp-surface));
+  color: var(--pp-title);
+}
+
+.pp-device-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pp-font-sm);
+}
+
+.pp-device-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pp-device-status--online {
+  color: var(--pp-success);
+}
+
+.pp-device-status--offline {
+  color: var(--pp-warning);
+}
+
+.pp-device-status--no_binding {
+  color: var(--pp-text-muted);
+}
+
+.pp-device-status--disabled {
+  color: var(--pp-danger);
+}
+
+.pp-tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-row-action {
+  border: 0;
+  background: transparent;
+  color: var(--pp-text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.pp-row-action:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.pp-spin {
+  animation: pp-spin 0.8s linear infinite;
+}
+
+@keyframes pp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pp-device-table__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pp-device-table__title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--pp-title);
+}
+
+.pp-device-table__count {
+  font-size: var(--pp-font-sm);
+  color: var(--pp-text-muted);
+}
+
+.pp-device-card-list,
+.pp-placement-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-device-card {
+  border: 1px solid var(--pp-border);
+  background: var(--pp-surface);
+  border-radius: var(--pp-card-radius);
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.pp-device-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.pp-device-card__title {
+  font-size: 1rem;
+}
+
+.pp-device-card__placement {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--pp-text-muted);
+  font-size: var(--pp-font-sm);
+}
+
+.pp-device-card__meta {
+  margin: 8px 0 0;
+  color: var(--pp-text);
+  font-size: var(--pp-font-sm);
+}
+
+.pp-device-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pp-device-card__ghost {
+  border: 1px solid var(--pp-border);
+  background: transparent;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.pp-placement-group {
+  border: 1px solid var(--pp-border);
+  border-radius: var(--pp-card-radius);
+  overflow: hidden;
+  background: var(--pp-surface);
+}
+
+.pp-placement-group__header {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border: 0;
+  background: color-mix(in srgb, var(--pp-accent) 6%, var(--pp-surface));
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pp-placement-group__title {
+  font-weight: 600;
+}
+
+.pp-placement-group__meta {
+  margin-left: auto;
+  color: var(--pp-text-muted);
+  font-size: var(--pp-font-sm);
+}
+
+.pp-placement-group__rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-placement-group__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid var(--pp-border);
+}
+
+.pp-placement-group__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.pp-compact-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .pp-kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pp-device-table__col-role,
+  .pp-device-table__col-last-seen {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .pp-filter-new-device__label {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .pp-kpi-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .pp-device-table--desktop {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .pp-device-card-list {
+    display: none;
+  }
+}
