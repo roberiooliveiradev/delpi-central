@@ -125,15 +125,15 @@ Hotfixes adicionais: labels compare por eixo branch; bare `01` em date_branch; c
 
 ### Critérios verify-final (E6)
 
-| Caso | Alvo | Offline | Live (2026-09-01) |
-|------|------|---------|-------------------|
-| B3 | identity &lt;2s | PASS unit | **BLOQUEADO** — `403` falta `minha-delpi.chat.access` (rober) após rebuild stack |
-| A7 | `branch=01`, valor ~filial 01 | PASS unit bare `01` | pendente live |
-| C1 | consolidado ≠ 0 (sem branch) | PASS unit omit branch | pendente live |
-| D3 | dual ago×jul | PASS unit mês passado | pendente live |
-| D4/D5/D6 | prosa filial, sem YoY | PASS unit branch labels | pendente live |
+| Caso | Alvo | Offline | Live (2026-09-01, pós superadmin) |
+|------|------|---------|-----------------------------------|
+| B3 | identity &lt;2s | PASS unit | **PASS** 1456ms, identity direct |
+| A7 | `branch=01`, valor ~filial 01 | PASS unit bare `01` | **PASS** br=01, ROL ~R$ 723k |
+| C1 | consolidado ≠ 0 (sem branch) | PASS unit omit branch | **PASS** ROL ~R$ 4,43M consolidado |
+| D3 | dual ago×jul | PASS unit mês passado | **PASS** dual jul/2026, label período anterior |
+| D4/D5/D6 | prosa filial, sem YoY | PASS unit branch labels | **PASS** «filial 01/02», ack branch |
 
-Suite offline do plano: **79 passed** (5 arquivos acima). Re-smoke live: repetir quando permissão `minha-delpi.chat.access` estiver ativa para o usuário de smoke.
+**Re-smoke live:** **7 PASS / 0 FAIL** (`SMOKE_ONLY` subset). Artefato: `smoke-packages-a-d-human-eval.json`.
 
 ## 5. Hotfixes aplicados (E7)
 
