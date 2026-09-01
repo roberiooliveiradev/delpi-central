@@ -111,6 +111,9 @@ class DeviceDriverRegistryService:
         except (TypeError, ValueError):
             return 1
 
+    def clear_implementations_for_tests(self) -> None:
+        self._implementations.clear()
+
 
 _default_registry = DeviceDriverRegistryService()
 

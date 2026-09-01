@@ -13,6 +13,7 @@ from production_pulse_app.core.responses import error, success
 from production_pulse_app.interface.http.routes.catalog_routes import router as catalog_router
 from production_pulse_app.interface.http.routes.device_routes import router as devices_router
 from production_pulse_app.middleware.auth_middleware import jwt_middleware
+from production_pulse_app.startup.register_device_drivers import register_device_drivers
 from production_pulse_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_migrations_on_startup()
+    register_device_drivers()
     yield
     from production_pulse_app.infrastructure.persistence.plugins_postgres_connection import (
         close_plugins_connection,
