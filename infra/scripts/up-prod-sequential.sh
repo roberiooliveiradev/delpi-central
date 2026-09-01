@@ -164,6 +164,7 @@ FASE_API=(
   production-control-api
   financial-api
   travel-expenses-api
+  production-pulse-api
   tv-dashboard-api
 )
 

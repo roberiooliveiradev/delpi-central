@@ -802,6 +802,17 @@ Documentação completa: [docs/06-portal-frontend/portal-deploy-cache-cloudflare
 
 Recreate de `delpi-travel-expenses-api` **não** apaga cupons (metadado no schema `travel_expenses` + arquivo no host). Variáveis em `infra/env.travel-expenses.example`.
 
+### Production Pulse (IoT industrial)
+
+| Ambiente | Rede | Gateway → API |
+|---|---|---|
+| **Dev (WSL)** | `production-pulse-api` com **`network_mode: host`** — alcança VLAN LAN (`192.168.x.x`) | `host.docker.internal:8025` (`nginx.dev.conf`) |
+| **Prod** | bridge Docker (`production-pulse-api:8000`) | `nginx.conf` padrão |
+
+Dev: Postgres plugins via **`127.0.0.1:5433`** (`PRODUCTION_PULSE_PLUGINS_DB_HOST` / `PRODUCTION_PULSE_PLUGINS_DB_PORT`). Porta host da API: **`PRODUCTION_PULSE_API_PORT=8025`** (deve coincidir com nginx dev).
+
+Homologação LAN: `curl -sf http://localhost/apps/production-pulse-api/health` e, com ESP na rede, poll HTTP a partir do container/host conforme [ADR-002](../docs/12-roadmap-e-evolucao/production-pulse/ADR-002-poll-scheduler-and-lan.md). Variáveis em `infra/env.production-pulse.example`.
+
 ### CIPA (atas / assinaturas / SIPAT)
 
 | Path no container | Host (`DELPI_DATA_HOST_DIR`) |

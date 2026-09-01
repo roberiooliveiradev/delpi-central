@@ -172,6 +172,7 @@ FASE_API=(
   production-control-api
   financial-api
   travel-expenses-api
+  production-pulse-api
 )
 
 FASE_CHAT=(

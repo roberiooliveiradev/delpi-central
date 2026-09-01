@@ -1904,6 +1904,60 @@ services:
     networks:
       - delpi-network
 
+  production-pulse-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: production-pulse-api/Dockerfile
+
+    container_name: delpi-production-pulse-api
+    restart: unless-stopped
+    network_mode: host
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: ${PRODUCTION_PULSE_API_PORT:-8025}
+      PRODUCTION_PULSE_API_ROOT_PATH: /apps/production-pulse-api
+      PRODUCTION_PULSE_RUN_MIGRATIONS_ON_STARTUP: ${PRODUCTION_PULSE_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_AUTH_CORE_API_URL: ${PRODUCTION_PULSE_CORE_API_URL:-http://127.0.0.1:80/core-api}
+      CORE_API_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+      PLUGINS_DB_HOST: ${PRODUCTION_PULSE_PLUGINS_DB_HOST:-127.0.0.1}
+      PLUGINS_DB_PORT: ${PRODUCTION_PULSE_PLUGINS_DB_PORT:-5433}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+      PP_POLL_MAX_CONCURRENT: ${PP_POLL_MAX_CONCURRENT:-10}
+      PP_ONLINE_GRACE_MIN_SECONDS: ${PP_ONLINE_GRACE_MIN_SECONDS:-60}
+      PP_ONLINE_GRACE_MAX_SECONDS: ${PP_ONLINE_GRACE_MAX_SECONDS:-600}
+      PP_ONLINE_GRACE_MULTIPLIER: ${PP_ONLINE_GRACE_MULTIPLIER:-2}
+
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+
+    volumes:
+      - ../production-pulse-api:/app
+      - ../shared:/shared
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - core-api
+
   comite-etica-conduta-api:
     <<: *plugin-profile
     build:
@@ -2248,6 +2302,9 @@ services:
     volumes:
       - ../gateway/nginx.dev.conf:/etc/nginx/nginx.conf
       - ../gateway/snippets:/etc/nginx/snippets:ro
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     # Nginx resolve plugins sob demanda (delpi-{id}). Evita rebuild de todos os MFEs ao subir o gateway.
     depends_on:
