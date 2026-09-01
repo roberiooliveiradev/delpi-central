@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  fetchCostCenterEntries,
   fetchCostCenterRankingCenters,
   fetchCostCenterRankingSuppliers,
 } from "../api/financialApi";
@@ -34,11 +35,16 @@ import { formatIssueDate, formatPeriodRange, formatYearMonth } from "../utils/fo
 import { downloadExcel } from "../utils/exportExcel";
 import { formatCurrency, formatInteger, formatPercent } from "../utils/formatNumbers";
 import { resolveMonthComparison, type MonthComparison } from "../utils/monthComparison";
+import { monthPeriodRange } from "../utils/monthPeriod";
 import {
   buildFinancialHref,
   navigateFinancial,
   replaceFinancialQuery,
 } from "../utils/routeParser";
+
+/** Teto do Excel do mês: 200 linhas/página do BFF × 20 páginas. */
+const EXPORT_PAGE_SIZE = 200;
+const EXPORT_PAGE_LIMIT = 20;
 
 type CostCenterMonthPageProps = {
   branch: FinancialBranch;
@@ -87,6 +93,7 @@ export function CostCenterMonthPage({
   const [sortBy, setSortBy] = useState("data_emissao");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selected, setSelected] = useState<CostCenterEntry | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const syncQuery = useCallback(
     (changes: { search?: string | null; page?: number }) => {
@@ -191,18 +198,20 @@ export function CostCenterMonthPage({
     ];
   }, [summary, previous]);
 
+  const monthRange = useMemo(() => monthPeriodRange(month), [month]);
+
   const rankingQuery = useMemo(
     () => ({
       branch,
-      startDate: data?.period.startDate ?? null,
-      endDate: data?.period.endDate ?? null,
+      startDate: monthRange?.startDate ?? null,
+      endDate: monthRange?.endDate ?? null,
       costCenter,
       supplierCode,
       supplierStore,
       excludeMpProducts: excludeMp,
       limit: EXPANDED_RANKING_LIMIT,
     }),
-    [branch, data?.period.startDate, data?.period.endDate, costCenter, supplierCode, supplierStore, excludeMp],
+    [branch, monthRange, costCenter, supplierCode, supplierStore, excludeMp],
   );
 
   const loadExpandedCenters = useCallback(async () => {
@@ -215,8 +224,52 @@ export function CostCenterMonthPage({
     return response.items;
   }, [rankingQuery]);
 
-  const exportEntries = () => {
-    const rows = data?.entries.items ?? [];
+  /** O Excel do mês não pode ficar preso à página visível da tabela. */
+  const collectMonthEntries = useCallback(async (): Promise<CostCenterEntry[]> => {
+    if (!monthRange) return [];
+    const collected: CostCenterEntry[] = [];
+    for (let current = 1; current <= EXPORT_PAGE_LIMIT; current += 1) {
+      const payload = await fetchCostCenterEntries({
+        branch,
+        startDate: monthRange.startDate,
+        endDate: monthRange.endDate,
+        costCenter,
+        supplierCode,
+        supplierStore,
+        excludeMpProducts: excludeMp,
+        search,
+        page: current,
+        pageSize: EXPORT_PAGE_SIZE,
+        sortBy,
+        sortDir,
+      });
+      collected.push(...payload.items);
+      if (!payload.pagination.hasNext) break;
+    }
+    return collected;
+  }, [
+    monthRange,
+    branch,
+    costCenter,
+    supplierCode,
+    supplierStore,
+    excludeMp,
+    search,
+    sortBy,
+    sortDir,
+  ]);
+
+  const exportEntries = async () => {
+    if (exporting) return;
+    setExporting(true);
+    let rows: CostCenterEntry[] = [];
+    try {
+      rows = await collectMonthEntries();
+    } catch {
+      rows = data?.entries.items ?? [];
+    } finally {
+      setExporting(false);
+    }
     if (!rows.length) {
       window.alert(copy.costCenters.exportEmpty);
       return;
@@ -303,7 +356,12 @@ export function CostCenterMonthPage({
               <span>{copy.costCenters.monthDetail.back}</span>
             </button>
             {canExport ? (
-              <button type="button" className="fin-icon-btn" onClick={exportEntries}>
+              <button
+                type="button"
+                className="fin-icon-btn"
+                onClick={() => void exportEntries()}
+                disabled={exporting}
+              >
                 <Download size={16} strokeWidth={1.75} aria-hidden />
                 <span>{copy.costCenters.exportLabel}</span>
               </button>
