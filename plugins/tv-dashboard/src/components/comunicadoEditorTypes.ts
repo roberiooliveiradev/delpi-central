@@ -35,4 +35,7 @@ export type ComunicadoEditorKeyboardActions = {
   groupSelected?: () => void;
   ungroupSelected?: () => void;
   nudgeSelected: (dx: number, dy: number) => void;
+  /** Grade — Ctrl+M / Ctrl+Shift+M. Retorna true se aplicou. */
+  mergeCanvasTableSelection?: () => boolean;
+  unmergeCanvasTableSelection?: () => boolean;
 };

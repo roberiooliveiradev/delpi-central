@@ -13,4 +13,11 @@ describe("useComunicadoEditorKeyboard — Ctrl+A", () => {
     expect(src).toContain("listStageSelectableIds");
     expect(src).toContain("isEditableKeyboardTarget");
   });
+
+  it("Grade mescla/desmescla com Ctrl+M / Ctrl+Shift+M no palco", () => {
+    const src = readFileSync(join(here, "useComunicadoEditorKeyboard.ts"), "utf8");
+    expect(src).toContain("resolveCanvasTableMergeShortcut");
+    expect(src).toContain("mergeCanvasTableSelection");
+    expect(src).toContain("unmergeCanvasTableSelection");
+  });
 });

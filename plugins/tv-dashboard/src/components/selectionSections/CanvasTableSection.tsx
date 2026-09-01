@@ -12,6 +12,8 @@ import {
   Rows3,
   Settings2,
   Square,
+  TableCellsMerge,
+  TableCellsSplit,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -20,11 +22,13 @@ import {
   ToolbarSelectField,
 } from "@delpi/plugin-ui/index";
 import {
+  canMergeRect,
   canvasTableCellPlainText,
   canvasTablePresetOptions,
   mergeCanvasTableOptions,
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
+  remapCanvasTableMerges,
   type CanvasTableCell,
   type CanvasTableCellKind,
   type CanvasTableStylePresetId,
@@ -35,6 +39,10 @@ import {
   primaryCanvasTableCellRef,
   summarizeCanvasTableCellSelection,
 } from "../../utils/canvasTableCellSelection";
+import {
+  canUnmergeCanvasTableSelection,
+  resolveCanvasTableMergeCommand,
+} from "../../utils/canvasTableMergeCommands";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
@@ -193,6 +201,25 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
     patchSelectedCells(() => next);
   }
 
+  const canMergeSelection = Boolean(
+    cellSelection?.cells.length && canMergeRect(cellSelection.cells, table.merges),
+  );
+  const canUnmergeSelection = Boolean(
+    cellSelection?.cells.length &&
+      canUnmergeCanvasTableSelection(table.merges, cellSelection.cells),
+  );
+
+  function applyMergeCommand(mode: "merge" | "unmerge") {
+    if (!cellSelection?.cells.length) return;
+    const next = resolveCanvasTableMergeCommand({
+      merges: table.merges,
+      cells: cellSelection.cells,
+      mode,
+    });
+    if (!next) return;
+    updateBlock(table.id, { merges: next.length ? next : undefined });
+  }
+
   const structureFields = (
     <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
       <label className="td-deck-ribbon__frame-field">
@@ -210,9 +237,11 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
           aria-label="Linhas da Grade"
           onChange={(value) => {
             const rows = Math.max(1, Math.min(20, value));
+            const merges = remapCanvasTableMerges(table.merges, rows, table.cols);
             updateSelected({
               rows,
               cells: normalizeCanvasTableCells(table.cells, rows, table.cols),
+              merges: merges.length ? merges : undefined,
             });
           }}
         />
@@ -232,9 +261,11 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
           aria-label="Colunas da Grade"
           onChange={(value) => {
             const cols = Math.max(1, Math.min(12, value));
+            const merges = remapCanvasTableMerges(table.merges, table.rows, cols);
             updateSelected({
               cols,
               cells: normalizeCanvasTableCells(table.cells, table.rows, cols),
+              merges: merges.length ? merges : undefined,
             });
           }}
         />
@@ -458,6 +489,20 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
 
   const cellAlignTiles = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <DeckRibbonTile
+        icon={TableCellsMerge}
+        label="Mesclar"
+        hint="Mescla o retângulo selecionado (Ctrl+M)."
+        disabled={!canMergeSelection}
+        onClick={() => applyMergeCommand("merge")}
+      />
+      <DeckRibbonTile
+        icon={TableCellsSplit}
+        label="Desmesclar"
+        hint="Desfaz merges cobertos pela seleção (Ctrl+Shift+M)."
+        disabled={!canUnmergeSelection}
+        onClick={() => applyMergeCommand("unmerge")}
+      />
       <DeckRibbonTile
         icon={AlignLeft}
         label="Esquerda"

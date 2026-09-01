@@ -22,6 +22,11 @@ describe("CanvasTableSection chrome (plugin-ui + ícones)", () => {
     expect(source).toContain("Heading2");
     expect(source).toContain("Grid3x3");
     expect(source).toContain("AlignLeft");
+    expect(source).toContain("TableCellsMerge");
+    expect(source).toContain("TableCellsSplit");
+    expect(source).toContain('label="Mesclar"');
+    expect(source).toContain('label="Desmesclar"');
+    expect(source).toContain("canMergeRect");
   });
 
   it("não reintroduz NativeCheckbox/NativeSelect no inspetor Grade", () => {

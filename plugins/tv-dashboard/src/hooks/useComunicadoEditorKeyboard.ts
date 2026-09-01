@@ -10,6 +10,7 @@ import {
   resolveStageEscapeAction,
   resolveStageF2KeyAction,
 } from "../utils/stageInteractionPolicy";
+import { resolveCanvasTableMergeShortcut } from "../utils/canvasTableMergeCommands";
 
 /** Atalhos do editor — recebe ações do provider (sem importar o contexto, evita ciclo ESM). */
 export function useComunicadoEditorKeyboard({
@@ -40,6 +41,8 @@ export function useComunicadoEditorKeyboard({
   enableHistoryShortcuts = true,
   stageDrawTool = null,
   clearStageDrawTool,
+  mergeCanvasTableSelection,
+  unmergeCanvasTableSelection,
 }: ComunicadoEditorKeyboardActions & {
   enableHistoryShortcuts?: boolean;
   blocks?: ComunicadoBlock[];
@@ -180,6 +183,21 @@ export function useComunicadoEditorKeyboard({
         } else {
           groupSelected?.();
         }
+        return { handled: true };
+      }
+
+      const mergeShortcut = resolveCanvasTableMergeShortcut({
+        key: event.key,
+        ctrl: event.ctrlKey,
+        meta: event.metaKey,
+        shift: event.shiftKey,
+      });
+      if (mergeShortcut === "merge") {
+        if (!mergeCanvasTableSelection?.()) return;
+        return { handled: true };
+      }
+      if (mergeShortcut === "unmerge") {
+        if (!unmergeCanvasTableSelection?.()) return;
         return { handled: true };
       }
 

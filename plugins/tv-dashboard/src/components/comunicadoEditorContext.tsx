@@ -50,6 +50,8 @@ import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
+import { resolveCanvasTableMergeCommand } from "../utils/canvasTableMergeCommands";
+import { resolveCanvasTableMergeCommand } from "../utils/canvasTableMergeCommands";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -127,7 +129,37 @@ function ComunicadoEditorKeyboardBridge() {
     nudgeSelected,
     stageDrawTool,
     setStageDrawTool,
+    updateBlock,
   } = useComunicadoEditor();
+
+  const mergeCanvasTableSelection = useCallback(() => {
+    if (!selectedCanvasTableCell) return false;
+    const block = blocks.find((item) => item.id === selectedCanvasTableCell.blockId);
+    if (!block || block.type !== "canvas_table") return false;
+    const next = resolveCanvasTableMergeCommand({
+      merges: block.merges,
+      cells: selectedCanvasTableCell.cells,
+      mode: "merge",
+    });
+    if (!next) return false;
+    updateBlock(block.id, { merges: next.length ? next : undefined });
+    return true;
+  }, [blocks, selectedCanvasTableCell, updateBlock]);
+
+  const unmergeCanvasTableSelection = useCallback(() => {
+    if (!selectedCanvasTableCell) return false;
+    const block = blocks.find((item) => item.id === selectedCanvasTableCell.blockId);
+    if (!block || block.type !== "canvas_table") return false;
+    const next = resolveCanvasTableMergeCommand({
+      merges: block.merges,
+      cells: selectedCanvasTableCell.cells,
+      mode: "unmerge",
+    });
+    if (!next) return false;
+    updateBlock(block.id, { merges: next.length ? next : undefined });
+    return true;
+  }, [blocks, selectedCanvasTableCell, updateBlock]);
+
   useComunicadoEditorKeyboard({
     selectedIds,
     preferGroupChildrenSelection,
@@ -161,6 +193,8 @@ function ComunicadoEditorKeyboardBridge() {
     groupSelected,
     ungroupSelected,
     nudgeSelected,
+    mergeCanvasTableSelection,
+    unmergeCanvasTableSelection,
     /* Undo do slide é local/imediato — deck history é só trilha de revisão. */
     enableHistoryShortcuts: true,
   });
