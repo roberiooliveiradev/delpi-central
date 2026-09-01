@@ -1,0 +1,80 @@
+.dashboard-production-pulse,
+.dashboard-production-pulse * {
+  box-sizing: border-box;
+}
+
+.dashboard-production-pulse {
+  --pp-page-padding: 24px;
+  --pp-section-gap: 20px;
+  --pp-grid-gap: 16px;
+  --pp-card-radius: 18px;
+  --pp-card-padding: 20px;
+  --pp-accent: var(--primary, #089bdb);
+  --pp-accent-soft: color-mix(in srgb, var(--pp-accent) 12%, transparent);
+  --pp-title: var(--secundary, #003866);
+  --pp-text: var(--text, #111111);
+  --pp-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --pp-surface: var(--surface, #ffffff);
+  --pp-border: var(--border, #e6e6e6);
+  --pp-canvas: var(--app-canvas, var(--bg));
+  --pp-success: var(--success, #15803d);
+  --pp-danger: var(--danger, #b42318);
+  --pp-warning: var(--warning, #b45309);
+  --pp-font-xs: 12px;
+  --pp-font-sm: 13px;
+  --pp-font-md: 14px;
+  --pp-font-hero: clamp(24px, 2vw, 36px);
+  --pp-font-kpi: clamp(22px, 2vw, 30px);
+
+  --delpi-ui-accent: var(--pp-accent);
+  --delpi-ui-title: var(--pp-title);
+  --delpi-ui-surface: var(--pp-surface);
+  --delpi-ui-text: var(--pp-text);
+  --delpi-ui-text-muted: var(--pp-text-muted);
+  --delpi-ui-border: var(--pp-border);
+  --delpi-ui-muted: var(--pp-text-muted);
+  --delpi-ui-card-padding: var(--pp-card-padding);
+  --delpi-ui-radius: var(--pp-card-radius);
+  --delpi-ui-section-gap: var(--pp-section-gap);
+  --delpi-ui-grid-gap: var(--pp-grid-gap);
+}
+
+:root[data-theme="dark"] .dashboard-production-pulse {
+  --pp-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --pp-text: rgba(255, 255, 255, 0.88);
+  --pp-text-muted: rgba(255, 255, 255, 0.64);
+  --pp-surface: color-mix(in srgb, var(--surface, #1e293b) 92%, black);
+  --pp-border: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-production-pulse.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-section-gap);
+  padding: var(--pp-page-padding);
+  min-height: 100%;
+  color: var(--pp-text);
+  background-color: var(--pp-canvas);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pp-accent) 5%, var(--pp-canvas)),
+    var(--pp-canvas) 280px
+  );
+}
+
+.dashboard-production-pulse .pp-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-section-gap);
+}
+
+@media (max-width: 768px) {
+  .dashboard-production-pulse {
+    --pp-page-padding: 16px;
+    --pp-card-padding: 16px;
+  }
+}
+
+#root:has(> .dashboard-production-pulse) {
+  min-height: 100%;
+}

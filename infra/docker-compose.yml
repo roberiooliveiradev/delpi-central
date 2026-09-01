@@ -861,6 +861,23 @@ services:
     networks:
       - delpi-network
 
+  production-pulse:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: production-pulse/Dockerfile
+      target: production
+
+    container_name: delpi-production-pulse
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   production-control:
     depends_on:
       - plugin-ui
@@ -2431,6 +2448,7 @@ services:
       - travel-expenses-api
       - travel-expenses
       - production-pulse-api
+      - production-pulse
       - purchase-requests-api
       - purchase-requests
       - comite-etica-conduta-api

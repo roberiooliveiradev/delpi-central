@@ -59,6 +59,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/production-control` | `production-control` | microfrontend | **módulo** | `/apps/production-control` | `delpi-production-control` |
 | `plugins/financial` | `financial` | microfrontend | **módulo** | `/apps/financial` | `delpi-financial` |
 | `plugins/travel-expenses` | `travel-expenses` | microfrontend | plugin | `/apps/travel-expenses` | `delpi-travel-expenses` |
+| `plugins/production-pulse` | `production-pulse` | microfrontend | plugin | `/apps/production-pulse` | `delpi-production-pulse` |
 | `plugins/dashboard-commercial` | `dashboard-commercial` | microfrontend | plugin | `/apps/dashboard-commercial` | `delpi-dashboard-commercial` |
 | `plugins/dashboard-production` | `dashboard-production` | microfrontend | plugin | `/apps/dashboard-production` | `delpi-dashboard-production` |
 | `plugins/dashboard-financial` | `dashboard-financial` | microfrontend | plugin | `/apps/dashboard-financial` | `delpi-dashboard-financial` |

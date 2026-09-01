@@ -145,6 +145,7 @@ FASE_MFE=(
   production-control
   financial
   travel-expenses
+  production-pulse
   purchase-requests
   cultura-delpi
   codigo-etica

@@ -884,6 +884,19 @@ services:
     networks:
       - delpi-network
 
+  production-pulse:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: production-pulse/Dockerfile
+      target: production
+    container_name: delpi-production-pulse
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    networks:
+      - delpi-network
+
   production-control:
     <<: *plugin-ui-federated
     build:
