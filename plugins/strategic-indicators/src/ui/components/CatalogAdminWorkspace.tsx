@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AdminDepartmentsWorkspace } from "./AdminDepartmentsWorkspace";
 import { CatalogStructureValidationWorkspace } from "./CatalogStructureValidationWorkspace";
 import { SiUnderlineNav } from "./siLayoutUi";
-import type { CatalogAdminView } from "../settings/settingsAdminTabs";
+import type { CatalogAdminView, SettingsAdminTab } from "../settings/settingsAdminTabs";
 import "./CatalogAdminWorkspace.css";
 
 type CatalogAdminWorkspaceProps = {
@@ -10,6 +10,7 @@ type CatalogAdminWorkspaceProps = {
   view: CatalogAdminView;
   validationIssueCount?: number;
   onViewChange: (view: CatalogAdminView) => void;
+  onNavigate?: (tab: SettingsAdminTab, catalogView?: CatalogAdminView) => void;
 };
 
 export function CatalogAdminWorkspace({
@@ -17,8 +18,15 @@ export function CatalogAdminWorkspace({
   view,
   validationIssueCount = 0,
   onViewChange,
+  onNavigate,
 }: CatalogAdminWorkspaceProps) {
   const [activeView, setActiveView] = useState<CatalogAdminView>(view);
+  const [structureFocus, setStructureFocus] = useState<{
+    departmentId: string;
+    indicatorId: string;
+  } | null>(null);
+
+  const clearStructureFocus = useCallback(() => setStructureFocus(null), []);
 
   useEffect(() => {
     setActiveView(view);
@@ -57,9 +65,20 @@ export function CatalogAdminWorkspace({
 
       <div className="si-catalog-admin__panel">
         {activeView === "structure" ? (
-          <AdminDepartmentsWorkspace getAccessToken={getAccessToken} />
+          <AdminDepartmentsWorkspace
+            getAccessToken={getAccessToken}
+            structureFocus={structureFocus}
+            onStructureFocusConsumed={clearStructureFocus}
+          />
         ) : (
-          <CatalogStructureValidationWorkspace getAccessToken={getAccessToken} />
+          <CatalogStructureValidationWorkspace
+            getAccessToken={getAccessToken}
+            onOpenIndicator={(departmentId, indicatorId) => {
+              setStructureFocus({ departmentId, indicatorId });
+              selectView("structure");
+            }}
+            onOpenGoals={() => onNavigate?.("goals")}
+          />
         )}
       </div>
     </div>

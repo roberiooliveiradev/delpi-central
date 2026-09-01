@@ -191,6 +191,7 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
               view={catalogView}
               validationIssueCount={validationIssueCount}
               onViewChange={setCatalogView}
+              onNavigate={navigate}
             />
           ) : null}
 

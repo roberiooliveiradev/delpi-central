@@ -1,0 +1,10 @@
+.si-indicator-form-drawer__active {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.si-indicator-form-drawer__active .si-admin-form-field__label {
+  margin: 0;
+}

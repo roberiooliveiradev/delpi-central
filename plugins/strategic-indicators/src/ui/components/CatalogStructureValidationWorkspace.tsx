@@ -1,13 +1,12 @@
-import { useMemo, useState } from "react";
-import { SectionHintLabel } from "@delpi/plugin-ui/index";
+import { ActionButton, SectionHintLabel } from "@delpi/plugin-ui/index";
+import { useEffect, useMemo, useState } from "react";
+import type { CatalogValidationRow } from "../../domain/catalogStructureValidation";
+import type { ValidationSeverity } from "../../domain/catalogStructureValidation";
 import { InfoState } from "./InfoState";
 import { LoadingActivityInline } from "./LoadingActivityInline";
+import { DrawerPanel } from "./DrawerPanel";
 import { useCatalogStructureValidation } from "../../state/hooks/useCatalogStructureValidation";
-import type { ValidationSeverity } from "../../domain/catalogStructureValidation";
-import {
-  getAggregationModeLabel,
-  getScopeTypeLabel,
-} from "../presentation/labels";
+import { getAggregationModeLabel, getScopeTypeLabel } from "../presentation/labels";
 import { SI_HELP } from "../../content/helpTooltips";
 import "./CatalogStructureValidationWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
@@ -16,6 +15,8 @@ import { SiAdminFormField } from "./SiAdminFormField";
 
 type CatalogStructureValidationWorkspaceProps = {
   getAccessToken?: () => string | undefined;
+  onOpenIndicator?: (departmentId: string, indicatorId: string) => void;
+  onOpenGoals?: () => void;
 };
 
 const SEVERITY_LABEL: Record<ValidationSeverity, string> = {
@@ -24,6 +25,12 @@ const SEVERITY_LABEL: Record<ValidationSeverity, string> = {
   warning: "Atenção",
   error: "Erro",
 };
+
+function validationRowKey(row: CatalogValidationRow): string {
+  return row.indicatorId === "—"
+    ? `dept-${row.departmentId}`
+    : `${row.departmentId}-${row.indicatorId}`;
+}
 
 function GoalScopeBadges({
   consolidated,
@@ -49,12 +56,105 @@ function GoalScopeBadges({
   );
 }
 
+function ValidationRowDetail({
+  row,
+  goalYear,
+  onOpenIndicator,
+  onOpenGoals,
+}: {
+  row: CatalogValidationRow;
+  goalYear: number;
+  onOpenIndicator?: (departmentId: string, indicatorId: string) => void;
+  onOpenGoals?: () => void;
+}) {
+  const canOpenIndicator = row.indicatorId !== "—";
+
+  return (
+    <div className="si-catalog-validation__detail">
+      <header className="si-catalog-validation__detail-header">
+        <div>
+          <h3>{row.indicatorName}</h3>
+          <p>
+            {row.departmentShortName || row.departmentName}
+            {canOpenIndicator ? ` · ${row.indicatorId}` : ""}
+          </p>
+        </div>
+        <span className={`si-catalog-validation__badge severity-${row.worstSeverity}`}>
+          {SEVERITY_LABEL[row.worstSeverity]}
+        </span>
+      </header>
+
+      <dl className="si-catalog-validation__detail-meta">
+        <div>
+          <dt>Agregação dept</dt>
+          <dd>{getAggregationModeLabel(row.departmentAggregation)}</dd>
+        </div>
+        {canOpenIndicator ? (
+          <>
+            <div>
+              <dt>Escopo</dt>
+              <dd>{getScopeTypeLabel(row.scopeType)}</dd>
+            </div>
+            <div>
+              <dt>Metas {goalYear}</dt>
+              <dd>
+                <GoalScopeBadges
+                  consolidated={row.goalCoverage.consolidated}
+                  branch01={row.goalCoverage.branch01}
+                  branch02={row.goalCoverage.branch02}
+                />
+              </dd>
+            </div>
+          </>
+        ) : null}
+      </dl>
+
+      <div className="si-catalog-validation__detail-issues">
+        <h4>Apontamentos</h4>
+        {row.issues.length === 0 ? (
+          <p className="is-muted">Alinhado ao modelo esperado.</p>
+        ) : (
+          <ul>
+            {row.issues.map((issue) => (
+              <li key={issue.code} className={`severity-${issue.severity}`}>
+                {issue.message}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {canOpenIndicator ? (
+        <div className="si-catalog-validation__detail-actions">
+          {onOpenIndicator ? (
+            <ActionButton
+              variant="primary"
+              onClick={() => onOpenIndicator(row.departmentId, row.indicatorId)}
+            >
+              Ir para indicador
+            </ActionButton>
+          ) : null}
+          {onOpenGoals ? (
+            <ActionButton variant="ghost" onClick={onOpenGoals}>
+              Ir para metas
+            </ActionButton>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function CatalogStructureValidationWorkspace({
   getAccessToken,
+  onOpenIndicator,
+  onOpenGoals,
 }: CatalogStructureValidationWorkspaceProps) {
   const validation = useCatalogStructureValidation({ getAccessToken });
   const [onlyIssues, setOnlyIssues] = useState(true);
   const [departmentFilter, setDepartmentFilter] = useState("");
+  const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
   const departmentOptions = useMemo(() => {
     const seen = new Map<string, string>();
@@ -78,6 +178,29 @@ export function CatalogStructureValidationWorkspace({
     const current = new Date().getFullYear();
     return [current + 1, current, current - 1];
   }, []);
+
+  useEffect(() => {
+    if (filteredRows.length === 0) {
+      setSelectedRowKey(null);
+      return;
+    }
+    if (
+      !selectedRowKey ||
+      !filteredRows.some((row) => validationRowKey(row) === selectedRowKey)
+    ) {
+      setSelectedRowKey(validationRowKey(filteredRows[0]));
+    }
+  }, [filteredRows, selectedRowKey]);
+
+  const selectedRow =
+    filteredRows.find((row) => validationRowKey(row) === selectedRowKey) ?? null;
+
+  function handleSelectRow(row: CatalogValidationRow) {
+    setSelectedRowKey(validationRowKey(row));
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
+      setMobileDetailOpen(true);
+    }
+  }
 
   if (validation.loading && validation.rows.length === 0) {
     return (
@@ -198,96 +321,76 @@ export function CatalogStructureValidationWorkspace({
           }
         />
       ) : (
-        <div className="si-catalog-validation__table">
-          <div className="si-catalog-validation__table-head">
-            <span>Departamento</span>
-            <span>Agregação</span>
-            <span>Indicador</span>
-            <span>Escopo</span>
-            <span>Metas</span>
-            <span>Status</span>
-            <span>Validação</span>
+        <div className="si-catalog-validation__split">
+          <div className="si-catalog-validation__list" role="listbox" aria-label="Linhas de validação">
+            {filteredRows.map((row) => {
+              const key = validationRowKey(row);
+              const isSelected = key === selectedRowKey;
+              const preview =
+                row.issues[0]?.message ??
+                (row.worstSeverity === "ok" ? "Alinhado ao modelo esperado." : "—");
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`si-catalog-validation__list-item severity-${row.worstSeverity} ${
+                    isSelected ? "is-selected" : ""
+                  }`}
+                  onClick={() => handleSelectRow(row)}
+                >
+                  <div className="si-catalog-validation__list-item-top">
+                    <strong>
+                      {row.departmentShortName || row.departmentName}
+                      {row.indicatorId !== "—" ? ` › ${row.indicatorName}` : ""}
+                    </strong>
+                    <span className={`si-catalog-validation__badge severity-${row.worstSeverity}`}>
+                      {SEVERITY_LABEL[row.worstSeverity]}
+                    </span>
+                  </div>
+                  <p>{preview}</p>
+                </button>
+              );
+            })}
           </div>
 
-          {filteredRows.map((row) => {
-            const rowKey =
-              row.indicatorId === "—"
-                ? `dept-${row.departmentId}`
-                : `${row.departmentId}-${row.indicatorId}`;
-
-            return (
-              <div
-                key={rowKey}
-                className={`si-catalog-validation__table-row severity-${row.worstSeverity}`}
-              >
-                <div>
-                  <strong>{row.departmentShortName || row.departmentName}</strong>
-                  {!row.departmentActive ? (
-                    <small className="is-muted">Inativo</small>
-                  ) : null}
-                </div>
-
-                <div>
-                  <strong>{getAggregationModeLabel(row.departmentAggregation)}</strong>
-                  <small>{row.departmentWeightPct}% no IGD</small>
-                </div>
-
-                <div>
-                  <strong>{row.indicatorName}</strong>
-                  {row.indicatorId !== "—" ? (
-                    <small>
-                      {row.indicatorId}
-                      {!row.indicatorActive ? " · inativo" : ` · ${row.indicatorWeightPct}%`}
-                    </small>
-                  ) : null}
-                </div>
-
-                <div>
-                  {row.indicatorId === "—" ? (
-                    <span className="is-muted">—</span>
-                  ) : (
-                    <strong>{getScopeTypeLabel(row.scopeType)}</strong>
-                  )}
-                </div>
-
-                <div className="si-catalog-validation__cell--goals">
-                  <GoalScopeBadges
-                    consolidated={row.goalCoverage.consolidated}
-                    branch01={row.goalCoverage.branch01}
-                    branch02={row.goalCoverage.branch02}
-                  />
-                  <small>{row.goalCoverage.activeCount} meta(s) ativa(s)</small>
-                </div>
-
-                <div className="si-catalog-validation__cell--status">
-                  <span
-                    className={`si-catalog-validation__badge severity-${row.worstSeverity}`}
-                  >
-                    {SEVERITY_LABEL[row.worstSeverity]}
-                  </span>
-                </div>
-
-                <div className="si-catalog-validation__messages">
-                  {row.issues.length === 0 ? (
-                    <span className="is-muted">Alinhado ao modelo esperado.</span>
-                  ) : (
-                    <ul>
-                      {row.issues.map((issue) => (
-                        <li
-                          key={`${rowKey}-${issue.code}`}
-                          className={`severity-${issue.severity}`}
-                        >
-                          {issue.message}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {selectedRow ? (
+            <div className="si-catalog-validation__detail-panel">
+              <ValidationRowDetail
+                row={selectedRow}
+                goalYear={validation.goalYear}
+                onOpenIndicator={onOpenIndicator}
+                onOpenGoals={onOpenGoals}
+              />
+            </div>
+          ) : null}
         </div>
       )}
+
+      {selectedRow ? (
+        <DrawerPanel
+          open={mobileDetailOpen}
+          onClose={() => setMobileDetailOpen(false)}
+          title={selectedRow.indicatorName}
+          description={selectedRow.departmentShortName || selectedRow.departmentName}
+          size="lg"
+        >
+          <ValidationRowDetail
+            row={selectedRow}
+            goalYear={validation.goalYear}
+            onOpenIndicator={(departmentId, indicatorId) => {
+              setMobileDetailOpen(false);
+              onOpenIndicator?.(departmentId, indicatorId);
+            }}
+            onOpenGoals={() => {
+              setMobileDetailOpen(false);
+              onOpenGoals?.();
+            }}
+          />
+        </DrawerPanel>
+      ) : null}
     </div>
   );
 }

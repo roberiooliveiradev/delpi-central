@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   AdminDepartmentIndicatorItem,
   AdminDepartmentItem,
-  BranchValueAggregation,
   CreateAdminDepartmentIndicatorRequest,
   CreateAdminDepartmentRequest,
   UpdateAdminDepartmentIndicatorRequest,
@@ -15,20 +14,25 @@ import { DrawerPanel } from "./DrawerPanel";
 import { SectionBlock } from "./SectionBlock";
 import { ActiveToggle } from "./ActiveToggle";
 import {
+  AdminIndicatorFormDrawer,
+  emptyIndicatorForm,
+  indicatorFormFromItem,
+  type IndicatorFormState,
+} from "./AdminIndicatorFormDrawer";
+import {
   getAggregationModeLabel,
-  getBranchValueAggregationLabel,
-  getPerformanceDirectionLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
-import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
 import { SI_HELP } from "../../content/helpTooltips";
 import "./AdminDepartmentsWorkspace.css";
-import { SI_VALUE_UNIT_OPTIONS, SiSelectControl } from "./siFiltersUi";
+import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
 import { SiAdminFormField } from "./SiAdminFormField";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
+  structureFocus?: { departmentId: string; indicatorId: string } | null;
+  onStructureFocusConsumed?: () => void;
 };
 
 type DepartmentFormState = {
@@ -44,23 +48,6 @@ type DepartmentFormState = {
   is_active: boolean;
 };
 
-type IndicatorFormState = {
-  indicator_id: string;
-  indicator_name: string;
-  weight_pct: number;
-  scope_type: "consolidated" | "per_unit";
-  performance_direction: "higher_is_better" | "lower_is_better";
-  strategic_description: string;
-  source_key: string;
-  value_unit: string;
-  value_prefix: string;
-  value_suffix: string;
-  value_decimals: number;
-  branch_value_aggregation: BranchValueAggregation;
-  display_order: number;
-  is_active: boolean;
-};
-
 const emptyDepartmentForm: DepartmentFormState = {
   department_id: "",
   department_name: "",
@@ -70,23 +57,6 @@ const emptyDepartmentForm: DepartmentFormState = {
   supporting_focus: "",
   weight_pct: 0,
   aggregation_mode: "consolidated",
-  display_order: 0,
-  is_active: true,
-};
-
-const emptyIndicatorForm: IndicatorFormState = {
-  indicator_id: "",
-  indicator_name: "",
-  weight_pct: 0,
-  scope_type: "consolidated",
-  performance_direction: "higher_is_better",
-  strategic_description: "",
-  source_key: "",
-  value_unit: "",
-  value_prefix: "",
-  value_suffix: "",
-  value_decimals: 2,
-  branch_value_aggregation: "auto",
   display_order: 0,
   is_active: true,
 };
@@ -105,6 +75,8 @@ function getIndicatorFormatLabel(item: AdminDepartmentIndicatorItem) {
 
 export function AdminDepartmentsWorkspace({
   getAccessToken,
+  structureFocus = null,
+  onStructureFocusConsumed,
 }: AdminDepartmentsWorkspaceProps) {
   const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
 
@@ -132,6 +104,32 @@ export function AdminDepartmentsWorkspace({
       departments.items.find((item) => item.department_id === selectedDepartmentId) ?? null,
     [departments.items, selectedDepartmentId],
   );
+
+  useEffect(() => {
+    if (!structureFocus) return;
+    setSelectedDepartmentId(structureFocus.departmentId);
+  }, [structureFocus]);
+
+  useEffect(() => {
+    if (!structureFocus || departmentIndicators.loading) return;
+
+    const match = departmentIndicators.items.find(
+      (item) => item.indicator_id === structureFocus.indicatorId,
+    );
+    if (!match) return;
+
+    setIndicatorMode("edit");
+    setEditingIndicatorId(match.indicator_id);
+    setIndicatorForm(indicatorFormFromItem(match));
+    setIndicatorFormError(null);
+    setIndicatorDrawerOpen(true);
+    onStructureFocusConsumed?.();
+  }, [
+    structureFocus,
+    departmentIndicators.loading,
+    departmentIndicators.items,
+    onStructureFocusConsumed,
+  ]);
 
   function openCreateDepartmentDrawer() {
     setDepartmentMode("create");
@@ -168,22 +166,7 @@ export function AdminDepartmentsWorkspace({
   function openEditIndicatorDrawer(item: AdminDepartmentIndicatorItem) {
     setIndicatorMode("edit");
     setEditingIndicatorId(item.indicator_id);
-    setIndicatorForm({
-      indicator_id: item.indicator_id,
-      indicator_name: item.indicator_name,
-      weight_pct: item.weight_pct,
-      scope_type: item.scope_type,
-      performance_direction: item.performance_direction,
-      strategic_description: item.strategic_description,
-      source_key: item.source_key ?? "",
-      value_unit: item.value_unit ?? "",
-      value_prefix: item.value_prefix ?? "",
-      value_suffix: item.value_suffix ?? "",
-      value_decimals: Number(item.value_decimals ?? 2),
-      branch_value_aggregation: item.branch_value_aggregation ?? "auto",
-      display_order: item.display_order,
-      is_active: item.is_active,
-    });
+    setIndicatorForm(indicatorFormFromItem(item));
     setIndicatorDrawerOpen(true);
   }
 
@@ -233,14 +216,6 @@ export function AdminDepartmentsWorkspace({
   async function handleSubmitIndicator() {
     if (!selectedDepartmentId) return;
 
-    const sourceKeyError = validateIndicatorSourceKey(
-      indicatorForm.source_key,
-      indicatorMode === "create" ? true : indicatorForm.is_active,
-    );
-    if (sourceKeyError) {
-      setIndicatorFormError(sourceKeyError);
-      return;
-    }
     setIndicatorFormError(null);
 
     if (indicatorMode === "create") {
@@ -716,257 +691,19 @@ export function AdminDepartmentsWorkspace({
 
       </DrawerPanel>
 
-      <DrawerPanel
+      <AdminIndicatorFormDrawer
         open={indicatorDrawerOpen}
+        mode={indicatorMode}
+        saving={departmentIndicators.saving}
+        form={indicatorForm}
+        formError={indicatorFormError}
         onClose={() => {
           setIndicatorDrawerOpen(false);
           setIndicatorFormError(null);
         }}
-        title={indicatorMode === "create" ? "Novo indicador estrutural" : "Editar indicador estrutural"}
-        description="Defina a estrutura oficial do indicador dentro do departamento."
-        size="xl"
-        footer={
-          <>
-            <button
-              type="button"
-              className="si-settings-editor__button si-settings-editor__button--secondary"
-              onClick={() => {
-                setIndicatorDrawerOpen(false);
-                setIndicatorFormError(null);
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="si-settings-editor__button"
-              onClick={() => void handleSubmitIndicator()}
-              disabled={departmentIndicators.saving}
-            >
-              {departmentIndicators.saving ? "Salvando..." : "Salvar"}
-            </button>
-          </>
-        }
-      >
-        <div className="si-admin-form-grid">
-          <SiAdminFormField label="ID" hint={SI_HELP.indicator.indicatorId}>
-            <SiNativeTextControl
-              value={indicatorForm.indicator_id}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  indicator_id: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Nome" hint={SI_HELP.indicator.indicatorName}>
-            <SiNativeTextControl
-              value={indicatorForm.indicator_name}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  indicator_name: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Peso" hint={SI_HELP.indicator.weightPct}>
-            <SiNativeTextControl
-              type="number"
-              value={indicatorForm.weight_pct}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  weight_pct: Number(value || 0),
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Escopo" hint={SI_HELP.indicator.scopeType}>
-            <SiSelectControl
-              value={indicatorForm.scope_type}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  scope_type: value as "consolidated" | "per_unit",
-                }))
-              }
-              options={[
-                { value: "consolidated", label: getScopeTypeLabel("consolidated") },
-                { value: "per_unit", label: getScopeTypeLabel("per_unit") },
-              ]}
-            />
-          </SiAdminFormField>
-
-          {indicatorForm.scope_type === "per_unit" ? (
-            <SiAdminFormField
-              label="Agregação entre filiais"
-              hint={SI_HELP.indicator.branchValueAggregation}
-            >
-              <SiSelectControl
-                value={indicatorForm.branch_value_aggregation}
-                onChange={(value) =>
-                  setIndicatorForm((current) => ({
-                    ...current,
-                    branch_value_aggregation: value as BranchValueAggregation,
-                  }))
-                }
-                options={[
-                  { value: "auto", label: getBranchValueAggregationLabel("auto") },
-                  { value: "sum", label: getBranchValueAggregationLabel("sum") },
-                  {
-                    value: "average",
-                    label: getBranchValueAggregationLabel("average"),
-                  },
-                  {
-                    value: "source_consolidated",
-                    label: getBranchValueAggregationLabel("source_consolidated"),
-                  },
-                ]}
-              />
-            </SiAdminFormField>
-          ) : null}
-
-          <SiAdminFormField
-            label="Direção de performance"
-            hint={SI_HELP.indicator.performanceDirection}
-          >
-            <SiSelectControl
-              value={indicatorForm.performance_direction}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  performance_direction: value as "higher_is_better" | "lower_is_better",
-                }))
-              }
-              options={[
-                {
-                  value: "higher_is_better",
-                  label: getPerformanceDirectionLabel("higher_is_better"),
-                },
-                {
-                  value: "lower_is_better",
-                  label: getPerformanceDirectionLabel("lower_is_better"),
-                },
-              ]}
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField
-            label="Chave da fonte (obrigatória se ativo)"
-            hint={SI_HELP.indicator.sourceKey}
-          >
-            <SiNativeTextControl
-              value={indicatorForm.source_key}
-              placeholder="ex.: commercial_rol, production_otd"
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  source_key: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          {indicatorFormError ? (
-            <p className="si-settings-editor__alert si-settings-editor__alert--error">
-              {indicatorFormError}
-            </p>
-          ) : null}
-
-          <SiAdminFormField label="Unidade" hint={SI_HELP.indicator.valueUnit}>
-            <SiSelectControl
-              value={indicatorForm.value_unit}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  value_unit: value,
-                }))
-              }
-              allowEmpty
-              emptyLabel="Não informada"
-              options={[...SI_VALUE_UNIT_OPTIONS]}
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Prefixo" hint={SI_HELP.indicator.valuePrefix}>
-            <SiNativeTextControl
-              placeholder="Ex.: R$"
-              value={indicatorForm.value_prefix}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  value_prefix: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Sufixo" hint={SI_HELP.indicator.valueSuffix}>
-            <SiNativeTextControl
-              placeholder="Ex.: %, PPM, /mês, dias"
-              value={indicatorForm.value_suffix}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  value_suffix: value,
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Casas decimais" hint={SI_HELP.indicator.valueDecimals}>
-            <SiNativeTextControl
-              type="number"
-              min={0}
-              max={6}
-              value={indicatorForm.value_decimals}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  value_decimals: Number(value || 0),
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField label="Ordem" hint={SI_HELP.indicator.displayOrder}>
-            <SiNativeTextControl
-              type="number"
-              value={indicatorForm.display_order}
-              onChange={(value) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  display_order: Number(value || 0),
-                }))
-              }
-            />
-          </SiAdminFormField>
-
-          <SiAdminFormField
-            label="Descrição estratégica"
-            hint={SI_HELP.indicator.strategicDescription}
-            fullWidth
-          >
-            <SiNativeTextAreaControl
-              rows={3}
-              value={indicatorForm.strategic_description}
-              aria-label="Descrição estratégica"
-              onChange={(strategic_description) =>
-                setIndicatorForm((current) => ({
-                  ...current,
-                  strategic_description,
-                }))
-              }
-            />
-          </SiAdminFormField>
-        </div>
-
-      </DrawerPanel>
+        onChange={setIndicatorForm}
+        onSubmit={handleSubmitIndicator}
+      />
     </div>
   );
 }
