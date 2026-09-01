@@ -96,7 +96,7 @@ export function CostCenterMonthPage({
   const [exporting, setExporting] = useState(false);
 
   const syncQuery = useCallback(
-    (changes: { search?: string | null; page?: number }) => {
+    (changes: { search?: string | null; page?: number; excludeMp?: boolean }) => {
       replaceFinancialQuery(
         buildFinancialHref({
           subpluginId: "cost-centers",
@@ -105,7 +105,7 @@ export function CostCenterMonthPage({
           costCenter,
           supplierCode,
           supplierStore,
-          excludeMp,
+          excludeMp: changes.excludeMp === undefined ? excludeMp : changes.excludeMp,
           search: changes.search === undefined ? search : changes.search,
           page: changes.page ?? 1,
         }),
@@ -318,7 +318,6 @@ export function CostCenterMonthPage({
   const scopeChips = [
     costCenter ? copy.costCenters.monthDetail.filtersLabel.costCenter(costCenter) : null,
     supplierCode ? copy.costCenters.monthDetail.filtersLabel.supplier(supplierCode) : null,
-    excludeMp ? copy.costCenters.monthDetail.filtersLabel.excludeMp : null,
   ].filter((chip): chip is string => Boolean(chip));
 
   return (
@@ -369,6 +368,17 @@ export function CostCenterMonthPage({
           </>
         }
       />
+
+      <div className="fin-filters" aria-label={copy.costCenters.filtersAria}>
+        <label className="fin-check" title={helpTooltips.excludeMpProducts}>
+          <input
+            type="checkbox"
+            checked={excludeMp}
+            onChange={(event) => syncQuery({ excludeMp: event.target.checked, page: 1 })}
+          />
+          <span className="fin-check__label">{copy.costCenters.excludeMpLabel}</span>
+        </label>
+      </div>
 
       {loading && !data ? <FinLoadingCard title={copy.costCenters.monthDetail.loading} /> : null}
       {error ? (
