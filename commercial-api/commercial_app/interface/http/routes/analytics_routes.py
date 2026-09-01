@@ -321,12 +321,9 @@ def bff_open_portfolio_horizon(
         return fail("Erro interno no BFF analytics.", 500, operation_id=operation_id)
 
 
-@router.get(
-    "/head_office_rol_target_pct",
-    operation_id="bff_get_head_office_rol_target_pct",
-)
+@router.get("/rol/summary", operation_id="bff_get_commercial_rol_summary")
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
-def bff_head_office_rol(
+def bff_commercial_rol_summary(
     request: Request,
     start_date: str | None = None,
     end_date: str | None = None,
@@ -337,8 +334,8 @@ def bff_head_office_rol(
 ):
     return _proxy(
         request,
-        operation_id="bff_get_head_office_rol_target_pct",
-        path="/head_office_rol_target_pct",
+        operation_id="bff_get_commercial_rol_summary",
+        path="/rol/summary",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
         params=_common_filters(
@@ -347,13 +344,13 @@ def bff_head_office_rol(
             branch=branch,
             customer_segment=customer_segment,
         ),
-        message="ROL matriz carregado.",
+        message="ROL comercial carregado.",
     )
 
 
-@router.get("/branch_rol_target_pct", operation_id="bff_get_branch_rol_target_pct")
+@router.get("/weg-rol-target-pct", operation_id="bff_get_weg_rol_target_pct")
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
-def bff_branch_rol(
+def bff_weg_rol_target(
     request: Request,
     start_date: str | None = None,
     end_date: str | None = None,
@@ -364,8 +361,8 @@ def bff_branch_rol(
 ):
     return _proxy(
         request,
-        operation_id="bff_get_branch_rol_target_pct",
-        path="/branch_rol_target_pct",
+        operation_id="bff_get_weg_rol_target_pct",
+        path="/weg-rol-target-pct",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
         params=_common_filters(
@@ -374,46 +371,16 @@ def bff_branch_rol(
             branch=branch,
             customer_segment=customer_segment,
         ),
-        message="ROL filial carregado.",
-    )
-
-
-@router.get(
-    "/head_office_weg_rol_target_pct",
-    operation_id="bff_get_head_office_weg_rol_target_pct",
-)
-@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
-def bff_head_office_weg_rol(
-    request: Request,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    branch: str | None = None,
-    customer_segment: str | None = None,
-    seller_id: str | None = Query(default=None),
-    portfolio_id: str | None = Query(default=None),
-):
-    return _proxy(
-        request,
-        operation_id="bff_get_head_office_weg_rol_target_pct",
-        path="/head_office_weg_rol_target_pct",
-        seller_id=seller_id,
-        portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
-        ),
-        message="ROL WEG matriz carregado.",
+        message="ROL WEG carregado.",
     )
 
 
 @router.get(
-    "/branch_weg_rol_target_pct",
-    operation_id="bff_get_branch_weg_rol_target_pct",
+    "/new-business-rol-target-pct",
+    operation_id="bff_get_new_business_rol_target_pct",
 )
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
-def bff_branch_weg_rol(
+def bff_new_business_rol_target(
     request: Request,
     start_date: str | None = None,
     end_date: str | None = None,
@@ -424,8 +391,8 @@ def bff_branch_weg_rol(
 ):
     return _proxy(
         request,
-        operation_id="bff_get_branch_weg_rol_target_pct",
-        path="/branch_weg_rol_target_pct",
+        operation_id="bff_get_new_business_rol_target_pct",
+        path="/new-business-rol-target-pct",
         seller_id=seller_id,
         portfolio_id=portfolio_id,
         params=_common_filters(
@@ -434,67 +401,7 @@ def bff_branch_weg_rol(
             branch=branch,
             customer_segment=customer_segment,
         ),
-        message="ROL WEG filial carregado.",
-    )
-
-
-@router.get(
-    "/head_office_new_business_rol_target_pct",
-    operation_id="bff_get_head_office_new_business_rol_target_pct",
-)
-@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
-def bff_head_office_new_business_rol(
-    request: Request,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    branch: str | None = None,
-    customer_segment: str | None = None,
-    seller_id: str | None = Query(default=None),
-    portfolio_id: str | None = Query(default=None),
-):
-    return _proxy(
-        request,
-        operation_id="bff_get_head_office_new_business_rol_target_pct",
-        path="/head_office_new_business_rol_target_pct",
-        seller_id=seller_id,
-        portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
-        ),
-        message="ROL novos negócios matriz carregado.",
-    )
-
-
-@router.get(
-    "/branch_new_business_rol_target_pct",
-    operation_id="bff_get_branch_new_business_rol_target_pct",
-)
-@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
-def bff_branch_new_business_rol(
-    request: Request,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    branch: str | None = None,
-    customer_segment: str | None = None,
-    seller_id: str | None = Query(default=None),
-    portfolio_id: str | None = Query(default=None),
-):
-    return _proxy(
-        request,
-        operation_id="bff_get_branch_new_business_rol_target_pct",
-        path="/branch_new_business_rol_target_pct",
-        seller_id=seller_id,
-        portfolio_id=portfolio_id,
-        params=_common_filters(
-            start_date=start_date,
-            end_date=end_date,
-            branch=branch,
-            customer_segment=customer_segment,
-        ),
-        message="ROL novos negócios filial carregado.",
+        message="ROL novos negócios carregado.",
     )
 
 

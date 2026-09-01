@@ -11,13 +11,12 @@ from commercial_app.application.services.resolve_commercial_customer_scope_servi
     CommercialCustomerScope,
 )
 from commercial_app.application.use_cases.get_portfolio_billing_share import (
-    BRANCH_ROL_PATH,
-    HEAD_OFFICE_ROL_PATH,
+    ROL_SUMMARY_PATH,
     NATURE_PORTFOLIO_BILLING_SHARE,
     GetPortfolioBillingShareUseCase,
     compute_share_pct,
     extract_rol_from_target_payload,
-    resolve_rol_paths_for_branch,
+    resolve_rol_branches_for_branch,
 )
 from commercial_app.interface.http.routes import analytics_routes
 
@@ -58,10 +57,10 @@ def test_extract_rol_prefers_rol_field() -> None:
     assert extract_rol_from_target_payload(None) == 0.0
 
 
-def test_resolve_rol_paths_for_branch() -> None:
-    assert resolve_rol_paths_for_branch(None) == (HEAD_OFFICE_ROL_PATH, BRANCH_ROL_PATH)
-    assert resolve_rol_paths_for_branch("01") == (HEAD_OFFICE_ROL_PATH,)
-    assert resolve_rol_paths_for_branch("02") == (BRANCH_ROL_PATH,)
+def test_resolve_rol_branches_for_branch() -> None:
+    assert resolve_rol_branches_for_branch(None) == ("01", "02")
+    assert resolve_rol_branches_for_branch("01") == ("01",)
+    assert resolve_rol_branches_for_branch("02") == ("02",)
 
 
 def test_use_case_share_portfolio_over_company() -> None:
@@ -69,11 +68,14 @@ def test_use_case_share_portfolio_over_company() -> None:
 
     def _analytics(path: str, *, params=None):
         codes = (params or {}).get("customer_codes")
-        if path == HEAD_OFFICE_ROL_PATH:
+        branch_code = (params or {}).get("branch")
+        if path != ROL_SUMMARY_PATH:
+            raise AssertionError(path)
+        if branch_code == "01":
             return {"data": {"rol": 40.0 if codes else 200.0}}
-        if path == BRANCH_ROL_PATH:
+        if branch_code == "02":
             return {"data": {"rol": 10.0 if codes else 50.0}}
-        raise AssertionError(path)
+        raise AssertionError(branch_code)
 
     gateway.get_commercial_analytics.side_effect = _analytics
     scope = CommercialCustomerScope(
@@ -148,7 +150,7 @@ def test_use_case_branch_01_only_head_office() -> None:
     assert data["companyRol"] == 100.0
     assert data["sharePct"] == 100.0
     assert all(
-        c.args[0] == HEAD_OFFICE_ROL_PATH
+        c.args[0] == ROL_SUMMARY_PATH and c.kwargs.get("params", {}).get("branch") == "01"
         for c in gateway.get_commercial_analytics.call_args_list
     )
     assert gateway.get_commercial_analytics.call_count == 2
@@ -178,9 +180,14 @@ def test_portfolio_billing_share_route_ok() -> None:
 
     def _analytics(path: str, *, params=None):
         codes = (params or {}).get("customer_codes")
-        if "head_office" in path:
+        branch_code = (params or {}).get("branch")
+        if path != ROL_SUMMARY_PATH:
+            raise AssertionError(path)
+        if branch_code == "01":
             return {"data": {"rol": 30.0 if codes else 100.0}}
-        return {"data": {"rol": 20.0 if codes else 100.0}}
+        if branch_code == "02":
+            return {"data": {"rol": 20.0 if codes else 100.0}}
+        raise AssertionError(branch_code)
 
     gateway.get_commercial_analytics.side_effect = _analytics
     scope = CommercialCustomerScope(

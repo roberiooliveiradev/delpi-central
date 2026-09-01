@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
-  getBranchNewBusinessRolTarget,
-  getBranchRolTarget,
-  getBranchWegRolTarget,
   getClosingRate,
-  getHeadOfficeNewBusinessRolTarget,
-  getHeadOfficeRolTarget,
-  getHeadOfficeWegRolTarget,
   getNewBusinessRolPct,
+  getNewBusinessRolTarget,
   getOpenPortfolioHorizon,
   getPortfolioBillingShare,
+  getRolSummary,
   getSalesOrderOtd,
+  getWegRolTarget,
 } from "../../../api/analyticsApi";
 import type {
   AnalyticsFilterParams,
@@ -87,20 +84,25 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     setError(null);
 
     const needsBranchIdd = !filters.branch;
-    const segmentParams: AnalyticsFilterParams = {
+    const segmentParams = {
       start_date: filters.start_date,
       end_date: filters.end_date,
-      branch: filters.branch,
+      seller_id: filters.seller_id,
+    };
+    const rolParams = {
+      start_date: filters.start_date,
+      end_date: filters.end_date,
+      customer_segment: filters.customer_segment,
       seller_id: filters.seller_id,
     };
 
     void Promise.allSettled([
-      getHeadOfficeRolTarget(filters, controller.signal),
-      getBranchRolTarget(filters, controller.signal),
-      getHeadOfficeWegRolTarget(segmentParams, controller.signal),
-      getBranchWegRolTarget(segmentParams, controller.signal),
-      getHeadOfficeNewBusinessRolTarget(segmentParams, controller.signal),
-      getBranchNewBusinessRolTarget(segmentParams, controller.signal),
+      getRolSummary({ ...rolParams, branch: "01" }, controller.signal),
+      getRolSummary({ ...rolParams, branch: "02" }, controller.signal),
+      getWegRolTarget({ ...segmentParams, branch: "01" }, controller.signal),
+      getWegRolTarget({ ...segmentParams, branch: "02" }, controller.signal),
+      getNewBusinessRolTarget({ ...segmentParams, branch: "01" }, controller.signal),
+      getNewBusinessRolTarget({ ...segmentParams, branch: "02" }, controller.signal),
       getClosingRate(filters, controller.signal),
       getSalesOrderOtd(filters, controller.signal),
       getNewBusinessRolPct(filters, controller.signal),
