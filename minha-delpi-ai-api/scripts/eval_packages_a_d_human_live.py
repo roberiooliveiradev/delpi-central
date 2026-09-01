@@ -352,7 +352,7 @@ def main() -> int:
         Turn(
             "D3-mes-passado",
             "e no mês passado?",
-            "soft",
+            "compare_dual",
             use_agent=True,
             seed=["ROL filial 01 agosto 2026"],
         ),
