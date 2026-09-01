@@ -6,6 +6,17 @@
   min-height: 0;
 }
 
+.si-admin-catalog-detail--form .si-admin-master-detail__detail {
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .si-admin-catalog-detail--form.is-mobile-detail-open .si-admin-master-detail__master,
+  .si-admin-catalog-detail--form .si-admin-master-detail__master {
+    min-width: 0;
+  }
+}
+
 .si-admin-workspace > .si-section-block {
   margin-bottom: 0;
 }

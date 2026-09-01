@@ -17,6 +17,7 @@ const ADMIN_UI_FILES = [
   "components/CatalogAdminWorkspace.tsx",
   "components/AdminDepartmentsWorkspace.tsx",
   "components/CatalogStructureValidationWorkspace.tsx",
+  "components/SiAdminFormPanelShell.tsx",
   "components/AdminDepartmentFormDrawer.tsx",
   "components/AdminIndicatorFormDrawer.tsx",
   "components/AdminGoalsWorkspace.tsx",

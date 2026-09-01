@@ -14,7 +14,7 @@ import {
 } from "../presentation/labels";
 import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
 import { ActiveToggle } from "./ActiveToggle";
-import { DrawerPanel } from "./DrawerPanel";
+import { SiAdminFormPanelShell, type SiAdminFormPanelShellConfig } from "./SiAdminFormPanelShell";
 import { SiAdminFormField } from "./SiAdminFormField";
 import { SI_VALUE_UNIT_OPTIONS, SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
@@ -81,12 +81,11 @@ export function indicatorFormFromItem(item: AdminDepartmentIndicatorItem): Indic
 }
 
 type AdminIndicatorFormDrawerProps = {
-  open: boolean;
   mode: "create" | "edit";
   saving: boolean;
   form: IndicatorFormState;
   formError: string | null;
-  onClose: () => void;
+  panelShell: SiAdminFormPanelShellConfig;
   onChange: (next: IndicatorFormState) => void;
   onSubmit: () => Promise<void>;
 };
@@ -105,12 +104,11 @@ function validateEssentialStep(form: IndicatorFormState, mode: "create" | "edit"
 }
 
 export function AdminIndicatorFormDrawer({
-  open,
   mode,
   saving,
   form,
   formError,
-  onClose,
+  panelShell,
   onChange,
   onSubmit,
 }: AdminIndicatorFormDrawerProps) {
@@ -118,11 +116,9 @@ export function AdminIndicatorFormDrawer({
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setStep(1);
-      setLocalError(null);
-    }
-  }, [open, mode]);
+    setStep(1);
+    setLocalError(null);
+  }, [mode]);
 
   const errorMessage = localError ?? formError;
 
@@ -151,25 +147,23 @@ export function AdminIndicatorFormDrawer({
     await onSubmit();
   }
 
-  const title =
-    mode === "create" ? "Novo indicador estrutural" : "Editar indicador estrutural";
-
   return (
-    <DrawerPanel
-      open={open}
-      onClose={onClose}
-      title={title}
-      description={`Passo ${step} de 2 — ${step === 1 ? "Essencial" : "Formato e avançado"}`}
-      size="xl"
+    <SiAdminFormPanelShell
+      shell={{
+        ...panelShell,
+        subtitle:
+          panelShell.subtitle ??
+          `Passo ${step} de 2 — ${step === 1 ? "Essencial" : "Formato e avançado"}`,
+      }}
       footer={
         step === 1 ? (
           <>
             <button
               type="button"
               className="si-settings-editor__button si-settings-editor__button--secondary"
-              onClick={onClose}
+              onClick={panelShell.onBack}
             >
-              Cancelar
+              Descartar
             </button>
             <button
               type="button"
@@ -408,6 +402,6 @@ export function AdminIndicatorFormDrawer({
           </SiAdminFormField>
         </div>
       )}
-    </DrawerPanel>
+    </SiAdminFormPanelShell>
   );
 }

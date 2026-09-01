@@ -67,15 +67,13 @@ export function AdminDepartmentsWorkspace({
   const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
-  const [departmentDrawerOpen, setDepartmentDrawerOpen] = useState(false);
-  const [departmentMode, setDepartmentMode] = useState<"create" | "edit">("create");
+  const [departmentFormMode, setDepartmentFormMode] = useState<"create" | "edit" | null>(null);
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null);
   const [departmentForm, setDepartmentForm] =
     useState<DepartmentFormState>(emptyDepartmentForm);
 
-  const [indicatorDrawerOpen, setIndicatorDrawerOpen] = useState(false);
+  const [indicatorFormMode, setIndicatorFormMode] = useState<"create" | "edit" | null>(null);
   const [indicatorFormError, setIndicatorFormError] = useState<string | null>(null);
-  const [indicatorMode, setIndicatorMode] = useState<"create" | "edit">("create");
   const [editingIndicatorId, setEditingIndicatorId] = useState<string | null>(null);
   const [indicatorForm, setIndicatorForm] =
     useState<IndicatorFormState>(emptyIndicatorForm);
@@ -132,11 +130,10 @@ export function AdminDepartmentsWorkspace({
     );
     if (!match) return;
 
-    setIndicatorMode("edit");
+    setIndicatorFormMode("edit");
     setEditingIndicatorId(match.indicator_id);
     setIndicatorForm(indicatorFormFromItem(match));
     setIndicatorFormError(null);
-    setIndicatorDrawerOpen(true);
     onStructureFocusConsumed?.();
   }, [
     structureFocus,
@@ -149,7 +146,7 @@ export function AdminDepartmentsWorkspace({
     if (!catalogAction || departments.loading) return;
 
     if (catalogAction === "new-department") {
-      openCreateDepartmentDrawer();
+      openCreateDepartmentForm();
       onCatalogActionConsumed?.();
       return;
     }
@@ -165,7 +162,7 @@ export function AdminDepartmentsWorkspace({
       }
       if (departmentIndicators.loading) return;
 
-      openCreateIndicatorDrawer();
+      openCreateIndicatorForm();
       onCatalogActionConsumed?.();
     }
   }, [
@@ -177,36 +174,53 @@ export function AdminDepartmentsWorkspace({
     onCatalogActionConsumed,
   ]);
 
-  function openCreateDepartmentDrawer() {
-    setDepartmentMode("create");
+  function closeDepartmentForm() {
+    setDepartmentFormMode(null);
     setEditingDepartmentId(null);
     setDepartmentForm(emptyDepartmentForm);
-    setDepartmentDrawerOpen(true);
   }
 
-  function openEditDepartmentDrawer(item: AdminDepartmentItem) {
-    setDepartmentMode("edit");
-    setEditingDepartmentId(item.department_id);
-    setDepartmentForm(departmentFormFromItem(item));
-    setDepartmentDrawerOpen(true);
-  }
-
-  function openCreateIndicatorDrawer() {
-    setIndicatorMode("create");
+  function closeIndicatorForm() {
+    setIndicatorFormMode(null);
     setEditingIndicatorId(null);
     setIndicatorForm(emptyIndicatorForm);
-    setIndicatorDrawerOpen(true);
+    setIndicatorFormError(null);
   }
 
-  function openEditIndicatorDrawer(item: AdminDepartmentIndicatorItem) {
-    setIndicatorMode("edit");
+  function openCreateDepartmentForm() {
+    closeIndicatorForm();
+    setDepartmentFormMode("create");
+    setEditingDepartmentId(null);
+    setDepartmentForm(emptyDepartmentForm);
+  }
+
+  function openEditDepartmentForm(item: AdminDepartmentItem) {
+    closeIndicatorForm();
+    setDepartmentFormMode("edit");
+    setEditingDepartmentId(item.department_id);
+    setDepartmentForm(departmentFormFromItem(item));
+  }
+
+  function openCreateIndicatorForm() {
+    closeDepartmentForm();
+    setIndicatorFormMode("create");
+    setEditingIndicatorId(null);
+    setIndicatorForm(emptyIndicatorForm);
+    setIndicatorFormError(null);
+  }
+
+  function openEditIndicatorForm(item: AdminDepartmentIndicatorItem) {
+    closeDepartmentForm();
+    setIndicatorFormMode("edit");
     setEditingIndicatorId(item.indicator_id);
     setIndicatorForm(indicatorFormFromItem(item));
-    setIndicatorDrawerOpen(true);
+    setIndicatorFormError(null);
   }
 
+  const catalogFormOpen = Boolean(departmentFormMode || indicatorFormMode);
+
   async function handleSubmitDepartment() {
-    if (departmentMode === "create") {
+    if (departmentFormMode === "create") {
       const payload: CreateAdminDepartmentRequest = {
         department_id: departmentForm.department_id.trim(),
         department_name: departmentForm.department_name.trim(),
@@ -245,7 +259,7 @@ export function AdminDepartmentsWorkspace({
       }
     }
 
-    setDepartmentDrawerOpen(false);
+    closeDepartmentForm();
   }
 
   async function handleSubmitIndicator() {
@@ -253,7 +267,7 @@ export function AdminDepartmentsWorkspace({
 
     setIndicatorFormError(null);
 
-    if (indicatorMode === "create") {
+    if (indicatorFormMode === "create") {
       const payload: CreateAdminDepartmentIndicatorRequest = {
         indicator_id: indicatorForm.indicator_id.trim(),
         indicator_name: indicatorForm.indicator_name.trim(),
@@ -296,8 +310,15 @@ export function AdminDepartmentsWorkspace({
       await departmentIndicators.updateIndicator(editingIndicatorId, payload);
     }
 
-    setIndicatorDrawerOpen(false);
+    closeIndicatorForm();
   }
+
+  const departmentFormTitle =
+    departmentFormMode === "edit" ? "Editar departamento" : "Novo departamento";
+  const indicatorFormTitle =
+    indicatorFormMode === "edit"
+      ? "Editar indicador estrutural"
+      : "Novo indicador estrutural";
 
   return (
     <div className="si-admin-workspace">
@@ -318,8 +339,10 @@ export function AdminDepartmentsWorkspace({
 
       <div
         className={`si-admin-master-detail ${
-          isPhone && selectedDepartmentId ? "is-mobile-detail-open" : ""
-        }`}
+          isPhone && (selectedDepartmentId || catalogFormOpen)
+            ? "is-mobile-detail-open"
+            : ""
+        } ${catalogFormOpen ? "si-admin-catalog-detail--form" : ""}`}
       >
         <div className="si-admin-master-detail__master">
           <div className="si-admin-master-detail__master-header">
@@ -330,7 +353,8 @@ export function AdminDepartmentsWorkspace({
             <SiHelpActionButton
               className="si-settings-editor__button"
               helpHint={SI_HELP.catalog.newDepartment}
-              onClick={openCreateDepartmentDrawer}
+              onClick={openCreateDepartmentForm}
+              disabled={!!catalogFormOpen}
             >
               Novo departamento
             </SiHelpActionButton>
@@ -357,7 +381,7 @@ export function AdminDepartmentsWorkspace({
               title="Nenhum departamento cadastrado"
               description="Crie o primeiro departamento administrativo para começar a configurar o módulo."
               actionLabel="Criar departamento"
-              onAction={openCreateDepartmentDrawer}
+              onAction={openCreateDepartmentForm}
             />
           ) : (
             <div className="si-admin-list">
@@ -388,17 +412,52 @@ export function AdminDepartmentsWorkspace({
         </div>
 
         <div className="si-admin-master-detail__detail">
-          {isPhone && selectedDepartment ? (
+          {isPhone && (selectedDepartment || catalogFormOpen) ? (
             <button
               type="button"
               className="si-admin-master-detail__back"
-              onClick={() => setSelectedDepartmentId(null)}
+              onClick={() => {
+                if (catalogFormOpen) {
+                  if (departmentFormMode) closeDepartmentForm();
+                  else closeIndicatorForm();
+                  return;
+                }
+                setSelectedDepartmentId(null);
+              }}
             >
               ← Lista de departamentos
             </button>
           ) : null}
 
-          {!selectedDepartment ? (
+          {departmentFormMode ? (
+            <AdminDepartmentFormDrawer
+              mode={departmentFormMode}
+              saving={departments.saving}
+              form={departmentForm}
+              panelShell={{
+                title: departmentFormTitle,
+                onBack: closeDepartmentForm,
+                backLabel: "← Voltar ao catálogo",
+              }}
+              onChange={setDepartmentForm}
+              onSubmit={handleSubmitDepartment}
+            />
+          ) : indicatorFormMode && selectedDepartment ? (
+            <AdminIndicatorFormDrawer
+              mode={indicatorFormMode}
+              saving={departmentIndicators.saving}
+              form={indicatorForm}
+              formError={indicatorFormError}
+              panelShell={{
+                title: indicatorFormTitle,
+                subtitle: selectedDepartment.department_name,
+                onBack: closeIndicatorForm,
+                backLabel: "← Voltar ao departamento",
+              }}
+              onChange={setIndicatorForm}
+              onSubmit={handleSubmitIndicator}
+            />
+          ) : !selectedDepartment ? (
             <InfoState
               title="Selecione um departamento"
               description="Escolha um departamento na lista para editar cadastro e indicadores."
@@ -416,7 +475,7 @@ export function AdminDepartmentsWorkspace({
                       <button
                         type="button"
                         className="si-settings-editor__button si-settings-editor__button--secondary"
-                        onClick={() => openEditDepartmentDrawer(selectedDepartment)}
+                        onClick={() => openEditDepartmentForm(selectedDepartment)}
                       >
                         Editar
                       </button>
@@ -491,7 +550,8 @@ export function AdminDepartmentsWorkspace({
                     <SiHelpActionButton
                       className="si-settings-editor__button"
                       helpHint={SI_HELP.catalog.newIndicator}
-                      onClick={openCreateIndicatorDrawer}
+                      onClick={openCreateIndicatorForm}
+                      disabled={!!indicatorFormMode}
                     >
                       Novo indicador
                     </SiHelpActionButton>
@@ -533,7 +593,7 @@ export function AdminDepartmentsWorkspace({
                       title="Nenhum indicador estrutural cadastrado"
                       description="Crie os indicadores oficiais deste departamento para habilitar metas anuais e leitura estratégica."
                       actionLabel="Criar indicador"
-                      onAction={openCreateIndicatorDrawer}
+                      onAction={openCreateIndicatorForm}
                     />
                   ) : (
                     <div className="si-admin-indicators-table">
@@ -577,7 +637,7 @@ export function AdminDepartmentsWorkspace({
                             <button
                               type="button"
                               className="si-settings-editor__button si-settings-editor__button--secondary"
-                              onClick={() => openEditIndicatorDrawer(item)}
+                              onClick={() => openEditIndicatorForm(item)}
                             >
                               Editar
                             </button>
@@ -626,30 +686,6 @@ export function AdminDepartmentsWorkspace({
           )}
         </div>
       </div>
-
-      <AdminDepartmentFormDrawer
-        open={departmentDrawerOpen}
-        mode={departmentMode}
-        saving={departments.saving}
-        form={departmentForm}
-        onClose={() => setDepartmentDrawerOpen(false)}
-        onChange={setDepartmentForm}
-        onSubmit={handleSubmitDepartment}
-      />
-
-      <AdminIndicatorFormDrawer
-        open={indicatorDrawerOpen}
-        mode={indicatorMode}
-        saving={departmentIndicators.saving}
-        form={indicatorForm}
-        formError={indicatorFormError}
-        onClose={() => {
-          setIndicatorDrawerOpen(false);
-          setIndicatorFormError(null);
-        }}
-        onChange={setIndicatorForm}
-        onSubmit={handleSubmitIndicator}
-      />
     </div>
   );
 }

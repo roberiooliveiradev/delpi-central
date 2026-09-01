@@ -4,7 +4,7 @@ import type { AdminDepartmentItem } from "../../data/types/settings";
 import { SI_HELP } from "../../content/helpTooltips";
 import { getAggregationModeLabel } from "../presentation/labels";
 import { ActiveToggle } from "./ActiveToggle";
-import { DrawerPanel } from "./DrawerPanel";
+import { SiAdminFormPanelShell, type SiAdminFormPanelShellConfig } from "./SiAdminFormPanelShell";
 import { SiAdminFormField } from "./SiAdminFormField";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
@@ -54,11 +54,10 @@ export function departmentFormFromItem(item: AdminDepartmentItem): DepartmentFor
 type DepartmentAccordionPanel = "identity" | "idd" | "narrative";
 
 type AdminDepartmentFormDrawerProps = {
-  open: boolean;
   mode: "create" | "edit";
   saving: boolean;
   form: DepartmentFormState;
-  onClose: () => void;
+  panelShell: SiAdminFormPanelShellConfig;
   onChange: (next: DepartmentFormState) => void;
   onSubmit: () => Promise<void>;
 };
@@ -118,11 +117,10 @@ function AccordionPanel({
 }
 
 export function AdminDepartmentFormDrawer({
-  open,
   mode,
   saving,
   form,
-  onClose,
+  panelShell,
   onChange,
   onSubmit,
 }: AdminDepartmentFormDrawerProps) {
@@ -130,11 +128,9 @@ export function AdminDepartmentFormDrawer({
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setOpenPanel("identity");
-      setLocalError(null);
-    }
-  }, [open, mode]);
+    setOpenPanel("identity");
+    setLocalError(null);
+  }, [mode]);
 
   function patchForm(patch: Partial<DepartmentFormState>) {
     onChange({ ...form, ...patch });
@@ -151,23 +147,17 @@ export function AdminDepartmentFormDrawer({
     await onSubmit();
   }
 
-  const title = mode === "create" ? "Novo departamento" : "Editar departamento";
-
   return (
-    <DrawerPanel
-      open={open}
-      onClose={onClose}
-      title={title}
-      description="Identidade, IDD e narrativa estratégica do departamento."
-      size="lg"
+    <SiAdminFormPanelShell
+      shell={panelShell}
       footer={
         <>
           <button
             type="button"
             className="si-settings-editor__button si-settings-editor__button--secondary"
-            onClick={onClose}
+            onClick={panelShell.onBack}
           >
-            Cancelar
+            Descartar
           </button>
           <button
             type="button"
@@ -175,7 +165,7 @@ export function AdminDepartmentFormDrawer({
             onClick={() => void handleSave()}
             disabled={saving}
           >
-            {saving ? "Salvando..." : "Salvar"}
+            {saving ? "Salvando..." : "Salvar departamento"}
           </button>
         </>
       }
@@ -311,6 +301,6 @@ export function AdminDepartmentFormDrawer({
           </div>
         </AccordionPanel>
       </div>
-    </DrawerPanel>
+    </SiAdminFormPanelShell>
   );
 }
