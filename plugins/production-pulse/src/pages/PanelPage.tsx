@@ -131,7 +131,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
           variant="error"
           title="Erro ao carregar"
           message={error}
-          actions={
+          action={
             <PpActionButton variant="ghost" onClick={() => void reload()}>
               Tentar novamente
             </PpActionButton>
@@ -144,12 +144,12 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
           variant="empty"
           title="Nenhum dispositivo cadastrado"
           message={PP_HELP.panel.emptyFilial}
-          actions={
+          action={
             permissions.canManageDevices ? (
               <PpActionButton variant="primary" onClick={openCreate}>
                 Cadastrar dispositivo
               </PpActionButton>
-            ) : null
+            ) : undefined
           }
         />
       ) : null}
@@ -159,7 +159,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
           variant="empty"
           title="Nenhum dispositivo com esses filtros"
           message={PP_HELP.panel.emptyFilters}
-          actions={
+          action={
             <PpActionButton
               variant="ghost"
               onClick={() =>

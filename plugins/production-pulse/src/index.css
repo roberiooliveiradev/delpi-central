@@ -147,18 +147,6 @@
   grid-column: 1 / -1;
 }
 
-.pp-filters-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: end;
-  justify-content: space-between;
-}
-
-.pp-filters-wrap__actions {
-  margin-left: auto;
-}
-
 .pp-filter-new-device__label {
   white-space: nowrap;
 }
