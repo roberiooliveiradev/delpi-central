@@ -20,6 +20,7 @@ class DepartmentKpiMatch:
     domain_prefix: str
     reason: str
     operation_hint: str = ""
+    branch_default: str | None = None
 
 
 def invalidate_department_kpi_rules_cache() -> None:
@@ -27,7 +28,7 @@ def invalidate_department_kpi_rules_cache() -> None:
 
 
 @lru_cache(maxsize=1)
-def _rules_content() -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str], ...]:
+def _rules_content() -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str, str | None], ...]:
     bundle = ChatAssistantContentService.load_bundle("department_kpi_rules")
     rules = bundle.get("rules")
     default_mode = str(bundle.get("defaultMatchMode") or "substring").strip().lower() or "substring"
@@ -35,7 +36,7 @@ def _rules_content() -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], 
     if not isinstance(rules, list):
         return ()
 
-    normalized_rules: list[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str]] = []
+    normalized_rules: list[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str, str | None]] = []
 
     for rule in rules:
         if not isinstance(rule, dict):
@@ -47,6 +48,12 @@ def _rules_content() -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], 
         keywords = rule.get("keywords") or []
         excludes = rule.get("excludes") or []
         match_mode = str(rule.get("matchMode") or default_mode).strip().lower() or default_mode
+        branch_default_raw = rule.get("branchDefault")
+        branch_default = (
+            str(branch_default_raw).strip()
+            if branch_default_raw is not None and str(branch_default_raw).strip()
+            else None
+        )
 
         if not domain_prefix or not path_token or not label:
             continue
@@ -59,6 +66,7 @@ def _rules_content() -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], 
                 tuple(str(item).strip() for item in excludes if str(item).strip()),
                 label,
                 match_mode,
+                branch_default,
             )
         )
 
@@ -79,13 +87,13 @@ class ChatDepartmentKpiIntentService:
         token = str(path_token or "").strip()
         if not token:
             return cls.default_match_mode()
-        for _domain, path, _keywords, _excludes, _label, match_mode in cls._rules():
+        for _domain, path, _keywords, _excludes, _label, match_mode, _branch_default in cls._rules():
             if path == token:
                 return match_mode or cls.default_match_mode()
         return cls.default_match_mode()
 
     @classmethod
-    def _rules(cls) -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str], ...]:
+    def _rules(cls) -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str, str | None], ...]:
         return _rules_content()
 
     @classmethod
@@ -124,7 +132,7 @@ class ChatDepartmentKpiIntentService:
         best: DepartmentKpiMatch | None = None
         best_score = 0
 
-        for domain_prefix, path_token, keywords, excludes, label, match_mode in cls._rules():
+        for domain_prefix, path_token, keywords, excludes, label, match_mode, branch_default in cls._rules():
             if any(exclude in normalized for exclude in excludes):
                 continue
 
@@ -147,6 +155,7 @@ class ChatDepartmentKpiIntentService:
                         label=label,
                     ),
                     operation_hint=label,
+                    branch_default=branch_default,
                 )
 
         return best

@@ -2096,7 +2096,7 @@
     "financial_ebitda_pct": "/financial/ebitda_pct",
     "financial_fixed_cost_pct": "/financial/fixed_cost_pct",
     "financial_pmr": "/financial/pmr",
-    "commercial_rol_target": "/commercial/head_office_rol_target_pct",
+    "commercial_rol_target": "/commercial/rol/summary",
     "commercial_rol_series": "/commercial/rol/series",
     "sales_conversion_rate": "/commercial/closing-rate",
     "new_clients_average": "/commercial/new-clients-average",
@@ -2194,7 +2194,7 @@
   },
   "entityPathHintAliases": {
     "commercial_rol_target": [
-      "/commercial/branch_rol_target_pct"
+      "/commercial/rol/summary"
     ]
   },
   "pathEntityFallbacks": []

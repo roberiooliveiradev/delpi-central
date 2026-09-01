@@ -539,6 +539,9 @@ class ChatRouteContextService:
         if token in {"series", "search"} and len(parts) >= 3:
             return f"{token}/{parts[2]}"
 
+        if len(parts) > 2:
+            return "/".join(parts[1:])
+
         return token
 
     @classmethod

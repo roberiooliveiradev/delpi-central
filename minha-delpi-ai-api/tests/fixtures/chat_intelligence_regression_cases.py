@@ -721,8 +721,8 @@ SELECTION_CASES = [
             {
                 "actionId": "commercial-branch-rol-target",
                 "method": "GET",
-                "path": "/commercial/branch_rol_target_pct",
-                "operationId": "get_branch_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "summary": "Meta % ROL filial",
                 "parametersSchema": [],
             },
@@ -743,16 +743,16 @@ SELECTION_CASES = [
             {
                 "actionId": "commercial-head-office-rol-target",
                 "method": "GET",
-                "path": "/commercial/head_office_rol_target_pct",
-                "operationId": "get_head_office_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "summary": "Meta % ROL matriz",
                 "parametersSchema": [],
             },
             {
                 "actionId": "commercial-branch-rol-target",
                 "method": "GET",
-                "path": "/commercial/branch_rol_target_pct",
-                "operationId": "get_branch_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "summary": "Meta % ROL filial",
                 "parametersSchema": [],
             },
@@ -905,7 +905,7 @@ SELECTION_CASES = [
                             "name": "execute_external_action",
                             "metadata": {
                                 "ok": True,
-                                "path": "/commercial/branch_rol_target_pct",
+                                "path": "/commercial/rol/summary",
                             },
                         }
                     ]
@@ -916,8 +916,8 @@ SELECTION_CASES = [
             {
                 "actionId": "commercial-branch-rol-target",
                 "method": "GET",
-                "path": "/commercial/branch_rol_target_pct",
-                "operationId": "get_branch_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "summary": "Meta % ROL filial",
                 "parametersSchema": [
                     {"name": "branch", "in": "query", "required": False},
@@ -954,7 +954,7 @@ SELECTION_CASES = [
                             "name": "execute_external_action",
                             "metadata": {
                                 "ok": True,
-                                "path": "/commercial/branch_new_business_rol_target_pct",
+                                "path": "/commercial/new-business-rol-target-pct",
                             },
                         }
                     ]
@@ -965,16 +965,16 @@ SELECTION_CASES = [
             {
                 "actionId": "commercial-head-office-rol-target",
                 "method": "GET",
-                "path": "/commercial/head_office_rol_target_pct",
-                "operationId": "get_head_office_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "summary": "Meta % ROL matriz",
                 "parametersSchema": [],
             },
             {
                 "actionId": "commercial-branch-rol-target",
                 "method": "GET",
-                "path": "/commercial/branch_rol_target_pct",
-                "operationId": "get_branch_rol_target_pct",
+                "path": "/commercial/rol/summary",
+                "operationId": "get_commercial_rol_summary",
                 "summary": "Meta % ROL filial",
                 "parametersSchema": [
                     {"name": "branch", "in": "query", "required": False},
@@ -985,8 +985,8 @@ SELECTION_CASES = [
             {
                 "actionId": "commercial-branch-new-business-rol-target",
                 "method": "GET",
-                "path": "/commercial/branch_new_business_rol_target_pct",
-                "operationId": "get_branch_new_business_rol_target_pct",
+                "path": "/commercial/new-business-rol-target-pct",
+                "operationId": "get_new_business_rol_target_pct",
                 "summary": "Meta % ROL novos negócios filial",
                 "parametersSchema": [
                     {"name": "branch", "in": "query", "required": False},
@@ -2919,7 +2919,7 @@ PROSE_COMMENTARY_DIRECT_CASES = [
         "tool_metadata": {
             "ok": True,
             "llmProseDecoupled": True,
-            "path": "/commercial/branch_rol_target_pct",
+            "path": "/commercial/rol/summary",
             "dataCommentary": {
                 "highlights": [
                     "**rol:** R$ 3.717.926,47",

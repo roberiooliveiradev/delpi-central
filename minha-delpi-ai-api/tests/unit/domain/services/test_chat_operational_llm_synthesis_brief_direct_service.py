@@ -102,7 +102,7 @@ def test_normal_commentary_direct_builds_answer_when_enabled():
     metadata = {
         "ok": True,
         "llmProseDecoupled": True,
-        "path": "/commercial/branch_rol_target_pct",
+        "path": "/commercial/rol/summary",
         "dataCommentary": {
             "highlights": [
                 "**rol:** R$ 3.717.926,47",
@@ -136,7 +136,7 @@ def test_apply_turn_direct_answer_policy_normal_uses_commentary_direct():
     metadata = {
         "ok": True,
         "llmProseDecoupled": True,
-        "path": "/commercial/branch_rol_target_pct",
+        "path": "/commercial/rol/summary",
         "dataCommentary": {
             "highlights": [
                 "**rol:** R$ 3.717.926,47",
@@ -216,7 +216,7 @@ def test_apply_turn_direct_answer_policy_prefers_commentary_over_stale_tool_cont
     metadata = {
         "ok": True,
         "llmProseDecoupled": True,
-        "path": "/commercial/branch_rol_target_pct",
+        "path": "/commercial/rol/summary",
         "dataCommentary": {
             "highlights": [
                 "**rol:** R$ 3.717.926,47",

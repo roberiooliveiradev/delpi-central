@@ -1219,8 +1219,8 @@ def test_select_metric_refinement_uses_path_token_not_semantic_candidates():
                 {
                     "actionId": "commercial-branch",
                     "method": "GET",
-                    "path": "/commercial/branch_rol_target_pct",
-                    "operationId": "get_branch_rol_target_pct",
+                    "path": "/commercial/rol/summary",
+                    "operationId": "get_commercial_rol_summary",
                     "summary": "ROL filial",
                     "parametersSchema": [{"name": "branch", "in": "query"}],
                 },

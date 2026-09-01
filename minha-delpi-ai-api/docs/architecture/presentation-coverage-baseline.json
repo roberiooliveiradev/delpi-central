@@ -75,8 +75,8 @@
   "rows": [
     {
       "method": "GET",
-      "path": "/commercial/branch_rol_target_pct",
-      "operation_id": "get_branch_rol_target_pct",
+      "path": "/commercial/rol/summary",
+      "operation_id": "get_commercial_rol_summary",
       "tags": [
         "Comercial"
       ],
@@ -121,8 +121,8 @@
     },
     {
       "method": "GET",
-      "path": "/commercial/head_office_rol_target_pct",
-      "operation_id": "get_head_office_rol_target_pct",
+      "path": "/commercial/rol/summary",
+      "operation_id": "get_commercial_rol_summary",
       "tags": [
         "Comercial"
       ],

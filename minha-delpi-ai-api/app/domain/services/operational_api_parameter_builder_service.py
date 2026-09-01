@@ -97,6 +97,10 @@ class OperationalApiParameterBuilderService:
             branch = str(spec.get("allBranchesValue") or "all")
         else:
             branch = branch_match.group(1) if branch_match else None
+        route_parameters = action.get("parameters") if isinstance(action.get("parameters"), dict) else {}
+        branch_default = route_parameters.get("branchDefault")
+        if branch is None and branch_default:
+            branch = str(branch_default).strip() or None
         context = {
             "branch": branch,
             "branch_match": branch_match if not all_branches_match else None,

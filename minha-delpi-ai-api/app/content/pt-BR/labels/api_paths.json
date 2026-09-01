@@ -1,128 +1,453 @@
 {
   "pathLabels": [
-    { "path": "/health", "label": "Verificar saúde da API" },
-    { "path": "/data/sql", "label": "Executar consulta SQL somente leitura" },
-
-    { "path": "/products/search", "label": "Buscar produtos no Protheus" },
-    { "path": "/products/{code}", "label": "Descrição e dados cadastrais do produto" },
-    { "path": "/products/{code}/summary", "label": "Resumo consolidado do produto" },
-    { "path": "/products/{code}/analyser", "label": "Ficha completa do produto (analisador)" },
-    { "path": "/products/{code}/stock", "label": "Estoque do produto por filial e local" },
-    { "path": "/products/{code}/structure", "label": "Estrutura (BOM) do produto" },
-    { "path": "/products/{code}/structure/excel", "label": "Exportar estrutura (BOM) em Excel" },
-    { "path": "/products/{code}/parents", "label": "Onde o produto é usado (produtos pai)" },
-    { "path": "/products/{code}/suppliers", "label": "Fornecedores do produto" },
-    { "path": "/products/{code}/customers", "label": "Clientes do produto" },
-    { "path": "/products/{code}/purchases", "label": "Histórico de compras do produto" },
-    { "path": "/products/{code}/sales", "label": "Resumo de vendas do produto" },
-    { "path": "/products/{code}/sales/open-orders", "label": "Carteira de pedidos de venda em aberto" },
-    { "path": "/products/{code}/sales/billing", "label": "Resumo de faturamento do produto" },
-    { "path": "/products/{code}/pricing", "label": "Preços comerciais do produto" },
-    { "path": "/products/{code}/guide", "label": "Roteiro de produção do produto" },
-    { "path": "/products/{code}/inspection", "label": "Plano de inspeção do produto" },
-    { "path": "/products/{code}/internal-movements", "label": "Movimentações internas do produto" },
-    { "path": "/products/{code}/inbound-invoice-items", "label": "Itens de notas fiscais de entrada" },
-    { "path": "/products/{code}/outbound-invoice-items", "label": "Itens de notas fiscais de saída" },
-
-    { "path": "/sales/", "label": "Listar ordens de venda" },
-
-    { "path": "/commercial/head_office_rol_target_pct", "label": "Meta ROL matriz (%)" },
-    { "path": "/commercial/branch_rol_target_pct", "label": "Meta ROL por filial (%)" },
-    { "path": "/commercial/rol/series", "label": "Série histórica de ROL comercial" },
-    { "path": "/commercial/proposals", "label": "Propostas comerciais (ganhas, abertas ou todas)" },
-    { "path": "/commercial/closing-rate", "label": "Taxa de conversão de vendas" },
-    { "path": "/commercial/new-clients-average", "label": "Média de novos clientes" },
-    { "path": "/commercial/sales-order-otd", "label": "OTD de ordens de venda (comercial)" },
-    { "path": "/commercial/new-business-rol-pct", "label": "ROL de novos negócios (%)" },
-    { "path": "/commercial/new-clients-rol-pct", "label": "ROL de novos clientes (%)" },
-
-    { "path": "/financial/rol", "label": "ROL financeiro" },
-    { "path": "/financial/ebitda_pct", "label": "EBITDA (%)" },
-    { "path": "/financial/fixed_cost_pct", "label": "Custos fixos (%)" },
-    { "path": "/financial/pmr", "label": "PMR — prazo médio de recebimento" },
-    { "path": "/finacial/rol", "label": "ROL — rota legada" },
-    { "path": "/finacial/ebitda_pct", "label": "EBITDA (%) — rota legada" },
-    { "path": "/finacial/fixed_cost_pct", "label": "Custos fixos (%) — rota legada" },
-    { "path": "/finacial/pmr", "label": "PMR — rota legada" },
-
-    { "path": "/production/direct_labor_cost_pct", "label": "Custo de mão de obra direta (%)" },
-    { "path": "/production/production_cost_pct", "label": "Custo de produção (%)" },
-    { "path": "/production/depreciation_pct", "label": "Depreciação (%) — produção" },
-    { "path": "/production/oee/series", "label": "Série histórica de OEE (produção)" },
-    { "path": "/production/oee/appointments/{id}", "label": "Detalhe do apontamento OEE — roteiro, estrutura e tempos" },
-    { "path": "/production/oee", "label": "OEE produção — resumo e apontamentos (SH6010)" },
-    { "path": "/production/otd/series", "label": "Série histórica de OTD (produção)" },
-    { "path": "/production/otd", "label": "OTD produção — resumo e ordens (SC2010)" },
-    { "path": "/production/overall_equipment_effectiveness_pct", "label": "OEE — eficiência global dos equipamentos (%)" },
-    { "path": "/production/on_time_delivery_pct", "label": "Entrega no prazo (%) — produção" },
-    { "path": "/production/eficiencia-fabril/dashboard", "label": "Painel de eficiência fabril (apontamentos)" },
-    { "path": "/production/eficiencia-fabril/appointments", "label": "Apontamentos de eficiência fabril" },
-
-    { "path": "/production/consumption/top-items", "label": "Ranking de consumo de materiais (produção)" },
-    { "path": "/production/consumption/top-items-by-work-center", "label": "Consumo por centro de trabalho" },
-    { "path": "/production/consumption/top-items-validated", "label": "Consumo validado (produção)" },
-    { "path": "/production/consumption/by-item/{code}", "label": "Consumo por item (produção)" },
-    { "path": "/production/losses/top-materials", "label": "Refugos por matéria-prima" },
-    { "path": "/production/losses/records", "label": "Registros de refugo/perda" },
-    { "path": "/production/schedule/today", "label": "Programação de produção do dia" },
-    { "path": "/production/orders/open", "label": "Ordens de produção em aberto" },
-    { "path": "/production/orders/finished", "label": "Ordens de produção encerradas" },
-    { "path": "/production/orders/finished-without-consumption", "label": "OPs encerradas sem baixa de consumo" },
-    { "path": "/production/work-centers/order-summary", "label": "Resumo de OPs por centro de trabalho" },
-    { "path": "/production/work-centers/average-planned-time", "label": "Tempo médio planejado por CT" },
-    { "path": "/production/allocation-gaps", "label": "Componentes sem empenho (travamento)" },
-    { "path": "/production/planned-vs-real-time", "label": "Planejado × real por OP" },
-    { "path": "/purchases/top-products", "label": "Ranking de produtos mais comprados" },
-
-    { "path": "/supplies/cpv", "label": "CPV — custo de produto vendido (suprimentos)" },
-    { "path": "/supplies/otd", "label": "OTD — entrega no prazo (suprimentos)" },
-    { "path": "/supplies/stock-value", "label": "Valor total de estoque (suprimentos)" },
-    { "path": "/supplies/inventory-turnover", "label": "Giro de estoque / IDD (suprimentos)" },
-
-    { "path": "/engineering/lmps", "label": "Listar LMPs (ordens especiais / amostras)" },
-    { "path": "/engineering/lmps/{sale_number}", "label": "Detalhe da LMP por ordem de venda" },
-    { "path": "/engineering/lmps/dashboard", "label": "Painel (dashboard) de LMPs" },
-    { "path": "/engineering/lmps/dashboard/summary", "label": "Resumo do painel de LMPs" },
-    { "path": "/engineering/lmps/dashboard/items", "label": "Itens do painel de LMPs" },
-    { "path": "/engineering/lmps/dashboard/charts", "label": "Gráficos do painel de LMPs" },
-    { "path": "/engineering/transforma-mais/processes", "label": "Listar processos Transforma Mais" },
-    { "path": "/engineering/transforma-mais/processes/summary", "label": "Resumo dos processos Transforma Mais" },
-
-    { "path": "/quality/branches", "label": "Filiais (qualidade)" },
-    { "path": "/quality/nonconformities", "label": "Não conformidades" },
-    { "path": "/quality/nonconformities/series", "label": "Série de não conformidades" },
-    { "path": "/quality/kaizens/summary", "label": "Resumo de kaizens" },
-    { "path": "/quality/kaizens/{kaizen_id}", "label": "Detalhe do kaizen" },
-    { "path": "/quality/audit-5s/summary", "label": "Resumo da auditoria 5S" },
-    { "path": "/quality/audit-5s/areas", "label": "Áreas da auditoria 5S (PostgreSQL)" },
-    { "path": "/quality/audit-5s/criteria", "label": "Critérios da auditoria 5S" },
-    { "path": "/quality/audit-5s/audits", "label": "Auditorias 5S operacionais (PostgreSQL)" },
-    { "path": "/quality/audit-5s/audits/{audit_id}", "label": "Detalhe de auditoria 5S" },
-    { "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates", "label": "Candidatas a NC na auditoria 5S" },
-    { "path": "/quality/audit-5s/audits/{audit_id}/nonconformities", "label": "NC da auditoria 5S (PostgreSQL)" },
-    { "path": "/quality/audit-5s/nonconformities/{nc_id}/actions", "label": "Ações de NC 5S" },
-    { "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments", "label": "Evidências de NC 5S" },
-    { "path": "/quality/audit-5s/analytics/dashboard", "label": "Dashboard analítico 5S" },
-    { "path": "/quality/ppm/internal", "label": "PPM interno" },
-    { "path": "/quality/ppm/internal/summary", "label": "Resumo de PPM interno" },
-    { "path": "/quality/ppm/internal/series", "label": "Série de PPM interno" },
-    { "path": "/quality/ppm/external", "label": "PPM externo" },
-    { "path": "/quality/ppm/external/summary", "label": "Resumo de PPM externo" },
-    { "path": "/quality/ppm/external/series", "label": "Série de PPM externo" },
-
-    { "path": "/hr/branches", "label": "Filiais (RH)" },
-    { "path": "/hr/snapshot", "label": "Snapshot de indicadores de RH" },
-    { "path": "/hr/active-pdi-count", "label": "PDIs ativos (RH)" },
-    { "path": "/hr/performance-reviews-completion", "label": "Conclusão de avaliações de desempenho" },
-
-    { "path": "/system/tables/search", "label": "Buscar tabelas por descrição (SX2)" },
-    { "path": "/system/tables/{tablename}", "label": "Consultar informações de tabela" },
-    { "path": "/system/tables/{tablename}/columns", "label": "Listar colunas de tabela com paginação" },
-    { "path": "/system/tables/{tablename}/columns/search", "label": "Buscar colunas de uma tabela por texto" },
-    { "path": "/system/tables/{tablename}/indexes", "label": "Índices da tabela (SIX)" },
-    { "path": "/system/tables/{tablename}/relations", "label": "Relacionamentos da tabela (SX9)" },
-    { "path": "/system/tables/{tablename}/schema", "label": "Schema completo da tabela (SX2/SX3/SIX/SX9)" },
-    { "path": "/system/columns/search", "label": "Buscar colunas por descrição (SX3)" }
+    {
+      "path": "/health",
+      "label": "Verificar saúde da API"
+    },
+    {
+      "path": "/data/sql",
+      "label": "Executar consulta SQL somente leitura"
+    },
+    {
+      "path": "/products/search",
+      "label": "Buscar produtos no Protheus"
+    },
+    {
+      "path": "/products/{code}",
+      "label": "Descrição e dados cadastrais do produto"
+    },
+    {
+      "path": "/products/{code}/summary",
+      "label": "Resumo consolidado do produto"
+    },
+    {
+      "path": "/products/{code}/analyser",
+      "label": "Ficha completa do produto (analisador)"
+    },
+    {
+      "path": "/products/{code}/stock",
+      "label": "Estoque do produto por filial e local"
+    },
+    {
+      "path": "/products/{code}/structure",
+      "label": "Estrutura (BOM) do produto"
+    },
+    {
+      "path": "/products/{code}/structure/excel",
+      "label": "Exportar estrutura (BOM) em Excel"
+    },
+    {
+      "path": "/products/{code}/parents",
+      "label": "Onde o produto é usado (produtos pai)"
+    },
+    {
+      "path": "/products/{code}/suppliers",
+      "label": "Fornecedores do produto"
+    },
+    {
+      "path": "/products/{code}/customers",
+      "label": "Clientes do produto"
+    },
+    {
+      "path": "/products/{code}/purchases",
+      "label": "Histórico de compras do produto"
+    },
+    {
+      "path": "/products/{code}/sales",
+      "label": "Resumo de vendas do produto"
+    },
+    {
+      "path": "/products/{code}/sales/open-orders",
+      "label": "Carteira de pedidos de venda em aberto"
+    },
+    {
+      "path": "/products/{code}/sales/billing",
+      "label": "Resumo de faturamento do produto"
+    },
+    {
+      "path": "/products/{code}/pricing",
+      "label": "Preços comerciais do produto"
+    },
+    {
+      "path": "/products/{code}/guide",
+      "label": "Roteiro de produção do produto"
+    },
+    {
+      "path": "/products/{code}/inspection",
+      "label": "Plano de inspeção do produto"
+    },
+    {
+      "path": "/products/{code}/internal-movements",
+      "label": "Movimentações internas do produto"
+    },
+    {
+      "path": "/products/{code}/inbound-invoice-items",
+      "label": "Itens de notas fiscais de entrada"
+    },
+    {
+      "path": "/products/{code}/outbound-invoice-items",
+      "label": "Itens de notas fiscais de saída"
+    },
+    {
+      "path": "/sales/",
+      "label": "Listar ordens de venda"
+    },
+    {
+      "path": "/commercial/rol/summary",
+      "label": "Meta ROL matriz (%)"
+    },
+    {
+      "path": "/commercial/rol/summary",
+      "label": "Meta ROL por filial (%)"
+    },
+    {
+      "path": "/commercial/rol/series",
+      "label": "Série histórica de ROL comercial"
+    },
+    {
+      "path": "/commercial/proposals",
+      "label": "Propostas comerciais (ganhas, abertas ou todas)"
+    },
+    {
+      "path": "/commercial/closing-rate",
+      "label": "Taxa de conversão de vendas"
+    },
+    {
+      "path": "/commercial/new-clients-average",
+      "label": "Média de novos clientes"
+    },
+    {
+      "path": "/commercial/sales-order-otd",
+      "label": "OTD de ordens de venda (comercial)"
+    },
+    {
+      "path": "/commercial/new-business-rol-pct",
+      "label": "ROL de novos negócios (%)"
+    },
+    {
+      "path": "/commercial/new-clients-rol-pct",
+      "label": "ROL de novos clientes (%)"
+    },
+    {
+      "path": "/financial/rol",
+      "label": "ROL financeiro"
+    },
+    {
+      "path": "/financial/ebitda_pct",
+      "label": "EBITDA (%)"
+    },
+    {
+      "path": "/financial/fixed_cost_pct",
+      "label": "Custos fixos (%)"
+    },
+    {
+      "path": "/financial/pmr",
+      "label": "PMR — prazo médio de recebimento"
+    },
+    {
+      "path": "/finacial/rol",
+      "label": "ROL — rota legada"
+    },
+    {
+      "path": "/finacial/ebitda_pct",
+      "label": "EBITDA (%) — rota legada"
+    },
+    {
+      "path": "/finacial/fixed_cost_pct",
+      "label": "Custos fixos (%) — rota legada"
+    },
+    {
+      "path": "/finacial/pmr",
+      "label": "PMR — rota legada"
+    },
+    {
+      "path": "/production/direct_labor_cost_pct",
+      "label": "Custo de mão de obra direta (%)"
+    },
+    {
+      "path": "/production/production_cost_pct",
+      "label": "Custo de produção (%)"
+    },
+    {
+      "path": "/production/depreciation_pct",
+      "label": "Depreciação (%) — produção"
+    },
+    {
+      "path": "/production/oee/series",
+      "label": "Série histórica de OEE (produção)"
+    },
+    {
+      "path": "/production/oee/appointments/{id}",
+      "label": "Detalhe do apontamento OEE — roteiro, estrutura e tempos"
+    },
+    {
+      "path": "/production/oee",
+      "label": "OEE produção — resumo e apontamentos (SH6010)"
+    },
+    {
+      "path": "/production/otd/series",
+      "label": "Série histórica de OTD (produção)"
+    },
+    {
+      "path": "/production/otd",
+      "label": "OTD produção — resumo e ordens (SC2010)"
+    },
+    {
+      "path": "/production/overall_equipment_effectiveness_pct",
+      "label": "OEE — eficiência global dos equipamentos (%)"
+    },
+    {
+      "path": "/production/on_time_delivery_pct",
+      "label": "Entrega no prazo (%) — produção"
+    },
+    {
+      "path": "/production/eficiencia-fabril/dashboard",
+      "label": "Painel de eficiência fabril (apontamentos)"
+    },
+    {
+      "path": "/production/eficiencia-fabril/appointments",
+      "label": "Apontamentos de eficiência fabril"
+    },
+    {
+      "path": "/production/consumption/top-items",
+      "label": "Ranking de consumo de materiais (produção)"
+    },
+    {
+      "path": "/production/consumption/top-items-by-work-center",
+      "label": "Consumo por centro de trabalho"
+    },
+    {
+      "path": "/production/consumption/top-items-validated",
+      "label": "Consumo validado (produção)"
+    },
+    {
+      "path": "/production/consumption/by-item/{code}",
+      "label": "Consumo por item (produção)"
+    },
+    {
+      "path": "/production/losses/top-materials",
+      "label": "Refugos por matéria-prima"
+    },
+    {
+      "path": "/production/losses/records",
+      "label": "Registros de refugo/perda"
+    },
+    {
+      "path": "/production/schedule/today",
+      "label": "Programação de produção do dia"
+    },
+    {
+      "path": "/production/orders/open",
+      "label": "Ordens de produção em aberto"
+    },
+    {
+      "path": "/production/orders/finished",
+      "label": "Ordens de produção encerradas"
+    },
+    {
+      "path": "/production/orders/finished-without-consumption",
+      "label": "OPs encerradas sem baixa de consumo"
+    },
+    {
+      "path": "/production/work-centers/order-summary",
+      "label": "Resumo de OPs por centro de trabalho"
+    },
+    {
+      "path": "/production/work-centers/average-planned-time",
+      "label": "Tempo médio planejado por CT"
+    },
+    {
+      "path": "/production/allocation-gaps",
+      "label": "Componentes sem empenho (travamento)"
+    },
+    {
+      "path": "/production/planned-vs-real-time",
+      "label": "Planejado × real por OP"
+    },
+    {
+      "path": "/purchases/top-products",
+      "label": "Ranking de produtos mais comprados"
+    },
+    {
+      "path": "/supplies/cpv",
+      "label": "CPV — custo de produto vendido (suprimentos)"
+    },
+    {
+      "path": "/supplies/otd",
+      "label": "OTD — entrega no prazo (suprimentos)"
+    },
+    {
+      "path": "/supplies/stock-value",
+      "label": "Valor total de estoque (suprimentos)"
+    },
+    {
+      "path": "/supplies/inventory-turnover",
+      "label": "Giro de estoque / IDD (suprimentos)"
+    },
+    {
+      "path": "/engineering/lmps",
+      "label": "Listar LMPs (ordens especiais / amostras)"
+    },
+    {
+      "path": "/engineering/lmps/{sale_number}",
+      "label": "Detalhe da LMP por ordem de venda"
+    },
+    {
+      "path": "/engineering/lmps/dashboard",
+      "label": "Painel (dashboard) de LMPs"
+    },
+    {
+      "path": "/engineering/lmps/dashboard/summary",
+      "label": "Resumo do painel de LMPs"
+    },
+    {
+      "path": "/engineering/lmps/dashboard/items",
+      "label": "Itens do painel de LMPs"
+    },
+    {
+      "path": "/engineering/lmps/dashboard/charts",
+      "label": "Gráficos do painel de LMPs"
+    },
+    {
+      "path": "/engineering/transforma-mais/processes",
+      "label": "Listar processos Transforma Mais"
+    },
+    {
+      "path": "/engineering/transforma-mais/processes/summary",
+      "label": "Resumo dos processos Transforma Mais"
+    },
+    {
+      "path": "/quality/branches",
+      "label": "Filiais (qualidade)"
+    },
+    {
+      "path": "/quality/nonconformities",
+      "label": "Não conformidades"
+    },
+    {
+      "path": "/quality/nonconformities/series",
+      "label": "Série de não conformidades"
+    },
+    {
+      "path": "/quality/kaizens/summary",
+      "label": "Resumo de kaizens"
+    },
+    {
+      "path": "/quality/kaizens/{kaizen_id}",
+      "label": "Detalhe do kaizen"
+    },
+    {
+      "path": "/quality/audit-5s/summary",
+      "label": "Resumo da auditoria 5S"
+    },
+    {
+      "path": "/quality/audit-5s/areas",
+      "label": "Áreas da auditoria 5S (PostgreSQL)"
+    },
+    {
+      "path": "/quality/audit-5s/criteria",
+      "label": "Critérios da auditoria 5S"
+    },
+    {
+      "path": "/quality/audit-5s/audits",
+      "label": "Auditorias 5S operacionais (PostgreSQL)"
+    },
+    {
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "label": "Detalhe de auditoria 5S"
+    },
+    {
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
+      "label": "Candidatas a NC na auditoria 5S"
+    },
+    {
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "label": "NC da auditoria 5S (PostgreSQL)"
+    },
+    {
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "label": "Ações de NC 5S"
+    },
+    {
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "label": "Evidências de NC 5S"
+    },
+    {
+      "path": "/quality/audit-5s/analytics/dashboard",
+      "label": "Dashboard analítico 5S"
+    },
+    {
+      "path": "/quality/ppm/internal",
+      "label": "PPM interno"
+    },
+    {
+      "path": "/quality/ppm/internal/summary",
+      "label": "Resumo de PPM interno"
+    },
+    {
+      "path": "/quality/ppm/internal/series",
+      "label": "Série de PPM interno"
+    },
+    {
+      "path": "/quality/ppm/external",
+      "label": "PPM externo"
+    },
+    {
+      "path": "/quality/ppm/external/summary",
+      "label": "Resumo de PPM externo"
+    },
+    {
+      "path": "/quality/ppm/external/series",
+      "label": "Série de PPM externo"
+    },
+    {
+      "path": "/hr/branches",
+      "label": "Filiais (RH)"
+    },
+    {
+      "path": "/hr/snapshot",
+      "label": "Snapshot de indicadores de RH"
+    },
+    {
+      "path": "/hr/active-pdi-count",
+      "label": "PDIs ativos (RH)"
+    },
+    {
+      "path": "/hr/performance-reviews-completion",
+      "label": "Conclusão de avaliações de desempenho"
+    },
+    {
+      "path": "/system/tables/search",
+      "label": "Buscar tabelas por descrição (SX2)"
+    },
+    {
+      "path": "/system/tables/{tablename}",
+      "label": "Consultar informações de tabela"
+    },
+    {
+      "path": "/system/tables/{tablename}/columns",
+      "label": "Listar colunas de tabela com paginação"
+    },
+    {
+      "path": "/system/tables/{tablename}/columns/search",
+      "label": "Buscar colunas de uma tabela por texto"
+    },
+    {
+      "path": "/system/tables/{tablename}/indexes",
+      "label": "Índices da tabela (SIX)"
+    },
+    {
+      "path": "/system/tables/{tablename}/relations",
+      "label": "Relacionamentos da tabela (SX9)"
+    },
+    {
+      "path": "/system/tables/{tablename}/schema",
+      "label": "Schema completo da tabela (SX2/SX3/SIX/SX9)"
+    },
+    {
+      "path": "/system/columns/search",
+      "label": "Buscar colunas por descrição (SX3)"
+    }
   ],
   "englishSummaries": {
     "customers": "Clientes do produto",

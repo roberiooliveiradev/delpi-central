@@ -83,7 +83,8 @@
     },
     {
       "domainPrefix": "/commercial/",
-      "pathToken": "head_office_rol_target",
+      "pathToken": "rol/summary",
+      "branchDefault": "01",
       "keywords": [
         "meta rol matriz",
         "rol matriz",
@@ -104,7 +105,8 @@
     },
     {
       "domainPrefix": "/commercial/",
-      "pathToken": "branch_rol_target",
+      "pathToken": "rol/summary",
+      "branchDefault": "02",
       "keywords": [
         "meta rol filial",
         "rol filial meta",

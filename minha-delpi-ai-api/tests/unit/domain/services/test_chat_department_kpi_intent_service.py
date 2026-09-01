@@ -135,7 +135,8 @@ def test_resolve_commercial_branch_rol_target_meta_percentual_filial():
     )
 
     assert match is not None
-    assert match.path_token == "branch_rol_target"
+    assert match.path_token == "rol/summary"
+    assert match.branch_default == "02"
     assert match.domain_prefix == "/commercial/"
 
 
@@ -150,7 +151,8 @@ def test_resolve_commercial_head_office_meta_para_comercial_desse_mes():
     )
 
     assert match is not None
-    assert match.path_token == "head_office_rol_target"
+    assert match.path_token == "rol/summary"
+    assert match.branch_default == "01"
     assert match.domain_prefix == "/commercial/"
 
 
@@ -165,7 +167,8 @@ def test_resolve_commercial_branch_meta_comercial_da_filial():
     )
 
     assert match is not None
-    assert match.path_token == "branch_rol_target"
+    assert match.path_token == "rol/summary"
+    assert match.branch_default == "02"
 
 
 def test_resolve_commercial_branch_meta_para_comercial_com_filial_02():
@@ -179,7 +182,8 @@ def test_resolve_commercial_branch_meta_para_comercial_com_filial_02():
     )
 
     assert match is not None
-    assert match.path_token == "branch_rol_target"
+    assert match.path_token == "rol/summary"
+    assert match.branch_default == "02"
     assert match.domain_prefix == "/commercial/"
 
 
