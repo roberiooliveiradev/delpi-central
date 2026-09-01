@@ -72,6 +72,10 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "ipi_separated": "IPI destacado",
     "rol_taxes": "Impostos sobre ROL",
     "rol": "ROL",
+    "target": "Meta ROL (R$)",
+    "comparable_goal": "Meta ROL comparável (R$)",
+    "rol_target_pct": "Atingimento da meta ROL (%)",
+    "goal_label": "Meta (rótulo)",
     "financial_titles": "Títulos financeiros",
     "financial_balance": "Saldo financeiro",
 }

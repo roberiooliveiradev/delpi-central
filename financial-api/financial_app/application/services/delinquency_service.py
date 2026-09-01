@@ -22,6 +22,7 @@ from financial_app.core.security import FIN_DELINQUENCY_VIEW
 from financial_app.domain.errors import FinancialError
 from financial_app.domain.ports.financial_data_gateway import FinancialDataGateway
 from financial_app.domain.services.branch_access_service import BranchAccessService
+from financial_app.domain.services.period_range import resolve_inclusive_period_or_default
 
 
 class InvalidDelinquencyQuery(FinancialError):
@@ -403,7 +404,8 @@ class DelinquencyService:
     ) -> tuple[str | None, str | None]:
         self._branch_access.assert_can_use(user, FIN_DELINQUENCY_VIEW)
         self._branch_access.resolve_branch_scope(user, None)
-        return resolve_delinquency_gateway_period(start_date, end_date)
+        start, end = resolve_inclusive_period_or_default(start_date, end_date)
+        return resolve_delinquency_gateway_period(start, end)
 
     def _cached(
         self,

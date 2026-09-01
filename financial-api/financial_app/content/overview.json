@@ -1,6 +1,6 @@
 {
   "topCostCentersLimit": 5,
-  "delinquencySeriesMonths": 12,
+  "defaultPeriodMode": "current_month",
   "maxParallelBlocks": 6,
   "messages": {
     "blockFailed": "Não foi possível carregar este bloco agora.",

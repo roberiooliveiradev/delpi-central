@@ -33,7 +33,7 @@ def normalize_optional_period(
     end = as_optional_text(end_date)
     if (start is None) ^ (end is None):
         raise InvalidPeriod(
-            "Informe início e fim juntos, ou omita ambos para usar os últimos 12 meses."
+            "Informe início e fim juntos, ou omita ambos para usar o mês corrente."
         )
     if start is None or end is None:
         return None, None
@@ -70,6 +70,26 @@ def resolve_required_period(
 def current_month_bounds(today: date | None = None) -> tuple[str, str]:
     reference = today or date.today()
     return date(reference.year, reference.month, 1).isoformat(), reference.isoformat()
+
+
+def resolve_inclusive_period_or_default(
+    start_date: str | None,
+    end_date: str | None,
+    *,
+    today: date | None = None,
+) -> tuple[str, str]:
+    """Período inclusivo na UI: omitir ambos → 1º dia do mês corrente até hoje."""
+    start = as_optional_text(start_date)
+    end = as_optional_text(end_date)
+    if (start is None) ^ (end is None):
+        raise InvalidPeriod("Informe início e fim do período juntos.")
+    if start and end:
+        if parse_iso_date(start, field_name="startDate") > parse_iso_date(
+            end, field_name="endDate"
+        ):
+            raise InvalidPeriod("A data inicial não pode ser posterior à data final.")
+        return start, end
+    return current_month_bounds(today)
 
 
 def last_completed_months_bounds(months: int = 12, today: date | None = None) -> tuple[str, str]:

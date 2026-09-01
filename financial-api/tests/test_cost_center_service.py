@@ -199,5 +199,9 @@ def test_default_period_is_applied_when_omitted() -> None:
         supplier_store=None,
     )
     kwargs = gateway.call_kwargs("fetch_cost_center_summary")
-    assert kwargs["start_date"] and kwargs["end_date"]
-    assert kwargs["start_date"] < kwargs["end_date"]
+    start = kwargs["start_date"]
+    end = kwargs["end_date"]
+    assert start and end
+    assert start <= end
+    assert start.endswith("-01")
+    assert start[:7] == end[:7]

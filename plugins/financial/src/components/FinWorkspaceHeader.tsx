@@ -6,6 +6,7 @@ import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { FinancialBranch } from "../types";
 import { buildFinancialHref, navigateFinancial, storeBranch } from "../utils/routeParser";
+import { FinPeriodFilterButton } from "./FinPeriodFilterButton";
 
 const BRANCH_OPTIONS = ["01", "02", "all"] as const;
 
@@ -13,6 +14,11 @@ type FinWorkspaceHeaderProps = {
   title: string;
   subtitle?: string;
   period?: string | null;
+  /** ISO YYYY-MM-DD sugeridos no popover quando não há filtro na URL. */
+  periodDefaultStart?: string | null;
+  periodDefaultEnd?: string | null;
+  /** Quando true, exibe botão sutil que abre o filtro de período. */
+  periodEditable?: boolean;
   titleHint?: string;
   stats?: ReactNode;
   actions?: ReactNode;
@@ -24,12 +30,16 @@ type FinWorkspaceHeaderProps = {
   endDate?: string | null;
   onRefresh?: () => void;
   refreshBusy?: boolean;
+  onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
 };
 
 export function FinWorkspaceHeader({
   title,
   subtitle,
   period,
+  periodDefaultStart,
+  periodDefaultEnd,
+  periodEditable = false,
   titleHint,
   stats,
   actions,
@@ -40,6 +50,7 @@ export function FinWorkspaceHeader({
   endDate,
   onRefresh,
   refreshBusy,
+  onPeriodChange,
 }: FinWorkspaceHeaderProps) {
   const setBranch = (next: FinancialBranch) => {
     storeBranch(next);
@@ -64,7 +75,20 @@ export function FinWorkspaceHeader({
               </h1>
             </div>
             {subtitle ? <p className="fin-header__subtitle">{subtitle}</p> : null}
-            {period ? <p className="fin-header__period">{period}</p> : null}
+            {period ? (
+              <div className="fin-header__period-row">
+                <p className="fin-header__period">{period}</p>
+                {periodEditable && onPeriodChange ? (
+                  <FinPeriodFilterButton
+                    startDate={startDate ?? null}
+                    endDate={endDate ?? null}
+                    defaultStartDate={periodDefaultStart}
+                    defaultEndDate={periodDefaultEnd}
+                    onApply={onPeriodChange}
+                  />
+                ) : null}
+              </div>
+            ) : null}
             {stats ? <div className="fin-header__stats">{stats}</div> : null}
           </div>
         </div>

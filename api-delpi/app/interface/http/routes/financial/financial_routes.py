@@ -53,7 +53,14 @@ def get_rol(
         )
 
         use_case = build_get_rol_use_case()
-        result = use_case.execute(dto)
+        result = enrich_dashboard_metric(
+            use_case.execute(dto),
+            source_key=goal_keys.COMMERCIAL_ROL,
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            recompute_target_pct_from="rol",
+        )
 
         return api_delpi_success(
             result,

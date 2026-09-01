@@ -243,6 +243,14 @@ def test_half_open_period_is_rejected() -> None:
         service.summary(full_user(), start_date="2026-01-01", end_date=None)
 
 
+def test_delinquency_defaults_to_current_month_for_gateway() -> None:
+    service, gateway = build()
+    service.summary(full_user(), start_date=None, end_date=None, refresh=True)
+    kwargs = gateway.call_kwargs("fetch_delinquency_summary")
+    assert kwargs["start_date"].endswith("-01")
+    assert kwargs["start_date"][:7] == kwargs["end_date"][:7]
+
+
 def test_delinquency_period_converts_inclusive_end_for_gateway() -> None:
     service, gateway = build()
     service.summary(full_user(), start_date="2026-08-01", end_date="2026-08-21")

@@ -30,7 +30,10 @@ def test_overview_aggregates_every_block() -> None:
     result = service.build(full_user(), branch="01")
 
     assert result["branch"] == "01"
-    assert result["period"]["startDate"] and result["period"]["endDate"]
+    start, end = result["period"]["startDate"], result["period"]["endDate"]
+    assert start and end
+    assert start <= end
+    assert start.endswith("-01")
 
     blocks = result["blocks"]
     assert set(blocks) == {

@@ -11,7 +11,6 @@ import { useOverview } from "../hooks/useOverview";
 import type { FinancialBranch, KpiBlock } from "../types";
 import { formatPeriodRange, formatYearMonth } from "../utils/formatDates";
 import {
-  formatCompactCurrency,
   formatCurrency,
   formatDays,
   formatInteger,
@@ -24,14 +23,14 @@ const SERIES_HEIGHT = 208;
 
 function kpiValue(block: KpiBlock | undefined, kind: "currency" | "percent" | "days"): string {
   if (!block || block.available === false) return "—";
-  if (kind === "currency") return formatCompactCurrency(block.value);
+  if (kind === "currency") return formatCurrency(block.value);
   if (kind === "days") return formatDays(block.value);
   return formatPercent(block.value);
 }
 
 function kpiGoal(block: KpiBlock | undefined, kind: "currency" | "percent" | "days"): string | null {
   if (!block || block.available === false || block.target === undefined) return null;
-  if (kind === "currency") return formatCompactCurrency(block.target);
+  if (kind === "currency") return formatCurrency(block.target);
   if (kind === "days") return formatDays(block.target);
   return formatPercent(block.target);
 }
@@ -42,10 +41,16 @@ function formatChartPercent(value: number): string {
 
 type OverviewPageProps = {
   branch: FinancialBranch;
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
-export function OverviewPage({ branch }: OverviewPageProps) {
-  const { data, loading, error, reload } = useOverview(branch);
+export function OverviewPage({
+  branch,
+  startDate = null,
+  endDate = null,
+}: OverviewPageProps) {
+  const { data, loading, error, reload } = useOverview(branch, startDate, endDate);
   const blocks = data?.blocks;
 
   const delinquencyRows = useMemo(
@@ -63,8 +68,21 @@ export function OverviewPage({ branch }: OverviewPageProps) {
 
   const period = data ? formatPeriodRange(data.period.startDate, data.period.endDate) : null;
 
+  const applyPeriod = (next: { startDate: string; endDate: string } | null) => {
+    navigateFinancial(
+      buildFinancialHref({
+        subpluginId: "home",
+        branch,
+        startDate: next?.startDate ?? null,
+        endDate: next?.endDate ?? null,
+      }),
+    );
+  };
+
   const openSubplugin = (subpluginId: string) => {
-    navigateFinancial(buildFinancialHref({ subpluginId, branch }));
+    navigateFinancial(
+      buildFinancialHref({ subpluginId, branch, startDate, endDate }),
+    );
   };
 
   return (
@@ -73,9 +91,15 @@ export function OverviewPage({ branch }: OverviewPageProps) {
         title={copy.home.title}
         subtitle={copy.home.subtitle}
         period={period}
+        periodDefaultStart={data?.period.startDate ?? null}
+        periodDefaultEnd={data?.period.endDate ?? null}
+        periodEditable
         titleHint={helpTooltips.home}
         branch={branch}
         subpluginId="home"
+        startDate={startDate}
+        endDate={endDate}
+        onPeriodChange={applyPeriod}
         onRefresh={reload}
         refreshBusy={loading}
       />

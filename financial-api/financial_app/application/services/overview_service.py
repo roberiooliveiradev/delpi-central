@@ -11,10 +11,9 @@ from financial_app.application.services.payload_mapping import (
     as_float,
     as_int,
     as_opt_float,
-    default_period,
     unwrap_data,
-    validate_period_pair,
 )
+from financial_app.domain.services.period_range import resolve_inclusive_period_or_default
 from financial_app.core.security import (
     FIN_ACCESS,
     FIN_COST_CENTERS_VIEW,
@@ -60,10 +59,7 @@ class OverviewService:
         if not can(user, FIN_ACCESS):
             raise PermissionError("Você não tem permissão para acessar o Portal Financeiro.")
         scope = self._branch_access.resolve_branch_scope(user, branch)
-        start, end = validate_period_pair(start_date, end_date)
-        if start is None or end is None:
-            months = as_int(_settings().get("delinquencySeriesMonths"), 12)
-            start, end = default_period(months)
+        start, end = resolve_inclusive_period_or_default(start_date, end_date)
 
         kpi_cfg = _settings().get("kpis") or {}
         return {

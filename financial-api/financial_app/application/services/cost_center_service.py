@@ -11,13 +11,12 @@ from financial_app.application.services.payload_mapping import (
     clamp_limit,
     clamp_page,
     clamp_page_size,
-    default_period,
     map_pagination,
     map_period,
     map_sort,
     unwrap_data,
-    validate_period_pair,
 )
+from financial_app.domain.services.period_range import resolve_inclusive_period_or_default
 from financial_app.application.services.response_cache import cached_fetch
 from financial_app.core.security import FIN_COST_CENTERS_VIEW
 from financial_app.domain.errors import FinancialError
@@ -421,9 +420,7 @@ class CostCenterService:
     ) -> tuple[str | None, str, str]:
         self._branch_access.assert_can_use(user, FIN_COST_CENTERS_VIEW)
         scope = self._branch_access.resolve_branch_scope(user, branch)
-        start, end = validate_period_pair(start_date, end_date)
-        if start is None or end is None:
-            start, end = default_period(as_int(_settings().get("defaultPeriodMonths"), 12))
+        start, end = resolve_inclusive_period_or_default(start_date, end_date)
         return scope, start, end
 
     def _cached(
