@@ -546,6 +546,79 @@
   align-items: stretch;
 }
 
+/* ------------------------------------------- detalhamento do mês de despesas */
+
+.dashboard-financial .fin-month-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  font-size: var(--fin-font-xs);
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.dashboard-financial .fin-month-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--fin-border);
+  border-left: 4px solid var(--fin-accent);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--fin-accent) 8%, var(--fin-surface)) 0%,
+      var(--fin-surface) 62%
+    );
+}
+
+.dashboard-financial .fin-month-hero__label {
+  margin: 0;
+  font-size: var(--fin-font-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fin-text-muted);
+}
+
+.dashboard-financial .fin-month-hero__value {
+  margin: 0;
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--fin-title);
+}
+
+.dashboard-financial .fin-month-hero__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  font-size: var(--fin-font-md);
+  font-weight: 600;
+  color: var(--fin-text-muted);
+}
+
+.dashboard-financial .fin-month-hero__delta--up {
+  color: var(--fin-critical);
+}
+
+.dashboard-financial .fin-month-hero__delta--down {
+  color: var(--fin-ok);
+}
+
+.dashboard-financial .fin-month-hero__delta--muted {
+  font-weight: 500;
+}
+
+.dashboard-financial .fin-month-back {
+  font-weight: 600;
+}
+
 .dashboard-financial .fin-board-grid {
   display: grid;
   grid-template-columns: minmax(280px, 1.2fr) minmax(240px, 0.8fr);

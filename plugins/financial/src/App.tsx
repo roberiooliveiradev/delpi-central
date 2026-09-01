@@ -7,6 +7,7 @@ import { DEFAULT_SUBPLUGIN } from "./constants/routes";
 import { useFinancialRouterPath } from "./hooks/useFinancialRouterPath";
 import { useSubplugins } from "./hooks/useSubplugins";
 import { BillingPage } from "./pages/BillingPage";
+import { CostCenterMonthPage } from "./pages/CostCenterMonthPage";
 import { CostCentersPage } from "./pages/CostCentersPage";
 import { DelinquencyPage } from "./pages/DelinquencyPage";
 import { IndicatorsPage } from "./pages/IndicatorsPage";
@@ -75,6 +76,19 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         customerStore={route.customerStore}
         status={route.status}
         delayRange={route.delayRange}
+        page={route.page}
+      />
+    );
+  } else if (route.subpluginId === "cost-centers" && route.month) {
+    workspace = (
+      <CostCenterMonthPage
+        branch={route.branch}
+        month={route.month}
+        costCenter={route.costCenter}
+        supplierCode={route.supplierCode}
+        supplierStore={route.supplierStore}
+        excludeMp={route.excludeMp}
+        search={route.search}
         page={route.page}
       />
     );
