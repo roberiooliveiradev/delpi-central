@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyCanvasTableMerge,
   canMergeRect,
+  canvasTableCellHtmlSpan,
   expandSelectionToMerges,
   isCoveredCell,
   mergeAt,
@@ -83,5 +84,12 @@ describe("canvas table merges", () => {
     expect(block.merges).toEqual([MERGE_2X2]);
     const serialized = serializeComunicadoConfig(parsed);
     expect((serialized.blocks?.[0] as { merges?: unknown }).merges).toEqual([MERGE_2X2]);
+  });
+
+  it("âncora tem rowspan/colspan; coberta não gera span", () => {
+    expect(canvasTableCellHtmlSpan([MERGE_2X2], 0, 0)).toEqual({ rowSpan: 2, colSpan: 2 });
+    expect(canvasTableCellHtmlSpan([MERGE_2X2], 1, 1)).toEqual({});
+    expect(isCoveredCell([MERGE_2X2], 1, 0)).toBe(true);
+    expect(isCoveredCell([MERGE_2X2], 0, 0)).toBe(false);
   });
 });

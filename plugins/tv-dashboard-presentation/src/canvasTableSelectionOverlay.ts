@@ -3,7 +3,8 @@
  * Rects em coordenadas relativas ao host (não viewport).
  */
 
-import type { CanvasTableCellRef } from "./comunicadoCanvasTable";
+import { mergeAt } from "./canvasTableMerge";
+import type { CanvasTableCellRef, CanvasTableMerge } from "./comunicadoCanvasTable";
 
 export type CanvasTableCellDomRect = {
   row: number;
@@ -24,6 +25,7 @@ export function resolveCanvasTableSelectionOverlayRects(params: {
   cellRects: readonly CanvasTableCellDomRect[];
   selectedCells: readonly CanvasTableCellRef[];
   focus?: CanvasTableCellRef | null;
+  merges?: readonly CanvasTableMerge[];
 }): CanvasTableSelectionOverlayRects {
   const selected = params.selectedCells;
   if (!selected.length) {
@@ -41,7 +43,10 @@ export function resolveCanvasTableSelectionOverlayRects(params: {
   let any = false;
 
   for (const cell of selected) {
-    const rect = byKey.get(`${cell.row}:${cell.col}`);
+    const found = mergeAt(params.merges, cell.row, cell.col);
+    const rect = byKey.get(
+      found ? `${found.row}:${found.col}` : `${cell.row}:${cell.col}`,
+    );
     if (!rect) continue;
     any = true;
     minL = Math.min(minL, rect.left);
@@ -55,8 +60,13 @@ export function resolveCanvasTableSelectionOverlayRects(params: {
     : null;
 
   const focusRef = params.focus ?? selected[selected.length - 1] ?? null;
+  const focusMerge = focusRef ? mergeAt(params.merges, focusRef.row, focusRef.col) : null;
   const focusRect = focusRef
-    ? byKey.get(`${focusRef.row}:${focusRef.col}`) ?? null
+    ? byKey.get(
+        focusMerge
+          ? `${focusMerge.row}:${focusMerge.col}`
+          : `${focusRef.row}:${focusRef.col}`,
+      ) ?? null
     : null;
   const focus = focusRect
     ? {

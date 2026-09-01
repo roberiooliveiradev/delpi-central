@@ -631,6 +631,7 @@ export {
   applyCanvasTableMerge,
   unmergeCanvasTableMerges,
   remapCanvasTableMerges,
+  canvasTableCellHtmlSpan,
   formatCanvasTableNumber,
   buildCanvasTableSparklinePath,
   resolveColumnSparklineAxis,

@@ -135,6 +135,7 @@ export {
   applyCanvasTableMerge,
   unmergeCanvasTableMerges,
   remapCanvasTableMerges,
+  canvasTableCellHtmlSpan,
 } from "./canvasTableMerge";
 export type { CanvasTableMerge } from "./comunicadoCanvasTable";
 export type {

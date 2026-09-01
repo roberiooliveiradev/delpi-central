@@ -1507,6 +1507,7 @@ function EditorCanvasTableBlock({
             range,
             rowCount: block.rows,
             colCount: block.cols,
+            merges: block.merges,
           }),
         onCellCommit: (row, col, cell: CanvasTableCell) => {
           const cells = block.cells.map((currentRow) =>

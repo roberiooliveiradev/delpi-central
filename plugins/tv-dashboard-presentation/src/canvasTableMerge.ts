@@ -90,6 +90,20 @@ export function isCoveredCell(
   return Boolean(found && (found.row !== row || found.col !== col));
 }
 
+/** Span HTML da âncora; coberta não renderiza `td`. */
+export function canvasTableCellHtmlSpan(
+  merges: readonly CanvasTableMerge[] | undefined,
+  row: number,
+  col: number,
+): { rowSpan?: number; colSpan?: number } {
+  const found = mergeAt(merges, row, col);
+  if (!found || found.row !== row || found.col !== col) return {};
+  return {
+    ...(found.rowspan > 1 ? { rowSpan: found.rowspan } : {}),
+    ...(found.colspan > 1 ? { colSpan: found.colspan } : {}),
+  };
+}
+
 export function parseCanvasTableMerge(raw: unknown): CanvasTableMerge | null {
   if (!raw || typeof raw !== "object") return null;
   const src = raw as Record<string, unknown>;

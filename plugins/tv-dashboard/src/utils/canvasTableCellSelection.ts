@@ -11,7 +11,12 @@
  * - Shift+clique → retângulo da âncora até a célula clicada.
  */
 
-import type { CanvasTableCellRef } from "@delpi/tv-dashboard-presentation";
+import {
+  expandSelectionToMerges,
+  mergeAt,
+  type CanvasTableCellRef,
+  type CanvasTableMerge,
+} from "@delpi/tv-dashboard-presentation";
 
 export type CanvasTableCellPointerAction = "select-block" | "select-cell";
 
@@ -27,6 +32,7 @@ export type CanvasTableCellSelectionRequest = {
   range?: boolean;
   rowCount: number;
   colCount: number;
+  merges?: readonly CanvasTableMerge[];
 };
 
 /** Seleção ativa de células na Grade. */
@@ -92,37 +98,69 @@ export function canvasTableCellRectangle(
   return cells;
 }
 
+function focusForMerge(
+  cell: CanvasTableCellRef,
+  merges: readonly CanvasTableMerge[] | undefined,
+): CanvasTableCellRef {
+  const found = mergeAt(merges, cell.row, cell.col);
+  return found ? { row: found.row, col: found.col } : cell;
+}
+
 export function applyCanvasTableCellSelectionRequest(
   previous: ComunicadoCanvasTableCellSelection | null,
   blockId: string,
   request: CanvasTableCellSelectionRequest,
 ): ComunicadoCanvasTableCellSelection {
   const cell = clampCell(request.cell, request.rowCount, request.colCount);
+  const focus = focusForMerge(cell, request.merges);
   if (!request.additive && !request.range) {
-    return { blockId, cells: [cell], anchor: cell, focus: cell };
+    return {
+      blockId,
+      cells: expandSelectionToMerges([cell], request.merges),
+      anchor: focus,
+      focus,
+    };
   }
   if (!previous || previous.blockId !== blockId) {
-    return { blockId, cells: [cell], anchor: cell, focus: cell };
+    return {
+      blockId,
+      cells: expandSelectionToMerges([cell], request.merges),
+      anchor: focus,
+      focus,
+    };
   }
   if (request.range) {
-    const cells = canvasTableCellRectangle(
-      previous.anchor,
-      cell,
-      request.rowCount,
-      request.colCount,
+    const cells = expandSelectionToMerges(
+      canvasTableCellRectangle(
+        previous.anchor,
+        cell,
+        request.rowCount,
+        request.colCount,
+      ),
+      request.merges,
     );
-    return { blockId, cells, anchor: previous.anchor, focus: cell };
+    return { blockId, cells, anchor: previous.anchor, focus };
   }
-  const exists = previous.cells.some((item) => item.row === cell.row && item.col === cell.col);
-  const nextCells = exists
-    ? previous.cells.filter((item) => !(item.row === cell.row && item.col === cell.col))
-    : [...previous.cells, cell];
-  const cells = nextCells.length > 0 ? nextCells : [cell];
+  const unit = expandSelectionToMerges([cell], request.merges);
+  const unitKeys = new Set(unit.map((item) => canvasTableCellKey(item)));
+  const unitSelected = unit.every((item) =>
+    previous.cells.some((current) => current.row === item.row && current.col === item.col),
+  );
+  const nextCells = unitSelected
+    ? previous.cells.filter((item) => !unitKeys.has(canvasTableCellKey(item)))
+    : [
+        ...previous.cells,
+        ...unit.filter(
+          (item) =>
+            !previous.cells.some((current) => current.row === item.row && current.col === item.col),
+        ),
+      ];
+  const cells = nextCells.length > 0 ? nextCells : unit;
   return {
     blockId,
     cells,
-    anchor: previous.anchor ?? cell,
-    focus: cell,
+    anchor: previous.anchor ?? focus,
+    focus,
   };
 }
 

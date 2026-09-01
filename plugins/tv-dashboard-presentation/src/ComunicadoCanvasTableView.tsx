@@ -16,6 +16,10 @@ import {
   type CanvasTableCellDomRect,
 } from "./canvasTableSelectionOverlay";
 import {
+  canvasTableCellHtmlSpan,
+  isCoveredCell,
+} from "./canvasTableMerge";
+import {
   buildCanvasTableSparklinePath,
   canvasTableCellDisplayRuns,
   canvasTableCellPlainText,
@@ -206,6 +210,7 @@ export function ComunicadoCanvasTableView({
           cellRects,
           selectedCells,
           focus: focusCell,
+          merges: block.merges,
         })
       : { range: null, focus: null };
 
@@ -432,9 +437,11 @@ export function ComunicadoCanvasTableView({
           {block.cells.map((row, rowIndex) => (
             <tr key={rowIndex} style={rowHeightStyles[rowIndex]}>
               {row.map((rawCell, colIndex) => {
+                if (isCoveredCell(block.merges, rowIndex, colIndex)) return null;
                 const cell = normalizeCanvasTableCell(rawCell);
                 const isHeader = Boolean(block.headerRow && rowIndex === 0);
                 const Cell = isHeader ? "th" : "td";
+                const span = canvasTableCellHtmlSpan(block.merges, rowIndex, colIndex);
                 const display = resolveCanvasTableCellDisplay(
                   cell,
                   resolveCanvasTableCellResolved(block, cell),
@@ -476,6 +483,8 @@ export function ComunicadoCanvasTableView({
                     data-cell-col={colIndex}
                     data-cell-kind={cell.kind}
                     data-cell-bound={bound ? "true" : undefined}
+                    rowSpan={span.rowSpan}
+                    colSpan={span.colSpan}
                     className={[
                       cell.kind === "sparkline" ? "td-canvas-table__cell--sparkline" : "",
                       cell.kind === "number" ? "td-canvas-table__cell--number" : "",

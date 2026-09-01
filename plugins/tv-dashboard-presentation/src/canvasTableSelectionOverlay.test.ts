@@ -56,6 +56,25 @@ describe("resolveCanvasTableSelectionOverlayRects", () => {
     });
     expect(result.range).toEqual({ left: 0, top: 0, width: 40, height: 20 });
   });
+
+  it("usa âncora do merge quando coberta não tem td medido", () => {
+    const mergedAnchorOnly = [
+      { row: 0, col: 0, left: 0, top: 0, width: 90, height: 44 },
+    ];
+    const result = resolveCanvasTableSelectionOverlayRects({
+      cellRects: mergedAnchorOnly,
+      selectedCells: [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 1, col: 0 },
+        { row: 1, col: 1 },
+      ],
+      focus: { row: 1, col: 1 },
+      merges: [{ row: 0, col: 0, rowspan: 2, colspan: 2 }],
+    });
+    expect(result.range).toEqual({ left: 0, top: 0, width: 90, height: 44 });
+    expect(result.focus).toEqual({ left: 0, top: 0, width: 90, height: 44 });
+  });
 });
 
 describe("resolveCanvasTableTrackHandles", () => {

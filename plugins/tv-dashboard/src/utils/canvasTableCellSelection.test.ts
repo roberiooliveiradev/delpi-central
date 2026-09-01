@@ -96,4 +96,17 @@ describe("canvasTableCellSelection", () => {
     expect(primaryCanvasTableCellRef(multi)).toEqual({ row: 0, col: 1 });
     expect(summarizeCanvasTableCellSelection(multi)).toBe("2 células");
   });
+
+  it("expande clique em coberta para o merge", () => {
+    const next = applyCanvasTableCellSelectionRequest(null, blockId, {
+      cell: { row: 1, col: 1 },
+      rowCount: 3,
+      colCount: 3,
+      merges: [{ row: 0, col: 0, rowspan: 2, colspan: 2 }],
+    });
+    expect(next.cells).toHaveLength(4);
+    expect(next.focus).toEqual({ row: 0, col: 0 });
+    expect(isCanvasTableCellSelected(next, 0, 0)).toBe(true);
+    expect(isCanvasTableCellSelected(next, 1, 1)).toBe(true);
+  });
 });
