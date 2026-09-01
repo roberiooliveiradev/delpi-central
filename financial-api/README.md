@@ -2,7 +2,7 @@
 
 BFF do **Portal Financeiro**. Dono do catálogo de subplugins, do RBAC de filial, do cache e da agregação da gestão à vista. SQL TOTVS permanece na api-delpi; IDD/IGD vêm do strategic-indicators-api.
 
-O MFE fala **apenas** com esta API (`/apps/financial-api`). Nenhuma rota nova foi criada na api-delpi.
+O MFE fala **apenas** com esta API (`/apps/financial-api`). SQL TOTVS permanece na api-delpi.
 
 ## Endpoints
 
@@ -12,6 +12,7 @@ O MFE fala **apenas** com esta API (`/apps/financial-api`). Nenhuma rota nova fo
 | GET | `/subplugins` | JWT + `financial.access` |
 | GET | `/overview?branch=&startDate=&endDate=` | JWT + acesso + filial |
 | GET | `/billing/dashboard?branch=&startDate=&endDate=&granularity=` | JWT + `financial.access` + filial |
+| GET | `/billing/invoices?branch=&startDate=&endDate=` | JWT + `financial.export` + filial |
 | GET | `/delinquency/{summary,monthly,aging,customers,titles}` | JWT + `financial.delinquency.view` + ambas as filiais |
 | GET | `/cost-centers/{filters,summary,series,ranking-cost-centers,ranking-suppliers,entries}` | JWT + `financial.cost-centers.view` + filial |
 | GET | `/indicators/department` | JWT + `financial.indicators.view` |
@@ -22,6 +23,8 @@ Envelope `{ success, message, data }`. Campos de negócio em camelCase.
 `GET /overview` agrega em paralelo ROL, EBITDA %, custo fixo %, PMR, resumo de inadimplência, top centros de custo e IDD do Financeiro. Cada bloco falha isoladamente (`blocks[].available` / `blocks[].error`) sem derrubar a tela.
 
 `GET /billing/dashboard` agrega composição da ROL (`/financial/rol`), série e ranking de clientes (`/commercial/rol/series` e `/commercial/rol/by-customer`) e ROL por unidade (`/commercial/rol/by-branch`). Série e ranking degradam isoladamente se a api-delpi falhar; o resumo da ROL é obrigatório.
+
+`GET /billing/invoices` lista as notas de saída (SD2) e devoluções (SD1) que entram no ROL, com os mesmos filtros de `GET /financial/rol`. Serve para extrato Excel de conferência — não são títulos SE1 de cobrança.
 
 EBITDA %, custo fixo % e PMR vêm de **Google Sheets** na api-delpi (`/financial/ebitda_pct`, `/fixed_cost_pct`, `/pmr`). Sem as variáveis abaixo no `infra/.env` da **api-delpi**, esses blocos ficam indisponíveis (ROL e inadimplência continuam, pois leem TOTVS):
 

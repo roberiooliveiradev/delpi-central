@@ -103,6 +103,7 @@ Legenda de permissões:
 | Método | Endpoint | Perm. |
 |---|---|---|
 | GET | `/financial/rol` | A |
+| GET | `/financial/rol/invoices` | A |
 | GET | `/financial/ebitda_pct` | A |
 | GET | `/financial/fixed_cost_pct` | A |
 | GET | `/financial/pmr` | A |

@@ -311,6 +311,63 @@ class FakeFinancialGateway:
 
     # ------------------------------------------------------------------ KPIs
 
+    def fetch_rol_invoices(self, **kwargs: Any) -> dict[str, Any]:
+        self._record("fetch_rol_invoices", **kwargs)
+        return envelope(
+            {
+                "branch": kwargs.get("branch") or "consolidated",
+                "start_date": kwargs.get("start_date"),
+                "end_date": kwargs.get("end_date"),
+                "truncated": False,
+                "items": [
+                    {
+                        "kind": "sale",
+                        "branch": "01",
+                        "issue_date": "2026-08-02",
+                        "invoice_number": "000123",
+                        "series": "1",
+                        "customer_code": "000001",
+                        "customer_store": "01",
+                        "customer_name": "WEG EQUIPAMENTOS ELETRICOS SA",
+                        "gross": 1480.0,
+                        "discounts": 20.0,
+                        "returns": 0.0,
+                        "taxes": 210.0,
+                        "rol": 1250.0,
+                    },
+                    {
+                        "kind": "return",
+                        "branch": "01",
+                        "issue_date": "2026-08-10",
+                        "invoice_number": "000050",
+                        "series": "1",
+                        "customer_code": "000002",
+                        "customer_store": "01",
+                        "customer_name": "CLIENTE DEVOLUCAO",
+                        "gross": 0.0,
+                        "discounts": 0.0,
+                        "returns": 80.0,
+                        "taxes": 0.0,
+                        "rol": -80.0,
+                    },
+                ],
+                "totals": {
+                    "count": 2,
+                    "gross": 1480.0,
+                    "discounts": 20.0,
+                    "returns": 80.0,
+                    "taxes": 210.0,
+                    "rol": 1170.0,
+                },
+                "pagination": {
+                    "limit": kwargs.get("limit") or 8000,
+                    "offset": 0,
+                    "returned": 2,
+                    "is_complete": True,
+                },
+            }
+        )
+
     def fetch_rol(self, **kwargs: Any) -> dict[str, Any]:
         self._record("fetch_rol", **kwargs)
         return envelope(

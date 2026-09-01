@@ -822,6 +822,11 @@
   width: 100%;
 }
 
+.dashboard-financial .fin-customer-pie {
+  min-height: 360px;
+  width: 100%;
+}
+
 .dashboard-financial .fin-bar-list,
 .dashboard-financial .fin-indicator-list {
   list-style: none;
@@ -1166,16 +1171,106 @@
   color: var(--fin-critical, #e5484d);
 }
 
-.dashboard-financial .fin-waterfall {
-  list-style: none;
-  margin: 0;
-  padding: 10px 14px 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.dashboard-financial .fin-statement-card {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--fin-title) 5%, var(--fin-surface)) 0%,
+      var(--fin-surface) 28%
+    );
 }
 
-.dashboard-financial .fin-waterfall__head,
+.dashboard-financial .fin-statement {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 6px 16px 8px;
+}
+
+.dashboard-financial .fin-statement__row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) minmax(6.25rem, auto) minmax(6.75rem, auto);
+  align-items: center;
+  gap: 8px 10px;
+  padding: 7px 4px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--fin-border) 85%, transparent);
+  font-size: var(--fin-font-sm);
+}
+
+.dashboard-financial .fin-statement__row--head {
+  border-bottom: 1px solid var(--fin-border);
+  color: var(--fin-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-financial .fin-statement__op {
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.dashboard-financial .fin-statement__op--add {
+  color: var(--fin-title);
+  background: color-mix(in srgb, var(--fin-accent) 14%, var(--fin-surface));
+}
+
+.dashboard-financial .fin-statement__op--subtract {
+  color: var(--fin-critical, #e5484d);
+  background: color-mix(in srgb, var(--fin-critical, #e5484d) 12%, var(--fin-surface));
+}
+
+.dashboard-financial .fin-statement__op--result {
+  color: #fff;
+  background: var(--fin-title);
+}
+
+.dashboard-financial .fin-statement__label {
+  color: var(--fin-title);
+}
+
+.dashboard-financial .fin-statement__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--fin-text-muted);
+}
+
+.dashboard-financial .fin-statement__balance {
+  color: var(--fin-title);
+  font-weight: 650;
+}
+
+.dashboard-financial .fin-statement__row--subtract .fin-statement__num:not(.fin-statement__balance) {
+  color: var(--fin-critical, #e5484d);
+}
+
+.dashboard-financial .fin-statement__row--result {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-bottom: none;
+  border-top: 1px solid var(--fin-title);
+  background: color-mix(in srgb, var(--fin-accent) 8%, var(--fin-surface));
+  border-radius: 0 0 8px 8px;
+}
+
+.dashboard-financial .fin-statement__row--result .fin-statement__label,
+.dashboard-financial .fin-statement__row--result .fin-statement__balance {
+  font-size: 0.98rem;
+  font-weight: 750;
+}
+
+.dashboard-financial .fin-statement__row--result .fin-statement__balance {
+  box-shadow: 0 2px 0 var(--fin-title);
+  padding-bottom: 2px;
+}
+
 .dashboard-financial .fin-tax-mix__list li {
   display: flex;
   justify-content: space-between;
@@ -1183,39 +1278,8 @@
   font-size: var(--fin-font-sm);
 }
 
-.dashboard-financial .fin-waterfall__head strong,
 .dashboard-financial .fin-tax-mix__list strong {
   font-variant-numeric: tabular-nums;
-  color: var(--fin-title);
-}
-
-.dashboard-financial .fin-waterfall__track {
-  height: 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--fin-border) 65%, var(--fin-surface));
-  overflow: hidden;
-}
-
-.dashboard-financial .fin-waterfall__fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-}
-
-.dashboard-financial .fin-waterfall__fill--add {
-  background: var(--fin-accent);
-}
-
-.dashboard-financial .fin-waterfall__fill--subtract {
-  background: color-mix(in srgb, var(--fin-critical, #e5484d) 78%, var(--fin-accent));
-}
-
-.dashboard-financial .fin-waterfall__fill--result {
-  background: var(--fin-title);
-}
-
-.dashboard-financial .fin-waterfall__row--result .fin-waterfall__head {
-  font-weight: 700;
   color: var(--fin-title);
 }
 

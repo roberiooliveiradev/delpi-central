@@ -14,7 +14,7 @@ from financial_app.application.services.payload_mapping import (
     unwrap_data,
 )
 from financial_app.application.services.response_cache import cached_fetch
-from financial_app.core.security import FIN_ACCESS
+from financial_app.core.security import FIN_ACCESS, FIN_EXPORT, can
 from financial_app.domain.errors import FinancialError
 from financial_app.domain.ports.financial_data_gateway import FinancialDataGateway
 from financial_app.domain.services.branch_access_service import BranchAccessService
@@ -273,6 +273,48 @@ class BillingService:
             "totalRol": total_rol,
         }
 
+    def invoices(
+        self,
+        user: object | None,
+        *,
+        branch: str | None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        if not can(user, FIN_EXPORT):
+            raise PermissionError(str((_settings().get("messages") or {}).get("exportDenied") or ""))
+        scope, start, end = self._prepare(user, branch, start_date, end_date)
+        limit = max(1, as_int(_settings().get("invoiceLimit"), 8000))
+        payload = unwrap_data(
+            self._gateway.fetch_rol_invoices(
+                branch=scope,
+                start_date=start,
+                end_date=end,
+                limit=limit,
+            )
+        )
+        kinds = _settings().get("invoiceKinds") or {}
+        items = [
+            self._map_invoice(item, kinds)
+            for item in payload.get("items") or []
+            if isinstance(item, dict)
+        ]
+        totals = payload.get("totals") if isinstance(payload.get("totals"), dict) else {}
+        return {
+            "branch": scope,
+            "period": {"startDate": start, "endDate": end},
+            "truncated": bool(payload.get("truncated")),
+            "items": items,
+            "totals": {
+                "count": as_int(totals.get("count"), len(items)),
+                "gross": as_float(totals.get("gross")),
+                "discounts": as_float(totals.get("discounts")),
+                "returns": as_float(totals.get("returns")),
+                "taxes": as_float(totals.get("taxes")),
+                "rol": as_float(totals.get("rol")),
+            },
+        }
+
     def _prepare(
         self,
         user: object | None,
@@ -342,6 +384,27 @@ class BillingService:
                 }
             )
         return rows
+
+    @staticmethod
+    def _map_invoice(item: dict[str, Any], kinds: dict[str, Any]) -> dict[str, Any]:
+        kind = as_str(item.get("kind")).strip().lower() or "sale"
+        label = as_str(kinds.get(kind)) or kind
+        return {
+            "kind": kind,
+            "kindLabel": label,
+            "branch": as_str(item.get("branch")),
+            "issueDate": as_str(item.get("issue_date")),
+            "invoiceNumber": as_str(item.get("invoice_number")),
+            "series": as_str(item.get("series")),
+            "customerCode": as_str(item.get("customer_code")),
+            "customerStore": as_str(item.get("customer_store")),
+            "customerName": as_str(item.get("customer_name")),
+            "gross": as_float(item.get("gross")),
+            "discounts": as_float(item.get("discounts")),
+            "returns": as_float(item.get("returns")),
+            "taxes": as_float(item.get("taxes")),
+            "rol": as_float(item.get("rol")),
+        }
 
     @staticmethod
     def _map_customer(item: dict[str, Any] | None) -> dict[str, Any]:

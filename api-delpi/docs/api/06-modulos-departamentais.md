@@ -27,6 +27,7 @@ Parâmetros comuns de período:
 | Método | Rota (preferida) | Descrição |
 |---|---|---|
 | GET | `/financial/rol` | Receita Operacional Líquida (ROL). |
+| GET | `/financial/rol/invoices` | Extrato das notas (SD2) e devoluções (SD1) que entram no ROL. |
 | GET | `/financial/ebitda_pct` | EBITDA % (planilha; filial vazia = consolidado). |
 | GET | `/financial/fixed_cost_pct` | Custos fixos % (planilha; filial vazia = consolidado). |
 | GET | `/financial/pmr` | Prazo médio de recebimento. |

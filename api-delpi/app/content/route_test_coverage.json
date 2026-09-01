@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-08-28",
-  "baselineOperationCount": 696,
-  "operationCount": 696,
-  "coveredCount": 621,
+  "baselineOperationCount": 697,
+  "operationCount": 697,
+  "coveredCount": 622,
   "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
@@ -56,8 +56,8 @@
       "exempt": 0
     },
     "financial": {
-      "total": 4,
-      "covered": 4,
+      "total": 5,
+      "covered": 5,
       "gap": 0,
       "exempt": 0
     },
@@ -1546,6 +1546,15 @@
       "module": "financial",
       "entity": "financial_rol",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financial_rol_invoices",
+      "method": "GET",
+      "path": "/financial/rol/invoices",
+      "module": "financial",
+      "entity": "financial_rol_invoice",
+      "shape": "paged_list",
       "status": "covered"
     },
     {

@@ -80,6 +80,25 @@ FINANCIAL_ROL_FIELD_LABELS: dict[str, str] = {
     "financial_balance": "Saldo financeiro",
 }
 
+FINANCIAL_ROL_INVOICES_FIELD_LABELS: dict[str, str] = {
+    "kind": "Tipo",
+    "branch": "Filial",
+    "issue_date": "Emissão",
+    "invoice_number": "Nota",
+    "series": "Série",
+    "customer_code": "Cliente",
+    "customer_store": "Loja",
+    "customer_name": "Nome do cliente",
+    "gross": "Receita bruta",
+    "discounts": "Descontos",
+    "returns": "Devolução",
+    "taxes": "Impostos",
+    "rol": "ROL",
+    "truncated": "Extrato truncado",
+    "items": "Notas",
+    "totals": "Totais do extrato",
+}
+
 FINANCIAL_EBITDA_FIELD_LABELS: dict[str, str] = {
     "ebitda_value": "EBITDA (valor)",
     "ebitda_over_rol_pct": "EBITDA / ROL (%)",

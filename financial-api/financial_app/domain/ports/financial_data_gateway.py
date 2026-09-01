@@ -135,6 +135,15 @@ class FinancialDataGateway(Protocol):
         self, *, branch: str | None, start_date: str | None, end_date: str | None
     ) -> dict[str, Any]: ...
 
+    def fetch_rol_invoices(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+        limit: int,
+    ) -> dict[str, Any]: ...
+
     def fetch_rol_series(
         self,
         *,

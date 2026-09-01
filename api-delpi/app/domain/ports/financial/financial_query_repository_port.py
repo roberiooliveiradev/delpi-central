@@ -8,3 +8,7 @@ class FinancialQueryRepositoryPort(ABC):
     @abstractmethod
     def get_rol(self, request: GetRolRequest) -> dict:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_rol_invoices(self, request: GetRolRequest, *, limit: int) -> list[dict]:
+        raise NotImplementedError

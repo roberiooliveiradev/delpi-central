@@ -16,6 +16,7 @@ import type {
   FinancialBranch,
   GlobalIndicators,
   BillingDashboard,
+  BillingInvoicesPayload,
   OverviewPayload,
   Period,
   SubpluginsPayload,
@@ -79,6 +80,24 @@ export function fetchBillingDashboard(params: {
   return get<BillingDashboard>(
     `/billing/dashboard${query}`,
     "Não foi possível carregar o faturamento.",
+    params.signal,
+  );
+}
+
+export function fetchBillingInvoices(params: {
+  branch: FinancialBranch;
+  startDate?: string | null;
+  endDate?: string | null;
+  signal?: AbortSignal;
+}): Promise<BillingInvoicesPayload> {
+  const query = buildQuery({
+    branch: branchParam(params.branch),
+    startDate: params.startDate,
+    endDate: params.endDate,
+  });
+  return get<BillingInvoicesPayload>(
+    `/billing/invoices${query}`,
+    "Não foi possível gerar o extrato de títulos.",
     params.signal,
   );
 }

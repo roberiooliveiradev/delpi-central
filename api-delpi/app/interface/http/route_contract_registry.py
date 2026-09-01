@@ -253,6 +253,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "execute_readonly_sql": RouteContract("sql_result", "paged_list"),
     # Financeiro
     "get_financial_rol": RouteContract("financial_rol", "scalar"),
+    "get_financial_rol_invoices": RouteContract("financial_rol_invoice", "paged_list"),
     "get_financial_ebitda_pct": RouteContract("financial_ebitda_pct", "scalar"),
     "get_financial_fixed_cost_pct": RouteContract("financial_fixed_cost_pct", "scalar"),
     "get_financial_pmr": RouteContract("financial_pmr", "scalar"),

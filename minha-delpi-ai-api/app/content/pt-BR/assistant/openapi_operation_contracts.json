@@ -335,6 +335,10 @@
     "entity": "financial_rol",
     "shape": "scalar"
   },
+  "get_financial_rol_invoices": {
+    "entity": "financial_rol_invoice",
+    "shape": "paged_list"
+  },
   "get_financial_ebitda_pct": {
     "entity": "financial_ebitda_pct",
     "shape": "scalar"

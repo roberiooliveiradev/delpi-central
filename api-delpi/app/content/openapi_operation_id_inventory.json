@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 694,
-  "stableCount": 692,
+  "operationCount": 695,
+  "stableCount": 693,
   "autoCount": 2,
   "recommendationCollisions": [],
   "autoByTag": {
@@ -1036,6 +1036,13 @@
       "operationId": "get_financial_rol",
       "method": "GET",
       "path": "/financial/rol",
+      "tag": "Financeiro",
+      "stable": true
+    },
+    {
+      "operationId": "get_financial_rol_invoices",
+      "method": "GET",
+      "path": "/financial/rol/invoices",
       "tag": "Financeiro",
       "stable": true
     },

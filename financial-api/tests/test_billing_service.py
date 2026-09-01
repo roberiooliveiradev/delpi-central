@@ -64,6 +64,31 @@ def test_invalid_granularity_is_rejected() -> None:
         raise AssertionError("esperava InvalidBillingQuery")
 
 
+def test_invoices_maps_sale_and_return_for_conference() -> None:
+    service, gateway = build()
+    result = service.invoices(full_user(), branch="01")
+
+    assert result["truncated"] is False
+    assert result["items"][0]["kind"] == "sale"
+    assert result["items"][0]["kindLabel"] == "Nota de saída"
+    assert result["items"][0]["invoiceNumber"] == "000123"
+    assert result["items"][1]["kind"] == "return"
+    assert result["items"][1]["rol"] == -80.0
+    assert result["totals"]["rol"] == 1170.0
+    assert gateway.call_kwargs("fetch_rol_invoices")["branch"] == "01"
+
+
+def test_invoices_requires_export_permission() -> None:
+    service, _ = build()
+    scoped = user("financial.access", "financial.view.filial-01")
+    try:
+        service.invoices(scoped, branch="01")
+    except PermissionError as exc:
+        assert "exportar" in str(exc)
+    else:
+        raise AssertionError("esperava PermissionError")
+
+
 def test_single_branch_user_can_open_billing() -> None:
     service, _ = build()
     scoped = user(

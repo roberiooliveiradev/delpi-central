@@ -71,6 +71,7 @@ def client(monkeypatch: pytest.MonkeyPatch):
         "/indicators/global",
         "/overview?branch=01",
         "/billing/dashboard?branch=01",
+        "/billing/invoices?branch=01",
     ],
 )
 def test_every_route_family_answers_with_the_envelope(client, path: str) -> None:
@@ -100,6 +101,18 @@ def test_missing_module_permission_returns_403(client) -> None:
     client.state["user"] = user("financial.access")
     assert client.get("/delinquency/summary").status_code == 403
     assert client.get("/indicators/department").status_code == 403
+
+
+def test_billing_invoices_without_export_returns_403(client) -> None:
+    from tests.conftest import user
+
+    client.state["user"] = user(
+        "financial.access", "financial.view.filial-01", "financial.view.filial-02"
+    )
+    response = client.get("/billing/invoices?branch=01")
+
+    assert response.status_code == 403
+    assert response.json()["success"] is False
 
 
 def test_invalid_billing_granularity_returns_400(client) -> None:

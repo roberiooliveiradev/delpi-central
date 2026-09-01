@@ -1,5 +1,6 @@
 import {
   MultiTypeSeriesChart,
+  SERIES_CHART_CATEGORY_PALETTE,
   useChartGranularitySelection,
   type ChartGranularity,
 } from "@delpi/plugin-ui/index";
@@ -7,12 +8,13 @@ import {
   BadgeMinus,
   Banknote,
   Download,
+  FileSpreadsheet,
   Landmark,
   Receipt,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { FinBlockState } from "../components/FinBlockState";
 import {
@@ -25,23 +27,25 @@ import { FinWorkspaceHeader } from "../components/FinWorkspaceHeader";
 import { DataTable } from "../components/dataTableUi";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
+import { fetchBillingInvoices } from "../api/financialApi";
 import { useBilling } from "../hooks/useBilling";
 import { useSubplugins } from "../hooks/useSubplugins";
 import type { BillingLine, FinancialBranch } from "../types";
 import {
   billingSeriesKeys,
   clampPercent,
+  compositionStatementRows,
+  customerPieRows,
   seriesChartRows,
-  waterfallBarWidth,
-  waterfallPeak,
 } from "../utils/billingPresentation";
 import { downloadExcel } from "../utils/exportExcel";
-import { formatPeriodRange } from "../utils/formatDates";
+import { formatIsoDate, formatPeriodRange } from "../utils/formatDates";
 import { formatCompactCurrency, formatCurrency, formatPercent } from "../utils/formatNumbers";
 import { resolveKpiComparisonTone } from "../utils/kpiComparisonTone";
 import { buildFinancialHref, replaceFinancialQuery } from "../utils/routeParser";
 
 const SERIES_HEIGHT = 260;
+const CUSTOMER_PIE_HEIGHT = 360;
 
 const GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }[] = [
   { value: "day", label: copy.billing.granularity.day },
@@ -64,6 +68,8 @@ export function BillingPage({
   granularity: granularityFromUrl,
 }: BillingPageProps) {
   const { canExport } = useSubplugins();
+  const [extracting, setExtracting] = useState(false);
+  const [extractNotice, setExtractNotice] = useState<string | null>(null);
   const auto = useChartGranularitySelection(startDate ?? undefined, endDate ?? undefined);
   const granularity = (granularityFromUrl as ChartGranularity | null) ?? auto.granularity;
   const { data, loading, error, reload } = useBilling(branch, startDate, endDate, granularity);
@@ -101,8 +107,8 @@ export function BillingPage({
     () => seriesChartRows(data?.series.items ?? []),
     [data?.series.items],
   );
-  const compositionPeak = useMemo(
-    () => waterfallPeak(summary?.composition ?? []),
+  const statementRows = useMemo(
+    () => compositionStatementRows(summary?.composition ?? []),
     [summary?.composition],
   );
   const taxMix = useMemo(
@@ -110,6 +116,16 @@ export function BillingPage({
     [summary?.taxMix],
   );
   const customers = data?.customers.items ?? [];
+  const customerPie = useMemo(
+    () =>
+      customerPieRows(
+        customers,
+        data?.customers.others,
+        copy.billing.othersLabel,
+        SERIES_CHART_CATEGORY_PALETTE,
+      ),
+    [customers, data?.customers.others],
+  );
   const unitItems = data?.branches.items ?? [];
   const rolTone = resolveKpiComparisonTone(
     summary
@@ -143,6 +159,69 @@ export function BillingPage({
     );
   };
 
+  const exportInvoices = async () => {
+    setExtractNotice(null);
+    setExtracting(true);
+    try {
+      const extract = await fetchBillingInvoices({
+        branch,
+        startDate: startDate ?? data?.period.startDate,
+        endDate: endDate ?? data?.period.endDate,
+      });
+      if (!extract.items.length) {
+        setExtractNotice(copy.billing.exportExtractEmpty);
+        return;
+      }
+      await downloadExcel(
+        {
+          title: copy.billing.exportExtractSheetTitle,
+          columns: [
+            { key: "kind", label: copy.billing.extractColumns.kind },
+            { key: "branch", label: copy.billing.extractColumns.branch },
+            { key: "issueDate", label: copy.billing.extractColumns.issueDate },
+            { key: "invoiceNumber", label: copy.billing.extractColumns.invoiceNumber },
+            { key: "series", label: copy.billing.extractColumns.series },
+            { key: "customerCode", label: copy.billing.extractColumns.customerCode },
+            { key: "customerStore", label: copy.billing.extractColumns.customerStore },
+            { key: "customerName", label: copy.billing.extractColumns.customerName },
+            { key: "gross", label: copy.billing.extractColumns.gross },
+            { key: "discounts", label: copy.billing.extractColumns.discounts },
+            { key: "returns", label: copy.billing.extractColumns.returns },
+            { key: "taxes", label: copy.billing.extractColumns.taxes },
+            { key: "rol", label: copy.billing.extractColumns.rol },
+          ],
+          rows: extract.items.map((item) => ({
+            kind: item.kindLabel,
+            branch: item.branch,
+            issueDate: formatIsoDate(item.issueDate),
+            invoiceNumber: item.invoiceNumber,
+            series: item.series,
+            customerCode: item.customerCode,
+            customerStore: item.customerStore,
+            customerName: item.customerName,
+            gross: item.gross,
+            discounts: item.discounts,
+            returns: item.returns,
+            taxes: item.taxes,
+            rol: item.rol,
+          })),
+        },
+        copy.billing.exportExtractFileName,
+      );
+      if (extract.truncated) {
+        setExtractNotice(copy.billing.exportExtractTruncated);
+      }
+    } catch (error) {
+      setExtractNotice(
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : copy.billing.exportExtractError,
+      );
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   return (
     <div className="fin-page-stack">
       <FinWorkspaceHeader
@@ -163,22 +242,42 @@ export function BillingPage({
         refreshBusy={loading}
         actions={
           canExport ? (
-            <button
-              type="button"
-              className="fin-icon-btn"
-              onClick={exportComposition}
-              disabled={!summary?.detail.length}
-              title={copy.billing.exportLabel}
-            >
-              <Download size={16} strokeWidth={1.75} aria-hidden />
-              <span>{copy.billing.exportLabel}</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className="fin-icon-btn"
+                onClick={() => void exportInvoices()}
+                disabled={extracting}
+                title={helpTooltips.billingExtract}
+              >
+                <FileSpreadsheet size={16} strokeWidth={1.75} aria-hidden />
+                <span>
+                  {extracting ? copy.billing.exportExtractBusy : copy.billing.exportExtractLabel}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="fin-icon-btn"
+                onClick={exportComposition}
+                disabled={!summary?.detail.length || extracting}
+                title={copy.billing.exportLabel}
+              >
+                <Download size={16} strokeWidth={1.75} aria-hidden />
+                <span>{copy.billing.exportLabel}</span>
+              </button>
+            </>
           ) : null
         }
       />
 
       {loading && !data ? (
         <FinLoadingCard title={copy.billing.loading} description={copy.billing.loadingHint} />
+      ) : null}
+
+      {extractNotice ? (
+        <div className="fin-state fin-state--error" role="status">
+          {extractNotice}
+        </div>
       ) : null}
 
       {error ? (
@@ -243,35 +342,35 @@ export function BillingPage({
             <FinKpiCard
               title={copy.billing.grossLabel}
               titleHint={helpTooltips.billingWaterfall}
-              value={formatCompactCurrency(summary.grossRevenue)}
+              value={formatCurrency(summary.grossRevenue)}
               subtitle={copy.branch[branch]}
               icon={<Banknote size={22} strokeWidth={1.75} />}
             />
             <FinKpiCard
               title={copy.billing.taxesLabel}
               titleHint={helpTooltips.billingWaterfall}
-              value={formatCompactCurrency(summary.taxes)}
+              value={formatCurrency(summary.taxes)}
               subtitle={formatPercent(summary.grossRevenue ? (summary.taxes / summary.grossRevenue) * 100 : null)}
               icon={<Landmark size={22} strokeWidth={1.75} />}
             />
             <FinKpiCard
               title={copy.billing.returnsLabel}
               titleHint={helpTooltips.billingWaterfall}
-              value={formatCompactCurrency(summary.returns)}
+              value={formatCurrency(summary.returns)}
               subtitle={copy.branch[branch]}
               icon={<Receipt size={22} strokeWidth={1.75} />}
             />
             <FinKpiCard
               title={copy.billing.discountsLabel}
               titleHint={helpTooltips.billingWaterfall}
-              value={formatCompactCurrency(summary.discounts)}
+              value={formatCurrency(summary.discounts)}
               subtitle={copy.branch[branch]}
               icon={<BadgeMinus size={22} strokeWidth={1.75} />}
             />
             <FinKpiCard
               title={copy.billing.gapLabel}
               titleHint={helpTooltips.rol}
-              value={formatCompactCurrency(gap)}
+              value={formatCurrency(gap)}
               comparisonTone={rolTone}
               subtitle={gap == null ? copy.billing.noGoal : gapLabel}
               icon={
@@ -324,32 +423,51 @@ export function BillingPage({
               )}
             </FinChartCard>
 
-            <article className="fin-board-list" aria-label={copy.billing.waterfallTitle}>
+            <article className="fin-board-list fin-statement-card" aria-label={copy.billing.waterfallTitle}>
               <header className="fin-board-list__head">
                 <h2 className="fin-board-list__title">{copy.billing.waterfallTitle}</h2>
                 <p className="fin-board-list__hint">{copy.billing.waterfallHint}</p>
               </header>
-              <ul className="fin-waterfall">
-                {(summary.composition ?? []).map((line) => (
-                  <li
+              <div className="fin-statement" role="table" aria-label={copy.billing.waterfallTitle}>
+                <div className="fin-statement__row fin-statement__row--head" role="row">
+                  <span className="fin-statement__op" role="columnheader" />
+                  <span role="columnheader">{copy.billing.columns.component}</span>
+                  <span className="fin-statement__num" role="columnheader">
+                    {copy.billing.statementMovement}
+                  </span>
+                  <span className="fin-statement__num" role="columnheader">
+                    {copy.billing.statementBalance}
+                  </span>
+                </div>
+                {statementRows.map((line) => (
+                  <div
                     key={line.key}
-                    className={`fin-waterfall__row${
-                      line.role === "result" ? " fin-waterfall__row--result" : ""
-                    }`}
+                    className={`fin-statement__row fin-statement__row--${line.role}`}
+                    role="row"
                   >
-                    <div className="fin-waterfall__head">
-                      <span>{line.label}</span>
-                      <strong>{formatSigned(line)}</strong>
-                    </div>
-                    <div className="fin-waterfall__track">
-                      <span
-                        className={`fin-waterfall__fill fin-waterfall__fill--${line.role ?? "add"}`}
-                        style={{ width: `${waterfallBarWidth(line.value, compositionPeak)}%` }}
-                      />
-                    </div>
-                  </li>
+                    <span
+                      className={`fin-statement__op fin-statement__op--${line.role}`}
+                      role="cell"
+                      aria-hidden={line.role === "add"}
+                    >
+                      {line.role === "subtract"
+                        ? copy.billing.statementMinus
+                        : line.role === "result"
+                          ? copy.billing.statementEquals
+                          : copy.billing.statementPlus}
+                    </span>
+                    <span className="fin-statement__label" role="cell">
+                      {line.label}
+                    </span>
+                    <span className="fin-statement__num" role="cell">
+                      {line.role === "result" ? "" : formatCurrency(Math.abs(line.movement))}
+                    </span>
+                    <span className="fin-statement__num fin-statement__balance" role="cell">
+                      {formatCurrency(line.balance)}
+                    </span>
+                  </div>
                 ))}
-              </ul>
+              </div>
               {taxMix.length ? (
                 <div className="fin-tax-mix">
                   <p className="fin-tax-mix__title">{copy.billing.taxMixTitle}</p>
@@ -410,54 +528,38 @@ export function BillingPage({
               )}
             </article>
 
-            <article className="fin-board-list" aria-label={copy.billing.customersTitle}>
-              <header className="fin-board-list__head">
-                <h2 className="fin-board-list__title">{copy.billing.customersTitle}</h2>
-                <p className="fin-board-list__hint">{copy.billing.customersHint}</p>
-              </header>
+            <FinChartCard
+              title={copy.billing.customersTitle}
+              titleHint={helpTooltips.billingCustomers}
+              hint={copy.billing.customersHint}
+              className="fin-board-card"
+            >
               {data?.customers.available === false ? (
                 <FinBlockState block={data.customers} />
-              ) : customers.length === 0 ? (
+              ) : customerPie.length === 0 ? (
                 <FinBlockState block={undefined} empty emptyMessage={copy.billing.customersEmpty} />
               ) : (
-                <ul className="fin-bar-list">
-                  {customers.map((item) => (
-                    <li key={`${item.customerCode}-${item.customerStore}`}>
-                      <div className="fin-bar-list__head">
-                        <strong>{item.customerName || item.customerCode}</strong>
-                        <span>{formatCurrency(item.rol)}</span>
-                      </div>
-                      <div className="fin-bar-list__track">
-                        <span
-                          className="fin-bar-list__fill"
-                          style={{ width: `${clampPercent(item.sharePct)}%` }}
-                        />
-                      </div>
-                      <span className="fin-bar-list__meta">
-                        {formatPercent(item.sharePct)} · {item.customerCode}
-                      </span>
-                    </li>
-                  ))}
-                  {data?.customers.others ? (
-                    <li>
-                      <div className="fin-bar-list__head">
-                        <strong>{copy.billing.othersLabel}</strong>
-                        <span>{formatCurrency(data.customers.others.rol)}</span>
-                      </div>
-                      <div className="fin-bar-list__track">
-                        <span
-                          className="fin-bar-list__fill"
-                          style={{ width: `${clampPercent(data.customers.others.sharePct)}%` }}
-                        />
-                      </div>
-                      <span className="fin-bar-list__meta">
-                        {formatPercent(data.customers.others.sharePct)}
-                      </span>
-                    </li>
-                  ) : null}
-                </ul>
+                <div className="fin-customer-pie">
+                  <MultiTypeSeriesChart
+                    data={customerPie}
+                    categoryKey="label"
+                    categoryFillKey="fill"
+                    series={[
+                      {
+                        dataKey: "rol",
+                        name: copy.billing.rolShort,
+                        fill: "var(--fin-accent, #089bdb)",
+                      },
+                    ]}
+                    chartType="pie"
+                    height={CUSTOMER_PIE_HEIGHT}
+                    showLegend
+                    formatY={formatCompactCurrency}
+                    formatTooltipValue={formatCurrency}
+                  />
+                </div>
               )}
-            </article>
+            </FinChartCard>
           </div>
 
           <article className="fin-board-list" aria-label={copy.billing.detailTitle}>
@@ -487,10 +589,4 @@ export function BillingPage({
       ) : null}
     </div>
   );
-}
-
-function formatSigned(line: BillingLine): string {
-  const formatted = formatCurrency(line.value);
-  if (line.role === "subtract" && line.value > 0) return `− ${formatted}`;
-  return formatted;
 }

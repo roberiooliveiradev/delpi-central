@@ -382,6 +382,38 @@ export type BillingDashboard = {
   branches: BillingBranchesBlock;
 };
 
+export type BillingInvoice = {
+  kind: string;
+  kindLabel: string;
+  branch: string;
+  issueDate: string;
+  invoiceNumber: string;
+  series: string;
+  customerCode: string;
+  customerStore: string;
+  customerName: string;
+  gross: number;
+  discounts: number;
+  returns: number;
+  taxes: number;
+  rol: number;
+};
+
+export type BillingInvoicesPayload = {
+  branch: string | null;
+  period: { startDate: string; endDate: string };
+  truncated: boolean;
+  items: BillingInvoice[];
+  totals: {
+    count: number;
+    gross: number;
+    discounts: number;
+    returns: number;
+    taxes: number;
+    rol: number;
+  };
+};
+
 export type OverviewDelinquencyBlock = BlockState & {
   period?: Period;
   scopeNotice?: string;

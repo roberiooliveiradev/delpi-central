@@ -3,6 +3,9 @@ from app.config import settings
 from app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
+from app.application.use_cases.financial.get_rol_invoices_use_case import (
+    GetRolInvoicesUseCase,
+)
 from app.application.use_cases.financial.get_rol_use_case import GetRolUseCase
 from app.infrastructure.persistence.google_sheets.financial.financial_ebitda_repository import (
     FinancialEbitdaRepository,
@@ -78,6 +81,10 @@ def build_financial_metrics_snapshot_service() -> FinancialMetricsSnapshotServic
 def build_get_rol_use_case() -> GetRolUseCase:
     repository = FinancialRepository()
     return GetRolUseCase(repository)
+
+
+def build_get_rol_invoices_use_case() -> GetRolInvoicesUseCase:
+    return GetRolInvoicesUseCase(FinancialRepository())
 
 
 def build_get_financial_ebitda_pct_use_case() -> GetFinancialEbitdaPctUseCase:

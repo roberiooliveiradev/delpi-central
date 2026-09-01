@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 696,
+  "operation_count": 697,
   "operations": [
     {
       "method": "POST",
@@ -29922,6 +29922,175 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Financial ROL indicator consolidated by branch and period. Use for financial ROL / net operating revenue — not commercial ROL (/commercial/rol/series)."
+    },
+    {
+      "method": "GET",
+      "path": "/financial/rol/invoices",
+      "operationId": "get_financial_rol_invoices",
+      "summary": "ROL invoices (sales and returns)",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Limit query parameter.",
+          "type": "integer",
+          "default": 8000
+        }
+      ],
+      "xDelpi": {
+        "entity": "financial_rol_invoice",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "ROL invoices (sales and returns)",
+            "description": "Sales invoices (SD2) and sales returns (SD1) that compose financial ROL for the same filters as GET /financial/rol. Use to reconcile the ROL KPI to documents — not SE1 payment titles.",
+            "whenToUse": "Use for a conference extract of invoices that make up financial ROL.",
+            "label": "ROL invoices"
+          },
+          "pt-BR": {
+            "summary": "Extrato de notas da ROL (saídas e devoluções)",
+            "description": "Notas de saída (SD2) e devoluções (SD1) que entram no ROL financeiro, com os mesmos filtros de GET /financial/rol. Use para conferir o KPI nota a nota — não são títulos SE1.",
+            "whenToUse": "Use para extrato de conferência das notas que formam a ROL financeira.",
+            "label": "Extrato de notas da ROL"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para extrato de conferência das notas que formam a ROL financeira.",
+          "description": "Notas de saída (SD2) e devoluções (SD1) que entram no ROL financeiro, com os mesmos filtros de GET /financial/rol. Use para conferir o KPI nota a nota — não são títulos SE1.",
+          "label": "Extrato de notas da ROL"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Sales invoices (SD2) and sales returns (SD1) that compose financial ROL for the same filters as GET /financial/rol. Use to reconcile the ROL KPI to documents — not SE1 payment titles."
     },
     {
       "method": "PUT",

@@ -329,6 +329,20 @@ class DelpiFinancialGateway:
     ) -> dict[str, Any]:
         return self._request("GET", "/financial/rol", params=self._kpi_params(branch, start_date, end_date))
 
+    def fetch_rol_invoices(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+        limit: int,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/financial/rol/invoices",
+            params={**self._kpi_params(branch, start_date, end_date), "limit": limit},
+        )
+
     def fetch_rol_series(
         self,
         *,

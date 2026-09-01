@@ -9144,6 +9144,59 @@
       ]
     },
     {
+      "operationId": "get_financial_rol_invoices",
+      "httpMethod": "GET",
+      "label": "Extrato de notas da ROL",
+      "category": "financial",
+      "path": "/financial/rol/invoices",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Notas de saída (SD2) e devoluções (SD1) que entram no ROL financeiro, com os mesmos filtros de GET /financial/rol. Use para conferir o KPI nota a nota — não são títulos SE1.",
+      "whenToUse": "Use para extrato de conferência das notas que formam a ROL financeira.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 8000,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
       "operationId": "list_guias_procedimentos_admin_departments",
       "httpMethod": "GET",
       "label": "List Admin Departments",

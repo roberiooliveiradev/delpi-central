@@ -37,6 +37,7 @@ Base: `/apps/financial-api`
 | GET | `/subplugins` | Catálogo filtrado por permissão + `capabilities.export` |
 | GET | `/overview?branch=&startDate=&endDate=` | Gestão à vista (blocos isolados) |
 | GET | `/billing/dashboard?branch=&startDate=&endDate=&granularity=` | Faturamento (ROL + série + clientes + unidades) |
+| GET | `/billing/invoices?branch=&startDate=&endDate=` | Extrato de notas da ROL (Excel de conferência; exige `financial.export`) |
 | GET | `/delinquency/{summary,monthly,aging,customers,titles}` | Inadimplência |
 | GET | `/cost-centers/{filters,summary,series,ranking-cost-centers,ranking-suppliers,entries}` | Despesas por CC |
 | GET | `/indicators/{department,global}` | IDD / IGD |

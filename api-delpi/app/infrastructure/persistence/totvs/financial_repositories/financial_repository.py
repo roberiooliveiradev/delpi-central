@@ -28,7 +28,93 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
         set_cached_financial_rol(cache_key, result)
         return result
 
-    def _load_rol(self, request: GetRolRequest) -> dict:
+    def list_rol_invoices(self, request: GetRolRequest, *, limit: int) -> list[dict]:
+        vendas_where, vendas_params, exists_where, exists_params, dev_where, dev_params = (
+            self._rol_filter_clauses(request)
+        )
+        fetch_limit = max(1, int(limit)) + 1
+        sale_gross = CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")
+        sale_net = CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")
+        return_net = CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")
+        eligibility = CommercialRolReturnSql.sale_eligibility_predicate(
+            exists_where=exists_where
+        )
+        sql = f"""
+        SELECT TOP (?)
+            kind,
+            branch,
+            issue_date,
+            invoice_number,
+            series,
+            customer_code,
+            customer_store,
+            customer_name,
+            gross,
+            discounts,
+            returns,
+            taxes,
+            rol
+        FROM (
+            SELECT
+                'sale' AS kind,
+                RTRIM(D2.D2_FILIAL) AS branch,
+                MIN(D2.D2_EMISSAO) AS issue_date,
+                RTRIM(D2.D2_DOC) AS invoice_number,
+                RTRIM(D2.D2_SERIE) AS series,
+                RTRIM(D2.D2_CLIENTE) AS customer_code,
+                RTRIM(D2.D2_LOJA) AS customer_store,
+                MAX(RTRIM(ISNULL(A1.A1_NOME, ''))) AS customer_name,
+                {sale_gross} AS gross,
+                SUM(CONVERT(FLOAT, ISNULL(D2.D2_DESCON, 0) + ISNULL(D2.D2_DESC, 0))) AS discounts,
+                CONVERT(FLOAT, 0) AS returns,
+                SUM(CONVERT(FLOAT,
+                    ISNULL(D2.D2_VALICM, 0)
+                    + ISNULL(D2.D2_VALIMP5, 0)
+                    + ISNULL(D2.D2_VALIMP6, 0)
+                )) AS taxes,
+                {sale_net} AS rol
+            FROM SD2010 D2 WITH (NOLOCK)
+            {CommercialRolReturnSql.sale_customer_join(d2_alias="D2", a1_alias="A1", with_nolock=True)}
+            {CommercialRolReturnSql.sale_tes_join(d2_alias="D2", f4_alias="F4", with_nolock=True)}
+            WHERE {vendas_where}
+                AND {eligibility}
+            GROUP BY D2.D2_FILIAL, D2.D2_DOC, D2.D2_SERIE, D2.D2_CLIENTE, D2.D2_LOJA
+
+            UNION ALL
+
+            SELECT
+                'return' AS kind,
+                RTRIM(D1.D1_FILIAL) AS branch,
+                MIN(D1.D1_DTDIGIT) AS issue_date,
+                RTRIM(D1.D1_DOC) AS invoice_number,
+                RTRIM(D1.D1_SERIE) AS series,
+                RTRIM(D1.D1_FORNECE) AS customer_code,
+                RTRIM(D1.D1_LOJA) AS customer_store,
+                MAX(RTRIM(ISNULL(A1D.A1_NOME, ''))) AS customer_name,
+                CONVERT(FLOAT, 0) AS gross,
+                CONVERT(FLOAT, 0) AS discounts,
+                {return_net} AS returns,
+                CONVERT(FLOAT, 0) AS taxes,
+                -{return_net} AS rol
+            FROM SD1010 D1 WITH (NOLOCK)
+            LEFT JOIN SA1010 A1D WITH (NOLOCK)
+                ON  A1D.D_E_L_E_T_ = ''
+                AND A1D.A1_COD  = D1.D1_FORNECE
+                AND A1D.A1_LOJA = D1.D1_LOJA
+            {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
+            WHERE {dev_where}
+                AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
+            GROUP BY D1.D1_FILIAL, D1.D1_DOC, D1.D1_SERIE, D1.D1_FORNECE, D1.D1_LOJA
+        ) AS invoices
+        ORDER BY issue_date, branch, invoice_number, series, kind
+        """
+        params = (fetch_limit,) + vendas_params + exists_params + dev_params
+        with self as repo:
+            return repo.execute_query(sql, params)
+
+    def _rol_filter_clauses(
+        self, request: GetRolRequest
+    ) -> tuple[str, tuple, str, tuple, str, tuple]:
         vendas_qb = QueryBuilder()
         vendas_qb.raw("D2.D_E_L_E_T_ = ''")
         if request.branch:
@@ -66,6 +152,19 @@ class FinancialRepository(BaseRepository, FinancialQueryRepositoryPort):
             exclude_customer_names=request.exclude_customer_names,
         )
         dev_where, dev_params = dev_qb.build()
+        return (
+            vendas_where,
+            vendas_params,
+            exists_where,
+            exists_params,
+            dev_where,
+            dev_params,
+        )
+
+    def _load_rol(self, request: GetRolRequest) -> dict:
+        vendas_where, vendas_params, exists_where, exists_params, dev_where, dev_params = (
+            self._rol_filter_clauses(request)
+        )
 
         sql = f"""
         WITH VENDAS AS (

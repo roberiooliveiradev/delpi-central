@@ -7,11 +7,17 @@
   },
   "maxParallelBlocks": 4,
   "customerLimit": 12,
+  "invoiceLimit": 8000,
   "defaultGranularity": "month",
   "allowedGranularities": ["day", "week", "month", "year"],
+  "invoiceKinds": {
+    "sale": "Nota de saída",
+    "return": "Devolução"
+  },
   "messages": {
     "invalidGranularity": "Granularidade inválida. Use day, week, month ou year.",
-    "blockFailed": "Não foi possível carregar este recorte agora."
+    "blockFailed": "Não foi possível carregar este recorte agora.",
+    "exportDenied": "Você não tem permissão para exportar o extrato de títulos."
   },
   "composition": [
     { "key": "grossRevenue", "source": "gross_revenue", "role": "add", "label": "Receita bruta" },

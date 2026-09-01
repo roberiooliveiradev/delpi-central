@@ -1581,6 +1581,23 @@
       },
       "category": "financial"
     },
+    "get_financial_rol_invoices": {
+      "locale": {
+        "en": {
+          "summary": "ROL invoices (sales and returns)",
+          "description": "Sales invoices (SD2) and sales returns (SD1) that compose financial ROL for the same filters as GET /financial/rol. Use to reconcile the ROL KPI to documents — not SE1 payment titles.",
+          "whenToUse": "Use for a conference extract of invoices that make up financial ROL.",
+          "label": "ROL invoices"
+        },
+        "pt-BR": {
+          "label": "Extrato de notas da ROL",
+          "summary": "Extrato de notas da ROL (saídas e devoluções)",
+          "description": "Notas de saída (SD2) e devoluções (SD1) que entram no ROL financeiro, com os mesmos filtros de GET /financial/rol. Use para conferir o KPI nota a nota — não são títulos SE1.",
+          "whenToUse": "Use para extrato de conferência das notas que formam a ROL financeira."
+        }
+      },
+      "category": "financial"
+    },
     "get_guias_procedimentos_admin_department": {
       "category": "quality",
       "locale": {

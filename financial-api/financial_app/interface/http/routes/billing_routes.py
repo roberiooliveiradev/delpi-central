@@ -31,3 +31,22 @@ def get_dashboard(
     except Exception as exc:
         return fail_from_exception(exc)
     return ok(data)
+
+
+@router.get("/invoices")
+def get_invoices(
+    request: Request,
+    branch: str | None = Query(None),
+    startDate: str | None = Query(None),
+    endDate: str | None = Query(None),
+):
+    try:
+        data = build_billing_service().invoices(
+            resolve_user(request),
+            branch=branch,
+            start_date=startDate,
+            end_date=endDate,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    return ok(data)

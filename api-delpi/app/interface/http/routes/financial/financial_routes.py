@@ -10,8 +10,12 @@ from app.application.security.api_delpi_permissions import KPI_FINANCIAL_ACCESS
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
+from app.application.use_cases.financial.get_rol_invoices_use_case import (
+    DEFAULT_ROL_INVOICE_LIMIT,
+)
 from app.composition.financial_composer import (
     build_get_rol_use_case,
+    build_get_rol_invoices_use_case,
     build_get_financial_ebitda_pct_use_case,
     build_get_financial_fixed_cost_pct_use_case,
     build_get_financial_pmr_use_case,
@@ -21,6 +25,7 @@ from app.interface.http.kpi_field_labels import (
     FINANCIAL_FIXED_COST_FIELD_LABELS,
     FINANCIAL_PMR_FIELD_LABELS,
     FINANCIAL_ROL_FIELD_LABELS,
+    FINANCIAL_ROL_INVOICES_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.openapi_agent_metadata import (
@@ -28,6 +33,7 @@ from app.interface.http.openapi_agent_metadata import (
     FINANCIAL_FIXED_COST,
     FINANCIAL_PMR,
     FINANCIAL_ROL,
+    FINANCIAL_ROL_INVOICES,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.interface.http.query_param_enums import (
@@ -71,6 +77,33 @@ def get_rol(
 
     except Exception as e:
         log_error(f"Erro ao consultar ROL: {e}")
+        return error_response(str(e))
+
+
+@router.get("/rol/invoices", **FINANCIAL_ROL_INVOICES)
+@require_any_permission(KPI_FINANCIAL_ACCESS)
+def get_rol_invoices(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    limit: int = Query(DEFAULT_ROL_INVOICE_LIMIT, ge=1, le=DEFAULT_ROL_INVOICE_LIMIT),
+):
+    try:
+        dto = GetRolRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        use_case = build_get_rol_invoices_use_case()
+        result = use_case.execute(dto, limit=limit)
+        return api_delpi_success(
+            result,
+            operation_id="get_financial_rol_invoices",
+            message="Extrato de notas da ROL consultado com sucesso.",
+            fields=kpi_fields(FINANCIAL_ROL_INVOICES_FIELD_LABELS),
+        )
+    except Exception as e:
+        log_error(f"Erro ao consultar extrato de notas da ROL: {e}")
         return error_response(str(e))
 
 

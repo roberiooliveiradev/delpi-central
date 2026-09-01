@@ -1014,6 +1014,17 @@ FINANCIAL_ROL = agent_route(
     operation_id="get_financial_rol",
 )
 
+FINANCIAL_ROL_INVOICES = agent_route(
+    summary="ROL invoices (sales and returns)",
+    description=(
+        "Line-level sales invoices (SD2) and sales returns (SD1) that compose financial ROL "
+        "for the same branch and period as GET /financial/rol. "
+        "Use for conference extract, invoice list, or reconciling the ROL KPI to documents. "
+        "Not SE1 payment titles."
+    ),
+    operation_id="get_financial_rol_invoices",
+)
+
 FINANCIAL_EBITDA = agent_route(
     summary="EBITDA percentual (financeiro)",
     description=(

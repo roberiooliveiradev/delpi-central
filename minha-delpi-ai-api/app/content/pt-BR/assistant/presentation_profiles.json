@@ -2093,6 +2093,7 @@
     "supplies_safety_stock_summary": "/supplies/safety-stock/summary",
     "supplies_safety_stock_filters": "/supplies/safety-stock/filters",
     "financial_rol": "/financial/rol",
+    "financial_rol_invoice": "/financial/rol/invoices",
     "financial_ebitda_pct": "/financial/ebitda_pct",
     "financial_fixed_cost_pct": "/financial/fixed_cost_pct",
     "financial_pmr": "/financial/pmr",

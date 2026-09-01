@@ -6,7 +6,7 @@ export const helpTooltips = {
   billingSeries:
     "Evolução da ROL no recorte. Com consolidado, compara Santa Catarina e Espírito Santo; com uma unidade, mostra só essa série.",
   billingWaterfall:
-    "Como a receita bruta vira ROL: descontos, devoluções e impostos sobre venda saem do bruto.",
+    "Demonstração da ROL: a receita bruta menos descontos, devoluções e impostos sobre venda, com o saldo a cada linha.",
   billingCustomers:
     "Clientes com maior ROL no período e a fatia de cada um sobre o total filtrado.",
   billingUnits: "ROL por unidade operacional no mesmo recorte de datas.",
@@ -33,4 +33,6 @@ export const helpTooltips = {
     "Filial usada na consulta (Santa Catarina ou Espírito Santo). O consolidado soma as duas e exige permissão de ambas.",
   period: "Recorte de datas da consulta. O fim é inclusivo na tela; a api-delpi usa limite exclusivo por mês de referência.",
   export: "Baixa o recorte atual em Excel, com os mesmos filtros aplicados na tela.",
+  billingExtract:
+    "Excel com cada nota de saída e devolução que entra na ROL do período — a mesma base do KPI, para conferência. Não são títulos de cobrança (SE1).",
 } as const;
