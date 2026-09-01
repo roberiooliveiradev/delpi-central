@@ -5,6 +5,7 @@ import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPa
 import { ScaffoldPage } from "./pages/ScaffoldPage";
 import { PanelPage } from "./pages/PanelPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
+import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
 
 export type AppProps = {
@@ -53,14 +54,12 @@ export default function App({
       ) : route.kind === "deviceEdit" ? (
         <DeviceFormPage mode="edit" deviceId={route.deviceId} permissions={permissionFlags} />
       ) : route.kind === "deviceDetail" ? (
-        <div className="pp-page-stack">
-          <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} />
-          <PpStateBox
-            variant="empty"
-            title="Detalhe em construção"
-            message="A tela de detalhe com histórico e comandos será entregue na próxima etapa (E5.S4)."
-          />
-        </div>
+        <DeviceDetailPage
+          deviceId={route.deviceId}
+          tab={route.tab}
+          search={search}
+          permissions={permissionFlags}
+        />
       ) : (
         <ScaffoldPage mode="operator" />
       )}

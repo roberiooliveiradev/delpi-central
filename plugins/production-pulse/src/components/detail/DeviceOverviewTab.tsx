@@ -1,0 +1,85 @@
+import { useEffect, useMemo, useState } from "react";
+
+import { fetchDeviceReadings } from "../../api/productionPulseApi";
+import { PpActionButton, PpChartCard, PpSectionCard } from "../../app/productionPulseUi";
+import { SimpleLineChart } from "../charts/SimpleLineChart";
+import type { DeviceListItem } from "../../types/device";
+import type { DeviceReading, LivePollResult } from "../../types/detail";
+import { PP_HELP } from "../../content/helpTooltips";
+import { productionPulseDeviceDetailPath } from "../../constants/routes";
+import { navigateProductionPulse } from "../../utils/navigation";
+import { isoHoursAgo, primaryMetricKey, readingsToChartPoints } from "../../utils/detailDisplay";
+import { DeviceBindingCard } from "./DeviceBindingCard";
+import { DeviceMetricHero } from "./DeviceMetricHero";
+
+type DeviceOverviewTabProps = {
+  device: DeviceListItem;
+  liveSnapshot: LivePollResult | null;
+  refreshing: boolean;
+  canCommand: boolean;
+  onRefreshLive: () => void;
+  onPollNow: () => void;
+  onReset: () => void;
+};
+
+export function DeviceOverviewTab({
+  device,
+  liveSnapshot,
+  refreshing,
+  canCommand,
+  onRefreshLive,
+  onPollNow,
+  onReset,
+}: DeviceOverviewTabProps) {
+  const [miniReadings, setMiniReadings] = useState<DeviceReading[]>([]);
+  const metricKey = primaryMetricKey(liveSnapshot?.metrics ?? device.lastMetrics, device.capabilities);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchDeviceReadings(device.id, {
+      page: 1,
+      pageSize: 48,
+      from: isoHoursAgo(24),
+      signal: controller.signal,
+    })
+      .then((payload) => setMiniReadings(payload.items))
+      .catch(() => setMiniReadings([]));
+    return () => controller.abort();
+  }, [device.id, liveSnapshot?.recordedAt]);
+
+  const deltaPoints = useMemo(
+    () => (metricKey ? readingsToChartPoints(miniReadings, metricKey, "delta") : []),
+    [metricKey, miniReadings],
+  );
+
+  return (
+    <div className="pp-detail-overview">
+      <div className="pp-detail-overview__top">
+        <DeviceMetricHero
+          device={device}
+          liveSnapshot={liveSnapshot}
+          refreshing={refreshing}
+          canCommand={canCommand}
+          onRefreshLive={onRefreshLive}
+          onPollNow={onPollNow}
+          onReset={onReset}
+        />
+        <DeviceBindingCard binding={device.binding} />
+      </div>
+
+      <PpSectionCard title="Mini histórico (24h)">
+        <PpChartCard title="Variação entre leituras" titleHint={PP_HELP.detail.chartDelta}>
+          <SimpleLineChart points={deltaPoints} height={200} />
+        </PpChartCard>
+        <div className="pp-detail-overview__link-row">
+          <PpActionButton
+            variant="ghost"
+            onClick={() => navigateProductionPulse(productionPulseDeviceDetailPath(device.id, "history"))}
+          >
+            Ver histórico completo →
+          </PpActionButton>
+        </div>
+      </PpSectionCard>
+    </div>
+  );
+}

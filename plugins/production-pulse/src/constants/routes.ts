@@ -1,4 +1,15 @@
+import type { DeviceDetailTab } from "../types/detail";
+
 export const PRODUCTION_PULSE_BASE_PATH = "/apps/production-pulse";
+
+const DEVICE_DETAIL_TABS: DeviceDetailTab[] = ["overview", "history", "commands"];
+
+export function parseDeviceDetailTab(value: string | null | undefined): DeviceDetailTab {
+  if (value && DEVICE_DETAIL_TABS.includes(value as DeviceDetailTab)) {
+    return value as DeviceDetailTab;
+  }
+  return "overview";
+}
 
 export type ProductionPulseRouteKind =
   | "panel"
@@ -13,7 +24,7 @@ export type ProductionPulseRoute =
   | { kind: "operator" }
   | { kind: "deviceNew"; branch?: string }
   | { kind: "deviceEdit"; deviceId: string }
-  | { kind: "deviceDetail"; deviceId: string }
+  | { kind: "deviceDetail"; deviceId: string; tab: DeviceDetailTab }
   | { kind: "unknown" };
 
 export function parseProductionPulseRoute(pathname: string, search = ""): ProductionPulseRoute {
@@ -43,7 +54,11 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
     new RegExp(`^${PRODUCTION_PULSE_BASE_PATH}/devices/([^/]+)$`),
   );
   if (detailMatch) {
-    return { kind: "deviceDetail", deviceId: detailMatch[1] };
+    return {
+      kind: "deviceDetail",
+      deviceId: detailMatch[1],
+      tab: parseDeviceDetailTab(query.get("tab")),
+    };
   }
 
   return { kind: "unknown" };
@@ -56,4 +71,12 @@ export function productionPulseDeviceEditPath(deviceId: string): string {
 export function productionPulseDeviceNewPath(branch?: string): string {
   const suffix = branch ? `?branch=${encodeURIComponent(branch)}` : "";
   return `${PRODUCTION_PULSE_BASE_PATH}/devices/new${suffix}`;
+}
+
+export function productionPulseDeviceDetailPath(
+  deviceId: string,
+  tab: DeviceDetailTab = "overview",
+): string {
+  const query = tab === "overview" ? "" : `?tab=${encodeURIComponent(tab)}`;
+  return `${PRODUCTION_PULSE_BASE_PATH}/devices/${deviceId}${query}`;
 }

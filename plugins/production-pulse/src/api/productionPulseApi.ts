@@ -1,5 +1,6 @@
 import { httpGet, httpJson, PRODUCTION_PULSE_API_BASE } from "./httpClient";
 import type { DeviceListItem, DeviceSummary } from "../types/device";
+import type { DeviceCommandAudit, DeviceReading, LivePollResult, PaginatedItems } from "../types/detail";
 import type {
   DeviceFormValues,
   DriverCatalogItem,
@@ -137,6 +138,76 @@ export async function testExistingDevice(deviceId: string): Promise<ProbeResult>
   return payload.data;
 }
 
-export async function pollDevice(deviceId: string): Promise<void> {
-  await httpJson("POST", `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/poll`);
+export async function pollDevice(deviceId: string): Promise<LivePollResult> {
+  const payload = await httpJson<ApiEnvelope<LivePollResult>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/poll`,
+  );
+  return payload.data;
+}
+
+export async function fetchDeviceLive(deviceId: string): Promise<LivePollResult> {
+  const payload = await httpGet<ApiEnvelope<LivePollResult>>(
+    `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/live`,
+  );
+  return payload.data;
+}
+
+export type FetchDeviceReadingsParams = {
+  page?: number;
+  pageSize?: number;
+  from?: string;
+  to?: string;
+  metric?: string;
+  signal?: AbortSignal;
+};
+
+export async function fetchDeviceReadings(
+  deviceId: string,
+  params: FetchDeviceReadingsParams = {},
+): Promise<PaginatedItems<DeviceReading>> {
+  const searchParams = new URLSearchParams();
+  if (params.page) searchParams.set("page", String(params.page));
+  if (params.pageSize) searchParams.set("pageSize", String(params.pageSize));
+  if (params.from) searchParams.set("from", params.from);
+  if (params.to) searchParams.set("to", params.to);
+  if (params.metric) searchParams.set("metric", params.metric);
+  const suffix = searchParams.toString();
+  const payload = await httpGet<ApiEnvelope<PaginatedItems<DeviceReading>>>(
+    `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/readings${suffix ? `?${suffix}` : ""}`,
+    { signal: params.signal },
+  );
+  return payload.data;
+}
+
+export type FetchDeviceCommandsParams = {
+  page?: number;
+  pageSize?: number;
+  signal?: AbortSignal;
+};
+
+export async function fetchDeviceCommands(
+  deviceId: string,
+  params: FetchDeviceCommandsParams = {},
+): Promise<PaginatedItems<DeviceCommandAudit>> {
+  const searchParams = new URLSearchParams();
+  if (params.page) searchParams.set("page", String(params.page));
+  if (params.pageSize) searchParams.set("pageSize", String(params.pageSize));
+  const suffix = searchParams.toString();
+  const payload = await httpGet<ApiEnvelope<PaginatedItems<DeviceCommandAudit>>>(
+    `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/commands${suffix ? `?${suffix}` : ""}`,
+    { signal: params.signal },
+  );
+  return payload.data;
+}
+
+export async function executeDeviceCommand(
+  deviceId: string,
+  commandKey: string,
+): Promise<DeviceCommandAudit> {
+  const payload = await httpJson<ApiEnvelope<DeviceCommandAudit>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/commands/${encodeURIComponent(commandKey)}`,
+  );
+  return payload.data;
 }

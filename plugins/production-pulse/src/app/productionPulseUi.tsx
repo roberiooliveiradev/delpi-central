@@ -1,11 +1,15 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import {
   ActionButton,
   BackLink,
+  ChartCard,
+  chartCardBemClasses,
+  createCompactPagination,
   createDashboardFormActions,
   createDashboardFormGrid,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
+  createDashboardUnderlineNav,
   createSimpleKpiCard,
   createStateBoxPanel,
   FieldLabel,
@@ -44,5 +48,41 @@ export const PpSectionCard = createDashboardSectionCard({
 });
 export const PpFormGrid = createDashboardFormGrid({ classNames: formGridBemClasses(PREFIX) });
 export const PpFormActions = createDashboardFormActions({ classNames: formActionsBemClasses(PREFIX) });
+export const PpUnderlineNav = createDashboardUnderlineNav({ prefix: PREFIX });
+export const PpPagination = createCompactPagination({
+  prefix: PREFIX,
+  layout: "flat",
+  labels: {
+    info: ({ page, totalPages, total }) =>
+      `Página ${page} de ${totalPages} · ${total.toLocaleString("pt-BR")} registro(s)`,
+    previous: "Anterior",
+    next: "Próxima",
+    navigationAriaLabel: "Paginação",
+  },
+});
+
+const CHART_CARD_CLASSES = chartCardBemClasses(PREFIX, { headerLayout: "titleRow" });
+
+type PpChartCardProps = {
+  title: string;
+  hint?: string;
+  titleHint?: string;
+  children: ReactNode;
+  headerActions?: ReactNode;
+};
+
+export function PpChartCard({ title, hint, titleHint, children, headerActions }: PpChartCardProps) {
+  return (
+    <ChartCard
+      title={title}
+      hint={hint}
+      titleHint={titleHint}
+      headerActions={headerActions}
+      classNames={CHART_CARD_CLASSES}
+    >
+      {children}
+    </ChartCard>
+  );
+}
 
 export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;

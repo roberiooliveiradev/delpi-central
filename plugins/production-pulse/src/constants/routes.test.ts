@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  parseDeviceDetailTab,
   parseProductionPulseRoute,
+  productionPulseDeviceDetailPath,
   productionPulseDeviceNewPath,
 } from "./routes";
 
@@ -27,6 +29,27 @@ describe("parseProductionPulseRoute", () => {
     );
     expect(parseProductionPulseRoute("/apps/production-pulse/devices/abc-123").kind).toBe(
       "deviceDetail",
+    );
+  });
+
+  it("maps device detail tabs from query", () => {
+    expect(parseProductionPulseRoute("/apps/production-pulse/devices/abc-123", "?tab=history")).toEqual({
+      kind: "deviceDetail",
+      deviceId: "abc-123",
+      tab: "history",
+    });
+    expect(parseProductionPulseRoute("/apps/production-pulse/devices/abc-123", "?tab=commands")).toEqual({
+      kind: "deviceDetail",
+      deviceId: "abc-123",
+      tab: "commands",
+    });
+    expect(parseDeviceDetailTab("invalid")).toBe("overview");
+  });
+
+  it("builds detail path with tab", () => {
+    expect(productionPulseDeviceDetailPath("abc-123")).toBe("/apps/production-pulse/devices/abc-123");
+    expect(productionPulseDeviceDetailPath("abc-123", "history")).toBe(
+      "/apps/production-pulse/devices/abc-123?tab=history",
     );
   });
 
