@@ -1499,6 +1499,7 @@ function EditorCanvasTableBlock({
       className={className}
       canvasTableInteraction={{
         selectedCells: cellSelection?.cells ?? [],
+        focusCell: cellSelection?.focus ?? null,
         blockSelected,
         onSelectCell: ({ cell, additive, range }) =>
           selectCanvasTableCell(block.id, {

@@ -19,6 +19,7 @@ import {
 import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from "./canvasTableProjection";
 import { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
 import {
+  mapViewportRectToHostLocal,
   resolveCanvasTableSelectionOverlayRects,
   resolveCanvasTableTrackHandles,
   type CanvasTableCellDomRect,
@@ -49,6 +50,8 @@ import type { ComunicadoCanvasTableBlock } from "./comunicadoTypes";
 
 export type ComunicadoCanvasTableInteraction = {
   selectedCells?: CanvasTableCellRef[];
+  /** Célula de foco (overlay / teclado) — não assumir «última de selectedCells». */
+  focusCell?: CanvasTableCellRef | null;
   /** @deprecated Prefer `selectedCells`. */
   selectedCell?: CanvasTableCellRef | null;
   /**
@@ -120,13 +123,19 @@ function measureCellRects(host: HTMLElement): CanvasTableCellDomRect[] {
     const col = Number(node.dataset.cellCol);
     if (!Number.isFinite(row) || !Number.isFinite(col)) return;
     const box = node.getBoundingClientRect();
+    const local = mapViewportRectToHostLocal({
+      hostRect: hostBox,
+      hostOffsetWidth: host.offsetWidth,
+      hostOffsetHeight: host.offsetHeight,
+      targetRect: box,
+    });
     rects.push({
       row,
       col,
-      left: box.left - hostBox.left,
-      top: box.top - hostBox.top,
-      width: box.width,
-      height: box.height,
+      left: local.left,
+      top: local.top,
+      width: local.width,
+      height: local.height,
     });
   });
   return rects;
@@ -158,7 +167,10 @@ export function ComunicadoCanvasTableView({
   const selectedCells =
     interaction?.selectedCells ??
     (interaction?.selectedCell ? [interaction.selectedCell] : []);
-  const focusCell = selectedCells[selectedCells.length - 1] ?? null;
+  const focusCell =
+    interaction?.focusCell ??
+    selectedCells[selectedCells.length - 1] ??
+    null;
   const resolvedCells = block.cells.map((row) =>
     row.map((raw) => {
       const cell = normalizeCanvasTableCell(raw);
@@ -182,7 +194,15 @@ export function ComunicadoCanvasTableView({
     }
     const host = hostRef.current;
     if (!host) return;
-    setCellRects(measureCellRects(host));
+    const refresh = () => setCellRects(measureCellRects(host));
+    refresh();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(refresh) : null;
+    ro?.observe(host);
+    window.addEventListener("resize", refresh);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", refresh);
+    };
   }, [
     editable,
     selectionKey,
@@ -191,6 +211,7 @@ export function ComunicadoCanvasTableView({
     block.cols,
     block.frame?.w,
     block.frame?.h,
+    block.merges,
     displayColumnWidths,
     displayRowHeights,
   ]);
@@ -216,6 +237,15 @@ export function ComunicadoCanvasTableView({
       sel?.addRange(range);
     }
   }, [editingCell]);
+
+  /* Seleção mudou sem entrar em edição → encerra caret antigo (evita ponteiro descompassado). */
+  useLayoutEffect(() => {
+    if (!editingCell) return;
+    const stillSelected = selectedCells.some(
+      (cell) => cell.row === editingCell.row && cell.col === editingCell.col,
+    );
+    if (!stillSelected) setEditingCell(null);
+  }, [editingCell, selectionKey, selectedCells]);
 
   const overlay =
     editable && selectedCells.length
@@ -349,6 +379,9 @@ export function ComunicadoCanvasTableView({
     const sameFocus =
       focusCell?.row === row && focusCell?.col === col && !event.ctrlKey && !event.metaKey && !event.shiftKey;
     const enterEdit = canEdit && sameFocus && !isCellEditing(row, col);
+    if (!enterEdit && editingCell) {
+      setEditingCell(null);
+    }
     selectAndMaybeEdit(
       { row, col },
       {
@@ -357,6 +390,10 @@ export function ComunicadoCanvasTableView({
         enterEdit,
       },
     );
+    if (!enterEdit) {
+      /* Navegar: foco na célula clicada sem caret de edição. */
+      requestAnimationFrame(() => focusCellAt(row, col));
+    }
   }
 
   function onCellKeyDown(

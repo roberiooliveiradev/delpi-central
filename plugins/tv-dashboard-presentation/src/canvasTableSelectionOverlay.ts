@@ -1,6 +1,6 @@
 /**
  * Overlay de seleção da Grade — chrome sem alterar o box das células.
- * Rects em coordenadas relativas ao host (não viewport).
+ * Rects em coordenadas locais do host (não viewport / pós-scale).
  */
 
 import { mergeAt } from "./canvasTableMerge";
@@ -19,6 +19,31 @@ export type CanvasTableSelectionOverlayRects = {
   range: { left: number; top: number; width: number; height: number } | null;
   focus: { left: number; top: number; width: number; height: number } | null;
 };
+
+/**
+ * Converte rect de tela (getBoundingClientRect) para coords locais do host.
+ * Obrigatório no editor: o palco aplica `transform: scale(...)` no DesignViewportStage —
+ * sem dividir pela escala, overlay/handles desalinhados e handles somem no overflow.
+ */
+export function mapViewportRectToHostLocal(params: {
+  hostRect: { left: number; top: number; width: number; height: number };
+  hostOffsetWidth: number;
+  hostOffsetHeight: number;
+  targetRect: { left: number; top: number; width: number; height: number };
+}): { left: number; top: number; width: number; height: number } {
+  const scaleX =
+    params.hostOffsetWidth > 0 ? params.hostRect.width / params.hostOffsetWidth : 1;
+  const scaleY =
+    params.hostOffsetHeight > 0 ? params.hostRect.height / params.hostOffsetHeight : 1;
+  const sx = scaleX || 1;
+  const sy = scaleY || 1;
+  return {
+    left: (params.targetRect.left - params.hostRect.left) / sx,
+    top: (params.targetRect.top - params.hostRect.top) / sy,
+    width: params.targetRect.width / sx,
+    height: params.targetRect.height / sy,
+  };
+}
 
 /** União dos retângulos das células selecionadas (range) + foco opcional. */
 export function resolveCanvasTableSelectionOverlayRects(params: {
@@ -89,7 +114,7 @@ export type CanvasTableTrackHandleRect = {
   height: number;
 };
 
-/** Handles nas divisórias internas — hit-area ~6px, coordenadas do host. */
+/** Handles nas divisórias internas — hit-area ~8px, coordenadas do host. */
 export function resolveCanvasTableTrackHandles(params: {
   cellRects: readonly CanvasTableCellDomRect[];
   rows: number;
@@ -117,9 +142,9 @@ export function resolveCanvasTableTrackHandles(params: {
     handles.push({
       axis: "col",
       index: col,
-      left: cell.left + cell.width,
+      left: cell.left + cell.width - 4,
       top: tableTop,
-      width: 6,
+      width: 8,
       height: tableBottom - tableTop,
     });
   }
@@ -130,9 +155,9 @@ export function resolveCanvasTableTrackHandles(params: {
       axis: "row",
       index: row,
       left: tableLeft,
-      top: cell.top + cell.height,
+      top: cell.top + cell.height - 4,
       width: tableRight - tableLeft,
-      height: 6,
+      height: 8,
     });
   }
   return handles;

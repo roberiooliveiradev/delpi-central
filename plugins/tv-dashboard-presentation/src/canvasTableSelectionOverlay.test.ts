@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  mapViewportRectToHostLocal,
   resolveCanvasTableSelectionOverlayRects,
   resolveCanvasTableTrackHandles,
 } from "./canvasTableSelectionOverlay";
@@ -88,12 +89,34 @@ describe("resolveCanvasTableTrackHandles", () => {
   it("posiciona divisórias internas de coluna e linha", () => {
     const handles = resolveCanvasTableTrackHandles({ cellRects, rows: 2, cols: 2 });
     expect(handles).toEqual([
-      { axis: "col", index: 0, left: 40, top: 0, width: 6, height: 44 },
-      { axis: "row", index: 0, left: 0, top: 20, width: 90, height: 6 },
+      { axis: "col", index: 0, left: 36, top: 0, width: 8, height: 44 },
+      { axis: "row", index: 0, left: 0, top: 16, width: 90, height: 8 },
     ]);
   });
 
   it("não cria handle na última faixa", () => {
     expect(resolveCanvasTableTrackHandles({ cellRects, rows: 1, cols: 1 })).toEqual([]);
+  });
+});
+
+describe("mapViewportRectToHostLocal", () => {
+  it("compensa scale do palco (getBoundingClientRect ≠ offsetWidth)", () => {
+    const local = mapViewportRectToHostLocal({
+      hostRect: { left: 100, top: 50, width: 200, height: 100 },
+      hostOffsetWidth: 400,
+      hostOffsetHeight: 200,
+      targetRect: { left: 150, top: 75, width: 50, height: 25 },
+    });
+    expect(local).toEqual({ left: 100, top: 50, width: 100, height: 50 });
+  });
+
+  it("escala 1:1 quando não há zoom", () => {
+    const local = mapViewportRectToHostLocal({
+      hostRect: { left: 10, top: 20, width: 100, height: 80 },
+      hostOffsetWidth: 100,
+      hostOffsetHeight: 80,
+      targetRect: { left: 30, top: 40, width: 40, height: 20 },
+    });
+    expect(local).toEqual({ left: 20, top: 20, width: 40, height: 20 });
   });
 });
