@@ -9,6 +9,7 @@ from tv_app.application.services.data.tv_data_param_defaults_service import (
 )
 from tv_app.application.services.data.tv_commercial_composite_binding_migration_service import (
     migrate_composite_commercial_binding,
+    migrate_dual_commercial_rol_binding,
 )
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
@@ -171,7 +172,9 @@ def hydrate_comunicado_data_bindings(
             if block_type not in DATA_BLOCK_TYPES or not isinstance(binding, dict):
                 next_blocks.append(block)
                 continue
-            migrated = migrate_composite_commercial_binding(binding)
+            migrated = migrate_dual_commercial_rol_binding(
+                migrate_composite_commercial_binding(binding)
+            )
             operation_id = str(migrated.get("operationId") or "").strip()
             route = cat.get_route(operation_id) if operation_id else None
             hydrated, diag = hydrate_data_binding(migrated, route)

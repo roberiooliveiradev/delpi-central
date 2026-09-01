@@ -91,6 +91,34 @@ def _remap_string_keys(value: Any) -> Any:
     return value
 
 
+_LEGACY_DUAL_COMMERCIAL_ROL: dict[str, tuple[str, str]] = {
+    "get_head_office_rol_target_pct": ("get_commercial_rol_summary", "01"),
+    "get_branch_rol_target_pct": ("get_commercial_rol_summary", "02"),
+    "get_head_office_weg_rol_target_pct": ("get_weg_rol_target_pct", "01"),
+    "get_branch_weg_rol_target_pct": ("get_weg_rol_target_pct", "02"),
+    "get_head_office_new_business_rol_target_pct": ("get_new_business_rol_target_pct", "01"),
+    "get_branch_new_business_rol_target_pct": ("get_new_business_rol_target_pct", "02"),
+}
+
+
+def migrate_dual_commercial_rol_binding(binding: dict[str, Any]) -> dict[str, Any]:
+    """Remapeia bindings legados head_office/branch ROL para rotas unificadas + branch."""
+    if not isinstance(binding, dict):
+        return binding
+    operation_id = str(binding.get("operationId") or "").strip()
+    mapped = _LEGACY_DUAL_COMMERCIAL_ROL.get(operation_id)
+    if not mapped:
+        return binding
+    next_op, branch = mapped
+    next_binding = dict(binding)
+    next_binding["operationId"] = next_op
+    params_in = binding.get("params") if isinstance(binding.get("params"), dict) else {}
+    next_params = {key: value for key, value in params_in.items() if value not in (None, "")}
+    next_params["branch"] = branch
+    next_binding["params"] = next_params
+    return next_binding
+
+
 def migrate_composite_commercial_binding(binding: dict[str, Any]) -> dict[str, Any]:
     """Atualiza operationId/params/transform de um binding composto para rota simples."""
     if not isinstance(binding, dict):
