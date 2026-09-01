@@ -99,6 +99,28 @@ def last_completed_months_bounds(months: int = 12, today: date | None = None) ->
     return add_months(end_exclusive, -months).isoformat(), end_exclusive.isoformat()
 
 
+def rolling_month_series_bounds(
+    start_date: str | None,
+    end_date: str | None,
+    *,
+    months: int = 12,
+    today: date | None = None,
+) -> tuple[str, str]:
+    """Série mensal: N meses calendário inclusivos ancorados no fim do período da UI."""
+    if months < 1:
+        raise InvalidPeriod("A janela da série deve incluir ao menos um mês.")
+
+    _, resolved_end = resolve_inclusive_period_or_default(
+        start_date,
+        end_date,
+        today=today,
+    )
+    end_d = parse_iso_date(resolved_end, field_name="endDate")
+    end_month = date(end_d.year, end_d.month, 1)
+    series_start = add_months(end_month, -(months - 1))
+    return series_start.isoformat(), end_d.isoformat()
+
+
 def map_period(raw: Any) -> dict[str, str | None]:
     """Converte o ``periodo`` da api-delpi para o contrato camelCase do BFF."""
     source = raw if isinstance(raw, dict) else {}

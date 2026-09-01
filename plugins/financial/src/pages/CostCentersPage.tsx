@@ -335,7 +335,11 @@ export function CostCentersPage({
           </div>
 
           <div className="fin-chart-section fin-chart-section--full">
-            <FinChartCard title={copy.costCenters.seriesTitle} titleHint={helpTooltips.costCenters}>
+            <FinChartCard
+              title={copy.costCenters.seriesTitle}
+              titleHint={helpTooltips.costCenters}
+              hint={copy.costCenters.seriesHint}
+            >
               {data?.sectionErrors.series ? (
                 <p className="fin-block-state fin-block-state--error" role="alert">
                   {data.sectionErrors.series}

@@ -44,7 +44,7 @@ def test_summary_maps_business_fields() -> None:
 
 
 def test_series_and_rankings() -> None:
-    service, _ = build()
+    service, gateway = build()
     series = service.series(
         full_user(),
         branch=None,
@@ -56,6 +56,22 @@ def test_series_and_rankings() -> None:
     )
     assert series["items"][0]["yearMonth"] == "2026-08"
     assert series["items"][0]["totalAmount"] == 450_000.0
+
+    service.series(
+        full_user(),
+        branch="01",
+        start_date="2026-09-01",
+        end_date="2026-09-15",
+        cost_center=None,
+        supplier_code=None,
+        supplier_store=None,
+        refresh=True,
+    )
+    series_calls = [
+        kwargs for name, kwargs in gateway.calls if name == "fetch_cost_center_series"
+    ]
+    assert series_calls[-1]["start_date"] == "2025-10-01"
+    assert series_calls[-1]["end_date"] == "2026-09-15"
 
     centers = service.ranking_cost_centers(
         full_user(),

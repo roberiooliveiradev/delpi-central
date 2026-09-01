@@ -16,7 +16,10 @@ from financial_app.application.services.payload_mapping import (
     map_sort,
     unwrap_data,
 )
-from financial_app.domain.services.period_range import resolve_inclusive_period_or_default
+from financial_app.domain.services.period_range import (
+    resolve_inclusive_period_or_default,
+    rolling_month_series_bounds,
+)
 from financial_app.application.services.response_cache import cached_fetch
 from financial_app.core.security import FIN_COST_CENTERS_VIEW
 from financial_app.domain.errors import FinancialError
@@ -154,7 +157,14 @@ class CostCenterService:
         exclude_mp_products: bool = False,
         refresh: bool = False,
     ) -> dict[str, Any]:
-        scope, start, end = self._prepare(user, branch, start_date, end_date)
+        scope, _, _ = self._prepare(user, branch, start_date, end_date)
+        series_cfg = _settings().get("series") or {}
+        series_months = as_int(series_cfg.get("months"), 12)
+        start, end = rolling_month_series_bounds(
+            start_date,
+            end_date,
+            months=series_months,
+        )
         payload = self._cached(
             "series",
             {

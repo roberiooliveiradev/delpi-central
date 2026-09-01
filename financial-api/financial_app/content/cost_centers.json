@@ -16,6 +16,9 @@
     "maxLimit": 50
   },
   "defaultPeriodMode": "current_month",
+  "series": {
+    "months": 12
+  },
   "sort": {
     "entries": {
       "default": "data_emissao",
