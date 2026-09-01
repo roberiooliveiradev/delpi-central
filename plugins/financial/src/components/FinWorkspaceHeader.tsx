@@ -29,6 +29,8 @@ type FinWorkspaceHeaderProps = {
   startDate?: string | null;
   endDate?: string | null;
   granularity?: string | null;
+  /** Mês em foco — preserva o detalhamento ao trocar de filial. */
+  month?: string | null;
   onRefresh?: () => void;
   refreshBusy?: boolean;
   onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
@@ -50,6 +52,7 @@ export function FinWorkspaceHeader({
   startDate,
   endDate,
   granularity = null,
+  month = null,
   onRefresh,
   refreshBusy,
   onPeriodChange,
@@ -57,7 +60,7 @@ export function FinWorkspaceHeader({
   const setBranch = (next: FinancialBranch) => {
     storeBranch(next);
     navigateFinancial(
-      buildFinancialHref({ subpluginId, branch: next, startDate, endDate, granularity }),
+      buildFinancialHref({ subpluginId, branch: next, startDate, endDate, granularity, month }),
     );
   };
 

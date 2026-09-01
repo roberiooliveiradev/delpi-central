@@ -22,6 +22,8 @@ export type FinancialRoute = {
   delayRange: string | null;
   granularity: string | null;
   excludeMp: boolean;
+  /** Mês em foco no detalhamento de despesas (`AAAA-MM`). */
+  month: string | null;
   page: number;
   pathname: string;
 };
@@ -31,6 +33,7 @@ const TITLE_STATUSES = new Set(["all", "on_time", "late"]);
 const GRANULARITIES = new Set(["day", "week", "month", "year"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export function isBranch(value: string | null): value is FinancialBranch {
   return value === "01" || value === "02" || value === "all";
@@ -50,6 +53,11 @@ export function storeBranch(branch: FinancialBranch) {
 function isoDateOrNull(value: string | null): string | null {
   const text = value?.trim() ?? "";
   return ISO_DATE.test(text) ? text : null;
+}
+
+function yearMonthOrNull(value: string | null): string | null {
+  const text = value?.trim() ?? "";
+  return YEAR_MONTH.test(text) ? text : null;
 }
 
 function positiveIntOrOne(value: string | null): number {
@@ -93,6 +101,7 @@ export function parseFinancialPath(
     delayRange: params.get("delayRange")?.trim() || null,
     granularity: GRANULARITIES.has(granularityRaw) ? granularityRaw : null,
     excludeMp: parseBooleanFlag(params.get("excludeMp")),
+    month: yearMonthOrNull(params.get("month")),
     page: positiveIntOrOne(params.get("page")),
     pathname: path || FINANCIAL_BASE_PATH,
   };
@@ -114,6 +123,7 @@ export function buildFinancialHref(input: {
   delayRange?: string | null;
   granularity?: string | null;
   excludeMp?: boolean | null;
+  month?: string | null;
   page?: number | null;
 }): string {
   const path =
@@ -135,6 +145,7 @@ export function buildFinancialHref(input: {
   if (input.delayRange) params.set("delayRange", input.delayRange);
   if (input.granularity) params.set("granularity", input.granularity);
   if (input.excludeMp) params.set("excludeMp", "1");
+  if (input.month) params.set("month", input.month);
   if (input.page && input.page > 1) params.set("page", String(input.page));
   return `${path}?${params.toString()}`;
 }

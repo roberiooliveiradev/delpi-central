@@ -42,6 +42,27 @@ describe("parseFinancialPath", () => {
     expect(route.status).toBeNull();
   });
 
+  it("reads the focused expense month from the shareable URL", () => {
+    const route = parseFinancialPath(
+      "/apps/financial/cost-centers",
+      "?branch=01&month=2026-09&costCenter=1101&excludeMp=1",
+      "01",
+    );
+    expect(route.subpluginId).toBe("cost-centers");
+    expect(route.month).toBe("2026-09");
+    expect(route.costCenter).toBe("1101");
+    expect(route.excludeMp).toBe(true);
+  });
+
+  it("drops a malformed month instead of forwarding it to the API", () => {
+    expect(parseFinancialPath("/apps/financial/cost-centers", "?month=2026-13", "01").month).toBeNull();
+    expect(parseFinancialPath("/apps/financial/cost-centers", "?month=2026-9", "01").month).toBeNull();
+    expect(parseFinancialPath("/apps/financial/cost-centers", "?month=2026-00", "01").month).toBeNull();
+    expect(
+      parseFinancialPath("/apps/financial/cost-centers", "?month=2026-09-01", "01").month,
+    ).toBeNull();
+  });
+
   it("ignores malformed dates", () => {
     const route = parseFinancialPath(
       "/apps/financial/cost-centers",
@@ -92,6 +113,22 @@ describe("buildFinancialHref", () => {
       }),
     ).toBe(
       "/apps/financial/cost-centers?branch=02&costCenter=1101&supplier=000045&supplierStore=01&page=2",
+    );
+  });
+
+  it("serializes the expense month alongside the inherited filters", () => {
+    expect(
+      buildFinancialHref({
+        subpluginId: "cost-centers",
+        branch: "01",
+        month: "2026-09",
+        costCenter: "1101",
+        supplierCode: "000045",
+        supplierStore: "01",
+        excludeMp: true,
+      }),
+    ).toBe(
+      "/apps/financial/cost-centers?branch=01&costCenter=1101&supplier=000045&supplierStore=01&excludeMp=1&month=2026-09",
     );
   });
 });
