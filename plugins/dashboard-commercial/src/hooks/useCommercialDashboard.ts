@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  getBranchNewBusinessRolTarget,
-  getBranchRolTarget,
-  getBranchWegRolTarget,
   getClosingRate,
-  getHeadOfficeNewBusinessRolTarget,
-  getHeadOfficeRolTarget,
-  getHeadOfficeWegRolTarget,
   getNewBusinessRolPct,
+  getNewBusinessRolTarget,
+  getRolSummary,
   getSalesOrderOtd,
+  getWegRolTarget,
 } from "../api/commercialApi";
 import { formatCommercialApiError } from "../utils/formatCommercialApiError";
 import {
@@ -123,18 +120,24 @@ export function useCommercialDashboard(
         const segmentRolParams = {
           start_date: indicatorParams.start_date,
           end_date: indicatorParams.end_date,
-          branch: indicatorParams.branch,
+        };
+
+        const rolMetricParams = {
+          start_date: indicatorParams.start_date,
+          end_date: indicatorParams.end_date,
+          customer_segment: indicatorParams.customer_segment,
         };
 
         const results = await runParallelWithProgress(
           [
-            (signal) => getHeadOfficeRolTarget(indicatorParams, signal),
-            (signal) => getBranchRolTarget(indicatorParams, signal),
-            (signal) => getHeadOfficeWegRolTarget(segmentRolParams, signal),
-            (signal) => getBranchWegRolTarget(segmentRolParams, signal),
+            (signal) => getRolSummary({ ...rolMetricParams, branch: "01" }, signal),
+            (signal) => getRolSummary({ ...rolMetricParams, branch: "02" }, signal),
+            (signal) => getWegRolTarget({ ...segmentRolParams, branch: "01" }, signal),
+            (signal) => getWegRolTarget({ ...segmentRolParams, branch: "02" }, signal),
             (signal) =>
-              getHeadOfficeNewBusinessRolTarget(segmentRolParams, signal),
-            (signal) => getBranchNewBusinessRolTarget(segmentRolParams, signal),
+              getNewBusinessRolTarget({ ...segmentRolParams, branch: "01" }, signal),
+            (signal) =>
+              getNewBusinessRolTarget({ ...segmentRolParams, branch: "02" }, signal),
             (signal) => getClosingRate(indicatorParams, signal),
             (signal) => getSalesOrderOtd(indicatorParams, signal),
             (signal) => getNewBusinessRolPct(indicatorParams, signal),

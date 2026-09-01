@@ -6,8 +6,9 @@ Permissão: `dashboard-commercial.view` ou `api-delpi.access`
 
 | Função | Método | Rota | Query |
 |--------|--------|------|-------|
-| `getHeadOfficeRolTarget` | GET | `/head_office_rol_target_pct` | `start_date`, `end_date` — ROL filial 01; meta SI: `commercial_rol`, branch `01` |
-| `getBranchRolTarget` | GET | `/branch_rol_target_pct` | `start_date`, `end_date` — ROL filial 02; meta SI: `commercial_rol`, branch `02` |
+| `getRolSummary` | GET | `/rol/summary` | `start_date`, `end_date`, `branch` (`01` \| `02`) — meta SI: `commercial_rol` |
+| `getWegRolTarget` | GET | `/weg-rol-target-pct` | `start_date`, `end_date`, `branch` — meta SI: `commercial_rol_weg` |
+| `getNewBusinessRolTarget` | GET | `/new-business-rol-target-pct` | `start_date`, `end_date`, `branch` — meta SI: `commercial_rol_new_business` |
 | `getCommercialRolSeries` | GET | `/rol-series` | `start_date`, `end_date`, `granularity` — séries `rol_matrix` / `rol_branch` (01/02) |
 | `getClosingRate` | GET | `/closing-rate` | `start_date`, `end_date`, `branch` |
 | `getCommercialProposals` | GET | `/proposals` | `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment`, `page`, `page_size`, `sort_by`, `sort_dir`, `search` |
