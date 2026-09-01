@@ -174,6 +174,25 @@ async def test_probe(request: Request, body: DeviceTestProbeBody):
         return _json_error(exc)
 
 
+@router.post("/poll-all")
+async def poll_all_devices(
+    request: Request,
+    branch: str | None = Query(default=None),
+    role: str | None = Query(default=None),
+):
+    denied = guard_manage_devices(request)
+    if denied is not None:
+        return denied
+    branches, denied = resolve_list_branches(request, branch)
+    if denied is not None:
+        return denied
+    try:
+        data = _poll_service.poll_all(branch=branch, branches=branches, role=role)
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
 @router.get("/{device_id}/commands")
 async def list_device_commands(
     request: Request,

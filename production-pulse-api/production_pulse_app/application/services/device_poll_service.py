@@ -171,6 +171,57 @@ class DevicePollService:
             },
         }
 
+    def poll_all(
+        self,
+        *,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        role: str | None = None,
+    ) -> dict[str, Any]:
+        rows = self._devices.list_devices(branch=branch, branches=branches, role_key=role, enabled=True)
+        device_ids = [row["id"] for row in rows]
+        bound_ids = self._bindings.active_device_ids_among(device_ids)
+
+        results: list[dict[str, Any]] = []
+        succeeded = 0
+        failed = 0
+        skipped = 0
+
+        for row in rows:
+            device_id = row["id"]
+            if device_id not in bound_ids:
+                skipped += 1
+                continue
+            try:
+                payload = self.poll_and_persist(device_id, source="manual")
+                succeeded += 1
+                results.append(
+                    {
+                        "deviceId": str(device_id),
+                        "success": True,
+                        "online": payload.get("online"),
+                        "status": payload.get("status"),
+                    }
+                )
+            except DevicePollFailedError as exc:
+                failed += 1
+                results.append(
+                    {
+                        "deviceId": str(device_id),
+                        "success": False,
+                        "error": str(exc),
+                        "code": exc.code,
+                    }
+                )
+
+        return {
+            "polled": succeeded + failed,
+            "succeeded": succeeded,
+            "failed": failed,
+            "skippedNoBinding": skipped,
+            "results": results,
+        }
+
     def _read_from_driver(self, device: dict[str, Any]):
         try:
             driver = self._registry.get_implementation(device["driver_key"])
