@@ -619,6 +619,28 @@
   font-weight: 600;
 }
 
+.dashboard-financial .fin-month-search {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.dashboard-financial .fin-month-search input {
+  width: min(280px, 42vw);
+  padding: 5px 9px;
+  border: 1px solid var(--fin-border);
+  border-radius: 8px;
+  background: var(--fin-surface);
+  color: var(--fin-text);
+  font-size: var(--fin-font-sm);
+}
+
+.dashboard-financial .fin-month-search input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fin-accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
 .dashboard-financial .fin-board-grid {
   display: grid;
   grid-template-columns: minmax(280px, 1.2fr) minmax(240px, 0.8fr);

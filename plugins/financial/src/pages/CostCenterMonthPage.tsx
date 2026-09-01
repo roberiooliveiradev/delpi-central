@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Truck,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   fetchCostCenterRankingCenters,
@@ -20,17 +20,25 @@ import {
   CostCenterRankingPanel,
   EXPANDED_RANKING_LIMIT,
 } from "../components/CostCenterRankingPanel";
+import { DataTable, FIN_TABLE_CLASSES, FIN_TABLE_LABELS } from "../components/dataTableUi";
 import { FinKpiCard, FinLoadingCard } from "../components/finUiKit";
+import { FinWideDialog } from "../components/FinDialog";
+import { FinPagination } from "../components/FinPagination";
 import { FinWorkspaceHeader } from "../components/FinWorkspaceHeader";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useCostCenterMonth } from "../hooks/useCostCenterMonth";
 import { useSubplugins } from "../hooks/useSubplugins";
-import type { CostCenterSummary, FinancialBranch } from "../types";
-import { formatPeriodRange, formatYearMonth } from "../utils/formatDates";
+import type { CostCenterEntry, CostCenterSummary, FinancialBranch } from "../types";
+import { formatIssueDate, formatPeriodRange, formatYearMonth } from "../utils/formatDates";
+import { downloadExcel } from "../utils/exportExcel";
 import { formatCurrency, formatInteger, formatPercent } from "../utils/formatNumbers";
 import { resolveMonthComparison, type MonthComparison } from "../utils/monthComparison";
-import { buildFinancialHref, navigateFinancial } from "../utils/routeParser";
+import {
+  buildFinancialHref,
+  navigateFinancial,
+  replaceFinancialQuery,
+} from "../utils/routeParser";
 
 type CostCenterMonthPageProps = {
   branch: FinancialBranch;
@@ -75,8 +83,37 @@ export function CostCenterMonthPage({
   page,
 }: CostCenterMonthPageProps) {
   const { canExport } = useSubplugins();
-  const [sortBy] = useState("data_emissao");
-  const [sortDir] = useState<"asc" | "desc">("desc");
+  const [searchDraft, setSearchDraft] = useState(search ?? "");
+  const [sortBy, setSortBy] = useState("data_emissao");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selected, setSelected] = useState<CostCenterEntry | null>(null);
+
+  const syncQuery = useCallback(
+    (changes: { search?: string | null; page?: number }) => {
+      replaceFinancialQuery(
+        buildFinancialHref({
+          subpluginId: "cost-centers",
+          branch,
+          month,
+          costCenter,
+          supplierCode,
+          supplierStore,
+          excludeMp,
+          search: changes.search === undefined ? search : changes.search,
+          page: changes.page ?? 1,
+        }),
+      );
+    },
+    [branch, month, costCenter, supplierCode, supplierStore, excludeMp, search],
+  );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if ((searchDraft || null) === (search || null)) return;
+      syncQuery({ search: searchDraft || null, page: 1 });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [searchDraft, search, syncQuery]);
 
   const { data, loading, error, reload } = useCostCenterMonth({
     branch,
@@ -178,6 +215,40 @@ export function CostCenterMonthPage({
     return response.items;
   }, [rankingQuery]);
 
+  const exportEntries = () => {
+    const rows = data?.entries.items ?? [];
+    if (!rows.length) {
+      window.alert(copy.costCenters.exportEmpty);
+      return;
+    }
+    void downloadExcel(
+      {
+        title: copy.costCenters.exportSheetTitle,
+        columns: [
+          { key: "issue", label: copy.costCenters.columns.issueDate },
+          { key: "center", label: copy.costCenters.columns.costCenter },
+          { key: "supplier", label: copy.costCenters.columns.supplier },
+          { key: "document", label: copy.costCenters.columns.document },
+          { key: "product", label: copy.costCenters.columns.product },
+          { key: "notes", label: copy.costCenters.columns.notes },
+          { key: "qty", label: copy.costCenters.columns.quantity },
+          { key: "amount", label: copy.costCenters.columns.totalAmount },
+        ],
+        rows: rows.map((row) => ({
+          issue: formatIssueDate(row.issueDate, row.issueDateLabel),
+          center: row.costCenterLabel || row.costCenterCode,
+          supplier: row.supplierName,
+          document: row.document,
+          product: row.productLabel || row.productCode,
+          notes: row.notes,
+          qty: row.quantity,
+          amount: row.totalAmount,
+        })),
+      },
+      copy.costCenters.monthDetail.exportFileName(month),
+    );
+  };
+
   const goBack = () => {
     navigateFinancial(
       buildFinancialHref({
@@ -232,7 +303,7 @@ export function CostCenterMonthPage({
               <span>{copy.costCenters.monthDetail.back}</span>
             </button>
             {canExport ? (
-              <button type="button" className="fin-icon-btn" disabled>
+              <button type="button" className="fin-icon-btn" onClick={exportEntries}>
                 <Download size={16} strokeWidth={1.75} aria-hidden />
                 <span>{copy.costCenters.exportLabel}</span>
               </button>
@@ -324,7 +395,171 @@ export function CostCenterMonthPage({
               onLoadExpanded={loadExpandedSuppliers}
             />
           </div>
+
+          <article className="fin-board-list" aria-label={copy.costCenters.monthDetail.entriesTitle}>
+            <header className="fin-board-list__head">
+              <h2 className="fin-board-list__title">
+                {copy.costCenters.monthDetail.entriesTitle}
+              </h2>
+              <label className="fin-month-search">
+                <span className="fin-sr-only">{copy.costCenters.searchPlaceholder}</span>
+                <input
+                  type="search"
+                  value={searchDraft}
+                  placeholder={copy.costCenters.searchPlaceholder}
+                  onChange={(event) => setSearchDraft(event.target.value)}
+                />
+              </label>
+              <p className="fin-board-list__hint">{copy.costCenters.entriesHint}</p>
+            </header>
+            {data?.sectionErrors.entries ? (
+              <p className="fin-block-state fin-block-state--error" role="alert">
+                {data.sectionErrors.entries}
+              </p>
+            ) : null}
+            <DataTable
+              classNames={FIN_TABLE_CLASSES}
+              labels={FIN_TABLE_LABELS}
+              columns={[
+                {
+                  key: "data_emissao",
+                  header: copy.costCenters.columns.issueDate,
+                  sortable: true,
+                  render: (row) => formatIssueDate(row.issueDate, row.issueDateLabel),
+                },
+                {
+                  key: "centro_custo_descricao",
+                  header: copy.costCenters.columns.costCenter,
+                  sortable: true,
+                  render: (row) => row.costCenterLabel || row.costCenterCode,
+                },
+                {
+                  key: "razao_social",
+                  header: copy.costCenters.columns.supplier,
+                  sortable: true,
+                  render: (row) => row.supplierName,
+                },
+                {
+                  key: "documento",
+                  header: copy.costCenters.columns.document,
+                  sortable: true,
+                  render: (row) => row.document,
+                },
+                {
+                  key: "produto_descricao",
+                  header: copy.costCenters.columns.product,
+                  render: (row) => row.productLabel || row.productCode,
+                },
+                {
+                  key: "observacoes",
+                  header: copy.costCenters.columns.notes,
+                  className: "fin-table__col--wide fin-notes-cell",
+                  render: (row) =>
+                    row.notes ? (
+                      <span className="fin-notes-cell__text" title={row.notes}>
+                        {row.notes}
+                      </span>
+                    ) : (
+                      "—"
+                    ),
+                },
+                {
+                  key: "valor_total",
+                  header: copy.costCenters.columns.totalAmount,
+                  align: "right",
+                  sortable: true,
+                  render: (row) => formatCurrency(row.totalAmount),
+                },
+              ]}
+              rows={data?.entries.items ?? []}
+              rowKey={(row) => row.id}
+              emptyMessage={copy.costCenters.entriesEmpty}
+              onRowClick={setSelected}
+              sortKey={sortBy}
+              sortDirection={sortDir}
+              onSortChange={(column) => {
+                if (sortBy === column) {
+                  setSortDir((current) => (current === "asc" ? "desc" : "asc"));
+                  return;
+                }
+                setSortBy(column);
+                setSortDir("desc");
+              }}
+            />
+            {data ? (
+              <FinPagination
+                pagination={data.entries.pagination}
+                onPageChange={(next) => syncQuery({ page: next })}
+              />
+            ) : null}
+          </article>
         </>
+      ) : null}
+
+      {selected ? (
+        <FinWideDialog
+          open
+          title={copy.costCenters.detail.title}
+          onClose={() => setSelected(null)}
+          closeAriaLabel={copy.costCenters.detail.close}
+        >
+          <dl className="fin-detail-grid">
+            <div>
+              <dt>{copy.costCenters.detail.branch}</dt>
+              <dd>{selected.branch}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.issueDate}</dt>
+              <dd>{formatIssueDate(selected.issueDate, selected.issueDateLabel)}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.document}</dt>
+              <dd>
+                {selected.document} / {selected.series}
+              </dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.purchaseOrder}</dt>
+              <dd>{selected.purchaseOrder || "—"}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.supplier}</dt>
+              <dd>{selected.supplierName}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.costCenter}</dt>
+              <dd>{selected.costCenterLabel || selected.costCenterCode}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.product}</dt>
+              <dd>{selected.productLabel || selected.productCode}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.quantity}</dt>
+              <dd>{formatInteger(selected.quantity)}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.unitAmount}</dt>
+              <dd>{formatCurrency(selected.unitAmount)}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.totalAmount}</dt>
+              <dd>{formatCurrency(selected.totalAmount)}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.ledgerAccount}</dt>
+              <dd>{selected.ledgerAccount || "—"}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.apportionment}</dt>
+              <dd>{selected.apportionment || "—"}</dd>
+            </div>
+            <div>
+              <dt>{copy.costCenters.detail.notes}</dt>
+              <dd>{selected.notes || "—"}</dd>
+            </div>
+          </dl>
+        </FinWideDialog>
       ) : null}
     </div>
   );
