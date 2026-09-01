@@ -125,13 +125,15 @@ Hotfixes adicionais: labels compare por eixo branch; bare `01` em date_branch; c
 
 ### Critérios verify-final (E6)
 
-| Caso | Alvo |
-|------|------|
-| B3 | identity &lt;2s |
-| A7 | `branch=01`, valor ~filial 01 |
-| C1 | consolidado ≠ 0 (params sem branch) |
-| D3 | dual ago×jul, label período anterior |
-| D4/D5/D6 | prosa «filial 01/02», sem «ano anterior» |
+| Caso | Alvo | Offline | Live (2026-09-01) |
+|------|------|---------|-------------------|
+| B3 | identity &lt;2s | PASS unit | **BLOQUEADO** — `403` falta `minha-delpi.chat.access` (rober) após rebuild stack |
+| A7 | `branch=01`, valor ~filial 01 | PASS unit bare `01` | pendente live |
+| C1 | consolidado ≠ 0 (sem branch) | PASS unit omit branch | pendente live |
+| D3 | dual ago×jul | PASS unit mês passado | pendente live |
+| D4/D5/D6 | prosa filial, sem YoY | PASS unit branch labels | pendente live |
+
+Suite offline do plano: **79 passed** (5 arquivos acima). Re-smoke live: repetir quando permissão `minha-delpi.chat.access` estiver ativa para o usuário de smoke.
 
 ## 5. Hotfixes aplicados (E7)
 
