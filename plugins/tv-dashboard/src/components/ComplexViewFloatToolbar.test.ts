@@ -42,8 +42,20 @@ function inputBlock(): ComunicadoBlock {
   } as ComunicadoBlock;
 }
 
+function canvasTableBlock(): ComunicadoBlock {
+  return {
+    id: "g1",
+    type: "canvas_table",
+    rows: 3,
+    cols: 3,
+    cells: [],
+    frame: { x: 0, y: 0, w: 40, h: 30 },
+    style: { zIndex: 1 },
+  } as ComunicadoBlock;
+}
+
 describe("shouldShowComplexViewFloatToolbar", () => {
-  it("mostra float em chart/kpi/table/filtro sem parte selecionada", () => {
+  it("mostra float em chart/kpi/table/Grade/filtro sem parte selecionada", () => {
     expect(
       shouldShowComplexViewFloatToolbar({
         block: chartBlock(),
@@ -69,6 +81,17 @@ describe("shouldShowComplexViewFloatToolbar", () => {
     expect(
       shouldShowComplexViewFloatToolbar({
         block: tableBlock(),
+        isPrimary: true,
+        selectedIdsLength: 1,
+        selectedChartPart: null,
+        selectedKpiPart: null,
+        selectedTablePart: null,
+        selectedInputPart: null,
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowComplexViewFloatToolbar({
+        block: canvasTableBlock(),
         isPrimary: true,
         selectedIdsLength: 1,
         selectedChartPart: null,
@@ -127,6 +150,17 @@ describe("shouldShowComplexViewFloatToolbar", () => {
     expect(
       shouldShowComplexViewFloatToolbar({
         block: tableBlock(),
+        isPrimary: true,
+        selectedIdsLength: 2,
+        selectedChartPart: null,
+        selectedKpiPart: null,
+        selectedTablePart: null,
+        selectedInputPart: null,
+      }),
+    ).toBe(false);
+    expect(
+      shouldShowComplexViewFloatToolbar({
+        block: canvasTableBlock(),
         isPrimary: true,
         selectedIdsLength: 2,
         selectedChartPart: null,
