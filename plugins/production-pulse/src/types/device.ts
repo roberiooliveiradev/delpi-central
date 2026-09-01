@@ -14,6 +14,8 @@ export type DeviceBinding = {
   toolCode: string | null;
   notes: string | null;
 };
+
+export type DeviceCapabilities = {
   metrics: string[];
   commands: string[];
   operatorSurface: string;

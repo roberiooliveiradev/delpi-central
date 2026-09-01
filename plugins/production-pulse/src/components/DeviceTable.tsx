@@ -1,6 +1,5 @@
 import { RefreshCw } from "lucide-react";
 
-import { DataTable, dataTableBemClasses, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
@@ -9,6 +8,7 @@ import {
   placementLabel,
   roleLabel,
 } from "../utils/deviceDisplay";
+import { PpDataTable, type DataTableColumn } from "./data/dataTableUi";
 import { AnchorTypeBadge } from "./AnchorTypeBadge";
 import { DeviceStatusBadge } from "./DeviceStatusBadge";
 
@@ -101,13 +101,12 @@ export function DeviceTable({
         <h2 className="pp-device-table__title">Dispositivos</h2>
         <span className="pp-device-table__count">{devices.length} dispositivo(s)</span>
       </header>
-      <DataTable
+      <PpDataTable
         rows={devices}
         columns={columns}
         rowKey={(row) => row.id}
         loading={loading}
         emptyMessage="Nenhum dispositivo encontrado."
-        classNames={dataTableBemClasses("pp")}
       />
     </section>
   );
