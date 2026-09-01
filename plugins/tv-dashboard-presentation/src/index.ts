@@ -619,6 +619,8 @@ export {
   canvasTablePresetOptions,
   resolveCanvasTableFontSize,
   resolveCanvasTableHostStyle,
+  resolveCanvasTableCellBoxStyle,
+  resolveCanvasTableGeometrySnapshot,
   parseCanvasTableOptions,
   normalizeCanvasTableTrackSizes,
   applyCanvasTableTrackDrag,

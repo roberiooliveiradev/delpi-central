@@ -294,6 +294,13 @@
   box-sizing: border-box;
   touch-action: none;
   background: transparent;
+  /* Hit-areas só no editor — --editable não adiciona padding ao td. */
+  display: none;
+}
+
+.td-canvas-table--editable .td-canvas-table__col-handle,
+.td-canvas-table--editable .td-canvas-table__row-handle {
+  display: block;
 }
 
 .td-canvas-table__col-handle {

@@ -29,6 +29,7 @@ import {
   normalizeCanvasTableCell,
   normalizeCanvasTableTrackSizes,
   resolveCanvasTableHostStyle,
+  resolveCanvasTableCellBoxStyle,
   resolveCanvasTableRowHeightStyles,
   resolveColumnSparklineAxis,
   type CanvasTableCell,
@@ -447,25 +448,10 @@ export function ComunicadoCanvasTableView({
                   resolveCanvasTableCellResolved(block, cell),
                 );
                 const axis = resolveColumnSparklineAxis(resolvedCells, colIndex);
-                const cellStyle: CSSProperties = {
-                  ...(cell.style?.fontSize != null
-                    ? { fontSize: `${cell.style.fontSize}px` }
-                    : null),
-                  ...(cell.style?.fontWeight != null
-                    ? { fontWeight: cell.style.fontWeight }
-                    : null),
-                  ...(display.color
-                    ? { color: display.color }
-                    : cell.style?.color
-                      ? { color: cell.style.color }
-                      : null),
-                  ...(cell.style?.backgroundColor
-                    ? { backgroundColor: cell.style.backgroundColor }
-                    : null),
-                  ...(cell.style?.textAlign
-                    ? { textAlign: cell.style.textAlign }
-                    : null),
-                };
+                const cellStyle = resolveCanvasTableCellBoxStyle(
+                  cell,
+                  display.color,
+                ) as CSSProperties;
                 const displayText = display.text;
                 const sparkSeries = display.series ?? cell.series;
                 const bound = display.fromData;

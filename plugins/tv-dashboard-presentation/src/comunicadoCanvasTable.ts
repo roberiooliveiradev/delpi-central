@@ -458,6 +458,58 @@ export function resolveCanvasTableHostStyle(
   };
 }
 
+/**
+ * Estilo persistido do box da célula — independente de `editable`/chrome.
+ * Editor e TV devem produzir o mesmo resultado.
+ */
+export function resolveCanvasTableCellBoxStyle(
+  cell: CanvasTableCell,
+  colorOverride?: string | null,
+): Record<string, string | number> {
+  const style: Record<string, string | number> = {};
+  if (cell.style?.fontSize != null) style.fontSize = `${cell.style.fontSize}px`;
+  if (cell.style?.fontWeight != null) style.fontWeight = cell.style.fontWeight;
+  if (colorOverride) style.color = colorOverride;
+  else if (cell.style?.color) style.color = cell.style.color;
+  if (cell.style?.backgroundColor) style.backgroundColor = cell.style.backgroundColor;
+  if (cell.style?.textAlign) style.textAlign = cell.style.textAlign;
+  return style;
+}
+
+/** Snapshot de geometria/modelo que deve ser idêntico com ou sem chrome de edição. */
+export function resolveCanvasTableGeometrySnapshot(
+  block: Pick<
+    ComunicadoCanvasTableBlock,
+    "rows" | "cols" | "merges" | "cells" | "canvasTableOptions"
+  >,
+): {
+  columnWidths?: number[];
+  rowHeights?: number[];
+  merges: CanvasTableMerge[];
+  cellBackgrounds: Array<string | undefined>;
+} {
+  const opts = mergeCanvasTableOptions(block.canvasTableOptions);
+  const cells = normalizeCanvasTableCells(block.cells, block.rows, block.cols);
+  const merges = (block.merges ?? []).filter(
+    (merge) =>
+      merge.row >= 0 &&
+      merge.col >= 0 &&
+      merge.rowspan >= 1 &&
+      merge.colspan >= 1 &&
+      merge.row + merge.rowspan <= block.rows &&
+      merge.col + merge.colspan <= block.cols,
+  );
+  return {
+    columnWidths:
+      opts.columnWidths?.length === block.cols ? opts.columnWidths : undefined,
+    rowHeights: opts.rowHeights?.length === block.rows ? opts.rowHeights : undefined,
+    merges,
+    cellBackgrounds: cells.flatMap((row) =>
+      row.map((cell) => normalizeCanvasTableCell(cell).style?.backgroundColor),
+    ),
+  };
+}
+
 export function scaleCanvasTableBlockTypography(
   block: ComunicadoCanvasTableBlock,
   scale: number,

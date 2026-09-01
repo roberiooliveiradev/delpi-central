@@ -18,6 +18,8 @@ import {
   parseCanvasTableOptions,
   resolveCanvasTableFontSize,
   resolveCanvasTableRowHeightStyles,
+  resolveCanvasTableCellBoxStyle,
+  resolveCanvasTableGeometrySnapshot,
   commitCanvasTableCellText,
 } from "./comunicadoCanvasTable";
 import {
@@ -234,5 +236,38 @@ describe("canvas_table", () => {
       undefined,
     ]);
     expect(resolveCanvasTableRowHeightStyles(undefined, 2)).toEqual([undefined, undefined]);
+  });
+
+  it("geometria e fill da célula não dependem de editable", () => {
+    const block = {
+      rows: 2,
+      cols: 2,
+      merges: [{ row: 0, col: 0, rowspan: 1, colspan: 2 }],
+      cells: [
+        [
+          { kind: "text" as const, text: "A", style: { backgroundColor: "#003366" } },
+          { kind: "text" as const, text: "B" },
+        ],
+        [{ kind: "text" as const, text: "C" }, { kind: "text" as const, text: "D" }],
+      ],
+      canvasTableOptions: {
+        columnWidths: [40, 60],
+        rowHeights: [30, 70],
+      },
+    };
+    const snapA = resolveCanvasTableGeometrySnapshot(block);
+    const snapB = resolveCanvasTableGeometrySnapshot(block);
+    expect(snapA).toEqual(snapB);
+    expect(snapA.columnWidths).toEqual([40, 60]);
+    expect(snapA.rowHeights).toEqual([30, 70]);
+    expect(snapA.merges).toEqual([{ row: 0, col: 0, rowspan: 1, colspan: 2 }]);
+    expect(snapA.cellBackgrounds[0]).toBe("#003366");
+    expect(
+      resolveCanvasTableCellBoxStyle({
+        kind: "text",
+        text: "A",
+        style: { backgroundColor: "#003366", textAlign: "center" },
+      }),
+    ).toEqual({ backgroundColor: "#003366", textAlign: "center" });
   });
 });
