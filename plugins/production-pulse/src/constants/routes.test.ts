@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  parseDeviceDetailTab,
   parseProductionPulseRoute,
   productionPulseDeviceDetailPath,
   productionPulseDeviceNewPath,
+  productionPulseOperatorDevicePath,
+  productionPulseOperatorPath,
+  productionPulseOperatorPlacementPath,
+  parseDeviceDetailTab,
 } from "./routes";
 
 describe("parseProductionPulseRoute", () => {
@@ -12,11 +15,35 @@ describe("parseProductionPulseRoute", () => {
     expect(parseProductionPulseRoute("/apps/production-pulse").kind).toBe("panel");
   });
 
-  it("maps operator subtree", () => {
-    expect(parseProductionPulseRoute("/apps/production-pulse/operator").kind).toBe("operator");
-    expect(parseProductionPulseRoute("/apps/production-pulse/operator/placements/wc:01:CT-1").kind).toBe(
-      "operator",
-    );
+  it("maps operator hub with filters", () => {
+    expect(parseProductionPulseRoute("/apps/production-pulse/operator", "?branch=02&anchorType=machine&search=motor")).toEqual({
+      kind: "operatorHub",
+      branch: "02",
+      anchorType: "machine",
+      search: "motor",
+    });
+  });
+
+  it("maps operator picker and device routes", () => {
+    expect(
+      parseProductionPulseRoute(
+        "/apps/production-pulse/operator/placements/wc%3A01%3ACT-53",
+        "?branch=01",
+      ),
+    ).toEqual({
+      kind: "operatorPicker",
+      placementKey: "wc:01:CT-53",
+      branch: "01",
+    });
+
+    expect(
+      parseProductionPulseRoute("/apps/production-pulse/operator/devices/dev-1", "?branch=01&placementKey=wc:01:CT-53"),
+    ).toEqual({
+      kind: "operatorDevice",
+      deviceId: "dev-1",
+      branch: "01",
+      placementKey: "wc:01:CT-53",
+    });
   });
 
   it("maps device create and edit routes", () => {
@@ -50,6 +77,16 @@ describe("parseProductionPulseRoute", () => {
     expect(productionPulseDeviceDetailPath("abc-123")).toBe("/apps/production-pulse/devices/abc-123");
     expect(productionPulseDeviceDetailPath("abc-123", "history")).toBe(
       "/apps/production-pulse/devices/abc-123?tab=history",
+    );
+  });
+
+  it("builds operator paths", () => {
+    expect(productionPulseOperatorPath("01")).toBe("/apps/production-pulse/operator?branch=01");
+    expect(productionPulseOperatorPlacementPath("wc:01:CT-53", "01")).toBe(
+      "/apps/production-pulse/operator/placements/wc%3A01%3ACT-53?branch=01",
+    );
+    expect(productionPulseOperatorDevicePath("dev-1", "01", "wc:01:CT-53")).toBe(
+      "/apps/production-pulse/operator/devices/dev-1?branch=01&placementKey=wc%3A01%3ACT-53",
     );
   });
 

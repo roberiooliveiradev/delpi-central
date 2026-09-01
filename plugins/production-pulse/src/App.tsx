@@ -2,10 +2,10 @@ import { configureHttpClient } from "./api/httpClient";
 import { resolveProductionPulsePermissions } from "./constants/permissions";
 import { parseProductionPulseRoute } from "./constants/routes";
 import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPath";
-import { ScaffoldPage } from "./pages/ScaffoldPage";
 import { PanelPage } from "./pages/PanelPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
+import { OperatorPage } from "./pages/operator/OperatorPage";
 import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
 
 export type AppProps = {
@@ -41,8 +41,15 @@ export default function App({
     );
   }
 
+  const isOperatorRoute =
+    route.kind === "operatorHub" ||
+    route.kind === "operatorPicker" ||
+    route.kind === "operatorDevice";
+
   return (
-    <div className="dashboard-production-pulse dashboard-page">
+    <div
+      className={`dashboard-production-pulse dashboard-page${isOperatorRoute ? " dashboard-production-pulse--operator" : ""}`}
+    >
       {route.kind === "panel" ? (
         <PanelPage search={search} permissions={permissionFlags} />
       ) : route.kind === "deviceNew" ? (
@@ -60,9 +67,9 @@ export default function App({
           search={search}
           permissions={permissionFlags}
         />
-      ) : (
-        <ScaffoldPage mode="operator" />
-      )}
+      ) : isOperatorRoute ? (
+        <OperatorPage route={route} permissions={permissionFlags} />
+      ) : null}
     </div>
   );
 }

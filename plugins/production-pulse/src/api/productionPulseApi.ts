@@ -2,6 +2,11 @@ import { httpGet, httpJson, PRODUCTION_PULSE_API_BASE } from "./httpClient";
 import type { DeviceListItem, DeviceSummary } from "../types/device";
 import type { DeviceCommandAudit, DeviceReading, LivePollResult, PaginatedItems } from "../types/detail";
 import type {
+  OperatorCommandResult,
+  OperatorDeviceItem,
+  OperatorPlacement,
+} from "../types/operator";
+import type {
   DeviceFormValues,
   DriverCatalogItem,
   ProbeResult,
@@ -208,6 +213,57 @@ export async function executeDeviceCommand(
   const payload = await httpJson<ApiEnvelope<DeviceCommandAudit>>(
     "POST",
     `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/commands/${encodeURIComponent(commandKey)}`,
+  );
+  return payload.data;
+}
+
+export type FetchOperatorPlacementsParams = {
+  branch: string;
+  anchorType?: string;
+  search?: string;
+  signal?: AbortSignal;
+};
+
+export async function fetchOperatorPlacements(
+  params: FetchOperatorPlacementsParams,
+): Promise<OperatorPlacement[]> {
+  const searchParams = new URLSearchParams({ branch: params.branch });
+  if (params.anchorType) searchParams.set("anchorType", params.anchorType);
+  if (params.search?.trim()) searchParams.set("search", params.search.trim());
+  const payload = await httpGet<ApiEnvelope<{ items: OperatorPlacement[] }>>(
+    `${PRODUCTION_PULSE_API_BASE}/operator/placements?${searchParams}`,
+    { signal: params.signal },
+  );
+  return payload.data.items;
+}
+
+export async function fetchOperatorPlacementDevices(
+  placementKey: string,
+  branch: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<OperatorDeviceItem[]> {
+  const params = new URLSearchParams({ branch });
+  const payload = await httpGet<ApiEnvelope<{ items: OperatorDeviceItem[] }>>(
+    `${PRODUCTION_PULSE_API_BASE}/operator/placements/${encodeURIComponent(placementKey)}/devices?${params}`,
+    { signal: options.signal },
+  );
+  return payload.data.items;
+}
+
+export async function fetchOperatorDevice(deviceId: string): Promise<OperatorDeviceItem> {
+  const payload = await httpGet<ApiEnvelope<OperatorDeviceItem>>(
+    `${PRODUCTION_PULSE_API_BASE}/operator/devices/${deviceId}`,
+  );
+  return payload.data;
+}
+
+export async function executeOperatorCommand(
+  deviceId: string,
+  commandKey: string,
+): Promise<OperatorCommandResult> {
+  const payload = await httpJson<ApiEnvelope<OperatorCommandResult>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/operator/devices/${deviceId}/commands/${encodeURIComponent(commandKey)}`,
   );
   return payload.data;
 }
