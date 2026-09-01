@@ -114,7 +114,11 @@ export function DeviceFiltersBar({
           ) : null}
         </div>
         {canManage ? (
-          <PpActionButton variant="primary" onClick={onCreateDevice} className="pp-filter-new-device">
+          <PpActionButton
+            variant="primary"
+            onClick={onCreateDevice}
+            className="pp-filter-new-device"
+          >
             <Plus size={16} aria-hidden="true" />
             <span className="pp-filter-new-device__label">Novo dispositivo</span>
           </PpActionButton>

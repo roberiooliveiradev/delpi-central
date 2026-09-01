@@ -127,25 +127,31 @@ export function OperatorPlacementHub({
       />
 
       {branchOptions.length > 1 ? (
-        <PpSegmentToggle
-          ariaLabel="Filial"
-          value={activeBranch}
-          onChange={(value) => updateFilters({ branch: value })}
-          options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
-        />
+        <div className="pp-operator-hub__filters">
+          <PpSegmentToggle
+            ariaLabel="Filial"
+            size="sm"
+            value={activeBranch}
+            onChange={(value) => updateFilters({ branch: value })}
+            options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
+          />
+        </div>
       ) : null}
 
-      <PpSegmentToggle
-        ariaLabel="Filtro de tipo de local"
-        value={anchorType}
-        onChange={(value) => updateFilters({ anchorType: value as OperatorAnchorFilter })}
-        options={[
-          { value: "", label: "Todos" },
-          { value: "work_center", label: "Postos PCP" },
-          { value: "machine", label: "Máquinas" },
-          { value: "equipment", label: "Equipamentos" },
-        ]}
-      />
+      <div className="pp-operator-hub__filters">
+        <PpSegmentToggle
+          ariaLabel="Filtro de tipo de local"
+          size="sm"
+          value={anchorType}
+          onChange={(value) => updateFilters({ anchorType: value as OperatorAnchorFilter })}
+          options={[
+            { value: "", label: "Todos" },
+            { value: "work_center", label: "Postos PCP" },
+            { value: "machine", label: "Máquinas" },
+            { value: "equipment", label: "Equipamentos" },
+          ]}
+        />
+      </div>
 
       <PpFiltersRow>
         <PpFilterInputField
@@ -157,9 +163,15 @@ export function OperatorPlacementHub({
           onChange={setLocalSearch}
           placeholder="Ventilador, CT-53…"
         />
-        <PpActionButton variant="ghost" onClick={() => updateFilters({ search: localSearch })}>
-          Buscar
-        </PpActionButton>
+        <div className="pp-filter-toolbar-row pp-operator-hub__search-actions">
+          <PpActionButton
+            variant="ghost"
+            className="pp-operator-hub__search-btn"
+            onClick={() => updateFilters({ search: localSearch })}
+          >
+            Buscar
+          </PpActionButton>
+        </div>
       </PpFiltersRow>
 
       {error ? <p className="pp-detail-error">{error}</p> : null}

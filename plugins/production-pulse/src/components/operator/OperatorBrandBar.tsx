@@ -35,6 +35,7 @@ export function OperatorBrandBar({
         {showAdminLink ? (
           <PpActionButton
             variant="ghost"
+            className="pp-operator-brand-bar__btn"
             onClick={() => navigateProductionPulse(`${PRODUCTION_PULSE_BASE_PATH}?branch=${branch}`)}
             title={PP_HELP.operator.adminLink}
           >

@@ -20,7 +20,10 @@ import {
   metricUnit,
   primaryMetricKey,
 } from "../../utils/detailDisplay";
-import { metricDisplayLabel } from "../../utils/operatorDisplay";
+import {
+  metricDisplayLabel,
+  resolveOperatorHeaderTitle,
+} from "../../utils/operatorDisplay";
 
 type CounterPadSurfaceProps = {
   deviceId: string;
@@ -135,10 +138,10 @@ export function CounterPadSurface({
     <div className="pp-operator-surface pp-counter-pad">
       <OperatorBrandBar
         branch={branch}
-        title={placementLabel ?? device.placementLabel ?? device.name}
+        title={resolveOperatorHeaderTitle(device, placementLabel)}
         subtitle={statusLine}
         trailing={
-          <PpActionButton variant="ghost" onClick={goBack}>
+          <PpActionButton variant="ghost" className="pp-operator-brand-bar__btn" onClick={goBack}>
             Trocar posto
           </PpActionButton>
         }
@@ -231,7 +234,12 @@ export function CounterPadSurface({
       </div>
 
       <div className="pp-counter-pad__sync">
-        <PpActionButton variant="ghost" onClick={() => void syncNow()} disabled={busy}>
+        <PpActionButton
+          variant="ghost"
+          className="pp-counter-pad__sync-btn"
+          onClick={() => void syncNow()}
+          disabled={busy}
+        >
           {busy ? "Sincronizando…" : "Sincronizar agora"}
         </PpActionButton>
       </div>

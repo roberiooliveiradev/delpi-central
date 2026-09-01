@@ -13,6 +13,7 @@ import {
 import { navigateProductionPulse } from "../../utils/navigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import { formatMetricValue, metricLabel, metricUnit } from "../../utils/detailDisplay";
+import { resolveOperatorHeaderTitle } from "../../utils/operatorDisplay";
 
 type GaugeReadoutSurfaceProps = {
   deviceId: string;
@@ -71,10 +72,10 @@ export function GaugeReadoutSurface({
     <div className="pp-operator-surface pp-gauge-readout">
       <OperatorBrandBar
         branch={branch}
-        title={placementLabel ?? device.placementLabel ?? device.name}
+        title={resolveOperatorHeaderTitle(device, placementLabel)}
         subtitle={`${device.name} · ${formatRelativeTime(device.lastSeenAt)}`}
         trailing={
-          <PpActionButton variant="ghost" onClick={goBack}>
+          <PpActionButton variant="ghost" className="pp-operator-brand-bar__btn" onClick={goBack}>
             Trocar posto
           </PpActionButton>
         }

@@ -62,3 +62,18 @@ export function metricDisplayLabel(device: OperatorDeviceItem): string {
   const key = primaryMetricKey(device.lastMetrics, device.capabilities);
   return key ? metricLabel(key) : "Métrica";
 }
+
+export function resolveOperatorHeaderTitle(
+  device: OperatorDeviceItem,
+  placementLabel?: string,
+): string {
+  const candidate = placementLabel ?? device.placementLabel;
+  if (
+    !candidate ||
+    /^s:[0-9a-f-]{8,}$/i.test(candidate) ||
+    candidate === device.placementKey
+  ) {
+    return device.name;
+  }
+  return candidate;
+}

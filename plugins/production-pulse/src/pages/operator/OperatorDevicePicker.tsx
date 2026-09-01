@@ -89,6 +89,7 @@ export function OperatorDevicePicker({
         trailing={
           <PpActionButton
             variant="ghost"
+            className="pp-operator-brand-bar__btn"
             onClick={() => navigateProductionPulse(productionPulseOperatorPath(branch))}
           >
             Trocar posto

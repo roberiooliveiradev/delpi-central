@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatByRoleSummary,
   formatPlacementMeta,
+  resolveOperatorHeaderTitle,
   resolveOperatorSurface,
 } from "./operatorDisplay";
 import type { OperatorDeviceItem, OperatorPlacement } from "../types/operator";
@@ -34,5 +35,18 @@ describe("operatorDisplay", () => {
 
     expect(resolveOperatorSurface(counter)).toBe("counter_pad");
     expect(resolveOperatorSurface(gauge)).toBe("gauge_readout");
+  });
+
+  it("prefers device name when placement label is internal key", () => {
+    const device = {
+      id: "d1",
+      name: "Prensa A #1",
+      placementKey: "s:72dbbda0-9512-40e0-857e-5b4bcc16d5ac",
+    } as OperatorDeviceItem;
+
+    expect(resolveOperatorHeaderTitle(device, "s:72dbbda0-9512-40e0-857e-5b4bcc16d5ac")).toBe(
+      "Prensa A #1",
+    );
+    expect(resolveOperatorHeaderTitle(device, "CT-53 · Usinagem")).toBe("CT-53 · Usinagem");
   });
 });
