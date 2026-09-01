@@ -113,6 +113,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 **Portal PCP:** `/apps/production-control` (gestão à vista + demanda + carga máquina + análise de problemas + materiais). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
 **Portal Financeiro:** `/apps/financial` (gestão à vista + faturamento/ROL + inadimplência + despesas por CC + IDD/IGD). API: `/apps/financial-api/*`. Plugins legados permanecem. [README do plugin](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [spec](../12-roadmap-e-evolucao/financial/README.md).
 **Despesas de Viagem:** `/apps/travel-expenses` (prestação, cupons e pacote). API: `/apps/travel-expenses-api/*`. [README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md).
+**Pulso de Produção:** `/apps/production-pulse` (dispositivos IoT + modo operador). API: `/apps/production-pulse-api/*`. [README](../../plugins/production-pulse/README.md) · [API](../../production-pulse-api/README.md) · [roadmap](../12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
 **CIPA SIPAT:** admin `/apps/cipa/filial-{01|02}/sipat`; público `/p/cipa/sipat/{token}`. API: `/apps/cipa-api/public/sipat/*`.
 
 
@@ -145,6 +146,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Portal PCP | `/apps/production-control-api/*` (subplugins + demanda + carga máquina + análise de problemas + materiais; TOTVS via api-delpi) |
 | Portal Financeiro | `/apps/financial-api/*` (subplugins + overview + faturamento + inadimplência + centros de custo + IDD/IGD; TOTVS via api-delpi, SI direto) |
 | Despesas de Viagem | `/apps/travel-expenses-api/*` (prestações, cupons, PDF; Postgres plugins) |
+| Pulso de Produção | `/apps/production-pulse-api/*` (devices, bindings, readings, poll, operador; Postgres plugins; CT via api-delpi gateway) |
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
@@ -238,6 +240,7 @@ Declaradas no manifesto e persistidas na Core API:
 | kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
 | financial | `financial.access`, `.delinquency.view`, `.cost-centers.view`, `.indicators.view`, `.export`, `.view.filial-01/02` |
 | travel-expenses | `travel-expenses.view`, `.write`, `.manage`, `.admin`, `.unit.filial-01/02` |
+| production-pulse | `production-pulse.access`, `.devices.view`, `.devices.manage`, `.devices.command`, `.operator`, `.view.filial-01/02`, `.admin` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
 
@@ -268,6 +271,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 | Portal Financeiro | [Plugin README](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [Spec](../12-roadmap-e-evolucao/financial/README.md) |
 | Despesas de Viagem | [Plugin README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [Playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md) · [Wireframes](../12-roadmap-e-evolucao/travel-expenses/WIREFRAMES.md) |
+| Pulso de Produção | [Plugin README](../../plugins/production-pulse/README.md) · [API](../../production-pulse-api/README.md) · [Roadmap](../12-roadmap-e-evolucao/production-pulse/ROADMAP.md) · [Wireframes](../12-roadmap-e-evolucao/production-pulse/WIREFRAMES.md) |
 
 ---
 

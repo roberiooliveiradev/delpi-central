@@ -1,29 +1,50 @@
 # Plugin Pulso de Produção
 
-Monitoramento IoT de dispositivos na fábrica: contadores, sensores e modo operador tablet.
+Monitoramento IoT na fábrica: cadastro de dispositivos, leituras em tempo real, painel administrativo e modo operador (tablet).
 
 ## Fluxo
 
 ```text
 Portal → plugins/production-pulse (MFE) → /apps/production-pulse-api → schema production_pulse (postgres-plugins)
+                                                              └→ api-delpi (só CT / work-centers, via BFF)
 ```
 
 O MFE **não** chama a api-delpi diretamente.
 
-## Rotas UI (MVP)
+## Rotas UI
 
 | Path | Descrição |
 |------|-----------|
-| `/apps/production-pulse` | Painel administrativo (scaffold E5.S1) |
-| `/apps/production-pulse/operator` | Modo operador tablet (scaffold E5.S1) |
+| `/apps/production-pulse` | Painel — KPI, filtros URL-sync, lista ou agrupado por posto/máquina/equipamento |
+| `/apps/production-pulse/devices/new` | Cadastro de dispositivo + amarração |
+| `/apps/production-pulse/devices/{id}/edit` | Edição |
+| `/apps/production-pulse/devices/{id}` | Detalhe (overview, histórico, comandos) |
+| `/apps/production-pulse/operator` | Hub operador — escolha de posto/máquina/equipamento |
+| `/apps/production-pulse/operator/placements/{key}` | Picker quando há mais de um device no local |
+| `/apps/production-pulse/operator/devices/{id}` | Superfície operador (`counter_pad` ou `gauge_readout`) |
+
+Query params comuns: `branch`, `anchorType`, `status`, `role`, `search`, `view`, `groupBy`, `tab`.
 
 ## API
 
 Base: `/apps/production-pulse-api` — ver [production-pulse-api/README.md](../../production-pulse-api/README.md).
 
+Header recomendado nas chamadas autenticadas: `X-Delpi-Caller-App: production-pulse`.
+
 ## Permissões
 
-Ver `production-pulse.manifest.json` e [docs/12-roadmap-e-evolucao/production-pulse/README.md](../../docs/12-roadmap-e-evolucao/production-pulse/README.md).
+| Código | Escopo |
+|--------|--------|
+| `production-pulse.access` | Abrir o plugin no portal |
+| `production-pulse.devices.view` | Painel admin, detalhe, histórico, poll manual |
+| `production-pulse.devices.manage` | CRUD, binding, test-probe, poll-all |
+| `production-pulse.devices.command` | Comandos no painel administrativo |
+| `production-pulse.operator` | Hub, picker e comandos na rota operador (sem exigir `view`) |
+| `production-pulse.view.filial-01` | Dados filial SC |
+| `production-pulse.view.filial-02` | Dados filial ES |
+| `production-pulse.admin` | Todas as filiais |
+
+Matriz MVP: [docs/12-roadmap-e-evolucao/production-pulse/ADR-003-rbac-mvp.md](../../docs/12-roadmap-e-evolucao/production-pulse/ADR-003-rbac-mvp.md).
 
 ## Dev
 
@@ -36,22 +57,52 @@ cd plugins/production-pulse
 VITE_PLUGIN_UI_DEV=1 npm run dev
 ```
 
-## Build / smoke
+Stack via gateway (recomendado):
 
 ```bash
-cd plugins/production-pulse && npm run ci
-curl -sI http://localhost/apps/production-pulse/assets/remoteEntry.js | head -3
+./infra/scripts/up-dev-sequential.sh --fase api --build production-pulse-api
+./infra/scripts/up-dev-sequential.sh --fase mfe --build production-pulse
 ```
+
+Migrations (se pendente):
+
+```bash
+docker exec delpi-production-pulse-api python -m production_pulse_app.infrastructure.persistence.migrations_runner up
+```
+
+## Testes / build
+
+```bash
+cd plugins/production-pulse && npm run test && npm run build
+cd production-pulse-api && pytest tests -q
+```
+
+## Homologação HTTP
+
+```bash
+export TOKEN="<jwt sem Bearer>"
+bash ./scripts/homologacao/check-production-pulse.sh
+```
+
+Parcial (sem JWT): valida `remoteEntry.js` + `/health`.
+
+Verify live ESP8266 piloto (`192.168.20.2`): [ROADMAP E6.S2](../../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
 
 ## Contratos do kit (regressão)
 
 `src/app/productionPulseKit.structural.test.ts` impede:
 
-- `DataTable` cru sem `labels` — usar `PpDataTable` (`components/data/dataTableUi.tsx`)
-- `FilterBarShell` + flex externo (`pp-filters-wrap`) — usar `PpFiltersRow` + `pp-filter-toolbar-row` (toggle + CTA na mesma linha)
+- `DataTable` cru sem `labels` — usar `PpDataTable`
+- `FilterBarShell` / `pp-filters-wrap` — usar `PpFiltersRow` + `pp-filter-toolbar-row`
 - `PpStateBox` com prop `actions` — canônico é `action`
-- `FilterInputField` sem `type` explícito
+- Hub operador com botão «Buscar» — usar `PpCatalogSearchBar` (busca automática)
 
-Novos componentes do MFE devem consumir factories em `components/data/*Ui.tsx` ou `app/productionPulseUi.tsx`, não importar primitives do kit direto nas páginas.
+Novos componentes devem consumir factories em `components/data/*Ui.tsx` ou `app/productionPulseUi.tsx`.
 
 Registro do manifesto: `scripts/register-manifest.sh` (requer `TOKEN`).
+
+## Documentação de produto
+
+- [Roadmap](../../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md)
+- [Especificação](../../docs/12-roadmap-e-evolucao/production-pulse/ESPECIFICACAO-PLUGIN.md)
+- [Wireframes](../../docs/12-roadmap-e-evolucao/production-pulse/WIREFRAMES.md)
