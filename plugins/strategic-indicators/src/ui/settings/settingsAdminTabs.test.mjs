@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  parseCatalogAdminAction,
   parseCatalogAdminView,
+  parseGoalsAdminAction,
   parseSettingsAdminTab,
 } from "./settingsAdminTabs.ts";
 
@@ -16,5 +18,8 @@ describe("settingsAdminTabs", () => {
     assert.equal(parseSettingsAdminTab("audit"), "system");
     assert.equal(parseCatalogAdminView("validacao"), "validation");
     assert.equal(parseCatalogAdminView("estrutura"), "structure");
+    assert.equal(parseCatalogAdminAction("novo-indicador"), "new-indicator");
+    assert.equal(parseGoalsAdminAction("novo-ano"), "new-year");
+    assert.equal(parseCatalogAdminAction(null), null);
   });
 });

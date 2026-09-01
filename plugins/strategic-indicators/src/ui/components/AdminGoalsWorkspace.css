@@ -103,10 +103,32 @@
   padding: 0 12px;
 }
 
+.si-admin-goals-master__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.si-admin-goals-detail-card__summary {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.si-admin-goals-table__head .delpi-ui-section-hint-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
 .si-admin-goals-table__row {
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 10px 12px;
   background: var(--surface);
 }
 

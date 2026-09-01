@@ -29,12 +29,15 @@ import {
   getScopeTypeLabel,
 } from "../presentation/labels";
 import { SI_HELP } from "../../content/helpTooltips";
+import type { CatalogAdminAction } from "../settings/settingsAdminTabs";
 import "./AdminDepartmentsWorkspace.css";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
   structureFocus?: { departmentId: string; indicatorId: string } | null;
+  catalogAction?: CatalogAdminAction | null;
   onStructureFocusConsumed?: () => void;
+  onCatalogActionConsumed?: () => void;
 };
 
 function getIndicatorFormatLabel(item: AdminDepartmentIndicatorItem) {
@@ -52,7 +55,9 @@ function getIndicatorFormatLabel(item: AdminDepartmentIndicatorItem) {
 export function AdminDepartmentsWorkspace({
   getAccessToken,
   structureFocus = null,
+  catalogAction = null,
   onStructureFocusConsumed,
+  onCatalogActionConsumed,
 }: AdminDepartmentsWorkspaceProps) {
   const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
 
@@ -105,6 +110,38 @@ export function AdminDepartmentsWorkspace({
     departmentIndicators.loading,
     departmentIndicators.items,
     onStructureFocusConsumed,
+  ]);
+
+  useEffect(() => {
+    if (!catalogAction || departments.loading) return;
+
+    if (catalogAction === "new-department") {
+      openCreateDepartmentDrawer();
+      onCatalogActionConsumed?.();
+      return;
+    }
+
+    if (catalogAction === "new-indicator") {
+      if (!selectedDepartmentId && departments.items.length > 0) {
+        setSelectedDepartmentId(departments.items[0].department_id);
+        return;
+      }
+      if (!selectedDepartmentId) {
+        onCatalogActionConsumed?.();
+        return;
+      }
+      if (departmentIndicators.loading) return;
+
+      openCreateIndicatorDrawer();
+      onCatalogActionConsumed?.();
+    }
+  }, [
+    catalogAction,
+    departments.loading,
+    departments.items,
+    selectedDepartmentId,
+    departmentIndicators.loading,
+    onCatalogActionConsumed,
   ]);
 
   function openCreateDepartmentDrawer() {

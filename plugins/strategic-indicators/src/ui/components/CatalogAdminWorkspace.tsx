@@ -2,23 +2,39 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminDepartmentsWorkspace } from "./AdminDepartmentsWorkspace";
 import { CatalogStructureValidationWorkspace } from "./CatalogStructureValidationWorkspace";
 import { SiUnderlineNav } from "./siLayoutUi";
-import type { CatalogAdminView, SettingsAdminTab } from "../settings/settingsAdminTabs";
+import type {
+  CatalogAdminAction,
+  CatalogAdminView,
+  GoalsAdminAction,
+  SettingsAdminTab,
+} from "../settings/settingsAdminTabs";
 import "./CatalogAdminWorkspace.css";
 
 type CatalogAdminWorkspaceProps = {
   getAccessToken?: () => string | undefined;
   view: CatalogAdminView;
   validationIssueCount?: number;
+  catalogAction?: CatalogAdminAction | null;
   onViewChange: (view: CatalogAdminView) => void;
-  onNavigate?: (tab: SettingsAdminTab, catalogView?: CatalogAdminView) => void;
+  onNavigate?: (
+    tab: SettingsAdminTab,
+    catalogView?: CatalogAdminView,
+    options?: {
+      catalogAction?: CatalogAdminAction | null;
+      goalsAction?: GoalsAdminAction | null;
+    },
+  ) => void;
+  onCatalogActionConsumed?: () => void;
 };
 
 export function CatalogAdminWorkspace({
   getAccessToken,
   view,
   validationIssueCount = 0,
+  catalogAction = null,
   onViewChange,
   onNavigate,
+  onCatalogActionConsumed,
 }: CatalogAdminWorkspaceProps) {
   const [activeView, setActiveView] = useState<CatalogAdminView>(view);
   const [structureFocus, setStructureFocus] = useState<{
@@ -68,7 +84,9 @@ export function CatalogAdminWorkspace({
           <AdminDepartmentsWorkspace
             getAccessToken={getAccessToken}
             structureFocus={structureFocus}
+            catalogAction={catalogAction}
             onStructureFocusConsumed={clearStructureFocus}
+            onCatalogActionConsumed={onCatalogActionConsumed}
           />
         ) : (
           <CatalogStructureValidationWorkspace

@@ -1,7 +1,13 @@
-import { ActionButton } from "@delpi/plugin-ui/index";
+import { ActionButton, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useMemo } from "react";
 import type { useCatalogStructureValidation } from "../../state/hooks/useCatalogStructureValidation";
-import type { CatalogAdminView, SettingsAdminTab } from "../settings/settingsAdminTabs";
+import { SI_HELP } from "../../content/helpTooltips";
+import type {
+  CatalogAdminAction,
+  CatalogAdminView,
+  GoalsAdminAction,
+  SettingsAdminTab,
+} from "../settings/settingsAdminTabs";
 import { InfoState } from "./InfoState";
 import { LoadingActivityInline } from "./LoadingActivityInline";
 import "./SettingsOverviewWorkspace.css";
@@ -10,7 +16,14 @@ type ValidationState = ReturnType<typeof useCatalogStructureValidation>;
 
 type SettingsOverviewWorkspaceProps = {
   validation: ValidationState;
-  onNavigate: (tab: SettingsAdminTab, catalogView?: CatalogAdminView) => void;
+  onNavigate: (
+    tab: SettingsAdminTab,
+    catalogView?: CatalogAdminView,
+    options?: {
+      catalogAction?: CatalogAdminAction | null;
+      goalsAction?: GoalsAdminAction | null;
+    },
+  ) => void;
 };
 
 function formatIssuePreview(text: string, maxLength = 96): string {
@@ -23,7 +36,6 @@ export function SettingsOverviewWorkspace({
   validation,
   onNavigate,
 }: SettingsOverviewWorkspaceProps) {
-
   const departmentCount = useMemo(() => {
     const ids = new Set<string>();
     for (const row of validation.rows) {
@@ -81,17 +93,24 @@ export function SettingsOverviewWorkspace({
     <div className="si-settings-overview">
       <div className="si-settings-overview__kpi-strip" role="list">
         <article className="si-settings-overview__kpi" role="listitem">
-          <span>Departamentos</span>
+          <SectionHintLabel
+            label="Departamentos"
+            hint={SI_HELP.overview.kpiDepartments}
+          />
           <strong>{departmentCount}</strong>
-          <small>departamentos</small>
         </article>
         <article className="si-settings-overview__kpi" role="listitem">
-          <span>Indicadores</span>
+          <SectionHintLabel
+            label="Indicadores"
+            hint={SI_HELP.overview.kpiIndicators}
+          />
           <strong>{activeIndicators}</strong>
-          <small>ativos no catálogo</small>
         </article>
         <article className="si-settings-overview__kpi" role="listitem">
-          <span>{validation.goalYear}</span>
+          <SectionHintLabel
+            label={String(validation.goalYear)}
+            hint={SI_HELP.overview.kpiGoalsYear}
+          />
           <strong>{goalsInYear}</strong>
           <small>com meta no ano</small>
         </article>
@@ -101,7 +120,10 @@ export function SettingsOverviewWorkspace({
           }`}
           role="listitem"
         >
-          <span>Pendências</span>
+          <SectionHintLabel
+            label="Pendências"
+            hint={SI_HELP.overview.kpiValidationIssues}
+          />
           <strong>{openIssues}</strong>
           <small>validação {validation.goalYear}</small>
         </article>
@@ -110,22 +132,38 @@ export function SettingsOverviewWorkspace({
       <div className="si-settings-overview__actions">
         <ActionButton
           variant="primary"
+          title={SI_HELP.overview.actionGoValidation}
           onClick={() => onNavigate("catalog", "validation")}
         >
           Ir para validação
         </ActionButton>
-        <ActionButton variant="ghost" onClick={() => onNavigate("catalog", "structure")}>
-          Catálogo estrutural
+        <ActionButton
+          variant="ghost"
+          title={SI_HELP.overview.actionNewIndicator}
+          onClick={() =>
+            onNavigate("catalog", "structure", {
+              catalogAction: "new-indicator",
+            })
+          }
+        >
+          Novo indicador
         </ActionButton>
-        <ActionButton variant="ghost" onClick={() => onNavigate("goals")}>
-          Metas anuais
+        <ActionButton
+          variant="ghost"
+          title={SI_HELP.overview.actionNewGoalYear}
+          onClick={() => onNavigate("goals", undefined, { goalsAction: "new-year" })}
+        >
+          Novo ano de metas
         </ActionButton>
       </div>
 
       {pendingRows.length > 0 ? (
         <section className="si-settings-overview__pending">
           <header className="si-settings-overview__pending-header">
-            <h2>Pendências de validação</h2>
+            <SectionHintLabel
+              label="Pendências de validação"
+              hint={SI_HELP.overview.pendingIssues}
+            />
             <ActionButton
               variant="link"
               onClick={() => onNavigate("catalog", "validation")}

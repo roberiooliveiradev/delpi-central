@@ -1,3 +1,4 @@
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 import { fetchAdminDepartmentIndicators } from "../../data/api/strategicIndicatorsSettingsApi";
 import { InfoState } from "./InfoState";
@@ -28,12 +29,17 @@ import {
 } from "../utils/goalYearHelpers";
 import { buildGoalDuplicateSeed } from "../utils/goalDuplicateHelpers";
 import type { ScopeType } from "../../data/types/settings";
+import type { GoalsAdminAction } from "../settings/settingsAdminTabs";
+import { SI_HELP } from "../../content/helpTooltips";
 import "./AdminGoalsWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeCheckboxControl } from "./siNativeFormFields";
+import { SiAdminFormField } from "./SiAdminFormField";
 
 type AdminGoalsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
+  goalsAction?: GoalsAdminAction | null;
+  onGoalsActionConsumed?: () => void;
 };
 
 type BulkToolMode = "create_year" | "duplicate" | "fill" | null;
@@ -46,7 +52,11 @@ type CatalogIndicatorOption = {
   scopeType: ScopeType;
 };
 
-export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps) {
+export function AdminGoalsWorkspace({
+  getAccessToken,
+  goalsAction = null,
+  onGoalsActionConsumed,
+}: AdminGoalsWorkspaceProps) {
   const yearsOverview = useStrategicIndicatorsGoalYearsOverview({ getAccessToken });
   const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -77,6 +87,13 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
       goals.setSelectedGoalYear(selectedYear);
     }
   }, [selectedYear]);
+
+  useEffect(() => {
+    if (goalsAction !== "new-year") return;
+    setBulkTool("create_year");
+    setSelectedYear(null);
+    onGoalsActionConsumed?.();
+  }, [goalsAction, onGoalsActionConsumed]);
 
   useEffect(() => {
     if (departments.items.length === 0) {
@@ -311,26 +328,6 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
         </div>
       ) : null}
 
-      <div className="si-admin-goals-toolbar">
-        <p className="si-admin-goals-toolbar__hint">
-          Selecione um ano para editar metas no painel ao lado. Formulários abrem em
-          gaveta lateral — sem modais empilhados.
-        </p>
-
-        <div className="si-admin-goals-toolbar__actions">
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={() => {
-              setBulkTool("create_year");
-              setSelectedYear(null);
-            }}
-          >
-            Novo ano
-          </button>
-        </div>
-      </div>
-
       {yearsOverview.error ? (
         <InfoState
           title="Falha ao carregar ciclos anuais"
@@ -365,6 +362,23 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
 
       <div className="si-admin-master-detail si-admin-goals-master-detail">
         <div className="si-admin-master-detail__master">
+          <div className="si-admin-goals-master__header">
+            <SectionHintLabel
+              label="Ciclos anuais"
+              hint={SI_HELP.goals.yearList}
+            />
+            <button
+              type="button"
+              className="si-settings-editor__button"
+              onClick={() => {
+                setBulkTool("create_year");
+                setSelectedYear(null);
+              }}
+            >
+              Novo ano
+            </button>
+          </div>
+
           {yearsOverview.loading ? (
             <div className="si-admin-placeholder">Carregando anos...</div>
           ) : yearsOverview.items.length === 0 ? (
@@ -396,12 +410,16 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
             />
           ) : (
             <>
-              <div className="si-admin-detail-card">
+              <div className="si-admin-detail-card si-admin-goals-detail-card">
                 <div className="si-admin-detail-card__header">
                   <div>
                     <h3>Ciclo {selectedYear}</h3>
-                    <p>
-                      Metas por indicador com escopo consolidado ou por unidade (Santa Catarina / Espírito Santo).
+                    <p className="si-admin-goals-detail-card__summary">
+                      {goals.items.length} metas carregadas ·{" "}
+                      {selectedYearOverview?.total_active_indicators ?? "—"} indicadores ativos
+                      {selectedYearOverview
+                        ? ` · ${selectedYearOverview.total_active_versions} versões ativas`
+                        : ""}
                     </p>
                   </div>
 
@@ -431,21 +449,6 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                     >
                       Preencher faltantes
                     </button>
-                  </div>
-                </div>
-
-                <div className="si-admin-detail-card__grid">
-                  <div>
-                    <span className="si-admin-detail-card__label">Indicadores ativos</span>
-                    <strong>{selectedYearOverview?.total_active_indicators ?? "—"}</strong>
-                  </div>
-                  <div>
-                    <span className="si-admin-detail-card__label">Versões ativas</span>
-                    <strong>{selectedYearOverview?.total_active_versions ?? "—"}</strong>
-                  </div>
-                  <div>
-                    <span className="si-admin-detail-card__label">Metas carregadas</span>
-                    <strong>{goals.items.length}</strong>
                   </div>
                 </div>
               </div>
@@ -556,8 +559,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
               ) : null}
 
               <div className="si-admin-goals-filters">
-                <label className="si-admin-form-field">
-                  <span>Departamento</span>
+                <SiAdminFormField label="Departamento" hint={SI_HELP.catalog.validationDepartment}>
                   <SiSelectControl
                     value={goals.selectedDepartmentId}
                     disabled={departments.loading}
@@ -574,10 +576,9 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                       }`,
                     }))}
                   />
-                </label>
+                </SiAdminFormField>
 
-                <label className="si-admin-form-field">
-                  <span>Indicador</span>
+                <SiAdminFormField label="Indicador" hint={SI_HELP.goals.goalTableIndicator}>
                   <SiSelectControl
                     value={goals.selectedIndicatorId}
                     disabled={catalogIndicatorsLoading || departments.loading}
@@ -590,7 +591,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                     }
                     options={indicatorFilterOptions}
                   />
-                </label>
+                </SiAdminFormField>
               </div>
 
               {goals.error ? (
@@ -621,10 +622,22 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                 <div className="si-admin-goals-table-scroll">
                 <div className="si-admin-goals-table">
                   <div className="si-admin-goals-table__head">
-                    <span>Indicador</span>
-                    <span>Escopo</span>
-                    <span>Meta</span>
-                    <span>Modo</span>
+                    <SectionHintLabel
+                      label="Indicador"
+                      hint={SI_HELP.goals.goalTableIndicator}
+                    />
+                    <SectionHintLabel
+                      label="Escopo"
+                      hint={SI_HELP.goals.goalTableScope}
+                    />
+                    <SectionHintLabel
+                      label="Meta"
+                      hint={SI_HELP.goals.goalTableValue}
+                    />
+                    <SectionHintLabel
+                      label="Modo"
+                      hint={SI_HELP.goals.goalTableMode}
+                    />
                     <span>Situação</span>
                     <span>Ações</span>
                   </div>

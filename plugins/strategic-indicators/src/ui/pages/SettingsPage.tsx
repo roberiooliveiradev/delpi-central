@@ -16,7 +16,9 @@ import { SI_HELP } from "../../content/helpTooltips";
 import {
   readSettingsAdminRoute,
   writeSettingsAdminRoute,
+  type CatalogAdminAction,
   type CatalogAdminView,
+  type GoalsAdminAction,
   type SettingsAdminTab,
 } from "../settings/settingsAdminTabs";
 import "./SettingsPage.css";
@@ -44,6 +46,12 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   const [catalogView, setCatalogView] = useState<CatalogAdminView>(
     initialRoute.catalogView,
   );
+  const [catalogAction, setCatalogAction] = useState<CatalogAdminAction | null>(
+    initialRoute.catalogAction,
+  );
+  const [goalsAction, setGoalsAction] = useState<GoalsAdminAction | null>(
+    initialRoute.goalsAction,
+  );
 
   useEffect(() => {
     document.documentElement.classList.add(SETTINGS_LAYOUT_CLASS);
@@ -53,28 +61,48 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   }, []);
 
   useEffect(() => {
-    writeSettingsAdminRoute(activeTab, catalogView);
-  }, [activeTab, catalogView]);
+    writeSettingsAdminRoute(activeTab, catalogView, { catalogAction, goalsAction });
+  }, [activeTab, catalogView, catalogAction, goalsAction]);
 
   useEffect(() => {
     const onPopState = () => {
       const route = readSettingsAdminRoute();
       setActiveTab(route.tab);
       setCatalogView(route.catalogView);
+      setCatalogAction(route.catalogAction);
+      setGoalsAction(route.goalsAction);
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   const navigate = useCallback(
-    (tab: SettingsAdminTab, nextCatalogView: CatalogAdminView = "structure") => {
+    (
+      tab: SettingsAdminTab,
+      nextCatalogView: CatalogAdminView = "structure",
+      options: {
+        catalogAction?: CatalogAdminAction | null;
+        goalsAction?: GoalsAdminAction | null;
+      } = {},
+    ) => {
       setActiveTab(tab);
       if (tab === "catalog") {
         setCatalogView(nextCatalogView);
+        setCatalogAction(options.catalogAction ?? null);
+        setGoalsAction(null);
+      } else if (tab === "goals") {
+        setGoalsAction(options.goalsAction ?? null);
+        setCatalogAction(null);
+      } else {
+        setCatalogAction(null);
+        setGoalsAction(null);
       }
     },
     [],
   );
+
+  const clearCatalogAction = useCallback(() => setCatalogAction(null), []);
+  const clearGoalsAction = useCallback(() => setGoalsAction(null), []);
 
   const globalLoadingProgress = useLoadingProgress(
     settings.loading && activeTab === "system",
@@ -190,13 +218,19 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
               getAccessToken={getAccessToken}
               view={catalogView}
               validationIssueCount={validationIssueCount}
+              catalogAction={catalogAction}
               onViewChange={setCatalogView}
               onNavigate={navigate}
+              onCatalogActionConsumed={clearCatalogAction}
             />
           ) : null}
 
           {activeTab === "goals" ? (
-            <AdminGoalsWorkspace getAccessToken={getAccessToken} />
+            <AdminGoalsWorkspace
+              getAccessToken={getAccessToken}
+              goalsAction={goalsAction}
+              onGoalsActionConsumed={clearGoalsAction}
+            />
           ) : null}
 
           {activeTab === "system" ? (

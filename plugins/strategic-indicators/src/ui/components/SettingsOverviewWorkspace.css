@@ -21,7 +21,8 @@
 }
 
 .si-settings-overview__kpi span,
-.si-settings-overview__kpi small {
+.si-settings-overview__kpi small,
+.si-settings-overview__kpi .delpi-ui-section-hint-label {
   font-size: 12px;
   color: var(--text-muted);
 }
@@ -58,7 +59,8 @@
   margin-bottom: 12px;
 }
 
-.si-settings-overview__pending-header h2 {
+.si-settings-overview__pending-header h2,
+.si-settings-overview__pending-header .delpi-ui-section-hint-label {
   margin: 0;
   font-size: 16px;
 }
