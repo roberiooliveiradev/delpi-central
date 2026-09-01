@@ -70,6 +70,11 @@ export type ComunicadoCanvasTableInteraction = {
     range?: boolean;
     band?: "row" | "col";
   }) => void;
+  onCellContextMenu?: (request: {
+    cell: CanvasTableCellRef;
+    clientX: number;
+    clientY: number;
+  }) => void;
   onCellCommit?: (row: number, col: number, cell: CanvasTableCell) => void;
   onCellsCommit?: (cells: CanvasTableCell[][]) => void;
   onTracksCommit?: (next: { columnWidths?: number[]; rowHeights?: number[] }) => void;
@@ -651,6 +656,17 @@ export function ComunicadoCanvasTableView({
                     onPointerDown={(event) =>
                       onCellPointerDown(event, rowIndex, colIndex, canEdit)
                     }
+                    onContextMenu={(event) => {
+                      if (!editable || !allowCellSelection) return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      interaction?.onSelectCell?.({ cell: { row: rowIndex, col: colIndex } });
+                      interaction?.onCellContextMenu?.({
+                        cell: { row: rowIndex, col: colIndex },
+                        clientX: event.clientX,
+                        clientY: event.clientY,
+                      });
+                    }}
                     onKeyDown={(event) =>
                       onCellKeyDown(event, rowIndex, colIndex, canEdit)
                     }

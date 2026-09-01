@@ -2,7 +2,12 @@
  * Modelo Excel-like de merges da Grade — retângulos no JSON; HTML deriva.
  */
 
-import type { CanvasTableCellRef, CanvasTableMerge } from "./comunicadoCanvasTable";
+import {
+  normalizeCanvasTableCell,
+  type CanvasTableCell,
+  type CanvasTableCellRef,
+  type CanvasTableMerge,
+} from "./comunicadoCanvasTable";
 
 export type { CanvasTableMerge };
 
@@ -221,6 +226,27 @@ export function applyCanvasTableMerge(
   const candidate = selectionAsMerge(cells);
   if (!candidate) return [...current];
   return [...current.filter((merge) => !canvasTableMergesOverlap(merge, candidate)), candidate];
+}
+
+/**
+ * Merge and center — aplica `textAlign: center` na âncora do retângulo mesclado.
+ */
+export function centerCanvasTableMergeAnchor(
+  grid: CanvasTableCell[][],
+  cells: readonly CanvasTableCellRef[],
+): CanvasTableCell[][] {
+  const candidate = selectionAsMerge(cells);
+  if (!candidate) {
+    return grid.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
+  }
+  const next = grid.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
+  const anchor = next[candidate.row]?.[candidate.col];
+  if (!anchor) return next;
+  next[candidate.row]![candidate.col] = {
+    ...anchor,
+    style: { ...(anchor.style ?? {}), textAlign: "center" },
+  };
+  return next;
 }
 
 export function unmergeCanvasTableMerges(

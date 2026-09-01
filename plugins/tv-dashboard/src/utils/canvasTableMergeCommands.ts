@@ -5,8 +5,10 @@
 import {
   applyCanvasTableMerge,
   canMergeRect,
+  centerCanvasTableMergeAnchor,
   mergeAt,
   unmergeCanvasTableMerges,
+  type CanvasTableCell,
   type CanvasTableCellRef,
   type CanvasTableMerge,
 } from "@delpi/tv-dashboard-presentation";
@@ -23,13 +25,18 @@ export function resolveCanvasTableMergeCommand(params: {
   merges?: readonly CanvasTableMerge[];
   cells: readonly CanvasTableCellRef[];
   mode: "merge" | "unmerge";
-}): CanvasTableMerge[] | null {
+  cellMatrix?: CanvasTableCell[][];
+}): { merges: CanvasTableMerge[]; cells?: CanvasTableCell[][] } | null {
   if (params.mode === "merge") {
     if (!canMergeRect(params.cells, params.merges)) return null;
-    return applyCanvasTableMerge(params.merges, params.cells);
+    const merges = applyCanvasTableMerge(params.merges, params.cells);
+    const cells = params.cellMatrix
+      ? centerCanvasTableMergeAnchor(params.cellMatrix, params.cells)
+      : undefined;
+    return { merges, cells };
   }
   if (!canUnmergeCanvasTableSelection(params.merges, params.cells)) return null;
-  return unmergeCanvasTableMerges(params.merges, params.cells);
+  return { merges: unmergeCanvasTableMerges(params.merges, params.cells) };
 }
 
 /** Atalho: Ctrl+M mescla; Ctrl+Shift+M desmescla. */

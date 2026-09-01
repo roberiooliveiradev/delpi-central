@@ -135,6 +135,7 @@ export {
   expandSelectionToMerges,
   canMergeRect,
   applyCanvasTableMerge,
+  centerCanvasTableMergeAnchor,
   unmergeCanvasTableMerges,
   remapCanvasTableMerges,
   canvasTableCellHtmlSpan,
@@ -142,6 +143,8 @@ export {
 export {
   clearCanvasTableCellContent,
   clearCanvasTableCellsContent,
+  clearCanvasTableCellFormats,
+  clearCanvasTableCellsFormats,
   serializeCanvasTableClipboard,
   pasteCanvasTableClipboard,
   parseCanvasTableClipboardTsv,

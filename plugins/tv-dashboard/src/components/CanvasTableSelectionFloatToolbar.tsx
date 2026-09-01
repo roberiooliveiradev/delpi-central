@@ -53,9 +53,13 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
       merges: block.merges,
       cells,
       mode,
+      cellMatrix: mode === "merge" ? block.cells : undefined,
     });
     if (!next) return;
-    updateBlock(block.id, { merges: next.length ? next : undefined });
+    updateBlock(block.id, {
+      merges: next.merges.length ? next.merges : undefined,
+      ...(next.cells ? { cells: next.cells } : {}),
+    });
   }
 
   function patchSelectedCellsStyle(stylePatch: NonNullable<CanvasTableCell["style"]>) {

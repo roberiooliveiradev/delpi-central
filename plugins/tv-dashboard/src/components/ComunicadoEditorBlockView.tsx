@@ -89,6 +89,7 @@ import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { resolveCompositePartPointerAction, isCompositeContentPart, shouldAttachCompositePartInteraction } from "../utils/compositePartSelection";
 import { resolveCanvasTableCellPointerAction } from "../utils/canvasTableCellSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { CanvasTableContextMenu } from "./CanvasTableContextMenu";
 import { startLiveBlockPatchGesture } from "../utils/comunicadoLiveBlockGesture";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
@@ -1489,48 +1490,60 @@ function EditorCanvasTableBlock({
     selectedCanvasTableCell?.blockId === block.id ? selectedCanvasTableCell : null;
   const blockSelected =
     resolveCanvasTableCellPointerAction({ blockSelected: isSelected }) === "select-cell";
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   return (
-    <ComunicadoBlockView
-      block={block}
-      fontScale={fontScale}
-      interactive
-      embedded
-      className={className}
-      canvasTableInteraction={{
-        selectedCells: cellSelection?.cells ?? [],
-        focusCell: cellSelection?.focus ?? null,
-        blockSelected,
-        onSelectCell: ({ cell, additive, range, band }) =>
-          selectCanvasTableCell(block.id, {
-            cell,
-            additive,
-            range,
-            band,
-            rowCount: block.rows,
-            colCount: block.cols,
-            merges: block.merges,
-          }),
-        onCellCommit: (row, col, cell: CanvasTableCell) => {
-          const cells = block.cells.map((currentRow) =>
-            currentRow.map((item) => normalizeCanvasTableCell(item)),
-          );
-          cells[row]![col] = normalizeCanvasTableCell(cell);
-          updateBlock(block.id, { cells });
-        },
-        onCellsCommit: (cells) => {
-          updateBlock(block.id, { cells });
-        },
-        onTracksCommit: (next) => {
-          updateBlock(block.id, {
-            canvasTableOptions: {
-              ...(block.canvasTableOptions ?? {}),
-              ...next,
-            },
-          });
-        },
-      }}
-    />
+    <>
+      <ComunicadoBlockView
+        block={block}
+        fontScale={fontScale}
+        interactive
+        embedded
+        className={className}
+        canvasTableInteraction={{
+          selectedCells: cellSelection?.cells ?? [],
+          focusCell: cellSelection?.focus ?? null,
+          blockSelected,
+          onSelectCell: ({ cell, additive, range, band }) =>
+            selectCanvasTableCell(block.id, {
+              cell,
+              additive,
+              range,
+              band,
+              rowCount: block.rows,
+              colCount: block.cols,
+              merges: block.merges,
+            }),
+          onCellContextMenu: ({ clientX, clientY }) => {
+            setContextMenu({ x: clientX, y: clientY });
+          },
+          onCellCommit: (row, col, cell: CanvasTableCell) => {
+            const cells = block.cells.map((currentRow) =>
+              currentRow.map((item) => normalizeCanvasTableCell(item)),
+            );
+            cells[row]![col] = normalizeCanvasTableCell(cell);
+            updateBlock(block.id, { cells });
+          },
+          onCellsCommit: (cells) => {
+            updateBlock(block.id, { cells });
+          },
+          onTracksCommit: (next) => {
+            updateBlock(block.id, {
+              canvasTableOptions: {
+                ...(block.canvasTableOptions ?? {}),
+                ...next,
+              },
+            });
+          },
+        }}
+      />
+      <CanvasTableContextMenu
+        block={block}
+        open={Boolean(contextMenu)}
+        position={contextMenu}
+        onClose={() => setContextMenu(null)}
+      />
+    </>
   );
 }
 

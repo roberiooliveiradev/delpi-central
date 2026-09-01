@@ -42,6 +42,10 @@ export type CanvasTableCellStyle = {
   color?: string;
   backgroundColor?: string;
   textAlign?: "left" | "center" | "right";
+  /** Alinhamento vertical (Excel / PPT). */
+  verticalAlign?: "top" | "middle" | "bottom";
+  /** Quebra de linha — default de render é `pre-wrap` se omitido. */
+  whiteSpace?: "normal" | "nowrap" | "pre-wrap";
 };
 
 export type CanvasTableCell = {
@@ -461,6 +465,7 @@ export function resolveCanvasTableHostStyle(
 /**
  * Estilo persistido do box da célula — independente de `editable`/chrome.
  * Editor e TV devem produzir o mesmo resultado.
+ * Defaults Excel: número → direita; texto → esquerda; wrap `pre-wrap`.
  */
 export function resolveCanvasTableCellBoxStyle(
   cell: CanvasTableCell,
@@ -472,7 +477,18 @@ export function resolveCanvasTableCellBoxStyle(
   if (colorOverride) style.color = colorOverride;
   else if (cell.style?.color) style.color = cell.style.color;
   if (cell.style?.backgroundColor) style.backgroundColor = cell.style.backgroundColor;
-  if (cell.style?.textAlign) style.textAlign = cell.style.textAlign;
+  const textAlign =
+    cell.style?.textAlign ?? (cell.kind === "number" ? "right" : "left");
+  style.textAlign = textAlign;
+  const verticalAlign = cell.style?.verticalAlign ?? "middle";
+  style.verticalAlign = verticalAlign;
+  const whiteSpace = cell.style?.whiteSpace ?? "pre-wrap";
+  style.whiteSpace = whiteSpace;
+  if (whiteSpace === "nowrap") {
+    style.textOverflow = "ellipsis";
+  } else {
+    style.textOverflow = "clip";
+  }
   return style;
 }
 

@@ -86,6 +86,33 @@ export function clearCanvasTableCellsContent(
   return next;
 }
 
+/** Remove formatos (style / contentRuns); mantém texto, value, binding e kind. */
+export function clearCanvasTableCellFormats(cell: CanvasTableCell): CanvasTableCell {
+  const prev = normalizeCanvasTableCell(cell);
+  const next: CanvasTableCell = { kind: prev.kind };
+  if (prev.text != null) next.text = prev.text;
+  if (prev.value !== undefined) next.value = prev.value;
+  if (prev.format) next.format = prev.format;
+  if (prev.displayFormat) next.displayFormat = prev.displayFormat;
+  if (prev.series) next.series = [...prev.series];
+  if (prev.dataRef) next.dataRef = { ...prev.dataRef };
+  if (prev.dataSourceId) next.dataSourceId = prev.dataSourceId;
+  return next;
+}
+
+export function clearCanvasTableCellsFormats(
+  grid: CanvasTableCell[][],
+  cells: readonly CanvasTableCellRef[],
+): CanvasTableCell[][] {
+  const next = grid.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
+  for (const { row, col } of cells) {
+    const current = next[row]?.[col];
+    if (current == null) continue;
+    next[row]![col] = clearCanvasTableCellFormats(current);
+  }
+  return next;
+}
+
 export function serializeCanvasTableClipboard(params: {
   cells: CanvasTableCell[][];
   selected: readonly CanvasTableCellRef[];

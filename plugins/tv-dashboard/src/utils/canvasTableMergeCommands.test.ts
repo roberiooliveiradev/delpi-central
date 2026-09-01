@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { normalizeCanvasTableCell } from "@delpi/tv-dashboard-presentation";
+
 import {
   canUnmergeCanvasTableSelection,
   resolveCanvasTableMergeCommand,
@@ -18,7 +20,7 @@ describe("canvasTableMergeCommands", () => {
   it("mescla retângulo ≥2 e rejeita célula única", () => {
     expect(
       resolveCanvasTableMergeCommand({ cells: CELLS_2X2, merges: [], mode: "merge" }),
-    ).toEqual([MERGE_2X2]);
+    ).toEqual({ merges: [MERGE_2X2] });
     expect(
       resolveCanvasTableMergeCommand({
         cells: [{ row: 0, col: 0 }],
@@ -26,6 +28,21 @@ describe("canvasTableMergeCommands", () => {
         mode: "merge",
       }),
     ).toBeNull();
+  });
+
+  it("merge and center aplica textAlign na âncora", () => {
+    const matrix = [
+      [normalizeCanvasTableCell("A"), normalizeCanvasTableCell("B")],
+      [normalizeCanvasTableCell("C"), normalizeCanvasTableCell("D")],
+    ];
+    const next = resolveCanvasTableMergeCommand({
+      cells: CELLS_2X2,
+      merges: [],
+      mode: "merge",
+      cellMatrix: matrix,
+    });
+    expect(next?.merges).toEqual([MERGE_2X2]);
+    expect(next?.cells?.[0]?.[0]?.style?.textAlign).toBe("center");
   });
 
   it("desmescla quando a seleção cobre um merge", () => {
@@ -36,7 +53,7 @@ describe("canvasTableMergeCommands", () => {
         merges: [MERGE_2X2],
         mode: "unmerge",
       }),
-    ).toEqual([]);
+    ).toEqual({ merges: [] });
   });
 
   it("atalhos Ctrl+M / Ctrl+Shift+M", () => {

@@ -5,15 +5,18 @@ import {
   AlignRight,
   Columns3,
   Database,
+  Eraser,
   Grid3x3,
   Heading2,
   Minus,
   MousePointer2,
+  RemoveFormatting,
   Rows3,
   Settings2,
   Square,
   TableCellsMerge,
   TableCellsSplit,
+  WrapText,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -25,6 +28,8 @@ import {
   canMergeRect,
   canvasTableCellPlainText,
   canvasTablePresetOptions,
+  clearCanvasTableCellsContent,
+  clearCanvasTableCellsFormats,
   mergeCanvasTableOptions,
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
@@ -216,9 +221,13 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
       merges: table.merges,
       cells: cellSelection.cells,
       mode,
+      cellMatrix: mode === "merge" ? table.cells : undefined,
     });
     if (!next) return;
-    updateBlock(table.id, { merges: next.length ? next : undefined });
+    updateBlock(table.id, {
+      merges: next.merges.length ? next.merges : undefined,
+      ...(next.cells ? { cells: next.cells } : {}),
+    });
   }
 
   const structureFields = (
@@ -553,6 +562,46 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         label="Direita"
         active={cellAlign === "right"}
         onClick={() => patchSelectedCellsStyle({ textAlign: "right" })}
+      />
+      <DeckRibbonTile
+        icon={WrapText}
+        label="Quebrar"
+        hint="Quebra de linha na célula (white-space pre-wrap)."
+        active={(selectedCell?.style?.whiteSpace ?? "pre-wrap") !== "nowrap"}
+        disabled={!cellSelection?.cells.length}
+        onClick={() => patchSelectedCellsStyle({ whiteSpace: "pre-wrap" })}
+      />
+      <DeckRibbonTile
+        icon={Minus}
+        label="1 linha"
+        hint="Não quebra texto (ellipsis se não couber)."
+        active={selectedCell?.style?.whiteSpace === "nowrap"}
+        disabled={!cellSelection?.cells.length}
+        onClick={() => patchSelectedCellsStyle({ whiteSpace: "nowrap" })}
+      />
+      <DeckRibbonTile
+        icon={Eraser}
+        label="Limpar"
+        hint="Limpa o conteúdo das células selecionadas (mantém estilo e binding)."
+        disabled={!cellSelection?.cells.length}
+        onClick={() => {
+          if (!cellSelection?.cells.length) return;
+          updateBlock(table.id, {
+            cells: clearCanvasTableCellsContent(table.cells, cellSelection.cells),
+          });
+        }}
+      />
+      <DeckRibbonTile
+        icon={RemoveFormatting}
+        label="Sem formato"
+        hint="Remove estilos das células (mantém texto e binding)."
+        disabled={!cellSelection?.cells.length}
+        onClick={() => {
+          if (!cellSelection?.cells.length) return;
+          updateBlock(table.id, {
+            cells: clearCanvasTableCellsFormats(table.cells, cellSelection.cells),
+          });
+        }}
       />
     </div>
   );

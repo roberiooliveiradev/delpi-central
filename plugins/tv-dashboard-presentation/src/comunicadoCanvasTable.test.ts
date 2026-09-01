@@ -268,6 +268,12 @@ describe("canvas_table", () => {
         text: "A",
         style: { backgroundColor: "#003366", textAlign: "center" },
       }),
-    ).toEqual({ backgroundColor: "#003366", textAlign: "center" });
+    ).toEqual({
+      backgroundColor: "#003366",
+      textAlign: "center",
+      verticalAlign: "middle",
+      whiteSpace: "pre-wrap",
+      textOverflow: "clip",
+    });
   });
 });

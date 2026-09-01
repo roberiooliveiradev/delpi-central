@@ -51,7 +51,6 @@ import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
 import { resolveCanvasTableMergeCommand } from "../utils/canvasTableMergeCommands";
-import { resolveCanvasTableMergeCommand } from "../utils/canvasTableMergeCommands";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -140,9 +139,13 @@ function ComunicadoEditorKeyboardBridge() {
       merges: block.merges,
       cells: selectedCanvasTableCell.cells,
       mode: "merge",
+      cellMatrix: block.cells,
     });
     if (!next) return false;
-    updateBlock(block.id, { merges: next.length ? next : undefined });
+    updateBlock(block.id, {
+      merges: next.merges.length ? next.merges : undefined,
+      ...(next.cells ? { cells: next.cells } : {}),
+    });
     return true;
   }, [blocks, selectedCanvasTableCell, updateBlock]);
 
@@ -156,7 +159,7 @@ function ComunicadoEditorKeyboardBridge() {
       mode: "unmerge",
     });
     if (!next) return false;
-    updateBlock(block.id, { merges: next.length ? next : undefined });
+    updateBlock(block.id, { merges: next.merges.length ? next.merges : undefined });
     return true;
   }, [blocks, selectedCanvasTableCell, updateBlock]);
 
