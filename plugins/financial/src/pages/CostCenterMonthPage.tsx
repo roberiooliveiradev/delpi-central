@@ -10,8 +10,16 @@ import {
   TrendingUp,
   Truck,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
+import {
+  fetchCostCenterRankingCenters,
+  fetchCostCenterRankingSuppliers,
+} from "../api/financialApi";
+import {
+  CostCenterRankingPanel,
+  EXPANDED_RANKING_LIMIT,
+} from "../components/CostCenterRankingPanel";
 import { FinKpiCard, FinLoadingCard } from "../components/finUiKit";
 import { FinWorkspaceHeader } from "../components/FinWorkspaceHeader";
 import { copy } from "../content/copy";
@@ -146,6 +154,30 @@ export function CostCenterMonthPage({
     ];
   }, [summary, previous]);
 
+  const rankingQuery = useMemo(
+    () => ({
+      branch,
+      startDate: data?.period.startDate ?? null,
+      endDate: data?.period.endDate ?? null,
+      costCenter,
+      supplierCode,
+      supplierStore,
+      excludeMpProducts: excludeMp,
+      limit: EXPANDED_RANKING_LIMIT,
+    }),
+    [branch, data?.period.startDate, data?.period.endDate, costCenter, supplierCode, supplierStore, excludeMp],
+  );
+
+  const loadExpandedCenters = useCallback(async () => {
+    const response = await fetchCostCenterRankingCenters(rankingQuery);
+    return response.items;
+  }, [rankingQuery]);
+
+  const loadExpandedSuppliers = useCallback(async () => {
+    const response = await fetchCostCenterRankingSuppliers(rankingQuery);
+    return response.items;
+  }, [rankingQuery]);
+
   const goBack = () => {
     navigateFinancial(
       buildFinancialHref({
@@ -264,6 +296,33 @@ export function CostCenterMonthPage({
                 subtitle={comparisonSubtitle(kpi.comparison, previousMonth, kpi.formatDelta)}
               />
             ))}
+          </div>
+
+          <div className="fin-board-grid fin-board-grid--rankings">
+            <CostCenterRankingPanel
+              title={copy.costCenters.rankingCentersTitle}
+              items={data?.centers ?? []}
+              variant="centers"
+              loading={loading}
+              loadError={data?.sectionErrors.centers}
+              previewHint={copy.costCenters.monthDetail.rankingPreviewHint}
+              expandAriaLabel={copy.costCenters.rankingExpandCentersAria}
+              modalTitle={copy.costCenters.rankingCentersTitle}
+              modalSubtitle={copy.costCenters.monthDetail.rankingExpandedCentersSubtitle}
+              onLoadExpanded={loadExpandedCenters}
+            />
+            <CostCenterRankingPanel
+              title={copy.costCenters.rankingSuppliersTitle}
+              items={data?.suppliers ?? []}
+              variant="suppliers"
+              loading={loading}
+              loadError={data?.sectionErrors.suppliers}
+              previewHint={copy.costCenters.monthDetail.rankingPreviewHint}
+              expandAriaLabel={copy.costCenters.rankingExpandSuppliersAria}
+              modalTitle={copy.costCenters.rankingSuppliersTitle}
+              modalSubtitle={copy.costCenters.monthDetail.rankingExpandedSuppliersSubtitle}
+              onLoadExpanded={loadExpandedSuppliers}
+            />
           </div>
         </>
       ) : null}

@@ -18,6 +18,8 @@ type CostCenterRankingPanelProps = {
   variant: RankingVariant;
   loading?: boolean;
   loadError?: string | null;
+  /** Recorte exibido no cabeçalho — o mês sobrescreve o texto do período. */
+  previewHint?: string;
   expandAriaLabel: string;
   modalTitle: string;
   modalSubtitle: string;
@@ -55,6 +57,7 @@ export function CostCenterRankingPanel({
   variant,
   loading = false,
   loadError = null,
+  previewHint = copy.costCenters.rankingPreviewHint,
   expandAriaLabel,
   modalTitle,
   modalSubtitle,
@@ -106,7 +109,7 @@ export function CostCenterRankingPanel({
               <span>{copy.costCenters.rankingExpand}</span>
             </button>
           ) : null}
-          <p className="fin-board-list__hint">{copy.costCenters.rankingPreviewHint}</p>
+          <p className="fin-board-list__hint">{previewHint}</p>
         </header>
         {loading ? (
           <p className="fin-block-state">{copy.costCenters.loading}</p>
