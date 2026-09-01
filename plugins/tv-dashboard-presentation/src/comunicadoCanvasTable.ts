@@ -82,6 +82,14 @@ export type CanvasTableOptions = {
 
 export type CanvasTableCellRef = { row: number; col: number };
 
+/** Retângulo mesclado — conteúdo na âncora; cobertas permanecem na matriz. */
+export type CanvasTableMerge = {
+  row: number;
+  col: number;
+  rowspan: number;
+  colspan: number;
+};
+
 export function clampCanvasTableDimension(
   value: unknown,
   min: number,

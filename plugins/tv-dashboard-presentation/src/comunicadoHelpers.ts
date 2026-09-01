@@ -98,6 +98,7 @@ import {
   normalizeCanvasTableCells,
   parseCanvasTableOptions,
 } from "./comunicadoCanvasTable";
+import { normalizeCanvasTableMerges } from "./canvasTableMerge";
 
 export {
   CANVAS_TABLE_MIN_ROWS,
@@ -125,6 +126,17 @@ export {
   buildCanvasTableSparklinePath,
   resolveColumnSparklineAxis,
 } from "./comunicadoCanvasTable";
+export {
+  normalizeCanvasTableMerges,
+  mergeAt,
+  isCoveredCell,
+  expandSelectionToMerges,
+  canMergeRect,
+  applyCanvasTableMerge,
+  unmergeCanvasTableMerges,
+  remapCanvasTableMerges,
+} from "./canvasTableMerge";
+export type { CanvasTableMerge } from "./comunicadoCanvasTable";
 export type {
   CanvasTableCell,
   CanvasTableCellKind,
@@ -1003,6 +1015,9 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       })),
     );
     if (block.headerRow != null) base.headerRow = block.headerRow;
+    if (block.merges?.length) {
+      base.merges = block.merges.map((merge) => ({ ...merge }));
+    }
     if (block.canvasTableOptions) base.canvasTableOptions = { ...block.canvasTableOptions };
     if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
   } else if (block.type === "kpi_view") {
@@ -1461,6 +1476,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     );
     const dataSourceId =
       typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
+    const merges = normalizeCanvasTableMerges(
+      (block as { merges?: unknown }).merges,
+      rows,
+      cols,
+    );
     return attachBlockAnimations(
       {
         id,
@@ -1472,6 +1492,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         cols,
         cells: normalizeCanvasTableCells(block.cells, rows, cols),
         headerRow: block.headerRow !== false,
+        ...(merges.length ? { merges } : {}),
         ...(canvasTableOptions ? { canvasTableOptions } : {}),
         ...(dataSourceId ? { dataSourceId } : {}),
         resolved:

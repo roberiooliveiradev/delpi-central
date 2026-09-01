@@ -623,6 +623,14 @@ export {
   normalizeCanvasTableTrackSizes,
   applyCanvasTableTrackDrag,
   resolveCanvasTableRowHeightStyles,
+  normalizeCanvasTableMerges,
+  mergeAt,
+  isCoveredCell,
+  expandSelectionToMerges,
+  canMergeRect,
+  applyCanvasTableMerge,
+  unmergeCanvasTableMerges,
+  remapCanvasTableMerges,
   formatCanvasTableNumber,
   buildCanvasTableSparklinePath,
   resolveColumnSparklineAxis,
@@ -638,6 +646,7 @@ export type {
   CanvasTableOptions,
   CanvasTableStylePresetId,
   CanvasTableNumberFormat,
+  CanvasTableMerge,
 } from "./comunicadoHelpers";
 export type { StageHideReason } from "./comunicadoStageVisibility";
 export { ComunicadoBlockView } from "./comunicadoBlockView";

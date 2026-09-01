@@ -518,12 +518,21 @@ export type ComunicadoCanvasTableOptions = {
   rowHeights?: number[];
 };
 
+export type ComunicadoCanvasTableMerge = {
+  row: number;
+  col: number;
+  rowspan: number;
+  colspan: number;
+};
+
 export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
   type: "canvas_table";
   rows: number;
   cols: number;
   /** Células tipadas (string legado é migrado no parse). */
   cells: ComunicadoCanvasTableCell[][];
+  /** Retângulos mesclados; cobertas permanecem em `cells`. */
+  merges?: ComunicadoCanvasTableMerge[];
   headerRow?: boolean;
   canvasTableOptions?: ComunicadoCanvasTableOptions;
   /** Fonte default do bloco; células podem sobrescrever com `cells[][].dataSourceId`. */
