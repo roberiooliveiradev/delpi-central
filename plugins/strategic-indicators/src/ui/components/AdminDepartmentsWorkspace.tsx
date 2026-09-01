@@ -1,3 +1,4 @@
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 import type {
   AdminDepartmentIndicatorItem,
@@ -22,8 +23,8 @@ import {
   indicatorFormFromItem,
   type IndicatorFormState,
 } from "./AdminIndicatorFormDrawer";
-import { SectionBlock } from "./SectionBlock";
 import { ActiveToggle } from "./ActiveToggle";
+import { useSiPhoneViewport } from "../hooks/useSiPhoneViewport";
 import {
   getAggregationModeLabel,
   getScopeTypeLabel,
@@ -59,6 +60,7 @@ export function AdminDepartmentsWorkspace({
   onStructureFocusConsumed,
   onCatalogActionConsumed,
 }: AdminDepartmentsWorkspaceProps) {
+  const isPhone = useSiPhoneViewport();
   const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
@@ -268,81 +270,96 @@ export function AdminDepartmentsWorkspace({
 
   return (
     <div className="si-admin-workspace">
-      <SectionBlock
-        title="Departamentos administrativos"
-        description="Cadastre, edite, desative ou exclua departamentos e defina a base executiva de cada área."
-        aside={
-          <button
-            type="button"
-            className="si-settings-editor__button"
-            onClick={openCreateDepartmentDrawer}
-          >
-            Novo departamento
-          </button>
-        }
+      {departments.error ? (
+        <InfoState
+          title="Falha ao carregar departamentos"
+          description={departments.error}
+          actionLabel="Tentar novamente"
+          onAction={() => void departments.reload()}
+        />
+      ) : null}
+
+      {departments.successMessage ? (
+        <div className="si-settings-editor__alert si-settings-editor__alert--success">
+          {departments.successMessage}
+        </div>
+      ) : null}
+
+      <div
+        className={`si-admin-master-detail ${
+          isPhone && selectedDepartmentId ? "is-mobile-detail-open" : ""
+        }`}
       >
-        {departments.error ? (
-          <InfoState
-            title="Falha ao carregar departamentos"
-            description={departments.error}
-            actionLabel="Tentar novamente"
-            onAction={() => void departments.reload()}
-          />
-        ) : null}
-
-        {!!departments.successMessage ? (
-          <div className="si-settings-editor__alert si-settings-editor__alert--success">
-            {departments.successMessage}
-          </div>
-        ) : null}
-
-        <div className="si-admin-master-detail">
-          <div className="si-admin-master-detail__master">
-            {departments.loading ? (
-              <div className="si-admin-placeholder">Carregando departamentos...</div>
-            ) : departments.items.length === 0 ? (
-              <InfoState
-                title="Nenhum departamento cadastrado"
-                description="Crie o primeiro departamento administrativo para começar a configurar o módulo."
-                actionLabel="Criar departamento"
-                onAction={openCreateDepartmentDrawer}
-              />
-            ) : (
-              <div className="si-admin-list">
-                {departments.items.map((item) => {
-                  const isSelected = item.department_id === selectedDepartmentId;
-
-                  return (
-                    <button
-                      key={item.department_id}
-                      type="button"
-                      className={`si-admin-list__item ${isSelected ? "is-selected" : ""}`}
-                      onClick={() => setSelectedDepartmentId(item.department_id)}
-                    >
-                      <div className="si-admin-list__item-top">
-                        <strong>{item.department_name}</strong>
-                        <span>{item.short_name}</span>
-                      </div>
-
-                      <div className="si-admin-list__item-meta">
-                        <span>Peso: {item.weight_pct}%</span>
-                        <span>{item.is_active ? "Ativo" : "Inativo"}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+        <div className="si-admin-master-detail__master">
+          <div className="si-admin-master-detail__master-header">
+            <SectionHintLabel
+              label="Departamentos"
+              hint={SI_HELP.catalog.departmentList}
+            />
+            <button
+              type="button"
+              className="si-settings-editor__button"
+              onClick={openCreateDepartmentDrawer}
+            >
+              Novo departamento
+            </button>
           </div>
 
-          <div className="si-admin-master-detail__detail">
-            {!selectedDepartment ? (
-              <InfoState
-                title="Selecione um departamento"
-                description="Escolha um departamento à esquerda para editar seu cadastro e seus indicadores estruturais."
-              />
-            ) : (
-              <>
+          {departments.loading ? (
+            <div className="si-admin-placeholder">Carregando departamentos...</div>
+          ) : departments.items.length === 0 ? (
+            <InfoState
+              title="Nenhum departamento cadastrado"
+              description="Crie o primeiro departamento administrativo para começar a configurar o módulo."
+              actionLabel="Criar departamento"
+              onAction={openCreateDepartmentDrawer}
+            />
+          ) : (
+            <div className="si-admin-list">
+              {departments.items.map((item) => {
+                const isSelected = item.department_id === selectedDepartmentId;
+
+                return (
+                  <button
+                    key={item.department_id}
+                    type="button"
+                    className={`si-admin-list__item ${isSelected ? "is-selected" : ""}`}
+                    onClick={() => setSelectedDepartmentId(item.department_id)}
+                  >
+                    <div className="si-admin-list__item-top">
+                      <strong>{item.department_name}</strong>
+                      <span>{item.short_name}</span>
+                    </div>
+
+                    <div className="si-admin-list__item-meta">
+                      <span>Peso: {item.weight_pct}%</span>
+                      <span>{item.is_active ? "Ativo" : "Inativo"}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="si-admin-master-detail__detail">
+          {isPhone && selectedDepartment ? (
+            <button
+              type="button"
+              className="si-admin-master-detail__back"
+              onClick={() => setSelectedDepartmentId(null)}
+            >
+              ← Lista de departamentos
+            </button>
+          ) : null}
+
+          {!selectedDepartment ? (
+            <InfoState
+              title="Selecione um departamento"
+              description="Escolha um departamento na lista para editar cadastro e indicadores."
+            />
+          ) : (
+            <>
                 <div className="si-admin-detail-card">
                   <div className="si-admin-detail-card__header">
                     <div>
@@ -411,10 +428,12 @@ export function AdminDepartmentsWorkspace({
                   </div>
                 </div>
 
-                <SectionBlock
-                  title="Indicadores estruturais"
-                  description="Cadastre os indicadores oficiais do departamento e mantenha o catálogo estruturado."
-                  aside={
+                <div className="si-admin-indicators-section">
+                  <header className="si-admin-indicators-section__header">
+                    <SectionHintLabel
+                      label="Indicadores estruturais"
+                      hint={SI_HELP.catalog.indicatorList}
+                    />
                     <button
                       type="button"
                       className="si-settings-editor__button"
@@ -422,9 +441,9 @@ export function AdminDepartmentsWorkspace({
                     >
                       Novo indicador
                     </button>
-                  }
-                >
-                  {!!departmentIndicators.successMessage ? (
+                  </header>
+
+                  {departmentIndicators.successMessage ? (
                     <div className="si-settings-editor__alert si-settings-editor__alert--success">
                       {departmentIndicators.successMessage}
                     </div>
@@ -533,12 +552,11 @@ export function AdminDepartmentsWorkspace({
                       ))}
                     </div>
                   )}
-                </SectionBlock>
-              </>
-            )}
-          </div>
+                </div>
+            </>
+          )}
         </div>
-      </SectionBlock>
+      </div>
 
       <AdminDepartmentFormDrawer
         open={departmentDrawerOpen}

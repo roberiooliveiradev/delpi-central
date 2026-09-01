@@ -1,3 +1,5 @@
+@import "./siAdminMasterDetail.css";
+
 .si-admin-goals-workspace .si-admin-goals-toolbar {
   display: flex;
   justify-content: space-between;

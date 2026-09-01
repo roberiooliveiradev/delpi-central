@@ -119,4 +119,31 @@
   .si-settings-page {
     padding: 16px;
   }
+
+  .si-settings-shell__nav {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    margin: 0 -16px;
+    padding: 0 16px 8px;
+    background: var(--app-canvas, var(--bg, #ffffff));
+    border-bottom: 1px solid var(--border);
+  }
+
+  .si-settings-admin-nav {
+    position: static;
+    border-bottom: none;
+  }
+
+  .si-settings-admin-nav .delpi-ui-underline-nav__scroller,
+  .si-settings-admin-nav .si-underline-nav__scroller {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .si-settings-admin-nav .delpi-ui-underline-nav__item,
+  .si-settings-admin-nav .si-underline-nav__item {
+    flex: 0 0 auto;
+  }
 }

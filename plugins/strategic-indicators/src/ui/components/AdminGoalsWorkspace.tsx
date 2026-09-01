@@ -31,6 +31,7 @@ import { buildGoalDuplicateSeed } from "../utils/goalDuplicateHelpers";
 import type { ScopeType } from "../../data/types/settings";
 import type { GoalsAdminAction } from "../settings/settingsAdminTabs";
 import { SI_HELP } from "../../content/helpTooltips";
+import { useSiPhoneViewport } from "../hooks/useSiPhoneViewport";
 import "./AdminGoalsWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeCheckboxControl } from "./siNativeFormFields";
@@ -57,6 +58,7 @@ export function AdminGoalsWorkspace({
   goalsAction = null,
   onGoalsActionConsumed,
 }: AdminGoalsWorkspaceProps) {
+  const isPhone = useSiPhoneViewport();
   const yearsOverview = useStrategicIndicatorsGoalYearsOverview({ getAccessToken });
   const departments = useStrategicIndicatorsAdminDepartments({ getAccessToken });
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -360,7 +362,11 @@ export function AdminGoalsWorkspace({
         </AdminInlineToolPanel>
       ) : null}
 
-      <div className="si-admin-master-detail si-admin-goals-master-detail">
+      <div
+        className={`si-admin-master-detail si-admin-goals-master-detail ${
+          isPhone && typeof selectedYear === "number" ? "is-mobile-detail-open" : ""
+        }`}
+      >
         <div className="si-admin-master-detail__master">
           <div className="si-admin-goals-master__header">
             <SectionHintLabel
@@ -403,6 +409,16 @@ export function AdminGoalsWorkspace({
         </div>
 
         <div className="si-admin-master-detail__detail">
+          {isPhone && typeof selectedYear === "number" ? (
+            <button
+              type="button"
+              className="si-admin-master-detail__back"
+              onClick={() => setSelectedYear(null)}
+            >
+              ← Lista de anos
+            </button>
+          ) : null}
+
           {typeof selectedYear !== "number" ? (
             <InfoState
               title="Selecione um ano"
