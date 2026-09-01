@@ -8,104 +8,110 @@
   padding: 24px;
   overflow-x: clip;
   background: var(--app-canvas, var(--bg, #ffffff));
+  display: grid;
+  gap: 16px;
 }
 
-/*
- * Overrides de layout para `.content` e `.app-host-federated` vivem
- * exclusivamente em portal/src/index.css (regras :has(.si-settings-page)).
- * Mantê-los em um só lugar evita conflito de cascade entre portal e plugin.
- */
+.si-settings-page__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
 
-.si-settings-sections,
-.si-settings-sections .si-section-block,
-.si-settings-sections .si-section-block__content {
-  width: 100%;
-  max-width: 100%;
+.si-settings-page__status button {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+  background: transparent;
+}
+
+.si-settings-page__status--neutral {
+  background: var(--surface-2, #f7f7f7);
+  color: var(--text-muted);
+}
+
+.si-settings-page__status--error {
+  background: color-mix(in srgb, var(--danger, #c62828) 10%, var(--surface));
+  color: var(--danger, #c62828);
+}
+
+.si-settings-page__status--error button {
+  border-color: color-mix(in srgb, var(--danger, #c62828) 35%, transparent);
+  color: var(--danger, #c62828);
+}
+
+.si-settings-page__status--success {
+  background: color-mix(in srgb, var(--success, #2e7d32) 10%, var(--surface));
+  color: var(--success, #2e7d32);
+}
+
+.si-settings-page__status--success button {
+  border-color: color-mix(in srgb, var(--success, #2e7d32) 35%, transparent);
+  color: var(--success, #2e7d32);
+}
+
+.si-settings-shell {
+  display: grid;
+  gap: 20px;
   min-width: 0;
 }
 
-.si-settings-tabbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 20px 0 24px;
+.si-settings-shell__nav {
+  min-width: 0;
 }
 
-.si-settings-tabbar__item {
-  border: 1px solid var(--border);
-  background: var(--surface-2, #f7f7f7);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 10px 16px;
-  font: inherit;
-  cursor: pointer;
-  transition: 0.2s ease;
+.si-settings-shell__main {
+  min-width: 0;
 }
 
-.si-settings-tabbar__item:hover {
-  border-color: var(--primary);
-  transform: translateY(-1px);
-}
-
-.si-settings-tabbar__item.is-active {
-  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
-  border-color: var(--primary);
-  color: var(--text);
-}
-
-.si-settings-sections {
+.si-settings-system {
   display: grid;
   gap: 20px;
 }
 
-.si-settings-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-  margin-top: 18px;
+.si-settings-admin-nav {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--app-canvas, var(--bg, #ffffff));
 }
 
-.si-settings-overview-card {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: var(--shadow-sm);
-}
+@media (min-width: 1101px) {
+  .si-settings-shell {
+    grid-template-columns: 200px minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+  }
 
-.si-settings-overview-card__label {
-  display: block;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
+  .si-settings-admin-nav {
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+    padding-right: 8px;
+  }
 
-.si-settings-overview-card__value {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--si-title);
-}
+  .si-settings-admin-nav .delpi-ui-underline-nav__scroller,
+  .si-settings-admin-nav .si-underline-nav__scroller {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible;
+  }
 
-.si-settings-overview-card p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--si-text-muted);
-}
+  .si-settings-admin-nav .delpi-ui-underline-nav__item,
+  .si-settings-admin-nav .si-underline-nav__item {
+    justify-content: flex-start;
+    box-shadow: inset -2px 0 0 transparent;
+  }
 
-.si-settings-global-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-@media (max-width: 1100px) {
-  .si-settings-global-grid {
-    grid-template-columns: 1fr;
+  .si-settings-admin-nav .delpi-ui-underline-nav__item[aria-current="page"],
+  .si-settings-admin-nav .si-underline-nav__item[aria-current="page"] {
+    box-shadow: inset -2px 0 0 var(--primary);
   }
 }
 

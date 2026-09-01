@@ -1,0 +1,126 @@
+.si-settings-overview {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.si-settings-overview__kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.si-settings-overview__kpi {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 14px 16px;
+  display: grid;
+  gap: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.si-settings-overview__kpi span,
+.si-settings-overview__kpi small {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.si-settings-overview__kpi strong {
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--si-title, var(--text));
+}
+
+.si-settings-overview__kpi--warning {
+  border-color: color-mix(in srgb, var(--warning, #f2a100) 40%, var(--border));
+}
+
+.si-settings-overview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.si-settings-overview__pending {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.si-settings-overview__pending-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.si-settings-overview__pending-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.si-settings-overview__pending-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.si-settings-overview__pending-list li {
+  display: grid;
+  gap: 4px;
+}
+
+.si-settings-overview__pending-list strong {
+  font-size: 14px;
+}
+
+.si-settings-overview__pending-list p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.si-settings-overview__severity {
+  display: inline-flex;
+  width: fit-content;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.si-settings-overview__severity.is-error {
+  background: color-mix(in srgb, var(--danger, #c62828) 14%, transparent);
+  color: var(--danger, #c62828);
+}
+
+.si-settings-overview__severity.is-warning {
+  background: color-mix(in srgb, var(--warning, #f2a100) 18%, transparent);
+  color: color-mix(in srgb, var(--warning, #f2a100) 85%, #000);
+}
+
+.si-settings-overview__severity.is-info {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+@media (max-width: 1100px) {
+  .si-settings-overview__kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .si-settings-overview__kpi-strip {
+    grid-template-columns: 1fr;
+  }
+}

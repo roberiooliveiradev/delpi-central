@@ -1,51 +1,49 @@
-import { useEffect, useMemo, useState } from "react";
-import { PageHeader } from "../components/PageHeader";
-import { SettingsHero } from "../components/SettingsHero";
-import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuditWorkspacePanel } from "../components/AuditWorkspacePanel";
-import { SectionBlock } from "../components/SectionBlock";
+import { AdminConfigImportExportPanel } from "../components/AdminConfigImportExportPanel";
+import { AdminGoalsWorkspace } from "../components/AdminGoalsWorkspace";
+import { CatalogAdminWorkspace } from "../components/CatalogAdminWorkspace";
 import { InfoState } from "../components/InfoState";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
-import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
-import { SettingsSummaryCards } from "../components/SettingsSummaryCards";
-import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
-import type { SettingsDashboardData } from "../../data/types/settingsDashboard";
-import type {
-  SettingsWeightItem,
-  SettingsGoalItem,
-  SettingsParameterItem,
-  SettingsGovernanceItem,
-} from "../../data/types/settings";
-
-import { AdminDepartmentsWorkspace } from "../components/AdminDepartmentsWorkspace";
-import { AdminGoalsWorkspace } from "../components/AdminGoalsWorkspace";
-import { CatalogStructureValidationWorkspace } from "../components/CatalogStructureValidationWorkspace";
-import { SettingsStructuredEditor } from "../components/SettingsStructuredEditor";
 import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
-import { AdminConfigImportExportPanel } from "../components/AdminConfigImportExportPanel";
+import { SettingsOverviewWorkspace } from "../components/SettingsOverviewWorkspace";
+import { SettingsStructuredEditor } from "../components/SettingsStructuredEditor";
+import { SiPageHero, SiUnderlineNav } from "../components/siLayoutUi";
+import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
+import { useCatalogStructureValidation } from "../../state/hooks/useCatalogStructureValidation";
+import { useStrategicIndicatorsSettings } from "../../state/hooks/useStrategicIndicatorsSettings";
+import { SI_HELP } from "../../content/helpTooltips";
 import {
-  getMetaSourceLabel,
-} from "../presentation/labels";
+  readSettingsAdminRoute,
+  writeSettingsAdminRoute,
+  type CatalogAdminView,
+  type SettingsAdminTab,
+} from "../settings/settingsAdminTabs";
 import "./SettingsPage.css";
-
 
 type SettingsPageProps = {
   getAccessToken?: () => string | undefined;
 };
 
-type SettingsTab =
-  | "overview"
-  | "departments"
-  | "goals"
-  | "catalog"
-  | "global"
-  | "audit";
-
 const SETTINGS_LAYOUT_CLASS = "si-settings-active";
+
+function formatSyncLine(updatedAt: string | null, updatedByEmail: string | null): string {
+  if (!updatedAt) return "Sem registro de sincronização administrativa.";
+  const when = new Date(updatedAt).toLocaleString("pt-BR");
+  return updatedByEmail
+    ? `Sync ${when} · por ${updatedByEmail}`
+    : `Sync ${when}`;
+}
 
 export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   const settings = useStrategicIndicatorsSettings({ getAccessToken });
-  const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
+  const validation = useCatalogStructureValidation({ getAccessToken });
+
+  const initialRoute = useMemo(() => readSettingsAdminRoute(), []);
+  const [activeTab, setActiveTab] = useState<SettingsAdminTab>(initialRoute.tab);
+  const [catalogView, setCatalogView] = useState<CatalogAdminView>(
+    initialRoute.catalogView,
+  );
 
   useEffect(() => {
     document.documentElement.classList.add(SETTINGS_LAYOUT_CLASS);
@@ -53,277 +51,188 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
       document.documentElement.classList.remove(SETTINGS_LAYOUT_CLASS);
     };
   }, []);
-  const overviewLoadingProgress = useLoadingProgress(
-    settings.loading && activeTab === "overview",
-    settings.requestProgress
-  );
-  const globalLoadingProgress = useLoadingProgress(
-    settings.loading && activeTab === "global",
-    settings.requestProgress
-  );
 
-  const dashboardData = useMemo<SettingsDashboardData | null>(() => {
-    if (!settings.data) return null;
+  useEffect(() => {
+    writeSettingsAdminRoute(activeTab, catalogView);
+  }, [activeTab, catalogView]);
 
-    return {
-      weights: settings.data.weights.items.map((item: SettingsWeightItem) => ({
-        id: item.department_id,
-        departmentName: item.department_name,
-        weightPct: item.weight_pct,
-        note: "Bloco legado do painel. A edição principal agora ocorre via departamentos.",
-      })),
-
-      goals: settings.data.goals.items.map((item: SettingsGoalItem) => ({
-        id: item.department_id,
-        departmentName: item.department_name,
-        headlineGoal: item.headline_goal,
-        supportingFocus: item.supporting_focus,
-      })),
-
-      parameters: settings.data.parameters.items.map(
-        (item: SettingsParameterItem, index: number) => ({
-          id: `${item.key}-${index}`,
-          label: item.label,
-          value: item.value,
-          observation: item.key,
-        }),
-      ),
-
-      governance: settings.data.governance.items.map(
-        (item: SettingsGovernanceItem, index: number) => ({
-          id: `${item.key}-${index}`,
-          label: item.label,
-          value: item.value,
-          observation: item.observation,
-        }),
-      ),
-      readiness: [
-        {
-          id: "departments-admin",
-          title: "Administração de departamentos",
-          status: "ready",
-          description:
-            "Fluxo principal do catálogo estrutural do módulo.",
-        },
-        {
-          id: "annual-goals-admin",
-          title: "Metas anuais",
-          status: "ready",
-          description:
-            "Fluxo principal para metas analíticas, ciclos anuais e operações em lote.",
-        },
-        {
-          id: "catalog-validation",
-          title: "Catálogo e validação",
-          status: "ready",
-          description:
-            "Lista departamentos, indicadores e metas com checagem de agregação e escopos.",
-        },
-        {
-          id: "global-settings",
-          title: "Configurações globais",
-          status: "ready",
-          description:
-            "Escopo reduzido a parâmetros e governança.",
-        },
-      ],
-      meta: {
-        source: getMetaSourceLabel(settings.data.meta.source),
-        updatedAt: settings.data.meta.updated_at,
-        updatedByEmail: settings.data.meta.updated_by_email,
-      },
+  useEffect(() => {
+    const onPopState = () => {
+      const route = readSettingsAdminRoute();
+      setActiveTab(route.tab);
+      setCatalogView(route.catalogView);
     };
-  }, [settings.data]);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const navigate = useCallback(
+    (tab: SettingsAdminTab, nextCatalogView: CatalogAdminView = "structure") => {
+      setActiveTab(tab);
+      if (tab === "catalog") {
+        setCatalogView(nextCatalogView);
+      }
+    },
+    [],
+  );
+
+  const globalLoadingProgress = useLoadingProgress(
+    settings.loading && activeTab === "system",
+    settings.requestProgress,
+  );
+
+  const validationIssueCount =
+    validation.summary.errors +
+    validation.summary.warnings +
+    validation.summary.infos;
+
+  const syncDescription = formatSyncLine(
+    settings.data?.meta.updated_at ?? null,
+    settings.data?.meta.updated_by_email ?? null,
+  );
+
+  const navItems = useMemo(
+    () => [
+      {
+        id: "overview",
+        label: "Início",
+        title: SI_HELP.nav.overview,
+        onSelect: () => navigate("overview"),
+      },
+      {
+        id: "catalog",
+        label: "Catálogo",
+        title: SI_HELP.nav.catalog,
+        count: validationIssueCount > 0 ? validationIssueCount : undefined,
+        onSelect: () => navigate("catalog", "structure"),
+      },
+      {
+        id: "goals",
+        label: "Metas",
+        title: SI_HELP.nav.goals,
+        onSelect: () => navigate("goals"),
+      },
+      {
+        id: "system",
+        label: "Sistema",
+        title: SI_HELP.nav.system,
+        onSelect: () => navigate("system"),
+      },
+    ],
+    [navigate, validationIssueCount],
+  );
 
   return (
     <div className="si-settings-page">
-      <PageHeader
+      <SiPageHero
+        density="compact"
         eyebrow="Indicadores Estratégicos"
-        title="Administração do módulo"
-        description="Central administrativa do modelo novo: departamentos, indicadores estruturais, metas anuais, parâmetros globais e auditoria."
+        title="Administração"
+        description={syncDescription}
         actions={
           <RefreshSnapshotButton
             getAccessToken={getAccessToken}
-            onRefreshed={() => void settings.reload()}
+            onRefreshed={() => {
+              void settings.reload();
+              void validation.reload();
+            }}
             disabled={settings.loading || settings.saving}
           />
         }
       />
 
-      <SettingsHero
-        routePath="/apps/strategic-indicators/settings"
-        permissionCode="strategic-indicators.settings.manage"
-      />
+      {settings.loading ? (
+        <div className="si-settings-page__status si-settings-page__status--neutral">
+          Carregando configurações…
+        </div>
+      ) : null}
 
-      <SettingsStatusStrip
-        loading={settings.loading}
-        error={settings.error}
-        successMessage={settings.successMessage}
-        updatedAt={settings.data?.meta.updated_at ?? null}
-        updatedByEmail={settings.data?.meta.updated_by_email ?? null}
-        onRetry={() => void settings.reload()}
-        onDismissSuccess={settings.clearSuccessMessage}
-      />
-
-      <div className="si-settings-tabbar">
-        {([
-          ["overview", "Painel"],
-          ["departments", "Departamentos"],
-          ["goals", "Metas anuais"],
-          ["catalog", "Catálogo e validação"],
-          ["global", "Configurações globais"],
-          ["audit", "Auditoria"],
-        ] as const).map(([tabId, label]) => (
-          <button
-            key={tabId}
-            type="button"
-            className={`si-settings-tabbar__item ${
-              activeTab === tabId ? "is-active" : ""
-            }`}
-            onClick={() => setActiveTab(tabId)}
-          >
-            {label}
+      {settings.error ? (
+        <div className="si-settings-page__status si-settings-page__status--error">
+          <span>{settings.error}</span>
+          <button type="button" onClick={() => void settings.reload()}>
+            Tentar novamente
           </button>
-        ))}
-      </div>
+        </div>
+      ) : null}
 
-      <div className="si-settings-sections">
-        {activeTab === "overview" ? (
-          <SectionBlock
-            title="Painel administrativo"
-            description="Resumo executivo do estado atual do módulo. Os blocos de pesos e metas abaixo são visão de leitura, não a base principal de edição."
-          >
-            {settings.loading && !dashboardData ? (
-              <LoadingActivityInline
-                title="Carregando painel administrativo"
-                description="Aguarde enquanto o painel do módulo é carregado."
-                variant="panel"
-                tone="info"
-                progressPercent={overviewLoadingProgress}
-              />
-            ) : !dashboardData ? (
-              <InfoState
-                title="Painel indisponível"
-                description="Não foi possível carregar o painel administrativo."
-              />
-            ) : (
-              <>
-                <AdminConfigImportExportPanel
-                  getAccessToken={getAccessToken}
-                  onCompleted={() => void settings.reload()}
-                />
+      {settings.successMessage ? (
+        <div className="si-settings-page__status si-settings-page__status--success">
+          <span>{settings.successMessage}</span>
+          <button type="button" onClick={settings.clearSuccessMessage}>
+            Fechar
+          </button>
+        </div>
+      ) : null}
 
-                <SettingsSummaryCards data={dashboardData} />
+      <div className="si-settings-shell">
+        <aside className="si-settings-shell__nav">
+          <SiUnderlineNav
+            className="si-settings-admin-nav"
+            aria-label="Administração SI"
+            activeId={activeTab}
+            mode="navigation"
+            layout="wrap"
+            items={navItems}
+          />
+        </aside>
 
-                <div className="si-settings-overview-grid">
-                  <article className="si-settings-overview-card">
-                    <span className="si-settings-overview-card__label">
-                      Última atualização
-                    </span>
-                    <strong className="si-settings-overview-card__value">
-                      {dashboardData.meta.updatedAt
-                        ? new Date(dashboardData.meta.updatedAt).toLocaleDateString("pt-BR")
-                        : "—"}
-                    </strong>
-                    <p>
-                      {dashboardData.meta.updatedByEmail
-                        ? `Registro mais recente por ${dashboardData.meta.updatedByEmail}.`
-                        : "Sem identificação de autor no registro atual."}
-                    </p>
-                  </article>
+        <div className="si-settings-shell__main">
+          {activeTab === "overview" ? (
+            <SettingsOverviewWorkspace
+              validation={validation}
+              onNavigate={navigate}
+            />
+          ) : null}
 
-                  <article className="si-settings-overview-card">
-                    <span className="si-settings-overview-card__label">
-                      Fonte declarada
-                    </span>
-                    <strong className="si-settings-overview-card__value">
-                      {dashboardData.meta.source}
-                    </strong>
-                    <p>
-                      O backend ainda pode retornar blocos legados para o painel, mas a escrita principal permanece no modelo novo.
-                    </p>
-                  </article>
+          {activeTab === "catalog" ? (
+            <CatalogAdminWorkspace
+              getAccessToken={getAccessToken}
+              view={catalogView}
+              validationIssueCount={validationIssueCount}
+              onViewChange={setCatalogView}
+            />
+          ) : null}
 
-                  <article className="si-settings-overview-card">
-                    <span className="si-settings-overview-card__label">
-                      Centro da administração
-                    </span>
-                    <strong className="si-settings-overview-card__value">
-                      Departamentos e metas anuais
-                    </strong>
-                    <p>
-                      Use as abas dedicadas para editar catálogo estrutural e ciclos anuais. Configurações globais ficaram restritas a parâmetros e governança.
-                    </p>
-                  </article>
-                </div>
-              </>
-            )}
-          </SectionBlock>
-        ) : null}
-
-        {activeTab === "departments" ? (
-          <SectionBlock
-            title="Departamentos"
-            description="Gerencie a estrutura administrativa do módulo e abra cada departamento em um workspace focado no catálogo estrutural."
-          >
-            <AdminDepartmentsWorkspace getAccessToken={getAccessToken} />
-          </SectionBlock>
-        ) : null}
-
-        {activeTab === "goals" ? (
-          <SectionBlock
-            title="Metas anuais"
-            description="Gerencie ciclos anuais, metas por indicador e operações em lote como duplicação e preenchimento."
-          >
+          {activeTab === "goals" ? (
             <AdminGoalsWorkspace getAccessToken={getAccessToken} />
-          </SectionBlock>
-        ) : null}
+          ) : null}
 
-        {activeTab === "catalog" ? (
-          <SectionBlock
-            title="Catálogo e validação"
-            description="Compare agregação do departamento, escopo do indicador e metas ativas do ano para identificar inconsistências antes de publicar o painel."
-          >
-            <CatalogStructureValidationWorkspace getAccessToken={getAccessToken} />
-          </SectionBlock>
-        ) : null}
-
-        {activeTab === "global" ? (
-          <SectionBlock
-            title="Configurações globais"
-            description="Administre apenas os blocos globais centrais do módulo: parâmetros e governança."
-          >
-            {settings.loading && !settings.data ? (
-              <LoadingActivityInline
-                title="Carregando configurações globais"
-                description="Aguarde enquanto parâmetros e governança são carregados."
-                variant="panel"
-                tone="info"
-                progressPercent={globalLoadingProgress}
-              />
-            ) : !settings.data ? (
-              <InfoState
-                title="Configurações indisponíveis"
-                description="Não foi possível carregar parâmetros e governança."
-              />
-            ) : (
-              <SettingsStructuredEditor
-                data={settings.data}
-                saving={settings.saving}
-                onSave={settings.save}
-              />
-            )}
-          </SectionBlock>
-        ) : null}
-
-        {activeTab === "audit" ? (
-          <SectionBlock
-            title="Auditoria"
-            description="Acompanhe as mudanças administrativas recentes e filtre a trilha por bloco funcional."
-          >
-            <AuditWorkspacePanel getAccessToken={getAccessToken} />
-          </SectionBlock>
-        ) : null}
+          {activeTab === "system" ? (
+            <div className="si-settings-system">
+              {settings.loading && !settings.data ? (
+                <LoadingActivityInline
+                  title="Carregando sistema"
+                  description="Parâmetros, governança e auditoria."
+                  variant="panel"
+                  tone="info"
+                  progressPercent={globalLoadingProgress}
+                />
+              ) : !settings.data ? (
+                <InfoState
+                  title="Sistema indisponível"
+                  description="Não foi possível carregar parâmetros e governança."
+                />
+              ) : (
+                <>
+                  <SettingsStructuredEditor
+                    data={settings.data}
+                    saving={settings.saving}
+                    onSave={settings.save}
+                  />
+                  <AdminConfigImportExportPanel
+                    getAccessToken={getAccessToken}
+                    onCompleted={() => {
+                      void settings.reload();
+                      void validation.reload();
+                    }}
+                  />
+                  <AuditWorkspacePanel getAccessToken={getAccessToken} />
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

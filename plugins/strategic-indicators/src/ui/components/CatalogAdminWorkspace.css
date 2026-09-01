@@ -1,0 +1,16 @@
+.si-catalog-admin {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.si-catalog-admin__subnav {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--app-canvas, var(--bg, #ffffff));
+}
+
+.si-catalog-admin__panel {
+  min-width: 0;
+}
