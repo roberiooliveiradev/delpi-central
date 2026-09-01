@@ -3,6 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
+from production_pulse_app.application.services.device_driver_registry_service import (
+    get_device_driver_registry,
+)
 from production_pulse_app.application.services.work_center_catalog_service import (
     BindingValidationError,
     WorkCenterCatalogService,
@@ -13,6 +16,17 @@ from production_pulse_app.infrastructure.http.auth_header import bearer_authoriz
 
 router = APIRouter(prefix="/catalog", tags=["Catalog"])
 _catalog_service = WorkCenterCatalogService()
+_driver_registry = get_device_driver_registry()
+
+
+@router.get("/drivers")
+async def list_drivers():
+    return success(
+        {
+            "schemaVersion": _driver_registry.schema_version(),
+            "drivers": _driver_registry.list_catalog_drivers(),
+        }
+    )
 
 
 @router.get("/work-centers")

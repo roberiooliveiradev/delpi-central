@@ -2,19 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-# Stub até E3.S0 (device_drivers.json). driver_key → role_key.
-DRIVER_ROLE_MAP: dict[str, str] = {
-    "esp8266_counter_v1": "pulse_counter",
-    "esp8266_gauge_v1": "process_gauge",
-}
+from production_pulse_app.application.services.device_driver_registry_service import (
+    get_device_driver_registry,
+)
+from production_pulse_app.domain.errors import DeviceValidationError
 
 POLL_INTERVAL_MIN = 5
 POLL_INTERVAL_MAX = 300
 VALID_BRANCHES = frozenset({"01", "02"})
-
-
-class DeviceValidationError(ValueError):
-    pass
 
 
 @dataclass(frozen=True)
@@ -24,13 +19,8 @@ class ResolvedDriver:
 
 
 def resolve_driver(driver_key: str) -> ResolvedDriver:
-    normalized = (driver_key or "").strip()
-    if not normalized:
-        raise DeviceValidationError("driver_key é obrigatório.")
-    role_key = DRIVER_ROLE_MAP.get(normalized)
-    if role_key is None:
-        raise DeviceValidationError(f"Driver desconhecido: {normalized}")
-    return ResolvedDriver(driver_key=normalized, role_key=role_key)
+    resolved = get_device_driver_registry().resolve_driver(driver_key)
+    return ResolvedDriver(driver_key=resolved.driver_key, role_key=resolved.role_key)
 
 
 def validate_branch(branch: str) -> str:
@@ -62,3 +52,14 @@ def normalize_name(name: str) -> str:
     if len(normalized) > 120:
         raise DeviceValidationError("name deve ter no máximo 120 caracteres.")
     return normalized
+
+
+__all__ = [
+    "DeviceValidationError",
+    "ResolvedDriver",
+    "resolve_driver",
+    "validate_branch",
+    "validate_poll_interval",
+    "normalize_ip_address",
+    "normalize_name",
+]

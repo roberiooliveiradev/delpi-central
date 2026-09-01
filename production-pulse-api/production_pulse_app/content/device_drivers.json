@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "drivers": {
+    "esp8266_counter_v1": {
+      "roleKey": "pulse_counter",
+      "labelPt": "ESP8266 — contador de golpes",
+      "descriptionPt": "Firmware piloto: GET /api/contador, POST incrementar/decrementar/reset",
+      "metrics": [
+        {
+          "key": "counter",
+          "type": "integer",
+          "monotonic": true,
+          "labelPt": "Golpes",
+          "primary": true,
+          "icon": "Hash"
+        }
+      ],
+      "commands": ["increment", "decrement", "reset"],
+      "operatorSurface": "counter_pad",
+      "operatorEligible": true,
+      "poll": { "timeoutMs": 3000 },
+      "thresholds": {}
+    },
+    "esp8266_gauge_v1": {
+      "roleKey": "process_gauge",
+      "labelPt": "ESP8266 — sensores de processo",
+      "descriptionPt": "Leitura rpm e temperatura; sem comandos de escrita",
+      "metrics": [
+        {
+          "key": "rpm",
+          "type": "number",
+          "monotonic": false,
+          "labelPt": "Rotação",
+          "unit": "rpm",
+          "primary": true,
+          "icon": "Gauge"
+        },
+        {
+          "key": "temperature_c",
+          "type": "number",
+          "monotonic": false,
+          "labelPt": "Temperatura",
+          "unit": "°C",
+          "primary": false,
+          "icon": "Thermometer"
+        }
+      ],
+      "commands": [],
+      "operatorSurface": "gauge_readout",
+      "operatorEligible": true,
+      "poll": { "timeoutMs": 3000 },
+      "thresholds": {
+        "temperature_c": { "warnAbove": 75, "dangerAbove": 90 }
+      }
+    }
+  }
+}

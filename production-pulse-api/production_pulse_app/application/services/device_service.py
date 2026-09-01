@@ -3,10 +3,13 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from production_pulse_app.application.services.device_driver_registry_service import (
+    get_device_driver_registry,
+)
 from production_pulse_app.core.serialize import json_safe
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
+from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.domain.services.device_validation_service import (
-    DeviceValidationError,
     normalize_ip_address,
     normalize_name,
     resolve_driver,
@@ -36,6 +39,10 @@ class DeviceService:
             device_repository=self._repository,
             binding_repository=self._binding_repository,
         )
+        self._driver_registry = get_device_driver_registry()
+
+    def _capabilities_for(self, driver_key: str) -> dict[str, Any]:
+        return self._driver_registry.build_capabilities(driver_key)
 
     def list_devices(
         self,
@@ -59,7 +66,12 @@ class DeviceService:
         row = self._repository.get_by_id(device_id)
         if row is None:
             raise DeviceNotFoundError(str(device_id))
-        payload = json_safe(device_row_to_api(row))
+        payload = json_safe(
+            device_row_to_api(
+                row,
+                capabilities=self._capabilities_for(row["driver_key"]),
+            )
+        )
         payload["binding"] = self._binding_service.get_active_binding(device_id)
         return payload
 

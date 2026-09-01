@@ -4,8 +4,12 @@ from typing import Any
 from uuid import UUID
 
 
-def device_row_to_api(row: dict[str, Any]) -> dict[str, Any]:
-    return {
+def device_row_to_api(
+    row: dict[str, Any],
+    *,
+    capabilities: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload = {
         "id": str(row["id"]),
         "branch": row["branch"],
         "name": row["name"],
@@ -24,6 +28,9 @@ def device_row_to_api(row: dict[str, Any]) -> dict[str, Any]:
         "createdBy": row.get("created_by"),
         "updatedBy": row.get("updated_by"),
     }
+    if capabilities is not None:
+        payload["capabilities"] = capabilities
+    return payload
 
 
 def parse_device_id(device_id: str) -> UUID:

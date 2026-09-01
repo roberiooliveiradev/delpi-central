@@ -1,0 +1,2 @@
+class DeviceValidationError(ValueError):
+    pass
