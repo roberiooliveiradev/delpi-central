@@ -38,10 +38,10 @@ Rotas api-delpi (metas via `commercial_rol` + filial):
 
 | KPI na UI | Rota | Meta SI |
 |-----------|------|---------|
-| ROL Matriz (01) | `GET /commercial/head_office_rol_target_pct` | `commercial_rol`, `branch=01` |
-| ROL Filial (02) | `GET /commercial/branch_rol_target_pct` | `commercial_rol`, `branch=02` |
-| ROL WEG (01/02) | `GET /commercial/head_office_weg_rol_target_pct` + `branch_weg_rol_target_pct` | `commercial_rol_weg` |
-| ROL Novos Negócios (01/02) | `GET /commercial/head_office_new_business_rol_target_pct` + `branch_new_business_rol_target_pct` | `commercial_rol_new_business` |
+| ROL Matriz (01) | `GET /commercial/rol/summary` | `commercial_rol`, `branch=01` |
+| ROL Filial (02) | `GET /commercial/rol/summary` | `commercial_rol`, `branch=02` |
+| ROL WEG (01/02) | `GET /commercial/weg-rol-target-pct` + `branch_weg_rol_target_pct` | `commercial_rol_weg` |
+| ROL Novos Negócios (01/02) | `GET /commercial/new-business-rol-target-pct` + `branch_new_business_rol_target_pct` | `commercial_rol_new_business` |
 | Conversão / OTD / % novos | rotas com `branch` opcional | `source_key` do indicador + `branch` |
 
 Chaves legadas `commercial_head_office_rol_target` / `commercial_branch_rol_target` ainda resolvem para `commercial-rol` na API de metas do SI.

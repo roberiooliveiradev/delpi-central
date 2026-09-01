@@ -114,8 +114,9 @@ Documentação completa: [invoice-issuance.md](./invoice-issuance.md) · playboo
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/commercial/head_office_rol_target_pct` | Meta % ROL matriz (filial fixa `01`). |
-| GET | `/commercial/branch_rol_target_pct` | Meta % ROL filial (filial fixa `02`). |
+| GET | `/commercial/rol/summary` | Meta % ROL comercial (`branch` opcional: `01` matriz, `02` filial, omitido = consolidado). |
+| GET | `/commercial/weg-rol-target-pct` | Meta % ROL WEG (`branch` opcional). |
+| GET | `/commercial/new-business-rol-target-pct` | Meta R$ ROL novos negócios (`branch` opcional). |
 | GET | `/commercial/closing-rate` | Taxa de conversão de vendas. Ver [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md). |
 | GET | `/commercial/sales-order-otd` | OTD de pedidos de venda (KPI escalar). Ver [comercial-sales-order-otd.md](./comercial-sales-order-otd.md). |
 | GET | `/commercial/sales-order-otd/summary` | OTD + meta SI (hub TV KPI). |
@@ -125,7 +126,7 @@ Documentação completa: [invoice-issuance.md](./invoice-issuance.md) · playboo
 | GET | `/commercial/new-business-rol-pct` | % ROL de novos negócios (exclui clientes WEG). |
 | GET | `/commercial/new-clients-average` | Média mensal de novos clientes. |
 | GET | `/commercial/new-clients-rol-pct` | % do ROL de clientes novos. |
-| GET | `/commercial/rol/summary` | ROL + meta SI (hub TV KPI; `recompute_target_pct_from=rol`). |
+| GET | `/commercial/rol/summary` | ROL + meta SI (hub TV KPI; `recompute_target_pct_from=rol`; `branch` opcional). |
 | GET | `/commercial/rol/series` | Série temporal de ROL (`granularity`: day, week, month, year). |
 | GET | `/commercial/rol/by-customer` | Ranking de ROL por cliente (Top N + Demais). |
 | GET | `/commercial/proposals` | Listagem paginada de propostas (OV). Filtros: `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment` (`weg`/`new_business`), `page`, `page_size`, `sort_by`, `sort_dir`, `search`. Ver `plugins/dashboard-commercial/docs/PROPOSTAS-PERIODO.md`. |
