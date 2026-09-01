@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-28",
-  "baselineOperationCount": 696,
-  "operationCount": 696,
-  "coveredCount": 621,
+  "generatedAt": "2026-09-01",
+  "baselineOperationCount": 692,
+  "operationCount": 692,
+  "coveredCount": 617,
   "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 26,
-      "covered": 26,
+      "total": 22,
+      "covered": 22,
       "gap": 0,
       "exempt": 0
     },
@@ -217,33 +217,6 @@
       "status": "covered"
     },
     {
-      "operationId": "get_branch_new_business_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/branch_new_business_rol_target_pct",
-      "module": "commercial",
-      "entity": "commercial_rol_new_business_target",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_branch_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/branch_rol_target_pct",
-      "module": "commercial",
-      "entity": "commercial_rol_target",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_branch_weg_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/branch_weg_rol_target_pct",
-      "module": "commercial",
-      "entity": "commercial_rol_weg_target",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
       "operationId": "get_sales_conversion_rate",
       "method": "GET",
       "path": "/commercial/closing-rate",
@@ -258,33 +231,6 @@
       "path": "/commercial/closing-rate/series",
       "module": "commercial",
       "entity": "sales_conversion_rate_series",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_head_office_new_business_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/head_office_new_business_rol_target_pct",
-      "module": "commercial",
-      "entity": "commercial_rol_new_business_target",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_head_office_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/head_office_rol_target_pct",
-      "module": "commercial",
-      "entity": "commercial_rol_target",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_head_office_weg_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/head_office_weg_rol_target_pct",
-      "module": "commercial",
-      "entity": "commercial_rol_weg_target",
       "shape": "scalar",
       "status": "covered"
     },
@@ -375,6 +321,24 @@
       "path": "/commercial/rol/summary",
       "module": "commercial",
       "entity": "commercial_rol_summary",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_weg_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/weg-rol-target-pct",
+      "module": "commercial",
+      "entity": "commercial_rol_weg_target",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_new_business_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/new-business-rol-target-pct",
+      "module": "commercial",
+      "entity": "commercial_rol_new_business_target",
       "shape": "scalar",
       "status": "covered"
     },

@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 694,
-  "stableCount": 692,
+  "operationCount": 692,
+  "stableCount": 690,
   "autoCount": 2,
   "recommendationCollisions": [],
   "autoByTag": {
@@ -15,27 +15,6 @@
       "method": "POST",
       "path": "/canal-denuncia/denuncias",
       "tag": "Canal de Denúncia",
-      "stable": true
-    },
-    {
-      "operationId": "get_branch_new_business_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/branch_new_business_rol_target_pct",
-      "tag": "Comercial",
-      "stable": true
-    },
-    {
-      "operationId": "get_branch_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/branch_rol_target_pct",
-      "tag": "Comercial",
-      "stable": true
-    },
-    {
-      "operationId": "get_branch_weg_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/branch_weg_rol_target_pct",
-      "tag": "Comercial",
       "stable": true
     },
     {
@@ -53,30 +32,16 @@
       "stable": true
     },
     {
-      "operationId": "get_head_office_new_business_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/head_office_new_business_rol_target_pct",
-      "tag": "Comercial",
-      "stable": true
-    },
-    {
-      "operationId": "get_head_office_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/head_office_rol_target_pct",
-      "tag": "Comercial",
-      "stable": true
-    },
-    {
-      "operationId": "get_head_office_weg_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/head_office_weg_rol_target_pct",
-      "tag": "Comercial",
-      "stable": true
-    },
-    {
       "operationId": "get_new_business_rol_pct",
       "method": "GET",
       "path": "/commercial/new-business-rol-pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_new_business_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/new-business-rol-target-pct",
       "tag": "Comercial",
       "stable": true
     },
@@ -137,6 +102,13 @@
       "stable": true
     },
     {
+      "operationId": "get_commercial_rol_summary",
+      "method": "GET",
+      "path": "/commercial/rol/summary",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
       "operationId": "get_sales_order_otd",
       "method": "GET",
       "path": "/commercial/sales-order-otd",
@@ -182,6 +154,20 @@
       "operationId": "get_sales_order_otd_series_by_customer",
       "method": "GET",
       "path": "/commercial/sales-order-otd/series-by-customer",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_summary",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/summary",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_weg_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/weg-rol-target-pct",
       "tag": "Comercial",
       "stable": true
     },

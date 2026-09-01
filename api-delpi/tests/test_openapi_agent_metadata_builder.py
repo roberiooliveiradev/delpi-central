@@ -5,13 +5,13 @@ from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetada
 
 def test_from_contract_commercial_rol_target() -> None:
     meta = OpenApiAgentMetadataBuilder.from_contract(
-        "get_head_office_rol_target_pct",
-        path="/commercial/head_office_rol_target_pct",
+        "get_weg_rol_target_pct",
+        path="/commercial/weg-rol-target-pct",
     )
 
-    assert meta["operation_id"] == "get_head_office_rol_target_pct"
+    assert meta["operation_id"] == "get_weg_rol_target_pct"
     assert "ROL" in meta["summary"] or "rol" in meta["summary"].lower()
-    assert "Comercial" in meta["description"]
+    assert "WEG" in meta["summary"] or "weg" in meta["summary"].lower()
     assert meta["summary"]
     assert len(meta["description"]) > 40
 
