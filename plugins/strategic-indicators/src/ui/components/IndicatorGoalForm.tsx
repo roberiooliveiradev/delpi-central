@@ -29,9 +29,11 @@ import {
   expectedMonthlyCurvePointCount,
   resolveGoalValueForApi,
 } from "../utils/goalValuePolicy";
+import { SI_HELP } from "../../content/helpTooltips";
 import "./IndicatorGoalForm.css";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 
 type IndicatorOption = {
   value: string;
@@ -238,7 +240,7 @@ export function IndicatorGoalForm({
       ) : null}
 
       <div className="si-modal-form__grid">
-        <Field label="Indicador">
+        <Field label="Indicador" hint={SI_HELP.goalForm.indicatorId}>
           {normalizedIndicatorOptions.length > 0 ? (
             <SiSelectControl
               value={indicatorId}
@@ -266,7 +268,7 @@ export function IndicatorGoalForm({
           )}
         </Field>
 
-        <Field label="Ano da meta">
+        <Field label="Ano da meta" hint={SI_HELP.goalForm.goalYear}>
           <SiNativeTextControl
             type="number"
             min={MIN_GOAL_YEAR}
@@ -277,14 +279,14 @@ export function IndicatorGoalForm({
           />
         </Field>
 
-        <Field label="Nome da meta" fullWidth>
+        <Field label="Nome da meta" hint={SI_HELP.goalForm.goalLabel} fullWidth>
           <SiNativeTextControl
             value={goalLabel}
             onChange={setGoalLabel}
           />
         </Field>
 
-        <Field label="Modo da meta">
+        <Field label="Modo da meta" hint={SI_HELP.goalForm.goalMode}>
           <SiSelectControl
             value={goalMode}
             onChange={(nextMode) => {
@@ -301,7 +303,7 @@ export function IndicatorGoalForm({
           />
         </Field>
 
-        <Field label="Escopo da meta">
+        <Field label="Escopo da meta" hint={SI_HELP.goalForm.goalScopeBranch}>
           <SiSelectControl
             value={goalScopeBranch}
             onChange={setGoalScopeBranch}
@@ -314,7 +316,7 @@ export function IndicatorGoalForm({
           />
         </Field>
 
-        <Field label="Periodicidade">
+        <Field label="Periodicidade" hint={SI_HELP.goalForm.goalPeriodicity}>
           <SiSelectControl
             value={goalPeriodicity}
             onChange={(nextPeriodicity) => {
@@ -336,7 +338,7 @@ export function IndicatorGoalForm({
         </Field>
 
         {goalMode === "standard" ? (
-          <Field label="Valor da meta">
+          <Field label="Valor da meta" hint={SI_HELP.goalForm.goalValue}>
             <SiNativeTextControl
               type="number"
               step="0.0001"
@@ -346,7 +348,7 @@ export function IndicatorGoalForm({
           </Field>
         ) : null}
 
-        <Field label="Vigência inicial">
+        <Field label="Vigência inicial" hint={SI_HELP.goalForm.validFrom}>
           <SiNativeTextControl
             type="date"
             value={validFrom}
@@ -354,7 +356,7 @@ export function IndicatorGoalForm({
           />
         </Field>
 
-        <Field label="Vigência final">
+        <Field label="Vigência final" hint={SI_HELP.goalForm.validTo}>
           <SiNativeTextControl
             type="date"
             value={validTo}
@@ -364,9 +366,11 @@ export function IndicatorGoalForm({
 
         {goalMode === "monthly_curve" ? (
           <div className="si-settings-form-field si-settings-form-field--full">
-            <span className="si-settings-form-field__label">
-              {getCurveSectionTitle(goalPeriodicity)}
-            </span>
+            <FieldLabel
+              label={getCurveSectionTitle(goalPeriodicity)}
+              hint={SI_HELP.goalForm.monthlyTargets}
+              className="si-settings-form-field__label"
+            />
 
             <div className="si-monthly-targets-toolbar">
               <span className="si-monthly-targets-toolbar__badge">
@@ -409,7 +413,7 @@ export function IndicatorGoalForm({
           </div>
         ) : null}
 
-        <Field label="Observações" fullWidth>
+        <Field label="Observações" hint={SI_HELP.goalForm.notes} fullWidth>
           <SiNativeTextAreaControl
             value={notes}
             aria-label="Observações"
@@ -451,10 +455,12 @@ export function IndicatorGoalForm({
 
 function Field({
   label,
+  hint,
   children,
   fullWidth = false,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
   fullWidth?: boolean;
 }) {
@@ -462,7 +468,7 @@ function Field({
     <label
       className={`si-settings-form-field ${fullWidth ? "si-settings-form-field--full" : ""}`}
     >
-      <span className="si-settings-form-field__label">{label}</span>
+      <FieldLabel label={label} hint={hint} className="si-settings-form-field__label" />
       {children}
     </label>
   );

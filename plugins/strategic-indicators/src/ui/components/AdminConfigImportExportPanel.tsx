@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useConfirmDialogController } from "@delpi/plugin-ui/index";
+import { SectionHintLabel, useConfirmDialogController } from "@delpi/plugin-ui/index";
 import {
   applyAdminConfigBundle,
   downloadAdminConfigBundleJson,
@@ -16,6 +16,7 @@ import { DataTable } from "./DataTable";
 import { InfoState } from "./InfoState";
 import { SiConfirmModal } from "./SiConfirmModal";
 import { SiNativeCheckboxControl } from "./siNativeFormFields";
+import { SI_HELP } from "../../content/helpTooltips";
 import "./AdminConfigImportExportPanel.css";
 
 type AdminConfigImportExportPanelProps = {
@@ -267,13 +268,11 @@ export function AdminConfigImportExportPanel({
   return (
     <section className="si-config-io-panel">
       <div className="si-config-io-panel__header">
-        <div>
-          <h3>Exportar e importar configuração</h3>
-          <p>
-            Backup do catálogo: departamentos, indicadores, metas ativas e
-            parâmetros globais (JSON versionado).
-          </p>
-        </div>
+        <SectionHintLabel
+          label="Exportar e importar configuração"
+          hint={SI_HELP.system.importExportTitle}
+          className="si-config-io-panel__title"
+        />
       </div>
 
       {feedback?.kind === "error" ? (
@@ -335,10 +334,7 @@ export function AdminConfigImportExportPanel({
           />
           <span>
             <strong>Substituir tudo</strong>
-            <small>
-              Apaga o cadastro atual e grava o JSON. Scores do painel são
-              zerados até o job / Atualizar.
-            </small>
+            <small>{SI_HELP.system.importModeReplace}</small>
           </span>
         </label>
         <label className="si-config-io-panel__mode">
@@ -350,10 +346,7 @@ export function AdminConfigImportExportPanel({
           />
           <span>
             <strong>Mesclar por ID</strong>
-            <small>
-              Mantém IDs que não estão no arquivo; metas existentes não são
-              alteradas.
-            </small>
+            <small>{SI_HELP.system.importModeMerge}</small>
           </span>
         </label>
       </fieldset>

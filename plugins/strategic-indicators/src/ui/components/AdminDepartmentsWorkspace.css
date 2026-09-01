@@ -238,7 +238,9 @@
   grid-column: 1 / -1;
 }
 
-.si-admin-form-field span {
+.si-admin-form-field span,
+.si-admin-form-field .delpi-ui-field-label,
+.si-admin-form-field__label {
   font-size: 13px;
   color: var(--text-muted);
 }

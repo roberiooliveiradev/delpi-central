@@ -16,15 +16,16 @@ import { SectionBlock } from "./SectionBlock";
 import { ActiveToggle } from "./ActiveToggle";
 import {
   getAggregationModeLabel,
-  getBranchValueAggregationHint,
   getBranchValueAggregationLabel,
   getPerformanceDirectionLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
 import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
+import { SI_HELP } from "../../content/helpTooltips";
 import "./AdminDepartmentsWorkspace.css";
 import { SI_VALUE_UNIT_OPTIONS, SiSelectControl } from "./siFiltersUi";
 import { SiNativeTextAreaControl, SiNativeTextControl } from "./siNativeFormFields";
+import { SiAdminFormField } from "./SiAdminFormField";
 
 type AdminDepartmentsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -589,8 +590,7 @@ export function AdminDepartmentsWorkspace({
         }
       >
         <div className="si-admin-form-grid">
-          <label className="si-admin-form-field">
-            <span>ID</span>
+          <SiAdminFormField label="ID" hint={SI_HELP.department.departmentId}>
             <SiNativeTextControl
               value={departmentForm.department_id}
               onChange={(value) =>
@@ -600,10 +600,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Nome</span>
+          <SiAdminFormField label="Nome" hint={SI_HELP.department.departmentName}>
             <SiNativeTextControl
               value={departmentForm.department_name}
               onChange={(value) =>
@@ -613,10 +612,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Sigla</span>
+          <SiAdminFormField label="Sigla" hint={SI_HELP.department.shortName}>
             <SiNativeTextControl
               value={departmentForm.short_name}
               onChange={(value) =>
@@ -626,10 +624,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Peso</span>
+          <SiAdminFormField label="Peso" hint={SI_HELP.department.weightPct}>
             <SiNativeTextControl
               type="number"
               value={departmentForm.weight_pct}
@@ -640,10 +637,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Agregação</span>
+          <SiAdminFormField label="Agregação" hint={SI_HELP.department.aggregationMode}>
             <SiSelectControl
               value={departmentForm.aggregation_mode}
               onChange={(value) =>
@@ -660,10 +656,9 @@ export function AdminDepartmentsWorkspace({
                 },
               ]}
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Ordem</span>
+          <SiAdminFormField label="Ordem" hint={SI_HELP.department.displayOrder}>
             <SiNativeTextControl
               type="number"
               value={departmentForm.display_order}
@@ -674,10 +669,13 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field si-admin-form-field--full">
-            <span>Resumo estratégico</span>
+          <SiAdminFormField
+            label="Resumo estratégico"
+            hint={SI_HELP.department.strategicSummary}
+            fullWidth
+          >
             <SiNativeTextAreaControl
               rows={3}
               value={departmentForm.strategic_summary}
@@ -689,10 +687,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Meta principal</span>
+          <SiAdminFormField label="Meta principal" hint={SI_HELP.department.headlineGoal}>
             <SiNativeTextControl
               value={departmentForm.headline_goal}
               onChange={(value) =>
@@ -702,10 +699,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Foco complementar</span>
+          <SiAdminFormField label="Foco complementar" hint={SI_HELP.department.supportingFocus}>
             <SiNativeTextControl
               value={departmentForm.supporting_focus}
               onChange={(value) =>
@@ -715,7 +711,7 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
         </div>
 
       </DrawerPanel>
@@ -753,8 +749,7 @@ export function AdminDepartmentsWorkspace({
         }
       >
         <div className="si-admin-form-grid">
-          <label className="si-admin-form-field">
-            <span>ID</span>
+          <SiAdminFormField label="ID" hint={SI_HELP.indicator.indicatorId}>
             <SiNativeTextControl
               value={indicatorForm.indicator_id}
               onChange={(value) =>
@@ -764,10 +759,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Nome</span>
+          <SiAdminFormField label="Nome" hint={SI_HELP.indicator.indicatorName}>
             <SiNativeTextControl
               value={indicatorForm.indicator_name}
               onChange={(value) =>
@@ -777,10 +771,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Peso</span>
+          <SiAdminFormField label="Peso" hint={SI_HELP.indicator.weightPct}>
             <SiNativeTextControl
               type="number"
               value={indicatorForm.weight_pct}
@@ -791,10 +784,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Escopo</span>
+          <SiAdminFormField label="Escopo" hint={SI_HELP.indicator.scopeType}>
             <SiSelectControl
               value={indicatorForm.scope_type}
               onChange={(value) =>
@@ -808,11 +800,13 @@ export function AdminDepartmentsWorkspace({
                 { value: "per_unit", label: getScopeTypeLabel("per_unit") },
               ]}
             />
-          </label>
+          </SiAdminFormField>
 
           {indicatorForm.scope_type === "per_unit" ? (
-            <label className="si-admin-form-field">
-              <span>Agregação entre filiais</span>
+            <SiAdminFormField
+              label="Agregação entre filiais"
+              hint={SI_HELP.indicator.branchValueAggregation}
+            >
               <SiSelectControl
                 value={indicatorForm.branch_value_aggregation}
                 onChange={(value) =>
@@ -834,14 +828,13 @@ export function AdminDepartmentsWorkspace({
                   },
                 ]}
               />
-              <small className="si-admin-form-field__hint">
-                {getBranchValueAggregationHint(indicatorForm.branch_value_aggregation)}
-              </small>
-            </label>
+            </SiAdminFormField>
           ) : null}
 
-          <label className="si-admin-form-field">
-            <span>Direção de performance</span>
+          <SiAdminFormField
+            label="Direção de performance"
+            hint={SI_HELP.indicator.performanceDirection}
+          >
             <SiSelectControl
               value={indicatorForm.performance_direction}
               onChange={(value) =>
@@ -861,10 +854,12 @@ export function AdminDepartmentsWorkspace({
                 },
               ]}
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Chave da fonte (obrigatória se ativo)</span>
+          <SiAdminFormField
+            label="Chave da fonte (obrigatória se ativo)"
+            hint={SI_HELP.indicator.sourceKey}
+          >
             <SiNativeTextControl
               value={indicatorForm.source_key}
               placeholder="ex.: commercial_rol, production_otd"
@@ -875,11 +870,7 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-            <small className="si-admin-form-field__hint">
-              Liga o indicador às medições do SI e às metas nos dashboards
-              departamentais. Use letras minúsculas e underscore.
-            </small>
-          </label>
+          </SiAdminFormField>
 
           {indicatorFormError ? (
             <p className="si-settings-editor__alert si-settings-editor__alert--error">
@@ -887,8 +878,7 @@ export function AdminDepartmentsWorkspace({
             </p>
           ) : null}
 
-          <label className="si-admin-form-field">
-            <span>Unidade</span>
+          <SiAdminFormField label="Unidade" hint={SI_HELP.indicator.valueUnit}>
             <SiSelectControl
               value={indicatorForm.value_unit}
               onChange={(value) =>
@@ -901,10 +891,9 @@ export function AdminDepartmentsWorkspace({
               emptyLabel="Não informada"
               options={[...SI_VALUE_UNIT_OPTIONS]}
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Prefixo</span>
+          <SiAdminFormField label="Prefixo" hint={SI_HELP.indicator.valuePrefix}>
             <SiNativeTextControl
               placeholder="Ex.: R$"
               value={indicatorForm.value_prefix}
@@ -915,10 +904,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Sufixo</span>
+          <SiAdminFormField label="Sufixo" hint={SI_HELP.indicator.valueSuffix}>
             <SiNativeTextControl
               placeholder="Ex.: %, PPM, /mês, dias"
               value={indicatorForm.value_suffix}
@@ -929,10 +917,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Casas decimais</span>
+          <SiAdminFormField label="Casas decimais" hint={SI_HELP.indicator.valueDecimals}>
             <SiNativeTextControl
               type="number"
               min={0}
@@ -945,10 +932,9 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field">
-            <span>Ordem</span>
+          <SiAdminFormField label="Ordem" hint={SI_HELP.indicator.displayOrder}>
             <SiNativeTextControl
               type="number"
               value={indicatorForm.display_order}
@@ -959,10 +945,13 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
 
-          <label className="si-admin-form-field si-admin-form-field--full">
-            <span>Descrição estratégica</span>
+          <SiAdminFormField
+            label="Descrição estratégica"
+            hint={SI_HELP.indicator.strategicDescription}
+            fullWidth
+          >
             <SiNativeTextAreaControl
               rows={3}
               value={indicatorForm.strategic_description}
@@ -974,7 +963,7 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
-          </label>
+          </SiAdminFormField>
         </div>
 
       </DrawerPanel>

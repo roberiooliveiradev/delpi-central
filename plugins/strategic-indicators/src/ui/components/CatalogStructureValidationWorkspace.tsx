@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { InfoState } from "./InfoState";
 import { LoadingActivityInline } from "./LoadingActivityInline";
 import { useCatalogStructureValidation } from "../../state/hooks/useCatalogStructureValidation";
@@ -7,9 +8,11 @@ import {
   getAggregationModeLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
+import { SI_HELP } from "../../content/helpTooltips";
 import "./CatalogStructureValidationWorkspace.css";
 import { SiSelectControl } from "./siFiltersUi";
 import { SiNativeCheckboxControl } from "./siNativeFormFields";
+import { SiAdminFormField } from "./SiAdminFormField";
 
 type CatalogStructureValidationWorkspaceProps = {
   getAccessToken?: () => string | undefined;
@@ -33,13 +36,13 @@ function GoalScopeBadges({
 }) {
   return (
     <span className="si-catalog-validation__scopes">
-      <span className={consolidated ? "is-on" : "is-off"} title="Meta consolidada">
+      <span className={consolidated ? "is-on" : "is-off"} title={SI_HELP.badges.goalScopeConsolidated}>
         C
       </span>
-      <span className={branch01 ? "is-on" : "is-off"} title="Meta Santa Catarina">
+      <span className={branch01 ? "is-on" : "is-off"} title={SI_HELP.badges.goalScope01}>
         01
       </span>
-      <span className={branch02 ? "is-on" : "is-off"} title="Meta Espírito Santo">
+      <span className={branch02 ? "is-on" : "is-off"} title={SI_HELP.badges.goalScope02}>
         02
       </span>
     </span>
@@ -101,10 +104,11 @@ export function CatalogStructureValidationWorkspace({
   return (
     <div className="si-catalog-validation">
       <div className="si-catalog-validation__toolbar">
-        <p className="si-catalog-validation__hint">
-          Cruza agregação do departamento, escopo do indicador e cobertura de metas ativas
-          no ano. Use para detectar inconsistências antes de fechar o ciclo ou publicar o painel.
-        </p>
+        <SectionHintLabel
+          label="Validação estrutural do catálogo"
+          hint={SI_HELP.catalog.validationColIssues}
+          className="si-catalog-validation__hint"
+        />
         <button
           type="button"
           className="si-btn si-btn--secondary"
@@ -152,8 +156,7 @@ export function CatalogStructureValidationWorkspace({
       ) : null}
 
       <div className="si-catalog-validation__filters">
-        <label className="si-admin-form-field">
-          <span>Ano das metas</span>
+        <SiAdminFormField label="Ano das metas" hint={SI_HELP.catalog.validationYear}>
           <SiSelectControl
             value={String(validation.goalYear)}
             onChange={(value) => validation.setGoalYear(Number(value))}
@@ -162,10 +165,9 @@ export function CatalogStructureValidationWorkspace({
               label: String(year),
             }))}
           />
-        </label>
+        </SiAdminFormField>
 
-        <label className="si-admin-form-field">
-          <span>Departamento</span>
+        <SiAdminFormField label="Departamento" hint={SI_HELP.catalog.validationDepartment}>
           <SiSelectControl
             value={departmentFilter}
             onChange={setDepartmentFilter}
@@ -176,7 +178,7 @@ export function CatalogStructureValidationWorkspace({
               label: option.label,
             }))}
           />
-        </label>
+        </SiAdminFormField>
 
         <SiNativeCheckboxControl
           className="si-catalog-validation__checkbox"
