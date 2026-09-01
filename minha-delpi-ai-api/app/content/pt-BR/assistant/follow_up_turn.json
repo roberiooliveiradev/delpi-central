@@ -42,7 +42,13 @@
     "yoy",
     "year over year",
     "periodo anterior",
-    "período anterior"
+    "período anterior",
+    "mes passado",
+    "mês passado",
+    "no mes passado",
+    "no mês passado",
+    "e no mes passado",
+    "e no mês passado"
   ],
   "periodSlotKinds": [
     "previous_year_same_range",
@@ -76,7 +82,13 @@
       "comparar com periodo",
       "comparar com período",
       "periodo anterior",
-      "período anterior"
+      "período anterior",
+      "mes passado",
+      "mês passado",
+      "no mes passado",
+      "no mês passado",
+      "e no mes passado",
+      "e no mês passado"
     ],
     "message_resolved": [
       "deste mes",

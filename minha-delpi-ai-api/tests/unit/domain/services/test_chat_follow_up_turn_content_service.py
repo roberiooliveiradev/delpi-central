@@ -81,6 +81,12 @@ def test_previous_period_and_branch_compare_vocab_loaded():
         )
         == "previous_year_same_range"
     )
+    assert (
+        ChatFollowUpTurnContentService.period_slot_kind_for_message(
+            "e no mês passado?"
+        )
+        == "previous_period"
+    )
     assert "período anterior" in ChatFollowUpTurnContentService.period_compare_prior_label(
         "previous_period"
     ).lower()

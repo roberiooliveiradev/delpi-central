@@ -162,7 +162,22 @@ def test_revise_previous_period_consumes_last_action():
     assert result.slot_delta.get("end_date")
 
 
-def test_revise_branch_compare_sets_compare_axis():
+def test_revise_mes_passado_maps_to_previous_period():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="e no mês passado?",
+        last_action={
+            **_ROL_ACTION,
+            "params": {
+                "start_date": "01-08-2026",
+                "end_date": "31-08-2026",
+                "branch": "01",
+            },
+        },
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.continuity_mode == "consume_last_action"
+    assert result.slot_delta.get("period") == "previous_period"
     result = ChatFollowUpTurnInterpretationService.interpret(
         message="comparar filial 01 com filial 02",
         last_action={
