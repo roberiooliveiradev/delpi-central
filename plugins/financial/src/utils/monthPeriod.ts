@@ -1,4 +1,6 @@
 const YEAR_MONTH = /^(\d{4})-(0[1-9]|1[0-2])$/;
+/** A série de despesas chega do TOTVS como `AAAAMM` (`LEFT(data_emissao, 6)`). */
+const YEAR_MONTH_COMPACT = /^(\d{4})(0[1-9]|1[0-2])$/;
 
 export type MonthPeriod = {
   startDate: string;
@@ -10,9 +12,17 @@ export function isYearMonth(value: string | null | undefined): boolean {
 }
 
 function parts(value: string | null | undefined): { year: number; month: number } | null {
-  const match = YEAR_MONTH.exec(value?.trim() ?? "");
+  const text = value?.trim() ?? "";
+  const match = YEAR_MONTH.exec(text) ?? YEAR_MONTH_COMPACT.exec(text);
   if (!match) return null;
   return { year: Number(match[1]), month: Number(match[2]) };
+}
+
+/** Converte `AAAAMM` ou `AAAA-MM` na forma canônica da URL (`AAAA-MM`). */
+export function normalizeYearMonth(value: string | null | undefined): string | null {
+  const parsed = parts(value);
+  if (!parsed) return null;
+  return `${parsed.year}-${pad(parsed.month)}`;
 }
 
 function pad(value: number): string {

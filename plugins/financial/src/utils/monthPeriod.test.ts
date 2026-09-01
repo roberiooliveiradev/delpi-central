@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { isYearMonth, monthPeriodRange, previousYearMonth } from "./monthPeriod";
+import {
+  isYearMonth,
+  monthPeriodRange,
+  normalizeYearMonth,
+  previousYearMonth,
+} from "./monthPeriod";
 
 describe("isYearMonth", () => {
   it("accepts only AAAA-MM with a real month", () => {
@@ -15,7 +20,32 @@ describe("isYearMonth", () => {
   });
 });
 
+describe("normalizeYearMonth", () => {
+  it("converts the TOTVS compact month to the URL form", () => {
+    expect(normalizeYearMonth("202608")).toBe("2026-08");
+    expect(normalizeYearMonth("202512")).toBe("2025-12");
+  });
+
+  it("keeps an already canonical month untouched", () => {
+    expect(normalizeYearMonth("2026-08")).toBe("2026-08");
+  });
+
+  it("rejects anything that is not a month", () => {
+    expect(normalizeYearMonth("202613")).toBeNull();
+    expect(normalizeYearMonth("20260801")).toBeNull();
+    expect(normalizeYearMonth("2026-8")).toBeNull();
+    expect(normalizeYearMonth(null)).toBeNull();
+  });
+});
+
 describe("monthPeriodRange", () => {
+  it("accepts the compact month coming from the expense series", () => {
+    expect(monthPeriodRange("202602")).toEqual({
+      startDate: "2026-02-01",
+      endDate: "2026-02-28",
+    });
+  });
+
   it("closes the month on its calendar last day", () => {
     expect(monthPeriodRange("2026-09")).toEqual({
       startDate: "2026-09-01",

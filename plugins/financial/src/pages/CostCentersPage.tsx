@@ -33,6 +33,7 @@ import type { CostCenterEntry, FinancialBranch } from "../types";
 import { downloadExcel } from "../utils/exportExcel";
 import { formatIssueDate, formatPeriodRange, formatYearMonth } from "../utils/formatDates";
 import { formatCompactCurrency, formatCurrency, formatInteger } from "../utils/formatNumbers";
+import { normalizeYearMonth } from "../utils/monthPeriod";
 import {
   buildFinancialHref,
   navigateFinancial,
@@ -117,7 +118,8 @@ export function CostCentersPage({
   const monthByLabel = useMemo(() => {
     const map = new Map<string, string>();
     for (const point of data?.series ?? []) {
-      map.set(formatYearMonth(point.yearMonth), point.yearMonth);
+      const month = normalizeYearMonth(point.yearMonth);
+      if (month) map.set(formatYearMonth(point.yearMonth), month);
     }
     return map;
   }, [data?.series]);
