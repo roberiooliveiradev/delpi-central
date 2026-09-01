@@ -184,30 +184,54 @@ class ChatFollowUpGroundedAnswerService:
             prior_params=prior_params,
         )
 
-        ack = ChatFollowUpTurnContentService.period_compare_format(
-            "ackTemplate",
-            baseline_start=str(baseline_params.get("start_date") or ""),
-            baseline_end=str(baseline_params.get("end_date") or ""),
-            prior_start=str(prior_params.get("start_date") or ""),
-            prior_end=str(prior_params.get("end_date") or ""),
-        )
+        baseline_branch = str(baseline_params.get("branch") or "").strip()
+        prior_branch = str(prior_params.get("branch") or "").strip()
+
+        if period_kind == "branch":
+            ack = ChatFollowUpTurnContentService.period_compare_branch_ack(
+                baseline_branch=baseline_branch,
+                compare_branch=prior_branch,
+                start=str(baseline_params.get("start_date") or ""),
+                end=str(baseline_params.get("end_date") or ""),
+            )
+            baseline_period_label = ChatFollowUpTurnContentService.period_compare_slot_label(
+                "branch",
+                "baseline",
+                branch=baseline_branch,
+            )
+            prior_period_label = ChatFollowUpTurnContentService.period_compare_slot_label(
+                "branch",
+                "prior",
+                branch=prior_branch,
+            )
+        else:
+            ack = ChatFollowUpTurnContentService.period_compare_format(
+                "ackTemplate",
+                baseline_start=str(baseline_params.get("start_date") or ""),
+                baseline_end=str(baseline_params.get("end_date") or ""),
+                prior_start=str(prior_params.get("start_date") or ""),
+                prior_end=str(prior_params.get("end_date") or ""),
+            )
+            baseline_period_label = ChatFollowUpTurnContentService.period_compare_slot_label(
+                period_kind,
+                "baseline",
+            )
+            prior_period_label = ChatFollowUpTurnContentService.period_compare_slot_label(
+                period_kind,
+                "prior",
+            )
+
         label = str(baseline_metric.get("label") or prior_metric.get("label") or "Indicador")
         baseline_line = ChatFollowUpTurnContentService.period_compare_format(
             "lineTemplate",
             label=label,
-            period_label=ChatFollowUpTurnContentService.period_compare_format(
-                "baselinePeriodLabel"
-            )
-            or "referência",
+            period_label=baseline_period_label or "referência",
             value=str(baseline_metric.get("display") or ""),
         )
         prior_line = ChatFollowUpTurnContentService.period_compare_format(
             "lineTemplate",
             label=label,
-            period_label=ChatFollowUpTurnContentService.period_compare_prior_label(
-                period_kind
-            )
-            or "período de comparação",
+            period_label=prior_period_label or "período de comparação",
             value=str(prior_metric.get("display") or ""),
         )
 
@@ -425,6 +449,22 @@ class ChatFollowUpGroundedAnswerService:
 
         baseline_start = str(baseline_params.get("start_date") or "").strip()
         prior_start = str(prior_params.get("start_date") or "").strip()
+        baseline_end = str(baseline_params.get("end_date") or "").strip()
+        prior_end = str(prior_params.get("end_date") or "").strip()
+        baseline_branch = str(baseline_params.get("branch") or "").strip()
+        prior_branch = str(prior_params.get("branch") or "").strip()
+
+        if (
+            baseline_branch
+            and prior_branch
+            and baseline_branch != prior_branch
+            and baseline_start
+            and prior_start
+            and baseline_start == prior_start
+            and baseline_end == prior_end
+        ):
+            return "branch"
+
         if len(baseline_start) >= 10 and len(prior_start) >= 10:
             # DD-MM-YYYY — mesmo mês/dia com ano-1 => YoY
             if (

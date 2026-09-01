@@ -332,3 +332,56 @@ def test_period_compare_prior_label_follows_slot_kind():
     )
     assert yoy
     assert "ano anterior" in yoy.lower()
+
+
+def test_period_compare_branch_axis_uses_filial_labels_not_yoy():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "periodCompareRole": "baseline",
+            "arguments": {
+                "parameters": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                    "branch": "01",
+                },
+            },
+            "metadata": {
+                "ok": True,
+                "kpiPresentation": {
+                    "cards": [{"key": "gross_revenue", "label": "Receita bruta", "value": 885743.10}]
+                },
+            },
+        },
+        {
+            "name": "execute_external_action",
+            "periodCompareRole": "prior",
+            "arguments": {
+                "parameters": {
+                    "start_date": "01-08-2026",
+                    "end_date": "31-08-2026",
+                    "branch": "02",
+                },
+            },
+            "metadata": {
+                "ok": True,
+                "kpiPresentation": {
+                    "cards": [{"key": "gross_revenue", "label": "Receita bruta", "value": 4094825.51}]
+                },
+            },
+        },
+    ]
+    workspace = {
+        "turnGrounding": {
+            "followUp": {"slotDelta": {"compareAxis": "branch"}},
+        }
+    }
+    answer = ChatFollowUpGroundedAnswerService.build_period_compare_answer(
+        tool_calls=tool_calls,
+        workspace_context=workspace,
+    )
+    assert answer
+    assert "filial 01" in answer.lower()
+    assert "filial 02" in answer.lower()
+    assert "ano anterior" not in answer.lower()
+    assert "Comparação entre filiais" in answer
