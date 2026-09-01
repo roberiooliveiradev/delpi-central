@@ -19,3 +19,11 @@ def test_initial_poll_at_within_interval():
     for sample in samples:
         delta = (sample - now).total_seconds()
         assert 0 <= delta <= 60
+
+
+def test_next_poll_at_supports_subsecond_interval():
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    sample = compute_next_poll_at(0.5, now=now)
+    delta = (sample - now).total_seconds()
+    assert 0.45 <= delta <= 0.55
+

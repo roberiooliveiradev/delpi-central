@@ -17,7 +17,7 @@ def device_row_to_api(
         "driverKey": row["driver_key"],
         "roleKey": row["role_key"],
         "enabled": row["enabled"],
-        "pollIntervalSeconds": row["poll_interval_seconds"],
+        "pollIntervalSeconds": float(row["poll_interval_seconds"]),
         "lastSeenAt": row.get("last_seen_at"),
         "lastPollAttemptAt": row.get("last_poll_attempt_at"),
         "nextPollAt": row.get("next_poll_at"),

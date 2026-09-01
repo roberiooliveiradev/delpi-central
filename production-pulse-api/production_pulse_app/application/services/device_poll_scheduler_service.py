@@ -98,7 +98,7 @@ class DevicePollSchedulerService:
                     self._in_flight.discard(device_id)
 
     def _schedule_next(self, device: dict[str, Any]) -> None:
-        next_at = compute_next_poll_at(int(device["poll_interval_seconds"]))
+        next_at = compute_next_poll_at(float(device["poll_interval_seconds"]))
         self._devices.update_next_poll_at(device["id"], next_poll_at=next_at)
 
 

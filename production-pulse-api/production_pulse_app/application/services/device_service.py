@@ -110,7 +110,7 @@ class DeviceService:
         ip_address = normalize_ip_address(payload.get("ip_address") or payload.get("ipAddress", ""))
         driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))
         poll_interval = validate_poll_interval(
-            int(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds") or 30)
+            float(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds") or 30)
         )
         enabled = bool(payload.get("enabled", True))
         row = self._repository.create(
@@ -137,7 +137,7 @@ class DeviceService:
         ip_address = normalize_ip_address(payload.get("ip_address") or payload.get("ipAddress", ""))
         driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))
         poll_interval = validate_poll_interval(
-            int(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds") or 30)
+            float(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds") or 30)
         )
         enabled = bool(payload.get("enabled", True))
         row = self._repository.replace(
@@ -177,7 +177,7 @@ class DeviceService:
             updates["enabled"] = bool(payload["enabled"])
         if "poll_interval_seconds" in payload or "pollIntervalSeconds" in payload:
             updates["poll_interval_seconds"] = validate_poll_interval(
-                int(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds"))
+                float(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds"))
             )
         row = self._repository.patch(device_id, updates=updates, actor_sub=actor_sub)
         return json_safe(device_row_to_api(row))

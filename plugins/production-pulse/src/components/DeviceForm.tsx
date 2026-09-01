@@ -115,11 +115,14 @@ export function DeviceForm({
           <PpFieldLabel label="Intervalo poll (s)" hint={PP_HELP.form.pollInterval} />
           <input
             type="number"
-            min={5}
+            min={0.5}
             max={300}
+            step={0.5}
             value={device.pollIntervalSeconds}
             onChange={(event) =>
-              onChange({ pollIntervalSeconds: Number.parseInt(event.target.value, 10) || 30 })
+              onChange({
+                pollIntervalSeconds: Number.parseFloat(event.target.value) || 30,
+              })
             }
           />
           {errors?.pollIntervalSeconds ? (

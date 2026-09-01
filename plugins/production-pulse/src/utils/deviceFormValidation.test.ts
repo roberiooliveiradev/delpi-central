@@ -43,6 +43,32 @@ describe("deviceFormValidation", () => {
     ).toBe(true);
   });
 
+  it("accepts half-second poll interval", () => {
+    const errors = validateDeviceForm(
+      {
+        ...DEFAULT_DEVICE_FORM_VALUES,
+        name: "ESP A",
+        ipAddress: "192.168.20.2",
+        pollIntervalSeconds: 0.5,
+      },
+      DEFAULT_BINDING_VALUES,
+    );
+    expect(errors.pollIntervalSeconds).toBeUndefined();
+  });
+
+  it("rejects poll interval below minimum", () => {
+    const errors = validateDeviceForm(
+      {
+        ...DEFAULT_DEVICE_FORM_VALUES,
+        name: "ESP A",
+        ipAddress: "192.168.20.2",
+        pollIntervalSeconds: 0.4,
+      },
+      DEFAULT_BINDING_VALUES,
+    );
+    expect(errors.pollIntervalSeconds).toBeTruthy();
+  });
+
   it("formats probe metrics", () => {
     expect(formatPrimaryMetricFromProbe({ counter: 42 })).toBe("Golpes: 42");
   });

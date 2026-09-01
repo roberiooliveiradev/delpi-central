@@ -12,8 +12,11 @@ export function validateIpv4(value: string): boolean {
   return IPV4_RE.test(value.trim());
 }
 
+export const POLL_INTERVAL_MIN_SECONDS = 0.5;
+export const POLL_INTERVAL_MAX_SECONDS = 300;
+
 export function clampPollInterval(value: number): number {
-  return Math.min(300, Math.max(5, value));
+  return Math.min(POLL_INTERVAL_MAX_SECONDS, Math.max(POLL_INTERVAL_MIN_SECONDS, value));
 }
 
 export function validateDeviceForm(
@@ -37,8 +40,11 @@ export function validateDeviceForm(
 
   if (!Number.isFinite(device.pollIntervalSeconds)) {
     errors.pollIntervalSeconds = "Intervalo inválido.";
-  } else if (device.pollIntervalSeconds < 5 || device.pollIntervalSeconds > 300) {
-    errors.pollIntervalSeconds = "Intervalo deve estar entre 5 e 300 segundos.";
+  } else if (
+    device.pollIntervalSeconds < POLL_INTERVAL_MIN_SECONDS ||
+    device.pollIntervalSeconds > POLL_INTERVAL_MAX_SECONDS
+  ) {
+    errors.pollIntervalSeconds = "Intervalo deve estar entre 0,5 e 300 segundos.";
   }
 
   const bindingErrors = validateBindingForm(binding, options.requireBinding);

@@ -17,7 +17,7 @@ def _as_utc(value: datetime) -> datetime:
 
 
 def grace_seconds_for_device(device: dict[str, Any]) -> int:
-    interval = int(device.get("poll_interval_seconds") or 30)
+    interval = float(device.get("poll_interval_seconds") or 30)
     raw = interval * settings.PP_ONLINE_GRACE_MULTIPLIER
     return max(
         settings.PP_ONLINE_GRACE_MIN_SECONDS,

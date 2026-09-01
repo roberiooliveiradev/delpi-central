@@ -7,8 +7,8 @@ from production_pulse_app.application.services.device_driver_registry_service im
 )
 from production_pulse_app.domain.errors import DeviceValidationError
 
-POLL_INTERVAL_MIN = 5
-POLL_INTERVAL_MAX = 300
+POLL_INTERVAL_MIN = 0.5
+POLL_INTERVAL_MAX = 300.0
 VALID_BRANCHES = frozenset({"01", "02"})
 
 
@@ -30,12 +30,13 @@ def validate_branch(branch: str) -> str:
     return normalized
 
 
-def validate_poll_interval(seconds: int) -> int:
-    if seconds < POLL_INTERVAL_MIN or seconds > POLL_INTERVAL_MAX:
+def validate_poll_interval(seconds: int | float) -> float:
+    value = float(seconds)
+    if value < POLL_INTERVAL_MIN or value > POLL_INTERVAL_MAX:
         raise DeviceValidationError(
-            f"poll_interval_seconds deve estar entre {POLL_INTERVAL_MIN} e {POLL_INTERVAL_MAX}."
+            f"poll_interval_seconds deve estar entre {POLL_INTERVAL_MIN} e {int(POLL_INTERVAL_MAX)}."
         )
-    return seconds
+    return round(value, 2)
 
 
 def normalize_ip_address(ip_address: str) -> str:

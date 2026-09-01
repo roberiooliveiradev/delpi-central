@@ -68,7 +68,7 @@ export const PP_HELP = {
     driverPreview:
       "Resumo das métricas e comandos suportados pelo driver selecionado.",
     pollInterval:
-      "Intervalo em segundos entre leituras automáticas (mín. 5, máx. 300). Default 30.",
+      "Intervalo em segundos entre leituras automáticas (mín. 0,5, máx. 300). Default 30.",
     enabled:
       "Desligado — para de pollar e some do hub operador; histórico é preservado.",
     testConnection:
