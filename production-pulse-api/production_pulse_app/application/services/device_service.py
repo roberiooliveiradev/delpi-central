@@ -13,6 +13,10 @@ from production_pulse_app.domain.services.device_validation_service import (
     validate_branch,
     validate_poll_interval,
 )
+from production_pulse_app.application.services.device_binding_service import DeviceBindingService
+from production_pulse_app.infrastructure.persistence.repositories.postgres_device_binding_repository import (
+    PostgresDeviceBindingRepository,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     DeviceConflictError,
     DeviceNotFoundError,
@@ -21,8 +25,17 @@ from production_pulse_app.infrastructure.persistence.repositories.postgres_devic
 
 
 class DeviceService:
-    def __init__(self, repository: PostgresDeviceRepository | None = None) -> None:
+    def __init__(
+        self,
+        repository: PostgresDeviceRepository | None = None,
+        binding_repository: PostgresDeviceBindingRepository | None = None,
+    ) -> None:
         self._repository = repository or PostgresDeviceRepository()
+        self._binding_repository = binding_repository or PostgresDeviceBindingRepository()
+        self._binding_service = DeviceBindingService(
+            device_repository=self._repository,
+            binding_repository=self._binding_repository,
+        )
 
     def list_devices(
         self,
@@ -46,7 +59,9 @@ class DeviceService:
         row = self._repository.get_by_id(device_id)
         if row is None:
             raise DeviceNotFoundError(str(device_id))
-        return json_safe(device_row_to_api(row))
+        payload = json_safe(device_row_to_api(row))
+        payload["binding"] = self._binding_service.get_active_binding(device_id)
+        return payload
 
     def create_device(self, payload: dict[str, Any], *, actor_sub: str | None) -> dict[str, Any]:
         branch = validate_branch(payload.get("branch", ""))
