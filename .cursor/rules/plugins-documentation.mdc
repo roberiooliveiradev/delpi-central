@@ -10,6 +10,8 @@ alwaysApply: false
 
 **Todo plugin novo ou alteração relevante** deve incluir documentação no monorepo — não basta manifest + código. Referência: `inspecoes-entrada`, `eficiencia-fabril`, `controle-retrabalhos`.
 
+**Ajuda in-app** (Manual `/help`, tooltips, FAQ do produto) é **obrigatória** no mesmo entregável de feature user-facing — ver **`feature-help-sync.mdc`** (inegociável; não substitui README/API).
+
 ---
 
 ## Checklist — novo plugin MFE

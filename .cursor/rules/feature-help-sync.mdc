@@ -1,0 +1,77 @@
+---
+description: Ajuda in-app obrigatória em toda feature/modificação — fluxo generalista inegociável
+alwaysApply: true
+---
+
+# Ajuda do produto — sync inegociável
+
+## Princípio (não negociável)
+
+**Toda** funcionalidade nova ou alteração de comportamento **visível ao usuário** só está **pronta** quando a **Ajuda** do módulo dono estiver atualizada no **mesmo** entregável (mesmo PR / mesma subetapa de plano, não “depois”).
+
+Entregar código sem sync de Ajuda = entrega incompleta. Avisar com:
+
+> **⚠ Desvio — Ajuda desatualizada:** [o que mudou na UI/fluxo] → **canônico:** [arquivo de conteúdo/Ajuda do módulo] → **risco:** usuário não encontra a tela ou aprende fluxo errado.
+
+Complementa: `plugins-documentation.mdc` (README/API), `plan-construction.mdc`, `test-and-commit.mdc`, `english-code-identifiers.mdc` (paths EN; textos PT na Ajuda).
+
+## Fluxo generalista (obrigatório)
+
+```
+Mudança de produto (rota, tela, filtro, conceito, permissão UX, KPI, FAQ implícito)
+  → 1. Identificar módulo dono + superfície de Ajuda (tabela abaixo)
+  → 2. Atualizar conteúdo canônico (não patch em componente)
+  → 3. Se citar tela/ferramenta → link navegável (catálogo label→view)
+  → 4. Espelhar doc markdown do roadmap se o módulo mantiver espelho
+  → 5. Teste mínimo (estrutural / split de links / snapshot de chaves)
+```
+
+Não inventar segunda página de ajuda ad hoc nem texto só no README quando o plugin já tem Manual/Ajuda in-app.
+
+## Superfícies canônicas por módulo
+
+| Módulo | Conteúdo Ajuda (fonte) | Links para telas | Espelho docs (se existir) |
+|--------|------------------------|------------------|---------------------------|
+| Portal Comercial (`plugins/commercial`) | `src/content/userManualContent.ts` + página `/help` | `userManualToolLinks.ts` + `UserManualLinkedText` | `docs/12-roadmap-e-evolucao/commercial/MANUAL-USUARIO-*.md` (+ treinamento se agenda mudar) |
+| Demais MFEs com helps | `src/content/helpTooltips.ts` (ou equivalente no plugin) | N/A (tooltip) | README do plugin + roadmap do módulo |
+| Plugin **sem** Ajuda in-app ainda | Criar Manual/Ajuda no padrão commercial **ou** no mínimo `helpTooltips` + seção no README — **antes** de feature user-facing grande | Catálogo label→rota no próprio plugin | `docs/12-roadmap-e-evolucao/{módulo}/` |
+
+Novas telas no Comercial: incluir label no `MANUAL_TOOL_TARGETS` (label longo primeiro) **e** linhas Quero→onde / mapa / FAQ se o usuário precisar achar a tela.
+
+## O que exige sync (sempre)
+
+- Nova rota / item de menu / launcher / top bar
+- Mudança de nome de tela, conceito (Pedido vs OV vs Proposta, etc.) ou fluxo “onde ir”
+- Filtro, chip, Escopo, permissão que altera “o que eu vejo”
+- KPI / indicador / regra de negócio explicável ao usuário
+- FAQ implícito (suporte vai responder a mesma pergunta)
+
+## O que NÃO exige sync de Manual (ainda documentar se README/API)
+
+- Refactor interno sem mudança de UX/contrato
+- Fix de bug que restaura comportamento **já** documentado
+- Infra, CI, migrations sem impacto de uso
+- Texto só de log/erro técnico sem superfície de usuário
+
+Se houver dúvida → **atualizar a Ajuda**.
+
+## O que NÃO fazer
+
+- Feature “pronta” com Manual/FAQ/tooltips desatualizados
+- Citar tela no texto sem entrada no catálogo de links (Comercial)
+- Duplicar prosa só no `system_prompt` / comentário de PR
+- Patch local de copy na página em vez do `*Content.ts` / JSON de conteúdo
+- Deixar sync de Ajuda como “todo futuro” fora do plano
+
+## Checklist antes de merge / “pronto”
+
+- [ ] Superfície de Ajuda do módulo dono revisada?
+- [ ] Conceitos / Quero→onde / FAQ / glossário / tooltips coerentes com o código?
+- [ ] Telas citadas linkáveis (Comercial: `MANUAL_TOOL_TARGETS`)?
+- [ ] Espelho markdown atualizado quando o módulo mantém paridade doc↔app?
+- [ ] Teste estrutural ou de conteúdo cobre a mudança?
+
+## Planos e commits
+
+- **Planos:** incluir satélite **Ajuda** na matriz de fluxos; subetapa explícita ou item na receita `E*.S*` quando a mudança for user-facing.
+- **Commits:** preferir incluir sync de Ajuda no mesmo commit da feature; se split, o commit da feature **não** declara pronto sem o de Ajuda em seguida no mesmo PR.

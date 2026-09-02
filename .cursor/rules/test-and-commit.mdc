@@ -22,6 +22,10 @@ Executar o que couber ao escopo antes de considerar a tarefa concluída:
 
 Corrigir falhas antes de entregar. Resumir no fim: testes executados (pass/fail).
 
+### Ajuda in-app (inegociável se user-facing)
+
+Antes de declarar a tarefa concluída: sync conforme **`feature-help-sync.mdc`** (conteúdo canônico + links + espelho docs). Não considerar “pronto” só com código/UI.
+
 ### PDFs de desenho (`desenhos/*.pdf`)
 
 - Caminho canônico: `tests/support/drawing_pdf_fixtures.py` (`require_drawing_pdf`, `require_drawing_pdf_with_tesseract`).

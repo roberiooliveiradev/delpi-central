@@ -9,7 +9,7 @@ alwaysApply: true
 
 **Nunca** entregar melhoria que não esteja alinhada a clean code e clean architecture deste repositório. **Sempre** avisar o usuário **antes ou durante** a implementação quando a solução proposta ou em curso estiver fugindo disso — não corrigir silenciosamente com patch local.
 
-Regras complementares (obrigatórias): `development-standards-index.mdc`, `english-code-identifiers.mdc`, `application-bounded-context-decoupling.mdc`, `root-cause-generalized-fix.mdc`, `centralized-rules-first.mdc`, `schema-first-presentation-delivered.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc`, `api-delpi-openapi-route-standards.mdc` (rotas api-delpi).
+Regras complementares (obrigatórias): `development-standards-index.mdc`, `english-code-identifiers.mdc`, `feature-help-sync.mdc`, `application-bounded-context-decoupling.mdc`, `root-cause-generalized-fix.mdc`, `centralized-rules-first.mdc`, `schema-first-presentation-delivered.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc`, `api-delpi-openapi-route-standards.mdc` (rotas api-delpi).
 
 ## O que significa «alinhado» aqui
 
@@ -35,6 +35,7 @@ Interromper ou sinalizar com **«⚠ Desvio de clean architecture»** quando:
 7. **Acoplamento por rota** — novo `*_presenter.py`, `visualBuilders`/`tableAssembly`, ramo legacy no pipeline, ou serviço `ChatOperational{Route}*` em vez de schema-driven + `profileKey` (ver `schema-first-presentation-delivered.mdc`).
 8. **Upload sem volume persistente** — `*_UPLOAD_DIR`, `*Storage.save`, `write_bytes` em disco sem bind mount no Compose → ver `persistent-upload-storage.mdc`.
 9. **Acoplamento entre apps** — regra de negócio / membership / use case compartilhado ou alterado no contexto errado (qualquer par de APIs/MFEs da Minha Delpi) → ver `application-bounded-context-decoupling.mdc`.
+10. **Feature user-facing sem sync de Ajuda** — Manual/tooltips/FAQ do módulo desatualizados → ver `feature-help-sync.mdc`.
 
 Formato do aviso (obrigatório quando aplicável):
 
@@ -51,6 +52,7 @@ Só prosseguir com desvio após confirmação explícita do usuário ou refatora
 - [ ] **Teste de regressão** cobre o bug ou a qualidade esperada (fixture/canônico quando couber).
 - [ ] Nenhum texto PT novo, regex (`re.compile`) nem constante/limite mágico fora de `assistant/*.json` (exceto loaders `*_content_service` / `*_patterns_service`).
 - [ ] Rota nova seguiu **`new-api-route-checklist.mdc`** (se aplicável).
+- [ ] Mudança user-facing: Ajuda do módulo sincronizada (**`feature-help-sync.mdc`**).
 
 ## Anti-padrão documentado (jun/2026 — apresentação)
 
