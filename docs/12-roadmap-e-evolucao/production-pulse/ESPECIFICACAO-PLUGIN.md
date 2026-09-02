@@ -80,6 +80,8 @@ Alias MVP: `GET /operator/work-centers` filtra `anchor_type=work_center`; hub un
 
 ## 4. API REST (production-pulse-api) — contrato fechado (MVP)
 
+> **Canônico (rotas + regras R\*):** [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md) — esta seção resume; em conflito, prevalece o canônico.
+
 Base gateway: `/apps/production-pulse-api`  
 Envelope: `{ success, message, data, meta? }` (padrão Delpi BFF).  
 Auth: JWT em todas as rotas exceto `GET /health`.
@@ -251,6 +253,8 @@ KPI painel: **total** inclui rascunhos; **online/offline** só devices com bindi
 ---
 
 ## 7. Regras de negócio (fechadas — MVP)
+
+> Lista completa e atualizada (inclui R36–R44 provenance/piso/P2): [API-ROUTES-AND-BUSINESS-RULES.md §3](./API-ROUTES-AND-BUSINESS-RULES.md).
 
 ### 7.1 Cadastro e amarração
 

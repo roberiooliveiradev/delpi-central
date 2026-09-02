@@ -285,6 +285,7 @@ Alinhamento com ROADMAP: bloco **P2** em [ROADMAP.md](./ROADMAP.md) · UX em [OP
 
 | Doc | Uso |
 |-----|-----|
+| [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md) | Rotas + regras R\* |
 | [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md) | UX surfaces, alertas, metas |
 | [WIREFRAMES.md](./WIREFRAMES.md) | ASCII TEMP/ROTATION/COMBO/… |
 | [DEVICE-DRIVERS.md](./DEVICE-DRIVERS.md) | Registry + stubs |
