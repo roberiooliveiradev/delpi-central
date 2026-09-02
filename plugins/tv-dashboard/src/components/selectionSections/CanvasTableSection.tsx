@@ -28,8 +28,6 @@ import {
   canMergeRect,
   canvasTableCellPlainText,
   canvasTablePresetOptions,
-  clearCanvasTableCellsContent,
-  clearCanvasTableCellsFormats,
   mergeCanvasTableOptions,
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
@@ -44,11 +42,14 @@ import {
   primaryCanvasTableCellRef,
   summarizeCanvasTableCellSelection,
 } from "../../utils/canvasTableCellSelection";
+import { canUnmergeCanvasTableSelection } from "../../utils/canvasTableMergeCommands";
 import {
-  canUnmergeCanvasTableSelection,
-  resolveCanvasTableMergeCommand,
-} from "../../utils/canvasTableMergeCommands";
-import { buildCanvasTableInsertPatch } from "../../utils/canvasTableStructureCommands";
+  applyCanvasTableMergeToBlock,
+  clearCanvasTableSelectionContent,
+  clearCanvasTableSelectionFormats,
+  insertCanvasTableBand,
+  patchCanvasTableCellsStyle,
+} from "../../utils/canvasTableSelectionCommands";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
@@ -165,13 +166,15 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
     updateBlock(table.id, { cells });
   }
 
-  function patchSelectedCellsStyle(
-    stylePatch: NonNullable<CanvasTableCell["style"]>,
-  ) {
-    patchSelectedCells((cell) => ({
-      ...cell,
-      style: { ...(cell.style ?? {}), ...stylePatch },
-    }));
+  function applyCellsStyle(stylePatch: NonNullable<CanvasTableCell["style"]>) {
+    if (!cellSelection?.cells.length) return;
+    updateBlock(table.id, {
+      cells: patchCanvasTableCellsStyle({
+        cells: table.cells,
+        selection: cellSelection.cells,
+        stylePatch,
+      }),
+    });
   }
 
   function resolveSharedCellTextAlign(): string {
@@ -217,17 +220,13 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
 
   function applyMergeCommand(mode: "merge" | "unmerge") {
     if (!cellSelection?.cells.length) return;
-    const next = resolveCanvasTableMergeCommand({
-      merges: table.merges,
-      cells: cellSelection.cells,
+    const patch = applyCanvasTableMergeToBlock({
+      block: table,
+      selection: cellSelection.cells,
       mode,
-      cellMatrix: mode === "merge" ? table.cells : undefined,
     });
-    if (!next) return;
-    updateBlock(table.id, {
-      merges: next.merges.length ? next.merges : undefined,
-      ...(next.cells ? { cells: next.cells } : {}),
-    });
+    if (!patch) return;
+    updateBlock(table.id, patch);
   }
 
   const structureFields = (
@@ -311,7 +310,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
           hint="Insere linha abaixo da célula de foco (Shift+clique = acima)."
           onClick={(event) => {
             updateSelected(
-              buildCanvasTableInsertPatch({
+              insertCanvasTableBand({
                 block: table,
                 axis: "row",
                 placement: event.shiftKey ? "before" : "after",
@@ -326,7 +325,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
           hint="Insere coluna à direita do foco (Shift+clique = à esquerda)."
           onClick={(event) => {
             updateSelected(
-              buildCanvasTableInsertPatch({
+              insertCanvasTableBand({
                 block: table,
                 axis: "col",
                 placement: event.shiftKey ? "before" : "after",
@@ -549,19 +548,19 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         icon={AlignLeft}
         label="Esquerda"
         active={cellAlign === "left"}
-        onClick={() => patchSelectedCellsStyle({ textAlign: "left" })}
+        onClick={() => applyCellsStyle({ textAlign: "left" })}
       />
       <DeckRibbonTile
         icon={AlignCenter}
         label="Centro"
         active={cellAlign === "center"}
-        onClick={() => patchSelectedCellsStyle({ textAlign: "center" })}
+        onClick={() => applyCellsStyle({ textAlign: "center" })}
       />
       <DeckRibbonTile
         icon={AlignRight}
         label="Direita"
         active={cellAlign === "right"}
-        onClick={() => patchSelectedCellsStyle({ textAlign: "right" })}
+        onClick={() => applyCellsStyle({ textAlign: "right" })}
       />
       <DeckRibbonTile
         icon={WrapText}
@@ -569,7 +568,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         hint="Quebra de linha na célula (white-space pre-wrap)."
         active={(selectedCell?.style?.whiteSpace ?? "pre-wrap") !== "nowrap"}
         disabled={!cellSelection?.cells.length}
-        onClick={() => patchSelectedCellsStyle({ whiteSpace: "pre-wrap" })}
+        onClick={() => applyCellsStyle({ whiteSpace: "pre-wrap" })}
       />
       <DeckRibbonTile
         icon={Minus}
@@ -577,7 +576,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         hint="Não quebra texto (ellipsis se não couber)."
         active={selectedCell?.style?.whiteSpace === "nowrap"}
         disabled={!cellSelection?.cells.length}
-        onClick={() => patchSelectedCellsStyle({ whiteSpace: "nowrap" })}
+        onClick={() => applyCellsStyle({ whiteSpace: "nowrap" })}
       />
       <DeckRibbonTile
         icon={Eraser}
@@ -587,7 +586,10 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         onClick={() => {
           if (!cellSelection?.cells.length) return;
           updateBlock(table.id, {
-            cells: clearCanvasTableCellsContent(table.cells, cellSelection.cells),
+            cells: clearCanvasTableSelectionContent({
+              cells: table.cells,
+              selection: cellSelection.cells,
+            }),
           });
         }}
       />
@@ -599,7 +601,10 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         onClick={() => {
           if (!cellSelection?.cells.length) return;
           updateBlock(table.id, {
-            cells: clearCanvasTableCellsFormats(table.cells, cellSelection.cells),
+            cells: clearCanvasTableSelectionFormats({
+              cells: table.cells,
+              selection: cellSelection.cells,
+            }),
           });
         }}
       />
@@ -613,16 +618,16 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         variant="text"
         showAutomatic
         value={selectedCell?.style?.color}
-        onChange={(color) => patchSelectedCellsStyle({ color })}
-        onAutomatic={(color) => patchSelectedCellsStyle({ color })}
+        onChange={(color) => applyCellsStyle({ color })}
+        onAutomatic={(color) => applyCellsStyle({ color })}
       />
       <TvRibbonColorPicker
         label="Fundo"
         variant="fill"
         showNoFill
         value={selectedCell?.style?.backgroundColor}
-        onChange={(color) => patchSelectedCellsStyle({ backgroundColor: color })}
-        onNoFill={() => patchSelectedCellsStyle({ backgroundColor: undefined })}
+        onChange={(color) => applyCellsStyle({ backgroundColor: color })}
+        onNoFill={() => applyCellsStyle({ backgroundColor: undefined })}
       />
     </div>
   );

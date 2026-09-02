@@ -21,7 +21,8 @@ describe("canvas table ribbon layout contract", () => {
     expect(source).toContain("td-canvas-table-cell-ribbon");
     expect(source).toContain('label="Tipo"');
     expect(source).toContain("summarizeCanvasTableCellSelection");
-    expect(source).toContain("patchSelectedCellsStyle");
+    expect(source).toContain("patchCanvasTableCellsStyle");
+    expect(source).not.toMatch(/function patchSelectedCellsStyle/);
   });
 
   it("seleção da Grade usa overlay CSS — sem outline no td --selected", () => {
