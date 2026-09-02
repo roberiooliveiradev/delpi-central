@@ -24,6 +24,7 @@ import { TestConnectionModal } from "../components/modals/TestConnectionModal";
 import { PRODUCTION_PULSE_BASE_PATH } from "../constants/routes";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
+import { resolveDeviceActionMessage, resolveProbeErrorMessage } from "../utils/apiErrors";
 import type { BindingFormValues, DeviceFormValues, ProbeResult } from "../types/form";
 import {
   DEFAULT_BINDING_VALUES,
@@ -129,10 +130,10 @@ export function DeviceFormPage({
           : await testDeviceProbe(device);
       setTestResult(result);
       if (!result.online) {
-        setTestError(result.error ?? PP_HELP.modals.testFail);
+        setTestError(resolveProbeErrorMessage(result, PP_HELP.modals.testFail));
       }
     } catch (err) {
-      setTestError(err instanceof Error ? err.message : PP_HELP.modals.testFail);
+      setTestError(resolveDeviceActionMessage(err, PP_HELP.modals.testFail));
     } finally {
       setTestLoading(false);
     }

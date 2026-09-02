@@ -51,6 +51,7 @@ export const PP_HELP = {
     colStatus: "Online se houve poll recente com sucesso; offline se timeout ou erro.",
     colLastSeen: "Momento da última comunicação bem-sucedida com o hardware.",
     rowPoll: "Lê o device agora e atualiza a métrica exibida.",
+    pollNoticeTitle: "Dispositivo não respondeu",
     rowReset:
       "Zera o contador físico (somente devices contador). Operação auditada.",
     emptyFilial:

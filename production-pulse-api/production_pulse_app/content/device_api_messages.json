@@ -20,5 +20,10 @@
       "driver_not_implemented": "O driver selecionado ainda não está disponível neste ambiente."
     },
     "fallbackMessage": "O dispositivo não respondeu à leitura."
+  },
+  "httpErrors": {
+    "notFoundDevice": "Dispositivo não encontrado.",
+    "notFoundBinding": "Amarração não encontrada.",
+    "duplicateIp": "Já existe dispositivo com este IP nesta filial."
   }
 }

@@ -130,7 +130,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
 
       {pollNotice ? (
         <div className="pp-poll-notice" role="status">
-          <strong>Dispositivo não respondeu</strong>
+          <strong>{PP_HELP.panel.pollNoticeTitle}</strong>
           <span>{pollNotice}</span>
           <PpActionButton variant="ghost" onClick={clearPollNotice}>
             Fechar

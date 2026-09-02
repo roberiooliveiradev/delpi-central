@@ -2,6 +2,7 @@ from production_pulse_app.infrastructure.content.device_api_messages_content_ser
     device_connectivity_codes,
     device_connectivity_http_status_code,
     device_connectivity_user_message,
+    http_error_message,
 )
 
 
@@ -24,3 +25,8 @@ def test_device_connectivity_user_message_falls_back_to_driver_message():
 
 def test_device_connectivity_http_status_code_is_422():
     assert device_connectivity_http_status_code() == 422
+
+
+def test_http_error_message_reads_not_found_device():
+    message = http_error_message("notFoundDevice")
+    assert "dispositivo" in message.lower()

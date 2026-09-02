@@ -42,6 +42,12 @@ export function resolveDeviceActionError(err: unknown, fallback: string): Resolv
   };
 }
 
+export function resolveProbeErrorMessage(result: { error?: string; errorMessage?: string }, fallback: string): string {
+  if (result.errorMessage?.trim()) return result.errorMessage.trim();
+  if (result.error) return resolveDeviceConnectivityMessage(result.error, fallback);
+  return fallback;
+}
+
 export function resolveDeviceActionMessage(err: unknown, fallback: string): string {
   return resolveDeviceActionError(err, fallback).message;
 }

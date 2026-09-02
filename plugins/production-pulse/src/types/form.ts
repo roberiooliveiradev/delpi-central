@@ -51,6 +51,7 @@ export type ProbeResult = {
   metrics?: Record<string, number | string>;
   latencyMs?: number;
   error?: string;
+  errorMessage?: string;
 };
 
 export const DEFAULT_BINDING_VALUES: BindingFormValues = {

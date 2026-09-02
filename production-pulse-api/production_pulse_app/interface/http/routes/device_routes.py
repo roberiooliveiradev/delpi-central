@@ -32,6 +32,9 @@ from production_pulse_app.application.services.device_service import (
     DeviceValidationError,
 )
 from production_pulse_app.core.responses import error, success
+from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
+    http_error_message,
+)
 from production_pulse_app.domain.services.device_serialization_service import parse_device_id
 from production_pulse_app.interface.http.device_connectivity_responses import device_poll_failed_response
 from production_pulse_app.interface.http.rbac_http import (
@@ -82,13 +85,13 @@ def _handle_domain_errors(exc: Exception):
         return error(str(exc), code="upstream_unavailable", status_code=503)
     if isinstance(exc, (DeviceNotFoundError, BindingNotFoundError)):
         message = (
-            "Amarração não encontrada."
+            http_error_message("notFoundBinding")
             if isinstance(exc, BindingNotFoundError)
-            else "Dispositivo não encontrado."
+            else http_error_message("notFoundDevice")
         )
         return error(message, code="not_found", status_code=404)
     if isinstance(exc, DeviceConflictError):
-        return error(str(exc), code="conflict", status_code=409)
+        return error(http_error_message("duplicateIp", fallback=str(exc)), code="conflict", status_code=409)
     if isinstance(exc, TestProbeRateLimitError):
         return error(str(exc), code="rate_limit_exceeded", status_code=429)
     raise exc

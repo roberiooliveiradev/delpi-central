@@ -21,6 +21,14 @@ def _device_connectivity_section() -> dict[str, Any]:
     return section
 
 
+def _http_errors_section() -> dict[str, Any]:
+    catalog = load_device_api_messages()
+    section = catalog.get("httpErrors")
+    if not isinstance(section, dict):
+        return {}
+    return section
+
+
 @lru_cache(maxsize=1)
 def device_connectivity_codes() -> frozenset[str]:
     section = _device_connectivity_section()
@@ -53,9 +61,20 @@ def device_connectivity_user_message(code: str, *, fallback: str | None = None) 
     return "O dispositivo não respondeu à leitura."
 
 
+def http_error_message(key: str, *, fallback: str | None = None) -> str:
+    section = _http_errors_section()
+    mapped = section.get(key)
+    if isinstance(mapped, str) and mapped.strip():
+        return mapped.strip()
+    if fallback and fallback.strip():
+        return fallback.strip()
+    return key
+
+
 __all__ = [
     "device_connectivity_codes",
     "device_connectivity_http_status_code",
     "device_connectivity_user_message",
+    "http_error_message",
     "load_device_api_messages",
 ]

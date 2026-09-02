@@ -75,7 +75,7 @@ function parseApiErrorBody(text: string): ParsedApiErrorBody | null {
 async function parseError(response: Response, bodyText?: string): Promise<string> {
   const text = bodyText ?? (await readBodyText(response));
   if (looksLikeHtml(text, response.headers.get("content-type"))) {
-    return "API Pulso de Produção indisponível. Verifique production-pulse-api e o gateway.";
+    return PP_HELP.apiErrors.apiUnavailable;
   }
 
   const parsed = parseApiErrorBody(text);

@@ -6,7 +6,9 @@ import {
   isDeviceConnectivityError,
   isDeviceConnectivityErrorCode,
   resolveDeviceActionError,
+  resolveProbeErrorMessage,
 } from "./apiErrors";
+import type { ProbeResult } from "../types/form";
 
 describe("apiErrors", () => {
   it("recognizes device connectivity codes", () => {
@@ -43,5 +45,15 @@ describe("apiErrors", () => {
       kind: "infra",
       message: "API Pulso de Produção indisponível.",
     });
+  });
+
+  it("prefers probe errorMessage from API over raw code", () => {
+    const result: ProbeResult = {
+      driverKey: "esp8266_counter_v1",
+      online: false,
+      error: "timeout",
+      errorMessage: "Mensagem amigável da API.",
+    };
+    expect(resolveProbeErrorMessage(result, "fallback")).toBe("Mensagem amigável da API.");
   });
 });

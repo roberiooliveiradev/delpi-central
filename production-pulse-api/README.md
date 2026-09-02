@@ -75,7 +75,7 @@ Envelope: `{ "success", "message", "data" }`.
 | Arquivo | Uso |
 |---------|-----|
 | `production_pulse_app/content/device_drivers.json` | Registry de drivers, métricas e comandos |
-| `production_pulse_app/content/device_api_messages.json` | Mensagens PT de erro HTTP (conectividade device) + códigos canônicos |
+| `production_pulse_app/content/device_api_messages.json` | Mensagens PT de erro HTTP (conectividade device, 404/409) + códigos canônicos |
 
 Loader: `device_api_messages_content_service.py`. O MFE espelha **somente** `deviceConnectivity.codes` em `plugins/production-pulse/src/content/deviceApiMessages.ts` — textos vêm do `error.message` da API.
 
