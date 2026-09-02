@@ -14,20 +14,20 @@ import {
 } from "lucide-react";
 import {
   canMergeRect,
-  clearCanvasTableCellsContent,
-  clearCanvasTableCellsFormats,
-  normalizeCanvasTableCell,
-  type CanvasTableCell,
   type ComunicadoCanvasTableBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { canUnmergeCanvasTableSelection } from "../utils/canvasTableMergeCommands";
 import {
-  canUnmergeCanvasTableSelection,
-  resolveCanvasTableMergeCommand,
-} from "../utils/canvasTableMergeCommands";
-import { buildCanvasTableInsertPatch } from "../utils/canvasTableStructureCommands";
+  applyCanvasTableMergeToBlock,
+  clearCanvasTableSelectionContent,
+  clearCanvasTableSelectionFormats,
+  insertCanvasTableBand,
+  patchCanvasTableCellsStyle,
+  type CanvasTableCellStylePatch,
+} from "../utils/canvasTableSelectionCommands";
 
 type Props = {
   block: ComunicadoCanvasTableBlock;
@@ -55,79 +55,46 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
   function clearContent() {
     if (!hasSelection) return;
     updateBlock(block.id, {
-      cells: clearCanvasTableCellsContent(block.cells, cells),
+      cells: clearCanvasTableSelectionContent({ cells: block.cells, selection: cells }),
     });
   }
 
   function clearFormats() {
     if (!hasSelection) return;
     updateBlock(block.id, {
-      cells: clearCanvasTableCellsFormats(block.cells, cells),
+      cells: clearCanvasTableSelectionFormats({ cells: block.cells, selection: cells }),
     });
   }
 
-  function merge() {
-    const next = resolveCanvasTableMergeCommand({
-      merges: block.merges,
-      cells,
-      mode: "merge",
-      cellMatrix: block.cells,
-    });
-    if (!next) return;
-    updateBlock(block.id, {
-      merges: next.merges.length ? next.merges : undefined,
-      ...(next.cells ? { cells: next.cells } : {}),
-    });
-  }
-
-  function unmerge() {
-    const next = resolveCanvasTableMergeCommand({
-      merges: block.merges,
-      cells,
-      mode: "unmerge",
-    });
-    if (!next) return;
-    updateBlock(block.id, {
-      merges: next.merges.length ? next.merges : undefined,
-    });
+  function merge(mode: "merge" | "unmerge") {
+    const patch = applyCanvasTableMergeToBlock({ block, selection: cells, mode });
+    if (!patch) return;
+    updateBlock(block.id, patch);
   }
 
   function insertRow(placement: "before" | "after") {
     updateBlock(
       block.id,
-      buildCanvasTableInsertPatch({
-        block,
-        axis: "row",
-        placement,
-        focus,
-      }),
+      insertCanvasTableBand({ block, axis: "row", placement, focus }),
     );
   }
 
   function insertCol(placement: "before" | "after") {
     updateBlock(
       block.id,
-      buildCanvasTableInsertPatch({
-        block,
-        axis: "col",
-        placement,
-        focus,
-      }),
+      insertCanvasTableBand({ block, axis: "col", placement, focus }),
     );
   }
 
-  function patchStyle(stylePatch: NonNullable<CanvasTableCell["style"]>) {
+  function patchStyle(stylePatch: CanvasTableCellStylePatch) {
     if (!hasSelection) return;
-    const nextCells = block.cells.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
-    for (const { row, col } of cells) {
-      const current = nextCells[row]?.[col];
-      if (current == null) continue;
-      nextCells[row]![col] = {
-        ...normalizeCanvasTableCell(current),
-        style: { ...(current.style ?? {}), ...stylePatch },
-      };
-    }
-    updateBlock(block.id, { cells: nextCells });
+    updateBlock(block.id, {
+      cells: patchCanvasTableCellsStyle({
+        cells: block.cells,
+        selection: cells,
+        stylePatch,
+      }),
+    });
   }
 
   function run(fn: () => void) {
@@ -147,13 +114,13 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
         label="Mesclar"
         icon={Combine}
         disabled={!canMerge}
-        onSelect={() => run(merge)}
+        onSelect={() => run(() => merge("merge"))}
       />
       <ContextMenuItem
         label="Desmesclar"
         icon={TableCellsSplit}
         disabled={!canUnmerge}
-        onSelect={() => run(unmerge)}
+        onSelect={() => run(() => merge("unmerge"))}
       />
       <ContextMenuDivider />
       <ContextMenuItem
