@@ -9,7 +9,7 @@
 1. Cadastrar **N dispositivos** (IP, filial, driver) — contador, rpm, temperatura, multi-sensor.
 2. Amarrar cada device a **um objeto operacional** (`anchor_type`): CT (atalho TOTVS), **máquina**, **equipamento**, área ou avulso. Vários devices no **mesmo** motor/CT/máquina.
 3. Histórico genérico (`metrics` JSONB), painel e operador tablet.
-4. CRUD + RBAC; drivers plugáveis sem migration SQL.
+4. CRUD + RBAC; drivers plugáveis sem migration SQL — plano de evolução: [API-MFE-DEVICE-EVOLUTION.md](./API-MFE-DEVICE-EVOLUTION.md).
 
 **Exemplos:**
 
