@@ -73,13 +73,14 @@ describe("production-pulse kit contracts", () => {
     expect(panel).toMatch(/pp-panel-operator-link/);
   });
 
-  it("botões do hero usam classe canônica delpi-ui-action-btn com tokens de marca", () => {
+  it("botões do hero usam classe de domínio pp-hero-brand-btn com tokens de marca", () => {
     const css = readRelative("index.css");
+    const detail = readRelative("pages/DeviceDetailPage.tsx");
     expect(css).toMatch(
-      /\.pp-page-hero__actions \.delpi-ui-action-btn[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
+      /\.pp-hero-brand-btn[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
     );
-    expect(css).not.toMatch(/\.pp-page-hero__actions \.pp-action-button/);
-    expect(css).toMatch(/:root\[data-theme="dark"\][\s\S]*--pp-hero-brand-btn-border/);
+    expect(detail).toMatch(/pp-hero-brand-btn/);
+    expect(css).not.toMatch(/\.delpi-ui-/);
   });
 
   it("FilterInputField declara type explícito no painel", () => {

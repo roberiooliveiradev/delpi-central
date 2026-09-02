@@ -149,12 +149,18 @@ export function DeviceDetailPage({
             {permissions.canManageDevices ? (
               <PpActionButton
                 variant="ghost"
+                className="pp-hero-brand-btn"
                 onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
               >
                 Editar
               </PpActionButton>
             ) : null}
-            <PpActionButton variant="ghost" onClick={() => void pollNow()} disabled={refreshing}>
+            <PpActionButton
+              variant="ghost"
+              className="pp-hero-brand-btn"
+              onClick={() => void pollNow()}
+              disabled={refreshing}
+            >
               {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
             </PpActionButton>
           </div>
