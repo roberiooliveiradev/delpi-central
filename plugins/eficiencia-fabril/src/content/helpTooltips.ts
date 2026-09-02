@@ -1,4 +1,10 @@
 export const EF_HELP_TOOLTIPS = {
+  tabs: {
+    efficiency:
+      "Indicadores de eficiência operacional e resultado MOD dos apontamentos produtivos no período.",
+    unproductiveHours:
+      "Paradas de produção apontadas pelos operadores (horas improdutivas PCP) — todos os motivos, não só retrabalho.",
+  },
   filters: {
     dateStart:
       "Início do período. KPIs e gráficos usam apontamentos com data de produção a partir desta data.",
@@ -17,6 +23,31 @@ export const EF_HELP_TOOLTIPS = {
       "Turno do apontamento (API: turno/turno_label por horário de início — 1º, 2º ou 3º).",
     efficiencyBands:
       "Filtra por faixa de eficiência: na faixa (≥ 50%), eficiência baixa (< 50%) ou fora da faixa (0–199%).",
+  },
+  unproductiveHours: {
+    filters: {
+      stopReason:
+        "Código do motivo de parada (MOTIVO na view TOTVS), por exemplo RT (retrabalho), OT ou MT. Vazio = todos.",
+      operatorCode: "Código do operador que apontou a parada. Vazio = todos.",
+      resource: "Código do recurso (máquina/posto) da parada. Vazio = todos.",
+      costCenter: "Centro de custo associado ao apontamento de parada. Vazio = todos.",
+    },
+    kpis: {
+      totalHours: "Soma das horas improdutivas (paradas) no período e filtros.",
+      totalCost: "Soma do valor da parada (R$) no período. O subtítulo mostra o % de horas sem custo.",
+      appointments: "Quantidade de apontamentos de parada retornados pela API.",
+      topResource: "Recurso com maior volume de horas improdutivas no período.",
+      topOperator: "Operador com maior volume de horas improdutivas no período.",
+    },
+    charts: {
+      byStopReason: "Ranking dos motivos de parada por total de horas no período.",
+      byOperator: "Ranking dos operadores por total de horas improdutivas.",
+      byResource: "Ranking dos recursos por total de horas improdutivas.",
+    },
+    table: {
+      section:
+        "Lista paginada das paradas apontadas. Exporta Excel/PDF de todo o resultado filtrado (todas as páginas).",
+    },
   },
   kpis: {
     efficiency:

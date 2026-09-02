@@ -4,7 +4,7 @@ Consultas de **horas improdutivas / paradas PCP** alimentadas pela view TOTVS `d
 
 **Não confundir** com [`/retrabalhos/*`](./controle-retrabalhos.md), que usa a **mesma view** filtrada em `MOTIVO = RT` (retrabalho).
 
-**Permissão:** `api-delpi.access` ou `dashboard-production.view` (`KPI_PRODUCTION_ACCESS`).
+**Permissão:** `UNPRODUCTIVE_HOURS_ACCESS` — `api-delpi.access`, `dashboard-production.view` **ou** `eficiencia-fabril.view` / `.view.filial-sc` / `.view.filial-es` (aba Horas improdutivas no plugin Eficiência Fabril).
 
 **Formato:** envelope `{ success, message, data, meta }` (Playbook 10). Datas em **ISO `YYYY-MM-DD`**.
 

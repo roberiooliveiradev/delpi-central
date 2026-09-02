@@ -290,10 +290,13 @@ function computeDashboardFromItems(
   };
 }
 
-export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParams) {
+export function useEficienciaFabrilDashboard(
+  params: EficienciaFabrilFilterParams,
+  enabled = true,
+) {
   const [allItems, setAllItems] = useState<EficienciaFabrilItem[]>([]);
   const [loadedRange, setLoadedRange] = useState<LoadedRange | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -307,6 +310,10 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
   }, [loadedRange, params.branch, params.end_date, params.start_date]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     if (isRangeLoaded && reloadKey === 0) return;
 
     const controller = new AbortController();
@@ -349,14 +356,14 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
     void run();
 
     return () => controller.abort();
-  }, [isRangeLoaded, reloadKey, params.branch, params.end_date, params.start_date]);
+  }, [enabled, isRangeLoaded, reloadKey, params.branch, params.end_date, params.start_date]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);
   }, []);
 
   const derived = useMemo(() => {
-    if (!loadedRange || allItems.length === 0) return null;
+    if (!enabled || !loadedRange || allItems.length === 0) return null;
 
     const page = params.page ?? 1;
     const pageSize = params.page_size ?? FALLBACK_PAGE_SIZE;
@@ -377,7 +384,7 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
       data: computeDashboardFromItems(scopedItems, sortedVisibleItems, page, pageSize),
       exportItems: sortedVisibleItems,
     };
-  }, [allItems, loadedRange, params]);
+  }, [allItems, enabled, loadedRange, params]);
 
   const data = derived?.data ?? null;
 
@@ -385,8 +392,8 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
     data,
     allItems: derived?.exportItems ?? [],
     loadedItems: allItems,
-    loading,
-    error,
+    loading: enabled ? loading : false,
+    error: enabled ? error : null,
     reload,
   };
 }

@@ -178,3 +178,21 @@ def test_ranking_invalid_rank_by_pattern(unproductive_hours_client: TestClient) 
         },
     )
     assert response.status_code == 422
+
+
+def test_unproductive_hours_access_includes_eficiencia_fabril_permissions() -> None:
+    from app.application.security.api_delpi_permissions import (
+        EFICIENCIA_FABRIL_VIEW,
+        EFICIENCIA_FABRIL_VIEW_FILIAL_ES,
+        EFICIENCIA_FABRIL_VIEW_FILIAL_SC,
+        KPI_PRODUCTION_ACCESS,
+        UNPRODUCTIVE_HOURS_ACCESS,
+    )
+    from app.interface.http.routes.production import unproductive_hours_router as mod
+
+    for code in KPI_PRODUCTION_ACCESS:
+        assert code in UNPRODUCTIVE_HOURS_ACCESS
+    assert EFICIENCIA_FABRIL_VIEW in UNPRODUCTIVE_HOURS_ACCESS
+    assert EFICIENCIA_FABRIL_VIEW_FILIAL_SC in UNPRODUCTIVE_HOURS_ACCESS
+    assert EFICIENCIA_FABRIL_VIEW_FILIAL_ES in UNPRODUCTIVE_HOURS_ACCESS
+    assert mod.UNPRODUCTIVE_HOURS_ACCESS == UNPRODUCTIVE_HOURS_ACCESS
