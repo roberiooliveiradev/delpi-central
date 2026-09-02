@@ -1,18 +1,25 @@
 import {
   canMergeRect,
+  canvasTablePresetOptions,
+  mergeCanvasTableOptions,
   type ComunicadoCanvasTableBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
-import { FloatChecklist, FloatChecklistItem } from "./FloatChecklist";
-import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
+import {
+  CanvasTableBlockStylesMenu,
+  type CanvasTableBlockStyleActionId,
+} from "./CanvasTableBlockStylesMenu";
+import { CanvasTableDataMenu } from "./CanvasTableDataMenu";
+import {
+  CanvasTableStructureMenu,
+  type CanvasTableStructureActionId,
+} from "./CanvasTableStructureMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { canUnmergeCanvasTableSelection } from "../utils/canvasTableMergeCommands";
 import {
   applyCanvasTableMergeToBlock,
   insertCanvasTableBand,
-  patchCanvasTableCellsStyle,
-  type CanvasTableCellStylePatch,
 } from "../utils/canvasTableSelectionCommands";
 
 type Props = {
@@ -20,9 +27,8 @@ type Props = {
 };
 
 /**
- * Float da Grade — + estrutura/merge, pincel fill/alinhamento, funil dados.
- * Mesmo shell dos charts (ComplexSelectionFloatToolbar + AnchoredPanelPortal).
- * Chrome legado FloatChecklist permanece até E8.S18; lógica já via commands.
+ * Float da Grade — + estrutura, pincel bloco, funil dados.
+ * Chrome chart/table (`td-chart-*`); dispatcher célula em S22.
  */
 export function CanvasTableSelectionFloatToolbar({ block }: Props) {
   const {
@@ -40,6 +46,7 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
   const canUnmerge = Boolean(
     cells.length && canUnmergeCanvasTableSelection(block.merges, cells),
   );
+  const opts = mergeCanvasTableOptions(block.canvasTableOptions);
 
   function insert(axis: "row" | "col", placement: "before" | "after") {
     updateBlock(block.id, insertCanvasTableBand({ block, axis, placement, focus }));
@@ -51,15 +58,81 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
     updateBlock(block.id, patch);
   }
 
-  function applyCellsStyle(stylePatch: CanvasTableCellStylePatch) {
-    if (!cells.length) return;
+  function onStructure(actionId: CanvasTableStructureActionId) {
+    switch (actionId) {
+      case "insert-row-before":
+        insert("row", "before");
+        break;
+      case "insert-row-after":
+        insert("row", "after");
+        break;
+      case "insert-col-before":
+        insert("col", "before");
+        break;
+      case "insert-col-after":
+        insert("col", "after");
+        break;
+      case "merge":
+        applyMerge("merge");
+        break;
+      case "unmerge":
+        applyMerge("unmerge");
+        break;
+      default:
+        break;
+    }
+  }
+
+  function patchOptions(patch: Partial<typeof opts>) {
     updateBlock(block.id, {
-      cells: patchCanvasTableCellsStyle({
-        cells: block.cells,
-        selection: cells,
-        stylePatch,
-      }),
+      canvasTableOptions: {
+        ...(block.canvasTableOptions ?? {}),
+        ...patch,
+      },
     });
+  }
+
+  function onBlockStyle(actionId: CanvasTableBlockStyleActionId) {
+    switch (actionId) {
+      case "preset-grid":
+      case "preset-minimal":
+      case "preset-banded": {
+        const preset = actionId.replace("preset-", "") as "grid" | "minimal" | "banded";
+        updateBlock(block.id, {
+          canvasTableOptions: {
+            ...(block.canvasTableOptions ?? {}),
+            ...canvasTablePresetOptions(preset),
+          },
+        });
+        break;
+      }
+      case "toggle-banded-rows":
+        patchOptions({ bandedRows: !opts.bandedRows });
+        break;
+      case "toggle-banded-cols":
+        patchOptions({ bandedColumns: !opts.bandedColumns });
+        break;
+      case "header-subtle":
+        patchOptions({ headerStyle: "subtle" });
+        break;
+      case "header-accent":
+        patchOptions({ headerStyle: "accent" });
+        break;
+      case "header-none":
+        patchOptions({ headerStyle: "none" });
+        break;
+      case "borders-all":
+        patchOptions({ borderStyle: "all" });
+        break;
+      case "borders-horizontal":
+        patchOptions({ borderStyle: "horizontal" });
+        break;
+      case "borders-none":
+        patchOptions({ borderStyle: "none" });
+        break;
+      default:
+        break;
+    }
   }
 
   return (
@@ -68,120 +141,41 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
       frame={block.frame}
       labels={{
         elements: "Estrutura da Grade",
-        style: "Estilo das células",
+        style: "Estilo da Grade",
         data: "Dados da Grade",
       }}
       renderElements={(close) => (
-        <FloatChecklist aria-label="Estrutura da Grade">
-          <FloatChecklistItem
-            label="Inserir linha acima"
-            title="Insere uma linha acima da célula de foco (remap de merges e alturas)."
-            onClick={() => {
-              insert("row", "before");
-              close();
-            }}
-          />
-          <FloatChecklistItem
-            label="Inserir linha abaixo"
-            title="Insere uma linha abaixo da célula de foco (remap de merges e alturas)."
-            onClick={() => {
-              insert("row", "after");
-              close();
-            }}
-          />
-          <FloatChecklistItem
-            label="Inserir coluna à esquerda"
-            title="Insere uma coluna à esquerda do foco (remap de merges e larguras)."
-            onClick={() => {
-              insert("col", "before");
-              close();
-            }}
-          />
-          <FloatChecklistItem
-            label="Inserir coluna à direita"
-            title="Insere uma coluna à direita do foco (remap de merges e larguras)."
-            onClick={() => {
-              insert("col", "after");
-              close();
-            }}
-          />
-          <FloatChecklistItem
-            label="Mesclar"
-            title="Mescla o retângulo selecionado (Ctrl+M)."
-            disabled={!canMerge}
-            onClick={() => {
-              applyMerge("merge");
-              close();
-            }}
-          />
-          <FloatChecklistItem
-            label="Desmesclar"
-            title="Desfaz merges cobertos pela seleção (Ctrl+Shift+M)."
-            disabled={!canUnmerge}
-            onClick={() => {
-              applyMerge("unmerge");
-              close();
-            }}
-          />
-        </FloatChecklist>
+        <CanvasTableStructureMenu
+          canMerge={canMerge}
+          canUnmerge={canUnmerge}
+          onSelect={(actionId) => {
+            onStructure(actionId);
+            close();
+          }}
+        />
       )}
       renderStyle={(close) => (
-        <div className="td-deck-ribbon__float-panel">
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
-            <TvRibbonColorPicker
-              label="Fundo"
-              variant="fill"
-              showNoFill
-              onChange={(color) => {
-                applyCellsStyle({ backgroundColor: color });
-                close();
-              }}
-              onNoFill={() => {
-                applyCellsStyle({ backgroundColor: undefined });
-                close();
-              }}
-            />
-          </div>
-          <FloatChecklist aria-label="Alinhamento das células">
-            <FloatChecklistItem
-              label="Esquerda"
-              disabled={!cells.length}
-              onClick={() => {
-                applyCellsStyle({ textAlign: "left" });
-                close();
-              }}
-            />
-            <FloatChecklistItem
-              label="Centro"
-              disabled={!cells.length}
-              onClick={() => {
-                applyCellsStyle({ textAlign: "center" });
-                close();
-              }}
-            />
-            <FloatChecklistItem
-              label="Direita"
-              disabled={!cells.length}
-              onClick={() => {
-                applyCellsStyle({ textAlign: "right" });
-                close();
-              }}
-            />
-          </FloatChecklist>
-        </div>
+        <CanvasTableBlockStylesMenu
+          options={block.canvasTableOptions}
+          headerRow={Boolean(block.headerRow)}
+          onToggleHeaderRow={() => {
+            updateBlock(block.id, { headerRow: !block.headerRow });
+            close();
+          }}
+          onSelect={(actionId) => {
+            onBlockStyle(actionId);
+            close();
+          }}
+        />
       )}
       renderData={(close) => (
-        <button
-          type="button"
-          className="td-deck-ribbon__cascade-item"
-          onClick={() => {
+        <CanvasTableDataMenu
+          onSelect={() => {
             openDataPanel();
             setSelectionPanelTab("data");
             close();
           }}
-        >
-          Vincular dados…
-        </button>
+        />
       )}
     />
   );
