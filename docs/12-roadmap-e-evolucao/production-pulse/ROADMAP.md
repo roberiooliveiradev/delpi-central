@@ -27,7 +27,7 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 
 **E7.S1 entregue (set/2026):** `commandErrors` + `validationErrors` no JSON; `ContentCodedError`; comandos/validação HTTP via loader; drivers retornam `error_code` — commit `1c91f052d`.
 
-**E7.S2 entregue (set/2026):** `DeviceDriverError` code-first; HTTP compartilhado em `device_http_support`; `last_error` grava código; mensagem PT só no boundary JSON — commit pendente desta entrega.
+**E7.S2 entregue (set/2026):** `DeviceDriverError` code-first; HTTP compartilhado em `device_http_support`; `last_error` grava código; mensagem PT só no boundary JSON — commit `d7e6675fa`.
 
 ---
 
@@ -359,7 +359,7 @@ flowchart LR
 #### E7.S2 — Drivers HTTP: códigos only ✅
 
 - **Objetivo:** Drivers LAN levantam `DeviceDriverError(code=…)`; texto amigável só no loader JSON (poll/probe/command boundary).
-- **Status:** ✅ `main` — após commit desta entrega.
+- **Status:** ✅ `main` — commit `d7e6675fa`.
 - **Fazer:**
   1. `esp8266_counter_driver.py`, `esp8266_gauge_driver.py`, `device_http_support.py` — mensagens técnicas EN ou código-only; sem PT ao usuário
   2. Garantir todos os `code` usados ∈ `deviceConnectivity.codes` ou `commandErrors`
@@ -410,7 +410,7 @@ flowchart LR
 
 - [x] E7.S0 — poll/live/test-probe/404/409 no catálogo JSON; MFE device vs infra
 - [x] E7.S1 — comandos + validação HTTP no JSON
-- [ ] E7.S2 — drivers sem copy PT ao usuário
+- [x] E7.S2 — drivers sem copy PT ao usuário
 - [ ] E7.S3 — form validation content sync API/MFE
 - [ ] E7.S4 — modais host-contained
 - [ ] E7.S5 — zero override `.delpi-ui-*` no MFE
