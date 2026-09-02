@@ -53,8 +53,6 @@ export const PP_HELP = {
     colLastSeen: "Momento da última comunicação bem-sucedida com o hardware.",
     rowPoll: "Lê o device agora e atualiza a métrica exibida.",
     rowPollAction: "Atualizar",
-    cardActivateTable:
-      "Clique no card para voltar à visão em tabela com os mesmos filtros.",
     cardOpenDetail: "Ver detalhe",
     pollNoticeTitle: "Dispositivo não respondeu",
     pollNoticeClose: "Fechar",

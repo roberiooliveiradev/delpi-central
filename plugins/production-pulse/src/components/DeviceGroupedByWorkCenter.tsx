@@ -56,7 +56,7 @@ function GroupSection({
                 device={device}
                 compact
                 polling={pollingDeviceId === device.id}
-                onActivate={() => onOpenDevice?.(device.id)}
+                onOpen={onOpenDevice}
                 onPoll={onPoll}
               />
             ))}

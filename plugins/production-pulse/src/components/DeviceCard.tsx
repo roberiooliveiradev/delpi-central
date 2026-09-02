@@ -18,8 +18,7 @@ type DeviceCardProps = {
   device: DeviceListItem;
   compact?: boolean;
   polling?: boolean;
-  onActivate?: () => void;
-  onOpenDetail?: (deviceId: string) => void;
+  onOpen?: (deviceId: string) => void;
   onPoll?: (deviceId: string) => void;
 };
 
@@ -40,30 +39,26 @@ export function DeviceCard({
   device,
   compact = false,
   polling = false,
-  onActivate,
-  onOpenDetail,
+  onOpen,
   onPoll,
 }: DeviceCardProps) {
   const standalone = device.binding?.anchorType === "standalone";
   const dayDelta = formatCounterPeriodDelta(device, "day");
   const metricValue = formatPrimaryMetric(device);
 
+  const openDevice = () => onOpen?.(device.id);
+
   return (
     <div
       className="pp-device-card-hit"
       role="button"
       tabIndex={0}
-      title={compact ? undefined : PP_HELP.panel.cardActivateTable}
-      aria-label={
-        compact
-          ? device.name
-          : `${device.name} — ${PP_HELP.panel.cardActivateTable}`
-      }
-      onClick={() => onActivate?.()}
+      aria-label={device.name}
+      onClick={openDevice}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          onActivate?.();
+          openDevice();
         }
       }}
     >
@@ -114,10 +109,7 @@ export function DeviceCard({
               onClick={stopCardActivation}
               onKeyDown={stopCardActivation}
             >
-              <PpActionButton
-                variant="ghost"
-                onClick={() => onOpenDetail?.(device.id)}
-              >
+              <PpActionButton variant="ghost" onClick={() => onOpen?.(device.id)}>
                 {PP_HELP.panel.cardOpenDetail}
               </PpActionButton>
               <PpActionButton
@@ -141,8 +133,7 @@ type DeviceCardListProps = {
   devices: DeviceListItem[];
   loading?: boolean;
   pollingDeviceId: string | null;
-  onSwitchToTable: () => void;
-  onOpenDetail?: (deviceId: string) => void;
+  onOpenDevice?: (deviceId: string) => void;
   onPoll: (deviceId: string) => void;
 };
 
@@ -150,8 +141,7 @@ export function DeviceCardList({
   devices,
   loading = false,
   pollingDeviceId,
-  onSwitchToTable,
-  onOpenDetail,
+  onOpenDevice,
   onPoll,
 }: DeviceCardListProps) {
   return (
@@ -170,8 +160,7 @@ export function DeviceCardList({
             key={device.id}
             device={device}
             polling={pollingDeviceId === device.id}
-            onActivate={onSwitchToTable}
-            onOpenDetail={onOpenDetail}
+            onOpen={onOpenDevice}
             onPoll={onPoll}
           />
         ))}
