@@ -298,67 +298,33 @@
 }
 
 .pp-device-card-list {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
-.pp-placement-groups {
-  grid-template-columns: 1fr;
-}
-
-.pp-device-card {
-  border: 1px solid var(--pp-border);
-  background: var(--pp-surface);
-  border-radius: var(--pp-card-radius);
-  padding: 14px 16px;
+.pp-device-card-hit {
+  display: block;
   cursor: pointer;
+  border-radius: var(--pp-card-radius);
 }
 
-.pp-device-card__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: start;
+.pp-device-card-hit:focus-visible {
+  outline: 2px solid var(--pp-accent);
+  outline-offset: 2px;
 }
 
-.pp-device-card__header-aside {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.pp-device-card__title {
-  font-size: 1rem;
-}
-
-.pp-device-card__placement {
+.pp-device-card-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
+}
+
+.pp-device-card-metric-delta {
   color: var(--pp-text-muted);
   font-size: var(--pp-font-sm);
 }
 
-.pp-device-card__meta {
-  margin: 8px 0 0;
-  color: var(--pp-text);
-  font-size: var(--pp-font-sm);
-}
-
-.pp-device-card__actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.pp-device-card__ghost {
-  border: 1px solid var(--pp-border);
-  background: transparent;
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: pointer;
+.pp-placement-groups {
+  grid-template-columns: 1fr;
 }
 
 .pp-placement-group {

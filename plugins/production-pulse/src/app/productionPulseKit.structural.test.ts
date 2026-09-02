@@ -39,6 +39,8 @@ describe("production-pulse kit contracts", () => {
       expect(source, rel).not.toMatch(/dataTableBemClasses\s*\(/);
     }
     expect(readRelative("components/DeviceTable.tsx")).toMatch(/PpDataTable/);
+    expect(readRelative("components/DeviceCard.tsx")).toMatch(/PpDataRecordCard/);
+    expect(readRelative("components/DeviceCard.tsx")).not.toMatch(/pp-device-card__ghost/);
     expect(readRelative("components/data/dataTableUi.tsx")).toMatch(/labels={LABELS}/);
     expect(readRelative("components/data/dataTableUi.tsx")).toMatch(/loadingMessage:/);
   });

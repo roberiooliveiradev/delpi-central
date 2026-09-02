@@ -6,6 +6,7 @@ import {
   createHostContainedModalShell,
   catalogSearchBarBemClasses,
   createDashboardCatalogSearchBar,
+  createDashboardDataRecordCard,
   createDashboardFormActions,
   createDashboardFormGrid,
   createDashboardSectionCard,
@@ -71,6 +72,8 @@ export const PpPagination = createCompactPagination({
     navigationAriaLabel: "Paginação",
   },
 });
+
+export const PpDataRecordCard = createDashboardDataRecordCard({ prefix: PREFIX });
 
 export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;
 

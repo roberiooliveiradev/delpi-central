@@ -213,8 +213,9 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
             devices={pagedDevices}
             loading={loading}
             pollingDeviceId={pollingDeviceId}
+            onSwitchToTable={() => setFilters({ view: "table" })}
+            onOpenDetail={openDevice}
             onPoll={runPoll}
-            onOpenDevice={openDevice}
           />
         ) : (
           <DeviceTable
