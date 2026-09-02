@@ -433,13 +433,14 @@ void ensureWifiConnected() {
 }
 
 String paginaPrincipal() {
+  // Evitar F("...</tag>..."): no Arduino IDE, "</" dentro de F() quebra a string.
   String html;
   html.reserve(2400);
-  html += F(
+  html +=
     "<!DOCTYPE html><html lang='pt-BR'><head>"
     "<meta charset='utf-8'/>"
     "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
-    "<title>Production Pulse — Contador</title>"
+    "<title>Production Pulse - Contador</title>"
     "<style>"
     ":root{--bg:#0f172a;--card:#1e293b;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;}"
     "*{box-sizing:border-box}"
@@ -456,40 +457,36 @@ String paginaPrincipal() {
     ".meta{font-size:.8rem;color:var(--muted);margin-top:.75rem}"
     ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);"
     "margin-right:.35rem;vertical-align:middle}"
-    "</style></head><body><div class='wrap'>"
-  );
-  html += F("<div class='card'>");
-  html += F("<p class='label'>Código do controlador</p>");
+    "</style></head><body><div class='wrap'>";
+  html += "<div class='card'>";
+  html += "<p class='label'>Codigo do controlador</p>";
   html += "<div class='code' id='codigo'>" + codigoControlador + "</div>";
-  html += F(
+  html +=
     "<p class='hint'>"
-    "Use este código no cadastro do Production Pulse (campo «Código do controlador»), "
+    "Use este codigo no cadastro do Production Pulse (campo Codigo do controlador), "
     "junto com IP e nome do dispositivo. Config Wi-Fi/token: API /api/config."
     "</p>"
-    "<p class='meta'><span class='dot'></span>Identidade fixa do chip (não muda ao reiniciar)</p>"
-    "</div>"
-  );
-  html += F(
+    "<p class='meta'><span class='dot'></span>Identidade fixa do chip (nao muda ao reiniciar)</p>"
+    "</div>";
+  html +=
     "<div class='card'>"
     "<p class='label'>Contador</p>"
     "<div class='valor'><span id='c'>0</span></div>"
-    "<p class='meta'>Atualização via GET /api/contador (público)</p>"
-    "</div>"
-  );
-  html += F(
+    "<p class='meta'>Atualizacao via GET /api/contador (publico)</p>"
+    "</div>";
+  html +=
     "<script>"
     "async function atualiza(){"
       "try{"
-        "const r=await fetch('/api/contador');"
+        "var r=await fetch('/api/contador');"
         "if(!r.ok){return;}"
-        "const j=await r.json();"
+        "var j=await r.json();"
         "document.getElementById('c').innerText=j.contador;"
       "}catch(e){}"
     "}"
     "setInterval(atualiza,500);"
     "atualiza();"
-    "</script></div></body></html>"
-  );
+    "</script></div></body></html>";
   return html;
 }
 
@@ -518,9 +515,8 @@ void processarBotao(
 }
 
 void registrarRotas() {
-  const char* tokenHeader = "X-Device-Token";
-  const char* headerKeys[] = {tokenHeader};
-  server.collectHeaders(headerKeys, 1);
+  // ESP8266 core 3.x: collectHeaders é variádico (não array + count).
+  server.collectHeaders("X-Device-Token");
 
   server.on("/", HTTP_GET, []() {
     server.send(200, "text/html", paginaPrincipal());

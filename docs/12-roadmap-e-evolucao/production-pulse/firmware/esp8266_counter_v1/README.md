@@ -2,6 +2,8 @@
 
 Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 
+**Arduino IDE:** não use `F("...</tag>")` no HTML da página — o IDE quebra a string em `</`. Core ESP8266 **3.x**: `server.collectHeaders("X-Device-Token")` (sem array + count).
+
 ## Endpoints
 
 | Método | Rota | Auth | Notas |
