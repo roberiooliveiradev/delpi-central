@@ -1,19 +1,19 @@
 import {
   canMergeRect,
-  normalizeCanvasTableCell,
   type ComunicadoCanvasTableBlock,
-  type CanvasTableCell,
 } from "@delpi/tv-dashboard-presentation";
 
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
 import { FloatChecklist, FloatChecklistItem } from "./FloatChecklist";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { canUnmergeCanvasTableSelection } from "../utils/canvasTableMergeCommands";
 import {
-  canUnmergeCanvasTableSelection,
-  resolveCanvasTableMergeCommand,
-} from "../utils/canvasTableMergeCommands";
-import { buildCanvasTableInsertPatch } from "../utils/canvasTableStructureCommands";
+  applyCanvasTableMergeToBlock,
+  insertCanvasTableBand,
+  patchCanvasTableCellsStyle,
+  type CanvasTableCellStylePatch,
+} from "../utils/canvasTableSelectionCommands";
 
 type Props = {
   block: ComunicadoCanvasTableBlock;
@@ -22,6 +22,7 @@ type Props = {
 /**
  * Float da Grade — + estrutura/merge, pincel fill/alinhamento, funil dados.
  * Mesmo shell dos charts (ComplexSelectionFloatToolbar + AnchoredPanelPortal).
+ * Chrome legado FloatChecklist permanece até E8.S18; lógica já via commands.
  */
 export function CanvasTableSelectionFloatToolbar({ block }: Props) {
   const {
@@ -41,39 +42,24 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
   );
 
   function insert(axis: "row" | "col", placement: "before" | "after") {
-    updateBlock(
-      block.id,
-      buildCanvasTableInsertPatch({ block, axis, placement, focus }),
-    );
+    updateBlock(block.id, insertCanvasTableBand({ block, axis, placement, focus }));
   }
 
   function applyMerge(mode: "merge" | "unmerge") {
-    if (!cells.length) return;
-    const next = resolveCanvasTableMergeCommand({
-      merges: block.merges,
-      cells,
-      mode,
-      cellMatrix: mode === "merge" ? block.cells : undefined,
-    });
-    if (!next) return;
-    updateBlock(block.id, {
-      merges: next.merges.length ? next.merges : undefined,
-      ...(next.cells ? { cells: next.cells } : {}),
-    });
+    const patch = applyCanvasTableMergeToBlock({ block, selection: cells, mode });
+    if (!patch) return;
+    updateBlock(block.id, patch);
   }
 
-  function patchSelectedCellsStyle(stylePatch: NonNullable<CanvasTableCell["style"]>) {
+  function applyCellsStyle(stylePatch: CanvasTableCellStylePatch) {
     if (!cells.length) return;
-    const nextCells = block.cells.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
-    for (const { row, col } of cells) {
-      const current = nextCells[row]?.[col];
-      if (current == null) continue;
-      nextCells[row]![col] = {
-        ...normalizeCanvasTableCell(current),
-        style: { ...(current.style ?? {}), ...stylePatch },
-      };
-    }
-    updateBlock(block.id, { cells: nextCells });
+    updateBlock(block.id, {
+      cells: patchCanvasTableCellsStyle({
+        cells: block.cells,
+        selection: cells,
+        stylePatch,
+      }),
+    });
   }
 
   return (
@@ -147,11 +133,11 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
               variant="fill"
               showNoFill
               onChange={(color) => {
-                patchSelectedCellsStyle({ backgroundColor: color });
+                applyCellsStyle({ backgroundColor: color });
                 close();
               }}
               onNoFill={() => {
-                patchSelectedCellsStyle({ backgroundColor: undefined });
+                applyCellsStyle({ backgroundColor: undefined });
                 close();
               }}
             />
@@ -161,7 +147,7 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
               label="Esquerda"
               disabled={!cells.length}
               onClick={() => {
-                patchSelectedCellsStyle({ textAlign: "left" });
+                applyCellsStyle({ textAlign: "left" });
                 close();
               }}
             />
@@ -169,7 +155,7 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
               label="Centro"
               disabled={!cells.length}
               onClick={() => {
-                patchSelectedCellsStyle({ textAlign: "center" });
+                applyCellsStyle({ textAlign: "center" });
                 close();
               }}
             />
@@ -177,7 +163,7 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
               label="Direita"
               disabled={!cells.length}
               onClick={() => {
-                patchSelectedCellsStyle({ textAlign: "right" });
+                applyCellsStyle({ textAlign: "right" });
                 close();
               }}
             />
