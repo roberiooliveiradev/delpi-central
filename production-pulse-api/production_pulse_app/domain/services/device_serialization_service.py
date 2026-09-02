@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
+    public_metrics,
+)
+
 
 def device_row_to_api(
     row: dict[str, Any],
@@ -21,7 +25,7 @@ def device_row_to_api(
         "lastSeenAt": row.get("last_seen_at"),
         "lastPollAttemptAt": row.get("last_poll_attempt_at"),
         "nextPollAt": row.get("next_poll_at"),
-        "lastMetrics": row.get("last_metrics") or {},
+        "lastMetrics": public_metrics(row.get("last_metrics") or {}),
         "lastError": row.get("last_error"),
         "createdAt": row.get("created_at"),
         "updatedAt": row.get("updated_at"),

@@ -138,7 +138,7 @@ export const PP_HELP = {
     delta:
       "Diferença em relação à leitura anterior — só para métricas monotônicas (golpes).",
     counterHardwareReset:
-      "O contador físico caiu em relação à leitura anterior (reset no hardware ou troca de firmware). O delta usa o valor novo como base.",
+      "O contador físico caiu (ex.: device desligado). A plataforma restaura o último valor (POST /api/definir) ou mantém continuidade lógica até o firmware aceitar set.",
     coverageIncomplete:
       "Pode haver lacunas se o device ficou offline ou o poll falhou.",
   },

@@ -92,6 +92,11 @@ Detalhe: [SCHEMA.md § device_bindings](./SCHEMA.md) · [INTEGRATIONS-TOTVS.md](
 | `POST` | `/api/incrementar` | `{"contador": <int>}` |
 | `POST` | `/api/decrementar` | `{"contador": <int>}` |
 | `POST` | `/api/reset` | `{"contador": 0}` |
+| `POST` | `/api/definir` | body `{"contador": <int>}` → `{"contador": <int>}` |
+
+Comando plataforma: `POST /devices/{id}/commands/set` com `{"counter": <int>}` (aliases `contador` / `value`).
+
+Ao detectar queda do contador no poll (perda de memória após desligar), a API tenta `set` com o último valor persistido (+ golpes pós-reboot). Se o firmware ainda não tiver `/api/definir`, aplica offset lógico em `last_metrics` para manter a contagem.
 
 Driver interno: `esp8266_counter_v1` — primeiro entry do registry; novos firmwares = novo `driver_key`, mesmo schema de leituras.
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from urllib.parse import urlencode
 from uuid import UUID
 
@@ -16,7 +17,7 @@ from production_pulse_app.interface.http.rbac_http import (
     guard_device_branch_access,
     guard_operator,
 )
-from production_pulse_app.interface.http.routes.device_routes import _json_error
+from production_pulse_app.interface.http.routes.device_routes import _json_error, _optional_json_body
 
 router = APIRouter(prefix="/operator", tags=["Operator"])
 _placement_service = OperatorPlacementService()
@@ -106,6 +107,7 @@ async def execute_operator_device_command(
             parse_device_id(str(device_id)),
             command_key,
             actor_sub=_actor_sub(request),
+            payload=await _optional_json_body(request),
         )
         return success(data)
     except Exception as exc:

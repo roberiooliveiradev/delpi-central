@@ -19,7 +19,7 @@ def test_registry_counter_capabilities():
     registry = DeviceDriverRegistryService()
     caps = registry.build_capabilities("esp8266_counter_v1")
     assert caps["metrics"] == ["counter"]
-    assert caps["commands"] == ["increment", "decrement", "reset"]
+    assert caps["commands"] == ["increment", "decrement", "reset", "set"]
     assert caps["operatorSurface"] == "counter_pad"
 
 

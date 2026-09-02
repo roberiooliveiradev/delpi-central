@@ -98,6 +98,25 @@ def name_max_length(*, default: int = 120) -> int:
     return default
 
 
+def _counter_set_limits() -> dict[str, Any]:
+    section = _limits_section().get("counterSet")
+    return section if isinstance(section, dict) else {}
+
+
+def counter_set_min(*, default: int = 0) -> int:
+    raw = _counter_set_limits().get("min")
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    return default
+
+
+def counter_set_max(*, default: int = 2_147_483_647) -> int:
+    raw = _counter_set_limits().get("max")
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    return default
+
+
 def valid_branches() -> frozenset[str]:
     raw = load_device_validation_content().get("validBranches")
     if not isinstance(raw, list):
@@ -121,6 +140,8 @@ def matches_ipv4(value: str) -> bool:
 
 
 __all__ = [
+    "counter_set_max",
+    "counter_set_min",
     "ipv4_pattern",
     "live_ui_refresh_min_ms",
     "load_device_validation_content",

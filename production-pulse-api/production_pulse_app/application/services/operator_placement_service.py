@@ -10,6 +10,9 @@ from production_pulse_app.application.services.device_driver_registry_service im
 from production_pulse_app.domain.services.device_connectivity_status_service import (
     resolve_connectivity_status,
 )
+from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
+    public_metrics,
+)
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
 from production_pulse_app.infrastructure.persistence.repositories.postgres_operator_placement_repository import (
     PostgresOperatorPlacementRepository,
@@ -83,7 +86,7 @@ class OperatorPlacementService:
                 if connectivity.get("online"):
                     online_count += 1
                 if primary_preview is None:
-                    metrics = row.get("last_metrics") or {}
+                    metrics = public_metrics(row.get("last_metrics") or {})
                     if isinstance(metrics, dict) and metrics:
                         metric_key = next(iter(metrics.keys()))
                         primary_preview = {

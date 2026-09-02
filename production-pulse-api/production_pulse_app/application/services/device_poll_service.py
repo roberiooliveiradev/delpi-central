@@ -13,6 +13,14 @@ from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.domain.services.device_connectivity_status_service import (
     resolve_connectivity_status,
 )
+from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
+    COUNTER_OFFSET_KEY,
+    COUNTER_RAW_KEY,
+    apply_monotonic_continuity,
+    build_hardware_set_payload,
+    counter_restore_enabled,
+    public_metrics,
+)
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
 from production_pulse_app.domain.services.reading_serialization_service import reading_row_to_api
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_binding_repository import (
@@ -94,10 +102,16 @@ class DevicePollService:
                 technical_detail=exc.technical_detail,
                 connectivity=connectivity,
             ) from exc
+        previous_metrics = device.get("last_metrics") or {}
+        canonical, _meta = apply_monotonic_continuity(
+            driver_key=device["driver_key"],
+            previous_metrics=previous_metrics if isinstance(previous_metrics, dict) else {},
+            raw_metrics=reading.metrics,
+        )
         return self._build_poll_payload(
             device,
             has_binding=has_binding,
-            metrics=reading.metrics,
+            metrics=public_metrics(canonical),
             recorded_at=reading.recorded_at,
         )
 
@@ -116,30 +130,109 @@ class DevicePollService:
                 connectivity=connectivity,
             ) from exc
 
-        previous_metrics = device.get("last_metrics") or {}
-        delta_metrics, meta = compute_delta_metrics(
-            driver_key=device["driver_key"],
-            previous_metrics=previous_metrics if isinstance(previous_metrics, dict) else {},
-            new_metrics=reading.metrics,
+        previous_metrics = (
+            device.get("last_metrics") if isinstance(device.get("last_metrics"), dict) else {}
         )
+        raw_metrics = dict(reading.metrics)
+        continuity_meta: dict[str, Any] = {}
+
+        restored = self._maybe_hardware_restore_counter(
+            device,
+            previous_metrics=previous_metrics,
+            raw_metrics=raw_metrics,
+        )
+        if restored is not None:
+            canonical, continuity_meta = restored
+        else:
+            canonical, continuity_meta = apply_monotonic_continuity(
+                driver_key=device["driver_key"],
+                previous_metrics=previous_metrics,
+                raw_metrics=raw_metrics,
+            )
+
+        previous_public = public_metrics(previous_metrics)
+        canonical_public = public_metrics(canonical)
+        delta_metrics, delta_meta = compute_delta_metrics(
+            driver_key=device["driver_key"],
+            previous_metrics=previous_public,
+            new_metrics=canonical_public,
+        )
+        meta = {**continuity_meta, **delta_meta}
+        if meta.get("counter_restored"):
+            meta.pop("counter_reset", None)
+
         reading_row = self._readings.insert(
             device_id,
-            metrics=reading.metrics,
+            metrics=canonical_public,
             delta_metrics=delta_metrics,
             meta=meta,
             source=source,
             recorded_at=reading.recorded_at,
         )
-        device = self._devices.record_poll_success(device_id, metrics=reading.metrics)
+        device = self._devices.record_poll_success(device_id, metrics=canonical)
         return self._build_poll_payload(
             device,
             has_binding=has_binding,
-            metrics=reading.metrics,
+            metrics=canonical_public,
             recorded_at=reading_row["recorded_at"],
             delta_metrics=delta_metrics,
             reading_id=reading_row["id"],
             meta=meta,
         )
+
+    def _maybe_hardware_restore_counter(
+        self,
+        device: dict[str, Any],
+        *,
+        previous_metrics: dict[str, Any],
+        raw_metrics: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any]] | None:
+        if not counter_restore_enabled(device["driver_key"]):
+            return None
+
+        prev_logical = previous_metrics.get("counter")
+        prev_raw = previous_metrics.get(COUNTER_RAW_KEY, prev_logical)
+        new_raw = raw_metrics.get("counter")
+        if not isinstance(prev_logical, (int, float)) or isinstance(prev_logical, bool):
+            return None
+        if not isinstance(prev_raw, (int, float)) or isinstance(prev_raw, bool):
+            return None
+        if not isinstance(new_raw, (int, float)) or isinstance(new_raw, bool):
+            return None
+        if int(new_raw) >= int(prev_raw):
+            return None
+
+        target = int(prev_logical) + int(new_raw)
+        try:
+            driver = self._registry.get_implementation(device["driver_key"])
+        except DeviceDriverNotImplementedError:
+            return None
+
+        result = driver.execute(
+            device,
+            "set",
+            payload=build_hardware_set_payload(counter=target),
+        )
+        if not result.success or not result.metrics:
+            return None
+
+        restored_raw = result.metrics.get("counter")
+        if not isinstance(restored_raw, (int, float)) or isinstance(restored_raw, bool):
+            return None
+
+        metrics = {
+            "counter": int(restored_raw),
+            COUNTER_RAW_KEY: int(restored_raw),
+            COUNTER_OFFSET_KEY: 0,
+        }
+        meta = {
+            "counter_restored": True,
+            "counter_restore_mode": "hardware_set",
+            "counter_restore_from": int(prev_logical),
+            "counter_restore_raw": int(new_raw),
+            "counter_restore_target": target,
+        }
+        return metrics, meta
 
     def list_readings(
         self,

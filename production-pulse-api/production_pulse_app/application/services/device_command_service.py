@@ -14,6 +14,15 @@ from production_pulse_app.application.services.command_audit_actor_enrichment_se
     enrich_command_audit_actors,
 )
 from production_pulse_app.domain.services.command_serialization_service import command_row_to_api
+from production_pulse_app.domain.services.device_command_payload_service import (
+    normalize_set_command_payload,
+)
+from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
+    COUNTER_OFFSET_KEY,
+    COUNTER_RAW_KEY,
+    apply_monotonic_continuity,
+    public_metrics,
+)
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
 from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
     command_error_message,
@@ -78,13 +87,18 @@ class DeviceCommandService:
         normalized_key = (command_key or "").strip().lower()
         self._assert_command_supported(device["driver_key"], normalized_key)
 
+        request_payload = payload if isinstance(payload, dict) else {}
+        driver_payload = request_payload
+        if normalized_key == "set":
+            driver_payload = normalize_set_command_payload(request_payload)
+
         try:
             driver = self._registry.get_implementation(device["driver_key"])
         except DeviceDriverNotImplementedError:
             result = CommandResult(success=False, error_code="driver_not_implemented")
         else:
             try:
-                result = driver.execute(device, normalized_key, payload=payload)
+                result = driver.execute(device, normalized_key, payload=driver_payload)
             except DeviceDriverError as exc:
                 result = CommandResult(success=False, error_code=exc.code)
 
@@ -95,37 +109,73 @@ class DeviceCommandService:
             issued_by=actor_sub or "unknown",
             success=result.success,
             error_message=user_error_message,
-            request_payload=payload or {},
+            request_payload=driver_payload if normalized_key == "set" else (payload or {}),
             response_payload=result.response_payload,
         )
 
         reading_id = None
         if result.success and result.metrics:
-            previous_metrics = device.get("last_metrics") or {}
-            delta_metrics, meta = compute_delta_metrics(
-                driver_key=device["driver_key"],
-                previous_metrics=previous_metrics if isinstance(previous_metrics, dict) else {},
-                new_metrics=result.metrics,
+            previous_metrics = (
+                device.get("last_metrics") if isinstance(device.get("last_metrics"), dict) else {}
             )
+            clear_offsets = normalized_key in {"reset", "set"}
+            canonical, continuity_meta = apply_monotonic_continuity(
+                driver_key=device["driver_key"],
+                previous_metrics=previous_metrics,
+                raw_metrics=result.metrics,
+                clear_offsets=clear_offsets,
+            )
+            if clear_offsets:
+                # set/reset definem baseline absoluta no hardware
+                counter = int(result.metrics["counter"])
+                canonical = {
+                    "counter": counter,
+                    COUNTER_RAW_KEY: counter,
+                    COUNTER_OFFSET_KEY: 0,
+                }
+                continuity_meta = {}
+
+            previous_public = public_metrics(previous_metrics)
+            canonical_public = public_metrics(canonical)
+            delta_metrics, delta_meta = compute_delta_metrics(
+                driver_key=device["driver_key"],
+                previous_metrics=previous_public,
+                new_metrics=canonical_public,
+            )
+            meta = {**continuity_meta, **delta_meta}
+            if normalized_key == "reset":
+                meta["operator_reset"] = True
+                meta.pop("counter_reset", None)
+                delta_metrics = {key: 0 for key in delta_metrics}
+            if normalized_key == "set":
+                meta["operator_set"] = True
+                meta.pop("counter_reset", None)
+
             reading_row = self._readings.insert(
                 device_id,
-                metrics=result.metrics,
+                metrics=canonical_public,
                 delta_metrics=delta_metrics,
                 meta=meta,
                 source="command",
             )
-            self._devices.record_poll_success(device_id, metrics=result.metrics)
+            self._devices.record_poll_success(device_id, metrics=canonical)
             reading_id = reading_row["id"]
 
         response = {
             "commandKey": normalized_key,
             "success": result.success,
-            "metrics": result.metrics,
+            "metrics": public_metrics(result.metrics) if result.metrics else result.metrics,
             "errorMessage": user_error_message,
             "commandId": str(audit_row["id"]),
         }
         if reading_id is not None:
             response["readingId"] = reading_id
+        if normalized_key == "set" and result.success:
+            response["metrics"] = public_metrics(
+                {
+                    "counter": int(result.metrics["counter"]),
+                }
+            )
         return json_safe(response)
 
     def list_commands(

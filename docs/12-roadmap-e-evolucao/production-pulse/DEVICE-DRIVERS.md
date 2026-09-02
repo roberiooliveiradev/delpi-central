@@ -55,7 +55,7 @@
 {
   "roleKey": "pulse_counter",
   "labelPt": "ESP8266 — contador de golpes",
-  "descriptionPt": "Firmware piloto: GET /api/contador, POST incrementar/decrementar/reset",
+  "descriptionPt": "Firmware piloto: GET /api/contador, POST incrementar/decrementar/reset/definir",
   "metrics": [
     {
       "key": "counter",
@@ -66,7 +66,8 @@
       "icon": "Hash"
     }
   ],
-  "commands": ["increment", "decrement", "reset"],
+  "commands": ["increment", "decrement", "reset", "set"],
+  "counterRestore": { "enabled": true, "preferHardwareSet": true },
   "operatorSurface": "counter_pad",
   "operatorEligible": true,
   "poll": { "timeoutMs": 3000 }

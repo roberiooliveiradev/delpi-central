@@ -63,4 +63,8 @@ describe("isHardwareCounterReset", () => {
     expect(isHardwareCounterReset({ meta: { counterReset: true } })).toBe(true);
     expect(isHardwareCounterReset({ meta: {} })).toBe(false);
   });
+
+  it("detects counter_restored meta after power-loss restore", () => {
+    expect(isHardwareCounterReset({ meta: { counter_restored: true } })).toBe(true);
+  });
 });
