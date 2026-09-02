@@ -2,6 +2,8 @@ import {
   canMergeRect,
   canvasTablePresetOptions,
   mergeCanvasTableOptions,
+  nextCanvasTableWhiteSpaceToggle,
+  normalizeCanvasTableCell,
   type ComunicadoCanvasTableBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -10,6 +12,7 @@ import {
   CanvasTableBlockStylesMenu,
   type CanvasTableBlockStyleActionId,
 } from "./CanvasTableBlockStylesMenu";
+import { CanvasTableCellFormatMenu } from "./CanvasTableCellFormatMenu";
 import { CanvasTableDataMenu } from "./CanvasTableDataMenu";
 import {
   CanvasTableStructureMenu,
@@ -20,6 +23,8 @@ import { canUnmergeCanvasTableSelection } from "../utils/canvasTableMergeCommand
 import {
   applyCanvasTableMergeToBlock,
   insertCanvasTableBand,
+  patchCanvasTableCellsStyle,
+  type CanvasTableCellStylePatch,
 } from "../utils/canvasTableSelectionCommands";
 
 type Props = {
@@ -27,8 +32,7 @@ type Props = {
 };
 
 /**
- * Float da Grade — + estrutura, pincel bloco, funil dados.
- * Chrome chart/table (`td-chart-*`); dispatcher célula em S22.
+ * Float da Grade — + estrutura; pincel/dados alternam bloco vs célula.
  */
 export function CanvasTableSelectionFloatToolbar({ block }: Props) {
   const {
@@ -42,6 +46,10 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
     selectedCanvasTableCell?.blockId === block.id ? selectedCanvasTableCell : null;
   const cells = cellSelection?.cells ?? [];
   const focus = cellSelection?.focus ?? null;
+  const hasCellSelection = cells.length > 0;
+  const focusCell = focus
+    ? normalizeCanvasTableCell(block.cells[focus.row]?.[focus.col])
+    : null;
   const canMerge = Boolean(cells.length && canMergeRect(cells, block.merges));
   const canUnmerge = Boolean(
     cells.length && canUnmergeCanvasTableSelection(block.merges, cells),
@@ -56,6 +64,17 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
     const patch = applyCanvasTableMergeToBlock({ block, selection: cells, mode });
     if (!patch) return;
     updateBlock(block.id, patch);
+  }
+
+  function applyCellsStyle(stylePatch: CanvasTableCellStylePatch) {
+    if (!cells.length) return;
+    updateBlock(block.id, {
+      cells: patchCanvasTableCellsStyle({
+        cells: block.cells,
+        selection: cells,
+        stylePatch,
+      }),
+    });
   }
 
   function onStructure(actionId: CanvasTableStructureActionId) {
@@ -141,8 +160,8 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
       frame={block.frame}
       labels={{
         elements: "Estrutura da Grade",
-        style: "Estilo da Grade",
-        data: "Dados da Grade",
+        style: hasCellSelection ? "Formato da célula" : "Estilo da Grade",
+        data: hasCellSelection ? "Dados da célula" : "Dados da Grade",
       }}
       renderElements={(close) => (
         <CanvasTableStructureMenu
@@ -154,22 +173,63 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
           }}
         />
       )}
-      renderStyle={(close) => (
-        <CanvasTableBlockStylesMenu
-          options={block.canvasTableOptions}
-          headerRow={Boolean(block.headerRow)}
-          onToggleHeaderRow={() => {
-            updateBlock(block.id, { headerRow: !block.headerRow });
-            close();
-          }}
-          onSelect={(actionId) => {
-            onBlockStyle(actionId);
-            close();
-          }}
-        />
-      )}
+      renderStyle={(close) =>
+        hasCellSelection && focusCell ? (
+          <CanvasTableCellFormatMenu
+            textAlign={focusCell.style?.textAlign}
+            verticalAlign={focusCell.style?.verticalAlign}
+            whiteSpace={focusCell.style?.whiteSpace}
+            color={focusCell.style?.color}
+            backgroundColor={focusCell.style?.backgroundColor}
+            onAlign={(align) => {
+              applyCellsStyle({ textAlign: align });
+              close();
+            }}
+            onVerticalAlign={(align) => {
+              applyCellsStyle({ verticalAlign: align });
+              close();
+            }}
+            onToggleWrap={() => {
+              applyCellsStyle({
+                whiteSpace: nextCanvasTableWhiteSpaceToggle(focusCell.style?.whiteSpace),
+              });
+              close();
+            }}
+            onSetNowrap={() => {
+              applyCellsStyle({ whiteSpace: "nowrap" });
+              close();
+            }}
+            onColorChange={(color) => {
+              applyCellsStyle({ color });
+              close();
+            }}
+            onBackgroundChange={(color) => {
+              applyCellsStyle({ backgroundColor: color });
+              close();
+            }}
+            onNoFill={() => {
+              applyCellsStyle({ backgroundColor: undefined });
+              close();
+            }}
+          />
+        ) : (
+          <CanvasTableBlockStylesMenu
+            options={block.canvasTableOptions}
+            headerRow={Boolean(block.headerRow)}
+            onToggleHeaderRow={() => {
+              updateBlock(block.id, { headerRow: !block.headerRow });
+              close();
+            }}
+            onSelect={(actionId) => {
+              onBlockStyle(actionId);
+              close();
+            }}
+          />
+        )
+      }
       renderData={(close) => (
         <CanvasTableDataMenu
+          variant={hasCellSelection ? "cell" : "block"}
           onSelect={() => {
             openDataPanel();
             setSelectionPanelTab("data");

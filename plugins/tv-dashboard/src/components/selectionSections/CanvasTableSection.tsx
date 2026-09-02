@@ -317,8 +317,8 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         <DeckRibbonTilePopover
           icon={Grid3x3}
           label="Estrutura"
-          hint="Linhas, colunas e tamanho da fonte da Grade."
-          panelLabel="Linhas, colunas e fonte"
+          hint="Linhas e colunas da Grade."
+          panelLabel="Linhas e colunas"
           panelClassName="td-deck-ribbon-tile-popover--wide"
         >
           {structureFields}
