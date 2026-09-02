@@ -62,8 +62,8 @@ Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — *
 | `/apps/commercial/interaction-rooms` | Inbox da sala de interação (lista) | `commercial.access` |
 | `/apps/commercial/interaction-rooms/:roomId` | Thread da sala (SPA; não declarado no manifesto) | `commercial.access` |
 
-Nav de topo: `Início → Visão geral† → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração°`
-(†‡ `commercial.access` · ° `commercial.manage`). Propostas, OTD, Oportunidades
+Nav de topo: `Início → Visão geral† → Sala → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração° → Ajuda`
+(†‡ `commercial.access` · ° `commercial.manage` · Ajuda sempre visível). Propostas, OTD, Oportunidades
 e Equipe analytics saem do topo: chega-se a elas pelo launcher do Início ou pelos drills da Visão geral.
 Alias `/administration/members` → Equipe; detalhe legado `/seller-portfolios/:id` permanece válido.
 

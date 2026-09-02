@@ -28,7 +28,7 @@ describe("commercial RBAC gates (sem aliases)", () => {
     assert.match(shell, /worklist: showWorklist/);
   });
 
-  it("navegação de topo tem as sete áreas da IA 2026", () => {
+  it("navegação de topo tem as áreas da IA 2026 + Ajuda", () => {
     const nav = readFileSync(join(src, "content/shellNav.ts"), "utf8");
     for (const [id, label] of [
       ["home", "Início"],
@@ -38,12 +38,17 @@ describe("commercial RBAC gates (sem aliases)", () => {
       ["open_orders", "Meus pedidos"],
       ["customers", "Minha Carteira"],
       ["administration", "Administração"],
+      ["help", "Ajuda"],
     ]) {
       assert.match(nav, new RegExp(`id: "${id}", label: "${label}"`), id);
     }
     assert.match(
       nav,
       /id: "overview", label: "Visão geral"[\s\S]*?id: "interaction_rooms", label: "Sala de interação"/,
+    );
+    assert.match(
+      nav,
+      /id: "administration", label: "Administração"[\s\S]*?id: "help", label: "Ajuda"/,
     );
     // Gestão / Propostas / Carteiras (admin) não são itens do topo.
     assert.doesNotMatch(nav, /id: "[^"]+", label: "(Gestão|Propostas|Carteiras)"/);

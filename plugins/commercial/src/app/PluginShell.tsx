@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
+  BookOpen,
   BriefcaseBusiness,
   CalendarCheck,
   ClipboardList,
@@ -74,6 +75,7 @@ const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   customers: CM_HELP.shell.navCustomers,
   client_context: CM_HELP.shell.navCustomers,
   administration: CM_HELP.shell.navAdmin,
+  help: CM_HELP.shell.navHelp,
 };
 
 const NAV_ICONS: Record<PluginNavId, ReactNode> = {
@@ -85,6 +87,7 @@ const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   customers: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,
   client_context: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,
   administration: <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />,
+  help: <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 function greetingForNow(date = new Date()): string {

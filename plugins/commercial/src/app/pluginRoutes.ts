@@ -31,7 +31,7 @@ export type PluginView =
   | "help"
   | "not_found";
 
-/** Itens da navegação de topo (IA 2026 — sete áreas + Cliente efêmero fora da carteira). */
+/** Itens da navegação de topo (IA 2026 — áreas do portal + Cliente efêmero fora da carteira). */
 export type PluginNavId =
   | "home"
   | "overview"
@@ -40,7 +40,8 @@ export type PluginNavId =
   | "open_orders"
   | "customers"
   | "client_context"
-  | "administration";
+  | "administration"
+  | "help";
 
 export type ResolvedPluginRoute = {
   view: PluginView;
@@ -729,7 +730,7 @@ export function resolveActiveNavId(
     return "administration";
   }
   if (view === "proposals" || view === "proposal_detail") return null;
-  if (view === "help") return null;
+  if (view === "help") return "help";
   if (view === "user_profile") return null;
   if (view === "interaction_rooms" || view === "interaction_room_detail") {
     return "interaction_rooms";
