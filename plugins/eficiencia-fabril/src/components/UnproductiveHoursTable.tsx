@@ -209,9 +209,6 @@ export function UnproductiveHoursTable({
                 disabled={disabled}
                 onSortChange={onSortChange}
               />
-              <th scope="col">OP</th>
-              <th scope="col">Produto</th>
-              <th scope="col">Operação</th>
               <th scope="col">Recurso</th>
               <th scope="col">CT custo</th>
               <th scope="col">Operador</th>
@@ -236,7 +233,7 @@ export function UnproductiveHoursTable({
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={11} className={EF_TABLE.empty}>
+                <td colSpan={8} className={EF_TABLE.empty}>
                   Nenhum apontamento de parada para os filtros selecionados.
                 </td>
               </tr>
@@ -248,9 +245,6 @@ export function UnproductiveHoursTable({
                 return (
                   <tr key={key} className="ef-row">
                     <td>{formatDisplayDate(item.reference_date ?? item.dataReferencia)}</td>
-                    <td>{item.production_order ?? item.op ?? "—"}</td>
-                    <td>{item.product_code ?? item.produto ?? "—"}</td>
-                    <td>{item.operation ?? item.operacao ?? "—"}</td>
                     <td>{item.resource ?? item.recurso ?? "—"}</td>
                     <td>{item.cost_center ?? item.centroCusto ?? "—"}</td>
                     <td>{item.operator_name ?? item.nomeOperador ?? "—"}</td>
