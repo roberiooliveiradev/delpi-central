@@ -84,6 +84,7 @@
     "allocationBase": "Base do rateio",
     "linkedInvoiceCount": "NFs no CT-e",
     "freightIssueDate": "Emissão do CT-e",
+    "freightAccessKey": "Chave eletrônica",
     "reason": "Motivo",
     "reasonCode": "Código"
   },

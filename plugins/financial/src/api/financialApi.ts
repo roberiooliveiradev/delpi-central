@@ -14,6 +14,8 @@ import type {
   DelinquencyTitlesPayload,
   DepartmentIndicators,
   FinancialBranch,
+  FreightDashboardPayload,
+  FreightInconsistenciesPayload,
   GlobalIndicators,
   BillingDashboard,
   BillingInvoicesPayload,
@@ -364,6 +366,69 @@ export function fetchCostCenterEntries(
   return get<CostCenterEntriesPayload>(
     `/cost-centers/entries${query}`,
     "Não foi possível carregar os lançamentos.",
+    params.signal,
+  );
+}
+
+// -------------------------------------------------------------- frete das compras
+
+type FreightParams = {
+  branch: FinancialBranch;
+  issueStart?: string | null;
+  issueEnd?: string | null;
+  entryStart?: string | null;
+  entryEnd?: string | null;
+  supplier?: string | null;
+  invoiceDocument?: string | null;
+  freightDocument?: string | null;
+  page?: number;
+  pageSize?: number;
+  refresh?: boolean;
+  signal?: AbortSignal;
+};
+
+function freightQuery(params: FreightParams, extra: Record<string, unknown> = {}): string {
+  return buildQuery({
+    branch: branchParam(params.branch),
+    issueStart: params.issueStart,
+    issueEnd: params.issueEnd,
+    entryStart: params.entryStart,
+    entryEnd: params.entryEnd,
+    supplier: params.supplier,
+    invoiceDocument: params.invoiceDocument,
+    freightDocument: params.freightDocument,
+    page: params.page,
+    pageSize: params.pageSize,
+    refresh: params.refresh ? "true" : null,
+    ...(extra as Record<string, string | number | boolean | null | undefined>),
+  });
+}
+
+export function fetchFreightDashboard(
+  params: FreightParams & {
+    situation?: string | null;
+    sortBy?: string | null;
+    sortDir?: string | null;
+  },
+): Promise<FreightDashboardPayload> {
+  const query = freightQuery(params, {
+    situation: params.situation,
+    sortBy: params.sortBy,
+    sortDir: params.sortDir,
+  });
+  return get<FreightDashboardPayload>(
+    `/freight/dashboard${query}`,
+    "Não foi possível carregar o frete das compras.",
+    params.signal,
+  );
+}
+
+export function fetchFreightInconsistencies(
+  params: FreightParams,
+): Promise<FreightInconsistenciesPayload> {
+  return get<FreightInconsistenciesPayload>(
+    `/freight/inconsistencies${freightQuery(params)}`,
+    "Não foi possível carregar as inconsistências de frete.",
     params.signal,
   );
 }

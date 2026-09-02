@@ -129,6 +129,16 @@ def test_dashboard_maps_invoices_and_summary() -> None:
     assert result["summary"]["freightPercent"] == "4.13"
 
 
+def test_allocation_carries_the_cte_access_key_for_the_detail() -> None:
+    """A conferência no Protheus começa pela chave — não pode parar no gateway."""
+    service, _ = build()
+
+    result = service.dashboard(full_user(), **PERIOD)
+
+    allocation = result["items"][0]["allocations"][0]
+    assert allocation["freightAccessKey"] == "4326" + "0" * 40
+
+
 def test_orphan_link_is_reported_and_kept_out_of_the_totals() -> None:
     service, _ = build()
 

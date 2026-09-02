@@ -60,6 +60,7 @@ class FreightLink:
     freight_issue_date: str
     freight_document_type: str
     freight_document_kind: str
+    freight_access_key: str = ""
 
     @property
     def invoice_key(self) -> tuple[str, ...]:
@@ -104,6 +105,7 @@ class FreightAllocation:
     allocation_base: Decimal
     allocated_value: Decimal
     linked_invoice_count: int
+    freight_access_key: str = ""
 
 
 @dataclass(frozen=True)
@@ -280,6 +282,7 @@ class FreightAllocationService:
                     allocation_base=base,
                     allocated_value=shares[link.invoice_key],
                     linked_invoice_count=linked_invoice_count,
+                    freight_access_key=link.freight_access_key,
                 )
             )
 

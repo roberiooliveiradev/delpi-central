@@ -320,6 +320,7 @@ class FreightService:
             freight_issue_date=as_str(item.get("freight_issue_date")),
             freight_document_type=as_str(item.get("freight_document_type")),
             freight_document_kind=as_str(item.get("freight_document_kind")),
+            freight_access_key=as_str(item.get("freight_access_key")),
         )
 
     @staticmethod
@@ -524,6 +525,7 @@ class FreightService:
                     "carrierStore": item.carrier_store,
                     "carrierName": item.carrier_name,
                     "freightIssueDate": item.freight_issue_date,
+                    "freightAccessKey": item.freight_access_key,
                     "freightGrossValue": str(item.freight_gross_value),
                     "allocationBase": str(item.allocation_base),
                     "allocatedValue": str(item.allocated_value),

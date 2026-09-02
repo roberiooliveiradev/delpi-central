@@ -225,6 +225,98 @@ export type CostCenterEntriesPayload = {
   items: CostCenterEntry[];
 };
 
+// ------------------------------------------------------- frete das compras
+
+/** Situação da NF na análise de frete — espelha o `freight.json` do BFF. */
+export type FreightSituation = "normal" | "above_limit" | "inconsistent";
+
+/**
+ * Valores monetários chegam como string decimal: o rateio é feito em Decimal
+ * no BFF e converter para `number` aqui devolveria o erro de ponto flutuante
+ * que o cálculo evitou.
+ */
+export type FreightAllocation = {
+  freightDocument: string;
+  freightSeries: string;
+  carrierCode: string;
+  carrierStore: string;
+  carrierName: string;
+  freightIssueDate: string;
+  /** Chave da NF-e do CT-e — conferência no Protheus começa por ela. */
+  freightAccessKey: string;
+  freightGrossValue: string;
+  allocationBase: string;
+  allocatedValue: string;
+  linkedInvoiceCount: number;
+};
+
+export type FreightInvoice = {
+  branch: string;
+  invoiceDocument: string;
+  invoiceSeries: string;
+  supplierCode: string;
+  supplierStore: string;
+  supplierName: string;
+  issueDate: string;
+  entryDate: string;
+  goodsValue: string;
+  freightTotal: string;
+  freightPercent: string | null;
+  freightLimit: string | null;
+  situation: FreightSituation;
+  reasonCodes: string[];
+  freightDocumentCount: number;
+  allocations: FreightAllocation[];
+};
+
+export type FreightSummary = {
+  invoiceCount: number;
+  goodsTotal: string;
+  freightTotal: string;
+  freightPercent: string | null;
+  aboveLimitCount: number;
+  inconsistentCount: number;
+};
+
+export type FreightDashboardPayload = {
+  period: {
+    issueStart: string | null;
+    issueEnd: string | null;
+    entryStart: string | null;
+    entryEnd: string | null;
+  };
+  branch: string | null;
+  situation: string;
+  sort: SortState;
+  pagination: Pagination;
+  summary: FreightSummary;
+  /** Limite percentual por filial, como string decimal. */
+  limits: Record<string, string>;
+  items: FreightInvoice[];
+};
+
+export type FreightInconsistency = {
+  reasonCode: string;
+  reason: string;
+  branch: string;
+  invoiceDocument: string;
+  invoiceSeries: string;
+  supplierCode: string;
+  supplierName: string;
+  freightDocument: string;
+  freightSeries: string;
+  carrierName: string;
+  goodsValue: string | null;
+  freightGrossValue: string | null;
+};
+
+export type FreightInconsistenciesPayload = {
+  branch: string | null;
+  pagination: Pagination;
+  totalsByReason: { reasonCode: string; reason: string; count: number }[];
+  items: FreightInconsistency[];
+};
+
 // ------------------------------------------------------------------ indicadores
 
 export type StrategicIndicator = {
