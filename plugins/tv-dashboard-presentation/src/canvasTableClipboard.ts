@@ -9,7 +9,7 @@ import {
   type CanvasTableCellRef,
   type CanvasTableMerge,
 } from "./comunicadoCanvasTable";
-import { expandSelectionToMerges } from "./canvasTableMerge";
+import { expandSelectionToMerges, normalizeCanvasTableMerges } from "./canvasTableMerge";
 
 export type CanvasTableClipboardPayload = {
   rows: number;
@@ -182,7 +182,9 @@ export function pasteCanvasTableClipboard(params: {
   origin: CanvasTableCellRef;
   rows: number;
   cols: number;
-}): { cells: CanvasTableCell[][] } {
+  /** Merges atuais do bloco — fundidos com os remapeados do payload. */
+  merges?: readonly CanvasTableMerge[];
+}): { cells: CanvasTableCell[][]; merges?: CanvasTableMerge[] } {
   const next = params.cells.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
   for (let r = 0; r < params.payload.rows; r += 1) {
     for (let c = 0; c < params.payload.cols; c += 1) {
@@ -192,5 +194,46 @@ export function pasteCanvasTableClipboard(params: {
       next[row]![col] = cloneCell(params.payload.cells[r]![c]!);
     }
   }
-  return { cells: next };
+
+  const payloadMerges = (params.payload.merges ?? [])
+    .map((merge) => ({
+      row: params.origin.row + merge.row,
+      col: params.origin.col + merge.col,
+      rowspan: merge.rowspan,
+      colspan: merge.colspan,
+    }))
+    .filter(
+      (merge) =>
+        merge.row >= 0 &&
+        merge.col >= 0 &&
+        merge.row + merge.rowspan - 1 < params.rows &&
+        merge.col + merge.colspan - 1 < params.cols,
+    );
+
+  if (!payloadMerges.length) {
+    return { cells: next };
+  }
+
+  const pasteRect = {
+    rowMin: params.origin.row,
+    colMin: params.origin.col,
+    rowMax: params.origin.row + params.payload.rows - 1,
+    colMax: params.origin.col + params.payload.cols - 1,
+  };
+  const kept = (params.merges ?? []).filter((merge) => {
+    const rowMax = merge.row + merge.rowspan - 1;
+    const colMax = merge.col + merge.colspan - 1;
+    const overlaps =
+      merge.row <= pasteRect.rowMax &&
+      rowMax >= pasteRect.rowMin &&
+      merge.col <= pasteRect.colMax &&
+      colMax >= pasteRect.colMin;
+    return !overlaps;
+  });
+  const merges = normalizeCanvasTableMerges(
+    [...kept, ...payloadMerges],
+    params.rows,
+    params.cols,
+  );
+  return { cells: next, merges };
 }

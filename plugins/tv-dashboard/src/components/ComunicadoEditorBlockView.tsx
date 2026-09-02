@@ -1525,8 +1525,13 @@ function EditorCanvasTableBlock({
             cells[row]![col] = normalizeCanvasTableCell(cell);
             updateBlock(block.id, { cells });
           },
-          onCellsCommit: (cells) => {
-            updateBlock(block.id, { cells });
+          onCellsCommit: (cells, extras) => {
+            updateBlock(block.id, {
+              cells,
+              ...(extras?.merges
+                ? { merges: extras.merges.length ? extras.merges : undefined }
+                : {}),
+            });
           },
           onTracksCommit: (next) => {
             updateBlock(block.id, {

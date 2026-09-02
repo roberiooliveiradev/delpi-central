@@ -49,6 +49,7 @@ import {
   resolveColumnSparklineAxis,
   type CanvasTableCell,
   type CanvasTableCellRef,
+  type CanvasTableMerge,
 } from "./comunicadoCanvasTable";
 import { hasRichTextRuns } from "./comunicadoContentRuns";
 import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
@@ -78,7 +79,10 @@ export type ComunicadoCanvasTableInteraction = {
     clientY: number;
   }) => void;
   onCellCommit?: (row: number, col: number, cell: CanvasTableCell) => void;
-  onCellsCommit?: (cells: CanvasTableCell[][]) => void;
+  onCellsCommit?: (
+    cells: CanvasTableCell[][],
+    extras?: { merges?: CanvasTableMerge[] },
+  ) => void;
   onTracksCommit?: (next: { columnWidths?: number[]; rowHeights?: number[] }) => void;
 };
 
@@ -611,8 +615,12 @@ export function ComunicadoCanvasTableView({
           origin,
           rows: block.rows,
           cols: block.cols,
+          merges: block.merges,
         });
-        interaction?.onCellsCommit?.(pasted.cells);
+        interaction?.onCellsCommit?.(
+          pasted.cells,
+          pasted.merges ? { merges: pasted.merges } : undefined,
+        );
       };
       if (canvasTableSessionClipboard) {
         applyPayload(canvasTableSessionClipboard);

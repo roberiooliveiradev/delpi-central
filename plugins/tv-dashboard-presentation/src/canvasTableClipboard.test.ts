@@ -65,6 +65,47 @@ describe("canvasTableClipboard", () => {
     expect(payload?.cells[0]?.[0]?.text).toBe("1");
   });
 
+  it("cola intervalo com merge deslocando a âncora", () => {
+    const grid = [
+      [normalizeCanvasTableCell("A"), normalizeCanvasTableCell("B")],
+      [normalizeCanvasTableCell("C"), normalizeCanvasTableCell("D")],
+    ];
+    const payload = serializeCanvasTableClipboard({
+      cells: grid,
+      selected: [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+        { row: 1, col: 0 },
+        { row: 1, col: 1 },
+      ],
+      merges: [{ row: 0, col: 0, rowspan: 2, colspan: 2 }],
+    });
+    expect(payload?.merges).toEqual([{ row: 0, col: 0, rowspan: 2, colspan: 2 }]);
+
+    const target = [
+      [
+        normalizeCanvasTableCell(""),
+        normalizeCanvasTableCell(""),
+        normalizeCanvasTableCell(""),
+      ],
+      [
+        normalizeCanvasTableCell(""),
+        normalizeCanvasTableCell(""),
+        normalizeCanvasTableCell(""),
+      ],
+    ];
+    const pasted = pasteCanvasTableClipboard({
+      cells: target,
+      payload: payload!,
+      origin: { row: 0, col: 1 },
+      rows: 2,
+      cols: 3,
+      merges: [],
+    });
+    expect(pasted.merges).toEqual([{ row: 0, col: 1, rowspan: 2, colspan: 2 }]);
+    expect(pasted.cells[0]?.[1]?.text).toBe("A");
+  });
+
   it("clearCanvasTableCellsContent zera várias células", () => {
     const grid = [
       [

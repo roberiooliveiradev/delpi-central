@@ -146,8 +146,14 @@ export function useComunicadoEditorClipboard({
         origin,
         rows: table.rows,
         cols: table.cols,
+        merges: table.merges,
       });
-      updateBlock(table.id, { cells: pasted.cells });
+      updateBlock(table.id, {
+        cells: pasted.cells,
+        ...(pasted.merges
+          ? { merges: pasted.merges.length ? pasted.merges : undefined }
+          : {}),
+      });
       return true;
     },
     [getEditingTextId, getExistingBlocks, getSelectedCanvasTableCell, updateBlock],
