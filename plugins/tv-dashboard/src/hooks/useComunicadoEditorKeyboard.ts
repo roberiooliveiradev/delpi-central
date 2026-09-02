@@ -168,6 +168,7 @@ export function useComunicadoEditorKeyboard({
       }
 
       if (mod && key === "a" && !event.shiftKey) {
+        if (hasPartSelection) return;
         if (!selectBlocksByIds) return;
         selectBlocksByIds(listStageSelectableIds(blocks));
         return { handled: true };

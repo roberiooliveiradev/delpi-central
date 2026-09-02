@@ -33,6 +33,8 @@ export type CanvasTableCellSelectionRequest = {
   range?: boolean;
   /** Seleciona linha/coluna inteira (gutter / Shift+Space / Ctrl+Space). */
   band?: "row" | "col";
+  /** Ctrl+A — todas as células da Grade. */
+  selectAll?: boolean;
   rowCount: number;
   colCount: number;
   merges?: readonly CanvasTableMerge[];
@@ -116,6 +118,22 @@ export function applyCanvasTableCellSelectionRequest(
 ): ComunicadoCanvasTableCellSelection {
   const cell = clampCell(request.cell, request.rowCount, request.colCount);
   const focus = focusForMerge(cell, request.merges);
+
+  if (request.selectAll) {
+    const all = canvasTableCellRectangle(
+      { row: 0, col: 0 },
+      { row: request.rowCount - 1, col: request.colCount - 1 },
+      request.rowCount,
+      request.colCount,
+    );
+    const cells = expandSelectionToMerges(all, request.merges);
+    return {
+      blockId,
+      cells,
+      anchor: { row: 0, col: 0 },
+      focus: cells[0] ?? { row: 0, col: 0 },
+    };
+  }
 
   if (request.band) {
     const bandCells = canvasTableBandSelection({

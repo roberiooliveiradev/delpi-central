@@ -134,4 +134,15 @@ describe("canvasTableCellSelection", () => {
     expect(isCanvasTableCellSelected(next, 0, 0)).toBe(true);
     expect(isCanvasTableCellSelected(next, 1, 1)).toBe(true);
   });
+
+  it("selectAll seleciona todas as células", () => {
+    const next = applyCanvasTableCellSelectionRequest(null, blockId, {
+      cell: { row: 0, col: 0 },
+      selectAll: true,
+      rowCount: 2,
+      colCount: 2,
+    });
+    expect(next.cells).toHaveLength(4);
+    expect(next.anchor).toEqual({ row: 0, col: 0 });
+  });
 });

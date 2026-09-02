@@ -136,4 +136,45 @@ describe("resolveCanvasTableKeyboardAction", () => {
       }),
     ).toEqual({ type: "selectBand", axis: "col" });
   });
+
+  it("em navegar: Home/End/Ctrl+setas/Ctrl+A", () => {
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "Home",
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "navigate", next: { row: 1, col: 0 }, range: false });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "End",
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "navigate", next: { row: 1, col: 2 }, range: false });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "ArrowUp",
+        ctrl: true,
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "navigate", next: { row: 0, col: 1 }, range: false });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "ArrowRight",
+        ctrl: true,
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "navigate", next: { row: 1, col: 2 }, range: false });
+    expect(
+      resolveCanvasTableKeyboardAction({
+        ...base,
+        key: "a",
+        ctrl: true,
+        mode: "navigate",
+      }),
+    ).toEqual({ type: "selectAll" });
+  });
 });

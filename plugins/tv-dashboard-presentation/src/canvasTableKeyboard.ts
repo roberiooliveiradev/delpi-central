@@ -18,6 +18,7 @@ export type CanvasTableKeyboardAction =
   | { type: "insertNewline" }
   | { type: "clipboard"; op: "copy" | "cut" | "paste" }
   | { type: "selectBand"; axis: "row" | "col" }
+  | { type: "selectAll" }
   | { type: "ignore" };
 
 export type ResolveCanvasTableKeyboardParams = {
@@ -128,8 +129,22 @@ export function resolveCanvasTableKeyboardAction(
   if (mod && (key === "c" || key === "C")) return { type: "clipboard", op: "copy" };
   if (mod && (key === "x" || key === "X")) return { type: "clipboard", op: "cut" };
   if (mod && (key === "v" || key === "V")) return { type: "clipboard", op: "paste" };
+  if (mod && (key === "a" || key === "A")) return { type: "selectAll" };
 
   if (key === "Delete" || key === "Backspace") return { type: "clearContent" };
+
+  if (key === "Home") {
+    const next = mod
+      ? clampCell(0, 0, rows, cols)
+      : clampCell(row, 0, rows, cols);
+    return { type: "navigate", next, range: shift };
+  }
+  if (key === "End") {
+    const next = mod
+      ? clampCell(rows - 1, cols - 1, rows, cols)
+      : clampCell(row, cols - 1, rows, cols);
+    return { type: "navigate", next, range: shift };
+  }
 
   if (key === "Tab") {
     const next = moveInRow(row, col, shift ? -1 : 1, rows, cols);
@@ -142,28 +157,28 @@ export function resolveCanvasTableKeyboardAction(
   if (key === "ArrowUp") {
     return {
       type: "navigate",
-      next: clampCell(row - 1, col, rows, cols),
+      next: clampCell(mod ? 0 : row - 1, col, rows, cols),
       range: shift,
     };
   }
   if (key === "ArrowDown") {
     return {
       type: "navigate",
-      next: clampCell(row + 1, col, rows, cols),
+      next: clampCell(mod ? rows - 1 : row + 1, col, rows, cols),
       range: shift,
     };
   }
   if (key === "ArrowLeft") {
     return {
       type: "navigate",
-      next: clampCell(row, col - 1, rows, cols),
+      next: clampCell(row, mod ? 0 : col - 1, rows, cols),
       range: shift,
     };
   }
   if (key === "ArrowRight") {
     return {
       type: "navigate",
-      next: clampCell(row, col + 1, rows, cols),
+      next: clampCell(row, mod ? cols - 1 : col + 1, rows, cols),
       range: shift,
     };
   }

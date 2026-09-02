@@ -70,6 +70,7 @@ export type ComunicadoCanvasTableInteraction = {
     additive?: boolean;
     range?: boolean;
     band?: "row" | "col";
+    selectAll?: boolean;
   }) => void;
   onCellContextMenu?: (request: {
     cell: CanvasTableCellRef;
@@ -629,6 +630,15 @@ export function ComunicadoCanvasTableView({
       event.stopPropagation();
       setEditingCell(null);
       interaction?.onSelectCell?.({ cell: { row, col }, band: action.axis });
+      return;
+    }
+
+    if (action.type === "selectAll") {
+      event.preventDefault();
+      event.stopPropagation();
+      setEditingCell(null);
+      interaction?.onSelectCell?.({ cell: { row: 0, col: 0 }, selectAll: true });
+      focusCellAt(0, 0);
       return;
     }
 
