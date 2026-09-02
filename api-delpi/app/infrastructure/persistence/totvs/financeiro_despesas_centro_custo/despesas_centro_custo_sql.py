@@ -26,7 +26,8 @@ SEARCH_FIELDS = (
 )
 
 SORT_BY_SQL_COLUMNS = {
-    "data_emissao": "LTRIM(RTRIM(data_emissao))",
+    # data_emissao Protheus YYYYMMDD — ORDER BY direto (LTRIM impede índice/scan barato).
+    "data_emissao": "data_emissao",
     "documento": "LTRIM(RTRIM(documento))",
     "razao_social": "LTRIM(RTRIM(razao_social))",
     "centro_custo_codigo": "LTRIM(RTRIM(centro_custo_codigo))",
@@ -338,6 +339,11 @@ def build_resumo_query(
     supplier_store: str | None = None,
     exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
+    """Resumo do período em um passe: agrupa (CC × fornecedor × loja) e agrega.
+
+    Evita `COUNT(DISTINCT CONCAT(...))` sobre todas as linhas brutas da view —
+    no mês cheio isso era o principal custo do `/resumo`.
+    """
     where_clause, params = build_query_where(
         start_date=start_date,
         end_date=end_date,
@@ -348,22 +354,33 @@ def build_resumo_query(
         exclude_mp_products=exclude_mp_products,
     )
     query = f"""
+WITH grouped AS (
+    SELECT
+        LTRIM(RTRIM(centro_custo_codigo)) AS centro_custo_codigo,
+        LTRIM(RTRIM(fornecedor_cliente_codigo)) AS fornecedor_cliente_codigo,
+        LTRIM(RTRIM(loja)) AS loja,
+        SUM(CAST(valor_total AS DECIMAL(18, 2))) AS valor_grupo,
+        COUNT(*) AS qtd_grupo,
+        MAX(CAST(valor_total AS DECIMAL(18, 2))) AS maior_grupo
+    FROM {DESPESAS_CENTRO_CUSTO_VIEW} WITH (NOLOCK)
+    WHERE {where_clause}
+    GROUP BY
+        LTRIM(RTRIM(centro_custo_codigo)),
+        LTRIM(RTRIM(fornecedor_cliente_codigo)),
+        LTRIM(RTRIM(loja))
+)
 SELECT
-    COALESCE(SUM(CAST(valor_total AS DECIMAL(18, 2))), 0) AS total_periodo,
-    COUNT(*) AS quantidade_lancamentos,
+    COALESCE(SUM(valor_grupo), 0) AS total_periodo,
+    COALESCE(SUM(qtd_grupo), 0) AS quantidade_lancamentos,
+    COUNT(DISTINCT NULLIF(centro_custo_codigo, '')) AS quantidade_centros_custo,
     COUNT(
-        DISTINCT LTRIM(RTRIM(centro_custo_codigo))
-    ) AS quantidade_centros_custo,
-    COUNT(
-        DISTINCT CONCAT(
-            LTRIM(RTRIM(fornecedor_cliente_codigo)),
-            '|',
-            LTRIM(RTRIM(loja))
-        )
+        DISTINCT CASE
+            WHEN fornecedor_cliente_codigo <> ''
+            THEN fornecedor_cliente_codigo + N'|' + loja
+        END
     ) AS quantidade_fornecedores,
-    COALESCE(MAX(CAST(valor_total AS DECIMAL(18, 2))), 0) AS maior_lancamento
-FROM {DESPESAS_CENTRO_CUSTO_VIEW} WITH (NOLOCK)
-WHERE {where_clause}
+    COALESCE(MAX(maior_grupo), 0) AS maior_lancamento
+FROM grouped
 """.strip()
     return query, params
 

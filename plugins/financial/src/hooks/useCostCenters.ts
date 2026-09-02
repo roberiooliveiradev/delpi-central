@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
   fetchCostCenterEntries,
@@ -17,6 +17,10 @@ import type {
   CostCenterSummary,
   FinancialBranch,
 } from "../types";
+import {
+  costCenterPageDashboardKey,
+  costCenterPageEntriesKey,
+} from "./costCenterPageKeys";
 import { useAsyncResource } from "./useAsyncResource";
 
 export type CostCenterPageFilters = {
@@ -51,6 +55,13 @@ export type CostCenterBundle = {
   entries: CostCenterEntriesPayload;
   sectionErrors: CostCenterSectionErrors;
 };
+
+type CostCenterPageDashboard = Omit<CostCenterBundle, "entries">;
+
+export {
+  costCenterPageDashboardKey,
+  costCenterPageEntriesKey,
+} from "./costCenterPageKeys";
 
 function errorMessage(reason: unknown, fallback: string): string {
   return reason instanceof Error ? reason.message : fallback;
@@ -91,25 +102,10 @@ function emptyEntries(filters: CostCenterPageFilters): CostCenterEntriesPayload 
 }
 
 export function useCostCenters(filters: CostCenterPageFilters) {
-  const key = useMemo(
-    () =>
-      [
-        filters.branch,
-        filters.startDate,
-        filters.endDate,
-        filters.costCenter,
-        filters.supplierCode,
-        filters.supplierStore,
-        filters.excludeMp,
-        filters.search,
-        filters.page,
-        filters.sortBy,
-        filters.sortDir,
-      ].join("|"),
-    [filters],
-  );
+  const dashboardKey = useMemo(() => costCenterPageDashboardKey(filters), [filters]);
+  const entriesKey = useMemo(() => costCenterPageEntriesKey(filters), [filters]);
 
-  return useAsyncResource<CostCenterBundle>(
+  const dashboard = useAsyncResource<CostCenterPageDashboard>(
     async (signal) => {
       const shared = {
         branch: filters.branch,
@@ -123,17 +119,19 @@ export function useCostCenters(filters: CostCenterPageFilters) {
       };
       const sectionErrors: CostCenterSectionErrors = {};
 
-      const [catalogResult, summaryResult, entriesResult] = await Promise.allSettled([
-        fetchCostCenterFilters(shared),
-        fetchCostCenterSummary(shared),
-        fetchCostCenterEntries({
-          ...shared,
-          search: filters.search,
-          page: filters.page,
-          sortBy: filters.sortBy,
-          sortDir: filters.sortDir,
-        }),
-      ]);
+      // Uma onda: igual ao legado após /filtros — sem waterfall wave1→wave2.
+      const rankingCentersPromise = filters.costCenter
+        ? Promise.resolve({ items: [] as CostCenterRankingItem[] })
+        : fetchCostCenterRankingCenters(shared);
+
+      const [catalogResult, summaryResult, seriesResult, centersResult, suppliersResult] =
+        await Promise.allSettled([
+          fetchCostCenterFilters(shared),
+          fetchCostCenterSummary(shared),
+          fetchCostCenterSeries(shared),
+          rankingCentersPromise,
+          fetchCostCenterRankingSuppliers(shared),
+        ]);
 
       const catalog =
         catalogResult.status === "fulfilled" ? catalogResult.value : emptyFilters();
@@ -144,45 +142,11 @@ export function useCostCenters(filters: CostCenterPageFilters) {
         );
       }
 
-      if (summaryResult.status === "rejected" && entriesResult.status === "rejected") {
+      if (summaryResult.status === "rejected") {
         throw summaryResult.reason;
       }
 
-      const summary =
-        summaryResult.status === "fulfilled"
-          ? summaryResult.value
-          : entriesResult.status === "fulfilled"
-            ? {
-                period: entriesResult.value.period,
-                branch: entriesResult.value.branch,
-                totalAmount: 0,
-                entryCount: entriesResult.value.pagination.totalItems,
-                costCenterCount: 0,
-                supplierCount: 0,
-                averageTicket: 0,
-                largestEntry: 0,
-              }
-            : null;
-
-      if (!summary) {
-        throw entriesResult.status === "rejected" ? entriesResult.reason : copy.costCenters.loadError;
-      }
-
-      if (summaryResult.status === "rejected") {
-        sectionErrors.summary = errorMessage(summaryResult.reason, copy.costCenters.loadError);
-      }
-
-      const entries =
-        entriesResult.status === "fulfilled" ? entriesResult.value : emptyEntries(filters);
-      if (entriesResult.status === "rejected") {
-        sectionErrors.entries = errorMessage(entriesResult.reason, copy.costCenters.loadError);
-      }
-
-      const [seriesResult, centersResult, suppliersResult] = await Promise.allSettled([
-        fetchCostCenterSeries(shared),
-        fetchCostCenterRankingCenters(shared),
-        fetchCostCenterRankingSuppliers(shared),
-      ]);
+      const summary = summaryResult.value;
 
       const series = seriesResult.status === "fulfilled" ? seriesResult.value.items : [];
       if (seriesResult.status === "rejected") {
@@ -194,9 +158,13 @@ export function useCostCenters(filters: CostCenterPageFilters) {
         sectionErrors.centers = errorMessage(centersResult.reason, copy.costCenters.loadError);
       }
 
-      const suppliers = suppliersResult.status === "fulfilled" ? suppliersResult.value.items : [];
+      const suppliers =
+        suppliersResult.status === "fulfilled" ? suppliersResult.value.items : [];
       if (suppliersResult.status === "rejected") {
-        sectionErrors.suppliers = errorMessage(suppliersResult.reason, copy.costCenters.loadError);
+        sectionErrors.suppliers = errorMessage(
+          suppliersResult.reason,
+          copy.costCenters.loadError,
+        );
       }
 
       return {
@@ -205,11 +173,56 @@ export function useCostCenters(filters: CostCenterPageFilters) {
         series,
         centers,
         suppliers,
-        entries,
         sectionErrors,
       };
     },
-    [key],
+    [dashboardKey],
     copy.costCenters.loadError,
   );
+
+  const entries = useAsyncResource<CostCenterEntriesPayload>(
+    async (signal) => {
+      return fetchCostCenterEntries({
+        branch: filters.branch,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        costCenter: filters.costCenter,
+        supplierCode: filters.supplierCode,
+        supplierStore: filters.supplierStore,
+        excludeMpProducts: filters.excludeMp,
+        search: filters.search,
+        page: filters.page,
+        sortBy: filters.sortBy,
+        sortDir: filters.sortDir,
+        signal,
+      });
+    },
+    [entriesKey],
+    copy.costCenters.loadError,
+  );
+
+  const data = useMemo<CostCenterBundle | null>(() => {
+    if (!dashboard.data) return null;
+    return {
+      ...dashboard.data,
+      entries: entries.data ?? emptyEntries(filters),
+      sectionErrors: {
+        ...dashboard.data.sectionErrors,
+        ...(entries.error ? { entries: entries.error } : {}),
+      },
+    };
+  }, [dashboard.data, entries.data, entries.error, filters]);
+
+  const reload = useCallback(() => {
+    dashboard.reload();
+    entries.reload();
+  }, [dashboard.reload, entries.reload]);
+
+  return {
+    data,
+    loading: dashboard.loading,
+    entriesLoading: entries.loading,
+    error: dashboard.error,
+    reload,
+  };
 }

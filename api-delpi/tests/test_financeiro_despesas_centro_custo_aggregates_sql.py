@@ -49,8 +49,9 @@ def test_build_resumo_query_uses_aggregation_without_select_star() -> None:
     )
 
     assert "data_emissao BETWEEN ? AND ?" in query
+    assert "WITH grouped AS" in query
     assert "SUM(CAST(valor_total AS DECIMAL(18, 2)))" in query
-    assert "MAX(CAST(valor_total AS DECIMAL(18, 2)))" in query
+    assert "COUNT(DISTINCT CONCAT" not in query
     assert "SELECT *" not in query
     assert params == ("20250601", "20250630", "01")
 

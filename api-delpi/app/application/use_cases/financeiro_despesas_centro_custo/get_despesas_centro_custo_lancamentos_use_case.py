@@ -87,35 +87,53 @@ class GetDespesasCentroCustoLancamentosUseCase:
         start_date, end_date = request.resolve_protheus_period()
         page = request.resolve_page()
         page_size = request.resolve_page_size()
+        search = str(request.search or "").strip() or None
 
-        total_items = self._repository.count_lancamentos(
+        scope = dict(
             start_date=start_date,
             end_date=end_date,
             branch=request.branch,
             cost_center=request.cost_center,
             supplier_code=request.supplier_code,
             supplier_store=request.supplier_store,
-            search=request.search,
             exclude_mp_products=request.exclude_mp_products,
-        )
-        rows = self._repository.list_lancamentos(
-            start_date=start_date,
-            end_date=end_date,
-            branch=request.branch,
-            cost_center=request.cost_center,
-            supplier_code=request.supplier_code,
-            supplier_store=request.supplier_store,
-            search=request.search,
-            exclude_mp_products=request.exclude_mp_products,
-            sort_by=request.sort_by,
-            sort_dir=request.sort_dir,
-            page=page,
-            page_size=page_size,
         )
 
-        total_pages = (
-            max((total_items + page_size - 1) // page_size, 1) if total_items else 1
-        )
+        # COUNT(*) na view chega a ~15s no mês; o /resumo (cacheado) já traz
+        # quantidade_lancamentos no mesmo filtro. Com busca textual, usa overfetch
+        # (page_size+1) e evita o COUNT pesado.
+        if search:
+            fetch_size = page_size + 1
+            rows = self._repository.list_lancamentos(
+                **scope,
+                search=search,
+                sort_by=request.sort_by,
+                sort_dir=request.sort_dir,
+                page=page,
+                page_size=fetch_size,
+            )
+            has_next = len(rows) > page_size
+            rows = rows[:page_size]
+            total_items = (page - 1) * page_size + len(rows) + (1 if has_next else 0)
+            total_pages = page + (1 if has_next else 0)
+            if page > 1 and not rows and not has_next:
+                total_pages = max(page - 1, 1)
+                total_items = (page - 1) * page_size
+        else:
+            resumo = self._repository.get_resumo(**scope)
+            total_items = _as_int(resumo.get("quantidade_lancamentos"))
+            rows = self._repository.list_lancamentos(
+                **scope,
+                search=None,
+                sort_by=request.sort_by,
+                sort_dir=request.sort_dir,
+                page=page,
+                page_size=page_size,
+            )
+            total_pages = (
+                max((total_items + page_size - 1) // page_size, 1) if total_items else 1
+            )
+            has_next = page < total_pages
 
         return DespesasCentroCustoLancamentosResponse(
             periodo=request.periodo_dict(),
@@ -125,9 +143,9 @@ class GetDespesasCentroCustoLancamentosUseCase:
                 total_items=total_items,
                 total=total_items,
                 total_pages=total_pages,
-                has_next=page < total_pages,
+                has_next=has_next,
                 has_previous=page > 1,
-                is_complete=page >= total_pages if total_pages else True,
+                is_complete=not has_next,
             ),
             sort={
                 "sort_by": request.sort_by,

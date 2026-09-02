@@ -47,6 +47,21 @@ class DelpiFinancialGateway:
         self._base_url = (base_url or settings.DELPI_API_URL).rstrip("/")
         self._timeout = float(timeout or settings.DELPI_API_TIMEOUT)
         self._caller_app = caller_app or settings.DELPI_API_CALLER_APP
+        self._client: httpx.Client | None = None
+
+    def _http(self) -> httpx.Client:
+        """Cliente keep-alive reutilizado — evita novo TCP/TLS a cada hop api-delpi."""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.Client(
+                timeout=self._timeout,
+                limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
+            )
+        return self._client
+
+    def close(self) -> None:
+        if self._client is not None and not self._client.is_closed:
+            self._client.close()
+        self._client = None
 
     def _headers(self) -> dict[str, str]:
         headers = {
@@ -463,14 +478,13 @@ class DelpiFinancialGateway:
             if value is not None and value != ""
         }
         try:
-            with httpx.Client(timeout=self._timeout) as client:
-                response = client.request(
-                    method,
-                    url,
-                    params=clean_params or None,
-                    json=json_body,
-                    headers=self._headers(),
-                )
+            response = self._http().request(
+                method,
+                url,
+                params=clean_params or None,
+                json=json_body,
+                headers=self._headers(),
+            )
         except httpx.RequestError as exc:
             raise DelpiGatewayError("Erro ao consultar api-delpi.") from exc
         if response.status_code >= 400:

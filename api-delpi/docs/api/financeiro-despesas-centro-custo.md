@@ -69,7 +69,10 @@ Query params já estão em **EN**. Alinhamento full EN do body fica para estrat�
 ## Performance (rankings)
 
 - SQL dos rankings (`/ranking-centros`, `/ranking-fornecedores`): **um** `GROUP BY` na view + percentual com `SUM(...) OVER ()` (sem CTE `scoped` + `period_total` + segundo scan).
-- Cache em memória `query_cache`, namespace `despesas-cc-ranking-v1` (TTL = `QUERY_CACHE_TTL_SECONDS`, default 300 s) — reduz carga no polling do Portal Financeiro / MFE legado.
+- SQL do `/resumo`: agrega por (CC × fornecedor × loja) e depois soma — evita `COUNT(DISTINCT CONCAT(...))` sobre todas as linhas.
+- `/lancamentos` **sem busca**: total vem do `/resumo` (mesmo filtro; ~1s / cache) — **não** roda `COUNT(*)` na view (~15s no mês).
+- `/lancamentos` **com busca**: overfetch `page_size+1` para `has_next`, sem COUNT.
+- Cache em memória `query_cache`, namespace `despesas-cc-query-v1` (TTL = `QUERY_CACHE_TTL_SECONDS`, default 300 s) para resumo, rankings, count e páginas de lançamentos.
 
 ---
 

@@ -1,10 +1,19 @@
 from __future__ import annotations
 
-from app.application.services.financeiro_despesas_centro_custo.despesas_centro_custo_ranking_cache import (
+from app.application.services.financeiro_despesas_centro_custo.despesas_centro_custo_query_cache import (
+    get_cached_count,
+    get_cached_lancamentos_rows,
     get_cached_ranking_rows,
+    get_cached_resumo_row,
+    lancamentos_count_cache_key,
+    lancamentos_page_cache_key,
     ranking_centros_cache_key,
     ranking_fornecedores_cache_key,
+    resumo_cache_key,
+    set_cached_count,
+    set_cached_lancamentos_rows,
     set_cached_ranking_rows,
+    set_cached_resumo_row,
 )
 from app.domain.ports.financeiro_despesas_centro_custo.despesas_centro_custo_repository_port import (
     DespesasCentroCustoRepositoryPort,
@@ -124,6 +133,19 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         supplier_store: str | None = None,
         exclude_mp_products: bool = False,
     ) -> dict:
+        cache_key = resumo_cache_key(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            cost_center=cost_center,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+            exclude_mp_products=exclude_mp_products,
+        )
+        cached = get_cached_resumo_row(cache_key)
+        if cached is not None:
+            return cached
+
         query, params = build_resumo_query(
             start_date=start_date,
             end_date=end_date,
@@ -136,7 +158,9 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         with self:
             rows = self.execute_query(query, params)
 
-        return rows[0] if rows else {}
+        row = rows[0] if rows else {}
+        set_cached_resumo_row(cache_key, row)
+        return row
 
     def get_serie(
         self,
@@ -246,6 +270,20 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         search: str | None = None,
         exclude_mp_products: bool = False,
     ) -> int:
+        cache_key = lancamentos_count_cache_key(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            cost_center=cost_center,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+            search=search,
+            exclude_mp_products=exclude_mp_products,
+        )
+        cached = get_cached_count(cache_key)
+        if cached is not None:
+            return cached
+
         query, params = build_lancamentos_count_query(
             start_date=start_date,
             end_date=end_date,
@@ -259,7 +297,9 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         with self:
             row = self.execute_one(query, params)
 
-        return int((row or {}).get("total_items") or 0)
+        total = int((row or {}).get("total_items") or 0)
+        set_cached_count(cache_key, total)
+        return total
 
     def list_lancamentos(
         self,
@@ -277,6 +317,24 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         page: int,
         page_size: int,
     ) -> list[dict]:
+        cache_key = lancamentos_page_cache_key(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            cost_center=cost_center,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+            search=search,
+            exclude_mp_products=exclude_mp_products,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+            page=page,
+            page_size=page_size,
+        )
+        cached = get_cached_lancamentos_rows(cache_key)
+        if cached is not None:
+            return cached
+
         query, params = build_lancamentos_data_query(
             start_date=start_date,
             end_date=end_date,
@@ -292,4 +350,6 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             page_size=page_size,
         )
         with self:
-            return self.execute_query(query, params)
+            rows = self.execute_query(query, params)
+        set_cached_lancamentos_rows(cache_key, rows)
+        return rows

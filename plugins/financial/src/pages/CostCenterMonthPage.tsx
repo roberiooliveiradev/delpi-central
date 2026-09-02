@@ -122,7 +122,7 @@ export function CostCenterMonthPage({
     return () => window.clearTimeout(timer);
   }, [searchDraft, search, syncQuery]);
 
-  const { data, loading, error, reload } = useCostCenterMonth({
+  const { data, loading, entriesLoading, error, reload } = useCostCenterMonth({
     branch,
     month,
     costCenter,
@@ -331,7 +331,7 @@ export function CostCenterMonthPage({
         subpluginId="cost-centers"
         month={month}
         onRefresh={reload}
-        refreshBusy={loading}
+        refreshBusy={loading || entriesLoading}
         stats={
           scopeChips.length ? (
             <>
@@ -445,7 +445,7 @@ export function CostCenterMonthPage({
               title={copy.costCenters.rankingCentersTitle}
               items={data?.centers ?? []}
               variant="centers"
-              loading={loading}
+              loading={loading && !data?.centers.length && !costCenter}
               loadError={data?.sectionErrors.centers}
               previewHint={copy.costCenters.monthDetail.rankingPreviewHint}
               expandAriaLabel={copy.costCenters.rankingExpandCentersAria}
@@ -457,7 +457,7 @@ export function CostCenterMonthPage({
               title={copy.costCenters.rankingSuppliersTitle}
               items={data?.suppliers ?? []}
               variant="suppliers"
-              loading={loading}
+              loading={loading && !data?.suppliers.length}
               loadError={data?.sectionErrors.suppliers}
               previewHint={copy.costCenters.monthDetail.rankingPreviewHint}
               expandAriaLabel={copy.costCenters.rankingExpandSuppliersAria}
@@ -467,7 +467,11 @@ export function CostCenterMonthPage({
             />
           </div>
 
-          <article className="fin-board-list" aria-label={copy.costCenters.monthDetail.entriesTitle}>
+          <article
+            className="fin-board-list"
+            aria-label={copy.costCenters.monthDetail.entriesTitle}
+            aria-busy={entriesLoading || undefined}
+          >
             <header className="fin-board-list__head">
               <h2 className="fin-board-list__title">
                 {copy.costCenters.monthDetail.entriesTitle}
@@ -491,6 +495,7 @@ export function CostCenterMonthPage({
             <DataTable
               classNames={FIN_TABLE_CLASSES}
               labels={FIN_TABLE_LABELS}
+              loading={entriesLoading && !(data?.entries.items.length)}
               columns={[
                 {
                   key: "data_emissao",

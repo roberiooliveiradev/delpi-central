@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
   fetchCostCenterEntries,
@@ -15,6 +15,10 @@ import type {
   Period,
 } from "../types";
 import { monthPeriodRange, previousYearMonth, type MonthPeriod } from "../utils/monthPeriod";
+import {
+  costCenterMonthDashboardKey,
+  costCenterMonthEntriesKey,
+} from "./costCenterMonthKeys";
 import { useAsyncResource } from "./useAsyncResource";
 
 export type CostCenterMonthFilters = {
@@ -29,6 +33,11 @@ export type CostCenterMonthFilters = {
   sortBy: string;
   sortDir: "asc" | "desc";
 };
+
+export {
+  costCenterMonthDashboardKey,
+  costCenterMonthEntriesKey,
+} from "./costCenterMonthKeys";
 
 export type CostCenterMonthSectionErrors = Partial<{
   summary: string;
@@ -50,6 +59,8 @@ export type CostCenterMonthBundle = {
   entries: CostCenterEntriesPayload;
   sectionErrors: CostCenterMonthSectionErrors;
 };
+
+type CostCenterMonthDashboard = Omit<CostCenterMonthBundle, "entries">;
 
 function errorMessage(reason: unknown, fallback: string): string {
   return reason instanceof Error ? reason.message : fallback;
@@ -105,31 +116,15 @@ function emptySummary(period: MonthPeriod, branch: FinancialBranch): CostCenterS
 }
 
 export function useCostCenterMonth(filters: CostCenterMonthFilters) {
-  const key = useMemo(
-    () =>
-      [
-        filters.branch,
-        filters.month,
-        filters.costCenter,
-        filters.supplierCode,
-        filters.supplierStore,
-        filters.excludeMp,
-        filters.search,
-        filters.page,
-        filters.sortBy,
-        filters.sortDir,
-      ].join("|"),
-    [filters],
-  );
+  const dashboardKey = useMemo(() => costCenterMonthDashboardKey(filters), [filters]);
+  const entriesKey = useMemo(() => costCenterMonthEntriesKey(filters), [filters]);
 
-  return useAsyncResource<CostCenterMonthBundle>(
+  const dashboard = useAsyncResource<CostCenterMonthDashboard>(
     async (signal) => {
       const period = monthPeriodRange(filters.month);
       if (!period) throw new Error(copy.costCenters.monthDetail.invalidMonth);
 
       const previousMonth = previousYearMonth(filters.month);
-      const previousPeriod = previousMonth ? monthPeriodRange(previousMonth) : null;
-
       const scope = {
         branch: filters.branch,
         costCenter: filters.costCenter,
@@ -141,25 +136,24 @@ export function useCostCenterMonth(filters: CostCenterMonthFilters) {
       const shared = { ...scope, startDate: period.startDate, endDate: period.endDate };
       const sectionErrors: CostCenterMonthSectionErrors = {};
 
-      const [summaryResult, entriesResult, previousResult] = await Promise.allSettled([
+      // Sem o resumo do mês anterior aqui: ele competia no TOTVS com summary/rankings
+      // e empurrava o BFF para 502 (timeout). Comparativo carrega depois.
+      // Com CC filtrado, ranking de centros é redundante (igual ao legado).
+      const rankingCentersPromise = filters.costCenter
+        ? Promise.resolve({ items: [] as CostCenterRankingItem[] })
+        : fetchCostCenterRankingCenters(shared);
+
+      const [summaryResult, centersResult, suppliersResult] = await Promise.allSettled([
         fetchCostCenterSummary(shared),
-        fetchCostCenterEntries({
-          ...shared,
-          search: filters.search,
-          page: filters.page,
-          sortBy: filters.sortBy,
-          sortDir: filters.sortDir,
-        }),
-        previousPeriod
-          ? fetchCostCenterSummary({
-              ...scope,
-              startDate: previousPeriod.startDate,
-              endDate: previousPeriod.endDate,
-            })
-          : Promise.resolve(null),
+        rankingCentersPromise,
+        fetchCostCenterRankingSuppliers(shared),
       ]);
 
-      if (summaryResult.status === "rejected" && entriesResult.status === "rejected") {
+      if (
+        summaryResult.status === "rejected" &&
+        centersResult.status === "rejected" &&
+        suppliersResult.status === "rejected"
+      ) {
         throw summaryResult.reason;
       }
 
@@ -171,34 +165,13 @@ export function useCostCenterMonth(filters: CostCenterMonthFilters) {
         sectionErrors.summary = errorMessage(summaryResult.reason, copy.costCenters.loadError);
       }
 
-      const entries =
-        entriesResult.status === "fulfilled"
-          ? entriesResult.value
-          : emptyEntries(filters, period);
-      if (entriesResult.status === "rejected") {
-        sectionErrors.entries = errorMessage(entriesResult.reason, copy.costCenters.loadError);
-      }
-
-      const previousSummary =
-        previousResult.status === "fulfilled" ? previousResult.value : null;
-      if (previousResult.status === "rejected") {
-        sectionErrors.previousSummary = errorMessage(
-          previousResult.reason,
-          copy.costCenters.loadError,
-        );
-      }
-
-      const [centersResult, suppliersResult] = await Promise.allSettled([
-        fetchCostCenterRankingCenters(shared),
-        fetchCostCenterRankingSuppliers(shared),
-      ]);
-
       const centers = centersResult.status === "fulfilled" ? centersResult.value.items : [];
       if (centersResult.status === "rejected") {
         sectionErrors.centers = errorMessage(centersResult.reason, copy.costCenters.loadError);
       }
 
-      const suppliers = suppliersResult.status === "fulfilled" ? suppliersResult.value.items : [];
+      const suppliers =
+        suppliersResult.status === "fulfilled" ? suppliersResult.value.items : [];
       if (suppliersResult.status === "rejected") {
         sectionErrors.suppliers = errorMessage(
           suppliersResult.reason,
@@ -211,14 +184,95 @@ export function useCostCenterMonth(filters: CostCenterMonthFilters) {
         previousMonth,
         period,
         summary,
-        previousSummary,
+        previousSummary: null,
         centers,
         suppliers,
-        entries,
         sectionErrors,
       };
     },
-    [key],
+    [dashboardKey],
     copy.costCenters.loadError,
   );
+
+  const previousReady = Boolean(dashboard.data) && !dashboard.loading;
+  const previous = useAsyncResource<CostCenterSummary | null>(
+    async (signal) => {
+      if (!previousReady || !dashboard.data?.previousMonth) return null;
+      const previousPeriod = monthPeriodRange(dashboard.data.previousMonth);
+      if (!previousPeriod) return null;
+      return fetchCostCenterSummary({
+        branch: filters.branch,
+        startDate: previousPeriod.startDate,
+        endDate: previousPeriod.endDate,
+        costCenter: filters.costCenter,
+        supplierCode: filters.supplierCode,
+        supplierStore: filters.supplierStore,
+        excludeMpProducts: filters.excludeMp,
+        signal,
+      });
+    },
+    [dashboardKey, previousReady, dashboard.data?.previousMonth],
+    copy.costCenters.loadError,
+  );
+
+  const entries = useAsyncResource<CostCenterEntriesPayload>(
+    async (signal) => {
+      const period = monthPeriodRange(filters.month);
+      if (!period) throw new Error(copy.costCenters.monthDetail.invalidMonth);
+
+      return fetchCostCenterEntries({
+        branch: filters.branch,
+        startDate: period.startDate,
+        endDate: period.endDate,
+        costCenter: filters.costCenter,
+        supplierCode: filters.supplierCode,
+        supplierStore: filters.supplierStore,
+        excludeMpProducts: filters.excludeMp,
+        search: filters.search,
+        page: filters.page,
+        sortBy: filters.sortBy,
+        sortDir: filters.sortDir,
+        signal,
+      });
+    },
+    [entriesKey],
+    copy.costCenters.loadError,
+  );
+
+  const data = useMemo<CostCenterMonthBundle | null>(() => {
+    if (!dashboard.data) return null;
+    return {
+      ...dashboard.data,
+      previousSummary: previous.error ? null : (previous.data ?? null),
+      entries: entries.data ?? emptyEntries(filters, dashboard.data.period),
+      sectionErrors: {
+        ...dashboard.data.sectionErrors,
+        ...(previous.error ? { previousSummary: previous.error } : {}),
+        ...(entries.error ? { entries: entries.error } : {}),
+      },
+    };
+  }, [
+    dashboard.data,
+    previous.data,
+    previous.error,
+    entries.data,
+    entries.error,
+    filters,
+  ]);
+
+  const reload = useCallback(() => {
+    dashboard.reload();
+    previous.reload();
+    entries.reload();
+  }, [dashboard.reload, previous.reload, entries.reload]);
+
+  return {
+    data,
+    /** Carregamento do painel (KPIs + rankings). */
+    loading: dashboard.loading,
+    /** Só a grade de lançamentos (paginação/ordenação/busca). */
+    entriesLoading: entries.loading,
+    error: dashboard.error,
+    reload,
+  };
 }

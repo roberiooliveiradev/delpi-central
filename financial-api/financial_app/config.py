@@ -32,7 +32,10 @@ class Settings:
     PUBLIC_BASE_URL: str | None = _get_env("PUBLIC_BASE_URL")
 
     DELPI_API_URL: str = _get_env("DELPI_API_URL", default="http://delpi-api-delpi:8000")
-    DELPI_API_TIMEOUT: float = float(_get_env("DELPI_API_TIMEOUT", default="30"))
+    # Prefer FINANCIAL_* so o timeout deste BFF não herda o default curto de outros serviços.
+    DELPI_API_TIMEOUT: float = float(
+        _get_env("FINANCIAL_DELPI_API_TIMEOUT", "DELPI_API_TIMEOUT", default="90")
+    )
     DELPI_API_CALLER_APP: str = _get_env("DELPI_API_CALLER_APP", default="financial-api")
 
     STRATEGIC_INDICATORS_API_BASE_URL: str = _get_env(

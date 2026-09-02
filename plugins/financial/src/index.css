@@ -719,6 +719,11 @@
   overflow: hidden;
 }
 
+.dashboard-financial .fin-board-list[aria-busy="true"] {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
 .dashboard-financial .fin-board-list__head {
   display: flex;
   flex-wrap: wrap;

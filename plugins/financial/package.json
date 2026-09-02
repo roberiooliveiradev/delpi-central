@@ -8,7 +8,7 @@
     "build": "vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "test": "vitest run && node --test src/components/FinPeriodFilterButton.structural.test.mjs",
+    "test": "vitest run && node --test src/components/FinPeriodFilterButton.structural.test.mjs && node --experimental-strip-types --test src/hooks/costCenterMonthKeys.test.mjs && node --experimental-strip-types --test src/hooks/costCenterPageKeys.test.mjs",
     "ci": "npm run lint && npm run test && npm run build",
     "preview": "vite preview"
   },

@@ -91,7 +91,7 @@ export function CostCentersPage({
     return () => window.clearTimeout(timer);
   }, [searchDraft, branch, startDate, endDate, costCenter, supplierCode, supplierStore, excludeMp]);
 
-  const { data, loading, error, reload } = useCostCenters({
+  const { data, loading, entriesLoading, error, reload } = useCostCenters({
     branch,
     startDate,
     endDate,
@@ -238,7 +238,7 @@ export function CostCentersPage({
         startDate={startDate}
         endDate={endDate}
         onRefresh={reload}
-        refreshBusy={loading}
+        refreshBusy={loading || entriesLoading}
         actions={
           canExport ? (
             <button type="button" className="fin-icon-btn" onClick={exportEntries}>
@@ -408,7 +408,7 @@ export function CostCentersPage({
               title={copy.costCenters.rankingCentersTitle}
               items={data?.centers ?? []}
               variant="centers"
-              loading={loading}
+              loading={loading && !data?.centers.length && !costCenter}
               loadError={data?.sectionErrors.centers}
               expandAriaLabel={copy.costCenters.rankingExpandCentersAria}
               modalTitle={copy.costCenters.rankingCentersTitle}
@@ -419,7 +419,7 @@ export function CostCentersPage({
               title={copy.costCenters.rankingSuppliersTitle}
               items={data?.suppliers ?? []}
               variant="suppliers"
-              loading={loading}
+              loading={loading && !data?.suppliers.length}
               loadError={data?.sectionErrors.suppliers}
               expandAriaLabel={copy.costCenters.rankingExpandSuppliersAria}
               modalTitle={copy.costCenters.rankingSuppliersTitle}
@@ -428,7 +428,11 @@ export function CostCentersPage({
             />
           </div>
 
-          <article className="fin-board-list" aria-label={copy.costCenters.entriesTitle}>
+          <article
+            className="fin-board-list"
+            aria-label={copy.costCenters.entriesTitle}
+            aria-busy={entriesLoading || undefined}
+          >
             <header className="fin-board-list__head">
               <h2 className="fin-board-list__title">{copy.costCenters.entriesTitle}</h2>
               <p className="fin-board-list__hint">{copy.costCenters.entriesHint}</p>
@@ -436,6 +440,7 @@ export function CostCentersPage({
             <DataTable
               classNames={FIN_TABLE_CLASSES}
               labels={FIN_TABLE_LABELS}
+              loading={entriesLoading && !(data?.entries.items.length)}
               columns={[
                 {
                   key: "data_emissao",
