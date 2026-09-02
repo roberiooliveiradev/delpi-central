@@ -116,6 +116,7 @@ describe("production-pulse kit contracts", () => {
     const css = readRelative("index.css");
     expect(css).toMatch(/--pp-form-max-width/);
     expect(css).toMatch(/pp-form-grid--pair/);
+    expect(css).toMatch(/pp-page-stack\.pp-form-page/);
     expect(css).toMatch(/display:\s*contents/);
   });
 });
