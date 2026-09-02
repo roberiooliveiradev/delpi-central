@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { fetchWorkCenters } from "../api/productionPulseApi";
-import { PpFieldLabel, PpFormGrid } from "../app/productionPulseUi";
+import { PpFormGrid } from "../app/productionPulseUi";
 import { PP_HELP } from "../content/helpTooltips";
 import { getPpSectionIntro } from "../content/sectionIntros";
 import type { BindingFormValues } from "../types/form";
 import type { WorkCenterCatalogItem } from "../types/form";
 import { AnchorTypeSegmented } from "./AnchorTypeSegmented";
+import {
+  PpNativeSelectField,
+  PpNativeTextAreaField,
+  PpNativeTextField,
+  ppFieldError,
+  ppFieldHint,
+} from "./data/ppFormFields";
 
 type DeviceBindingSectionProps = {
   binding: BindingFormValues;
@@ -15,6 +22,13 @@ type DeviceBindingSectionProps = {
   stackedAnchor?: boolean;
   onChange: (patch: Partial<BindingFormValues>) => void;
 };
+
+function workCenterOptions(items: WorkCenterCatalogItem[]) {
+  return items.map((item) => ({
+    value: item.workCenterCode,
+    label: `${item.workCenterCode} — ${item.workCenterName}`,
+  }));
+}
 
 export function DeviceBindingSection({
   binding,
@@ -29,6 +43,8 @@ export function DeviceBindingSection({
   const [workCenterSearch, setWorkCenterSearch] = useState(binding.workCenterCode);
   const [workCenters, setWorkCenters] = useState<WorkCenterCatalogItem[]>([]);
   const [loadingWorkCenters, setLoadingWorkCenters] = useState(false);
+
+  const catalogOptions = useMemo(() => workCenterOptions(workCenters), [workCenters]);
 
   useEffect(() => {
     if (!totvsOpen && binding.anchorType !== "work_center") return;
@@ -52,6 +68,51 @@ export function DeviceBindingSection({
     };
   }, [branch, binding.anchorType, totvsOpen, workCenterSearch]);
 
+  const applyWorkCenterCode = (code: string) => {
+    const match = workCenters.find((item) => item.workCenterCode === code);
+    onChange({
+      workCenterCode: code,
+      workCenterName: match?.workCenterName ?? binding.workCenterName,
+    });
+    setWorkCenterSearch(code);
+  };
+
+  const workCenterFields = (
+    <>
+      <PpNativeTextField
+        id="pp-binding-wc-search"
+        label="Buscar centro de trabalho"
+        hint={PP_HELP.form.anchorWorkCenter}
+        value={workCenterSearch}
+        placeholder="CT-53"
+        onChange={(value) => {
+          setWorkCenterSearch(value);
+          const match = workCenters.find((item) => item.workCenterCode === value);
+          onChange({
+            workCenterCode: value,
+            workCenterName: match?.workCenterName ?? binding.workCenterName,
+          });
+        }}
+        afterControl={
+          <>
+            {ppFieldError(errors?.workCenterCode)}
+            {loadingWorkCenters ? ppFieldHint("Carregando catálogo TOTVS…") : null}
+          </>
+        }
+      />
+      <PpNativeSelectField
+        id="pp-binding-wc-pick"
+        label="Catálogo TOTVS"
+        hint="Escolha um CT retornado pela busca"
+        value={binding.workCenterCode}
+        disabled={catalogOptions.length === 0}
+        placeholderOption={loadingWorkCenters ? "Carregando…" : "Selecione…"}
+        options={catalogOptions}
+        onChange={applyWorkCenterCode}
+      />
+    </>
+  );
+
   return (
     <div className="pp-binding-section">
       <p className="pp-section-intro">{getPpSectionIntro("form.placement")}</p>
@@ -62,99 +123,63 @@ export function DeviceBindingSection({
       />
 
       {binding.anchorType === "work_center" ? (
-        <PpFormGrid className="pp-form-grid--single">
-          <label className="pp-field">
-            <PpFieldLabel label="Centro de trabalho" hint={PP_HELP.form.anchorWorkCenter} />
-            <input
-              list="pp-work-centers"
-              value={binding.workCenterCode}
-              onChange={(event) => {
-                const code = event.target.value;
-                const match = workCenters.find((item) => item.workCenterCode === code);
-                onChange({
-                  workCenterCode: code,
-                  workCenterName: match?.workCenterName ?? binding.workCenterName,
-                });
-                setWorkCenterSearch(code);
-              }}
-              placeholder="CT-53"
-            />
-            <datalist id="pp-work-centers">
-              {workCenters.map((item) => (
-                <option
-                  key={item.workCenterCode}
-                  value={item.workCenterCode}
-                  label={item.workCenterName}
-                />
-              ))}
-            </datalist>
-            {errors?.workCenterCode ? (
-              <span className="pp-field-error">{errors.workCenterCode}</span>
-            ) : null}
-            {loadingWorkCenters ? (
-              <span className="pp-field-hint">Carregando catálogo TOTVS…</span>
-            ) : null}
-          </label>
-        </PpFormGrid>
+        <PpFormGrid className="pp-form-grid--pair">{workCenterFields}</PpFormGrid>
       ) : null}
 
       {binding.anchorType === "machine" ? (
-        <PpFormGrid className="pp-form-grid--single">
-          <label className="pp-field">
-            <PpFieldLabel label="Máquina" hint={PP_HELP.form.anchorMachine} />
-            <input
-              value={binding.machineLabel}
-              onChange={(event) => onChange({ machineLabel: event.target.value })}
-              placeholder="Motor bomba recirculação #2"
-            />
-            {errors?.machineLabel ? (
-              <span className="pp-field-error">{errors.machineLabel}</span>
-            ) : null}
-          </label>
+        <PpFormGrid>
+          <PpNativeTextField
+            id="pp-binding-machine"
+            label="Máquina"
+            hint={PP_HELP.form.anchorMachine}
+            value={binding.machineLabel}
+            placeholder="Motor bomba recirculação #2"
+            onChange={(value) => onChange({ machineLabel: value })}
+            afterControl={ppFieldError(errors?.machineLabel)}
+          />
         </PpFormGrid>
       ) : null}
 
       {binding.anchorType === "equipment" ? (
-        <PpFormGrid className="pp-form-grid--single">
-          <label className="pp-field">
-            <PpFieldLabel label="Equipamento" hint={PP_HELP.form.anchorEquipment} />
-            <input
-              value={binding.equipmentLabel}
-              onChange={(event) => onChange({ equipmentLabel: event.target.value })}
-              placeholder="Ventilador exaustão setor A"
-            />
-            {errors?.equipmentLabel ? (
-              <span className="pp-field-error">{errors.equipmentLabel}</span>
-            ) : null}
-          </label>
+        <PpFormGrid>
+          <PpNativeTextField
+            id="pp-binding-equipment"
+            label="Equipamento"
+            hint={PP_HELP.form.anchorEquipment}
+            value={binding.equipmentLabel}
+            placeholder="Ventilador exaustão setor A"
+            onChange={(value) => onChange({ equipmentLabel: value })}
+            afterControl={ppFieldError(errors?.equipmentLabel)}
+          />
         </PpFormGrid>
       ) : null}
 
       {binding.anchorType === "area" ? (
-        <PpFormGrid className="pp-form-grid--single">
-          <label className="pp-field">
-            <PpFieldLabel label="Área" hint={PP_HELP.form.anchorArea} />
-            <input
-              value={binding.areaLabel}
-              onChange={(event) => onChange({ areaLabel: event.target.value })}
-              placeholder="Sala HVAC"
-            />
-            {errors?.areaLabel ? <span className="pp-field-error">{errors.areaLabel}</span> : null}
-          </label>
+        <PpFormGrid>
+          <PpNativeTextField
+            id="pp-binding-area"
+            label="Área"
+            hint={PP_HELP.form.anchorArea}
+            value={binding.areaLabel}
+            placeholder="Sala HVAC"
+            onChange={(value) => onChange({ areaLabel: value })}
+            afterControl={ppFieldError(errors?.areaLabel)}
+          />
         </PpFormGrid>
       ) : null}
 
       {binding.anchorType === "standalone" ? (
-        <PpFormGrid className="pp-form-grid--single">
-          <label className="pp-field">
-            <PpFieldLabel label="Observações" hint={PP_HELP.form.anchorStandalone} />
-            <textarea
-              rows={3}
-              value={binding.notes}
-              onChange={(event) => onChange({ notes: event.target.value })}
-              placeholder="Referência operacional do device avulso"
-            />
-          </label>
+        <PpFormGrid>
+          <PpNativeTextAreaField
+            id="pp-binding-notes"
+            label="Observações"
+            hint={PP_HELP.form.anchorStandalone}
+            rows={3}
+            value={binding.notes}
+            placeholder="Referência operacional do device avulso"
+            onChange={(value) => onChange({ notes: value })}
+            afterControl={ppFieldError(errors?.notes)}
+          />
         </PpFormGrid>
       ) : null}
 
@@ -167,42 +192,46 @@ export function DeviceBindingSection({
           <summary>Vincular ao TOTVS (opcional)</summary>
           <p className="pp-section-intro">{getPpSectionIntro("form.totvsDetails")}</p>
           <PpFormGrid className="pp-form-grid--pair">
-            <label className="pp-field pp-form-grid__span-full">
-              <PpFieldLabel label="Centro de trabalho" hint={PP_HELP.form.workCenterOptional} />
-              <input
-                list="pp-work-centers-opt"
-                value={binding.workCenterCode}
-                onChange={(event) => {
-                  const code = event.target.value;
-                  const match = workCenters.find((item) => item.workCenterCode === code);
-                  onChange({
-                    workCenterCode: code,
-                    workCenterName: match?.workCenterName ?? binding.workCenterName,
-                  });
-                  setWorkCenterSearch(code);
-                }}
-                placeholder="Opcional"
-              />
-              <datalist id="pp-work-centers-opt">
-                {workCenters.map((item) => (
-                  <option key={item.workCenterCode} value={item.workCenterCode} label={item.workCenterName} />
-                ))}
-              </datalist>
-            </label>
-            <label className="pp-field">
-              <PpFieldLabel label="Recurso" hint={PP_HELP.form.resourceOptional} />
-              <input
-                value={binding.resourceCode}
-                onChange={(event) => onChange({ resourceCode: event.target.value })}
-              />
-            </label>
-            <label className="pp-field">
-              <PpFieldLabel label="Ferramenta" hint={PP_HELP.form.toolOptional} />
-              <input
-                value={binding.toolCode}
-                onChange={(event) => onChange({ toolCode: event.target.value })}
-              />
-            </label>
+            <PpNativeTextField
+              id="pp-binding-wc-opt-search"
+              label="Buscar centro de trabalho"
+              hint={PP_HELP.form.workCenterOptional}
+              span
+              value={workCenterSearch}
+              placeholder="Opcional"
+              onChange={(value) => {
+                setWorkCenterSearch(value);
+                const match = workCenters.find((item) => item.workCenterCode === value);
+                onChange({
+                  workCenterCode: value,
+                  workCenterName: match?.workCenterName ?? binding.workCenterName,
+                });
+              }}
+            />
+            <PpNativeSelectField
+              id="pp-binding-wc-opt-pick"
+              label="Catálogo TOTVS"
+              span
+              value={binding.workCenterCode}
+              disabled={catalogOptions.length === 0}
+              placeholderOption="Selecione…"
+              options={catalogOptions}
+              onChange={applyWorkCenterCode}
+            />
+            <PpNativeTextField
+              id="pp-binding-resource"
+              label="Recurso"
+              hint={PP_HELP.form.resourceOptional}
+              value={binding.resourceCode}
+              onChange={(value) => onChange({ resourceCode: value })}
+            />
+            <PpNativeTextField
+              id="pp-binding-tool"
+              label="Ferramenta"
+              hint={PP_HELP.form.toolOptional}
+              value={binding.toolCode}
+              onChange={(value) => onChange({ toolCode: value })}
+            />
           </PpFormGrid>
         </details>
       ) : null}

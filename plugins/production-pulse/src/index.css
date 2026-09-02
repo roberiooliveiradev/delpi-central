@@ -459,9 +459,37 @@
   display: flex;
   flex-direction: column;
   gap: var(--pp-section-gap);
-  max-width: var(--pp-form-max-width);
   width: 100%;
+  max-width: var(--pp-form-max-width);
   margin: 0 auto;
+}
+
+@media (min-width: 1101px) {
+  .dashboard-production-pulse {
+    --pp-form-max-width: min(1200px, 100%);
+  }
+
+  .pp-form-page {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--pp-section-gap);
+    row-gap: var(--pp-section-gap);
+    align-items: start;
+  }
+
+  .pp-form-page > :not(.pp-form-layout):not(.pp-form-footer) {
+    grid-column: 1 / -1;
+  }
+
+  .pp-form-page > .pp-form-footer {
+    grid-column: 1 / -1;
+  }
+
+  .pp-form-layout {
+    display: contents;
+    max-width: none;
+    margin: 0;
+  }
 }
 
 .pp-section-intro {
@@ -494,30 +522,32 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
-.pp-field input,
+.pp-field input:not([type="checkbox"]),
 .pp-field select,
 .pp-field textarea {
   width: 100%;
-  border: 1px solid var(--pp-border);
-  border-radius: 12px;
-  padding: 10px 12px;
-  background: var(--pp-surface);
-  color: var(--pp-text);
+}
+
+.pp-field__inline-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  width: 100%;
 }
 
 .pp-field--switch {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
-.pp-field--ip-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: end;
+.pp-field--switch .pp-field__label {
+  margin: 0;
 }
 
 .pp-field-error {
@@ -551,9 +581,16 @@
 }
 
 .pp-form-footer {
-  max-width: var(--pp-form-max-width);
   width: 100%;
+  max-width: var(--pp-form-max-width);
   margin: 0 auto;
+}
+
+@media (min-width: 1101px) {
+  .pp-form-footer {
+    max-width: none;
+    margin: 0;
+  }
 }
 
 .pp-form-footer--sticky {
@@ -570,15 +607,15 @@
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 
-  .pp-field input,
+  .pp-field input:not([type="checkbox"]),
   .pp-field select,
   .pp-field textarea {
     min-height: var(--pp-field-min-height-compact);
     font-size: 16px;
   }
 
-  .pp-field--switch {
-    min-height: var(--pp-field-min-height-compact);
+  .pp-field__inline-controls {
+    grid-template-columns: 1fr;
   }
 
   .pp-test-connection-btn {
@@ -586,8 +623,8 @@
     justify-content: center;
   }
 
-  .pp-field--ip-row {
-    grid-template-columns: 1fr;
+  .pp-field--switch {
+    min-height: var(--pp-field-min-height-compact);
   }
 }
 
