@@ -93,6 +93,18 @@ export type SelectedTextFormatTarget =
       style: TextFormatStyleSnapshot;
       textAlign?: string;
       verticalAlign?: string;
+    }
+  | {
+      /** Célula(s) ativa(s) da Grade — tipografia em `cell.style`. */
+      mode: "canvasCell";
+      source: "canvas_table";
+      blockId: string;
+      partLabel: string;
+      focus: { row: number; col: number };
+      cells: Array<{ row: number; col: number }>;
+      style: TextFormatStyleSnapshot;
+      textAlign?: string;
+      verticalAlign?: string;
     };
 
 const KPI_TEXT_FORMAT_KINDS = new Set<string>(KPI_TEXT_PART_KINDS);
@@ -217,13 +229,27 @@ function resolveCanvasGlobalStyle(block: ComunicadoCanvasTableBlock): TextFormat
     fontWeight: style?.fontWeight != null ? String(style.fontWeight) : undefined,
     fontStyle: style?.fontStyle,
     color: style?.color,
-    textDecoration: style?.textDecoration,
     textAlign: style?.textAlign,
     verticalAlign: style?.verticalAlign,
-    textShadow: style?.textShadow,
-    textStrokeColor: style?.textStrokeColor,
-    textStrokeWidth: style?.textStrokeWidth,
-    textReflection: style?.textReflection,
+  };
+}
+
+function resolveCanvasCellStyle(
+  block: ComunicadoCanvasTableBlock,
+  focus: { row: number; col: number },
+): TextFormatStyleSnapshot {
+  const cell = block.cells[focus.row]?.[focus.col];
+  const cellStyle = cell?.style;
+  const global = resolveCanvasGlobalStyle(block);
+  return {
+    fontFamily: cellStyle?.fontFamily ?? global.fontFamily,
+    fontSize: cellStyle?.fontSize ?? global.fontSize,
+    fontWeight:
+      cellStyle?.fontWeight != null ? String(cellStyle.fontWeight) : global.fontWeight,
+    fontStyle: cellStyle?.fontStyle ?? global.fontStyle,
+    color: cellStyle?.color ?? global.color,
+    textAlign: cellStyle?.textAlign ?? global.textAlign,
+    verticalAlign: cellStyle?.verticalAlign ?? global.verticalAlign,
   };
 }
 
@@ -252,6 +278,11 @@ export function resolveSelectedTextFormatTarget(params: {
   selectedChartPart?: ComunicadoChartPartRef | null;
   selectedTablePart?: ComunicadoTablePartRef | null;
   selectedInputPart?: ComunicadoInputPartRef | null;
+  selectedCanvasTableCell?: {
+    blockId: string;
+    cells: Array<{ row: number; col: number }>;
+    focus: { row: number; col: number };
+  } | null;
 }): SelectedTextFormatTarget | null {
   const {
     selected,
@@ -259,6 +290,7 @@ export function resolveSelectedTextFormatTarget(params: {
     selectedChartPart = null,
     selectedTablePart = null,
     selectedInputPart = null,
+    selectedCanvasTableCell = null,
   } = params;
   if (!selected) return null;
 
@@ -413,6 +445,26 @@ export function resolveSelectedTextFormatTarget(params: {
   }
 
   if (selected.type === "canvas_table") {
+    const cellSelection =
+      selectedCanvasTableCell?.blockId === selected.id &&
+      selectedCanvasTableCell.cells.length > 0
+        ? selectedCanvasTableCell
+        : null;
+    if (cellSelection) {
+      const style = resolveCanvasCellStyle(selected, cellSelection.focus);
+      return {
+        mode: "canvasCell",
+        source: "canvas_table",
+        blockId: selected.id,
+        partLabel:
+          cellSelection.cells.length === 1 ? "Célula da grade" : "Células da grade",
+        focus: cellSelection.focus,
+        cells: cellSelection.cells,
+        style,
+        textAlign: style.textAlign,
+        verticalAlign: style.verticalAlign,
+      };
+    }
     const style = resolveCanvasGlobalStyle(selected);
     return {
       mode: "complexGlobal",
