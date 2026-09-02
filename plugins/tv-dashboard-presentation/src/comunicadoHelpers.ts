@@ -118,6 +118,8 @@ export {
   resolveCanvasTableFontSize,
   resolveCanvasTableHostStyle,
   resolveCanvasTableCellBoxStyle,
+  resolveCanvasTableWrapActive,
+  nextCanvasTableWhiteSpaceToggle,
   resolveCanvasTableGeometrySnapshot,
   parseCanvasTableOptions,
   normalizeCanvasTableTrackSizes,
