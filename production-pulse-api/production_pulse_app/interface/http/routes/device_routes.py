@@ -281,6 +281,26 @@ async def list_device_readings(
     device_id: UUID,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500, alias="pageSize"),
+    recorded_from: str | None = Query(default=None, alias="from"),
+    recorded_to: str | None = Query(default=None, alias="to"),
+    metric: str | None = Query(default=None),
+):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
+    try:
+        from datetime import datetime
+
+        def _parse_dt(value: str | None) -> datetime | None:
+            if not value:
+                return None
+            normalized = value.replace("Z", "+00:00")
+            return datetime.fromisoformat(normalized)
+
+        data = _poll_service.list_readings(
+            parse_device_id(str(device_id)),
+            page=page,
+            page_size=page_size,
             recorded_from=_parse_dt(recorded_from),
             recorded_to=_parse_dt(recorded_to),
             metric_key=metric,
