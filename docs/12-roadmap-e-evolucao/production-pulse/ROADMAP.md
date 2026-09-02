@@ -31,7 +31,7 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 
 **E7.S3 entregue (set/2026):** `device_validation_content.json` + loader API; MFE `deviceValidationContent.ts` com sync test; formulário consome limites/regex/mensagens do JSON — commit `c02aee745`.
 
-**E7.S4 entregue (set/2026):** `PpHostContainedDialog` + migração de modais; teste estrutural anti-ModalShell — commit pendente desta entrega.
+**E7.S4 entregue (set/2026):** `PpHostContainedDialog` + migração de modais; teste estrutural anti-ModalShell — commit `98e58f0a6`.
 
 ---
 
@@ -390,7 +390,7 @@ flowchart LR
 #### E7.S4 — Modais host-contained ✅
 
 - **Objetivo:** Modais do plugin não cobrem sidebar do portal.
-- **Status:** ✅ `main` — após commit desta entrega.
+- **Status:** ✅ `main` — commit `98e58f0a6`.
 - **Fazer:**
   1. `plugins/production-pulse/src/app/productionPulseUi.tsx` — export `HostContainedDialog` via `createHostContainedModalShell({ containedLayout: "dialog" })`
   2. Migrar `TestConnectionModal`, `ResetCounterModal`, `OperatorClearCounterModal` (+ demais em `components/modals/`)
