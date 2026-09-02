@@ -2,7 +2,9 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     COUNTER_OFFSET_KEY,
     COUNTER_RAW_KEY,
     apply_monotonic_continuity,
-    is_power_loss_counter_drop,
+    intentional_decrease_command_grace_ms,
+    intentional_decrease_command_keys,
+    is_unexplained_counter_drop,
     public_metrics,
 )
 
@@ -45,19 +47,21 @@ def test_continuity_restores_software_offset_after_power_loss():
     assert metrics[COUNTER_OFFSET_KEY] == 100
     assert meta["counter_restored"] is True
     assert meta["counter_restore_mode"] == "software_offset"
+    assert meta["counter_restore_reason"] == "unexplained_drop"
 
 
-def test_continuity_accepts_small_intentional_decrease():
-    previous = {"counter": 100, COUNTER_RAW_KEY: 100, COUNTER_OFFSET_KEY: 0}
+def test_continuity_small_unexplained_drop_also_restores():
+    """Sem provenance de comando, queda de 1 também é power-loss (não usa teto 50)."""
+    previous = {"counter": 30, COUNTER_RAW_KEY: 30, COUNTER_OFFSET_KEY: 0}
     metrics, meta = apply_monotonic_continuity(
         driver_key="esp8266_counter_v1",
         previous_metrics=previous,
-        raw_metrics={"counter": 99},
+        raw_metrics={"counter": 0},
     )
-    assert metrics["counter"] == 99
-    assert metrics[COUNTER_RAW_KEY] == 99
-    assert metrics[COUNTER_OFFSET_KEY] == 0
-    assert meta == {}
+    assert metrics["counter"] == 30
+    assert metrics[COUNTER_RAW_KEY] == 0
+    assert metrics[COUNTER_OFFSET_KEY] == 30
+    assert meta["counter_restored"] is True
 
 
 def test_continuity_accept_decrease_flag_skips_power_loss():
@@ -69,7 +73,9 @@ def test_continuity_accept_decrease_flag_skips_power_loss():
         accept_decrease=True,
     )
     assert metrics["counter"] == 8
-    assert meta == {}
+    assert meta.get("counter_decrease_accepted") is True
+    assert meta.get("counter_decrease_provenance") == "recent_command"
+    assert "counter_restored" not in meta
 
 
 def test_continuity_clear_offsets_for_absolute_set():
@@ -86,10 +92,16 @@ def test_continuity_clear_offsets_for_absolute_set():
     assert meta == {}
 
 
-def test_power_loss_drop_helper():
-    assert is_power_loss_counter_drop(100, 99, max_intentional_decrease=50) is False
-    assert is_power_loss_counter_drop(100, 8, max_intentional_decrease=50) is True
-    assert is_power_loss_counter_drop(100, 100, max_intentional_decrease=50) is False
+def test_unexplained_drop_helper():
+    assert is_unexplained_counter_drop(100, 99) is True
+    assert is_unexplained_counter_drop(100, 8) is True
+    assert is_unexplained_counter_drop(100, 100) is False
+    assert is_unexplained_counter_drop(100, 101) is False
+
+
+def test_intentional_decrease_config_from_driver():
+    assert "decrement" in intentional_decrease_command_keys("esp8266_counter_v1")
+    assert intentional_decrease_command_grace_ms("esp8266_counter_v1") == 15_000
 
 
 def test_continuity_floors_negative_counter():

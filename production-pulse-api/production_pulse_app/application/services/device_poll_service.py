@@ -20,14 +20,18 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     build_hardware_set_payload,
     counter_floor,
     counter_restore_enabled,
-    is_power_loss_counter_drop,
-    max_intentional_decrease,
+    intentional_decrease_command_grace_ms,
+    intentional_decrease_command_keys,
+    is_unexplained_counter_drop,
     public_metrics,
 )
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
 from production_pulse_app.domain.services.reading_serialization_service import reading_row_to_api
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_binding_repository import (
     PostgresDeviceBindingRepository,
+)
+from production_pulse_app.infrastructure.persistence.repositories.postgres_device_command_repository import (
+    PostgresDeviceCommandRepository,
 )
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_reading_repository import (
     PostgresDeviceReadingRepository,
@@ -44,10 +48,12 @@ class DevicePollService:
         device_repository: PostgresDeviceRepository | None = None,
         binding_repository: PostgresDeviceBindingRepository | None = None,
         reading_repository: PostgresDeviceReadingRepository | None = None,
+        command_repository: PostgresDeviceCommandRepository | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._bindings = binding_repository or PostgresDeviceBindingRepository()
         self._readings = reading_repository or PostgresDeviceReadingRepository()
+        self._commands = command_repository or PostgresDeviceCommandRepository()
         self._registry = get_device_driver_registry()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
@@ -61,6 +67,14 @@ class DevicePollService:
 
     def _capabilities(self, driver_key: str) -> dict[str, Any]:
         return self._registry.build_capabilities(driver_key)
+
+    def _has_recent_intentional_decrease(self, device_id: UUID, driver_key: str) -> bool:
+        """True quando um comando recente explica queda intencional (pad), não power-loss."""
+        return self._commands.has_recent_successful_command(
+            device_id,
+            command_keys=intentional_decrease_command_keys(driver_key),
+            within_ms=intentional_decrease_command_grace_ms(driver_key),
+        )
 
     def _build_poll_payload(
         self,
@@ -111,10 +125,12 @@ class DevicePollService:
                 connectivity=connectivity,
             ) from exc
         previous_metrics = device.get("last_metrics") or {}
+        accept_decrease = self._has_recent_intentional_decrease(device_id, device["driver_key"])
         canonical, _meta = apply_monotonic_continuity(
             driver_key=device["driver_key"],
             previous_metrics=previous_metrics if isinstance(previous_metrics, dict) else {},
             raw_metrics=reading.metrics,
+            accept_decrease=accept_decrease,
         )
         return self._build_poll_payload(
             device,
@@ -144,11 +160,13 @@ class DevicePollService:
         )
         raw_metrics = dict(reading.metrics)
         continuity_meta: dict[str, Any] = {}
+        accept_decrease = self._has_recent_intentional_decrease(device_id, device["driver_key"])
 
         restored = self._maybe_hardware_restore_counter(
             device,
             previous_metrics=previous_metrics,
             raw_metrics=raw_metrics,
+            accept_decrease=accept_decrease,
         )
         if restored is not None:
             canonical, continuity_meta = restored
@@ -161,6 +179,7 @@ class DevicePollService:
                     driver_key=device["driver_key"],
                     previous_metrics=previous_metrics,
                     raw_metrics=raw_metrics,
+                    accept_decrease=accept_decrease,
                 )
 
         previous_public = public_metrics(previous_metrics)
@@ -251,8 +270,12 @@ class DevicePollService:
         *,
         previous_metrics: dict[str, Any],
         raw_metrics: dict[str, Any],
+        accept_decrease: bool = False,
     ) -> tuple[dict[str, Any], dict[str, Any]] | None:
         if not counter_restore_enabled(device["driver_key"]):
+            return None
+        if accept_decrease:
+            # Comando recente (decrement/reset/set) explica a queda — não reescrever o chip.
             return None
 
         prev_logical = previous_metrics.get("counter")
@@ -264,14 +287,7 @@ class DevicePollService:
             return None
         if not isinstance(new_raw, (int, float)) or isinstance(new_raw, bool):
             return None
-        if int(new_raw) >= int(prev_raw):
-            return None
-        if not is_power_loss_counter_drop(
-            int(prev_raw),
-            int(new_raw),
-            max_intentional_decrease=max_intentional_decrease(device["driver_key"]),
-        ):
-            # Queda pequena (diminuir no pad / botão) — não reescrever o chip.
+        if not is_unexplained_counter_drop(int(prev_raw), int(new_raw)):
             return None
 
         target = max(counter_floor(), int(prev_logical) + int(new_raw))
@@ -304,6 +320,7 @@ class DevicePollService:
             "counter_restore_from": int(prev_logical),
             "counter_restore_raw": int(new_raw),
             "counter_restore_target": target,
+            "counter_restore_reason": "unexplained_drop",
         }
         return metrics, meta
 
@@ -320,6 +337,7 @@ class DevicePollService:
         self._require_device(device_id)
         page = max(1, page)
         page_size = min(max(1, page_size), 500)
+        rows, total = self._readings.list_for_device(
             device_id,
             page=page,
             page_size=page_size,

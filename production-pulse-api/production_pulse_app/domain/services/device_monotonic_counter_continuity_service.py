@@ -12,7 +12,8 @@ from production_pulse_app.infrastructure.content.device_validation_content_servi
 COUNTER_RAW_KEY = "counterRaw"
 COUNTER_OFFSET_KEY = "counterOffset"
 _INTERNAL_METRIC_KEYS = frozenset({COUNTER_RAW_KEY, COUNTER_OFFSET_KEY})
-_DEFAULT_MAX_INTENTIONAL_DECREASE = 50
+_DEFAULT_INTENTIONAL_DECREASE_COMMANDS = frozenset({"decrement", "reset", "set"})
+_DEFAULT_INTENTIONAL_DECREASE_GRACE_MS = 15_000
 
 
 def _monotonic_metric_keys(driver_key: str) -> frozenset[str]:
@@ -26,6 +27,12 @@ def _monotonic_metric_keys(driver_key: str) -> frozenset[str]:
                 if key:
                     keys.add(key)
     return frozenset(keys)
+
+
+def _counter_restore_section(driver_key: str) -> dict[str, Any]:
+    definition = get_device_driver_registry().resolve_driver(driver_key).definition
+    section = definition.get("counterRestore")
+    return section if isinstance(section, dict) else {}
 
 
 def public_metrics(metrics: dict[str, Any] | None) -> dict[str, Any]:
@@ -45,30 +52,30 @@ def counter_floor() -> int:
     return counter_set_min()
 
 
-def max_intentional_decrease(driver_key: str) -> int:
-    """Quedas até este valor (ex.: −1 do pad) não são power-loss."""
-    definition = get_device_driver_registry().resolve_driver(driver_key).definition
-    section = definition.get("counterRestore")
-    if not isinstance(section, dict):
-        return _DEFAULT_MAX_INTENTIONAL_DECREASE
-    raw = section.get("maxIntentionalDecrease", _DEFAULT_MAX_INTENTIONAL_DECREASE)
+def intentional_decrease_command_keys(driver_key: str) -> frozenset[str]:
+    """Comandos de auditoria que explicam uma queda intencional no chip."""
+    section = _counter_restore_section(driver_key)
+    raw = section.get("intentionalDecreaseCommands")
+    if not isinstance(raw, list) or not raw:
+        return _DEFAULT_INTENTIONAL_DECREASE_COMMANDS
+    keys = {str(item).strip().lower() for item in raw if str(item).strip()}
+    return frozenset(keys) if keys else _DEFAULT_INTENTIONAL_DECREASE_COMMANDS
+
+
+def intentional_decrease_command_grace_ms(driver_key: str) -> int:
+    """Janela em que um comando recente autoriza aceitar queda no poll."""
+    section = _counter_restore_section(driver_key)
+    raw = section.get("intentionalDecreaseCommandGraceMs", _DEFAULT_INTENTIONAL_DECREASE_GRACE_MS)
     try:
         value = int(raw)
     except (TypeError, ValueError):
-        return _DEFAULT_MAX_INTENTIONAL_DECREASE
+        return _DEFAULT_INTENTIONAL_DECREASE_GRACE_MS
     return max(0, value)
 
 
-def is_power_loss_counter_drop(
-    prev_raw: int,
-    new_raw: int,
-    *,
-    max_intentional_decrease: int,
-) -> bool:
-    """True só quando a queda parece reboot/perda de RAM — não −1/−N do operador."""
-    if new_raw >= prev_raw:
-        return False
-    return (prev_raw - new_raw) > max_intentional_decrease
+def is_unexplained_counter_drop(prev_raw: int, new_raw: int) -> bool:
+    """Queda de raw sem provenance de comando — candidata a power-loss/restore."""
+    return new_raw < prev_raw
 
 
 def _apply_counter_floor(
@@ -104,13 +111,13 @@ def apply_monotonic_continuity(
     Retorna (metrics_para_persistir, meta). ``counter`` fica lógico (visível);
     ``counterRaw`` / ``counterOffset`` ficam só no last_metrics interno.
 
-    ``accept_decrease``: comandos increment/decrement — nunca trata queda como power-loss.
+    ``accept_decrease``: provenance de comando (decrement/reset/set) ou path de comando —
+    nunca trata queda como power-loss. No poll sem comando recente, qualquer queda restaura.
     Contagem nunca fica abaixo do piso canônico (``counterSet.min``, tipicamente 0).
     """
     previous = previous_metrics if isinstance(previous_metrics, dict) else {}
     result = dict(raw_metrics)
     meta: dict[str, Any] = {}
-    intentional_cap = max_intentional_decrease(driver_key)
 
     if clear_offsets:
         for key in _monotonic_metric_keys(driver_key):
@@ -151,11 +158,7 @@ def apply_monotonic_continuity(
             result[COUNTER_OFFSET_KEY] = offset
             continue
 
-        power_loss = (not accept_decrease) and is_power_loss_counter_drop(
-            prev_raw,
-            raw_val,
-            max_intentional_decrease=intentional_cap,
-        )
+        power_loss = (not accept_decrease) and is_unexplained_counter_drop(prev_raw, raw_val)
         if power_loss:
             # Hardware perdeu a contagem (power-loss / reboot). Mantém continuidade lógica.
             offset = prev_logical
@@ -173,8 +176,9 @@ def apply_monotonic_continuity(
             meta["counter_restore_mode"] = "software_offset"
             meta["counter_restore_from"] = prev_logical
             meta["counter_restore_raw"] = raw_val
+            meta["counter_restore_reason"] = "unexplained_drop"
         else:
-            # Inclui −1 do pad / botão físico: mantém offset e acompanha o raw.
+            # Provenance de comando (ou incremento): mantém offset e acompanha o raw.
             logical = raw_val + prev_offset
             logical, stored_raw, offset = _apply_counter_floor(
                 logical=logical,
@@ -185,6 +189,9 @@ def apply_monotonic_continuity(
             result[key] = logical
             result[COUNTER_RAW_KEY] = stored_raw
             result[COUNTER_OFFSET_KEY] = offset
+            if accept_decrease and is_unexplained_counter_drop(prev_raw, raw_val):
+                meta["counter_decrease_accepted"] = True
+                meta["counter_decrease_provenance"] = "recent_command"
 
     return result, meta
 
@@ -194,9 +201,8 @@ def build_hardware_set_payload(*, counter: int) -> dict[str, Any]:
 
 
 def counter_restore_enabled(driver_key: str) -> bool:
-    definition = get_device_driver_registry().resolve_driver(driver_key).definition
-    section = definition.get("counterRestore")
-    if not isinstance(section, dict):
+    section = _counter_restore_section(driver_key)
+    if not section:
         return True
     return bool(section.get("enabled", True))
 
@@ -208,7 +214,8 @@ __all__ = [
     "build_hardware_set_payload",
     "counter_floor",
     "counter_restore_enabled",
-    "is_power_loss_counter_drop",
-    "max_intentional_decrease",
+    "intentional_decrease_command_grace_ms",
+    "intentional_decrease_command_keys",
+    "is_unexplained_counter_drop",
     "public_metrics",
 ]

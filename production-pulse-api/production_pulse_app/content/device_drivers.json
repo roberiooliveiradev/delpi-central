@@ -19,7 +19,8 @@
       "counterRestore": {
         "enabled": true,
         "preferHardwareSet": true,
-        "maxIntentionalDecrease": 50
+        "intentionalDecreaseCommands": ["decrement", "reset", "set"],
+        "intentionalDecreaseCommandGraceMs": 15000
       },
       "operatorSurface": "counter_pad",
       "operatorEligible": true,

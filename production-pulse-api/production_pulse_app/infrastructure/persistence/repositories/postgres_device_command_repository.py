@@ -83,3 +83,33 @@ class PostgresDeviceCommandRepository:
                 )
                 rows = list(cur.fetchall())
         return rows, total
+
+    def has_recent_successful_command(
+        self,
+        device_id: UUID,
+        *,
+        command_keys: list[str] | tuple[str, ...] | set[str] | frozenset[str],
+        within_ms: int,
+    ) -> bool:
+        keys = [str(key).strip().lower() for key in command_keys if str(key).strip()]
+        if not keys or within_ms <= 0:
+            return False
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT 1
+                    FROM production_pulse.device_commands
+                    WHERE device_id = %s
+                      AND success IS TRUE
+                      AND lower(command_key) = ANY(%s)
+                      AND created_at >= NOW() - (%s * INTERVAL '1 millisecond')
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                    """,
+                    (device_id, keys, int(within_ms)),
+                )
+                return cur.fetchone() is not None
+
+
+__all__ = ["PostgresDeviceCommandRepository"]

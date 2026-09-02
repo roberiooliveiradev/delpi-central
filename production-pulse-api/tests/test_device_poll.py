@@ -189,7 +189,7 @@ def test_manual_poll_restores_counter_after_hardware_power_loss(client, unique_i
     # Firmware atual sem /api/definir → restore por offset de software.
     monkeypatch.setattr(
         "production_pulse_app.application.services.device_poll_service.DevicePollService._maybe_hardware_restore_counter",
-        lambda self, device, *, previous_metrics, raw_metrics: None,
+        lambda self, device, *, previous_metrics, raw_metrics, accept_decrease=False: None,
     )
 
     device = _create_device(client, unique_ip)
@@ -226,7 +226,7 @@ def test_manual_poll_hardware_set_restore(client, unique_ip, monkeypatch):
     )
     monkeypatch.setattr(
         "production_pulse_app.application.services.device_poll_service.DevicePollService._maybe_hardware_restore_counter",
-        lambda self, device, *, previous_metrics, raw_metrics: (
+        lambda self, device, *, previous_metrics, raw_metrics, accept_decrease=False: (
             (
                 {"counter": 108, "counterRaw": 108, "counterOffset": 0},
                 {
@@ -237,7 +237,8 @@ def test_manual_poll_hardware_set_restore(client, unique_ip, monkeypatch):
                     "counter_restore_target": 108,
                 },
             )
-            if previous_metrics.get("counter") is not None
+            if (not accept_decrease)
+            and previous_metrics.get("counter") is not None
             and isinstance(raw_metrics.get("counter"), (int, float))
             and int(raw_metrics["counter"])
             < int(previous_metrics.get("counterRaw", previous_metrics.get("counter")))
