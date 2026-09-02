@@ -108,6 +108,7 @@ export function DeviceCard({
 
 type DeviceCardListProps = {
   devices: DeviceListItem[];
+  loading?: boolean;
   pollingDeviceId: string | null;
   onPoll: (deviceId: string) => void;
   onOpenDevice?: (deviceId: string) => void;
@@ -115,21 +116,32 @@ type DeviceCardListProps = {
 
 export function DeviceCardList({
   devices,
+  loading = false,
   pollingDeviceId,
   onPoll,
   onOpenDevice,
 }: DeviceCardListProps) {
   return (
-    <div className="pp-device-card-list">
-      {devices.map((device) => (
-        <DeviceCard
-          key={device.id}
-          device={device}
-          polling={pollingDeviceId === device.id}
-          onPoll={onPoll}
-          onOpen={onOpenDevice}
-        />
-      ))}
-    </div>
+    <section className="pp-device-card-panel" aria-label="Dispositivos">
+      <header className="pp-device-table__header">
+        <h2 className="pp-device-table__title">Dispositivos</h2>
+        <span className="pp-device-table__count">{devices.length} dispositivo(s)</span>
+      </header>
+      {loading ? <p className="pp-device-card-panel__loading">Carregando…</p> : null}
+      {!loading && devices.length === 0 ? (
+        <p className="pp-device-card-panel__empty">Nenhum dispositivo encontrado.</p>
+      ) : null}
+      <div className="pp-device-card-list">
+        {devices.map((device) => (
+          <DeviceCard
+            key={device.id}
+            device={device}
+            polling={pollingDeviceId === device.id}
+            onPoll={onPoll}
+            onOpen={onOpenDevice}
+          />
+        ))}
+      </div>
+    </section>
   );
 }

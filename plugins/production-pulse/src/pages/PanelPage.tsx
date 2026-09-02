@@ -16,8 +16,8 @@ import {
 } from "../app/productionPulseUi";
 import { usePanelData } from "../hooks/usePanelData";
 import { usePanelFilters } from "../hooks/usePanelFilters";
-import { isMobileViewport } from "../utils/viewportLayout";
 import { useViewportBucket } from "../hooks/useViewportBucket";
+import { isMobileViewport } from "../utils/viewportLayout";
 import { groupDevices, paginateDevices, totalPages } from "../utils/deviceGrouping";
 import { DeviceCardList } from "../components/DeviceCard";
 import { DeviceFiltersBar } from "../components/DeviceFiltersBar";
@@ -208,9 +208,10 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
             onPoll={runPoll}
             onOpenDevice={openDevice}
           />
-        ) : isMobile ? (
+        ) : filters.view === "cards" ? (
           <DeviceCardList
             devices={pagedDevices}
+            loading={loading}
             pollingDeviceId={pollingDeviceId}
             onPoll={runPoll}
             onOpenDevice={openDevice}
@@ -226,7 +227,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         )
       ) : null}
 
-      {!showEmptyFilial && !showEmptyFilters && filters.view === "list" ? (
+      {!showEmptyFilial && !showEmptyFilters && filters.view !== "grouped" ? (
         <PpPagination
           page={filters.page}
           pageSize={PAGE_SIZE}

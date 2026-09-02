@@ -278,11 +278,31 @@
   color: var(--pp-text-muted);
 }
 
-.pp-device-card-list,
-.pp-placement-groups {
+.pp-device-card-panel {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.pp-device-card-panel__loading,
+.pp-device-card-panel__empty {
+  margin: 0;
+  color: var(--pp-text-muted);
+  font-size: var(--pp-font-sm);
+}
+
+.pp-device-card-list,
+.pp-placement-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.pp-device-card-list {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.pp-placement-groups {
+  grid-template-columns: 1fr;
 }
 
 .pp-device-card {
@@ -415,14 +435,8 @@
     grid-template-columns: 1fr;
   }
 
-  .pp-device-table--desktop {
-    display: none;
-  }
-}
-
-@media (min-width: 769px) {
   .pp-device-card-list {
-    display: none;
+    grid-template-columns: 1fr;
   }
 }
 

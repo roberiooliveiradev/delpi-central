@@ -101,7 +101,8 @@ export function DeviceFiltersBar({
             value={filters.view}
             onChange={(value) => onChange({ view: value as PanelFilters["view"] })}
             options={[
-              { value: "list", label: "Lista" },
+              { value: "table", label: "Tabela" },
+              { value: "cards", label: "Cards" },
               { value: "grouped", label: "Agrupado" },
             ]}
           />

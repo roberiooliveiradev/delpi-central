@@ -39,7 +39,8 @@ export const PP_HELP = {
       "Busca por nome do device, rótulo do objeto (placement) ou endereço IP.",
     filterGroupBy:
       "Na vista agrupada, define se os devices aparecem por posto, máquina, equipamento ou área.",
-    viewList: "Tabela flat com todos os dispositivos e filtros ativos.",
+    viewTable: "Tabela com colunas — ideal para comparar muitos devices de uma vez.",
+    viewCards: "Cards com nome, objeto, métrica e ações — mais legível em telas menores.",
     viewGrouped: "Seções colapsáveis agrupadas pelo objeto operacional escolhido.",
     colName: "Nome do dispositivo IoT (ESP ou gateway) — identificação técnica na rede.",
     colPlacement:

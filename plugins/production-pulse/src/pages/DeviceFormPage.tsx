@@ -117,7 +117,7 @@ export function DeviceFormPage({
   const canManage = permissions.canManageDevices;
 
   const goBack = () => {
-    navigateProductionPulse(buildPanelPath({ branch: device.branch, page: 1, view: "list", groupBy: "work_center", anchorType: "", role: "", status: "", search: "" }));
+    navigateProductionPulse(buildPanelPath({ branch: device.branch, page: 1, view: "table", groupBy: "work_center", anchorType: "", role: "", status: "", search: "" }));
   };
 
   const runTestConnection = async () => {
