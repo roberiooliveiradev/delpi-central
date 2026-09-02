@@ -2,6 +2,7 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     COUNTER_OFFSET_KEY,
     COUNTER_RAW_KEY,
     apply_monotonic_continuity,
+    is_power_loss_counter_drop,
     public_metrics,
 )
 
@@ -46,6 +47,31 @@ def test_continuity_restores_software_offset_after_power_loss():
     assert meta["counter_restore_mode"] == "software_offset"
 
 
+def test_continuity_accepts_small_intentional_decrease():
+    previous = {"counter": 100, COUNTER_RAW_KEY: 100, COUNTER_OFFSET_KEY: 0}
+    metrics, meta = apply_monotonic_continuity(
+        driver_key="esp8266_counter_v1",
+        previous_metrics=previous,
+        raw_metrics={"counter": 99},
+    )
+    assert metrics["counter"] == 99
+    assert metrics[COUNTER_RAW_KEY] == 99
+    assert metrics[COUNTER_OFFSET_KEY] == 0
+    assert meta == {}
+
+
+def test_continuity_accept_decrease_flag_skips_power_loss():
+    previous = {"counter": 100, COUNTER_RAW_KEY: 100, COUNTER_OFFSET_KEY: 0}
+    metrics, meta = apply_monotonic_continuity(
+        driver_key="esp8266_counter_v1",
+        previous_metrics=previous,
+        raw_metrics={"counter": 8},
+        accept_decrease=True,
+    )
+    assert metrics["counter"] == 8
+    assert meta == {}
+
+
 def test_continuity_clear_offsets_for_absolute_set():
     previous = {"counter": 108, COUNTER_RAW_KEY: 8, COUNTER_OFFSET_KEY: 100}
     metrics, meta = apply_monotonic_continuity(
@@ -58,3 +84,9 @@ def test_continuity_clear_offsets_for_absolute_set():
     assert metrics[COUNTER_RAW_KEY] == 50
     assert metrics[COUNTER_OFFSET_KEY] == 0
     assert meta == {}
+
+
+def test_power_loss_drop_helper():
+    assert is_power_loss_counter_drop(100, 99, max_intentional_decrease=50) is False
+    assert is_power_loss_counter_drop(100, 8, max_intentional_decrease=50) is True
+    assert is_power_loss_counter_drop(100, 100, max_intentional_decrease=50) is False

@@ -18,7 +18,8 @@
       "commands": ["increment", "decrement", "reset", "set", "configure", "reboot", "factory_reset"],
       "counterRestore": {
         "enabled": true,
-        "preferHardwareSet": true
+        "preferHardwareSet": true,
+        "maxIntentionalDecrease": 50
       },
       "operatorSurface": "counter_pad",
       "operatorEligible": true,

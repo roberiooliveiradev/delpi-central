@@ -45,10 +45,10 @@ def compute_delta_metrics(
             continue
 
         prev_num = int(prev_raw)
-        if new_num >= prev_num:
-            delta[key] = new_num - prev_num
-        else:
-            delta[key] = new_num
-            meta["counter_reset"] = True
+        # Delta assinado: −1 do pad é válido. Power-loss já foi normalizado
+        # em apply_monotonic_continuity (meta counter_restored).
+        delta[key] = new_num - prev_num
+        if new_num < prev_num:
+            meta["counter_decreased"] = True
 
     return delta, meta

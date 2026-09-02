@@ -19,6 +19,8 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     apply_monotonic_continuity,
     build_hardware_set_payload,
     counter_restore_enabled,
+    is_power_loss_counter_drop,
+    max_intentional_decrease,
     public_metrics,
 )
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
@@ -206,6 +208,13 @@ class DevicePollService:
         if not isinstance(new_raw, (int, float)) or isinstance(new_raw, bool):
             return None
         if int(new_raw) >= int(prev_raw):
+            return None
+        if not is_power_loss_counter_drop(
+            int(prev_raw),
+            int(new_raw),
+            max_intentional_decrease=max_intentional_decrease(device["driver_key"]),
+        ):
+            # Queda pequena (diminuir no pad / botão) — não reescrever o chip.
             return None
 
         target = int(prev_logical) + int(new_raw)

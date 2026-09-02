@@ -227,14 +227,21 @@ def test_manual_poll_hardware_set_restore(client, unique_ip, monkeypatch):
     monkeypatch.setattr(
         "production_pulse_app.application.services.device_poll_service.DevicePollService._maybe_hardware_restore_counter",
         lambda self, device, *, previous_metrics, raw_metrics: (
-            {"counter": 108, "counterRaw": 108, "counterOffset": 0},
-            {
-                "counter_restored": True,
-                "counter_restore_mode": "hardware_set",
-                "counter_restore_from": 100,
-                "counter_restore_raw": 8,
-                "counter_restore_target": 108,
-            },
+            (
+                {"counter": 108, "counterRaw": 108, "counterOffset": 0},
+                {
+                    "counter_restored": True,
+                    "counter_restore_mode": "hardware_set",
+                    "counter_restore_from": 100,
+                    "counter_restore_raw": 8,
+                    "counter_restore_target": 108,
+                },
+            )
+            if previous_metrics.get("counter") is not None
+            and isinstance(raw_metrics.get("counter"), (int, float))
+            and int(raw_metrics["counter"])
+            < int(previous_metrics.get("counterRaw", previous_metrics.get("counter")))
+            else None
         ),
     )
 

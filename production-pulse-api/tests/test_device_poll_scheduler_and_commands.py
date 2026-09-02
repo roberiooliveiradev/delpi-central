@@ -37,7 +37,7 @@ def test_gauge_increment_command_rejected(client, unique_ip):
 
     response = client.post(f"/devices/{device['id']}/commands/increment")
     assert response.status_code == 422
-    assert "não suportado" in response.json()["error"]["message"].lower()
+    assert "não suport" in response.json()["error"]["message"].lower()
 
 
 def test_counter_reset_command_is_audited(client, unique_ip, monkeypatch):

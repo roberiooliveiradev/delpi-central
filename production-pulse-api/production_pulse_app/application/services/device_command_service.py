@@ -114,16 +114,19 @@ class DeviceCommandService:
         )
 
         reading_id = None
+        canonical_public: dict[str, Any] | None = None
         if result.success and result.metrics:
             previous_metrics = (
                 device.get("last_metrics") if isinstance(device.get("last_metrics"), dict) else {}
             )
             clear_offsets = normalized_key in {"reset", "set"}
+            accept_decrease = normalized_key in {"increment", "decrement"}
             canonical, continuity_meta = apply_monotonic_continuity(
                 driver_key=device["driver_key"],
                 previous_metrics=previous_metrics,
                 raw_metrics=result.metrics,
                 clear_offsets=clear_offsets,
+                accept_decrease=accept_decrease,
             )
             if clear_offsets:
                 # set/reset definem baseline absoluta no hardware
@@ -150,6 +153,8 @@ class DeviceCommandService:
             if normalized_key == "set":
                 meta["operator_set"] = True
                 meta.pop("counter_reset", None)
+            if normalized_key == "decrement":
+                meta.pop("counter_reset", None)
 
             reading_row = self._readings.insert(
                 device_id,
@@ -164,18 +169,18 @@ class DeviceCommandService:
         response = {
             "commandKey": normalized_key,
             "success": result.success,
-            "metrics": public_metrics(result.metrics) if result.metrics else result.metrics,
+            "metrics": (
+                canonical_public
+                if canonical_public is not None
+                else (public_metrics(result.metrics) if result.metrics else result.metrics)
+            ),
             "errorMessage": user_error_message,
             "commandId": str(audit_row["id"]),
         }
         if reading_id is not None:
             response["readingId"] = reading_id
-        if normalized_key == "set" and result.success:
-            response["metrics"] = public_metrics(
-                {
-                    "counter": int(result.metrics["counter"]),
-                }
-            )
+        if normalized_key == "set" and result.success and canonical_public is not None:
+            response["metrics"] = canonical_public
         if normalized_key == "factory_reset" and result.success:
             self._devices.patch(
                 device_id,
