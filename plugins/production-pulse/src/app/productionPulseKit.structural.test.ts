@@ -73,11 +73,12 @@ describe("production-pulse kit contracts", () => {
     expect(panel).toMatch(/pp-panel-operator-link/);
   });
 
-  it("botão Modo operador no hero usa tokens de marca claro/escuro", () => {
+  it("botões do hero usam classe canônica delpi-ui-action-btn com tokens de marca", () => {
     const css = readRelative("index.css");
     expect(css).toMatch(
-      /\.pp-page-hero__actions \.pp-action-button[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
+      /\.pp-page-hero__actions \.delpi-ui-action-btn[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
     );
+    expect(css).not.toMatch(/\.pp-page-hero__actions \.pp-action-button/);
     expect(css).toMatch(/:root\[data-theme="dark"\][\s\S]*--pp-hero-brand-btn-border/);
   });
 
