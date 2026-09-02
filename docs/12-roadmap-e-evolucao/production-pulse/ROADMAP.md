@@ -544,15 +544,47 @@ Verificados em **dev** (pytest, vitest, `check-production-pulse.sh`). Itens marc
 
 **MVP código:** fechado. **MVP operacional:** fecha após E6.S2.
 
+---
+
+## P2 — Superfícies operador avançadas (especificação)
+
+> Doc: [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md) · Wireframes WF-PP-OP-TEMP / ROTATION / COMBO / ALERT / GOAL / PCT
+
+### Decisões
+
+| Tema | Decisão |
+|------|---------|
+| Surfaces novas | `temperature_focus`, `rotation_ring`, `telemetry_stack`, board `placement_combo` |
+| Alertas | API calcula `presentation.alertLevel` a partir de `thresholds` |
+| Metas / % | API calcula `progress.pct`; MFE só renderiza |
+| Contador | Mantém pad; meta como faixa abaixo do valor |
+
+### Etapas (planejado)
+
+| Etapa | Objetivo |
+|-------|----------|
+| P2.S0 | Registry stubs + contrato `goals`/`progress`/`alertLevel` na API |
+| P2.S1 | MFE TEMP + ROTATION + overlays ALERT/GOAL |
+| P2.S2 | Rota board COMBO + ordenação danger-first |
+| P2.S3 | Cadastro de metas (manage) + helps `PP_HELP` |
+| P2.S4 | Homologação tablet com ≥2 tipos de device no mesmo posto |
+
+### Fora (P2)
+
+Alarme push, OEE PCP oficial, Modbus write, wallboard TV.
+
+---
+
 ## Fora do escopo (MVP)
 
-- Chat/agente, cockpit PCP embed, WebSocket, alertas limite temperatura/rpm, sync TOTVS apontamento, Modbus/MQTT
+- Chat/agente, cockpit PCP embed, WebSocket, **alertas/metas operador (viram P2)**, sync TOTVS apontamento, Modbus/MQTT
 
 ---
 
 ## Referências
 
 - [README.md](./README.md)
+- [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md)
 - [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md)
 - [SCHEMA.md](./SCHEMA.md)
 - `travel-expenses-api` — RBAC + CRUD

@@ -55,6 +55,10 @@ Cada tela inclui subseções **`tablet (769–1100px)`** e **`mobile (≤768px)`
 | `/operator/placements/:key` | WF-PP-OP-PICK | **WF-PP-OP-PICK tablet** — grid 2 col | WF-PP-OP-PICK mobile — stack |
 | `/operator/devices/:id` contador | WF-PP-OP-01 | **WF-PP-OP-01** (referência tablet) | WF-PP-OP-02 portrait |
 | `/operator/devices/:id` gauge | WF-PP-OP-GAUGE | **WF-PP-OP-GAUGE tablet** — métricas 2 col | WF-PP-OP-GAUGE mobile — stack |
+| `/operator/devices/:id` temperatura | WF-PP-OP-TEMP | **WF-PP-OP-TEMP tablet** | WF-PP-OP-TEMP mobile |
+| `/operator/devices/:id` rotação | WF-PP-OP-ROTATION | **WF-PP-OP-ROTATION tablet** | WF-PP-OP-ROTATION mobile |
+| `/operator/placements/:key/board` | WF-PP-OP-COMBO | **WF-PP-OP-COMBO tablet** — grid 2–3 | WF-PP-OP-COMBO mobile — 1 col |
+| Overlay meta / % / alerta | WF-PP-OP-GOAL · PCT · ALERT | mesma rota da superfície | — |
 | Shell | WF-PP-00 | **WF-PP-00 tablet** — hero wrap | WF-PP-00 mobile — hero coluna |
 
 ---
@@ -67,7 +71,8 @@ Cada tela inclui subseções **`tablet (769–1100px)`** e **`mobile (≤768px)`
 | `/apps/production-pulse/devices/:id/edit` | WF-PP-02 | não | `devices.manage` |
 | `/apps/production-pulse/operator` | **WF-PP-OP-HUB** | sim† «Operador · Pulso» | `operator` |
 | `/apps/production-pulse/operator/placements/:placementKey` | **WF-PP-OP-PICK** | não | picker devices |
-| `/apps/production-pulse/operator/devices/:deviceId` | **WF-PP-OP** / **GAUGE** | não | superfície driver |
+| `/apps/production-pulse/operator/devices/:deviceId` | **WF-PP-OP** / **GAUGE** / **TEMP** / **ROTATION** | não | superfície driver |
+| `/apps/production-pulse/operator/placements/:placementKey/board` | **WF-PP-OP-COMBO** | não | board do posto (P2) |
 
 Rotas legado: redirect **308** — ver [ADR-004-routes-and-legacy-aliases.md](./ADR-004-routes-and-legacy-aliases.md).
 
@@ -1269,14 +1274,202 @@ Desktop (>1100) — gauge 2+ métricas
 
 ---
 
+## WF-PP-OP-TEMP — Superfície temperatura (`temperature_focus`) — P2
+
+> Spec: [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md)
+
+**Rota:** `/operator/devices/:deviceId` · `operatorSurface: temperature_focus`
+
+```text
+┌─ BrandBar ─ CT-53 · Cabine térmica ──────── [Trocar posto] ───────┐
+│ ● Online · sync 3 s                                                │
+└────────────────────────────────────────────────────────────────────┘
+
+              ┌─ alert banner (se danger) ──────────────────┐
+              │ ⚠ Temperatura acima do limite (80 °C)       │
+              └─────────────────────────────────────────────┘
+
+                         72,4
+                          °C
+                   Temperatura cabine
+
+              ┌─ margem até teto ───────────────────────────┐
+              │██████████████████░░░░  72% do limite        │
+              │ Limite 80 °C · margem 7,6 °C                │
+              └─────────────────────────────────────────────┘
+
+                    min 15m 68,1 · max 15m 74,0
+                         [ghost Atualizar]
+```
+
+### WF-PP-OP-TEMP tablet (769–1100px)
+
+- Valor: `clamp(4rem, 14vw, 7rem)`; barra meta full width max 420px centrada.
+- Banner alerta sticky sob BrandBar.
+
+### WF-PP-OP-TEMP mobile (≤768px)
+
+- Valor `clamp(3rem, 20vw, 5rem)`; barra e stats empilhados; Atualizar full width 48px.
+
+**Helps:** `operator.tempValue` · `operator.tempMargin` · `operator.alertBanner`.
+
+---
+
+## WF-PP-OP-ROTATION — Superfície rotação (`rotation_ring`) — P2
+
+**Rota:** `/operator/devices/:deviceId` · `operatorSurface: rotation_ring`
+
+```text
+┌─ BrandBar ─ CT-53 · Fusos ──────────────── [Trocar posto] ───────┐
+│ ● Online · sync 2 s · faixa 1.600–2.200 rpm                        │
+└────────────────────────────────────────────────────────────────────┘
+
+                      ╭───────────────╮
+                   ╭──┤   ●●●●●●●○    ├──╮     ← anel % na faixa
+                   │  │               │  │
+                   │  │    1.850      │  │
+                   │  │     rpm       │  │
+                   │  │   ~ mid band  │  │
+                   ╰──┤               ├──╯
+                      ╰───────────────╯
+
+              ┌─ tile secundário (se houver °C) ────┐
+              │  61,0 °C · ok                        │
+              └──────────────────────────────────────┘
+
+                         [ghost Atualizar]
+```
+
+| Estado anel | Cor |
+|-------------|-----|
+| in_band | accent / ok |
+| near edge (warn) | warning |
+| out_of_band | danger + banner |
+
+### WF-PP-OP-ROTATION tablet / mobile
+
+- Tablet: anel diam. `min(52vw, 320px)`; tile °C ao lado se ≥901px.
+- Mobile: anel centrado; tile °C abaixo; Atualizar full width.
+
+**Helps:** `operator.rotationRing` · `operator.gaugeValue` · `operator.alertBanner`.
+
+---
+
+## WF-PP-OP-COMBO — Painel combinado do posto (`placement_combo`) — P2
+
+**Rota:** `/operator/placements/:placementKey/board`
+
+Entrada: picker → `[ghost Ver posto]` ou hub com atalho «Board» se `deviceCount ≥ 2`.
+
+```text
+┌─ BrandBar ─ CT-53 · Usinagem CNC ──── [Trocar posto] ─────────────┐
+│ 4 devices · 3 online · 1 atenção                                   │
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ Contador ─────────┐  ┌─ Rotação ──────────┐  ┌─ Temperatura ─────┐
+│ Prensa A #1        │  │ Fusos              │  │ Cabine            │
+│      1.284         │  │     1.850 rpm      │  │     72,4 °C       │
+│ golpes             │  │  ○○○○○○○ anel 70%  │  │  ⚠ warn           │
+│ meta 70% ████░░    │  │  in band           │  │  margem 7,6 °C    │
+└────────────────────┘  └────────────────────┘  └────────────────────┘
+
+┌─ Sensor ───────────┐
+│ Pressão linha      │
+│    4,2 bar         │
+│ ● ok               │
+└────────────────────┘
+```
+
+Tap card → superfície dedicada do device. Ordenação: danger → warn → ok → offline.
+
+### WF-PP-OP-COMBO tablet (769–1100px)
+
+Grid **2 col** (769–900) / **3 col** (901–1100). Card min-height **120px**.
+
+### WF-PP-OP-COMBO mobile (≤768px)
+
+1 coluna; cards full width; pior alerta no topo da lista.
+
+**Helps:** `operator.comboBoard` · `operator.hubCardMeta` · `operator.alertBanner`.
+
+---
+
+## WF-PP-OP-ALERT — Banner e chips de alerta (overlay) — P2
+
+Composição em **qualquer** superfície (não é rota).
+
+```text
+┌─ BrandBar … ──────────────────────────────────────────────────────┐
+├─ ALERT sticky ────────────────────────────────────────────────────┤
+│ ⚠ DANGER  Temperatura cabine 84,1 °C (limite 80 °C)               │
+│           Avise a supervisão · sync há 4 s                        │
+└───────────────────────────────────────────────────────────────────┘
+│ … restante da superfície (valor / pad / anel) …                   │
+```
+
+| Nível | Prefixo | Cor |
+|-------|---------|-----|
+| warn | Atenção | `--pp-warning` |
+| danger | Perigo | `--pp-danger` |
+| stale | Desatualizado | muted |
+| offline | (banner existente) | — |
+
+Hub/picker: bolinha no canto do card (`● warn` / `● danger`).
+
+**Helps:** `operator.alertBanner`.
+
+---
+
+## WF-PP-OP-GOAL — Faixa de meta no contador / scalar — P2
+
+Overlay sob o valor hero (contador ou temperatura).
+
+```text
+                        842
+                      golpes
+
+         ┌─ meta turno ─────────────────────────────┐
+         │ Meta 1.200 · 70%  ████████████░░░░░      │
+         │ Faltam 358 · no ritmo                     │
+         └──────────────────────────────────────────┘
+
+              [ − ]     [ Limpar ]     [ + ]
+```
+
+- Não reduzir o tamanho do número hero.
+- Estados copy: «no ritmo» / «em risco» / «abaixo da meta» (`progress.state`).
+
+**Helps:** `operator.goalBar` · `operator.pctChart`.
+
+---
+
+## WF-PP-OP-PCT — Gráfico percentual (anel / barra) — P2
+
+Elementos reutilizáveis (não tela inteira):
+
+| Variante | Uso | ASCII |
+|----------|-----|-------|
+| Anel | rotação na faixa; % meta contador compacto | ver WF-PP-OP-ROTATION |
+| Barra horizontal | meta turno; margem térmica | ver WF-PP-OP-TEMP / GOAL |
+| Spark % 1h | P2b — sparkline sob o hero | `▁▂▃▄▅▆` + label «1 h» |
+
+Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
+
+**Helps:** `operator.pctChart`.
+
+---
+
 ## WF-PP-06 — Fluxos satélite (operador)
 
 | Fluxo | Comportamento |
 |-------|---------------|
 | Operador abre app | `/operator` hub; `localStorage` último `placement_key` por filial |
 | Escolhe placement | 1 device → superfície; N → picker; 0 → toast |
+| Ver posto (P2) | Picker → board `/operator/placements/:key/board` (COMBO) |
 | Trocar posto | Hub (`OperatorBrandBar` ghost) |
 | Sem amarração | Grupo «Sem amarração» no painel; excluído do hub operador |
+| Alerta limiar (P2) | Banner sticky + chip no hub; ordenação danger-first no board |
+| Meta turno (P2) | Faixa % sob hero quando API envia `progress` |
 
 ---
 
@@ -1293,7 +1486,7 @@ Desktop (>1100) — gauge 2+ métricas
 | `form.*` | 24 | seções, campos device/binding, TOTVS opcional |
 | `detail.*` | 14 | abas, métricas live, gráficos, auditoria |
 | `modals.*` | 8 | reset, limpar operador, teste conexão, desativar |
-| `operator.*` | 18 | hub, picker, contador, gauge, offline |
+| `operator.*` | 18 (+7 P2) | hub, picker, contador, gauge, temp, ring, combo, meta, alerta |
 | `badges.*` | 12 | anchor types, roles, status |
 
 **Proibido no help:** paths API, IPs de exemplo fixos como regra, códigos Protheus internos.

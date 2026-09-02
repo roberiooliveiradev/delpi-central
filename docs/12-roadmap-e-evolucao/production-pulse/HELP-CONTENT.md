@@ -216,6 +216,20 @@ Cabeçalho de grupo: `placement_label` + `AnchorTypeBadge` — helps dos badges 
 | Valor métrica | `operator.gaugeValue` |
 | Atualizar | `operator.gaugeRefresh` |
 
+### Superfícies P2 (temperatura, rotação, combo, meta, alerta)
+
+| Elemento | Chave | Wireframe |
+|----------|-------|-----------|
+| Temperatura | `operator.tempValue` | WF-PP-OP-TEMP |
+| Margem até teto | `operator.tempMargin` | WF-PP-OP-TEMP |
+| Anel de rotação | `operator.rotationRing` | WF-PP-OP-ROTATION |
+| Board do posto | `operator.comboBoard` | WF-PP-OP-COMBO |
+| Barra de meta | `operator.goalBar` | WF-PP-OP-GOAL |
+| Gráfico % | `operator.pctChart` | WF-PP-OP-PCT |
+| Banner alerta | `operator.alertBanner` | WF-PP-OP-ALERT |
+
+Spec: [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md).
+
 ### Chrome
 
 | Elemento | Chave |

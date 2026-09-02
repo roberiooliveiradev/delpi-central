@@ -499,20 +499,26 @@ Tela **dedicada ao chão de fábrica**: tablet na máquina. Prioridade: **legibi
 
 **Escalabilidade:** nem todo device é contador. O MFE usa **`OperatorDeviceSurface`** — roteador que escolhe a UI pelo `operatorSurface` do driver (registry via `GET /catalog/drivers`).
 
-| `operatorSurface` | Componente | MVP |
-|-------------------|------------|-----|
-| `counter_pad` | `OperatorCounterStage` + `OperatorActionPad` | Sim |
+| `operatorSurface` | Componente | Fase |
+|-------------------|------------|------|
+| `counter_pad` | `OperatorCounterStage` + `OperatorActionPad` | MVP |
 | `gauge_readout` | `OperatorGaugeStage` — valores grandes read-only | P1 |
-| `telemetry_dashboard` | painel multi-métrica | Futuro |
+| `temperature_focus` | `OperatorTemperatureStage` — °C + margem/alerta | P2 |
+| `rotation_ring` | `OperatorRotationStage` — rpm + anel % | P2 |
+| `telemetry_stack` | lista de tiles multi-métrica | P2 |
+| `placement_combo` | board do posto (rota `/board`) | P2 |
+
+Overlays P2 (não são surface): alerta sticky, faixa de meta %, chips no hub — ver [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md).
 
 Dispositivos sem `operatorEligible` não entram no hub/picker operador.
 
-### 9.0 Fluxo operador (3 telas)
+### 9.0 Fluxo operador (3 telas + board P2)
 
 ```text
 ① Hub placements     ② Device picker (se N)     ③ Superfície por driver
 /operator            /operator/placements/:key  /operator/devices/:id
-(posto|máq|equip.)   (badges métrica)           counter_pad | gauge_readout
+(posto|máq|equip.)   (badges métrica)           counter | gauge | temp | rotation
+                     └─ [Ver posto] → /board    (combo P2)
 ```
 
 Hub unificado por **`placement_label`** — CT é um tipo de card entre outros.
