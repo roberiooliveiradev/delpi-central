@@ -46,6 +46,8 @@ export type CanvasTableCellStyle = {
   verticalAlign?: "top" | "middle" | "bottom";
   /** Quebra de linha — default de render é `pre-wrap` se omitido. */
   whiteSpace?: "normal" | "nowrap" | "pre-wrap";
+  /** Cor uniforme das bordas da célula (sobrescreve a do bloco). */
+  borderColor?: string;
 };
 
 export type CanvasTableCell = {
@@ -477,6 +479,7 @@ export function resolveCanvasTableCellBoxStyle(
   if (colorOverride) style.color = colorOverride;
   else if (cell.style?.color) style.color = cell.style.color;
   if (cell.style?.backgroundColor) style.backgroundColor = cell.style.backgroundColor;
+  if (cell.style?.borderColor) style.borderColor = cell.style.borderColor;
   const textAlign =
     cell.style?.textAlign ?? (cell.kind === "number" ? "right" : "left");
   style.textAlign = textAlign;

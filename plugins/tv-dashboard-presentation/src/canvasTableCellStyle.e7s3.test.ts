@@ -57,6 +57,17 @@ describe("resolveCanvasTableCellBoxStyle defaults", () => {
     expect(toggled.whiteSpace).toBe("nowrap");
   });
 
+  it("borderColor da célula sobrescreve a borda no box style", () => {
+    const styled = resolveCanvasTableCellBoxStyle(
+      normalizeCanvasTableCell({
+        kind: "text",
+        text: "x",
+        style: { borderColor: "#ef4444" },
+      }),
+    );
+    expect(styled.borderColor).toBe("#ef4444");
+  });
+
   it("verticalAlign middle por default", () => {
     expect(
       resolveCanvasTableCellBoxStyle(normalizeCanvasTableCell("A")).verticalAlign,
