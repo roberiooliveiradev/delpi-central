@@ -4,7 +4,7 @@ def test_devices_crud_round_trip(client, unique_ip):
         "branch": "01",
         "ipAddress": unique_ip,
         "driverKey": "esp8266_counter_v1",
-        "pollIntervalSeconds": 30,
+        "pollIntervalMs": 30_000,
         "enabled": True,
     }
 
@@ -29,23 +29,23 @@ def test_devices_crud_round_trip(client, unique_ip):
 
     patched = client.patch(
         f"/devices/{device_id}",
-        json={"name": "ESP contador renomeado", "pollIntervalSeconds": 45},
+        json={"name": "ESP contador renomeado", "pollIntervalMs": 45_000},
     )
     assert patched.status_code == 200
     assert patched.json()["data"]["name"] == "ESP contador renomeado"
-    assert patched.json()["data"]["pollIntervalSeconds"] == 45
+    assert patched.json()["data"]["pollIntervalMs"] == 45_000
 
     replaced = client.put(
         f"/devices/{device_id}",
         json={
             **create_body,
             "name": "ESP contador replace",
-            "pollIntervalSeconds": 60,
+            "pollIntervalMs": 60_000,
         },
     )
     assert replaced.status_code == 200
     assert replaced.json()["data"]["name"] == "ESP contador replace"
-    assert replaced.json()["data"]["pollIntervalSeconds"] == 60
+    assert replaced.json()["data"]["pollIntervalMs"] == 60_000
 
     deleted = client.delete(f"/devices/{device_id}")
     assert deleted.status_code == 200

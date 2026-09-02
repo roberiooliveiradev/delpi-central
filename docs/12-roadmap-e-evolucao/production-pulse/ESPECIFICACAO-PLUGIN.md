@@ -230,7 +230,7 @@ Referência: [ADR-002-poll-scheduler-and-lan.md](./ADR-002-poll-scheduler-and-la
 ### 6.3 Grace window (online / offline)
 
 ```text
-grace_seconds = clamp(poll_interval_seconds × 2, min=60, max=600)
+grace_seconds = clamp((poll_interval_ms / 1000) × 2, min=60, max=600)
 ```
 
 | `status` | Condição |
@@ -348,7 +348,7 @@ POST /devices
   "branch": "01",
   "ip_address": "192.168.20.15",
   "driver_key": "esp8266_gauge_v1",
-  "poll_interval_seconds": 30,
+  "pollIntervalMs": 30000,
   "enabled": true
 }
 

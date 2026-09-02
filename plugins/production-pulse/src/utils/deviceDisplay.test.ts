@@ -19,7 +19,7 @@ const baseDevice = (overrides: Partial<DeviceListItem> = {}): DeviceListItem => 
   driverKey: "esp8266_counter_v1",
   roleKey: "pulse_counter",
   enabled: true,
-  pollIntervalSeconds: 30,
+  pollIntervalMs: 30_000,
   lastSeenAt: "2026-09-01T12:00:00.000Z",
   lastMetrics: { counter: 1284 },
   lastError: null,

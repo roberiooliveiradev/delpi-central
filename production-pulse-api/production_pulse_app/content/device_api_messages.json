@@ -32,7 +32,7 @@
   },
   "validationErrors": {
     "invalid_branch": "A filial deve ser 01 ou 02.",
-    "poll_interval_out_of_range": "O intervalo de leitura deve estar entre {min} e {max} segundos.",
+    "poll_interval_out_of_range": "O intervalo de leitura deve estar entre {min} e {max} milissegundos.",
     "ip_address_required": "Informe o endereço IP do dispositivo.",
     "invalid_ipv4": "Informe um endereço IPv4 válido.",
     "name_required": "Informe o nome do dispositivo.",

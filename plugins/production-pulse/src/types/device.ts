@@ -40,7 +40,7 @@ export type DeviceListItem = {
   driverKey: string;
   roleKey: string;
   enabled: boolean;
-  pollIntervalSeconds: number;
+  pollIntervalMs: number;
   lastSeenAt: string | null;
   lastMetrics: Record<string, number | string>;
   lastError: string | null;

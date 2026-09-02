@@ -12,6 +12,7 @@ import { formatRelativeTime } from "../../utils/deviceDisplay";
 import { formatMetricValue, metricLabel, metricUnit } from "../../utils/detailDisplay";
 import { resolveMetricThresholdLevel, gaugeThresholdAriaLabel } from "../../utils/gaugeThresholds";
 import { resolveOperatorHeaderTitle } from "../../utils/operatorDisplay";
+import { resolveOperatorRefreshIntervalMs } from "../../utils/operatorRefreshInterval";
 
 type GaugeReadoutSurfaceProps = {
   deviceId: string;
@@ -33,14 +34,14 @@ export function GaugeReadoutSurface({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const intervalMs = Math.max(5000, (device.pollIntervalSeconds ?? 30) * 1000);
+    const intervalMs = resolveOperatorRefreshIntervalMs(device.pollIntervalMs);
     const timer = window.setInterval(() => {
       fetchOperatorDevice(deviceId)
         .then(setDevice)
         .catch(() => undefined);
     }, intervalMs);
     return () => window.clearInterval(timer);
-  }, [device.pollIntervalSeconds, deviceId]);
+  }, [device.pollIntervalMs, deviceId]);
 
   const syncNow = async () => {
     setBusy(true);

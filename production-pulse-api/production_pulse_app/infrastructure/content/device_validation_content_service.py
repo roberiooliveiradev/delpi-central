@@ -20,21 +20,28 @@ def _limits_section() -> dict[str, Any]:
 
 
 def _poll_interval_limits() -> dict[str, Any]:
-    section = _limits_section().get("pollIntervalSeconds")
+    section = _limits_section().get("pollIntervalMs")
     return section if isinstance(section, dict) else {}
 
 
-def poll_interval_min(*, default: float = 0.5) -> float:
+def poll_interval_min(*, default: int = 500) -> int:
     raw = _poll_interval_limits().get("min")
     if isinstance(raw, (int, float)):
-        return float(raw)
+        return int(raw)
     return default
 
 
-def poll_interval_max(*, default: float = 300.0) -> float:
+def poll_interval_max(*, default: int = 300_000) -> int:
     raw = _poll_interval_limits().get("max")
     if isinstance(raw, (int, float)):
-        return float(raw)
+        return int(raw)
+    return default
+
+
+def poll_interval_default(*, default: int = 30_000) -> int:
+    raw = _poll_interval_limits().get("default")
+    if isinstance(raw, (int, float)):
+        return int(raw)
     return default
 
 
@@ -72,6 +79,7 @@ __all__ = [
     "load_device_validation_content",
     "matches_ipv4",
     "name_max_length",
+    "poll_interval_default",
     "poll_interval_max",
     "poll_interval_min",
     "valid_branches",

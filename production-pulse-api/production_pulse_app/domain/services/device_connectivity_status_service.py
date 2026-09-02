@@ -17,11 +17,14 @@ def _as_utc(value: datetime) -> datetime:
 
 
 def grace_seconds_for_device(device: dict[str, Any]) -> int:
-    interval = float(device.get("poll_interval_seconds") or 30)
-    raw = interval * settings.PP_ONLINE_GRACE_MULTIPLIER
-    return max(
-        settings.PP_ONLINE_GRACE_MIN_SECONDS,
-        min(settings.PP_ONLINE_GRACE_MAX_SECONDS, raw),
+    interval_ms = float(device.get("poll_interval_ms") or 30_000)
+    interval_seconds = interval_ms / 1000.0
+    raw = interval_seconds * settings.PP_ONLINE_GRACE_MULTIPLIER
+    return int(
+        max(
+            settings.PP_ONLINE_GRACE_MIN_SECONDS,
+            min(settings.PP_ONLINE_GRACE_MAX_SECONDS, raw),
+        )
     )
 
 

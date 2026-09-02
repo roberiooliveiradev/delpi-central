@@ -35,17 +35,17 @@ def validate_branch(branch: str) -> str:
     return normalized
 
 
-def validate_poll_interval(seconds: int | float) -> float:
+def validate_poll_interval_ms(milliseconds: int | float) -> int:
     minimum = poll_interval_min()
     maximum = poll_interval_max()
-    value = float(seconds)
+    value = int(round(float(milliseconds)))
     if value < minimum or value > maximum:
         raise DeviceValidationError(
             "poll_interval_out_of_range",
             min=minimum,
-            max=int(maximum),
+            max=maximum,
         )
-    return round(value, 2)
+    return value
 
 
 def normalize_ip_address(ip_address: str) -> str:
@@ -71,7 +71,7 @@ __all__ = [
     "ResolvedDriver",
     "resolve_driver",
     "validate_branch",
-    "validate_poll_interval",
+    "validate_poll_interval_ms",
     "normalize_ip_address",
     "normalize_name",
 ]

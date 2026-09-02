@@ -1,8 +1,9 @@
 {
   "limits": {
-    "pollIntervalSeconds": {
-      "min": 0.5,
-      "max": 300
+    "pollIntervalMs": {
+      "min": 500,
+      "max": 300000,
+      "default": 30000
     },
     "nameMaxLength": 120
   },

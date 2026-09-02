@@ -108,7 +108,7 @@ export function DeviceFormPage({
           branch: row.branch,
           ipAddress: row.ipAddress,
           driverKey: row.driverKey,
-          pollIntervalSeconds: row.pollIntervalSeconds,
+          pollIntervalMs: row.pollIntervalMs,
           enabled: row.enabled,
         });
         setBinding(bindingFromApi(row.binding));

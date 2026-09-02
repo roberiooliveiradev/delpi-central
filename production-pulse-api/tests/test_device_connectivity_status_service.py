@@ -9,7 +9,7 @@ from production_pulse_app.domain.services.device_connectivity_status_service imp
 def _device(**overrides):
     base = {
         "enabled": True,
-        "poll_interval_seconds": 30,
+        "poll_interval_ms": 30_000,
         "last_seen_at": None,
     }
     base.update(overrides)
@@ -17,9 +17,9 @@ def _device(**overrides):
 
 
 def test_grace_seconds_clamps_to_min_and_max():
-    assert grace_seconds_for_device(_device(poll_interval_seconds=5)) == 60
-    assert grace_seconds_for_device(_device(poll_interval_seconds=30)) == 60
-    assert grace_seconds_for_device(_device(poll_interval_seconds=400)) == 600
+    assert grace_seconds_for_device(_device(poll_interval_ms=5_000)) == 60
+    assert grace_seconds_for_device(_device(poll_interval_ms=30_000)) == 60
+    assert grace_seconds_for_device(_device(poll_interval_ms=400_000)) == 600
 
 
 def test_status_disabled():

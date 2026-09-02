@@ -364,7 +364,7 @@ Sheet «Filtros»: Tipo amarração · Papel · Status · Agrupar por — botõe
 │ Filial *            [Santa Catarina (01) ▼]                                           │
 │ Endereço IP *       ····· 192.168.20.15 ·········  [ghost Testar conexão]†           │
 │ Driver *            [ESP8266 sensores processo v1 ▼]  Preview: rpm · °C · leitura   │
-│ Intervalo poll (s) *  ····· 30 ·········                                              │
+│ Intervalo poll (ms) *  ····· 30000 ·······                                              │
 │ [toggle] Dispositivo ativo                                                            │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 

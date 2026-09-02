@@ -14,7 +14,7 @@ _DEVICE_BINDING_COLUMNS = """
     d.driver_key,
     d.role_key,
     d.enabled,
-    d.poll_interval_seconds,
+    d.poll_interval_ms,
     d.last_seen_at,
     d.last_poll_attempt_at,
     d.last_metrics,

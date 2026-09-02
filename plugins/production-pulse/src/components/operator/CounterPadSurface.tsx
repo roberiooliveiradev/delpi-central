@@ -20,6 +20,7 @@ import {
   metricDisplayLabel,
   resolveOperatorHeaderTitle,
 } from "../../utils/operatorDisplay";
+import { resolveOperatorRefreshIntervalMs } from "../../utils/operatorRefreshInterval";
 
 type CounterPadSurfaceProps = {
   deviceId: string;
@@ -50,14 +51,14 @@ export function CounterPadSurface({
   const commandsDisabled = busy || !device.online;
 
   useEffect(() => {
-    const intervalMs = Math.max(5000, (device.pollIntervalSeconds ?? 30) * 1000);
+    const intervalMs = resolveOperatorRefreshIntervalMs(device.pollIntervalMs);
     const timer = window.setInterval(() => {
       fetchOperatorDevice(deviceId)
         .then(setDevice)
         .catch(() => undefined);
     }, intervalMs);
     return () => window.clearInterval(timer);
-  }, [device.pollIntervalSeconds, deviceId]);
+  }, [device.pollIntervalMs, deviceId]);
 
   const applyMetrics = (metrics?: Record<string, number | string>) => {
     if (!metrics) return;

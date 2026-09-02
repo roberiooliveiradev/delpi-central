@@ -9,6 +9,11 @@ import {
   ppFieldHint,
 } from "../app/productionPulseUi";
 import { PP_HELP } from "../content/helpTooltips";
+import {
+  POLL_INTERVAL_DEFAULT_MS,
+  POLL_INTERVAL_MAX_MS,
+  POLL_INTERVAL_MIN_MS,
+} from "../content/deviceValidationContent";
 import { getPpSectionIntro } from "../content/sectionIntros";
 import type { DeviceFormValues, DriverCatalogItem } from "../types/form";
 import { branchLabel, resolveBranchOptions } from "../constants/branches";
@@ -119,20 +124,20 @@ export function DeviceForm({
 
         <PpNativeTextField
           id="pp-device-poll-interval"
-          label="Intervalo poll (s)"
+          label="Intervalo poll (ms)"
           hint={PP_HELP.form.pollInterval}
           type="number"
-          min={0.5}
-          max={300}
-          step={0.5}
-          inputMode="decimal"
-          value={String(device.pollIntervalSeconds)}
+          min={POLL_INTERVAL_MIN_MS}
+          max={POLL_INTERVAL_MAX_MS}
+          step={100}
+          inputMode="numeric"
+          value={String(device.pollIntervalMs)}
           onChange={(value) =>
             onChange({
-              pollIntervalSeconds: Number.parseFloat(value) || 30,
+              pollIntervalMs: Number.parseInt(value, 10) || POLL_INTERVAL_DEFAULT_MS,
             })
           }
-          afterControl={ppFieldError(errors?.pollIntervalSeconds)}
+          afterControl={ppFieldError(errors?.pollIntervalMs)}
         />
 
         <PpNativeSwitchField

@@ -15,7 +15,7 @@
 |---------|--------|
 | Modelo | **Per-device** `next_poll_at` (não cron global) |
 | Tick | Loop a cada **1 s** — seleciona devices com `enabled=true`, binding vigente, `next_poll_at <= now()` |
-| Intervalo | `devices.poll_interval_seconds` (clamp 5–300) |
+| Intervalo | `devices.poll_interval_ms` (clamp 500–300000) |
 | **Jitter** | ±10% no intervalo — evita thundering herd (padrão Kubernetes / IoT hubs) |
 | Concorrência | Semáforo asyncio **`max_concurrent_polls=10`** (env `PP_POLL_MAX_CONCURRENT`, default 10) |
 | Overlap | Se poll do mesmo device **em flight** → pula tick (idempotência por device) |
@@ -32,7 +32,7 @@ Implementação alvo: `production_pulse_app/application/services/device_poll_sch
 Alinhado a **2× intervalo de poll** com piso/teto (mesmo espírito Prometheus/Grafana):
 
 ```text
-grace_seconds(device) = clamp(poll_interval_seconds × 2, min=60, max=600)
+grace_seconds(device) = clamp((poll_interval_ms / 1000) × 2, min=60, max=600)
 
 online  ⇔  enabled AND last_seen_at NOT NULL AND (now - last_seen_at) <= grace_seconds
 offline ⇔  enabled AND NOT online

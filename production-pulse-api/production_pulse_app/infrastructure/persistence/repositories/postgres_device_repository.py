@@ -22,7 +22,7 @@ class DeviceNotFoundError(Exception):
 
 _DEVICE_COLUMNS = """
     id, branch, name, ip_address, driver_key, role_key, enabled,
-    poll_interval_seconds, last_seen_at, last_poll_attempt_at, next_poll_at,
+    poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by
 """
 
@@ -89,7 +89,7 @@ class PostgresDeviceRepository:
         driver_key: str,
         role_key: str,
         enabled: bool,
-        poll_interval_seconds: int,
+        poll_interval_ms: int,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -99,7 +99,7 @@ class PostgresDeviceRepository:
                         f"""
                         INSERT INTO production_pulse.devices (
                             branch, name, ip_address, driver_key, role_key,
-                            enabled, poll_interval_seconds, created_by, updated_by
+                            enabled, poll_interval_ms, created_by, updated_by
                         )
                         VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s)
                         RETURNING {_DEVICE_COLUMNS}
@@ -111,7 +111,7 @@ class PostgresDeviceRepository:
                             driver_key,
                             role_key,
                             enabled,
-                            poll_interval_seconds,
+                            poll_interval_ms,
                             actor_sub,
                             actor_sub,
                         ),
@@ -133,7 +133,7 @@ class PostgresDeviceRepository:
         driver_key: str,
         role_key: str,
         enabled: bool,
-        poll_interval_seconds: int,
+        poll_interval_ms: int,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -148,7 +148,7 @@ class PostgresDeviceRepository:
                             driver_key = %s,
                             role_key = %s,
                             enabled = %s,
-                            poll_interval_seconds = %s,
+                            poll_interval_ms = %s,
                             updated_by = %s,
                             updated_at = NOW()
                         WHERE id = %s
@@ -161,7 +161,7 @@ class PostgresDeviceRepository:
                             driver_key,
                             role_key,
                             enabled,
-                            poll_interval_seconds,
+                            poll_interval_ms,
                             actor_sub,
                             device_id,
                         ),
@@ -195,7 +195,7 @@ class PostgresDeviceRepository:
             "driver_key": "driver_key",
             "role_key": "role_key",
             "enabled": "enabled",
-            "poll_interval_seconds": "poll_interval_seconds",
+            "poll_interval_ms": "poll_interval_ms",
         }
         set_parts: list[str] = []
         params: list[Any] = []
@@ -330,7 +330,7 @@ class PostgresDeviceRepository:
 
             self.update_next_poll_at(
                 row["id"],
-                next_poll_at=compute_initial_poll_at(int(row["poll_interval_seconds"])),
+                next_poll_at=compute_initial_poll_at(int(row["poll_interval_ms"])),
             )
             updated += 1
         return updated
@@ -368,5 +368,5 @@ class PostgresDeviceRepository:
 
         self.update_next_poll_at(
             device_id,
-            next_poll_at=compute_initial_poll_at(int(device["poll_interval_seconds"])),
+            next_poll_at=compute_initial_poll_at(int(device["poll_interval_ms"])),
         )

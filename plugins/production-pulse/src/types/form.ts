@@ -1,3 +1,7 @@
+import {
+  POLL_INTERVAL_DEFAULT_MS,
+} from "../content/deviceValidationContent";
+
 export type AnchorType = "work_center" | "machine" | "equipment" | "area" | "standalone";
 
 export type DeviceFormValues = {
@@ -5,7 +9,7 @@ export type DeviceFormValues = {
   branch: string;
   ipAddress: string;
   driverKey: string;
-  pollIntervalSeconds: number;
+  pollIntervalMs: number;
   enabled: boolean;
 };
 
@@ -71,6 +75,6 @@ export const DEFAULT_DEVICE_FORM_VALUES: DeviceFormValues = {
   branch: "01",
   ipAddress: "",
   driverKey: "esp8266_counter_v1",
-  pollIntervalSeconds: 30,
+  pollIntervalMs: POLL_INTERVAL_DEFAULT_MS,
   enabled: true,
 };

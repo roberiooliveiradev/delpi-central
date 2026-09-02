@@ -16,7 +16,7 @@ def test_tick_skips_device_already_in_flight():
 
     scheduler = DevicePollSchedulerService(poll_service=_PollService())
     device_id = uuid4()
-    device = {"id": device_id, "poll_interval_seconds": 30}
+    device = {"id": device_id, "poll_interval_ms": 30_000}
     scheduler._devices.list_due_for_scheduled_poll = lambda limit=50: [device]
     scheduler._in_flight.add(device_id)
 
