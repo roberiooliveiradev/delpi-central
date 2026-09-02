@@ -17,6 +17,10 @@ import {
   serializeCanvasTableClipboard,
   type CanvasTableClipboardPayload,
 } from "./canvasTableClipboard";
+import {
+  getCanvasTableSessionClipboard,
+  setCanvasTableSessionClipboard,
+} from "./canvasTableSessionClipboard";
 import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from "./canvasTableProjection";
 import { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
 import {
@@ -164,9 +168,6 @@ function measureCellRects(host: HTMLElement): CanvasTableCellDomRect[] {
   });
   return rects;
 }
-
-/** Clipboard interno da Grade (intervalo) — não cria bloco novo no Ctrl+V. */
-let canvasTableSessionClipboard: CanvasTableClipboardPayload | null = null;
 
 export function ComunicadoCanvasTableView({
   block,
@@ -599,7 +600,7 @@ export function ComunicadoCanvasTableView({
           merges: block.merges,
         });
         if (!payload) return;
-        canvasTableSessionClipboard = payload;
+        setCanvasTableSessionClipboard(payload);
         const tsv = canvasTableClipboardToTsv(payload);
         void navigator.clipboard?.writeText?.(tsv);
         if (action.op === "cut") {
@@ -622,8 +623,9 @@ export function ComunicadoCanvasTableView({
           pasted.merges ? { merges: pasted.merges } : undefined,
         );
       };
-      if (canvasTableSessionClipboard) {
-        applyPayload(canvasTableSessionClipboard);
+      const sessionPayload = getCanvasTableSessionClipboard();
+      if (sessionPayload) {
+        applyPayload(sessionPayload);
         return;
       }
       void navigator.clipboard?.readText?.().then((text) => {

@@ -150,6 +150,10 @@ export {
   parseCanvasTableClipboardTsv,
   canvasTableClipboardToTsv,
 } from "./canvasTableClipboard";
+export {
+  getCanvasTableSessionClipboard,
+  setCanvasTableSessionClipboard,
+} from "./canvasTableSessionClipboard";
 export type { CanvasTableMerge } from "./comunicadoCanvasTable";
 export type {
   CanvasTableCell,

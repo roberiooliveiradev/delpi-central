@@ -6,14 +6,24 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   AlignCenter,
+  ClipboardCopy,
+  ClipboardPaste,
   Combine,
   Eraser,
   RemoveFormatting,
+  Scissors,
   TableCellsSplit,
   WrapText,
 } from "lucide-react";
 import {
   canMergeRect,
+  canvasTableClipboardToTsv,
+  clearCanvasTableCellsContent,
+  getCanvasTableSessionClipboard,
+  parseCanvasTableClipboardTsv,
+  pasteCanvasTableClipboard,
+  serializeCanvasTableClipboard,
+  setCanvasTableSessionClipboard,
   type ComunicadoCanvasTableBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -97,6 +107,53 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
     });
   }
 
+  function copySelection(cut: boolean) {
+    if (!hasSelection) return;
+    const payload = serializeCanvasTableClipboard({
+      cells: block.cells,
+      selected: cells,
+      merges: block.merges,
+    });
+    if (!payload) return;
+    setCanvasTableSessionClipboard(payload);
+    void navigator.clipboard?.writeText?.(canvasTableClipboardToTsv(payload));
+    if (cut) {
+      updateBlock(block.id, {
+        cells: clearCanvasTableCellsContent(block.cells, cells),
+      });
+    }
+  }
+
+  function pasteSelection() {
+    const origin = focus ?? cells[0];
+    if (!origin) return;
+    const applyPayload = (payload: NonNullable<ReturnType<typeof getCanvasTableSessionClipboard>>) => {
+      const pasted = pasteCanvasTableClipboard({
+        cells: block.cells,
+        payload,
+        origin,
+        rows: block.rows,
+        cols: block.cols,
+        merges: block.merges,
+      });
+      updateBlock(block.id, {
+        cells: pasted.cells,
+        ...(pasted.merges
+          ? { merges: pasted.merges.length ? pasted.merges : undefined }
+          : {}),
+      });
+    };
+    const session = getCanvasTableSessionClipboard();
+    if (session) {
+      applyPayload(session);
+      return;
+    }
+    void navigator.clipboard?.readText?.().then((text) => {
+      const payload = parseCanvasTableClipboardTsv(text);
+      if (payload) applyPayload(payload);
+    });
+  }
+
   function run(fn: () => void) {
     fn();
     onClose();
@@ -110,6 +167,25 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
       aria-label="Menu da Grade"
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
     >
+      <ContextMenuItem
+        label="Copiar"
+        icon={ClipboardCopy}
+        disabled={!hasSelection}
+        onSelect={() => run(() => copySelection(false))}
+      />
+      <ContextMenuItem
+        label="Recortar"
+        icon={Scissors}
+        disabled={!hasSelection}
+        onSelect={() => run(() => copySelection(true))}
+      />
+      <ContextMenuItem
+        label="Colar"
+        icon={ClipboardPaste}
+        disabled={!focus}
+        onSelect={() => run(pasteSelection)}
+      />
+      <ContextMenuDivider />
       <ContextMenuItem
         label="Mesclar"
         icon={Combine}

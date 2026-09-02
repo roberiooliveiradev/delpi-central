@@ -19,4 +19,13 @@ describe("CanvasTableContextMenu (contrato)", () => {
     expect(editor).toContain("CanvasTableContextMenu");
     expect(editor).toContain("onCellContextMenu");
   });
+
+  it("expõe Copiar/Recortar/Colar via session clipboard (sem execCommand)", () => {
+    expect(menu).toContain('label="Copiar"');
+    expect(menu).toContain('label="Recortar"');
+    expect(menu).toContain('label="Colar"');
+    expect(menu).toContain("serializeCanvasTableClipboard");
+    expect(menu).toContain("setCanvasTableSessionClipboard");
+    expect(menu).not.toContain("execCommand");
+  });
 });

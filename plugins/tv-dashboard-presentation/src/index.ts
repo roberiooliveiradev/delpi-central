@@ -643,6 +643,8 @@ export {
   pasteCanvasTableClipboard,
   parseCanvasTableClipboardTsv,
   canvasTableClipboardToTsv,
+  getCanvasTableSessionClipboard,
+  setCanvasTableSessionClipboard,
   formatCanvasTableNumber,
   buildCanvasTableSparklinePath,
   resolveColumnSparklineAxis,
