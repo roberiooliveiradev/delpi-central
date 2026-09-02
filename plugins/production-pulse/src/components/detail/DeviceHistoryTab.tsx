@@ -19,10 +19,12 @@ import {
   formatDateTime,
   formatDeltaValue,
   formatMetricValue,
+  isHardwareCounterReset,
   primaryMetricKey,
   readingsToChartPoints,
   sourceLabel,
 } from "../../utils/detailDisplay";
+import { ReadingHardwareResetBadge } from "./ReadingHardwareResetBadge";
 import { ReadingCard } from "./ReadingCard";
 
 const PAGE_SIZE = 20;
@@ -98,7 +100,12 @@ export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
         key: "delta",
         header: "Delta",
         headerHint: PP_HELP.detail.delta,
-        render: (row) => formatDeltaValue(key, row.deltaMetrics?.[key]),
+        render: (row) => (
+          <span className="pp-reading-delta-cell">
+            {formatDeltaValue(key, row.deltaMetrics?.[key])}
+            {isHardwareCounterReset(row) ? <ReadingHardwareResetBadge compact /> : null}
+          </span>
+        ),
       },
       {
         key: "source",

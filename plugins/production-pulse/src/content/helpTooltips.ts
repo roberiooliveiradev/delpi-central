@@ -121,6 +121,8 @@ export const PP_HELP = {
       "Desativa o device (soft delete). Para polling; não apaga histórico.",
     delta:
       "Diferença em relação à leitura anterior — só para métricas monotônicas (golpes).",
+    counterHardwareReset:
+      "O contador físico caiu em relação à leitura anterior (reset no hardware ou troca de firmware). O delta usa o valor novo como base.",
     coverageIncomplete:
       "Pode haver lacunas se o device ficou offline ou o poll falhou.",
   },

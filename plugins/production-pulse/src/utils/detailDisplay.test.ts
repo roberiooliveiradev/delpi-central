@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { readingsToChartPoints } from "./detailDisplay";
+import { isHardwareCounterReset, readingsToChartPoints } from "./detailDisplay";
 import type { DeviceReading } from "../types/detail";
 
 describe("readingsToChartPoints", () => {
@@ -30,5 +30,13 @@ describe("readingsToChartPoints", () => {
     expect(points).toHaveLength(2);
     expect(points[0]?.y).toBe(10);
     expect(points[1]?.y).toBe(12);
+  });
+});
+
+describe("isHardwareCounterReset", () => {
+  it("detects counter_reset meta from API", () => {
+    expect(isHardwareCounterReset({ meta: { counter_reset: true } })).toBe(true);
+    expect(isHardwareCounterReset({ meta: { counterReset: true } })).toBe(true);
+    expect(isHardwareCounterReset({ meta: {} })).toBe(false);
   });
 });

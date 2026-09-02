@@ -169,3 +169,34 @@ def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypa
 
     readings = client.get(f"/devices/{device['id']}/readings")
     assert readings.json()["data"]["pagination"]["total"] == 2
+
+
+def test_manual_poll_marks_hardware_counter_reset(client, unique_ip, monkeypatch):
+    sequence = iter(
+        [
+            DeviceReading(metrics={"counter": 100}),
+            DeviceReading(metrics={"counter": 8}),
+        ]
+    )
+
+    def fake_read(_self, _device):
+        return next(sequence)
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+
+    device = _create_device(client, unique_ip)
+    _bind_equipment(client, device["id"])
+
+    client.post(f"/devices/{device['id']}/poll")
+    second = client.post(f"/devices/{device['id']}/poll")
+    assert second.status_code == 200
+    body = second.json()["data"]
+    assert body["deltaMetrics"]["counter"] == 8
+    assert body["meta"]["counter_reset"] is True
+
+    readings = client.get(f"/devices/{device['id']}/readings")
+    latest = readings.json()["data"]["items"][0]
+    assert latest["meta"]["counter_reset"] is True

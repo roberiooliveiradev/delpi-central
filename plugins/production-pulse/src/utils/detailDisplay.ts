@@ -66,6 +66,12 @@ export function formatDeltaValue(
   return unit ? `${prefix}${formatted} ${unit}` : `${prefix}${formatted}`;
 }
 
+export function isHardwareCounterReset(reading: Pick<DeviceReading, "meta">): boolean {
+  const meta = reading.meta ?? {};
+  if (meta.counter_reset === true || meta.counterReset === true) return true;
+  return false;
+}
+
 export function formatPrimaryMetricFromDevice(device: DeviceListItem): string {
   const key = primaryMetricKey(device.lastMetrics, device.capabilities);
   if (!key) return "—";
