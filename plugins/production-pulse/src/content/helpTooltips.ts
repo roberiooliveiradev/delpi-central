@@ -167,6 +167,10 @@ export const PP_HELP = {
     counterClear:
       "Zera o contador. Pedirá confirmação antes de enviar ao device.",
     gaugeValue: "Leitura atual do sensor — atualiza automaticamente a cada poucos segundos.",
+    gaugeThresholdWarn:
+      "Valor acima do limite de atenção definido no driver — verifique o processo.",
+    gaugeThresholdDanger:
+      "Valor acima do limite crítico — risco operacional; ação imediata recomendada.",
     gaugeRefresh: "Força nova leitura sem esperar o ciclo automático.",
     changePlacement: "Volta à lista de locais para escolher outro posto ou equipamento.",
     offlineBanner:

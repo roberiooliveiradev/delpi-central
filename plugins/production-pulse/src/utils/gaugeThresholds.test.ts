@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveMetricThresholdLevel } from "./gaugeThresholds";
+import { resolveMetricThresholdLevel, gaugeThresholdAriaLabel } from "./gaugeThresholds";
 
 describe("resolveMetricThresholdLevel", () => {
   const thresholds = {
@@ -17,5 +17,11 @@ describe("resolveMetricThresholdLevel", () => {
 
   it("returns danger at or above danger threshold", () => {
     expect(resolveMetricThresholdLevel("temperature_c", 92, thresholds)).toBe("danger");
+  });
+
+  it("maps threshold level to aria label copy", () => {
+    expect(gaugeThresholdAriaLabel("warn")).toContain("atenção");
+    expect(gaugeThresholdAriaLabel("danger")).toContain("crítico");
+    expect(gaugeThresholdAriaLabel("normal")).toBeUndefined();
   });
 });

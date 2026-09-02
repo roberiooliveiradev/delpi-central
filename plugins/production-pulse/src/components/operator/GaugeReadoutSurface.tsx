@@ -13,7 +13,7 @@ import {
 import { navigateProductionPulse } from "../../utils/navigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import { formatMetricValue, metricLabel, metricUnit } from "../../utils/detailDisplay";
-import { resolveMetricThresholdLevel } from "../../utils/gaugeThresholds";
+import { resolveMetricThresholdLevel, gaugeThresholdAriaLabel } from "../../utils/gaugeThresholds";
 import { resolveOperatorHeaderTitle } from "../../utils/operatorDisplay";
 
 type GaugeReadoutSurfaceProps = {
@@ -97,6 +97,7 @@ export function GaugeReadoutSurface({
             device.lastMetrics?.[key],
             device.capabilities?.thresholds,
           );
+          const thresholdHint = gaugeThresholdAriaLabel(level);
           return (
             <div
               key={key}
@@ -107,6 +108,11 @@ export function GaugeReadoutSurface({
                     ? " pp-gauge-readout__tile--danger"
                     : ""
               }`}
+              aria-label={
+                thresholdHint
+                  ? `${metricLabel(key)}: ${formatMetricValue(key, device.lastMetrics?.[key])}. ${thresholdHint}`
+                  : undefined
+              }
             >
             <p className="pp-gauge-readout__value">
               {formatMetricValue(key, device.lastMetrics?.[key])

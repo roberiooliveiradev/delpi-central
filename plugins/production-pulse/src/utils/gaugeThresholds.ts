@@ -1,3 +1,4 @@
+import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceCapabilities } from "../types/device";
 
 export type MetricThresholds = NonNullable<DeviceCapabilities["thresholds"]>[string];
@@ -23,4 +24,10 @@ export function resolveMetricThresholdLevel(
   if (rule.dangerBelow !== undefined && numeric <= rule.dangerBelow) return "danger";
   if (rule.warnBelow !== undefined && numeric <= rule.warnBelow) return "warn";
   return "normal";
+}
+
+export function gaugeThresholdAriaLabel(level: MetricThresholdLevel): string | undefined {
+  if (level === "warn") return PP_HELP.operator.gaugeThresholdWarn;
+  if (level === "danger") return PP_HELP.operator.gaugeThresholdDanger;
+  return undefined;
 }
