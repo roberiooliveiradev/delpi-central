@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { productionPulseDeviceNewPath } from "../constants/routes";
+import { productionPulseDeviceDetailPath, productionPulseDeviceNewPath } from "../constants/routes";
 import { navigateProductionPulse } from "../utils/navigation";
 
 import { resolveBranchOptions } from "../constants/branches";
@@ -72,7 +72,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
   const pageCount = totalPages(filteredDevices.length, PAGE_SIZE);
 
   const openDevice = (deviceId: string) => {
-    navigateProductionPulse(`/apps/production-pulse/devices/${deviceId}`);
+    navigateProductionPulse(productionPulseDeviceDetailPath(deviceId));
   };
 
   const openCreate = () => {

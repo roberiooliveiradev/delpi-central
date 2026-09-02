@@ -26,13 +26,13 @@ export function useProductionPulseRouterPath(pathnameFromHost?: string): {
     if (typeof window === "undefined") return;
 
     const syncFromBrowser = () => {
+      setPathname(readPathname());
       setSearch(readSearch());
-      setPathname(pathnameFromHost ?? readPathname());
     };
 
     window.addEventListener("popstate", syncFromBrowser);
     return () => window.removeEventListener("popstate", syncFromBrowser);
-  }, [pathnameFromHost]);
+  }, []);
 
   return { pathname, search };
 }

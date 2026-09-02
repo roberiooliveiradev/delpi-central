@@ -171,10 +171,18 @@ describe("production-pulse kit contracts", () => {
     expect(sources.some(({ rel }) => rel === "components/FilialSwitcher.tsx")).toBe(false);
   });
 
-  it("router hook escuta popstate para sincronizar query (?tab=) com o portal", () => {
+  it("replacePanelFilters só roda no path do painel", () => {
+    const hook = readRelative("hooks/usePanelFilters.ts");
+    expect(hook).toMatch(/isPanelPath/);
+    expect(hook).toMatch(/query\.has\("view"\)/);
+  });
+
+  it("router hook escuta popstate e lê pathname do browser (não só do host)", () => {
     const hook = readRelative("hooks/useProductionPulseRouterPath.ts");
     expect(hook).toMatch(/addEventListener\("popstate"/);
     expect(hook).toMatch(/setSearch\(readSearch\(\)\)/);
+    expect(hook).toMatch(/setPathname\(readPathname\(\)\)/);
+    expect(hook).not.toMatch(/setPathname\(pathnameFromHost \?\? readPathname\(\)\)/);
   });
 
   it("textos de ação e modal não ficam hardcoded fora de helpTooltips", () => {
