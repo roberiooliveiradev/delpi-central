@@ -35,6 +35,7 @@ import {
   applyCanvasTableMergeToBlock,
   clearCanvasTableSelectionContent,
   clearCanvasTableSelectionFormats,
+  deleteCanvasTableBand,
   insertCanvasTableBand,
   patchCanvasTableCellsStyle,
   type CanvasTableCellStylePatch,
@@ -222,6 +223,36 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
         label="Inserir coluna à direita"
         disabled={!focus}
         onSelect={() => run(() => insertCol("after"))}
+      />
+      <ContextMenuItem
+        label="Excluir linha"
+        disabled={!focus || block.rows <= 1}
+        onSelect={() =>
+          run(() => {
+            const patch = deleteCanvasTableBand({
+              block,
+              axis: "row",
+              selection: cells,
+              focus,
+            });
+            if (patch) updateBlock(block.id, patch);
+          })
+        }
+      />
+      <ContextMenuItem
+        label="Excluir coluna"
+        disabled={!focus || block.cols <= 1}
+        onSelect={() =>
+          run(() => {
+            const patch = deleteCanvasTableBand({
+              block,
+              axis: "col",
+              selection: cells,
+              focus,
+            });
+            if (patch) updateBlock(block.id, patch);
+          })
+        }
       />
       <ContextMenuDivider />
       {hasSelection && focusCell ? (

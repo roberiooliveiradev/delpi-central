@@ -11,6 +11,8 @@ export type CanvasTableStructureActionId =
   | "insert-row-after"
   | "insert-col-before"
   | "insert-col-after"
+  | "delete-row"
+  | "delete-col"
   | "merge"
   | "unmerge";
 
@@ -25,6 +27,8 @@ type Props = {
   onSelect: (actionId: CanvasTableStructureActionId) => void;
   canMerge?: boolean;
   canUnmerge?: boolean;
+  canDeleteRow?: boolean;
+  canDeleteCol?: boolean;
   className?: string;
 };
 
@@ -36,6 +40,8 @@ export function CanvasTableStructureMenu({
   onSelect,
   canMerge = false,
   canUnmerge = false,
+  canDeleteRow = true,
+  canDeleteCol = true,
   className,
 }: Props) {
   const actions: Action[] = [
@@ -43,6 +49,8 @@ export function CanvasTableStructureMenu({
     { id: "insert-row-after", label: "Inserir linha abaixo", icon: Rows3 },
     { id: "insert-col-before", label: "Inserir coluna à esquerda", icon: Columns3 },
     { id: "insert-col-after", label: "Inserir coluna à direita", icon: Columns3 },
+    { id: "delete-row", label: "Excluir linha", icon: Rows3, disabled: !canDeleteRow },
+    { id: "delete-col", label: "Excluir coluna", icon: Columns3, disabled: !canDeleteCol },
     { id: "merge", label: "Mesclar", icon: TableCellsMerge, disabled: !canMerge },
     { id: "unmerge", label: "Desmesclar", icon: TableCellsSplit, disabled: !canUnmerge },
   ];

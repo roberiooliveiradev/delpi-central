@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { normalizeCanvasTableCell } from "@delpi/tv-dashboard-presentation";
 
 import {
+  buildCanvasTableDeletePatch,
   buildCanvasTableInsertPatch,
   resolveCanvasTableInsertFocus,
 } from "./canvasTableStructureCommands";
@@ -43,5 +44,24 @@ describe("canvasTableStructureCommands", () => {
     });
     expect(patch.cols).toBe(3);
     expect(patch.merges).toEqual([{ row: 0, col: 2, rowspan: 2, colspan: 1 }]);
+  });
+
+  it("exclui linha coberta e no-op em grade 1×N", () => {
+    const block = sampleBlock();
+    const deleted = buildCanvasTableDeletePatch({
+      block,
+      axis: "row",
+      selection: [{ row: 0, col: 0 }],
+    });
+    expect(deleted?.rows).toBe(1);
+    expect(deleted?.cells?.[0]?.[0]?.text).toBe("C");
+    const single = { ...block, rows: 1, cells: [block.cells[0]!] };
+    expect(
+      buildCanvasTableDeletePatch({
+        block: single,
+        axis: "row",
+        focus: { row: 0, col: 0 },
+      }),
+    ).toBeNull();
   });
 });

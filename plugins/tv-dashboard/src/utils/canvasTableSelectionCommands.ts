@@ -16,6 +16,7 @@ import {
   resolveCanvasTableMergeCommand,
 } from "./canvasTableMergeCommands";
 import {
+  buildCanvasTableDeletePatch,
   buildCanvasTableInsertPatch,
   type CanvasTableStructureInsertAxis,
 } from "./canvasTableStructureCommands";
@@ -69,6 +70,16 @@ export function insertCanvasTableBand(params: {
   focus?: { row: number; col: number } | null;
 }): Partial<ComunicadoCanvasTableBlock> {
   return buildCanvasTableInsertPatch(params);
+}
+
+/** Excluir linhas/colunas cobertas pela seleção — Delete key não usa isto. */
+export function deleteCanvasTableBand(params: {
+  block: ComunicadoCanvasTableBlock;
+  axis: CanvasTableStructureInsertAxis;
+  selection?: readonly CanvasTableCellRef[];
+  focus?: { row: number; col: number } | null;
+}): Partial<ComunicadoCanvasTableBlock> | null {
+  return buildCanvasTableDeletePatch(params);
 }
 
 export function clearCanvasTableSelectionContent(params: {

@@ -22,6 +22,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { canUnmergeCanvasTableSelection } from "../utils/canvasTableMergeCommands";
 import {
   applyCanvasTableMergeToBlock,
+  deleteCanvasTableBand,
   insertCanvasTableBand,
   patchCanvasTableCellsStyle,
   type CanvasTableCellStylePatch,
@@ -91,6 +92,26 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
       case "insert-col-after":
         insert("col", "after");
         break;
+      case "delete-row": {
+        const patch = deleteCanvasTableBand({
+          block,
+          axis: "row",
+          selection: cells,
+          focus,
+        });
+        if (patch) updateBlock(block.id, patch);
+        break;
+      }
+      case "delete-col": {
+        const patch = deleteCanvasTableBand({
+          block,
+          axis: "col",
+          selection: cells,
+          focus,
+        });
+        if (patch) updateBlock(block.id, patch);
+        break;
+      }
       case "merge":
         applyMerge("merge");
         break;
@@ -167,6 +188,8 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
         <CanvasTableStructureMenu
           canMerge={canMerge}
           canUnmerge={canUnmerge}
+          canDeleteRow={block.rows > 1}
+          canDeleteCol={block.cols > 1}
           onSelect={(actionId) => {
             onStructure(actionId);
             close();

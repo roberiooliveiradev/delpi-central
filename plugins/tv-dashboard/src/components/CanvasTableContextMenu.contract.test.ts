@@ -29,6 +29,12 @@ describe("CanvasTableContextMenu (contrato)", () => {
     expect(menu).not.toContain("execCommand");
   });
 
+  it("expõe Excluir linha/coluna via deleteCanvasTableBand", () => {
+    expect(menu).toContain('label="Excluir linha"');
+    expect(menu).toContain('label="Excluir coluna"');
+    expect(menu).toContain("deleteCanvasTableBand");
+  });
+
   it("Quebrar texto usa toggle canônico (não só pre-wrap fixo)", () => {
     expect(menu).toContain("CanvasTableCellFormatMenu");
     expect(menu).toContain("nextCanvasTableWhiteSpaceToggle");

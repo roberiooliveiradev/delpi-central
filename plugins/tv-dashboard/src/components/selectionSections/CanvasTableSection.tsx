@@ -45,6 +45,7 @@ import {
   applyCanvasTableMergeToBlock,
   clearCanvasTableSelectionContent,
   clearCanvasTableSelectionFormats,
+  deleteCanvasTableBand,
   insertCanvasTableBand,
   patchCanvasTableCellsStyle,
 } from "../../utils/canvasTableSelectionCommands";
@@ -305,6 +306,36 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
                 focus: primaryCellRef,
               }),
             );
+          }}
+        />
+        <DeckRibbonTile
+          icon={Rows3}
+          label="Excluir linha"
+          hint="Exclui as linhas cobertas pela seleção (mín. 1 linha)."
+          disabled={table.rows <= 1}
+          onClick={() => {
+            const patch = deleteCanvasTableBand({
+              block: table,
+              axis: "row",
+              selection: cellSelection?.cells,
+              focus: primaryCellRef,
+            });
+            if (patch) updateSelected(patch);
+          }}
+        />
+        <DeckRibbonTile
+          icon={Columns3}
+          label="Excluir coluna"
+          hint="Exclui as colunas cobertas pela seleção (mín. 1 coluna)."
+          disabled={table.cols <= 1}
+          onClick={() => {
+            const patch = deleteCanvasTableBand({
+              block: table,
+              axis: "col",
+              selection: cellSelection?.cells,
+              focus: primaryCellRef,
+            });
+            if (patch) updateSelected(patch);
           }}
         />
       </div>
