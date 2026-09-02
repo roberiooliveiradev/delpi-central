@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from app.application.services.financeiro_despesas_centro_custo.despesas_centro_custo_ranking_cache import (
+    get_cached_ranking_rows,
+    ranking_centros_cache_key,
+    ranking_fornecedores_cache_key,
+    set_cached_ranking_rows,
+)
 from app.domain.ports.financeiro_despesas_centro_custo.despesas_centro_custo_repository_port import (
     DespesasCentroCustoRepositoryPort,
 )
@@ -166,6 +172,19 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         limit: int = 10,
         exclude_mp_products: bool = False,
     ) -> list[dict]:
+        cache_key = ranking_centros_cache_key(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+            limit=limit,
+            exclude_mp_products=exclude_mp_products,
+        )
+        cached = get_cached_ranking_rows(cache_key)
+        if cached is not None:
+            return cached
+
         query, params = build_ranking_centros_query(
             start_date=start_date,
             end_date=end_date,
@@ -176,7 +195,9 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             exclude_mp_products=exclude_mp_products,
         )
         with self:
-            return self.execute_query(query, params)
+            rows = self.execute_query(query, params)
+        set_cached_ranking_rows(cache_key, rows)
+        return rows
 
     def get_ranking_fornecedores(
         self,
@@ -188,6 +209,18 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
         limit: int = 10,
         exclude_mp_products: bool = False,
     ) -> list[dict]:
+        cache_key = ranking_fornecedores_cache_key(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            cost_center=cost_center,
+            limit=limit,
+            exclude_mp_products=exclude_mp_products,
+        )
+        cached = get_cached_ranking_rows(cache_key)
+        if cached is not None:
+            return cached
+
         query, params = build_ranking_fornecedores_query(
             start_date=start_date,
             end_date=end_date,
@@ -197,7 +230,9 @@ class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositor
             exclude_mp_products=exclude_mp_products,
         )
         with self:
-            return self.execute_query(query, params)
+            rows = self.execute_query(query, params)
+        set_cached_ranking_rows(cache_key, rows)
+        return rows
 
     def count_lancamentos(
         self,

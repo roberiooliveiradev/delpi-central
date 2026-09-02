@@ -410,6 +410,11 @@ def build_ranking_centros_query(
     limit: int = DEFAULT_RANKING_LIMIT,
     exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
+    """Ranking de centros: um GROUP BY na view + percentual via window.
+
+    Evita CTE `scoped` materializada + `period_total` + segundo scan em `grouped`
+    (padrão antigo relia a view três vezes no período cheio).
+    """
     where_clause, params = build_query_where(
         start_date=start_date,
         end_date=end_date,
@@ -420,41 +425,29 @@ def build_ranking_centros_query(
     )
     safe_limit = min(max(int(limit), 1), MAX_RANKING_LIMIT)
     query = f"""
-WITH scoped AS (
+WITH grouped AS (
     SELECT
         LTRIM(RTRIM(centro_custo_codigo)) AS centro_custo_codigo,
-        LTRIM(RTRIM(centro_custo_descricao)) AS centro_custo_descricao,
-        CAST(valor_total AS DECIMAL(18, 2)) AS valor_total
+        MAX(LTRIM(RTRIM(centro_custo_descricao))) AS centro_custo_descricao,
+        SUM(CAST(valor_total AS DECIMAL(18, 2))) AS valor_total,
+        COUNT(*) AS quantidade_lancamentos
     FROM {DESPESAS_CENTRO_CUSTO_VIEW} WITH (NOLOCK)
     WHERE {where_clause}
       AND LTRIM(RTRIM(centro_custo_codigo)) <> ''
-),
-period_total AS (
-    SELECT COALESCE(SUM(valor_total), 0) AS total_periodo
-    FROM scoped
-),
-grouped AS (
-    SELECT
-        centro_custo_codigo,
-        MAX(centro_custo_descricao) AS centro_custo_descricao,
-        SUM(valor_total) AS valor_total,
-        COUNT(*) AS quantidade_lancamentos
-    FROM scoped
-    GROUP BY centro_custo_codigo
+    GROUP BY LTRIM(RTRIM(centro_custo_codigo))
 )
 SELECT TOP ({safe_limit})
-    g.centro_custo_codigo,
-    g.centro_custo_descricao,
-    g.valor_total,
-    g.quantidade_lancamentos,
+    centro_custo_codigo,
+    centro_custo_descricao,
+    valor_total,
+    quantidade_lancamentos,
     CASE
-        WHEN pt.total_periodo > 0
-        THEN ROUND(g.valor_total * 100.0 / pt.total_periodo, 2)
+        WHEN SUM(valor_total) OVER () > 0
+        THEN ROUND(valor_total * 100.0 / SUM(valor_total) OVER (), 2)
         ELSE 0
     END AS percentual
-FROM grouped g
-CROSS JOIN period_total pt
-ORDER BY g.valor_total DESC, g.centro_custo_codigo ASC
+FROM grouped
+ORDER BY valor_total DESC, centro_custo_codigo ASC
 """.strip()
     return query, params
 
@@ -468,6 +461,7 @@ def build_ranking_fornecedores_query(
     limit: int = DEFAULT_RANKING_LIMIT,
     exclude_mp_products: bool = False,
 ) -> tuple[str, tuple]:
+    """Ranking de fornecedores: mesmo padrão single-pass do ranking de centros."""
     where_clause, params = build_query_where(
         start_date=start_date,
         end_date=end_date,
@@ -477,43 +471,32 @@ def build_ranking_fornecedores_query(
     )
     safe_limit = min(max(int(limit), 1), MAX_RANKING_LIMIT)
     query = f"""
-WITH scoped AS (
+WITH grouped AS (
     SELECT
         LTRIM(RTRIM(fornecedor_cliente_codigo)) AS fornecedor_cliente_codigo,
         LTRIM(RTRIM(loja)) AS loja,
-        LTRIM(RTRIM(razao_social)) AS razao_social,
-        CAST(valor_total AS DECIMAL(18, 2)) AS valor_total
+        MAX(LTRIM(RTRIM(razao_social))) AS razao_social,
+        SUM(CAST(valor_total AS DECIMAL(18, 2))) AS valor_total,
+        COUNT(*) AS quantidade_lancamentos
     FROM {DESPESAS_CENTRO_CUSTO_VIEW} WITH (NOLOCK)
     WHERE {where_clause}
       AND LTRIM(RTRIM(fornecedor_cliente_codigo)) <> ''
-),
-period_total AS (
-    SELECT COALESCE(SUM(valor_total), 0) AS total_periodo
-    FROM scoped
-),
-grouped AS (
-    SELECT
-        fornecedor_cliente_codigo,
-        loja,
-        MAX(razao_social) AS razao_social,
-        SUM(valor_total) AS valor_total,
-        COUNT(*) AS quantidade_lancamentos
-    FROM scoped
-    GROUP BY fornecedor_cliente_codigo, loja
+    GROUP BY
+        LTRIM(RTRIM(fornecedor_cliente_codigo)),
+        LTRIM(RTRIM(loja))
 )
 SELECT TOP ({safe_limit})
-    g.fornecedor_cliente_codigo,
-    g.loja,
-    g.razao_social,
-    g.valor_total,
-    g.quantidade_lancamentos,
+    fornecedor_cliente_codigo,
+    loja,
+    razao_social,
+    valor_total,
+    quantidade_lancamentos,
     CASE
-        WHEN pt.total_periodo > 0
-        THEN ROUND(g.valor_total * 100.0 / pt.total_periodo, 2)
+        WHEN SUM(valor_total) OVER () > 0
+        THEN ROUND(valor_total * 100.0 / SUM(valor_total) OVER (), 2)
         ELSE 0
     END AS percentual
-FROM grouped g
-CROSS JOIN period_total pt
-ORDER BY g.valor_total DESC, g.fornecedor_cliente_codigo ASC, g.loja ASC
+FROM grouped
+ORDER BY valor_total DESC, fornecedor_cliente_codigo ASC, loja ASC
 """.strip()
     return query, params
