@@ -208,6 +208,12 @@
   overflow: hidden;
 }
 
+/* Editor: gutter/handles da Grade ficam fora do td — não clipar no wrapper do bloco. */
+.delpi-ui-comunicado--editor .delpi-ui-comunicado__block--canvas_table,
+.delpi-ui-comunicado--editor .delpi-ui-comunicado__block--canvas-table {
+  overflow: visible;
+}
+
 .delpi-ui-comunicado__block--data {
   overflow: hidden;
 }

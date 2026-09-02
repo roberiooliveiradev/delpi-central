@@ -38,4 +38,14 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
     expect(css).toMatch(/vector-effect:\s*non-scaling-stroke/);
     expect(css).toMatch(/stroke-linejoin:\s*round/);
   });
+
+  it("editor libera overflow do bloco Grade (handles/gutter); TV/prévia mantém clip", () => {
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado--editor\s+\.delpi-ui-comunicado__block--canvas_table[\s\S]*?overflow:\s*visible/,
+    );
+    const tvBlock = css.match(
+      /\.delpi-ui-comunicado__block--canvas_table,\s*\n\.delpi-ui-comunicado__block--canvas-table\s*\{([\s\S]*?)\}/,
+    );
+    expect(tvBlock?.[1] ?? "").toMatch(/overflow:\s*hidden/);
+  });
 });
