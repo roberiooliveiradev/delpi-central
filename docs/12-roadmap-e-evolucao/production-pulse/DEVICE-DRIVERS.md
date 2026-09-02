@@ -77,6 +77,7 @@
 **Firmware:** ver [README.md § Protocolo piloto](./README.md) e [firmware/esp8266_counter_v1/](./firmware/esp8266_counter_v1/).
 
 Contrato config: `GET/POST /api/config` + header `X-Device-Token`. Contagem pública em `GET /api/contador`.
+Health no mesmo `GET /api/status` (sem rota `/api/health` paralela): `firmwareVersion`, `uptimeMs`, `freeHeap`, `rssi`, `wifiConnected`.
 
 **HTTP gauge:** `GET /api/sensores` → `{"rpm": <number>, "temperatura": <number>}` (aliases `rotacao`, `temperature_c`).
 
