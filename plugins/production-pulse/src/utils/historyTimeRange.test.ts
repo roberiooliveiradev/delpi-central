@@ -11,6 +11,7 @@ import {
   resolveHistoryChartPageSize,
   resolveHistoryChartSampleIntervalMs,
   resolveHistoryReadingsResolution,
+  shouldSlideHistoryRangeOnRefresh,
   HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX,
   toDatetimeLocalValue,
 } from "./historyTimeRange";
@@ -177,5 +178,16 @@ describe("historyTimeRange", () => {
         "2026-09-02T14:00:00.000Z",
       ),
     ).toBe("day");
+  });
+
+  it("só desliza janela no refresh para presets curtos", () => {
+    expect(shouldSlideHistoryRangeOnRefresh("1m")).toBe(true);
+    expect(shouldSlideHistoryRangeOnRefresh("15m")).toBe(true);
+    expect(shouldSlideHistoryRangeOnRefresh("1h")).toBe(true);
+    expect(shouldSlideHistoryRangeOnRefresh("24h")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("7d")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("month")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("12m")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("custom")).toBe(false);
   });
 });

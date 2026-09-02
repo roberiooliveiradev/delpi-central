@@ -217,6 +217,17 @@ export function resolveHistoryReadingsResolution(
   return "raw";
 }
 
+/**
+ * Presets curtos (≤ 1 h) deslizam a janela no refresh explícito (poll/comando).
+ * Calendário / spans longos mantêm o «De» fixo e só avançam o «Até» — evita flicker.
+ */
+export function shouldSlideHistoryRangeOnRefresh(preset: HistoryRangePreset): boolean {
+  if (preset === "custom") return false;
+  const option = HISTORY_RANGE_PRESET_OPTIONS.find((item) => item.value === preset);
+  if (!option || option.mode !== "rolling") return false;
+  return option.durationMs <= 60 * 60_000;
+}
+
 /** Reduz pontos densos mantendo início/fim e passo uniforme. */
 export function downsampleChartPoints(points: ChartPoint[], maxPoints = CHART_TARGET_POINTS): ChartPoint[] {
   if (points.length <= maxPoints) return points;

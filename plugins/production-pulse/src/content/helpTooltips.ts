@@ -160,7 +160,7 @@ export const PP_HELP = {
     chartSeries:
       "Evolução temporal de cada métrica (rpm, °C, golpes) conforme o driver. O eixo X adapta a granularidade ao intervalo (segundos, minutos, horas).",
     historyRangePresets:
-      "Atalhos de período (1 min → 12 meses, este mês). Acima de 7 dias o gráfico usa agregação horária; acima de 90 dias, diária. A tabela continua com leituras raw paginadas. Livre usa data/hora manual.",
+      "Atalhos de período (1 min → 12 meses, este mês). Acima de 7 dias o gráfico usa agregação horária; acima de 90 dias, diária. A tabela continua com leituras raw paginadas. O histórico só recarrega em «Atualizar agora»/comando — não a cada tick live. Livre usa data/hora manual.",
     readingsTable:
       "Histórico paginado de polls e comandos gravados no banco (resolução raw). Raw antigo pode ser purgado pela retenção; o gráfico longo usa rollups.",
     commandsTable:

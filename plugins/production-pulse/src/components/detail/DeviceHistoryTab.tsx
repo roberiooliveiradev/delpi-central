@@ -39,6 +39,7 @@ import {
   resolveHistoryChartPageSize,
   resolveHistoryChartSampleIntervalMs,
   resolveHistoryReadingsResolution,
+  shouldSlideHistoryRangeOnRefresh,
   type HistoryRangePreset,
 } from "../../utils/historyTimeRange";
 import { ReadingHardwareResetBadge } from "./ReadingHardwareResetBadge";
@@ -107,11 +108,18 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
 
   useEffect(() => {
     if (refreshToken === 0 || preset === "custom") return;
-    const bounds = boundsForHistoryPreset(preset);
-    setFromLocal(isoToDatetimeLocalValue(bounds.fromIso));
-    setToLocal(isoToDatetimeLocalValue(bounds.toIso));
-    setAppliedFrom(bounds.fromIso);
-    setAppliedTo(bounds.toIso);
+    if (shouldSlideHistoryRangeOnRefresh(preset)) {
+      const bounds = boundsForHistoryPreset(preset);
+      setFromLocal(isoToDatetimeLocalValue(bounds.fromIso));
+      setToLocal(isoToDatetimeLocalValue(bounds.toIso));
+      setAppliedFrom(bounds.fromIso);
+      setAppliedTo(bounds.toIso);
+      return;
+    }
+    // Calendar / longo: mantém «De»; avança «Até» uma vez no refresh explícito.
+    const nowIso = new Date().toISOString();
+    setToLocal(isoToDatetimeLocalValue(nowIso));
+    setAppliedTo(nowIso);
   }, [preset, refreshToken]);
 
   useEffect(() => {
