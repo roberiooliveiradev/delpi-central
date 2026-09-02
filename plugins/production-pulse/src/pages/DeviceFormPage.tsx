@@ -24,6 +24,7 @@ import { TestConnectionModal } from "../components/modals/TestConnectionModal";
 import {
   PRODUCTION_PULSE_BASE_PATH,
   productionPulseDeviceDetailPath,
+  productionPulseDeviceEditPath,
 } from "../constants/routes";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
@@ -86,6 +87,7 @@ export function DeviceFormPage({
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<DeviceFormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [configPushBanner, setConfigPushBanner] = useState<string | null>(null);
 
   const [testOpen, setTestOpen] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
@@ -109,6 +111,11 @@ export function DeviceFormPage({
           ipAddress: row.ipAddress,
           controllerCode: row.controllerCode ?? "",
           firmwareSource: row.firmwareSource ?? "",
+          wifiSsid: row.wifiSsid ?? "",
+          wifiPassword: "",
+          debounceMs: row.debounceMs != null ? String(row.debounceMs) : "",
+          apiToken: "",
+          apiTokenSet: Boolean(row.apiTokenSet),
           driverKey: row.driverKey,
           pollIntervalMs: row.pollIntervalMs,
           enabled: row.enabled,
@@ -153,10 +160,30 @@ export function DeviceFormPage({
           ? await testExistingDevice(deviceId)
           : await testDeviceProbe(device);
       setTestResult(result);
-      if (!result.online) {
+      if (result.online) {
+        setDevice((prev) => {
+          const patch: Partial<DeviceFormValues> = {};
+          if (result.controllerCode && !prev.controllerCode.trim()) {
+            patch.controllerCode = result.controllerCode;
+          }
+          const ssid = result.wifiSsid ?? result.deviceConfig?.ssid;
+          if (ssid && !prev.wifiSsid.trim()) {
+            patch.wifiSsid = ssid;
+          }
+          const debounce =
+            result.debounceMs ?? result.deviceConfig?.debounceMs;
+          if (debounce != null && !prev.debounceMs.trim()) {
+            patch.debounceMs = String(debounce);
+          }
+          if (result.apiTokenSet != null || result.deviceConfig?.apiTokenSet != null) {
+            patch.apiTokenSet = Boolean(
+              result.apiTokenSet ?? result.deviceConfig?.apiTokenSet,
+            );
+          }
+          return Object.keys(patch).length ? { ...prev, ...patch } : prev;
+        });
+      } else {
         setTestError(resolveProbeErrorMessage(result, PP_HELP.modals.testFail));
-      } else if (result.controllerCode && !device.controllerCode.trim()) {
-        setDevice((prev) => ({ ...prev, controllerCode: result.controllerCode ?? "" }));
       }
     } catch (err) {
       setTestError(resolveDeviceActionMessage(err, PP_HELP.modals.testFail));
@@ -177,6 +204,7 @@ export function DeviceFormPage({
 
     setSaving(true);
     setFormError(null);
+    setConfigPushBanner(null);
     try {
       const saved =
         mode === "edit" && deviceId
@@ -185,10 +213,30 @@ export function DeviceFormPage({
 
       if (hasBindingInput(binding)) {
         await upsertDeviceBinding(saved.id, binding);
-        navigateProductionPulse(`${PRODUCTION_PULSE_BASE_PATH}?branch=${encodeURIComponent(saved.branch)}`);
-      } else {
-        navigateProductionPulse(`${PRODUCTION_PULSE_BASE_PATH}?branch=${encodeURIComponent(saved.branch)}`);
       }
+
+      if (saved.deviceConfigPush?.status === "failed") {
+        setConfigPushBanner(
+          saved.deviceConfigPush.message ?? PP_HELP.form.deviceConfigPushFailed,
+        );
+        setDevice((prev) => ({
+          ...prev,
+          wifiPassword: "",
+          apiToken: "",
+          apiTokenSet: Boolean(saved.apiTokenSet),
+          wifiSsid: saved.wifiSsid ?? prev.wifiSsid,
+          debounceMs:
+            saved.debounceMs != null ? String(saved.debounceMs) : prev.debounceMs,
+        }));
+        if (mode === "create") {
+          navigateProductionPulse(productionPulseDeviceEditPath(saved.id));
+        }
+        return;
+      }
+
+      navigateProductionPulse(
+        `${PRODUCTION_PULSE_BASE_PATH}?branch=${encodeURIComponent(saved.branch)}`,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Não foi possível salvar o dispositivo.";
       setFormError(message);
@@ -247,6 +295,14 @@ export function DeviceFormPage({
 
       {formError ? (
         <PpStateBox variant="error" title="Não foi possível continuar" message={formError} />
+      ) : null}
+
+      {configPushBanner ? (
+        <PpStateBox
+          variant="error"
+          title="Configuração no chip"
+          message={configPushBanner}
+        />
       ) : null}
 
       <div className="pp-form-layout">

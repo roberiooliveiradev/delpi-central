@@ -10,6 +10,11 @@ export type DeviceFormValues = {
   ipAddress: string;
   controllerCode: string;
   firmwareSource: string;
+  wifiSsid: string;
+  wifiPassword: string;
+  debounceMs: string;
+  apiToken: string;
+  apiTokenSet: boolean;
   driverKey: string;
   pollIntervalMs: number;
   enabled: boolean;
@@ -60,6 +65,15 @@ export type ProbeResult = {
   errorMessage?: string;
   controllerCode?: string;
   mac?: string;
+  wifiSsid?: string;
+  debounceMs?: number;
+  apiTokenSet?: boolean;
+  deviceConfig?: {
+    ssid?: string;
+    debounceMs?: number;
+    passwordSet?: boolean;
+    apiTokenSet?: boolean;
+  };
 };
 
 export const DEFAULT_BINDING_VALUES: BindingFormValues = {
@@ -80,6 +94,11 @@ export const DEFAULT_DEVICE_FORM_VALUES: DeviceFormValues = {
   ipAddress: "",
   controllerCode: "",
   firmwareSource: "",
+  wifiSsid: "",
+  wifiPassword: "",
+  debounceMs: "",
+  apiToken: "",
+  apiTokenSet: false,
   driverKey: "esp8266_counter_v1",
   pollIntervalMs: POLL_INTERVAL_DEFAULT_MS,
   enabled: true,

@@ -74,3 +74,4 @@ class DeviceTestProbeBody(BaseModel):
     branch: str
     ip_address: str = Field(alias="ipAddress")
     driver_key: str = Field(alias="driverKey")
+    api_token: str | None = Field(default=None, alias="apiToken")

@@ -32,6 +32,14 @@ export type DeviceCapabilities = {
 
 export type DeviceStatus = "online" | "offline" | "disabled" | "no_binding";
 
+export type DeviceConfigPushStatus = "ok" | "skipped" | "failed";
+
+export type DeviceConfigPush = {
+  status: DeviceConfigPushStatus;
+  message?: string;
+  messageKey?: string;
+};
+
 export type DeviceListItem = {
   id: string;
   branch: string;
@@ -39,6 +47,9 @@ export type DeviceListItem = {
   ipAddress: string;
   controllerCode: string | null;
   firmwareSource: string | null;
+  wifiSsid?: string | null;
+  debounceMs?: number | null;
+  apiTokenSet?: boolean;
   driverKey: string;
   roleKey: string;
   enabled: boolean;
@@ -51,6 +62,7 @@ export type DeviceListItem = {
   graceSeconds: number;
   capabilities?: DeviceCapabilities;
   binding: DeviceBinding | null;
+  deviceConfigPush?: DeviceConfigPush;
   periodDeltas?: {
     day?: Record<string, number>;
     shift?: Record<string, number>;

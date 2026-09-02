@@ -6,6 +6,11 @@ export const POLL_INTERVAL_DEFAULT_MS = validationContent.limits.pollIntervalMs.
 export const LIVE_UI_REFRESH_MIN_MS = validationContent.limits.liveUiRefreshMs.min;
 export const NAME_MAX_LENGTH = validationContent.limits.nameMaxLength;
 export const CONTROLLER_CODE_MAX_LENGTH = validationContent.limits.controllerCodeMaxLength;
+export const WIFI_SSID_MAX_LENGTH = validationContent.limits.wifiSsidMaxLength;
+export const DEVICE_API_TOKEN_MAX_LENGTH = validationContent.limits.deviceApiTokenMaxLength;
+export const DEBOUNCE_MS_MIN = validationContent.limits.debounceMs.min;
+export const DEBOUNCE_MS_MAX = validationContent.limits.debounceMs.max;
+export const DEBOUNCE_MS_DEFAULT = validationContent.limits.debounceMs.default;
 export const VALID_BRANCHES = validationContent.validBranches;
 export const IPV4_REGEX = new RegExp(validationContent.patterns.ipv4);
 export const CONTROLLER_CODE_REGEX = new RegExp(validationContent.patterns.controllerCode);
@@ -21,6 +26,9 @@ export const DEVICE_FORM_VALIDATION_ERROR_CODES = [
   "invalid_controller_code",
   "driver_key_required",
   "poll_interval_out_of_range",
+  "wifi_ssid_too_long",
+  "device_api_token_too_long",
+  "debounce_ms_out_of_range",
   "work_center_code_required",
   "machine_label_required",
   "equipment_label_required",
@@ -53,6 +61,9 @@ export const DEVICE_FORM_VALIDATION_MESSAGES: Record<DeviceFormValidationErrorCo
   driver_key_required: "Selecione o driver (protocolo) do dispositivo.",
   poll_interval_out_of_range:
     "O intervalo de leitura deve estar entre {min} e {max} milissegundos.",
+  wifi_ssid_too_long: "O SSID Wi-Fi deve ter no máximo {max} caracteres.",
+  device_api_token_too_long: "O token do dispositivo deve ter no máximo {max} caracteres.",
+  debounce_ms_out_of_range: "O debounce deve estar entre {min} e {max} milissegundos.",
   work_center_code_required: "Informe o centro de trabalho para amarração por posto.",
   machine_label_required: "Informe o rótulo da máquina para amarração por máquina.",
   equipment_label_required: "Informe o rótulo do equipamento para amarração por equipamento.",

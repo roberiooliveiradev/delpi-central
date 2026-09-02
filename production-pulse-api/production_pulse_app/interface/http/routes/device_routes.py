@@ -183,6 +183,7 @@ async def test_probe(request: Request, body: DeviceTestProbeBody):
             ip_address=body.ip_address,
             driver_key=body.driver_key,
             actor_sub=_actor_sub(request),
+            api_token=body.api_token,
         )
         return success(data)
     except Exception as exc:

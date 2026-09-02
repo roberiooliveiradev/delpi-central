@@ -93,7 +93,7 @@ describe("production-pulse kit contracts", () => {
     for (const { rel, source } of sources) {
       if (!source.includes("PpStateBox")) continue;
       const withoutPageHero = source.replace(/<PpPageHero[\s\S]*?\/>/g, "");
-      expect(withoutPageHero, rel).not.toMatch(/<PpStateBox[\s\S]*?\bactions=/);
+      expect(withoutPageHero, rel).not.toMatch(/<PpStateBox[^>]*\bactions=/);
     }
   });
 

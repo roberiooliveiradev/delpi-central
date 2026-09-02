@@ -70,6 +70,19 @@ describe("deviceFormValidation", () => {
     expect(errors.pollIntervalMs).toContain("300000");
   });
 
+  it("rejects debounce outside range", () => {
+    const errors = validateDeviceForm(
+      {
+        ...DEFAULT_DEVICE_FORM_VALUES,
+        name: "ESP A",
+        ipAddress: "192.168.20.2",
+        debounceMs: "0",
+      },
+      DEFAULT_BINDING_VALUES,
+    );
+    expect(errors.debounceMs).toContain("1");
+  });
+
   it("formats probe metrics", () => {
     expect(formatPrimaryMetricFromProbe({ counter: 42 })).toBe("Golpes: 42");
   });

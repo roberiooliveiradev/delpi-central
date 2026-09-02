@@ -4,11 +4,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  DEBOUNCE_MS_DEFAULT,
+  DEBOUNCE_MS_MAX,
+  DEBOUNCE_MS_MIN,
   LIVE_UI_REFRESH_MIN_MS,
   NAME_MAX_LENGTH,
   POLL_INTERVAL_DEFAULT_MS,
   POLL_INTERVAL_MAX_MS,
   POLL_INTERVAL_MIN_MS,
+  WIFI_SSID_MAX_LENGTH,
 } from "./deviceValidationContent";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -24,6 +28,8 @@ describe("deviceValidationContent", () => {
         pollIntervalMs?: { min?: number; max?: number; default?: number };
         liveUiRefreshMs?: { min?: number };
         nameMaxLength?: number;
+        wifiSsidMaxLength?: number;
+        debounceMs?: { min?: number; max?: number; default?: number };
       };
     };
     expect(POLL_INTERVAL_MIN_MS).toBe(apiContent.limits?.pollIntervalMs?.min);
@@ -31,5 +37,9 @@ describe("deviceValidationContent", () => {
     expect(POLL_INTERVAL_DEFAULT_MS).toBe(apiContent.limits?.pollIntervalMs?.default);
     expect(LIVE_UI_REFRESH_MIN_MS).toBe(apiContent.limits?.liveUiRefreshMs?.min);
     expect(NAME_MAX_LENGTH).toBe(apiContent.limits?.nameMaxLength);
+    expect(WIFI_SSID_MAX_LENGTH).toBe(apiContent.limits?.wifiSsidMaxLength);
+    expect(DEBOUNCE_MS_MIN).toBe(apiContent.limits?.debounceMs?.min);
+    expect(DEBOUNCE_MS_MAX).toBe(apiContent.limits?.debounceMs?.max);
+    expect(DEBOUNCE_MS_DEFAULT).toBe(apiContent.limits?.debounceMs?.default);
   });
 });

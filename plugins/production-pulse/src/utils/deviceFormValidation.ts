@@ -2,10 +2,14 @@ import type { AnchorType, BindingFormValues, DeviceFormValues } from "../types/f
 import {
   clampPollIntervalMs,
   CONTROLLER_CODE_MAX_LENGTH,
+  DEBOUNCE_MS_MAX,
+  DEBOUNCE_MS_MIN,
+  DEVICE_API_TOKEN_MAX_LENGTH,
   formatValidationMessage,
   NAME_MAX_LENGTH,
   POLL_INTERVAL_MAX_MS,
   POLL_INTERVAL_MIN_MS,
+  WIFI_SSID_MAX_LENGTH,
   validateControllerCode,
   validateIpv4,
 } from "../content/deviceValidationContent";
@@ -44,6 +48,35 @@ export function validateDeviceForm(
       });
     } else if (!validateControllerCode(controllerCode)) {
       errors.controllerCode = formatValidationMessage("invalid_controller_code");
+    }
+  }
+
+  const wifiSsid = (device.wifiSsid ?? "").trim();
+  if (wifiSsid.length > WIFI_SSID_MAX_LENGTH) {
+    errors.wifiSsid = formatValidationMessage("wifi_ssid_too_long", {
+      max: WIFI_SSID_MAX_LENGTH,
+    });
+  }
+
+  const apiToken = (device.apiToken ?? "").trim();
+  if (apiToken.length > DEVICE_API_TOKEN_MAX_LENGTH) {
+    errors.apiToken = formatValidationMessage("device_api_token_too_long", {
+      max: DEVICE_API_TOKEN_MAX_LENGTH,
+    });
+  }
+
+  const debounceRaw = (device.debounceMs ?? "").trim();
+  if (debounceRaw) {
+    const debounceMs = Number.parseInt(debounceRaw, 10);
+    if (
+      !Number.isFinite(debounceMs) ||
+      debounceMs < DEBOUNCE_MS_MIN ||
+      debounceMs > DEBOUNCE_MS_MAX
+    ) {
+      errors.debounceMs = formatValidationMessage("debounce_ms_out_of_range", {
+        min: DEBOUNCE_MS_MIN,
+        max: DEBOUNCE_MS_MAX,
+      });
     }
   }
 

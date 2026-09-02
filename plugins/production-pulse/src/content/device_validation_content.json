@@ -18,6 +18,13 @@
     },
     "nameMaxLength": 120,
     "controllerCodeMaxLength": 64,
+    "wifiSsidMaxLength": 64,
+    "deviceApiTokenMaxLength": 128,
+    "debounceMs": {
+      "min": 1,
+      "max": 60000,
+      "default": 100
+    },
     "counterSet": {
       "min": 0,
       "max": 2147483647

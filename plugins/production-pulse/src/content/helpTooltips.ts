@@ -81,6 +81,21 @@ export const PP_HELP = {
       "Endereço IPv4 fixo do hardware na rede industrial. Deve ser alcançável pela API.",
     controllerCode:
       "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde.",
+    wifiSsid:
+      "Nome da rede Wi-Fi gravada no chip (EEPROM). Enviado ao dispositivo no Salvar.",
+    wifiPassword:
+      "Senha da rede Wi-Fi. Write-only: em branco = não altera a senha já gravada no chip. Nunca é armazenada no Postgres.",
+    debounceMs:
+      "Tempo de debounce dos botões no ESP (ms). Em branco no cadastro = default do firmware.",
+    apiToken:
+      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Protege status, config e comandos; só a contagem (GET /api/contador) fica pública. Em branco = não altera o token já gravado.",
+    apiTokenSetHint:
+      "Já existe token neste cadastro. Deixe em branco para manter, ou informe um novo / use «Gerar token».",
+    generateApiTokenAction: "Gerar token",
+    deviceConfigPushFailed:
+      "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo. Verifique IP, energia e token.",
+    deviceConfigPushOk: "Configuração enviada ao dispositivo.",
+    deviceConfigPushSkipped: "Cadastro salvo. Nenhuma configuração de chip para enviar.",
     firmwareSource:
       "Cole aqui o sketch Arduino (.ino) deste dispositivo. Sem limite de tamanho. Fica disponível na aba Firmware do detalhe, pronto para copiar.",
     driver:

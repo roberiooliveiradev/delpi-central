@@ -87,17 +87,36 @@ export async function fetchWorkCenters(
   return payload.data.items;
 }
 
-export async function createDevice(device: DeviceFormValues): Promise<DeviceListItem> {
-  const payload = await httpJson<ApiEnvelope<DeviceListItem>>("POST", `${PRODUCTION_PULSE_API_BASE}/devices`, {
+function deviceFormToApiBody(device: DeviceFormValues): Record<string, unknown> {
+  const debounceRaw = device.debounceMs.trim();
+  const debounceMs = debounceRaw ? Number.parseInt(debounceRaw, 10) : null;
+  const body: Record<string, unknown> = {
     name: device.name.trim(),
     branch: device.branch,
     ipAddress: device.ipAddress.trim(),
     controllerCode: device.controllerCode.trim() || null,
-    firmwareSource: device.firmwareSource.trim() ? device.firmwareSource.replace(/^\n+|\n+$/g, "") : null,
+    firmwareSource: device.firmwareSource.trim()
+      ? device.firmwareSource.replace(/^\n+|\n+$/g, "")
+      : null,
+    wifiSsid: device.wifiSsid.trim() || null,
     driverKey: device.driverKey,
     pollIntervalMs: device.pollIntervalMs,
     enabled: device.enabled,
-  });
+    debounceMs: Number.isFinite(debounceMs as number) ? debounceMs : null,
+  };
+  const wifiPassword = device.wifiPassword.trim();
+  if (wifiPassword) body.wifiPassword = wifiPassword;
+  const apiToken = device.apiToken.trim();
+  if (apiToken) body.apiToken = apiToken;
+  return body;
+}
+
+export async function createDevice(device: DeviceFormValues): Promise<DeviceListItem> {
+  const payload = await httpJson<ApiEnvelope<DeviceListItem>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/devices`,
+    deviceFormToApiBody(device),
+  );
   return payload.data;
 }
 
@@ -105,18 +124,7 @@ export async function replaceDevice(deviceId: string, device: DeviceFormValues):
   const payload = await httpJson<ApiEnvelope<DeviceListItem>>(
     "PUT",
     `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}`,
-    {
-      name: device.name.trim(),
-      branch: device.branch,
-      ipAddress: device.ipAddress.trim(),
-      controllerCode: device.controllerCode.trim() || null,
-      firmwareSource: device.firmwareSource.trim()
-        ? device.firmwareSource.replace(/^\n+|\n+$/g, "")
-        : null,
-      driverKey: device.driverKey,
-      pollIntervalMs: device.pollIntervalMs,
-      enabled: device.enabled,
-    },
+    deviceFormToApiBody(device),
   );
   return payload.data;
 }
@@ -129,14 +137,17 @@ export async function upsertDeviceBinding(
 }
 
 export async function testDeviceProbe(device: DeviceFormValues): Promise<ProbeResult> {
+  const body: Record<string, unknown> = {
+    branch: device.branch,
+    ipAddress: device.ipAddress.trim(),
+    driverKey: device.driverKey,
+  };
+  const apiToken = device.apiToken.trim();
+  if (apiToken) body.apiToken = apiToken;
   const payload = await httpJson<ApiEnvelope<ProbeResult>>(
     "POST",
     `${PRODUCTION_PULSE_API_BASE}/devices/test-probe`,
-    {
-      branch: device.branch,
-      ipAddress: device.ipAddress.trim(),
-      driverKey: device.driverKey,
-    },
+    body,
   );
   return payload.data;
 }

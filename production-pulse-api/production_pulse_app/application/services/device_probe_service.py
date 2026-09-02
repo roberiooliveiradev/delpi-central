@@ -30,16 +30,20 @@ class DeviceProbeService:
         ip_address: str,
         driver_key: str,
         actor_sub: str | None,
+        api_token: str | None = None,
     ) -> dict[str, Any]:
         get_test_probe_rate_limiter().check(actor_sub or "anonymous")
         validate_branch(branch)
         ip = normalize_ip_address(ip_address)
         resolved = resolve_driver(driver_key)
-        device_stub = {
+        device_stub: dict[str, Any] = {
             "branch": branch,
             "ip_address": ip,
             "driver_key": resolved.driver_key,
         }
+        token = (api_token or "").strip()
+        if token:
+            device_stub["device_api_token"] = token
         return self._run_probe(resolved.driver_key, device_stub)
 
     def probe_existing_device(self, device: dict[str, Any], *, actor_sub: str | None) -> dict[str, Any]:
