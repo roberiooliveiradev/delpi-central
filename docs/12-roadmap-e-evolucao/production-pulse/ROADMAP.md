@@ -718,7 +718,7 @@ flowchart LR
 
 ### Critérios de pronto (P3)
 
-- [ ] P3.S0 — docs/regras
+- [x] P3.S0 — docs/regras
 - [ ] P3.S1 — policy change/heartbeat
 - [ ] P3.S2 — meta observabilidade
 - [ ] P3.S3 — purge raw
