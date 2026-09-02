@@ -7,6 +7,7 @@ import {
   clearCanvasTableSelectionContent,
   clearCanvasTableSelectionFormats,
   insertCanvasTableBand,
+  patchCanvasTableBorderColor,
   patchCanvasTableCellsStyle,
 } from "./canvasTableSelectionCommands";
 
@@ -96,5 +97,43 @@ describe("canvasTableSelectionCommands", () => {
     });
     expect(formats[0]![0]!.text).toBe("X");
     expect(formats[0]![0]!.style).toBeUndefined();
+  });
+
+  it("patchCanvasTableBorderColor roteia bloco vs células e clear remove borderColor", () => {
+    const block = {
+      id: "t1",
+      type: "canvas_table" as const,
+      rows: 2,
+      cols: 2,
+      cells: grid2x2(),
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      style: { borderColor: "#111" },
+    };
+    const blockPatch = patchCanvasTableBorderColor({
+      block,
+      selection: [],
+      color: "#ef4444",
+    });
+    expect(blockPatch.style?.borderColor).toBe("#ef4444");
+
+    const cellPatch = patchCanvasTableBorderColor({
+      block,
+      selection: [
+        { row: 0, col: 0 },
+        { row: 0, col: 1 },
+      ],
+      color: "#22c55e",
+    });
+    expect(cellPatch.cells?.[0]?.[0]?.style?.borderColor).toBe("#22c55e");
+    expect(cellPatch.cells?.[0]?.[1]?.style?.borderColor).toBe("#22c55e");
+    expect(cellPatch.cells?.[1]?.[0]?.style?.borderColor).toBeUndefined();
+
+    const cleared = patchCanvasTableBorderColor({
+      block: { ...block, cells: cellPatch.cells! },
+      selection: [{ row: 0, col: 0 }],
+      color: undefined,
+    });
+    expect(cleared.cells?.[0]?.[0]?.style?.borderColor).toBeUndefined();
+    expect(cleared.cells?.[0]?.[1]?.style?.borderColor).toBe("#22c55e");
   });
 });

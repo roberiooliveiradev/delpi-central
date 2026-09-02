@@ -95,3 +95,45 @@ export function clearCanvasTableSelectionFormats(params: {
 }): CanvasTableCell[][] {
   return clearCanvasTableCellsFormats(params.cells, params.selection);
 }
+
+/**
+ * Cor de bordas: com seleção → células; sem → `block.style.borderColor`.
+ * `color` undefined remove a cor (célula herda bloco; bloco volta ao default do host).
+ */
+export function patchCanvasTableBorderColor(params: {
+  block: ComunicadoCanvasTableBlock;
+  selection?: readonly CanvasTableCellRef[] | null;
+  color: string | undefined;
+}): Partial<ComunicadoCanvasTableBlock> {
+  const selection = params.selection ?? [];
+  if (selection.length) {
+    if (params.color != null) {
+      return {
+        cells: patchCanvasTableCellsStyle({
+          cells: params.block.cells,
+          selection,
+          stylePatch: { borderColor: params.color },
+        }),
+      };
+    }
+    const next = params.block.cells.map((row) => row.map((cell) => normalizeCanvasTableCell(cell)));
+    for (const { row, col } of selection) {
+      const current = next[row]?.[col];
+      if (current?.style?.borderColor == null) continue;
+      const style = { ...current.style };
+      delete style.borderColor;
+      next[row]![col] = {
+        ...current,
+        style: Object.keys(style).length ? style : undefined,
+      };
+    }
+    return { cells: next };
+  }
+  const nextStyle = { ...(params.block.style ?? {}) };
+  if (params.color == null) {
+    delete nextStyle.borderColor;
+  } else {
+    nextStyle.borderColor = params.color;
+  }
+  return { style: nextStyle };
+}
