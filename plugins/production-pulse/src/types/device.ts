@@ -38,6 +38,7 @@ export type DeviceListItem = {
   name: string;
   ipAddress: string;
   controllerCode: string | null;
+  firmwareSource: string | null;
   driverKey: string;
   roleKey: string;
   enabled: boolean;

@@ -4,6 +4,7 @@ import {
   PpNativeInlineTextField,
   PpNativeSelectField,
   PpNativeSwitchField,
+  PpNativeTextAreaField,
   PpNativeTextField,
   ppFieldError,
   ppFieldHint,
@@ -110,6 +111,19 @@ export function DeviceForm({
           placeholder="ESP-00A1B2C3"
           onChange={(value) => onChange({ controllerCode: value })}
           afterControl={ppFieldError(errors?.controllerCode)}
+        />
+
+        <PpNativeTextAreaField
+          id="pp-device-firmware-source"
+          label="Código .ino"
+          hint={PP_HELP.form.firmwareSource}
+          className="pp-firmware-source-field"
+          controlClassName="pp-firmware-source-field__control"
+          rows={14}
+          value={device.firmwareSource}
+          placeholder="// Cole o sketch Arduino completo deste dispositivo"
+          onChange={(value) => onChange({ firmwareSource: value })}
+          afterControl={ppFieldError(errors?.firmwareSource)}
         />
 
         <PpNativeSelectField

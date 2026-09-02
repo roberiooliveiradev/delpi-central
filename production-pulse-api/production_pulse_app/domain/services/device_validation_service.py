@@ -83,6 +83,16 @@ def normalize_controller_code(controller_code: str | None) -> str | None:
     return normalized
 
 
+def normalize_firmware_source(firmware_source: str | None) -> str | None:
+    """Sketch .ino opcional; sem limite de tamanho. Vazio vira None."""
+    if firmware_source is None:
+        return None
+    normalized = str(firmware_source).strip("\n\r")
+    if not normalized.strip():
+        return None
+    return normalized
+
+
 __all__ = [
     "DeviceValidationError",
     "ResolvedDriver",
@@ -90,6 +100,7 @@ __all__ = [
     "validate_branch",
     "validate_poll_interval_ms",
     "normalize_controller_code",
+    "normalize_firmware_source",
     "normalize_ip_address",
     "normalize_name",
 ]

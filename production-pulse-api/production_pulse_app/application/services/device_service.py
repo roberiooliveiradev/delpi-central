@@ -15,6 +15,7 @@ from production_pulse_app.domain.services.device_serialization_service import de
 from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.domain.services.device_validation_service import (
     normalize_controller_code,
+    normalize_firmware_source,
     normalize_ip_address,
     normalize_name,
     resolve_driver,
@@ -136,6 +137,11 @@ class DeviceService:
             if "controller_code" in payload
             else payload.get("controllerCode")
         )
+        firmware_source = normalize_firmware_source(
+            payload.get("firmware_source")
+            if "firmware_source" in payload
+            else payload.get("firmwareSource")
+        )
         row = self._repository.create(
             branch=branch,
             name=name,
@@ -145,6 +151,7 @@ class DeviceService:
             enabled=enabled,
             poll_interval_ms=poll_interval,
             controller_code=controller_code,
+            firmware_source=firmware_source,
             actor_sub=actor_sub,
         )
         return json_safe(device_row_to_api(row))
@@ -173,6 +180,11 @@ class DeviceService:
             if "controller_code" in payload
             else payload.get("controllerCode")
         )
+        firmware_source = normalize_firmware_source(
+            payload.get("firmware_source")
+            if "firmware_source" in payload
+            else payload.get("firmwareSource")
+        )
         row = self._repository.replace(
             device_id,
             branch=branch,
@@ -183,6 +195,7 @@ class DeviceService:
             enabled=enabled,
             poll_interval_ms=poll_interval,
             controller_code=controller_code,
+            firmware_source=firmware_source,
             actor_sub=actor_sub,
         )
         return json_safe(device_row_to_api(row))
@@ -208,6 +221,12 @@ class DeviceService:
                 payload.get("controller_code")
                 if "controller_code" in payload
                 else payload.get("controllerCode")
+            )
+        if "firmware_source" in payload or "firmwareSource" in payload:
+            updates["firmware_source"] = normalize_firmware_source(
+                payload.get("firmware_source")
+                if "firmware_source" in payload
+                else payload.get("firmwareSource")
             )
         if "driver_key" in payload or "driverKey" in payload:
             driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))

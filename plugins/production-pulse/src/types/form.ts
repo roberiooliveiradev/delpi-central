@@ -9,6 +9,7 @@ export type DeviceFormValues = {
   branch: string;
   ipAddress: string;
   controllerCode: string;
+  firmwareSource: string;
   driverKey: string;
   pollIntervalMs: number;
   enabled: boolean;
@@ -78,6 +79,7 @@ export const DEFAULT_DEVICE_FORM_VALUES: DeviceFormValues = {
   branch: "01",
   ipAddress: "",
   controllerCode: "",
+  firmwareSource: "",
   driverKey: "esp8266_counter_v1",
   pollIntervalMs: POLL_INTERVAL_DEFAULT_MS,
   enabled: true,

@@ -108,6 +108,7 @@ export function DeviceFormPage({
           branch: row.branch,
           ipAddress: row.ipAddress,
           controllerCode: row.controllerCode ?? "",
+          firmwareSource: row.firmwareSource ?? "",
           driverKey: row.driverKey,
           pollIntervalMs: row.pollIntervalMs,
           enabled: row.enabled,

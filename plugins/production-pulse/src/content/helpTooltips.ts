@@ -81,6 +81,8 @@ export const PP_HELP = {
       "Endereço IPv4 fixo do hardware na rede industrial. Deve ser alcançável pela API.",
     controllerCode:
       "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde.",
+    firmwareSource:
+      "Cole aqui o sketch Arduino (.ino) deste dispositivo. Sem limite de tamanho. Fica disponível na aba Firmware do detalhe, pronto para copiar.",
     driver:
       "Protocolo/firmware instalado no device. Define quais métricas são lidas e se há comandos (+/−/zerar).",
     driverPreview:
@@ -119,6 +121,11 @@ export const PP_HELP = {
     tabOverview: "Status ao vivo, amarração vigente e métricas atuais do device.",
     tabHistory: "Gráfico e tabela de leituras ao longo do tempo.",
     tabCommands: "Auditoria de comandos enviados ao hardware (zerar, +/−).",
+    tabFirmware: "Sketch .ino cadastrado — leitura e cópia para gravar no dispositivo.",
+    firmwareEmpty: "Nenhum código .ino cadastrado. Edite o dispositivo e cole o sketch.",
+    firmwareCopy: "Copiar código",
+    firmwareCopied: "Copiado",
+    firmwareCopyFailed: "Não foi possível copiar. Selecione o texto e copie manualmente.",
     liveMetrics:
       "Valores lidos na última comunicação. A tela atualiza sozinha no ritmo do intervalo de poll do dispositivo.",
     bindingCard:

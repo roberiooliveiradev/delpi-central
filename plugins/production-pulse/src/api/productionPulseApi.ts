@@ -93,6 +93,7 @@ export async function createDevice(device: DeviceFormValues): Promise<DeviceList
     branch: device.branch,
     ipAddress: device.ipAddress.trim(),
     controllerCode: device.controllerCode.trim() || null,
+    firmwareSource: device.firmwareSource.trim() ? device.firmwareSource.replace(/^\n+|\n+$/g, "") : null,
     driverKey: device.driverKey,
     pollIntervalMs: device.pollIntervalMs,
     enabled: device.enabled,
@@ -109,6 +110,9 @@ export async function replaceDevice(deviceId: string, device: DeviceFormValues):
       branch: device.branch,
       ipAddress: device.ipAddress.trim(),
       controllerCode: device.controllerCode.trim() || null,
+      firmwareSource: device.firmwareSource.trim()
+        ? device.firmwareSource.replace(/^\n+|\n+$/g, "")
+        : null,
       driverKey: device.driverKey,
       pollIntervalMs: device.pollIntervalMs,
       enabled: device.enabled,

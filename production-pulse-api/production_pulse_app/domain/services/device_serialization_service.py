@@ -19,6 +19,7 @@ def device_row_to_api(
         "name": row["name"],
         "ipAddress": str(row["ip_address"]),
         "controllerCode": row.get("controller_code"),
+        "firmwareSource": row.get("firmware_source"),
         "driverKey": row["driver_key"],
         "roleKey": row["role_key"],
         "enabled": row["enabled"],

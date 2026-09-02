@@ -21,6 +21,12 @@ class DeviceNotFoundError(Exception):
 
 
 _DEVICE_COLUMNS = """
+    id, branch, name, ip_address, controller_code, firmware_source, driver_key, role_key, enabled,
+    poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
+    last_metrics, last_error, created_at, updated_at, created_by, updated_by
+"""
+
+_DEVICE_LIST_COLUMNS = """
     id, branch, name, ip_address, controller_code, driver_key, role_key, enabled,
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by
@@ -59,7 +65,7 @@ class PostgresDeviceRepository:
             params.extend([pattern, pattern, pattern])
         where_sql = " AND ".join(clauses)
         query = f"""
-            SELECT {_DEVICE_COLUMNS}
+            SELECT {_DEVICE_LIST_COLUMNS}
             FROM production_pulse.devices
             WHERE {where_sql}
             ORDER BY branch, name
@@ -93,6 +99,7 @@ class PostgresDeviceRepository:
         enabled: bool,
         poll_interval_ms: int,
         controller_code: str | None = None,
+        firmware_source: str | None = None,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -101,10 +108,10 @@ class PostgresDeviceRepository:
                     cur.execute(
                         f"""
                         INSERT INTO production_pulse.devices (
-                            branch, name, ip_address, controller_code, driver_key, role_key,
-                            enabled, poll_interval_ms, created_by, updated_by
+                            branch, name, ip_address, controller_code, firmware_source,
+                            driver_key, role_key, enabled, poll_interval_ms, created_by, updated_by
                         )
-                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING {_DEVICE_COLUMNS}
                         """,
                         (
@@ -112,6 +119,7 @@ class PostgresDeviceRepository:
                             name,
                             ip_address,
                             controller_code,
+                            firmware_source,
                             driver_key,
                             role_key,
                             enabled,
@@ -141,6 +149,7 @@ class PostgresDeviceRepository:
         enabled: bool,
         poll_interval_ms: int,
         controller_code: str | None = None,
+        firmware_source: str | None = None,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -153,6 +162,7 @@ class PostgresDeviceRepository:
                             name = %s,
                             ip_address = %s::inet,
                             controller_code = %s,
+                            firmware_source = %s,
                             driver_key = %s,
                             role_key = %s,
                             enabled = %s,
@@ -167,6 +177,7 @@ class PostgresDeviceRepository:
                             name,
                             ip_address,
                             controller_code,
+                            firmware_source,
                             driver_key,
                             role_key,
                             enabled,
@@ -204,6 +215,7 @@ class PostgresDeviceRepository:
             "name": "name",
             "ip_address": "ip_address",
             "controller_code": "controller_code",
+            "firmware_source": "firmware_source",
             "driver_key": "driver_key",
             "role_key": "role_key",
             "enabled": "enabled",

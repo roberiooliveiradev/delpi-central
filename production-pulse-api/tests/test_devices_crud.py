@@ -82,3 +82,41 @@ def test_create_device_persists_controller_code(client, unique_ip):
 
     fetched = client.get(f"/devices/{data['id']}")
     assert fetched.json()["data"]["controllerCode"] == code
+
+
+def test_create_device_persists_firmware_source(client, unique_ip):
+    sketch = "// Teste.ino\nvoid setup() {}\nvoid loop() {}\n"
+    created = client.post(
+        "/devices",
+        json={
+            "name": "ESP com firmware",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_counter_v1",
+            "firmwareSource": sketch,
+        },
+    )
+    assert created.status_code == 201
+    data = created.json()["data"]
+    assert data["firmwareSource"] == sketch.rstrip("\n")
+
+    fetched = client.get(f"/devices/{data['id']}")
+    assert fetched.json()["data"]["firmwareSource"] == sketch.rstrip("\n")
+
+    listed = client.get("/devices", params={"branch": "01"})
+    assert listed.status_code == 200
+    item = next(row for row in listed.json()["data"]["items"] if row["id"] == data["id"])
+    assert item.get("firmwareSource") in (None, "")
+
+    replaced = client.put(
+        f"/devices/{data['id']}",
+        json={
+            "name": "ESP com firmware",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_counter_v1",
+            "firmwareSource": "",
+        },
+    )
+    assert replaced.status_code == 200
+    assert replaced.json()["data"]["firmwareSource"] is None

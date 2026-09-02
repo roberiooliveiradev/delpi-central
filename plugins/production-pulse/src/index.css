@@ -1014,6 +1014,31 @@
   max-height: 320px;
 }
 
+.pp-firmware-source-field__control textarea,
+.dashboard-production-pulse .pp-firmware-source-field textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre;
+  tab-size: 2;
+  min-height: 16rem;
+}
+
+.pp-firmware-source {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pp-border) 35%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre;
+  overflow: auto;
+  max-height: min(70vh, 48rem);
+  tab-size: 2;
+  user-select: text;
+}
+
 .dashboard-production-pulse--operator {
   --pp-section-gap: clamp(12px, 2.4vw, 20px);
   --pp-grid-gap: clamp(10px, 2vw, 20px);
