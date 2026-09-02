@@ -10,6 +10,7 @@ import { BillingPage } from "./pages/BillingPage";
 import { CostCenterMonthPage } from "./pages/CostCenterMonthPage";
 import { CostCentersPage } from "./pages/CostCentersPage";
 import { DelinquencyPage } from "./pages/DelinquencyPage";
+import { FreightPage } from "./pages/FreightPage";
 import { IndicatorsPage } from "./pages/IndicatorsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import {
@@ -21,7 +22,14 @@ import {
 } from "./utils/routeParser";
 
 /** Subplugins com página própria — os demais voltam para a gestão à vista. */
-const WORKSPACES = new Set([DEFAULT_SUBPLUGIN, "billing", "delinquency", "cost-centers", "indicators"]);
+const WORKSPACES = new Set([
+  DEFAULT_SUBPLUGIN,
+  "billing",
+  "delinquency",
+  "cost-centers",
+  "freight",
+  "indicators",
+]);
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -103,6 +111,21 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         supplierCode={route.supplierCode}
         supplierStore={route.supplierStore}
         excludeMp={route.excludeMp}
+        page={route.page}
+      />
+    );
+  } else if (route.subpluginId === "freight") {
+    workspace = (
+      <FreightPage
+        branch={route.branch}
+        issueStart={route.issueStart}
+        issueEnd={route.issueEnd}
+        entryStart={route.entryStart}
+        entryEnd={route.entryEnd}
+        supplierCode={route.supplierCode}
+        invoiceDocument={route.invoiceDocument}
+        freightDocument={route.freightDocument}
+        situation={route.situation}
         page={route.page}
       />
     );

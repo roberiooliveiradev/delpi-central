@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "financial",
   "name": "Portal Financeiro",
-  "description": "Gestão à vista financeira, faturamento (ROL), inadimplência de clientes, despesas por centro de custo e indicadores IDD/IGD.",
+  "description": "Gestão à vista financeira, faturamento (ROL), inadimplência de clientes, despesas por centro de custo, frete das compras e indicadores IDD/IGD.",
   "category": "financeiro",
   "icon": "wallet",
   "version": "0.1.0",
@@ -26,6 +26,12 @@
       "code": "financial.cost-centers.view",
       "name": "Despesas por centro de custo",
       "description": "Ver gasto por centro de custo, fornecedor e lançamentos.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.freight.view",
+      "name": "Frete das compras",
+      "description": "Ver o percentual de frete das notas de compra e os vínculos com CT-e.",
       "module": "financial"
     },
     {
@@ -96,11 +102,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/financial/freight",
+      "label": "Frete das compras",
+      "permission": "financial.freight.view",
+      "icon": "truck",
+      "order": 43,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/financial/indicators",
       "label": "Indicadores",
       "permission": "financial.indicators.view",
       "icon": "gauge",
-      "order": 43,
+      "order": 44,
       "showInMenu": false
     }
   ],

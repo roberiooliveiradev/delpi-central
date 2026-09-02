@@ -34,6 +34,8 @@ type FinWorkspaceHeaderProps = {
   onRefresh?: () => void;
   refreshBusy?: boolean;
   onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
+  /** Telas com filtros próprios na URL assumem a navegação ao trocar de filial. */
+  onBranchChange?: (next: FinancialBranch) => void;
 };
 
 export function FinWorkspaceHeader({
@@ -56,9 +58,14 @@ export function FinWorkspaceHeader({
   onRefresh,
   refreshBusy,
   onPeriodChange,
+  onBranchChange,
 }: FinWorkspaceHeaderProps) {
   const setBranch = (next: FinancialBranch) => {
     storeBranch(next);
+    if (onBranchChange) {
+      onBranchChange(next);
+      return;
+    }
     navigateFinancial(
       buildFinancialHref({ subpluginId, branch: next, startDate, endDate, granularity, month }),
     );

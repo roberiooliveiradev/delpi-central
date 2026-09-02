@@ -24,6 +24,14 @@ export type FinancialRoute = {
   excludeMp: boolean;
   /** Mês em foco no detalhamento de despesas (`AAAA-MM`). */
   month: string | null;
+  /** Fretes: emissão e digitação da NF de compra são intervalos independentes. */
+  issueStart: string | null;
+  issueEnd: string | null;
+  entryStart: string | null;
+  entryEnd: string | null;
+  invoiceDocument: string | null;
+  freightDocument: string | null;
+  situation: string | null;
   page: number;
   pathname: string;
 };
@@ -31,6 +39,8 @@ export type FinancialRoute = {
 /** Situação do título aceita na URL — espelha o contrato do BFF. */
 const TITLE_STATUSES = new Set(["all", "on_time", "late"]);
 const GRANULARITIES = new Set(["day", "week", "month", "year"]);
+/** Situação da NF na análise de frete — espelha `situations` do freight.json. */
+const FREIGHT_SITUATIONS = new Set(["all", "normal", "above_limit", "inconsistent"]);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -84,6 +94,7 @@ export function parseFinancialPath(
   const branchRaw = params.get("branch");
   const statusRaw = params.get("status")?.trim() || "";
   const granularityRaw = params.get("granularity")?.trim().toLowerCase() || "";
+  const situationRaw = params.get("situation")?.trim().toLowerCase() || "";
 
   return {
     subpluginId: segment || DEFAULT_SUBPLUGIN,
@@ -102,6 +113,13 @@ export function parseFinancialPath(
     granularity: GRANULARITIES.has(granularityRaw) ? granularityRaw : null,
     excludeMp: parseBooleanFlag(params.get("excludeMp")),
     month: yearMonthOrNull(params.get("month")),
+    issueStart: isoDateOrNull(params.get("issueStart")),
+    issueEnd: isoDateOrNull(params.get("issueEnd")),
+    entryStart: isoDateOrNull(params.get("entryStart")),
+    entryEnd: isoDateOrNull(params.get("entryEnd")),
+    invoiceDocument: params.get("invoiceDocument")?.trim() || null,
+    freightDocument: params.get("freightDocument")?.trim() || null,
+    situation: FREIGHT_SITUATIONS.has(situationRaw) ? situationRaw : null,
     page: positiveIntOrOne(params.get("page")),
     pathname: path || FINANCIAL_BASE_PATH,
   };
@@ -124,6 +142,13 @@ export function buildFinancialHref(input: {
   granularity?: string | null;
   excludeMp?: boolean | null;
   month?: string | null;
+  issueStart?: string | null;
+  issueEnd?: string | null;
+  entryStart?: string | null;
+  entryEnd?: string | null;
+  invoiceDocument?: string | null;
+  freightDocument?: string | null;
+  situation?: string | null;
   page?: number | null;
 }): string {
   const path =
@@ -146,6 +171,13 @@ export function buildFinancialHref(input: {
   if (input.granularity) params.set("granularity", input.granularity);
   if (input.excludeMp) params.set("excludeMp", "1");
   if (input.month) params.set("month", input.month);
+  if (input.issueStart) params.set("issueStart", input.issueStart);
+  if (input.issueEnd) params.set("issueEnd", input.issueEnd);
+  if (input.entryStart) params.set("entryStart", input.entryStart);
+  if (input.entryEnd) params.set("entryEnd", input.entryEnd);
+  if (input.invoiceDocument) params.set("invoiceDocument", input.invoiceDocument);
+  if (input.freightDocument) params.set("freightDocument", input.freightDocument);
+  if (input.situation && input.situation !== "all") params.set("situation", input.situation);
   if (input.page && input.page > 1) params.set("page", String(input.page));
   return `${path}?${params.toString()}`;
 }

@@ -6,6 +6,7 @@ import {
   Receipt,
   Target,
   TrendingUp,
+  Truck,
   Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -19,6 +20,7 @@ const ICONS: Record<string, LucideIcon> = {
   banknote: Banknote,
   "hand-coins": HandCoins,
   receipt: Receipt,
+  truck: Truck,
   gauge: Gauge,
   target: Target,
   "trending-up": TrendingUp,

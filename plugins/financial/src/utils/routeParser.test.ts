@@ -63,6 +63,34 @@ describe("parseFinancialPath", () => {
     ).toBeNull();
   });
 
+  it("reads freight filters from the shareable URL", () => {
+    const route = parseFinancialPath(
+      "/apps/financial/freight",
+      "?branch=01&issueStart=2026-01-01&issueEnd=2026-01-31&entryStart=2026-02-01&entryEnd=2026-02-28&supplier=000045&invoiceDocument=123456&freightDocument=987654&situation=above_limit&page=2",
+      "02",
+    );
+    expect(route.subpluginId).toBe("freight");
+    expect(route.issueStart).toBe("2026-01-01");
+    expect(route.issueEnd).toBe("2026-01-31");
+    expect(route.entryStart).toBe("2026-02-01");
+    expect(route.entryEnd).toBe("2026-02-28");
+    expect(route.supplierCode).toBe("000045");
+    expect(route.invoiceDocument).toBe("123456");
+    expect(route.freightDocument).toBe("987654");
+    expect(route.situation).toBe("above_limit");
+    expect(route.page).toBe(2);
+  });
+
+  it("drops an unknown freight situation and malformed freight dates", () => {
+    const route = parseFinancialPath(
+      "/apps/financial/freight",
+      "?situation=acima&issueStart=01%2F01%2F2026",
+      "01",
+    );
+    expect(route.situation).toBeNull();
+    expect(route.issueStart).toBeNull();
+  });
+
   it("ignores malformed dates", () => {
     const route = parseFinancialPath(
       "/apps/financial/cost-centers",
@@ -129,6 +157,33 @@ describe("buildFinancialHref", () => {
       }),
     ).toBe(
       "/apps/financial/cost-centers?branch=01&costCenter=1101&supplier=000045&supplierStore=01&excludeMp=1&month=2026-09",
+    );
+  });
+
+  it("serializes freight filters and omits the default situation", () => {
+    expect(
+      buildFinancialHref({
+        subpluginId: "freight",
+        branch: "01",
+        issueStart: "2026-01-01",
+        issueEnd: "2026-01-31",
+        invoiceDocument: "123456",
+        situation: "all",
+      }),
+    ).toBe(
+      "/apps/financial/freight?branch=01&issueStart=2026-01-01&issueEnd=2026-01-31&invoiceDocument=123456",
+    );
+    expect(
+      buildFinancialHref({
+        subpluginId: "freight",
+        branch: "all",
+        entryStart: "2026-02-01",
+        entryEnd: "2026-02-28",
+        freightDocument: "987654",
+        situation: "inconsistent",
+      }),
+    ).toBe(
+      "/apps/financial/freight?branch=all&entryStart=2026-02-01&entryEnd=2026-02-28&freightDocument=987654&situation=inconsistent",
     );
   });
 });

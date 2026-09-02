@@ -27,6 +27,16 @@ export const helpTooltips = {
     "Despesa apropriada mês a mês nos últimos 12 meses, com os filtros da tela. Clique na coluna do mês para abrir o detalhamento com KPIs, rankings e cada lançamento.",
   costCenterEntries:
     "Cada linha é um item de nota de entrada com centro de custo apropriado. Abra a linha para ver pedido, conta contábil e rateio.",
+  freight:
+    "Peso do frete em cada nota de compra: o valor bruto de cada CT-e é rateado entre as notas amarradas a ele, proporcional ao valor da mercadoria, e comparado com o limite da filial.",
+  freightAllocation:
+    "Quando um CT-e cobre várias notas, o valor bruto é dividido na proporção da mercadoria de cada nota. A base do rateio soma todas as notas amarradas ao CT-e, mesmo as fora do período filtrado, para o rateio fechar.",
+  freightLimits:
+    "Percentual máximo de frete aceito sobre o valor da mercadoria, definido por filial. Notas acima do limite ficam destacadas.",
+  freightSituation:
+    "Dentro do limite, acima do limite ou inconsistente. Inconsistente é o vínculo que não permite calcular o percentual com confiança — ele fica de fora dos totais.",
+  freightInconsistencies:
+    "Vínculos de frete que o Protheus tem, mas que não fecham: nota ou CT-e não localizados, valor zerado, vínculo repetido ou documento de espécie fora do padrão. Aparecem para correção, não são escondidos.",
   indicators:
     "Nota IDD do departamento Financeiro e IGD da Delpi, publicados no Indicadores estratégicos. A nota pondera cada indicador pelo peso definido na competência.",
   idd: "Índice de desempenho do departamento: média ponderada dos indicadores do Financeiro na competência.",
