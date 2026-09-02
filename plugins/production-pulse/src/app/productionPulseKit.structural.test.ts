@@ -65,6 +65,13 @@ describe("production-pulse kit contracts", () => {
     expect(hub).not.toMatch(/pp-operator-hub__search-actions/);
   });
 
+  it("painel admin tem atalho simétrico para modo operador", () => {
+    const panel = readRelative("pages/PanelPage.tsx");
+    expect(panel).toMatch(/productionPulseOperatorPath/);
+    expect(panel).toMatch(/Modo operador/);
+    expect(panel).toMatch(/canOperator/);
+  });
+
   it("FilterInputField declara type explícito no painel", () => {
     const filtersBar = readRelative("components/DeviceFiltersBar.tsx");
     expect(filtersBar).toMatch(/type="search"/);

@@ -253,6 +253,20 @@
   }
 }
 
+.pp-panel-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dashboard-production-pulse .pp-panel-operator-link {
+  min-height: var(--delpi-ui-control-height, 42px);
+  height: var(--delpi-ui-control-height, 42px);
+  padding-inline: 14px;
+  white-space: nowrap;
+}
 
 .pp-filter-new-device__label {
   white-space: nowrap;

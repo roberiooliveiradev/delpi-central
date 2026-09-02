@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 
-import { productionPulseDeviceDetailPath, productionPulseDeviceNewPath } from "../constants/routes";
+import {
+  productionPulseDeviceDetailPath,
+  productionPulseDeviceNewPath,
+  productionPulseOperatorPath,
+} from "../constants/routes";
 import { navigateProductionPulse } from "../utils/navigation";
 
 import { resolveBranchOptions } from "../constants/branches";
@@ -115,15 +119,29 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         description={PP_HELP.shell.heroTitle}
         badge={ppShellIcon}
         actions={
-          branchOptions.length > 1 ? (
-            <PpSegmentToggle
-              ariaLabel="Filial"
-              size="sm"
-              widthMode="content"
-              value={filters.branch}
-              onChange={(branch) => setFilters({ branch, page: 1 })}
-              options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
-            />
+          permissions.canOperator || branchOptions.length > 1 ? (
+            <div className="pp-panel-hero-actions">
+              {permissions.canOperator ? (
+                <PpActionButton
+                  variant="ghost"
+                  className="pp-panel-operator-link"
+                  title={PP_HELP.shell.modeOperator}
+                  onClick={() => navigateProductionPulse(productionPulseOperatorPath(filters.branch))}
+                >
+                  Modo operador
+                </PpActionButton>
+              ) : null}
+              {branchOptions.length > 1 ? (
+                <PpSegmentToggle
+                  ariaLabel="Filial"
+                  size="sm"
+                  widthMode="content"
+                  value={filters.branch}
+                  onChange={(branch) => setFilters({ branch, page: 1 })}
+                  options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
+                />
+              ) : null}
+            </div>
           ) : null
         }
       />
