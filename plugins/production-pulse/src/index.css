@@ -834,6 +834,30 @@
   margin-top: 12px;
 }
 
+.pp-chip-health {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pp-chip-health__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 30%) 1fr;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+
+.pp-chip-health__row dt {
+  margin: 0;
+  color: var(--pp-text-muted);
+  font-size: var(--pp-font-sm);
+}
+
+.pp-chip-health__row dd {
+  margin: 0;
+  font-weight: 600;
+}
+
 .pp-detail-history,
 .pp-detail-muted {
   display: flex;

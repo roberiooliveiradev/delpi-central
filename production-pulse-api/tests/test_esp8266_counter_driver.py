@@ -42,6 +42,11 @@ def test_probe_test_includes_controller_code_from_status():
                     "codigoControlador": "ESP-00ABCDEF",
                     "contador": 10,
                     "mac": "AA:BB:CC:DD:EE:FF",
+                    "firmwareVersion": "esp8266_counter_v1.1.0",
+                    "uptimeMs": 60000,
+                    "freeHeap": 32000,
+                    "rssi": -55,
+                    "wifiConnected": True,
                 },
             )
         if request.url.path == "/api/config":
@@ -62,6 +67,8 @@ def test_probe_test_includes_controller_code_from_status():
     assert reading.metrics == {"counter": 10}
     assert reading.meta["controllerCode"] == "ESP-00ABCDEF"
     assert reading.meta["mac"] == "AA:BB:CC:DD:EE:FF"
+    assert reading.meta["firmwareVersion"] == "esp8266_counter_v1.1.0"
+    assert reading.meta["rssi"] == -55
     assert reading.meta["deviceConfig"]["ssid"] == "FactoryNet"
 
 

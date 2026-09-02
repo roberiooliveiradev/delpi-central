@@ -44,24 +44,43 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     void reloadDevice();
   }, [reloadDevice]);
 
+  const applyLiveSnapshot = useCallback((live: LivePollResult) => {
+    setLiveSnapshot(live);
+    setDevice((current) =>
+      current
+        ? {
+            ...current,
+            lastMetrics: live.metrics,
+            lastSeenAt: live.recordedAt,
+            status: live.status as DeviceListItem["status"],
+            online: live.online,
+          }
+        : current,
+    );
+  }, []);
+
   const quietLiveRefresh = useCallback(async () => {
     if (!enabled) return;
     try {
-      const row = await fetchDevice(deviceId);
-      setDevice(row);
-      setLiveSnapshot(null);
+      const live = await fetchDeviceLive(deviceId);
+      applyLiveSnapshot(live);
       setHistoryRefreshToken((value) => value + 1);
       setCommandsRefreshToken((value) => value + 1);
     } catch {
       // Tick live silencioso — não mascara erros de ações manuais.
     }
-  }, [deviceId, enabled]);
+  }, [applyLiveSnapshot, deviceId, enabled]);
 
   useDeviceLiveRefresh({
     enabled: enabled && Boolean(device),
     pollIntervalMs: device?.pollIntervalMs,
     onTick: quietLiveRefresh,
   });
+
+  useEffect(() => {
+    if (!enabled) return;
+    void quietLiveRefresh();
+  }, [deviceId, enabled]); // carga inicial de live/saúde ao abrir o detalhe
 
   const applyDeviceActionFailure = async (err: unknown, fallback: string) => {
     await reloadDevice();
@@ -80,18 +99,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     setActionError(null);
     try {
       const live = await fetchDeviceLive(deviceId);
-      setLiveSnapshot(live);
-      setDevice((current) =>
-        current
-          ? {
-              ...current,
-              lastMetrics: live.metrics,
-              lastSeenAt: live.recordedAt,
-              status: live.status as DeviceListItem["status"],
-              online: live.online,
-            }
-          : current,
-      );
+      applyLiveSnapshot(live);
     } catch (err) {
       await applyDeviceActionFailure(err, "Erro ao ler device ao vivo.");
     } finally {
@@ -105,7 +113,14 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     setActionError(null);
     try {
       const polled = await pollDevice(deviceId);
-      setLiveSnapshot(polled);
+      setLiveSnapshot((current) => ({
+        ...polled,
+        firmwareVersion: current?.firmwareVersion ?? polled.firmwareVersion,
+        uptimeMs: current?.uptimeMs ?? polled.uptimeMs,
+        freeHeap: current?.freeHeap ?? polled.freeHeap,
+        rssi: current?.rssi ?? polled.rssi,
+        wifiConnected: current?.wifiConnected ?? polled.wifiConnected,
+      }));
       setDevice((current) =>
         current
           ? {
@@ -119,6 +134,13 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
       );
       setHistoryRefreshToken((value) => value + 1);
       setCommandsRefreshToken((value) => value + 1);
+      // Refresh chip health after persist poll (status is not part of poll path).
+      try {
+        const live = await fetchDeviceLive(deviceId);
+        applyLiveSnapshot(live);
+      } catch {
+        // Health is best-effort after poll.
+      }
     } catch (err) {
       await applyDeviceActionFailure(err, "Erro ao executar poll.");
     } finally {

@@ -9,6 +9,7 @@ import { productionPulseDeviceDetailPath } from "../../constants/routes";
 import { navigateProductionPulse } from "../../utils/navigation";
 import { isoHoursAgo, primaryMetricKey, readingsToChartPoints } from "../../utils/detailDisplay";
 import { DeviceBindingCard } from "./DeviceBindingCard";
+import { DeviceChipHealthCard } from "./DeviceChipHealthCard";
 import { DeviceMetricHero } from "./DeviceMetricHero";
 
 type DeviceOverviewTabProps = {
@@ -65,6 +66,20 @@ export function DeviceOverviewTab({
         />
         <DeviceBindingCard binding={device.binding} deviceName={device.name} />
       </div>
+
+      <DeviceChipHealthCard
+        health={
+          liveSnapshot
+            ? {
+                firmwareVersion: liveSnapshot.firmwareVersion,
+                uptimeMs: liveSnapshot.uptimeMs,
+                freeHeap: liveSnapshot.freeHeap,
+                rssi: liveSnapshot.rssi,
+                wifiConnected: liveSnapshot.wifiConnected,
+              }
+            : null
+        }
+      />
 
       <PpSectionCard title="Mini histórico (24h)" hint={PP_HELP.detail.chartDelta}>
         <PpReadingsAreaChart points={deltaPoints} height={240} variant="mini" />

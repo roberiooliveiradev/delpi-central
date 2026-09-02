@@ -47,4 +47,14 @@ export type LivePollResult = {
     operatorSurface: string;
   };
   latencyMs?: number;
+  firmwareVersion?: string;
+  uptimeMs?: number;
+  freeHeap?: number;
+  rssi?: number;
+  wifiConnected?: boolean;
 };
+
+export type DeviceChipHealth = Pick<
+  LivePollResult,
+  "firmwareVersion" | "uptimeMs" | "freeHeap" | "rssi" | "wifiConnected"
+>;

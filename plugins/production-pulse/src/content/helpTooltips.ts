@@ -143,6 +143,16 @@ export const PP_HELP = {
     firmwareCopyFailed: "Não foi possível copiar. Selecione o texto e copie manualmente.",
     liveMetrics:
       "Valores lidos na última comunicação. A tela atualiza sozinha no ritmo do intervalo de poll do dispositivo.",
+    chipHealth:
+      "Telemetria do chip via GET /api/status (versão, uptime, RSSI, heap). Atualiza ao usar «Atualizar agora».",
+    chipHealthTitle: "Saúde do chip",
+    chipHealthVersion: "Firmware",
+    chipHealthUptime: "Uptime",
+    chipHealthRssi: "Wi-Fi RSSI",
+    chipHealthHeap: "Heap livre",
+    chipHealthWifi: "Wi-Fi",
+    chipHealthWifiOnline: "Conectado",
+    chipHealthWifiOffline: "Desconectado",
     bindingCard:
       "Objeto operacional onde o sensor está instalado. CT TOTVS aparece aqui quando vinculado.",
     chartDelta:

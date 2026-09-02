@@ -70,6 +70,7 @@ class DevicePollService:
         reading_id: int | None = None,
         meta: dict[str, Any] | None = None,
         latency_ms: int | None = None,
+        chip_health: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         connectivity = resolve_connectivity_status(device, has_binding=has_binding)
         payload: dict[str, Any] = {
@@ -88,6 +89,10 @@ class DevicePollService:
             payload["meta"] = meta
         if latency_ms is not None:
             payload["latencyMs"] = latency_ms
+        if chip_health:
+            for key, value in chip_health.items():
+                if value is not None:
+                    payload[key] = value
         return json_safe(payload)
 
     def read_live(self, device_id: UUID) -> dict[str, Any]:
@@ -113,6 +118,7 @@ class DevicePollService:
             has_binding=has_binding,
             metrics=public_metrics(canonical),
             recorded_at=reading.recorded_at,
+            chip_health=self._chip_health_from_driver(device),
         )
 
     def poll_and_persist(self, device_id: UUID, *, source: str = "manual") -> dict[str, Any]:
@@ -314,6 +320,26 @@ class DevicePollService:
             "skippedNoBinding": skipped,
             "results": results,
         }
+
+    def _chip_health_from_driver(self, device: dict[str, Any]) -> dict[str, Any]:
+        try:
+            driver = self._registry.get_implementation(device["driver_key"])
+        except DeviceDriverNotImplementedError:
+            return {}
+        fetch_identity = getattr(driver, "_fetch_identity", None)
+        if not callable(fetch_identity):
+            return {}
+        try:
+            identity = fetch_identity(device)
+        except DeviceDriverError:
+            return {}
+        if not isinstance(identity, dict):
+            return {}
+        health: dict[str, Any] = {}
+        for key in ("firmwareVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+            if key in identity and identity.get(key) is not None:
+                health[key] = identity[key]
+        return health
 
     def _read_from_driver(self, device: dict[str, Any]):
         try:
