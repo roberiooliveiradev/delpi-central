@@ -34,11 +34,12 @@ const PAGE_SIZE = 20;
 
 type DeviceHistoryTabProps = {
   device: DeviceListItem;
+  refreshToken?: number;
 };
 
 type ChartMode = "value" | "delta";
 
-export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
+export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabProps) {
   const viewport = useViewportBucket();
   const isMobile = isMobileViewport(viewport);
   const metricKey = primaryMetricKey(device.lastMetrics, device.capabilities);
@@ -56,7 +57,10 @@ export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    const quiet = refreshToken > 0;
+    if (!quiet) {
+      setLoading(true);
+    }
     setError(null);
     fetchDeviceReadings(device.id, {
       page,
@@ -77,7 +81,7 @@ export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
         setLoading(false);
       });
     return () => controller.abort();
-  }, [appliedFrom, appliedTo, device.id, metricKey, page]);
+  }, [appliedFrom, appliedTo, device.id, metricKey, page, refreshToken]);
 
   const chartPoints = useMemo(
     () => (metricKey ? readingsToChartPoints(readings, metricKey, chartMode) : []),

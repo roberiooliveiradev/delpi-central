@@ -118,7 +118,7 @@ export const PP_HELP = {
     tabHistory: "Gráfico e tabela de leituras ao longo do tempo.",
     tabCommands: "Auditoria de comandos enviados ao hardware (zerar, +/−).",
     liveMetrics:
-      "Valores lidos na última comunicação. Atualize com «Atualizar agora» se necessário.",
+      "Valores lidos na última comunicação. A tela atualiza sozinha no ritmo do intervalo de poll do dispositivo.",
     bindingCard:
       "Objeto operacional onde o sensor está instalado. CT TOTVS aparece aqui quando vinculado.",
     chartDelta:

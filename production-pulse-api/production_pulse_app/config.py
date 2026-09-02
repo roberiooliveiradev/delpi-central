@@ -76,6 +76,21 @@ class Settings:
         str(_get_env("PP_POLL_SCHEDULER_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    # Preenchido após instanciação (env ou content JSON).
+    PP_POLL_SCHEDULER_TICK_MS: int | None = None
+
+
+def _optional_positive_int(raw: str | None) -> int | None:
+    if raw is None or raw == "":
+        return None
+    value = int(raw)
+    if value < 1:
+        return None
+    return value
 
 
 settings = Settings()
+# Override opcional; None → device_validation_content.json → schedulerTickMs.default
+settings.PP_POLL_SCHEDULER_TICK_MS = _optional_positive_int(
+    _get_env("PP_POLL_SCHEDULER_TICK_MS", default="")
+)

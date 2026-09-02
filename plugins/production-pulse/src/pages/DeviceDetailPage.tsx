@@ -50,6 +50,7 @@ export function DeviceDetailPage({
     liveSnapshot,
     refreshing,
     commandsRefreshToken,
+    historyRefreshToken,
     refreshLive,
     pollNow,
     resetCounter,
@@ -184,7 +185,9 @@ export function DeviceDetailPage({
         />
       ) : null}
 
-      {tab === "history" ? <DeviceHistoryTab device={device} /> : null}
+      {tab === "history" ? (
+        <DeviceHistoryTab device={device} refreshToken={historyRefreshToken} />
+      ) : null}
 
       {tab === "commands" ? (
         <DeviceCommandsTab deviceId={deviceId} refreshToken={commandsRefreshToken} />

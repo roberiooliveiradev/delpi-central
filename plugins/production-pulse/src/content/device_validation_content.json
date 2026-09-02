@@ -5,6 +5,12 @@
       "max": 300000,
       "default": 30000
     },
+    "liveUiRefreshMs": {
+      "min": 50
+    },
+    "schedulerTickMs": {
+      "default": 100
+    },
     "nameMaxLength": 120
   },
   "patterns": {

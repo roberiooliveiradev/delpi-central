@@ -3,6 +3,7 @@ import validationContent from "./device_validation_content.json";
 export const POLL_INTERVAL_MIN_MS = validationContent.limits.pollIntervalMs.min;
 export const POLL_INTERVAL_MAX_MS = validationContent.limits.pollIntervalMs.max;
 export const POLL_INTERVAL_DEFAULT_MS = validationContent.limits.pollIntervalMs.default;
+export const LIVE_UI_REFRESH_MIN_MS = validationContent.limits.liveUiRefreshMs.min;
 export const NAME_MAX_LENGTH = validationContent.limits.nameMaxLength;
 export const VALID_BRANCHES = validationContent.validBranches;
 export const IPV4_REGEX = new RegExp(validationContent.patterns.ipv4);

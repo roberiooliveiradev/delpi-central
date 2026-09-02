@@ -45,6 +45,26 @@ def poll_interval_default(*, default: int = 30_000) -> int:
     return default
 
 
+def live_ui_refresh_min_ms(*, default: int = 50) -> int:
+    section = _limits_section().get("liveUiRefreshMs")
+    if not isinstance(section, dict):
+        return default
+    raw = section.get("min")
+    if isinstance(raw, (int, float)):
+        return max(1, int(raw))
+    return default
+
+
+def scheduler_tick_ms(*, default: int = 100) -> int:
+    section = _limits_section().get("schedulerTickMs")
+    if not isinstance(section, dict):
+        return default
+    raw = section.get("default")
+    if isinstance(raw, (int, float)):
+        return max(10, int(raw))
+    return default
+
+
 def name_max_length(*, default: int = 120) -> int:
     raw = _limits_section().get("nameMaxLength")
     if isinstance(raw, int) and raw > 0:
@@ -76,11 +96,13 @@ def matches_ipv4(value: str) -> bool:
 
 __all__ = [
     "ipv4_pattern",
+    "live_ui_refresh_min_ms",
     "load_device_validation_content",
     "matches_ipv4",
     "name_max_length",
     "poll_interval_default",
     "poll_interval_max",
     "poll_interval_min",
+    "scheduler_tick_ms",
     "valid_branches",
 ]

@@ -9,6 +9,7 @@ import {
 import type { DeviceListItem } from "../types/device";
 import type { DeviceDetailTab, LivePollResult } from "../types/detail";
 import { resolveDeviceActionError } from "../utils/apiErrors";
+import { useDeviceLiveRefresh } from "./useDeviceLiveRefresh";
 
 type UseDeviceDetailOptions = {
   deviceId: string;
@@ -23,6 +24,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   const [liveSnapshot, setLiveSnapshot] = useState<LivePollResult | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [commandsRefreshToken, setCommandsRefreshToken] = useState(0);
+  const [historyRefreshToken, setHistoryRefreshToken] = useState(0);
 
   const reloadDevice = useCallback(async () => {
     if (!enabled) return;
@@ -41,6 +43,25 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   useEffect(() => {
     void reloadDevice();
   }, [reloadDevice]);
+
+  const quietLiveRefresh = useCallback(async () => {
+    if (!enabled) return;
+    try {
+      const row = await fetchDevice(deviceId);
+      setDevice(row);
+      setLiveSnapshot(null);
+      setHistoryRefreshToken((value) => value + 1);
+      setCommandsRefreshToken((value) => value + 1);
+    } catch {
+      // Tick live silencioso — não mascara erros de ações manuais.
+    }
+  }, [deviceId, enabled]);
+
+  useDeviceLiveRefresh({
+    enabled: enabled && Boolean(device),
+    pollIntervalMs: device?.pollIntervalMs,
+    onTick: quietLiveRefresh,
+  });
 
   const applyDeviceActionFailure = async (err: unknown, fallback: string) => {
     await reloadDevice();
@@ -96,6 +117,8 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
             }
           : current,
       );
+      setHistoryRefreshToken((value) => value + 1);
+      setCommandsRefreshToken((value) => value + 1);
     } catch (err) {
       await applyDeviceActionFailure(err, "Erro ao executar poll.");
     } finally {
@@ -106,6 +129,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   const resetCounter = async () => {
     await executeDeviceCommand(deviceId, "reset");
     setCommandsRefreshToken((value) => value + 1);
+    setHistoryRefreshToken((value) => value + 1);
     await pollNow();
     await reloadDevice();
   };
@@ -118,6 +142,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     liveSnapshot,
     refreshing,
     commandsRefreshToken,
+    historyRefreshToken,
     reloadDevice,
     refreshLive,
     pollNow,

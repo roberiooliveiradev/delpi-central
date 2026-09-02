@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { fetchOperatorDevice } from "../../api/productionPulseApi";
 import { PpActionButton } from "../../app/productionPulseUi";
@@ -7,12 +7,12 @@ import { OperatorBrandBar } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
 import { resolveDeviceActionMessage } from "../../utils/apiErrors";
 import { PP_HELP } from "../../content/helpTooltips";
+import { useDeviceLiveRefresh } from "../../hooks/useDeviceLiveRefresh";
 import { navigateOperatorPlacementHub } from "../../utils/operatorNavigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import { formatMetricValue, metricLabel, metricUnit } from "../../utils/detailDisplay";
 import { resolveMetricThresholdLevel, gaugeThresholdAriaLabel } from "../../utils/gaugeThresholds";
 import { resolveOperatorHeaderTitle } from "../../utils/operatorDisplay";
-import { resolveOperatorRefreshIntervalMs } from "../../utils/operatorRefreshInterval";
 
 type GaugeReadoutSurfaceProps = {
   deviceId: string;
@@ -33,15 +33,13 @@ export function GaugeReadoutSurface({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const intervalMs = resolveOperatorRefreshIntervalMs(device.pollIntervalMs);
-    const timer = window.setInterval(() => {
-      fetchOperatorDevice(deviceId)
-        .then(setDevice)
-        .catch(() => undefined);
-    }, intervalMs);
-    return () => window.clearInterval(timer);
-  }, [device.pollIntervalMs, deviceId]);
+  useDeviceLiveRefresh({
+    enabled: true,
+    pollIntervalMs: device.pollIntervalMs,
+    onTick: async () => {
+      setDevice(await fetchOperatorDevice(deviceId));
+    },
+  });
 
   const syncNow = async () => {
     setBusy(true);
