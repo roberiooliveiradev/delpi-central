@@ -2,7 +2,7 @@
 
 > **Plugin:** `production-pulse` · **Root CSS:** `.dashboard-production-pulse` · **Prefixo BEM:** `pp-`  
 > **Kit:** `@delpi/plugin-ui/index` via Module Federation · **Ícones:** `lucide-react`  
-> **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md)
+> **Wireframes (estrutura):** [WIREFRAMES.md](./WIREFRAMES.md) · **Visuais e cores:** [VISUAL-WIREFRAMES-AND-COLORS.md](./VISUAL-WIREFRAMES-AND-COLORS.md)
 
 ---
 
@@ -11,6 +11,8 @@
 Pulso de Produção é **monitoramento IoT industrial**: dispositivos na rede, leituras ao vivo (golpes, rpm, °C) e amarração a **postos, máquinas ou equipamentos**. Tom **industrial limpo** — vocabulário visual dos dashboards Delpi (Production, Maintenance).
 
 ### 1.1 Cores (tokens locais)
+
+> **Mapa visual por tela/componente:** [VISUAL-WIREFRAMES-AND-COLORS.md](./VISUAL-WIREFRAMES-AND-COLORS.md)
 
 Mapeamento em `.dashboard-production-pulse` → `--delpi-ui-*` (kit). **Não** hardcode `#fff` / `#000` em componentes.
 

@@ -1,7 +1,7 @@
 # Wireframes — Production Pulse (Pulso de Produção)
 
 > **Id:** `production-pulse` · **basePath:** `/apps/production-pulse`  
-> **Design:** [DESIGN-FRONTEND.md](./DESIGN-FRONTEND.md) · **API:** [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md)  
+> **Design:** [DESIGN-FRONTEND.md](./DESIGN-FRONTEND.md) · **Visuais/cores:** [VISUAL-WIREFRAMES-AND-COLORS.md](./VISUAL-WIREFRAMES-AND-COLORS.md) · **API:** [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md)  
 > **Helps:** [HELP-CONTENT.md](./HELP-CONTENT.md) · catálogo [`content/helpTooltips.ts`](./content/helpTooltips.ts) (`PP_HELP`)  
 > **Kit:** `@delpi/plugin-ui` · modais host-contained
 

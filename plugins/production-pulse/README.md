@@ -113,3 +113,5 @@ Registro do manifesto: `scripts/register-manifest.sh` (requer `TOKEN`).
 - [Roadmap](../../docs/12-roadmap-e-evolucao/production-pulse/ROADMAP.md)
 - [Especificação](../../docs/12-roadmap-e-evolucao/production-pulse/ESPECIFICACAO-PLUGIN.md)
 - [Wireframes](../../docs/12-roadmap-e-evolucao/production-pulse/WIREFRAMES.md)
+- [Visuais e cores](../../docs/12-roadmap-e-evolucao/production-pulse/VISUAL-WIREFRAMES-AND-COLORS.md)
+- [Design frontend](../../docs/12-roadmap-e-evolucao/production-pulse/DESIGN-FRONTEND.md)

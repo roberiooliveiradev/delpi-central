@@ -19,6 +19,7 @@ Plataforma de **dispositivos IoT** na rede industrial: contadores de golpe, rota
 | [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md) | Telas, drivers/papéis, regras, API |
 | [SCHEMA.md](./SCHEMA.md) | Modelo Postgres + leituras genéricas (`metrics` JSONB) |
 | [DESIGN-FRONTEND.md](./DESIGN-FRONTEND.md) | Cores, tokens, componentes plugin-ui, estrutura MFE |
+| [VISUAL-WIREFRAMES-AND-COLORS.md](./VISUAL-WIREFRAMES-AND-COLORS.md) | Wireframes coloridos por página/componente + mapa de tokens |
 | [INTEGRATIONS-TOTVS.md](./INTEGRATIONS-TOTVS.md) | Matriz api-delpi / TOTVS vs dados locais |
 | [DEVICE-DRIVERS.md](./DEVICE-DRIVERS.md) | Registry JSON de drivers e métricas |
 | [GLOSSARY.md](./GLOSSARY.md) | Vocabulário device × âncora × CT |
