@@ -24,6 +24,10 @@ class DeviceCreateBody(BaseModel):
     driver_key: str = Field(alias="driverKey")
     controller_code: str | None = Field(default=None, alias="controllerCode")
     firmware_source: str | None = Field(default=None, alias="firmwareSource")
+    wifi_ssid: str | None = Field(default=None, alias="wifiSsid")
+    wifi_password: str | None = Field(default=None, alias="wifiPassword")
+    debounce_ms: int | None = Field(default=None, alias="debounceMs")
+    api_token: str | None = Field(default=None, alias="apiToken")
     poll_interval_ms: int = Field(
         default=_POLL_DEFAULT,
         alias="pollIntervalMs",
@@ -46,6 +50,10 @@ class DevicePatchBody(BaseModel):
     driver_key: str | None = Field(default=None, alias="driverKey")
     controller_code: str | None = Field(default=None, alias="controllerCode")
     firmware_source: str | None = Field(default=None, alias="firmwareSource")
+    wifi_ssid: str | None = Field(default=None, alias="wifiSsid")
+    wifi_password: str | None = Field(default=None, alias="wifiPassword")
+    debounce_ms: int | None = Field(default=None, alias="debounceMs")
+    api_token: str | None = Field(default=None, alias="apiToken")
     poll_interval_ms: int | None = Field(
         default=None,
         alias="pollIntervalMs",
@@ -56,7 +64,8 @@ class DevicePatchBody(BaseModel):
 
 
 def body_to_dict(model: BaseModel) -> dict[str, Any]:
-    return model.model_dump(by_alias=False, exclude_none=True)
+    # Keep explicit nulls for write-only clears (apiToken "") — exclude_unset only
+    return model.model_dump(by_alias=False, exclude_none=False, exclude_unset=True)
 
 
 class DeviceTestProbeBody(BaseModel):

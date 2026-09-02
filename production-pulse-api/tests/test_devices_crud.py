@@ -120,3 +120,31 @@ def test_create_device_persists_firmware_source(client, unique_ip):
     )
     assert replaced.status_code == 200
     assert replaced.json()["data"]["firmwareSource"] is None
+
+
+def test_create_device_persists_wifi_and_token_mirror(client, unique_ip):
+    created = client.post(
+        "/devices",
+        json={
+            "name": "ESP wifi",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_counter_v1",
+            "wifiSsid": "PlantNet",
+            "debounceMs": 120,
+            "apiToken": "tok-abc",
+        },
+    )
+    assert created.status_code == 201
+    data = created.json()["data"]
+    assert data["wifiSsid"] == "PlantNet"
+    assert data["debounceMs"] == 120
+    assert data["apiTokenSet"] is True
+    assert "apiToken" not in data
+    assert "wifiPassword" not in data
+    assert data["deviceConfigPush"]["status"] in {"ok", "skipped", "failed"}
+
+    fetched = client.get(f"/devices/{data['id']}")
+    body = fetched.json()["data"]
+    assert body["apiTokenSet"] is True
+    assert "apiToken" not in body

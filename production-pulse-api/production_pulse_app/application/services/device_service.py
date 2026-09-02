@@ -13,11 +13,17 @@ from production_pulse_app.domain.services.device_connectivity_status_service imp
 from production_pulse_app.domain.services.binding_serialization_service import binding_row_to_api
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
 from production_pulse_app.domain.errors import DeviceValidationError
+from production_pulse_app.application.services.device_config_push_service import (
+    DeviceConfigPushService,
+)
 from production_pulse_app.domain.services.device_validation_service import (
     normalize_controller_code,
+    normalize_debounce_ms,
+    normalize_device_api_token,
     normalize_firmware_source,
     normalize_ip_address,
     normalize_name,
+    normalize_wifi_ssid,
     resolve_driver,
     validate_branch,
     validate_poll_interval_ms,
@@ -53,6 +59,46 @@ class DeviceService:
         )
         self._period_delta_service = DevicePeriodDeltaService()
         self._driver_registry = get_device_driver_registry()
+        self._config_push = DeviceConfigPushService()
+
+    @staticmethod
+    def _payload_has(payload: dict[str, Any], snake: str, camel: str) -> bool:
+        return snake in payload or camel in payload
+
+    @staticmethod
+    def _payload_get(payload: dict[str, Any], snake: str, camel: str) -> Any:
+        if snake in payload:
+            return payload.get(snake)
+        return payload.get(camel)
+
+    def _resolve_device_config_fields(self, payload: dict[str, Any]) -> dict[str, Any]:
+        fields: dict[str, Any] = {}
+        if self._payload_has(payload, "wifi_ssid", "wifiSsid"):
+            fields["wifi_ssid"] = normalize_wifi_ssid(
+                self._payload_get(payload, "wifi_ssid", "wifiSsid")
+            )
+        if self._payload_has(payload, "debounce_ms", "debounceMs"):
+            fields["debounce_ms"] = normalize_debounce_ms(
+                self._payload_get(payload, "debounce_ms", "debounceMs")
+            )
+        if self._payload_has(payload, "api_token", "apiToken"):
+            fields["device_api_token"] = normalize_device_api_token(
+                self._payload_get(payload, "api_token", "apiToken")
+            )
+        return fields
+
+    def _with_config_push(
+        self,
+        row: dict[str, Any],
+        *,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        api_payload = json_safe(device_row_to_api(row))
+        api_payload["deviceConfigPush"] = self._config_push.push_after_save(
+            row,
+            request_payload=payload,
+        )
+        return api_payload
 
     def _capabilities_for(self, driver_key: str) -> dict[str, Any]:
         return self._driver_registry.build_capabilities(driver_key)
@@ -142,6 +188,7 @@ class DeviceService:
             if "firmware_source" in payload
             else payload.get("firmwareSource")
         )
+        config_fields = self._resolve_device_config_fields(payload)
         row = self._repository.create(
             branch=branch,
             name=name,
@@ -152,9 +199,12 @@ class DeviceService:
             poll_interval_ms=poll_interval,
             controller_code=controller_code,
             firmware_source=firmware_source,
+            wifi_ssid=config_fields.get("wifi_ssid"),
+            debounce_ms=config_fields.get("debounce_ms"),
+            device_api_token=config_fields.get("device_api_token"),
             actor_sub=actor_sub,
         )
-        return json_safe(device_row_to_api(row))
+        return self._with_config_push(row, payload=payload)
 
     def replace_device(
         self,
@@ -185,6 +235,25 @@ class DeviceService:
             if "firmware_source" in payload
             else payload.get("firmwareSource")
         )
+        existing = self._repository.get_by_id(device_id)
+        if existing is None:
+            raise DeviceNotFoundError(str(device_id))
+        config_fields = self._resolve_device_config_fields(payload)
+        wifi_ssid = (
+            config_fields["wifi_ssid"]
+            if "wifi_ssid" in config_fields
+            else existing.get("wifi_ssid")
+        )
+        debounce_ms = (
+            config_fields["debounce_ms"]
+            if "debounce_ms" in config_fields
+            else existing.get("debounce_ms")
+        )
+        device_api_token = (
+            config_fields["device_api_token"]
+            if "device_api_token" in config_fields
+            else existing.get("device_api_token")
+        )
         row = self._repository.replace(
             device_id,
             branch=branch,
@@ -196,9 +265,12 @@ class DeviceService:
             poll_interval_ms=poll_interval,
             controller_code=controller_code,
             firmware_source=firmware_source,
+            wifi_ssid=wifi_ssid,
+            debounce_ms=debounce_ms,
+            device_api_token=device_api_token,
             actor_sub=actor_sub,
         )
-        return json_safe(device_row_to_api(row))
+        return self._with_config_push(row, payload=payload)
 
     def patch_device(
         self,
@@ -228,6 +300,7 @@ class DeviceService:
                 if "firmware_source" in payload
                 else payload.get("firmwareSource")
             )
+        updates.update(self._resolve_device_config_fields(payload))
         if "driver_key" in payload or "driverKey" in payload:
             driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))
             updates["driver_key"] = driver.driver_key
@@ -239,7 +312,7 @@ class DeviceService:
                 float(payload.get("poll_interval_ms") or payload.get("pollIntervalMs"))
             )
         row = self._repository.patch(device_id, updates=updates, actor_sub=actor_sub)
-        return json_safe(device_row_to_api(row))
+        return self._with_config_push(row, payload=payload)
 
     def delete_device(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
         row = self._repository.soft_delete(device_id, actor_sub=actor_sub)

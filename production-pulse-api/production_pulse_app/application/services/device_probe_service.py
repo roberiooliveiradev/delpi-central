@@ -90,6 +90,18 @@ class DeviceProbeService:
                 payload["controllerCode"] = controller_code
             if meta.get("mac"):
                 payload["mac"] = meta["mac"]
+            device_config = meta.get("deviceConfig")
+            if isinstance(device_config, dict) and device_config:
+                payload["deviceConfig"] = device_config
+                if device_config.get("ssid"):
+                    payload["wifiSsid"] = device_config["ssid"]
+                if "debounceMs" in device_config:
+                    payload["debounceMs"] = device_config["debounceMs"]
+                if "apiTokenSet" in device_config:
+                    payload["apiTokenSet"] = bool(device_config["apiTokenSet"])
+            for key in ("firmwareVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+                if key in meta and meta.get(key) is not None:
+                    payload[key] = meta[key]
             return payload
         except DeviceDriverError as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)

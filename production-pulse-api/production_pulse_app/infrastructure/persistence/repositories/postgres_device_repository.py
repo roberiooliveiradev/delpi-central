@@ -21,13 +21,17 @@ class DeviceNotFoundError(Exception):
 
 
 _DEVICE_COLUMNS = """
-    id, branch, name, ip_address, controller_code, firmware_source, driver_key, role_key, enabled,
+    id, branch, name, ip_address, controller_code, firmware_source, wifi_ssid, debounce_ms,
+    device_api_token, driver_key, role_key, enabled,
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by
 """
 
 _DEVICE_LIST_COLUMNS = """
-    id, branch, name, ip_address, controller_code, driver_key, role_key, enabled,
+    id, branch, name, ip_address, controller_code, wifi_ssid, debounce_ms,
+    CASE WHEN device_api_token IS NOT NULL AND btrim(device_api_token) <> '' THEN '1' ELSE NULL END
+        AS device_api_token,
+    driver_key, role_key, enabled,
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by
 """
@@ -100,6 +104,9 @@ class PostgresDeviceRepository:
         poll_interval_ms: int,
         controller_code: str | None = None,
         firmware_source: str | None = None,
+        wifi_ssid: str | None = None,
+        debounce_ms: int | None = None,
+        device_api_token: str | None = None,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -109,9 +116,10 @@ class PostgresDeviceRepository:
                         f"""
                         INSERT INTO production_pulse.devices (
                             branch, name, ip_address, controller_code, firmware_source,
+                            wifi_ssid, debounce_ms, device_api_token,
                             driver_key, role_key, enabled, poll_interval_ms, created_by, updated_by
                         )
-                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING {_DEVICE_COLUMNS}
                         """,
                         (
@@ -120,6 +128,9 @@ class PostgresDeviceRepository:
                             ip_address,
                             controller_code,
                             firmware_source,
+                            wifi_ssid,
+                            debounce_ms,
+                            device_api_token,
                             driver_key,
                             role_key,
                             enabled,
@@ -150,6 +161,9 @@ class PostgresDeviceRepository:
         poll_interval_ms: int,
         controller_code: str | None = None,
         firmware_source: str | None = None,
+        wifi_ssid: str | None = None,
+        debounce_ms: int | None = None,
+        device_api_token: str | None = None,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -163,6 +177,9 @@ class PostgresDeviceRepository:
                             ip_address = %s::inet,
                             controller_code = %s,
                             firmware_source = %s,
+                            wifi_ssid = %s,
+                            debounce_ms = %s,
+                            device_api_token = %s,
                             driver_key = %s,
                             role_key = %s,
                             enabled = %s,
@@ -178,6 +195,9 @@ class PostgresDeviceRepository:
                             ip_address,
                             controller_code,
                             firmware_source,
+                            wifi_ssid,
+                            debounce_ms,
+                            device_api_token,
                             driver_key,
                             role_key,
                             enabled,
@@ -216,6 +236,9 @@ class PostgresDeviceRepository:
             "ip_address": "ip_address",
             "controller_code": "controller_code",
             "firmware_source": "firmware_source",
+            "wifi_ssid": "wifi_ssid",
+            "debounce_ms": "debounce_ms",
+            "device_api_token": "device_api_token",
             "driver_key": "driver_key",
             "role_key": "role_key",
             "enabled": "enabled",
