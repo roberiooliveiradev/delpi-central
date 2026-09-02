@@ -433,60 +433,57 @@ void ensureWifiConnected() {
 }
 
 String paginaPrincipal() {
-  // Evitar F("...</tag>..."): no Arduino IDE, "</" dentro de F() quebra a string.
+  // Arduino IDE 1.x corrompe sequencias literais de fechamento HTML no .ino.
+  // Sempre quebrar: "</" + "tag>"
   String html;
   html.reserve(2400);
-  html +=
-    "<!DOCTYPE html><html lang='pt-BR'><head>"
-    "<meta charset='utf-8'/>"
-    "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
-    "<title>Production Pulse - Contador</title>"
-    "<style>"
-    ":root{--bg:#0f172a;--card:#1e293b;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;}"
-    "*{box-sizing:border-box}"
-    "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;"
-    "background:linear-gradient(160deg,#0f172a,#1e293b 55%,#0f172a);color:var(--text);min-height:100vh;padding:1.25rem}"
-    ".wrap{max-width:28rem;margin:0 auto}"
-    ".card{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.25rem;"
-    "margin-bottom:1rem;box-shadow:0 12px 40px rgba(0,0,0,.35)}"
-    ".label{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 .35rem}"
-    ".code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.35rem;"
-    "font-weight:700;color:var(--accent);word-break:break-all}"
-    ".hint{margin:.55rem 0 0;font-size:.85rem;color:var(--muted);line-height:1.4}"
-    ".valor{font-size:2.75rem;font-weight:700;letter-spacing:-.03em;margin:.25rem 0}"
-    ".meta{font-size:.8rem;color:var(--muted);margin-top:.75rem}"
-    ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);"
-    "margin-right:.35rem;vertical-align:middle}"
-    "</style></head><body><div class='wrap'>";
+  html += "<!DOCTYPE html><html lang='pt-BR'><head>";
+  html += "<meta charset='utf-8'/>";
+  html += "<meta name='viewport' content='width=device-width,initial-scale=1'/>";
+  html += "<title>Production Pulse - Contador</" "title><style>";
+  html += ":root{--bg:#0f172a;--card:#1e293b;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;}";
+  html += "*{box-sizing:border-box}";
+  html += "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;";
+  html += "background:linear-gradient(160deg,#0f172a,#1e293b 55%,#0f172a);color:var(--text);min-height:100vh;padding:1.25rem}";
+  html += ".wrap{max-width:28rem;margin:0 auto}";
+  html += ".card{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.25rem;";
+  html += "margin-bottom:1rem;box-shadow:0 12px 40px rgba(0,0,0,.35)}";
+  html += ".label{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 .35rem}";
+  html += ".code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.35rem;";
+  html += "font-weight:700;color:var(--accent);word-break:break-all}";
+  html += ".hint{margin:.55rem 0 0;font-size:.85rem;color:var(--muted);line-height:1.4}";
+  html += ".valor{font-size:2.75rem;font-weight:700;letter-spacing:-.03em;margin:.25rem 0}";
+  html += ".meta{font-size:.8rem;color:var(--muted);margin-top:.75rem}";
+  html += ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);";
+  html += "margin-right:.35rem;vertical-align:middle}";
+  html += "</" "style></" "head><body><div class='wrap'>";
   html += "<div class='card'>";
-  html += "<p class='label'>Codigo do controlador</p>";
-  html += "<div class='code' id='codigo'>" + codigoControlador + "</div>";
-  html +=
-    "<p class='hint'>"
-    "Use este codigo no cadastro do Production Pulse (campo Codigo do controlador), "
-    "junto com IP e nome do dispositivo. Config Wi-Fi/token: API /api/config."
-    "</p>"
-    "<p class='meta'><span class='dot'></span>Identidade fixa do chip (nao muda ao reiniciar)</p>"
-    "</div>";
-  html +=
-    "<div class='card'>"
-    "<p class='label'>Contador</p>"
-    "<div class='valor'><span id='c'>0</span></div>"
-    "<p class='meta'>Atualizacao via GET /api/contador (publico)</p>"
-    "</div>";
-  html +=
-    "<script>"
-    "async function atualiza(){"
-      "try{"
-        "var r=await fetch('/api/contador');"
-        "if(!r.ok){return;}"
-        "var j=await r.json();"
-        "document.getElementById('c').innerText=j.contador;"
-      "}catch(e){}"
-    "}"
-    "setInterval(atualiza,500);"
-    "atualiza();"
-    "</script></div></body></html>";
+  html += "<p class='label'>Codigo do controlador</" "p>";
+  html += "<div class='code' id='codigo'>";
+  html += codigoControlador;
+  html += "</" "div>";
+  html += "<p class='hint'>Use este codigo no cadastro do Production Pulse ";
+  html += "(campo Codigo do controlador), junto com IP e nome do dispositivo. ";
+  html += "Config Wi-Fi/token: API /api/config.</" "p>";
+  html += "<p class='meta'><i class='dot'></" "i>Identidade fixa do chip (nao muda ao reiniciar)</" "p>";
+  html += "</" "div>";
+  html += "<div class='card'>";
+  html += "<p class='label'>Contador</" "p>";
+  html += "<div class='valor' id='c'>0</" "div>";
+  html += "<p class='meta'>Atualizacao via GET /api/contador (publico)</" "p>";
+  html += "</" "div>";
+  html += "<script>";
+  html += "async function atualiza(){";
+  html += "try{";
+  html += "var r=await fetch('/api/contador');";
+  html += "if(!r.ok){return;}";
+  html += "var j=await r.json();";
+  html += "document.getElementById('c').innerText=j.contador;";
+  html += "}catch(e){}";
+  html += "}";
+  html += "setInterval(atualiza,500);";
+  html += "atualiza();";
+  html += "</" "script></" "div></" "body></" "html>";
   return html;
 }
 
