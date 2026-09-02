@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
+  formatCounterPeriodDelta,
   formatPrimaryMetric,
   formatRelativeTime,
   placementLabel,
@@ -56,7 +57,15 @@ export function DeviceTable({
     {
       key: "metric",
       header: "Métrica",
-      render: (row) => <span className="pp-tabular-nums">{formatPrimaryMetric(row)}</span>,
+      render: (row) => {
+        const dayDelta = formatCounterPeriodDelta(row, "day");
+        return (
+          <span className="pp-device-metric">
+            <span className="pp-tabular-nums">{formatPrimaryMetric(row)}</span>
+            {dayDelta ? <span className="pp-device-metric__delta">{dayDelta} hoje</span> : null}
+          </span>
+        );
+      },
     },
     {
       key: "status",

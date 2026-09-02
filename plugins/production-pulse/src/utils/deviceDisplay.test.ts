@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { DeviceListItem } from "../types/device";
-import { formatPrimaryMetric, formatRelativeTime, resolveViewportBucket } from "./deviceDisplay";
+import { formatCounterPeriodDelta, formatPrimaryMetric, formatRelativeTime, resolveViewportBucket } from "./deviceDisplay";
 import { applyClientFilters, groupDevices } from "./deviceGrouping";
 
 const baseDevice = (overrides: Partial<DeviceListItem> = {}): DeviceListItem => ({
@@ -26,6 +26,16 @@ const baseDevice = (overrides: Partial<DeviceListItem> = {}): DeviceListItem => 
 describe("deviceDisplay", () => {
   it("formats primary metric with unit", () => {
     expect(formatPrimaryMetric(baseDevice())).toBe("1.284 gol");
+  });
+
+  it("formats counter period delta for counters only", () => {
+    expect(
+      formatCounterPeriodDelta(
+        baseDevice({ periodDeltas: { day: { counter: 42 }, shift: { counter: 7 } } }),
+        "day",
+      ),
+    ).toBe("+42");
+    expect(formatCounterPeriodDelta(baseDevice({ roleKey: "process_gauge" }), "day")).toBeNull();
   });
 
   it("formats relative time", () => {

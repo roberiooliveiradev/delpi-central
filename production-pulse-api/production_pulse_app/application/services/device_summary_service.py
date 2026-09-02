@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from production_pulse_app.application.services.device_period_delta_service import (
+    DevicePeriodDeltaService,
+)
 from production_pulse_app.domain.services.device_connectivity_status_service import (
     resolve_connectivity_status,
 )
@@ -21,6 +24,7 @@ class DeviceSummaryService:
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._bindings = binding_repository or PostgresDeviceBindingRepository()
+        self._period_delta_service = DevicePeriodDeltaService()
 
     def build_summary(
         self,
@@ -54,6 +58,12 @@ class DeviceSummaryService:
             "offline": offline,
             "withoutBinding": without_binding,
         }
+        counter_delta = self._period_delta_service.aggregate_branch_counter_deltas(
+            rows,
+            bound_device_ids=bound_ids,
+        )
+        if counter_delta:
+            payload["counterDelta"] = counter_delta
         if branch:
             payload["branch"] = branch
         elif branches:

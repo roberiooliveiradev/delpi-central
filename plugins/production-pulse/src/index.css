@@ -85,6 +85,21 @@
   gap: var(--pp-grid-gap);
 }
 
+.pp-kpi-strip--extended {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.pp-device-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pp-device-metric__delta {
+  font-size: var(--pp-font-xs, 12px);
+  color: var(--pp-text-muted);
+}
+
 .pp-kpi-skeleton {
   min-height: 96px;
   border-radius: var(--pp-card-radius);

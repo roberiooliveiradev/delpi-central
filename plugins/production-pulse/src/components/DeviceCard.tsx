@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
+  formatCounterPeriodDelta,
   formatPrimaryMetric,
   formatRelativeTime,
   placementLabel,
@@ -49,8 +50,17 @@ export function DeviceCard({
       </div>
       <p className="pp-device-card__meta">
         {roleLabel(device.roleKey)} ·{" "}
-        <span className="pp-tabular-nums">{formatPrimaryMetric(device)}</span> · há{" "}
-        <span className="pp-tabular-nums">{formatRelativeTime(device.lastSeenAt)}</span>
+        <span className="pp-tabular-nums">{formatPrimaryMetric(device)}</span>
+        {formatCounterPeriodDelta(device, "day") ? (
+          <>
+            {" "}
+            ·{" "}
+            <span className="pp-tabular-nums">
+              {formatCounterPeriodDelta(device, "day")} hoje
+            </span>
+          </>
+        ) : null}{" "}
+        · há <span className="pp-tabular-nums">{formatRelativeTime(device.lastSeenAt)}</span>
       </p>
       {!compact ? (
         <div className="pp-device-card__actions">

@@ -22,6 +22,10 @@ export const PP_HELP = {
       "Dispositivos sem resposta HTTP no tempo limite — verifique rede, energia ou IP.",
     kpiWithoutBinding:
       "Cadastros incompletos: falta informar posto, máquina, equipamento ou área de instalação.",
+    kpiCounterDeltaDay:
+      "Soma dos incrementos de golpe (delta) de todos os contadores amarrados na filial, desde a meia-noite local.",
+    kpiCounterDeltaShift:
+      "Soma dos incrementos de golpe no turno operacional atual (06–14, 14–22 ou 22–06).",
     filterAnchorType:
       "Filtra por tipo de amarração: posto PCP, máquina, equipamento, área ou avulso.",
     filterRole:

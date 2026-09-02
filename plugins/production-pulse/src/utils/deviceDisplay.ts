@@ -1,4 +1,4 @@
-import type { DeviceListItem, DeviceStatus } from "../types/device";
+import type { DeviceListItem, DeviceStatus, DeviceSummary } from "../types/device";
 
 const ROLE_LABELS: Record<string, string> = {
   pulse_counter: "Contador",
@@ -63,6 +63,24 @@ export function formatPrimaryMetric(device: DeviceListItem): string {
       : String(raw);
   if (!meta?.unit) return formatted;
   return `${formatted} ${meta.unit}`;
+}
+
+export function formatCounterPeriodDelta(
+  device: DeviceListItem,
+  period: "day" | "shift",
+): string | null {
+  if (device.roleKey !== "pulse_counter") return null;
+  const value = device.periodDeltas?.[period]?.counter;
+  if (value === null || value === undefined) return null;
+  return `+${new Intl.NumberFormat("pt-BR").format(value)}`;
+}
+
+export function formatCounterDeltaKpi(
+  counterDelta: DeviceSummary["counterDelta"],
+  period: "day" | "shift",
+): string {
+  const value = counterDelta?.[period]?.counter ?? 0;
+  return new Intl.NumberFormat("pt-BR").format(value);
 }
 
 export function placementLabel(device: DeviceListItem): string {
