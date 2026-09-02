@@ -188,6 +188,7 @@ describe("production-pulse kit contracts", () => {
     expect(gauge).toMatch(/pp-gauge-readout__workspace/);
     expect(css).toMatch(/--pp-operator-content-max/);
     expect(css).toMatch(/--pp-operator-counter-value/);
+    expect(css).toMatch(/--pp-operator-pad-max-width/);
     expect(css).toMatch(/data-pp-viewport="mobile"\] \.pp-counter-pad__pad/);
     expect(css).toMatch(/min-width: 901px\)[\s\S]*pp-gauge-readout__grid/);
     expect(css).toMatch(/--pp-operator-card-min-height/);

@@ -937,7 +937,8 @@
   --pp-operator-control-height: clamp(42px, 10vw, 48px);
   --pp-operator-touch-min: clamp(44px, 11vw, 52px);
   --pp-operator-pad-height: clamp(72px, 14vw, 112px);
-  --pp-operator-pad-gap: clamp(10px, 2vw, 20px);
+  --pp-operator-pad-gap: clamp(6px, 1.2vw, 10px);
+  --pp-operator-pad-max-width: min(100%, 26rem);
   --pp-operator-pad-icon: clamp(24px, 6vw, 32px);
   --pp-operator-btn-font: clamp(0.875rem, 2.4vw, 1rem);
   --pp-operator-content-max: min(720px, 100%);
@@ -979,25 +980,32 @@
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="mobile"] {
-  --pp-operator-content-max: min(480px, 100%);
+  --pp-operator-content-max: 100%;
+  --pp-operator-pad-max-width: 100%;
+  --pp-page-padding: clamp(8px, 2vw, 12px);
   --pp-operator-shell-min-height: max(0px, calc(100dvh - var(--pp-operator-chrome-offset)));
   --pp-operator-chrome-offset: clamp(5.75rem, 14vh, 7.5rem);
   --pp-operator-pad-height: clamp(72px, 18vw, 96px);
+  --pp-operator-pad-gap: clamp(8px, 2vw, 10px);
   --pp-operator-sync-max-width: 100%;
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="tablet"] {
-  --pp-operator-content-max: min(720px, 100%);
+  --pp-operator-content-max: min(560px, 100%);
+  --pp-operator-pad-max-width: min(100%, 30rem);
+  --pp-page-padding: clamp(10px, 2vw, 16px);
   --pp-operator-shell-min-height: max(0px, calc(100dvh - var(--pp-operator-chrome-offset)));
   --pp-operator-chrome-offset: clamp(6.75rem, 15vh, 9rem);
   --pp-operator-pad-height: clamp(96px, 12vw, 112px);
+  --pp-operator-pad-gap: clamp(8px, 1.5vw, 10px);
   --pp-operator-counter-value: clamp(4.5rem, 18vw, 8rem);
   --pp-operator-gauge-value: clamp(3rem, 12vw, 5rem);
   --pp-operator-hero-title: clamp(1.45rem, 3.5vw, 2rem);
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="desktop"] {
-  --pp-operator-content-max: min(840px, 100%);
+  --pp-operator-content-max: min(640px, 100%);
+  --pp-operator-pad-max-width: min(100%, 34rem);
   --pp-operator-pad-height: 112px;
   --pp-operator-pad-icon: 32px;
   --pp-operator-counter-value: clamp(5rem, 10vw, 10rem);
@@ -1287,6 +1295,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  align-items: center;
   gap: var(--pp-section-gap);
   width: 100%;
   min-height: var(--pp-operator-shell-min-height);
@@ -1334,8 +1343,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--pp-operator-pad-gap);
   width: 100%;
+  max-width: var(--pp-operator-pad-max-width);
   margin: 0 auto;
-  padding-inline: clamp(2px, 1vw, 6px);
+  padding-inline: 0;
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="mobile"] .pp-counter-pad__pad {
@@ -1407,7 +1417,7 @@
 .dashboard-production-pulse--operator .pp-counter-pad__sync-btn {
   min-height: var(--pp-operator-touch-min);
   width: 100%;
-  max-width: var(--pp-operator-sync-max-width);
+  max-width: var(--pp-operator-pad-max-width);
   padding-inline: clamp(16px, 4vw, 24px);
   font-size: var(--pp-operator-btn-font);
 }
@@ -1417,6 +1427,8 @@
   justify-content: center;
   padding-top: clamp(2px, 1vw, 6px);
   width: 100%;
+  max-width: var(--pp-operator-pad-max-width);
+  margin-inline: auto;
 }
 
 .pp-gauge-readout__grid {
