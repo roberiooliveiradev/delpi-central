@@ -33,7 +33,7 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 
 **E7.S4 entregue (set/2026):** `PpHostContainedDialog` + migração de modais; teste estrutural anti-ModalShell — commit `98e58f0a6`.
 
-**E7.S5 entregue (set/2026):** `SegmentToggle` width/column no kit; toolbar filtros via `filterToolbarRowBemClasses`; zero `.delpi-ui-*` no `index.css` do MFE; teste estrutural — commit pendente nesta sessão.
+**E7.S5 entregue (set/2026):** `SegmentToggle` width/column no kit; toolbar filtros via `filterToolbarRowBemClasses`; zero `.delpi-ui-*` no `index.css` do MFE; teste estrutural — commit `d645243f5`.
 
 ---
 
