@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { isShortViewportHeight } from "../utils/viewportLayout";
 
-/** Viewport baixo (ex.: iPhone landscape ~375px) — operador compacto sem scroll. */
+/** Viewport baixo (ex.: landscape ~375px ou portrait ≤700px) — operador compacto sem scroll. */
 export function useShortViewport(): boolean {
   const [short, setShort] = useState(() =>
     typeof window !== "undefined" ? isShortViewportHeight(window.innerHeight) : false,

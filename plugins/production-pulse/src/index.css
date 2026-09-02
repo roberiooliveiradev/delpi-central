@@ -172,7 +172,8 @@
 #root:has(> .dashboard-production-pulse--operator:has(.pp-counter-pad)),
 #root:has(> .dashboard-production-pulse--operator:has(.pp-gauge-readout)) {
   height: 100%;
-  max-height: 100dvh;
+  max-height: 100vh;
+  max-height: 100svh;
   overflow: hidden;
 }
 
@@ -964,7 +965,7 @@
   --pp-operator-counter-value: clamp(2rem, min(16vw, 22vh), 5rem);
   --pp-operator-counter-unit: clamp(0.85rem, min(2.5vw, 3vh), 1.25rem);
   --pp-operator-counter-label: clamp(0.8125rem, min(2.2vw, 2.8vh), 1rem);
-  --pp-operator-stage-min-height: 0;
+  --pp-operator-stage-min-height: clamp(72px, 16vh, 140px);
 
   --pp-operator-gauge-value: clamp(2rem, min(9vw, 18vh), 4rem);
   --pp-operator-gauge-tile-padding: clamp(16px, 3vw, 28px);
@@ -982,7 +983,8 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  max-height: 100dvh;
+  max-height: 100vh;
+  max-height: 100svh;
   overflow: hidden;
   width: 100%;
   max-width: none;
@@ -1000,7 +1002,8 @@
 .dashboard-production-pulse--operator:has(.pp-counter-pad),
 .dashboard-production-pulse--operator:has(.pp-gauge-readout) {
   height: 100%;
-  max-height: 100dvh;
+  max-height: 100vh;
+  max-height: 100svh;
   overflow: hidden;
 }
 
@@ -1008,18 +1011,26 @@
 .dashboard-production-pulse--operator:has(.pp-gauge-readout) > * {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.dashboard-production-pulse--operator:has(.pp-counter-pad) > .pp-operator-surface.pp-counter-pad {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(min-content, 1fr) auto auto;
+  align-content: stretch;
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="mobile"] {
   --pp-operator-content-max: 100%;
   --pp-operator-pad-max-width: 100%;
   --pp-page-padding: clamp(8px, 2vw, 12px);
-  --pp-operator-pad-height: clamp(64px, 14vh, 96px);
+  --pp-operator-pad-height: clamp(52px, 11vh, 80px);
   --pp-operator-pad-gap: clamp(8px, 2vw, 10px);
   --pp-operator-sync-max-width: 100%;
+  --pp-operator-stage-min-height: clamp(64px, 14vh, 120px);
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="tablet"] {
@@ -1070,6 +1081,12 @@
 .pp-operator-surface.pp-counter-pad,
 .pp-operator-surface.pp-gauge-readout {
   gap: clamp(6px, 1.5vh, var(--pp-section-gap));
+}
+
+.pp-operator-surface.pp-counter-pad {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .dashboard-production-pulse--operator .pp-page-hero {
@@ -1325,7 +1342,10 @@
   line-height: 1.45;
 }
 
-.pp-counter-pad__workspace,
+.pp-counter-pad__workspace {
+  display: contents;
+}
+
 .pp-gauge-readout__workspace {
   display: flex;
   flex: 1 1 auto;
@@ -1339,15 +1359,15 @@
 
 .pp-counter-pad__stage {
   display: flex;
-  flex: 1 1 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: clamp(4px, 1vh, 8px);
   padding: clamp(4px, 1vh, 12px) 0;
-  min-height: 0;
+  min-height: var(--pp-operator-stage-min-height);
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
+  align-self: center;
 }
 
 .pp-counter-pad__stage--muted {
@@ -1396,7 +1416,7 @@
 
 .dashboard-production-pulse--operator[data-pp-viewport="mobile"]:not([data-pp-viewport-short="true"]) .pp-counter-pad__btn--increment {
   grid-area: increment;
-  min-height: max(var(--pp-operator-pad-height), clamp(72px, 14vh, 88px));
+  min-height: var(--pp-operator-pad-height);
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="mobile"]:not([data-pp-viewport-short="true"]) .pp-counter-pad__btn--decrement {
@@ -1471,7 +1491,7 @@
   flex-shrink: 0;
 }
 
-/* Viewport baixo — tudo visível sem scroll (landscape mobile, etc.) */
+/* Viewport baixo — tudo visível sem scroll (landscape mobile, portrait ≤700px) */
 .dashboard-production-pulse--operator[data-pp-viewport-short="true"] {
   --pp-section-gap: clamp(4px, 1.2vh, 8px);
   --pp-page-padding: clamp(6px, 1.5vw, 10px);
@@ -1482,6 +1502,7 @@
   --pp-operator-counter-value: clamp(1.75rem, min(14vw, 20vh), 2.75rem);
   --pp-operator-counter-unit: clamp(0.75rem, min(2.5vw, 3.5vh), 0.95rem);
   --pp-operator-counter-label: clamp(0.75rem, min(2vw, 3vh), 0.875rem);
+  --pp-operator-stage-min-height: clamp(48px, 12vh, 88px);
   --pp-operator-pad-height: clamp(44px, 11vh, 60px);
   --pp-operator-pad-icon: clamp(20px, 5vh, 26px);
   --pp-operator-btn-font: clamp(0.8125rem, min(2.2vw, 3vh), 0.875rem);

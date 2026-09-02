@@ -18,7 +18,8 @@ describe("viewportLayout", () => {
   it("detecta viewport baixo para layout operador sem scroll", () => {
     expect(isShortViewportHeight(375)).toBe(true);
     expect(isShortViewportHeight(520)).toBe(true);
-    expect(isShortViewportHeight(521)).toBe(false);
-    expect(isShortViewportHeight(667)).toBe(false);
+    expect(isShortViewportHeight(667)).toBe(true);
+    expect(isShortViewportHeight(700)).toBe(true);
+    expect(isShortViewportHeight(701)).toBe(false);
   });
 });
