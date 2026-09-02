@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from production_pulse_app.domain.models.device_reading import DeviceReading
 
 
@@ -135,10 +137,17 @@ def test_device_without_binding_reports_no_binding_status(client, unique_ip, mon
 
 
 def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypatch):
+    t0 = datetime(2026, 9, 2, 12, 0, 0, tzinfo=timezone.utc)
     sequence = iter(
         [
-            DeviceReading(metrics={"rpm": 1180.0, "temperature_c": 42.0}),
-            DeviceReading(metrics={"rpm": 1180.0, "temperature_c": 42.0}),
+            DeviceReading(
+                metrics={"rpm": 1180.0, "temperature_c": 42.0},
+                recorded_at=t0,
+            ),
+            DeviceReading(
+                metrics={"rpm": 1180.0, "temperature_c": 42.0},
+                recorded_at=t0 + timedelta(seconds=61),
+            ),
         ]
     )
 
@@ -166,9 +175,12 @@ def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypa
     first_body = first.json()["data"]
     assert first_body["metrics"]["rpm"] == 1180.0
     assert first_body.get("deltaMetrics") in ({}, None)
+    assert first_body["meta"]["readingPersisted"] is True
 
     second = client.post(f"/devices/{device['id']}/poll")
     assert second.status_code == 200
+    assert second.json()["data"]["meta"]["readingPersisted"] is True
+    assert second.json()["data"]["meta"]["persistReason"] == "heartbeat"
 
     readings = client.get(f"/devices/{device['id']}/readings")
     assert readings.json()["data"]["pagination"]["total"] == 2

@@ -722,7 +722,7 @@ flowchart LR
 - [x] P3.S1 — policy change/heartbeat
 - [x] P3.S2 — meta observabilidade
 - [x] P3.S3 — purge raw
-- [ ] P3.S4 — rollups + query resolution
+- [x] P3.S4 — rollups + query resolution
 - [ ] P3.S5 — MFE + helps
 - [ ] P3.S6 — verify
 

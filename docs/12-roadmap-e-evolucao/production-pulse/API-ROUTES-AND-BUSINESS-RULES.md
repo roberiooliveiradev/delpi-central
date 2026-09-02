@@ -193,7 +193,7 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 | **R47** | Poll OK sem insert **ainda** atualiza `last_metrics` + `last_seen_at` (estado ao vivo). | ✅ S1 |
 | **R48** | `source=command` sempre persiste reading; meta restore/reset também. | ✅ S1 |
 | **R49** | Purge de raw com idade &gt; `rawRetentionDays` (default 90). | ✅ S3 |
-| **R50** | Rollups hour/day; `GET /readings?resolution=raw\|hour\|day`. | 📋 |
+| **R50** | Rollups hour/day; `GET /readings?resolution=raw\|hour\|day`. | ✅ S4 |
 | **R51** | MFE: spans longos preferem rollup; R45 permanece para raw denso. | 📋 |
 
 Poll response `meta.readingPersisted` + `meta.persistReason` (S2).

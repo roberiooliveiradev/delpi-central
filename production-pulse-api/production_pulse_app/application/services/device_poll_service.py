@@ -8,6 +8,9 @@ from production_pulse_app.application.services.device_driver_registry_service im
     DeviceDriverNotImplementedError,
     get_device_driver_registry,
 )
+from production_pulse_app.application.services.device_reading_rollup_service import (
+    DeviceReadingRollupService,
+)
 from production_pulse_app.core.serialize import json_safe
 from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.domain.services.device_connectivity_status_service import (
@@ -52,11 +55,13 @@ class DevicePollService:
         binding_repository: PostgresDeviceBindingRepository | None = None,
         reading_repository: PostgresDeviceReadingRepository | None = None,
         command_repository: PostgresDeviceCommandRepository | None = None,
+        rollup_service: DeviceReadingRollupService | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._bindings = binding_repository or PostgresDeviceBindingRepository()
         self._readings = reading_repository or PostgresDeviceReadingRepository()
         self._commands = command_repository or PostgresDeviceCommandRepository()
+        self._rollups = rollup_service or DeviceReadingRollupService()
         self._registry = get_device_driver_registry()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
@@ -221,6 +226,12 @@ class DevicePollService:
             )
             reading_id = int(reading_row["id"])
             recorded_at = reading_row["recorded_at"]
+            self._rollups.apply_persisted_reading(
+                device_id,
+                recorded_at=recorded_at,
+                metrics=canonical_public,
+                delta_metrics=delta_metrics,
+            )
 
         device = self._devices.record_poll_success(device_id, metrics=canonical)
         payload_meta = {
@@ -360,8 +371,20 @@ class DevicePollService:
         recorded_to: datetime | None = None,
         metric_key: str | None = None,
         sample_interval_ms: int | None = None,
+        resolution: str | None = None,
     ) -> dict[str, Any]:
         self._require_device(device_id)
+        normalized_resolution = str(resolution or "raw").strip().lower()
+        if normalized_resolution in {"hour", "day"}:
+            return self._rollups.list_rollups(
+                device_id,
+                resolution=normalized_resolution,
+                page=page,
+                page_size=page_size,
+                recorded_from=recorded_from,
+                recorded_to=recorded_to,
+            )
+
         page = max(1, page)
         page_size = min(max(1, page_size), 500)
         interval: int | None = None
@@ -384,6 +407,7 @@ class DevicePollService:
                 "pageSize": page_size,
                 "total": total,
             },
+            "resolution": "raw",
         }
 
     def poll_all(

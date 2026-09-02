@@ -290,6 +290,7 @@ async def list_device_readings(
         le=31_622_400_000,
         alias="sampleIntervalMs",
     ),
+    resolution: str = Query(default="raw", pattern="^(raw|hour|day)$"),
 ):
     _, denied = _load_device_for_request(request, device_id, action="view")
     if denied is not None:
@@ -311,6 +312,7 @@ async def list_device_readings(
             recorded_to=_parse_dt(recorded_to),
             metric_key=metric,
             sample_interval_ms=sample_interval_ms,
+            resolution=resolution,
         )
         return success(data)
     except Exception as exc:
