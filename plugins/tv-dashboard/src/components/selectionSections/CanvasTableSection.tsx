@@ -1,8 +1,5 @@
 import type { ReactNode } from "react";
 import {
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
   Columns3,
   Database,
   Eraser,
@@ -10,13 +7,13 @@ import {
   Heading2,
   Minus,
   MousePointer2,
+  Paintbrush,
   RemoveFormatting,
   Rows3,
   Settings2,
   Square,
   TableCellsMerge,
   TableCellsSplit,
-  WrapText,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -33,7 +30,6 @@ import {
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
   remapCanvasTableMerges,
-  resolveCanvasTableWrapActive,
   type CanvasTableCell,
   type CanvasTableCellKind,
   type CanvasTableStylePresetId,
@@ -52,11 +48,11 @@ import {
   insertCanvasTableBand,
   patchCanvasTableCellsStyle,
 } from "../../utils/canvasTableSelectionCommands";
+import { CanvasTableCellFormatMenu } from "../CanvasTableCellFormatMenu";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { DeckRibbonTilePopover } from "../deck/DeckRibbonTilePopover";
-import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonSelect } from "../tdRibbonUi";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
@@ -95,7 +91,6 @@ const KIND_OPTIONS: { value: CanvasTableCellKind; label: string }[] = [
   { value: "sparkline", label: "Sparkline" },
 ];
 
-const FONT_SIZE_PRESETS = [10, 12, 14, 16, 18, 20, 24, 28, 32] as const;
 const ROW_PRESETS = [2, 3, 4, 5, 6, 8, 10] as const;
 const COL_PRESETS = [2, 3, 4, 5, 6, 8] as const;
 
@@ -277,30 +272,6 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
               cols,
               cells: normalizeCanvasTableCells(table.cells, table.rows, cols),
               merges: merges.length ? merges : undefined,
-            });
-          }}
-        />
-      </label>
-      <label className="td-deck-ribbon__frame-field">
-        <span className="td-deck-ribbon__field-label">Fonte (px)</span>
-        <ComboboxNumberControl
-          className="td-deck-ribbon__number-combobox"
-          compact
-          square={false}
-          min={8}
-          max={96}
-          value={opts.fontSize}
-          options={FONT_SIZE_PRESETS}
-          clamp={(value) => Math.max(8, Math.min(96, value))}
-          portalScopeClassName="dashboard-tv-dashboard"
-          aria-label="Tamanho da fonte da Grade"
-          onChange={(fontSize) => {
-            updateSelected({
-              canvasTableOptions: {
-                ...(table.canvasTableOptions ?? {}),
-                fontSize,
-              },
-              style: { ...(table.style ?? {}), fontSize },
             });
           }}
         />
@@ -530,7 +501,32 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
       </>
     ) : null;
 
-  const cellAlignTiles = (
+  const cellFormatMenu = selectedCell ? (
+    <CanvasTableCellFormatMenu
+      textAlign={
+        cellAlign === "left" || cellAlign === "center" || cellAlign === "right"
+          ? cellAlign
+          : undefined
+      }
+      verticalAlign={selectedCell.style?.verticalAlign}
+      whiteSpace={selectedCell.style?.whiteSpace}
+      color={selectedCell.style?.color}
+      backgroundColor={selectedCell.style?.backgroundColor}
+      onAlign={(align) => applyCellsStyle({ textAlign: align })}
+      onVerticalAlign={(align) => applyCellsStyle({ verticalAlign: align })}
+      onToggleWrap={() =>
+        applyCellsStyle({
+          whiteSpace: nextCanvasTableWhiteSpaceToggle(selectedCell.style?.whiteSpace),
+        })
+      }
+      onSetNowrap={() => applyCellsStyle({ whiteSpace: "nowrap" })}
+      onColorChange={(color) => applyCellsStyle({ color })}
+      onBackgroundChange={(color) => applyCellsStyle({ backgroundColor: color })}
+      onNoFill={() => applyCellsStyle({ backgroundColor: undefined })}
+    />
+  ) : null;
+
+  const cellActionTiles = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
       <DeckRibbonTile
         icon={TableCellsMerge}
@@ -546,44 +542,29 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         disabled={!canUnmergeSelection}
         onClick={() => applyMergeCommand("unmerge")}
       />
-      <DeckRibbonTile
-        icon={AlignLeft}
-        label="Esquerda"
-        active={cellAlign === "left"}
-        onClick={() => applyCellsStyle({ textAlign: "left" })}
-      />
-      <DeckRibbonTile
-        icon={AlignCenter}
-        label="Centro"
-        active={cellAlign === "center"}
-        onClick={() => applyCellsStyle({ textAlign: "center" })}
-      />
-      <DeckRibbonTile
-        icon={AlignRight}
-        label="Direita"
-        active={cellAlign === "right"}
-        onClick={() => applyCellsStyle({ textAlign: "right" })}
-      />
-      <DeckRibbonTile
-        icon={WrapText}
-        label="Quebrar"
-        hint="Alterna quebra de linha na célula (pre-wrap ↔ nowrap)."
-        active={resolveCanvasTableWrapActive(selectedCell?.style?.whiteSpace)}
-        disabled={!cellSelection?.cells.length}
-        onClick={() =>
-          applyCellsStyle({
-            whiteSpace: nextCanvasTableWhiteSpaceToggle(selectedCell?.style?.whiteSpace),
-          })
-        }
-      />
-      <DeckRibbonTile
-        icon={Minus}
-        label="1 linha"
-        hint="Não quebra texto (ellipsis se não couber)."
-        active={selectedCell?.style?.whiteSpace === "nowrap"}
-        disabled={!cellSelection?.cells.length}
-        onClick={() => applyCellsStyle({ whiteSpace: "nowrap" })}
-      />
+      {layout === "ribbon" ? (
+        <DeckRibbonTilePopover
+          icon={Paintbrush}
+          label="Formato"
+          hint="Alinhamento, quebra e cores da célula."
+          panelLabel="Formato da célula"
+          panelVariant="menu"
+          panelClassName="td-chart-float__popover--style"
+        >
+          {(close) => (
+            <div
+              onClick={(event) => {
+                const target = event.target as HTMLElement | null;
+                if (target?.closest("button[role='menuitemradio'],button[role='menuitemcheckbox']")) {
+                  close();
+                }
+              }}
+            >
+              {cellFormatMenu}
+            </div>
+          )}
+        </DeckRibbonTilePopover>
+      ) : null}
       <DeckRibbonTile
         icon={Eraser}
         label="Limpar"
@@ -617,27 +598,6 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
     </div>
   );
 
-  const cellColorPickers = (
-    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
-      <TvRibbonColorPicker
-        label="Texto"
-        variant="text"
-        showAutomatic
-        value={selectedCell?.style?.color}
-        onChange={(color) => applyCellsStyle({ color })}
-        onAutomatic={(color) => applyCellsStyle({ color })}
-      />
-      <TvRibbonColorPicker
-        label="Fundo"
-        variant="fill"
-        showNoFill
-        value={selectedCell?.style?.backgroundColor}
-        onChange={(color) => applyCellsStyle({ backgroundColor: color })}
-        onNoFill={() => applyCellsStyle({ backgroundColor: undefined })}
-      />
-    </div>
-  );
-
   const cellRibbon =
     cellSelection?.cells.length && selectedCell ? (
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-canvas-table-cell-ribbon">
@@ -652,8 +612,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
             {cellTypeFields}
           </DeckRibbonTilePopover>
         ) : null}
-        {cellAlignTiles}
-        {cellColorPickers}
+        {cellActionTiles}
       </div>
     ) : (
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
@@ -677,8 +636,8 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
         {cellTypeFields}
         {cellSelection?.cells.length ? (
           <>
-            {cellAlignTiles}
-            {cellColorPickers}
+            {cellActionTiles}
+            {cellFormatMenu}
           </>
         ) : null}
       </>

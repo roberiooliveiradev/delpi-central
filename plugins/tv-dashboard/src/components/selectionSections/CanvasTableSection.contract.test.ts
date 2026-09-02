@@ -17,11 +17,9 @@ describe("CanvasTableSection chrome (plugin-ui + ícones)", () => {
     expect(source).toContain("DeckRibbonTile");
     expect(source).toContain("ComboboxNumberControl");
     expect(source).toContain("ToolbarSelectField");
-    expect(source).toContain("TvRibbonColorPicker");
     expect(source).toContain("TdRibbonSelect");
     expect(source).toContain("Heading2");
     expect(source).toContain("Grid3x3");
-    expect(source).toContain("AlignLeft");
     expect(source).toContain("TableCellsMerge");
     expect(source).toContain("TableCellsSplit");
     expect(source).toContain('label="Mesclar"');
@@ -42,9 +40,7 @@ describe("CanvasTableSection chrome (plugin-ui + ícones)", () => {
 
   it("Quebrar alterna wrap via nextCanvasTableWhiteSpaceToggle", () => {
     expect(source).toContain("nextCanvasTableWhiteSpaceToggle");
-    expect(source).toContain("resolveCanvasTableWrapActive");
-    expect(source).toContain('label="Quebrar"');
-    expect(source).toContain('label="1 linha"');
-    expect(source).toContain('whiteSpace: "nowrap"');
+    expect(source).toContain("CanvasTableCellFormatMenu");
+    expect(source).toContain('label="Formato"');
   });
 });
