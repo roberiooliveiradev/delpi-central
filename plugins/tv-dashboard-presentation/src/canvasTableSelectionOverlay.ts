@@ -202,7 +202,7 @@ export function resolveCanvasTableGutterHandles(params: {
     gutters.push({
       axis: "row",
       index: row,
-      left: tableLeft,
+      left: tableLeft - GUTTER_HIT_PX,
       top: cell.top,
       width: GUTTER_HIT_PX,
       height: cell.height,
@@ -215,7 +215,7 @@ export function resolveCanvasTableGutterHandles(params: {
       axis: "col",
       index: col,
       left: cell.left,
-      top: tableTop,
+      top: tableTop - GUTTER_HIT_PX,
       width: cell.width,
       height: GUTTER_HIT_PX,
     });

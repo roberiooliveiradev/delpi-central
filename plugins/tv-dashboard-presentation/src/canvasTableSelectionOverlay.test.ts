@@ -108,16 +108,22 @@ describe("resolveCanvasTableGutterHandles", () => {
     { row: 1, col: 1, left: 40, top: 20, width: 50, height: 24 },
   ];
 
-  it("cria gutter por linha e coluna", () => {
+  it("cria gutter por linha e coluna fora da caixa das células", () => {
     const gutters = resolveCanvasTableGutterHandles({ cellRects, rows: 2, cols: 2 });
     expect(gutters.filter((g) => g.axis === "row")).toHaveLength(2);
     expect(gutters.filter((g) => g.axis === "col")).toHaveLength(2);
-    expect(gutters.find((g) => g.axis === "row" && g.index === 1)).toMatchObject({
-      left: 0,
+    const rowGutter = gutters.find((g) => g.axis === "row" && g.index === 1);
+    expect(rowGutter).toMatchObject({
+      left: -14,
       top: 20,
       height: 24,
       width: 14,
     });
+    // Não intersecta o interior do td 0,0
+    expect((rowGutter?.left ?? 0) + (rowGutter?.width ?? 0)).toBeLessThanOrEqual(0);
+    const colGutter = gutters.find((g) => g.axis === "col" && g.index === 0);
+    expect(colGutter?.top).toBe(-14);
+    expect((colGutter?.top ?? 0) + (colGutter?.height ?? 0)).toBeLessThanOrEqual(0);
   });
 });
 
