@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -80,13 +81,20 @@ export type ComunicadoCanvasTableInteraction = {
   onTracksCommit?: (next: { columnWidths?: number[]; rowHeights?: number[] }) => void;
 };
 
+/** Pixels antes do primeiro preview — clique sem arrastar não prende preview. */
+export const CANVAS_TABLE_TRACK_DRAG_THRESHOLD_PX = 3;
+
 type CanvasTableTrackDrag = {
   axis: "col" | "row";
   index: number;
+  pointerId: number;
   startClient: number;
   startTracks: number[];
   axisSize: number;
   lastTracks: number[];
+  /** true após passar o threshold de arraste. */
+  active: boolean;
+  captureTarget: HTMLElement | null;
 };
 
 type Props = {
@@ -170,6 +178,11 @@ export function ComunicadoCanvasTableView({
   } | null>(null);
   const pendingReplaceRef = useRef<string | null>(null);
   const trackDragRef = useRef<CanvasTableTrackDrag | null>(null);
+  const trackDragListenersRef = useRef<{
+    onPointerMove: (event: PointerEvent) => void;
+    onPointerUp: (event: PointerEvent) => void;
+    onLostPointerCapture: (event: PointerEvent) => void;
+  } | null>(null);
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const hostStyle = resolveCanvasTableHostStyle(block) as CSSProperties;
   const displayColumnWidths = trackPreview?.columnWidths ?? opts.columnWidths;
@@ -295,19 +308,48 @@ export function ComunicadoCanvasTableView({
       })
     : [];
 
-  function commitTrackDrag() {
+  function removeTrackDragWindowListeners() {
+    const listeners = trackDragListenersRef.current;
+    if (!listeners) return;
+    window.removeEventListener("pointermove", listeners.onPointerMove);
+    window.removeEventListener("pointerup", listeners.onPointerUp);
+    window.removeEventListener("pointercancel", listeners.onPointerUp);
+    window.removeEventListener("lostpointercapture", listeners.onLostPointerCapture);
+    trackDragListenersRef.current = null;
+  }
+
+  function finishTrackDrag(options?: { commit?: boolean }) {
     const drag = trackDragRef.current;
     trackDragRef.current = null;
+    removeTrackDragWindowListeners();
+    if (drag?.captureTarget) {
+      try {
+        if (drag.captureTarget.hasPointerCapture(drag.pointerId)) {
+          drag.captureTarget.releasePointerCapture(drag.pointerId);
+        }
+      } catch {
+        /* capture já solto pelo browser */
+      }
+    }
     if (!drag) {
       setTrackPreview(null);
       return;
     }
-    const next = drag.lastTracks;
-    interaction?.onTracksCommit?.(
-      drag.axis === "col" ? { columnWidths: next } : { rowHeights: next },
-    );
+    const shouldCommit = options?.commit !== false && drag.active;
+    if (shouldCommit) {
+      interaction?.onTracksCommit?.(
+        drag.axis === "col" ? { columnWidths: drag.lastTracks } : { rowHeights: drag.lastTracks },
+      );
+    }
     setTrackPreview(null);
   }
+
+  useEffect(() => {
+    return () => {
+      trackDragRef.current = null;
+      removeTrackDragWindowListeners();
+    };
+  }, []);
 
   function onTrackHandlePointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
@@ -315,11 +357,13 @@ export function ComunicadoCanvasTableView({
     index: number,
   ) {
     if (!showTrackHandles) return;
+    if (Number.isFinite(event.button) && event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
+    finishTrackDrag({ commit: false });
     const host = hostRef.current;
     if (!host) return;
+    const captureTarget = event.currentTarget;
     const box = host.getBoundingClientRect();
     const startTracks =
       axis === "col"
@@ -328,37 +372,58 @@ export function ComunicadoCanvasTableView({
     trackDragRef.current = {
       axis,
       index,
+      pointerId: event.pointerId,
       startClient: axis === "col" ? event.clientX : event.clientY,
       startTracks,
       axisSize: axis === "col" ? box.width : box.height,
       lastTracks: startTracks,
+      active: false,
+      captureTarget,
     };
-    setTrackPreview(axis === "col" ? { columnWidths: startTracks } : { rowHeights: startTracks });
-  }
 
-  function onTrackHandlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const drag = trackDragRef.current;
-    if (!drag) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const client = drag.axis === "col" ? event.clientX : event.clientY;
-    const deltaPct = drag.axisSize > 0 ? ((client - drag.startClient) / drag.axisSize) * 100 : 0;
-    const next = applyCanvasTableTrackDrag({
-      tracks: drag.startTracks,
-      index: drag.index,
-      deltaPct,
-    });
-    drag.lastTracks = next;
-    setTrackPreview(drag.axis === "col" ? { columnWidths: next } : { rowHeights: next });
-  }
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const drag = trackDragRef.current;
+      if (!drag || moveEvent.pointerId !== drag.pointerId) return;
+      moveEvent.preventDefault();
+      const client = drag.axis === "col" ? moveEvent.clientX : moveEvent.clientY;
+      const deltaPx = client - drag.startClient;
+      if (!drag.active) {
+        if (Math.abs(deltaPx) < CANVAS_TABLE_TRACK_DRAG_THRESHOLD_PX) return;
+        drag.active = true;
+      }
+      const deltaPct = drag.axisSize > 0 ? (deltaPx / drag.axisSize) * 100 : 0;
+      const next = applyCanvasTableTrackDrag({
+        tracks: drag.startTracks,
+        index: drag.index,
+        deltaPct,
+      });
+      drag.lastTracks = next;
+      setTrackPreview(drag.axis === "col" ? { columnWidths: next } : { rowHeights: next });
+    };
 
-  function onTrackHandlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    const onPointerUp = (upEvent: PointerEvent) => {
+      const drag = trackDragRef.current;
+      if (!drag || upEvent.pointerId !== drag.pointerId) return;
+      upEvent.preventDefault();
+      finishTrackDrag({ commit: true });
+    };
+
+    const onLostPointerCapture = (lostEvent: PointerEvent) => {
+      const drag = trackDragRef.current;
+      if (!drag || lostEvent.pointerId !== drag.pointerId) return;
+      finishTrackDrag({ commit: true });
+    };
+
+    trackDragListenersRef.current = { onPointerMove, onPointerUp, onLostPointerCapture };
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("lostpointercapture", onLostPointerCapture);
+    try {
+      captureTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* alguns ambientes de teste não suportam capture */
     }
-    commitTrackDrag();
   }
 
   function onTrackHandleDoubleClick(
@@ -757,9 +822,6 @@ export function ComunicadoCanvasTableView({
           onDoubleClick={(event) =>
             onTrackHandleDoubleClick(event, handle.axis, handle.index)
           }
-          onPointerMove={onTrackHandlePointerMove}
-          onPointerUp={onTrackHandlePointerUp}
-          onPointerCancel={onTrackHandlePointerUp}
         />
       ))}
       {gutterHandles.map((gutter) => (
