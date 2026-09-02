@@ -2,6 +2,8 @@ import { configureHttpClient } from "./api/httpClient";
 import { resolveProductionPulsePermissions } from "./constants/permissions";
 import { parseProductionPulseRoute } from "./constants/routes";
 import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPath";
+import { useShortViewport } from "./hooks/useShortViewport";
+import { useViewportBucket } from "./hooks/useViewportBucket";
 import { PanelPage } from "./pages/PanelPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
@@ -25,6 +27,8 @@ export default function App({
   const { pathname, search } = useProductionPulseRouterPath(pathnameFromHost);
   const route = parseProductionPulseRoute(pathname, search);
   const permissionFlags = resolveProductionPulsePermissions(permissions, isSuperadmin);
+  const viewport = useViewportBucket();
+  const shortViewport = useShortViewport();
 
   if (route.kind === "unknown") {
     return (
@@ -49,6 +53,8 @@ export default function App({
   return (
     <div
       className={`dashboard-production-pulse dashboard-page${isOperatorRoute ? " dashboard-production-pulse--operator" : ""}`}
+      data-pp-viewport={viewport}
+      data-pp-viewport-short={shortViewport && isOperatorRoute ? "true" : undefined}
     >
       {route.kind === "panel" ? (
         <PanelPage search={search} permissions={permissionFlags} />

@@ -3,13 +3,13 @@ import { RefreshCw } from "lucide-react";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
+  formatCounterPeriodDelta,
   formatPrimaryMetric,
   formatRelativeTime,
-  placementLabel,
   roleLabel,
 } from "../utils/deviceDisplay";
-import { PpDataTable, type DataTableColumn } from "./data/dataTableUi";
-import { AnchorTypeBadge } from "./AnchorTypeBadge";
+import { PpDataTable, type DataTableColumn } from "../app/productionPulseUi";
+import { PlacementObjectDisplay } from "./PlacementObjectDisplay";
 import { DeviceStatusBadge } from "./DeviceStatusBadge";
 
 type DeviceTableProps = {
@@ -40,12 +40,7 @@ export function DeviceTable({
     {
       key: "placement",
       header: "Objeto",
-      render: (row) => (
-        <span className="pp-device-placement">
-          {placementLabel(row)}
-          {row.binding ? <AnchorTypeBadge anchorType={row.binding.anchorType} /> : null}
-        </span>
-      ),
+      render: (row) => <PlacementObjectDisplay device={row} />,
     },
     {
       key: "role",
@@ -56,7 +51,15 @@ export function DeviceTable({
     {
       key: "metric",
       header: "Métrica",
-      render: (row) => <span className="pp-tabular-nums">{formatPrimaryMetric(row)}</span>,
+      render: (row) => {
+        const dayDelta = formatCounterPeriodDelta(row, "day");
+        return (
+          <span className="pp-device-metric">
+            <span className="pp-tabular-nums">{formatPrimaryMetric(row)}</span>
+            {dayDelta ? <span className="pp-device-metric__delta">{dayDelta} hoje</span> : null}
+          </span>
+        );
+      },
     },
     {
       key: "status",

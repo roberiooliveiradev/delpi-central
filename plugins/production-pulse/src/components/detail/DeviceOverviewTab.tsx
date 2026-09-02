@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { fetchDeviceReadings } from "../../api/productionPulseApi";
-import { PpActionButton, PpChartCard, PpSectionCard } from "../../app/productionPulseUi";
-import { SimpleLineChart } from "../charts/SimpleLineChart";
+import { PpActionButton, PpReadingsAreaChart, PpSectionCard } from "../../app/productionPulseUi";
 import type { DeviceListItem } from "../../types/device";
 import type { DeviceReading, LivePollResult } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
@@ -64,13 +63,11 @@ export function DeviceOverviewTab({
           onPollNow={onPollNow}
           onReset={onReset}
         />
-        <DeviceBindingCard binding={device.binding} />
+        <DeviceBindingCard binding={device.binding} deviceName={device.name} />
       </div>
 
-      <PpSectionCard title="Mini histórico (24h)">
-        <PpChartCard title="Variação entre leituras" titleHint={PP_HELP.detail.chartDelta}>
-          <SimpleLineChart points={deltaPoints} height={200} />
-        </PpChartCard>
+      <PpSectionCard title="Mini histórico (24h)" hint={PP_HELP.detail.chartDelta}>
+        <PpReadingsAreaChart points={deltaPoints} height={240} variant="mini" />
         <div className="pp-detail-overview__link-row">
           <PpActionButton
             variant="ghost"

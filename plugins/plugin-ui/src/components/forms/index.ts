@@ -7,6 +7,8 @@ export {
   type SegmentToggleOption,
   type SegmentToggleProps,
   type SegmentToggleSize,
+  type SegmentToggleWidthMode,
+  type SegmentToggleDirection,
 } from "./SegmentToggle";
 
 export {

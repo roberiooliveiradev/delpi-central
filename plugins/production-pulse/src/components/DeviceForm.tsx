@@ -1,9 +1,12 @@
-import { NativeSwitchControl } from "@delpi/plugin-ui/index";
-
 import {
   PpActionButton,
-  PpFieldLabel,
   PpFormGrid,
+  PpNativeInlineTextField,
+  PpNativeSelectField,
+  PpNativeSwitchField,
+  PpNativeTextField,
+  ppFieldError,
+  ppFieldHint,
 } from "../app/productionPulseUi";
 import { PP_HELP } from "../content/helpTooltips";
 import { getPpSectionIntro } from "../content/sectionIntros";
@@ -45,99 +48,100 @@ export function DeviceForm({
   return (
     <div className="pp-device-form">
       <p className="pp-section-intro">{getPpSectionIntro("form.device")}</p>
-      <PpFormGrid className="pp-form-grid--single">
-        <label className="pp-field">
-          <PpFieldLabel label="Nome do dispositivo" hint={PP_HELP.form.name} />
-          <input
-            value={device.name}
-            onChange={(event) => onChange({ name: event.target.value })}
-            placeholder="ESP ventilador setor A"
-          />
-          {errors?.name ? <span className="pp-field-error">{errors.name}</span> : null}
-        </label>
+      <PpFormGrid className="pp-form-grid--pair">
+        <PpNativeTextField
+          id="pp-device-name"
+          label="Nome do dispositivo"
+          hint={PP_HELP.form.name}
+          value={device.name}
+          placeholder="ESP ventilador setor A"
+          onChange={(value) => onChange({ name: value })}
+          afterControl={ppFieldError(errors?.name)}
+        />
 
-        <label className="pp-field">
-          <PpFieldLabel label="Filial" hint={PP_HELP.form.filial} />
-          <select
-            value={device.branch}
-            disabled={readOnlyBranch}
-            onChange={(event) => onChange({ branch: event.target.value })}
-          >
-            {branchOptions.map((item) => (
-              <option key={item.id} value={item.id}>
-                {branchLabel(item.id)} ({item.id})
-              </option>
-            ))}
-          </select>
-          {errors?.branch ? <span className="pp-field-error">{errors.branch}</span> : null}
-        </label>
+        <PpNativeSelectField
+          id="pp-device-branch"
+          label="Filial"
+          hint={PP_HELP.form.filial}
+          value={device.branch}
+          disabled={readOnlyBranch}
+          options={branchOptions.map((item) => ({
+            value: item.id,
+            label: `${branchLabel(item.id)} (${item.id})`,
+          }))}
+          onChange={(value) => onChange({ branch: value })}
+          afterControl={ppFieldError(errors?.branch)}
+        />
 
-        <div className="pp-field pp-field--ip-row">
-          <label className="pp-field">
-            <PpFieldLabel label="Endereço IP" hint={PP_HELP.form.ip} />
-            <input
-              value={device.ipAddress}
-              onChange={(event) => onChange({ ipAddress: event.target.value })}
-              placeholder="192.168.20.2"
-            />
-            {errors?.ipAddress ? <span className="pp-field-error">{errors.ipAddress}</span> : null}
-          </label>
-          {onTestConnection ? (
-            <PpActionButton
-              variant="ghost"
-              className="pp-test-connection-btn"
-              disabled={testingConnection || !device.ipAddress.trim()}
-              onClick={onTestConnection}
-            >
-              {testingConnection ? "Testando…" : "Testar conexão"}
-            </PpActionButton>
-          ) : null}
-        </div>
+        <PpNativeInlineTextField
+          id="pp-device-ip"
+          label="Endereço IP"
+          hint={PP_HELP.form.ip}
+          span
+          className="pp-form-grid__span-full pp-field--ip-row"
+          value={device.ipAddress}
+          placeholder="192.168.20.2"
+          onChange={(value) => onChange({ ipAddress: value })}
+          afterControl={ppFieldError(errors?.ipAddress)}
+          trailing={
+            onTestConnection ? (
+              <PpActionButton
+                variant="ghost"
+                className="pp-test-connection-btn"
+                disabled={testingConnection || !device.ipAddress.trim()}
+                onClick={onTestConnection}
+              >
+                {testingConnection ? PP_HELP.form.testConnectionLoading : PP_HELP.form.testConnectionAction}
+              </PpActionButton>
+            ) : null
+          }
+        />
 
-        <label className="pp-field">
-          <PpFieldLabel label="Driver" hint={PP_HELP.form.driver} />
-          <select
-            value={device.driverKey}
-            onChange={(event) => onChange({ driverKey: event.target.value })}
-          >
-            {drivers.map((driver) => (
-              <option key={driver.key} value={driver.key}>
-                {driver.labelPt}
-              </option>
-            ))}
-          </select>
-          <span className="pp-field-hint">{PP_HELP.form.driverPreview}</span>
-          <span className="pp-driver-preview">Preview: {driverPreview(selectedDriver)}</span>
-          {errors?.driverKey ? <span className="pp-field-error">{errors.driverKey}</span> : null}
-        </label>
+        <PpNativeSelectField
+          id="pp-device-driver"
+          label="Driver"
+          hint={PP_HELP.form.driver}
+          span
+          value={device.driverKey}
+          options={drivers.map((driver) => ({
+            value: driver.key,
+            label: driver.labelPt,
+          }))}
+          onChange={(value) => onChange({ driverKey: value })}
+          afterControl={
+            <>
+              {ppFieldHint(PP_HELP.form.driverPreview)}
+              <span className="pp-driver-preview">Preview: {driverPreview(selectedDriver)}</span>
+              {ppFieldError(errors?.driverKey)}
+            </>
+          }
+        />
 
-        <label className="pp-field">
-          <PpFieldLabel label="Intervalo poll (s)" hint={PP_HELP.form.pollInterval} />
-          <input
-            type="number"
-            min={0.5}
-            max={300}
-            step={0.5}
-            value={device.pollIntervalSeconds}
-            onChange={(event) =>
-              onChange({
-                pollIntervalSeconds: Number.parseFloat(event.target.value) || 30,
-              })
-            }
-          />
-          {errors?.pollIntervalSeconds ? (
-            <span className="pp-field-error">{errors.pollIntervalSeconds}</span>
-          ) : null}
-        </label>
+        <PpNativeTextField
+          id="pp-device-poll-interval"
+          label="Intervalo poll (s)"
+          hint={PP_HELP.form.pollInterval}
+          type="number"
+          min={0.5}
+          max={300}
+          step={0.5}
+          inputMode="decimal"
+          value={String(device.pollIntervalSeconds)}
+          onChange={(value) =>
+            onChange({
+              pollIntervalSeconds: Number.parseFloat(value) || 30,
+            })
+          }
+          afterControl={ppFieldError(errors?.pollIntervalSeconds)}
+        />
 
-        <label className="pp-field pp-field--switch">
-          <PpFieldLabel label="Dispositivo ativo" hint={PP_HELP.form.enabled} />
-          <NativeSwitchControl
-            checked={device.enabled}
-            aria-label="Dispositivo ativo"
-            onChange={(checked) => onChange({ enabled: checked })}
-          />
-        </label>
+        <PpNativeSwitchField
+          id="pp-device-enabled"
+          label="Dispositivo ativo"
+          hint={PP_HELP.form.enabled}
+          checked={device.enabled}
+          onChange={(checked) => onChange({ enabled: checked })}
+        />
       </PpFormGrid>
     </div>
   );

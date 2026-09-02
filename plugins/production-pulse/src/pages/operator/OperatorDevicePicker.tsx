@@ -11,6 +11,7 @@ import {
 import type { ProductionPulsePermissionFlags } from "../../constants/permissions";
 import { PP_HELP } from "../../content/helpTooltips";
 import type { OperatorDeviceItem } from "../../types/operator";
+import { navigateOperatorPlacementHub } from "../../utils/operatorNavigation";
 import { navigateProductionPulse } from "../../utils/navigation";
 import { writeLastPlacementKey } from "../../utils/operatorStorage";
 
@@ -89,8 +90,9 @@ export function OperatorDevicePicker({
         trailing={
           <PpActionButton
             variant="ghost"
-            className="pp-operator-brand-bar__btn"
-            onClick={() => navigateProductionPulse(productionPulseOperatorPath(branch))}
+            className="pp-operator-hero-btn"
+            onClick={() => navigateOperatorPlacementHub(branch)}
+            title={PP_HELP.operator.changePlacement}
           >
             Trocar posto
           </PpActionButton>

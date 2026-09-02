@@ -36,8 +36,9 @@ def test_read_timeout_raises_device_driver_error():
         raise httpx.ReadTimeout("timed out")
 
     driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=0.1)
-    with pytest.raises(DeviceDriverError, match="Timeout"):
+    with pytest.raises(DeviceDriverError) as exc_info:
         driver.read(_DEVICE)
+    assert exc_info.value.code == "timeout"
 
 
 def test_execute_increment_returns_updated_counter():
@@ -63,11 +64,22 @@ def test_execute_reset_returns_zero():
     assert result.metrics == {"counter": 0}
 
 
+def test_execute_network_error_returns_code_only():
+    def handler(_request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("connection refused")
+
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    result = driver.execute(_DEVICE, "increment")
+    assert result.success is False
+    assert result.error_code == "network_error"
+    assert result.error_message is None
+
+
 def test_execute_unknown_command_returns_failure():
     driver = Esp8266CounterDriver(timeout_seconds=1.0)
     result = driver.execute(_DEVICE, "reboot")
     assert result.success is False
-    assert "não suportado" in (result.error_message or "")
+    assert result.error_code == "unsupported_command"
 
 
 def test_register_device_drivers_exposes_implementation():

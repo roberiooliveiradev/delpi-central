@@ -12,6 +12,7 @@ from production_pulse_app.application.services.work_center_catalog_service impor
     WorkCenterCatalogUnavailableError,
 )
 from production_pulse_app.core.responses import error, success
+from production_pulse_app.interface.http.content_coded_error_response import content_coded_error_response
 from production_pulse_app.infrastructure.http.auth_header import bearer_authorization_from_context
 from production_pulse_app.interface.http.rbac_http import (
     guard_branch_access,
@@ -53,9 +54,7 @@ async def list_work_centers(
         )
         return success(data)
     except BindingValidationError as exc:
-        payload = error(str(exc), code="validation_error", status_code=422)
-        status_code = payload.pop("_status_code", 422)
-        return JSONResponse(status_code=status_code, content=payload)
+        return content_coded_error_response(exc)
     except WorkCenterCatalogUnavailableError as exc:
         payload = error(str(exc), code="upstream_unavailable", status_code=503)
         status_code = payload.pop("_status_code", 503)

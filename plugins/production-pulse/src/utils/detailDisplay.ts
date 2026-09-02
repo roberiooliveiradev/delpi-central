@@ -1,5 +1,5 @@
 import type { DeviceListItem } from "../types/device";
-import type { DeviceReading } from "../types/detail";
+import type { DeviceCommandAudit, DeviceReading } from "../types/detail";
 
 const METRIC_LABELS: Record<string, { label: string; unit?: string }> = {
   counter: { label: "Golpes", unit: "gol" },
@@ -66,6 +66,12 @@ export function formatDeltaValue(
   return unit ? `${prefix}${formatted} ${unit}` : `${prefix}${formatted}`;
 }
 
+export function isHardwareCounterReset(reading: Pick<DeviceReading, "meta">): boolean {
+  const meta = reading.meta ?? {};
+  if (meta.counter_reset === true || meta.counterReset === true) return true;
+  return false;
+}
+
 export function formatPrimaryMetricFromDevice(device: DeviceListItem): string {
   const key = primaryMetricKey(device.lastMetrics, device.capabilities);
   if (!key) return "—";
@@ -78,6 +84,28 @@ export function sourceLabel(source: string): string {
 
 export function commandLabel(commandKey: string): string {
   return COMMAND_LABELS[commandKey] ?? commandKey;
+}
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function safeUserPart(value: string | null | undefined): string {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed || UUID_RE.test(trimmed)) return "";
+  return trimmed;
+}
+
+export function formatIssuedByUser(
+  command: Pick<DeviceCommandAudit, "issuedBy" | "issuedByName" | "issuedByEmail">,
+): string {
+  const name = safeUserPart(command.issuedByName);
+  const email = safeUserPart(command.issuedByEmail);
+  if (name && email) return `${name} · ${email}`;
+  if (name) return name;
+  if (email) return email;
+  const fallback = safeUserPart(command.issuedBy);
+  if (fallback) return fallback;
+  return "—";
 }
 
 export function formatDateTime(iso: string | null | undefined): string {

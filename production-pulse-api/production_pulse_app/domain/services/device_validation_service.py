@@ -6,10 +6,13 @@ from production_pulse_app.application.services.device_driver_registry_service im
     get_device_driver_registry,
 )
 from production_pulse_app.domain.errors import DeviceValidationError
-
-POLL_INTERVAL_MIN = 0.5
-POLL_INTERVAL_MAX = 300.0
-VALID_BRANCHES = frozenset({"01", "02"})
+from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    matches_ipv4,
+    name_max_length,
+    poll_interval_max,
+    poll_interval_min,
+    valid_branches,
+)
 
 
 @dataclass(frozen=True)
@@ -25,16 +28,22 @@ def resolve_driver(driver_key: str) -> ResolvedDriver:
 
 def validate_branch(branch: str) -> str:
     normalized = (branch or "").strip()
-    if normalized not in VALID_BRANCHES:
-        raise DeviceValidationError("branch deve ser 01 ou 02.")
+    if not normalized:
+        raise DeviceValidationError("branch_required")
+    if normalized not in valid_branches():
+        raise DeviceValidationError("invalid_branch")
     return normalized
 
 
 def validate_poll_interval(seconds: int | float) -> float:
+    minimum = poll_interval_min()
+    maximum = poll_interval_max()
     value = float(seconds)
-    if value < POLL_INTERVAL_MIN or value > POLL_INTERVAL_MAX:
+    if value < minimum or value > maximum:
         raise DeviceValidationError(
-            f"poll_interval_seconds deve estar entre {POLL_INTERVAL_MIN} e {int(POLL_INTERVAL_MAX)}."
+            "poll_interval_out_of_range",
+            min=minimum,
+            max=int(maximum),
         )
     return round(value, 2)
 
@@ -42,16 +51,18 @@ def validate_poll_interval(seconds: int | float) -> float:
 def normalize_ip_address(ip_address: str) -> str:
     normalized = (ip_address or "").strip()
     if not normalized:
-        raise DeviceValidationError("ip_address é obrigatório.")
+        raise DeviceValidationError("ip_address_required")
+    if not matches_ipv4(normalized):
+        raise DeviceValidationError("invalid_ipv4")
     return normalized
 
 
 def normalize_name(name: str) -> str:
     normalized = (name or "").strip()
     if not normalized:
-        raise DeviceValidationError("name é obrigatório.")
-    if len(normalized) > 120:
-        raise DeviceValidationError("name deve ter no máximo 120 caracteres.")
+        raise DeviceValidationError("name_required")
+    if len(normalized) > name_max_length():
+        raise DeviceValidationError("name_too_long")
     return normalized
 
 

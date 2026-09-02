@@ -18,10 +18,11 @@ const OPTIONS = [
 
 export function AnchorTypeSegmented({ value, onChange, stacked }: AnchorTypeSegmentedProps) {
   return (
-    <div className={`pp-anchor-segmented${stacked ? " pp-anchor-segmented--stack" : ""}`}>
+    <div className="pp-anchor-segmented">
       <PpFieldLabel label="Tipo de amarração" hint={PP_HELP.form.anchorType} />
       <PpSegmentToggle
         ariaLabel="Tipo de amarração"
+        direction={stacked ? "column" : "row"}
         value={value}
         onChange={(next) => onChange(next as AnchorType)}
         options={OPTIONS}

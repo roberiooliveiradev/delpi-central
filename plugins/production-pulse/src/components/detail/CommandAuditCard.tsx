@@ -1,6 +1,6 @@
 import type { DeviceCommandAudit } from "../../types/detail";
 import { PpActionButton } from "../../app/productionPulseUi";
-import { commandLabel, formatDateTime } from "../../utils/detailDisplay";
+import { commandLabel, formatDateTime, formatIssuedByUser } from "../../utils/detailDisplay";
 
 type CommandAuditCardProps = {
   command: DeviceCommandAudit;
@@ -23,7 +23,7 @@ export function CommandAuditCard({ command, onViewJson }: CommandAuditCardProps)
         </div>
         <div>
           <span className="pp-command-card__label">Usuário</span>
-          <strong>{command.issuedBy || "—"}</strong>
+          <strong>{formatIssuedByUser(command)}</strong>
         </div>
         {!command.success && command.errorMessage ? (
           <p className="pp-command-card__error">{command.errorMessage}</p>

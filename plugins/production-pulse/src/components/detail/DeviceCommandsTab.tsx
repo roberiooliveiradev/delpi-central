@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { fetchDeviceCommands } from "../../api/productionPulseApi";
-import { PpActionButton, PpPagination, PpSectionCard } from "../../app/productionPulseUi";
-import { PpDataTable, type DataTableColumn } from "../data/dataTableUi";
+import { PpActionButton, PpDataTable, PpPagination, PpSectionCard, type DataTableColumn } from "../../app/productionPulseUi";
 import type { DeviceCommandAudit } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
 import { useViewportBucket } from "../../hooks/useViewportBucket";
-import { commandLabel, formatDateTime } from "../../utils/detailDisplay";
+import { isMobileViewport } from "../../utils/viewportLayout";
+import { commandLabel, formatDateTime, formatIssuedByUser } from "../../utils/detailDisplay";
 import { CommandAuditCard } from "./CommandAuditCard";
 import { CommandJsonModal } from "../modals/CommandJsonModal";
 
@@ -19,7 +19,7 @@ type DeviceCommandsTabProps = {
 
 export function DeviceCommandsTab({ deviceId, refreshToken }: DeviceCommandsTabProps) {
   const viewport = useViewportBucket();
-  const isMobile = viewport === "mobile";
+  const isMobile = isMobileViewport(viewport);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +62,7 @@ export function DeviceCommandsTab({ deviceId, refreshToken }: DeviceCommandsTabP
       {
         key: "issuedBy",
         header: "Usuário",
-        render: (row) => row.issuedBy || "—",
+        render: (row) => formatIssuedByUser(row),
       },
       {
         key: "success",

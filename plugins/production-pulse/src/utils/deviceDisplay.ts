@@ -1,4 +1,4 @@
-import type { DeviceListItem, DeviceStatus } from "../types/device";
+import type { DeviceBinding, DeviceListItem, DeviceStatus, DeviceSummary } from "../types/device";
 
 const ROLE_LABELS: Record<string, string> = {
   pulse_counter: "Contador",
@@ -65,9 +65,41 @@ export function formatPrimaryMetric(device: DeviceListItem): string {
   return `${formatted} ${meta.unit}`;
 }
 
+export function formatCounterPeriodDelta(
+  device: DeviceListItem,
+  period: "day" | "shift",
+): string | null {
+  if (device.roleKey !== "pulse_counter") return null;
+  const value = device.periodDeltas?.[period]?.counter;
+  if (value === null || value === undefined) return null;
+  return `+${new Intl.NumberFormat("pt-BR").format(value)}`;
+}
+
+export function formatCounterDeltaKpi(
+  counterDelta: DeviceSummary["counterDelta"],
+  period: "day" | "shift",
+): string {
+  const value = counterDelta?.[period]?.counter ?? 0;
+  return new Intl.NumberFormat("pt-BR").format(value);
+}
+
 export function placementLabel(device: DeviceListItem): string {
   if (!device.binding) return "—";
-  return device.binding.placementLabel || "—";
+  return bindingObjectLabel(device.binding, device.name);
+}
+
+export function bindingObjectLabel(binding: DeviceBinding, deviceName: string): string {
+  if (binding.anchorType === "standalone") return "—";
+  const label = binding.placementLabel?.trim();
+  if (!label) return "—";
+  if (label === deviceName.trim()) return "—";
+  return label;
+}
+
+export function formatDeviceDetailDescription(device: DeviceListItem): string {
+  const placement = placementLabel(device);
+  if (placement === "—") return device.ipAddress;
+  return `${placement} · ${device.ipAddress}`;
 }
 
 export function statusLabel(status: DeviceStatus): string {

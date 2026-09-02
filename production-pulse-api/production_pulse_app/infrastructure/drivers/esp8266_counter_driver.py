@@ -10,7 +10,8 @@ from production_pulse_app.application.services.device_driver_registry_service im
 from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.domain.models.device_reading import CommandResult, DeviceReading
 from production_pulse_app.infrastructure.drivers.device_http_support import (
-    device_base_url,
+    device_get_json,
+    device_post_json,
     parse_counter_response,
 )
 
@@ -64,13 +65,16 @@ class Esp8266CounterDriver:
         normalized = (command_key or "").strip().lower()
         path = _COMMAND_PATHS.get(normalized)
         if path is None:
-            return CommandResult(
-                success=False,
-                error_message=f"Comando não suportado: {command_key}",
-            )
+            return CommandResult(success=False, error_code="unsupported_command")
 
         try:
-            response_body = self._post_json(device, path, payload=payload)
+            response_body = device_post_json(
+                device,
+                path,
+                client=self._client,
+                timeout_seconds=self._timeout_for(device),
+                payload=payload,
+            )
             counter = parse_counter_response(response_body)
             return CommandResult(
                 success=True,
@@ -78,75 +82,17 @@ class Esp8266CounterDriver:
                 response_payload=response_body if isinstance(response_body, dict) else {},
             )
         except DeviceDriverError as exc:
-            return CommandResult(success=False, error_message=str(exc))
+            return CommandResult(success=False, error_code=exc.code)
 
     def _fetch_counter(self, device: dict[str, Any]) -> DeviceReading:
-        body = self._get_json(device, _READ_PATH)
+        body = device_get_json(
+            device,
+            _READ_PATH,
+            client=self._client,
+            timeout_seconds=self._timeout_for(device),
+        )
         counter = parse_counter_response(body)
         return DeviceReading(metrics={"counter": counter})
-
-    def _get_json(self, device: dict[str, Any], path: str) -> Any:
-        url = f"{device_base_url(device)}{path}"
-        try:
-            if self._client is not None:
-                response = self._client.get(url, timeout=self._timeout_for(device))
-            else:
-                with httpx.Client(timeout=self._timeout_for(device)) as client:
-                    response = client.get(url)
-        except httpx.TimeoutException as exc:
-            raise DeviceDriverError(
-                f"Timeout ao contactar dispositivo em {url}.",
-                code="timeout",
-            ) from exc
-        except httpx.RequestError as exc:
-            raise DeviceDriverError(
-                f"Falha de rede ao contactar dispositivo em {url}: {exc}",
-                code="network_error",
-            ) from exc
-
-        return self._parse_http_response(response, url=url)
-
-    def _post_json(
-        self,
-        device: dict[str, Any],
-        path: str,
-        *,
-        payload: dict[str, Any] | None = None,
-    ) -> Any:
-        url = f"{device_base_url(device)}{path}"
-        json_body = payload or {}
-        try:
-            if self._client is not None:
-                response = self._client.post(url, json=json_body, timeout=self._timeout_for(device))
-            else:
-                with httpx.Client(timeout=self._timeout_for(device)) as client:
-                    response = client.post(url, json=json_body)
-        except httpx.TimeoutException as exc:
-            raise DeviceDriverError(
-                f"Timeout ao contactar dispositivo em {url}.",
-                code="timeout",
-            ) from exc
-        except httpx.RequestError as exc:
-            raise DeviceDriverError(
-                f"Falha de rede ao contactar dispositivo em {url}: {exc}",
-                code="network_error",
-            ) from exc
-
-        return self._parse_http_response(response, url=url)
-
-    def _parse_http_response(self, response: httpx.Response, *, url: str) -> Any:
-        if response.status_code >= 400:
-            raise DeviceDriverError(
-                f"Dispositivo respondeu HTTP {response.status_code} em {url}.",
-                code="http_error",
-            )
-        try:
-            return response.json()
-        except ValueError as exc:
-            raise DeviceDriverError(
-                f"Resposta JSON inválida do dispositivo em {url}.",
-                code="invalid_response",
-            ) from exc
 
 
 __all__ = ["Esp8266CounterDriver"]

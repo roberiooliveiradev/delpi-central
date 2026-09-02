@@ -1,0 +1,13 @@
+{
+  "limits": {
+    "pollIntervalSeconds": {
+      "min": 0.5,
+      "max": 300
+    },
+    "nameMaxLength": 120
+  },
+  "patterns": {
+    "ipv4": "^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)$"
+  },
+  "validBranches": ["01", "02"]
+}

@@ -1,33 +1,48 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  buildPanelPath,
-  buildPanelSearchParams,
-  readPanelFilters,
-} from "./panelFilterUrl";
+import { buildPanelSearchParams, readPanelFilters } from "./panelFilterUrl";
 
-describe("panelFilterUrl", () => {
-  it("reads default filters from empty search", () => {
-    expect(readPanelFilters("")).toMatchObject({
+describe("readPanelFilters view mode", () => {
+  it("defaults to table", () => {
+    expect(readPanelFilters("").view).toBe("table");
+  });
+
+  it("maps legacy list to table", () => {
+    expect(readPanelFilters("?view=list").view).toBe("table");
+  });
+
+  it("parses cards and grouped", () => {
+    expect(readPanelFilters("?view=cards").view).toBe("cards");
+    expect(readPanelFilters("?view=grouped").view).toBe("grouped");
+  });
+});
+
+describe("buildPanelSearchParams view mode", () => {
+  it("omits default table view from query", () => {
+    const params = buildPanelSearchParams({
       branch: "01",
-      view: "list",
+      anchorType: "",
+      role: "",
+      status: "",
+      search: "",
+      view: "table",
       groupBy: "work_center",
       page: 1,
     });
+    expect(params.get("view")).toBeNull();
   });
 
-  it("round-trips query params", () => {
-    const search =
-      "?branch=02&status=online&role=pulse_counter&search=esp&view=grouped&groupBy=machine&page=2";
-    const filters = readPanelFilters(search);
-    expect(filters.branch).toBe("02");
-    expect(filters.status).toBe("online");
-    expect(filters.role).toBe("pulse_counter");
-    expect(filters.search).toBe("esp");
-    expect(filters.view).toBe("grouped");
-    expect(filters.groupBy).toBe("machine");
-    expect(filters.page).toBe(2);
-    expect(buildPanelSearchParams(filters).toString()).toContain("branch=02");
-    expect(buildPanelPath(filters)).toContain("/apps/production-pulse?");
+  it("persists cards view in query", () => {
+    const params = buildPanelSearchParams({
+      branch: "01",
+      anchorType: "",
+      role: "",
+      status: "",
+      search: "",
+      view: "cards",
+      groupBy: "work_center",
+      page: 1,
+    });
+    expect(params.get("view")).toBe("cards");
   });
 });

@@ -1203,6 +1203,60 @@ Substituído por **WF-PP-OP-PICK** (tela dedicada após hub CT, não chips inlin
 
 **Optimistic UI:** ao tap +/−, incrementa/decrementa valor local imediatamente; reconcilia com resposta API; rollback se falhar.
 
+### WF-PP-OP-08 — Shell responsivo (contador + gauge)
+
+Layout unificado por faixa — implementação via `data-pp-viewport` + CSS (sem duplicar markup TS).
+
+| Faixa | Largura | Shell | Contador (`counter_pad`) | Gauge (`gauge_readout`) |
+|-------|---------|-------|--------------------------|-------------------------|
+| **Mobile** | ≤768px | Hero compacto; ações full width | Palco centrado; pad **+** full → **− \| Limpar**; sync full width; `min-height` ~viewport | Tiles 1 col; sync full width |
+| **Tablet** | 769–1100px | Hero compact; conteúdo `max-width: 720px` | Palco + pad **3 col** (− \| Limpar \| +); botões 96–112px | 769–900: tiles 1 col · 901+: **2 col** |
+| **Desktop** | >1100px | Mesmo shell; `max-width: 840px` centrado | Palco maior; pad 3 col gap 20px | Grid 2 col (auto-fit min 280px) |
+
+```text
+Mobile (≤768) — contador
+┌──────────────────────────────┐
+│ Hero compact · [Trocar posto]│  ← full width ghost
+├──────────────────────────────┤
+│ ⚠ offline banner (se houver) │
+│                              │
+│         ╭────────────╮       │  ← stage flex-1, valor clamp 2.5–4.5rem
+│         │   1.284    │       │
+│         │   golpes   │       │
+│         ╰────────────╯       │
+│  ╭────────────────────────╮  │
+│  │  +   Aumentar golpe    │  │
+│  ╰────────────────────────╯  │
+│  ╭──────────╮ ╭────────────╮ │
+│  │ − Dimin. │ │ ⌫ Limpar   │ │
+│  ╰──────────╯ ╰────────────╯ │
+│     [ Sincronizar agora ]    │
+└──────────────────────────────┘
+
+Tablet landscape (769–1100) — contador
+┌─ max 720px centrado ─────────────────────────┐
+│ Hero · status · [Trocar posto]               │
+│              ╭──────────╮                    │
+│              │  1.284   │  clamp 4.5–8rem    │
+│              ╰──────────╯                    │
+│   [ − ]    [ Limpar ]    [ + ]  ← 3×1 grid   │
+│        [ Sincronizar agora ]                 │
+└──────────────────────────────────────────────┘
+
+Desktop (>1100) — gauge 2+ métricas
+┌─ max 840px centrado ─────────────────────────┐
+│ Hero · [Trocar posto]                        │
+│ ┌─────────────┐  ┌─────────────┐             │
+│ │  1.850 rpm  │  │  67,2 °C    │             │
+│ └─────────────┘  └─────────────┘             │
+│ ● Online          [ Atualizar ]              │
+└──────────────────────────────────────────────┘
+```
+
+**Tokens CSS:** `--pp-operator-content-max`, `--pp-operator-shell-min-height`, `--pp-operator-pad-height` por `data-pp-viewport`.
+
+**Tokens fluidos (OP-08b):** todos os tamanhos do operador usam `clamp()` centralizado em `.dashboard-production-pulse--operator` — hero, cards hub/picker, contador, gauge, badges, banner offline, botões pad/sync e modal zerar. Componentes consomem `--pp-operator-*` (sem px fixo solto no bloco operador).
+
 ### WF-PP-OP-07 — Entradas
 
 | Origem | Destino |

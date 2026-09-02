@@ -1,6 +1,4 @@
-import { ModalShell, modalShellBemClasses } from "@delpi/plugin-ui/index";
-
-import { PpActionButton } from "../../app/productionPulseUi";
+import { PpActionButton, PpHostContainedDialog } from "../../app/productionPulseUi";
 import { PP_HELP } from "../../content/helpTooltips";
 import type { ProbeResult } from "../../types/form";
 import { formatPrimaryMetricFromProbe } from "../../utils/deviceFormValidation";
@@ -24,20 +22,17 @@ export function TestConnectionModal({
   const metricSummary = result ? formatPrimaryMetricFromProbe(result.metrics) : null;
 
   return (
-    <ModalShell
-      open={open}
-      title="Testar conexão"
-      onClose={onClose}
-      classNames={modalShellBemClasses("pp")}
-    >
+    <PpHostContainedDialog open={open} title={PP_HELP.modals.testTitle} onClose={onClose}>
       <div className="pp-test-modal">
-        {loading ? <p>Testando comunicação com o device…</p> : null}
+        {loading ? <p>{PP_HELP.modals.testLoading}</p> : null}
         {!loading && success ? (
           <>
             <p>{PP_HELP.modals.testOk}</p>
             {metricSummary ? <p className="pp-test-modal__metric">{metricSummary}</p> : null}
             {result?.latencyMs != null ? (
-              <p className="pp-test-modal__meta">Latência: {result.latencyMs} ms</p>
+              <p className="pp-test-modal__meta">
+                {PP_HELP.modals.testLatencyPrefix}: {result.latencyMs} ms
+              </p>
             ) : null}
           </>
         ) : null}
@@ -46,10 +41,10 @@ export function TestConnectionModal({
         ) : null}
         <div className="pp-test-modal__actions">
           <PpActionButton variant="primary" onClick={onClose}>
-            Fechar
+            {PP_HELP.modals.testClose}
           </PpActionButton>
         </div>
       </div>
-    </ModalShell>
+    </PpHostContainedDialog>
   );
 }

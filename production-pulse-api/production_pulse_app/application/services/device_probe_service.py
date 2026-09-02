@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import time
 from typing import Any
-from uuid import UUID
 
 from production_pulse_app.application.services.device_driver_registry_service import (
     DeviceDriverNotImplementedError,
@@ -17,6 +16,9 @@ from production_pulse_app.domain.services.device_validation_service import (
     normalize_ip_address,
     resolve_driver,
     validate_branch,
+)
+from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
+    device_connectivity_user_message,
 )
 
 
@@ -44,18 +46,34 @@ class DeviceProbeService:
         get_test_probe_rate_limiter().check(actor_sub or "anonymous")
         return self._run_probe(str(device["driver_key"]), device)
 
+    def _probe_failure_payload(
+        self,
+        driver_key: str,
+        *,
+        code: str,
+        latency_ms: int,
+        fallback: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "driverKey": driver_key,
+            "online": False,
+            "error": code,
+            "errorMessage": device_connectivity_user_message(code, fallback=fallback),
+            "latencyMs": latency_ms,
+        }
+
     def _run_probe(self, driver_key: str, device: dict[str, Any]) -> dict[str, Any]:
         started = time.perf_counter()
         try:
             driver = get_device_driver_registry().get_implementation(driver_key)
         except DeviceDriverNotImplementedError as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
-            return {
-                "driverKey": driver_key,
-                "online": False,
-                "error": "driver_not_implemented",
-                "latencyMs": latency_ms,
-            }
+            return self._probe_failure_payload(
+                driver_key,
+                code="driver_not_implemented",
+                latency_ms=latency_ms,
+                fallback=str(exc),
+            )
 
         try:
             reading = driver.test(device)
@@ -68,12 +86,12 @@ class DeviceProbeService:
             }
         except DeviceDriverError as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
-            return {
-                "driverKey": driver_key,
-                "online": False,
-                "error": exc.code,
-                "latencyMs": latency_ms,
-            }
+            return self._probe_failure_payload(
+                driver_key,
+                code=exc.code,
+                latency_ms=latency_ms,
+                fallback=exc.technical_detail,
+            )
 
 
 __all__ = [

@@ -3,9 +3,11 @@ import {
   formatDateTime,
   formatDeltaValue,
   formatMetricValue,
+  isHardwareCounterReset,
   primaryMetricKey,
   sourceLabel,
 } from "../../utils/detailDisplay";
+import { ReadingHardwareResetBadge } from "./ReadingHardwareResetBadge";
 
 type ReadingCardProps = {
   reading: DeviceReading;
@@ -29,7 +31,12 @@ export function ReadingCard({ reading, metricKey }: ReadingCardProps) {
             </div>
             <div>
               <span className="pp-reading-card__label">Delta</span>
-              <strong>{formatDeltaValue(key, reading.deltaMetrics?.[key])}</strong>
+              <strong className="pp-reading-card__delta">
+                {formatDeltaValue(key, reading.deltaMetrics?.[key])}
+                {isHardwareCounterReset(reading) ? (
+                  <ReadingHardwareResetBadge compact />
+                ) : null}
+              </strong>
             </div>
           </>
         ) : (

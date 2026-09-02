@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   createDevice,
@@ -11,19 +11,23 @@ import {
 } from "../api/productionPulseApi";
 import {
   PpActionButton,
-  PpBackLink,
   PpFormActions,
   PpPageHero,
   PpSectionCard,
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { DeviceBindingSection } from "../components/DeviceBindingSection";
 import { DeviceForm } from "../components/DeviceForm";
 import { TestConnectionModal } from "../components/modals/TestConnectionModal";
-import { PRODUCTION_PULSE_BASE_PATH } from "../constants/routes";
+import {
+  PRODUCTION_PULSE_BASE_PATH,
+  productionPulseDeviceDetailPath,
+} from "../constants/routes";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
+import { resolveDeviceActionMessage, resolveProbeErrorMessage } from "../utils/apiErrors";
 import type { BindingFormValues, DeviceFormValues, ProbeResult } from "../types/form";
 import {
   DEFAULT_BINDING_VALUES,
@@ -34,6 +38,7 @@ import {
   validateDeviceForm,
   type DeviceFormErrors,
 } from "../utils/deviceFormValidation";
+import { isCompactViewport, isMobileViewport } from "../utils/viewportLayout";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import { navigateProductionPulse } from "../utils/navigation";
 import { buildPanelPath } from "../utils/panelFilterUrl";
@@ -68,7 +73,8 @@ export function DeviceFormPage({
   permissions,
 }: DeviceFormPageProps) {
   const viewport = useViewportBucket();
-  const isMobile = viewport === "mobile";
+  const isMobile = isMobileViewport(viewport);
+  const isCompact = isCompactViewport(viewport);
 
   const [device, setDevice] = useState<DeviceFormValues>({
     ...DEFAULT_DEVICE_FORM_VALUES,
@@ -113,9 +119,26 @@ export function DeviceFormPage({
 
   const canManage = permissions.canManageDevices;
 
+  const panelBackPath = useMemo(
+    () =>
+      buildPanelPath({
+        branch: device.branch,
+        page: 1,
+        view: "table",
+        groupBy: "work_center",
+        anchorType: "",
+        role: "",
+        status: "",
+        search: "",
+      }),
+    [device.branch],
+  );
+
   const goBack = () => {
-    navigateProductionPulse(buildPanelPath({ branch: device.branch, page: 1, view: "list", groupBy: "work_center", anchorType: "", role: "", status: "", search: "" }));
+    navigateProductionPulse(panelBackPath);
   };
+
+  const formPageTitle = mode === "create" ? "Novo dispositivo" : "Editar dispositivo";
 
   const runTestConnection = async () => {
     setTestOpen(true);
@@ -129,10 +152,10 @@ export function DeviceFormPage({
           : await testDeviceProbe(device);
       setTestResult(result);
       if (!result.online) {
-        setTestError(result.error ?? PP_HELP.modals.testFail);
+        setTestError(resolveProbeErrorMessage(result, PP_HELP.modals.testFail));
       }
     } catch (err) {
-      setTestError(err instanceof Error ? err.message : PP_HELP.modals.testFail);
+      setTestError(resolveDeviceActionMessage(err, PP_HELP.modals.testFail));
     } finally {
       setTestLoading(false);
     }
@@ -197,11 +220,25 @@ export function DeviceFormPage({
 
   return (
     <div className="pp-page-stack pp-form-page">
+      <ProductionPulsePagePath
+        panelHref={panelBackPath}
+        current={formPageTitle}
+        items={
+          mode === "edit" && deviceId && device.name
+            ? [
+                {
+                  id: "device",
+                  label: device.name,
+                  href: productionPulseDeviceDetailPath(deviceId),
+                },
+              ]
+            : []
+        }
+      />
       <PpPageHero
-        title={mode === "create" ? "Novo dispositivo" : "Editar dispositivo"}
+        title={formPageTitle}
         description="Cadastro do hardware e onde o sensor está instalado."
         badge={ppShellIcon}
-        nav={<PpBackLink onClick={goBack}>Voltar ao painel</PpBackLink>}
       />
 
       {formError ? (
@@ -233,7 +270,7 @@ export function DeviceFormPage({
         </PpSectionCard>
       </div>
 
-      <div className={`pp-form-footer${isMobile ? " pp-form-footer--sticky" : ""}`}>
+      <div className={`pp-form-footer${isCompact ? " pp-form-footer--sticky" : ""}`}>
         <PpFormActions>
           <PpActionButton variant="ghost" onClick={goBack} disabled={saving}>
             Cancelar

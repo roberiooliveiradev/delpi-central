@@ -50,7 +50,8 @@ def test_binding_rejects_unknown_work_center(client, unique_ip, monkeypatch):
     )
 
     mock_catalog.validate_work_center_code.side_effect = BindingValidationError(
-        "work_center_code 'CT-404' não existe no catálogo TOTVS da filial."
+        "work_center_not_in_catalog",
+        work_center_code="CT-404",
     )
 
     monkeypatch.setattr(

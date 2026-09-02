@@ -2,12 +2,12 @@ import { useMemo, useState } from "react";
 
 import {
   PpActionButton,
-  PpBackLink,
   PpPageHero,
   PpStateBox,
   PpUnderlineNav,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
 import { DeviceHistoryTab } from "../components/detail/DeviceHistoryTab";
 import { DeviceOverviewTab } from "../components/detail/DeviceOverviewTab";
@@ -22,7 +22,7 @@ import { PP_HELP } from "../content/helpTooltips";
 import { DEVICE_DETAIL_NAV, useDeviceDetail } from "../hooks/useDeviceDetail";
 import { buildPanelPath, readPanelFilters } from "../utils/panelFilterUrl";
 import { navigateProductionPulse, replaceProductionPulse } from "../utils/navigation";
-import { placementLabel } from "../utils/deviceDisplay";
+import { formatDeviceDetailDescription } from "../utils/deviceDisplay";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
 
 type DeviceDetailPageProps = {
@@ -46,6 +46,7 @@ export function DeviceDetailPage({
     device,
     loading,
     error,
+    actionError,
     liveSnapshot,
     refreshing,
     commandsRefreshToken,
@@ -136,12 +137,10 @@ export function DeviceDetailPage({
 
   return (
     <div className="pp-page-stack pp-device-detail">
+      <ProductionPulsePagePath panelHref={panelBackPath} current={device.name} />
       <PpPageHero
-        eyebrow={
-          <PpBackLink onClick={() => navigateProductionPulse(panelBackPath)}>Voltar ao painel</PpBackLink>
-        }
         title={device.name}
-        description={`${placementLabel(device)} · ${device.ipAddress}`}
+        description={formatDeviceDetailDescription(device)}
         badge={ppShellIcon}
         actions={
           <div className="pp-device-detail__hero-actions">
@@ -155,7 +154,7 @@ export function DeviceDetailPage({
               </PpActionButton>
             ) : null}
             <PpActionButton variant="ghost" onClick={() => void pollNow()} disabled={refreshing}>
-              {refreshing ? "Poll…" : "Poll agora"}
+              {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
             </PpActionButton>
           </div>
         }
@@ -171,7 +170,7 @@ export function DeviceDetailPage({
         aria-label="Abas do dispositivo"
       />
 
-      {error ? <p className="pp-detail-banner-error">{error}</p> : null}
+      {actionError ? <p className="pp-detail-banner-error">{actionError}</p> : null}
 
       {tab === "overview" ? (
         <DeviceOverviewTab

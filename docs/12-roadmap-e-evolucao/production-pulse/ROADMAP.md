@@ -1,8 +1,131 @@
 # Roadmap — Production Pulse
 
-> **Status:** planejamento (set/2026)  
+> **Status:** implementado em dev (set/2026) — **homologação live E6.S2 pendente** (ESP `192.168.20.2` / VLAN)  
 > **Escopo:** `production-pulse-api` + `plugins/production-pulse`  
 > **Piloto:** ESP8266 em `192.168.20.2`
+
+---
+
+## Estado da execução (set/2026)
+
+| Etapa | Status | Evidência |
+|-------|--------|-----------|
+| E1 — Fundação API + infra | ✅ Feito | health via gateway; compose + `network_mode: host` |
+| E2 — CRUD + binding + catálogo CT | ✅ Feito | pytest CRUD/binding; proxy work-centers |
+| E3 — Drivers + leituras + scheduler | ✅ Feito | counter + gauge; test-probe; scheduler |
+| E4 — RBAC | ✅ Feito | `test_permissions.py`; ADR-003 |
+| E5 — MFE (painel, form, detalhe, operador) | ✅ Feito | vitest + build; remoteEntry 200 |
+| E6.S1 — Docs + smoke | ✅ Feito | `check-production-pulse.sh` 8/8 OK |
+| **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
+| P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
+| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | ✅ **Concluído** | E7.S0–S5 em `main` |
+| **E8 — Layout responsivo (formulários + superfícies)** | 🔄 **Em curso** | E8.S0–S3 ✅ commit `11378d221`; S4 verify pendente |
+
+Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
+Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
+
+**E7.S0 entregue (set/2026):** poll/live 422 + `device_api_messages.json`; test-probe `errorMessage`; HTTP 404/409 no JSON; MFE `resolveDeviceActionError` — commits `56c3c7606`, `4c7a3fe13`.
+
+**E7.S1 entregue (set/2026):** `commandErrors` + `validationErrors` no JSON; `ContentCodedError`; comandos/validação HTTP via loader; drivers retornam `error_code` — commit `1c91f052d`.
+
+**E7.S2 entregue (set/2026):** `DeviceDriverError` code-first; HTTP compartilhado em `device_http_support`; `last_error` grava código; mensagem PT só no boundary JSON — commit `d7e6675fa`.
+
+**E7.S3 entregue (set/2026):** `device_validation_content.json` + loader API; MFE `deviceValidationContent.ts` com sync test; formulário consome limites/regex/mensagens do JSON — commit `c02aee745`.
+
+**E7.S4 entregue (set/2026):** `PpHostContainedDialog` + migração de modais; teste estrutural anti-ModalShell — commit `98e58f0a6`.
+
+**E7.S5 entregue (set/2026):** `SegmentToggle` width/column no kit; toolbar filtros via `filterToolbarRowBemClasses`; zero `.delpi-ui-*` no `index.css` do MFE; teste estrutural — commit `d645243f5`.
+
+**E8.S0–S3 entregue (set/2026):** tokens viewport + `data-pp-viewport`; form grade 2 col + footer sticky compact; painel/detalhe/operador responsive — commit `11378d221`.
+
+**E8.S1+ (form kit):** `ppFormFields.tsx` + `createDashboardNativeFormFields`; cadastro 2 col desktop (1200px); CT via busca+select TOTVS — commit `2c15a1491`.
+
+---
+
+## E8 — Layout responsivo (formulários + superfícies)
+
+Complementa E5 (wireframes WF-PP-01/02/03/OP). Objetivo: **todas as páginas** legíveis em mobile (≤768px), tablet (769–1100px) e desktop — formulários com grade, touch targets e footers sticky onde couber.
+
+### Decisões travadas (E8)
+
+| Tema | Decisão |
+|------|---------|
+| Breakpoints | Mobile ≤768 · tablet ≤1100 · desktop >1100 — `resolveViewportBucket` + `data-pp-viewport` no shell |
+| Form cadastro | `max-width: 720px`; grade 2 col (nome+filial, poll+ativo) ≥769px; footer sticky mobile+tablet |
+| Campos compact | `min-height: 44px`, `font-size: 16px` em inputs ≤1100px (evita zoom iOS) |
+| Painel | KPI 4→2→1 col; tabela compacta tablet; cards só mobile |
+| Detalhe | Overview 2 col ≥901px; hero actions empilhadas mobile; nav horizontal scroll |
+| Operador | Hub filtros coluna ≤600px; grid 1→2→3→4 col por breakpoint |
+| CSS kit | Sem override `.delpi-ui-*` — só tokens `--pp-*` e seletores `.pp-*` |
+
+### Matriz de fluxos (E8)
+
+| Fluxo | Superfície | Caminho | E8 |
+|-------|------------|---------|-----|
+| Cadastro device + binding | Form | `DeviceFormPage` | S1 |
+| Filtros histórico | Detalhe aba history | `DeviceHistoryTab` | S2 |
+| Hero ações poll/editar | Detalhe | `DeviceDetailPage` | S2 |
+| Lista painel | Painel | `PanelPage` | S2 |
+| Hub operador filtros | Tablet | `OperatorPlacementHub` | S3 |
+| Contador / gauge | Tablet | `CounterPadSurface`, `GaugeReadoutSurface` | S3 + **S5** (WF-PP-OP-08 shell) |
+
+### Etapas
+
+#### E8.S0 — Tokens viewport + shell ✅
+
+- **Objetivo:** Uma fonte de breakpoints e `data-pp-viewport` no root do MFE.
+- **Fazer:** `--pp-form-max-width`, `--pp-breakpoint-*` em `index.css`; `App.tsx` + `viewportLayout.ts` + testes.
+- **Pronto quando:** vitest `viewportLayout.test.ts` verde; grep `data-pp-viewport` no shell.
+
+#### E8.S1 — Formulário cadastro (WF-PP-02) ✅
+
+- **Objetivo:** Grade 2 col desktop/tablet; sticky footer compact; IP row + teste full-width ≤1100px.
+- **Fazer:** `DeviceForm.tsx` (`pp-form-grid--pair`); `DeviceBindingSection` TOTVS pair; `DeviceFormPage` `isCompactViewport`.
+- **Pronto quando:** form legível ≤768px e max-w 720px tablet; teste estrutural cadastro.
+
+#### E8.S2 — Painel + detalhe (WF-PP-01/03) ✅
+
+- **Objetivo:** Hero detalhe, nav abas, filtros histórico e painel adaptados a mobile/tablet.
+- **Fazer:** CSS `pp-panel-page`, `pp-device-detail__hero-actions`, `pp-detail-history__filters`; helpers `isMobileViewport` nos tabs.
+- **Pronto quando:** vitest estrutural + build MFE; sem regressão KPI/tablet compact table.
+
+#### E8.S3 — Operador hub (WF-PP-OP) ✅
+
+- **Objetivo:** Filtros hub empilham em celular; toggles largura total.
+- **Fazer:** CSS `pp-operator-hub__filters` ≤600px; herda grid cards E5.
+- **Pronto quando:** hub 1 col mobile · 2–3 col tablet (grid existente).
+
+#### E8.S5 — Superfícies operador responsivas (WF-PP-OP-08) ✅
+
+- **Objetivo:** Contador e gauge legíveis em mobile, tablet e desktop — shell flex, pad CSS grid, gauge 2 col ≥901px.
+- **Fazer:** `CounterPadSurface` markup único + `pp-counter-pad__workspace`; tokens `--pp-operator-content-max` por `data-pp-viewport`; wireframe WF-PP-OP-08.
+- **Pronto quando:** vitest estrutural OP-08; build MFE; pad empilhado ≤768px sem branch TS.
+
+#### E8.S4 — Verify visual + homologação tablet ⏳
+
+- **Objetivo:** Checklist manual WF-PP em 375px / 768px / 1024px antes de E6.S2 live.
+- **Fazer:** Rodar `npm test && npm run build`; smoke portal dev; anotar pass/fail em HOMOLOGACAO-E6-S2 § UI.
+- **Pronto quando:** checklist tablet preenchido ou issues abertas documentadas.
+- **Commit:** só se fix de regressão visual.
+
+### Critérios de pronto (E8)
+
+- [x] E8.S0 — tokens + `data-pp-viewport`
+- [x] E8.S1 — form grade + footer compact
+- [x] E8.S2 — painel + detalhe responsive
+- [x] E8.S3 — operador hub filtros mobile
+- [x] E8.S5 — superfícies operador responsivas (WF-PP-OP-08)
+- [ ] E8.S4 — verify visual tablet (pré E6.S2 live)
+
+### Fora do escopo (E8)
+
+- Modo quiosque fullscreen (`?kiosk=1`) — ADR-001 P1
+- Rename `FilialSwitcher` → EN
+- Breakpoints diferentes do resto do Portal (1100px alinhado a maintenance/controle-retrabalhos)
+
+### Protocolo de execução (E8)
+
+E8.S0–S3 = **um commit** com escopo responsive (testes incluídos). E8.S4 = verify-only; commit só se fix.
 
 ---
 
@@ -28,7 +151,7 @@
 | Driver | Registry JSON + port `DeviceDriver`; MVP `esp8266_counter_v1` |
 | Leituras | `metrics` JSONB genérico — contador, rotação, temperatura, … |
 | Papéis | `role_key` derivado do driver (`pulse_counter`, `process_gauge`, …) |
-| Operador | Superfície UI por `operatorSurface` — contador MVP; gauge P1 |
+| Operador | Superfície UI por `operatorSurface` — contador MVP; gauge P1 ✅ |
 
 ---
 
@@ -51,12 +174,12 @@
 | Testar conexão | Form | `POST /devices/test-probe` (novo) · `POST /devices/{id}/test` (edit) | P0 |
 | Hub operador (placements) | Tablet | `GET /operator/placements` | P0 |
 | Superfície contador | Tablet | `counter_pad` + commands | P0 |
-| Superfície sensor | Tablet | `gauge_readout` read-only | P1 |
+| Superfície sensor | Tablet | `gauge_readout` read-only | P1 ✅ |
 | Comando capability-gated | API | 422 se driver não suporta | P0 |
 | RBAC filial | API + menu | manifest + `branch_access` | P0 |
-| Delta turno/dia KPI (contador) | Painel | agregação `delta_metrics.counter` | P1 |
-| Driver gauge ESP8266 | API + tablet | `esp8266_gauge_v1` + WF-PP-OP-GAUGE | P1 |
-| Detecção reset hardware | readings | meta `counter_reset` | P1 |
+| Delta turno/dia KPI (contador) | Painel | agregação `delta_metrics.counter` | P1 ✅ |
+| Driver gauge ESP8266 | API + tablet | `esp8266_gauge_v1` + WF-PP-OP-GAUGE | P1 ✅ |
+| Detecção reset hardware | readings | meta `counter_reset` | P1 ✅ |
 | Cockpit PCP embed | production-control | HTTP entre BFFs | Fora |
 
 ---
@@ -264,6 +387,7 @@ flowchart TB
 - **Teste:** script homologação verde em dev
 - **Pronto quando:** checklist plugins-documentation.mdc completo.
 - **Commit:** `docs(production-pulse): README, inventário e smoke de homologação`
+- **Status:** ✅ concluído — smoke dev verde (set/2026).
 
 #### E6.S2 — Verify live com ESP8266 piloto
 
@@ -272,20 +396,153 @@ flowchart TB
 - **Fazer:** rebuild sequencial plugin-ui → api → mfe; seguir checklist §3–5.
 - **Pronto quando:** contador do device aparece no painel após poll; operador abre superfície contador.
 - **Commit:** só se fix de regressão.
+- **Status:** ⏳ **pendente** — implementação pronta; bloqueio atual: host dev (WSL) sem rota à VLAN `192.168.20.x` (`curl` ESP timeout). Executar homologação a partir de máquina na LAN ou com WSL roteando à VLAN industrial.
+
+---
+
+## E7 — Alinhamento diretrizes `.cursor` (pós-MVP)
+
+Complementa entregas de erro HTTP (E7.S0 ✅). Objetivo: **zero copy PT duplicada** fora de JSON/loaders; **zero override de kit** no MFE; modais **host-contained**.
+
+### Decisões travadas (E7)
+
+| Tema | Decisão |
+|------|---------|
+| Mensagens PT ao usuário | `production_pulse_app/content/*.json` + loaders (`*_content_service.py`) — regra `assistant-content-json.mdc` |
+| Códigos de erro device | Lista canônica em `device_api_messages.json` → `deviceConnectivity.codes`; MFE espelha só códigos em `content/deviceApiMessages.ts` + teste sync |
+| Mensagem final na UI | **API** (`error.message` / `errorMessage` no probe); MFE classifica device vs infra, não remapeia texto |
+| Validação form | Um JSON compartilhado (limites, regex IPv4, labels) — loader API + cópia/sync documentada no MFE |
+| Modais aviso/confirm | `createHostContainedModalShell` — regra `mfe-modal-host-contained.mdc` |
+| CSS `.delpi-ui-*` no MFE | Proibido — fix no `plugin-ui`, rebuild fase `remote` antes do MFE |
+| Identificadores legado PT | `FilialSwitcher` / `filiais` mantidos até ADR de rename — **código novo** só EN |
+
+### Matriz de fluxos (E7)
+
+| Fluxo | Superfície | Caminho | E7 |
+|-------|------------|---------|-----|
+| Poll/live falha LAN | Painel / detalhe | 422 + `device_api_messages` | S0 ✅ |
+| Test-probe offline | Form modal | `errorMessage` no payload 200 | S0 ✅ |
+| Comando falha (timeout/rede) | Detalhe / operador | `CommandResult.errorMessage` via JSON | S1 |
+| Validação IP/intervalo | Form | API 422 + MFE inline mesmo catálogo | S3 |
+| Modal test reset/operador | Form / detalhe / tablet | Host-contained dialog | S4 |
+| Toggle agrupado / segment | Painel WF-PP-01 | Kit `plugin-ui`, sem override MFE | S5 |
+
+### Diagrama (conteúdo canônico)
+
+```mermaid
+flowchart LR
+  JSON[device_api_messages.json + device_validation.json]
+  Loader[device_*_content_service.py]
+  API[Routes / probe / poll / commands]
+  MFE[httpClient + apiErrors + hooks]
+  JSON --> Loader --> API
+  API -->|error.message / errorMessage| MFE
+  Codes[deviceApiMessages.ts codes only] -.sync test.-> JSON
+```
+
+---
+
+#### E7.S0 — Erros HTTP device vs infra ✅
+
+- **Objetivo:** Poll/live/test-probe não confundem falha de ESP com API indisponível.
+- **Status:** ✅ `main` — `56c3c7606`, `4c7a3fe13`.
+- **Pronto quando:** pytest content/probe; vitest `apiErrors` + sync codes; painel aviso amarelo em poll offline.
+
+#### E7.S1 — Catálogo JSON: comandos + validação HTTP ✅
+
+- **Objetivo:** Comandos e erros de domínio expostos ao usuário saem do JSON, não de strings nos drivers/services.
+- **Status:** ✅ `main` — commit `1c91f052d`.
+- **Pronto quando:** pytest command/content/validation; grep zero `"Comando não suportado"` em `device_command_service.py`; assert mensagem PT vem do JSON.
+
+#### E7.S2 — Drivers HTTP: códigos only ✅
+
+- **Objetivo:** Drivers LAN levantam `DeviceDriverError(code=…)`; texto amigável só no loader JSON (poll/probe/command boundary).
+- **Status:** ✅ `main` — commit `d7e6675fa`.
+- **Fazer:**
+  1. `esp8266_counter_driver.py`, `esp8266_gauge_driver.py`, `device_http_support.py` — mensagens técnicas EN ou código-only; sem PT ao usuário
+  2. Garantir todos os `code` usados ∈ `deviceConnectivity.codes` ou `commandErrors`
+  3. Audit `last_error` / audit log — guardar code + optional technical detail (log), não copy PT duplicada
+- **Não fazer:** `re.compile` novo em driver; mudar protocolo HTTP do ESP.
+- **Teste:** `pytest production-pulse-api/tests/test_esp8266_* -q`; assert poll/probe mapeiam code → JSON message
+- **Pronto quando:** grep zero strings PT com pontuação em `infrastructure/drivers/` (exceto comentários)
+- **Commit:** `refactor(production-pulse): drivers LAN emitem códigos canônicos sem copy PT`
+
+#### E7.S3 — Validação form API ↔ MFE (content compartilhado) ✅
+
+- **Objetivo:** Regex IPv4, limites poll 0.5–300 e labels de erro idênticos API e MFE via JSON.
+- **Status:** ✅ `main` — commit `c02aee745`.
+- **Fazer:**
+  1. Criar `device_validation_content.json` (+ loader API)
+  2. Refatorar `device_validation_service.py` — limites/regex do JSON
+  3. MFE: `content/deviceValidationContent.ts` gerado ou espelhado + teste sync (padrão `deviceApiMessages.test.ts`)
+  4. `deviceFormValidation.ts` — consumir content; remover regex/limites duplicados
+- **Não fazer:** validar só no MFE; importar JSON da API no build Docker do MFE (copiar + doc sync no README)
+- **Teste:** pytest validação; vitest form + sync JSON
+- **Pronto quando:** alterar min poll no JSON reflete API e MFE; teste sync verde
+- **Commit:** `refactor(production-pulse): validação de cadastro centralizada em content JSON`
+
+#### E7.S4 — Modais host-contained ✅
+
+- **Objetivo:** Modais do plugin não cobrem sidebar do portal.
+- **Status:** ✅ `main` — commit `98e58f0a6`.
+- **Fazer:**
+  1. `plugins/production-pulse/src/app/productionPulseUi.tsx` — export `HostContainedDialog` via `createHostContainedModalShell({ containedLayout: "dialog" })`
+  2. Migrar `TestConnectionModal`, `ResetCounterModal`, `OperatorClearCounterModal` (+ demais em `components/modals/`)
+  3. Teste regressão: dialog dentro de `.dashboard-production-pulse`, sem overlay `inset:0` no body
+- **Não fazer:** `window.alert`; `ModalShell` body-fixed para avisos
+- **Teste:** vitest layout modal (padrão `ModalShell.test.tsx` do kit); smoke manual portal + sidebar clicável
+- **Pronto quando:** grep zero `ModalShell` import direto de modais de aviso; sidebar navegável com modal aberto
+- **Commit:** `fix(production-pulse): modais host-contained no plugin`
+
+#### E7.S5 — Overrides `.delpi-ui-*` → plugin-ui
+
+- **Objetivo:** WF-PP-01 toggle/agrupamento sem CSS de kit no MFE.
+- **Fazer:**
+  1. Inventariar overrides em `plugins/production-pulse/src/index.css` (§ WF-PP-01, segment toggle, …)
+  2. Estender variant/props no `plugin-ui` (SegmentToggle, toolbar layout) — rebuild fase `remote`
+  3. Remover blocos `.delpi-ui-*` do MFE; validar painel desktop + tablet
+- **Não fazer:** patch local no MFE após merge no kit
+- **Teste:** `cd plugins/plugin-ui && npx vite build`; `npm run build` production-pulse; screenshot/tablet checklist WF-PP-01
+- **Pronto quando:** grep zero `.delpi-ui-` em `plugins/production-pulse/src/index.css`
+- **Commit:** `refactor(plugin-ui): layout filtros painel; chore(production-pulse): remove overrides kit`
+
+### Critérios de pronto (E7)
+
+- [x] E7.S0 — poll/live/test-probe/404/409 no catálogo JSON; MFE device vs infra
+- [x] E7.S1 — comandos + validação HTTP no JSON
+- [x] E7.S2 — drivers sem copy PT ao usuário
+- [x] E7.S3 — form validation content sync API/MFE
+- [x] E7.S4 — modais host-contained
+- [x] E7.S5 — zero override `.delpi-ui-*` no MFE
+
+### Fora do escopo (E7)
+
+- Rename `FilialSwitcher` → EN (exige ADR RBAC/menu)
+- Migrar textos de `helpTooltips.ts` (helps hover) para JSON — baixo ROI
+- Chat/apresentação — outro bounded context
+
+### Protocolo de execução (E7)
+
+Cada **E7.S1–S5** = implementar → testar escopo → **commit + push** separado (não agrupar subetapas). E7.S0 já commitado.
 
 ---
 
 ## Critérios de pronto (MVP)
 
-- [ ] CRUD dispositivo + amarração (`anchor_type`) via UI e API
-- [ ] Registry drivers + `metrics` JSONB; comando 422 se capability ausente
-- [ ] Poll manual e automático gravam histórico
-- [ ] Detalhe com gráfico/tabela de readings
-- [ ] Reset remoto auditado (com permissão)
-- [ ] RBAC filial SC/ES
-- [ ] MFE federado no Portal; MFE não chama api-delpi
-- [ ] Piloto `192.168.20.2` operacional na rede dev
-- [ ] Critérios MVP: **Jornada operador** hub placements → contador; **ventilador** equipment sem CT no painel
+Verificados em **dev** (pytest, vitest, `check-production-pulse.sh`). Itens marcados ⏳ dependem de **E6.S2 live** na VLAN.
+
+- [x] CRUD dispositivo + amarração (`anchor_type`) via UI e API — smoke CRUD + testes binding
+- [x] Registry drivers + `metrics` JSONB; comando 422 se capability ausente
+- [x] Poll manual e automático gravam histórico
+- [x] Detalhe com gráfico/tabela de readings
+- [x] Reset remoto auditado (com permissão)
+- [x] RBAC filial SC/ES
+- [x] MFE federado no Portal; MFE não chama api-delpi
+- [ ] ⏳ Piloto `192.168.20.2` operacional na rede dev — **E6.S2 live**
+- [ ] ⏳ Jornada operador hub placements → contador (UI tablet na LAN) — **E6.S2 §5**
+- [x] **Ventilador** equipment sem CT no painel — cenário binding validado em testes API (UI live opcional em E6.S2)
+
+**MVP código:** fechado. **MVP operacional:** fecha após E6.S2.
 
 ## Fora do escopo (MVP)
 

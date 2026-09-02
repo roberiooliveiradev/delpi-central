@@ -16,6 +16,8 @@ export type DeviceCommandAudit = {
   deviceId: string;
   commandKey: string;
   issuedBy: string | null;
+  issuedByName?: string | null;
+  issuedByEmail?: string | null;
   success: boolean;
   errorMessage: string | null;
   requestPayload: Record<string, unknown>;

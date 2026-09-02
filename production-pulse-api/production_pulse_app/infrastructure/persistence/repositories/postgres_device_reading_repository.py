@@ -121,3 +121,43 @@ class PostgresDeviceReadingRepository:
                 )
                 rows = list(cur.fetchall())
         return rows, total
+
+    def sum_delta_metric_for_devices(
+        self,
+        device_ids: list[UUID],
+        *,
+        metric_key: str,
+        recorded_from: datetime,
+        recorded_to: datetime,
+    ) -> dict[UUID, int]:
+        if not device_ids:
+            return {}
+
+        normalized_key = (metric_key or "").strip()
+        if not normalized_key:
+            return {}
+
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT device_id,
+                           COALESCE(SUM((delta_metrics->>%s)::bigint), 0) AS total
+                    FROM production_pulse.readings
+                    WHERE device_id = ANY(%s::uuid[])
+                      AND recorded_at >= %s
+                      AND recorded_at < %s
+                      AND delta_metrics ? %s
+                    GROUP BY device_id
+                    """,
+                    (
+                        normalized_key,
+                        device_ids,
+                        recorded_from,
+                        recorded_to,
+                        normalized_key,
+                    ),
+                )
+                rows = list(cur.fetchall())
+
+        return {row["device_id"]: int(row["total"]) for row in rows}

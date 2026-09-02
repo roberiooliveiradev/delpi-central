@@ -19,6 +19,15 @@ export type DeviceCapabilities = {
   metrics: string[];
   commands: string[];
   operatorSurface: string;
+  thresholds?: Record<
+    string,
+    {
+      warnAbove?: number;
+      dangerAbove?: number;
+      warnBelow?: number;
+      dangerBelow?: number;
+    }
+  >;
 };
 
 export type DeviceStatus = "online" | "offline" | "disabled" | "no_binding";
@@ -40,6 +49,10 @@ export type DeviceListItem = {
   graceSeconds: number;
   capabilities?: DeviceCapabilities;
   binding: DeviceBinding | null;
+  periodDeltas?: {
+    day?: Record<string, number>;
+    shift?: Record<string, number>;
+  };
 };
 
 export type DeviceSummary = {
@@ -49,4 +62,8 @@ export type DeviceSummary = {
   withoutBinding: number;
   branch?: string;
   branches?: string[];
+  counterDelta?: {
+    day?: Record<string, number>;
+    shift?: Record<string, number>;
+  };
 };

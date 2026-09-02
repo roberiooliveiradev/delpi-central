@@ -85,7 +85,19 @@ curl -fsS "${PP_API}/devices?branch=${BRANCH}" "${AUTH[@]}" \
 
 echo "[6/8] catalog drivers"
 curl -fsS "${PP_API}/catalog/drivers" "${AUTH[@]}" \
-  | python3 -c "import json,sys; b=json.load(sys.stdin); assert b.get('success'), b; drivers=(b.get('data') or {}).get('drivers') or []; assert drivers, 'sem drivers'; print('OK drivers', len(drivers))"
+  | python3 -c "
+import json, sys
+b = json.load(sys.stdin)
+assert b.get('success'), b
+drivers = (b.get('data') or {}).get('drivers') or []
+assert drivers, 'sem drivers'
+keys = {d.get('key') for d in drivers}
+assert 'esp8266_counter_v1' in keys and 'esp8266_gauge_v1' in keys, keys
+gauge = next(d for d in drivers if d.get('key') == 'esp8266_gauge_v1')
+temp = (gauge.get('thresholds') or {}).get('temperature_c') or {}
+assert temp.get('warnAbove') == 75, gauge
+print('OK drivers', len(drivers), '(gauge thresholds)')
+"
 
 echo "[7/8] operator placements (403 = sem permissão operator)"
 op_code="$(curl -sS -o /tmp/pp-op.json -w "%{http_code}" \

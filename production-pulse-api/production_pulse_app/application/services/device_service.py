@@ -21,6 +21,9 @@ from production_pulse_app.domain.services.device_validation_service import (
     validate_poll_interval,
 )
 from production_pulse_app.application.services.device_binding_service import DeviceBindingService
+from production_pulse_app.application.services.device_period_delta_service import (
+    DevicePeriodDeltaService,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_binding_repository import (
     PostgresDeviceBindingRepository,
 )
@@ -43,6 +46,7 @@ class DeviceService:
             device_repository=self._repository,
             binding_repository=self._binding_repository,
         )
+        self._period_delta_service = DevicePeriodDeltaService()
         self._driver_registry = get_device_driver_registry()
 
     def _capabilities_for(self, driver_key: str) -> dict[str, Any]:
@@ -81,11 +85,15 @@ class DeviceService:
         )
         device_ids = [row["id"] for row in rows]
         bindings_by_device = self._binding_repository.list_active_for_device_ids(device_ids)
+        period_deltas = self._period_delta_service.build_period_deltas_for_devices(rows)
         items = []
         for row in rows:
             binding_row = bindings_by_device.get(row["id"])
             payload = self._enrich_connectivity(row, has_binding=binding_row is not None)
             payload["binding"] = binding_row_to_api(binding_row) if binding_row else None
+            deltas = period_deltas.get(row["id"])
+            if deltas:
+                payload["periodDeltas"] = deltas
             items.append(payload)
         return {"items": items}
 

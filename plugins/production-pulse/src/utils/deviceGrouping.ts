@@ -54,6 +54,14 @@ function resolveGroupMeta(
     };
   }
 
+  if (binding.anchorType === "standalone") {
+    return {
+      key: binding.placementKey,
+      title: device.name,
+      anchorType: binding.anchorType,
+    };
+  }
+
   if (groupBy === "work_center") {
     const code = binding.workCenterCode ?? "";
     const name = binding.workCenterName ?? binding.placementLabel;

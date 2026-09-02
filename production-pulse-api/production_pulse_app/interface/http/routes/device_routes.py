@@ -10,13 +10,9 @@ from production_pulse_app.application.services.work_center_catalog_service impor
 )
 from production_pulse_app.application.services.device_binding_service import (
     BindingNotFoundError,
-    BindingValidationError,
     DeviceBindingService,
 )
-from production_pulse_app.application.services.device_command_service import (
-    CommandNotSupportedError,
-    DeviceCommandService,
-)
+from production_pulse_app.application.services.device_command_service import DeviceCommandService
 from production_pulse_app.application.services.device_poll_service import (
     DevicePollFailedError,
     DevicePollService,
@@ -29,10 +25,19 @@ from production_pulse_app.application.services.device_service import (
     DeviceConflictError,
     DeviceNotFoundError,
     DeviceService,
-    DeviceValidationError,
 )
 from production_pulse_app.core.responses import error, success
+from production_pulse_app.domain.errors import (
+    BindingValidationError,
+    CommandNotSupportedError,
+    DeviceValidationError,
+)
+from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
+    http_error_message,
+)
 from production_pulse_app.domain.services.device_serialization_service import parse_device_id
+from production_pulse_app.interface.http.content_coded_error_response import content_coded_error_response
+from production_pulse_app.interface.http.device_connectivity_responses import device_poll_failed_response
 from production_pulse_app.interface.http.rbac_http import (
     guard_admin_command,
     guard_branch_access,
@@ -76,24 +81,26 @@ def _handle_domain_errors(exc: Exception):
     if isinstance(exc, PermissionError):
         return error(str(exc), code="forbidden", status_code=403)
     if isinstance(exc, (DeviceValidationError, BindingValidationError, CommandNotSupportedError)):
-        return error(str(exc), code="validation_error", status_code=422)
+        raise exc
     if isinstance(exc, WorkCenterCatalogUnavailableError):
         return error(str(exc), code="upstream_unavailable", status_code=503)
     if isinstance(exc, (DeviceNotFoundError, BindingNotFoundError)):
         message = (
-            "Amarração não encontrada."
+            http_error_message("notFoundBinding")
             if isinstance(exc, BindingNotFoundError)
-            else "Dispositivo não encontrado."
+            else http_error_message("notFoundDevice")
         )
         return error(message, code="not_found", status_code=404)
     if isinstance(exc, DeviceConflictError):
-        return error(str(exc), code="conflict", status_code=409)
+        return error(http_error_message("duplicateIp", fallback=str(exc)), code="conflict", status_code=409)
     if isinstance(exc, TestProbeRateLimitError):
         return error(str(exc), code="rate_limit_exceeded", status_code=429)
     raise exc
 
 
 def _json_error(exc: Exception):
+    if isinstance(exc, (DeviceValidationError, BindingValidationError, CommandNotSupportedError)):
+        return content_coded_error_response(exc)
     payload = _handle_domain_errors(exc)
     status_code = payload.pop("_status_code", 400)
     from fastapi.responses import JSONResponse
@@ -208,6 +215,7 @@ async def list_device_commands(
             parse_device_id(str(device_id)),
             page=page,
             page_size=page_size,
+            authorization=_authorization_header(request),
         )
         return success(data)
     except Exception as exc:
@@ -238,11 +246,7 @@ async def get_device_live(request: Request, device_id: UUID):
     try:
         return success(_poll_service.read_live(parse_device_id(str(device_id))))
     except DevicePollFailedError as exc:
-        payload = error(str(exc), code=exc.code, status_code=502, details=exc.connectivity)
-        status_code = payload.pop("_status_code", 502)
-        from fastapi.responses import JSONResponse
-
-        return JSONResponse(status_code=status_code, content=payload)
+        return device_poll_failed_response(exc)
     except Exception as exc:
         return _json_error(exc)
 
@@ -255,11 +259,7 @@ async def poll_device(request: Request, device_id: UUID):
     try:
         return success(_poll_service.poll_and_persist(parse_device_id(str(device_id)), source="manual"))
     except DevicePollFailedError as exc:
-        payload = error(str(exc), code=exc.code, status_code=502, details=exc.connectivity)
-        status_code = payload.pop("_status_code", 502)
-        from fastapi.responses import JSONResponse
-
-        return JSONResponse(status_code=status_code, content=payload)
+        return device_poll_failed_response(exc)
     except Exception as exc:
         return _json_error(exc)
 

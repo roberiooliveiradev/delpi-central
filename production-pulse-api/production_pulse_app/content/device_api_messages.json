@@ -1,0 +1,52 @@
+{
+  "deviceConnectivity": {
+    "httpStatusCode": 422,
+    "codes": [
+      "timeout",
+      "network_error",
+      "http_error",
+      "invalid_response",
+      "device_error",
+      "missing_ip",
+      "driver_not_implemented"
+    ],
+    "messages": {
+      "timeout": "O dispositivo não respondeu a tempo. Verifique se está ligado e acessível na rede.",
+      "network_error": "Não foi possível contactar o dispositivo. Verifique IP, cabo e energia.",
+      "http_error": "O dispositivo respondeu com erro HTTP. Confira o firmware ou reinicie o hardware.",
+      "invalid_response": "O dispositivo respondeu com dados inválidos. Confira o driver e o firmware.",
+      "device_error": "O dispositivo não respondeu à leitura.",
+      "missing_ip": "O cadastro do dispositivo não possui endereço IP. Informe o IP antes de ler o hardware.",
+      "driver_not_implemented": "O driver selecionado ainda não está disponível neste ambiente."
+    },
+    "fallbackMessage": "O dispositivo não respondeu à leitura."
+  },
+  "httpErrors": {
+    "notFoundDevice": "Dispositivo não encontrado.",
+    "notFoundBinding": "Amarração não encontrada.",
+    "duplicateIp": "Já existe dispositivo com este IP nesta filial."
+  },
+  "commandErrors": {
+    "unsupported_command": "Este dispositivo não suporta o comando solicitado.",
+    "command_failed": "Não foi possível concluir o comando no dispositivo."
+  },
+  "validationErrors": {
+    "invalid_branch": "A filial deve ser 01 ou 02.",
+    "poll_interval_out_of_range": "O intervalo de leitura deve estar entre {min} e {max} segundos.",
+    "ip_address_required": "Informe o endereço IP do dispositivo.",
+    "invalid_ipv4": "Informe um endereço IPv4 válido.",
+    "name_required": "Informe o nome do dispositivo.",
+    "name_too_long": "O nome do dispositivo deve ter no máximo 120 caracteres.",
+    "driver_key_required": "Selecione o driver (protocolo) do dispositivo.",
+    "unknown_driver": "Driver desconhecido: {driver}.",
+    "driver_missing_role_key": "Driver \"{driver}\" sem roleKey no registry.",
+    "invalid_anchor_type": "Tipo de amarração inválido. Use posto, máquina, equipamento, área ou avulso.",
+    "work_center_code_required": "Informe o centro de trabalho para amarração por posto.",
+    "machine_label_required": "Informe o rótulo da máquina para amarração por máquina.",
+    "equipment_label_required": "Informe o rótulo do equipamento para amarração por equipamento.",
+    "area_label_required": "Informe o rótulo da área para amarração por área.",
+    "standalone_forbidden_fields": "Amarração avulsa não aceita campos de posto, máquina, equipamento ou área.",
+    "branch_required": "Informe a filial.",
+    "work_center_not_in_catalog": "O centro de trabalho \"{work_center_code}\" não existe no catálogo TOTVS da filial."
+  }
+}

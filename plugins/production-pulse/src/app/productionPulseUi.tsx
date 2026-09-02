@@ -1,14 +1,14 @@
 import type { ComponentProps, ReactNode } from "react";
 import {
   ActionButton,
-  BackLink,
-  ChartCard,
-  chartCardBemClasses,
   createCompactPagination,
+  createHostContainedModalShell,
   catalogSearchBarBemClasses,
   createDashboardCatalogSearchBar,
+  createDashboardDataRecordCard,
   createDashboardFormActions,
   createDashboardFormGrid,
+  createDashboardPagePath,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardUnderlineNav,
@@ -25,6 +25,13 @@ import {
 import { Activity, AlertTriangle, FileQuestion, Loader2 } from "lucide-react";
 
 const PREFIX = "pp";
+const PP_PORTAL_SCOPE = "dashboard-production-pulse";
+
+export const PpHostContainedDialog = createHostContainedModalShell({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+  containedLayout: "dialog",
+});
 
 export function PpPageHero(props: ComponentProps<typeof PageHero>) {
   return <PageHero {...props} classNames={pageHeroBemClasses(PREFIX)} density="compact" />;
@@ -40,7 +47,10 @@ export const PpStateBox = createStateBoxPanel({
 });
 
 export const PpActionButton = ActionButton;
-export const PpBackLink = BackLink;
+export const PpPagePath = createDashboardPagePath({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+});
 export const PpFieldLabel = FieldLabel;
 export const PpSimpleKpiCard = createSimpleKpiCard(PREFIX, { withBody: true, withSubtitle: true });
 export const PpSegmentToggle = createDashboardSegmentToggle(PREFIX);
@@ -66,28 +76,33 @@ export const PpPagination = createCompactPagination({
   },
 });
 
-const CHART_CARD_CLASSES = chartCardBemClasses(PREFIX, { headerLayout: "titleRow" });
-
-type PpChartCardProps = {
-  title: string;
-  hint?: string;
-  titleHint?: string;
-  children: ReactNode;
-  headerActions?: ReactNode;
-};
-
-export function PpChartCard({ title, hint, titleHint, children, headerActions }: PpChartCardProps) {
-  return (
-    <ChartCard
-      title={title}
-      hint={hint}
-      titleHint={titleHint}
-      headerActions={headerActions}
-      classNames={CHART_CARD_CLASSES}
-    >
-      {children}
-    </ChartCard>
-  );
-}
+export const PpDataRecordCard = createDashboardDataRecordCard({ prefix: PREFIX });
 
 export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;
+
+export {
+  PpChartCard,
+  PpReadingsAreaChart,
+  buildPpReadingsChartSeries,
+  formatPpReadingsChartValue,
+  readingsToComparativeData,
+  readingsToSeriesPoints,
+  type PpReadingsChartVariant,
+} from "../components/data/ppCharts";
+export { PpDataTable, type DataTableColumn } from "../components/data/dataTableUi";
+export {
+  PpFilterInputField,
+  PpFilterSelectField,
+  PpFiltersRow,
+  PpFilterToolbarRowClasses,
+} from "../components/data/filtersUi";
+export {
+  PpFormFieldShell,
+  PpNativeInlineTextField,
+  PpNativeSelectField,
+  PpNativeSwitchField,
+  PpNativeTextAreaField,
+  PpNativeTextField,
+  ppFieldError,
+  ppFieldHint,
+} from "../components/data/ppFormFields";

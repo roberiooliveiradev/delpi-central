@@ -169,3 +169,83 @@ def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypa
 
     readings = client.get(f"/devices/{device['id']}/readings")
     assert readings.json()["data"]["pagination"]["total"] == 2
+
+
+def test_manual_poll_marks_hardware_counter_reset(client, unique_ip, monkeypatch):
+    sequence = iter(
+        [
+            DeviceReading(metrics={"counter": 100}),
+            DeviceReading(metrics={"counter": 8}),
+        ]
+    )
+
+    def fake_read(_self, _device):
+        return next(sequence)
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+
+    device = _create_device(client, unique_ip)
+    _bind_equipment(client, device["id"])
+
+    client.post(f"/devices/{device['id']}/poll")
+    second = client.post(f"/devices/{device['id']}/poll")
+    assert second.status_code == 200
+    body = second.json()["data"]
+    assert body["deltaMetrics"]["counter"] == 8
+    assert body["meta"]["counter_reset"] is True
+
+    readings = client.get(f"/devices/{device['id']}/readings")
+    latest = readings.json()["data"]["items"][0]
+    assert latest["meta"]["counter_reset"] is True
+
+
+def test_manual_poll_device_unreachable_returns_422(client, unique_ip, monkeypatch):
+    from production_pulse_app.domain.errors import DeviceDriverError
+
+    def fake_read(_self, _device):
+        raise DeviceDriverError(
+            "timeout",
+            technical_detail="HTTP timeout for http://192.168.20.2/api/contador.",
+        )
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+
+    device = _create_device(client, unique_ip)
+    _bind_equipment(client, device["id"])
+
+    response = client.post(f"/devices/{device['id']}/poll")
+    assert response.status_code == 422
+    body = response.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "timeout"
+    assert "dispositivo" in body["error"]["message"].lower()
+    assert "timeout" not in body["error"]["message"].lower()
+
+    detail = client.get(f"/devices/{device['id']}")
+    assert detail.status_code == 200
+    assert detail.json()["data"]["status"] == "offline"
+
+
+def test_live_device_unreachable_returns_422(client, unique_ip, monkeypatch):
+    from production_pulse_app.domain.errors import DeviceDriverError
+
+    def fake_read(_self, _device):
+        raise DeviceDriverError("network_error", technical_detail="HTTP request failed.")
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+
+    device = _create_device(client, unique_ip)
+    _bind_equipment(client, device["id"])
+
+    response = client.get(f"/devices/{device['id']}/live")
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "network_error"

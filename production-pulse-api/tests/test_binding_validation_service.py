@@ -17,10 +17,15 @@ def test_compose_equipment_placement():
     assert key == "e:01:ventilador-exaustao-setor-a"
 
 
+def test_compose_standalone_placement_label_is_empty():
+    binding = normalize_binding_input({"anchorType": "standalone"})
+    assert compose_placement_label(binding, device_name="ESP8266 - TESTE") == ""
+
+
 def test_work_center_requires_code():
     try:
         normalize_binding_input({"anchorType": "work_center"})
     except BindingValidationError as exc:
-        assert "work_center_code" in str(exc)
+        assert exc.code == "work_center_code_required"
     else:
         raise AssertionError("expected BindingValidationError")

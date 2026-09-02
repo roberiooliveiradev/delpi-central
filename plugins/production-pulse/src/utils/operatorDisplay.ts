@@ -63,6 +63,15 @@ export function metricDisplayLabel(device: OperatorDeviceItem): string {
   return key ? metricLabel(key) : "Métrica";
 }
 
+export function operatorPlacementTitle(placement: OperatorPlacement): string {
+  const label = placement.placementLabel?.trim();
+  if (label) return label;
+  if (placement.anchorType === "standalone") {
+    return anchorTypeLabel("standalone");
+  }
+  return "—";
+}
+
 export function resolveOperatorHeaderTitle(
   device: OperatorDeviceItem,
   placementLabel?: string,

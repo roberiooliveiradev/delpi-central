@@ -21,4 +21,5 @@ class CommandResult:
     success: bool
     metrics: dict[str, Any] | None = None
     error_message: str | None = None
+    error_code: str | None = None
     response_payload: dict[str, Any] = field(default_factory=dict)

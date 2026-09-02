@@ -41,6 +41,40 @@ describe("SegmentToggle", () => {
     expect(onChange).toHaveBeenCalledWith("departamento");
   });
 
+  it("aplica width-content fora do fill em FiltersRow", () => {
+    const { container } = render(
+      <SegmentToggle
+        ariaLabel="Modo"
+        widthMode="content"
+        options={[
+          { value: "list", label: "Lista" },
+          { value: "grouped", label: "Agrupado" },
+        ]}
+        value="list"
+        onChange={() => undefined}
+      />,
+    );
+    const root = container.querySelector(".delpi-ui-segment-toggle");
+    expect(root?.className.includes("delpi-ui-segment-toggle--width-content")).toBe(true);
+  });
+
+  it("aplica column para pilha vertical", () => {
+    const { container } = render(
+      <SegmentToggle
+        ariaLabel="Tipo"
+        direction="column"
+        options={[
+          { value: "a", label: "A" },
+          { value: "b", label: "B" },
+        ]}
+        value="a"
+        onChange={() => undefined}
+      />,
+    );
+    const root = container.querySelector(".delpi-ui-segment-toggle");
+    expect(root?.className.includes("delpi-ui-segment-toggle--column")).toBe(true);
+  });
+
   it("aplica modificador sm no root", () => {
     const { container } = render(
       <SegmentToggle

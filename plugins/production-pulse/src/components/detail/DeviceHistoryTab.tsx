@@ -4,25 +4,30 @@ import { fetchDeviceReadings } from "../../api/productionPulseApi";
 import {
   PpActionButton,
   PpChartCard,
+  PpDataTable,
+  PpFilterInputField,
+  PpFiltersRow,
   PpPagination,
+  PpReadingsAreaChart,
   PpSectionCard,
   PpSegmentToggle,
+  type DataTableColumn,
 } from "../../app/productionPulseUi";
-import { PpDataTable, type DataTableColumn } from "../data/dataTableUi";
-import { PpFilterInputField, PpFiltersRow } from "../data/filtersUi";
-import { SimpleLineChart } from "../charts/SimpleLineChart";
 import type { DeviceListItem } from "../../types/device";
 import type { DeviceReading } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
 import { useViewportBucket } from "../../hooks/useViewportBucket";
+import { isMobileViewport } from "../../utils/viewportLayout";
 import {
   formatDateTime,
   formatDeltaValue,
   formatMetricValue,
+  isHardwareCounterReset,
   primaryMetricKey,
   readingsToChartPoints,
   sourceLabel,
 } from "../../utils/detailDisplay";
+import { ReadingHardwareResetBadge } from "./ReadingHardwareResetBadge";
 import { ReadingCard } from "./ReadingCard";
 
 const PAGE_SIZE = 20;
@@ -35,7 +40,7 @@ type ChartMode = "value" | "delta";
 
 export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
   const viewport = useViewportBucket();
-  const isMobile = viewport === "mobile";
+  const isMobile = isMobileViewport(viewport);
   const metricKey = primaryMetricKey(device.lastMetrics, device.capabilities);
 
   const [fromDate, setFromDate] = useState("");
@@ -98,7 +103,12 @@ export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
         key: "delta",
         header: "Delta",
         headerHint: PP_HELP.detail.delta,
-        render: (row) => formatDeltaValue(key, row.deltaMetrics?.[key]),
+        render: (row) => (
+          <span className="pp-reading-delta-cell">
+            {formatDeltaValue(key, row.deltaMetrics?.[key])}
+            {isHardwareCounterReset(row) ? <ReadingHardwareResetBadge compact /> : null}
+          </span>
+        ),
       },
       {
         key: "source",
@@ -116,7 +126,7 @@ export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
 
   return (
     <div className="pp-detail-history">
-      <PpFiltersRow>
+      <PpFiltersRow className="pp-detail-history__filters">
         <PpFilterInputField
           id="pp-history-from"
           label="De"
@@ -151,7 +161,7 @@ export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
           />
         }
       >
-        <SimpleLineChart points={chartPoints} height={isMobile ? 180 : 240} />
+        <PpReadingsAreaChart points={chartPoints} height={isMobile ? 200 : 280} variant="detail" />
       </PpChartCard>
 
       <PpSectionCard title="Leituras" hint={PP_HELP.detail.readingsTable}>

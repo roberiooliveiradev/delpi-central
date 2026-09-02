@@ -18,6 +18,11 @@ export type SegmentToggleClassNames = {
 
 export type SegmentToggleSize = "sm" | "md";
 
+/** `fill` = largura total em FiltersRow; `content` = inline ao lado de outros controles (WF painel). */
+export type SegmentToggleWidthMode = "fill" | "content";
+
+export type SegmentToggleDirection = "row" | "column";
+
 export type SegmentToggleProps<T extends string = string> = {
   options: readonly SegmentToggleOption<T>[];
   value: T;
@@ -28,6 +33,8 @@ export type SegmentToggleProps<T extends string = string> = {
   /** Prefixo BEM do plugin (default `ds`). */
   prefix?: string;
   size?: SegmentToggleSize;
+  widthMode?: SegmentToggleWidthMode;
+  direction?: SegmentToggleDirection;
   disabled?: boolean;
   className?: string;
   /** Sobrescreve classes dual BEM + delpi-ui (avançado). */
@@ -75,6 +82,8 @@ export function SegmentToggle<T extends string>({
   idPrefix = "segment",
   prefix = "ds",
   size = "md",
+  widthMode = "fill",
+  direction = "row",
   disabled = false,
   className,
   classNames: classNamesOverride,
@@ -86,12 +95,18 @@ export function SegmentToggle<T extends string>({
     buttonActive: classNamesOverride?.buttonActive ?? base.buttonActive,
   };
 
-  const rootClass = [
-    size === "sm" ? withBemModifier(classNames.root, "sm") : classNames.root,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  let rootBase = classNames.root;
+  if (size === "sm") {
+    rootBase = withBemModifier(rootBase, "sm");
+  }
+  if (widthMode === "content") {
+    rootBase = withBemModifier(rootBase, "width-content");
+  }
+  if (direction === "column") {
+    rootBase = withBemModifier(rootBase, "column");
+  }
+
+  const rootClass = [rootBase, className].filter(Boolean).join(" ");
 
   return (
     <div className={rootClass} role="group" aria-label={ariaLabel}>

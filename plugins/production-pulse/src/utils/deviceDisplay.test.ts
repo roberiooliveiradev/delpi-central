@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import type { DeviceListItem } from "../types/device";
-import { formatPrimaryMetric, formatRelativeTime, resolveViewportBucket } from "./deviceDisplay";
+import {
+  formatCounterPeriodDelta,
+  formatDeviceDetailDescription,
+  formatPrimaryMetric,
+  formatRelativeTime,
+  placementLabel,
+  resolveViewportBucket,
+} from "./deviceDisplay";
 import { applyClientFilters, groupDevices } from "./deviceGrouping";
 
 const baseDevice = (overrides: Partial<DeviceListItem> = {}): DeviceListItem => ({
@@ -26,6 +33,40 @@ const baseDevice = (overrides: Partial<DeviceListItem> = {}): DeviceListItem => 
 describe("deviceDisplay", () => {
   it("formats primary metric with unit", () => {
     expect(formatPrimaryMetric(baseDevice())).toBe("1.284 gol");
+  });
+
+  it("formats counter period delta for counters only", () => {
+    expect(
+      formatCounterPeriodDelta(
+        baseDevice({ periodDeltas: { day: { counter: 42 }, shift: { counter: 7 } } }),
+        "day",
+      ),
+    ).toBe("+42");
+    expect(formatCounterPeriodDelta(baseDevice({ roleKey: "process_gauge" }), "day")).toBeNull();
+  });
+
+  it("hides standalone placement object label to avoid duplicating device name", () => {
+    const device = baseDevice({
+      name: "ESP8266 - TESTE",
+      binding: {
+        id: "b1",
+        deviceId: "d1",
+        anchorType: "standalone",
+        placementLabel: "ESP8266 - TESTE",
+        placementKey: "s:d1",
+        workCenterCode: null,
+        workCenterName: null,
+        machineCode: null,
+        machineLabel: null,
+        equipmentLabel: null,
+        areaLabel: null,
+        resourceCode: null,
+        toolCode: null,
+        notes: null,
+      },
+    });
+    expect(placementLabel(device)).toBe("—");
+    expect(formatDeviceDetailDescription(device)).toBe("192.168.20.2");
   });
 
   it("formats relative time", () => {
@@ -76,5 +117,33 @@ describe("deviceGrouping", () => {
     expect(groups).toHaveLength(2);
     expect(groups[0]?.title).toContain("CT-53");
     expect(groups[1]?.title).toBe("Sem amarração");
+  });
+
+  it("groups standalone devices by device name", () => {
+    const devices = [
+      baseDevice({
+        id: "a",
+        name: "Ventilador A",
+        binding: {
+          id: "b1",
+          deviceId: "a",
+          anchorType: "standalone",
+          placementLabel: "",
+          placementKey: "s:a",
+          workCenterCode: null,
+          workCenterName: null,
+          machineCode: null,
+          machineLabel: null,
+          equipmentLabel: null,
+          areaLabel: null,
+          resourceCode: null,
+          toolCode: null,
+          notes: null,
+        },
+      }),
+    ];
+    const groups = groupDevices(devices, "work_center");
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.title).toBe("Ventilador A");
   });
 });

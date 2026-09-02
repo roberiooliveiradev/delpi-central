@@ -806,7 +806,7 @@ Recreate de `delpi-travel-expenses-api` **não** apaga cupons (metadado no schem
 
 | Ambiente | Rede | Gateway → API |
 |---|---|---|
-| **Dev (WSL)** | `production-pulse-api` com **`network_mode: host`** — alcança VLAN LAN (`192.168.x.x`) | `host.docker.internal:8025` (`nginx.dev.conf`) |
+| **Dev (WSL)** | `production-pulse-api` com **`network_mode: host`** — alcança VLAN LAN (`192.168.x.x`) | `172.17.0.1:8025` (`gateway/nginx.dev.conf`) |
 | **Prod** | bridge Docker (`production-pulse-api:8000`) | `nginx.conf` padrão |
 
 Dev: Postgres plugins via **`127.0.0.1:5433`** (`PRODUCTION_PULSE_PLUGINS_DB_HOST` / `PRODUCTION_PULSE_PLUGINS_DB_PORT`). Porta host da API: **`PRODUCTION_PULSE_API_PORT=8025`** (deve coincidir com nginx dev).

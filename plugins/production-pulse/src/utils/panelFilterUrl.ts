@@ -1,6 +1,6 @@
 import { PRODUCTION_PULSE_BASE_PATH } from "../constants/routes";
 
-export type PanelViewMode = "list" | "grouped";
+export type PanelViewMode = "table" | "cards" | "grouped";
 export type PanelGroupBy = "work_center" | "machine" | "equipment" | "area";
 export type PanelStatusFilter = "" | "online" | "offline" | "no_binding" | "disabled";
 export type PanelAnchorTypeFilter =
@@ -28,7 +28,7 @@ export const DEFAULT_PANEL_FILTERS: PanelFilters = {
   role: "",
   status: "",
   search: "",
-  view: "list",
+  view: "table",
   groupBy: "work_center",
   page: 1,
 };
@@ -57,6 +57,16 @@ const STATUS_VALUES = new Set<PanelStatusFilter>([
   "disabled",
 ]);
 
+const VIEW_VALUES = new Set<PanelViewMode>(["table", "cards", "grouped"]);
+
+function parsePanelViewMode(raw: string | null): PanelViewMode {
+  if (raw === "list") return "table";
+  if (raw && VIEW_VALUES.has(raw as PanelViewMode)) {
+    return raw as PanelViewMode;
+  }
+  return DEFAULT_PANEL_FILTERS.view;
+}
+
 function parseSearch(search: string): URLSearchParams {
   const raw = search.startsWith("?") ? search.slice(1) : search;
   return new URLSearchParams(raw);
@@ -64,7 +74,7 @@ function parseSearch(search: string): URLSearchParams {
 
 export function readPanelFilters(search: string): PanelFilters {
   const query = parseSearch(search);
-  const view = query.get("view") === "grouped" ? "grouped" : "list";
+  const view = parsePanelViewMode(query.get("view"));
   const groupByRaw = query.get("groupBy") ?? DEFAULT_PANEL_FILTERS.groupBy;
   const groupBy = GROUP_BY_VALUES.has(groupByRaw as PanelGroupBy)
     ? (groupByRaw as PanelGroupBy)

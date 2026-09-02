@@ -61,12 +61,13 @@ def test_catalog_uses_cache(mock_gateway):
 def test_validate_unknown_work_center_raises(mock_gateway):
     service = WorkCenterCatalogService(mock_gateway, cache_ttl_seconds=0)
 
-    with pytest.raises(BindingValidationError, match="não existe no catálogo"):
+    with pytest.raises(BindingValidationError) as exc_info:
         service.validate_work_center_code(
             branch="01",
             work_center_code="CT-404",
             authorization="Bearer test",
         )
+    assert exc_info.value.code == "work_center_not_in_catalog"
 
 
 def test_validate_known_work_center_ok(mock_gateway):

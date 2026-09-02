@@ -3,12 +3,17 @@
  * Copiar para `plugins/production-pulse/src/content/helpTooltips.ts` no scaffold E5.S1.
  */
 export const PP_HELP = {
+  apiErrors: {
+    apiUnavailable: "API Pulso de Produção indisponível. Tente novamente em instantes.",
+  },
+
   shell: {
     heroTitle:
       "Monitoramento de dispositivos IoT na filial: contadores, sensores de rotação, temperatura e demais métricas.",
     heroFilial: "Filial operacional dos dispositivos e sensores cadastrados.",
     pollAll:
       "Solicita leitura imediata em todos os dispositivos ativos da filial. Requer permissão de gestão.",
+    breadcrumbRoot: "Pulso de Produção",
     backToPanel: "Volta ao painel principal de dispositivos.",
     modeOperator: "Abre a visão simplificada para tablet no chão de fábrica.",
   },
@@ -22,6 +27,10 @@ export const PP_HELP = {
       "Dispositivos sem resposta HTTP no tempo limite — verifique rede, energia ou IP.",
     kpiWithoutBinding:
       "Cadastros incompletos: falta informar posto, máquina, equipamento ou área de instalação.",
+    kpiCounterDeltaDay:
+      "Soma dos incrementos de golpe (delta) de todos os contadores amarrados na filial, desde a meia-noite local.",
+    kpiCounterDeltaShift:
+      "Soma dos incrementos de golpe no turno operacional atual (06–14, 14–22 ou 22–06).",
     filterAnchorType:
       "Filtra por tipo de amarração: posto PCP, máquina, equipamento, área ou avulso.",
     filterRole:
@@ -31,7 +40,8 @@ export const PP_HELP = {
       "Busca por nome do device, rótulo do objeto (placement) ou endereço IP.",
     filterGroupBy:
       "Na vista agrupada, define se os devices aparecem por posto, máquina, equipamento ou área.",
-    viewList: "Tabela flat com todos os dispositivos e filtros ativos.",
+    viewTable: "Tabela com colunas — ideal para comparar muitos devices de uma vez.",
+    viewCards: "Cards com nome, objeto, métrica e ações — mais legível em telas menores.",
     viewGrouped: "Seções colapsáveis agrupadas pelo objeto operacional escolhido.",
     colName: "Nome do dispositivo IoT (ESP ou gateway) — identificação técnica na rede.",
     colPlacement:
@@ -43,6 +53,12 @@ export const PP_HELP = {
     colStatus: "Online se houve poll recente com sucesso; offline se timeout ou erro.",
     colLastSeen: "Momento da última comunicação bem-sucedida com o hardware.",
     rowPoll: "Lê o device agora e atualiza a métrica exibida.",
+    rowPollAction: "Atualizar",
+    cardOpenDetail: "Ver detalhe",
+    pollNoticeTitle: "Dispositivo não respondeu",
+    pollNoticeClose: "Fechar",
+    retryLoad: "Tentar novamente",
+    clearFilters: "Limpar filtros",
     rowReset:
       "Zera o contador físico (somente devices contador). Operação auditada.",
     emptyFilial:
@@ -73,6 +89,8 @@ export const PP_HELP = {
       "Desligado — para de pollar e some do hub operador; histórico é preservado.",
     testConnection:
       "Testa comunicação HTTP com o device sem gravar histórico. No cadastro novo usa test-probe (IP + driver); na edição, test no device salvo.",
+    testConnectionAction: "Testar conexão",
+    testConnectionLoading: "Testando…",
     anchorType:
       "Tipo de objeto onde o sensor está: posto PCP (CT), máquina, equipamento, área ou avulso.",
     anchorWorkCenter:
@@ -111,12 +129,16 @@ export const PP_HELP = {
     commandsTable:
       "Quem executou cada comando, quando e se o hardware respondeu com sucesso.",
     pollNow: "Força leitura imediata e grava no histórico.",
+    pollNowAction: "Atualizar agora",
+    pollNowLoading: "Atualizando…",
     resetCounter:
       "Zera o contador no ESP. Use com cuidado — ação registrada em auditoria.",
     deactivate:
       "Desativa o device (soft delete). Para polling; não apaga histórico.",
     delta:
       "Diferença em relação à leitura anterior — só para métricas monotônicas (golpes).",
+    counterHardwareReset:
+      "O contador físico caiu em relação à leitura anterior (reset no hardware ou troca de firmware). O delta usa o valor novo como base.",
     coverageIncomplete:
       "Pode haver lacunas se o device ficou offline ou o poll falhou.",
   },
@@ -130,6 +152,10 @@ export const PP_HELP = {
     testOk: "Conexão OK. Métricas retornadas pelo driver.",
     testFail:
       "Não foi possível alcançar o device. Verifique IP, cabo, Wi‑Fi ou firewall.",
+    testTitle: "Testar conexão",
+    testLoading: "Testando comunicação com o device…",
+    testLatencyPrefix: "Latência",
+    testClose: "Fechar",
     deactivateTitle: "Desativar este dispositivo?",
     deactivateBody:
       "Para leituras automáticas. O cadastro e o histórico permanecem consultáveis.",
@@ -161,11 +187,16 @@ export const PP_HELP = {
     counterClear:
       "Zera o contador. Pedirá confirmação antes de enviar ao device.",
     gaugeValue: "Leitura atual do sensor — atualiza automaticamente a cada poucos segundos.",
+    gaugeThresholdWarn:
+      "Valor acima do limite de atenção definido no driver — verifique o processo.",
+    gaugeThresholdDanger:
+      "Valor acima do limite crítico — risco operacional; ação imediata recomendada.",
     gaugeRefresh: "Força nova leitura sem esperar o ciclo automático.",
     changePlacement: "Volta à lista de locais para escolher outro posto ou equipamento.",
     offlineBanner:
       "Sem comunicação com o device. Comandos ficam desabilitados até reconectar.",
     adminLink: "Abre o painel administrativo completo (se você tiver permissão).",
+    brandEyebrowPrefix: "PULSO",
   },
 
   badges: {

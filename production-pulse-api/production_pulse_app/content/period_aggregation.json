@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "timezone": "America/Sao_Paulo",
+  "shifts": [
+    { "key": "morning", "startHour": 6, "endHour": 14 },
+    { "key": "afternoon", "startHour": 14, "endHour": 22 },
+    { "key": "night", "startHour": 22, "endHour": 6 }
+  ],
+  "metricsByRole": {
+    "pulse_counter": ["counter"]
+  }
+}

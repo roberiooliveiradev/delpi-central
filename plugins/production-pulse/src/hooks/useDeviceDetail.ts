@@ -8,6 +8,7 @@ import {
 } from "../api/productionPulseApi";
 import type { DeviceListItem } from "../types/device";
 import type { DeviceDetailTab, LivePollResult } from "../types/detail";
+import { resolveDeviceActionError } from "../utils/apiErrors";
 
 type UseDeviceDetailOptions = {
   deviceId: string;
@@ -18,6 +19,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   const [device, setDevice] = useState<DeviceListItem | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [liveSnapshot, setLiveSnapshot] = useState<LivePollResult | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [commandsRefreshToken, setCommandsRefreshToken] = useState(0);
@@ -40,9 +42,21 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     void reloadDevice();
   }, [reloadDevice]);
 
+  const applyDeviceActionFailure = async (err: unknown, fallback: string) => {
+    await reloadDevice();
+    const resolved = resolveDeviceActionError(err, fallback);
+    if (resolved.kind === "device") {
+      setActionError(resolved.message);
+      return;
+    }
+    setActionError(null);
+    setError(resolved.message);
+  };
+
   const refreshLive = async () => {
     if (!device) return;
     setRefreshing(true);
+    setActionError(null);
     try {
       const live = await fetchDeviceLive(deviceId);
       setLiveSnapshot(live);
@@ -58,7 +72,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
           : current,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao ler device ao vivo.");
+      await applyDeviceActionFailure(err, "Erro ao ler device ao vivo.");
     } finally {
       setRefreshing(false);
     }
@@ -67,6 +81,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   const pollNow = async () => {
     if (!device) return;
     setRefreshing(true);
+    setActionError(null);
     try {
       const polled = await pollDevice(deviceId);
       setLiveSnapshot(polled);
@@ -82,7 +97,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
           : current,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao executar poll.");
+      await applyDeviceActionFailure(err, "Erro ao executar poll.");
     } finally {
       setRefreshing(false);
     }
@@ -99,6 +114,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     device,
     loading,
     error,
+    actionError,
     liveSnapshot,
     refreshing,
     commandsRefreshToken,

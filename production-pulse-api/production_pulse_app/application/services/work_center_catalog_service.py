@@ -6,7 +6,7 @@ from typing import Any
 from delpi_api_client import DelpiApiError
 
 from production_pulse_app.config import settings
-from production_pulse_app.domain.services.binding_validation_service import BindingValidationError
+from production_pulse_app.domain.errors import BindingValidationError
 from production_pulse_app.infrastructure.gateways.delpi_production_appointments_gateway import (
     DelpiProductionAppointmentsGateway,
 )
@@ -69,7 +69,7 @@ class WorkCenterCatalogService:
     ) -> list[dict[str, Any]]:
         branch = branch.strip()
         if not branch:
-            raise BindingValidationError("branch é obrigatório.")
+            raise BindingValidationError("branch_required")
 
         cached = self._cache.get(branch)
         now = time.monotonic()
@@ -126,7 +126,8 @@ class WorkCenterCatalogService:
         known = {_normalize_code(item.get("workCenterCode")) for item in items}
         if code not in known:
             raise BindingValidationError(
-                f"work_center_code '{work_center_code.strip()}' não existe no catálogo TOTVS da filial."
+                "work_center_not_in_catalog",
+                work_center_code=work_center_code.strip(),
             )
 
 

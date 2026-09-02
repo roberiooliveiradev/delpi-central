@@ -153,6 +153,7 @@ export {
   FiltersRow,
   createDashboardFiltersKit,
   filterBoxBemClasses,
+  filterToolbarRowBemClasses,
   filtersRowBemClasses,
   type DashboardFiltersKit,
   type DashboardFiltersLabels,

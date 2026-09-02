@@ -77,7 +77,7 @@
 
 **HTTP:** `GET /api/sensores` → `{"rpm": <number>, "temperatura": <number>}` (aliases `rotacao`, `temperature_c`).
 
-### `esp8266_gauge_v1` (P1 — spec antecipada)
+### `esp8266_gauge_v1` (P1 — implementado)
 
 ```json
 {
@@ -122,7 +122,9 @@
 |--------|------|----------|
 | `GET` | `/catalog/drivers` | `{ drivers: [{ key, ...def }] }` |
 
-`GET /devices/{id}` embute `capabilities` derivadas do registry (commands + metrics + operatorSurface).
+`GET /devices/{id}` embute `capabilities` derivadas do registry (commands + metrics + operatorSurface + `thresholds` quando definidos no JSON).
+
+A superfície operador `gauge_readout` usa `capabilities.thresholds` para colorir tiles (warn/danger) conforme a leitura atual.
 
 ---
 
