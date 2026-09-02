@@ -340,7 +340,8 @@ class DevicePollService:
         page_size = min(max(1, page_size), 500)
         interval: int | None = None
         if sample_interval_ms is not None:
-            interval = min(max(int(sample_interval_ms), 100), 86_400_000)
+            # Máx. ~366 dias — alinhado ao MFE HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX.
+            interval = min(max(int(sample_interval_ms), 100), 31_622_400_000)
         rows, total = self._readings.list_for_device(
             device_id,
             page=page,

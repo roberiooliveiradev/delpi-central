@@ -170,6 +170,7 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
       .catch((err) => {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
+        setChartReadings([]);
         setLoading(false);
       });
     return () => controller.abort();

@@ -287,7 +287,7 @@ async def list_device_readings(
     sample_interval_ms: int | None = Query(
         default=None,
         ge=100,
-        le=86_400_000,
+        le=31_622_400_000,
         alias="sampleIntervalMs",
     ),
 ):

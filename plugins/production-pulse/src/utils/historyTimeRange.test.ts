@@ -10,6 +10,7 @@ import {
   resolveDefaultHistoryPreset,
   resolveHistoryChartPageSize,
   resolveHistoryChartSampleIntervalMs,
+  HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX,
   toDatetimeLocalValue,
 } from "./historyTimeRange";
 
@@ -123,5 +124,14 @@ describe("historyTimeRange", () => {
     );
     expect(sample).toBeGreaterThan(200);
     expect(sample).toBeGreaterThanOrEqual(Math.ceil((7 * 24 * 60 * 60_000) / 96));
+
+    const longCustom = resolveHistoryChartSampleIntervalMs(
+      "2026-05-26T20:40:00.000Z",
+      "2026-09-02T20:40:00.000Z",
+      200,
+    );
+    expect(longCustom).toBeDefined();
+    expect(longCustom!).toBeLessThanOrEqual(HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX);
+    expect(longCustom!).toBeGreaterThan(86_400_000);
   });
 });

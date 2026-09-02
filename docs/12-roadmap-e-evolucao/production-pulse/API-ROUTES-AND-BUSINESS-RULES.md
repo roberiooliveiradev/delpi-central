@@ -181,7 +181,7 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 | **R42** | Board do posto: só devices `operatorEligible` + binding; ordenação danger → warn → ok → offline. |
 | **R43** | Superfície UI escolhida por `capabilities.operatorSurface` — **proibido** ramificar por `driver_key` no MFE. |
 | **R44** | Novo medidor = entrada no registry + `DeviceDriver` + (se preciso) surface; **sem** rota CRUD nova. |
-| **R45** | Série do gráfico de histórico: quando o período tem mais leituras que o `pageSize`, o MFE envia `sampleIntervalMs` e a API devolve **uma leitura por bucket** cobrindo o intervalo inteiro — não só o fim da janela (LIMIT DESC). Tick do eixo X segue o **span** (não o poll). |
+| **R45** | Série do gráfico de histórico: quando o período tem mais leituras que o `pageSize`, o MFE envia `sampleIntervalMs` (até ~366 dias) e a API devolve **uma leitura por bucket** cobrindo o intervalo inteiro — não só o fim da janela (LIMIT DESC). Tick do eixo X segue o **span** (não o poll). |
 
 ---
 

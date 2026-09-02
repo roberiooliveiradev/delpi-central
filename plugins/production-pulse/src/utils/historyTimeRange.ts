@@ -20,6 +20,8 @@ export type ChartTickGranularity = "second" | "minute" | "hour" | "day";
 
 const CHART_TARGET_POINTS = 96;
 export const HISTORY_CHART_PAGE_SIZE_MAX = 500;
+/** Teto alinhado à API (`sampleIntervalMs`) — períodos Livre longos (meses). */
+export const HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX = 366 * 86_400_000;
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
@@ -148,7 +150,8 @@ export function resolveHistoryChartSampleIntervalMs(
     return undefined;
   }
   const points = Math.max(8, Math.min(targetPoints, HISTORY_CHART_PAGE_SIZE_MAX));
-  return Math.max(poll, Math.ceil(spanMs / points));
+  const ideal = Math.max(poll, Math.ceil(spanMs / points));
+  return Math.min(HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX, ideal);
 }
 
 /** Reduz pontos densos mantendo início/fim e passo uniforme. */
