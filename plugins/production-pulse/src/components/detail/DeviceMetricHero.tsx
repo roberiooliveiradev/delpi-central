@@ -19,6 +19,7 @@ type DeviceMetricHeroProps = {
   onRefreshLive: () => void;
   onPollNow: () => void;
   onReset: () => void;
+  onFactoryReset?: () => void;
 };
 
 export function DeviceMetricHero({
@@ -29,6 +30,7 @@ export function DeviceMetricHero({
   onRefreshLive,
   onPollNow,
   onReset,
+  onFactoryReset,
 }: DeviceMetricHeroProps) {
   const metrics = liveSnapshot?.metrics ?? device.lastMetrics ?? {};
   const metricKey = primaryMetricKey(metrics, device.capabilities);
@@ -37,6 +39,8 @@ export function DeviceMetricHero({
   const label = metricKey ? metricLabel(metricKey) : "Métrica";
   const recordedAt = liveSnapshot?.recordedAt ?? device.lastSeenAt;
   const supportsReset = device.capabilities?.commands?.includes("reset") ?? false;
+  const supportsFactoryReset =
+    device.capabilities?.commands?.includes("factory_reset") ?? false;
 
   return (
     <PpSectionCard title="Métricas ao vivo" hint={PP_HELP.detail.liveMetrics}>
@@ -60,6 +64,16 @@ export function DeviceMetricHero({
           {supportsReset && canCommand ? (
             <PpActionButton variant="ghost" onClick={onReset} disabled={refreshing || !device.online}>
               Reset contador
+            </PpActionButton>
+          ) : null}
+          {supportsFactoryReset && canCommand && onFactoryReset ? (
+            <PpActionButton
+              variant="ghost"
+              onClick={onFactoryReset}
+              disabled={refreshing}
+              title={PP_HELP.detail.factoryReset}
+            >
+              {PP_HELP.detail.factoryResetAction}
             </PpActionButton>
           ) : null}
         </div>

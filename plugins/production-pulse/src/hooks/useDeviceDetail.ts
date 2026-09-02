@@ -156,6 +156,12 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     await reloadDevice();
   };
 
+  const factoryReset = async () => {
+    await executeDeviceCommand(deviceId, "factory_reset");
+    setCommandsRefreshToken((value) => value + 1);
+    await reloadDevice();
+  };
+
   return {
     device,
     loading,
@@ -169,6 +175,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     refreshLive,
     pollNow,
     resetCounter,
+    factoryReset,
   };
 }
 

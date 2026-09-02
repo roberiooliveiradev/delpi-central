@@ -176,6 +176,12 @@ class DeviceCommandService:
                     "counter": int(result.metrics["counter"]),
                 }
             )
+        if normalized_key == "factory_reset" and result.success:
+            self._devices.patch(
+                device_id,
+                updates={"device_api_token": None, "wifi_ssid": None, "debounce_ms": None},
+                actor_sub=actor_sub,
+            )
         return json_safe(response)
 
     def list_commands(

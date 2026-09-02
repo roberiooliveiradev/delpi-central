@@ -16,6 +16,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 | `POST` | `/api/reset` | idem | zera |
 | `POST` | `/api/definir` | idem | body `{"contador": N}` — restore pela API Delpi |
 | `POST` | `/api/reboot` | idem | responde JSON e reinicia o chip |
+| `POST` | `/api/factory-reset` | idem | restaura EEPROM (defaults); reinicia — contador em RAM zera |
 
 ### Autenticação
 
@@ -30,5 +31,9 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 O código do controlador é `ESP-` + `ESP.getChipId()` em hex — estável após reboot.
 
 Wi‑Fi: tentativa limitada no boot; no `loop`, reconnect com backoff via `millis()` (sem `delay` longo) + `ESP.wdtFeed()`.
+
+mDNS: hostname = `controllerCode` em minúsculas (ex.: `esp-00a1b2c3.local`).
+
+Factory reset: `POST /api/factory-reset` (auth) ou hold **D5+D1** por 10 s. Não apaga readings no Postgres; no chip, restart zera o contador em RAM.
 
 No Production Pulse: cadastro com Wi‑Fi/debounce/token; «Testar conexão» e Salvar (modo A) usam `/api/config` e `/api/status`.

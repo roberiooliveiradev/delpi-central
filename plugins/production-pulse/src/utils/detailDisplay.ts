@@ -18,6 +18,9 @@ const COMMAND_LABELS: Record<string, string> = {
   increment: "+1",
   decrement: "−1",
   set: "Definir",
+  reboot: "Reiniciar",
+  factory_reset: "Factory reset",
+  configure: "Configurar",
 };
 
 export function metricLabel(key: string): string {

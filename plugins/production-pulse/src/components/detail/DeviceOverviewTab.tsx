@@ -20,6 +20,7 @@ type DeviceOverviewTabProps = {
   onRefreshLive: () => void;
   onPollNow: () => void;
   onReset: () => void;
+  onFactoryReset?: () => void;
 };
 
 export function DeviceOverviewTab({
@@ -30,6 +31,7 @@ export function DeviceOverviewTab({
   onRefreshLive,
   onPollNow,
   onReset,
+  onFactoryReset,
 }: DeviceOverviewTabProps) {
   const [miniReadings, setMiniReadings] = useState<DeviceReading[]>([]);
   const metricKey = primaryMetricKey(liveSnapshot?.metrics ?? device.lastMetrics, device.capabilities);
@@ -63,6 +65,7 @@ export function DeviceOverviewTab({
           onRefreshLive={onRefreshLive}
           onPollNow={onPollNow}
           onReset={onReset}
+          onFactoryReset={onFactoryReset}
         />
         <DeviceBindingCard binding={device.binding} deviceName={device.name} />
       </div>

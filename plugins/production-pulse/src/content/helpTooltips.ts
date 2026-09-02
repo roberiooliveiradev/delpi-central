@@ -80,7 +80,7 @@ export const PP_HELP = {
     ip:
       "Endereço IPv4 fixo do hardware na rede industrial. Deve ser alcançável pela API.",
     controllerCode:
-      "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde.",
+      "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde. Na LAN, o mDNS usa este código (ex.: esp-00a1b2c3.local).",
     wifiSsid:
       "Nome da rede Wi-Fi gravada no chip (EEPROM). Enviado ao dispositivo no Salvar.",
     wifiPassword:
@@ -167,6 +167,9 @@ export const PP_HELP = {
     pollNowLoading: "Atualizando…",
     resetCounter:
       "Zera o contador no ESP. Use com cuidado — ação registrada em auditoria.",
+    factoryReset:
+      "Restaura Wi-Fi/token/debounce no chip (EEPROM) e reinicia. Histórico no banco não é apagado.",
+    factoryResetAction: "Factory reset",
     deactivate:
       "Desativa o device (soft delete). Para polling; não apaga histórico.",
     delta:
@@ -181,6 +184,10 @@ export const PP_HELP = {
     resetTitle: "Confirma zerar o contador físico deste device?",
     resetBody:
       "O valor no hardware volta a zero. A operação fica registrada com seu usuário.",
+    factoryResetTitle: "Restaurar configuração de fábrica do chip?",
+    factoryResetBody:
+      "Apaga Wi-Fi, token e debounce no EEPROM do ESP e reinicia o controlador. O contador em memória zera. O histórico no Production Pulse permanece. O token no cadastro também será limpo.",
+    factoryResetConfirm: "Restaurar fábrica",
     clearOperatorTitle: "Zerar contador para 0?",
     clearOperatorBody: "Confirme apenas se a contagem atual estiver incorreta.",
     testOk: "Conexão OK. Métricas retornadas pelo driver.",

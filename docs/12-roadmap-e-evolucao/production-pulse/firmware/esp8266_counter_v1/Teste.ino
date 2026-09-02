@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
 #include <EEPROM.h>
 #include <string.h>
 
@@ -38,8 +39,10 @@ unsigned long tempoMenos = 0;
 
 unsigned long lastWifiAttemptMs = 0;
 unsigned long wifiBackoffMs = 1000;
+unsigned long factoryHoldStartMs = 0;
 static const unsigned long WIFI_BACKOFF_MAX_MS = 30000;
 static const unsigned long WIFI_BOOT_WAIT_MS = 15000;
+static const unsigned long FACTORY_HOLD_MS = 10000;
 
 String montarCodigoControlador() {
   char buf[24];
@@ -313,6 +316,50 @@ void reiniciarDispositivo() {
   ESP.restart();
 }
 
+void restoreFactoryConfig() {
+  memset(&cfg, 0, sizeof(cfg));
+  cfg.magic = CONFIG_MAGIC;
+  strncpy(cfg.ssid, DEFAULT_WIFI_SSID, sizeof(cfg.ssid) - 1);
+  strncpy(cfg.password, DEFAULT_WIFI_PASSWORD, sizeof(cfg.password) - 1);
+  cfg.apiToken[0] = '\0';
+  cfg.debounceMs = DEFAULT_DEBOUNCE_MS;
+  saveConfigToEeprom();
+}
+
+void aplicarFactoryReset() {
+  if (!requireDeviceToken()) {
+    return;
+  }
+  restoreFactoryConfig();
+  enviarCors();
+  server.send(
+    200,
+    "application/json",
+    "{\"ok\":true,\"action\":\"factory_reset\",\"note\":\"counter RAM cleared on restart\"}"
+  );
+  delay(80);
+  ESP.restart();
+}
+
+void checkFactoryResetHold() {
+  bool bothHeld = digitalRead(BT_MAIS) == LOW && digitalRead(BT_MENOS) == LOW;
+  if (!bothHeld) {
+    factoryHoldStartMs = 0;
+    return;
+  }
+  if (factoryHoldStartMs == 0) {
+    factoryHoldStartMs = millis();
+    return;
+  }
+  if ((millis() - factoryHoldStartMs) < FACTORY_HOLD_MS) {
+    return;
+  }
+  Serial.println("Factory reset via hold D5+D1");
+  restoreFactoryConfig();
+  delay(50);
+  ESP.restart();
+}
+
 void ensureWifiConnected() {
   if (WiFi.status() == WL_CONNECTED) {
     wifiBackoffMs = 1000;
@@ -480,6 +527,11 @@ void registrarRotas() {
     enviarCors();
     server.send(204);
   });
+  server.on("/api/factory-reset", HTTP_POST, aplicarFactoryReset);
+  server.on("/api/factory-reset", HTTP_OPTIONS, []() {
+    enviarCors();
+    server.send(204);
+  });
 }
 
 void setup() {
@@ -515,12 +567,26 @@ void setup() {
   registrarRotas();
   server.begin();
   Serial.println("Servidor iniciado");
+
+  String mdnsHost = codigoControlador;
+  mdnsHost.replace(":", "-");
+  mdnsHost.toLowerCase();
+  if (MDNS.begin(mdnsHost.c_str())) {
+    MDNS.addService("http", "tcp", 80);
+    Serial.print("mDNS: http://");
+    Serial.print(mdnsHost);
+    Serial.println(".local");
+  } else {
+    Serial.println("mDNS falhou");
+  }
 }
 
 void loop() {
   ESP.wdtFeed();
   ensureWifiConnected();
+  MDNS.update();
   server.handleClient();
+  checkFactoryResetHold();
   processarBotao(BT_MAIS, estadoMais, leituraAnteriorMais, tempoMais, +1);
   processarBotao(BT_MENOS, estadoMenos, leituraAnteriorMenos, tempoMenos, -1);
 }

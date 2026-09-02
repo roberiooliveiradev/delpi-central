@@ -216,3 +216,16 @@ def test_reboot_posts_authenticated_path():
     driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
     result = driver.execute(device, "reboot")
     assert result.success is True
+
+
+def test_factory_reset_posts_authenticated_path():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/factory-reset"
+        assert request.method == "POST"
+        assert request.headers.get("X-Device-Token") == "secret-token"
+        return httpx.Response(200, json={"ok": True, "action": "factory_reset"})
+
+    device = {**_DEVICE, "device_api_token": "secret-token"}
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    result = driver.execute(device, "factory_reset")
+    assert result.success is True

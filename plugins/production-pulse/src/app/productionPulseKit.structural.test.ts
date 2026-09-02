@@ -101,6 +101,7 @@ describe("production-pulse kit contracts", () => {
     const modalFiles = [
       "components/modals/TestConnectionModal.tsx",
       "components/modals/ResetCounterModal.tsx",
+      "components/modals/FactoryResetModal.tsx",
       "components/modals/OperatorClearCounterModal.tsx",
       "components/modals/CommandJsonModal.tsx",
     ];

@@ -12,6 +12,7 @@ import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
 import { DeviceFirmwareTab } from "../components/detail/DeviceFirmwareTab";
 import { DeviceHistoryTab } from "../components/detail/DeviceHistoryTab";
 import { DeviceOverviewTab } from "../components/detail/DeviceOverviewTab";
+import { FactoryResetModal } from "../components/modals/FactoryResetModal";
 import { ResetCounterModal } from "../components/modals/ResetCounterModal";
 import {
   productionPulseDeviceDetailPath,
@@ -42,6 +43,9 @@ export function DeviceDetailPage({
   const [resetOpen, setResetOpen] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
+  const [factoryOpen, setFactoryOpen] = useState(false);
+  const [factoryLoading, setFactoryLoading] = useState(false);
+  const [factoryError, setFactoryError] = useState<string | null>(null);
 
   const {
     device,
@@ -55,6 +59,7 @@ export function DeviceDetailPage({
     refreshLive,
     pollNow,
     resetCounter,
+    factoryReset,
   } = useDeviceDetail({
     deviceId,
     enabled: permissions.canViewDevices,
@@ -96,6 +101,19 @@ export function DeviceDetailPage({
       setResetError(err instanceof Error ? err.message : "Erro ao zerar contador.");
     } finally {
       setResetLoading(false);
+    }
+  };
+
+  const handleFactoryReset = async () => {
+    setFactoryLoading(true);
+    setFactoryError(null);
+    try {
+      await factoryReset();
+      setFactoryOpen(false);
+    } catch (err) {
+      setFactoryError(err instanceof Error ? err.message : "Erro ao restaurar fábrica.");
+    } finally {
+      setFactoryLoading(false);
     }
   };
 
@@ -191,6 +209,7 @@ export function DeviceDetailPage({
           onRefreshLive={() => void refreshLive()}
           onPollNow={() => void pollNow()}
           onReset={() => setResetOpen(true)}
+          onFactoryReset={() => setFactoryOpen(true)}
         />
       ) : null}
 
@@ -213,6 +232,18 @@ export function DeviceDetailPage({
           if (resetLoading) return;
           setResetOpen(false);
           setResetError(null);
+        }}
+      />
+
+      <FactoryResetModal
+        open={factoryOpen}
+        loading={factoryLoading}
+        error={factoryError}
+        onConfirm={() => void handleFactoryReset()}
+        onClose={() => {
+          if (factoryLoading) return;
+          setFactoryOpen(false);
+          setFactoryError(null);
         }}
       />
     </div>
