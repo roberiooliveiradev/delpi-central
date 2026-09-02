@@ -684,6 +684,7 @@ export {
   autoFitCanvasTableTrack,
   canvasTableBandSelection,
   canvasTableTrackContentWeights,
+  canvasTableTrackRectWeights,
 } from "./canvasTableStructure";
 export type { CanvasTableInsertPlacement } from "./canvasTableStructure";
 export {

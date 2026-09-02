@@ -78,4 +78,27 @@ describe("canvasTableStructure", () => {
     });
     expect(weights[1]).toBeGreaterThan(weights[0]!);
   });
+
+  it("pesos de cellRects priorizam faixa mais larga e autofit normaliza 100%", () => {
+    const weights = canvasTableTrackRectWeights({
+      axis: "col",
+      rows: 1,
+      cols: 3,
+      cellRects: [
+        { row: 0, col: 0, width: 40, height: 20 },
+        { row: 0, col: 1, width: 120, height: 20 },
+        { row: 0, col: 2, width: 40, height: 20 },
+      ],
+    });
+    expect(weights).not.toBeNull();
+    expect(weights![1]).toBeGreaterThan(weights![0]!);
+    expect(canvasTableTrackRectWeights({ axis: "col", rows: 2, cols: 2, cellRects: [] })).toBeNull();
+    const next = autoFitCanvasTableTrack({
+      tracks: [33, 34, 33],
+      index: 1,
+      contentWeights: weights!,
+    });
+    expect(next.reduce((s, n) => s + n, 0)).toBeCloseTo(100, 5);
+    expect(next[1]).toBeGreaterThan(next[0]!);
+  });
 });

@@ -33,6 +33,7 @@ import {
 import {
   autoFitCanvasTableTrack,
   canvasTableTrackContentWeights,
+  canvasTableTrackRectWeights,
 } from "./canvasTableStructure";
 import {
   canvasTableCellHtmlSpan,
@@ -444,12 +445,19 @@ export function ComunicadoCanvasTableView({
       axis === "col"
         ? normalizeCanvasTableTrackSizes(opts.columnWidths, block.cols)
         : normalizeCanvasTableTrackSizes(opts.rowHeights, block.rows);
-    const contentWeights = canvasTableTrackContentWeights({
-      axis,
-      cells: block.cells,
-      rows: block.rows,
-      cols: block.cols,
-    });
+    const contentWeights =
+      canvasTableTrackRectWeights({
+        axis,
+        cellRects,
+        rows: block.rows,
+        cols: block.cols,
+      }) ??
+      canvasTableTrackContentWeights({
+        axis,
+        cells: block.cells,
+        rows: block.rows,
+        cols: block.cols,
+      });
     const next = autoFitCanvasTableTrack({ tracks, index, contentWeights });
     interaction?.onTracksCommit?.(
       axis === "col" ? { columnWidths: next } : { rowHeights: next },

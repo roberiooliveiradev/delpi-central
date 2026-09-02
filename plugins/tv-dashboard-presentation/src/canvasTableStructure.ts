@@ -229,3 +229,32 @@ export function canvasTableTrackContentWeights(params: {
   return weights;
 }
 
+/**
+ * Pesos por faixa a partir de geometria medida (DOM).
+ * Retorna `null` se não houver rects utilizáveis — caller deve cair no proxy de conteúdo.
+ */
+export function canvasTableTrackRectWeights(params: {
+  axis: "row" | "col";
+  cellRects: readonly { row: number; col: number; width: number; height: number }[];
+  rows: number;
+  cols: number;
+}): number[] | null {
+  if (!params.cellRects.length) return null;
+  const count = params.axis === "col" ? params.cols : params.rows;
+  if (count < 1) return null;
+  const weights = Array.from({ length: count }, () => 0);
+  for (const rect of params.cellRects) {
+    const size = params.axis === "col" ? Number(rect.width) : Number(rect.height);
+    if (!Number.isFinite(size) || size <= 0) continue;
+    if (params.axis === "col") {
+      if (rect.col < 0 || rect.col >= count) continue;
+      weights[rect.col] = Math.max(weights[rect.col]!, size);
+    } else {
+      if (rect.row < 0 || rect.row >= count) continue;
+      weights[rect.row] = Math.max(weights[rect.row]!, size);
+    }
+  }
+  if (weights.every((w) => w <= 0)) return null;
+  return weights.map((w) => Math.max(1, w));
+}
+
