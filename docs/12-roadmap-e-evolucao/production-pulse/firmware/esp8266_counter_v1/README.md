@@ -36,4 +36,14 @@ mDNS: hostname = `controllerCode` em minúsculas (ex.: `esp-00a1b2c3.local`).
 
 Factory reset: `POST /api/factory-reset` (auth) ou hold **D5+D1** por 10 s. Não apaga readings no Postgres; no chip, restart zera o contador em RAM.
 
+### LED de estado (`LED_BUILTIN`, ativo LOW)
+
+| Estado EN | Padrão | Quando |
+|-----------|--------|--------|
+| `connecting` | pisca ~500 ms | Wi‑Fi offline |
+| `online` | pulso lento ~2 s | Wi‑Fi conectado |
+| `authError` | pisca rápido ~100 ms | falha `X-Device-Token` em `/api/*` (exceto contador), ~5 s |
+
+Sem `delay` no LED — animação via `millis()` no `loop`.
+
 No Production Pulse: cadastro com Wi‑Fi/debounce/token; «Testar conexão» e Salvar (modo A) usam `/api/config` e `/api/status`.

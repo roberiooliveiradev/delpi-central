@@ -40,9 +40,23 @@ unsigned long tempoMenos = 0;
 unsigned long lastWifiAttemptMs = 0;
 unsigned long wifiBackoffMs = 1000;
 unsigned long factoryHoldStartMs = 0;
+unsigned long ledLastToggleMs = 0;
+bool ledLit = false;
+bool authErrorLatched = false;
+unsigned long authErrorUntilMs = 0;
 static const unsigned long WIFI_BACKOFF_MAX_MS = 30000;
 static const unsigned long WIFI_BOOT_WAIT_MS = 15000;
 static const unsigned long FACTORY_HOLD_MS = 10000;
+static const unsigned long LED_CONNECTING_MS = 500;
+static const unsigned long LED_ONLINE_PULSE_MS = 2000;
+static const unsigned long LED_AUTH_ERROR_MS = 100;
+static const unsigned long AUTH_ERROR_HOLD_MS = 5000;
+
+enum LedState {
+  LED_CONNECTING = 0,
+  LED_ONLINE = 1,
+  LED_AUTH_ERROR = 2
+};
 
 String montarCodigoControlador() {
   char buf[24];
@@ -69,12 +83,16 @@ bool requireDeviceToken() {
     return true;
   }
   if (!server.hasHeader("X-Device-Token")) {
+    authErrorLatched = true;
+    authErrorUntilMs = millis() + AUTH_ERROR_HOLD_MS;
     enviarCors();
     server.send(401, "application/json", "{\"error\":\"unauthorized\"}");
     return false;
   }
   String got = server.header("X-Device-Token");
   if (got != String(cfg.apiToken)) {
+    authErrorLatched = true;
+    authErrorUntilMs = millis() + AUTH_ERROR_HOLD_MS;
     enviarCors();
     server.send(401, "application/json", "{\"error\":\"unauthorized\"}");
     return false;
@@ -360,6 +378,42 @@ void checkFactoryResetHold() {
   ESP.restart();
 }
 
+void updateStatusLed() {
+  if (authErrorLatched && (long)(millis() - authErrorUntilMs) >= 0) {
+    authErrorLatched = false;
+  }
+
+  LedState state = LED_CONNECTING;
+  if (authErrorLatched) {
+    state = LED_AUTH_ERROR;
+  } else if (WiFi.status() == WL_CONNECTED) {
+    state = LED_ONLINE;
+  }
+
+  unsigned long interval = LED_CONNECTING_MS;
+  if (state == LED_ONLINE) {
+    interval = LED_ONLINE_PULSE_MS;
+  } else if (state == LED_AUTH_ERROR) {
+    interval = LED_AUTH_ERROR_MS;
+  }
+
+  unsigned long now = millis();
+  if ((now - ledLastToggleMs) < interval) {
+    return;
+  }
+  ledLastToggleMs = now;
+
+  // LED_BUILTIN on NodeMCU is active LOW.
+  if (state == LED_ONLINE) {
+    // Slow pulse: mostly on, brief off.
+    ledLit = !ledLit;
+    digitalWrite(LED_BUILTIN, ledLit ? LOW : HIGH);
+  } else {
+    ledLit = !ledLit;
+    digitalWrite(LED_BUILTIN, ledLit ? LOW : HIGH);
+  }
+}
+
 void ensureWifiConnected() {
   if (WiFi.status() == WL_CONNECTED) {
     wifiBackoffMs = 1000;
@@ -537,6 +591,8 @@ void registrarRotas() {
 void setup() {
   Serial.begin(115200);
   ESP.wdtEnable(8000);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);  // off (active LOW)
   pinMode(BT_MAIS, INPUT_PULLUP);
   pinMode(BT_MENOS, INPUT_PULLUP);
   codigoControlador = montarCodigoControlador();
@@ -584,6 +640,7 @@ void setup() {
 void loop() {
   ESP.wdtFeed();
   ensureWifiConnected();
+  updateStatusLed();
   MDNS.update();
   server.handleClient();
   checkFactoryResetHold();
