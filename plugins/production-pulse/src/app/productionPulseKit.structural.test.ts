@@ -76,7 +76,7 @@ describe("production-pulse kit contracts", () => {
   it("botão Modo operador no hero usa tokens de marca claro/escuro", () => {
     const css = readRelative("index.css");
     expect(css).toMatch(
-      /\.pp-panel-operator-link[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
+      /\.pp-page-hero__actions \.pp-action-button[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
     );
     expect(css).toMatch(/:root\[data-theme="dark"\][\s\S]*--pp-hero-brand-btn-border/);
   });

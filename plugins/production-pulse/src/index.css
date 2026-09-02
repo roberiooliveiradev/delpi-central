@@ -117,6 +117,7 @@
   z-index: 2;
 }
 
+.dashboard-production-pulse .pp-page-hero__actions .pp-action-button,
 .dashboard-production-pulse .pp-operator-hero-btn,
 .dashboard-production-pulse .pp-panel-operator-link {
   min-height: var(--pp-operator-touch-min, 44px);
@@ -128,6 +129,7 @@
   opacity: 1;
 }
 
+.dashboard-production-pulse .pp-page-hero__actions .pp-action-button:hover:not(:disabled),
 .dashboard-production-pulse .pp-operator-hero-btn:hover:not(:disabled),
 .dashboard-production-pulse .pp-panel-operator-link:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.88);
@@ -136,10 +138,35 @@
   filter: none;
 }
 
+.dashboard-production-pulse .pp-page-hero__actions .pp-action-button:focus-visible,
 .dashboard-production-pulse .pp-operator-hero-btn:focus-visible,
 .dashboard-production-pulse .pp-panel-operator-link:focus-visible {
   outline: 2px solid var(--pp-hero-brand-fg);
   outline-offset: 2px;
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-action-button:disabled {
+  color: var(--pp-hero-brand-fg-muted);
+  border-color: var(--pp-hero-brand-btn-border);
+  background: var(--pp-hero-brand-btn-bg);
+  opacity: 0.55;
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-device-status {
+  color: var(--pp-hero-brand-fg);
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-device-status--online {
+  color: #86efac;
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-device-status--offline {
+  color: #fde68a;
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-device-status--disabled,
+.dashboard-production-pulse .pp-page-hero__actions .pp-device-status--no_binding {
+  color: var(--pp-hero-brand-fg-muted);
 }
 
 .dashboard-production-pulse .pp-page-hero__actions .pp-segment-toggle {
@@ -277,6 +304,7 @@
   white-space: nowrap;
 }
 
+:root[data-theme="dark"] .dashboard-production-pulse .pp-page-hero__actions .pp-action-button:hover:not(:disabled),
 :root[data-theme="dark"] .dashboard-production-pulse .pp-panel-operator-link:hover:not(:disabled),
 :root[data-theme="dark"] .dashboard-production-pulse .pp-operator-hero-btn:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.72);
