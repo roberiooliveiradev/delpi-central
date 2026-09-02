@@ -62,6 +62,7 @@ import {
 import {
   ComunicadoEditorContext,
   useComunicadoEditor,
+  type ComunicadoCanvasTableCellSelection,
   type ComunicadoEditorContextValue,
 } from "./comunicadoEditorContextCore";
 
@@ -246,6 +247,7 @@ export function ComunicadoEditorProvider({
 
   const removeSelectedRef = useRef<() => void>(() => {});
   const editingTextIdRef = useRef<string | null>(null);
+  const selectedCanvasTableCellRef = useRef<ComunicadoCanvasTableCellSelection | null>(null);
   const slideIdRef = useRef(slideId);
   slideIdRef.current = slideId;
   const updateBlockTextFieldsRef = useRef<
@@ -681,6 +683,7 @@ export function ComunicadoEditorProvider({
   );
 
   editingTextIdRef.current = selection.editingTextId;
+  selectedCanvasTableCellRef.current = selection.selectedCanvasTableCell;
 
   const getClipboardSlideId = useCallback(() => slideIdRef.current ?? null, []);
 
@@ -695,6 +698,8 @@ export function ComunicadoEditorProvider({
       removeSelected: () => removeSelectedRef.current(),
       chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
       getEditingTextId: () => editingTextIdRef.current,
+      getSelectedCanvasTableCell: () => selectedCanvasTableCellRef.current,
+      updateBlock: blockActions.updateBlock,
       canvasRef,
       canvasWrapRef: stage.canvasWrapRef,
     });

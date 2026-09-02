@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
 import {
   createBlock,
+  parseCanvasTableClipboardTsv,
+  pasteCanvasTableClipboard,
   resolveBlockPasteDataPolicy,
   type ComunicadoBlock,
+  type ComunicadoCanvasTableBlock,
   type DataSourceDuplicatePolicy,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -28,6 +31,11 @@ import {
   resolveViewportCenterCanvasPercent,
 } from "../../utils/placeBlockInViewport";
 import { readSystemClipboardDataTransfer } from "../../utils/readSystemClipboardDataTransfer";
+import {
+  resolveCanvasTablePasteOrigin,
+  shouldRoutePasteToCanvasTable,
+  type CanvasTablePasteRouteSelection,
+} from "../../utils/canvasTablePasteRoute";
 
 type Options = {
   playlistId: string;
@@ -43,6 +51,10 @@ type Options = {
   getEditingTextId?: () => string | null;
   canvasRef?: RefObject<HTMLElement | null>;
   canvasWrapRef?: RefObject<HTMLElement | null>;
+  /** Seleção de célula da Grade — paste TSV cola na grade, não cria bloco. */
+  getSelectedCanvasTableCell?: () => CanvasTablePasteRouteSelection;
+  /** Persiste patch parcial no bloco Grade (células). */
+  updateBlock?: (id: string, patch: Partial<ComunicadoBlock>) => void;
 };
 
 type PasteOptions = {
@@ -77,12 +89,69 @@ export function useComunicadoEditorClipboard({
   getEditingTextId,
   canvasRef,
   canvasWrapRef,
+  getSelectedCanvasTableCell,
+  updateBlock,
 }: Options) {
   const [clipboardRevision, setClipboardRevision] = useState(0);
   const [pastingExternal, setPastingExternal] = useState(false);
   const clipboardRef = useRef<ComunicadoBlock[]>([]);
   const clipboardSourceSlideIdRef = useRef<string | null>(null);
   const pastingRef = useRef(false);
+
+  const tryPasteIntoCanvasTable = useCallback(
+    async (data: DataTransfer | null | undefined): Promise<boolean> => {
+      const selection = getSelectedCanvasTableCell?.() ?? null;
+      if (
+        !shouldRoutePasteToCanvasTable({
+          selectedCanvasTableCell: selection,
+          editingTextId: getEditingTextId?.() ?? null,
+        })
+      ) {
+        return false;
+      }
+      if (!selection || !updateBlock) return false;
+      const block = getExistingBlocks().find((item) => item.id === selection.blockId);
+      if (!block || block.type !== "canvas_table") return false;
+      const table = block as ComunicadoCanvasTableBlock;
+      const text = data?.getData?.("text/plain")?.trim() || "";
+      let payload = text ? parseCanvasTableClipboardTsv(text) : null;
+      if (!payload && text) {
+        // Uma linha / sem tab — ainda cola como célula única.
+        payload = {
+          rows: 1,
+          cols: 1,
+          cells: [[{ kind: "text", text }]],
+        };
+      }
+      if (!payload && typeof navigator !== "undefined" && navigator.clipboard?.readText) {
+        try {
+          const systemText = (await navigator.clipboard.readText()).trim();
+          if (systemText) {
+            payload =
+              parseCanvasTableClipboardTsv(systemText) ?? {
+                rows: 1,
+                cols: 1,
+                cells: [[{ kind: "text", text: systemText }]],
+              };
+          }
+        } catch {
+          /* sem permissão */
+        }
+      }
+      if (!payload) return false;
+      const origin = resolveCanvasTablePasteOrigin(selection);
+      const pasted = pasteCanvasTableClipboard({
+        cells: table.cells,
+        payload,
+        origin,
+        rows: table.rows,
+        cols: table.cols,
+      });
+      updateBlock(table.id, { cells: pasted.cells });
+      return true;
+    },
+    [getEditingTextId, getExistingBlocks, getSelectedCanvasTableCell, updateBlock],
+  );
 
   const insertBlocks = useCallback(
     async (incoming: ComunicadoBlock[], sourceSlideId?: string | null) => {
@@ -241,6 +310,10 @@ export function useComunicadoEditorClipboard({
       options?: PasteOptions,
     ): Promise<boolean> => {
       const allowInternalFallback = options?.allowInternalFallback !== false;
+      // Célula da Grade ativa: cola TSV/texto na grade — nunca cria bloco novo.
+      if (await tryPasteIntoCanvasTable(data)) {
+        return true;
+      }
       const plan = planExternalClipboardPaste(data);
       if (plan.kind !== "empty") {
         return applyPastePlan(plan);
@@ -255,7 +328,7 @@ export function useComunicadoEditorClipboard({
       }
       return false;
     },
-    [applyPastePlan, pasteSelected],
+    [applyPastePlan, pasteSelected, tryPasteIntoCanvasTable],
   );
 
   const pasteFromSystemClipboard = useCallback(async (): Promise<boolean> => {
