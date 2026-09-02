@@ -5,6 +5,9 @@ from typing import Any
 from production_pulse_app.application.services.device_driver_registry_service import (
     get_device_driver_registry,
 )
+from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    counter_set_min,
+)
 
 COUNTER_RAW_KEY = "counterRaw"
 COUNTER_OFFSET_KEY = "counterOffset"
@@ -37,6 +40,11 @@ def _as_int(value: Any) -> int | None:
     return int(value)
 
 
+def counter_floor() -> int:
+    """Piso canônico do contador (mesmo limite do comando ``set``)."""
+    return counter_set_min()
+
+
 def max_intentional_decrease(driver_key: str) -> int:
     """Quedas até este valor (ex.: −1 do pad) não são power-loss."""
     definition = get_device_driver_registry().resolve_driver(driver_key).definition
@@ -63,6 +71,26 @@ def is_power_loss_counter_drop(
     return (prev_raw - new_raw) > max_intentional_decrease
 
 
+def _apply_counter_floor(
+    *,
+    logical: int,
+    raw_val: int,
+    offset: int,
+    meta: dict[str, Any],
+) -> tuple[int, int, int]:
+    """Garante contador lógico/raw >= piso; zera offset se o raw veio negativo."""
+    floor = counter_floor()
+    if logical >= floor and raw_val >= floor:
+        return logical, raw_val, offset
+    meta["counter_floored"] = True
+    meta["counter_floor"] = floor
+    meta["counter_floor_from_logical"] = logical
+    meta["counter_floor_from_raw"] = raw_val
+    if raw_val < floor:
+        return floor, floor, 0
+    return max(floor, logical), raw_val, offset
+
+
 def apply_monotonic_continuity(
     *,
     driver_key: str,
@@ -77,6 +105,7 @@ def apply_monotonic_continuity(
     ``counterRaw`` / ``counterOffset`` ficam só no last_metrics interno.
 
     ``accept_decrease``: comandos increment/decrement — nunca trata queda como power-loss.
+    Contagem nunca fica abaixo do piso canônico (``counterSet.min``, tipicamente 0).
     """
     previous = previous_metrics if isinstance(previous_metrics, dict) else {}
     result = dict(raw_metrics)
@@ -88,9 +117,15 @@ def apply_monotonic_continuity(
             raw_val = _as_int(raw_metrics.get(key))
             if raw_val is None:
                 continue
-            result[key] = raw_val
-            result[COUNTER_RAW_KEY] = raw_val
-            result[COUNTER_OFFSET_KEY] = 0
+            logical, stored_raw, offset = _apply_counter_floor(
+                logical=raw_val,
+                raw_val=raw_val,
+                offset=0,
+                meta=meta,
+            )
+            result[key] = logical
+            result[COUNTER_RAW_KEY] = stored_raw
+            result[COUNTER_OFFSET_KEY] = offset
         return result, meta
 
     for key in _monotonic_metric_keys(driver_key):
@@ -105,9 +140,15 @@ def apply_monotonic_continuity(
         prev_offset = _as_int(previous.get(COUNTER_OFFSET_KEY)) or 0
 
         if prev_logical is None or prev_raw is None:
-            result[key] = raw_val
-            result[COUNTER_RAW_KEY] = raw_val
-            result[COUNTER_OFFSET_KEY] = 0
+            logical, stored_raw, offset = _apply_counter_floor(
+                logical=raw_val,
+                raw_val=raw_val,
+                offset=0,
+                meta=meta,
+            )
+            result[key] = logical
+            result[COUNTER_RAW_KEY] = stored_raw
+            result[COUNTER_OFFSET_KEY] = offset
             continue
 
         power_loss = (not accept_decrease) and is_power_loss_counter_drop(
@@ -119,8 +160,14 @@ def apply_monotonic_continuity(
             # Hardware perdeu a contagem (power-loss / reboot). Mantém continuidade lógica.
             offset = prev_logical
             logical = raw_val + offset
+            logical, stored_raw, offset = _apply_counter_floor(
+                logical=logical,
+                raw_val=raw_val,
+                offset=offset,
+                meta=meta,
+            )
             result[key] = logical
-            result[COUNTER_RAW_KEY] = raw_val
+            result[COUNTER_RAW_KEY] = stored_raw
             result[COUNTER_OFFSET_KEY] = offset
             meta["counter_restored"] = True
             meta["counter_restore_mode"] = "software_offset"
@@ -129,9 +176,15 @@ def apply_monotonic_continuity(
         else:
             # Inclui −1 do pad / botão físico: mantém offset e acompanha o raw.
             logical = raw_val + prev_offset
+            logical, stored_raw, offset = _apply_counter_floor(
+                logical=logical,
+                raw_val=raw_val,
+                offset=prev_offset,
+                meta=meta,
+            )
             result[key] = logical
-            result[COUNTER_RAW_KEY] = raw_val
-            result[COUNTER_OFFSET_KEY] = prev_offset
+            result[COUNTER_RAW_KEY] = stored_raw
+            result[COUNTER_OFFSET_KEY] = offset
 
     return result, meta
 
@@ -153,6 +206,7 @@ __all__ = [
     "COUNTER_RAW_KEY",
     "apply_monotonic_continuity",
     "build_hardware_set_payload",
+    "counter_floor",
     "counter_restore_enabled",
     "is_power_loss_counter_drop",
     "max_intentional_decrease",

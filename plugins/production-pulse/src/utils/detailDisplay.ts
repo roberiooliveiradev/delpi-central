@@ -151,6 +151,7 @@ export function readingsToChartPoints(
   readings: DeviceReading[],
   metricKey: string,
   mode: "value" | "delta",
+  formatLabel: (iso: string) => string = formatDateTime,
 ): ChartPoint[] {
   const chronological = [...readings].reverse();
   return chronological
@@ -164,7 +165,7 @@ export function readingsToChartPoints(
       return {
         x: row.recordedAt,
         y: numeric,
-        label: formatDateTime(row.recordedAt),
+        label: formatLabel(row.recordedAt),
       };
     })
     .filter((point): point is ChartPoint => point !== null);

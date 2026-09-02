@@ -39,7 +39,10 @@ export type FilterInputFieldProps = {
   label: string;
   hint?: string;
   id?: string;
-  type: Extract<InputHTMLAttributes<HTMLInputElement>["type"], "month" | "date" | "text" | "search">;
+  type: Extract<
+    InputHTMLAttributes<HTMLInputElement>["type"],
+    "month" | "date" | "datetime-local" | "text" | "search"
+  >;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;

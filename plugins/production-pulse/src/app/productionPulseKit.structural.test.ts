@@ -154,6 +154,9 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/DeviceBindingSection.tsx")).toMatch(/PpNative(TextField|SelectField|TextAreaField)/);
     expect(readRelative("components/DeviceFiltersBar.tsx")).toMatch(/PpFilter(InputField|SelectField)/);
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpFilterInputField/);
+    expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpSegmentToggle/);
+    expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/datetime-local/);
+    expect(readRelative("components/detail/DeviceHistoryTab.tsx")).not.toMatch(/Aplicar/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppFormFields"/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/dataTableUi"/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/filtersUi"/);

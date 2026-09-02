@@ -158,7 +158,9 @@ export const PP_HELP = {
     chartDelta:
       "Variação entre leituras consecutivas — relevante para contadores de golpe.",
     chartSeries:
-      "Evolução temporal de cada métrica (rpm, °C, golpes) conforme o driver.",
+      "Evolução temporal de cada métrica (rpm, °C, golpes) conforme o driver. O eixo X adapta a granularidade ao intervalo (segundos, minutos, horas).",
+    historyRangePresets:
+      "Atalhos de período (1 min → 7 dias). O padrão limpo segue o intervalo de poll do device. Livre usa data/hora manual, aplicada automaticamente.",
     readingsTable: "Histórico paginado de polls e comandos gravados no banco.",
     commandsTable:
       "Quem executou cada comando, quando e se o hardware respondeu com sucesso.",

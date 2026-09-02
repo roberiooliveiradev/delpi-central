@@ -90,3 +90,27 @@ def test_power_loss_drop_helper():
     assert is_power_loss_counter_drop(100, 99, max_intentional_decrease=50) is False
     assert is_power_loss_counter_drop(100, 8, max_intentional_decrease=50) is True
     assert is_power_loss_counter_drop(100, 100, max_intentional_decrease=50) is False
+
+
+def test_continuity_floors_negative_counter():
+    metrics, meta = apply_monotonic_continuity(
+        driver_key="esp8266_counter_v1",
+        previous_metrics={"counter": 0, COUNTER_RAW_KEY: 0, COUNTER_OFFSET_KEY: 0},
+        raw_metrics={"counter": -3},
+        accept_decrease=True,
+    )
+    assert metrics["counter"] == 0
+    assert metrics[COUNTER_RAW_KEY] == 0
+    assert metrics[COUNTER_OFFSET_KEY] == 0
+    assert meta["counter_floored"] is True
+    assert public_metrics(metrics) == {"counter": 0}
+
+
+def test_continuity_floors_negative_on_first_reading():
+    metrics, meta = apply_monotonic_continuity(
+        driver_key="esp8266_counter_v1",
+        previous_metrics={},
+        raw_metrics={"counter": -1},
+    )
+    assert metrics["counter"] == 0
+    assert meta["counter_floored"] is True

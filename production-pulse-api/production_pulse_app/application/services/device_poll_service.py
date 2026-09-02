@@ -18,6 +18,7 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     COUNTER_RAW_KEY,
     apply_monotonic_continuity,
     build_hardware_set_payload,
+    counter_floor,
     counter_restore_enabled,
     is_power_loss_counter_drop,
     max_intentional_decrease,
@@ -152,11 +153,15 @@ class DevicePollService:
         if restored is not None:
             canonical, continuity_meta = restored
         else:
-            canonical, continuity_meta = apply_monotonic_continuity(
-                driver_key=device["driver_key"],
-                previous_metrics=previous_metrics,
-                raw_metrics=raw_metrics,
-            )
+            floored = self._maybe_hardware_floor_counter(device, raw_metrics=raw_metrics)
+            if floored is not None:
+                canonical, continuity_meta = floored
+            else:
+                canonical, continuity_meta = apply_monotonic_continuity(
+                    driver_key=device["driver_key"],
+                    previous_metrics=previous_metrics,
+                    raw_metrics=raw_metrics,
+                )
 
         previous_public = public_metrics(previous_metrics)
         canonical_public = public_metrics(canonical)
@@ -188,6 +193,58 @@ class DevicePollService:
             meta=meta,
         )
 
+    def _maybe_hardware_floor_counter(
+        self,
+        device: dict[str, Any],
+        *,
+        raw_metrics: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any]] | None:
+        """Se o chip reportou contagem negativa, grava o piso (0) no hardware."""
+        new_raw = raw_metrics.get("counter")
+        if not isinstance(new_raw, (int, float)) or isinstance(new_raw, bool):
+            return None
+        floor = counter_floor()
+        if int(new_raw) >= floor:
+            return None
+
+        try:
+            driver = self._registry.get_implementation(device["driver_key"])
+        except DeviceDriverNotImplementedError:
+            return None
+
+        result = driver.execute(
+            device,
+            "set",
+            payload=build_hardware_set_payload(counter=floor),
+        )
+        if not result.success or not result.metrics:
+            metrics = {
+                "counter": floor,
+                COUNTER_RAW_KEY: floor,
+                COUNTER_OFFSET_KEY: 0,
+            }
+            return metrics, {
+                "counter_floored": True,
+                "counter_floor": floor,
+                "counter_floor_from_raw": int(new_raw),
+                "counter_floor_sync": "software_only",
+            }
+
+        restored_raw = result.metrics.get("counter")
+        if not isinstance(restored_raw, (int, float)) or isinstance(restored_raw, bool):
+            restored_raw = floor
+        value = max(floor, int(restored_raw))
+        return {
+            "counter": value,
+            COUNTER_RAW_KEY: value,
+            COUNTER_OFFSET_KEY: 0,
+        }, {
+            "counter_floored": True,
+            "counter_floor": floor,
+            "counter_floor_from_raw": int(new_raw),
+            "counter_floor_sync": "hardware_set",
+        }
+
     def _maybe_hardware_restore_counter(
         self,
         device: dict[str, Any],
@@ -217,7 +274,7 @@ class DevicePollService:
             # Queda pequena (diminuir no pad / botão) — não reescrever o chip.
             return None
 
-        target = int(prev_logical) + int(new_raw)
+        target = max(counter_floor(), int(prev_logical) + int(new_raw))
         try:
             driver = self._registry.get_implementation(device["driver_key"])
         except DeviceDriverNotImplementedError:
@@ -235,9 +292,10 @@ class DevicePollService:
         if not isinstance(restored_raw, (int, float)) or isinstance(restored_raw, bool):
             return None
 
+        value = max(counter_floor(), int(restored_raw))
         metrics = {
-            "counter": int(restored_raw),
-            COUNTER_RAW_KEY: int(restored_raw),
+            "counter": value,
+            COUNTER_RAW_KEY: value,
             COUNTER_OFFSET_KEY: 0,
         }
         meta = {
@@ -261,8 +319,7 @@ class DevicePollService:
     ) -> dict[str, Any]:
         self._require_device(device_id)
         page = max(1, page)
-        page_size = min(max(1, page_size), 100)
-        rows, total = self._readings.list_for_device(
+        page_size = min(max(1, page_size), 500)
             device_id,
             page=page,
             page_size=page_size,

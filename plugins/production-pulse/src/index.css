@@ -865,6 +865,18 @@
   gap: var(--pp-section-gap);
 }
 
+.pp-detail-history__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pp-detail-history__toolbar .pp-segment-toggle {
+  width: max-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
 .pp-detail-muted {
   margin: 0;
   color: var(--pp-text-muted);

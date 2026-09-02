@@ -21,6 +21,8 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     COUNTER_OFFSET_KEY,
     COUNTER_RAW_KEY,
     apply_monotonic_continuity,
+    build_hardware_set_payload,
+    counter_floor,
     public_metrics,
 )
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
@@ -130,14 +132,40 @@ class DeviceCommandService:
             )
             if clear_offsets:
                 # set/reset definem baseline absoluta no hardware
-                counter = int(result.metrics["counter"])
+                floor = counter_floor()
+                counter = max(floor, int(result.metrics["counter"]))
                 canonical = {
                     "counter": counter,
                     COUNTER_RAW_KEY: counter,
                     COUNTER_OFFSET_KEY: 0,
                 }
                 continuity_meta = {}
+                if int(result.metrics["counter"]) < floor:
+                    continuity_meta["counter_floored"] = True
+                    continuity_meta["counter_floor"] = floor
 
+            if continuity_meta.get("counter_floored") and not clear_offsets:
+                # Chip ficou negativo (ex.: diminuir sem piso) — corrige no hardware.
+                floor = counter_floor()
+                try:
+                    driver = self._registry.get_implementation(device["driver_key"])
+                    sync = driver.execute(
+                        device,
+                        "set",
+                        payload=build_hardware_set_payload(counter=floor),
+                    )
+                    if sync.success and sync.metrics and "counter" in sync.metrics:
+                        synced = max(floor, int(sync.metrics["counter"]))
+                    else:
+                        synced = floor
+                except (DeviceDriverNotImplementedError, DeviceDriverError, TypeError, ValueError):
+                    synced = floor
+                canonical = {
+                    "counter": synced,
+                    COUNTER_RAW_KEY: synced,
+                    COUNTER_OFFSET_KEY: 0,
+                }
+                continuity_meta["counter_floor_sync"] = "hardware_set"
             previous_public = public_metrics(previous_metrics)
             canonical_public = public_metrics(canonical)
             delta_metrics, delta_meta = compute_delta_metrics(
