@@ -207,8 +207,8 @@ def test_manual_poll_device_unreachable_returns_422(client, unique_ip, monkeypat
 
     def fake_read(_self, _device):
         raise DeviceDriverError(
-            "Timeout ao contactar dispositivo em http://192.168.20.2/api/contador.",
-            code="timeout",
+            "timeout",
+            technical_detail="HTTP timeout for http://192.168.20.2/api/contador.",
         )
 
     monkeypatch.setattr(
@@ -236,7 +236,7 @@ def test_live_device_unreachable_returns_422(client, unique_ip, monkeypatch):
     from production_pulse_app.domain.errors import DeviceDriverError
 
     def fake_read(_self, _device):
-        raise DeviceDriverError("Falha de rede ao contactar dispositivo.", code="network_error")
+        raise DeviceDriverError("network_error", technical_detail="HTTP request failed.")
 
     monkeypatch.setattr(
         "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",

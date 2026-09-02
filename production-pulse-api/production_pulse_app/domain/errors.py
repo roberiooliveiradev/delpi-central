@@ -23,9 +23,17 @@ class CommandNotSupportedError(ContentCodedError):
 
 
 class DeviceDriverError(RuntimeError):
-    def __init__(self, message: str, *, code: str = "device_error") -> None:
+    def __init__(
+        self,
+        code: str,
+        *,
+        technical_detail: str | None = None,
+        **context: Any,
+    ) -> None:
         self.code = code
-        super().__init__(message)
+        self.technical_detail = technical_detail
+        self.context = context
+        super().__init__(technical_detail or code)
 
 
 __all__ = [

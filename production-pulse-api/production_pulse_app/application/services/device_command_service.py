@@ -83,7 +83,7 @@ class DeviceCommandService:
             try:
                 result = driver.execute(device, normalized_key, payload=payload)
             except DeviceDriverError as exc:
-                result = CommandResult(success=False, error_code=exc.code, error_message=str(exc))
+                result = CommandResult(success=False, error_code=exc.code)
 
         user_error_message = self._resolve_command_error_message(result)
         audit_row = self._commands.insert(

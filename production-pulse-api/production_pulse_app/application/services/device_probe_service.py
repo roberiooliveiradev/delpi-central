@@ -90,7 +90,7 @@ class DeviceProbeService:
                 driver_key,
                 code=exc.code,
                 latency_ms=latency_ms,
-                fallback=str(exc),
+                fallback=exc.technical_detail,
             )
 
 

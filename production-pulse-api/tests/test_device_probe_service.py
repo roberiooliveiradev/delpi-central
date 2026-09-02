@@ -13,7 +13,7 @@ def test_http_error_message_reads_catalog():
 def test_probe_failure_payload_includes_user_message(monkeypatch):
     class _Driver:
         def test(self, _device):
-            raise DeviceDriverError("Timeout técnico.", code="timeout")
+            raise DeviceDriverError("timeout", technical_detail="HTTP timeout for test probe.")
 
     class _Registry:
         def get_implementation(self, _driver_key):

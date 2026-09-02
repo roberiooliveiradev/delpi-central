@@ -90,8 +90,8 @@ class DevicePollService:
         except DeviceDriverError as exc:
             connectivity = resolve_connectivity_status(device, has_binding=has_binding)
             raise DevicePollFailedError(
-                str(exc),
-                code=exc.code,
+                exc.code,
+                technical_detail=exc.technical_detail,
                 connectivity=connectivity,
             ) from exc
         return self._build_poll_payload(
@@ -108,11 +108,11 @@ class DevicePollService:
         try:
             reading = self._read_from_driver(device)
         except DeviceDriverError as exc:
-            device = self._devices.record_poll_failure(device_id, error_message=str(exc))
+            device = self._devices.record_poll_failure(device_id, error_message=exc.code)
             connectivity = resolve_connectivity_status(device, has_binding=has_binding)
             raise DevicePollFailedError(
-                str(exc),
-                code=exc.code,
+                exc.code,
+                technical_detail=exc.technical_detail,
                 connectivity=connectivity,
             ) from exc
 
@@ -209,7 +209,7 @@ class DevicePollService:
                     {
                         "deviceId": str(device_id),
                         "success": False,
-                        "error": str(exc),
+                        "error": exc.code,
                         "code": exc.code,
                     }
                 )
@@ -227,8 +227,8 @@ class DevicePollService:
             driver = self._registry.get_implementation(device["driver_key"])
         except DeviceDriverNotImplementedError as exc:
             raise DeviceDriverError(
-                f"Driver não implementado: {device['driver_key']}",
-                code="driver_not_implemented",
+                "driver_not_implemented",
+                technical_detail=f"Driver not implemented: {device['driver_key']}",
             ) from exc
         return driver.read(device)
 
@@ -236,12 +236,13 @@ class DevicePollService:
 class DevicePollFailedError(DeviceDriverError):
     def __init__(
         self,
-        message: str,
+        code: str,
         *,
-        code: str = "device_error",
+        technical_detail: str | None = None,
         connectivity: dict[str, Any] | None = None,
+        **context: Any,
     ) -> None:
-        super().__init__(message, code=code)
+        super().__init__(code, technical_detail=technical_detail, **context)
         self.connectivity = connectivity or {}
 
 

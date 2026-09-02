@@ -33,8 +33,9 @@ def test_parse_gauge_response_accepts_canonical_keys():
 
 
 def test_parse_gauge_response_requires_at_least_one_metric():
-    with pytest.raises(DeviceDriverError, match="rpm ou temperatura"):
+    with pytest.raises(DeviceDriverError) as exc_info:
         parse_gauge_response({"status": "ok"})
+    assert exc_info.value.code == "invalid_response"
 
 
 def test_read_normalizes_gauge_metrics():
@@ -52,8 +53,9 @@ def test_read_timeout_raises_device_driver_error():
         raise httpx.ReadTimeout("timed out")
 
     driver = Esp8266GaugeDriver(client=_mock_transport(handler), timeout_seconds=0.1)
-    with pytest.raises(DeviceDriverError, match="Timeout"):
+    with pytest.raises(DeviceDriverError) as exc_info:
         driver.read(_DEVICE)
+    assert exc_info.value.code == "timeout"
 
 
 def test_execute_any_command_returns_failure():

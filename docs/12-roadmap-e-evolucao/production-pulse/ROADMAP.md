@@ -18,7 +18,7 @@
 | E6.S1 — Docs + smoke | ✅ Feito | `check-production-pulse.sh` 8/8 OK |
 | **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
-| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0–S1 ✅ em `main`; E7.S2–S5 pendentes |
+| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0–S2 ✅ em `main`; E7.S3–S5 pendentes |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
@@ -26,6 +26,8 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 **E7.S0 entregue (set/2026):** poll/live 422 + `device_api_messages.json`; test-probe `errorMessage`; HTTP 404/409 no JSON; MFE `resolveDeviceActionError` — commits `56c3c7606`, `4c7a3fe13`.
 
 **E7.S1 entregue (set/2026):** `commandErrors` + `validationErrors` no JSON; `ContentCodedError`; comandos/validação HTTP via loader; drivers retornam `error_code` — commit `1c91f052d`.
+
+**E7.S2 entregue (set/2026):** `DeviceDriverError` code-first; HTTP compartilhado em `device_http_support`; `last_error` grava código; mensagem PT só no boundary JSON — commit pendente desta entrega.
 
 ---
 
@@ -354,9 +356,10 @@ flowchart LR
 - **Status:** ✅ `main` — commit `1c91f052d`.
 - **Pronto quando:** pytest command/content/validation; grep zero `"Comando não suportado"` em `device_command_service.py`; assert mensagem PT vem do JSON.
 
-#### E7.S2 — Drivers HTTP: códigos only
+#### E7.S2 — Drivers HTTP: códigos only ✅
 
 - **Objetivo:** Drivers LAN levantam `DeviceDriverError(code=…)`; texto amigável só no loader JSON (poll/probe/command boundary).
+- **Status:** ✅ `main` — após commit desta entrega.
 - **Fazer:**
   1. `esp8266_counter_driver.py`, `esp8266_gauge_driver.py`, `device_http_support.py` — mensagens técnicas EN ou código-only; sem PT ao usuário
   2. Garantir todos os `code` usados ∈ `deviceConnectivity.codes` ou `commandErrors`

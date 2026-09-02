@@ -12,7 +12,7 @@ from production_pulse_app.infrastructure.content.device_api_messages_content_ser
 
 def device_poll_failed_response(exc: DevicePollFailedError) -> JSONResponse:
     payload = error(
-        device_connectivity_user_message(exc.code, fallback=str(exc)),
+        device_connectivity_user_message(exc.code, fallback=exc.technical_detail),
         code=exc.code,
         status_code=device_connectivity_http_status_code(),
         details=exc.connectivity,
