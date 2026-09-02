@@ -292,6 +292,8 @@ export type FreightDashboardPayload = {
   summary: FreightSummary;
   /** Limite percentual por filial, como string decimal. */
   limits: Record<string, string>;
+  /** Rótulo de cada `reasonCode` — fonte única no `freight.json` do BFF. */
+  reasonLabels: Record<string, string>;
   items: FreightInvoice[];
 };
 

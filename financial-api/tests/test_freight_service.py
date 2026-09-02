@@ -127,6 +127,7 @@ def test_dashboard_maps_invoices_and_summary() -> None:
     assert result["summary"]["goodsTotal"] == "2000.00"
     assert result["summary"]["freightTotal"] == "82.50"
     assert result["summary"]["freightPercent"] == "4.13"
+    assert result["reasonLabels"]["nf_not_found"]
 
 
 def test_allocation_carries_the_cte_access_key_for_the_detail() -> None:

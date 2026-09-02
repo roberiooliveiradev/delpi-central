@@ -123,6 +123,12 @@ class FreightService:
                 code: str(limit)
                 for code, limit in self._branch_limits(cfg).items()
             },
+            # A grade mostra ressalvas por NF; sem os rótulos aqui o MFE teria
+            # de duplicar os textos que já vivem no freight.json.
+            "reasonLabels": {
+                str(code): str(text)
+                for code, text in (cfg.get("inconsistencyReasons") or {}).items()
+            },
             "items": [self._map_invoice(invoice) for invoice in window],
         }
 

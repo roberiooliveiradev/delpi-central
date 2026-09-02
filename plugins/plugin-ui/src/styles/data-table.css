@@ -569,6 +569,45 @@ table.delpi-ui-table td.delpi-ui-table__col--wrap {
   padding: 24px;
 }
 
+/* Tom semântico da linha (`getRowClassName`): alerta de negócio como frete acima
+   do limite ou registro inconsistente. O consumidor só escolhe o tom — o visual
+   mora aqui para os plugins não recriarem destaque de tabela. */
+.delpi-ui-table__row--tone-danger > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, var(--danger, #dc2626)) 12%,
+    transparent
+  );
+  box-shadow: inset 3px 0 0 0 var(--delpi-ui-danger, var(--danger, #dc2626));
+}
+
+.delpi-ui-table__row--tone-warning > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, var(--warning, #d97706)) 12%,
+    transparent
+  );
+  box-shadow: inset 3px 0 0 0 var(--delpi-ui-warning, var(--warning, #d97706));
+}
+
+:root[data-theme="dark"] .delpi-ui-table__row--tone-danger > td,
+[data-theme="dark"] .delpi-ui-table__row--tone-danger > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, var(--danger, #dc2626)) 24%,
+    var(--delpi-ui-surface, var(--surface, #1a1a1a))
+  );
+}
+
+:root[data-theme="dark"] .delpi-ui-table__row--tone-warning > td,
+[data-theme="dark"] .delpi-ui-table__row--tone-warning > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, var(--warning, #d97706)) 24%,
+    var(--delpi-ui-surface, var(--surface, #1a1a1a))
+  );
+}
+
 /* Hover/cursor só na <tr> de dados direta — nunca na detail-row nem em tabelas aninhadas
    (seletores sem `>` pintavam o bloco expandido inteiro ao passar o mouse nas linhas filhas). */
 .delpi-ui-table__row--clickable,

@@ -374,6 +374,7 @@ export const copy = {
       freightLimit: "Limite da filial",
       situation: "Situação",
       reasons: "Ressalvas",
+      partialBase: "base dividida com outras notas",
       empty: "Nenhum CT-e amarrado a esta nota.",
       columns: {
         freightDocument: "CT-e",
