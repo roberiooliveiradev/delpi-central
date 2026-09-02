@@ -574,6 +574,7 @@ export function ComunicadoEditorProvider({
     selectedTableParts: selection.selectedTableParts,
     selectedKpiPart: selection.selectedKpiPart,
     selectedInputPart: selection.selectedInputPart,
+    selectedCanvasTableCell: selection.selectedCanvasTableCell,
     editingChartPart: selection.editingChartPart,
     editingKpiPart: selection.editingKpiPart,
     setSelectedId: selection.setSelectedId,

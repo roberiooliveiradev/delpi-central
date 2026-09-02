@@ -129,6 +129,7 @@ export function FormatRibbonTypographySections({
     selectedChartPart,
     selectedTablePart,
     selectedInputPart,
+    selectedCanvasTableCell,
     background,
     updateSelectedStyle,
     updateSelectedTextFormatStyle,
@@ -172,6 +173,7 @@ export function FormatRibbonTypographySections({
     selectedChartPart,
     selectedTablePart,
     selectedInputPart,
+    selectedCanvasTableCell,
   });
   if (!textFormatTarget) return null;
 

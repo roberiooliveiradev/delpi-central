@@ -145,6 +145,11 @@ type Options = {
   selectedTableParts?: ComunicadoTablePartRef[];
   selectedKpiPart: ComunicadoKpiPartRef | null;
   selectedInputPart: ComunicadoInputPartRef | null;
+  selectedCanvasTableCell?: {
+    blockId: string;
+    cells: Array<{ row: number; col: number }>;
+    focus: { row: number; col: number };
+  } | null;
   editingChartPart: ComunicadoChartPartRef | null;
   editingKpiPart: ComunicadoKpiPartRef | null;
   setSelectedId: (id: string | null) => void;
@@ -194,6 +199,7 @@ export function useComunicadoEditorBlocks({
   selectedTableParts = [],
   selectedKpiPart,
   selectedInputPart,
+  selectedCanvasTableCell = null,
   editingChartPart,
   editingKpiPart,
   setSelectedId,
@@ -933,6 +939,7 @@ export function useComunicadoEditorBlocks({
         selectedTablePart,
         selectedTableParts,
         selectedInputPart,
+        selectedCanvasTableCell,
         applyOptions,
       });
       if (complexPatch) {
@@ -944,6 +951,7 @@ export function useComunicadoEditorBlocks({
     },
     [
       selected,
+      selectedCanvasTableCell,
       selectedChartPart,
       selectedInputPart,
       selectedKpiPart,

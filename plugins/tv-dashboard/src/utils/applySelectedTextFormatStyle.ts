@@ -47,6 +47,7 @@ import {
   sparsePropertyPatch,
   type SelectionPropertyApplyOptions,
 } from "./selectionPropertyApply";
+import { patchCanvasTableCellsStyle } from "./canvasTableSelectionCommands";
 
 type AnyPartStyle = {
   fontFamily?: string;
@@ -328,6 +329,11 @@ export function buildSelectedTextFormatBlockPatch(params: {
   /** Multi-seleção de colunas/células/linhas — tipografia aplica a todas. */
   selectedTableParts?: ComunicadoTablePartRef[] | null;
   selectedInputPart?: ComunicadoInputPartRef | null;
+  selectedCanvasTableCell?: {
+    blockId: string;
+    cells: Array<{ row: number; col: number }>;
+    focus: { row: number; col: number };
+  } | null;
   applyOptions?: SelectionPropertyApplyOptions;
 }): Partial<ComunicadoBlock> | null {
   const {
@@ -338,6 +344,7 @@ export function buildSelectedTextFormatBlockPatch(params: {
     selectedTablePart = null,
     selectedTableParts = null,
     selectedInputPart = null,
+    selectedCanvasTableCell = null,
     applyOptions,
   } = params;
 
@@ -347,11 +354,42 @@ export function buildSelectedTextFormatBlockPatch(params: {
     selectedChartPart,
     selectedTablePart,
     selectedInputPart,
+    selectedCanvasTableCell,
   });
   if (!target) return null;
 
   if (target.mode === "block") {
     return null;
+  }
+
+  if (target.mode === "canvasCell" && selected.type === "canvas_table") {
+    const currentSize = target.style.fontSize ?? 14;
+    const nextFont = resolveFontSizeForTarget({
+      current: currentSize,
+      patch,
+      options: applyOptions?.fontSizeMode
+        ? applyOptions
+        : patch.fontSize != null
+          ? { fontSizeMode: "absolute" }
+          : undefined,
+    });
+    const stylePatch = sparsePropertyPatch({
+      fontFamily: patch.fontFamily,
+      fontWeight: patch.fontWeight,
+      fontStyle: patch.fontStyle,
+      color: patch.color,
+      textDecoration: patch.textDecoration,
+      textAlign: pickTextAlign(patch.textAlign),
+      verticalAlign: pickVerticalAlign(patch.verticalAlign),
+      ...(nextFont != null ? { fontSize: nextFont } : {}),
+    } as Record<string, unknown>);
+    return {
+      cells: patchCanvasTableCellsStyle({
+        cells: selected.cells,
+        selection: target.cells,
+        stylePatch,
+      }),
+    } as Partial<ComunicadoBlock>;
   }
 
   if (target.mode === "part" && target.source === "kpi" && selected.type === "kpi_view") {
