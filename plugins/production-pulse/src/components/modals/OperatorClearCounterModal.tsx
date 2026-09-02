@@ -22,10 +22,10 @@ export function OperatorClearCounterModal({
         <p>{PP_HELP.modals.clearOperatorBody}</p>
         {error ? <p className="pp-modal-body__error">{error}</p> : null}
         <div className="pp-modal-body__actions pp-modal-body__actions--operator">
-          <PpActionButton variant="ghost" onClick={onClose} disabled={loading}>
+          <PpActionButton variant="ghost" className="pp-modal-body__action-btn" onClick={onClose} disabled={loading}>
             Cancelar
           </PpActionButton>
-          <PpActionButton variant="primary" onClick={onConfirm} disabled={loading}>
+          <PpActionButton variant="primary" className="pp-modal-body__action-btn" onClick={onConfirm} disabled={loading}>
             {loading ? "Enviando…" : "Sim, zerar (0)"}
           </PpActionButton>
         </div>

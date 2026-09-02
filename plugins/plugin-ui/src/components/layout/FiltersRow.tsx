@@ -114,6 +114,18 @@ export function filtersRowBemClasses(prefix: string): FiltersRowClassNames & Fil
   };
 }
 
+/** Toolbar de filtros inline (toggle + select compacto + ação). */
+export function filterToolbarRowBemClasses(prefix: string) {
+  const row = `${prefix}-filter-toolbar-row`;
+  const ui = "delpi-ui-filter-toolbar-row";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+  return {
+    row: pair(row, ui),
+    cluster: pair(`${row}__views`, `${ui}__cluster`),
+    action: pair(`${prefix}-filter-new-device`, `${ui}__action`),
+  };
+}
+
 export function FiltersRow({
   children,
   classNames,

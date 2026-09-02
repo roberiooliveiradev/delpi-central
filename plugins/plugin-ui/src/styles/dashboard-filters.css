@@ -315,3 +315,59 @@
   box-sizing: border-box;
   width: 100%;
 }
+
+/** Toolbar inline: toggle de vista + select compacto + ação primária (Production Pulse WF-PP-01). */
+.delpi-ui-filters-row > .delpi-ui-filter-toolbar-row {
+  grid-column: 1 / -1;
+}
+
+.delpi-ui-filter-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.delpi-ui-filter-toolbar-row__cluster {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.delpi-ui-filter-toolbar-row__cluster > [class$="-field"],
+.delpi-ui-filter-toolbar-row__cluster > .delpi-ui-filter-box:not(.delpi-ui-filter-box--action) {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: min(11.5rem, 100%);
+  max-width: 14rem;
+}
+
+.delpi-ui-filter-toolbar-row__cluster [class$="-select-control"],
+.delpi-ui-filter-toolbar-row__cluster .delpi-ui-select-control {
+  min-width: 11.5rem;
+}
+
+.delpi-ui-filter-toolbar-row__action {
+  min-height: var(--delpi-ui-control-height, 42px);
+  height: var(--delpi-ui-control-height, 42px);
+  padding-inline: 14px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-filter-toolbar-row__cluster {
+    flex-wrap: wrap;
+  }
+
+  .delpi-ui-filter-toolbar-row__cluster > [class$="-field"],
+  .delpi-ui-filter-toolbar-row__cluster > .delpi-ui-filter-box:not(.delpi-ui-filter-box--action) {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}

@@ -156,6 +156,27 @@
   width: 100%;
 }
 
+.delpi-ui-segment-toggle--width-content,
+.delpi-ui-filters-row .delpi-ui-segment-toggle--width-content {
+  width: max-content;
+  flex: 0 0 auto;
+}
+
+.delpi-ui-segment-toggle--width-content .delpi-ui-segment-toggle__btn {
+  flex: 0 1 auto;
+}
+
+.delpi-ui-segment-toggle--column {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-segment-toggle--column .delpi-ui-segment-toggle__btn {
+    width: 100%;
+  }
+}
+
 .delpi-ui-segment-toggle--sm {
   padding: 3px;
   gap: 3px;

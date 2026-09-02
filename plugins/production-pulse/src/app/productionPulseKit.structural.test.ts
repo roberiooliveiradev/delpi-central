@@ -50,7 +50,7 @@ describe("production-pulse kit contracts", () => {
     }
     const filtersBar = readRelative("components/DeviceFiltersBar.tsx");
     expect(filtersBar).toMatch(/PpFiltersRow/);
-    expect(filtersBar).toMatch(/pp-filter-toolbar-row/);
+    expect(filtersBar).toMatch(/PpFilterToolbarRowClasses/);
     expect(filtersBar).not.toMatch(/pp-filters-wrap/);
     expect(filtersBar).not.toMatch(/PpFilterBarShell/);
     expect(readRelative("components/data/filtersUi.tsx")).toMatch(/PpFiltersRow/);
@@ -93,5 +93,10 @@ describe("production-pulse kit contracts", () => {
     expect(uiKit).toMatch(/createHostContainedModalShell/);
     expect(uiKit).toMatch(/dashboard-production-pulse/);
     expect(uiKit).toMatch(/containedLayout:\s*"dialog"/);
+  });
+
+  it("index.css não sobrescreve classes .delpi-ui-* do kit", () => {
+    const css = readRelative("index.css");
+    expect(css).not.toMatch(/\.delpi-ui-/);
   });
 });

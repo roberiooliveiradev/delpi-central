@@ -1,5 +1,6 @@
 import {
   createDashboardFiltersKit,
+  filterToolbarRowBemClasses,
   filtersRowBemClasses,
   FilterInputField as PluginFilterInputField,
   type FilterInputFieldProps,
@@ -15,6 +16,7 @@ const filtersKit = createDashboardFiltersKit({
 
 export const PpFiltersRow = filtersKit.FiltersRow;
 export const PpFilterSelectField = filtersKit.FilterSelectField;
+export const PpFilterToolbarRowClasses = filterToolbarRowBemClasses(PREFIX);
 
 const fieldClassNames = filtersRowBemClasses(PREFIX);
 

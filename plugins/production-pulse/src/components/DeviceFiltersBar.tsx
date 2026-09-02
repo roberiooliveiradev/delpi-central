@@ -5,8 +5,9 @@ import { PP_HELP } from "../content/helpTooltips";
 import type { PanelFilters, PanelGroupBy } from "../utils/panelFilterUrl";
 import {
   PpFilterInputField,
-  PpFiltersRow,
   PpFilterSelectField,
+  PpFiltersRow,
+  PpFilterToolbarRowClasses,
 } from "./data/filtersUi";
 
 type DeviceFiltersBarProps = {
@@ -90,11 +91,12 @@ export function DeviceFiltersBar({
         onChange={(value) => onChange({ search: value })}
         placeholder="Nome, objeto ou IP…"
       />
-      <div className="pp-filter-toolbar-row">
-        <div className="pp-filter-toolbar-row__views">
+      <div className={PpFilterToolbarRowClasses.row}>
+        <div className={PpFilterToolbarRowClasses.cluster}>
           <PpSegmentToggle
             ariaLabel="Modo de visualização"
             size="sm"
+            widthMode="content"
             value={filters.view}
             onChange={(value) => onChange({ view: value as PanelFilters["view"] })}
             options={[
@@ -117,7 +119,7 @@ export function DeviceFiltersBar({
           <PpActionButton
             variant="primary"
             onClick={onCreateDevice}
-            className="pp-filter-new-device"
+            className={PpFilterToolbarRowClasses.action}
           >
             <Plus size={16} aria-hidden="true" />
             <span className="pp-filter-new-device__label">Novo dispositivo</span>

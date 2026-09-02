@@ -129,7 +129,12 @@ export function GaugeReadoutSurface({
 
       <div className="pp-gauge-readout__footer">
         <DeviceStatusBadge status={device.status} />
-        <PpActionButton variant="ghost" onClick={() => void syncNow()} disabled={busy}>
+        <PpActionButton
+          variant="ghost"
+          className="pp-gauge-readout__sync-btn"
+          onClick={() => void syncNow()}
+          disabled={busy}
+        >
           {busy ? "Atualizando…" : "Atualizar"}
         </PpActionButton>
       </div>

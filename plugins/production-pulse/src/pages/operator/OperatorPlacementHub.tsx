@@ -158,6 +158,7 @@ export function OperatorPlacementHub({
           <PpSegmentToggle
             ariaLabel="Filial"
             size="sm"
+            widthMode="content"
             value={activeBranch}
             onChange={(value) => updateFilters({ branch: value })}
             options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
@@ -166,6 +167,7 @@ export function OperatorPlacementHub({
         <PpSegmentToggle
           ariaLabel="Filtro de tipo de local"
           size="sm"
+          widthMode="content"
           value={anchorType}
           onChange={(value) => updateFilters({ anchorType: value as OperatorAnchorFilter })}
           options={[
