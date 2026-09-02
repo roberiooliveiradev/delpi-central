@@ -150,10 +150,11 @@ class ChatCapabilitiesService:
     def is_capability_inquiry(cls, message: str) -> bool:
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
+        # Help de ativação/escolha de agente é autoajuda — não cair em RAG/ERP/SQL.
+        if cls.classify_help_topic(message) == "agent":
+            return True
+
         if ChatSqlIntentService.is_sql_conversation_turn(message):
-            # Help de ativação/escolha de agente não deve cair no stack SQL.
-            if cls.classify_help_topic(message) == "agent":
-                return True
             return False
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
@@ -271,6 +272,11 @@ class ChatCapabilitiesService:
         allowed_action_ids: list[str] | None = None,
         action_catalog: list[dict] | None = None,
     ) -> str | None:
+        # Escolha/ativação de agente: classificado por tópico, sem exigir
+        # marcadores genéricos de «capacidade» (frases naturais do usuário).
+        if cls.classify_help_topic(message) == "agent":
+            return cls._answer_agent_help(message)
+
         if not cls._is_feature_capability_inquiry(message):
             return None
 

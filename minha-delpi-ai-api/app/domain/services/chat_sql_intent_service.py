@@ -133,7 +133,10 @@ class ChatSqlIntentService:
         if any(term in normalized for term in cls._authoring_terms()):
             return True
 
-        if "query" in normalized or "quer" in normalized or "consulta sql" in normalized or "sql" in normalized:
+        if any(
+            token in normalized
+            for token in ("query", "quer", "consulta sql", "sql", "select")
+        ):
             if any(ctx in normalized for ctx in cls._sql_build_context()):
                 return True
 

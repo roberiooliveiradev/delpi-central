@@ -118,3 +118,36 @@ def test_qual_agente_consulta_produto_names_platform_agent():
     assert "para esta tarefa" in low
     assert "select " not in low
     assert "sb1010" not in low
+
+
+def test_natural_agent_choice_phrases_are_capability_inquiry():
+    from app.application.services.chat_capabilities_service import (
+        ChatCapabilitiesService,
+        _capabilities_content,
+    )
+    from app.infrastructure.content.content_service import ContentService
+
+    ContentService.clear_cache()
+    _capabilities_content.cache_clear()
+    phrases = (
+        "quero ver produto no ERP… qual especialista eu escolho?",
+        "preciso olhar estoque, me diga qual agente usar",
+        "tem algum agente bom pra consulta de cadastro de item?",
+        "ei, como faço pra ligar um agente nessa conversa?",
+    )
+    ws = {"userActivatedAgent": False, "actionsEnabled": False}
+    for message in phrases:
+        assert ChatCapabilitiesService.is_capability_inquiry(message), message
+        assert ChatCapabilitiesService.classify_help_topic(message) == "agent", message
+        answer = (
+            ChatCapabilitiesService.resolve_capability_answer(
+                message=message,
+                workspace_context=ws,
+            )
+            or ""
+        )
+        assert answer, message
+        assert "select " not in answer.lower()
+        assert "sb1010" not in answer.lower()
+        if "produto" in message.lower() or "estoque" in message.lower() or "cadastro" in message.lower():
+            assert "minha delpi" in answer.lower(), message

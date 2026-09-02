@@ -440,7 +440,20 @@ class ChatDateRangeIntentService:
 
     @classmethod
     def _contains_month_name(cls, normalized: str, name: str) -> bool:
-        return re.search(rf"\b{re.escape(name)}\b", normalized) is not None
+        if re.search(rf"\b{re.escape(name)}\b", normalized) is None:
+            return False
+
+        # Abreviações curtas (dez, mai, set…) não devem casar ranking/quantidade
+        # — ex.: «dez primeiros produtos» ≠ dezembro.
+        if len(name) <= 3:
+            followers = ChatDateRangeVocabularyService.month_abbrev_false_positive_followers()
+            if followers and re.search(
+                rf"\b{re.escape(name)}\s+(?:{'|'.join(re.escape(item) for item in followers)})\b",
+                normalized,
+            ):
+                return False
+
+        return True
 
     @classmethod
     def _extract_year_for_month(cls, normalized: str, month_name: str) -> int | None:

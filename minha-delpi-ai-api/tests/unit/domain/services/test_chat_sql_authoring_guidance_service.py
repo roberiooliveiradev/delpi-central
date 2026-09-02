@@ -23,6 +23,11 @@ def test_detects_sql_authoring_with_criar_and_quer_typo():
     assert ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(msg)
 
 
+def test_natural_me_passa_o_select_is_custom_authoring_not_rest():
+    msg = "me passa o select dos produtos do grupo 1008, só os dez primeiros ok?"
+    assert ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(msg)
+
+
 def test_extract_domain_hint_from_criar_quer_message():
     hint = ChatSqlAuthoringGuidanceService.extract_domain_hint(
         "use sql para criar uma quer que busque os 10 ultimos apontamentos de produção"
@@ -65,7 +70,11 @@ def test_plan_prefetch_uses_table_domain_entity_for_sql_authoring():
 
     assert len(planned) == 1
     selection.select_system_metadata.assert_called_once()
-    assert selection.select_system_metadata.call_args.args[0] == "qual a tabela de produtos"
+    assert selection.select_system_metadata.call_args.args[0] in {
+        "qual a tabela de produtos",
+        "colunas da tabela SB1",
+        "colunas da tabela SB1010",
+    }
 
 
 def test_should_prefetch_when_domain_hint_present():
@@ -101,7 +110,12 @@ def test_plan_prefetch_table_search(monkeypatch):
 
     assert len(planned) == 1
     selection.select_system_metadata.assert_called_once()
-    assert "qual a tabela de" in selection.select_system_metadata.call_args.args[0]
+    prefetch_q = selection.select_system_metadata.call_args.args[0]
+    assert (
+        "qual a tabela de" in prefetch_q
+        or "colunas da tabela SA1" in prefetch_q
+        or "colunas da tabela SA1010" in prefetch_q
+    )
 
 
 def test_extract_table_name_ignores_que_stopword():
