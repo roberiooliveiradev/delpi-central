@@ -143,7 +143,7 @@ export function CounterPadSurface({
         title={resolveOperatorHeaderTitle(device, placementLabel)}
         subtitle={statusLine}
         trailing={
-          <PpActionButton variant="ghost" className="pp-operator-brand-bar__btn" onClick={goBack}>
+          <PpActionButton variant="ghost" className="pp-operator-hero-btn" onClick={goBack}>
             Trocar posto
           </PpActionButton>
         }

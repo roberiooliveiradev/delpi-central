@@ -228,6 +228,13 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/data/filtersUi.tsx")).toMatch(/searchable = true/);
   });
 
+  it("hero usa paleta brand do operador em todo o plugin", () => {
+    const css = readRelative("index.css");
+    expect(css).toMatch(/\.dashboard-production-pulse \.pp-page-hero \{/);
+    expect(css).toMatch(/--pp-hero-brand-fg:/);
+    expect(readRelative("components/operator/OperatorBrandBar.tsx")).toMatch(/PpPageHero/);
+  });
+
   it("páginas profundas usam PagePath — não BackLink", () => {
     const detail = readRelative("pages/DeviceDetailPage.tsx");
     const formPage = readRelative("pages/DeviceFormPage.tsx");

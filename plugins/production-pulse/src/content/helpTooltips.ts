@@ -196,6 +196,7 @@ export const PP_HELP = {
     offlineBanner:
       "Sem comunicação com o device. Comandos ficam desabilitados até reconectar.",
     adminLink: "Abre o painel administrativo completo (se você tiver permissão).",
+    brandEyebrowPrefix: "PULSO",
   },
 
   badges: {
