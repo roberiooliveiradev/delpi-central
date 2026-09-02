@@ -29,7 +29,7 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 
 **E7.S2 entregue (set/2026):** `DeviceDriverError` code-first; HTTP compartilhado em `device_http_support`; `last_error` grava código; mensagem PT só no boundary JSON — commit `d7e6675fa`.
 
-**E7.S3 entregue (set/2026):** `device_validation_content.json` + loader API; MFE `deviceValidationContent.ts` com sync test; formulário consome limites/regex/mensagens do JSON — commit pendente desta entrega.
+**E7.S3 entregue (set/2026):** `device_validation_content.json` + loader API; MFE `deviceValidationContent.ts` com sync test; formulário consome limites/regex/mensagens do JSON — commit `c02aee745`.
 
 ---
 
@@ -374,7 +374,7 @@ flowchart LR
 #### E7.S3 — Validação form API ↔ MFE (content compartilhado) ✅
 
 - **Objetivo:** Regex IPv4, limites poll 0.5–300 e labels de erro idênticos API e MFE via JSON.
-- **Status:** ✅ `main` — após commit desta entrega.
+- **Status:** ✅ `main` — commit `c02aee745`.
 - **Fazer:**
   1. Criar `device_validation_content.json` (+ loader API)
   2. Refatorar `device_validation_service.py` — limites/regex do JSON
