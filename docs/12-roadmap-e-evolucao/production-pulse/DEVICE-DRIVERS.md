@@ -67,7 +67,12 @@
     }
   ],
   "commands": ["increment", "decrement", "reset", "set"],
-  "counterRestore": { "enabled": true, "preferHardwareSet": true },
+  "counterRestore": {
+    "enabled": true,
+    "preferHardwareSet": true,
+    "intentionalDecreaseCommands": ["decrement", "reset", "set"],
+    "intentionalDecreaseCommandGraceMs": 15000
+  },
   "operatorSurface": "counter_pad",
   "operatorEligible": true,
   "poll": { "timeoutMs": 3000 }

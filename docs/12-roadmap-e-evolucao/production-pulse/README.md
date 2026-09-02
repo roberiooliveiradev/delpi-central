@@ -102,7 +102,7 @@ Firmware de referência: [`firmware/esp8266_counter_v1/`](./firmware/esp8266_cou
 
 Comando plataforma: `POST /devices/{id}/commands/set` com `{"counter": <int>}` (aliases `contador` / `value`).
 
-Ao detectar queda do contador no poll (perda de memória após desligar), a API tenta `set` com o último valor persistido (+ golpes pós-reboot). Se o firmware ainda não tiver `/api/definir`, aplica offset lógico em `last_metrics` para manter a contagem.
+Ao detectar queda do contador no **poll** sem comando recente de `decrement` / `reset` / `set` (provenance), a API trata como perda de memória/reboot: tenta `set` com o valor lógico persistido (+ golpes pós-reboot) ou aplica offset em `last_metrics`. Quedas explicadas por comando do pad (janela `intentionalDecreaseCommandGraceMs`) **não** disparam restore. Não há mais limiar por magnitude (`maxIntentionalDecrease`).
 
 Driver interno: `esp8266_counter_v1` — primeiro entry do registry; novos firmwares = novo `driver_key`, mesmo schema de leituras.
 

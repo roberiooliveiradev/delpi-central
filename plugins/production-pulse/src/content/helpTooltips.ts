@@ -177,7 +177,7 @@ export const PP_HELP = {
     delta:
       "Diferença em relação à leitura anterior — só para métricas monotônicas (golpes).",
     counterHardwareReset:
-      "O contador físico caiu (ex.: device desligado). A plataforma restaura o último valor (POST /api/definir) ou mantém continuidade lógica até o firmware aceitar set.",
+      "Queda no poll sem comando recente do pad: a plataforma restaura o valor persistido (SET no chip ou offset lógico). Diminuir/Limpar via API não disparam restore.",
     coverageIncomplete:
       "Pode haver lacunas se o device ficou offline ou o poll falhou.",
   },
