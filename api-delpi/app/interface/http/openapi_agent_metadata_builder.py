@@ -55,6 +55,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "new_business_rol_pct": "percentual ROL de novos negócios",
     "new_clients_rol_pct": "percentual ROL de clientes novos",
     "financial_rol": "ROL financeiro",
+    "financial_purchase_freight_link": (
+        "vínculos de NF de compra com CT-e para análise de percentual de frete"
+    ),
     "financial_ebitda_pct": "EBITDA percentual",
     "financial_fixed_cost_pct": "custo fixo percentual",
     "financial_pmr": "prazo médio de recebimento (PMR)",

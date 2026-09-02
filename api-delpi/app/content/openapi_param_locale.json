@@ -1610,6 +1610,18 @@
         }
       }
     },
+    "invoice_document": {
+      "locale": {
+        "en": {
+          "label": "Invoice number",
+          "description": "Purchase invoice document number."
+        },
+        "pt-BR": {
+          "label": "Número da NF",
+          "description": "Número do documento da NF de compra."
+        }
+      }
+    },
     "invoice_number": {
       "locale": {
         "en": {
@@ -1621,6 +1633,70 @@
           "description": "Número da nota fiscal."
         }
       }
+    },
+    "freight_document": {
+      "locale": {
+        "en": {
+          "label": "Freight document number",
+          "description": "Freight document (CT-e) number."
+        },
+        "pt-BR": {
+          "label": "Número do CT-e",
+          "description": "Número do documento de frete (CT-e)."
+        }
+      }
+    },
+    "issue_start": {
+      "locale": {
+        "en": {
+          "label": "Issue start date",
+          "description": "Purchase invoice issue date, period start (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Emissão — início",
+          "description": "Data de emissão da NF de compra, início do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "issue_end": {
+      "locale": {
+        "en": {
+          "label": "Issue end date",
+          "description": "Purchase invoice issue date, period end (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Emissão — fim",
+          "description": "Data de emissão da NF de compra, fim do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "entry_start": {
+      "locale": {
+        "en": {
+          "label": "Entry start date",
+          "description": "Purchase invoice data-entry date, period start (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Digitação — início",
+          "description": "Data de digitação da NF de compra, início do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "entry_end": {
+      "locale": {
+        "en": {
+          "label": "Entry end date",
+          "description": "Purchase invoice data-entry date, period end (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Digitação — fim",
+          "description": "Data de digitação da NF de compra, fim do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
     },
     "invoice_type": {
       "locale": {

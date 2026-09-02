@@ -254,6 +254,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     # Financeiro
     "get_financial_rol": RouteContract("financial_rol", "scalar"),
     "get_financial_rol_invoices": RouteContract("financial_rol_invoice", "paged_list"),
+    "get_financial_purchase_freight_links": RouteContract(
+        "financial_purchase_freight_link", "paged_list"
+    ),
     "get_financial_ebitda_pct": RouteContract("financial_ebitda_pct", "scalar"),
     "get_financial_fixed_cost_pct": RouteContract("financial_fixed_cost_pct", "scalar"),
     "get_financial_pmr": RouteContract("financial_pmr", "scalar"),

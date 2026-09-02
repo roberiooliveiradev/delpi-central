@@ -99,6 +99,33 @@ FINANCIAL_ROL_INVOICES_FIELD_LABELS: dict[str, str] = {
     "totals": "Totais do extrato",
 }
 
+FINANCIAL_PURCHASE_FREIGHT_LINKS_FIELD_LABELS: dict[str, str] = {
+    "branch": "Filial",
+    "in_filter": "Atende ao filtro",
+    "link_entry_date": "Digitação do vínculo",
+    "invoice_found": "NF localizada",
+    "invoice_document": "NF de compra",
+    "invoice_series": "Série da NF",
+    "supplier_code": "Fornecedor",
+    "supplier_store": "Loja do fornecedor",
+    "supplier_name": "Nome do fornecedor",
+    "invoice_goods_value": "Valor da mercadoria",
+    "invoice_issue_date": "Emissão da NF",
+    "invoice_entry_date": "Digitação da NF",
+    "freight_found": "CT-e localizado",
+    "freight_document": "CT-e",
+    "freight_series": "Série do CT-e",
+    "carrier_code": "Transportadora",
+    "carrier_store": "Loja da transportadora",
+    "carrier_name": "Nome da transportadora",
+    "freight_gross_value": "Valor bruto do CT-e",
+    "freight_issue_date": "Emissão do CT-e",
+    "freight_access_key": "Chave eletrônica",
+    "freight_document_type": "Tipo do CT-e",
+    "freight_document_kind": "Espécie do CT-e",
+    "items": "Vínculos NF x CT-e",
+}
+
 FINANCIAL_EBITDA_FIELD_LABELS: dict[str, str] = {
     "ebitda_value": "EBITDA (valor)",
     "ebitda_over_rol_pct": "EBITDA / ROL (%)",

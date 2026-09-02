@@ -9,11 +9,18 @@ from delpi_auth.authorization import require_any_permission
 from app.application.security.api_delpi_permissions import KPI_FINANCIAL_ACCESS
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
+from app.application.dto.financial.purchase_freight_links_request import (
+    PurchaseFreightLinksRequest,
+)
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
+from app.application.use_cases.financial.get_purchase_freight_links_use_case import (
+    DEFAULT_PURCHASE_FREIGHT_LINK_LIMIT,
+)
 from app.application.use_cases.financial.get_rol_invoices_use_case import (
     DEFAULT_ROL_INVOICE_LIMIT,
 )
 from app.composition.financial_composer import (
+    build_get_purchase_freight_links_use_case,
     build_get_rol_use_case,
     build_get_rol_invoices_use_case,
     build_get_financial_ebitda_pct_use_case,
@@ -24,6 +31,7 @@ from app.interface.http.kpi_field_labels import (
     FINANCIAL_EBITDA_FIELD_LABELS,
     FINANCIAL_FIXED_COST_FIELD_LABELS,
     FINANCIAL_PMR_FIELD_LABELS,
+    FINANCIAL_PURCHASE_FREIGHT_LINKS_FIELD_LABELS,
     FINANCIAL_ROL_FIELD_LABELS,
     FINANCIAL_ROL_INVOICES_FIELD_LABELS,
     kpi_fields,
@@ -34,6 +42,9 @@ from app.interface.http.openapi_agent_metadata import (
     FINANCIAL_PMR,
     FINANCIAL_ROL,
     FINANCIAL_ROL_INVOICES,
+)
+from app.interface.http.openapi_agent_metadata_builder import (
+    OpenApiAgentMetadataBuilder,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.interface.http.query_param_enums import (
@@ -104,6 +115,53 @@ def get_rol_invoices(
         )
     except Exception as e:
         log_error(f"Erro ao consultar extrato de notas da ROL: {e}")
+        return error_response(str(e))
+
+
+@router.get(
+    "/purchase-freight/links",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_financial_purchase_freight_links",
+        path="/financial/purchase-freight/links",
+    ),
+)
+@require_any_permission(KPI_FINANCIAL_ACCESS)
+def get_financial_purchase_freight_links(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    issue_start: Optional[str] = Query(None),
+    issue_end: Optional[str] = Query(None),
+    entry_start: Optional[str] = Query(None),
+    entry_end: Optional[str] = Query(None),
+    supplier: Optional[str] = Query(None),
+    invoice_document: Optional[str] = Query(None),
+    freight_document: Optional[str] = Query(None),
+    limit: int = Query(
+        DEFAULT_PURCHASE_FREIGHT_LINK_LIMIT,
+        ge=1,
+        le=DEFAULT_PURCHASE_FREIGHT_LINK_LIMIT,
+    ),
+):
+    try:
+        dto = PurchaseFreightLinksRequest(
+            branch=branch,
+            issue_start=issue_start,
+            issue_end=issue_end,
+            entry_start=entry_start,
+            entry_end=entry_end,
+            supplier=supplier,
+            invoice_document=invoice_document,
+            freight_document=freight_document,
+        )
+        use_case = build_get_purchase_freight_links_use_case()
+        result = use_case.execute(dto, limit=limit)
+        return api_delpi_success(
+            result,
+            operation_id="get_financial_purchase_freight_links",
+            message="Vínculos de frete de compra consultados com sucesso.",
+            fields=kpi_fields(FINANCIAL_PURCHASE_FREIGHT_LINKS_FIELD_LABELS),
+        )
+    except Exception as e:
+        log_error(f"Erro ao consultar vínculos de frete de compra: {e}")
         return error_response(str(e))
 
 

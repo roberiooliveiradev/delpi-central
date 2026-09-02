@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 693,
+  "operation_count": 696,
   "operations": [
     {
       "method": "POST",
@@ -658,6 +658,151 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "New business rol pct."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/new-business-rol-target-pct",
+      "operationId": "get_new_business_rol_target_pct",
+      "summary": "Commercial new business ROL target (realized and goal)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_new_business_target",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial new business ROL target (realized and goal)",
+            "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+            "label": "Commercial new business ROL target"
+          },
+          "pt-BR": {
+            "summary": "Meta ROL novos negócios comercial (realizado e meta SI)",
+            "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+            "label": "Meta ROL novos negócios comercial"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+          "label": "Meta ROL novos negócios comercial"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02."
     },
     {
       "method": "GET",
@@ -2907,7 +3052,7 @@
       "method": "GET",
       "path": "/commercial/rol/summary",
       "operationId": "get_commercial_rol_summary",
-      "summary": "Indicador — Commercial rol summary",
+      "summary": "Commercial ROL summary (realized and goal)",
       "tags": [
         "Comercial"
       ],
@@ -2984,6 +3129,19 @@
       "xDelpi": {
         "entity": "commercial_rol_summary",
         "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial ROL summary (realized and goal)",
+            "description": "Net operating revenue (ROL) for a period with SI comparable goal fields for TV KPI.",
+            "label": "Commercial ROL summary"
+          },
+          "pt-BR": {
+            "summary": "ROL comercial — resumo (realizado e meta)",
+            "description": "Receita operacional líquida do período com meta SI no mesmo payload (hub TV).",
+            "label": "ROL comercial — resumo (realizado e meta)"
+          }
+        },
         "params": {
           "branch": {
             "locale": {
@@ -3144,316 +3302,13 @@
             "format": "date"
           }
         },
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Commercial ROL summary (realized and goal)",
-            "description": "Net operating revenue (ROL) for a period with SI comparable goal fields for TV KPI.",
-            "label": "Commercial ROL summary"
-          },
-          "pt-BR": {
-            "summary": "ROL comercial — resumo (realizado e meta)",
-            "description": "Receita operacional líquida do período com meta SI no mesmo payload (hub TV).",
-            "label": "ROL comercial — resumo (realizado e meta)"
-          }
-        },
         "tv": {
           "description": "Receita operacional líquida do período com meta SI no mesmo payload (hub TV).",
           "label": "ROL comercial — resumo (realizado e meta)"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retorna commercial ROL summary via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/weg-rol-target-pct",
-      "operationId": "get_weg_rol_target_pct",
-      "summary": "Commercial WEG ROL target (realized and goal)",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "branch",
-          "in": "query",
-          "required": false,
-          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_weg_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Commercial WEG ROL target (realized and goal)",
-            "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
-            "label": "Commercial WEG ROL target (realized and goal)"
-          },
-          "pt-BR": {
-            "summary": "Meta ROL WEG comercial (realizado e meta SI)",
-            "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
-            "label": "Meta ROL WEG comercial"
-          }
-        },
-        "params": {
-          "branch": {
-            "locale": {
-              "en": {
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
-                "label": "Filial"
-              }
-            },
-            "enumLabels": {
-              "all": {
-                "en": {
-                  "label": "All"
-                },
-                "pt-BR": {
-                  "label": "Todas"
-                }
-              },
-              "01": {
-                "en": {
-                  "label": "Branch 01"
-                },
-                "pt-BR": {
-                  "label": "Filial 01"
-                }
-              },
-              "02": {
-                "en": {
-                  "label": "Branch 02"
-                },
-                "pt-BR": {
-                  "label": "Filial 02"
-                }
-              },
-              "ES": {
-                "en": {
-                  "label": "ES"
-                },
-                "pt-BR": {
-                  "label": "ES"
-                }
-              },
-              "SC": {
-                "en": {
-                  "label": "SC"
-                },
-                "pt-BR": {
-                  "label": "SC"
-                }
-              }
-            }
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
-          "label": "Meta ROL WEG comercial"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02."
-    },
-    {
-      "method": "GET",
-      "path": "/commercial/new-business-rol-target-pct",
-      "operationId": "get_new_business_rol_target_pct",
-      "summary": "Commercial new business ROL target (realized and goal)",
-      "tags": [
-        "Comercial"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "branch",
-          "in": "query",
-          "required": false,
-          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-          "type": "string",
-          "format": "date"
-        }
-      ],
-      "xDelpi": {
-        "entity": "commercial_rol_new_business_target",
-        "shape": "scalar",
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Commercial new business ROL target (realized and goal)",
-            "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
-            "label": "Commercial new business ROL target (realized and goal)"
-          },
-          "pt-BR": {
-            "summary": "Meta ROL novos negócios comercial (realizado e meta SI)",
-            "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
-            "label": "Meta ROL novos negócios comercial"
-          }
-        },
-        "params": {
-          "branch": {
-            "locale": {
-              "en": {
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
-                "label": "Filial"
-              }
-            },
-            "enumLabels": {
-              "all": {
-                "en": {
-                  "label": "All"
-                },
-                "pt-BR": {
-                  "label": "Todas"
-                }
-              },
-              "01": {
-                "en": {
-                  "label": "Branch 01"
-                },
-                "pt-BR": {
-                  "label": "Filial 01"
-                }
-              },
-              "02": {
-                "en": {
-                  "label": "Branch 02"
-                },
-                "pt-BR": {
-                  "label": "Filial 02"
-                }
-              },
-              "ES": {
-                "en": {
-                  "label": "ES"
-                },
-                "pt-BR": {
-                  "label": "ES"
-                }
-              },
-              "SC": {
-                "en": {
-                  "label": "SC"
-                },
-                "pt-BR": {
-                  "label": "SC"
-                }
-              }
-            }
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "tv": {
-          "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
-          "label": "Meta ROL novos negócios comercial"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02."
+      "description": "Net operating revenue (ROL) for a period with SI comparable goal fields for TV KPI."
     },
     {
       "method": "GET",
@@ -3516,6 +3371,13 @@
           "in": "query",
           "required": false,
           "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
           "type": "string"
         },
         {
@@ -3613,6 +3475,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -3762,6 +3636,13 @@
           "type": "string"
         },
         {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+          "type": "string"
+        },
+        {
           "name": "customer_names",
           "in": "query",
           "required": false,
@@ -3796,6 +3677,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -3953,6 +3846,13 @@
           "type": "string"
         },
         {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+          "type": "string"
+        },
+        {
           "name": "customer_names",
           "in": "query",
           "required": false,
@@ -4057,6 +3957,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -4243,6 +4155,13 @@
           "required": false,
           "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
           "type": "string"
+        },
+        {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+          "type": "string"
         }
       ],
       "xDelpi": {
@@ -4325,6 +4244,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -4454,6 +4385,13 @@
           "in": "query",
           "required": false,
           "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
           "type": "string"
         },
         {
@@ -4604,6 +4542,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -5359,6 +5309,13 @@
           "type": "string"
         },
         {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+          "type": "string"
+        },
+        {
           "name": "exclude_customer_codes",
           "in": "query",
           "required": false,
@@ -5453,6 +5410,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -5682,6 +5651,13 @@
           "type": "string"
         },
         {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+          "type": "string"
+        },
+        {
           "name": "customer_names",
           "in": "query",
           "required": false,
@@ -5722,7 +5698,7 @@
           "name": "top_customers",
           "in": "query",
           "required": false,
-          "description": "Max customers by total_qty when no customer_codes/names filter.",
+          "description": "Max customers by total_qty when no customer_codes/names/code_stores filter.",
           "type": "integer",
           "default": 20
         }
@@ -5794,6 +5770,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -5988,7 +5976,7 @@
       "method": "GET",
       "path": "/commercial/sales-order-otd/summary",
       "operationId": "get_sales_order_otd_summary",
-      "summary": "Indicador — Sales order otd summary",
+      "summary": "Sales order OTD summary (realized and goal)",
       "tags": [
         "Comercial"
       ],
@@ -6048,6 +6036,13 @@
           "type": "string"
         },
         {
+          "name": "customer_code_stores",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer code|store pairs (e.g. 000001|01,000001|05).",
+          "type": "string"
+        },
+        {
           "name": "exclude_customer_codes",
           "in": "query",
           "required": false,
@@ -6065,6 +6060,19 @@
       "xDelpi": {
         "entity": "sales_order_otd_summary",
         "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Sales order OTD summary (realized and goal)",
+            "description": "On-time delivery percentage for sales order lines with SI comparable goal fields for TV KPI.",
+            "label": "Sales order OTD summary"
+          },
+          "pt-BR": {
+            "summary": "OTD de pedidos — resumo (realizado e meta)",
+            "description": "Percentual de entrega no prazo com meta SI no mesmo payload (hub TV).",
+            "label": "OTD de pedidos — resumo (realizado e meta)"
+          }
+        },
         "params": {
           "branch": {
             "locale": {
@@ -6129,6 +6137,18 @@
               "pt-BR": {
                 "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
                 "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_code_stores": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer code|store pairs to include (e.g. 000001|01,000001|05).",
+                "label": "Customer code and store pairs"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de pares código|loja TOTVS a incluir (ex.: 000001|01,000001|05).",
+                "label": "Pares cliente|loja"
               }
             }
           },
@@ -6225,26 +6245,158 @@
             "format": "date"
           }
         },
-        "category": "commercial",
-        "locale": {
-          "en": {
-            "summary": "Sales order OTD summary (realized and goal)",
-            "description": "On-time delivery percentage for sales order lines with SI comparable goal fields for TV KPI.",
-            "label": "Sales order OTD summary"
-          },
-          "pt-BR": {
-            "summary": "OTD de pedidos — resumo (realizado e meta)",
-            "description": "Percentual de entrega no prazo com meta SI no mesmo payload (hub TV).",
-            "label": "OTD de pedidos — resumo (realizado e meta)"
-          }
-        },
         "tv": {
           "description": "Percentual de entrega no prazo com meta SI no mesmo payload (hub TV).",
           "label": "OTD de pedidos — resumo (realizado e meta)"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retorna sales order OTD summary via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+      "description": "On-time delivery percentage for sales order lines with SI comparable goal fields for TV KPI."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/weg-rol-target-pct",
+      "operationId": "get_weg_rol_target_pct",
+      "summary": "Commercial WEG ROL target (realized and goal)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_weg_target",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial WEG ROL target (realized and goal)",
+            "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
+            "label": "Commercial WEG ROL target"
+          },
+          "pt-BR": {
+            "summary": "Meta ROL WEG comercial (realizado e meta SI)",
+            "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+            "label": "Meta ROL WEG comercial"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial).",
+          "label": "Meta ROL WEG comercial"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02."
     },
     {
       "method": "GET",
@@ -29472,6 +29624,274 @@
     },
     {
       "method": "GET",
+      "path": "/financial/purchase-freight/links",
+      "operationId": "get_financial_purchase_freight_links",
+      "summary": "Purchase invoice to freight document links",
+      "tags": [
+        "Financeiro",
+        "Financeiro"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "issue_start",
+          "in": "query",
+          "required": false,
+          "description": "Purchase invoice issue date, period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "issue_end",
+          "in": "query",
+          "required": false,
+          "description": "Purchase invoice issue date, period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "entry_start",
+          "in": "query",
+          "required": false,
+          "description": "Purchase invoice data-entry date, period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "entry_end",
+          "in": "query",
+          "required": false,
+          "description": "Purchase invoice data-entry date, period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "supplier",
+          "in": "query",
+          "required": false,
+          "description": "Supplier query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "invoice_document",
+          "in": "query",
+          "required": false,
+          "description": "Purchase invoice document number.",
+          "type": "string"
+        },
+        {
+          "name": "freight_document",
+          "in": "query",
+          "required": false,
+          "description": "Freight document (CT-e) number.",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Limit query parameter.",
+          "type": "integer",
+          "default": 20000
+        }
+      ],
+      "xDelpi": {
+        "entity": "financial_purchase_freight_link",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Purchase invoice to freight document links",
+            "description": "Raw SF8010 ties between purchase invoices and freight documents (CT-e), with goods value, gross value and access key from SF1010. Returns every invoice of a matched freight document so the consumer can close the allocation base; in_filter flags the rows that match the requested filters.",
+            "whenToUse": "Use as the source for purchase freight percentage analysis — allocation, branch limits and inconsistency rules belong to the consumer.",
+            "label": "Purchase freight links"
+          },
+          "pt-BR": {
+            "summary": "Vínculos de NF de compra com CT-e",
+            "description": "Amarrações da SF8010 entre NF de compra e conhecimento de frete (CT-e), com valor de mercadoria, valor bruto e chave eletrônica vindos da SF1010. Devolve todas as NFs de um CT-e selecionado para que o consumidor feche a base do rateio; in_filter marca as linhas que atendem ao filtro pedido.",
+            "whenToUse": "Use como origem da análise de percentual de frete das compras — rateio, limite por filial e inconsistências são regra do consumidor.",
+            "label": "Vínculos de frete de compra"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "invoice_document": {
+            "locale": {
+              "en": {
+                "description": "Purchase invoice document number.",
+                "label": "Invoice number"
+              },
+              "pt-BR": {
+                "description": "Número do documento da NF de compra.",
+                "label": "Número da NF"
+              }
+            }
+          },
+          "freight_document": {
+            "locale": {
+              "en": {
+                "description": "Freight document (CT-e) number.",
+                "label": "Freight document number"
+              },
+              "pt-BR": {
+                "description": "Número do documento de frete (CT-e).",
+                "label": "Número do CT-e"
+              }
+            }
+          },
+          "issue_start": {
+            "locale": {
+              "en": {
+                "description": "Purchase invoice issue date, period start (YYYY-MM-DD).",
+                "label": "Issue start date"
+              },
+              "pt-BR": {
+                "description": "Data de emissão da NF de compra, início do período (AAAA-MM-DD).",
+                "label": "Emissão — início"
+              }
+            },
+            "format": "date"
+          },
+          "issue_end": {
+            "locale": {
+              "en": {
+                "description": "Purchase invoice issue date, period end (YYYY-MM-DD).",
+                "label": "Issue end date"
+              },
+              "pt-BR": {
+                "description": "Data de emissão da NF de compra, fim do período (AAAA-MM-DD).",
+                "label": "Emissão — fim"
+              }
+            },
+            "format": "date"
+          },
+          "entry_start": {
+            "locale": {
+              "en": {
+                "description": "Purchase invoice data-entry date, period start (YYYY-MM-DD).",
+                "label": "Entry start date"
+              },
+              "pt-BR": {
+                "description": "Data de digitação da NF de compra, início do período (AAAA-MM-DD).",
+                "label": "Digitação — início"
+              }
+            },
+            "format": "date"
+          },
+          "entry_end": {
+            "locale": {
+              "en": {
+                "description": "Purchase invoice data-entry date, period end (YYYY-MM-DD).",
+                "label": "Entry end date"
+              },
+              "pt-BR": {
+                "description": "Data de digitação da NF de compra, fim do período (AAAA-MM-DD).",
+                "label": "Digitação — fim"
+              }
+            },
+            "format": "date"
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "supplier": {
+            "locale": {
+              "en": {
+                "description": "Supplier query parameter.",
+                "label": "Supplier"
+              },
+              "pt-BR": {
+                "description": "Código ou nome do fornecedor.",
+                "label": "Fornecedor"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use como origem da análise de percentual de frete das compras — rateio, limite por filial e inconsistências são regra do consumidor.",
+          "description": "Amarrações da SF8010 entre NF de compra e conhecimento de frete (CT-e), com valor de mercadoria, valor bruto e chave eletrônica vindos da SF1010. Devolve todas as NFs de um CT-e selecionado para que o consumidor feche a base do rateio; in_filter marca as linhas que atendem ao filtro pedido.",
+          "label": "Vínculos de frete de compra"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Raw SF8010 ties between purchase invoices and freight documents (CT-e), with goods value, gross value and access key from SF1010. Returns every invoice of a matched freight document so the consumer can close the allocation base; in_filter flags the rows that match the requested filters."
+    },
+    {
+      "method": "GET",
       "path": "/financial/rol",
       "operationId": "get_financial_rol",
       "summary": "Financial ROL (net operating revenue)",
@@ -50997,6 +51417,13 @@
           "required": false,
           "description": "When true (default), only open orders (C2_QUANT > C2_QUJE).",
           "type": "boolean"
+        },
+        {
+          "name": "include_closed",
+          "in": "query",
+          "required": false,
+          "description": "When true, includes open and closed orders (ignores open_only). Used for conjunto progress across intermediary OPs.",
+          "type": "boolean"
         }
       ],
       "xDelpi": {
@@ -51543,6 +51970,13 @@
           "in": "query",
           "required": false,
           "description": "When true (default), only open orders (C2_QUANT > C2_QUJE).",
+          "type": "boolean"
+        },
+        {
+          "name": "include_closed",
+          "in": "query",
+          "required": false,
+          "description": "When true, includes open and closed orders (ignores open_only). Used for conjunto progress across intermediary OPs.",
           "type": "boolean"
         }
       ],
@@ -84909,6 +85343,125 @@
         "shape": "scalar",
         "presentationStrategy": "as_delivered"
       }
+    },
+    {
+      "method": "GET",
+      "path": "/reports/personal-subscriptions/{provider_key}",
+      "operationId": "get_personal_report_subscription",
+      "summary": "Get Personal Report Subscription",
+      "tags": [
+        "Delpi Reports",
+        "Delpi Reports"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "provider_key",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "userId",
+          "in": "query",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "report_personal_subscription",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "S2S — Portal PCP lê a agenda pessoal do usuário."
+    },
+    {
+      "method": "PUT",
+      "path": "/reports/personal-subscriptions/{provider_key}",
+      "operationId": "upsert_personal_report_subscription",
+      "summary": "Upsert Personal Report Subscription",
+      "tags": [
+        "Delpi Reports",
+        "Delpi Reports"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "provider_key",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "report_personal_subscription",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "S2S — Portal PCP cria/atualiza agenda pessoal (weekdays)."
     },
     {
       "method": "GET",

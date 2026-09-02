@@ -1553,6 +1553,23 @@
       },
       "category": "financial"
     },
+    "get_financial_purchase_freight_links": {
+      "locale": {
+        "en": {
+          "summary": "Purchase invoice to freight document links",
+          "description": "Raw SF8010 ties between purchase invoices and freight documents (CT-e), with goods value, gross value and access key from SF1010. Returns every invoice of a matched freight document so the consumer can close the allocation base; in_filter flags the rows that match the requested filters.",
+          "whenToUse": "Use as the source for purchase freight percentage analysis — allocation, branch limits and inconsistency rules belong to the consumer.",
+          "label": "Purchase freight links"
+        },
+        "pt-BR": {
+          "label": "Vínculos de frete de compra",
+          "summary": "Vínculos de NF de compra com CT-e",
+          "description": "Amarrações da SF8010 entre NF de compra e conhecimento de frete (CT-e), com valor de mercadoria, valor bruto e chave eletrônica vindos da SF1010. Devolve todas as NFs de um CT-e selecionado para que o consumidor feche a base do rateio; in_filter marca as linhas que atendem ao filtro pedido.",
+          "whenToUse": "Use como origem da análise de percentual de frete das compras — rateio, limite por filial e inconsistências são regra do consumidor."
+        }
+      },
+      "category": "financial"
+    },
     "get_guias_procedimentos_admin_department": {
       "category": "quality",
       "locale": {
