@@ -5,7 +5,7 @@ BFF dedicado ao plugin **Pulso de Produção** (IoT industrial). O MFE consome *
 ## Escopo MVP
 
 - CRUD de dispositivos (`devices`) com filial + IP único por filial
-- Registry declarativo de drivers (`device_drivers.json`) — MVP `esp8266_counter_v1`
+- Registry declarativo de drivers (`device_drivers.json`) — `esp8266_counter_v1` + `esp8266_gauge_v1`
 - Amarração flexível (`device_bindings`) por `anchor_type` (posto, máquina, equipamento, área, avulso)
 - Leituras genéricas (`readings.metrics` JSONB) + poll manual e scheduler automático
 - Comandos auditados (`device_commands`) capability-gated por driver

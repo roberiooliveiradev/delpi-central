@@ -32,3 +32,46 @@ def parse_counter_response(body: Any) -> int:
             "Resposta do dispositivo não contém contador inteiro.",
             code="invalid_response",
         ) from exc
+
+
+def _first_numeric(body: dict[str, Any], *keys: str) -> float | None:
+    for key in keys:
+        if key not in body:
+            continue
+        raw = body.get(key)
+        if raw is None:
+            continue
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def parse_gauge_response(body: Any) -> dict[str, float]:
+    if not isinstance(body, dict):
+        raise DeviceDriverError("Resposta inválida do dispositivo.", code="invalid_response")
+
+    rpm = _first_numeric(body, "rpm", "rotacao", "rotação", "rotation")
+    temperature_c = _first_numeric(
+        body,
+        "temperature_c",
+        "temperatura",
+        "temperatura_c",
+        "temp_c",
+        "temperature",
+    )
+
+    metrics: dict[str, float] = {}
+    if rpm is not None:
+        metrics["rpm"] = rpm
+    if temperature_c is not None:
+        metrics["temperature_c"] = temperature_c
+
+    if not metrics:
+        raise DeviceDriverError(
+            "Resposta do dispositivo não contém rpm ou temperatura numéricos.",
+            code="invalid_response",
+        )
+
+    return metrics

@@ -75,6 +75,8 @@
 
 **Firmware:** ver [README.md § Protocolo piloto](./README.md).
 
+**HTTP:** `GET /api/sensores` → `{"rpm": <number>, "temperatura": <number>}` (aliases `rotacao`, `temperature_c`).
+
 ### `esp8266_gauge_v1` (P1 — spec antecipada)
 
 ```json

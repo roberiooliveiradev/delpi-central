@@ -129,3 +129,43 @@ def test_device_without_binding_reports_no_binding_status(client, unique_ip, mon
     detail = client.get(f"/devices/{device['id']}")
     assert detail.json()["data"]["status"] == "no_binding"
     assert detail.json()["data"]["online"] is False
+
+
+def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypatch):
+    sequence = iter(
+        [
+            DeviceReading(metrics={"rpm": 1180.0, "temperature_c": 42.0}),
+            DeviceReading(metrics={"rpm": 1180.0, "temperature_c": 42.0}),
+        ]
+    )
+
+    def fake_read(_self, _device):
+        return next(sequence)
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+
+    device = client.post(
+        "/devices",
+        json={
+            "name": "ESP gauge poll",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_gauge_v1",
+        },
+    ).json()["data"]
+    _bind_equipment(client, device["id"])
+
+    first = client.post(f"/devices/{device['id']}/poll")
+    assert first.status_code == 200
+    first_body = first.json()["data"]
+    assert first_body["metrics"]["rpm"] == 1180.0
+    assert first_body.get("deltaMetrics") in ({}, None)
+
+    second = client.post(f"/devices/{device['id']}/poll")
+    assert second.status_code == 200
+
+    readings = client.get(f"/devices/{device['id']}/readings")
+    assert readings.json()["data"]["pagination"]["total"] == 2
