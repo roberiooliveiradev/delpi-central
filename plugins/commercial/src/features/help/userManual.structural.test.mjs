@@ -18,9 +18,11 @@ describe("user manual page", () => {
     assert.match(content, /pageTitle: \"Manual do usuário\"/);
     const page = readSrc("features/help/UserManualPage.tsx");
     assert.match(page, /USER_MANUAL_CONTENT/);
+    assert.match(page, /UserManualLinkedText/);
     assert.match(page, /cm-user-manual__layout/);
-    assert.match(page, /cm-user-manual__main/);
-    assert.match(page, /cm-user-manual__concept-card/);
+    const links = readSrc("content/userManualToolLinks.ts");
+    assert.match(links, /MANUAL_TOOL_TARGETS/);
+    assert.match(links, /splitManualTextWithToolLinks/);
   });
 
   it("App e manifesto expõem /help", () => {

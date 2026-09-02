@@ -32,11 +32,17 @@ export const USER_MANUAL_CONTENT = {
   tocAriaLabel: "Índice do manual",
   conceptsTitle: "Três conceitos (não misture)",
   concepts: [
-    { term: "Pedido", meaning: "Linha em aberto — operação e fábrica." },
-    { term: "Oportunidade (OV)", meaning: "Proposta comercial no Protheus (AD1010)." },
+    {
+      term: "Pedido",
+      meaning: "Linha em aberto — operação e fábrica (veja em Meus pedidos).",
+    },
+    {
+      term: "Oportunidade (OV)",
+      meaning: "Proposta comercial no Protheus (AD1010) — lista em Oportunidades.",
+    },
     {
       term: "Proposta (documento)",
-      meaning: "Documento ADY + PDF para o cliente.",
+      meaning: "Documento ADY + PDF para o cliente — tela Propostas.",
     },
   ],
   scopeNote:
@@ -213,7 +219,7 @@ export const USER_MANUAL_CONTENT = {
       title: "Quem pedir ajuda",
       bullets: [
         "Não entro no Portal / erro de permissão → TI ou Admin Minha Delpi.",
-        "Não estou na carteira / clientes errados → Administrador do Portal Comercial (Administração → Carteiras).",
+        "Não estou na carteira / clientes errados → Administrador do Portal Comercial (Administração).",
         "Quero aviso de faturar → Admin libera a permissão de notificação + confira preferências Minha Delpi.",
         "Número de ROL/meta estranho → gestor e quem calibra metas nos Indicadores Estratégicos.",
         "Dúvida de processo comercial → supervisor ou Sala de interação do time.",

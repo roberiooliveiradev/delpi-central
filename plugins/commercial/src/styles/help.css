@@ -136,6 +136,22 @@
   color: var(--cm-muted, #64748b);
 }
 
+.cm-user-manual__where {
+  font-weight: 600;
+}
+
+.cm-user-manual__tool-link {
+  color: var(--cm-brand, #0f766e);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+}
+
+.cm-user-manual__tool-link:hover {
+  color: color-mix(in srgb, var(--cm-brand, #0f766e) 75%, #000);
+}
+
 .cm-user-manual__table-wrap {
   overflow-x: auto;
   margin: 0 -0.15rem;
