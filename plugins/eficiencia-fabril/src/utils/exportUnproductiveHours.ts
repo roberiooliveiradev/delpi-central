@@ -19,9 +19,6 @@ function motivoLabel(item: UnproductiveHoursItem): string {
 function itemToRow(item: UnproductiveHoursItem): (string | number)[] {
   return [
     formatDisplayDate(item.reference_date ?? item.dataReferencia),
-    cell(item.production_order ?? item.op),
-    cell(item.product_code ?? item.produto),
-    cell(item.operation ?? item.operacao),
     cell(item.resource ?? item.recurso),
     cell(item.cost_center ?? item.centroCusto),
     cell(item.operator_name ?? item.nomeOperador),
@@ -34,9 +31,6 @@ function itemToRow(item: UnproductiveHoursItem): (string | number)[] {
 
 const HEADERS = [
   "Data",
-  "OP",
-  "Produto",
-  "Operação",
   "Recurso",
   "Centro de custo",
   "Operador",
