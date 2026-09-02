@@ -28,7 +28,7 @@ Cadastro de **hardware** na rede (ESP, gateway, futuro Modbus).
 | `driver_key` | `varchar(40)` | Protocolo — `esp8266_counter_v1`, `esp8266_gauge_v1`, … |
 | `role_key` | `varchar(40)` | `pulse_counter`, `process_gauge`, `telemetry` — do registry |
 | `enabled` | `boolean` | Polling ativo |
-| `poll_interval_ms` | `int` | Default 30000; clamp 500–300000 (fonte: `device_validation_content.json`) |
+| `poll_interval_ms` | `int` | Default 30000; clamp 1–300000 (fonte: `device_validation_content.json`) |
 | `last_seen_at` | `timestamptz` | Último poll OK |
 | `last_metrics` | `jsonb` | Ex.: `{"counter": 1284}` ou `{"rpm": 1850, "temperature_c": 67.2}` |
 | `last_error` | `text` | Timeout/offline |

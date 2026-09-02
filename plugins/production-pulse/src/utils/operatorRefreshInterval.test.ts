@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { resolveOperatorRefreshIntervalMs } from "./operatorRefreshInterval";
 
 describe("resolveOperatorRefreshIntervalMs", () => {
-  it("respeita poll de 500 ms sem forçar piso de 5 s", () => {
-    expect(resolveOperatorRefreshIntervalMs(500)).toBe(500);
+  it("respeita poll de 1 ms sem forçar piso artificial", () => {
+    expect(resolveOperatorRefreshIntervalMs(1)).toBe(1);
   });
 
   it("usa default 30_000 ms quando intervalo ausente", () => {
@@ -13,7 +13,7 @@ describe("resolveOperatorRefreshIntervalMs", () => {
   });
 
   it("não desce abaixo do mínimo canônico nem passa do máximo", () => {
-    expect(resolveOperatorRefreshIntervalMs(100)).toBe(500);
+    expect(resolveOperatorRefreshIntervalMs(0)).toBe(1);
     expect(resolveOperatorRefreshIntervalMs(999_999)).toBe(300_000);
   });
 });

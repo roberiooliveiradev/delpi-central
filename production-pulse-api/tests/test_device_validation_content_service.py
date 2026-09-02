@@ -18,13 +18,13 @@ from production_pulse_app.infrastructure.content.device_validation_content_servi
 
 def test_load_device_validation_content_has_poll_limits():
     content = load_device_validation_content()
-    assert content["limits"]["pollIntervalMs"]["min"] == 500
+    assert content["limits"]["pollIntervalMs"]["min"] == 1
     assert content["limits"]["pollIntervalMs"]["max"] == 300_000
     assert content["limits"]["pollIntervalMs"]["default"] == 30_000
 
 
 def test_poll_interval_limits_match_json():
-    assert poll_interval_min() == 500
+    assert poll_interval_min() == 1
     assert poll_interval_max() == 300_000
     assert poll_interval_default() == 30_000
 
@@ -42,15 +42,15 @@ def test_matches_ipv4_rejects_invalid_octets():
 
 
 def test_validate_poll_interval_ms_accepts_minimum():
-    assert validate_poll_interval_ms(500) == 500
+    assert validate_poll_interval_ms(1) == 1
 
 
 def test_validate_poll_interval_ms_rejects_below_minimum():
     try:
-        validate_poll_interval_ms(400)
+        validate_poll_interval_ms(0)
     except DeviceValidationError as exc:
         assert exc.code == "poll_interval_out_of_range"
-        assert exc.params["min"] == 500
+        assert exc.params["min"] == 1
         assert exc.params["max"] == 300_000
     else:
         raise AssertionError("expected DeviceValidationError")

@@ -24,7 +24,7 @@ def _poll_interval_limits() -> dict[str, Any]:
     return section if isinstance(section, dict) else {}
 
 
-def poll_interval_min(*, default: int = 500) -> int:
+def poll_interval_min(*, default: int = 1) -> int:
     raw = _poll_interval_limits().get("min")
     if isinstance(raw, (int, float)):
         return int(raw)

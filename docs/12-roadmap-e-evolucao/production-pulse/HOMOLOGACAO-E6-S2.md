@@ -56,7 +56,7 @@ PP_LIVE_ESP=1 pytest tests/test_esp8266_counter_driver_live.py -q
 | Filial | SC (`01`) |
 | IP | `192.168.20.2` |
 | Driver | `esp8266_counter_v1` (contador) |
-| Intervalo poll | `30000` ms (mín. `500`, máx. `300000`) |
+| Intervalo poll | `30000` ms (mín. `1`, máx. `300000`) |
 | Ativo | Sim |
 
 1. **Testar conexão** antes de salvar → modal com contador lido (sem gravar histórico).

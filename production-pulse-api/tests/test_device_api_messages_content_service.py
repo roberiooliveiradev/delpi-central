@@ -40,7 +40,7 @@ def test_command_error_message_maps_unsupported_command():
 
 
 def test_validation_error_message_supports_placeholders():
-    message = validation_error_message("poll_interval_out_of_range", min=500, max=300_000)
-    assert "500" in message
+    message = validation_error_message("poll_interval_out_of_range", min=1, max=300_000)
+    assert "1" in message
     assert "300000" in message
     assert "milissegundos" in message.lower()

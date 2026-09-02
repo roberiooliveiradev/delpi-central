@@ -43,13 +43,13 @@ describe("deviceFormValidation", () => {
     ).toBe(true);
   });
 
-  it("accepts minimum poll interval in ms", () => {
+  it("accepts minimum poll interval of 1 ms", () => {
     const errors = validateDeviceForm(
       {
         ...DEFAULT_DEVICE_FORM_VALUES,
         name: "ESP A",
         ipAddress: "192.168.20.2",
-        pollIntervalMs: 500,
+        pollIntervalMs: 1,
       },
       DEFAULT_BINDING_VALUES,
     );
@@ -62,11 +62,11 @@ describe("deviceFormValidation", () => {
         ...DEFAULT_DEVICE_FORM_VALUES,
         name: "ESP A",
         ipAddress: "192.168.20.2",
-        pollIntervalMs: 400,
+        pollIntervalMs: 0,
       },
       DEFAULT_BINDING_VALUES,
     );
-    expect(errors.pollIntervalMs).toContain("500");
+    expect(errors.pollIntervalMs).toContain("1");
     expect(errors.pollIntervalMs).toContain("300000");
   });
 

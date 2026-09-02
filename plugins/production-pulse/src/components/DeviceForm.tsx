@@ -129,7 +129,7 @@ export function DeviceForm({
           type="number"
           min={POLL_INTERVAL_MIN_MS}
           max={POLL_INTERVAL_MAX_MS}
-          step={100}
+          step={1}
           inputMode="numeric"
           value={String(device.pollIntervalMs)}
           onChange={(value) =>

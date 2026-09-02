@@ -4,6 +4,16 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    poll_interval_default,
+    poll_interval_max,
+    poll_interval_min,
+)
+
+_POLL_MIN = poll_interval_min()
+_POLL_MAX = poll_interval_max()
+_POLL_DEFAULT = poll_interval_default()
+
 
 class DeviceCreateBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -12,7 +22,12 @@ class DeviceCreateBody(BaseModel):
     branch: str
     ip_address: str = Field(alias="ipAddress")
     driver_key: str = Field(alias="driverKey")
-    poll_interval_ms: int = Field(default=30_000, alias="pollIntervalMs", ge=500, le=300_000)
+    poll_interval_ms: int = Field(
+        default=_POLL_DEFAULT,
+        alias="pollIntervalMs",
+        ge=_POLL_MIN,
+        le=_POLL_MAX,
+    )
     enabled: bool = True
 
 
@@ -30,8 +45,8 @@ class DevicePatchBody(BaseModel):
     poll_interval_ms: int | None = Field(
         default=None,
         alias="pollIntervalMs",
-        ge=500,
-        le=300_000,
+        ge=_POLL_MIN,
+        le=_POLL_MAX,
     )
     enabled: bool | None = None
 

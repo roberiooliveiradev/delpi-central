@@ -1,7 +1,7 @@
 {
   "limits": {
     "pollIntervalMs": {
-      "min": 500,
+      "min": 1,
       "max": 300000,
       "default": 30000
     },
