@@ -67,7 +67,7 @@ Complementa E5 (wireframes WF-PP-01/02/03/OP). Objetivo: **todas as páginas** l
 | Hero ações poll/editar | Detalhe | `DeviceDetailPage` | S2 |
 | Lista painel | Painel | `PanelPage` | S2 |
 | Hub operador filtros | Tablet | `OperatorPlacementHub` | S3 |
-| Contador / gauge | Tablet | `CounterPadSurface`, `GaugeReadoutSurface` | S3 (herda E5) |
+| Contador / gauge | Tablet | `CounterPadSurface`, `GaugeReadoutSurface` | S3 + **S5** (WF-PP-OP-08 shell) |
 
 ### Etapas
 
@@ -95,6 +95,12 @@ Complementa E5 (wireframes WF-PP-01/02/03/OP). Objetivo: **todas as páginas** l
 - **Fazer:** CSS `pp-operator-hub__filters` ≤600px; herda grid cards E5.
 - **Pronto quando:** hub 1 col mobile · 2–3 col tablet (grid existente).
 
+#### E8.S5 — Superfícies operador responsivas (WF-PP-OP-08) ✅
+
+- **Objetivo:** Contador e gauge legíveis em mobile, tablet e desktop — shell flex, pad CSS grid, gauge 2 col ≥901px.
+- **Fazer:** `CounterPadSurface` markup único + `pp-counter-pad__workspace`; tokens `--pp-operator-content-max` por `data-pp-viewport`; wireframe WF-PP-OP-08.
+- **Pronto quando:** vitest estrutural OP-08; build MFE; pad empilhado ≤768px sem branch TS.
+
 #### E8.S4 — Verify visual + homologação tablet ⏳
 
 - **Objetivo:** Checklist manual WF-PP em 375px / 768px / 1024px antes de E6.S2 live.
@@ -108,6 +114,7 @@ Complementa E5 (wireframes WF-PP-01/02/03/OP). Objetivo: **todas as páginas** l
 - [x] E8.S1 — form grade + footer compact
 - [x] E8.S2 — painel + detalhe responsive
 - [x] E8.S3 — operador hub filtros mobile
+- [x] E8.S5 — superfícies operador responsivas (WF-PP-OP-08)
 - [ ] E8.S4 — verify visual tablet (pré E6.S2 live)
 
 ### Fora do escopo (E8)

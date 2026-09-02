@@ -177,6 +177,21 @@ describe("production-pulse kit contracts", () => {
     expect(hook).toMatch(/query\.has\("view"\)/);
   });
 
+  it("operador contador e gauge usam shell responsivo WF-PP-OP-08", () => {
+    const counter = readRelative("components/operator/CounterPadSurface.tsx");
+    const gauge = readRelative("components/operator/GaugeReadoutSurface.tsx");
+    const css = readRelative("index.css");
+    expect(counter).toMatch(/pp-counter-pad__workspace/);
+    expect(counter).toMatch(/pp-counter-pad__btn--increment/);
+    expect(counter).not.toMatch(/isMobileViewport/);
+    expect(counter).not.toMatch(/pp-counter-pad__pad--stack/);
+    expect(gauge).toMatch(/pp-gauge-readout__workspace/);
+    expect(css).toMatch(/--pp-operator-content-max/);
+    expect(css).toMatch(/grid-template-areas:\s*\n\s*"increment increment"/);
+    expect(css).toMatch(/data-pp-viewport="tablet"\] \.pp-counter-pad__value/);
+    expect(css).toMatch(/min-width: 901px\)[\s\S]*pp-gauge-readout__grid/);
+  });
+
   it("trocar posto no operador volta ao hub — evita auto-redirect do picker", () => {
     const counter = readRelative("components/operator/CounterPadSurface.tsx");
     const gauge = readRelative("components/operator/GaugeReadoutSurface.tsx");

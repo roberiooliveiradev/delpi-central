@@ -10,8 +10,6 @@ import type { OperatorDeviceItem } from "../../types/operator";
 import { PP_HELP } from "../../content/helpTooltips";
 import { resolveDeviceActionMessage } from "../../utils/apiErrors";
 import { navigateOperatorPlacementHub } from "../../utils/operatorNavigation";
-import { isMobileViewport } from "../../utils/viewportLayout";
-import { useViewportBucket } from "../../hooks/useViewportBucket";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import {
   formatMetricValue,
@@ -34,12 +32,9 @@ type CounterPadSurfaceProps = {
 export function CounterPadSurface({
   deviceId,
   branch,
-  placementKey,
   placementLabel,
   initialDevice,
 }: CounterPadSurfaceProps) {
-  const viewport = useViewportBucket();
-  const portraitStack = isMobileViewport(viewport);
   const [device, setDevice] = useState(initialDevice);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,10 +117,6 @@ export function CounterPadSurface({
     }
   };
 
-  const goBack = () => {
-    navigateOperatorPlacementHub(branch);
-  };
-
   const statusLine = `${device.name} · ${formatRelativeTime(device.lastSeenAt)}`;
 
   return (
@@ -138,7 +129,7 @@ export function CounterPadSurface({
           <PpActionButton
             variant="ghost"
             className="pp-operator-hero-btn"
-            onClick={goBack}
+            onClick={() => navigateOperatorPlacementHub(branch)}
             title={PP_HELP.operator.changePlacement}
           >
             Trocar posto
@@ -154,93 +145,60 @@ export function CounterPadSurface({
 
       {error ? <p className="pp-detail-error">{error}</p> : null}
 
-      <div className={`pp-counter-pad__stage${device.online ? "" : " pp-counter-pad__stage--muted"}`}>
-        <p className="pp-counter-pad__value">{metricValue}</p>
-        {unit ? <p className="pp-counter-pad__unit">{unit}</p> : null}
-        <p className="pp-counter-pad__label">{metricDisplayLabel(device)}</p>
-        <DeviceStatusBadge status={device.status} />
-      </div>
+      <div className="pp-counter-pad__workspace">
+        <div className={`pp-counter-pad__stage${device.online ? "" : " pp-counter-pad__stage--muted"}`}>
+          <p className="pp-counter-pad__value">{metricValue}</p>
+          {unit ? <p className="pp-counter-pad__unit">{unit}</p> : null}
+          <p className="pp-counter-pad__label">{metricDisplayLabel(device)}</p>
+          <DeviceStatusBadge status={device.status} />
+        </div>
 
-      <div
-        className={`pp-counter-pad__pad${portraitStack ? " pp-counter-pad__pad--stack" : ""}${commandsDisabled ? " pp-counter-pad__pad--disabled" : ""}`}
-      >
-        {portraitStack ? (
-          <>
-            <PpActionButton
-              variant="primary"
-              className="pp-counter-pad__btn pp-counter-pad__btn--primary-full"
-              disabled={commandsDisabled}
-              onClick={() => void runCommand("increment")}
-              title={PP_HELP.operator.counterIncrement}
-            >
-              <Plus size={28} aria-hidden="true" /> Aumentar golpe
-            </PpActionButton>
-            <div className="pp-counter-pad__row">
-              <PpActionButton
-                variant="ghost"
-                className="pp-counter-pad__btn"
-                disabled={commandsDisabled}
-                onClick={() => void runCommand("decrement")}
-                title={PP_HELP.operator.counterDecrement}
-              >
-                <Minus size={24} aria-hidden="true" /> Diminuir
-              </PpActionButton>
-              <PpActionButton
-                variant="ghost"
-                className="pp-counter-pad__btn pp-counter-pad__btn--warn"
-                disabled={commandsDisabled}
-                onClick={() => setClearOpen(true)}
-                title={PP_HELP.operator.counterClear}
-              >
-                <Eraser size={24} aria-hidden="true" /> Limpar
-              </PpActionButton>
-            </div>
-          </>
-        ) : (
-          <>
-            <PpActionButton
-              variant="ghost"
-              className="pp-counter-pad__btn"
-              disabled={commandsDisabled}
-              onClick={() => void runCommand("decrement")}
-              title={PP_HELP.operator.counterDecrement}
-            >
-              <Minus size={32} aria-hidden="true" />
-              <span>Diminuir</span>
-            </PpActionButton>
-            <PpActionButton
-              variant="ghost"
-              className="pp-counter-pad__btn pp-counter-pad__btn--warn"
-              disabled={commandsDisabled}
-              onClick={() => setClearOpen(true)}
-              title={PP_HELP.operator.counterClear}
-            >
-              <Eraser size={32} aria-hidden="true" />
-              <span>Limpar</span>
-            </PpActionButton>
-            <PpActionButton
-              variant="primary"
-              className="pp-counter-pad__btn pp-counter-pad__btn--accent"
-              disabled={commandsDisabled}
-              onClick={() => void runCommand("increment")}
-              title={PP_HELP.operator.counterIncrement}
-            >
-              <Plus size={32} aria-hidden="true" />
-              <span>Aumentar</span>
-            </PpActionButton>
-          </>
-        )}
-      </div>
-
-      <div className="pp-counter-pad__sync">
-        <PpActionButton
-          variant="ghost"
-          className="pp-counter-pad__sync-btn"
-          onClick={() => void syncNow()}
-          disabled={busy}
+        <div
+          className={`pp-counter-pad__pad${commandsDisabled ? " pp-counter-pad__pad--disabled" : ""}`}
         >
-          {busy ? "Sincronizando…" : "Sincronizar agora"}
-        </PpActionButton>
+          <PpActionButton
+            variant="ghost"
+            className="pp-counter-pad__btn pp-counter-pad__btn--decrement"
+            disabled={commandsDisabled}
+            onClick={() => void runCommand("decrement")}
+            title={PP_HELP.operator.counterDecrement}
+          >
+            <Minus size={32} aria-hidden="true" />
+            <span className="pp-counter-pad__btn-label">Diminuir</span>
+          </PpActionButton>
+          <PpActionButton
+            variant="ghost"
+            className="pp-counter-pad__btn pp-counter-pad__btn--clear pp-counter-pad__btn--warn"
+            disabled={commandsDisabled}
+            onClick={() => setClearOpen(true)}
+            title={PP_HELP.operator.counterClear}
+          >
+            <Eraser size={32} aria-hidden="true" />
+            <span className="pp-counter-pad__btn-label">Limpar</span>
+          </PpActionButton>
+          <PpActionButton
+            variant="primary"
+            className="pp-counter-pad__btn pp-counter-pad__btn--increment pp-counter-pad__btn--accent"
+            disabled={commandsDisabled}
+            onClick={() => void runCommand("increment")}
+            title={PP_HELP.operator.counterIncrement}
+          >
+            <Plus size={32} aria-hidden="true" />
+            <span className="pp-counter-pad__btn-label pp-counter-pad__btn-label--long">Aumentar golpe</span>
+            <span className="pp-counter-pad__btn-label pp-counter-pad__btn-label--short">Aumentar</span>
+          </PpActionButton>
+        </div>
+
+        <div className="pp-counter-pad__sync">
+          <PpActionButton
+            variant="ghost"
+            className="pp-counter-pad__sync-btn"
+            onClick={() => void syncNow()}
+            disabled={busy}
+          >
+            {busy ? "Sincronizando…" : "Sincronizar agora"}
+          </PpActionButton>
+        </div>
       </div>
 
       <OperatorClearCounterModal
