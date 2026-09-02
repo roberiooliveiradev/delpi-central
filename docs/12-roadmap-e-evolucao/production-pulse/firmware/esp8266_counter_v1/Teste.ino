@@ -36,6 +36,11 @@ bool leituraAnteriorMenos = HIGH;
 unsigned long tempoMais = 0;
 unsigned long tempoMenos = 0;
 
+unsigned long lastWifiAttemptMs = 0;
+unsigned long wifiBackoffMs = 1000;
+static const unsigned long WIFI_BACKOFF_MAX_MS = 30000;
+static const unsigned long WIFI_BOOT_WAIT_MS = 15000;
+
 String montarCodigoControlador() {
   char buf[24];
   snprintf(buf, sizeof(buf), "ESP-%08X", ESP.getChipId());
@@ -298,6 +303,34 @@ void aplicarConfigPost() {
   enviarConfig();
 }
 
+void reiniciarDispositivo() {
+  if (!requireDeviceToken()) {
+    return;
+  }
+  enviarCors();
+  server.send(200, "application/json", "{\"ok\":true,\"action\":\"reboot\"}");
+  delay(50);
+  ESP.restart();
+}
+
+void ensureWifiConnected() {
+  if (WiFi.status() == WL_CONNECTED) {
+    wifiBackoffMs = 1000;
+    return;
+  }
+  unsigned long now = millis();
+  if (now - lastWifiAttemptMs < wifiBackoffMs) {
+    return;
+  }
+  lastWifiAttemptMs = now;
+  WiFi.disconnect();
+  WiFi.begin(cfg.ssid, cfg.password);
+  if (wifiBackoffMs < WIFI_BACKOFF_MAX_MS) {
+    unsigned long next = wifiBackoffMs * 2UL;
+    wifiBackoffMs = next > WIFI_BACKOFF_MAX_MS ? WIFI_BACKOFF_MAX_MS : next;
+  }
+}
+
 String paginaPrincipal() {
   String html;
   html.reserve(2400);
@@ -442,24 +475,38 @@ void registrarRotas() {
     enviarCors();
     server.send(204);
   });
+  server.on("/api/reboot", HTTP_POST, reiniciarDispositivo);
+  server.on("/api/reboot", HTTP_OPTIONS, []() {
+    enviarCors();
+    server.send(204);
+  });
 }
 
 void setup() {
   Serial.begin(115200);
+  ESP.wdtEnable(8000);
   pinMode(BT_MAIS, INPUT_PULLUP);
   pinMode(BT_MENOS, INPUT_PULLUP);
   codigoControlador = montarCodigoControlador();
   loadConfigFromEeprom();
 
+  WiFi.mode(WIFI_STA);
   WiFi.begin(cfg.ssid, cfg.password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+  lastWifiAttemptMs = millis();
+  unsigned long bootStart = millis();
+  while (WiFi.status() != WL_CONNECTED && (millis() - bootStart) < WIFI_BOOT_WAIT_MS) {
+    delay(200);
+    ESP.wdtFeed();
   }
 
   Serial.println();
-  Serial.println("WiFi conectado");
-  Serial.print("IP: ");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("WiFi conectado");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("WiFi ainda offline — reconnect no loop");
+  }
   Serial.print("Codigo controlador: ");
   Serial.println(codigoControlador);
   Serial.print("apiTokenSet: ");
@@ -471,6 +518,8 @@ void setup() {
 }
 
 void loop() {
+  ESP.wdtFeed();
+  ensureWifiConnected();
   server.handleClient();
   processarBotao(BT_MAIS, estadoMais, leituraAnteriorMais, tempoMais, +1);
   processarBotao(BT_MENOS, estadoMenos, leituraAnteriorMenos, tempoMenos, -1);

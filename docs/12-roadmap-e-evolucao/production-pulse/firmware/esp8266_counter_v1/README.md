@@ -15,6 +15,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 | `POST` | `/api/decrementar` | idem | −1 |
 | `POST` | `/api/reset` | idem | zera |
 | `POST` | `/api/definir` | idem | body `{"contador": N}` — restore pela API Delpi |
+| `POST` | `/api/reboot` | idem | responde JSON e reinicia o chip |
 
 ### Autenticação
 
@@ -27,5 +28,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 `ssid`, `password`, `apiToken`, `debounceMs`. Defaults de fábrica: `YOUR_SSID` / `YOUR_PASSWORD`, debounce 100 ms, token vazio.
 
 O código do controlador é `ESP-` + `ESP.getChipId()` em hex — estável após reboot.
+
+Wi‑Fi: tentativa limitada no boot; no `loop`, reconnect com backoff via `millis()` (sem `delay` longo) + `ESP.wdtFeed()`.
 
 No Production Pulse: cadastro com Wi‑Fi/debounce/token; «Testar conexão» e Salvar (modo A) usam `/api/config` e `/api/status`.

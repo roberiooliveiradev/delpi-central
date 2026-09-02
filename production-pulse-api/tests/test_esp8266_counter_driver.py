@@ -196,3 +196,16 @@ def test_register_device_drivers_exposes_implementation():
     )
 
     reset_device_driver_registration_for_tests()
+
+
+def test_reboot_posts_authenticated_path():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/reboot"
+        assert request.method == "POST"
+        assert request.headers.get("X-Device-Token") == "secret-token"
+        return httpx.Response(200, json={"ok": True, "action": "reboot"})
+
+    device = {**_DEVICE, "device_api_token": "secret-token"}
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    result = driver.execute(device, "reboot")
+    assert result.success is True
