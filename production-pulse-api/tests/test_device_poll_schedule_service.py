@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from production_pulse_app.domain.services.device_poll_schedule_service import (
     compute_initial_poll_at,
@@ -8,22 +8,21 @@ from production_pulse_app.domain.services.device_poll_schedule_service import (
 
 def test_next_poll_at_applies_jitter_bounds():
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    samples = [compute_next_poll_at(100, now=now) for _ in range(50)]
+    samples = [compute_next_poll_at(100_000, now=now) for _ in range(50)]
     deltas = [(sample - now).total_seconds() for sample in samples]
     assert all(90 <= delta <= 110 for delta in deltas)
 
 
 def test_initial_poll_at_within_interval():
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    samples = [compute_initial_poll_at(60, now=now) for _ in range(20)]
+    samples = [compute_initial_poll_at(60_000, now=now) for _ in range(20)]
     for sample in samples:
         delta = (sample - now).total_seconds()
         assert 0 <= delta <= 60
 
 
-def test_next_poll_at_supports_subsecond_interval():
+def test_next_poll_at_supports_one_millisecond_interval():
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    sample = compute_next_poll_at(0.5, now=now)
-    delta = (sample - now).total_seconds()
-    assert 0.45 <= delta <= 0.55
-
+    sample = compute_next_poll_at(1, now=now)
+    delta_ms = (sample - now).total_seconds() * 1000
+    assert 0.9 <= delta_ms <= 1.1

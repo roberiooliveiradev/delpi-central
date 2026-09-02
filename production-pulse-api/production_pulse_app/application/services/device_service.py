@@ -14,11 +14,16 @@ from production_pulse_app.domain.services.binding_serialization_service import b
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
 from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.domain.services.device_validation_service import (
+    normalize_controller_code,
+    normalize_firmware_source,
     normalize_ip_address,
     normalize_name,
     resolve_driver,
     validate_branch,
-    validate_poll_interval,
+    validate_poll_interval_ms,
+)
+from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    poll_interval_default,
 )
 from production_pulse_app.application.services.device_binding_service import DeviceBindingService
 from production_pulse_app.application.services.device_period_delta_service import (
@@ -63,6 +68,8 @@ class DeviceService:
         payload["status"] = connectivity["status"]
         payload["online"] = connectivity["online"]
         payload["graceSeconds"] = connectivity["graceSeconds"]
+        if "graceMs" in connectivity:
+            payload["graceMs"] = connectivity["graceMs"]
         return payload
 
     def list_devices(
@@ -117,10 +124,24 @@ class DeviceService:
         name = normalize_name(payload.get("name", ""))
         ip_address = normalize_ip_address(payload.get("ip_address") or payload.get("ipAddress", ""))
         driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))
-        poll_interval = validate_poll_interval(
-            float(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds") or 30)
+        poll_interval = validate_poll_interval_ms(
+            float(
+                payload.get("poll_interval_ms")
+                or payload.get("pollIntervalMs")
+                or poll_interval_default()
+            )
         )
         enabled = bool(payload.get("enabled", True))
+        controller_code = normalize_controller_code(
+            payload.get("controller_code")
+            if "controller_code" in payload
+            else payload.get("controllerCode")
+        )
+        firmware_source = normalize_firmware_source(
+            payload.get("firmware_source")
+            if "firmware_source" in payload
+            else payload.get("firmwareSource")
+        )
         row = self._repository.create(
             branch=branch,
             name=name,
@@ -128,7 +149,9 @@ class DeviceService:
             driver_key=driver.driver_key,
             role_key=driver.role_key,
             enabled=enabled,
-            poll_interval_seconds=poll_interval,
+            poll_interval_ms=poll_interval,
+            controller_code=controller_code,
+            firmware_source=firmware_source,
             actor_sub=actor_sub,
         )
         return json_safe(device_row_to_api(row))
@@ -144,10 +167,24 @@ class DeviceService:
         name = normalize_name(payload.get("name", ""))
         ip_address = normalize_ip_address(payload.get("ip_address") or payload.get("ipAddress", ""))
         driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))
-        poll_interval = validate_poll_interval(
-            float(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds") or 30)
+        poll_interval = validate_poll_interval_ms(
+            float(
+                payload.get("poll_interval_ms")
+                or payload.get("pollIntervalMs")
+                or poll_interval_default()
+            )
         )
         enabled = bool(payload.get("enabled", True))
+        controller_code = normalize_controller_code(
+            payload.get("controller_code")
+            if "controller_code" in payload
+            else payload.get("controllerCode")
+        )
+        firmware_source = normalize_firmware_source(
+            payload.get("firmware_source")
+            if "firmware_source" in payload
+            else payload.get("firmwareSource")
+        )
         row = self._repository.replace(
             device_id,
             branch=branch,
@@ -156,7 +193,9 @@ class DeviceService:
             driver_key=driver.driver_key,
             role_key=driver.role_key,
             enabled=enabled,
-            poll_interval_seconds=poll_interval,
+            poll_interval_ms=poll_interval,
+            controller_code=controller_code,
+            firmware_source=firmware_source,
             actor_sub=actor_sub,
         )
         return json_safe(device_row_to_api(row))
@@ -177,15 +216,27 @@ class DeviceService:
             updates["ip_address"] = normalize_ip_address(
                 payload.get("ip_address") or payload.get("ipAddress", "")
             )
+        if "controller_code" in payload or "controllerCode" in payload:
+            updates["controller_code"] = normalize_controller_code(
+                payload.get("controller_code")
+                if "controller_code" in payload
+                else payload.get("controllerCode")
+            )
+        if "firmware_source" in payload or "firmwareSource" in payload:
+            updates["firmware_source"] = normalize_firmware_source(
+                payload.get("firmware_source")
+                if "firmware_source" in payload
+                else payload.get("firmwareSource")
+            )
         if "driver_key" in payload or "driverKey" in payload:
             driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))
             updates["driver_key"] = driver.driver_key
             updates["role_key"] = driver.role_key
         if "enabled" in payload:
             updates["enabled"] = bool(payload["enabled"])
-        if "poll_interval_seconds" in payload or "pollIntervalSeconds" in payload:
-            updates["poll_interval_seconds"] = validate_poll_interval(
-                float(payload.get("poll_interval_seconds") or payload.get("pollIntervalSeconds"))
+        if "poll_interval_ms" in payload or "pollIntervalMs" in payload:
+            updates["poll_interval_ms"] = validate_poll_interval_ms(
+                float(payload.get("poll_interval_ms") or payload.get("pollIntervalMs"))
             )
         row = self._repository.patch(device_id, updates=updates, actor_sub=actor_sub)
         return json_safe(device_row_to_api(row))

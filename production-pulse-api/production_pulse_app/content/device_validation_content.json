@@ -1,13 +1,31 @@
 {
   "limits": {
-    "pollIntervalSeconds": {
-      "min": 0.5,
-      "max": 300
+    "pollIntervalMs": {
+      "min": 1,
+      "max": 300000,
+      "default": 30000
     },
-    "nameMaxLength": 120
+    "liveUiRefreshMs": {
+      "min": 50
+    },
+    "schedulerTickMs": {
+      "default": 100
+    },
+    "onlineGraceMs": {
+      "multiplier": 2,
+      "min": 2000,
+      "max": 600000
+    },
+    "nameMaxLength": 120,
+    "controllerCodeMaxLength": 64,
+    "counterSet": {
+      "min": 0,
+      "max": 2147483647
+    }
   },
   "patterns": {
-    "ipv4": "^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)$"
+    "ipv4": "^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)$",
+    "controllerCode": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$"
   },
   "validBranches": ["01", "02"]
 }

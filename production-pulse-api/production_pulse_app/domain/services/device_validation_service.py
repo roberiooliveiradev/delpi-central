@@ -7,6 +7,8 @@ from production_pulse_app.application.services.device_driver_registry_service im
 )
 from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    controller_code_max_length,
+    matches_controller_code,
     matches_ipv4,
     name_max_length,
     poll_interval_max,
@@ -35,17 +37,17 @@ def validate_branch(branch: str) -> str:
     return normalized
 
 
-def validate_poll_interval(seconds: int | float) -> float:
+def validate_poll_interval_ms(milliseconds: int | float) -> int:
     minimum = poll_interval_min()
     maximum = poll_interval_max()
-    value = float(seconds)
+    value = int(round(float(milliseconds)))
     if value < minimum or value > maximum:
         raise DeviceValidationError(
             "poll_interval_out_of_range",
             min=minimum,
-            max=int(maximum),
+            max=maximum,
         )
-    return round(value, 2)
+    return value
 
 
 def normalize_ip_address(ip_address: str) -> str:
@@ -66,12 +68,39 @@ def normalize_name(name: str) -> str:
     return normalized
 
 
+def normalize_controller_code(controller_code: str | None) -> str | None:
+    """Código opcional do hardware; vazio vira None."""
+    if controller_code is None:
+        return None
+    normalized = str(controller_code).strip()
+    if not normalized:
+        return None
+    maximum = controller_code_max_length()
+    if len(normalized) > maximum:
+        raise DeviceValidationError("controller_code_too_long", max=maximum)
+    if not matches_controller_code(normalized):
+        raise DeviceValidationError("invalid_controller_code")
+    return normalized
+
+
+def normalize_firmware_source(firmware_source: str | None) -> str | None:
+    """Sketch .ino opcional; sem limite de tamanho. Vazio vira None."""
+    if firmware_source is None:
+        return None
+    normalized = str(firmware_source).strip("\n\r")
+    if not normalized.strip():
+        return None
+    return normalized
+
+
 __all__ = [
     "DeviceValidationError",
     "ResolvedDriver",
     "resolve_driver",
     "validate_branch",
-    "validate_poll_interval",
+    "validate_poll_interval_ms",
+    "normalize_controller_code",
+    "normalize_firmware_source",
     "normalize_ip_address",
     "normalize_name",
 ]

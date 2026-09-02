@@ -1,10 +1,12 @@
 import type { AnchorType, BindingFormValues, DeviceFormValues } from "../types/form";
 import {
-  clampPollInterval,
+  clampPollIntervalMs,
+  CONTROLLER_CODE_MAX_LENGTH,
   formatValidationMessage,
   NAME_MAX_LENGTH,
-  POLL_INTERVAL_MAX_SECONDS,
-  POLL_INTERVAL_MIN_SECONDS,
+  POLL_INTERVAL_MAX_MS,
+  POLL_INTERVAL_MIN_MS,
+  validateControllerCode,
   validateIpv4,
 } from "../content/deviceValidationContent";
 
@@ -13,7 +15,7 @@ export type DeviceFormErrors = Partial<Record<keyof DeviceFormValues, string>> &
   form?: string;
 };
 
-export { clampPollInterval, POLL_INTERVAL_MAX_SECONDS, POLL_INTERVAL_MIN_SECONDS, validateIpv4 };
+export { clampPollIntervalMs, POLL_INTERVAL_MAX_MS, POLL_INTERVAL_MIN_MS, validateIpv4 };
 
 export function validateDeviceForm(
   device: DeviceFormValues,
@@ -34,20 +36,31 @@ export function validateDeviceForm(
   if (!ip) errors.ipAddress = formatValidationMessage("ip_address_required");
   else if (!validateIpv4(ip)) errors.ipAddress = formatValidationMessage("invalid_ipv4");
 
+  const controllerCode = (device.controllerCode ?? "").trim();
+  if (controllerCode) {
+    if (controllerCode.length > CONTROLLER_CODE_MAX_LENGTH) {
+      errors.controllerCode = formatValidationMessage("controller_code_too_long", {
+        max: CONTROLLER_CODE_MAX_LENGTH,
+      });
+    } else if (!validateControllerCode(controllerCode)) {
+      errors.controllerCode = formatValidationMessage("invalid_controller_code");
+    }
+  }
+
   if (!device.driverKey.trim()) errors.driverKey = formatValidationMessage("driver_key_required");
 
-  if (!Number.isFinite(device.pollIntervalSeconds)) {
-    errors.pollIntervalSeconds = formatValidationMessage("poll_interval_out_of_range", {
-      min: POLL_INTERVAL_MIN_SECONDS,
-      max: POLL_INTERVAL_MAX_SECONDS,
+  if (!Number.isFinite(device.pollIntervalMs)) {
+    errors.pollIntervalMs = formatValidationMessage("poll_interval_out_of_range", {
+      min: POLL_INTERVAL_MIN_MS,
+      max: POLL_INTERVAL_MAX_MS,
     });
   } else if (
-    device.pollIntervalSeconds < POLL_INTERVAL_MIN_SECONDS ||
-    device.pollIntervalSeconds > POLL_INTERVAL_MAX_SECONDS
+    device.pollIntervalMs < POLL_INTERVAL_MIN_MS ||
+    device.pollIntervalMs > POLL_INTERVAL_MAX_MS
   ) {
-    errors.pollIntervalSeconds = formatValidationMessage("poll_interval_out_of_range", {
-      min: POLL_INTERVAL_MIN_SECONDS,
-      max: POLL_INTERVAL_MAX_SECONDS,
+    errors.pollIntervalMs = formatValidationMessage("poll_interval_out_of_range", {
+      min: POLL_INTERVAL_MIN_MS,
+      max: POLL_INTERVAL_MAX_MS,
     });
   }
 

@@ -29,6 +29,11 @@ export function TestConnectionModal({
           <>
             <p>{PP_HELP.modals.testOk}</p>
             {metricSummary ? <p className="pp-test-modal__metric">{metricSummary}</p> : null}
+            {result?.controllerCode ? (
+              <p className="pp-test-modal__meta">
+                {PP_HELP.modals.testControllerCodePrefix}: {result.controllerCode}
+              </p>
+            ) : null}
             {result?.latencyMs != null ? (
               <p className="pp-test-modal__meta">
                 {PP_HELP.modals.testLatencyPrefix}: {result.latencyMs} ms

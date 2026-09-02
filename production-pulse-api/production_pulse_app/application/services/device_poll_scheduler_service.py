@@ -11,11 +11,22 @@ from production_pulse_app.application.services.device_poll_service import (
 )
 from production_pulse_app.config import settings
 from production_pulse_app.domain.services.device_poll_schedule_service import compute_next_poll_at
+from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    scheduler_tick_ms,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     PostgresDeviceRepository,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_scheduler_tick_seconds() -> float:
+    """Tick do loop — content canônico, override opcional via env."""
+    tick_ms = settings.PP_POLL_SCHEDULER_TICK_MS
+    if tick_ms is None:
+        tick_ms = scheduler_tick_ms()
+    return max(0.01, float(tick_ms) / 1000.0)
 
 
 class DevicePollSchedulerService:
@@ -25,12 +36,14 @@ class DevicePollSchedulerService:
         device_repository: PostgresDeviceRepository | None = None,
         *,
         max_concurrent_polls: int | None = None,
-        tick_seconds: float = 1.0,
+        tick_seconds: float | None = None,
     ) -> None:
         self._poll_service = poll_service or DevicePollService()
         self._devices = device_repository or PostgresDeviceRepository()
         self._max_concurrent = max_concurrent_polls or settings.PP_POLL_MAX_CONCURRENT
-        self._tick_seconds = tick_seconds
+        self._tick_seconds = (
+            tick_seconds if tick_seconds is not None else resolve_scheduler_tick_seconds()
+        )
         self._semaphore = asyncio.Semaphore(max(1, self._max_concurrent))
         self._in_flight: set[UUID] = set()
         self._stop_event = asyncio.Event()
@@ -58,8 +71,9 @@ class DevicePollSchedulerService:
 
     async def _run_loop(self) -> None:
         logger.info(
-            "Device poll scheduler started (max_concurrent=%s).",
+            "Device poll scheduler started (max_concurrent=%s, tick_seconds=%s).",
             self._max_concurrent,
+            self._tick_seconds,
         )
         try:
             while not self._stop_event.is_set():
@@ -98,7 +112,7 @@ class DevicePollSchedulerService:
                     self._in_flight.discard(device_id)
 
     def _schedule_next(self, device: dict[str, Any]) -> None:
-        next_at = compute_next_poll_at(float(device["poll_interval_seconds"]))
+        next_at = compute_next_poll_at(float(device["poll_interval_ms"]))
         self._devices.update_next_poll_at(device["id"], next_poll_at=next_at)
 
 

@@ -16,7 +16,7 @@ def test_tick_skips_device_already_in_flight():
 
     scheduler = DevicePollSchedulerService(poll_service=_PollService())
     device_id = uuid4()
-    device = {"id": device_id, "poll_interval_seconds": 30}
+    device = {"id": device_id, "poll_interval_ms": 30_000}
     scheduler._devices.list_due_for_scheduled_poll = lambda limit=50: [device]
     scheduler._in_flight.add(device_id)
 
@@ -89,3 +89,50 @@ def test_counter_reset_command_is_audited(client, unique_ip, monkeypatch):
     assert len(items) == 1
     assert items[0]["commandKey"] == "reset"
     assert items[0]["success"] is True
+
+
+def test_counter_set_command_requires_payload_and_writes_value(client, unique_ip, monkeypatch):
+    device = client.post(
+        "/devices",
+        json={
+            "name": "ESP set",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_counter_v1",
+        },
+    ).json()["data"]
+
+    class _Driver:
+        driver_key = "esp8266_counter_v1"
+
+        def execute(self, _device, command_key, *, payload=None):
+            assert command_key == "set"
+            assert payload == {"counter": 1500}
+            return CommandResult(
+                success=True,
+                metrics={"counter": 1500},
+                response_payload={"contador": 1500},
+            )
+
+    class _Registry:
+        def build_capabilities(self, _driver_key):
+            return {"commands": ["increment", "decrement", "reset", "set"]}
+
+        def get_implementation(self, _driver_key):
+            return _Driver()
+
+    import production_pulse_app.interface.http.routes.device_routes as routes_module
+
+    monkeypatch.setattr(routes_module._command_service, "_registry", _Registry())
+
+    missing = client.post(f"/devices/{device['id']}/commands/set")
+    assert missing.status_code == 422
+
+    response = client.post(f"/devices/{device['id']}/commands/set", json={"counter": 1500})
+    assert response.status_code == 200
+    body = response.json()["data"]
+    assert body["success"] is True
+    assert body["metrics"]["counter"] == 1500
+
+    detail = client.get(f"/devices/{device['id']}")
+    assert detail.json()["data"]["lastMetrics"]["counter"] == 1500

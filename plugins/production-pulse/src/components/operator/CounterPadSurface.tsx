@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Eraser, Minus, Plus } from "lucide-react";
 
 import { executeOperatorCommand, fetchOperatorDevice } from "../../api/productionPulseApi";
@@ -8,6 +8,7 @@ import { DeviceStatusBadge } from "../DeviceStatusBadge";
 import { OperatorBrandBar } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
 import { PP_HELP } from "../../content/helpTooltips";
+import { useDeviceLiveRefresh } from "../../hooks/useDeviceLiveRefresh";
 import { resolveDeviceActionMessage } from "../../utils/apiErrors";
 import { navigateOperatorPlacementHub } from "../../utils/operatorNavigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
@@ -49,15 +50,13 @@ export function CounterPadSurface({
   const unit = metricUnit(metricKey);
   const commandsDisabled = busy || !device.online;
 
-  useEffect(() => {
-    const intervalMs = Math.max(5000, (device.pollIntervalSeconds ?? 30) * 1000);
-    const timer = window.setInterval(() => {
-      fetchOperatorDevice(deviceId)
-        .then(setDevice)
-        .catch(() => undefined);
-    }, intervalMs);
-    return () => window.clearInterval(timer);
-  }, [device.pollIntervalSeconds, deviceId]);
+  useDeviceLiveRefresh({
+    enabled: true,
+    pollIntervalMs: device.pollIntervalMs,
+    onTick: async () => {
+      setDevice(await fetchOperatorDevice(deviceId));
+    },
+  });
 
   const applyMetrics = (metrics?: Record<string, number | string>) => {
     if (!metrics) return;

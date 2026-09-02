@@ -17,6 +17,7 @@ const COMMAND_LABELS: Record<string, string> = {
   reset: "Reset",
   increment: "+1",
   decrement: "−1",
+  set: "Definir",
 };
 
 export function metricLabel(key: string): string {
@@ -69,6 +70,7 @@ export function formatDeltaValue(
 export function isHardwareCounterReset(reading: Pick<DeviceReading, "meta">): boolean {
   const meta = reading.meta ?? {};
   if (meta.counter_reset === true || meta.counterReset === true) return true;
+  if (meta.counter_restored === true || meta.counterRestored === true) return true;
   return false;
 }
 

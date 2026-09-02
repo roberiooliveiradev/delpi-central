@@ -67,12 +67,14 @@ export const PP_HELP = {
     filial: "Filial onde o IP do device é único. Não pode ser alterada após criar.",
     ip:
       "Endereço IPv4 fixo do hardware na rede industrial. Deve ser alcançável pela API.",
+    controllerCode:
+      "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde.",
     driver:
       "Protocolo/firmware instalado no device. Define quais métricas são lidas e se há comandos (+/−/zerar).",
     driverPreview:
       "Resumo das métricas e comandos suportados pelo driver selecionado.",
     pollInterval:
-      "Intervalo em segundos entre leituras automáticas (mín. 5, máx. 300). Default 30.",
+      "Intervalo em milissegundos entre leituras automáticas (mín. 1, máx. 300000). Default 30000.",
     enabled:
       "Desligado — para de pollar e some do hub operador; histórico é preservado.",
     testConnection:
@@ -122,7 +124,7 @@ export const PP_HELP = {
     delta:
       "Diferença em relação à leitura anterior — só para métricas monotônicas (golpes).",
     counterHardwareReset:
-      "O contador físico caiu em relação à leitura anterior (reset no hardware ou troca de firmware). O delta usa o valor novo como base.",
+      "O contador físico caiu (ex.: device desligado). A plataforma restaura o último valor (POST /api/definir) ou mantém continuidade lógica até o firmware aceitar set.",
     coverageIncomplete:
       "Pode haver lacunas se o device ficou offline ou o poll falhou.",
   },
@@ -136,6 +138,11 @@ export const PP_HELP = {
     testOk: "Conexão OK. Métricas retornadas pelo driver.",
     testFail:
       "Não foi possível alcançar o device. Verifique IP, cabo, Wi‑Fi ou firewall.",
+    testTitle: "Testar conexão",
+    testLoading: "Testando conexão…",
+    testClose: "Fechar",
+    testLatencyPrefix: "Latência",
+    testControllerCodePrefix: "Código do controlador",
     deactivateTitle: "Desativar este dispositivo?",
     deactivateBody:
       "Para leituras automáticas. O cadastro e o histórico permanecem consultáveis.",

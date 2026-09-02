@@ -37,10 +37,12 @@ export type DeviceListItem = {
   branch: string;
   name: string;
   ipAddress: string;
+  controllerCode: string | null;
+  firmwareSource: string | null;
   driverKey: string;
   roleKey: string;
   enabled: boolean;
-  pollIntervalSeconds: number;
+  pollIntervalMs: number;
   lastSeenAt: string | null;
   lastMetrics: Record<string, number | string>;
   lastError: string | null;

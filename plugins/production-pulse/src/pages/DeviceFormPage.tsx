@@ -107,8 +107,10 @@ export function DeviceFormPage({
           name: row.name,
           branch: row.branch,
           ipAddress: row.ipAddress,
+          controllerCode: row.controllerCode ?? "",
+          firmwareSource: row.firmwareSource ?? "",
           driverKey: row.driverKey,
-          pollIntervalSeconds: row.pollIntervalSeconds,
+          pollIntervalMs: row.pollIntervalMs,
           enabled: row.enabled,
         });
         setBinding(bindingFromApi(row.binding));
@@ -153,6 +155,8 @@ export function DeviceFormPage({
       setTestResult(result);
       if (!result.online) {
         setTestError(resolveProbeErrorMessage(result, PP_HELP.modals.testFail));
+      } else if (result.controllerCode && !device.controllerCode.trim()) {
+        setDevice((prev) => ({ ...prev, controllerCode: result.controllerCode ?? "" }));
       }
     } catch (err) {
       setTestError(resolveDeviceActionMessage(err, PP_HELP.modals.testFail));

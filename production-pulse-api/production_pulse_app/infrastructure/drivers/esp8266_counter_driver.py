@@ -17,12 +17,30 @@ from production_pulse_app.infrastructure.drivers.device_http_support import (
 
 _DRIVER_KEY = "esp8266_counter_v1"
 _READ_PATH = "/api/contador"
+_STATUS_PATH = "/api/status"
 _COMMAND_PATHS = {
     "increment": "/api/incrementar",
     "decrement": "/api/decrementar",
     "reset": "/api/reset",
+    "set": "/api/definir",
 }
-_CAPABILITIES = frozenset({"increment", "decrement", "reset"})
+_CAPABILITIES = frozenset({"increment", "decrement", "reset", "set"})
+
+
+def parse_controller_identity(body: Any) -> dict[str, Any]:
+    if not isinstance(body, dict):
+        return {}
+    code = body.get("controllerCode") or body.get("codigoControlador") or body.get("equipamento")
+    payload: dict[str, Any] = {}
+    if code is not None and str(code).strip():
+        payload["controllerCode"] = str(code).strip()
+    mac = body.get("mac")
+    if mac is not None and str(mac).strip():
+        payload["mac"] = str(mac).strip()
+    ip = body.get("ip")
+    if ip is not None and str(ip).strip():
+        payload["ip"] = str(ip).strip()
+    return payload
 
 
 class Esp8266CounterDriver:
@@ -53,7 +71,11 @@ class Esp8266CounterDriver:
         return self._fetch_counter(device)
 
     def test(self, device: dict[str, Any]) -> DeviceReading:
-        return self.read(device)
+        reading = self._fetch_counter(device)
+        identity = self._fetch_identity(device)
+        if not identity:
+            return reading
+        return DeviceReading(metrics=reading.metrics, meta=identity)
 
     def execute(
         self,
@@ -67,13 +89,20 @@ class Esp8266CounterDriver:
         if path is None:
             return CommandResult(success=False, error_code="unsupported_command")
 
+        body: dict[str, Any] | None = None
+        if normalized == "set":
+            counter = self._resolve_set_counter(payload)
+            if counter is None:
+                return CommandResult(success=False, error_code="invalid_command_payload")
+            body = {"contador": counter}
+
         try:
             response_body = device_post_json(
                 device,
                 path,
                 client=self._client,
                 timeout_seconds=self._timeout_for(device),
-                payload=payload,
+                payload=body,
             )
             counter = parse_counter_response(response_body)
             return CommandResult(
@@ -83,6 +112,22 @@ class Esp8266CounterDriver:
             )
         except DeviceDriverError as exc:
             return CommandResult(success=False, error_code=exc.code)
+
+    @staticmethod
+    def _resolve_set_counter(payload: dict[str, Any] | None) -> int | None:
+        if not isinstance(payload, dict):
+            return None
+        raw = payload.get("counter")
+        if raw is None:
+            raw = payload.get("contador")
+        if raw is None:
+            return None
+        try:
+            if isinstance(raw, bool):
+                return None
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
 
     def _fetch_counter(self, device: dict[str, Any]) -> DeviceReading:
         body = device_get_json(
@@ -94,5 +139,17 @@ class Esp8266CounterDriver:
         counter = parse_counter_response(body)
         return DeviceReading(metrics={"counter": counter})
 
+    def _fetch_identity(self, device: dict[str, Any]) -> dict[str, Any]:
+        try:
+            body = device_get_json(
+                device,
+                _STATUS_PATH,
+                client=self._client,
+                timeout_seconds=self._timeout_for(device),
+            )
+        except DeviceDriverError:
+            return {}
+        return parse_controller_identity(body)
 
-__all__ = ["Esp8266CounterDriver"]
+
+__all__ = ["Esp8266CounterDriver", "parse_controller_identity"]

@@ -49,10 +49,19 @@ export default function App({
     route.kind === "operatorHub" ||
     route.kind === "operatorPicker" ||
     route.kind === "operatorDevice";
+  /** Superfície imersiva (contador/gauge): preenche a área do .content do portal. */
+  const isOperatorFillRoute = route.kind === "operatorDevice";
 
   return (
     <div
-      className={`dashboard-production-pulse dashboard-page${isOperatorRoute ? " dashboard-production-pulse--operator" : ""}`}
+      className={[
+        "dashboard-production-pulse",
+        "dashboard-page",
+        isOperatorRoute ? "dashboard-production-pulse--operator" : "",
+        isOperatorFillRoute ? "dashboard-page--fill" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-pp-viewport={viewport}
       data-pp-viewport-short={shortViewport && isOperatorRoute ? "true" : undefined}
     >

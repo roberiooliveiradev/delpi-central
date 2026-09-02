@@ -1,4 +1,4 @@
-export type DeviceDetailTab = "overview" | "history" | "commands";
+export type DeviceDetailTab = "overview" | "history" | "commands" | "firmware";
 
 export type DeviceReading = {
   id: number;

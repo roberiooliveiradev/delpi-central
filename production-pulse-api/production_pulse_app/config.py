@@ -51,15 +51,10 @@ class Settings:
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
 
     PP_POLL_MAX_CONCURRENT: int = int(_get_env("PP_POLL_MAX_CONCURRENT", default="10") or "10")
-    PP_ONLINE_GRACE_MIN_SECONDS: int = int(
-        _get_env("PP_ONLINE_GRACE_MIN_SECONDS", default="60") or "60"
-    )
-    PP_ONLINE_GRACE_MAX_SECONDS: int = int(
-        _get_env("PP_ONLINE_GRACE_MAX_SECONDS", default="600") or "600"
-    )
-    PP_ONLINE_GRACE_MULTIPLIER: int = int(
-        _get_env("PP_ONLINE_GRACE_MULTIPLIER", default="2") or "2"
-    )
+    # None → device_validation_content.json → onlineGraceMs (fonte canônica).
+    PP_ONLINE_GRACE_MIN_SECONDS: int | None = None
+    PP_ONLINE_GRACE_MAX_SECONDS: int | None = None
+    PP_ONLINE_GRACE_MULTIPLIER: int | None = None
 
     DELPI_API_URL: str = _get_env(
         "DELPI_API_URL", default="http://delpi-api-delpi:8000"
@@ -76,6 +71,30 @@ class Settings:
         str(_get_env("PP_POLL_SCHEDULER_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    # Preenchido após instanciação (env ou content JSON).
+    PP_POLL_SCHEDULER_TICK_MS: int | None = None
+
+
+def _optional_positive_int(raw: str | None) -> int | None:
+    if raw is None or raw == "":
+        return None
+    value = int(raw)
+    if value < 1:
+        return None
+    return value
 
 
 settings = Settings()
+# Override opcional; None → device_validation_content.json → schedulerTickMs.default
+settings.PP_POLL_SCHEDULER_TICK_MS = _optional_positive_int(
+    _get_env("PP_POLL_SCHEDULER_TICK_MS", default="")
+)
+settings.PP_ONLINE_GRACE_MIN_SECONDS = _optional_positive_int(
+    _get_env("PP_ONLINE_GRACE_MIN_SECONDS", default="")
+)
+settings.PP_ONLINE_GRACE_MAX_SECONDS = _optional_positive_int(
+    _get_env("PP_ONLINE_GRACE_MAX_SECONDS", default="")
+)
+settings.PP_ONLINE_GRACE_MULTIPLIER = _optional_positive_int(
+    _get_env("PP_ONLINE_GRACE_MULTIPLIER", default="")
+)

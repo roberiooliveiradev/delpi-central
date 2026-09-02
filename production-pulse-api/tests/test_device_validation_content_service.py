@@ -3,12 +3,13 @@ from production_pulse_app.domain.services.device_validation_service import (
     normalize_ip_address,
     normalize_name,
     validate_branch,
-    validate_poll_interval,
+    validate_poll_interval_ms,
 )
 from production_pulse_app.infrastructure.content.device_validation_content_service import (
     load_device_validation_content,
     matches_ipv4,
     name_max_length,
+    poll_interval_default,
     poll_interval_max,
     poll_interval_min,
     valid_branches,
@@ -17,13 +18,15 @@ from production_pulse_app.infrastructure.content.device_validation_content_servi
 
 def test_load_device_validation_content_has_poll_limits():
     content = load_device_validation_content()
-    assert content["limits"]["pollIntervalSeconds"]["min"] == 0.5
-    assert content["limits"]["pollIntervalSeconds"]["max"] == 300
+    assert content["limits"]["pollIntervalMs"]["min"] == 1
+    assert content["limits"]["pollIntervalMs"]["max"] == 300_000
+    assert content["limits"]["pollIntervalMs"]["default"] == 30_000
 
 
 def test_poll_interval_limits_match_json():
-    assert poll_interval_min() == 0.5
-    assert poll_interval_max() == 300.0
+    assert poll_interval_min() == 1
+    assert poll_interval_max() == 300_000
+    assert poll_interval_default() == 30_000
 
 
 def test_valid_branches_include_01_and_02():
@@ -38,17 +41,17 @@ def test_matches_ipv4_rejects_invalid_octets():
     assert not matches_ipv4("999.1.1.1")
 
 
-def test_validate_poll_interval_accepts_half_second():
-    assert validate_poll_interval(0.5) == 0.5
+def test_validate_poll_interval_ms_accepts_minimum():
+    assert validate_poll_interval_ms(1) == 1
 
 
-def test_validate_poll_interval_rejects_below_minimum():
+def test_validate_poll_interval_ms_rejects_below_minimum():
     try:
-        validate_poll_interval(0.4)
+        validate_poll_interval_ms(0)
     except DeviceValidationError as exc:
         assert exc.code == "poll_interval_out_of_range"
-        assert exc.params["min"] == 0.5
-        assert exc.params["max"] == 300
+        assert exc.params["min"] == 1
+        assert exc.params["max"] == 300_000
     else:
         raise AssertionError("expected DeviceValidationError")
 

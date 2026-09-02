@@ -31,6 +31,28 @@ def test_read_normalizes_counter_metric():
     assert reading.metrics == {"counter": 1284}
 
 
+def test_probe_test_includes_controller_code_from_status():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/contador":
+            return httpx.Response(200, json={"contador": 10})
+        if request.url.path == "/api/status":
+            return httpx.Response(
+                200,
+                json={
+                    "codigoControlador": "ESP-00ABCDEF",
+                    "contador": 10,
+                    "mac": "AA:BB:CC:DD:EE:FF",
+                },
+            )
+        return httpx.Response(404)
+
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    reading = driver.test(_DEVICE)
+    assert reading.metrics == {"counter": 10}
+    assert reading.meta["controllerCode"] == "ESP-00ABCDEF"
+    assert reading.meta["mac"] == "AA:BB:CC:DD:EE:FF"
+
+
 def test_read_timeout_raises_device_driver_error():
     def handler(_request: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("timed out")
@@ -82,6 +104,29 @@ def test_execute_unknown_command_returns_failure():
     assert result.error_code == "unsupported_command"
 
 
+def test_execute_set_posts_definir_with_contador():
+    import json
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/definir"
+        assert request.method == "POST"
+        body = json.loads(request.content.decode("utf-8"))
+        assert body == {"contador": 1500}
+        return httpx.Response(200, json={"contador": 1500})
+
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    result = driver.execute(_DEVICE, "set", payload={"counter": 1500})
+    assert result.success is True
+    assert result.metrics == {"counter": 1500}
+
+
+def test_execute_set_without_payload_fails():
+    driver = Esp8266CounterDriver(timeout_seconds=1.0)
+    result = driver.execute(_DEVICE, "set", payload=None)
+    assert result.success is False
+    assert result.error_code == "invalid_command_payload"
+
+
 def test_register_device_drivers_exposes_implementation():
     reset_device_driver_registration_for_tests()
     with pytest.raises(DeviceDriverNotImplementedError):
@@ -90,6 +135,6 @@ def test_register_device_drivers_exposes_implementation():
     register_device_drivers()
     driver = get_device_driver_registry().get_implementation("esp8266_counter_v1")
     assert isinstance(driver, Esp8266CounterDriver)
-    assert driver.capabilities() == frozenset({"increment", "decrement", "reset"})
+    assert driver.capabilities() == frozenset({"increment", "decrement", "reset", "set"})
 
     reset_device_driver_registration_for_tests()

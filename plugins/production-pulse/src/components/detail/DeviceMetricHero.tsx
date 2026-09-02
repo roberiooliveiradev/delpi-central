@@ -47,7 +47,7 @@ export function DeviceMetricHero({
         {unit ? <p className="pp-metric-hero__unit">{unit}</p> : null}
         <p className="pp-metric-hero__label">{label}</p>
         <p className="pp-detail-muted">
-          Última leitura: {formatRelativeTime(recordedAt)} · Poll: {device.pollIntervalSeconds} s ·{" "}
+          Última leitura: {formatRelativeTime(recordedAt)} · Poll: {device.pollIntervalMs} ms ·{" "}
           {driverLabel(device.driverKey)}
         </p>
         <div className="pp-metric-hero__actions">

@@ -21,8 +21,14 @@ class DeviceNotFoundError(Exception):
 
 
 _DEVICE_COLUMNS = """
-    id, branch, name, ip_address, driver_key, role_key, enabled,
-    poll_interval_seconds, last_seen_at, last_poll_attempt_at, next_poll_at,
+    id, branch, name, ip_address, controller_code, firmware_source, driver_key, role_key, enabled,
+    poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
+    last_metrics, last_error, created_at, updated_at, created_by, updated_by
+"""
+
+_DEVICE_LIST_COLUMNS = """
+    id, branch, name, ip_address, controller_code, driver_key, role_key, enabled,
+    poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by
 """
 
@@ -52,12 +58,14 @@ class PostgresDeviceRepository:
             clauses.append("enabled = %s")
             params.append(enabled)
         if search:
-            clauses.append("(name ILIKE %s OR host(ip_address)::text ILIKE %s)")
+            clauses.append(
+                "(name ILIKE %s OR host(ip_address)::text ILIKE %s OR COALESCE(controller_code, '') ILIKE %s)"
+            )
             pattern = f"%{search.strip()}%"
-            params.extend([pattern, pattern])
+            params.extend([pattern, pattern, pattern])
         where_sql = " AND ".join(clauses)
         query = f"""
-            SELECT {_DEVICE_COLUMNS}
+            SELECT {_DEVICE_LIST_COLUMNS}
             FROM production_pulse.devices
             WHERE {where_sql}
             ORDER BY branch, name
@@ -89,7 +97,9 @@ class PostgresDeviceRepository:
         driver_key: str,
         role_key: str,
         enabled: bool,
-        poll_interval_seconds: int,
+        poll_interval_ms: int,
+        controller_code: str | None = None,
+        firmware_source: str | None = None,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -98,20 +108,22 @@ class PostgresDeviceRepository:
                     cur.execute(
                         f"""
                         INSERT INTO production_pulse.devices (
-                            branch, name, ip_address, driver_key, role_key,
-                            enabled, poll_interval_seconds, created_by, updated_by
+                            branch, name, ip_address, controller_code, firmware_source,
+                            driver_key, role_key, enabled, poll_interval_ms, created_by, updated_by
                         )
-                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING {_DEVICE_COLUMNS}
                         """,
                         (
                             branch,
                             name,
                             ip_address,
+                            controller_code,
+                            firmware_source,
                             driver_key,
                             role_key,
                             enabled,
-                            poll_interval_seconds,
+                            poll_interval_ms,
                             actor_sub,
                             actor_sub,
                         ),
@@ -121,7 +133,9 @@ class PostgresDeviceRepository:
                 return dict(row)
             except psycopg.errors.UniqueViolation as exc:
                 conn.rollback()
-                raise DeviceConflictError("Já existe dispositivo com este IP nesta filial.") from exc
+                raise DeviceConflictError(
+                    "Já existe dispositivo com este IP ou código de controlador nesta filial."
+                ) from exc
 
     def replace(
         self,
@@ -133,7 +147,9 @@ class PostgresDeviceRepository:
         driver_key: str,
         role_key: str,
         enabled: bool,
-        poll_interval_seconds: int,
+        poll_interval_ms: int,
+        controller_code: str | None = None,
+        firmware_source: str | None = None,
         actor_sub: str | None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
@@ -145,10 +161,12 @@ class PostgresDeviceRepository:
                         SET branch = %s,
                             name = %s,
                             ip_address = %s::inet,
+                            controller_code = %s,
+                            firmware_source = %s,
                             driver_key = %s,
                             role_key = %s,
                             enabled = %s,
-                            poll_interval_seconds = %s,
+                            poll_interval_ms = %s,
                             updated_by = %s,
                             updated_at = NOW()
                         WHERE id = %s
@@ -158,10 +176,12 @@ class PostgresDeviceRepository:
                             branch,
                             name,
                             ip_address,
+                            controller_code,
+                            firmware_source,
                             driver_key,
                             role_key,
                             enabled,
-                            poll_interval_seconds,
+                            poll_interval_ms,
                             actor_sub,
                             device_id,
                         ),
@@ -170,7 +190,9 @@ class PostgresDeviceRepository:
                 conn.commit()
             except psycopg.errors.UniqueViolation as exc:
                 conn.rollback()
-                raise DeviceConflictError("Já existe dispositivo com este IP nesta filial.") from exc
+                raise DeviceConflictError(
+                    "Já existe dispositivo com este IP ou código de controlador nesta filial."
+                ) from exc
             if row is None:
                 raise DeviceNotFoundError(str(device_id))
             return dict(row)
@@ -192,10 +214,12 @@ class PostgresDeviceRepository:
             "branch": "branch",
             "name": "name",
             "ip_address": "ip_address",
+            "controller_code": "controller_code",
+            "firmware_source": "firmware_source",
             "driver_key": "driver_key",
             "role_key": "role_key",
             "enabled": "enabled",
-            "poll_interval_seconds": "poll_interval_seconds",
+            "poll_interval_ms": "poll_interval_ms",
         }
         set_parts: list[str] = []
         params: list[Any] = []
@@ -228,7 +252,9 @@ class PostgresDeviceRepository:
                 conn.commit()
             except psycopg.errors.UniqueViolation as exc:
                 conn.rollback()
-                raise DeviceConflictError("Já existe dispositivo com este IP nesta filial.") from exc
+                raise DeviceConflictError(
+                    "Já existe dispositivo com este IP ou código de controlador nesta filial."
+                ) from exc
             if row is None:
                 raise DeviceNotFoundError(str(device_id))
             return dict(row)
@@ -330,7 +356,7 @@ class PostgresDeviceRepository:
 
             self.update_next_poll_at(
                 row["id"],
-                next_poll_at=compute_initial_poll_at(int(row["poll_interval_seconds"])),
+                next_poll_at=compute_initial_poll_at(int(row["poll_interval_ms"])),
             )
             updated += 1
         return updated
@@ -368,5 +394,5 @@ class PostgresDeviceRepository:
 
         self.update_next_poll_at(
             device_id,
-            next_poll_at=compute_initial_poll_at(int(device["poll_interval_seconds"])),
+            next_poll_at=compute_initial_poll_at(int(device["poll_interval_ms"])),
         )

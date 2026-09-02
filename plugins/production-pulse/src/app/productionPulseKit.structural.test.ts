@@ -70,6 +70,17 @@ describe("production-pulse kit contracts", () => {
     expect(panel).toMatch(/productionPulseOperatorPath/);
     expect(panel).toMatch(/Modo operador/);
     expect(panel).toMatch(/canOperator/);
+    expect(panel).toMatch(/pp-panel-operator-link/);
+  });
+
+  it("botões do hero usam classe de domínio pp-hero-brand-btn com tokens de marca", () => {
+    const css = readRelative("index.css");
+    const detail = readRelative("pages/DeviceDetailPage.tsx");
+    expect(css).toMatch(
+      /\.pp-hero-brand-btn[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
+    );
+    expect(detail).toMatch(/pp-hero-brand-btn/);
+    expect(css).not.toMatch(/\.delpi-ui-/);
   });
 
   it("FilterInputField declara type explícito no painel", () => {
@@ -200,9 +211,11 @@ describe("production-pulse kit contracts", () => {
     expect(css).toMatch(/--pp-operator-content-max/);
     expect(css).toMatch(/\.pp-operator-surface[\s\S]*max-width: none/);
     expect(css).toMatch(/data-pp-viewport-short="true"/);
-    expect(css).toMatch(/max-height: 100svh/);
-    expect(css).toMatch(/grid-template-rows: auto auto auto minmax\(min-content, 1fr\) auto/);
-    expect(css).toMatch(/\.pp-counter-pad__workspace[\s\S]*display: contents/);
+    expect(css).toMatch(/dashboard-page--fill/);
+    expect(css).toMatch(/\.pp-counter-pad__workspace[\s\S]*flex: 1 1 auto/);
+    expect(css).toMatch(/\.pp-counter-pad__stage[\s\S]*flex: 1 1 auto/);
+    expect(css).not.toMatch(/grid-template-rows: auto auto auto minmax\(min-content, 1fr\) auto/);
+    expect(css).not.toMatch(/\.pp-counter-pad__workspace[\s\S]*display: contents/);
     expect(css).toMatch(/container-type: inline-size/);
     expect(css).toMatch(/container-name: pp-counter-pad/);
     expect(css).toMatch(/pp-counter-pad__pad \.pp-counter-pad__btn \+ \.pp-counter-pad__btn[\s\S]*margin-inline-start: 0/);
@@ -211,6 +224,13 @@ describe("production-pulse kit contracts", () => {
     expect(css).toMatch(/min-width: 901px\)[\s\S]*pp-gauge-readout__grid/);
     expect(css).toMatch(/--pp-operator-card-min-height/);
     expect(css).toMatch(/dashboard-production-pulse--operator \.pp-device-status/);
+  });
+
+  it("modo operador device usa dashboard-page--fill (preenche área do portal)", () => {
+    const app = readRelative("App.tsx");
+    expect(app).toMatch(/dashboard-page--fill/);
+    expect(app).toMatch(/isOperatorFillRoute/);
+    expect(app).toMatch(/operatorDevice/);
   });
 
   it("trocar posto no operador volta ao hub — evita auto-redirect do picker", () => {

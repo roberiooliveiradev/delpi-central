@@ -4,11 +4,17 @@ import {
   PpNativeInlineTextField,
   PpNativeSelectField,
   PpNativeSwitchField,
+  PpNativeTextAreaField,
   PpNativeTextField,
   ppFieldError,
   ppFieldHint,
 } from "../app/productionPulseUi";
 import { PP_HELP } from "../content/helpTooltips";
+import {
+  POLL_INTERVAL_DEFAULT_MS,
+  POLL_INTERVAL_MAX_MS,
+  POLL_INTERVAL_MIN_MS,
+} from "../content/deviceValidationContent";
 import { getPpSectionIntro } from "../content/sectionIntros";
 import type { DeviceFormValues, DriverCatalogItem } from "../types/form";
 import { branchLabel, resolveBranchOptions } from "../constants/branches";
@@ -97,6 +103,29 @@ export function DeviceForm({
           }
         />
 
+        <PpNativeTextField
+          id="pp-device-controller-code"
+          label="Código do controlador"
+          hint={PP_HELP.form.controllerCode}
+          value={device.controllerCode}
+          placeholder="ESP-00A1B2C3"
+          onChange={(value) => onChange({ controllerCode: value })}
+          afterControl={ppFieldError(errors?.controllerCode)}
+        />
+
+        <PpNativeTextAreaField
+          id="pp-device-firmware-source"
+          label="Código .ino"
+          hint={PP_HELP.form.firmwareSource}
+          className="pp-firmware-source-field"
+          controlClassName="pp-firmware-source-field__control"
+          rows={14}
+          value={device.firmwareSource}
+          placeholder="// Cole o sketch Arduino completo deste dispositivo"
+          onChange={(value) => onChange({ firmwareSource: value })}
+          afterControl={ppFieldError(errors?.firmwareSource)}
+        />
+
         <PpNativeSelectField
           id="pp-device-driver"
           label="Driver"
@@ -119,20 +148,20 @@ export function DeviceForm({
 
         <PpNativeTextField
           id="pp-device-poll-interval"
-          label="Intervalo poll (s)"
+          label="Intervalo poll (ms)"
           hint={PP_HELP.form.pollInterval}
           type="number"
-          min={0.5}
-          max={300}
-          step={0.5}
-          inputMode="decimal"
-          value={String(device.pollIntervalSeconds)}
+          min={POLL_INTERVAL_MIN_MS}
+          max={POLL_INTERVAL_MAX_MS}
+          step={1}
+          inputMode="numeric"
+          value={String(device.pollIntervalMs)}
           onChange={(value) =>
             onChange({
-              pollIntervalSeconds: Number.parseFloat(value) || 30,
+              pollIntervalMs: Number.parseInt(value, 10) || POLL_INTERVAL_DEFAULT_MS,
             })
           }
-          afterControl={ppFieldError(errors?.pollIntervalSeconds)}
+          afterControl={ppFieldError(errors?.pollIntervalMs)}
         />
 
         <PpNativeSwitchField

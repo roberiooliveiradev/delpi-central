@@ -171,7 +171,7 @@ def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypa
     assert readings.json()["data"]["pagination"]["total"] == 2
 
 
-def test_manual_poll_marks_hardware_counter_reset(client, unique_ip, monkeypatch):
+def test_manual_poll_restores_counter_after_hardware_power_loss(client, unique_ip, monkeypatch):
     sequence = iter(
         [
             DeviceReading(metrics={"counter": 100}),
@@ -186,6 +186,11 @@ def test_manual_poll_marks_hardware_counter_reset(client, unique_ip, monkeypatch
         "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
         fake_read,
     )
+    # Firmware atual sem /api/definir → restore por offset de software.
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._maybe_hardware_restore_counter",
+        lambda self, device, *, previous_metrics, raw_metrics: None,
+    )
 
     device = _create_device(client, unique_ip)
     _bind_equipment(client, device["id"])
@@ -194,12 +199,53 @@ def test_manual_poll_marks_hardware_counter_reset(client, unique_ip, monkeypatch
     second = client.post(f"/devices/{device['id']}/poll")
     assert second.status_code == 200
     body = second.json()["data"]
+    assert body["metrics"]["counter"] == 108
     assert body["deltaMetrics"]["counter"] == 8
-    assert body["meta"]["counter_reset"] is True
+    assert body["meta"]["counter_restored"] is True
+    assert body["meta"]["counter_restore_mode"] == "software_offset"
+    assert "counter_reset" not in body["meta"]
 
-    readings = client.get(f"/devices/{device['id']}/readings")
-    latest = readings.json()["data"]["items"][0]
-    assert latest["meta"]["counter_reset"] is True
+    detail = client.get(f"/devices/{device['id']}")
+    assert detail.json()["data"]["lastMetrics"] == {"counter": 108}
+
+
+def test_manual_poll_hardware_set_restore(client, unique_ip, monkeypatch):
+    sequence = iter(
+        [
+            DeviceReading(metrics={"counter": 100}),
+            DeviceReading(metrics={"counter": 8}),
+        ]
+    )
+
+    def fake_read(_self, _device):
+        return next(sequence)
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._maybe_hardware_restore_counter",
+        lambda self, device, *, previous_metrics, raw_metrics: (
+            {"counter": 108, "counterRaw": 108, "counterOffset": 0},
+            {
+                "counter_restored": True,
+                "counter_restore_mode": "hardware_set",
+                "counter_restore_from": 100,
+                "counter_restore_raw": 8,
+                "counter_restore_target": 108,
+            },
+        ),
+    )
+
+    device = _create_device(client, unique_ip)
+    _bind_equipment(client, device["id"])
+    client.post(f"/devices/{device['id']}/poll")
+    second = client.post(f"/devices/{device['id']}/poll")
+    body = second.json()["data"]
+    assert body["metrics"]["counter"] == 108
+    assert body["deltaMetrics"]["counter"] == 8
+    assert body["meta"]["counter_restore_mode"] == "hardware_set"
 
 
 def test_manual_poll_device_unreachable_returns_422(client, unique_ip, monkeypatch):

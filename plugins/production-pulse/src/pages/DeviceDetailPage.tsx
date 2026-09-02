@@ -9,6 +9,7 @@ import {
 } from "../app/productionPulseUi";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
+import { DeviceFirmwareTab } from "../components/detail/DeviceFirmwareTab";
 import { DeviceHistoryTab } from "../components/detail/DeviceHistoryTab";
 import { DeviceOverviewTab } from "../components/detail/DeviceOverviewTab";
 import { ResetCounterModal } from "../components/modals/ResetCounterModal";
@@ -50,6 +51,7 @@ export function DeviceDetailPage({
     liveSnapshot,
     refreshing,
     commandsRefreshToken,
+    historyRefreshToken,
     refreshLive,
     pollNow,
     resetCounter,
@@ -75,7 +77,9 @@ export function DeviceDetailPage({
         ? PP_HELP.detail.tabOverview
         : item.id === "history"
           ? PP_HELP.detail.tabHistory
-          : PP_HELP.detail.tabCommands,
+          : item.id === "commands"
+            ? PP_HELP.detail.tabCommands
+            : PP_HELP.detail.tabFirmware,
   }));
 
   const setTab = (nextTab: typeof tab) => {
@@ -148,12 +152,18 @@ export function DeviceDetailPage({
             {permissions.canManageDevices ? (
               <PpActionButton
                 variant="ghost"
+                className="pp-hero-brand-btn"
                 onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
               >
                 Editar
               </PpActionButton>
             ) : null}
-            <PpActionButton variant="ghost" onClick={() => void pollNow()} disabled={refreshing}>
+            <PpActionButton
+              variant="ghost"
+              className="pp-hero-brand-btn"
+              onClick={() => void pollNow()}
+              disabled={refreshing}
+            >
               {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
             </PpActionButton>
           </div>
@@ -184,11 +194,15 @@ export function DeviceDetailPage({
         />
       ) : null}
 
-      {tab === "history" ? <DeviceHistoryTab device={device} /> : null}
+      {tab === "history" ? (
+        <DeviceHistoryTab device={device} refreshToken={historyRefreshToken} />
+      ) : null}
 
       {tab === "commands" ? (
         <DeviceCommandsTab deviceId={deviceId} refreshToken={commandsRefreshToken} />
       ) : null}
+
+      {tab === "firmware" ? <DeviceFirmwareTab firmwareSource={device.firmwareSource} /> : null}
 
       <ResetCounterModal
         open={resetOpen}

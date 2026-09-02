@@ -77,6 +77,14 @@ def _authorization_header(request: Request) -> str | None:
     return None
 
 
+async def _optional_json_body(request: Request) -> dict[str, Any] | None:
+    try:
+        body = await request.json()
+    except Exception:
+        return None
+    return body if isinstance(body, dict) else None
+
+
 def _handle_domain_errors(exc: Exception):
     if isinstance(exc, PermissionError):
         return error(str(exc), code="forbidden", status_code=403)
@@ -228,10 +236,12 @@ async def execute_device_command(request: Request, device_id: UUID, command_key:
     if denied is not None:
         return denied
     try:
+        payload = await _optional_json_body(request)
         data = _command_service.execute_command(
             parse_device_id(str(device_id)),
             command_key,
             actor_sub=_actor_sub(request),
+            payload=payload,
         )
         return success(data)
     except Exception as exc:

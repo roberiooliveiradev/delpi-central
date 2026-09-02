@@ -11,7 +11,7 @@ BFF dedicado ao plugin **Pulso de Produção** (IoT industrial). O MFE consome *
 - Comandos auditados (`device_commands`) capability-gated por driver
 - Catálogo CT via gateway → api-delpi `GET /production/appointments/work-centers`
 - Rotas operador (`/operator/*`) com RBAC `production-pulse.operator`
-- Status online/offline com grace 2× `poll_interval` (min 60 s, max 600 s)
+- Status online/offline com grace **2× `poll_interval_ms`** (piso 2 s / teto 600 s — `onlineGraceMs` no content)
 
 Dispositivo piloto dev: `http://192.168.20.2/` (ESP8266 contador).
 

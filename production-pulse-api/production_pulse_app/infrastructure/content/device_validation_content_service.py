@@ -20,21 +20,74 @@ def _limits_section() -> dict[str, Any]:
 
 
 def _poll_interval_limits() -> dict[str, Any]:
-    section = _limits_section().get("pollIntervalSeconds")
+    section = _limits_section().get("pollIntervalMs")
     return section if isinstance(section, dict) else {}
 
 
-def poll_interval_min(*, default: float = 0.5) -> float:
+def poll_interval_min(*, default: int = 1) -> int:
     raw = _poll_interval_limits().get("min")
     if isinstance(raw, (int, float)):
-        return float(raw)
+        return int(raw)
     return default
 
 
-def poll_interval_max(*, default: float = 300.0) -> float:
+def poll_interval_max(*, default: int = 300_000) -> int:
     raw = _poll_interval_limits().get("max")
     if isinstance(raw, (int, float)):
-        return float(raw)
+        return int(raw)
+    return default
+
+
+def poll_interval_default(*, default: int = 30_000) -> int:
+    raw = _poll_interval_limits().get("default")
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    return default
+
+
+def live_ui_refresh_min_ms(*, default: int = 50) -> int:
+    section = _limits_section().get("liveUiRefreshMs")
+    if not isinstance(section, dict):
+        return default
+    raw = section.get("min")
+    if isinstance(raw, (int, float)):
+        return max(1, int(raw))
+    return default
+
+
+def scheduler_tick_ms(*, default: int = 100) -> int:
+    section = _limits_section().get("schedulerTickMs")
+    if not isinstance(section, dict):
+        return default
+    raw = section.get("default")
+    if isinstance(raw, (int, float)):
+        return max(10, int(raw))
+    return default
+
+
+def _online_grace_section() -> dict[str, Any]:
+    section = _limits_section().get("onlineGraceMs")
+    return section if isinstance(section, dict) else {}
+
+
+def online_grace_multiplier(*, default: int = 2) -> int:
+    raw = _online_grace_section().get("multiplier")
+    if isinstance(raw, (int, float)) and int(raw) >= 1:
+        return int(raw)
+    return default
+
+
+def online_grace_min_ms(*, default: int = 2_000) -> int:
+    raw = _online_grace_section().get("min")
+    if isinstance(raw, (int, float)):
+        return max(1, int(raw))
+    return default
+
+
+def online_grace_max_ms(*, default: int = 600_000) -> int:
+    raw = _online_grace_section().get("max")
+    if isinstance(raw, (int, float)):
+        return max(1, int(raw))
     return default
 
 
@@ -42,6 +95,32 @@ def name_max_length(*, default: int = 120) -> int:
     raw = _limits_section().get("nameMaxLength")
     if isinstance(raw, int) and raw > 0:
         return raw
+    return default
+
+
+def controller_code_max_length(*, default: int = 64) -> int:
+    raw = _limits_section().get("controllerCodeMaxLength")
+    if isinstance(raw, int) and raw > 0:
+        return raw
+    return default
+
+
+def _counter_set_limits() -> dict[str, Any]:
+    section = _limits_section().get("counterSet")
+    return section if isinstance(section, dict) else {}
+
+
+def counter_set_min(*, default: int = 0) -> int:
+    raw = _counter_set_limits().get("min")
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    return default
+
+
+def counter_set_max(*, default: int = 2_147_483_647) -> int:
+    raw = _counter_set_limits().get("max")
+    if isinstance(raw, (int, float)):
+        return int(raw)
     return default
 
 
@@ -63,16 +142,40 @@ def ipv4_pattern() -> re.Pattern[str]:
     )
 
 
+@lru_cache(maxsize=1)
+def controller_code_pattern() -> re.Pattern[str]:
+    patterns = load_device_validation_content().get("patterns")
+    raw = patterns.get("controllerCode") if isinstance(patterns, dict) else None
+    if isinstance(raw, str) and raw.strip():
+        return re.compile(raw.strip())
+    return re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
+
+
 def matches_ipv4(value: str) -> bool:
     return bool(ipv4_pattern().fullmatch((value or "").strip()))
 
 
+def matches_controller_code(value: str) -> bool:
+    return bool(controller_code_pattern().fullmatch((value or "").strip()))
+
+
 __all__ = [
+    "controller_code_max_length",
+    "controller_code_pattern",
+    "counter_set_max",
+    "counter_set_min",
     "ipv4_pattern",
+    "live_ui_refresh_min_ms",
     "load_device_validation_content",
+    "matches_controller_code",
     "matches_ipv4",
     "name_max_length",
+    "online_grace_max_ms",
+    "online_grace_min_ms",
+    "online_grace_multiplier",
+    "poll_interval_default",
     "poll_interval_max",
     "poll_interval_min",
+    "scheduler_tick_ms",
     "valid_branches",
 ]

@@ -29,7 +29,10 @@ export function DeviceCommandsTab({ deviceId, refreshToken }: DeviceCommandsTabP
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    const quiet = refreshToken > 0;
+    if (!quiet) {
+      setLoading(true);
+    }
     setError(null);
     fetchDeviceCommands(deviceId, { page, pageSize: PAGE_SIZE, signal: controller.signal })
       .then((payload) => {
