@@ -38,9 +38,12 @@ describe("canvas table ribbon layout contract", () => {
     );
     expect(css).toContain(".td-canvas-table__sel-range");
     expect(css).toContain(".td-canvas-table__sel-focus");
+    expect(css).toContain(".td-canvas-table__fill-handle");
+    expect(css).toContain(".td-canvas-table__fill-preview");
     expect(css).toContain(".td-canvas-table__col-handle");
     expect(css).toContain(".td-canvas-table__row-handle");
     expect(css).toContain(".td-canvas-table--editable .td-canvas-table__col-handle");
+    expect(css).toContain(".td-canvas-table--editable .td-canvas-table__fill-handle");
     expect(css).not.toMatch(
       /\.td-canvas-table--editable\s*\{[^}]*padding/,
     );

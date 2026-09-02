@@ -65,6 +65,78 @@ export function resolveCanvasTableFillHandleRect(params: {
   };
 }
 
+export type CanvasTableCellHostRect = {
+  row: number;
+  col: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+/** Hit-test em coords locais do host; fallback na célula mais próxima. */
+export function resolveCanvasTableCellAtHostPoint(params: {
+  cellRects: readonly CanvasTableCellHostRect[];
+  x: number;
+  y: number;
+}): CanvasTableCellRef | null {
+  if (!params.cellRects.length) return null;
+  for (const rect of params.cellRects) {
+    if (
+      params.x >= rect.left &&
+      params.x < rect.left + rect.width &&
+      params.y >= rect.top &&
+      params.y < rect.top + rect.height
+    ) {
+      return { row: rect.row, col: rect.col };
+    }
+  }
+  let best: CanvasTableCellHostRect | null = null;
+  let bestDist = Infinity;
+  for (const rect of params.cellRects) {
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dist = (params.x - cx) ** 2 + (params.y - cy) ** 2;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = rect;
+    }
+  }
+  return best ? { row: best.row, col: best.col } : null;
+}
+
+/** União dos rects das células no bounds (preview do AutoFill). */
+export function resolveCanvasTableBoundsOverlayRect(params: {
+  cellRects: readonly CanvasTableCellHostRect[];
+  bounds: CanvasTableBounds;
+}): CanvasTableHostRect | null {
+  let minL = Infinity;
+  let minT = Infinity;
+  let maxR = -Infinity;
+  let maxB = -Infinity;
+  let any = false;
+  for (const rect of params.cellRects) {
+    if (!inBounds(params.bounds, rect.row, rect.col)) continue;
+    any = true;
+    minL = Math.min(minL, rect.left);
+    minT = Math.min(minT, rect.top);
+    maxR = Math.max(maxR, rect.left + rect.width);
+    maxB = Math.max(maxB, rect.top + rect.height);
+  }
+  if (!any) return null;
+  return { left: minL, top: minT, width: maxR - minL, height: maxB - minT };
+}
+
+export function canvasTableCellsFromBounds(bounds: CanvasTableBounds): CanvasTableCellRef[] {
+  const cells: CanvasTableCellRef[] = [];
+  for (let row = bounds.rowMin; row <= bounds.rowMax; row += 1) {
+    for (let col = bounds.colMin; col <= bounds.colMax; col += 1) {
+      cells.push({ row, col });
+    }
+  }
+  return cells;
+}
+
 function clampInt(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }

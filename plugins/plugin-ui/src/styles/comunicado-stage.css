@@ -303,6 +303,33 @@
   background: transparent;
 }
 
+.td-canvas-table__fill-preview {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 2;
+  border: 1px dashed var(--primary, #089bdb);
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, transparent);
+}
+
+.td-canvas-table__fill-handle {
+  position: absolute;
+  z-index: 5;
+  box-sizing: border-box;
+  display: none;
+  touch-action: none;
+  cursor: crosshair;
+  background: var(--primary, #089bdb);
+  border: 1px solid #fff;
+  border-radius: 1px;
+  padding: 0;
+  margin: 0;
+}
+
+.td-canvas-table--editable .td-canvas-table__fill-handle {
+  display: block;
+}
+
 .td-canvas-table__col-handle,
 .td-canvas-table__row-handle {
   position: absolute;

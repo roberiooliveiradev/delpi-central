@@ -5,6 +5,7 @@
 
 import { mergeAt } from "./canvasTableMerge";
 import type { CanvasTableCellRef, CanvasTableMerge } from "./comunicadoCanvasTable";
+import { resolveCanvasTableFillHandleRect } from "./canvasTableAutoFill";
 
 export type CanvasTableCellDomRect = {
   row: number;
@@ -103,6 +104,13 @@ export function resolveCanvasTableSelectionOverlayRects(params: {
     : null;
 
   return { range, focus };
+}
+
+/** Alça AutoFill no canto SE do range de seleção (coords host). */
+export function resolveCanvasTableSelectionFillHandleRect(params: {
+  range: { left: number; top: number; width: number; height: number } | null;
+}): { left: number; top: number; width: number; height: number } | null {
+  return resolveCanvasTableFillHandleRect({ range: params.range });
 }
 
 export type CanvasTableTrackHandleRect = {

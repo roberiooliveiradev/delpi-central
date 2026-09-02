@@ -56,4 +56,13 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
       /\.td-canvas-table\s+\.delpi-ui-comunicado__rich-text[\s\S]*?white-space:\s*inherit/,
     );
   });
+
+  it("alça AutoFill só no editor editable + cursor crosshair", () => {
+    expect(css).toContain(".td-canvas-table__fill-handle");
+    expect(css).toContain(".td-canvas-table__fill-preview");
+    expect(css).toMatch(
+      /\.td-canvas-table--editable\s+\.td-canvas-table__fill-handle[\s\S]*?display:\s*block/,
+    );
+    expect(css).toMatch(/\.td-canvas-table__fill-handle[\s\S]*?cursor:\s*crosshair/);
+  });
 });

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   applyCanvasTableAutoFill,
   resolveCanvasTableAutoFillTarget,
+  resolveCanvasTableBoundsOverlayRect,
+  resolveCanvasTableCellAtHostPoint,
   resolveCanvasTableFillHandleRect,
 } from "./canvasTableAutoFill";
 import { normalizeCanvasTableCell } from "./comunicadoCanvasTable";
@@ -171,5 +173,21 @@ describe("canvasTableAutoFill", () => {
       height: 8,
     });
     expect(resolveCanvasTableFillHandleRect({ range: null })).toBeNull();
+  });
+
+  it("hit-test encontra célula sob o ponto e preview une bounds", () => {
+    const cellRects = [
+      { row: 0, col: 0, left: 0, top: 0, width: 40, height: 20 },
+      { row: 1, col: 0, left: 0, top: 20, width: 40, height: 24 },
+    ];
+    expect(resolveCanvasTableCellAtHostPoint({ cellRects, x: 10, y: 25 })).toEqual({
+      row: 1,
+      col: 0,
+    });
+    const preview = resolveCanvasTableBoundsOverlayRect({
+      cellRects,
+      bounds: { rowMin: 0, colMin: 0, rowMax: 1, colMax: 0 },
+    });
+    expect(preview).toEqual({ left: 0, top: 0, width: 40, height: 44 });
   });
 });
