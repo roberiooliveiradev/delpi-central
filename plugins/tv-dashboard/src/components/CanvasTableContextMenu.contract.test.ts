@@ -28,4 +28,10 @@ describe("CanvasTableContextMenu (contrato)", () => {
     expect(menu).toContain("setCanvasTableSessionClipboard");
     expect(menu).not.toContain("execCommand");
   });
+
+  it("Quebrar texto usa toggle canônico (não só pre-wrap fixo)", () => {
+    expect(menu).toContain("nextCanvasTableWhiteSpaceToggle");
+    expect(menu).toContain('label="Quebrar texto"');
+    expect(menu).toContain('label="Não quebrar"');
+  });
 });

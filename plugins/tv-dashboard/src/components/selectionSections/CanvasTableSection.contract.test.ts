@@ -39,4 +39,12 @@ describe("CanvasTableSection chrome (plugin-ui + ícones)", () => {
     expect(collapseIcons).toContain('"canvas-table-design"');
     expect(collapseIcons).toContain('"canvas-table-cell"');
   });
+
+  it("Quebrar alterna wrap via nextCanvasTableWhiteSpaceToggle", () => {
+    expect(source).toContain("nextCanvasTableWhiteSpaceToggle");
+    expect(source).toContain("resolveCanvasTableWrapActive");
+    expect(source).toContain('label="Quebrar"');
+    expect(source).toContain('label="1 linha"');
+    expect(source).toContain('whiteSpace: "nowrap"');
+  });
 });

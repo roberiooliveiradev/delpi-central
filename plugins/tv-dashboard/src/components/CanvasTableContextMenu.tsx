@@ -20,6 +20,7 @@ import {
   canvasTableClipboardToTsv,
   clearCanvasTableCellsContent,
   getCanvasTableSessionClipboard,
+  nextCanvasTableWhiteSpaceToggle,
   parseCanvasTableClipboardTsv,
   pasteCanvasTableClipboard,
   serializeCanvasTableClipboard,
@@ -224,7 +225,18 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
         label="Quebrar texto"
         icon={WrapText}
         disabled={!hasSelection}
-        onSelect={() => run(() => patchStyle({ whiteSpace: "pre-wrap" }))}
+        onSelect={() =>
+          run(() => {
+            const focusCell = focus
+              ? block.cells[focus.row]?.[focus.col]
+              : cells[0]
+                ? block.cells[cells[0].row]?.[cells[0].col]
+                : undefined;
+            patchStyle({
+              whiteSpace: nextCanvasTableWhiteSpaceToggle(focusCell?.style?.whiteSpace),
+            });
+          })
+        }
       />
       <ContextMenuItem
         label="Não quebrar"

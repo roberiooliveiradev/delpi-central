@@ -29,9 +29,11 @@ import {
   canvasTableCellPlainText,
   canvasTablePresetOptions,
   mergeCanvasTableOptions,
+  nextCanvasTableWhiteSpaceToggle,
   normalizeCanvasTableCell,
   normalizeCanvasTableCells,
   remapCanvasTableMerges,
+  resolveCanvasTableWrapActive,
   type CanvasTableCell,
   type CanvasTableCellKind,
   type CanvasTableStylePresetId,
@@ -565,10 +567,14 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
       <DeckRibbonTile
         icon={WrapText}
         label="Quebrar"
-        hint="Quebra de linha na célula (white-space pre-wrap)."
-        active={(selectedCell?.style?.whiteSpace ?? "pre-wrap") !== "nowrap"}
+        hint="Alterna quebra de linha na célula (pre-wrap ↔ nowrap)."
+        active={resolveCanvasTableWrapActive(selectedCell?.style?.whiteSpace)}
         disabled={!cellSelection?.cells.length}
-        onClick={() => applyCellsStyle({ whiteSpace: "pre-wrap" })}
+        onClick={() =>
+          applyCellsStyle({
+            whiteSpace: nextCanvasTableWhiteSpaceToggle(selectedCell?.style?.whiteSpace),
+          })
+        }
       />
       <DeckRibbonTile
         icon={Minus}
