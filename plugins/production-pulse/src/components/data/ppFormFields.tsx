@@ -57,7 +57,7 @@ export function PpNativeSelectField({
   onChange,
   options,
   placeholderOption,
-  searchable = false,
+  searchable = true,
   afterControl,
 }: PpNativeSelectFieldProps) {
   const allowEmpty = placeholderOption !== undefined;

@@ -1,46 +1,32 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import {
-  AreaSeriesChart,
   ChartCard,
   chartCardBemClasses,
-  type SeriesChartTheme,
+  ComparativeAreaChart,
+  useDelpiDarkMode,
 } from "@delpi/plugin-ui/index";
 
 import type { ChartPoint } from "../../utils/detailDisplay";
 import {
-  buildPpReadingsChartOptions,
-  readingsToSeriesPoints,
+  buildPpReadingsChartSeries,
+  formatPpReadingsChartValue,
+  readingsToComparativeData,
+  resolvePpReadingsChartHeight,
+  resolvePpReadingsChartYAxisWidth,
   type PpReadingsChartVariant,
 } from "./ppChartConfig";
 
 export type { PpReadingsChartVariant } from "./ppChartConfig";
-export { buildPpReadingsChartOptions, readingsToSeriesPoints } from "./ppChartConfig";
+export {
+  buildPpReadingsChartSeries,
+  formatPpReadingsChartValue,
+  readingsToComparativeData,
+  readingsToSeriesPoints,
+} from "./ppChartConfig";
 
 const PREFIX = "pp";
 const CHART_CARD_CLASSES = chartCardBemClasses(PREFIX, { headerLayout: "titleRow" });
-
-function resolveHostChartTheme(): SeriesChartTheme {
-  if (typeof document === "undefined") return "light";
-  return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-}
-
-function usePpChartTheme(): SeriesChartTheme {
-  const [theme, setTheme] = useState<SeriesChartTheme>(() => resolveHostChartTheme());
-
-  useEffect(() => {
-    const syncTheme = () => setTheme(resolveHostChartTheme());
-    syncTheme();
-    const observer = new MutationObserver(syncTheme);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  return theme;
-}
 
 type PpReadingsAreaChartProps = {
   points: ChartPoint[];
@@ -49,30 +35,34 @@ type PpReadingsAreaChartProps = {
   variant?: PpReadingsChartVariant;
 };
 
-/** Série temporal de leituras — `AreaSeriesChart` do kit com tema do portal. */
+/** Série temporal interativa — ComparativeAreaChart (Recharts) com tooltip e tema claro/escuro. */
 export function PpReadingsAreaChart({
   points,
-  height = 220,
+  height,
   emptyMessage = "Sem leituras no período.",
   variant = "detail",
 }: PpReadingsAreaChartProps) {
-  const theme = usePpChartTheme();
-  const options = useMemo(
-    () => buildPpReadingsChartOptions(variant, theme),
-    [theme, variant],
-  );
+  const isDark = useDelpiDarkMode();
+  const resolvedHeight = resolvePpReadingsChartHeight(variant, height);
+  const series = useMemo(() => buildPpReadingsChartSeries(isDark), [isDark]);
+  const data = useMemo(() => readingsToComparativeData(points), [points]);
 
   if (points.length === 0) {
     return <p className="pp-chart-empty">{emptyMessage}</p>;
   }
 
   return (
-    <div className="pp-readings-chart" style={{ minHeight: height }}>
-      <AreaSeriesChart
+    <div className="pp-readings-chart" style={{ minHeight: resolvedHeight }}>
+      <ComparativeAreaChart
+        prefix={PREFIX}
         className="pp-readings-chart__series"
-        points={readingsToSeriesPoints(points)}
-        options={options}
+        data={data}
+        series={series}
+        height={resolvedHeight}
+        yAxisWidth={resolvePpReadingsChartYAxisWidth(variant)}
+        valueFormatter={formatPpReadingsChartValue}
         emptyMessage={emptyMessage}
+        smooth
       />
     </div>
   );

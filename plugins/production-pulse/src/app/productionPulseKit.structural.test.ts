@@ -184,6 +184,7 @@ describe("production-pulse kit contracts", () => {
     const chartGateways = new Set(["components/data/ppCharts.tsx"]);
     const bannedChartImports = [
       /\bAreaSeriesChart\b/,
+      /\bComparativeAreaChart\b/,
       /\bLineSeriesChart\b/,
       /\bBarSeriesChart\b/,
       /\bConfigurableSeriesChart\b/,
@@ -203,9 +204,12 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpReadingsAreaChart/);
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpChartCard/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppCharts"/);
-    expect(readRelative("components/data/ppCharts.tsx")).toMatch(/AreaSeriesChart/);
+    expect(readRelative("components/data/ppCharts.tsx")).toMatch(/ComparativeAreaChart/);
+    expect(readRelative("components/data/ppCharts.tsx")).toMatch(/useDelpiDarkMode/);
     expect(readRelative("components/data/ppCharts.tsx")).toMatch(/ChartCard/);
-    expect(readRelative("components/data/ppChartConfig.ts")).toMatch(/buildPpReadingsChartOptions/);
+    expect(readRelative("components/data/ppChartConfig.ts")).toMatch(/buildPpReadingsChartSeries/);
+    expect(readRelative("components/data/ppFormFields.tsx")).toMatch(/searchable = true/);
+    expect(readRelative("components/data/filtersUi.tsx")).toMatch(/searchable = true/);
   });
 
   it("cadastro usa grade responsiva e footer compacto", () => {

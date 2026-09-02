@@ -77,7 +77,9 @@ export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;
 export {
   PpChartCard,
   PpReadingsAreaChart,
-  buildPpReadingsChartOptions,
+  buildPpReadingsChartSeries,
+  formatPpReadingsChartValue,
+  readingsToComparativeData,
   readingsToSeriesPoints,
   type PpReadingsChartVariant,
 } from "../components/data/ppCharts";
