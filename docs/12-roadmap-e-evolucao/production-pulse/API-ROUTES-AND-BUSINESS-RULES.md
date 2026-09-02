@@ -183,6 +183,21 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 | **R44** | Novo medidor = entrada no registry + `DeviceDriver` + (se preciso) surface; **sem** rota CRUD nova. |
 | **R45** | Série do gráfico de histórico: quando o período tem mais leituras que o `pageSize`, o MFE envia `sampleIntervalMs` (até ~366 dias) e a API devolve **uma leitura por bucket** cobrindo o intervalo inteiro — não só o fim da janela (LIMIT DESC). Tick do eixo X segue o **span** (não o poll). |
 
+### 3.6 Persistência de telemetria (P3 — planejado)
+
+> Spec: [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) · Roadmap § P3
+
+| Id | Regra |
+|----|--------|
+| **R46** | Insert poll/manual em `readings` só com mudança ≥ deadband **ou** heartbeat desde o último insert. |
+| **R47** | Poll OK sem insert **ainda** atualiza `last_metrics` + `last_seen_at` (estado ao vivo). |
+| **R48** | `source=command` sempre persiste reading. |
+| **R49** | Purge de raw com idade &gt; `rawRetentionDays` (default 90). |
+| **R50** | Rollups hour/day; `GET /readings?resolution=raw\|hour\|day`. |
+| **R51** | MFE: spans longos preferem rollup; R45 permanece para raw denso. |
+
+R14 **evolui** no P3: “poll OK → sempre estado; insert condicional (R46)”.
+
 ---
 
 ## 4. Códigos HTTP (resumo)

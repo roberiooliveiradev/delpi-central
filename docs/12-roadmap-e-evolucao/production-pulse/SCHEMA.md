@@ -105,6 +105,8 @@ Histórico: fechar binding (`effective_to`) e criar novo — não UPDATE destrut
 | `source` | `varchar(20)` | `poll` \| `manual` \| `command` |
 | `recorded_at` / `created_at` | `timestamptz` | |
 
+**Evolução P3:** persistência seletiva + `readings_rollups` + retenção — [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md).
+
 ---
 
 ### `device_commands`

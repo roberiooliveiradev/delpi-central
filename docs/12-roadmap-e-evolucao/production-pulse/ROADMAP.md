@@ -20,6 +20,7 @@
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
 | **E7 — Alinhamento `.cursor` (conteúdo + kit)** | ✅ **Concluído** | E7.S0–S5 em `main` |
 | **E8 — Layout responsivo (formulários + superfícies)** | 🔄 **Em curso** | E8.S0–S3 ✅ commit `11378d221`; S4 verify pendente |
+| **P3 — Persistência telemetria (mercado)** | 📋 **Especificado** | [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) — R46–R51; implementação pendente |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
@@ -145,7 +146,7 @@ E8.S0–S3 = **um commit** com escopo responsive (testes incluídos). E8.S4 = ve
 | Cardinalidade | 1 device → 1 binding; 1 âncora → N devices |
 | CRUD | Completo na API desde MVP |
 | RBAC | Estrutura manifest + gates na API; matriz fina na Fase 4 |
-| Histórico | Tabela `readings` + poll background |
+| Histórico | Tabela `readings` + poll background — **P3** evolui para persistência seletiva + rollups + retenção ([TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md)) |
 | TOTVS | Lookup CT via gateway api-delpi — **sem** SQL no BFF |
 | MFE | Module Federation + `preparePluginUiRemote()` |
 | Driver | Registry JSON + port `DeviceDriver`; MVP `esp8266_counter_v1` |
@@ -578,15 +579,173 @@ Alarme push, OEE PCP oficial, Modbus write, wallboard TV.
 
 ---
 
+## P3 — Persistência de telemetria (padrão de mercado)
+
+> **Spec canônica:** [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md)  
+> **Motivo:** R14 atual grava **todo** poll OK (mesmo `delta = 0`) → volume explosivo (ex.: ~58k leituras / device). Mercado: exception + heartbeat + rollups + TTL.  
+> **Diretrizes:** bounded context Pulse; content JSON; serviço de domínio único; EN em contrato; migration nova imutável.
+
+### Overview
+
+Estado ao vivo continua em `last_metrics` a cada poll; **insert** em `readings` só com mudança (deadband) ou heartbeat; raw com retenção; rollups hour/day para histórico longo; MFE escolhe `resolution` conforme span.
+
+### Decisões travadas (P3)
+
+| Tema | Decisão |
+|------|---------|
+| Persistência poll | Mudança ≥ deadband **ou** heartbeat (default 30 s) — R46 |
+| Estado ao vivo | Sempre atualiza `last_metrics` / `last_seen` no poll OK — R47 |
+| Comandos | Sempre inserem reading — R48 |
+| Raw TTL | 90 dias + job purge — R49 |
+| Agregação | `readings_rollups` hour/day no Postgres — R50 (sem TSDB no P3) |
+| MFE | Span longo → `resolution=hour\|day`; raw + R45 para curto — R51 |
+| Config | `telemetry_persistence.json` + loader — sem magia no Python |
+| Serviço | `DeviceReadingPersistPolicyService` — sem `if` no route |
+
+### Matriz de fluxos transversais (P3)
+
+| Fluxo | Superfície | Caminho | P3 |
+|-------|------------|---------|-----|
+| Scheduler poll estável | Background | `DevicePollScheduler` → `poll_and_persist` | S1 |
+| Poll manual painel/detalhe | Admin | `POST /poll` | S1 |
+| Live refresh | Detalhe / operador | `GET /live` | herança (não grava) |
+| Comando +1/−1/reset | Operador / detalhe | `DeviceCommandService` | S1 (sempre insert) |
+| Restore / continuity | Poll | R36–R38 | herança — valor ok; insert segue R46/R48 |
+| Histórico tabela | Detalhe | `GET /readings` raw paginado | S5 |
+| Histórico gráfico 7d–12m | Detalhe | `resolution` + presets | S4–S5 |
+| Purge / rollup jobs | API boot ou cron interno | application services | S3–S4 |
+| Helps copy | Detalhe | `PP_HELP.detail.*` | S5 |
+
+```mermaid
+flowchart LR
+  Poll[poll OK] --> State[last_metrics]
+  Poll --> Policy[PersistPolicy]
+  Policy -->|yes| Raw[readings]
+  Policy -->|no| Skip[skip insert]
+  Raw --> Rollup[readings_rollups]
+  Raw --> Purge[TTL purge]
+  MFE[DeviceHistoryTab] --> Raw
+  MFE --> Rollup
+```
+
+### Etapas
+
+#### P3.S0 — Spec + regras canônicas ✅ (doc)
+
+- **Objetivo:** Travas e R46–R51 publicadas; inventário do pipeline atual.
+- **Fazer:**
+  1. Manter [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) como fonte
+  2. Registrar R46–R51 em [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md) § planejado
+  3. Apontar ROADMAP/README
+- **Não fazer:** mudar código de persistência nesta subetapa
+- **Teste:** n/a (doc)
+- **Pronto quando:** links cruzados README + ROADMAP + API-ROUTES
+- **Commit:** `docs(production-pulse): especifica P3 persistência telemetria padrão mercado`
+
+#### P3.S1 — Política change + heartbeat na API
+
+- **Objetivo:** Poll OK deixa de inserir reading redundante; estado ao vivo intacto.
+- **Fazer:**
+  1. Criar `telemetry_persistence.json` + `TelemetryPersistenceContentService`
+  2. Criar `domain/services/device_reading_persist_policy_service.py` (`should_persist_reading`)
+  3. Ligar em `DevicePollService.poll_and_persist` — insert condicional; comandos inalterados (sempre insert)
+  4. Testes: sequência estável → 1 insert + N skips; mudança counter → insert; heartbeat elapsed → insert
+- **Não fazer:** alterar firmware; filtrar no MFE; `if "/readings"` no MFE
+- **Teste:** `docker exec delpi-production-pulse-api python -m pytest tests/test_device_reading_persist_policy.py tests/test_device_poll.py -q`
+- **Pronto quando:** poll 200 ms estável ≤ ~2–3 inserts/min com heartbeat 30 s
+- **Commit:** `feat(production-pulse): persiste reading só com mudança ou heartbeat`
+
+#### P3.S2 — Observabilidade de skip
+
+- **Objetivo:** Operação enxerga `persisted` vs `skipped` sem poluir UI.
+- **Fazer:**
+  1. Meta opcional no response de poll (`meta.readingPersisted: bool`) — EN
+  2. Log/métrica contador (application); textos PT só se mensagem usuário (JSON)
+  3. Teste assert meta
+- **Não fazer:** banner no MFE a cada skip
+- **Teste:** pytest poll payload meta
+- **Pronto quando:** poll skip documentado no contrato OpenAPI/docs rotas
+- **Commit:** `feat(production-pulse): meta readingPersisted no poll`
+
+#### P3.S3 — Retenção raw (purge)
+
+- **Objetivo:** Apagar `readings` além de `rawRetentionDays`.
+- **Fazer:**
+  1. Migration se precisar índice `(recorded_at)` já existe parcial — confirmar
+  2. `DeviceReadingRetentionService` + job no lifespan/scheduler tick raro
+  3. Config `rawRetentionDays` no JSON; mensagem/ops no content se houver erro
+- **Não fazer:** apagar rollups; `DELETE` sem limite de batch
+- **Teste:** pytest com recorded_at antigo → removido; recente permanece
+- **Pronto quando:** job idempotente; R49 no canônico como implementado
+- **Commit:** `feat(production-pulse): purge de readings raw por retenção`
+
+#### P3.S4 — Rollups hour/day
+
+- **Objetivo:** Série longa sem varrer raw.
+- **Fazer:**
+  1. Migration `V0xx__readings_rollups.sql`
+  2. Job/agregação a partir de raw (last + sum delta monotônico)
+  3. `GET /readings?resolution=hour|day` no route + repo
+- **Não fazer:** TSDB externo; rollup no MFE
+- **Teste:** pytest agrega N raw → 1 bucket; list por resolution
+- **Pronto quando:** R50 implementado; `--check` docs rotas
+- **Commit:** `feat(production-pulse): rollups horários e diários de readings`
+
+#### P3.S5 — MFE histórico + helps
+
+- **Objetivo:** Presets longos usam rollup; copy explica retenção/amostragem.
+- **Fazer:**
+  1. `fetchDeviceReadings` + `DeviceHistoryTab` — `resolution` por span (R51)
+  2. Atualizar `PP_HELP.detail.readingsTable` / `historyRangePresets`
+  3. Espelhar docs `HELP-CONTENT` / content roadmap se houver cópia
+  4. Vitest historyTimeRange / tab estrutural
+- **Não fazer:** reimplementar deadband no browser
+- **Teste:** `npm test -- --run src/utils/historyTimeRange.test.ts` (+ tab se houver)
+- **Pronto quando:** 12 meses não dispara erro de sample; tabela raw continua paginada
+- **Commit:** `feat(production-pulse): histórico longo via resolution rollup`
+
+#### P3.S6 — Verify volume + regressão contador
+
+- **Objetivo:** Homologar volume e continuidade do contador.
+- **Fazer:**
+  1. Script ou checklist: device poll curto 5 min → contar inserts
+  2. Regression continuity/provenance pytest
+  3. Rebuild API; smoke histórico UI
+- **Não fazer:** reset schema prod
+- **Teste:** pytest provenance + poll policy; checklist em HOMOLOGACAO ou anexo P3
+- **Pronto quando:** tabela pass/fail; valor contador coerente com chip
+- **Commit:** só se fix de regressão
+
+### Critérios de pronto (P3)
+
+- [ ] P3.S0 — docs/regras
+- [ ] P3.S1 — policy change/heartbeat
+- [ ] P3.S2 — meta observabilidade
+- [ ] P3.S3 — purge raw
+- [ ] P3.S4 — rollups + query resolution
+- [ ] P3.S5 — MFE + helps
+- [ ] P3.S6 — verify
+
+### Fora do escopo (P3)
+
+- Influx/Timescale/PI; swinging-door; WebSocket; UI por-device de retenção; mudança de firmware
+
+### Protocolo de execução (P3)
+
+Cada **P3.S1–S5** = implementar → testar → **commit + push** separado. P3.S0 = commit de docs. P3.S6 = commit só com fix.
+
+---
+
 ## Fora do escopo (MVP)
 
-- Chat/agente, cockpit PCP embed, WebSocket, **alertas/metas operador (viram P2)**, sync TOTVS apontamento, Modbus/MQTT
+- Chat/agente, cockpit PCP embed, WebSocket, **alertas/metas operador (P2)**, **persistência seletiva/rollups (P3)**, sync TOTVS apontamento, Modbus/MQTT
 
 ---
 
 ## Referências
 
 - [README.md](./README.md)
+- [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md)
 - [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md)
 - [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md)
 - [SCHEMA.md](./SCHEMA.md)
