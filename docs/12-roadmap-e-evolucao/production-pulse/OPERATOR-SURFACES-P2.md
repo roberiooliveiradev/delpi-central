@@ -1,6 +1,7 @@
 # Superfícies operador P2+ — tipos de device, combo, alertas, metas
 
 > **Status:** especificação (set/2026) — **não implementado** no MFE/API além do que já existe (`counter_pad`, `gauge_readout` + thresholds)  
+> **Plano API + frontend:** [API-MFE-DEVICE-EVOLUTION.md](./API-MFE-DEVICE-EVOLUTION.md)  
 > **Wireframes:** [WIREFRAMES.md](./WIREFRAMES.md) § WF-PP-OP-TEMP … WF-PP-OP-COMBO  
 > **Drivers:** [DEVICE-DRIVERS.md](./DEVICE-DRIVERS.md) · **Design:** [DESIGN-FRONTEND.md §9](./DESIGN-FRONTEND.md)
 

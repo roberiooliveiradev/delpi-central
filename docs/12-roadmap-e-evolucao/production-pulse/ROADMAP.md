@@ -548,7 +548,8 @@ Verificados em **dev** (pytest, vitest, `check-production-pulse.sh`). Itens marc
 
 ## P2 — Superfícies operador avançadas (especificação)
 
-> Doc: [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md) · Wireframes WF-PP-OP-TEMP / ROTATION / COMBO / ALERT / GOAL / PCT
+> **Plano API + MFE:** [API-MFE-DEVICE-EVOLUTION.md](./API-MFE-DEVICE-EVOLUTION.md)  
+> **UX:** [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md) · Wireframes WF-PP-OP-TEMP / ROTATION / COMBO / ALERT / GOAL / PCT
 
 ### Decisões
 
@@ -558,16 +559,18 @@ Verificados em **dev** (pytest, vitest, `check-production-pulse.sh`). Itens marc
 | Alertas | API calcula `presentation.alertLevel` a partir de `thresholds` |
 | Metas / % | API calcula `progress.pct`; MFE só renderiza |
 | Contador | Mantém pad; meta como faixa abaixo do valor |
+| Extensão | Checklist §7 do plano de evolução — sem `if driverKey` |
 
-### Etapas (planejado)
+### Etapas (planejado) — mapear a E-API / E-MFE
 
-| Etapa | Objetivo |
-|-------|----------|
-| P2.S0 | Registry stubs + contrato `goals`/`progress`/`alertLevel` na API |
-| P2.S1 | MFE TEMP + ROTATION + overlays ALERT/GOAL |
-| P2.S2 | Rota board COMBO + ordenação danger-first |
-| P2.S3 | Cadastro de metas (manage) + helps `PP_HELP` |
-| P2.S4 | Homologação tablet com ≥2 tipos de device no mesmo posto |
+| Etapa ROADMAP | Plano evolução | Objetivo |
+|---------------|----------------|----------|
+| P2.S0 | E-API.0 + E-API.1 | Capabilities-first + drivers temp/rotation + `alertLevel` |
+| P2.S1 | E-MFE.0 + E-MFE.1 | Surfaces TEMP/ROTATION + overlays ALERT/GOAL |
+| P2.S2 | E-API.2 + E-API.3 + E-MFE.2 | Goals/progress + board COMBO |
+| P2.S3 | E-MFE.3–4 | Cadastro metas/thresholds + helps |
+| P2.S4 | Homologação | Posto com ≥2 tipos no board |
+| (depois) | E-API.4–5 | Monotônico genérico · Modbus/MQTT |
 
 ### Fora (P2)
 
