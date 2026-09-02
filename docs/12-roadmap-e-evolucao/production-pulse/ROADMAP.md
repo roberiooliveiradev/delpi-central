@@ -18,9 +18,12 @@
 | E6.S1 — Docs + smoke | ✅ Feito | `check-production-pulse.sh` 8/8 OK |
 | **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
+| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0 ✅ em `main`; E7.S1–S5 pendentes |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
+
+**E7.S0 entregue (set/2026):** poll/live 422 + `device_api_messages.json`; test-probe `errorMessage`; HTTP 404/409 no JSON; MFE `resolveDeviceActionError` — commits `56c3c7606`, `4c7a3fe13`.
 
 ---
 
@@ -292,6 +295,138 @@ flowchart TB
 - **Pronto quando:** contador do device aparece no painel após poll; operador abre superfície contador.
 - **Commit:** só se fix de regressão.
 - **Status:** ⏳ **pendente** — implementação pronta; bloqueio atual: host dev (WSL) sem rota à VLAN `192.168.20.x` (`curl` ESP timeout). Executar homologação a partir de máquina na LAN ou com WSL roteando à VLAN industrial.
+
+---
+
+## E7 — Alinhamento diretrizes `.cursor` (pós-MVP)
+
+Complementa entregas de erro HTTP (E7.S0 ✅). Objetivo: **zero copy PT duplicada** fora de JSON/loaders; **zero override de kit** no MFE; modais **host-contained**.
+
+### Decisões travadas (E7)
+
+| Tema | Decisão |
+|------|---------|
+| Mensagens PT ao usuário | `production_pulse_app/content/*.json` + loaders (`*_content_service.py`) — regra `assistant-content-json.mdc` |
+| Códigos de erro device | Lista canônica em `device_api_messages.json` → `deviceConnectivity.codes`; MFE espelha só códigos em `content/deviceApiMessages.ts` + teste sync |
+| Mensagem final na UI | **API** (`error.message` / `errorMessage` no probe); MFE classifica device vs infra, não remapeia texto |
+| Validação form | Um JSON compartilhado (limites, regex IPv4, labels) — loader API + cópia/sync documentada no MFE |
+| Modais aviso/confirm | `createHostContainedModalShell` — regra `mfe-modal-host-contained.mdc` |
+| CSS `.delpi-ui-*` no MFE | Proibido — fix no `plugin-ui`, rebuild fase `remote` antes do MFE |
+| Identificadores legado PT | `FilialSwitcher` / `filiais` mantidos até ADR de rename — **código novo** só EN |
+
+### Matriz de fluxos (E7)
+
+| Fluxo | Superfície | Caminho | E7 |
+|-------|------------|---------|-----|
+| Poll/live falha LAN | Painel / detalhe | 422 + `device_api_messages` | S0 ✅ |
+| Test-probe offline | Form modal | `errorMessage` no payload 200 | S0 ✅ |
+| Comando falha (timeout/rede) | Detalhe / operador | `CommandResult.errorMessage` via JSON | S1 |
+| Validação IP/intervalo | Form | API 422 + MFE inline mesmo catálogo | S3 |
+| Modal test reset/operador | Form / detalhe / tablet | Host-contained dialog | S4 |
+| Toggle agrupado / segment | Painel WF-PP-01 | Kit `plugin-ui`, sem override MFE | S5 |
+
+### Diagrama (conteúdo canônico)
+
+```mermaid
+flowchart LR
+  JSON[device_api_messages.json + device_validation.json]
+  Loader[device_*_content_service.py]
+  API[Routes / probe / poll / commands]
+  MFE[httpClient + apiErrors + hooks]
+  JSON --> Loader --> API
+  API -->|error.message / errorMessage| MFE
+  Codes[deviceApiMessages.ts codes only] -.sync test.-> JSON
+```
+
+---
+
+#### E7.S0 — Erros HTTP device vs infra ✅
+
+- **Objetivo:** Poll/live/test-probe não confundem falha de ESP com API indisponível.
+- **Status:** ✅ `main` — `56c3c7606`, `4c7a3fe13`.
+- **Pronto quando:** pytest content/probe; vitest `apiErrors` + sync codes; painel aviso amarelo em poll offline.
+
+#### E7.S1 — Catálogo JSON: comandos + validação HTTP
+
+- **Objetivo:** Comandos e erros de domínio expostos ao usuário saem do JSON, não de strings nos drivers/services.
+- **Fazer:**
+  1. Estender `device_api_messages.json` — seções `commandErrors`, `validationErrors` (chaves estáveis: `unsupported_command`, `poll_interval_min`, …)
+  2. Loader `device_api_messages_content_service.py` — `command_error_message(code)`, `validation_error_message(key)`
+  3. `device_command_service.py` + rotas — `CommandResult` / 422 com mensagem do loader (manter `code` técnico)
+  4. `binding_validation_service.py` / `device_validation_service.py` — levantar códigos; mensagem só no handler HTTP ou loader
+  5. MFE operador/detalhe — consumir `errorMessage` da API (sem literal de driver)
+- **Não fazer:** `if path` por rota; duplicar frase no MFE; alterar contrato 200 de test-probe.
+- **Teste:** `pytest production-pulse-api/tests/test_device_commands.py -q` (+ casos novos command message); vitest superfície operador mock 422
+- **Pronto quando:** grep zero `"Comando não suportado"` em `device_command_service.py` / drivers expostos ao HTTP; assert mensagem PT vem do JSON
+- **Commit:** `refactor(production-pulse): mensagens de comando e validação no catálogo JSON`
+
+#### E7.S2 — Drivers HTTP: códigos only
+
+- **Objetivo:** Drivers LAN levantam `DeviceDriverError(code=…)`; texto amigável só no loader JSON (poll/probe/command boundary).
+- **Fazer:**
+  1. `esp8266_counter_driver.py`, `esp8266_gauge_driver.py`, `device_http_support.py` — mensagens técnicas EN ou código-only; sem PT ao usuário
+  2. Garantir todos os `code` usados ∈ `deviceConnectivity.codes` ou `commandErrors`
+  3. Audit `last_error` / audit log — guardar code + optional technical detail (log), não copy PT duplicada
+- **Não fazer:** `re.compile` novo em driver; mudar protocolo HTTP do ESP.
+- **Teste:** `pytest production-pulse-api/tests/test_esp8266_* -q`; assert poll/probe mapeiam code → JSON message
+- **Pronto quando:** grep zero strings PT com pontuação em `infrastructure/drivers/` (exceto comentários)
+- **Commit:** `refactor(production-pulse): drivers LAN emitem códigos canônicos sem copy PT`
+
+#### E7.S3 — Validação form API ↔ MFE (content compartilhado)
+
+- **Objetivo:** Regex IPv4, limites poll 0.5–300 e labels de erro idênticos API e MFE via JSON.
+- **Fazer:**
+  1. Criar `device_validation_content.json` (+ loader API)
+  2. Refatorar `device_validation_service.py` — limites/regex do JSON
+  3. MFE: `content/deviceValidationContent.ts` gerado ou espelhado + teste sync (padrão `deviceApiMessages.test.ts`)
+  4. `deviceFormValidation.ts` — consumir content; remover regex/limites duplicados
+- **Não fazer:** validar só no MFE; importar JSON da API no build Docker do MFE (copiar + doc sync no README)
+- **Teste:** pytest validação; vitest form + sync JSON
+- **Pronto quando:** alterar min poll no JSON reflete API e MFE; teste sync verde
+- **Commit:** `refactor(production-pulse): validação de cadastro centralizada em content JSON`
+
+#### E7.S4 — Modais host-contained
+
+- **Objetivo:** Modais do plugin não cobrem sidebar do portal.
+- **Fazer:**
+  1. `plugins/production-pulse/src/app/productionPulseUi.tsx` — export `HostContainedDialog` via `createHostContainedModalShell({ containedLayout: "dialog" })`
+  2. Migrar `TestConnectionModal`, `ResetCounterModal`, `OperatorClearCounterModal` (+ demais em `components/modals/`)
+  3. Teste regressão: dialog dentro de `.dashboard-production-pulse`, sem overlay `inset:0` no body
+- **Não fazer:** `window.alert`; `ModalShell` body-fixed para avisos
+- **Teste:** vitest layout modal (padrão `ModalShell.test.tsx` do kit); smoke manual portal + sidebar clicável
+- **Pronto quando:** grep zero `ModalShell` import direto de modais de aviso; sidebar navegável com modal aberto
+- **Commit:** `fix(production-pulse): modais host-contained no plugin`
+
+#### E7.S5 — Overrides `.delpi-ui-*` → plugin-ui
+
+- **Objetivo:** WF-PP-01 toggle/agrupamento sem CSS de kit no MFE.
+- **Fazer:**
+  1. Inventariar overrides em `plugins/production-pulse/src/index.css` (§ WF-PP-01, segment toggle, …)
+  2. Estender variant/props no `plugin-ui` (SegmentToggle, toolbar layout) — rebuild fase `remote`
+  3. Remover blocos `.delpi-ui-*` do MFE; validar painel desktop + tablet
+- **Não fazer:** patch local no MFE após merge no kit
+- **Teste:** `cd plugins/plugin-ui && npx vite build`; `npm run build` production-pulse; screenshot/tablet checklist WF-PP-01
+- **Pronto quando:** grep zero `.delpi-ui-` em `plugins/production-pulse/src/index.css`
+- **Commit:** `refactor(plugin-ui): layout filtros painel; chore(production-pulse): remove overrides kit`
+
+### Critérios de pronto (E7)
+
+- [x] E7.S0 — poll/live/test-probe/404/409 no catálogo JSON; MFE device vs infra
+- [ ] E7.S1 — comandos + validação HTTP no JSON
+- [ ] E7.S2 — drivers sem copy PT ao usuário
+- [ ] E7.S3 — form validation content sync API/MFE
+- [ ] E7.S4 — modais host-contained
+- [ ] E7.S5 — zero override `.delpi-ui-*` no MFE
+
+### Fora do escopo (E7)
+
+- Rename `FilialSwitcher` → EN (exige ADR RBAC/menu)
+- Migrar textos de `helpTooltips.ts` (helps hover) para JSON — baixo ROI
+- Chat/apresentação — outro bounded context
+
+### Protocolo de execução (E7)
+
+Cada **E7.S1–S5** = implementar → testar escopo → **commit + push** separado (não agrupar subetapas). E7.S0 já commitado.
 
 ---
 
