@@ -180,6 +180,35 @@ class PostgresDeviceReadingRepository:
                 rows = list(cur.fetchall())
         return rows, total
 
+    def delete_older_than(
+        self,
+        *,
+        cutoff: datetime,
+        batch_size: int = 5_000,
+    ) -> int:
+        """Remove raw readings older than cutoff (R49). Returns deleted row count."""
+        limit = max(1, min(int(batch_size), 50_000))
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    WITH doomed AS (
+                        SELECT id
+                        FROM production_pulse.readings
+                        WHERE recorded_at < %s
+                        ORDER BY recorded_at ASC, id ASC
+                        LIMIT %s
+                    )
+                    DELETE FROM production_pulse.readings r
+                    USING doomed
+                    WHERE r.id = doomed.id
+                    """,
+                    (cutoff, limit),
+                )
+                deleted = cur.rowcount if cur.rowcount is not None and cur.rowcount >= 0 else 0
+            conn.commit()
+        return int(deleted)
+
     def sum_delta_metric_for_devices(
         self,
         device_ids: list[UUID],

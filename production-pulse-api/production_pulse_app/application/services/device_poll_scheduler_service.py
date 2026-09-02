@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from typing import Any
 from uuid import UUID
 
@@ -9,10 +10,16 @@ from production_pulse_app.application.services.device_poll_service import (
     DevicePollFailedError,
     DevicePollService,
 )
+from production_pulse_app.application.services.device_reading_retention_service import (
+    DeviceReadingRetentionService,
+)
 from production_pulse_app.config import settings
 from production_pulse_app.domain.services.device_poll_schedule_service import compute_next_poll_at
 from production_pulse_app.infrastructure.content.device_validation_content_service import (
     scheduler_tick_ms,
+)
+from production_pulse_app.infrastructure.content.telemetry_persistence_content_service import (
+    purge_interval_ms,
 )
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     PostgresDeviceRepository,
@@ -34,12 +41,14 @@ class DevicePollSchedulerService:
         self,
         poll_service: DevicePollService | None = None,
         device_repository: PostgresDeviceRepository | None = None,
+        retention_service: DeviceReadingRetentionService | None = None,
         *,
         max_concurrent_polls: int | None = None,
         tick_seconds: float | None = None,
     ) -> None:
         self._poll_service = poll_service or DevicePollService()
         self._devices = device_repository or PostgresDeviceRepository()
+        self._retention = retention_service or DeviceReadingRetentionService()
         self._max_concurrent = max_concurrent_polls or settings.PP_POLL_MAX_CONCURRENT
         self._tick_seconds = (
             tick_seconds if tick_seconds is not None else resolve_scheduler_tick_seconds()
@@ -49,6 +58,8 @@ class DevicePollSchedulerService:
         self._stop_event = asyncio.Event()
         self._task: asyncio.Task[None] | None = None
         self._lock = asyncio.Lock()
+        self._last_purge_monotonic = 0.0
+        self._purge_in_flight = False
 
     @property
     def in_flight_device_ids(self) -> frozenset[UUID]:
@@ -86,6 +97,7 @@ class DevicePollSchedulerService:
             logger.info("Device poll scheduler stopped.")
 
     async def _tick(self) -> None:
+        await self._maybe_purge_raw()
         due_devices = await asyncio.to_thread(self._devices.list_due_for_scheduled_poll)
         for device in due_devices:
             device_id = device["id"]
@@ -94,6 +106,26 @@ class DevicePollSchedulerService:
                     continue
                 self._in_flight.add(device_id)
             asyncio.create_task(self._poll_device(device), name=f"poll-{device_id}")
+
+    async def _maybe_purge_raw(self) -> None:
+        interval_s = purge_interval_ms() / 1000.0
+        now = time.monotonic()
+        if self._purge_in_flight:
+            return
+        if self._last_purge_monotonic and (now - self._last_purge_monotonic) < interval_s:
+            return
+        self._purge_in_flight = True
+        self._last_purge_monotonic = now
+
+        async def _run() -> None:
+            try:
+                await asyncio.to_thread(self._retention.purge_expired_raw)
+            except Exception:
+                logger.exception("Raw readings retention purge failed.")
+            finally:
+                self._purge_in_flight = False
+
+        asyncio.create_task(_run(), name="readings-raw-purge")
 
     async def _poll_device(self, device: dict[str, Any]) -> None:
         device_id = device["id"]

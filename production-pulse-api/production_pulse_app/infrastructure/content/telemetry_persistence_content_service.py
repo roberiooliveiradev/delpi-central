@@ -78,3 +78,21 @@ def always_persist_meta_keys() -> frozenset[str]:
 def rollup_enabled(*, default: bool = True) -> bool:
     raw = _defaults().get("rollupEnabled", default)
     return bool(raw)
+
+
+def purge_interval_ms(*, default: int = 3_600_000) -> int:
+    raw = _defaults().get("purgeIntervalMs", default)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return max(60_000, value)
+
+
+def purge_batch_size(*, default: int = 5_000) -> int:
+    raw = _defaults().get("purgeBatchSize", default)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return max(100, min(value, 50_000))

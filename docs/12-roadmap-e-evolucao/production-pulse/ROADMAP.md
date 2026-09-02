@@ -20,7 +20,7 @@
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
 | **E7 — Alinhamento `.cursor` (conteúdo + kit)** | ✅ **Concluído** | E7.S0–S5 em `main` |
 | **E8 — Layout responsivo (formulários + superfícies)** | 🔄 **Em curso** | E8.S0–S3 ✅ commit `11378d221`; S4 verify pendente |
-| **P3 — Persistência telemetria (mercado)** | 🔄 **Em curso** | S1–S2 ✅ (policy + meta); S3–S6 pendentes — [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) |
+| **P3 — Persistência telemetria (mercado)** | 🔄 **Em curso** | S1–S3 ✅; S4–S6 pendentes — [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
@@ -721,7 +721,7 @@ flowchart LR
 - [x] P3.S0 — docs/regras
 - [x] P3.S1 — policy change/heartbeat
 - [x] P3.S2 — meta observabilidade
-- [ ] P3.S3 — purge raw
+- [x] P3.S3 — purge raw
 - [ ] P3.S4 — rollups + query resolution
 - [ ] P3.S5 — MFE + helps
 - [ ] P3.S6 — verify

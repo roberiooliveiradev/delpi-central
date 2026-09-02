@@ -5,6 +5,8 @@
     "rawRetentionDays": 90,
     "counterDeadband": 1,
     "rollupEnabled": true,
+    "purgeIntervalMs": 3600000,
+    "purgeBatchSize": 5000,
     "deadband": {
       "counter": 1
     }
