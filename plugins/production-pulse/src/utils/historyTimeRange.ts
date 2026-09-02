@@ -199,6 +199,24 @@ export function resolveHistoryChartSampleIntervalMs(
   return Math.min(HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX, ideal);
 }
 
+export type HistoryReadingsResolution = "raw" | "hour" | "day";
+
+const HISTORY_RESOLUTION_HOUR_AFTER_MS = 7 * 24 * 60 * 60_000;
+const HISTORY_RESOLUTION_DAY_AFTER_MS = 90 * 24 * 60 * 60_000;
+
+/**
+ * R51 — spans longos preferem rollup na API; raw denso permanece para janelas curtas.
+ */
+export function resolveHistoryReadingsResolution(
+  fromIso: string | undefined,
+  toIso: string | undefined,
+): HistoryReadingsResolution {
+  const spanMs = resolveSpanMs(fromIso, toIso);
+  if (spanMs > HISTORY_RESOLUTION_DAY_AFTER_MS) return "day";
+  if (spanMs > HISTORY_RESOLUTION_HOUR_AFTER_MS) return "hour";
+  return "raw";
+}
+
 /** Reduz pontos densos mantendo início/fim e passo uniforme. */
 export function downsampleChartPoints(points: ChartPoint[], maxPoints = CHART_TARGET_POINTS): ChartPoint[] {
   if (points.length <= maxPoints) return points;

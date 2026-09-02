@@ -182,6 +182,7 @@ export type FetchDeviceReadingsParams = {
   to?: string;
   metric?: string;
   sampleIntervalMs?: number;
+  resolution?: "raw" | "hour" | "day";
   signal?: AbortSignal;
 };
 
@@ -195,6 +196,9 @@ export async function fetchDeviceReadings(
   if (params.from) searchParams.set("from", params.from);
   if (params.to) searchParams.set("to", params.to);
   if (params.metric) searchParams.set("metric", params.metric);
+  if (params.resolution && params.resolution !== "raw") {
+    searchParams.set("resolution", params.resolution);
+  }
   if (params.sampleIntervalMs != null && params.sampleIntervalMs > 0) {
     searchParams.set("sampleIntervalMs", String(params.sampleIntervalMs));
   }

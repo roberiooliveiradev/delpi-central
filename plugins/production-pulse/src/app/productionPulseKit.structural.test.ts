@@ -296,6 +296,9 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/detail/DeviceOverviewTab.tsx")).toMatch(/PpReadingsAreaChart/);
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpReadingsAreaChart/);
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpChartCard/);
+    expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(
+      /resolveHistoryReadingsResolution/,
+    );
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppCharts"/);
     expect(readRelative("components/data/ppCharts.tsx")).toMatch(/ComparativeAreaChart/);
     expect(readRelative("components/data/ppCharts.tsx")).toMatch(/useDelpiDarkMode/);

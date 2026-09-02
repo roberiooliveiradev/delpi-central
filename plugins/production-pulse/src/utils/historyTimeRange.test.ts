@@ -10,6 +10,7 @@ import {
   resolveDefaultHistoryPreset,
   resolveHistoryChartPageSize,
   resolveHistoryChartSampleIntervalMs,
+  resolveHistoryReadingsResolution,
   HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX,
   toDatetimeLocalValue,
 } from "./historyTimeRange";
@@ -155,5 +156,26 @@ describe("historyTimeRange", () => {
     expect(longCustom).toBeDefined();
     expect(longCustom!).toBeLessThanOrEqual(HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX);
     expect(longCustom!).toBeGreaterThan(86_400_000);
+  });
+
+  it("escolhe resolution rollup conforme span (R51)", () => {
+    expect(
+      resolveHistoryReadingsResolution(
+        "2026-09-02T12:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+      ),
+    ).toBe("raw");
+    expect(
+      resolveHistoryReadingsResolution(
+        "2026-08-20T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+      ),
+    ).toBe("hour");
+    expect(
+      resolveHistoryReadingsResolution(
+        "2026-05-01T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+      ),
+    ).toBe("day");
   });
 });

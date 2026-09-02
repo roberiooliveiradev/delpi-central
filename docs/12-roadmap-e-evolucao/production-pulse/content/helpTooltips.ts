@@ -113,7 +113,8 @@ export const PP_HELP = {
       "Variação entre leituras consecutivas — relevante para contadores de golpe.",
     chartSeries:
       "Evolução temporal de cada métrica (rpm, °C, golpes) conforme o driver.",
-    readingsTable: "Histórico paginado de polls e comandos gravados no banco.",
+    readingsTable:
+      "Histórico paginado de polls e comandos gravados no banco (raw). Períodos longos no gráfico usam rollups hour/day.",
     commandsTable:
       "Quem executou cada comando, quando e se o hardware respondeu com sucesso.",
     pollNow: "Força leitura imediata e grava no histórico.",
