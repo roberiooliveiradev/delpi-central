@@ -4,6 +4,7 @@ import {
   autoFitCanvasTableTrack,
   canvasTableBandSelection,
   canvasTableTrackContentWeights,
+  canvasTableTrackRectWeights,
   insertCanvasTableCol,
   insertCanvasTableRow,
 } from "./canvasTableStructure";

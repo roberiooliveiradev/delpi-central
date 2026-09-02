@@ -48,4 +48,12 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
     );
     expect(tvBlock?.[1] ?? "").toMatch(/overflow:\s*hidden/);
   });
+
+  it("Grade td/th não força pre-wrap; rich text herda wrap da célula", () => {
+    const tdRule = css.match(/\.td-canvas-table th,\s*\n\.td-canvas-table td\s*\{([\s\S]*?)\}/);
+    expect(tdRule?.[1] ?? "").not.toMatch(/white-space:\s*pre-wrap/);
+    expect(css).toMatch(
+      /\.td-canvas-table\s+\.delpi-ui-comunicado__rich-text[\s\S]*?white-space:\s*inherit/,
+    );
+  });
 });

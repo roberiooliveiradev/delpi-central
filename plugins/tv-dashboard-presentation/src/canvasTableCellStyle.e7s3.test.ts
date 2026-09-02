@@ -6,8 +6,10 @@ import {
 } from "./canvasTableClipboard";
 import { centerCanvasTableMergeAnchor } from "./canvasTableMerge";
 import {
+  nextCanvasTableWhiteSpaceToggle,
   normalizeCanvasTableCell,
   resolveCanvasTableCellBoxStyle,
+  resolveCanvasTableWrapActive,
 } from "./comunicadoCanvasTable";
 
 describe("resolveCanvasTableCellBoxStyle defaults", () => {
@@ -37,6 +39,22 @@ describe("resolveCanvasTableCellBoxStyle defaults", () => {
     );
     expect(nowrap.whiteSpace).toBe("nowrap");
     expect(nowrap.textOverflow).toBe("ellipsis");
+  });
+
+  it("toggle Quebrar alterna wrap ↔ nowrap e nowrap é visível no box style", () => {
+    expect(resolveCanvasTableWrapActive(undefined)).toBe(true);
+    expect(resolveCanvasTableWrapActive("pre-wrap")).toBe(true);
+    expect(resolveCanvasTableWrapActive("nowrap")).toBe(false);
+    expect(nextCanvasTableWhiteSpaceToggle(undefined)).toBe("nowrap");
+    expect(nextCanvasTableWhiteSpaceToggle("nowrap")).toBe("pre-wrap");
+    const toggled = resolveCanvasTableCellBoxStyle(
+      normalizeCanvasTableCell({
+        kind: "text",
+        text: "x",
+        style: { whiteSpace: nextCanvasTableWhiteSpaceToggle("pre-wrap") },
+      }),
+    );
+    expect(toggled.whiteSpace).toBe("nowrap");
   });
 
   it("verticalAlign middle por default", () => {

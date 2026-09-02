@@ -249,7 +249,12 @@
   overflow: hidden;
   /* white-space / text-overflow / vertical-align vêm de resolveCanvasTableCellBoxStyle. */
   vertical-align: middle;
-  white-space: pre-wrap;
+}
+
+/* Rich text / contentEditable na Grade herda wrap da célula (não força pre-wrap do bloco). */
+.td-canvas-table .delpi-ui-comunicado__rich-text,
+.td-canvas-table [contenteditable="true"] {
+  white-space: inherit;
 }
 
 .td-canvas-table th {

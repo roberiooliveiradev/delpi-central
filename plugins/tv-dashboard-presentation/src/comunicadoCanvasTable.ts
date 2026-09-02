@@ -492,6 +492,20 @@ export function resolveCanvasTableCellBoxStyle(
   return style;
 }
 
+/** Wrap ativo = qualquer valor distinto de `nowrap` (default Excel = pre-wrap). */
+export function resolveCanvasTableWrapActive(
+  whiteSpace: CanvasTableCellStyle["whiteSpace"] | null | undefined,
+): boolean {
+  return (whiteSpace ?? "pre-wrap") !== "nowrap";
+}
+
+/** Alterna Quebrar ↔ 1 linha a partir do whiteSpace atual da célula. */
+export function nextCanvasTableWhiteSpaceToggle(
+  whiteSpace: CanvasTableCellStyle["whiteSpace"] | null | undefined,
+): "pre-wrap" | "nowrap" {
+  return resolveCanvasTableWrapActive(whiteSpace) ? "nowrap" : "pre-wrap";
+}
+
 /** Snapshot de geometria/modelo que deve ser idêntico com ou sem chrome de edição. */
 export function resolveCanvasTableGeometrySnapshot(
   block: Pick<
