@@ -187,9 +187,11 @@ describe("production-pulse kit contracts", () => {
     expect(counter).not.toMatch(/pp-counter-pad__pad--stack/);
     expect(gauge).toMatch(/pp-gauge-readout__workspace/);
     expect(css).toMatch(/--pp-operator-content-max/);
-    expect(css).toMatch(/grid-template-areas:\s*\n\s*"increment increment"/);
-    expect(css).toMatch(/data-pp-viewport="tablet"\] \.pp-counter-pad__value/);
+    expect(css).toMatch(/--pp-operator-counter-value/);
+    expect(css).toMatch(/data-pp-viewport="mobile"\] \.pp-counter-pad__pad/);
     expect(css).toMatch(/min-width: 901px\)[\s\S]*pp-gauge-readout__grid/);
+    expect(css).toMatch(/--pp-operator-card-min-height/);
+    expect(css).toMatch(/dashboard-production-pulse--operator \.pp-device-status/);
   });
 
   it("trocar posto no operador volta ao hub — evita auto-redirect do picker", () => {

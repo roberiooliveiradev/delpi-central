@@ -1255,6 +1255,8 @@ Desktop (>1100) — gauge 2+ métricas
 
 **Tokens CSS:** `--pp-operator-content-max`, `--pp-operator-shell-min-height`, `--pp-operator-pad-height` por `data-pp-viewport`.
 
+**Tokens fluidos (OP-08b):** todos os tamanhos do operador usam `clamp()` centralizado em `.dashboard-production-pulse--operator` — hero, cards hub/picker, contador, gauge, badges, banner offline, botões pad/sync e modal zerar. Componentes consomem `--pp-operator-*` (sem px fixo solto no bloco operador).
+
 ### WF-PP-OP-07 — Entradas
 
 | Origem | Destino |
