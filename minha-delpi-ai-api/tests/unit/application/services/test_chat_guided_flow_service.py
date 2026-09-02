@@ -80,9 +80,41 @@ def test_qual_agente_for_product_stays_on_agent_flow():
 
 
 def test_agent_help_answer_instructs_activation_steps():
-    from app.application.services.chat_capabilities_service import ChatCapabilitiesService
+    from app.application.services.chat_capabilities_service import (
+        ChatCapabilitiesService,
+        _capabilities_content,
+    )
+    from app.infrastructure.content.content_service import ContentService
 
+    ContentService.clear_cache()
+    _capabilities_content.cache_clear()
     answer = ChatCapabilitiesService._answer_topic_help("agentHelp") or ""
     assert "composer" in answer.lower() or "+" in answer
     assert "Como usar" in answer or "toque" in answer.lower()
-    assert "consulta produto" not in answer.lower()
+    assert "Minha DELPI" in answer or "minha delpi" in answer.lower()
+    # Exemplos de help podem citar a pergunta; não devem virar fluxo SQL/produto.
+    assert "```sql" not in answer.lower()
+    assert "sb1010" not in answer.lower()
+
+
+def test_qual_agente_consulta_produto_names_platform_agent():
+    from app.application.services.chat_capabilities_service import (
+        ChatCapabilitiesService,
+        _capabilities_content,
+    )
+    from app.infrastructure.content.content_service import ContentService
+
+    ContentService.clear_cache()
+    _capabilities_content.cache_clear()
+    answer = (
+        ChatCapabilitiesService.resolve_capability_answer(
+            message="qual agente consulta produto?",
+            workspace_context={"userActivatedAgent": False, "actionsEnabled": False},
+        )
+        or ""
+    )
+    low = answer.lower()
+    assert "minha delpi" in low
+    assert "para esta tarefa" in low
+    assert "select " not in low
+    assert "sb1010" not in low

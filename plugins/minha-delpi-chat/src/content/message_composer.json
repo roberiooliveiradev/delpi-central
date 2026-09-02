@@ -13,7 +13,7 @@
     "filesSectionTitle": "Arquivos",
     "agentsSectionTitle": "Apps e agentes",
     "projectsSectionTitle": "Projetos",
-    "agentsHint": "Até {maxAgents} agentes — o menu permanece aberto para combinar.",
+    "agentsHint": "Até {maxAgents} agentes — para produto/estoque/SQL use Minha DELPI; o menu permanece aberto para combinar.",
     "projectsHint": "Até {maxProjects} projetos — combine na mesma pergunta.",
     "emptyAgents": "Nenhum agente disponível",
     "emptyProjects": "Nenhum projeto disponível"

@@ -335,7 +335,7 @@ class ChatCapabilitiesService:
             return cls._answer_topic_help("attachmentHelp")
 
         if topic == "agent":
-            return cls._answer_topic_help("agentHelp")
+            return cls._answer_agent_help(message)
 
         generic = _feature_answers().get("genericInquiry") or {}
 
@@ -598,6 +598,60 @@ class ChatCapabilitiesService:
         return body or None
 
     @classmethod
+    def _answer_agent_help(cls, message: str) -> str | None:
+        base = cls._answer_topic_help("agentHelp")
+
+        if not base:
+            return None
+
+        return cls._with_agent_task_hint(message, base)
+
+    @classmethod
+    def _with_agent_task_hint(cls, message: str, base_answer: str) -> str:
+        hint = cls._resolve_agent_task_hint(message)
+
+        if not hint:
+            return base_answer
+
+        return f"{hint}\n\n{base_answer}".strip()
+
+    @classmethod
+    def _resolve_agent_task_hint(cls, message: str) -> str | None:
+        block = _capabilities_content().get("agentTaskHints") or {}
+
+        if not isinstance(block, dict):
+            return None
+
+        tasks = block.get("tasks") or []
+
+        if not isinstance(tasks, list) or not tasks:
+            return None
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        section_title = str(block.get("sectionTitle") or "**Para esta tarefa**").strip()
+
+        for task in tasks:
+            if not isinstance(task, dict):
+                continue
+
+            markers = task.get("markers") or []
+
+            if not isinstance(markers, list):
+                continue
+
+            if not any(str(marker).strip() and str(marker).strip() in normalized for marker in markers):
+                continue
+
+            text = str(task.get("text") or "").strip()
+
+            if not text:
+                continue
+
+            return f"{section_title}\n\n{text}".strip()
+
+        return None
+
+    @classmethod
     def _format_catalog_feature_help(cls, feature: dict) -> str | None:
         title = str(feature.get("title") or "").strip()
         summary = str(feature.get("summary") or "").strip()
@@ -857,6 +911,10 @@ class ChatCapabilitiesService:
             formatted = cls._format_catalog_feature_help(feature)
 
             if formatted:
+                if str(feature.get("helpTopicId") or "") == "agent" or str(
+                    feature.get("id") or ""
+                ) == "agent_selection":
+                    formatted = cls._with_agent_task_hint(message, formatted)
                 intro = cls._self_help_context_intro(workspace_context)
 
                 if intro:

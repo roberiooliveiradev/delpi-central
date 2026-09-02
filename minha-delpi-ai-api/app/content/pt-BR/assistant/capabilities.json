@@ -394,6 +394,47 @@
     "admin": "Neste agente, posso ajudar com **e-mails**, textos, atas, comunicados, traduções, resumos e checklists.",
     "executive": "Neste agente, posso ajudar com **indicadores**, resumos executivos e visões consolidadas autorizadas."
   },
+  "agentTaskHints": {
+    "sectionTitle": "**Para esta tarefa**",
+    "tasks": [
+      {
+        "id": "product_ops",
+        "markers": [
+          "produto",
+          "estoque",
+          "cadastro",
+          "preco",
+          "preço",
+          "estrutura",
+          "fornecedor",
+          "lmp",
+          "bom",
+          "saldo"
+        ],
+        "text": "Ative o agente da plataforma **Minha DELPI** (composer **+** ou **@**), ou outro da lista com actions de produto/estoque. Em seguida faça a pergunta operacional."
+      },
+      {
+        "id": "sql",
+        "markers": [
+          "sql",
+          "query",
+          "consulta sql",
+          "consulta no banco"
+        ],
+        "text": "Ative o agente **Minha DELPI** (ou o especialista com skill/action de SQL) via **+** / **@** antes de pedir para criar, revisar ou executar consultas."
+      },
+      {
+        "id": "kpi",
+        "markers": [
+          "indicador",
+          "kpi",
+          "oee",
+          "dashboard"
+        ],
+        "text": "Ative o agente **Minha DELPI** (ou o da lista com actions de indicadores) via **+** / **@** e peça o KPI com período/filial quando couber."
+      }
+    ]
+  },
   "featureAnswers": {
     "helpAboutFallback": {
       "title": "**Ajuda no chat**",
@@ -435,7 +476,7 @@
     },
     "agentHelp": {
       "title": "**Agentes especializados**",
-      "body": "Para **ativar** um agente nesta conversa:\n\n1. No composer, toque em **+** (ou digite **@**) e escolha o agente na lista.\n2. Confirme que o nome do agente aparece no contexto da conversa.\n3. Faça a pergunta operacional (estoque, produto, indicadores, SQL…).\n\n**Chat comum** (sem agente) — documentação, textos, anexos e orientação.\n**Com agente** — actions/APIs DELPI autorizadas daquele especialista.\n\nNão invento nomes de agentes: use o menu **+** para ver os disponíveis na sua conta. Se a rota faltar, peça ao administrador para habilitar a action no agente."
+      "body": "Para **ativar** um agente nesta conversa:\n\n1. No composer, toque em **+** (ou digite **@**) e escolha o agente na lista.\n2. Confirme que o nome do agente aparece no contexto da conversa.\n3. Faça a pergunta operacional (estoque, produto, indicadores, SQL…).\n\n**Chat comum** (sem agente) — documentação, textos, anexos e orientação.\n**Com agente** — actions/APIs DELPI autorizadas daquele especialista.\n\nPara **produto, estoque, indicadores e SQL operacional**, o agente da plataforma é o **Minha DELPI** (ou outro da lista com essas actions). Se a rota faltar, peça ao administrador para habilitar a action no agente."
     },
     "stockHelp": {
       "title": "**Consulta de estoque**",

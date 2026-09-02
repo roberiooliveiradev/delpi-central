@@ -694,7 +694,7 @@
       "ajuste a query",
       "ajusta a query"
     ],
-    "sqlAuthoringIntro": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste sufixo de tabela (ex.: SA1010) conforme o ambiente:",
+    "sqlAuthoringIntro": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:",
     "schemaExplore": {
       "internalTitle": "Schema interno (uso interno)",
       "internalLines": [
@@ -704,7 +704,7 @@
       "userTitle": "Schema interno {table_name} (não exibir catálogo ao usuário)",
       "columnCountLine": "Tabela: {table_name} — {count} coluna(s) no catálogo.",
       "columnsLine": "Colunas para o SQL: {columns}.",
-      "activeFilterHint": "Filtro Protheus usual para ativos: D_E_L_E_T_ = '' (ou equivalente na tabela física, ex. SA1010).",
+      "activeFilterHint": "Filtro Protheus usual para ativos: D_E_L_E_T_ = '' (ou equivalente na tabela física …010).",
       "defaultDeleteHint": "Use exclusão lógica D_E_L_E_T_ = '' quando aplicável.",
       "deliveryHint": "Entrega obrigatória ao usuário: bloco ```sql``` com SELECT (somente leitura), depois explicação curta.",
       "columnNamesHint": "Use exatamente estes nomes de coluna no SQL (não invente Codigo/Nome/Status genéricos).",
