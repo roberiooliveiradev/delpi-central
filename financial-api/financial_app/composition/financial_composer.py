@@ -3,6 +3,7 @@ from __future__ import annotations
 from financial_app.application.services.billing_service import BillingService
 from financial_app.application.services.cost_center_service import CostCenterService
 from financial_app.application.services.delinquency_service import DelinquencyService
+from financial_app.application.services.freight_service import FreightService
 from financial_app.application.services.indicators_service import IndicatorsService
 from financial_app.application.services.overview_service import OverviewService
 from financial_app.application.services.subplugin_catalog_service import SubpluginCatalogService
@@ -42,6 +43,15 @@ def build_delinquency_service(
     gateway: DelpiFinancialGateway | None = None,
 ) -> DelinquencyService:
     return DelinquencyService(
+        gateway or build_financial_gateway(),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_freight_service(
+    gateway: DelpiFinancialGateway | None = None,
+) -> FreightService:
+    return FreightService(
         gateway or build_financial_gateway(),
         branch_access=build_branch_access_service(),
     )

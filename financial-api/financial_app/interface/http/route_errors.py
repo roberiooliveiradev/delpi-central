@@ -3,6 +3,7 @@ from __future__ import annotations
 from financial_app.application.services.billing_service import InvalidBillingQuery
 from financial_app.application.services.cost_center_service import InvalidCostCenterQuery
 from financial_app.application.services.delinquency_service import InvalidDelinquencyQuery
+from financial_app.application.services.freight_service import InvalidFreightQuery
 from financial_app.core.responses import fail
 from financial_app.domain.errors import (
     BranchAccessDenied,
@@ -21,6 +22,7 @@ def fail_from_exception(exc: Exception):
             InvalidDelinquencyQuery,
             InvalidCostCenterQuery,
             InvalidBillingQuery,
+            InvalidFreightQuery,
         ),
     ):
         return fail(str(exc), 400)
