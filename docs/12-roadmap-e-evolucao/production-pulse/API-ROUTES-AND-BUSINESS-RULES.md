@@ -55,7 +55,7 @@
 | Método | Path | Permissão | Regra / efeito |
 |--------|------|-----------|----------------|
 | `GET` | `/devices/{id}/live` | `devices.view` | Lê chip **sem** gravar reading; aplica continuity; status R9–R12 |
-| `POST` | `/devices/{id}/poll` | `devices.view` | Lê + persist reading + `last_metrics` (R14) ou falha R13 |
+| `POST` | `/devices/{id}/poll` | `devices.view` | Lê + atualiza estado (R47); insert reading se R46 (ou sempre se comando/restore) — R14 evoluído |
 | `POST` | `/devices/poll-all` | `devices.manage` | Poll em massa (só com binding); query `branch`, `role` |
 | `GET` | `/devices/{id}/readings` | `devices.view` | Histórico; query `from`, `to`, `metric`, `page`, `pageSize` (máx 500), `sampleIntervalMs` (R45) |
 
@@ -143,7 +143,7 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 | **R11** | **Disabled:** `enabled=false` — fora de scheduler, hub, KPIs online/offline. |
 | **R12** | **Sem amarração:** status `no_binding`; fora do hub; conta no KPI «sem amarração». |
 | **R13** | Poll **falho:** `last_error` + attempt; **não** reading; **não** muda `last_seen_at` / `last_metrics`. |
-| **R14** | Poll **OK:** limpa erro; atualiza `last_seen_at` + `last_metrics`; insert reading `source=poll`. |
+| **R14** | Poll **OK:** limpa erro; atualiza `last_seen_at` + `last_metrics`; insert reading `source=poll` **somente** se R46 (mudança/heartbeat/restore) — ver P3. |
 | **R15** | Gauge/telemetria: cada poll OK gera reading mesmo com valor estável (heartbeat). |
 | **R16** | `delta_metrics` só para `monotonic:true`. Queda **explicada** (comando) → delta assinado; queda **restaurada** → meta `counter_restored` (sem tratar como reset de operador). |
 | **R36** | Contagem lógica/raw **nunca** &lt; `counterSet.min` (piso 0); sync `SET` no chip se raw negativo. |
@@ -183,20 +183,20 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 | **R44** | Novo medidor = entrada no registry + `DeviceDriver` + (se preciso) surface; **sem** rota CRUD nova. |
 | **R45** | Série do gráfico de histórico: quando o período tem mais leituras que o `pageSize`, o MFE envia `sampleIntervalMs` (até ~366 dias) e a API devolve **uma leitura por bucket** cobrindo o intervalo inteiro — não só o fim da janela (LIMIT DESC). Tick do eixo X segue o **span** (não o poll). |
 
-### 3.6 Persistência de telemetria (P3 — planejado)
+### 3.6 Persistência de telemetria (P3)
 
 > Spec: [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) · Roadmap § P3
 
-| Id | Regra |
-|----|--------|
-| **R46** | Insert poll/manual em `readings` só com mudança ≥ deadband **ou** heartbeat desde o último insert. |
-| **R47** | Poll OK sem insert **ainda** atualiza `last_metrics` + `last_seen_at` (estado ao vivo). |
-| **R48** | `source=command` sempre persiste reading. |
-| **R49** | Purge de raw com idade &gt; `rawRetentionDays` (default 90). |
-| **R50** | Rollups hour/day; `GET /readings?resolution=raw\|hour\|day`. |
-| **R51** | MFE: spans longos preferem rollup; R45 permanece para raw denso. |
+| Id | Regra | Status |
+|----|--------|--------|
+| **R46** | Insert poll/manual em `readings` só com mudança ≥ deadband **ou** heartbeat desde o último insert. | ✅ S1 |
+| **R47** | Poll OK sem insert **ainda** atualiza `last_metrics` + `last_seen_at` (estado ao vivo). | ✅ S1 |
+| **R48** | `source=command` sempre persiste reading; meta restore/reset também. | ✅ S1 |
+| **R49** | Purge de raw com idade &gt; `rawRetentionDays` (default 90). | 📋 |
+| **R50** | Rollups hour/day; `GET /readings?resolution=raw\|hour\|day`. | 📋 |
+| **R51** | MFE: spans longos preferem rollup; R45 permanece para raw denso. | 📋 |
 
-R14 **evolui** no P3: “poll OK → sempre estado; insert condicional (R46)”.
+Poll response `meta.readingPersisted` + `meta.persistReason` (S2).
 
 ---
 

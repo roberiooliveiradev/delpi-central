@@ -84,11 +84,14 @@ def test_manual_poll_persists_reading_and_delta(client, unique_ip, monkeypatch):
     assert first_body["deltaMetrics"]["counter"] == 0
     assert first_body["online"] is True
     assert first_body["status"] == "online"
+    assert first_body["meta"]["readingPersisted"] is True
 
     second = client.post(f"/devices/{device['id']}/poll")
     assert second.status_code == 200
     second_body = second.json()["data"]
     assert second_body["deltaMetrics"]["counter"] == 5
+    assert second_body["meta"]["readingPersisted"] is True
+    assert second_body["meta"]["persistReason"] == "change"
 
     readings = client.get(f"/devices/{device['id']}/readings")
     assert readings.status_code == 200
@@ -359,3 +362,32 @@ def test_readings_sample_interval_covers_full_range(client, unique_ip):
     assert sampled_times[0].startswith("2026-08-26")
     assert sampled_times[-1].startswith("2026-08-28")
     assert sampled.json()["data"]["pagination"]["total"] == 48
+
+
+def test_poll_skips_persist_when_counter_unchanged(client, unique_ip, monkeypatch):
+    def fake_read(_self, _device):
+        return DeviceReading(metrics={"counter": 42})
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+
+    device = _create_device(client, unique_ip)
+    _bind_equipment(client, device["id"])
+
+    first = client.post(f"/devices/{device['id']}/poll")
+    assert first.status_code == 200
+    assert first.json()["data"]["meta"]["readingPersisted"] is True
+    assert first.json()["data"]["meta"]["persistReason"] == "first"
+
+    second = client.post(f"/devices/{device['id']}/poll")
+    assert second.status_code == 200
+    body = second.json()["data"]
+    assert body["metrics"]["counter"] == 42
+    assert body["meta"]["readingPersisted"] is False
+    assert body["meta"]["persistReason"] == "skipped_unchanged"
+    assert body.get("readingId") is None
+
+    readings = client.get(f"/devices/{device['id']}/readings")
+    assert readings.json()["data"]["pagination"]["total"] == 1

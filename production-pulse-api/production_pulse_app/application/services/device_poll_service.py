@@ -26,6 +26,9 @@ from production_pulse_app.domain.services.device_monotonic_counter_continuity_se
     public_metrics,
 )
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
+from production_pulse_app.domain.services.device_reading_persist_policy_service import (
+    decide_persist_reading,
+)
 from production_pulse_app.domain.services.reading_serialization_service import reading_row_to_api
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_binding_repository import (
     PostgresDeviceBindingRepository,
@@ -193,23 +196,46 @@ class DevicePollService:
         if meta.get("counter_restored"):
             meta.pop("counter_reset", None)
 
-        reading_row = self._readings.insert(
-            device_id,
-            metrics=canonical_public,
-            delta_metrics=delta_metrics,
-            meta=meta,
+        role_key = str(device.get("role_key") or "")
+        last_persisted_at = self._readings.latest_recorded_at(device_id)
+        decision = decide_persist_reading(
             source=source,
-            recorded_at=reading.recorded_at,
+            role_key=role_key,
+            previous_metrics=previous_public,
+            new_metrics=canonical_public,
+            last_persisted_at=last_persisted_at,
+            now=reading.recorded_at,
+            meta=meta,
         )
+
+        reading_id: int | None = None
+        recorded_at = reading.recorded_at
+        if decision.should_persist:
+            reading_row = self._readings.insert(
+                device_id,
+                metrics=canonical_public,
+                delta_metrics=delta_metrics,
+                meta=meta,
+                source=source,
+                recorded_at=reading.recorded_at,
+            )
+            reading_id = int(reading_row["id"])
+            recorded_at = reading_row["recorded_at"]
+
         device = self._devices.record_poll_success(device_id, metrics=canonical)
+        payload_meta = {
+            **meta,
+            "readingPersisted": decision.should_persist,
+            "persistReason": decision.reason,
+        }
         return self._build_poll_payload(
             device,
             has_binding=has_binding,
             metrics=canonical_public,
-            recorded_at=reading_row["recorded_at"],
+            recorded_at=recorded_at,
             delta_metrics=delta_metrics,
-            reading_id=reading_row["id"],
-            meta=meta,
+            reading_id=reading_id,
+            meta=payload_meta,
         )
 
     def _maybe_hardware_floor_counter(

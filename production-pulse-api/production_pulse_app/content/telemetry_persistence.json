@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "defaults": {
+    "heartbeatMs": 30000,
+    "rawRetentionDays": 90,
+    "counterDeadband": 1,
+    "rollupEnabled": true,
+    "deadband": {
+      "counter": 1
+    }
+  },
+  "byRoleKey": {
+    "pulse_counter": {
+      "heartbeatMs": 30000,
+      "deadband": {
+        "counter": 1
+      }
+    },
+    "process_gauge": {
+      "heartbeatMs": 60000,
+      "deadband": {
+        "rpm": 5,
+        "temperature_c": 0.5
+      }
+    }
+  },
+  "alwaysPersistMetaKeys": [
+    "counter_restored",
+    "counter_reset",
+    "counter_decreased"
+  ]
+}

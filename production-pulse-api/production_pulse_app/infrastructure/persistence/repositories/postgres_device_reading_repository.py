@@ -76,6 +76,25 @@ class PostgresDeviceReadingRepository:
                 )
                 return int(cur.fetchone()["total"])
 
+    def latest_recorded_at(self, device_id: UUID) -> datetime | None:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT recorded_at
+                    FROM production_pulse.readings
+                    WHERE device_id = %s
+                    ORDER BY recorded_at DESC, id DESC
+                    LIMIT 1
+                    """,
+                    (device_id,),
+                )
+                row = cur.fetchone()
+        if row is None:
+            return None
+        value = row["recorded_at"]
+        return value if isinstance(value, datetime) else None
+
     def list_for_device(
         self,
         device_id: UUID,

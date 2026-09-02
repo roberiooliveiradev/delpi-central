@@ -1,6 +1,6 @@
 # P3 — Persistência de telemetria (padrão de mercado)
 
-> **Status:** especificação (set/2026) — **não implementado**  
+> **Status:** implementação em curso (set/2026) — **S1–S2 ✅**; S3–S6 pendentes  
 > **Roadmap:** [ROADMAP.md § P3](./ROADMAP.md#p3--persistência-de-telemetria-padrão-de-mercado)  
 > **Regras alvo:** R46–R51 em [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md)  
 > **Problema motivador:** poll rápido grava **toda** leitura (R14 atual), inclusive `delta = 0` → dezenas de milhares de linhas / device em poucos dias; histórico e Postgres sofrem; o **valor** do contador em `last_metrics` **não** é corrompido por isso.
