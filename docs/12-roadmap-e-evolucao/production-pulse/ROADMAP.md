@@ -25,7 +25,7 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 
 **E7.S0 entregue (set/2026):** poll/live 422 + `device_api_messages.json`; test-probe `errorMessage`; HTTP 404/409 no JSON; MFE `resolveDeviceActionError` — commits `56c3c7606`, `4c7a3fe13`.
 
-**E7.S1 entregue (set/2026):** `commandErrors` + `validationErrors` no JSON; `ContentCodedError`; comandos/validação HTTP via loader; drivers retornam `error_code`.
+**E7.S1 entregue (set/2026):** `commandErrors` + `validationErrors` no JSON; `ContentCodedError`; comandos/validação HTTP via loader; drivers retornam `error_code` — commit `1c91f052d`.
 
 ---
 
@@ -351,7 +351,7 @@ flowchart LR
 #### E7.S1 — Catálogo JSON: comandos + validação HTTP ✅
 
 - **Objetivo:** Comandos e erros de domínio expostos ao usuário saem do JSON, não de strings nos drivers/services.
-- **Status:** ✅ `main` — após commit desta entrega.
+- **Status:** ✅ `main` — commit `1c91f052d`.
 - **Pronto quando:** pytest command/content/validation; grep zero `"Comando não suportado"` em `device_command_service.py`; assert mensagem PT vem do JSON.
 
 #### E7.S2 — Drivers HTTP: códigos only
