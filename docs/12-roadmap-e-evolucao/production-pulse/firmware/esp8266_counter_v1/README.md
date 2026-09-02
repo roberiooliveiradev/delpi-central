@@ -6,7 +6,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 
 | Método | Rota | Notas |
 |--------|------|--------|
-| `GET` | `/` | Página com **card do código do controlador** + contador |
+| `GET` | `/` | Página somente leitura: **código do controlador** + contagem (sem botões web) |
 | `GET` | `/api/contador` | `{"contador": N}` |
 | `GET` | `/api/status` | Inclui `codigoControlador` / `controllerCode`, IP, MAC |
 | `POST` | `/api/incrementar` | +1 |

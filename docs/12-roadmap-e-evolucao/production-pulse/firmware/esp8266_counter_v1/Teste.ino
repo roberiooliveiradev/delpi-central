@@ -1,48 +1,52 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-// =============================
-// Wi-Fi (ajuste para o ambiente)
-// =============================
+// =============================================================================
+// Wi-Fi
+// =============================================================================
 const char* ssid  = "YOUR_SSID";
 const char* senha = "YOUR_PASSWORD";
 
+// =============================================================================
+// Hardware — botões físicos (GPIO)
+// =============================================================================
 #define BT_MAIS  D5
 #define BT_MENOS D1
 
-long contador = 0;
-
-const unsigned long debounce = 100;
+const unsigned long DEBOUNCE_MS = 100;
 
 bool estadoMais = HIGH;
 bool estadoMenos = HIGH;
-
 bool leituraAnteriorMais = HIGH;
 bool leituraAnteriorMenos = HIGH;
-
 unsigned long tempoMais = 0;
 unsigned long tempoMenos = 0;
 
-// Código estável do controlador (chipId) — exibido na página e em /api/status
-String codigoControlador;
+// =============================================================================
+// Estado
+// =============================================================================
+long contador = 0;
+String codigoControlador;  // ESP-<chipId> — cadastro Delpi
 
 ESP8266WebServer server(80);
 
-
+// =============================================================================
+// Identidade
+// =============================================================================
 String montarCodigoControlador() {
-  // ChipId do ESP8266 em hex maiúsculo, prefixo fixo para cadastro Delpi
   char buf[24];
   snprintf(buf, sizeof(buf), "ESP-%08X", ESP.getChipId());
   return String(buf);
 }
 
-
+// =============================================================================
+// HTTP helpers
+// =============================================================================
 void enviarCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
 }
-
 
 void enviarContador() {
   enviarCors();
@@ -52,7 +56,6 @@ void enviarContador() {
     "{\"contador\":" + String(contador) + "}"
   );
 }
-
 
 void enviarStatus() {
   enviarCors();
@@ -69,11 +72,11 @@ void enviarStatus() {
   server.send(200, "application/json", json);
 }
 
-
 long parseContadorDoBody() {
   if (!server.hasArg("plain")) {
     return -1;
   }
+
   String body = server.arg("plain");
   body.replace(" ", "");
 
@@ -106,10 +109,14 @@ long parseContadorDoBody() {
   return body.substring(start, end).toInt();
 }
 
-
+// =============================================================================
+// Página web — somente leitura (código + contagem)
+// Controles +1 / −1 / RESET ficam comentados abaixo (reativar se necessário).
+// Ajuste de contagem: botões físicos (GPIO) ou API Delpi.
+// =============================================================================
 String paginaPrincipal() {
   String html;
-  html.reserve(3200);
+  html.reserve(2400);
 
   html += F(
     "<!DOCTYPE html><html lang='pt-BR'><head>"
@@ -117,24 +124,25 @@ String paginaPrincipal() {
     "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
     "<title>Production Pulse — Contador</title>"
     "<style>"
-    ":root{--bg:#0f172a;--card:#1e293b;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;--btn:#334155;}"
+    ":root{--bg:#0f172a;--card:#1e293b;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;}"
     "*{box-sizing:border-box}"
-    "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(160deg,#0f172a,#1e293b 55%,#0f172a);color:var(--text);min-height:100vh;padding:1.25rem}"
+    "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;"
+    "background:linear-gradient(160deg,#0f172a,#1e293b 55%,#0f172a);color:var(--text);min-height:100vh;padding:1.25rem}"
     ".wrap{max-width:28rem;margin:0 auto}"
-    ".card{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.25rem;margin-bottom:1rem;box-shadow:0 12px 40px rgba(0,0,0,.35)}"
+    ".card{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.25rem;"
+    "margin-bottom:1rem;box-shadow:0 12px 40px rgba(0,0,0,.35)}"
     ".label{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 .35rem}"
-    ".code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.35rem;font-weight:700;color:var(--accent);word-break:break-all}"
+    ".code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.35rem;"
+    "font-weight:700;color:var(--accent);word-break:break-all}"
     ".hint{margin:.55rem 0 0;font-size:.85rem;color:var(--muted);line-height:1.4}"
     ".valor{font-size:2.75rem;font-weight:700;letter-spacing:-.03em;margin:.25rem 0}"
-    ".row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}"
-    "button{flex:1;min-width:5rem;border:0;border-radius:.65rem;padding:.7rem .9rem;font-size:1rem;font-weight:600;cursor:pointer;background:var(--btn);color:var(--text)}"
-    "button.accent{background:var(--accent);color:#0f172a}"
-    "button.danger{background:#7f1d1d;color:#fecaca}"
     ".meta{font-size:.8rem;color:var(--muted);margin-top:.75rem}"
-    ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);margin-right:.35rem;vertical-align:middle}"
+    ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);"
+    "margin-right:.35rem;vertical-align:middle}"
     "</style></head><body><div class='wrap'>"
   );
 
+  // --- Card: código do controlador ---
   html += F("<div class='card'>");
   html += F("<p class='label'>Código do controlador</p>");
   html += "<div class='code' id='codigo'>" + codigoControlador + "</div>";
@@ -147,18 +155,31 @@ String paginaPrincipal() {
     "</div>"
   );
 
+  // --- Card: contagem (somente leitura) ---
   html += F(
     "<div class='card'>"
     "<p class='label'>Contador</p>"
     "<div class='valor'><span id='c'>0</span></div>"
-    "<div class='row'>"
-    "<button class='accent' onclick=\"cmd('incrementar')\">+1</button>"
-    "<button onclick=\"cmd('decrementar')\">−1</button>"
-    "<button class='danger' onclick=\"cmd('reset')\">RESET</button>"
-    "</div>"
     "<p class='meta' id='metaIp'></p>"
     "</div>"
   );
+
+  // --- Controles web (desativados) — descomente o bloco para reativar na página ---
+  // html += F(
+  //   "<div class='card'>"
+  //   "<p class='label'>Controles</p>"
+  //   "<div class='row' style='display:flex;gap:.5rem;flex-wrap:wrap'>"
+  //   "<button style='flex:1;padding:.7rem;border:0;border-radius:.65rem;background:#38bdf8;color:#0f172a;font-weight:600'"
+  //   " onclick=\"cmd('incrementar')\">+1</button>"
+  //   "<button style='flex:1;padding:.7rem;border:0;border-radius:.65rem;background:#334155;color:#e2e8f0;font-weight:600'"
+  //   " onclick=\"cmd('decrementar')\">−1</button>"
+  //   "<button style='flex:1;padding:.7rem;border:0;border-radius:.65rem;background:#7f1d1d;color:#fecaca;font-weight:600'"
+  //   " onclick=\"cmd('reset')\">RESET</button>"
+  //   "</div></div>"
+  // );
+
+  // JS cmd() desativado junto com os botões web:
+  // async function cmd(x){ await fetch('/api/'+x,{method:'POST'}); atualiza(); }
 
   html += F(
     "<script>"
@@ -173,10 +194,6 @@ String paginaPrincipal() {
         "document.getElementById('metaIp').innerText='IP '+ip+(mac?(' · MAC '+mac):'');"
       "}catch(e){}"
     "}"
-    "async function cmd(x){"
-      "await fetch('/api/'+x,{method:'POST'});"
-      "atualiza();"
-    "}"
     "setInterval(atualiza,500);"
     "atualiza();"
     "</script></div></body></html>"
@@ -185,29 +202,40 @@ String paginaPrincipal() {
   return html;
 }
 
+// =============================================================================
+// Botões físicos (debounce)
+// =============================================================================
+void processarBotao(
+  int pino,
+  bool& estado,
+  bool& leituraAnterior,
+  unsigned long& tempoRef,
+  long delta
+) {
+  bool leitura = digitalRead(pino);
 
-void setup() {
-  Serial.begin(115200);
-
-  pinMode(BT_MAIS, INPUT_PULLUP);
-  pinMode(BT_MENOS, INPUT_PULLUP);
-
-  codigoControlador = montarCodigoControlador();
-
-  WiFi.begin(ssid, senha);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+  if (leitura != leituraAnterior) {
+    tempoRef = millis();
   }
 
-  Serial.println();
-  Serial.println("WiFi conectado");
-  Serial.print("IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("MAC: ");
-  Serial.println(WiFi.macAddress());
-  Serial.print("Codigo controlador: ");
-  Serial.println(codigoControlador);
+  if ((millis() - tempoRef) > DEBOUNCE_MS) {
+    if (leitura != estado) {
+      estado = leitura;
+      if (estado == LOW) {
+        contador += delta;
+        Serial.print("Contador: ");
+        Serial.println(contador);
+      }
+    }
+  }
 
+  leituraAnterior = leitura;
+}
+
+// =============================================================================
+// Rotas HTTP (API permanece ativa para a plataforma Delpi)
+// =============================================================================
+void registrarRotas() {
   server.on("/", HTTP_GET, []() {
     server.send(200, "text/html", paginaPrincipal());
   });
@@ -235,7 +263,7 @@ void setup() {
     enviarContador();
   });
 
-  // Define valor absoluto — usado pela API Delpi no restore pós-queda de energia
+  // Valor absoluto — restore pela API Delpi após queda de energia
   server.on("/api/definir", HTTP_POST, []() {
     long valor = parseContadorDoBody();
     if (valor < 0) {
@@ -253,44 +281,40 @@ void setup() {
     enviarCors();
     server.send(204);
   });
+}
 
+// =============================================================================
+// Setup / loop
+// =============================================================================
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(BT_MAIS, INPUT_PULLUP);
+  pinMode(BT_MENOS, INPUT_PULLUP);
+
+  codigoControlador = montarCodigoControlador();
+
+  WiFi.begin(ssid, senha);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+
+  Serial.println();
+  Serial.println("WiFi conectado");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("MAC: ");
+  Serial.println(WiFi.macAddress());
+  Serial.print("Codigo controlador: ");
+  Serial.println(codigoControlador);
+
+  registrarRotas();
   server.begin();
   Serial.println("Servidor iniciado");
 }
 
-
 void loop() {
   server.handleClient();
-
-  bool leituraMais = digitalRead(BT_MAIS);
-  if (leituraMais != leituraAnteriorMais) {
-    tempoMais = millis();
-  }
-  if ((millis() - tempoMais) > debounce) {
-    if (leituraMais != estadoMais) {
-      estadoMais = leituraMais;
-      if (estadoMais == LOW) {
-        contador++;
-        Serial.print("Contador: ");
-        Serial.println(contador);
-      }
-    }
-  }
-  leituraAnteriorMais = leituraMais;
-
-  bool leituraMenos = digitalRead(BT_MENOS);
-  if (leituraMenos != leituraAnteriorMenos) {
-    tempoMenos = millis();
-  }
-  if ((millis() - tempoMenos) > debounce) {
-    if (leituraMenos != estadoMenos) {
-      estadoMenos = leituraMenos;
-      if (estadoMenos == LOW) {
-        contador--;
-        Serial.print("Contador: ");
-        Serial.println(contador);
-      }
-    }
-  }
-  leituraAnteriorMenos = leituraMenos;
+  processarBotao(BT_MAIS, estadoMais, leituraAnteriorMais, tempoMais, +1);
+  processarBotao(BT_MENOS, estadoMenos, leituraAnteriorMenos, tempoMenos, -1);
 }
