@@ -18,7 +18,10 @@ from financial_app.core.security import FIN_ACCESS, FIN_EXPORT, can
 from financial_app.domain.errors import FinancialError
 from financial_app.domain.ports.financial_data_gateway import FinancialDataGateway
 from financial_app.domain.services.branch_access_service import BranchAccessService
-from financial_app.domain.services.period_range import resolve_inclusive_period_or_default
+from financial_app.domain.services.period_range import (
+    resolve_inclusive_period_or_default,
+    rolling_month_series_bounds,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -163,8 +166,16 @@ class BillingService:
         refresh: bool = False,
     ) -> dict[str, Any]:
         self._branch_access.assert_can_use(user, FIN_ACCESS)
-        start, end = resolve_inclusive_period_or_default(start_date, end_date)
         grain = self._resolve_granularity(granularity)
+        start, end = resolve_inclusive_period_or_default(start_date, end_date)
+        if grain == "month":
+            series_cfg = _settings().get("series") or {}
+            series_months = as_int(series_cfg.get("months"), 12)
+            start, end = rolling_month_series_bounds(
+                start_date,
+                end_date,
+                months=series_months,
+            )
         payload = self._cached(
             "series",
             {"start": start, "end": end, "grain": grain},

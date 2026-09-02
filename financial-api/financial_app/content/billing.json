@@ -6,6 +6,9 @@
     "branches": 300
   },
   "maxParallelBlocks": 4,
+  "series": {
+    "months": 12
+  },
   "customerLimit": 12,
   "invoiceLimit": 8000,
   "defaultGranularity": "month",

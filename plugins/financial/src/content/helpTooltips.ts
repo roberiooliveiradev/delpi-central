@@ -4,7 +4,7 @@ export const helpTooltips = {
   billing:
     "Faturamento operacional do período: receita bruta, descontos, devoluções e impostos até chegar na ROL. A série e o ranking de clientes usam a mesma base TOTVS do dashboard comercial.",
   billingSeries:
-    "Evolução da ROL no recorte. Com consolidado, compara Santa Catarina e Espírito Santo; com uma unidade, mostra só essa série.",
+    "Evolução da ROL na visão mensal: últimos 12 meses ancorados no fim do período filtrado. Com consolidado, compara Santa Catarina e Espírito Santo.",
   billingWaterfall:
     "Demonstração da ROL: a receita bruta menos descontos, devoluções e impostos sobre venda, com o saldo a cada linha.",
   billingCustomers:

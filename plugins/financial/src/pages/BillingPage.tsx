@@ -387,7 +387,11 @@ export function BillingPage({
             <FinChartCard
               title={copy.billing.seriesTitle}
               titleHint={helpTooltips.billingSeries}
-              hint={`${copy.branch[branch]} · ${period ?? ""}`}
+              hint={
+                granularity === "month"
+                  ? `${copy.branch[branch]} · ${copy.billing.seriesHint}`
+                  : `${copy.branch[branch]} · ${period ?? ""}`
+              }
               className="fin-board-card"
               headerActions={
                 <FinChartGranularityToggle

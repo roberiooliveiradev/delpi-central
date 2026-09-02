@@ -98,3 +98,33 @@ def test_single_branch_user_can_open_billing() -> None:
     result = service.dashboard(scoped, branch="01")
     assert result["summary"]["rol"] == 5_000_000.0
     assert result["series"]["available"] is True
+
+
+def test_series_monthly_widens_to_twelve_months() -> None:
+    service, gateway = build()
+    service.series(
+        full_user(),
+        start_date="2026-09-01",
+        end_date="2026-09-15",
+        granularity="month",
+        refresh=True,
+    )
+    kwargs = gateway.call_kwargs("fetch_rol_series")
+    assert kwargs["start_date"] == "2025-10-01"
+    assert kwargs["end_date"] == "2026-09-15"
+    assert kwargs["granularity"] == "month"
+
+
+def test_series_day_keeps_filter_period() -> None:
+    service, gateway = build()
+    service.series(
+        full_user(),
+        start_date="2026-09-01",
+        end_date="2026-09-15",
+        granularity="day",
+        refresh=True,
+    )
+    kwargs = gateway.call_kwargs("fetch_rol_series")
+    assert kwargs["start_date"] == "2026-09-01"
+    assert kwargs["end_date"] == "2026-09-15"
+    assert kwargs["granularity"] == "day"
