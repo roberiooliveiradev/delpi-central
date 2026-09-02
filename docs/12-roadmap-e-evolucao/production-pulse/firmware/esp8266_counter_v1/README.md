@@ -2,7 +2,7 @@
 
 Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 
-**Arduino IDE:** não use `F("...</tag>")` no HTML da página — o IDE quebra a string em `</`. Core ESP8266 **3.x**: `server.collectHeaders("X-Device-Token")` (sem array + count).
+**Arduino IDE 1.x:** qualquer `</tag>` literal no `.ino` é corrompido pelo IDE — no sketch as tags de fechamento HTML usam concatenação `"</" "tag>"`. Core ESP8266 **3.x**: `server.collectHeaders("X-Device-Token")`.
 
 ## Endpoints
 
