@@ -1,8 +1,26 @@
 # Roadmap — Production Pulse
 
-> **Status:** planejamento (set/2026)  
+> **Status:** implementado em dev (set/2026) — **homologação live E6.S2 pendente** (ESP `192.168.20.2` / VLAN)  
 > **Escopo:** `production-pulse-api` + `plugins/production-pulse`  
 > **Piloto:** ESP8266 em `192.168.20.2`
+
+---
+
+## Estado da execução (set/2026)
+
+| Etapa | Status | Evidência |
+|-------|--------|-----------|
+| E1 — Fundação API + infra | ✅ Feito | health via gateway; compose + `network_mode: host` |
+| E2 — CRUD + binding + catálogo CT | ✅ Feito | pytest CRUD/binding; proxy work-centers |
+| E3 — Drivers + leituras + scheduler | ✅ Feito | counter + gauge; test-probe; scheduler |
+| E4 — RBAC | ✅ Feito | `test_permissions.py`; ADR-003 |
+| E5 — MFE (painel, form, detalhe, operador) | ✅ Feito | vitest + build; remoteEntry 200 |
+| E6.S1 — Docs + smoke | ✅ Feito | `check-production-pulse.sh` 8/8 OK |
+| **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
+| P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
+
+Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
+Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
 
 ---
 
@@ -28,7 +46,7 @@
 | Driver | Registry JSON + port `DeviceDriver`; MVP `esp8266_counter_v1` |
 | Leituras | `metrics` JSONB genérico — contador, rotação, temperatura, … |
 | Papéis | `role_key` derivado do driver (`pulse_counter`, `process_gauge`, …) |
-| Operador | Superfície UI por `operatorSurface` — contador MVP; gauge P1 |
+| Operador | Superfície UI por `operatorSurface` — contador MVP; gauge P1 ✅ |
 
 ---
 
@@ -51,12 +69,12 @@
 | Testar conexão | Form | `POST /devices/test-probe` (novo) · `POST /devices/{id}/test` (edit) | P0 |
 | Hub operador (placements) | Tablet | `GET /operator/placements` | P0 |
 | Superfície contador | Tablet | `counter_pad` + commands | P0 |
-| Superfície sensor | Tablet | `gauge_readout` read-only | P1 |
+| Superfície sensor | Tablet | `gauge_readout` read-only | P1 ✅ |
 | Comando capability-gated | API | 422 se driver não suporta | P0 |
 | RBAC filial | API + menu | manifest + `branch_access` | P0 |
-| Delta turno/dia KPI (contador) | Painel | agregação `delta_metrics.counter` | P1 |
-| Driver gauge ESP8266 | API + tablet | `esp8266_gauge_v1` + WF-PP-OP-GAUGE | P1 |
-| Detecção reset hardware | readings | meta `counter_reset` | P1 |
+| Delta turno/dia KPI (contador) | Painel | agregação `delta_metrics.counter` | P1 ✅ |
+| Driver gauge ESP8266 | API + tablet | `esp8266_gauge_v1` + WF-PP-OP-GAUGE | P1 ✅ |
+| Detecção reset hardware | readings | meta `counter_reset` | P1 ✅ |
 | Cockpit PCP embed | production-control | HTTP entre BFFs | Fora |
 
 ---
@@ -264,6 +282,7 @@ flowchart TB
 - **Teste:** script homologação verde em dev
 - **Pronto quando:** checklist plugins-documentation.mdc completo.
 - **Commit:** `docs(production-pulse): README, inventário e smoke de homologação`
+- **Status:** ✅ concluído — smoke dev verde (set/2026).
 
 #### E6.S2 — Verify live com ESP8266 piloto
 
@@ -272,20 +291,26 @@ flowchart TB
 - **Fazer:** rebuild sequencial plugin-ui → api → mfe; seguir checklist §3–5.
 - **Pronto quando:** contador do device aparece no painel após poll; operador abre superfície contador.
 - **Commit:** só se fix de regressão.
+- **Status:** ⏳ **pendente** — implementação pronta; bloqueio atual: host dev (WSL) sem rota à VLAN `192.168.20.x` (`curl` ESP timeout). Executar homologação a partir de máquina na LAN ou com WSL roteando à VLAN industrial.
 
 ---
 
 ## Critérios de pronto (MVP)
 
-- [ ] CRUD dispositivo + amarração (`anchor_type`) via UI e API
-- [ ] Registry drivers + `metrics` JSONB; comando 422 se capability ausente
-- [ ] Poll manual e automático gravam histórico
-- [ ] Detalhe com gráfico/tabela de readings
-- [ ] Reset remoto auditado (com permissão)
-- [ ] RBAC filial SC/ES
-- [ ] MFE federado no Portal; MFE não chama api-delpi
-- [ ] Piloto `192.168.20.2` operacional na rede dev
-- [ ] Critérios MVP: **Jornada operador** hub placements → contador; **ventilador** equipment sem CT no painel
+Verificados em **dev** (pytest, vitest, `check-production-pulse.sh`). Itens marcados ⏳ dependem de **E6.S2 live** na VLAN.
+
+- [x] CRUD dispositivo + amarração (`anchor_type`) via UI e API — smoke CRUD + testes binding
+- [x] Registry drivers + `metrics` JSONB; comando 422 se capability ausente
+- [x] Poll manual e automático gravam histórico
+- [x] Detalhe com gráfico/tabela de readings
+- [x] Reset remoto auditado (com permissão)
+- [x] RBAC filial SC/ES
+- [x] MFE federado no Portal; MFE não chama api-delpi
+- [ ] ⏳ Piloto `192.168.20.2` operacional na rede dev — **E6.S2 live**
+- [ ] ⏳ Jornada operador hub placements → contador (UI tablet na LAN) — **E6.S2 §5**
+- [x] **Ventilador** equipment sem CT no painel — cenário binding validado em testes API (UI live opcional em E6.S2)
+
+**MVP código:** fechado. **MVP operacional:** fecha após E6.S2.
 
 ## Fora do escopo (MVP)
 
