@@ -169,6 +169,12 @@ describe("production-pulse kit contracts", () => {
     expect(sources.some(({ rel }) => rel === "components/FilialSwitcher.tsx")).toBe(false);
   });
 
+  it("router hook escuta popstate para sincronizar query (?tab=) com o portal", () => {
+    const hook = readRelative("hooks/useProductionPulseRouterPath.ts");
+    expect(hook).toMatch(/addEventListener\("popstate"/);
+    expect(hook).toMatch(/setSearch\(readSearch\(\)\)/);
+  });
+
   it("textos de ação e modal não ficam hardcoded fora de helpTooltips", () => {
     const contentPaths = new Set(["content/helpTooltips.ts", "content/deviceApiMessages.ts"]);
     for (const { rel, source } of sources) {

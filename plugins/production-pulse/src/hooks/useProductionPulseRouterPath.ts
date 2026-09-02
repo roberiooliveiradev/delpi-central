@@ -1,25 +1,37 @@
 import { useEffect, useState } from "react";
 
-export function useProductionPulseRouterPath(pathnameFromHost?: string) {
-  const [pathname, setPathname] = useState(
-    () => pathnameFromHost || (typeof window !== "undefined" ? window.location.pathname : "/"),
-  );
-  const [search, setSearch] = useState(
-    () => (typeof window !== "undefined" ? window.location.search : ""),
-  );
+function readPathname(): string {
+  if (typeof window === "undefined") return "/";
+  return window.location.pathname;
+}
+
+function readSearch(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.search;
+}
+
+export function useProductionPulseRouterPath(pathnameFromHost?: string): {
+  pathname: string;
+  search: string;
+} {
+  const [pathname, setPathname] = useState(() => pathnameFromHost ?? readPathname());
+  const [search, setSearch] = useState(() => readSearch());
 
   useEffect(() => {
-    if (pathnameFromHost) {
-      setPathname(pathnameFromHost);
-      setSearch(typeof window !== "undefined" ? window.location.search : "");
-      return;
-    }
-    const onPop = () => {
-      setPathname(window.location.pathname);
-      setSearch(window.location.search);
+    if (!pathnameFromHost) return;
+    setPathname(pathnameFromHost);
+  }, [pathnameFromHost]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncFromBrowser = () => {
+      setSearch(readSearch());
+      setPathname(pathnameFromHost ?? readPathname());
     };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+
+    window.addEventListener("popstate", syncFromBrowser);
+    return () => window.removeEventListener("popstate", syncFromBrowser);
   }, [pathnameFromHost]);
 
   return { pathname, search };
