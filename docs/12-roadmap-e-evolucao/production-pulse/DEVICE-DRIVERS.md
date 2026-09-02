@@ -137,12 +137,25 @@ A superfície operador `gauge_readout` usa `capabilities.thresholds` para colori
 
 ---
 
+## Drivers futuros (P2 — especificação)
+
+> Spec: [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md) · WF-PP-OP-TEMP / ROTATION / COMBO.
+
+| driver_key | role_key | operatorSurface | HTTP piloto |
+|------------|----------|-----------------|-------------|
+| `esp8266_temp_v1` | `temperature_probe` | `temperature_focus` | `GET /api/temperatura` |
+| `esp8266_rotation_v1` | `rotation_probe` | `rotation_ring` | `GET /api/rotacao` |
+| `esp8266_pressure_v1` | `process_scalar` | `gauge_readout` | `GET /api/pressao` |
+| `modbus_generic_v1` | `telemetry_bundle` | `telemetry_stack` | gateway (P3) |
+
+---
+
 ## Extensão (novo driver)
 
 1. Entrada em `device_drivers.json`
 2. Classe `DeviceDriver` em `infrastructure/drivers/`
 3. Registro em `DeviceDriverRegistryService`
 4. Teste unitário: registry load + mock poll
-5. Wireframe operador se `operatorSurface` nova
+5. Wireframe operador se `operatorSurface` nova — ver [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md)
 
-Sem migration SQL.
+Sem migration SQL (salvo colunas de `goals` em P2.S0).
