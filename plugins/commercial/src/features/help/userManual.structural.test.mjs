@@ -18,7 +18,9 @@ describe("user manual page", () => {
     assert.match(content, /pageTitle: \"Manual do usuário\"/);
     const page = readSrc("features/help/UserManualPage.tsx");
     assert.match(page, /USER_MANUAL_CONTENT/);
-    assert.match(page, /cm-user-manual/);
+    assert.match(page, /cm-user-manual__layout/);
+    assert.match(page, /cm-user-manual__main/);
+    assert.match(page, /cm-user-manual__concept-card/);
   });
 
   it("App e manifesto expõem /help", () => {

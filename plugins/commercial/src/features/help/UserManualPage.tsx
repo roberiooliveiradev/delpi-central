@@ -60,109 +60,128 @@ export function UserManualPage({ basePath }: UserManualPageProps) {
 
       <p className="cm-user-manual__scope-note">{c.scopeNote}</p>
 
-      <SectionCard
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-        title={c.conceptsTitle}
-      >
-        <ul className="cm-user-manual__concepts">
-          {c.concepts.map((item) => (
-            <li key={item.term}>
-              <strong>{item.term}</strong> — {item.meaning}
-            </li>
-          ))}
-        </ul>
-      </SectionCard>
-
-      <nav className="cm-user-manual__toc" aria-label={c.tocAriaLabel}>
-        <p className="cm-user-manual__toc-title">{c.tocTitle}</p>
-        <ul>
-          {c.sections.map((section) => (
-            <li key={section.id}>
+      <div className="cm-user-manual__layout">
+        <nav className="cm-user-manual__toc" aria-label={c.tocAriaLabel}>
+          <p className="cm-user-manual__toc-title">{c.tocTitle}</p>
+          <ul>
+            <li>
               <button
                 type="button"
                 className="cm-user-manual__toc-link"
-                onClick={() => scrollToSection(section.id)}
+                onClick={() => scrollToSection("concepts")}
               >
-                {section.title}
+                {c.conceptsTitle}
               </button>
             </li>
-          ))}
-        </ul>
-      </nav>
+            {c.sections.map((section) => (
+              <li key={section.id}>
+                <button
+                  type="button"
+                  className="cm-user-manual__toc-link"
+                  onClick={() => scrollToSection(section.id)}
+                >
+                  {section.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      {c.sections.map((section) => (
-        <section
-          key={section.id}
-          id={`manual-${section.id}`}
-          className="cm-user-manual__section"
-        >
-          <SectionCard
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-            title={section.title}
+        <div className="cm-user-manual__main">
+          <section
+            id="manual-concepts"
+            className="cm-user-manual__section"
           >
-            {section.intro ? (
-              <p className="cm-user-manual__intro">{section.intro}</p>
-            ) : null}
-
-            {section.links?.length ? (
-              <div className="cm-user-manual__table-wrap">
-                <table className="cm-user-manual__table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Quero…</th>
-                      <th scope="col">Onde ir</th>
-                      <th scope="col">Como</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.links.map((row) => (
-                      <tr key={row.want}>
-                        <td>{row.want}</td>
-                        <td>
-                          <strong>{row.where}</strong>
-                        </td>
-                        <td>{row.how}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
-
-            {section.bullets?.length ? (
-              <ul className="cm-user-manual__list">
-                {section.bullets.map((item) => (
-                  <li key={item}>{item}</li>
+            <SectionCard
+              classNames={cmSectionCardClassNames}
+              labels={cmSectionLabels}
+              title={c.conceptsTitle}
+            >
+              <ul className="cm-user-manual__concepts">
+                {c.concepts.map((item) => (
+                  <li key={item.term} className="cm-user-manual__concept-card">
+                    <strong>{item.term}</strong>
+                    <span>{item.meaning}</span>
+                  </li>
                 ))}
               </ul>
-            ) : null}
+            </SectionCard>
+          </section>
 
-            {section.faqs?.length ? (
-              <dl className="cm-user-manual__faq">
-                {section.faqs.map((item) => (
-                  <div key={item.q} className="cm-user-manual__faq-item">
-                    <dt>{item.q}</dt>
-                    <dd>{item.a}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : null}
+          {c.sections.map((section) => (
+            <section
+              key={section.id}
+              id={`manual-${section.id}`}
+              className="cm-user-manual__section"
+            >
+              <SectionCard
+                classNames={cmSectionCardClassNames}
+                labels={cmSectionLabels}
+                title={section.title}
+              >
+                {section.intro ? (
+                  <p className="cm-user-manual__intro">{section.intro}</p>
+                ) : null}
 
-            {section.glossary?.length ? (
-              <dl className="cm-user-manual__glossary">
-                {section.glossary.map((item) => (
-                  <div key={item.term} className="cm-user-manual__glossary-item">
-                    <dt>{item.term}</dt>
-                    <dd>{item.meaning}</dd>
+                {section.links?.length ? (
+                  <div className="cm-user-manual__table-wrap">
+                    <table className="cm-user-manual__table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Quero…</th>
+                          <th scope="col">Onde ir</th>
+                          <th scope="col">Como</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.links.map((row) => (
+                          <tr key={row.want}>
+                            <td>{row.want}</td>
+                            <td>
+                              <strong>{row.where}</strong>
+                            </td>
+                            <td>{row.how}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </dl>
-            ) : null}
-          </SectionCard>
-        </section>
-      ))}
+                ) : null}
+
+                {section.bullets?.length ? (
+                  <ul className="cm-user-manual__list">
+                    {section.bullets.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                {section.faqs?.length ? (
+                  <dl className="cm-user-manual__faq">
+                    {section.faqs.map((item) => (
+                      <div key={item.q} className="cm-user-manual__faq-item">
+                        <dt>{item.q}</dt>
+                        <dd>{item.a}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+
+                {section.glossary?.length ? (
+                  <dl className="cm-user-manual__glossary">
+                    {section.glossary.map((item) => (
+                      <div key={item.term} className="cm-user-manual__glossary-item">
+                        <dt>{item.term}</dt>
+                        <dd>{item.meaning}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+              </SectionCard>
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
