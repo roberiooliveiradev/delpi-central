@@ -190,8 +190,10 @@ describe("production-pulse kit contracts", () => {
     expect(css).toMatch(/--pp-operator-counter-value/);
     expect(css).toMatch(/--pp-operator-content-max/);
     expect(css).toMatch(/\.pp-operator-surface[\s\S]*max-width: none/);
-    expect(css).toMatch(/align-items: stretch/);
-    expect(css).toMatch(/data-pp-viewport="mobile"\] \.pp-counter-pad__pad/);
+    expect(css).toMatch(/data-pp-viewport-short="true"/);
+    expect(css).toMatch(/max-height: 100dvh/);
+    expect(css).toMatch(/min-height: 0/);
+    expect(css).toMatch(/data-pp-viewport="mobile"\]:not\(\[data-pp-viewport-short="true"\]\) \.pp-counter-pad__pad/);
     expect(css).toMatch(/min-width: 901px\)[\s\S]*pp-gauge-readout__grid/);
     expect(css).toMatch(/--pp-operator-card-min-height/);
     expect(css).toMatch(/dashboard-production-pulse--operator \.pp-device-status/);
@@ -292,6 +294,8 @@ describe("production-pulse kit contracts", () => {
     expect(bindingSection).toMatch(/PpNativeTextField/);
     expect(bindingSection).not.toMatch(/<datalist/);
     expect(readRelative("App.tsx")).toMatch(/data-pp-viewport/);
+    expect(readRelative("App.tsx")).toMatch(/data-pp-viewport-short/);
+    expect(readRelative("hooks/useShortViewport.ts")).toMatch(/isShortViewportHeight/);
     expect(readRelative("components/data/ppFormFields.tsx")).toMatch(/createDashboardNativeFormFields/);
     expect(readRelative("components/data/ppFormFields.tsx")).toMatch(/FormSelectControl/);
     expect(readRelative("components/data/ppFormFields.tsx")).not.toMatch(/<select[\s/>]/);

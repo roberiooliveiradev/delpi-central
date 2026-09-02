@@ -8,3 +8,8 @@ export function isCompactViewport(viewport: ViewportBucket): boolean {
 export function isMobileViewport(viewport: ViewportBucket): boolean {
   return viewport === "mobile";
 }
+
+/** Altura útil baixa — landscape mobile ou janela compacta. */
+export function isShortViewportHeight(height: number): boolean {
+  return height <= 520;
+}
