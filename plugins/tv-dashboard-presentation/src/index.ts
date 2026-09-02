@@ -683,6 +683,8 @@ export type {
 export {
   insertCanvasTableRow,
   insertCanvasTableCol,
+  deleteCanvasTableRows,
+  deleteCanvasTableCols,
   autoFitCanvasTableTrack,
   canvasTableBandSelection,
   canvasTableTrackContentWeights,
