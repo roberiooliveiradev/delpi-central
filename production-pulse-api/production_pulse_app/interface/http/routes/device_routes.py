@@ -215,6 +215,7 @@ async def list_device_commands(
             parse_device_id(str(device_id)),
             page=page,
             page_size=page_size,
+            authorization=_authorization_header(request),
         )
         return success(data)
     except Exception as exc:

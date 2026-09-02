@@ -10,6 +10,9 @@ from production_pulse_app.application.services.device_driver_registry_service im
 from production_pulse_app.core.serialize import json_safe
 from production_pulse_app.domain.errors import CommandNotSupportedError, DeviceDriverError
 from production_pulse_app.domain.models.device_reading import CommandResult
+from production_pulse_app.application.services.command_audit_actor_enrichment_service import (
+    enrich_command_audit_actors,
+)
 from production_pulse_app.domain.services.command_serialization_service import command_row_to_api
 from production_pulse_app.domain.services.device_reading_delta_service import compute_delta_metrics
 from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
@@ -131,13 +134,16 @@ class DeviceCommandService:
         *,
         page: int = 1,
         page_size: int = 20,
+        authorization: str | None = None,
     ) -> dict[str, Any]:
         self._require_device(device_id)
         page = max(1, page)
         page_size = min(max(1, page_size), 100)
         rows, total = self._commands.list_for_device(device_id, page=page, page_size=page_size)
+        items = [json_safe(command_row_to_api(row)) for row in rows]
+        enrich_command_audit_actors(items, authorization=authorization)
         return {
-            "items": [json_safe(command_row_to_api(row)) for row in rows],
+            "items": items,
             "pagination": {
                 "page": page,
                 "pageSize": page_size,

@@ -6,7 +6,7 @@ import type { DeviceCommandAudit } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
 import { useViewportBucket } from "../../hooks/useViewportBucket";
 import { isMobileViewport } from "../../utils/viewportLayout";
-import { commandLabel, formatDateTime } from "../../utils/detailDisplay";
+import { commandLabel, formatDateTime, formatIssuedByUser } from "../../utils/detailDisplay";
 import { CommandAuditCard } from "./CommandAuditCard";
 import { CommandJsonModal } from "../modals/CommandJsonModal";
 
@@ -62,7 +62,7 @@ export function DeviceCommandsTab({ deviceId, refreshToken }: DeviceCommandsTabP
       {
         key: "issuedBy",
         header: "Usuário",
-        render: (row) => row.issuedBy || "—",
+        render: (row) => formatIssuedByUser(row),
       },
       {
         key: "success",
