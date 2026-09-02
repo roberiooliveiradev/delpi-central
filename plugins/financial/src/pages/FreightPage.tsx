@@ -1,4 +1,12 @@
-import { AlertTriangle, FileText, Percent, ShieldAlert, Truck, Wallet } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  FileText,
+  Percent,
+  ShieldAlert,
+  Truck,
+  Wallet,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { FinBlockState } from "../components/FinBlockState";
@@ -8,8 +16,15 @@ import { FinKpiCard, FinLoadingCard } from "../components/finUiKit";
 import { DataTable, DataTableSection, type DataTableColumn } from "../components/dataTableUi";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
-import { useFreightDashboard } from "../hooks/useFreight";
-import type { FinancialBranch, FreightAllocation, FreightInvoice } from "../types";
+import { useFreightDashboard, useFreightInconsistencies } from "../hooks/useFreight";
+import { useSubplugins } from "../hooks/useSubplugins";
+import type {
+  FinancialBranch,
+  FreightAllocation,
+  FreightInconsistency,
+  FreightInvoice,
+} from "../types";
+import { downloadExcel } from "../utils/exportExcel";
 import { formatIsoDate, formatPeriodRange } from "../utils/formatDates";
 import { formatInteger } from "../utils/formatNumbers";
 import {
@@ -63,9 +78,12 @@ function invoiceKey(row: FreightInvoice): string {
 }
 
 export function FreightPage(props: FreightPageProps) {
+  const { canExport } = useSubplugins();
   const [sortBy, setSortBy] = useState(DEFAULT_SORT_BY);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [openInvoiceKey, setOpenInvoiceKey] = useState<string | null>(null);
+  const [showInconsistencies, setShowInconsistencies] = useState(false);
+  const [inconsistencyPage, setInconsistencyPage] = useState(1);
 
   const { data, loading, error, reload } = useFreightDashboard({
     branch: props.branch,
@@ -82,12 +100,26 @@ export function FreightPage(props: FreightPageProps) {
     page: props.page,
   });
 
+  const inconsistencies = useFreightInconsistencies({
+    branch: props.branch,
+    issueStart: props.issueStart,
+    issueEnd: props.issueEnd,
+    entryStart: props.entryStart,
+    entryEnd: props.entryEnd,
+    supplierCode: props.supplierCode,
+    invoiceDocument: props.invoiceDocument,
+    freightDocument: props.freightDocument,
+    page: inconsistencyPage,
+    enabled: showInconsistencies,
+  });
+
   const hasPeriod = Boolean(
     (props.issueStart && props.issueEnd) || (props.entryStart && props.entryEnd),
   );
 
   /** Qualquer mudança de filtro volta para a primeira página da grade. */
   const patchQuery = (patch: Partial<FreightQuery>) => {
+    setInconsistencyPage(1);
     replaceFinancialQuery(freightHref({ ...props, page: 1, ...patch }));
   };
 
@@ -254,6 +286,132 @@ export function FreightPage(props: FreightPageProps) {
     [openInvoice],
   );
 
+  /**
+   * `duplicated_link` pode repetir o mesmo par NF x CT-e, então a chave da linha
+   * vem da posição na página — os campos do vínculo não identificam sozinhos.
+   */
+  const inconsistencyKeys = useMemo(() => {
+    const keys = new Map<FreightInconsistency, string>();
+    (inconsistencies.data?.items ?? []).forEach((row, index) => {
+      keys.set(row, `${row.reasonCode}-${row.invoiceDocument}-${row.freightDocument}-${index}`);
+    });
+    return keys;
+  }, [inconsistencies.data?.items]);
+
+  const inconsistencyColumns = useMemo<DataTableColumn<FreightInconsistency>[]>(
+    () => [
+      {
+        key: "reason",
+        header: copy.freight.inconsistencies.columns.reason,
+        className: "delpi-ui-table__col--wide",
+        render: (row) => row.reason,
+      },
+      { key: "branch", header: copy.freight.inconsistencies.columns.branch, render: (row) => row.branch },
+      {
+        key: "invoice",
+        header: copy.freight.inconsistencies.columns.invoice,
+        render: (row) => `${row.invoiceDocument}/${row.invoiceSeries}`,
+      },
+      {
+        key: "supplier",
+        header: copy.freight.inconsistencies.columns.supplier,
+        render: (row) => `${row.supplierName} (${row.supplierCode})`,
+      },
+      {
+        key: "freightDocument",
+        header: copy.freight.inconsistencies.columns.freightDocument,
+        render: (row) => `${row.freightDocument}/${row.freightSeries}`,
+      },
+      {
+        key: "carrier",
+        header: copy.freight.inconsistencies.columns.carrier,
+        render: (row) => row.carrierName,
+      },
+      {
+        key: "goodsValue",
+        header: copy.freight.inconsistencies.columns.goodsValue,
+        align: "right",
+        render: (row) => formatDecimalCurrency(row.goodsValue),
+      },
+      {
+        key: "freightGrossValue",
+        header: copy.freight.inconsistencies.columns.freightGrossValue,
+        align: "right",
+        render: (row) => formatDecimalCurrency(row.freightGrossValue),
+      },
+    ],
+    [],
+  );
+
+  /** Exporta o recorte visível: a grade é paginada no servidor. */
+  const exportInvoices = () => {
+    const rows = data?.items ?? [];
+    if (!rows.length) {
+      window.alert(copy.freight.exportEmpty);
+      return;
+    }
+    void downloadExcel(
+      {
+        title: copy.freight.exportSheetTitle,
+        columns: [
+          { key: "branch", label: copy.freight.columns.branch },
+          { key: "invoice", label: copy.freight.columns.invoice },
+          { key: "supplier", label: copy.freight.columns.supplier },
+          { key: "issueDate", label: copy.freight.columns.issueDate },
+          { key: "entryDate", label: copy.freight.columns.entryDate },
+          { key: "goodsValue", label: copy.freight.columns.goodsValue },
+          { key: "freightTotal", label: copy.freight.columns.freightTotal },
+          { key: "freightPercent", label: copy.freight.columns.freightPercent },
+          { key: "freightLimit", label: copy.freight.columns.freightLimit },
+          { key: "situation", label: copy.freight.columns.situation },
+        ],
+        rows: rows.map((row) => ({
+          branch: row.branch,
+          invoice: `${row.invoiceDocument}/${row.invoiceSeries}`,
+          supplier: row.supplierName,
+          issueDate: formatIsoDate(row.issueDate),
+          entryDate: formatIsoDate(row.entryDate),
+          goodsValue: Number(row.goodsValue),
+          freightTotal: Number(row.freightTotal),
+          freightPercent: row.freightPercent === null ? "" : Number(row.freightPercent),
+          freightLimit: row.freightLimit === null ? copy.freight.noLimitBadge : Number(row.freightLimit),
+          situation: freightSituationLabel(row.situation),
+        })),
+      },
+      copy.freight.exportFileName,
+    );
+  };
+
+  const exportInconsistencies = () => {
+    const rows = inconsistencies.data?.items ?? [];
+    if (!rows.length) {
+      window.alert(copy.freight.inconsistencies.exportEmpty);
+      return;
+    }
+    void downloadExcel(
+      {
+        title: copy.freight.inconsistencies.exportSheetTitle,
+        columns: [
+          { key: "reason", label: copy.freight.inconsistencies.columns.reason },
+          { key: "branch", label: copy.freight.inconsistencies.columns.branch },
+          { key: "invoice", label: copy.freight.inconsistencies.columns.invoice },
+          { key: "supplier", label: copy.freight.inconsistencies.columns.supplier },
+          { key: "freightDocument", label: copy.freight.inconsistencies.columns.freightDocument },
+          { key: "carrier", label: copy.freight.inconsistencies.columns.carrier },
+        ],
+        rows: rows.map((row) => ({
+          reason: row.reason,
+          branch: row.branch,
+          invoice: `${row.invoiceDocument}/${row.invoiceSeries}`,
+          supplier: row.supplierName,
+          freightDocument: `${row.freightDocument}/${row.freightSeries}`,
+          carrier: row.carrierName,
+        })),
+      },
+      copy.freight.inconsistencies.exportFileName,
+    );
+  };
+
   return (
     <div className="fin-page-stack fin-page-stack--padded">
       <FinWorkspaceHeader
@@ -266,6 +424,14 @@ export function FreightPage(props: FreightPageProps) {
         onBranchChange={(next) => patchQuery({ branch: next })}
         onRefresh={reload}
         refreshBusy={loading}
+        actions={
+          canExport && data ? (
+            <button type="button" className="fin-icon-btn" onClick={exportInvoices}>
+              <Download size={16} strokeWidth={1.75} aria-hidden />
+              <span>{copy.freight.exportLabel}</span>
+            </button>
+          ) : null
+        }
       />
 
       <div className="fin-toolbar">
@@ -449,6 +615,64 @@ export function FreightPage(props: FreightPageProps) {
               onSortChange: toggleSort,
             }}
           />
+
+          <div className="fin-toolbar">
+            <button
+              type="button"
+              className="fin-link-btn"
+              aria-expanded={showInconsistencies}
+              onClick={() => setShowInconsistencies((current) => !current)}
+            >
+              {showInconsistencies
+                ? copy.freight.inconsistencies.hide
+                : copy.freight.inconsistencies.show}
+            </button>
+            {showInconsistencies && canExport && inconsistencies.data ? (
+              <button type="button" className="fin-icon-btn" onClick={exportInconsistencies}>
+                <Download size={16} strokeWidth={1.75} aria-hidden />
+                <span>{copy.freight.inconsistencies.exportLabel}</span>
+              </button>
+            ) : null}
+          </div>
+
+          {showInconsistencies ? (
+            <>
+              {inconsistencies.error ? (
+                <div className="fin-state fin-state--error" role="alert">
+                  {inconsistencies.error}
+                </div>
+              ) : null}
+              {inconsistencies.data?.totalsByReason.length ? (
+                <p className="fin-scope-notice" role="note">
+                  {`${copy.freight.inconsistencies.totalsTitle}: ${inconsistencies.data.totalsByReason
+                    .map((item) => `${item.reason} (${formatInteger(item.count)})`)
+                    .join(" — ")}`}
+                </p>
+              ) : null}
+              <DataTableSection
+                title={copy.freight.inconsistencies.title}
+                titleHint={helpTooltips.freightInconsistencies}
+                hint={copy.freight.inconsistencies.hint}
+                columns={inconsistencyColumns}
+                rows={inconsistencies.data?.items ?? []}
+                rowKey={(row) => inconsistencyKeys.get(row) ?? row.reasonCode}
+                emptyMessage={copy.freight.inconsistencies.empty}
+                loading={inconsistencies.loading}
+                hideSearch
+                hidePageSizeSelect
+                serverPagination={
+                  inconsistencies.data
+                    ? {
+                        page: inconsistencies.data.pagination.page,
+                        pageSize: inconsistencies.data.pagination.pageSize,
+                        total: inconsistencies.data.pagination.totalItems,
+                        onPageChange: setInconsistencyPage,
+                      }
+                    : undefined
+                }
+              />
+            </>
+          ) : null}
         </>
       ) : null}
 
