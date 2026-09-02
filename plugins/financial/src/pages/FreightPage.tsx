@@ -25,6 +25,10 @@ import type {
   FreightInvoice,
 } from "../types";
 import { downloadExcel } from "../utils/exportExcel";
+import {
+  fetchAllFreightInconsistencies,
+  fetchAllFreightInvoices,
+} from "../utils/freightExport";
 import { formatIsoDate, formatPeriodRange } from "../utils/formatDates";
 import { formatInteger } from "../utils/formatNumbers";
 import {
@@ -84,6 +88,8 @@ export function FreightPage(props: FreightPageProps) {
   const [openInvoiceKey, setOpenInvoiceKey] = useState<string | null>(null);
   const [showInconsistencies, setShowInconsistencies] = useState(false);
   const [inconsistencyPage, setInconsistencyPage] = useState(1);
+  const [exportingInvoices, setExportingInvoices] = useState(false);
+  const [exportingInconsistencies, setExportingInconsistencies] = useState(false);
 
   const { data, loading, error, reload } = useFreightDashboard({
     branch: props.branch,
@@ -343,73 +349,124 @@ export function FreightPage(props: FreightPageProps) {
     [],
   );
 
-  /** Exporta o recorte visível: a grade é paginada no servidor. */
-  const exportInvoices = () => {
-    const rows = data?.items ?? [];
-    if (!rows.length) {
-      window.alert(copy.freight.exportEmpty);
-      return;
+  /**
+   * Percorre todas as páginas da consulta atual (mesmos filtros e ordenação).
+   * Exportar só `data.items` deixaria o Excel com a janela da grade (25 linhas)
+   * e o usuário acharia que o período tem só aquele recorte.
+   */
+  const exportInvoices = async () => {
+    setExportingInvoices(true);
+    try {
+      const rows = await fetchAllFreightInvoices({
+        branch: props.branch,
+        issueStart: props.issueStart,
+        issueEnd: props.issueEnd,
+        entryStart: props.entryStart,
+        entryEnd: props.entryEnd,
+        supplierCode: props.supplierCode,
+        invoiceDocument: props.invoiceDocument,
+        freightDocument: props.freightDocument,
+        situation: props.situation,
+        sortBy,
+        sortDir,
+      });
+      if (!rows.length) {
+        window.alert(copy.freight.exportEmpty);
+        return;
+      }
+      await downloadExcel(
+        {
+          title: copy.freight.exportSheetTitle,
+          columns: [
+            { key: "branch", label: copy.freight.columns.branch },
+            { key: "invoice", label: copy.freight.columns.invoice },
+            { key: "supplier", label: copy.freight.columns.supplier },
+            { key: "issueDate", label: copy.freight.columns.issueDate },
+            { key: "entryDate", label: copy.freight.columns.entryDate },
+            { key: "goodsValue", label: copy.freight.columns.goodsValue },
+            { key: "freightTotal", label: copy.freight.columns.freightTotal },
+            { key: "freightPercent", label: copy.freight.columns.freightPercent },
+            { key: "freightLimit", label: copy.freight.columns.freightLimit },
+            { key: "situation", label: copy.freight.columns.situation },
+          ],
+          rows: rows.map((row) => ({
+            branch: row.branch,
+            invoice: `${row.invoiceDocument}/${row.invoiceSeries}`,
+            supplier: row.supplierName,
+            issueDate: formatIsoDate(row.issueDate),
+            entryDate: formatIsoDate(row.entryDate),
+            goodsValue: Number(row.goodsValue),
+            freightTotal: Number(row.freightTotal),
+            freightPercent: row.freightPercent === null ? "" : Number(row.freightPercent),
+            freightLimit:
+              row.freightLimit === null ? copy.freight.noLimitBadge : Number(row.freightLimit),
+            situation: freightSituationLabel(row.situation),
+          })),
+        },
+        copy.freight.exportFileName,
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : copy.freight.exportError,
+      );
+    } finally {
+      setExportingInvoices(false);
     }
-    void downloadExcel(
-      {
-        title: copy.freight.exportSheetTitle,
-        columns: [
-          { key: "branch", label: copy.freight.columns.branch },
-          { key: "invoice", label: copy.freight.columns.invoice },
-          { key: "supplier", label: copy.freight.columns.supplier },
-          { key: "issueDate", label: copy.freight.columns.issueDate },
-          { key: "entryDate", label: copy.freight.columns.entryDate },
-          { key: "goodsValue", label: copy.freight.columns.goodsValue },
-          { key: "freightTotal", label: copy.freight.columns.freightTotal },
-          { key: "freightPercent", label: copy.freight.columns.freightPercent },
-          { key: "freightLimit", label: copy.freight.columns.freightLimit },
-          { key: "situation", label: copy.freight.columns.situation },
-        ],
-        rows: rows.map((row) => ({
-          branch: row.branch,
-          invoice: `${row.invoiceDocument}/${row.invoiceSeries}`,
-          supplier: row.supplierName,
-          issueDate: formatIsoDate(row.issueDate),
-          entryDate: formatIsoDate(row.entryDate),
-          goodsValue: Number(row.goodsValue),
-          freightTotal: Number(row.freightTotal),
-          freightPercent: row.freightPercent === null ? "" : Number(row.freightPercent),
-          freightLimit: row.freightLimit === null ? copy.freight.noLimitBadge : Number(row.freightLimit),
-          situation: freightSituationLabel(row.situation),
-        })),
-      },
-      copy.freight.exportFileName,
-    );
   };
 
-  const exportInconsistencies = () => {
-    const rows = inconsistencies.data?.items ?? [];
-    if (!rows.length) {
-      window.alert(copy.freight.inconsistencies.exportEmpty);
-      return;
+  const exportInconsistencies = async () => {
+    setExportingInconsistencies(true);
+    try {
+      const rows = await fetchAllFreightInconsistencies({
+        branch: props.branch,
+        issueStart: props.issueStart,
+        issueEnd: props.issueEnd,
+        entryStart: props.entryStart,
+        entryEnd: props.entryEnd,
+        supplierCode: props.supplierCode,
+        invoiceDocument: props.invoiceDocument,
+        freightDocument: props.freightDocument,
+      });
+      if (!rows.length) {
+        window.alert(copy.freight.inconsistencies.exportEmpty);
+        return;
+      }
+      await downloadExcel(
+        {
+          title: copy.freight.inconsistencies.exportSheetTitle,
+          columns: [
+            { key: "reason", label: copy.freight.inconsistencies.columns.reason },
+            { key: "branch", label: copy.freight.inconsistencies.columns.branch },
+            { key: "invoice", label: copy.freight.inconsistencies.columns.invoice },
+            { key: "supplier", label: copy.freight.inconsistencies.columns.supplier },
+            {
+              key: "freightDocument",
+              label: copy.freight.inconsistencies.columns.freightDocument,
+            },
+            { key: "carrier", label: copy.freight.inconsistencies.columns.carrier },
+          ],
+          rows: rows.map((row) => ({
+            reason: row.reason,
+            branch: row.branch,
+            invoice: `${row.invoiceDocument}/${row.invoiceSeries}`,
+            supplier: row.supplierName,
+            freightDocument: `${row.freightDocument}/${row.freightSeries}`,
+            carrier: row.carrierName,
+          })),
+        },
+        copy.freight.inconsistencies.exportFileName,
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : copy.freight.inconsistencies.exportError,
+      );
+    } finally {
+      setExportingInconsistencies(false);
     }
-    void downloadExcel(
-      {
-        title: copy.freight.inconsistencies.exportSheetTitle,
-        columns: [
-          { key: "reason", label: copy.freight.inconsistencies.columns.reason },
-          { key: "branch", label: copy.freight.inconsistencies.columns.branch },
-          { key: "invoice", label: copy.freight.inconsistencies.columns.invoice },
-          { key: "supplier", label: copy.freight.inconsistencies.columns.supplier },
-          { key: "freightDocument", label: copy.freight.inconsistencies.columns.freightDocument },
-          { key: "carrier", label: copy.freight.inconsistencies.columns.carrier },
-        ],
-        rows: rows.map((row) => ({
-          reason: row.reason,
-          branch: row.branch,
-          invoice: `${row.invoiceDocument}/${row.invoiceSeries}`,
-          supplier: row.supplierName,
-          freightDocument: `${row.freightDocument}/${row.freightSeries}`,
-          carrier: row.carrierName,
-        })),
-      },
-      copy.freight.inconsistencies.exportFileName,
-    );
   };
 
   return (
@@ -426,9 +483,14 @@ export function FreightPage(props: FreightPageProps) {
         refreshBusy={loading}
         actions={
           canExport && data ? (
-            <button type="button" className="fin-icon-btn" onClick={exportInvoices}>
+            <button
+              type="button"
+              className="fin-icon-btn"
+              disabled={exportingInvoices}
+              onClick={() => void exportInvoices()}
+            >
               <Download size={16} strokeWidth={1.75} aria-hidden />
-              <span>{copy.freight.exportLabel}</span>
+              <span>{exportingInvoices ? copy.freight.exportBusy : copy.freight.exportLabel}</span>
             </button>
           ) : null
         }
@@ -627,10 +689,19 @@ export function FreightPage(props: FreightPageProps) {
                 ? copy.freight.inconsistencies.hide
                 : copy.freight.inconsistencies.show}
             </button>
-            {showInconsistencies && canExport && inconsistencies.data ? (
-              <button type="button" className="fin-icon-btn" onClick={exportInconsistencies}>
+            {showInconsistencies && canExport ? (
+              <button
+                type="button"
+                className="fin-icon-btn"
+                disabled={exportingInconsistencies}
+                onClick={() => void exportInconsistencies()}
+              >
                 <Download size={16} strokeWidth={1.75} aria-hidden />
-                <span>{copy.freight.inconsistencies.exportLabel}</span>
+                <span>
+                  {exportingInconsistencies
+                    ? copy.freight.inconsistencies.exportBusy
+                    : copy.freight.inconsistencies.exportLabel}
+                </span>
               </button>
             ) : null}
           </div>
