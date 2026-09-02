@@ -1,7 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import {
   ActionButton,
-  BackLink,
   createCompactPagination,
   createHostContainedModalShell,
   catalogSearchBarBemClasses,
@@ -9,6 +8,7 @@ import {
   createDashboardDataRecordCard,
   createDashboardFormActions,
   createDashboardFormGrid,
+  createDashboardPagePath,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardUnderlineNav,
@@ -47,7 +47,10 @@ export const PpStateBox = createStateBoxPanel({
 });
 
 export const PpActionButton = ActionButton;
-export const PpBackLink = BackLink;
+export const PpPagePath = createDashboardPagePath({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+});
 export const PpFieldLabel = FieldLabel;
 export const PpSimpleKpiCard = createSimpleKpiCard(PREFIX, { withBody: true, withSubtitle: true });
 export const PpSegmentToggle = createDashboardSegmentToggle(PREFIX);

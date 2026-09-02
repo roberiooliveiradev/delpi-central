@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   createDevice,
@@ -11,17 +11,20 @@ import {
 } from "../api/productionPulseApi";
 import {
   PpActionButton,
-  PpBackLink,
   PpFormActions,
   PpPageHero,
   PpSectionCard,
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { DeviceBindingSection } from "../components/DeviceBindingSection";
 import { DeviceForm } from "../components/DeviceForm";
 import { TestConnectionModal } from "../components/modals/TestConnectionModal";
-import { PRODUCTION_PULSE_BASE_PATH } from "../constants/routes";
+import {
+  PRODUCTION_PULSE_BASE_PATH,
+  productionPulseDeviceDetailPath,
+} from "../constants/routes";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
 import { resolveDeviceActionMessage, resolveProbeErrorMessage } from "../utils/apiErrors";
@@ -116,9 +119,26 @@ export function DeviceFormPage({
 
   const canManage = permissions.canManageDevices;
 
+  const panelBackPath = useMemo(
+    () =>
+      buildPanelPath({
+        branch: device.branch,
+        page: 1,
+        view: "table",
+        groupBy: "work_center",
+        anchorType: "",
+        role: "",
+        status: "",
+        search: "",
+      }),
+    [device.branch],
+  );
+
   const goBack = () => {
-    navigateProductionPulse(buildPanelPath({ branch: device.branch, page: 1, view: "table", groupBy: "work_center", anchorType: "", role: "", status: "", search: "" }));
+    navigateProductionPulse(panelBackPath);
   };
+
+  const formPageTitle = mode === "create" ? "Novo dispositivo" : "Editar dispositivo";
 
   const runTestConnection = async () => {
     setTestOpen(true);
@@ -200,11 +220,25 @@ export function DeviceFormPage({
 
   return (
     <div className="pp-page-stack pp-form-page">
+      <ProductionPulsePagePath
+        panelHref={panelBackPath}
+        current={formPageTitle}
+        items={
+          mode === "edit" && deviceId && device.name
+            ? [
+                {
+                  id: "device",
+                  label: device.name,
+                  href: productionPulseDeviceDetailPath(deviceId),
+                },
+              ]
+            : []
+        }
+      />
       <PpPageHero
-        title={mode === "create" ? "Novo dispositivo" : "Editar dispositivo"}
+        title={formPageTitle}
         description="Cadastro do hardware e onde o sensor está instalado."
         badge={ppShellIcon}
-        nav={<PpBackLink onClick={goBack}>Voltar ao painel</PpBackLink>}
       />
 
       {formError ? (

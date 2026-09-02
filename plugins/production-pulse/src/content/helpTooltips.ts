@@ -13,6 +13,7 @@ export const PP_HELP = {
     heroFilial: "Filial operacional dos dispositivos e sensores cadastrados.",
     pollAll:
       "Solicita leitura imediata em todos os dispositivos ativos da filial. Requer permissão de gestão.",
+    breadcrumbRoot: "Pulso de Produção",
     backToPanel: "Volta ao painel principal de dispositivos.",
     modeOperator: "Abre a visão simplificada para tablet no chão de fábrica.",
   },

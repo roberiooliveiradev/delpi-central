@@ -228,6 +228,19 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/data/filtersUi.tsx")).toMatch(/searchable = true/);
   });
 
+  it("páginas profundas usam PagePath — não BackLink", () => {
+    const detail = readRelative("pages/DeviceDetailPage.tsx");
+    const formPage = readRelative("pages/DeviceFormPage.tsx");
+    const uiKit = readRelative("app/productionPulseUi.tsx");
+    expect(detail).toMatch(/ProductionPulsePagePath/);
+    expect(detail).not.toMatch(/PpBackLink/);
+    expect(formPage).toMatch(/ProductionPulsePagePath/);
+    expect(formPage).not.toMatch(/PpBackLink/);
+    expect(uiKit).toMatch(/createDashboardPagePath/);
+    expect(uiKit).not.toMatch(/PpBackLink/);
+    expect(readRelative("components/ProductionPulsePagePath.tsx")).toMatch(/PpPagePath/);
+  });
+
   it("cadastro usa grade responsiva e footer compacto", () => {
     const formPage = readRelative("pages/DeviceFormPage.tsx");
     const deviceForm = readRelative("components/DeviceForm.tsx");

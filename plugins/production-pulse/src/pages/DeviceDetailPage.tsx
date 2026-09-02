@@ -2,12 +2,12 @@ import { useMemo, useState } from "react";
 
 import {
   PpActionButton,
-  PpBackLink,
   PpPageHero,
   PpStateBox,
   PpUnderlineNav,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
 import { DeviceHistoryTab } from "../components/detail/DeviceHistoryTab";
 import { DeviceOverviewTab } from "../components/detail/DeviceOverviewTab";
@@ -137,10 +137,8 @@ export function DeviceDetailPage({
 
   return (
     <div className="pp-page-stack pp-device-detail">
+      <ProductionPulsePagePath panelHref={panelBackPath} current={device.name} />
       <PpPageHero
-        eyebrow={
-          <PpBackLink onClick={() => navigateProductionPulse(panelBackPath)}>Voltar ao painel</PpBackLink>
-        }
         title={device.name}
         description={formatDeviceDetailDescription(device)}
         badge={ppShellIcon}
