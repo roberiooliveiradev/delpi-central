@@ -31,6 +31,26 @@ Parâmetros comuns de período:
 | GET | `/financial/ebitda_pct` | EBITDA % (planilha; filial vazia = consolidado). |
 | GET | `/financial/fixed_cost_pct` | Custos fixos % (planilha; filial vazia = consolidado). |
 | GET | `/financial/pmr` | Prazo médio de recebimento. |
+| GET | `/financial/purchase-freight/links` | Vínculos NF de compra × CT-e (SF8010 + SF1010) para análise de frete. |
+
+#### Vínculos de frete — `/financial/purchase-freight/links`
+
+Contrato puro: devolve cada vínculo com os valores dos dois documentos. Rateio, percentual, limite por filial e classificação de inconsistência são regra do consumidor (`financial-api`).
+
+| Parâmetro | Uso |
+|---|---|
+| `branch` | Filial da SF8010; vazio = consolidado. |
+| `issue_start` / `issue_end` | Emissão da **NF de compra**. |
+| `entry_start` / `entry_end` | Digitação da **NF de compra**. |
+| `supplier`, `invoice_document`, `freight_document` | Recorte pontual. |
+| `limit`, `offset` | Paginação bruta dos vínculos. |
+
+Duas particularidades do contrato:
+
+- **`in_filter`** marca as linhas dentro do filtro do usuário. O filtro de data **não** vai para o `WHERE`: a resposta traz o CT-e inteiro para que a base de rateio some todas as NFs amarradas a ele, inclusive as fora do período. Sem isso o rateio das notas visíveis ficaria inflado.
+- **`invoice_found` / `freight_found`** expõem documento referenciado e não localizado (joins `LEFT`). Vínculo órfão é escopado pela digitação do próprio vínculo, já que não existe data de NF.
+
+Valores monetários saem com `CAST(... AS DECIMAL(18,2))` — `F1_VALMERC` e `F1_VALBRUT` são `float` no Protheus e o consumidor calcula em `Decimal`.
 
 ### Inadimplência — `/financeiro/inadimplencia`
 

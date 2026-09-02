@@ -15,6 +15,7 @@ O MFE fala **apenas** com esta API (`/apps/financial-api`). SQL TOTVS permanece 
 | GET | `/billing/invoices?branch=&startDate=&endDate=` | JWT + `financial.export` + filial |
 | GET | `/delinquency/{summary,monthly,aging,customers,titles}` | JWT + `financial.delinquency.view` + ambas as filiais |
 | GET | `/cost-centers/{filters,summary,series,ranking-cost-centers,ranking-suppliers,entries}` | JWT + `financial.cost-centers.view` + filial |
+| GET | `/freight/{dashboard,inconsistencies}` | JWT + `financial.freight.view` + filial |
 | GET | `/indicators/department` | JWT + `financial.indicators.view` |
 | GET | `/indicators/global` | JWT + `financial.indicators.view` |
 
@@ -25,6 +26,26 @@ Envelope `{ success, message, data }`. Campos de negócio em camelCase.
 `GET /billing/dashboard` agrega composição da ROL (`/financial/rol`), série e ranking de clientes (`/commercial/rol/series` e `/commercial/rol/by-customer`) e ROL por unidade (`/commercial/rol/by-branch`). Série e ranking degradam isoladamente se a api-delpi falhar; o resumo da ROL é obrigatório.
 
 `GET /billing/invoices` lista as notas de saída (SD2) e devoluções (SD1) que entram no ROL, com os mesmos filtros de `GET /financial/rol`. Serve para extrato Excel de conferência — não são títulos SE1 de cobrança.
+
+### Frete das compras — fórmula do rateio
+
+`GET /freight/dashboard` consome `GET /financial/purchase-freight/links` da api-delpi (vínculos SF8010 × SF1010) e calcula o peso do frete por nota. Toda a aritmética é `Decimal` com `ROUND_HALF_UP`, porque o percentual é comparado com o limite na fronteira exata (3,25%).
+
+```
+base(CT-e)        = Σ F1_VALMERC das NFs distintas amarradas ao CT-e
+rateio(NF, CT-e)  = bruto(CT-e) × mercadoria(NF) / base(CT-e)
+frete(NF)         = Σ rateio(NF, CT-e) de todos os CT-es da NF
+% frete(NF)       = frete(NF) / mercadoria(NF) × 100
+situação          = acima do limite quando % frete > limite da filial
+```
+
+Três decisões sustentam o número:
+
+- **Fecho da base.** A base soma **todas** as NFs do CT-e, inclusive as fora do filtro de data. Ignorá-las inflaria o rateio das notas visíveis e o percentual apareceria maior do que é. Quando isso acontece, o detalhe da nota sinaliza que a base está dividida com notas que a tela não mostra.
+- **Resíduo.** O arredondamento de cada parcela deixa centavos sobrando ou faltando; o resto vai para a NF de maior mercadoria, onde tem menor peso relativo. A soma dos rateios fecha com o bruto do CT-e.
+- **Inconsistência não vira zero.** Vínculo sem NF, sem CT-e, com valor não positivo, repetido, sem base ou com espécie fora do padrão sai classificado com código, fica **fora** dos totais e aparece em `/freight/inconsistencies`.
+
+Limites por filial, data de corte (`minimumIssueDate`), espécies especiais, TTL de cache e todos os textos ficam em `financial_app/content/freight.json`. A consulta exige um intervalo completo de emissão **ou** de digitação da NF.
 
 EBITDA %, custo fixo % e PMR vêm de **Google Sheets** na api-delpi (`/financial/ebitda_pct`, `/fixed_cost_pct`, `/pmr`). Sem as variáveis abaixo no `infra/.env` da **api-delpi**, esses blocos ficam indisponíveis (ROL e inadimplência continuam, pois leem TOTVS):
 
