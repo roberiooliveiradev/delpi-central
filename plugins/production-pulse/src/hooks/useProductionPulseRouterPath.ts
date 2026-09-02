@@ -19,7 +19,11 @@ export function useProductionPulseRouterPath(pathnameFromHost?: string): {
 
   useEffect(() => {
     if (!pathnameFromHost) return;
-    setPathname(pathnameFromHost);
+
+    // Evita que o host (stale) sobrescreva a rota real após popstate/pushState interno.
+    if (pathnameFromHost === readPathname()) {
+      setPathname(pathnameFromHost);
+    }
   }, [pathnameFromHost]);
 
   useEffect(() => {

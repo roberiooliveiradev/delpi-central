@@ -112,6 +112,11 @@
   color: var(--pp-hero-brand-fg-muted);
 }
 
+.dashboard-production-pulse .pp-page-hero__actions {
+  position: relative;
+  z-index: 2;
+}
+
 .dashboard-production-pulse .pp-page-hero__actions .pp-action-button,
 .dashboard-production-pulse .pp-operator-hero-btn {
   border-color: var(--pp-hero-brand-btn-border);

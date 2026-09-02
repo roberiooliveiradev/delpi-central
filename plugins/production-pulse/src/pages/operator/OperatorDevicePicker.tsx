@@ -91,6 +91,7 @@ export function OperatorDevicePicker({
             variant="ghost"
             className="pp-operator-hero-btn"
             onClick={() => navigateProductionPulse(productionPulseOperatorPath(branch))}
+            title={PP_HELP.operator.changePlacement}
           >
             Trocar posto
           </PpActionButton>

@@ -182,7 +182,8 @@ describe("production-pulse kit contracts", () => {
     expect(hook).toMatch(/addEventListener\("popstate"/);
     expect(hook).toMatch(/setSearch\(readSearch\(\)\)/);
     expect(hook).toMatch(/setPathname\(readPathname\(\)\)/);
-    expect(hook).not.toMatch(/setPathname\(pathnameFromHost \?\? readPathname\(\)\)/);
+    expect(hook).toMatch(/pathnameFromHost === readPathname\(\)/);
+    expect(hook).not.toMatch(/setPathname\(pathnameFromHost\);\s*\n\s*\}, \[pathnameFromHost\]\)/);
   });
 
   it("textos de ação e modal não ficam hardcoded fora de helpTooltips", () => {
