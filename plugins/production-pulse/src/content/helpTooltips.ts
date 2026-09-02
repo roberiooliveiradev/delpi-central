@@ -160,7 +160,7 @@ export const PP_HELP = {
     chartSeries:
       "Evolução temporal de cada métrica (rpm, °C, golpes) conforme o driver. O eixo X adapta a granularidade ao intervalo (segundos, minutos, horas).",
     historyRangePresets:
-      "Atalhos de período (1 min → 7 dias). O padrão limpo segue o intervalo de poll do device. Livre usa data/hora manual, aplicada automaticamente.",
+      "Atalhos de período (1 min → 12 meses, este mês). O padrão limpo segue o intervalo de poll do device. Livre usa data/hora manual, aplicada automaticamente.",
     readingsTable: "Histórico paginado de polls e comandos gravados no banco.",
     commandsTable:
       "Quem executou cada comando, quando e se o hardware respondeu com sucesso.",

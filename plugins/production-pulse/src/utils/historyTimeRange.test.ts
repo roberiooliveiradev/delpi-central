@@ -29,6 +29,28 @@ describe("historyTimeRange", () => {
     expect(bounds.fromIso).toBe("2026-09-02T13:00:00.000Z");
   });
 
+  it("monta bounds de este mês e últimos 12 meses", () => {
+    const now = Date.parse("2026-09-15T18:30:00.000Z");
+    const month = boundsForHistoryPreset("month", now);
+    expect(month.toIso).toBe("2026-09-15T18:30:00.000Z");
+    const monthFrom = new Date(month.fromIso);
+    expect(monthFrom.getDate()).toBe(1);
+    expect(monthFrom.getMonth()).toBe(new Date(now).getMonth());
+    expect(monthFrom.getFullYear()).toBe(2026);
+    expect(monthFrom.getHours()).toBe(0);
+    expect(monthFrom.getMinutes()).toBe(0);
+
+    const twelve = boundsForHistoryPreset("12m", now);
+    expect(twelve.toIso).toBe("2026-09-15T18:30:00.000Z");
+    const twelveFrom = new Date(twelve.fromIso);
+    expect(twelveFrom.getFullYear()).toBe(2025);
+    expect(twelveFrom.getMonth()).toBe(8);
+    expect(twelveFrom.getDate()).toBe(15);
+
+    const thirty = boundsForHistoryPreset("30d", now);
+    expect(Date.parse(thirty.toIso) - Date.parse(thirty.fromIso)).toBe(30 * 24 * 60 * 60_000);
+  });
+
   it("converte datetime-local local ↔ ISO", () => {
     const local = toDatetimeLocalValue(new Date("2026-09-02T15:30:00"));
     expect(local).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);

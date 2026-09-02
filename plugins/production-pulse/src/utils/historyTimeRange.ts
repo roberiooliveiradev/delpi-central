@@ -1,19 +1,52 @@
 import type { ChartPoint } from "./detailDisplay";
 
-export type HistoryRangePreset = "1m" | "15m" | "1h" | "24h" | "7d" | "custom";
+export type HistoryRangePreset =
+  | "1m"
+  | "15m"
+  | "1h"
+  | "24h"
+  | "7d"
+  | "30d"
+  | "month"
+  | "90d"
+  | "12m"
+  | "custom";
 
-export type HistoryRangePresetOption = {
-  value: Exclude<HistoryRangePreset, "custom">;
+type HistoryRollingPresetOption = {
+  value: Exclude<HistoryRangePreset, "custom" | "month" | "12m">;
   label: string;
+  mode: "rolling";
   durationMs: number;
 };
 
+type HistoryCalendarMonthPresetOption = {
+  value: "month";
+  label: string;
+  mode: "calendarMonth";
+};
+
+type HistoryRollingMonthsPresetOption = {
+  value: "12m";
+  label: string;
+  mode: "rollingMonths";
+  months: number;
+};
+
+export type HistoryRangePresetOption =
+  | HistoryRollingPresetOption
+  | HistoryCalendarMonthPresetOption
+  | HistoryRollingMonthsPresetOption;
+
 export const HISTORY_RANGE_PRESET_OPTIONS: readonly HistoryRangePresetOption[] = [
-  { value: "1m", label: "1 min", durationMs: 60_000 },
-  { value: "15m", label: "15 min", durationMs: 15 * 60_000 },
-  { value: "1h", label: "1 h", durationMs: 60 * 60_000 },
-  { value: "24h", label: "24 h", durationMs: 24 * 60 * 60_000 },
-  { value: "7d", label: "7 dias", durationMs: 7 * 24 * 60 * 60_000 },
+  { value: "1m", label: "1 min", mode: "rolling", durationMs: 60_000 },
+  { value: "15m", label: "15 min", mode: "rolling", durationMs: 15 * 60_000 },
+  { value: "1h", label: "1 h", mode: "rolling", durationMs: 60 * 60_000 },
+  { value: "24h", label: "24 h", mode: "rolling", durationMs: 24 * 60 * 60_000 },
+  { value: "7d", label: "7 dias", mode: "rolling", durationMs: 7 * 24 * 60 * 60_000 },
+  { value: "30d", label: "30 dias", mode: "rolling", durationMs: 30 * 24 * 60 * 60_000 },
+  { value: "month", label: "Este mês", mode: "calendarMonth" },
+  { value: "90d", label: "90 dias", mode: "rolling", durationMs: 90 * 24 * 60 * 60_000 },
+  { value: "12m", label: "12 meses", mode: "rollingMonths", months: 12 },
 ] as const;
 
 export type ChartTickGranularity = "second" | "minute" | "hour" | "day";
@@ -69,8 +102,20 @@ export function boundsForHistoryPreset(
   nowMs: number = Date.now(),
 ): { fromIso: string; toIso: string } {
   const option = HISTORY_RANGE_PRESET_OPTIONS.find((item) => item.value === preset);
-  const durationMs = option?.durationMs ?? 60 * 60_000;
   const to = new Date(nowMs);
+
+  if (option?.mode === "calendarMonth") {
+    const from = new Date(to.getFullYear(), to.getMonth(), 1, 0, 0, 0, 0);
+    return { fromIso: from.toISOString(), toIso: to.toISOString() };
+  }
+
+  if (option?.mode === "rollingMonths") {
+    const from = new Date(nowMs);
+    from.setMonth(from.getMonth() - option.months);
+    return { fromIso: from.toISOString(), toIso: to.toISOString() };
+  }
+
+  const durationMs = option?.mode === "rolling" ? option.durationMs : 60 * 60_000;
   const from = new Date(nowMs - durationMs);
   return { fromIso: from.toISOString(), toIso: to.toISOString() };
 }
