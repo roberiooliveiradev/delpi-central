@@ -70,6 +70,15 @@ describe("production-pulse kit contracts", () => {
     expect(panel).toMatch(/productionPulseOperatorPath/);
     expect(panel).toMatch(/Modo operador/);
     expect(panel).toMatch(/canOperator/);
+    expect(panel).toMatch(/pp-panel-operator-link/);
+  });
+
+  it("botão Modo operador no hero usa tokens de marca claro/escuro", () => {
+    const css = readRelative("index.css");
+    expect(css).toMatch(
+      /\.pp-panel-operator-link[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
+    );
+    expect(css).toMatch(/:root\[data-theme="dark"\][\s\S]*--pp-hero-brand-btn-border/);
   });
 
   it("FilterInputField declara type explícito no painel", () => {

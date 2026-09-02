@@ -117,7 +117,8 @@
   z-index: 2;
 }
 
-.dashboard-production-pulse .pp-operator-hero-btn {
+.dashboard-production-pulse .pp-operator-hero-btn,
+.dashboard-production-pulse .pp-panel-operator-link {
   min-height: var(--pp-operator-touch-min, 44px);
   padding-inline: 14px;
   border-color: var(--pp-hero-brand-btn-border);
@@ -127,10 +128,18 @@
   opacity: 1;
 }
 
-.dashboard-production-pulse .pp-operator-hero-btn:hover:not(:disabled) {
+.dashboard-production-pulse .pp-operator-hero-btn:hover:not(:disabled),
+.dashboard-production-pulse .pp-panel-operator-link:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.88);
   background: rgba(255, 255, 255, 0.18);
+  color: var(--pp-hero-brand-fg);
   filter: none;
+}
+
+.dashboard-production-pulse .pp-operator-hero-btn:focus-visible,
+.dashboard-production-pulse .pp-panel-operator-link:focus-visible {
+  outline: 2px solid var(--pp-hero-brand-fg);
+  outline-offset: 2px;
 }
 
 .dashboard-production-pulse .pp-page-hero__actions .pp-segment-toggle {
@@ -266,6 +275,12 @@
   height: var(--delpi-ui-control-height, 42px);
   padding-inline: 14px;
   white-space: nowrap;
+}
+
+:root[data-theme="dark"] .dashboard-production-pulse .pp-panel-operator-link:hover:not(:disabled),
+:root[data-theme="dark"] .dashboard-production-pulse .pp-operator-hero-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .pp-filter-new-device__label {
