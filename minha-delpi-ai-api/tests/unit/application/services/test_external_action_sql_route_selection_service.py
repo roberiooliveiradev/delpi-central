@@ -56,7 +56,8 @@ def test_select_sql_uses_data_sql_action_when_sql_provided():
     assert "SELECT A1_COD" in selected["arguments"]["body"]["sql"]
 
 
-def test_select_sql_without_embedded_query_uses_message_body():
+def test_select_sql_without_executable_query_returns_none():
+    """Sem SELECT…FROM não ranquear REST (ex.: schedule/today) nem body só com message."""
     repository = _FakeRepository(
         [
             {
@@ -67,18 +68,65 @@ def test_select_sql_without_embedded_query_uses_message_body():
                 "summary": "Executar SQL",
                 "parametersSchema": [{"name": "query"}],
             },
+            {
+                "actionId": "schedule-action",
+                "method": "GET",
+                "path": "/production/schedule/today",
+                "operationId": "get_production_schedule_today",
+                "summary": "Produtos programados hoje",
+                "parametersSchema": [],
+            },
         ]
     )
     service = ExternalActionSqlRouteSelectionService(repository)
-    message = "execute essa consulta no banco"
+    message = (
+        "executa no banco esse select top 10 de produtos do grupo 1008 "
+        "(SB1010, B1_COD, B1_DESC, B1_GRUPO)"
+    )
 
     selected = service.select(
         message,
-        ["sql-action"],
+        ["sql-action", "schedule-action"],
         candidates_loader=lambda _message, *, allowed_action_ids, limit: repository.list_actions(),
         rank_candidates=lambda _message, candidates, **kwargs: candidates,
     )
 
+    assert selected is None
+
+
+def test_select_sql_with_embedded_select_from_uses_sql_action_only():
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "sql-action",
+                "method": "POST",
+                "path": "/data/sql",
+                "operationId": "execute_sql",
+                "summary": "Executar SQL",
+                "parametersSchema": [{"name": "query"}],
+            },
+            {
+                "actionId": "schedule-action",
+                "method": "GET",
+                "path": "/production/schedule/today",
+                "operationId": "get_production_schedule_today",
+                "summary": "Produtos programados hoje",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    service = ExternalActionSqlRouteSelectionService(repository)
+    message = (
+        'execute: SELECT TOP 10 B1_COD FROM SB1010 WHERE B1_GRUPO = \'1008\''
+    )
+
+    selected = service.select(
+        message,
+        ["sql-action", "schedule-action"],
+        candidates_loader=lambda _message, *, allowed_action_ids, limit: repository.list_actions(),
+        rank_candidates=lambda _message, candidates, **kwargs: list(reversed(candidates)),
+    )
+
     assert selected is not None
     assert selected["arguments"]["actionId"] == "sql-action"
-    assert selected["arguments"]["body"] == {"message": message}
+    assert "SB1010" in selected["arguments"]["body"]["sql"].upper()

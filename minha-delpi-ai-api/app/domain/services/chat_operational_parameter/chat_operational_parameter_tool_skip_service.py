@@ -224,6 +224,14 @@ class ChatOperationalParameterToolSkipService:
         from app.domain.services.chat_production_operational_intent_service import (
             ChatProductionOperationalIntentService,
         )
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        # SQL execute/authoring não deve cair em similaridade semântica (ex.: schedule/today).
+        if ChatSqlIntentService.should_auto_execute_sql(message):
+            return True
+
+        if ChatSqlIntentService.is_authoring_request(message):
+            return True
 
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             return True

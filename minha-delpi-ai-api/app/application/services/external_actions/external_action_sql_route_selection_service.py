@@ -36,45 +36,8 @@ class ExternalActionSqlRouteSelectionService:
         if not allowed_action_ids:
             return None
 
-        candidates = []
-
-        if candidates_loader:
-            candidates = candidates_loader(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                limit=120,
-            )
-
-        if (sql or "").strip():
-            action = self._resolve_data_sql_action(allowed_action_ids)
-        else:
-            preferred = [
-                action
-                for action in candidates
-                if any(
-                    term
-                    in " ".join(
-                        [
-                            str(action.get("path") or ""),
-                            str(action.get("summary") or ""),
-                            str(action.get("description") or ""),
-                            str(action.get("operationId") or ""),
-                        ]
-                    ).lower()
-                    for term in ["sql", "data", "query"]
-                )
-            ]
-
-            ranked = (
-                rank_candidates(
-                    message,
-                    preferred or candidates,
-                    allowed_action_ids=allowed_action_ids,
-                )
-                if rank_candidates
-                else (preferred or candidates)
-            )
-            action = ranked[0] if ranked else None
+        # Sempre a action de SQL — nunca rank semântico de rotas REST (ex.: schedule/today).
+        action = self._resolve_data_sql_action(allowed_action_ids)
 
         if not action:
             return None
@@ -83,14 +46,13 @@ class ExternalActionSqlRouteSelectionService:
             str(raw_message or message).strip()
         )
 
-        if sql_query and ChatSqlSafetyService.contains_destructive_sql(sql_query):
+        if not sql_query:
             return None
 
-        body = (
-            ExternalActionSqlCapabilityService.build_sql_request_body(sql_query)
-            if sql_query
-            else {"message": message}
-        )
+        if ChatSqlSafetyService.contains_destructive_sql(sql_query):
+            return None
+
+        body = ExternalActionSqlCapabilityService.build_sql_request_body(sql_query)
 
         reason = ExternalActionResponseContentService.get(
             "selectionReasons",
@@ -130,11 +92,24 @@ class ExternalActionSqlRouteSelectionService:
         select_match = re.search(r"(select\s+.+)$", raw, flags=re.I | re.S)
 
         if select_match:
-            return ExternalActionSqlCapabilityService.normalize_extracted_sql(
+            candidate = ExternalActionSqlCapabilityService.normalize_extracted_sql(
                 select_match.group(1)
             )
 
+            if candidate and self._is_executable_select_candidate(candidate):
+                return candidate
+
         return None
+
+    @staticmethod
+    def _is_executable_select_candidate(sql: str) -> bool:
+        """Exige SELECT…FROM com tabela — rejeita prosa «select top 10 de produtos…»."""
+        normalized = re.sub(r"\s+", " ", str(sql or "").strip().lower())
+
+        if not normalized.startswith("select"):
+            return False
+
+        return bool(re.search(r"\bfrom\b\s+[a-z_][a-z0-9_]*", normalized))
 
     def _resolve_data_sql_action(self, allowed_action_ids: list[str]) -> dict | None:
         actions: list[dict] = []
