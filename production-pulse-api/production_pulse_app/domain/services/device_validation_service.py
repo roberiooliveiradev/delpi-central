@@ -8,12 +8,16 @@ from production_pulse_app.application.services.device_driver_registry_service im
 from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.infrastructure.content.device_validation_content_service import (
     controller_code_max_length,
+    debounce_ms_max,
+    debounce_ms_min,
+    device_api_token_max_length,
     matches_controller_code,
     matches_ipv4,
     name_max_length,
     poll_interval_max,
     poll_interval_min,
     valid_branches,
+    wifi_ssid_max_length,
 )
 
 
@@ -93,6 +97,46 @@ def normalize_firmware_source(firmware_source: str | None) -> str | None:
     return normalized
 
 
+def normalize_wifi_ssid(wifi_ssid: str | None) -> str | None:
+    if wifi_ssid is None:
+        return None
+    normalized = str(wifi_ssid).strip()
+    if not normalized:
+        return None
+    maximum = wifi_ssid_max_length()
+    if len(normalized) > maximum:
+        raise DeviceValidationError("wifi_ssid_too_long", max=maximum)
+    return normalized
+
+
+def normalize_device_api_token(api_token: str | None, *, allow_clear: bool = True) -> str | None:
+    """Empty string clears token when allow_clear; None means omit."""
+    if api_token is None:
+        return None
+    normalized = str(api_token).strip()
+    if not normalized:
+        return None if allow_clear else None
+    maximum = device_api_token_max_length()
+    if len(normalized) > maximum:
+        raise DeviceValidationError("device_api_token_too_long", max=maximum)
+    return normalized
+
+
+def normalize_debounce_ms(debounce_ms: int | float | None) -> int | None:
+    if debounce_ms is None:
+        return None
+    minimum = debounce_ms_min()
+    maximum = debounce_ms_max()
+    value = int(round(float(debounce_ms)))
+    if value < minimum or value > maximum:
+        raise DeviceValidationError(
+            "debounce_ms_out_of_range",
+            min=minimum,
+            max=maximum,
+        )
+    return value
+
+
 __all__ = [
     "DeviceValidationError",
     "ResolvedDriver",
@@ -100,7 +144,10 @@ __all__ = [
     "validate_branch",
     "validate_poll_interval_ms",
     "normalize_controller_code",
+    "normalize_debounce_ms",
+    "normalize_device_api_token",
     "normalize_firmware_source",
     "normalize_ip_address",
     "normalize_name",
+    "normalize_wifi_ssid",
 ]

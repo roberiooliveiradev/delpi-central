@@ -105,6 +105,46 @@ def controller_code_max_length(*, default: int = 64) -> int:
     return default
 
 
+def wifi_ssid_max_length(*, default: int = 64) -> int:
+    raw = _limits_section().get("wifiSsidMaxLength")
+    if isinstance(raw, int) and raw > 0:
+        return raw
+    return default
+
+
+def device_api_token_max_length(*, default: int = 128) -> int:
+    raw = _limits_section().get("deviceApiTokenMaxLength")
+    if isinstance(raw, int) and raw > 0:
+        return raw
+    return default
+
+
+def _debounce_limits() -> dict[str, Any]:
+    section = _limits_section().get("debounceMs")
+    return section if isinstance(section, dict) else {}
+
+
+def debounce_ms_min(*, default: int = 1) -> int:
+    raw = _debounce_limits().get("min")
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    return default
+
+
+def debounce_ms_max(*, default: int = 60_000) -> int:
+    raw = _debounce_limits().get("max")
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    return default
+
+
+def debounce_ms_default(*, default: int = 100) -> int:
+    raw = _debounce_limits().get("default")
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    return default
+
+
 def _counter_set_limits() -> dict[str, Any]:
     section = _limits_section().get("counterSet")
     return section if isinstance(section, dict) else {}
@@ -164,6 +204,10 @@ __all__ = [
     "controller_code_pattern",
     "counter_set_max",
     "counter_set_min",
+    "debounce_ms_default",
+    "debounce_ms_max",
+    "debounce_ms_min",
+    "device_api_token_max_length",
     "ipv4_pattern",
     "live_ui_refresh_min_ms",
     "load_device_validation_content",
@@ -178,4 +222,5 @@ __all__ = [
     "poll_interval_min",
     "scheduler_tick_ms",
     "valid_branches",
+    "wifi_ssid_max_length",
 ]

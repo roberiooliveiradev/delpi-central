@@ -9,22 +9,31 @@ from production_pulse_app.application.services.device_driver_registry_service im
 )
 from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.domain.models.device_reading import CommandResult, DeviceReading
+from production_pulse_app.domain.services.device_config_payload_service import (
+    build_configure_http_payload,
+)
 from production_pulse_app.infrastructure.drivers.device_http_support import (
     device_get_json,
     device_post_json,
     parse_counter_response,
+    parse_device_config_response,
 )
 
 _DRIVER_KEY = "esp8266_counter_v1"
 _READ_PATH = "/api/contador"
 _STATUS_PATH = "/api/status"
+_CONFIG_PATH = "/api/config"
 _COMMAND_PATHS = {
     "increment": "/api/incrementar",
     "decrement": "/api/decrementar",
     "reset": "/api/reset",
     "set": "/api/definir",
+    "reboot": "/api/reboot",
+    "factory_reset": "/api/factory-reset",
 }
-_CAPABILITIES = frozenset({"increment", "decrement", "reset", "set"})
+_CAPABILITIES = frozenset(
+    {"increment", "decrement", "reset", "set", "configure", "reboot", "factory_reset"}
+)
 
 
 def parse_controller_identity(body: Any) -> dict[str, Any]:
@@ -40,6 +49,9 @@ def parse_controller_identity(body: Any) -> dict[str, Any]:
     ip = body.get("ip")
     if ip is not None and str(ip).strip():
         payload["ip"] = str(ip).strip()
+    for key in ("firmwareVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+        if key in body and body.get(key) is not None:
+            payload[key] = body.get(key)
     return payload
 
 
@@ -72,10 +84,28 @@ class Esp8266CounterDriver:
 
     def test(self, device: dict[str, Any]) -> DeviceReading:
         reading = self._fetch_counter(device)
+        meta: dict[str, Any] = {}
         identity = self._fetch_identity(device)
-        if not identity:
+        if identity:
+            meta.update(identity)
+        config = self.get_config(device)
+        if config:
+            meta["deviceConfig"] = config
+        if not meta:
             return reading
-        return DeviceReading(metrics=reading.metrics, meta=identity)
+        return DeviceReading(metrics=reading.metrics, meta=meta)
+
+    def get_config(self, device: dict[str, Any]) -> dict[str, Any]:
+        try:
+            body = device_get_json(
+                device,
+                _CONFIG_PATH,
+                client=self._client,
+                timeout_seconds=self._timeout_for(device),
+            )
+        except DeviceDriverError:
+            return {}
+        return parse_device_config_response(body)
 
     def execute(
         self,
@@ -85,6 +115,9 @@ class Esp8266CounterDriver:
         payload: dict[str, Any] | None = None,
     ) -> CommandResult:
         normalized = (command_key or "").strip().lower()
+        if normalized == "configure":
+            return self._execute_configure(device, payload)
+
         path = _COMMAND_PATHS.get(normalized)
         if path is None:
             return CommandResult(success=False, error_code="unsupported_command")
@@ -104,11 +137,41 @@ class Esp8266CounterDriver:
                 timeout_seconds=self._timeout_for(device),
                 payload=body,
             )
+            if normalized in {"reboot", "factory_reset"}:
+                return CommandResult(
+                    success=True,
+                    metrics={},
+                    response_payload=response_body if isinstance(response_body, dict) else {},
+                )
             counter = parse_counter_response(response_body)
             return CommandResult(
                 success=True,
                 metrics={"counter": counter},
                 response_payload=response_body if isinstance(response_body, dict) else {},
+            )
+        except DeviceDriverError as exc:
+            return CommandResult(success=False, error_code=exc.code)
+
+    def _execute_configure(
+        self,
+        device: dict[str, Any],
+        payload: dict[str, Any] | None,
+    ) -> CommandResult:
+        body = build_configure_http_payload(payload)
+        if not body:
+            return CommandResult(success=False, error_code="invalid_command_payload")
+        try:
+            response_body = device_post_json(
+                device,
+                _CONFIG_PATH,
+                client=self._client,
+                timeout_seconds=self._timeout_for(device),
+                payload=body,
+            )
+            return CommandResult(
+                success=True,
+                metrics={},
+                response_payload=parse_device_config_response(response_body),
             )
         except DeviceDriverError as exc:
             return CommandResult(success=False, error_code=exc.code)

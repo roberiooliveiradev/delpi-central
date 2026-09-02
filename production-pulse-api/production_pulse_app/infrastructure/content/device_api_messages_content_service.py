@@ -99,8 +99,19 @@ def validation_error_message(code: str, *, fallback: str | None = None, **params
     return _lookup_message(_validation_errors_section(), code, fallback=fallback, **params)
 
 
+def device_config_push_message(status: str, *, fallback: str | None = None) -> str:
+    section = _section("deviceConfigPush")
+    mapped = section.get(status)
+    if isinstance(mapped, str) and mapped.strip():
+        return mapped.strip()
+    if fallback and fallback.strip():
+        return fallback.strip()
+    return status
+
+
 __all__ = [
     "command_error_message",
+    "device_config_push_message",
     "device_connectivity_codes",
     "device_connectivity_http_status_code",
     "device_connectivity_user_message",

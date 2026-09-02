@@ -44,6 +44,17 @@ def test_probe_test_includes_controller_code_from_status():
                     "mac": "AA:BB:CC:DD:EE:FF",
                 },
             )
+        if request.url.path == "/api/config":
+            return httpx.Response(
+                200,
+                json={
+                    "ssid": "FactoryNet",
+                    "debounceMs": 100,
+                    "passwordSet": True,
+                    "apiTokenSet": False,
+                    "wifiConfigured": True,
+                },
+            )
         return httpx.Response(404)
 
     driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
@@ -51,6 +62,51 @@ def test_probe_test_includes_controller_code_from_status():
     assert reading.metrics == {"counter": 10}
     assert reading.meta["controllerCode"] == "ESP-00ABCDEF"
     assert reading.meta["mac"] == "AA:BB:CC:DD:EE:FF"
+    assert reading.meta["deviceConfig"]["ssid"] == "FactoryNet"
+
+
+def test_configure_posts_config_payload():
+    import json
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/config"
+        assert request.method == "POST"
+        assert request.headers.get("X-Device-Token") == "secret-token"
+        body = json.loads(request.content.decode("utf-8"))
+        assert body["ssid"] == "PlantWifi"
+        assert body["debounceMs"] == 80
+        return httpx.Response(
+            200,
+            json={
+                "ssid": "PlantWifi",
+                "debounceMs": 80,
+                "passwordSet": True,
+                "apiTokenSet": True,
+                "wifiConfigured": True,
+            },
+        )
+
+    device = {**_DEVICE, "device_api_token": "secret-token"}
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    result = driver.execute(
+        device,
+        "configure",
+        payload={"wifiSsid": "PlantWifi", "debounceMs": 80},
+    )
+    assert result.success is True
+    assert result.response_payload["ssid"] == "PlantWifi"
+
+
+def test_device_http_injects_token_header():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.headers.get("X-Device-Token") == "tok-1"
+        assert request.url.path == "/api/status"
+        return httpx.Response(200, json={"controllerCode": "ESP-1", "contador": 1})
+
+    device = {**_DEVICE, "apiToken": "tok-1"}
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    meta = driver._fetch_identity(device)
+    assert meta["controllerCode"] == "ESP-1"
 
 
 def test_read_timeout_raises_device_driver_error():
@@ -99,7 +155,7 @@ def test_execute_network_error_returns_code_only():
 
 def test_execute_unknown_command_returns_failure():
     driver = Esp8266CounterDriver(timeout_seconds=1.0)
-    result = driver.execute(_DEVICE, "reboot")
+    result = driver.execute(_DEVICE, "not_a_real_command")
     assert result.success is False
     assert result.error_code == "unsupported_command"
 
@@ -135,6 +191,8 @@ def test_register_device_drivers_exposes_implementation():
     register_device_drivers()
     driver = get_device_driver_registry().get_implementation("esp8266_counter_v1")
     assert isinstance(driver, Esp8266CounterDriver)
-    assert driver.capabilities() == frozenset({"increment", "decrement", "reset", "set"})
+    assert driver.capabilities() == frozenset(
+        {"increment", "decrement", "reset", "set", "configure", "reboot", "factory_reset"}
+    )
 
     reset_device_driver_registration_for_tests()

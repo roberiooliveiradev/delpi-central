@@ -4,7 +4,7 @@
     "esp8266_counter_v1": {
       "roleKey": "pulse_counter",
       "labelPt": "ESP8266 — contador de golpes",
-      "descriptionPt": "Firmware piloto: GET /api/contador, POST incrementar/decrementar/reset/definir",
+      "descriptionPt": "Firmware: contador público, config/token, reboot e factory-reset autenticados",
       "metrics": [
         {
           "key": "counter",
@@ -15,7 +15,7 @@
           "icon": "Hash"
         }
       ],
-      "commands": ["increment", "decrement", "reset", "set"],
+      "commands": ["increment", "decrement", "reset", "set", "configure", "reboot", "factory_reset"],
       "counterRestore": {
         "enabled": true,
         "preferHardwareSet": true

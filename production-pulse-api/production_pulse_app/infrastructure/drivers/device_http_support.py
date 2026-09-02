@@ -6,6 +6,8 @@ import httpx
 
 from production_pulse_app.domain.errors import DeviceDriverError
 
+_DEVICE_TOKEN_HEADER = "X-Device-Token"
+
 
 def resolve_device_ip(device: dict[str, Any]) -> str:
     raw = device.get("ip_address") or device.get("ipAddress") or ""
@@ -19,6 +21,23 @@ def device_base_url(device: dict[str, Any]) -> str:
     return f"http://{resolve_device_ip(device)}"
 
 
+def resolve_device_api_token(device: dict[str, Any]) -> str | None:
+    raw = device.get("device_api_token")
+    if raw is None:
+        raw = device.get("apiToken")
+    if raw is None:
+        return None
+    token = str(raw).strip()
+    return token or None
+
+
+def device_auth_headers(device: dict[str, Any]) -> dict[str, str]:
+    token = resolve_device_api_token(device)
+    if not token:
+        return {}
+    return {_DEVICE_TOKEN_HEADER: token}
+
+
 def request_device_json(
     *,
     client: httpx.Client | None,
@@ -26,20 +45,31 @@ def request_device_json(
     url: str,
     timeout_seconds: float,
     json_body: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> Any:
     normalized_method = (method or "GET").strip().upper()
+    request_headers = dict(headers or {})
     try:
         if client is not None:
             if normalized_method == "GET":
-                response = client.get(url, timeout=timeout_seconds)
+                response = client.get(url, timeout=timeout_seconds, headers=request_headers)
             else:
-                response = client.post(url, json=json_body or {}, timeout=timeout_seconds)
+                response = client.post(
+                    url,
+                    json=json_body or {},
+                    timeout=timeout_seconds,
+                    headers=request_headers,
+                )
         else:
             with httpx.Client(timeout=timeout_seconds) as ephemeral:
                 if normalized_method == "GET":
-                    response = ephemeral.get(url)
+                    response = ephemeral.get(url, headers=request_headers)
                 else:
-                    response = ephemeral.post(url, json=json_body or {})
+                    response = ephemeral.post(
+                        url,
+                        json=json_body or {},
+                        headers=request_headers,
+                    )
     except httpx.TimeoutException as exc:
         raise DeviceDriverError(
             "timeout",
@@ -80,6 +110,7 @@ def device_get_json(
         method="GET",
         url=url,
         timeout_seconds=timeout_seconds,
+        headers=device_auth_headers(device),
     )
 
 
@@ -98,6 +129,7 @@ def device_post_json(
         url=url,
         timeout_seconds=timeout_seconds,
         json_body=payload,
+        headers=device_auth_headers(device),
     )
 
 
@@ -165,3 +197,24 @@ def parse_gauge_response(body: Any) -> dict[str, float]:
         )
 
     return metrics
+
+
+def parse_device_config_response(body: Any) -> dict[str, Any]:
+    if not isinstance(body, dict):
+        return {}
+    payload: dict[str, Any] = {}
+    ssid = body.get("ssid")
+    if ssid is not None and str(ssid).strip():
+        payload["ssid"] = str(ssid).strip()
+    if "debounceMs" in body:
+        try:
+            payload["debounceMs"] = int(body.get("debounceMs"))
+        except (TypeError, ValueError):
+            pass
+    if "passwordSet" in body:
+        payload["passwordSet"] = bool(body.get("passwordSet"))
+    if "apiTokenSet" in body:
+        payload["apiTokenSet"] = bool(body.get("apiTokenSet"))
+    if "wifiConfigured" in body:
+        payload["wifiConfigured"] = bool(body.get("wifiConfigured"))
+    return payload

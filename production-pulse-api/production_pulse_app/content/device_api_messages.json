@@ -29,7 +29,12 @@
   "commandErrors": {
     "unsupported_command": "Este dispositivo não suporta o comando solicitado.",
     "command_failed": "Não foi possível concluir o comando no dispositivo.",
-    "invalid_command_payload": "Payload inválido para o comando (informe counter)."
+    "invalid_command_payload": "Payload inválido para o comando."
+  },
+  "deviceConfigPush": {
+    "ok": "Configuração enviada ao dispositivo.",
+    "skipped": "Cadastro salvo. Nenhuma configuração de chip para enviar.",
+    "failed": "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo."
   },
   "validationErrors": {
     "invalid_branch": "A filial deve ser 01 ou 02.",
@@ -40,6 +45,9 @@
     "name_too_long": "O nome do dispositivo deve ter no máximo 120 caracteres.",
     "controller_code_too_long": "O código do controlador deve ter no máximo {max} caracteres.",
     "invalid_controller_code": "Informe um código de controlador válido (letras, números, . _ : -).",
+    "wifi_ssid_too_long": "O SSID Wi-Fi deve ter no máximo {max} caracteres.",
+    "device_api_token_too_long": "O token do dispositivo deve ter no máximo {max} caracteres.",
+    "debounce_ms_out_of_range": "O debounce deve estar entre {min} e {max} milissegundos.",
     "driver_key_required": "Selecione o driver (protocolo) do dispositivo.",
     "unknown_driver": "Driver desconhecido: {driver}.",
     "driver_missing_role_key": "Driver \"{driver}\" sem roleKey no registry.",
