@@ -24,6 +24,9 @@ describe("home hub stack", () => {
     assert.match(catalog, /orders_billable/);
     assert.match(catalog, /orders_postponed/);
     assert.match(catalog, /orders_ready_board/);
+    assert.match(catalog, /id: \"help\"/);
+    assert.match(catalog, /user_manual/);
+    assert.match(catalog, /viewId: \"help\"/);
   });
 
   it("HomePage usa stack vertical e SectionRouteCard", () => {

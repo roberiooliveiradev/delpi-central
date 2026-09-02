@@ -28,6 +28,7 @@ export type PluginView =
   | "user_profile"
   | "interaction_rooms"
   | "interaction_room_detail"
+  | "help"
   | "not_found";
 
 /** Itens da navegação de topo (IA 2026 — sete áreas + Cliente efêmero fora da carteira). */
@@ -122,6 +123,10 @@ export function resolvePluginRoute(
 
   if (relativePath === "overview") {
     return { view: "overview", pathname: path, relativePath };
+  }
+
+  if (relativePath === "help") {
+    return { view: "help", pathname: path, relativePath };
   }
 
   if (INTERACTION_ROOMS_PATH_RE.test(relativePath)) {
@@ -508,6 +513,7 @@ const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
   /** Alias legado — resolve para a aba Carteiras do hub. */
   seller_portfolios: "administration/seller-portfolios",
   interaction_rooms: "interaction-rooms",
+  help: "help",
 };
 
 export function buildPluginPath(
@@ -723,6 +729,7 @@ export function resolveActiveNavId(
     return "administration";
   }
   if (view === "proposals" || view === "proposal_detail") return null;
+  if (view === "help") return null;
   if (view === "user_profile") return null;
   if (view === "interaction_rooms" || view === "interaction_room_detail") {
     return "interaction_rooms";

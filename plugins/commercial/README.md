@@ -37,6 +37,7 @@ Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — *
 | Rota | Descrição | Permissão |
 |------|-----------|-----------|
 | `/apps/commercial` | Início — hero + eventos do dia + launcher de funcionalidades | `commercial.access` |
+| `/apps/commercial/help` | Manual do usuário — “Quero…” + FAQ (consulta permanente) | `commercial.access` |
 | `/apps/commercial/overview` | Visão geral — KPIs (incl. carteira aberta), filtros/período, ROL + YoY, funil, série hit rate + YoY | `commercial.access` |
 | `/apps/commercial/my-tasks` (alias `/my-day`) | Minhas tarefas — worklist | `commercial.access` |
 | `/apps/commercial/users/:userId` | Perfil de usuário (SPA; não declarado no manifesto) | `commercial.access` |

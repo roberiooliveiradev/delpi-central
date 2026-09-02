@@ -39,6 +39,7 @@ import { AdministrationHomePage } from "./features/administration/Administration
 import { AdministrationGroupsPage } from "./features/administration/AdministrationGroupsPage";
 import { AdministrationTeamPage } from "./features/administration/AdministrationTeamPage";
 import { InteractionRoomWorkspace } from "./features/interaction-rooms/InteractionRoomWorkspace";
+import { UserManualPage } from "./features/help/UserManualPage";
 import { SellerPortfolioDetailPage } from "./features/seller-portfolios/SellerPortfolioDetailPage";
 import { SellerPortfoliosPage } from "./features/seller-portfolios/SellerPortfoliosPage";
 
@@ -306,6 +307,7 @@ function AppRoutes({
           search={search}
         />
       ) : null}
+      {view === "help" ? <UserManualPage basePath={basePath} /> : null}
       {view === "not_found" ? <NotFoundPage basePath={basePath} /> : null}
     </PluginShell>
   );

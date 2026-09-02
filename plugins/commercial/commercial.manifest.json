@@ -78,6 +78,14 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/commercial/help",
+      "label": "Manual do usuário",
+      "permission": "commercial.access",
+      "icon": "book-open",
+      "order": 18,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/commercial/customers",
       "label": "Minha Carteira",
       "permission": "commercial.access",

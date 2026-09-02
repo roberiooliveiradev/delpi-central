@@ -18,6 +18,17 @@ import {
 import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink.ts";
 
 describe("rotas nativas do pedido comercial", () => {
+  it("resolve e build path do manual (/help)", () => {
+    const path = buildPluginPath("help", "/apps/commercial");
+    assert.equal(path, "/apps/commercial/help");
+    assert.deepEqual(resolvePluginRoute(path, "/apps/commercial"), {
+      view: "help",
+      pathname: "/apps/commercial/help",
+      relativePath: "help",
+    });
+    assert.equal(resolveActiveNavId("help"), null);
+  });
+
   it("resolve interaction-rooms (inbox e detalhe) em EN", () => {
     assert.equal(INTERACTION_ROOMS_PATH_RE.test("interaction-rooms"), true);
     assert.equal(INTERACTION_ROOM_DETAIL_PATH_RE.test("interaction-rooms/abc"), true);

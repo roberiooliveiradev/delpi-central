@@ -30,6 +30,7 @@ export type HubSectionId =
   | "operations"
   | "management"
   | "documents"
+  | "help"
   | "administration";
 
 export type HubSectionDef = {
@@ -189,6 +190,30 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         viewId: "proposals",
         requiredCap: "proposals",
         keywords: ["propostas", "proposta", "ady", "pdf", "documento"],
+      },
+    ],
+  },
+  {
+    id: "help",
+    title: "Ajuda",
+    description: "Manual e dúvidas frequentes.",
+    iconKey: "help",
+    routes: [
+      {
+        id: "user_manual",
+        label: "Manual do usuário",
+        viewId: "help",
+        requiredCap: "always",
+        keywords: [
+          "manual",
+          "ajuda",
+          "help",
+          "duvida",
+          "dúvida",
+          "faq",
+          "como usar",
+          "onde ir",
+        ],
       },
     ],
   },

@@ -1,9 +1,10 @@
 # Manual do usuário — Portal Comercial
 
 > **Para quem:** vendedores, orçamentistas, faturamento, supervisores e gestores.  
-> **Onde abrir:** menu Minha Delpi → **Portal Comercial** (`/apps/commercial`).  
+> **Onde abrir:** menu Minha Delpi → **Portal Comercial** → Início → **Ajuda → Manual do usuário**  
+> (URL direta: `/apps/commercial/help`).  
 > **Como usar este manual:** comece pelo **“Quero…”** (§2). Se a dúvida for específica, use o **FAQ** (§4).  
-> **Ajuda na tela:** ícones `?` e dicas nos campos/colunas explicam o mesmo conceito sem sair do Portal.
+> **Ajuda na tela:** ícones `?` e dicas nos campos/colunas explicam o mesmo conceito sem sair do Portal. A página **Manual do usuário** no Portal concentra este conteúdo para consulta a qualquer momento.
 
 Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMENTO-PORTAL-COMERCIAL-1H.md).
 

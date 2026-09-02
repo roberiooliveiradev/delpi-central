@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import {
   ArrowRight,
   BarChart3,
+  BookOpen,
   CircleAlert,
   ClipboardList,
   Clock,
@@ -88,6 +89,7 @@ const SECTION_ICONS: Record<HubSectionId, ReactNode> = {
   operations: <ClipboardList size={20} strokeWidth={1.75} aria-hidden="true" />,
   management: <BarChart3 size={20} strokeWidth={1.75} aria-hidden="true" />,
   documents: <FileText size={20} strokeWidth={1.75} aria-hidden="true" />,
+  help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
   administration: <Settings size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
