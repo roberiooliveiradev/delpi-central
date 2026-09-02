@@ -65,6 +65,32 @@ def scheduler_tick_ms(*, default: int = 100) -> int:
     return default
 
 
+def _online_grace_section() -> dict[str, Any]:
+    section = _limits_section().get("onlineGraceMs")
+    return section if isinstance(section, dict) else {}
+
+
+def online_grace_multiplier(*, default: int = 2) -> int:
+    raw = _online_grace_section().get("multiplier")
+    if isinstance(raw, (int, float)) and int(raw) >= 1:
+        return int(raw)
+    return default
+
+
+def online_grace_min_ms(*, default: int = 2_000) -> int:
+    raw = _online_grace_section().get("min")
+    if isinstance(raw, (int, float)):
+        return max(1, int(raw))
+    return default
+
+
+def online_grace_max_ms(*, default: int = 600_000) -> int:
+    raw = _online_grace_section().get("max")
+    if isinstance(raw, (int, float)):
+        return max(1, int(raw))
+    return default
+
+
 def name_max_length(*, default: int = 120) -> int:
     raw = _limits_section().get("nameMaxLength")
     if isinstance(raw, int) and raw > 0:
@@ -100,6 +126,9 @@ __all__ = [
     "load_device_validation_content",
     "matches_ipv4",
     "name_max_length",
+    "online_grace_max_ms",
+    "online_grace_min_ms",
+    "online_grace_multiplier",
     "poll_interval_default",
     "poll_interval_max",
     "poll_interval_min",

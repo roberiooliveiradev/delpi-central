@@ -11,6 +11,11 @@
     "schedulerTickMs": {
       "default": 100
     },
+    "onlineGraceMs": {
+      "multiplier": 2,
+      "min": 2000,
+      "max": 600000
+    },
     "nameMaxLength": 120
   },
   "patterns": {

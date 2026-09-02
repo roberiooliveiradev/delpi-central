@@ -11,7 +11,7 @@
 | **role_key** | Papel | Semântica operacional derivada do driver (`pulse_counter`, `process_gauge`). |
 | **metrics** | Métricas | Valores lidos (`counter`, `rpm`, `temperature_c`) em JSONB. |
 | **CT** | Centro de trabalho | Cadastro TOTVS (`SHB010`). **Atalho opcional** — não é o único vínculo. |
-| **status (device)** | Conectividade derivada | `online` \| `offline` \| `disabled` \| `no_binding` — grace **2× poll_interval** (min 60 s, max 600 s). Ver R9–R12. |
+| **status (device)** | Conectividade derivada | `online` \| `offline` \| `disabled` \| `no_binding` — grace **2× poll_interval_ms** (piso 2 s, teto 600 s). Ver R9–R12. |
 | **operatorSurface** | Superfície operador | UI tablet: `counter_pad`, `gauge_readout`, … |
 | **capabilities** | Capabilities | Comandos e métricas permitidos — vêm do registry. |
 | **Rascunho** | — | Device sem binding vigente — excluído de hub operador. |

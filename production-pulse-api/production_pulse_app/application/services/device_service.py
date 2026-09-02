@@ -66,6 +66,8 @@ class DeviceService:
         payload["status"] = connectivity["status"]
         payload["online"] = connectivity["online"]
         payload["graceSeconds"] = connectivity["graceSeconds"]
+        if "graceMs" in connectivity:
+            payload["graceMs"] = connectivity["graceMs"]
         return payload
 
     def list_devices(

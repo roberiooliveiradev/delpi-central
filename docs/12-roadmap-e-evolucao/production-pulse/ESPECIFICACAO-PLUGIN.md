@@ -230,7 +230,7 @@ Referência: [ADR-002-poll-scheduler-and-lan.md](./ADR-002-poll-scheduler-and-la
 ### 6.3 Grace window (online / offline)
 
 ```text
-grace_seconds = clamp((poll_interval_ms / 1000) × 2, min=60, max=600)
+grace_ms = clamp(poll_interval_ms × 2, min=2000, max=600000)
 ```
 
 | `status` | Condição |

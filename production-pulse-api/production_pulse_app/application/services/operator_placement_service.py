@@ -133,6 +133,8 @@ class OperatorPlacementService:
             payload["status"] = connectivity["status"]
             payload["online"] = connectivity["online"]
             payload["graceSeconds"] = connectivity["graceSeconds"]
+            if "graceMs" in connectivity:
+                payload["graceMs"] = connectivity["graceMs"]
             payload["placementKey"] = row.get("placement_key")
             payload["placementLabel"] = row.get("placement_label")
             payload["anchorType"] = row.get("anchor_type")

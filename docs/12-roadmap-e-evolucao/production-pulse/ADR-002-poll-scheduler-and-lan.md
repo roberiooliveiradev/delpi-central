@@ -32,23 +32,24 @@ Implementação alvo: `production_pulse_app/application/services/device_poll_sch
 Alinhado a **2× intervalo de poll** com piso/teto (mesmo espírito Prometheus/Grafana):
 
 ```text
-grace_seconds(device) = clamp((poll_interval_ms / 1000) × 2, min=60, max=600)
+grace_ms(device) = clamp(poll_interval_ms × 2, min=2000, max=600000)
+grace_seconds = round(grace_ms / 1000)
 
-online  ⇔  enabled AND last_seen_at NOT NULL AND (now - last_seen_at) <= grace_seconds
+online  ⇔  enabled AND last_seen_at NOT NULL AND (now - last_seen_at) <= grace_ms
 offline ⇔  enabled AND NOT online
 disabled ⇔  NOT enabled
 no_binding ⇔  sem binding vigente (rascunho)
 ```
 
-Constantes configuráveis via env (defaults acima):
+Constantes: fonte canônica `device_validation_content.json` → `onlineGraceMs` (multiplier / min / max em **ms**). Override operacional opcional:
 
-| Env | Default |
-|-----|---------|
-| `PP_ONLINE_GRACE_MIN_SECONDS` | `60` |
-| `PP_ONLINE_GRACE_MAX_SECONDS` | `600` |
-| `PP_ONLINE_GRACE_MULTIPLIER` | `2` |
+| Env | Efeito |
+|-----|--------|
+| `PP_ONLINE_GRACE_MIN_SECONDS` | Sobrescreve `onlineGraceMs.min` (×1000) |
+| `PP_ONLINE_GRACE_MAX_SECONDS` | Sobrescreve `onlineGraceMs.max` (×1000) |
+| `PP_ONLINE_GRACE_MULTIPLIER` | Sobrescreve `onlineGraceMs.multiplier` |
 
-Cálculo exposto em `DeviceConnectivityStatusService` — **único** módulo; painel, `/live`, hub operador consomem o mesmo `status` derivado.
+Cálculo em `DeviceConnectivityStatusService` — **único** módulo; painel, `/live`, hub operador consomem o mesmo `status` derivado.
 
 ---
 
