@@ -3,6 +3,9 @@ from app.config import settings
 from app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
+from app.application.use_cases.financial.get_purchase_freight_links_use_case import (
+    GetPurchaseFreightLinksUseCase,
+)
 from app.application.use_cases.financial.get_rol_invoices_use_case import (
     GetRolInvoicesUseCase,
 )
@@ -18,6 +21,9 @@ from app.infrastructure.persistence.google_sheets.financial.financial_receivable
 )
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import (
     FinancialRepository,
+)
+from app.infrastructure.persistence.totvs.financial_repositories.purchase_freight_repository import (
+    PurchaseFreightRepository,
 )
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
@@ -85,6 +91,10 @@ def build_get_rol_use_case() -> GetRolUseCase:
 
 def build_get_rol_invoices_use_case() -> GetRolInvoicesUseCase:
     return GetRolInvoicesUseCase(FinancialRepository())
+
+
+def build_get_purchase_freight_links_use_case() -> GetPurchaseFreightLinksUseCase:
+    return GetPurchaseFreightLinksUseCase(PurchaseFreightRepository())
 
 
 def build_get_financial_ebitda_pct_use_case() -> GetFinancialEbitdaPctUseCase:
