@@ -1,5 +1,5 @@
 import { EF_GHOST_BTN } from "../ui/ghostChrome";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   Clock3,
@@ -12,9 +12,11 @@ import {
 
 import { AppointmentsTable } from "../components/AppointmentsTable";
 import { DashboardCharts } from "../components/DashboardCharts";
+import { DashboardSectionTabs } from "../components/DashboardSectionTabs";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { UnproductiveHoursPanel } from "../components/UnproductiveHoursPanel";
 import {
   PRODUCTION_EFFICIENCY_LOW_PCT_THRESHOLD,
   PRODUCTION_EFFICIENCY_VALID_MAX_PCT,
@@ -48,6 +50,13 @@ import {
   buildWorkCenterFilterOptions,
 } from "../utils/filterOptions";
 import { navigateEficienciaFabril } from "../utils/navigation";
+import {
+  DASHBOARD_TAB_EFFICIENCY,
+  DASHBOARD_TAB_UNPRODUCTIVE_HOURS,
+  type EficienciaFabrilDashboardTab,
+  readDashboardTabFromLocation,
+  writeDashboardTabToUrl,
+} from "../utils/dashboardTab";
 
 type DashboardEficienciaFabrilPageProps = {
   pathname?: string;
@@ -120,6 +129,22 @@ function DashboardEficienciaFabrilContent({
     apiParams,
   } = useEficienciaFabrilFilters(totvsBranch);
 
+  const [activeTab, setActiveTab] = useState<EficienciaFabrilDashboardTab>(() =>
+    readDashboardTabFromLocation(),
+  );
+  const uhReloadRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const syncFromUrl = () => setActiveTab(readDashboardTabFromLocation());
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
+
+  const handleTabChange = useCallback((tab: EficienciaFabrilDashboardTab) => {
+    setActiveTab(tab);
+    writeDashboardTabToUrl(tab, { replace: true });
+  }, []);
+
   const [exportError, setExportError] = useState<string | null>(null);
   const handleExportError = useCallback((message: string) => {
     setExportError(message);
@@ -139,10 +164,21 @@ function DashboardEficienciaFabrilContent({
     [branchRoute, totvsBranch]
   );
 
-  const { data, allItems, loadedItems, loading, error, reload } =
-    useEficienciaFabrilDashboard(apiParams);
+  const efficiencyEnabled = activeTab === DASHBOARD_TAB_EFFICIENCY;
+  const unproductiveEnabled = activeTab === DASHBOARD_TAB_UNPRODUCTIVE_HOURS;
 
-  useAutoRefresh(reload);
+  const { data, allItems, loadedItems, loading, error, reload } =
+    useEficienciaFabrilDashboard(apiParams, efficiencyEnabled);
+
+  const handleReload = useCallback(() => {
+    if (activeTab === DASHBOARD_TAB_UNPRODUCTIVE_HOURS) {
+      uhReloadRef.current?.();
+      return;
+    }
+    reload();
+  }, [activeTab, reload]);
+
+  useAutoRefresh(handleReload);
 
   const shiftOptions = useMemo(() => buildShiftFilterOptions(), []);
   const efficiencyBandOptions = useMemo(() => EFFICIENCY_BAND_FILTER_OPTIONS, []);
@@ -194,14 +230,18 @@ function DashboardEficienciaFabrilContent({
         <button
           type="button"
           className={EF_GHOST_BTN}
-          onClick={() => reload()}
-          disabled={loading}
+          onClick={() => handleReload()}
+          disabled={efficiencyEnabled && loading}
         >
           <RefreshCw size={16} className={refreshing ? "ef-spin" : undefined} aria-hidden />
           {refreshing ? "Atualizando…" : "Atualizar"}
         </button>
       </header>
 
+      <DashboardSectionTabs activeTab={activeTab} onChange={handleTabChange} />
+
+      {efficiencyEnabled ? (
+        <>
       <FilterBar
         dateStart={dateStart}
         dateEnd={dateEnd}
@@ -339,6 +379,22 @@ function DashboardEficienciaFabrilContent({
           />
         ) : null}
       </div>
+        </>
+      ) : null}
+
+      {unproductiveEnabled ? (
+        <UnproductiveHoursPanel
+          branch={totvsBranch}
+          dateStart={dateStart}
+          dateEnd={dateEnd}
+          onDateStartChange={setDateStart}
+          onDateEndChange={setDateEnd}
+          enabled={unproductiveEnabled}
+          onReloadReady={(reloadFn) => {
+            uhReloadRef.current = reloadFn;
+          }}
+        />
+      ) : null}
       </div>
     </div>
   );

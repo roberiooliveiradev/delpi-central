@@ -358,6 +358,18 @@ EFICIENCIA_FABRIL_ACCESS = [
     DASHBOARD_PRODUCTION_VIEW,
 ]
 
+# Horas improdutivas / paradas PCP: KPI produção + quem só tem Eficiência Fabril.
+UNPRODUCTIVE_HOURS_ACCESS = list(
+    dict.fromkeys(
+        [
+            *KPI_PRODUCTION_ACCESS,
+            EFICIENCIA_FABRIL_VIEW,
+            EFICIENCIA_FABRIL_VIEW_FILIAL_SC,
+            EFICIENCIA_FABRIL_VIEW_FILIAL_ES,
+        ]
+    )
+)
+
 # Portal Comercial: access | manage. Plugin irmão PVA: .access | .admin.
 # api-delpi.access NÃO concede acesso a pedidos/carteira (evita unrestricted indevido).
 PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [

@@ -25,6 +25,7 @@ Dashboard gerencial de apontamentos de produção (eficiência operacional e res
 | Plugin MFE | `plugins/eficiencia-fabril/` |
 | Repository TOTVS | `api-delpi/app/infrastructure/persistence/totvs/eficiencia_fabril/` |
 | Rotas Produção | `api-delpi/app/interface/http/routes/production/production_router.py` |
+| Horas improdutivas | `api-delpi/app/interface/http/routes/production/unproductive_hours_router.py` · [production-unproductive-hours.md](../../../api-delpi/docs/api/production-unproductive-hours.md) |
 | Registro de plugin | [registrar-plugin.md](../../10-guias-operacionais/registrar-plugin.md) |
 | Inventário plugins | [08-plugins/README.md](../../08-plugins/README.md) |
 
@@ -44,8 +45,9 @@ Dashboard gerencial de apontamentos de produção (eficiência operacional e res
 
 | Método | Caminho | Uso |
 |--------|---------|-----|
-| `GET` | `/apps/api-delpi/production/eficiencia-fabril/appointments` | Carga bulk do período (MFE atual) |
+| `GET` | `/apps/api-delpi/production/eficiencia-fabril/appointments` | Carga bulk do período (aba Eficiência) |
 | `GET` | `/apps/api-delpi/production/eficiencia-fabril/dashboard` | Agregado paginado no SQL (smoke / legado) |
+| `GET` | `/apps/api-delpi/production/unproductive-hours/{summary,items,ranking}` | Aba Horas improdutivas (paradas PCP) |
 
 ---
 

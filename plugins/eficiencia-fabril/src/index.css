@@ -95,6 +95,37 @@
   margin: 4px 0 0;
   color: var(--ef-muted);
   font-size: 0.92rem;
+}.dashboard-eficiencia-fabril .ef-section-tabs{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--ef-section-gap);
+}.dashboard-eficiencia-fabril .ef-section-tabs__cell{
+  display: inline-flex;
+}.dashboard-eficiencia-fabril .ef-section-tabs__tab{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--ef-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ef-surface) 88%, transparent);
+  color: var(--ef-muted);
+  cursor: pointer;
+  font-size: var(--ef-font-sm);
+  font-weight: 600;
+}.dashboard-eficiencia-fabril .ef-section-tabs__tab.is-active{
+  border-color: color-mix(in srgb, var(--ef-accent) 55%, var(--ef-border));
+  background: color-mix(in srgb, var(--ef-accent) 12%, var(--ef-surface));
+  color: var(--ef-title);
+}.dashboard-eficiencia-fabril .ef-section-tabs__tab:disabled{
+  opacity: 0.55;
+  cursor: not-allowed;
+}.dashboard-eficiencia-fabril .ef-unproductive-panel{
+  display: flex;
+  flex-direction: column;
+  gap: var(--ef-section-gap);
 }.ef-table-card{
   background: var(--ef-surface);
   border: 1px solid var(--ef-border);

@@ -10,12 +10,14 @@ Faixa válida e changelog jun/2026: [regras-faixa-eficiencia-producao.md](../../
 ## Funcionalidades (resumo)
 
 - Duas entradas no menu: **SC** (filial 01) e **ES** (filial 02)
-- KPIs: eficiência (média simples das médias por CT), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
-- Gráficos: eficiência por dia, MOD por dia, top operadores, eficiência por CT (cores por faixa), horas por CT
-- Tabela paginada com **ordenação por coluna** + exportação Excel (dados filtrados e ordenados em memória)
-- Clique na linha → detalhe do apontamento (mesmo contrato do OEE: roteiro, tempos com **textos de cálculo legíveis**, estrutura em **árvore**, `time_analysis.findings`)
-- Filtros **automáticos** (sem botão aplicar): período, OP, operador, CT e **turno (multiseleção)**; debounce em campos de texto
-- Refetch da API quando o período sai do intervalo já carregado, ao clicar **Atualizar** ou **automaticamente a cada 5 min** com a aba visível (`useAutoRefresh`)
+- Abas internas: **Eficiência** (apontamentos produtivos) e **Horas improdutivas** (paradas PCP)
+- Deep link da aba: `?tab=unproductive-hours`
+- KPIs (Eficiência): eficiência (média simples das médias por CT), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
+- KPIs (Horas improdutivas): total de horas, custo, nº de apontamentos, principal recurso/operador
+- Gráficos de eficiência + rankings de parada (motivo, operador, recurso)
+- Tabelas paginadas com ordenação + exportação Excel/PDF
+- Clique na linha (aba Eficiência) → detalhe do apontamento (roteiro, tempos, estrutura)
+- Filtros automáticos; refetch / **Atualizar** / auto-refresh a cada 5 min com a aba visível
 - Regras: CTs excluídos (`CT-00`, `CT-70`, `CT-16A`, `CT-99`); eficiência fora da faixa **0–199%** fora dos indicadores (status **Verificar** na tabela)
 
 ---
@@ -25,16 +27,22 @@ Faixa válida e changelog jun/2026: [regras-faixa-eficiencia-producao.md](../../
 ```http
 GET /apps/api-delpi/production/eficiencia-fabril/appointments
 GET /apps/api-delpi/production/eficiencia-fabril/dashboard
+GET /apps/api-delpi/production/unproductive-hours/summary
+GET /apps/api-delpi/production/unproductive-hours/items
+GET /apps/api-delpi/production/unproductive-hours/ranking
 ```
 
-Parâmetros principais: `date_start`, `date_end`, `branch` (fixo pela rota SC/ES), `op`, `employee`, `work_center`, `shift` (opcional `1|2|3` ou CSV).
+A aba **Horas improdutivas** consome a família `/production/unproductive-hours/*` (view `VW_BI_RT_HORAS_IMPRODUTIVAS`, **todos** os motivos de parada). Não confundir com `/retrabalhos/*` (só motivo `RT`). Doc: [production-unproductive-hours.md](../../api-delpi/docs/api/production-unproductive-hours.md).
 
-Cada item traz `turno` / `turno_label` (classificação canônica na API por `hora_inicio`). O plugin filtra preferindo `turno` da API.
+Parâmetros principais (eficiência): `start_date`/`end_date`, `branch` (fixo pela rota SC/ES). Filtros OP/operador/CT/turno são locais no MFE.
+
+Parâmetros (horas improdutivas): `start_date`/`end_date`, `branch`, `stop_reason`, `operator_code`, `resource`, `cost_center`, `page`, `sort`, `rank_by`.
 
 Rotas no Portal:
 
 - `/apps/eficiencia-fabril/sc` — Filial SC (TOTVS `01`)
 - `/apps/eficiencia-fabril/es` — Filial ES (TOTVS `02`)
+- `/apps/eficiencia-fabril/{sc|es}?tab=unproductive-hours` — Aba de paradas
 - `/apps/eficiencia-fabril/sc/appointment/{appointment_id}` — Detalhe (consome `GET /production/oee/appointments/{id}`)
 
 ---
@@ -47,11 +55,18 @@ npm install
 npm run build
 ```
 
-A partir de `infra/`:
+A partir da **raiz do monorepo** (rebuild seguro):
 
 ```bash
-docker compose -f docker-compose.dev.yml build eficiencia-fabril --no-cache
-docker compose -f docker-compose.dev.yml up -d eficiencia-fabril gateway api-delpi
+./infra/scripts/up-dev-sequential.sh --fase mfe --build eficiencia-fabril
+```
+
+Ou local:
+
+```bash
+cd plugins/eficiencia-fabril
+npm install
+npm run build
 ```
 
 Após mudanças só no **backend**:

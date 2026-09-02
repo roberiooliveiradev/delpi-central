@@ -14,7 +14,7 @@ from app.application.dto.production.unproductive_hours_request import (
     UnproductiveHoursQueryRequest,
     UnproductiveHoursRankingRequest,
 )
-from app.application.security.api_delpi_permissions import KPI_PRODUCTION_ACCESS
+from app.application.security.api_delpi_permissions import UNPRODUCTIVE_HOURS_ACCESS
 from app.composition.unproductive_hours_composer import (
     build_get_production_unproductive_hours_items_use_case,
     build_get_production_unproductive_hours_ranking_use_case,
@@ -134,7 +134,7 @@ def _build_period(
         path="/production/unproductive-hours/summary",
     ),
 )
-@require_any_permission(KPI_PRODUCTION_ACCESS)
+@require_any_permission(UNPRODUCTIVE_HOURS_ACCESS)
 def get_production_unproductive_hours_summary(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = START_DATE_QUERY(),
@@ -210,7 +210,7 @@ def get_production_unproductive_hours_summary(
         path="/production/unproductive-hours/items",
     ),
 )
-@require_any_permission(KPI_PRODUCTION_ACCESS)
+@require_any_permission(UNPRODUCTIVE_HOURS_ACCESS)
 def get_production_unproductive_hours_items(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = START_DATE_QUERY(),
@@ -302,7 +302,7 @@ def get_production_unproductive_hours_items(
         path="/production/unproductive-hours/ranking",
     ),
 )
-@require_any_permission(KPI_PRODUCTION_ACCESS)
+@require_any_permission(UNPRODUCTIVE_HOURS_ACCESS)
 def get_production_unproductive_hours_ranking(
     rank_by: str = Query(
         ...,

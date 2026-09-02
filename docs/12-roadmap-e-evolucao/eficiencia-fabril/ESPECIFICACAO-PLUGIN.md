@@ -1,23 +1,22 @@
 # Especificação funcional — Plugin Eficiência Fabril (estado atual)
 
 > **Versão do plugin:** `0.1.0` (manifesto)  
-> **Última revisão:** 2026-06-15  
+> **Última revisão:** 2026-09-02  
 > **Escopo:** comportamento implementado em `plugins/eficiencia-fabril` + rotas `api-delpi` de Produção.
 
 ---
 
 ## 1. Visão geral
 
-Tela única no Portal (**Minha DELPI**) para líderes de produção acompanharem apontamentos da view TOTVS `dbo.vw_Apontamentos_Eficiencia`:
+Tela no Portal (**Minha DELPI**) para líderes de produção acompanharem:
 
-- KPIs de eficiência, apontamentos, resultado MOD e horas ganhas/perdidas;
-- cinco gráficos analíticos (layout 3 + 2);
-- tabela paginada de apontamentos com **ordenação por coluna** e exportação Excel;
-- filtros com aplicação **automática e local** (sem botão «Aplicar»), exceto mudança de período fora do cache, botão **Atualizar** ou **auto-refresh a cada 5 min** com aba visível;
-- detalhe do apontamento (clique na linha) com estrutura do produto em **árvore** e análise de tempos (`time_analysis.findings`).
+1. **Aba Eficiência** — apontamentos da view TOTVS `dbo.vw_Apontamentos_Eficiencia` (KPIs, gráficos, tabela, detalhe);
+2. **Aba Horas improdutivas** — paradas PCP da view `dbo.VW_BI_RT_HORAS_IMPRODUTIVAS` via `/production/unproductive-hours/*` (todos os motivos; não confundir com `/retrabalhos` = só `RT`).
 
-**URL:** `/apps/eficiencia-fabril`  
-**Permissão:** `eficiencia-fabril.view` (e legado `api-delpi.access` / `dashboard-production.view` na API).
+Deep link: `?tab=unproductive-hours`.
+
+**URL:** `/apps/eficiencia-fabril/{sc|es}`  
+**Permissão:** `eficiencia-fabril.view` / `.view.filial-*` (API UH também aceita essas permissões via `UNPRODUCTIVE_HOURS_ACCESS`).
 
 ---
 
@@ -47,8 +46,11 @@ Base no gateway: `/apps/api-delpi/production`
 
 | Método | Rota | Uso atual do MFE |
 |--------|------|------------------|
-| `GET` | `/eficiencia-fabril/appointments` | **Principal** — carga bulk do período |
+| `GET` | `/eficiencia-fabril/appointments` | **Principal (aba Eficiência)** — carga bulk do período |
 | `GET` | `/eficiencia-fabril/dashboard` | Legado / smoke / integrações futuras |
+| `GET` | `/unproductive-hours/summary` | Aba Horas improdutivas — KPIs |
+| `GET` | `/unproductive-hours/items` | Aba Horas improdutivas — tabela paginada |
+| `GET` | `/unproductive-hours/ranking` | Aba Horas improdutivas — gráficos (motivo/operador/recurso) |
 
 ### Query params comuns
 
@@ -113,6 +115,8 @@ Constantes: `isProductionEfficiencyOutlier()` / `PRODUCTION_EFFICIENCY_VALID_*_P
 
 ## 5. Filtros (UI)
 
+### 5.1 Aba Eficiência
+
 | Campo | Comportamento |
 |-------|----------------|
 | Data início / fim | Aplicação imediata; **preservadas** ao alterar demais filtros |
@@ -126,6 +130,18 @@ Constantes: `isProductionEfficiencyOutlier()` / `PRODUCTION_EFFICIENCY_VALID_*_P
 | ~~Aplicar filtros~~ | Removido — filtros automáticos |
 
 **Atualizar** (cabeçalho): recarrega dados do período atual da API. Com a aba visível, o mesmo refresh ocorre **automaticamente a cada 5 minutos** (`useAutoRefresh`).
+
+### 5.2 Aba Horas improdutivas
+
+| Campo | Comportamento |
+|-------|----------------|
+| Data início / fim | Compartilhado com a aba Eficiência |
+| Motivo | Código `stop_reason` (ex.: RT, OT) — server-side |
+| Operador (código) | `operator_code` — server-side |
+| Recurso | `resource` — server-side |
+| Centro de custo | `cost_center` — server-side |
+
+Fetch lazy: summary + rankings + items só quando a aba está ativa. Export Excel/PDF busca todas as páginas filtradas.
 
 ---
 
