@@ -31,6 +31,28 @@ def test_read_normalizes_counter_metric():
     assert reading.metrics == {"counter": 1284}
 
 
+def test_probe_test_includes_controller_code_from_status():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/contador":
+            return httpx.Response(200, json={"contador": 10})
+        if request.url.path == "/api/status":
+            return httpx.Response(
+                200,
+                json={
+                    "codigoControlador": "ESP-00ABCDEF",
+                    "contador": 10,
+                    "mac": "AA:BB:CC:DD:EE:FF",
+                },
+            )
+        return httpx.Response(404)
+
+    driver = Esp8266CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    reading = driver.test(_DEVICE)
+    assert reading.metrics == {"counter": 10}
+    assert reading.meta["controllerCode"] == "ESP-00ABCDEF"
+    assert reading.meta["mac"] == "AA:BB:CC:DD:EE:FF"
+
+
 def test_read_timeout_raises_device_driver_error():
     def handler(_request: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("timed out")

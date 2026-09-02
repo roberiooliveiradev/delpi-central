@@ -22,6 +22,7 @@ class DeviceCreateBody(BaseModel):
     branch: str
     ip_address: str = Field(alias="ipAddress")
     driver_key: str = Field(alias="driverKey")
+    controller_code: str | None = Field(default=None, alias="controllerCode")
     poll_interval_ms: int = Field(
         default=_POLL_DEFAULT,
         alias="pollIntervalMs",
@@ -42,6 +43,7 @@ class DevicePatchBody(BaseModel):
     branch: str | None = None
     ip_address: str | None = Field(default=None, alias="ipAddress")
     driver_key: str | None = Field(default=None, alias="driverKey")
+    controller_code: str | None = Field(default=None, alias="controllerCode")
     poll_interval_ms: int | None = Field(
         default=None,
         alias="pollIntervalMs",

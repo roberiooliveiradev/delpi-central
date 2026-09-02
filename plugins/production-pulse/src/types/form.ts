@@ -8,6 +8,7 @@ export type DeviceFormValues = {
   name: string;
   branch: string;
   ipAddress: string;
+  controllerCode: string;
   driverKey: string;
   pollIntervalMs: number;
   enabled: boolean;
@@ -56,6 +57,8 @@ export type ProbeResult = {
   latencyMs?: number;
   error?: string;
   errorMessage?: string;
+  controllerCode?: string;
+  mac?: string;
 };
 
 export const DEFAULT_BINDING_VALUES: BindingFormValues = {
@@ -74,6 +77,7 @@ export const DEFAULT_DEVICE_FORM_VALUES: DeviceFormValues = {
   name: "",
   branch: "01",
   ipAddress: "",
+  controllerCode: "",
   driverKey: "esp8266_counter_v1",
   pollIntervalMs: POLL_INTERVAL_DEFAULT_MS,
   enabled: true,

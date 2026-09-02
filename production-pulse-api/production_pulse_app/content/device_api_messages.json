@@ -24,7 +24,7 @@
   "httpErrors": {
     "notFoundDevice": "Dispositivo não encontrado.",
     "notFoundBinding": "Amarração não encontrada.",
-    "duplicateIp": "Já existe dispositivo com este IP nesta filial."
+    "duplicateIp": "Já existe dispositivo com este IP ou código de controlador nesta filial."
   },
   "commandErrors": {
     "unsupported_command": "Este dispositivo não suporta o comando solicitado.",
@@ -38,6 +38,8 @@
     "invalid_ipv4": "Informe um endereço IPv4 válido.",
     "name_required": "Informe o nome do dispositivo.",
     "name_too_long": "O nome do dispositivo deve ter no máximo 120 caracteres.",
+    "controller_code_too_long": "O código do controlador deve ter no máximo {max} caracteres.",
+    "invalid_controller_code": "Informe um código de controlador válido (letras, números, . _ : -).",
     "driver_key_required": "Selecione o driver (protocolo) do dispositivo.",
     "unknown_driver": "Driver desconhecido: {driver}.",
     "driver_missing_role_key": "Driver \"{driver}\" sem roleKey no registry.",

@@ -1,10 +1,12 @@
 import type { AnchorType, BindingFormValues, DeviceFormValues } from "../types/form";
 import {
   clampPollIntervalMs,
+  CONTROLLER_CODE_MAX_LENGTH,
   formatValidationMessage,
   NAME_MAX_LENGTH,
   POLL_INTERVAL_MAX_MS,
   POLL_INTERVAL_MIN_MS,
+  validateControllerCode,
   validateIpv4,
 } from "../content/deviceValidationContent";
 
@@ -33,6 +35,17 @@ export function validateDeviceForm(
   const ip = device.ipAddress.trim();
   if (!ip) errors.ipAddress = formatValidationMessage("ip_address_required");
   else if (!validateIpv4(ip)) errors.ipAddress = formatValidationMessage("invalid_ipv4");
+
+  const controllerCode = (device.controllerCode ?? "").trim();
+  if (controllerCode) {
+    if (controllerCode.length > CONTROLLER_CODE_MAX_LENGTH) {
+      errors.controllerCode = formatValidationMessage("controller_code_too_long", {
+        max: CONTROLLER_CODE_MAX_LENGTH,
+      });
+    } else if (!validateControllerCode(controllerCode)) {
+      errors.controllerCode = formatValidationMessage("invalid_controller_code");
+    }
+  }
 
   if (!device.driverKey.trim()) errors.driverKey = formatValidationMessage("driver_key_required");
 

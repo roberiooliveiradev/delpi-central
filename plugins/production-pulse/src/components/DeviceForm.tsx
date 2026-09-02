@@ -102,6 +102,16 @@ export function DeviceForm({
           }
         />
 
+        <PpNativeTextField
+          id="pp-device-controller-code"
+          label="Código do controlador"
+          hint={PP_HELP.form.controllerCode}
+          value={device.controllerCode}
+          placeholder="ESP-00A1B2C3"
+          onChange={(value) => onChange({ controllerCode: value })}
+          afterControl={ppFieldError(errors?.controllerCode)}
+        />
+
         <PpNativeSelectField
           id="pp-device-driver"
           label="Driver"

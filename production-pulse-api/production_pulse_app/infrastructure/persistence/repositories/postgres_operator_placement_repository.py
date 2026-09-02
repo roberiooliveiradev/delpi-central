@@ -11,6 +11,7 @@ _DEVICE_BINDING_COLUMNS = """
     d.branch,
     d.name,
     d.ip_address,
+    d.controller_code,
     d.driver_key,
     d.role_key,
     d.enabled,

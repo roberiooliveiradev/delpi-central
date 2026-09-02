@@ -64,14 +64,21 @@ def test_create_device_rejects_duplicate_ip(client, unique_ip):
     assert conflict.status_code == 409
 
 
-def test_create_device_rejects_unknown_driver(client, unique_ip):
-    response = client.post(
+def test_create_device_persists_controller_code(client, unique_ip):
+    code = f"ESP-{unique_ip.replace('.', '')[-6:].upper()}"
+    created = client.post(
         "/devices",
         json={
-            "name": "ESP inválido",
+            "name": "ESP com código",
             "branch": "01",
             "ipAddress": unique_ip,
-            "driverKey": "unknown_driver_v9",
+            "driverKey": "esp8266_counter_v1",
+            "controllerCode": code,
         },
     )
-    assert response.status_code == 422
+    assert created.status_code == 201
+    data = created.json()["data"]
+    assert data["controllerCode"] == code
+
+    fetched = client.get(f"/devices/{data['id']}")
+    assert fetched.json()["data"]["controllerCode"] == code

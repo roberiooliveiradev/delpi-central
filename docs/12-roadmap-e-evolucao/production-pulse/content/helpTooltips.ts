@@ -67,6 +67,8 @@ export const PP_HELP = {
     filial: "Filial onde o IP do device é único. Não pode ser alterada após criar.",
     ip:
       "Endereço IPv4 fixo do hardware na rede industrial. Deve ser alcançável pela API.",
+    controllerCode:
+      "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde.",
     driver:
       "Protocolo/firmware instalado no device. Define quais métricas são lidas e se há comandos (+/−/zerar).",
     driverPreview:
@@ -136,6 +138,11 @@ export const PP_HELP = {
     testOk: "Conexão OK. Métricas retornadas pelo driver.",
     testFail:
       "Não foi possível alcançar o device. Verifique IP, cabo, Wi‑Fi ou firewall.",
+    testTitle: "Testar conexão",
+    testLoading: "Testando conexão…",
+    testClose: "Fechar",
+    testLatencyPrefix: "Latência",
+    testControllerCodePrefix: "Código do controlador",
     deactivateTitle: "Desativar este dispositivo?",
     deactivateBody:
       "Para leituras automáticas. O cadastro e o histórico permanecem consultáveis.",

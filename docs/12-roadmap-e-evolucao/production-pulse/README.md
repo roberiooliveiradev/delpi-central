@@ -93,6 +93,9 @@ Detalhe: [SCHEMA.md § device_bindings](./SCHEMA.md) · [INTEGRATIONS-TOTVS.md](
 | `POST` | `/api/decrementar` | `{"contador": <int>}` |
 | `POST` | `/api/reset` | `{"contador": 0}` |
 | `POST` | `/api/definir` | body `{"contador": <int>}` → `{"contador": <int>}` |
+| `GET` | `/api/status` | `codigoControlador` / `controllerCode`, IP, MAC, contador |
+
+Firmware de referência: [`firmware/esp8266_counter_v1/`](./firmware/esp8266_counter_v1/).
 
 Comando plataforma: `POST /devices/{id}/commands/set` com `{"counter": <int>}` (aliases `contador` / `value`).
 

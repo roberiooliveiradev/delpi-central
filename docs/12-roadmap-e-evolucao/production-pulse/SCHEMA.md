@@ -25,6 +25,7 @@ Cadastro de **hardware** na rede (ESP, gateway, futuro Modbus).
 | `branch` | `varchar(2)` | `01` / `02` |
 | `name` | `varchar(120)` | Rótulo do **dispositivo** («ESP ventilador A», «Contador prensa») |
 | `ip_address` | `inet` | Ex.: `192.168.20.2` |
+| `controller_code` | `varchar(64)` | Identidade do chip no firmware (ex.: `ESP-00A1B2C3`); opcional; único por filial quando informado |
 | `driver_key` | `varchar(40)` | Protocolo — `esp8266_counter_v1`, `esp8266_gauge_v1`, … |
 | `role_key` | `varchar(40)` | `pulse_counter`, `process_gauge`, `telemetry` — do registry |
 | `enabled` | `boolean` | Polling ativo |

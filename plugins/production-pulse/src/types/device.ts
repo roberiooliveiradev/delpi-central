@@ -37,6 +37,7 @@ export type DeviceListItem = {
   branch: string;
   name: string;
   ipAddress: string;
+  controllerCode: string | null;
   driverKey: string;
   roleKey: string;
   enabled: boolean;

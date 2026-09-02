@@ -107,6 +107,7 @@ export function DeviceFormPage({
           name: row.name,
           branch: row.branch,
           ipAddress: row.ipAddress,
+          controllerCode: row.controllerCode ?? "",
           driverKey: row.driverKey,
           pollIntervalMs: row.pollIntervalMs,
           enabled: row.enabled,
@@ -153,6 +154,8 @@ export function DeviceFormPage({
       setTestResult(result);
       if (!result.online) {
         setTestError(resolveProbeErrorMessage(result, PP_HELP.modals.testFail));
+      } else if (result.controllerCode && !device.controllerCode.trim()) {
+        setDevice((prev) => ({ ...prev, controllerCode: result.controllerCode ?? "" }));
       }
     } catch (err) {
       setTestError(resolveDeviceActionMessage(err, PP_HELP.modals.testFail));

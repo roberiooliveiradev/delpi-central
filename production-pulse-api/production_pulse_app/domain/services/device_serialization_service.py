@@ -18,6 +18,7 @@ def device_row_to_api(
         "branch": row["branch"],
         "name": row["name"],
         "ipAddress": str(row["ip_address"]),
+        "controllerCode": row.get("controller_code"),
         "driverKey": row["driver_key"],
         "roleKey": row["role_key"],
         "enabled": row["enabled"],

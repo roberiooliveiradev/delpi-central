@@ -78,12 +78,19 @@ class DeviceProbeService:
         try:
             reading = driver.test(device)
             latency_ms = int((time.perf_counter() - started) * 1000)
-            return {
+            payload: dict[str, Any] = {
                 "driverKey": driver_key,
                 "metrics": reading.metrics,
                 "latencyMs": latency_ms,
                 "online": True,
             }
+            meta = reading.meta if isinstance(reading.meta, dict) else {}
+            controller_code = meta.get("controllerCode")
+            if controller_code:
+                payload["controllerCode"] = controller_code
+            if meta.get("mac"):
+                payload["mac"] = meta["mac"]
+            return payload
         except DeviceDriverError as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
             return self._probe_failure_payload(

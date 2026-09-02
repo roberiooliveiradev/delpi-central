@@ -14,6 +14,7 @@ from production_pulse_app.domain.services.binding_serialization_service import b
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
 from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.domain.services.device_validation_service import (
+    normalize_controller_code,
     normalize_ip_address,
     normalize_name,
     resolve_driver,
@@ -130,6 +131,11 @@ class DeviceService:
             )
         )
         enabled = bool(payload.get("enabled", True))
+        controller_code = normalize_controller_code(
+            payload.get("controller_code")
+            if "controller_code" in payload
+            else payload.get("controllerCode")
+        )
         row = self._repository.create(
             branch=branch,
             name=name,
@@ -138,6 +144,7 @@ class DeviceService:
             role_key=driver.role_key,
             enabled=enabled,
             poll_interval_ms=poll_interval,
+            controller_code=controller_code,
             actor_sub=actor_sub,
         )
         return json_safe(device_row_to_api(row))
@@ -161,6 +168,11 @@ class DeviceService:
             )
         )
         enabled = bool(payload.get("enabled", True))
+        controller_code = normalize_controller_code(
+            payload.get("controller_code")
+            if "controller_code" in payload
+            else payload.get("controllerCode")
+        )
         row = self._repository.replace(
             device_id,
             branch=branch,
@@ -170,6 +182,7 @@ class DeviceService:
             role_key=driver.role_key,
             enabled=enabled,
             poll_interval_ms=poll_interval,
+            controller_code=controller_code,
             actor_sub=actor_sub,
         )
         return json_safe(device_row_to_api(row))
@@ -189,6 +202,12 @@ class DeviceService:
         if "ip_address" in payload or "ipAddress" in payload:
             updates["ip_address"] = normalize_ip_address(
                 payload.get("ip_address") or payload.get("ipAddress", "")
+            )
+        if "controller_code" in payload or "controllerCode" in payload:
+            updates["controller_code"] = normalize_controller_code(
+                payload.get("controller_code")
+                if "controller_code" in payload
+                else payload.get("controllerCode")
             )
         if "driver_key" in payload or "driverKey" in payload:
             driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))

@@ -98,6 +98,13 @@ def name_max_length(*, default: int = 120) -> int:
     return default
 
 
+def controller_code_max_length(*, default: int = 64) -> int:
+    raw = _limits_section().get("controllerCodeMaxLength")
+    if isinstance(raw, int) and raw > 0:
+        return raw
+    return default
+
+
 def _counter_set_limits() -> dict[str, Any]:
     section = _limits_section().get("counterSet")
     return section if isinstance(section, dict) else {}
@@ -135,16 +142,32 @@ def ipv4_pattern() -> re.Pattern[str]:
     )
 
 
+@lru_cache(maxsize=1)
+def controller_code_pattern() -> re.Pattern[str]:
+    patterns = load_device_validation_content().get("patterns")
+    raw = patterns.get("controllerCode") if isinstance(patterns, dict) else None
+    if isinstance(raw, str) and raw.strip():
+        return re.compile(raw.strip())
+    return re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
+
+
 def matches_ipv4(value: str) -> bool:
     return bool(ipv4_pattern().fullmatch((value or "").strip()))
 
 
+def matches_controller_code(value: str) -> bool:
+    return bool(controller_code_pattern().fullmatch((value or "").strip()))
+
+
 __all__ = [
+    "controller_code_max_length",
+    "controller_code_pattern",
     "counter_set_max",
     "counter_set_min",
     "ipv4_pattern",
     "live_ui_refresh_min_ms",
     "load_device_validation_content",
+    "matches_controller_code",
     "matches_ipv4",
     "name_max_length",
     "online_grace_max_ms",
