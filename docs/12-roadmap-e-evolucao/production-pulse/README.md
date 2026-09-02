@@ -88,12 +88,14 @@ Detalhe: [SCHEMA.md § device_bindings](./SCHEMA.md) · [INTEGRATIONS-TOTVS.md](
 
 | Método | Rota | Corpo / resposta |
 |--------|------|------------------|
-| `GET` | `/api/contador` | `{"contador": <int>}` |
+| `GET` | `/api/contador` | `{"contador": <int>}` — **única rota pública** (sem token) |
+| `GET` | `/api/status` | `controllerCode`, IP, MAC, contador — exige `X-Device-Token` se token setado |
+| `GET` | `/api/config` | `ssid`, `debounceMs`, `passwordSet`, `apiTokenSet`, `wifiConfigured` |
+| `POST` | `/api/config` | body parcial: `ssid`, `password`, `debounceMs`, `apiToken` |
 | `POST` | `/api/incrementar` | `{"contador": <int>}` |
 | `POST` | `/api/decrementar` | `{"contador": <int>}` |
 | `POST` | `/api/reset` | `{"contador": 0}` |
 | `POST` | `/api/definir` | body `{"contador": <int>}` → `{"contador": <int>}` |
-| `GET` | `/api/status` | `codigoControlador` / `controllerCode`, IP, MAC, contador |
 
 Firmware de referência: [`firmware/esp8266_counter_v1/`](./firmware/esp8266_counter_v1/).
 

@@ -1,19 +1,32 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <EEPROM.h>
+#include <string.h>
 
 // =============================================================================
-// Wi-Fi
+// Defaults de fábrica (primeiro boot / EEPROM vazia)
 // =============================================================================
-const char* ssid  = "YOUR_SSID";
-const char* senha = "YOUR_PASSWORD";
+static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
+static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
+static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
+static const uint16_t EEPROM_SIZE = 512;
+static const uint32_t CONFIG_MAGIC = 0x50505301;  // "PPS\x01"
 
-// =============================================================================
-// Hardware — botões físicos (GPIO)
-// =============================================================================
 #define BT_MAIS  D5
 #define BT_MENOS D1
 
-const unsigned long DEBOUNCE_MS = 100;
+struct DeviceConfig {
+  uint32_t magic;
+  char ssid[33];
+  char password[65];
+  char apiToken[65];
+  uint32_t debounceMs;
+};
+
+DeviceConfig cfg;
+long contador = 0;
+String codigoControlador;
+ESP8266WebServer server(80);
 
 bool estadoMais = HIGH;
 bool estadoMenos = HIGH;
@@ -22,42 +35,165 @@ bool leituraAnteriorMenos = HIGH;
 unsigned long tempoMais = 0;
 unsigned long tempoMenos = 0;
 
-// =============================================================================
-// Estado
-// =============================================================================
-long contador = 0;
-String codigoControlador;  // ESP-<chipId> — cadastro Delpi
-
-ESP8266WebServer server(80);
-
-// =============================================================================
-// Identidade
-// =============================================================================
 String montarCodigoControlador() {
   char buf[24];
   snprintf(buf, sizeof(buf), "ESP-%08X", ESP.getChipId());
   return String(buf);
 }
 
-// =============================================================================
-// HTTP helpers
-// =============================================================================
+bool apiTokenConfigured() {
+  return cfg.apiToken[0] != '\0';
+}
+
+bool passwordConfigured() {
+  return cfg.password[0] != '\0';
+}
+
 void enviarCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+  server.sendHeader("Access-Control-Allow-Headers", "Content-Type, X-Device-Token");
+}
+
+bool requireDeviceToken() {
+  if (!apiTokenConfigured()) {
+    return true;
+  }
+  if (!server.hasHeader("X-Device-Token")) {
+    enviarCors();
+    server.send(401, "application/json", "{\"error\":\"unauthorized\"}");
+    return false;
+  }
+  String got = server.header("X-Device-Token");
+  if (got != String(cfg.apiToken)) {
+    enviarCors();
+    server.send(401, "application/json", "{\"error\":\"unauthorized\"}");
+    return false;
+  }
+  return true;
+}
+
+void saveConfigToEeprom() {
+  cfg.magic = CONFIG_MAGIC;
+  EEPROM.put(0, cfg);
+  EEPROM.commit();
+}
+
+void loadConfigFromEeprom() {
+  EEPROM.begin(EEPROM_SIZE);
+  DeviceConfig loaded;
+  EEPROM.get(0, loaded);
+  if (loaded.magic != CONFIG_MAGIC) {
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.magic = CONFIG_MAGIC;
+    strncpy(cfg.ssid, DEFAULT_WIFI_SSID, sizeof(cfg.ssid) - 1);
+    strncpy(cfg.password, DEFAULT_WIFI_PASSWORD, sizeof(cfg.password) - 1);
+    cfg.apiToken[0] = '\0';
+    cfg.debounceMs = DEFAULT_DEBOUNCE_MS;
+    saveConfigToEeprom();
+    return;
+  }
+  cfg = loaded;
+  if (cfg.debounceMs == 0 || cfg.debounceMs > 60000UL) {
+    cfg.debounceMs = DEFAULT_DEBOUNCE_MS;
+  }
+}
+
+String jsonEscape(const String& value) {
+  String out;
+  out.reserve(value.length() + 8);
+  for (size_t i = 0; i < value.length(); i++) {
+    char c = value[i];
+    if (c == '\\' || c == '"') {
+      out += '\\';
+    }
+    if (c == '\n' || c == '\r') {
+      continue;
+    }
+    out += c;
+  }
+  return out;
+}
+
+String extractJsonString(const String& body, const char* key) {
+  String needle = String("\"") + key + "\"";
+  int idx = body.indexOf(needle);
+  if (idx < 0) {
+    return String();
+  }
+  int colon = body.indexOf(':', idx + needle.length());
+  if (colon < 0) {
+    return String();
+  }
+  int start = colon + 1;
+  while (start < (int)body.length() && (body[start] == ' ' || body[start] == '\t')) {
+    start++;
+  }
+  if (start >= (int)body.length() || body[start] != '"') {
+    return String();
+  }
+  start++;
+  String out;
+  while (start < (int)body.length()) {
+    char c = body[start++];
+    if (c == '\\' && start < (int)body.length()) {
+      out += body[start++];
+      continue;
+    }
+    if (c == '"') {
+      break;
+    }
+    out += c;
+  }
+  return out;
+}
+
+bool extractJsonULong(const String& body, const char* key, unsigned long& value) {
+  String needle = String("\"") + key + "\"";
+  int idx = body.indexOf(needle);
+  if (idx < 0) {
+    return false;
+  }
+  int colon = body.indexOf(':', idx + needle.length());
+  if (colon < 0) {
+    return false;
+  }
+  int start = colon + 1;
+  while (start < (int)body.length() && (body[start] == ' ' || body[start] == '\"')) {
+    start++;
+  }
+  int end = start;
+  while (end < (int)body.length() && isDigit(body[end])) {
+    end++;
+  }
+  if (end <= start) {
+    return false;
+  }
+  value = body.substring(start, end).toInt();
+  return true;
+}
+
+long parseContadorDoBody() {
+  if (!server.hasArg("plain")) {
+    return -1;
+  }
+  String body = server.arg("plain");
+  unsigned long value = 0;
+  if (extractJsonULong(body, "contador", value) || extractJsonULong(body, "counter", value)) {
+    return (long)value;
+  }
+  return -1;
 }
 
 void enviarContador() {
   enviarCors();
-  server.send(
-    200,
-    "application/json",
-    "{\"contador\":" + String(contador) + "}"
-  );
+  server.send(200, "application/json", "{\"contador\":" + String(contador) + "}");
 }
 
 void enviarStatus() {
+  if (!requireDeviceToken()) {
+    return;
+  }
   enviarCors();
   String json =
     "{"
@@ -72,52 +208,92 @@ void enviarStatus() {
   server.send(200, "application/json", json);
 }
 
-long parseContadorDoBody() {
+void enviarConfig() {
+  if (!requireDeviceToken()) {
+    return;
+  }
+  enviarCors();
+  bool wifiOk = WiFi.status() == WL_CONNECTED;
+  String json =
+    "{"
+    "\"ssid\":\"" + jsonEscape(String(cfg.ssid)) + "\","
+    "\"passwordSet\":" + String(passwordConfigured() ? "true" : "false") + ","
+    "\"apiTokenSet\":" + String(apiTokenConfigured() ? "true" : "false") + ","
+    "\"debounceMs\":" + String(cfg.debounceMs) + ","
+    "\"wifiConfigured\":" + String(wifiOk ? "true" : "false") +
+    "}";
+  server.send(200, "application/json", json);
+}
+
+void aplicarConfigPost() {
+  if (!requireDeviceToken()) {
+    return;
+  }
   if (!server.hasArg("plain")) {
-    return -1;
+    enviarCors();
+    server.send(400, "application/json", "{\"error\":\"empty_body\"}");
+    return;
   }
 
   String body = server.arg("plain");
-  body.replace(" ", "");
+  bool wifiChanged = false;
+  bool touched = false;
 
-  int idx = body.indexOf("\"contador\"");
-  if (idx < 0) {
-    idx = body.indexOf("\"counter\"");
-  }
-  if (idx < 0) {
-    return -1;
-  }
-
-  int colon = body.indexOf(':', idx);
-  if (colon < 0) {
-    return -1;
+  String newSsid = extractJsonString(body, "ssid");
+  if (newSsid.length() > 0) {
+    strncpy(cfg.ssid, newSsid.c_str(), sizeof(cfg.ssid) - 1);
+    cfg.ssid[sizeof(cfg.ssid) - 1] = '\0';
+    wifiChanged = true;
+    touched = true;
   }
 
-  int start = colon + 1;
-  while (start < (int)body.length() && (body[start] == ' ' || body[start] == '\"')) {
-    start++;
+  String newPassword = extractJsonString(body, "password");
+  if (body.indexOf("\"password\"") >= 0) {
+    strncpy(cfg.password, newPassword.c_str(), sizeof(cfg.password) - 1);
+    cfg.password[sizeof(cfg.password) - 1] = '\0';
+    wifiChanged = true;
+    touched = true;
   }
 
-  int end = start;
-  while (end < (int)body.length() && isDigit(body[end])) {
-    end++;
-  }
-  if (end <= start) {
-    return -1;
+  String newToken = extractJsonString(body, "apiToken");
+  if (body.indexOf("\"apiToken\"") >= 0) {
+    strncpy(cfg.apiToken, newToken.c_str(), sizeof(cfg.apiToken) - 1);
+    cfg.apiToken[sizeof(cfg.apiToken) - 1] = '\0';
+    touched = true;
   }
 
-  return body.substring(start, end).toInt();
+  unsigned long debounce = 0;
+  if (extractJsonULong(body, "debounceMs", debounce)) {
+    if (debounce < 1UL) {
+      debounce = 1UL;
+    }
+    if (debounce > 60000UL) {
+      debounce = 60000UL;
+    }
+    cfg.debounceMs = debounce;
+    touched = true;
+  }
+
+  if (!touched) {
+    enviarCors();
+    server.send(400, "application/json", "{\"error\":\"no_fields\"}");
+    return;
+  }
+
+  saveConfigToEeprom();
+
+  if (wifiChanged) {
+    WiFi.disconnect(true);
+    delay(100);
+    WiFi.begin(cfg.ssid, cfg.password);
+  }
+
+  enviarConfig();
 }
 
-// =============================================================================
-// Página web — somente leitura (código + contagem)
-// Controles +1 / −1 / RESET ficam comentados abaixo (reativar se necessário).
-// Ajuste de contagem: botões físicos (GPIO) ou API Delpi.
-// =============================================================================
 String paginaPrincipal() {
   String html;
   html.reserve(2400);
-
   html += F(
     "<!DOCTYPE html><html lang='pt-BR'><head>"
     "<meta charset='utf-8'/>"
@@ -141,70 +317,41 @@ String paginaPrincipal() {
     "margin-right:.35rem;vertical-align:middle}"
     "</style></head><body><div class='wrap'>"
   );
-
-  // --- Card: código do controlador ---
   html += F("<div class='card'>");
   html += F("<p class='label'>Código do controlador</p>");
   html += "<div class='code' id='codigo'>" + codigoControlador + "</div>";
   html += F(
     "<p class='hint'>"
     "Use este código no cadastro do Production Pulse (campo «Código do controlador»), "
-    "junto com IP e nome do dispositivo."
+    "junto com IP e nome do dispositivo. Config Wi-Fi/token: API /api/config."
     "</p>"
     "<p class='meta'><span class='dot'></span>Identidade fixa do chip (não muda ao reiniciar)</p>"
     "</div>"
   );
-
-  // --- Card: contagem (somente leitura) ---
   html += F(
     "<div class='card'>"
     "<p class='label'>Contador</p>"
     "<div class='valor'><span id='c'>0</span></div>"
-    "<p class='meta' id='metaIp'></p>"
+    "<p class='meta'>Atualização via GET /api/contador (público)</p>"
     "</div>"
   );
-
-  // --- Controles web (desativados) — descomente o bloco para reativar na página ---
-  // html += F(
-  //   "<div class='card'>"
-  //   "<p class='label'>Controles</p>"
-  //   "<div class='row' style='display:flex;gap:.5rem;flex-wrap:wrap'>"
-  //   "<button style='flex:1;padding:.7rem;border:0;border-radius:.65rem;background:#38bdf8;color:#0f172a;font-weight:600'"
-  //   " onclick=\"cmd('incrementar')\">+1</button>"
-  //   "<button style='flex:1;padding:.7rem;border:0;border-radius:.65rem;background:#334155;color:#e2e8f0;font-weight:600'"
-  //   " onclick=\"cmd('decrementar')\">−1</button>"
-  //   "<button style='flex:1;padding:.7rem;border:0;border-radius:.65rem;background:#7f1d1d;color:#fecaca;font-weight:600'"
-  //   " onclick=\"cmd('reset')\">RESET</button>"
-  //   "</div></div>"
-  // );
-
-  // JS cmd() desativado junto com os botões web:
-  // async function cmd(x){ await fetch('/api/'+x,{method:'POST'}); atualiza(); }
-
   html += F(
     "<script>"
     "async function atualiza(){"
       "try{"
-        "const r=await fetch('/api/status');"
+        "const r=await fetch('/api/contador');"
+        "if(!r.ok){return;}"
         "const j=await r.json();"
         "document.getElementById('c').innerText=j.contador;"
-        "if(j.codigoControlador){document.getElementById('codigo').innerText=j.codigoControlador;}"
-        "const ip=j.ip||'';"
-        "const mac=j.mac||'';"
-        "document.getElementById('metaIp').innerText='IP '+ip+(mac?(' · MAC '+mac):'');"
       "}catch(e){}"
     "}"
     "setInterval(atualiza,500);"
     "atualiza();"
     "</script></div></body></html>"
   );
-
   return html;
 }
 
-// =============================================================================
-// Botões físicos (debounce)
-// =============================================================================
 void processarBotao(
   int pino,
   bool& estado,
@@ -213,12 +360,10 @@ void processarBotao(
   long delta
 ) {
   bool leitura = digitalRead(pino);
-
   if (leitura != leituraAnterior) {
     tempoRef = millis();
   }
-
-  if ((millis() - tempoRef) > DEBOUNCE_MS) {
+  if ((millis() - tempoRef) > cfg.debounceMs) {
     if (leitura != estado) {
       estado = leitura;
       if (estado == LOW) {
@@ -228,73 +373,78 @@ void processarBotao(
       }
     }
   }
-
   leituraAnterior = leitura;
 }
 
-// =============================================================================
-// Rotas HTTP (API permanece ativa para a plataforma Delpi)
-// =============================================================================
 void registrarRotas() {
+  const char* tokenHeader = "X-Device-Token";
+  const char* headerKeys[] = {tokenHeader};
+  server.collectHeaders(headerKeys, 1);
+
   server.on("/", HTTP_GET, []() {
     server.send(200, "text/html", paginaPrincipal());
   });
 
-  server.on("/api/contador", HTTP_GET, enviarContador);
+  server.on("/api/contador", HTTP_GET, []() {
+    // Única rota /api pública — ver contagem sem X-Device-Token
+    enviarContador();
+  });
   server.on("/api/status", HTTP_GET, enviarStatus);
+  server.on("/api/config", HTTP_GET, enviarConfig);
+  server.on("/api/config", HTTP_POST, aplicarConfigPost);
+  server.on("/api/config", HTTP_OPTIONS, []() {
+    enviarCors();
+    server.send(204);
+  });
 
   server.on("/api/incrementar", HTTP_POST, []() {
+    if (!requireDeviceToken()) {
+      return;
+    }
     contador++;
-    Serial.print("Contador: ");
-    Serial.println(contador);
     enviarContador();
   });
-
   server.on("/api/decrementar", HTTP_POST, []() {
+    if (!requireDeviceToken()) {
+      return;
+    }
     contador--;
-    Serial.print("Contador: ");
-    Serial.println(contador);
     enviarContador();
   });
-
   server.on("/api/reset", HTTP_POST, []() {
+    if (!requireDeviceToken()) {
+      return;
+    }
     contador = 0;
-    Serial.println("Contador zerado");
     enviarContador();
   });
-
-  // Valor absoluto — restore pela API Delpi após queda de energia
   server.on("/api/definir", HTTP_POST, []() {
+    if (!requireDeviceToken()) {
+      return;
+    }
     long valor = parseContadorDoBody();
     if (valor < 0) {
       enviarCors();
-      server.send(400, "application/json", "{\"erro\":\"informe contador\"}");
+      server.send(400, "application/json", "{\"error\":\"informe contador\"}");
       return;
     }
     contador = valor;
-    Serial.print("Contador definido: ");
-    Serial.println(contador);
     enviarContador();
   });
-
   server.on("/api/definir", HTTP_OPTIONS, []() {
     enviarCors();
     server.send(204);
   });
 }
 
-// =============================================================================
-// Setup / loop
-// =============================================================================
 void setup() {
   Serial.begin(115200);
-
   pinMode(BT_MAIS, INPUT_PULLUP);
   pinMode(BT_MENOS, INPUT_PULLUP);
-
   codigoControlador = montarCodigoControlador();
+  loadConfigFromEeprom();
 
-  WiFi.begin(ssid, senha);
+  WiFi.begin(cfg.ssid, cfg.password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
   }
@@ -303,10 +453,10 @@ void setup() {
   Serial.println("WiFi conectado");
   Serial.print("IP: ");
   Serial.println(WiFi.localIP());
-  Serial.print("MAC: ");
-  Serial.println(WiFi.macAddress());
   Serial.print("Codigo controlador: ");
   Serial.println(codigoControlador);
+  Serial.print("apiTokenSet: ");
+  Serial.println(apiTokenConfigured() ? "true" : "false");
 
   registrarRotas();
   server.begin();
