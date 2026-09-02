@@ -94,6 +94,21 @@ def test_summary_for_customer_uses_customer_row_and_titles() -> None:
     assert gateway.call_kwargs("fetch_delinquency_titles")["customer_code"] == "000001"
 
 
+def test_monthly_widens_the_window_to_twelve_months() -> None:
+    """A série mensal não segue o período curto dos demais painéis."""
+    service, gateway = build()
+    service.monthly(
+        full_user(),
+        start_date="2026-09-01",
+        end_date="2026-09-15",
+        refresh=True,
+    )
+    calls = [kwargs for name, kwargs in gateway.calls if name == "fetch_delinquency_monthly"]
+    assert calls[-1]["start_date"] == "2025-10-01"
+    # Fim exclusivo na api-delpi: 15/09 inclusivo vira 16/09.
+    assert calls[-1]["end_date"] == "2026-09-16"
+
+
 def test_monthly_forwards_customer_filter() -> None:
     service, gateway = build()
     service.monthly(

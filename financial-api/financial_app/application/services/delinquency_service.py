@@ -22,7 +22,10 @@ from financial_app.core.security import FIN_DELINQUENCY_VIEW
 from financial_app.domain.errors import FinancialError
 from financial_app.domain.ports.financial_data_gateway import FinancialDataGateway
 from financial_app.domain.services.branch_access_service import BranchAccessService
-from financial_app.domain.services.period_range import resolve_inclusive_period_or_default
+from financial_app.domain.services.period_range import (
+    resolve_inclusive_period_or_default,
+    rolling_month_series_bounds,
+)
 
 
 class InvalidDelinquencyQuery(FinancialError):
@@ -90,7 +93,15 @@ class DelinquencyService:
         new_business_only: bool = False,
         refresh: bool = False,
     ) -> dict[str, Any]:
-        start, end = self._prepare(user, start_date, end_date)
+        self._prepare(user, start_date, end_date)
+        series_cfg = _settings().get("series") or {}
+        series_months = as_int(series_cfg.get("months"), 12)
+        series_start, series_end = rolling_month_series_bounds(
+            start_date,
+            end_date,
+            months=series_months,
+        )
+        start, end = resolve_delinquency_gateway_period(series_start, series_end)
         payload = self._cached(
             "monthly",
             {

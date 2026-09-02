@@ -11,6 +11,9 @@
     "defaultPageSize": 20,
     "maxPageSize": 100
   },
+  "series": {
+    "months": 12
+  },
   "sort": {
     "customers": {
       "default": "late_amount",

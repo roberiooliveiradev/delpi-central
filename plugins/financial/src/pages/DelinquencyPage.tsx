@@ -433,7 +433,11 @@ export function DelinquencyPage({
           </div>
 
           <div className="fin-board-grid">
-            <FinChartCard title={copy.delinquency.seriesTitle} titleHint={helpTooltips.delinquency}>
+            <FinChartCard
+              title={copy.delinquency.seriesTitle}
+              titleHint={helpTooltips.delinquency}
+              hint={copy.delinquency.seriesHint}
+            >
               {monthlyRows.length === 0 ? (
                 <FinBlockState empty emptyMessage={copy.delinquency.seriesEmpty} block={undefined} />
               ) : (
