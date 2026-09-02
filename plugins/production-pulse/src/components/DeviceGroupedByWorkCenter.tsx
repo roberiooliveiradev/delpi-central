@@ -54,7 +54,6 @@ function GroupSection({
               <DeviceCard
                 key={device.id}
                 device={device}
-                compact
                 polling={pollingDeviceId === device.id}
                 onOpen={onOpenDevice}
                 onPoll={onPoll}

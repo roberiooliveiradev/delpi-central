@@ -462,17 +462,6 @@
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
-.pp-device-card-hit {
-  display: block;
-  cursor: pointer;
-  border-radius: var(--pp-card-radius);
-}
-
-.pp-device-card-hit:focus-visible {
-  outline: 2px solid var(--pp-accent);
-  outline-offset: 2px;
-}
-
 .pp-device-card-actions {
   display: flex;
   flex-wrap: wrap;

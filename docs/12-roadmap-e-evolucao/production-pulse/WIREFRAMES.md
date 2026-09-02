@@ -332,7 +332,7 @@ Sheet «Filtros»: Tipo amarração · Papel · Status · Agrupar por — botõe
 └──────────────────────────────────────────────────┘
 ```
 
-- Tap no card → detalhe; `⋮` → menu linha (Editar† · Poll · Reset†).
+- Detalhe só via `[ghost Ver detalhe]` (card **não** é clicável); Poll no segundo botão.
 - Métrica + status na mesma linha; badge `anchor_type` abaixo do placement.
 - Paginação: `CompactPagination` full width no rodapé.
 
