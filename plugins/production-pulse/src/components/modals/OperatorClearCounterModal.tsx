@@ -1,6 +1,4 @@
-import { ModalShell, modalShellBemClasses } from "@delpi/plugin-ui/index";
-
-import { PpActionButton } from "../../app/productionPulseUi";
+import { PpActionButton, PpHostContainedDialog } from "../../app/productionPulseUi";
 import { PP_HELP } from "../../content/helpTooltips";
 
 type OperatorClearCounterModalProps = {
@@ -19,12 +17,7 @@ export function OperatorClearCounterModal({
   onClose,
 }: OperatorClearCounterModalProps) {
   return (
-    <ModalShell
-      open={open}
-      title={PP_HELP.modals.clearOperatorTitle}
-      onClose={onClose}
-      classNames={modalShellBemClasses("pp")}
-    >
+    <PpHostContainedDialog open={open} title={PP_HELP.modals.clearOperatorTitle} onClose={onClose}>
       <div className="pp-modal-body pp-modal-body--operator">
         <p>{PP_HELP.modals.clearOperatorBody}</p>
         {error ? <p className="pp-modal-body__error">{error}</p> : null}
@@ -37,6 +30,6 @@ export function OperatorClearCounterModal({
           </PpActionButton>
         </div>
       </div>
-    </ModalShell>
+    </PpHostContainedDialog>
   );
 }

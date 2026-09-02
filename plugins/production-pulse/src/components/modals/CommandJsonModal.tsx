@@ -1,6 +1,4 @@
-import { ModalShell, modalShellBemClasses } from "@delpi/plugin-ui/index";
-
-import { PpActionButton } from "../../app/productionPulseUi";
+import { PpActionButton, PpHostContainedDialog } from "../../app/productionPulseUi";
 
 type CommandJsonModalProps = {
   open: boolean;
@@ -11,7 +9,7 @@ type CommandJsonModalProps = {
 
 export function CommandJsonModal({ open, title, payload, onClose }: CommandJsonModalProps) {
   return (
-    <ModalShell open={open} title={title} onClose={onClose} classNames={modalShellBemClasses("pp")}>
+    <PpHostContainedDialog open={open} title={title} onClose={onClose}>
       <div className="pp-modal-body">
         <pre className="pp-json-preview">{JSON.stringify(payload, null, 2)}</pre>
         <div className="pp-modal-body__actions">
@@ -20,6 +18,6 @@ export function CommandJsonModal({ open, title, payload, onClose }: CommandJsonM
           </PpActionButton>
         </div>
       </div>
-    </ModalShell>
+    </PpHostContainedDialog>
   );
 }

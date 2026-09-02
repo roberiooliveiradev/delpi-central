@@ -76,4 +76,22 @@ describe("production-pulse kit contracts", () => {
       expect(withoutPageHero, rel).not.toMatch(/<PpStateBox[\s\S]*?\bactions=/);
     }
   });
+
+  it("modais de aviso usam PpHostContainedDialog — nunca ModalShell body-fixed", () => {
+    const modalFiles = [
+      "components/modals/TestConnectionModal.tsx",
+      "components/modals/ResetCounterModal.tsx",
+      "components/modals/OperatorClearCounterModal.tsx",
+      "components/modals/CommandJsonModal.tsx",
+    ];
+    for (const rel of modalFiles) {
+      const source = readRelative(rel);
+      expect(source, rel).not.toMatch(/\bModalShell\b/);
+      expect(source, rel).toMatch(/PpHostContainedDialog/);
+    }
+    const uiKit = readRelative("app/productionPulseUi.tsx");
+    expect(uiKit).toMatch(/createHostContainedModalShell/);
+    expect(uiKit).toMatch(/dashboard-production-pulse/);
+    expect(uiKit).toMatch(/containedLayout:\s*"dialog"/);
+  });
 });

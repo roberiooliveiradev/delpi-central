@@ -18,7 +18,7 @@
 | E6.S1 — Docs + smoke | ✅ Feito | `check-production-pulse.sh` 8/8 OK |
 | **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
-| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0–S3 ✅ em `main`; E7.S4–S5 pendentes |
+| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0–S4 ✅ em `main`; E7.S5 pendente |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
@@ -30,6 +30,8 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 **E7.S2 entregue (set/2026):** `DeviceDriverError` code-first; HTTP compartilhado em `device_http_support`; `last_error` grava código; mensagem PT só no boundary JSON — commit `d7e6675fa`.
 
 **E7.S3 entregue (set/2026):** `device_validation_content.json` + loader API; MFE `deviceValidationContent.ts` com sync test; formulário consome limites/regex/mensagens do JSON — commit `c02aee745`.
+
+**E7.S4 entregue (set/2026):** `PpHostContainedDialog` + migração de modais; teste estrutural anti-ModalShell — commit pendente desta entrega.
 
 ---
 
@@ -385,9 +387,10 @@ flowchart LR
 - **Pronto quando:** alterar min poll no JSON reflete API e MFE; teste sync verde
 - **Commit:** `refactor(production-pulse): validação de cadastro centralizada em content JSON`
 
-#### E7.S4 — Modais host-contained
+#### E7.S4 — Modais host-contained ✅
 
 - **Objetivo:** Modais do plugin não cobrem sidebar do portal.
+- **Status:** ✅ `main` — após commit desta entrega.
 - **Fazer:**
   1. `plugins/production-pulse/src/app/productionPulseUi.tsx` — export `HostContainedDialog` via `createHostContainedModalShell({ containedLayout: "dialog" })`
   2. Migrar `TestConnectionModal`, `ResetCounterModal`, `OperatorClearCounterModal` (+ demais em `components/modals/`)
@@ -415,7 +418,7 @@ flowchart LR
 - [x] E7.S1 — comandos + validação HTTP no JSON
 - [x] E7.S2 — drivers sem copy PT ao usuário
 - [x] E7.S3 — form validation content sync API/MFE
-- [ ] E7.S4 — modais host-contained
+- [x] E7.S4 — modais host-contained
 - [ ] E7.S5 — zero override `.delpi-ui-*` no MFE
 
 ### Fora do escopo (E7)

@@ -1,6 +1,4 @@
-import { ModalShell, modalShellBemClasses } from "@delpi/plugin-ui/index";
-
-import { PpActionButton } from "../../app/productionPulseUi";
+import { PpActionButton, PpHostContainedDialog } from "../../app/productionPulseUi";
 import { PP_HELP } from "../../content/helpTooltips";
 import type { ProbeResult } from "../../types/form";
 import { formatPrimaryMetricFromProbe } from "../../utils/deviceFormValidation";
@@ -24,12 +22,7 @@ export function TestConnectionModal({
   const metricSummary = result ? formatPrimaryMetricFromProbe(result.metrics) : null;
 
   return (
-    <ModalShell
-      open={open}
-      title="Testar conexão"
-      onClose={onClose}
-      classNames={modalShellBemClasses("pp")}
-    >
+    <PpHostContainedDialog open={open} title="Testar conexão" onClose={onClose}>
       <div className="pp-test-modal">
         {loading ? <p>Testando comunicação com o device…</p> : null}
         {!loading && success ? (
@@ -50,6 +43,6 @@ export function TestConnectionModal({
           </PpActionButton>
         </div>
       </div>
-    </ModalShell>
+    </PpHostContainedDialog>
   );
 }

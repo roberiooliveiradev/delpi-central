@@ -5,6 +5,7 @@ import {
   ChartCard,
   chartCardBemClasses,
   createCompactPagination,
+  createHostContainedModalShell,
   catalogSearchBarBemClasses,
   createDashboardCatalogSearchBar,
   createDashboardFormActions,
@@ -25,6 +26,13 @@ import {
 import { Activity, AlertTriangle, FileQuestion, Loader2 } from "lucide-react";
 
 const PREFIX = "pp";
+const PP_PORTAL_SCOPE = "dashboard-production-pulse";
+
+export const PpHostContainedDialog = createHostContainedModalShell({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+  containedLayout: "dialog",
+});
 
 export function PpPageHero(props: ComponentProps<typeof PageHero>) {
   return <PageHero {...props} classNames={pageHeroBemClasses(PREFIX)} density="compact" />;
