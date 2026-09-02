@@ -22,7 +22,7 @@ import { PP_HELP } from "../content/helpTooltips";
 import { DEVICE_DETAIL_NAV, useDeviceDetail } from "../hooks/useDeviceDetail";
 import { buildPanelPath, readPanelFilters } from "../utils/panelFilterUrl";
 import { navigateProductionPulse, replaceProductionPulse } from "../utils/navigation";
-import { placementLabel } from "../utils/deviceDisplay";
+import { formatDeviceDetailDescription } from "../utils/deviceDisplay";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
 
 type DeviceDetailPageProps = {
@@ -142,7 +142,7 @@ export function DeviceDetailPage({
           <PpBackLink onClick={() => navigateProductionPulse(panelBackPath)}>Voltar ao painel</PpBackLink>
         }
         title={device.name}
-        description={`${placementLabel(device)} · ${device.ipAddress}`}
+        description={formatDeviceDetailDescription(device)}
         badge={ppShellIcon}
         actions={
           <div className="pp-device-detail__hero-actions">

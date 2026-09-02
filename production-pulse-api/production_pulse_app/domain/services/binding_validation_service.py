@@ -120,6 +120,8 @@ def compose_placement_label(
         return binding.equipment_label or ""
     if binding.anchor_type == "area":
         return binding.area_label or ""
+    if binding.anchor_type == "standalone":
+        return ""
     return device_name
 
 

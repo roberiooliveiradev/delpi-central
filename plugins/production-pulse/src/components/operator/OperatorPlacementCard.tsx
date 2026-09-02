@@ -4,6 +4,7 @@ import { DeviceStatusBadge } from "../DeviceStatusBadge";
 import {
   formatPlacementMeta,
   formatPrimaryPreview,
+  operatorPlacementTitle,
 } from "../../utils/operatorDisplay";
 
 type OperatorPlacementCardProps = {
@@ -26,7 +27,7 @@ export function OperatorPlacementCard({
       onClick={() => onSelect(placement)}
     >
       <div className="pp-operator-hub-card__header">
-        <strong className="pp-operator-hub-card__title">{placement.placementLabel}</strong>
+        <strong className="pp-operator-hub-card__title">{operatorPlacementTitle(placement)}</strong>
         <AnchorTypeBadge anchorType={placement.anchorType} />
       </div>
       <p className="pp-operator-hub-card__meta">{formatPlacementMeta(placement)}</p>

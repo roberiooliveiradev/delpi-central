@@ -85,7 +85,17 @@ export function formatCounterDeltaKpi(
 
 export function placementLabel(device: DeviceListItem): string {
   if (!device.binding) return "—";
-  return device.binding.placementLabel || "—";
+  if (device.binding.anchorType === "standalone") return "—";
+  const label = device.binding.placementLabel?.trim();
+  if (!label) return "—";
+  if (label === device.name.trim()) return "—";
+  return label;
+}
+
+export function formatDeviceDetailDescription(device: DeviceListItem): string {
+  const placement = placementLabel(device);
+  if (placement === "—") return device.ipAddress;
+  return `${placement} · ${device.ipAddress}`;
 }
 
 export function statusLabel(status: DeviceStatus): string {
